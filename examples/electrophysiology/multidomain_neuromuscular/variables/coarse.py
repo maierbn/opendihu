@@ -92,9 +92,9 @@ random.seed(0)  # ensure that random numbers are the same on every rank
 #   radius: [μm], activation_start_time: [s], stimulation frequency [Hz], jitter [-]
 # exponential distribution: low number of fibers per MU, slow twitch (type I), activated first --> high number of fibers per MU, fast twitch (type II), activated last -->
 motor_units = [
-  {"fiber_no": 10, "standard_deviation": 0.2, "maximum": 0.2, "radius": 40.00, "cm": 0.58, "activation_start_time": 0.0, "stimulation_frequency": 23.92, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # low number of fibers
-  {"fiber_no": 20, "standard_deviation": 0.2, "maximum": 0.2, "radius": 42.35, "cm": 0.58, "activation_start_time": 0.2, "stimulation_frequency": 23.36, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"fiber_no": 30, "standard_deviation": 0.2, "maximum": 0.2, "radius": 45.00, "cm": 0.58, "activation_start_time": 0.4, "stimulation_frequency": 23.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 10, "standard_deviation": 0.2, "maximum": 0.4, "radius": 40.00, "cm": 0.58, "activation_start_time": 0.0, "stimulation_frequency": 23.92, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # low number of fibers
+  {"fiber_no": 20, "standard_deviation": 0.2, "maximum": 0.4, "radius": 42.35, "cm": 0.58, "activation_start_time": 0.2, "stimulation_frequency": 23.36, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
+  {"fiber_no": 30, "standard_deviation": 0.2, "maximum": 0.4, "radius": 45.00, "cm": 0.58, "activation_start_time": 0.4, "stimulation_frequency": 23.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
   {"fiber_no": 40, "standard_deviation": 0.2, "maximum": 0.2, "radius": 48.00, "cm": 0.58, "activation_start_time": 0.6, "stimulation_frequency": 22.46, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
   {"fiber_no": 55, "standard_deviation": 0.2, "maximum": 0.2, "radius": 51.42, "cm": 0.58, "activation_start_time": 0.8, "stimulation_frequency": 20.28, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
   {"fiber_no": 60, "standard_deviation": 0.2, "maximum": 0.2, "radius": 55.38, "cm": 0.58, "activation_start_time": 1.0, "stimulation_frequency": 16.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
@@ -135,8 +135,8 @@ multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the mul
 # elasticity
 elasticity_solver_type = "lu"
 elasticity_preconditioner_type = "none"
-snes_max_iterations = 10                  # maximum number of iterations in the nonlinear solver
-snes_rebuild_jacobian_frequency = 2       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+snes_max_iterations = 14                  # maximum number of iterations in the nonlinear solver
+snes_rebuild_jacobian_frequency = 5       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
 snes_relative_tolerance = 1e-5      # relative tolerance of the nonlinear solver
 snes_absolute_tolerance = 1e-5      # absolute tolerance of the nonlinear solver
 relative_tolerance = 1e-5           # relative tolerance of the residual of the linear solver
@@ -151,7 +151,7 @@ use_lumped_mass_matrix = False            # which formulation to use, the formul
 
 # timing parameters
 # -----------------
-end_time = 1000.0                   # [ms] end time of the simulation
+end_time = 2e-2#; 1000.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
 dt_motoneuron = 1e-3                # [ms] timestep width for motoneurons 
@@ -159,9 +159,9 @@ dt_stimulation_check = 1e-2         # [ms] timestep width for when to check if t
 dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
-dt_elasticity = 2e0                # [ms] time step width of elasticity solver
+dt_elasticity = 1e-2 #2e0                # [ms] time step width of elasticity solver
 output_timestep_multidomain = 2e0  # [ms] timestep for fiber output, 0.5
-output_timestep_motoneuron = 1e0   # [ms] timestep for output of motoneuron
+output_timestep_motoneuron = 100e0   # [ms] timestep for output of motoneuron
 output_timestep_elasticity = dt_elasticity      # [ms] timestep for elasticity output files
 
 # input files
@@ -170,8 +170,8 @@ motoneuron_cellml_file = "../../input/hodgkin_huxley_1952.cellml"
 #cellml_file = "../../input/new_slow_TK_2014_12_08.c"
 cellml_file = "../../input/hodgkin_huxley-razumova.cellml"
 
-fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
-#fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
+#fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
+fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 firing_times_file = "../../input/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency

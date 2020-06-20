@@ -419,6 +419,7 @@ initializeCommunication(std::vector<DofsMappingType> &mappings)
       else
       {
         // no communication will take place
+        // process dofsMapping
         for (std::map<int,std::vector<int>>::iterator iter = mapping.dofsMapping.begin(); iter != mapping.dofsMapping.end(); iter++)
         {
           // if the "from" dofNo is local
@@ -442,6 +443,7 @@ initializeCommunication(std::vector<DofsMappingType> &mappings)
                   dof_no_t dofNoToLocal = nodeNoLocal;
 
                   // store the local dof at the local rank
+                  LOG(DEBUG) << "dofNoTo was global, add dofNoFrom local " << iter->first << " for rank " << ownRankNo << ", now all: " << mapping.dofNosLocalOfValuesToSendToRanks;
                   mapping.dofNosLocalOfValuesToSendToRanks[ownRankNo].push_back(iter->first);
                   mapping.allDofNosToSetLocal.push_back(dofNoToLocal);
                 }
@@ -452,6 +454,7 @@ initializeCommunication(std::vector<DofsMappingType> &mappings)
                 dof_no_t dofNoToLocal = dofNoTo;
 
                 // store the local dof at the local rank
+                LOG(DEBUG) << "dofNoTo is local, add dofNoFrom local " << iter->first << " for rank " << ownRankNo << ", now all: " << mapping.dofNosLocalOfValuesToSendToRanks;
                 mapping.dofNosLocalOfValuesToSendToRanks[ownRankNo].push_back(iter->first);
                 mapping.allDofNosToSetLocal.push_back(dofNoToLocal);
               }

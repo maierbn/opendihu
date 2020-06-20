@@ -1043,8 +1043,8 @@ n_motor_units = len(variables.motor_units)
 # set the motoneuron mesh, which is a Mesh::StructuredRegularFixed<1>, i.e. it has no physical locations but is only logical
 # on every rank there are as many nodes as global motor units
 variables.meshes["motoneuronMesh"] = {
-  "nElements":              n_motor_units-1,
-  "physicalExtent":         n_motor_units,        # this mesh has no physical representation so this value is irrelevant
+  "nElements":              n_motor_units,        # local number nodes (elements) equals number of motor units (there is one extra node at the last rank that is not used)
+  "physicalExtent":         0,                    # this mesh has no physical representation so this value is irrelevant
   "physicalOffset":         [0,0,0],              # this mesh has no physical representation so this value is irrelevant
   "nRanks":                 n_ranks,
   "inputMeshIsGlobal":      False,

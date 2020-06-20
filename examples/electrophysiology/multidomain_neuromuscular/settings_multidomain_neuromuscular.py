@@ -327,14 +327,16 @@ config = {
             # map from motoneuronMesh (algebraics) to 3Dmesh (solution)
             "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
               {                                                 
-                "fromOutputConnectorSlotNo":        5,                    # which fiber/compartment
-                "toOutputConnectorSlotNo":          0,
-                "fromOutputConnectorArrayIndex":    0,
-                "toOutputConnectorArrayIndex":      mu_no,
-                "fromDofNosNumbering":              "local",
-                "toDofNosNumbering":                "global",
+                "fromOutputConnectorSlotNo":        5,                    # source slot of the dofs mapping
+                "toOutputConnectorSlotNo":          0,                    # target slot of the dofs mapping
+                "fromOutputConnectorArrayIndex":    0,                    # which compartment/motor unit
+                "toOutputConnectorArrayIndex":      mu_no,                # which compartment/motor unit
+                "mode":                             "localSetIfAboveThreshold",          # "copyLocal", "copyLocalIfPositive" or "communicate"
+                "fromDofNosNumbering":              "local",					    # "local" or "global", if the 'from' dofs are given as local or global numbers
+                "toDofNosNumbering":                "global",             # "global" or "local", if the 'from' dofs are given as local or global numbers
                 "dofsMapping":                      {mu_no: junction_nodes_global_nos},
-                "mode":                             "copyLocalIfPositive",          # "copyLocal", "copyLocalIfPositive" or "communicate"
+                "thresholdValue":                   20,                   # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
+                "valueToSet":                       20,                   # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
               } for mu_no in range(n_motor_units)],
             
             # map from 3Dmesh to motoneuronMesh

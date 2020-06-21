@@ -44,6 +44,8 @@ int my_Step_MD(braid_App        app,
    braid_StepStatusGetLevel(status, &level);
    braid_StepStatusGetTstartTstop(status, &tstart, &tstop);
 
+   std::cout << level;
+
    // determine, which solver is needed (depends on size)
    solver=log2(u->size - 1);
    solver=0;

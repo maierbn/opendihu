@@ -201,10 +201,10 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
 
     // optimisation settings
     optimset_t optimset;
-    optimset.tolx = 1e-5;     // tolerance on the simplex solutions coordinates
-    optimset.tolf = 1e-5;     // tolerance on the function value
-    optimset.max_iter = 1000; // maximum number of allowed iterations
-    optimset.max_eval = 1000; // maximum number of allowed function evaluations
+    optimset.tolx = 1e-10;     // tolerance on the simplex solutions coordinates
+    optimset.tolf = 1e-10;     // tolerance on the function value
+    optimset.max_iter = 10000; // maximum number of allowed iterations
+    optimset.max_eval = 10000; // maximum number of allowed function evaluations
     optimset.verbose = 0;     // toggle verbose output during minimization
 
     LOG(DEBUG) << "Nelder-Mead, startingPoint: " << xi;

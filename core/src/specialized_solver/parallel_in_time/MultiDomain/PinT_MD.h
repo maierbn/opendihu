@@ -92,7 +92,7 @@ protected:
   braid_Core    core_;
   my_App       *app_;
   int print_level_   = 2;
-  int max_levels_    = 6;
+  int max_levels_    = 5;
 
 };
 } // namespace ParallelInTime

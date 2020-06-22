@@ -63,8 +63,10 @@ public:
   VecD<3,double_v_t> getNormal(Mesh::face_t face, std::array<VecD<3,double_v_t>,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> geometryValues, std::array<double,MeshType::dim()> xi);
 
   //! compute the normal in world space, normal to face at xi
-  template<typename double_v_t, typename element_no_v_t>
-  VecD<3,double_v_t> getNormal(Mesh::face_t face, element_no_v_t elementNoLocal, std::array<double,MeshType::dim()> xi);
+  VecD<3,Vc::double_v> getNormal(Mesh::face_t face, Vc::int_v elementNoLocal, std::array<double,MeshType::dim()> xi);
+
+  //! compute the normal in world space, normal to face at xi
+  Vec3 getNormal(Mesh::face_t face, element_no_t elementNoLocal, std::array<double,MeshType::dim()> xi);
 
   //! Compute the inverseJacobian that is needed to transform a gradient vector from parameter space to world space, for an element at a xi position.
   //! This version of the method needs the values of the geometry field, if the jacobian is needed at multiple positions in the same element, these values can be retrieved once and used for all computations of the jacobians.

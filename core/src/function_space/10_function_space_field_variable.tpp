@@ -219,15 +219,29 @@ getNormal(Mesh::face_t face, std::array<VecD<3,double_v_t>,FunctionSpaceFunction
 }
 
 template<typename MeshType, typename BasisFunctionType>
-template<typename double_v_t, typename element_no_v_t>
-VecD<3,double_v_t> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
-getNormal(Mesh::face_t face, element_no_v_t elementNoLocal, std::array<double,MeshType::dim()> xi)
+Vec3 FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
+getNormal(Mesh::face_t face, element_no_t elementNoLocal, std::array<double,MeshType::dim()> xi)
 {
   // compute normal analoguous to nansons formula
   // Nansons formula: ds = J F^-T dS (ds, dS are normal vectors, here ds is in world space, dS is in index space)
 
   // get geometry field values of element
-  std::array<VecD<3,double_v_t>,FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerElement()> geometryValues;
+  std::array<Vec3,FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerElement()> geometryValues;
+  this->getElementGeometry(elementNoLocal, geometryValues);
+
+  //LOG(DEBUG) << "elementNoLocal: " << elementNoLocal << ", geometryValues: " << geometryValues;
+  return getNormal(face, geometryValues, xi);
+}
+
+template<typename MeshType, typename BasisFunctionType>
+VecD<3,Vc::double_v> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
+getNormal(Mesh::face_t face, Vc::int_v elementNoLocal, std::array<double,MeshType::dim()> xi)
+{
+  // compute normal analoguous to nansons formula
+  // Nansons formula: ds = J F^-T dS (ds, dS are normal vectors, here ds is in world space, dS is in index space)
+
+  // get geometry field values of element
+  std::array<VecD<3,Vc::double_v>,FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerElement()> geometryValues;
   this->getElementGeometry(elementNoLocal, geometryValues);
 
   //LOG(DEBUG) << "elementNoLocal: " << elementNoLocal << ", geometryValues: " << geometryValues;

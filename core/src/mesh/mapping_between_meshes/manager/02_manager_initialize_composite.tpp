@@ -55,7 +55,8 @@ initializeMappingsBetweenMeshes(std::shared_ptr<ManagerInitializeComposite> mapp
   // add log message, to be included in the log file
   std::stringstream logMessage;
   logMessage << "  Initialize mappings between meshes \"" << functionSpace1->meshName()
-    << "\", type " << StringUtility::demangle(typeid(FunctionSpace1Type).name()) << " and \"" << functionSpace2->meshName()
+    << "\", type " << StringUtility::demangle(typeid(FunctionSpace1Type).name())
+    << "\n                                 and \"" << functionSpace2->meshName()
     << "\", type " << StringUtility::demangle(typeid(FunctionSpace2Type).name());
 
   mappingsManager->addLogMessage(logMessage.str());

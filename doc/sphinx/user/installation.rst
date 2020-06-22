@@ -41,7 +41,7 @@ As a prerequisite, on a blank machine with ubuntu (tested on 16.04 and 18.04) yo
 
   # Install prerequisites
   sudo apt-get update && \
-  sudo apt-get install -y libopenmpi-dev libx11-* python2.7 git apt-utils make software-properties-common zlib1g-dev cmake libssl-dev bison flex
+  sudo apt-get install -y libopenmpi-dev libx11-* git apt-utils make software-properties-common zlib1g-dev cmake libssl-dev bison flex
 
 Because we use C++14, **GCC version 7 or higher** is required including the gfortran compiler. 
 Ubuntu 16.04 has GCC 4 as default compiler chain, so you need to update to e.g. GCC 9 as follows. For Ubuntu 18.04 and later, this step is not necessary.
@@ -60,15 +60,8 @@ Make sure that the `gfortran` compiler is installed as well:
 
   sudo apt-get install gfortran
 
-The `scons` build system needs python2.7 Everything else like the python settings of example etc. use a newer python3 version. Make sure that the command `python2.7` starts a python 2.7 shell. If not, you probably have to create the following symbolic link:
-
-.. code-block:: bash
-
-  # link python executable
-  ln -s python2.7 /usr/bin/python
-
-All other needed dependencies will be handled by the `scons` build system. For each dependency you can either specify the path of its installation, if the dependency package is already installed on your system. Or you can not specify anything and let the build system download, build and install the dependencies on its own.
-Note that `python3` with `numpy`, ``scipy`` and `matplotlib` is such a dependency. Opendihu will download and install `python3` including these packages.
+All other needed dependencies will be handled by the `scons` build system. For each dependency you can either specify the path of its installation, if the dependency package is already installed on your system. Or, you if you don't specify anything, the build system downloads, builds and installs the dependencies on its own.
+Note that `python3` with `numpy`, `scipy` and `matplotlib` is such a dependency. Opendihu will download and install `python3` including these packages.
 
 Build 
 ^^^^^^^^^^^
@@ -91,7 +84,6 @@ Building with scons
 In order to build examples you need to use `scons`. The opendihu library can either be build using `scons` or using the `Makefile`, which again simply calls scons.
 
 So you can either install scons on your system or use the `scons` program, that is packaged with opendihu. This is located under `dependencies/scons/scons.py`. 
-It needs to be run with python 2.7 (not python3). 
 
 It is advisable to define a bash alias for this scons command.
 If you like, you can copy the following aliases to your `~/.bashrc` or `~/.bash_aliases` file:

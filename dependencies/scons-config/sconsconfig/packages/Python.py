@@ -1,5 +1,5 @@
 import sys, os, multiprocessing, subprocess, socket
-from Package import Package
+from .Package import Package
 
 #
 # Python requires bzip2 (for matplotlib to work)
@@ -47,7 +47,7 @@ class Python(Package):
       self.headers = ["Python.h"]
   
       # check configuration of gcc
-      #gcc_config = subprocess.check_output(["gcc", "-v"], stderr=subprocess.STDOUT)
+      #gcc_config = subprocess.check_output(["gcc", "-v"], stderr=subprocess.STDOUT).decode("utf-8")
      
       # extract and output gcc version
       #pos1 = gcc_config.find("gcc version")

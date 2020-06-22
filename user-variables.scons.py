@@ -105,7 +105,7 @@ try:
     
   # for Travis CI, build MPI ourselves
   if os.environ.get("TRAVIS") is not None:
-    print "Travis CI detected, del MPI_DIR"
+    print("Travis CI detected, del MPI_DIR")
     del MPI_DIR
     MPI_DOWNLOAD=True
   

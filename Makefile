@@ -2,10 +2,10 @@
 
 all: debug release
 
-#ifneq ("$(wildcard ./dependencies/python/install/bin/python)","")
-#python := ./dependencies/python/install/bin/python
+#ifneq ("$(wildcard ./dependencies/python/install/bin/python3)","")
+#	python=./dependencies/python/install/bin/python3
 #else
-python := python2.7
+python=python3
 #endif
 
 debug:
@@ -36,10 +36,10 @@ doc:
 	
 # the following targets are just for convenience and could also be deleted
 release_without_tests:
-	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE no_tests=True -j $(shell expr `nproc` / 2)
+	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE no_tests=True -j $(shell expr `nproc --all` / 2)
 
 debug_without_tests:
-	$(python) dependencies/scons/scons.py BUILD_TYPE=DEBUG no_tests=True -j $(shell expr `nproc` / 2)
+	$(python) dependencies/scons/scons.py BUILD_TYPE=DEBUG no_tests=True -j $(shell expr `nproc --all` / 2)
 
 travis_ci:
 	$(python) dependencies/scons/scons.py BUILD_TYPE=RELEASE no_tests=True travis_ci=True

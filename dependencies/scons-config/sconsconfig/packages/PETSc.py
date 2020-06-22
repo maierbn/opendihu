@@ -1,7 +1,7 @@
 import sys, os
 import socket
 from distutils import sysconfig
-from Package import Package
+from .Package import Package
 
 petsc_text = r'''
 #include <stdlib.h>

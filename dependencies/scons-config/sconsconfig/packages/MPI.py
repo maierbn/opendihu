@@ -1,6 +1,6 @@
 
 import sys, os
-from Package import Package
+from .Package import Package
 import subprocess
 import socket
 
@@ -96,16 +96,17 @@ int main(int argc, char* argv[])
       use_mpi_dir = True
       
     if use_showme:
-      try:
+      if True:
+     # try:
         # try to get compiler and linker flags from mpicc, this directly has the needed includes paths
         #ctx.Message("Checking MPI "+str(ctx.env["mpiCC"])+" --showme") 
         cflags_command = "echo '{}' > .a && {} .a --showme:compile; rm .a".format(self.check_text, ctx.env["mpiCC"])
         ldflags_command = "echo '{}' > .a && {} .a --showme:link; rm .a".format(self.check_text, ctx.env["mpiCC"])
-        cflags = subprocess.check_output(cflags_command, shell=True)
-        ldflags = subprocess.check_output(ldflags_command, shell=True)
+        cflags = subprocess.check_output(cflags_command, shell=True).decode("utf-8")
+        ldflags = subprocess.check_output(ldflags_command, shell=True).decode("utf-8")
 
-        ctx.Log("cflags: {}".format(cflags))
-        ctx.Log("ldflags: {}".format(ldflags))
+        ctx.Log("cflags: {}\n".format(cflags))
+        ctx.Log("ldflags: {}\n".format(ldflags))
 
         # remove trailing newline and leading .a
         try:
@@ -135,9 +136,9 @@ int main(int argc, char* argv[])
         res = self.try_link(ctx)
         use_mpi_dir = False
         
-      except Exception as e: 
-        ctx.Message("MPI "+str(ctx.env["mpiCC"])+" --showme failed: \n"+str(e)+"\nNow considering MPI_DIR\n")
-        use_mpi_dir = True
+     # except Exception as e: 
+     #   ctx.Message("MPI "+str(ctx.env["mpiCC"])+" --showme failed: \n"+str(e)+"\nNow considering MPI_DIR\n")
+     #   use_mpi_dir = True
     
     if use_mpi_dir:
       # mpicc was not available (e.g. on hazel hen), now try to use the MPI_DIR variable, as usual

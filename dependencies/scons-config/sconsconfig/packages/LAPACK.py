@@ -1,5 +1,5 @@
 import sys, os, multiprocessing
-from Package import Package
+from .Package import Package
 import subprocess
 
 ##
@@ -56,7 +56,7 @@ return EXIT_SUCCESS;
     
     # check if inside docker container, then we have no cpu features available and must compile with DYNAMIC_ARCH=1 NO_AFFINITY=1
     cmd = "cat /proc/self/cgroup"
-    output = subprocess.check_output(cmd, shell=True)
+    output = subprocess.check_output(cmd, shell=True).decode("utf-8")
     run_in_docker = False
     if "docker" in output:
       run_in_docker = True

@@ -337,6 +337,8 @@ fixUnmappedDofs(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
 {
   const dof_no_t nDofsLocalTarget = functionSpaceTarget->nDofsLocalWithoutGhosts();
   const int nDofsPerTargetElement = FunctionSpaceTargetType::nDofsPerElement();
+  const dof_no_t nDofsLocalSource = functionSpaceSource->nDofsLocalWithoutGhosts();
+
 
   // count number of target dofs that have no source dof mapped
   nTargetDofsNotMapped = 0;
@@ -451,7 +453,15 @@ fixUnmappedDofs(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
 
               try
               {
-                targetMappingInfo_[sourceDofNoLocal].targetElements.push_back(targetElement);
+                if (sourceDofNoLocal < 0 || sourceDofNoLocal >= nDofsLocalSource)
+                {
+                  LOG(ERROR) << "sourceDofNoLocal=" << sourceDofNoLocal << " is out of range, nDofsLocalSource=" << nDofsLocalSource << ", sourceDofNos: " << sourceDofNos;
+                }
+
+                if (sourceDofNoLocal < nDofsLocalSource)
+                {
+                  targetMappingInfo_[sourceDofNoLocal].targetElements.push_back(targetElement);
+                }
               }
               catch (...)
               {

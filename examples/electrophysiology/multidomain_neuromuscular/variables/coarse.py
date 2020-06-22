@@ -151,7 +151,7 @@ use_lumped_mass_matrix = False            # which formulation to use, the formul
 
 # timing parameters
 # -----------------
-end_time = 1000.0                   # [ms] end time of the simulation
+end_time = 3e-2                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
 dt_motoneuron = 1e-3                # [ms] timestep width for motoneurons 
@@ -159,7 +159,7 @@ dt_stimulation_check = 1e-2         # [ms] timestep width for when to check if t
 dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
-dt_elasticity = 1e-1                # [ms] time step width of elasticity solver
+dt_elasticity = 1e-2                # [ms] time step width of elasticity solver
 output_timestep_multidomain = 1e-2 #2e0  # [ms] timestep for fiber output, 0.5
 output_timestep_motoneuron = 1e0   # [ms] timestep for output of motoneuron
 output_timestep_elasticity = dt_elasticity      # [ms] timestep for elasticity output files

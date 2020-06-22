@@ -181,7 +181,7 @@ MappingBetweenMeshesConstruct(std::shared_ptr<FunctionSpaceSourceType> functionS
       }
 
       // debugging output about how interpolation is done, only in debug mode
-#ifndef NDEBUG
+//#ifndef NDEBUG
       std::array<Vec3,FunctionSpaceTargetType::nDofsPerElement()> targetPositions;
       functionSpaceTarget->geometryField().getElementValues(targetMappingInfo.targetElements[0].elementNoLocal, targetPositions);
       Vec3 computedSourcePosition{0,0,0};
@@ -191,11 +191,13 @@ MappingBetweenMeshesConstruct(std::shared_ptr<FunctionSpaceSourceType> functionS
 
       // print error for mismatch
       if (fabs(computedSourcePosition[0] - position[0]) > 1e-1 || fabs(computedSourcePosition[1] - position[1]) > 1e-1 || fabs(computedSourcePosition[2] - position[2]) > 1e-1)
-        LOG(ERROR) << "mismatch " << computedSourcePosition << " != " << position << ", " << ", xi: " << xi;
+        LOG(ERROR) << "Bad interpolation because of badly conditioned elements.\n "
+          << "Mesh \"" << functionSpaceSource->meshName() << "\" dof " << sourceDofNoLocal << " value = " << position << " = " << targetPositions << " * " << targetMappingInfo.targetElements[0].scalingFactors
+          << ", \nmismatch in position, " << computedSourcePosition << " != " << position << ", at xi: " << xi;
 
       LOG(DEBUG) << functionSpaceSource->meshName() << " dof " << sourceDofNoLocal << " value = " << position << " = " << targetPositions << " * " << targetMappingInfo.targetElements[0].scalingFactors
         << ", interpolation in element " << targetMappingInfo.targetElements[0].elementNoLocal << " of " << functionSpaceTarget->meshName();
-#endif
+//#endif
 
 
       targetMappingInfo_[sourceDofNoLocal] = targetMappingInfo;

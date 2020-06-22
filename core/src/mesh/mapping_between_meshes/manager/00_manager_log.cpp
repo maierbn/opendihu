@@ -92,9 +92,9 @@ std::string ManagerLog::produceLogContents()
       log << ", mesh \"" << logEntry.meshNameFrom << "\" (" << logEntry.dimensionalityFrom << "D) ";
       
       if (logEntry.nMappedSourceMeshes > 1)
-        log << " [and other field variables/meshes, in total " << logEntry.nMappedSourceMeshes << " ]";
+        log << " [and other field variables/meshes, in total " << logEntry.nMappedSourceMeshes << "]";
         
-      log << " to field variable \"" << logEntry.fieldVariableNameTo << "\"";
+      log << "\n        to field variable \"" << logEntry.fieldVariableNameTo << "\"";
       if (logEntry.componentNoTo == -1)
         log << ", all components";
       else 

@@ -86,7 +86,12 @@ if os.path.exists(relative_factors_file):
 
 else:
   sys.path.append(os.path.abspath(".."))
-  relative_factors = helper.compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_units)
+  n_points_x = n_linear_elements_per_coordinate_direction[0]+1
+  n_points_y = n_linear_elements_per_coordinate_direction[1]+1
+  n_points_z = n_linear_elements_per_coordinate_direction[2]+1
+  n_points_xy = n_points_x * n_points_y
+  
+  relative_factors = helper.compute_compartment_relative_factors(mesh_node_positions, n_points_xy, n_points_z, fiber_data, motor_units)
   if rank_no == 0:
     print("save relative factors to file \"{}\"".format(relative_factors_file))
     with open(relative_factors_file, "wb") as f:

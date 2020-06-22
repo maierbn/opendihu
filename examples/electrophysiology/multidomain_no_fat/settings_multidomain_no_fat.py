@@ -86,7 +86,12 @@ if os.path.exists(relative_factors_file):
 
 else:
   sys.path.append(os.path.abspath(".."))
-  relative_factors = helper.compute_compartment_relative_factors(mesh_node_positions, fiber_data, motor_units)
+  n_points_x = n_linear_elements_per_coordinate_direction[0]+1
+  n_points_y = n_linear_elements_per_coordinate_direction[1]+1
+  n_points_z = n_linear_elements_per_coordinate_direction[2]+1
+  n_points_xy = n_points_x * n_points_y
+  
+  relative_factors = helper.compute_compartment_relative_factors(mesh_node_positions, n_points_xy, n_points_z, fiber_data, motor_units)
   if rank_no == 0:
     print("save relative factors to file \"{}\"".format(relative_factors_file))
     with open(relative_factors_file, "wb") as f:
@@ -219,8 +224,11 @@ multidomain_solver = {
   "solverName":                       "activationSolver",                 # reference to the solver used for the global linear system of the multidomain eq.
   "initialGuessNonzero":              True,                               # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
   "inputIsGlobal":                    True,                               # if values and dofs correspond to the global numbering
-  "showLinearSolverOutput":           True,                              # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
+  "showLinearSolverOutput":           False,                              # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "compartmentRelativeFactors":       relative_factors.tolist(),          # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
+  "updateSystemMatrixEveryTimestep":  False,                              # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
+  "useSymmetricPreconditionerMatrix": True,                               # if the diagonal blocks of the system matrix should be used as preconditioner matrix
+  
   "PotentialFlow": {
     "FiniteElementMethod" : {  
       "meshName":                     "mesh",
@@ -253,15 +261,17 @@ multidomain_solver = {
   },
   
   "OutputWriter" : [
-    {"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
+    {"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
     #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
     #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
   ]
 }
   
 config = {
+  "scenarioName":              "multidomain_no_fat",        # name of the scenario such that the run can be identified in the log file
   "logFormat":                  "csv",                      # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile": "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile": "out/mappings_between_meshes.txt",  # name of a log file for the mapping between meshes
   "Meshes": {
     "mesh": {
       "nElements":             n_linear_elements_per_coordinate_direction,
@@ -281,13 +291,14 @@ config = {
       "dumpFilename":       "",
     },
     "activationSolver": {
-      "relativeTolerance":  1e-15,
+      "relativeTolerance":  1e-9,
       "absoluteTolerance":  solver_tolerance,         # 1e-10 absolute tolerance of the residual          
       "maxIterations":      1e3,
       "solverType":         "gmres",
-      "preconditionerType": "none",
+      "preconditionerType": "ilu" if n_ranks == 1 else "euclid",
+      "hypreOptions":       "",              # additional command line type options of petsc for the hypre solver
       "dumpFormat":         "matlab",
-      "dumpFilename":       "out/no",
+      "dumpFilename":       "", #"out/no",
     }
   },
   "StrangSplitting": {
@@ -314,6 +325,7 @@ config = {
             "inputMeshIsGlobal":            True,
             "dirichletBoundaryConditions":  {},
             "nAdditionalFieldVariables":    0,
+            "checkForNanInf":               True,
                 
             "CellML" : {
               "modelFilename":                          cellml_file,                            # input C++ source file or cellml XML file
@@ -354,7 +366,7 @@ config = {
       "MultidomainSolver" : multidomain_solver,
       "OutputSurface": {        # version for fibers_emg_2d_output
         "OutputWriter": [
-          {"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
+          {"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
         ],
         "face": "1-",
         "MultidomainSolver" : multidomain_solver,

@@ -160,7 +160,7 @@ dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
 dt_elasticity = 1e-1                # [ms] time step width of elasticity solver
-output_timestep_multidomain = 2e0  # [ms] timestep for fiber output, 0.5
+output_timestep_multidomain = 1e-2 #2e0  # [ms] timestep for fiber output, 0.5
 output_timestep_motoneuron = 1e0   # [ms] timestep for output of motoneuron
 output_timestep_elasticity = dt_elasticity      # [ms] timestep for elasticity output files
 

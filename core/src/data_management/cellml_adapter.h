@@ -11,28 +11,28 @@ namespace Data
 
 /**  The datastructures used for the cellml adapter.
   */
-template <int nStates, int nIntermediates, typename FunctionSpaceType>
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
 class CellmlAdapter : public Data<FunctionSpaceType>
 {
 public:
-  typedef FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates> FieldVariableIntermediates;
+  typedef FieldVariable::FieldVariable<FunctionSpaceType,nAlgebraics> FieldVariableAlgebraics;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nStates> FieldVariableStates;
-  typedef OutputConnectorData<FunctionSpaceType,nStates,nIntermediates> OutputConnectorDataType;
+  typedef OutputConnectorData<FunctionSpaceType,nStates,nAlgebraics> OutputConnectorDataType;
 
   //! constructor
   CellmlAdapter(DihuContext context);
 
-  //! return a reference to the intermediates field variable
-  std::shared_ptr<FieldVariableIntermediates> intermediates();
+  //! return a reference to the algebraics field variable
+  std::shared_ptr<FieldVariableAlgebraics> algebraics();
 
   //! return the field variable that stores all states
   std::shared_ptr<FieldVariableStates> states();
 
   //! return the field variable that stores all parameters
-  std::shared_ptr<FieldVariableIntermediates> parameters();
+  std::shared_ptr<FieldVariableAlgebraics> parameters();
 
   //! get a raw r/w memory pointer to the values of the parameters field variable, to be used in the rhs function
-  //! the array pointed to by this pointer contains parameter values for all instances, nIntermediates parameters for each instance, in struct-of-array memory layout
+  //! the array pointed to by this pointer contains parameter values for all instances, nAlgebraics parameters for each instance, in struct-of-array memory layout
   double *parameterValues();
 
   //! initialize data structures
@@ -41,8 +41,8 @@ public:
   //! assign the field variable that stores the states, this variable is owned by the timestepping scheme
   void setStatesVariable(std::shared_ptr<FieldVariableStates> states);
 
-  //! give the names of all intermediates, will be called before initialize()
-  void setIntermediateNames(const std::vector<std::string> &intermediateNames);
+  //! give the names of all algebraics, will be called before initialize()
+  void setAlgebraicAndParameterNames(const std::vector<std::string> &algebraicNames, const std::vector<std::string> &parameterNames);
 
   //! get the parameteValues_ pointer from the parameters field variable, then the field variable can no longer be used until restoreParameterValues() gets called
   void prepareParameterValues();
@@ -53,8 +53,8 @@ public:
   //! return a reference to statesForTransfer_
   std::vector<int> &statesForTransfer();
 
-  //! return a reference intermediatesForTransfer_
-  std::vector<int> &intermediatesForTransfer();
+  //! return a reference algebraicsForTransfer_
+  std::vector<int> &algebraicsForTransfer();
 
   //! return a reference parametersForTransfer_
   std::vector<int> &parametersForTransfer();
@@ -66,9 +66,9 @@ public:
   //! field variables that will be output by outputWriters
   typedef std::tuple<
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,     // geometry
-    std::shared_ptr<FieldVariableIntermediates>,     // intermediates
+    std::shared_ptr<FieldVariableAlgebraics>,     // algebraics
     std::shared_ptr<FieldVariableStates>,            // states
-    std::shared_ptr<FieldVariableIntermediates>          // parameters
+    std::shared_ptr<FieldVariableAlgebraics>          // parameters
   > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
@@ -82,18 +82,19 @@ private:
   //! initialize the outputConnectorData_ object, this can only be done after the states variable has been set
   void initializeOutputConnectorData();
 
-  std::shared_ptr<FieldVariableIntermediates> intermediates_;   //< intermediates field variable
-  std::shared_ptr<FieldVariableStates> states_;                 //< states field variable, this is a shared pointer with the timestepping scheme, which own the actual variable (creates it)
-  std::shared_ptr<FieldVariableIntermediates> parameters_;      //< parameters field variable, the number of components is equal or less than the number of intermediates in order to not have to specify the number of parameters at compile time. This possibly creates a vector that is too large which is not harmful.
-  double *parameterValues_;                                     //< a pointer to the data of the parameters_ Petsc Vec of the field variable
-  std::vector<std::string> intermediateNames_;                  //< component names of the intermediates field variable
+  std::shared_ptr<FieldVariableAlgebraics> algebraics_;   //< algebraics field variable
+  std::shared_ptr<FieldVariableStates> states_;           //< states field variable, this is a shared pointer with the timestepping scheme, which own the actual variable (creates it)
+  std::shared_ptr<FieldVariableAlgebraics> parameters_;   //< parameters field variable, the number of components is equal or less than the number of algebraics in order to not have to specify the number of parameters at compile time. This possibly creates a vector that is too large which is not harmful.
+  double *parameterValues_;                               //< a pointer to the data of the parameters_ Petsc Vec of the field variable
+  std::vector<std::string> algebraicNames_;               //< component names of the algebraics field variable
+  std::vector<std::string> parameterNames_;               //< component names of the parameter field variable
 
   std::shared_ptr<OutputConnectorDataType> outputConnectorData_;//< the object that holds all components of field variables that will be transferred to other solvers
   PythonConfig specificSettings_;                               //< the settings object
 
-  std::vector<int> statesForTransfer_;                          //< state no.s to transfer to other solvers within output connector data
-  std::vector<int> intermediatesForTransfer_;                   //< intermediate no.s to transfer to other solvers within output connector data
-  std::vector<int> parametersForTransfer_;                      //< parameter no.s to transfer to other solvers within output connector data
+  std::vector<int> statesForTransfer_;                    //< state no.s to transfer to other solvers within output connector data
+  std::vector<int> algebraicsForTransfer_;                //< algebraic no.s to transfer to other solvers within output connector data
+  std::vector<int> parametersForTransfer_;                //< parameter no.s to transfer to other solvers within output connector data
 
 };
 

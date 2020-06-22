@@ -5,7 +5,7 @@
 namespace PreciceAdapter
 {
 
-template<class NestedSolver>
+template<typename NestedSolver>
 PartitionedFibers<NestedSolver>::
 PartitionedFibers(DihuContext context) :
   Runnable(),
@@ -18,7 +18,7 @@ PartitionedFibers(DihuContext context) :
   timeStepOutputInterval_ = specificSettings_.getOptionInt("timeStepOutputInterval", 100, PythonUtility::Positive);
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void PartitionedFibers<NestedSolver>::
 initialize()
 {
@@ -30,7 +30,7 @@ initialize()
 
   // initialize() will be called before the simulation starts.
 
-  // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
+  // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
   DihuContext::solverStructureVisualizer()->addSolver("PreciceAdapter::PartitionedFibers", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
@@ -169,7 +169,7 @@ initialize()
 #endif
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void PartitionedFibers<NestedSolver>::
 run()
 {
@@ -245,7 +245,7 @@ run()
 
 #ifdef HAVE_PRECICE
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void PartitionedFibers<NestedSolver>::
 preciceReadData()
 {
@@ -317,7 +317,7 @@ preciceReadData()
   LOG(DEBUG) << "precice read geometry complete";
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void PartitionedFibers<NestedSolver>::
 preciceWriteData()
 {
@@ -373,7 +373,7 @@ preciceWriteData()
 
 #endif
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void PartitionedFibers<NestedSolver>::
 reset()
 {
@@ -383,7 +383,7 @@ reset()
   // "uninitialize" everything
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 typename PartitionedFibers<NestedSolver>::Data &PartitionedFibers<NestedSolver>::
 data()
 {
@@ -393,7 +393,7 @@ data()
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the output_connector_data_transfer class
-template<class NestedSolver>
+template<typename NestedSolver>
 std::shared_ptr<typename PartitionedFibers<NestedSolver>::OutputConnectorDataType> PartitionedFibers<NestedSolver>::
 getOutputConnectorData()
 {

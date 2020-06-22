@@ -5,17 +5,10 @@
 #include <memory>
 #include "control/types.h"
 
-//#include "field_variable/field_variable.h"
-namespace FieldVariable
-{
-  template<typename FunctionSpace,int nComponents>
-  class FieldVariable;
-}
+#include "mesh/mapping_between_meshes/mapping/00_construct.h"
 
 namespace MappingBetweenMeshes
 {
-
-class MappingBetweenMeshesBase{};
 
 /**
  * This is a mapping between two meshes, e.g. one 1D fiber mesh and one 3D mesh.
@@ -24,14 +17,13 @@ class MappingBetweenMeshesBase{};
  * Also read the more detailed description of the MappingBetweenMeshes::Manager class.
  */
 template<typename FunctionSpaceSourceType, typename FunctionSpaceTargetType>
-class MappingBetweenMeshesImplementation : public MappingBetweenMeshesBase
+class MappingBetweenMeshesImplementation :
+  public MappingBetweenMeshesConstruct<FunctionSpaceSourceType,FunctionSpaceTargetType>
 {
 public:
 
-  //! constructor, the function spaces need to be initialized
-  MappingBetweenMeshesImplementation(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource, std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget, 
-                                     double xiTolerance=0, bool enableWarnings=true, bool compositeUseOnlyInitializedMappings=false,
-                                     bool isEnabledFixUnmappedDofs=true);
+  //! constructor
+  using MappingBetweenMeshesConstruct<FunctionSpaceSourceType,FunctionSpaceTargetType>::MappingBetweenMeshesConstruct;
 
   //! map data between a single component of the field variables in the source and target function spaces
   template<int nComponentsSource, int nComponentsTarget>
@@ -56,39 +48,9 @@ public:
   template<int nComponentsTarget, int nComponentsSource>
   void mapHighToLowDimension(FieldVariable::FieldVariable<FunctionSpaceTargetType,nComponentsTarget> &fieldVariableSource, int componentNoSource,
                              FieldVariable::FieldVariable<FunctionSpaceSourceType,nComponentsSource> &fieldVariableTarget, int componentNoTarget);
-
-  /** data tytpe to store the target dofs of a source mesh dof to which the value will contribute
-   */
-  struct targetDof_t
-  {
-    struct element_t
-    {
-      element_no_t elementNoLocal;   //< local element no of the target element (high dim)
-      std::array<double,FunctionSpaceTargetType::nDofsPerElement()> scalingFactors;          //< factors for the dofs of the element with which to scale the value
-    };
-    std::vector<element_t> targetElements;   //< a list of possibly multiple target elements that are affected by the source dof, this is needed if the source mesh is so coarse that some target mesh nodes would not get any data mapped on
-    bool mapThisDof;    //< if this source dof should be mapped to the target dofs in elementNoLocal, if this is false, the dof is outside of the target mesh
-  };
-
-  //! get access to the internal targetMappingInfo_ variable
-  const std::vector<targetDof_t> &targetMappingInfo() const;
-
-protected:
-
-  //! add mapping to the target that have so far no contribution from any source dof, by interpolating the source mesh
-  void fixUnmappedDofs(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
-                       std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget,
-                       double xiTolerance, bool compositeUseOnlyInitializedMappings, const std::vector<bool> &targetDofIsMappedTo);
-
-  std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource_;   //< the function space of the mesh from which to map data
-  std::shared_ptr<FunctionSpaceTargetType> functionSpaceTarget_;   //< the function space of the mesh to which to map data
-
-
-  std::vector<targetDof_t> targetMappingInfo_;  //< [localDofNo source functionSpace (low dim)] information where in the target (high dim) to store the value from local dof No of the source (low dim)
-  double maxAllowedXiTolerance_;    //< the maximum tolerance in the parameter space (threshold for xi) by which a node is considered still inside the element
 };
 
 }  // namespace
 
-// the include is contained in mesh/mapping_between_meshes/manager/02_manager.h
+// the include is contained in mesh/mapping_between_meshes/manager/04_manager.h
 //#include "mesh/mapping_between_meshes/mapping/01_implementation.tpp"

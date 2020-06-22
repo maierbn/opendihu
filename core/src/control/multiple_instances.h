@@ -6,8 +6,9 @@
 #include <vector>
 
 #include "interfaces/runnable.h"
+#include "interfaces/multipliable.h"
 #include "control/dihu_context.h"
-#include "data_management/multiple_instances.h"
+#include "data_management/control/multiple_instances.h"
 #include "output_writer/manager.h"
 #include "partition/mesh_partition/02_mesh_partition.h"
 
@@ -16,8 +17,8 @@ namespace Control
 
 /** This class holds multiple instances of the template type, e.g. for having multiple fibers, which are each as in example electrophysiology
   */
-template<class TimeSteppingScheme>
-class MultipleInstances: public Runnable
+template<typename TimeSteppingScheme>
+class MultipleInstances: public Runnable, public Multipliable
 {
 public:
 
@@ -57,6 +58,12 @@ public:
   //! the FastMonodomainSolver accesses the internals of MultipleInstances
   std::vector<TimeSteppingScheme> &instancesLocal();
  
+  //! time of simulation
+  double endTime();
+
+  //! number of time steps in simulation time
+  int numberTimeSteps();
+
   /** write data to file using the output writer manager
    * @param callCountIncrement increment to the counter to reduce the output frequency in settings, this is only needed for FastMonodomainSolver
    */

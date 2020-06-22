@@ -28,6 +28,7 @@ print("element_size: {}, number of elements per fiber: {}".format(element_size, 
 
 config = {
   "scenarioName": "7x7fibers",
+  "logFormat": "csv",
   "solverStructureDiagramFile": "solver_structure.txt",
   "mappingsBetweenMeshesLogFile": "",
   "Solvers": {

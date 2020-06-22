@@ -105,8 +105,8 @@ void SolverStructureVisualizer::parseOutputConnection(std::shared_ptr<solver_t> 
   currentSolver->outputConnections.clear();
 
   // get output connector data from outputConnection
-  const std::vector<OutputConnection::Connector> &connectorTerm1To2 = currentSolver->outputConnection->connectorTerm1To2();
-  const std::vector<OutputConnection::Connector> &connectorTerm2To1 = currentSolver->outputConnection->connectorTerm2To1();
+  const std::vector<OutputConnection::Connector> &connectorTerm1To2 = currentSolver->outputConnection->connectorForVisualizerTerm1To2();
+  const std::vector<OutputConnection::Connector> &connectorTerm2To1 = currentSolver->outputConnection->connectorForVisualizerTerm2To1();
 
   // loop over connectors from term1 to term2
   for (int i = 0; i < connectorTerm1To2.size(); i++)

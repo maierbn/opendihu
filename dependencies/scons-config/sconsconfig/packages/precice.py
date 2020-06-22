@@ -74,7 +74,8 @@ class precice(Package):
     self.number_output_lines = 15536
       
     self.libs = ['precice']
-    self.extra_libs = [['boost_atomic', 'boost_chrono', 'boost_date_time', 'boost_filesystem', 'boost_log', 'boost_log_setup', 'boost_prg_exec_monitor', 'boost_program_options', 'boost_regex', 'boost_system', 'boost_test_exec_monitor', 'boost_thread', 'boost_timer', 'boost_unit_test_framework']]
+    self.extra_libs = [[], ['boost_filesystem' 'boost_log' 'boost_log_setup' 'boost_program_options' 'boost_system' 'boost_thread' 'boost_unit_test_framework'],
+    									 ['boost_atomic', 'boost_chrono', 'boost_date_time', 'boost_filesystem', 'boost_log', 'boost_log_setup', 'boost_prg_exec_monitor', 'boost_program_options', 'boost_regex', 'boost_system', 'boost_test_exec_monitor', 'boost_thread', 'boost_timer', 'boost_unit_test_framework']]
     self.headers = ["precice/SolverInterface.hpp"]
 
   def check(self, ctx):
@@ -85,11 +86,13 @@ class precice(Package):
     self.set_build_handler([
       'mkdir -p ${PREFIX}/include',
       'cd ${SOURCE_DIR} && wget http://bitbucket.org/eigen/eigen/get/3.3.7.tar.bz2 && tar xf 3.3.7.tar.bz2 && ln -s ${SOURCE_DIR}/eigen-eigen-323c052e1731/Eigen ${PREFIX}/include/Eigen',   # eigen
-      'cd ${SOURCE_DIR} && wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz && tar xf boost_1_65_1.tar.gz && \
-      cd boost_1_65_1 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test --prefix=${PREFIX} && \
-      ./b2 install',
+#      'cd ${SOURCE_DIR} && wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz && tar xf boost_1_65_1.tar.gz && \
+#      cd boost_1_65_1 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test --prefix=${PREFIX} && \
+#      ./b2 install',
       'cd ${SOURCE_DIR} && mkdir -p build && cd build && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} \
-      -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=${DEPENDENCIES_DIR}/python/install/bin/python3 -DPETSC_DIR=${PETSC_DIR} -DPRECICE_ENABLE_FORTRAN=OFF -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' .. && \
+      -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=${DEPENDENCIES_DIR}/python/install/bin/python3 \
+      -DPETSC_DIR=${PETSC_DIR} -DPETSC_EXECUTABLE_RUNS=TRUE \
+      -DLIBXML2_INCLUDE_DIR=${LIBXML2_DIR}/include -DLIBXML2_LIBRARY=${LIBXML2_DIR}/lib/libxml2.so -DPRECICE_ENABLE_FORTRAN=OFF -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' .. && \
       cd ${SOURCE_DIR}/build && make all install'
     ])
     

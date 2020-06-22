@@ -140,9 +140,6 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
     std::vector<double> values;
     std::array<std::vector<double>, nComponents> componentValues;
 
-    // initialize the dofNosLocalNaturalOrdering vector of the meshPartition to be able to get the values in the natural ordering
-    fieldVariable.functionSpace()->meshPartition()->initializeDofNosLocalNaturalOrdering(fieldVariable.functionSpace());
-
     // ensure that ghost values are in place
     fieldVariable.zeroGhostBuffer();
     fieldVariable.setRepresentationGlobal();

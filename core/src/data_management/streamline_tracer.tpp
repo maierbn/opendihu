@@ -103,13 +103,6 @@ nNodesLocalWithoutGhosts()
 }
 
 template<typename FunctionSpaceType,typename BaseDataType>
-constexpr int StreamlineTracer<FunctionSpaceType,BaseDataType>::
-getNDofsPerNode()
-{
-  return 1;
-}
-
-template<typename FunctionSpaceType,typename BaseDataType>
 void StreamlineTracer<FunctionSpaceType,BaseDataType>::
 print()
 {

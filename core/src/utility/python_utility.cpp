@@ -361,7 +361,8 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
   }
   else
   {
-    LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming default value " << std::boolalpha << defaultValue << ".";
+    LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName
+      << "\". Assuming default value " << (defaultValue? "True": "False") << ".";
   }
   Py_CLEAR(key);
   return result;
@@ -424,6 +425,10 @@ PyObject *PythonUtility::getOptionFunction(const PyObject *settings, std::string
         LOG(WARNING) << "Value for " << pathString << "[\"" << keyString << "\"] is not a callable object.";
       }
     }
+    else if (function == Py_None)
+    {
+      result = NULL;
+    }
     else
     {
       LOG(WARNING) << "Value for " << pathString << "[\"" << keyString << "\"] is not a function.";
@@ -434,6 +439,7 @@ PyObject *PythonUtility::getOptionFunction(const PyObject *settings, std::string
     LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\".";
   }
   Py_CLEAR(key);
+
   return result;
 }
 

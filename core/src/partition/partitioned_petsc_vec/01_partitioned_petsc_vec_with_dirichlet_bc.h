@@ -7,7 +7,7 @@
 #include "function_space/function_space.h"
 #include "mesh/type_traits.h"
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec_base.h"
-#include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
+#include "spatial_discretization/dirichlet_boundary_conditions/01_dirichlet_boundary_conditions.h"
 
 // forward declaration
 namespace FunctionSpace

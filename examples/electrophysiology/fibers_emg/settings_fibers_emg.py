@@ -163,6 +163,7 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 # define the config dict
 config = {
   "scenarioName":                   variables.scenario_name,    # scenario name which will appear in the log file
+  "logFormat":                      "csv",                      # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",     # output file that contains a log about creation of mappings between meshes
   "meta": {                 # additional fields that will appear in the log
@@ -279,7 +280,7 @@ config = {
                       
                       # parameters to the cellml model
                       "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-                      "mappings":                               variables.mappings,                             # mappings between parameters and intermediates/constants and between outputConnectorSlots and states, intermediates or parameters, they are defined in helper.py
+                      "mappings":                               variables.mappings,                             # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
                       
                       "meshName":                               "MeshFiber_{}".format(fiber_no),
                       "stimulationLogFilename":                 "out/stimulation.log",                          # a file that will contain the times of stimulations

@@ -9,4 +9,6 @@ Import('env')     # import Environment object from calling SConstruct
 
 # create the main executable
 #env.Program(target = 'multidomain_contraction_without_fat', source = "src/multidomain_contraction_without_fat.cpp")
-env.Program(target = 'multidomain_contraction', source = "src/multidomain_contraction.cpp")
+#env.Program(target = 'multidomain_contraction', source = "src/multidomain_contraction.cpp")
+env.Program(target = 'multidomain_contraction_hodgkin_huxley_razumova', source = "src/multidomain_contraction_hodgkin_huxley_razumova.cpp")
+#env.Program(target = 'dummy_contraction', source = "src/dummy_contraction.cpp")

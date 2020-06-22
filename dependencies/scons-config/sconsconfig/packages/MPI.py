@@ -99,14 +99,20 @@ int main(int argc, char* argv[])
       try:
         # try to get compiler and linker flags from mpicc, this directly has the needed includes paths
         #ctx.Message("Checking MPI "+str(ctx.env["mpiCC"])+" --showme") 
-        cflags = subprocess.check_output("{} --showme:compile".format(ctx.env["mpiCC"]), shell=True)
-        ldflags = subprocess.check_output("{} --showme:link".format(ctx.env["mpiCC"]), shell=True)
+        cflags_command = "echo '{}' > .a && {} .a --showme:compile; rm .a".format(self.check_text, ctx.env["mpiCC"])
+        ldflags_command = "echo '{}' > .a && {} .a --showme:link; rm .a".format(self.check_text, ctx.env["mpiCC"])
+        cflags = subprocess.check_output(cflags_command, shell=True)
+        ldflags = subprocess.check_output(ldflags_command, shell=True)
 
-        # remove trailing newline
+        # remove trailing newline and leading .a
         if cflags[-1] == '\n':
           cflags = cflags[:-1]
+        if cflags[:2] == ".a":
+          cflags = cflags[2:]
         if ldflags[-1] == '\n':
           ldflags = ldflags[:-1]
+        if ldflags[:2] == ".a":
+          ldflags = ldflags[2:]
 
         ctx.Log("extracted cflags  from {}: \n{}\n\n".format(ctx.env["mpiCC"], cflags))
         ctx.Log("extracted ldflags from {}: \n{}\n\n".format(ctx.env["mpiCC"], ldflags))

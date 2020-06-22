@@ -294,13 +294,13 @@ bool Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   Control::PerformanceMeasurement::start(this->durationLogKey_);
 
   // reset memory count in MemoryLeakFinder
-  Control::MemoryLeakFinder::nBytesIncreaseSinceLastCheck();
+  //Control::MemoryLeakFinder::nBytesIncreaseSinceLastCheck();
 
   // solve the system
   ierr = KSPSolve(*ksp_, rightHandSide, solution); CHKERRQ(ierr);
 
-  // output a warning if the memory increased by over 1 MB
-  Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("In Linear::solve, after KSPSolve");
+  // output a warning if the memory increased by over 1 MB, this takes a lot of time, do not do this
+  //Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("In Linear::solve, after KSPSolve");
     
   Control::PerformanceMeasurement::stop(this->durationLogKey_);
 

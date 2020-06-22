@@ -3,8 +3,8 @@
 #include <memory>
 
 #include "spatial_discretization/finite_element_method/01_matrix.h"
-#include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
-#include "spatial_discretization/boundary_conditions/neumann_boundary_conditions.h"
+#include "spatial_discretization/dirichlet_boundary_conditions/01_dirichlet_boundary_conditions.h"
+#include "spatial_discretization/neumann_boundary_conditions/01_neumann_boundary_conditions.h"
 
 namespace SpatialDiscretization
 {

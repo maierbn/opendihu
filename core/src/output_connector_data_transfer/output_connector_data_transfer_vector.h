@@ -31,7 +31,8 @@ public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
   static void transfer(const std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType1>>> transferableSolutionData1,
                        std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType2>>> transferableSolutionData2,
-                       OutputConnection &outputConnection);
+                       OutputConnection &outputConnection,
+                       int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 };
 
 /** Transfer between a normal entry and a vector, the first entry of the vector is used
@@ -50,7 +51,8 @@ public:
                          Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>
                        >>> transferableSolutionData1,
                        std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
-                       OutputConnection &outputConnection);
+                       OutputConnection &outputConnection,
+                       int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 };
 
 /** Transfer between a normal entry and a vector, the first entry of the vector is used
@@ -69,7 +71,8 @@ public:
                        std::shared_ptr<std::vector<std::shared_ptr<
                          Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
                        >>> transferableSolutionData2,
-                       OutputConnection &outputConnection);
+                       OutputConnection &outputConnection,
+                       int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 };
 
 #include "output_connector_data_transfer/output_connector_data_transfer_vector.tpp"

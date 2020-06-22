@@ -19,7 +19,7 @@ TEST(NumberingsTest, DofNodeNumberingDeformableLinear1D)
   // node_no_t functionSpace->getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction)
   // node_no_t functionSpace->getNodeNo(element_no_t elementNo, int nodeIndex)
   // meshPartition->getNodeNoGlobalNatural(coordinatesGlobal)
-  // node_no_t functionSpace->getNodeNo(std::array<int,D> coordinate)
+  // node_no_t functionSpace->meshPartition()->getNodeNoLocal(std::array<int,D> coordinate)
 
   // run serial problem
   std::string pythonConfig = R"(
@@ -74,7 +74,7 @@ config = {
         coordinatesLocal[i] = coordinatesGlobal[i] - meshPartition->beginNodeGlobalNatural(i);
       }
 
-      node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
+      node_no_t nodeNoLocalFromCoordinates = functionSpace->meshPartition()->getNodeNoLocal(coordinatesLocal);
 
       VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal;
 
@@ -206,7 +206,7 @@ config = {
         coordinatesLocal[i] = coordinatesGlobal[i] - meshPartition->beginNodeGlobalNatural(i);
       }
 
-      node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
+      node_no_t nodeNoLocalFromCoordinates = functionSpace->meshPartition()->getNodeNoLocal(coordinatesLocal);
 
       VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal;
 
@@ -338,7 +338,7 @@ config = {
         coordinatesLocal[i] = coordinatesGlobal[i] - meshPartition->beginNodeGlobalNatural(i);
       }
 
-      node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
+      node_no_t nodeNoLocalFromCoordinates = functionSpace->meshPartition()->getNodeNoLocal(coordinatesLocal);
 
       VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal;
 
@@ -475,7 +475,7 @@ config = {
         coordinatesLocal[i] = coordinatesGlobal[i] - meshPartition->beginNodeGlobalNatural(i);
       }
 
-      node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
+      node_no_t nodeNoLocalFromCoordinates = functionSpace->meshPartition()->getNodeNoLocal(coordinatesLocal);
 
       VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal;
 
@@ -613,7 +613,7 @@ config = {
         coordinatesLocal[i] = coordinatesGlobal[i] - meshPartition->beginNodeGlobalNatural(i);
       }
 
-      node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
+      node_no_t nodeNoLocalFromCoordinates = functionSpace->meshPartition()->getNodeNoLocal(coordinatesLocal);
 
       VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal;
 
@@ -751,7 +751,7 @@ config = {
         coordinatesLocal[i] = coordinatesGlobal[i] - meshPartition->beginNodeGlobalNatural(i);
       }
 
-      node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
+      node_no_t nodeNoLocalFromCoordinates = functionSpace->meshPartition()->getNodeNoLocal(coordinatesLocal);
 
       VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal;
 
@@ -868,7 +868,7 @@ config = {
         coordinatesLocal[i] = coordinatesGlobal[i] - meshPartition->beginNodeGlobalNatural(i);
       }
 
-      node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
+      node_no_t nodeNoLocalFromCoordinates = functionSpace->meshPartition()->getNodeNoLocal(coordinatesLocal);
 
       VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal;
 
@@ -1009,7 +1009,7 @@ config = {
         coordinatesLocal[i] = coordinatesGlobal[i] - meshPartition->beginNodeGlobalNatural(i);
       }
 
-      node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
+      node_no_t nodeNoLocalFromCoordinates = functionSpace->meshPartition()->getNodeNoLocal(coordinatesLocal);
 
       VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal;
 
@@ -1154,7 +1154,7 @@ config = {
         coordinatesLocal[i] = coordinatesGlobal[i] - meshPartition->beginNodeGlobalNatural(i);
       }
 
-      node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
+      node_no_t nodeNoLocalFromCoordinates = functionSpace->meshPartition()->getNodeNoLocal(coordinatesLocal);
 
       VLOG(1) << "coordinatesGlobal: " << coordinatesGlobal << ", coordinatesLocal: " << coordinatesLocal;
 

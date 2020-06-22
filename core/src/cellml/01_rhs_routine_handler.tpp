@@ -16,11 +16,11 @@
 #include <ctime>
 
 // forward declaration
-template <int nStates,int nIntermediates_,typename FunctionSpaceType>
+template <int nStates,int nAlgebraics_,typename FunctionSpaceType>
 class CellmlAdapter;
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+void RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 initializeRhsRoutine()
 {
   // if "libraryFilename" is specified: use the given library
@@ -129,8 +129,8 @@ initializeRhsRoutine()
 }
 
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void *RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+void *RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 loadRhsLibraryGetHandle(std::string libraryFilename)
 {
   std::string currentWorkingDirectory = getcwd(NULL,0);
@@ -170,8 +170,8 @@ loadRhsLibraryGetHandle(std::string libraryFilename)
   return handle;
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-bool RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 loadRhsLibrary(std::string libraryFilename)
 {
   // load dynamic library
@@ -227,8 +227,8 @@ loadRhsLibrary(std::string libraryFilename)
   return false;
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+void RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nInstancesRanks)
 {
   // get the global rank no, needed for the output filenames
@@ -313,8 +313,8 @@ createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nIns
   }
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-bool RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::approximateExponentialFunction()
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>::approximateExponentialFunction()
 {
   return approximateExponentialFunction_;
 }

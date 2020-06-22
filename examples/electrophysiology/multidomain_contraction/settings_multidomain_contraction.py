@@ -196,6 +196,7 @@ multidomain_solver = {
   
 config = {
   "scenarioName":          variables.scenario_name,
+  "logFormat":                      "csv",                                # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",               # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "mappings_between_meshes_log.txt",    # log file for mappings 
   "meta": {                                                               # additional fields that will appear in the log
@@ -203,13 +204,28 @@ config = {
   },
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": {
+  
+#    "3Dmesh_elasticity_quadratic":  [
+#       {"name": "3Dmesh",    "xiTolerance": 0.1, "enableWarnings": True, "compositeUseOnlyInitializedMappings": False, "fixUnmappedDofs": True},
+#    ],
+#    
+#    "3DFatMesh_elasticity_quadratic":  [
+#       {"name": "3DFatMesh", "xiTolerance": 0.1, "enableWarnings": True, "compositeUseOnlyInitializedMappings": False, "fixUnmappedDofs": True},
+#    ],
+#  
+#    "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic": [
+#       {"name": "3DFatMesh", "xiTolerance": 0.1, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},
+#       {"name": "3Dmesh",    "xiTolerance": 0.1, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
+#    ],
+    
+    
     "3Dmesh": [
-       {"name": "3Dmesh_elasticity_quadratic",                                 "xiTolerance": 0.1, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},
-       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic",  "xiTolerance": 0.1, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
+       {"name": "3Dmesh_elasticity_quadratic",                                 "xiTolerance": 1.5, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},
+       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic",  "xiTolerance": 1.5, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
     ],
     "3DFatMesh":  [
-       {"name": "3DFatMesh_elasticity_quadratic",                              "xiTolerance": 0.1, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},
-       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic",  "xiTolerance": 0.1, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
+       {"name": "3DFatMesh_elasticity_quadratic",                              "xiTolerance": 1.5, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},
+       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic",  "xiTolerance": 1.5, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
     ]
   },
   "Solvers": {
@@ -305,13 +321,13 @@ config = {
                   "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(compartment_no),# [ms] first time when to call setSpecificStates
                   "additionalArgument":                     compartment_no,
                   
-                  "mappings":                               variables.mappings,                             # mappings between parameters and intermediates/constants and between outputConnectorSlots and states, intermediates or parameters, they are defined in helper.py
+                  "mappings":                               variables.mappings,                             # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
                   "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                   
                   "meshName":                               "3Dmesh",                                       # use the linear mesh, it was partitioned by the helper.py script which called opendihu/scripts/create_partitioned_meshes_for_settings.py
                   "stimulationLogFilename":                 "out/stimulation.log",
   
-                  # output writer for states, intermediates and parameters                
+                  # output writer for states, algebraics and parameters                
 									"OutputWriter" : [
                     {"format": "Paraview", "outputInterval": (int)(1./variables.dt_0D*variables.output_timestep_multidomain), "filename": "out/" + variables.scenario_name + "/0D_all", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
                   ] if variables.states_output else []
@@ -335,13 +351,21 @@ config = {
             "MultidomainSolver" : multidomain_solver,
           }
         }
-      }
+      },
+      "PrescribedValues": {   # this is for dummy_contraction.cpp
+        "meshName":                               "3Dmesh",                                       # use the linear mesh, it was partitioned by the helper.py script which called opendihu/scripts/create_partitioned_meshes_for_settings.py
+        "additionalArgument":                     None,
+        "fieldVariables1": [
+          {"name": "stress", "callback": set_dummy_stress},
+        ],
+        "fieldVariables2":                        None,
+      },
     },
     "Term2": {        # solid mechanics
       "MuscleContractionSolver": {
         "numberTimeSteps":              1,                         # only use 1 timestep per interval
         "timeStepOutputInterval":       100,                       # do not output time steps
-        "Pmax": variables.pmax,                                    # maximum PK2 active stress
+        "Pmax":                         variables.pmax,            # maximum PK2 active stress
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
         ],

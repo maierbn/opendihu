@@ -36,9 +36,6 @@ public:
   //! set the data object that holds the field frorm which stream lines are generated
   void setBaseData(std::shared_ptr<BaseDataType> baseData);
 
-  //! return the number of degrees of freedom per mesh node
-  static constexpr int getNDofsPerNode();
-
   //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
   virtual dof_no_t nNodesLocalWithGhosts();
   

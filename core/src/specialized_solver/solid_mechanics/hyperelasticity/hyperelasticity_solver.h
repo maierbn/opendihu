@@ -10,8 +10,8 @@
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat_for_hyperelasticity.h"
 #include "solver/nonlinear.h"
 #include "output_writer/manager.h"
-#include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
-#include "spatial_discretization/boundary_conditions/neumann_boundary_conditions.h"
+#include "spatial_discretization/dirichlet_boundary_conditions/01_dirichlet_boundary_conditions.h"
+#include "spatial_discretization/neumann_boundary_conditions/01_neumann_boundary_conditions.h"
 #include "specialized_solver/solid_mechanics/hyperelasticity/pressure_function_space_creator.h"
 #include "specialized_solver/solid_mechanics/hyperelasticity/expression_helper.h"
 
@@ -167,6 +167,12 @@ public:
     std::shared_ptr<VecHyperelasticity> externalVirtualWork,
     std::shared_ptr<VecHyperelasticity> displacements
   );
+
+  //! get a pointer to the dirichlet boundary conditions object
+  std::shared_ptr<DirichletBoundaryConditions<DisplacementsFunctionSpace,nDisplacementComponents>> dirichletBoundaryConditions();
+
+  //! set new neumann bc's = traction for the next solve
+  void updateNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> newNeumannBoundaryConditions);
 
 protected:
 

@@ -152,6 +152,8 @@ output_timestep_elasticity = dt_elasticity      # [ms] timestep for elasticity o
 
 # input files
 cellml_file = "../../input/new_slow_TK_2014_12_08.c"
+#cellml_file = "../../input/hodgkin_huxley-razumova.cellml"
+
 fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
 fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"

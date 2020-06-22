@@ -233,7 +233,7 @@ initializeFiberDirections()
       LOG(DEBUG) << "create mapping  1D fiber -> 3D: \"" << fiberFunctionSpace->meshName() << "\" -> \"" << this->displacementsFunctionSpace_->meshName() << "\".";
 
       // initialize mapping 1D fiber -> 3D
-      DihuContext::mappingBetweenMeshesManager()->mappingBetweenMeshes<FiberFunctionSpace,DisplacementsFunctionSpace>(fiberFunctionSpace, this->displacementsFunctionSpace_);
+      DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<FiberFunctionSpace,DisplacementsFunctionSpace>(fiberFunctionSpace, this->displacementsFunctionSpace_);
     }
 
     using SourceFunctionSpaceType = FieldVariable::FieldVariable<FiberFunctionSpace,3>;
@@ -277,7 +277,7 @@ initializeFiberDirections()
 
 
       // transfer direction values from 1D fibers to 3D field, -1 means all components
-      DihuContext::mappingBetweenMeshesManager()->map<SourceFunctionSpaceType,TargetFunctionSpaceType>(
+      DihuContext::mappingBetweenMeshesManager()->template map<SourceFunctionSpaceType,TargetFunctionSpaceType>(
         direction, this->data_.fiberDirection(), -1, -1, false);
     }
 
@@ -489,6 +489,26 @@ typename HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::Data &Hyp
 data()
 {
   return data_;
+}
+
+//! get a pointer to the dirichlet boundary conditions object
+template<typename Term,typename MeshType,int nDisplacementComponents>
+std::shared_ptr<DirichletBoundaryConditions<typename HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::DisplacementsFunctionSpace,nDisplacementComponents>>
+HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+dirichletBoundaryConditions()
+{
+  return dirichletBoundaryConditions_;
+}
+
+//! set new neumann bc's = traction for the next solve
+template<typename Term,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+updateNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<typename HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> newNeumannBoundaryConditions)
+{
+  neumannBoundaryConditions_ = newNeumannBoundaryConditions;
+
+  // compute new value for the rhs, δW_ext,dead = int_Ω B^L * phi^L * phi^M * δu^M dx + int_∂Ω T^L * phi^L * phi^M * δu^M dS
+  materialComputeExternalVirtualWorkDead();
 }
 
 } // namespace SpatialDiscretization

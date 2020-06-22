@@ -8,7 +8,7 @@
 #include <sstream>
 #include <string>
 
-#include "data_management/multiple_instances.h"
+#include "data_management/control/multiple_instances.h"
 #include "partition/partition_manager.h"
 #include "utility/mpi_utility.h"
 #include "control/diagnostic_tool/performance_measurement.h"
@@ -447,6 +447,25 @@ instancesLocal()
   return instancesLocal_;
 }
 
+//! time of simulation
+template<typename TimeSteppingScheme>
+double MultipleInstances<TimeSteppingScheme>::
+endTime()
+{
+  if (nInstancesLocal_ > 0)
+    return instancesLocal_[0].endTime();
+  return 0;
+}
+
+//! number of time steps in simulation time
+template<typename TimeSteppingScheme>
+int MultipleInstances<TimeSteppingScheme>::
+numberTimeSteps()
+{
+  if (nInstancesLocal_ > 0)
+    return instancesLocal_[0].numberTimeSteps();
+  return -1;
+}
 
 template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::

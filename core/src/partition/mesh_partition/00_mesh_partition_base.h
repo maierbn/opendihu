@@ -65,6 +65,15 @@ public:
   //! get the node no in global petsc ordering from a local node no
   virtual global_no_t getNodeNoGlobalPetsc(node_no_t nodeNoLocal) const = 0;
 
+  //! get the local dof no for a global petsc dof no, does not work for ghost nodes
+  virtual dof_no_t getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const = 0;
+
+  //! get the rank on which the global natural node is located
+  virtual int getRankOfDofNoGlobalNatural(global_no_t dofNoGlobalNatural) const = 0;
+
+  //! transform the global natural numbering to the local numbering
+  virtual node_no_t getNodeNoLocalFromGlobalNatural(global_no_t nodeNoGlobalNatural, bool &isOnLocalDomain) const = 0;
+
   //! get a PETSc IS (index set) with the same information as dofNosLocal_
   const IS &dofNosLocalIS() const;
 

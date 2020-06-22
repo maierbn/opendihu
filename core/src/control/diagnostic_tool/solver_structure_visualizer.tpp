@@ -5,7 +5,7 @@
 //! add a solver to the diagram
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
 void SolverStructureVisualizer::
-setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2>> outputConnectorData)
+setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2>> outputConnectorData, bool isFromTuple)
 {
   LOG(DEBUG) << "SolverStructureVisualizer::setOutputConnectorData() nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_ << ", currently at \"" << currentSolver_->name << "\".";
 
@@ -18,7 +18,8 @@ setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceTy
     return;
   }
 
-  currentSolver_->outputSlots.clear();
+  if (!isFromTuple)
+    currentSolver_->outputSlots.clear();
 
   // loop over ComponentOfFieldVariable entries as variable1 in outputConnectorData
   for (int i = 0; i < outputConnectorData->variable1.size(); i++)
@@ -34,7 +35,7 @@ setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceTy
   }
 
   // if the geometry is set, also add it to the list
-  if (outputConnectorData->geometryField)
+  if (outputConnectorData->geometryField && !isFromTuple)
   {
     currentSolver_->outputSlots.emplace_back();
     currentSolver_->outputSlots.back().fieldVariableName = "(geometry)";
@@ -61,7 +62,7 @@ setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceTy
 
 template<typename T>
 void SolverStructureVisualizer::
-setOutputConnectorData(std::shared_ptr<std::vector<T>> outputConnectorData)
+setOutputConnectorData(std::shared_ptr<std::vector<T>> outputConnectorData, bool isFromTuple)
 {
   if (!outputConnectorData)
   {
@@ -72,6 +73,15 @@ setOutputConnectorData(std::shared_ptr<std::vector<T>> outputConnectorData)
   // if outputConnectorData is a vector, only use the first entry
   if (!outputConnectorData->empty())
   {
-    setOutputConnectorData((*outputConnectorData)[0]);
+    setOutputConnectorData((*outputConnectorData)[0], isFromTuple);
   }
+}
+
+template<typename OutputConnectorData1, typename OutputConnectorData2>
+void SolverStructureVisualizer::
+setOutputConnectorData(std::shared_ptr<std::tuple<OutputConnectorData1,OutputConnectorData2>> outputConnectorData)
+{
+  currentSolver_->outputSlots.clear();
+  setOutputConnectorData(std::get<0>(*outputConnectorData), true);
+  setOutputConnectorData(std::get<1>(*outputConnectorData), true);
 }

@@ -80,7 +80,7 @@ initialize()
   // call initialize of the parent class, this parses the timestepping settings from the settings file
   TimeSteppingScheme::TimeSteppingScheme::initialize();
 
-  // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
+  // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
   DihuContext::solverStructureVisualizer()->addSolver("PrescribedValues", false);   // hasInternalConnectionToFirstNestedSolver=false (the last argument) means output connector data is not shared with the first subsolver
   // if you have your own output connector data rather than the one of the subsolver, call "addSolver" with false as second argument
 
@@ -115,13 +115,20 @@ initialize()
     std::string name = settings.getOptionString("name", "a");
     PyObject *pyCallback = settings.getOptionPyObject("callback");
 
-    if (!PyFunction_Check(pyCallback))
+    if (pyCallback == Py_None)
     {
-      LOG(FATAL) << "Given value under settings[\"callback\"] is not a python function.";
+      fieldVariable1Names.push_back(name);
+      callbackFunctions1_.push_back(Py_None);
     }
-
-    fieldVariable1Names.push_back(name);
-    callbackFunctions1_.push_back(pyCallback);
+    else if (!PyFunction_Check(pyCallback))
+    {
+      LOG(FATAL) << "Given value under " << settings << "[\"callback\"] is not a python function.";
+    }
+    else
+    {
+      fieldVariable1Names.push_back(name);
+      callbackFunctions1_.push_back(pyCallback);
+    }
   }
 
   // parse option "fieldVariables2"
@@ -135,9 +142,20 @@ initialize()
     std::string name = settings.getOptionString("name", "b");
     PyObject *pyCallback = settings.getOptionPyObject("callback");
 
-
-    fieldVariable2Names.push_back(name);
-    callbackFunctions2_.push_back(pyCallback);
+    if (pyCallback == Py_None)
+    {
+      fieldVariable2Names.push_back(name);
+      callbackFunctions2_.push_back(Py_None);
+    }
+    else if (!PyFunction_Check(pyCallback))
+    {
+      LOG(FATAL) << "Given value under " << settings << "[\"callback\"] is not a python function.";
+    }
+    else
+    {
+      fieldVariable2Names.push_back(name);
+      callbackFunctions2_.push_back(pyCallback);
+    }
   }
 
   // now call initialize, data will then create all variables (Petsc Vec's)
@@ -154,6 +172,10 @@ callCallbacks(int timeStepNo, double currentTime)
   // call callback functions for field variable 1
   for (int fieldVariable1No = 0; fieldVariable1No < callbackFunctions1_.size(); fieldVariable1No++)
   {
+    // do not call callback if the function is None
+    if (callbackFunctions1_[fieldVariable1No] == Py_None)
+      continue;
+
     assert (callbackFunctions1_[fieldVariable1No]);
     assert (PyFunction_Check(callbackFunctions1_[fieldVariable1No]));
 
@@ -213,6 +235,10 @@ callCallbacks(int timeStepNo, double currentTime)
   // call callback functions for field variable 2
   for (int fieldVariable2No = 0; fieldVariable2No < callbackFunctions2_.size(); fieldVariable2No++)
   {
+    // do not call callback if the function is None
+    if (callbackFunctions2_[fieldVariable2No] == Py_None)
+      continue;
+
     //callbackFunctions2_
     // get all values
     std::vector<double> values;

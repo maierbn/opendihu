@@ -153,6 +153,7 @@ ranks = [
 
 config = {
   "scenarioName": "load_balancing",
+  "logFormat": "csv",
   # the 1D meshes for each fiber
   "Meshes": {
     "MeshFiber0":
@@ -221,7 +222,7 @@ config = {
                 "additionalArgument": i,
                 
                 "outputStateIndex": 0,                             # state 0 = Vm, rate 28 = gamma
-                "parametersUsedAsIntermediate": [],                # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+                "parametersUsedAsAlgebraic": [],                # list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
                 "parametersUsedAsConstant": [2],                   # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
                 "parametersInitialValues": [0.0],                  # initial values for the parameters
                 "meshName": "MeshFiber"+str(i),                    # name of the fiber mesh, i.e. either MeshFiber0 or MeshFiber1

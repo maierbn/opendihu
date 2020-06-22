@@ -162,7 +162,7 @@ setStiffnessMatrix()
 
   std::function<node_no_t(int,int)> dofIndex = [&functionSpace](int x, int y) -> node_no_t
   {
-    return functionSpace->getNodeNo(std::array<int,2>({x,y}));  // nDofsPerNode == 1
+    return functionSpace->meshPartition()->getNodeNoLocal(std::array<int,2>({x,y}));  // nDofsPerNode == 1
   };
   double value;
   dof_no_t dofNo;
@@ -417,7 +417,7 @@ setStiffnessMatrix()
 
   auto dofIndex = [&functionSpace](int x, int y, int z)
   {
-    return functionSpace->getNodeNo(std::array<int,3>({x,y,z}));  // nDofsPerNode == 1
+    return functionSpace->meshPartition()->getNodeNoLocal(std::array<int,3>({x,y,z}));  // nDofsPerNode == 1
   };
   double value;
   dof_no_t dofNo;

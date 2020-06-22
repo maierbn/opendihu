@@ -14,7 +14,7 @@ namespace PreciceAdapter
 
 /** Precice adapter for partitioned fibers.
   */
-template<class NestedSolver>
+template<typename NestedSolver>
 class PartitionedFibers :
   public Runnable
 {

@@ -27,7 +27,7 @@ class SolutionVectorMapping
 {
 };
 
-/** Transfer between a pair of states and intermediates field variables from CellML, with given component numbers each, to a normal field variable with component no, both field variables have a component no. != 1
+/** Transfer between a pair of states and algebraics field variables from CellML, with given component numbers each, to a normal field variable with component no, both field variables have a component no. != 1
  *
  *   template<typename FunctionSpaceType, int nComponents1, int nComponents2>
  *   struct OutputConnectorData
@@ -38,7 +38,7 @@ class SolutionVectorMapping
  */
 template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
 class SolutionVectorMapping<
-  Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,      //< intermediates and states from cellmlAdapter
+  Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,      //< algebraics and states from cellmlAdapter
   Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
 >
 {
@@ -46,9 +46,12 @@ public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
   static void transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1,
                        std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
-                       OutputConnection &outputConnection);
+                       OutputConnection &outputConnection,
+                       int offsetSlotNoData1=0, int offsetSlotNoData2=0
+                      );
 };
 
 #include "output_connector_data_transfer/output_connector_data_transfer.tpp"
 #include "output_connector_data_transfer/output_connector_data_transfer_fibers_emg.h"
 #include "output_connector_data_transfer/output_connector_data_transfer_vector.h"
+#include "output_connector_data_transfer/output_connector_data_transfer_tuple.h"

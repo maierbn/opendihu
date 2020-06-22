@@ -39,11 +39,15 @@ public:
 
   //! set the output connector data
   template<typename FunctionSpaceType, int nComponents1, int nComponents2>
-  void setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2>> outputConnectorData);
+  void setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2>> outputConnectorData, bool isFromTuple=false);
 
   //! set the output connector data
   template<typename T>
-  void setOutputConnectorData(std::shared_ptr<std::vector<T>> outputConnectorData);
+  void setOutputConnectorData(std::shared_ptr<std::vector<T>> outputConnectorData, bool isFromTuple=false);
+
+  //! set the output connector data
+  template<typename OutputConnectorData1, typename OutputConnectorData2>
+  void setOutputConnectorData(std::shared_ptr<std::tuple<OutputConnectorData1,OutputConnectorData2>> outputConnectorData);
 
   //! beginChild, addSolver etc. as well as writeDiagramFile will have no effect, this is needed for MultipleInstances such that not all instances appear as separate solvers but only the first one
   void disable();

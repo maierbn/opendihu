@@ -28,7 +28,7 @@ class FastMonodomainSolver
 
 /** The main implemented class.
  */
-template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 class FastMonodomainSolver
 <
   Control::MultipleInstances<                       // fibers
@@ -36,7 +36,7 @@ class FastMonodomainSolver
       Control::MultipleInstances<
         TimeSteppingScheme::Heun<                   // fiber reaction term
           CellmlAdapter<
-            nStates,nIntermediates,
+            nStates,nAlgebraics,
             FunctionSpace::FunctionSpace<
               Mesh::StructuredDeformableOfDimension<1>,
               BasisFunction::LagrangeOfOrder<1>
@@ -49,8 +49,8 @@ class FastMonodomainSolver
       >
     >
   >
-> : public FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>
+> : public FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>
 {
 public:
-  using FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::FastMonodomainSolverBase;
+  using FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::FastMonodomainSolverBase;
 };

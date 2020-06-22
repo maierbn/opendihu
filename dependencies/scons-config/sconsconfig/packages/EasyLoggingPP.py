@@ -4,8 +4,8 @@ from Package import Package
 from Package import Package
 
 check_text = r'''
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
 #include "easylogging++.h"
 
 INITIALIZE_EASYLOGGINGPP

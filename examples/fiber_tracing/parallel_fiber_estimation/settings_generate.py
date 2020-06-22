@@ -20,9 +20,10 @@ n_nodes_per_fiber = (220.-72.) / 0.1
 n_nodes_per_fiber = 2*(n_nodes_per_fiber//2)+1   # make number odd
 
 config = {
+  "scenarioName": "72 220 splines 2,2,2 improve",
+  "logFormat": "csv",
   "solverStructureDiagramFile": "solver_structure.txt",
   "mappingsBetweenMeshesLogFile": "",
-  "scenarioName": "72 220 splines 2,2,2 improve",
   "Solvers": {
     "linearSolver": {
       "relativeTolerance": 1e-4,

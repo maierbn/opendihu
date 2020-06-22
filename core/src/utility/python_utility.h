@@ -55,12 +55,12 @@ public:
   static PyObject *getOptionFunction(const PyObject *settings, std::string key, std::string pathString);
 
   //! return the option value as array given by key in the python dictionary settings. If not found, return the defaultValue, also check if validityCriterion is met
-  template<class ValueType, int D>
+  template<typename ValueType, int D>
   static std::array<ValueType, D> getOptionArray(PyObject* settings, std::string keyString, std::string pathString, std::array<ValueType, D> defaultValue,
                                                 ValidityCriterion validityCriterion = None);
 
   //! return the option value as array given by key in the python dictionary settings. If not found, return the defaultValue, also check if validityCriterion is met
-  template<class ValueType, int D>
+  template<typename ValueType, int D>
   static std::array<ValueType, D> getOptionArray(PyObject* settings, std::string keyString, std::string pathString, ValueType defaultValue,
                                                 ValidityCriterion validityCriterion = None);
 

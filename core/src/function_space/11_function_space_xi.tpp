@@ -221,7 +221,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
 
     residual = solution.fx;
 
-    LOG(INFO) << "Nelder-Mead, result: " << xi << ", residual: " << residual;
+    LOG(DEBUG) << "Nelder-Mead, result: " << xi << ", residual: " << residual;
 
     // check if point is inside the element by looking at the value of xi
     pointIsInElement = true;

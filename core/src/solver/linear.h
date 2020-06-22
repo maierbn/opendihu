@@ -34,6 +34,13 @@ public:
   //! dump files containing rhs, solution and system matrix
   void dumpMatrixRightHandSideSolution(Vec rightHandSide, Vec solution);
 
+  //! parse the solver and preconditioner type from strings that come from the settings
+  //! @param solverType [in]
+  //! @param preconditionerType [in]
+  //! @param kspType [out]
+  //! @param pcType [out]
+  static void parseSolverTypes(std::string solverType, std::string preconditionerType, KSPType &kspType, PCType &pcType);
+
 protected:
 
   //! parse options from settings
@@ -41,9 +48,6 @@ protected:
 
   //! set options for KSP object
   void setupKsp(KSP ksp);
-
-  //! parse the solver and preconditioner type from settings
-  void parseSolverTypes();
 
   std::shared_ptr<KSP> ksp_;   //< the PETSc KSP (Krylov subspace) object
   double relativeTolerance_;   //< relative solver tolerance of the residuum norm relative to the initial value of the residual norm

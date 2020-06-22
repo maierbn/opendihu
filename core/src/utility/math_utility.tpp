@@ -495,19 +495,19 @@ void rotateMatrix(Matrix<3,3,double_v_t> &matrix, VecD<3,double_v_t> directionVe
   const double_v_t e3bNorm = sqrt(sqr(b1) + sqr(b2));             // |e_3 x b|
   const double_v_t be3bNorm = sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2)));   // |b x (e_3 x b)|
 
-  if (MathUtility::abs(bNorm) < 1e-15)
+  if (Vc::any_of(MathUtility::abs(bNorm) < 1e-15))
   {
     LOG(ERROR) << "Trying to transform a matrix to direction vector " << directionVector;
     return;
   }
 
   // if one of the new basis vectors is zero (this happens, if directionVector == [0,0,1]), use e2 instead of e3
-  if (MathUtility::abs(e3bNorm) < 1e-15 || MathUtility::abs(be3bNorm) < 1e-15)
+  if (Vc::any_of(MathUtility::abs(e3bNorm) < 1e-15) || Vc::any_of(MathUtility::abs(be3bNorm) < 1e-15))
   {
     const double_v_t e2bNorm = sqrt(sqr(b3) + sqr(b1));             // |e_2 x b|
     const double_v_t be2bNorm = sqrt(sqr(b1)*sqr(b2) + sqr(sqr(b1)*sqr(b3)) + sqr(b2) + sqr(b3));   // |b x (e_3 x b)|
 
-    if (MathUtility::abs(e2bNorm) < 1e-15 || MathUtility::abs(be2bNorm) < 1e-15)
+    if (Vc::any_of(MathUtility::abs(e2bNorm) < 1e-15) || Vc::any_of(MathUtility::abs(be2bNorm) < 1e-15))
     {
       LOG(ERROR) << "Trying to transform a matrix to direction vector " << directionVector;
       return;

@@ -10,6 +10,7 @@
 #include "utility/matrix.h"
 #include "utility/matrix_operators.h"
 #include "utility/vector_operators.h"
+#include "utility/vector_operators_multiplication.h"
 
 namespace MathUtility
 {
@@ -55,12 +56,12 @@ template<int D>
 double normSquared(const VecD<D,Vc::double_v> node);
 
 //! return the normalized vector
-template<int D>
-VecD<D> normalized(VecD<D> &vector);
+template<int D, typename double_v_t=double>
+VecD<D> normalized(VecD<D,double_v_t> &vector);
 
 //! normalize the vector
-template<int D>
-void normalize(VecD<D> &vector);
+template<int D, typename double_v_t=double>
+void normalize(VecD<D,double_v_t> &vector);
 
 //! arc cosine
 template<typename double_v_t=double>
@@ -109,8 +110,11 @@ template<typename double_v_t=double>
 Tensor2<3,double_v_t> computeInverse(const Tensor2<3,double_v_t> &matrix, double_v_t &determinant);
 
 //! computes the cofactor matrix of the non-symmetric matrix. inv = 1/det * adj, adj = cof^T, i.e. cof(M) = det(M) * M^{-T}
-template<int D>
-Tensor2<D> computeCofactorMatrix(const Tensor2<D> &matrix);
+template<typename double_v_t>
+Tensor2<2,double_v_t> computeCofactorMatrix(const Tensor2<2,double_v_t> &matrix);
+
+template<typename double_v_t>
+Tensor2<3,double_v_t> computeCofactorMatrix(const Tensor2<3,double_v_t> &matrix);
 
 //! transform a 3xD2 matrix to a DxD matrix by filling up with identity entries
 template<int D, int D2>
@@ -191,6 +195,9 @@ double estimateConditionNumber(const Tensor2<3> &matrix, const Tensor2<3> &inver
 
 //! check if the given value contains any value > 1e+75 or nan
 bool containsNanOrInf(const double value);
+
+//! check if the given value contains any value > 1e+75 or nan
+bool containsNanOrInf(const Vc::double_v value);
 
 template<typename T, std::size_t N>
 bool containsNanOrInf(std::array<T,N> value);

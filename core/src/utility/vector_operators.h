@@ -74,10 +74,6 @@ std::array<T,nComponents> operator/(std::array<T,nComponents> vector1, std::arra
 template<typename T, std::size_t nComponents>
 std::array<T,nComponents> operator/(std::array<T,nComponents> vector1, double value);
 
-//! matrix-vector multiplication, note that there is a matrix class with also matrix-vector multiplication. It stores matrices in row-major order, here column-major order is assumed
-template<std::size_t M, std::size_t N, typename double_v_t>
-std::array<double_v_t,M> operator*(const std::array<std::array<double_v_t,M>,N> &matrix, const std::array<double,N> vector);
-
 //! extract multiple values from a normal vector
 template<std::size_t N>
 std::array<Vc::double_v,N> getValuesAtIndices(const std::vector<std::array<double,N>> &values, Vc::int_v indices);

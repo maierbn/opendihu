@@ -33,17 +33,17 @@ double_v_t norm(const VecD<D,double_v_t> node)
   return length(node);
 }
 
-template<int D>
-VecD<D> normalized(VecD<D> &vector)
+template<int D, typename double_v_t>
+VecD<D> normalized(VecD<D,double_v_t> &vector)
 {
-  double factor = 1./norm<D>(vector);
+  double_v_t factor = 1./norm<D,double_v_t>(vector);
   return vector * factor;
 }
 
-template<int D>
-void normalize(VecD<D> &vector)
+template<int D, typename double_v_t>
+void normalize(VecD<D,double_v_t> &vector)
 {
-  vector *= 1./norm<D>(vector);
+  vector = vector * 1./norm<D,double_v_t>(vector);
 }
 
 template<typename T>
@@ -166,6 +166,58 @@ double_v_t computeDeterminant(const Tensor2<2> &jacobian)
   const double_v_t m22 = jacobian[1][1];
 
   return m11*m22 - m12*m21;
+}
+
+template<typename double_v_t>
+Tensor2<3,double_v_t> computeCofactorMatrix(const Tensor2<3,double_v_t> &matrix)
+{
+  // matrices are stored column-major
+
+  // rename input values
+  const double_v_t m11 = matrix[0][0];
+  const double_v_t m21 = matrix[0][1];
+  const double_v_t m31 = matrix[0][2];
+  const double_v_t m12 = matrix[1][0];
+  const double_v_t m22 = matrix[1][1];
+  const double_v_t m32 = matrix[1][2];
+  const double_v_t m13 = matrix[2][0];
+  const double_v_t m23 = matrix[2][1];
+  const double_v_t m33 = matrix[2][2];
+
+  Tensor2<3,double_v_t> result;
+
+  result[0][0] = m22*m33 - m23*m32;   // entry m11
+  result[1][0] = -m21*m33 + m23*m31;  // entry m12
+  result[2][0] = m21*m32 - m22*m31;   // entry m13
+  result[0][1] = -m12*m33 + m13*m32;  // entry m21
+  result[1][1] = m11*m33 - m13*m31;   // entry m22
+  result[2][1] = -m11*m32 + m12*m31;  // entry m23
+  result[0][2] = m12*m23 - m13*m22;   // entry m31
+  result[1][2] = -m11*m23 + m13*m21;  // entry m32
+  result[2][2] = m11*m22 - m12*m21;   // entry m33
+
+  return result;
+}
+
+template<typename double_v_t>
+Tensor2<2,double_v_t> computeCofactorMatrix(const Tensor2<2,double_v_t> &matrix)
+{
+  // matrices are stored column-major
+
+  // rename input values
+  const double_v_t m11 = matrix[0][0];
+  const double_v_t m21 = matrix[0][1];
+  const double_v_t m12 = matrix[1][0];
+  const double_v_t m22 = matrix[1][1];
+
+  Tensor2<2,double_v_t> result;
+
+  result[0][0] = m22;   // entry m11
+  result[1][0] = -m21;  // entry m12
+  result[0][1] = -m12;  // entry m21
+  result[1][1] = m11;   // entry m22
+
+  return result;
 }
 
 // 3D symmetric matrix inverse

@@ -559,7 +559,7 @@ loadFebioOutputFile()
       double determinant = 0;
       Tensor2<3> inverseDeformationGradient = MathUtility::computeInverse(deformationGradient, determinant);
 
-      Tensor2<3> deformationGradientCofactor = MathUtility::computeCofactorMatrix<3>(deformationGradient);  // cof(M) = det(M) * M^{-T}
+      Tensor2<3> deformationGradientCofactor = MathUtility::computeCofactorMatrix<double>(deformationGradient);  // cof(M) = det(M) * M^{-T}
       Tensor2<3> pk2Stress = inverseDeformationGradient * cauchyStress * deformationGradientCofactor;
 
       LOG(DEBUG) << "local element " << elementNoLocal << " of " << this->data_.functionSpace()->nElementsLocal() << ", " << FunctionSpace::nNodesPerElement() << " elementNodeNos: " << elementNodeNos;

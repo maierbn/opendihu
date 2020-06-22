@@ -124,58 +124,6 @@ Vc::double_v abs<Vc::double_v>(Vc::double_v value)
   return Vc::abs(value);
 }
 
-template<>
-Tensor2<3> computeCofactorMatrix<3>(const Tensor2<3> &matrix)
-{
-  // matrices are stored column-major
-
-  // rename input values
-  const double m11 = matrix[0][0];
-  const double m21 = matrix[0][1];
-  const double m31 = matrix[0][2];
-  const double m12 = matrix[1][0];
-  const double m22 = matrix[1][1];
-  const double m32 = matrix[1][2];
-  const double m13 = matrix[2][0];
-  const double m23 = matrix[2][1];
-  const double m33 = matrix[2][2];
-
-  std::array<Vec3,3> result;
-
-  result[0][0] = m22*m33 - m23*m32;   // entry m11
-  result[1][0] = -m21*m33 + m23*m31;  // entry m12
-  result[2][0] = m21*m32 - m22*m31;   // entry m13
-  result[0][1] = -m12*m33 + m13*m32;  // entry m21
-  result[1][1] = m11*m33 - m13*m31;   // entry m22
-  result[2][1] = -m11*m32 + m12*m31;  // entry m23
-  result[0][2] = m12*m23 - m13*m22;   // entry m31
-  result[1][2] = -m11*m23 + m13*m21;  // entry m32
-  result[2][2] = m11*m22 - m12*m21;   // entry m33
-
-  return result;
-}
-
-template<>
-Tensor2<2> computeCofactorMatrix<2>(const Tensor2<2> &matrix)
-{
-  // matrices are stored column-major
-
-  // rename input values
-  const double m11 = matrix[0][0];
-  const double m21 = matrix[0][1];
-  const double m12 = matrix[1][0];
-  const double m22 = matrix[1][1];
-
-  Tensor2<2> result;
-
-  result[0][0] = m22;   // entry m11
-  result[1][0] = -m21;  // entry m12
-  result[0][1] = -m12;  // entry m21
-  result[1][1] = m11;   // entry m22
-
-  return result;
-}
-
 //! transform a 3xD2 matrix to a DxD matrix by filling up with identity entries
 template<>
 std::array<std::array<double,3>,3> transformToDxD<3,3>(const std::array<Vec3,3> &matrix)

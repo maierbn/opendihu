@@ -824,7 +824,7 @@ computePK2StressField()
       if (indexZ == 0)
       {
         // bottom node
-        Vec3_v_t normal = displacementsFunctionSpace->template getNormal<double_v_t,dof_no_v_t>(Mesh::face_t::face2Minus, elementNoLocalv, xi);
+        Vec3_v_t normal = displacementsFunctionSpace->getNormal(Mesh::face_t::face2Minus, elementNoLocalv, xi);
 
         // compute traction by Cauchy theorem T = S n
         Vec3_v_t traction = pK2Stress * normal;
@@ -836,7 +836,7 @@ computePK2StressField()
       else if (indexZ == 2)
       {
         // top node
-        Vec3_v_t normal = displacementsFunctionSpace->template getNormal<double_v_t,dof_no_v_t>(Mesh::face_t::face2Plus, elementNoLocalv, xi);
+        Vec3_v_t normal = displacementsFunctionSpace->getNormal(Mesh::face_t::face2Plus, elementNoLocalv, xi);
 
         // compute traction by Cauchy theorem T = S n
         Vec3_v_t traction = pK2Stress * normal;

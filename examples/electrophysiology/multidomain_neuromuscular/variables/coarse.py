@@ -159,7 +159,7 @@ dt_stimulation_check = 1e-2         # [ms] timestep width for when to check if t
 dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
-dt_elasticity = 2e0                # [ms] time step width of elasticity solver
+dt_elasticity = 1e-1                # [ms] time step width of elasticity solver
 output_timestep_multidomain = 2e0  # [ms] timestep for fiber output, 0.5
 output_timestep_motoneuron = 1e0   # [ms] timestep for output of motoneuron
 output_timestep_elasticity = dt_elasticity      # [ms] timestep for elasticity output files
@@ -170,8 +170,8 @@ motoneuron_cellml_file = "../../input/hodgkin_huxley_1952.cellml"
 #cellml_file = "../../input/new_slow_TK_2014_12_08.c"
 cellml_file = "../../input/hodgkin_huxley-razumova.cellml"
 
-fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
-#fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
+#fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
+fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 firing_times_file = "../../input/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
@@ -182,7 +182,7 @@ fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1
 sampling_stride_y = 1
-sampling_stride_z = 50
+sampling_stride_z = 22
 sampling_stride_fat = 1
 
 # how much of the multidomain mesh is used for elasticity

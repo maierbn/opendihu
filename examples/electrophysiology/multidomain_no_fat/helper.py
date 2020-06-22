@@ -60,6 +60,7 @@ def load_mesh(fiber_file, sampling_stride_z, rank_no):
               
     # set node positions
     n_points_whole_fiber = len(fiber_data[0])
+    mesh_node_positions = [0 for _ in range(n_fibers_x*n_fibers_y*n_points_whole_fiber)]
     n_linear_elements_per_coordinate_direction = [n_fibers_x-1, n_fibers_y-1, n_points_whole_fiber-1]
     for k in range(n_points_whole_fiber):
       for j in range(n_fibers_y):
@@ -143,6 +144,7 @@ def compute_compartment_relative_factors(mesh_node_positions, n_mesh_points_xy, 
   # list of fibers, fiber = list of points, point = list with 3 coordinate entries
   n_compartments = len(motor_units)
   n_points_fiber = len(fiber_data[0])
+  n_fibers_x = int(np.sqrt(len(fiber_data)))
 
   # create relative factors for compartments
   #if rank_no == 0:
@@ -158,10 +160,10 @@ def compute_compartment_relative_factors(mesh_node_positions, n_mesh_points_xy, 
     
     # get point on first and last fiber
     point0 = np.array(fiber_data[0][z_index_fiber])
-    point4 = np.array(fiber_data[(variables.n_fibers_x-1)//2][z_index_fiber])
-    point1 = np.array(fiber_data[variables.n_fibers_x-1][z_index_fiber])
-    point2 = np.array(fiber_data[-variables.n_fibers_x][z_index_fiber])
-    point5 = np.array(fiber_data[(-variables.n_fibers_x)//2][z_index_fiber])
+    point4 = np.array(fiber_data[(n_fibers_x-1)//2][z_index_fiber])
+    point1 = np.array(fiber_data[n_fibers_x-1][z_index_fiber])
+    point2 = np.array(fiber_data[-n_fibers_x][z_index_fiber])
+    point5 = np.array(fiber_data[(-n_fibers_x)//2][z_index_fiber])
     point3 = np.array(fiber_data[-1][z_index_fiber])
     
     # their distance is an approximation for the diameter

@@ -215,7 +215,7 @@ run()
   int       skip          = 0;
   double    tol           = 1.0e-07;
   int       cfactor       = 2;
-  int       max_iter      = 20;
+  int       max_iter      = 100;
   int       min_coarse    = 3;
   int       fmg           = 0;
   int       scoarsen      = 0;

@@ -453,11 +453,7 @@ fixUnmappedDofs(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
 
               try
               {
-                if (sourceDofNoLocal < 0 || sourceDofNoLocal >= nDofsLocalSource)
-                {
-                  LOG(ERROR) << "sourceDofNoLocal=" << sourceDofNoLocal << " is out of range, nDofsLocalSource=" << nDofsLocalSource << ", sourceDofNos: " << sourceDofNos;
-                }
-
+                // only if the source dof no is local
                 if (sourceDofNoLocal < nDofsLocalSource)
                 {
                   targetMappingInfo_[sourceDofNoLocal].targetElements.push_back(targetElement);

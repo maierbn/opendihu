@@ -352,7 +352,7 @@ parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpa
           xiSurface[i] = 0.5;
 
         VecD<D> xi = Mesh::getXiOnFace(result.face, xiSurface);
-        constantVector = MathUtility::transformToD<D,3>(functionSpace->template getNormal<double,element_no_t>(result.face, result.elementNoLocal, xi) * constantValue);
+        constantVector = MathUtility::transformToD<D,3>(functionSpace->getNormal(result.face, result.elementNoLocal, xi) * constantValue);
       }
     }
     else if (specificSettings.hasKey("constantVector"))

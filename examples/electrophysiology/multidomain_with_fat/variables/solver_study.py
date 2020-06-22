@@ -68,11 +68,11 @@ multidomain_alternative_solver_max_iterations = 1e4      # maximum number of ite
 
 # timing parameters
 # -----------------
-end_time = 0.3                      # [ms] end time of the simulation
+end_time = 0.1                      # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
-dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
-dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver
-dt_splitting = 1e-3                 # [ms] overall timestep width of strang splitting (3e-3)
+dt_0D = 5e-4                        # [ms] timestep width of ODEs (1e-3)
+dt_multidomain = 5e-4               # [ms] timestep width of the multidomain solver
+dt_splitting = 5e-4                 # [ms] overall timestep width of strang splitting (3e-3)
 output_timestep_multidomain = 2e-1  # [ms] timestep for multidomain output
 output_timestep_multidomain = 5     # [ms] timestep for multidomain output
 #end_time = 1e-2
@@ -81,6 +81,7 @@ scenario_name = None       # set scenario name from settings
  
 # input files
 cellml_file = "../../input/hodgkin_huxley_1952.c"
+cellml_file = "../../input/new_slow_TK_2014_12_08.c"
 fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
 fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
@@ -91,7 +92,7 @@ firing_times_file = "../../input/MU_firing_times_immediately.txt"
 # a higher number leads to less 3D elements
 sampling_stride_x = 1
 sampling_stride_y = 1
-sampling_stride_z = 20
+sampling_stride_z = 5
 sampling_stride_fat = 1
 
 # other options

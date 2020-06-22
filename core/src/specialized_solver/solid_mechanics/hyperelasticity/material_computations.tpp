@@ -859,7 +859,7 @@ materialComputeJacobian()
   typedef std::array<double_v_t, nPressureDofsPerElement*nUnknowsPerElement> EvaluationsPressureType;
   std::array<EvaluationsPressureType, QuadratureDD::numberEvaluations()> evaluationsArrayPressure{};
 
-  typedef std::array<double, nDisplacementsDofsPerElement*nDisplacementsDofsPerElement> EvaluationsUVType;   // for vectorized types, phi_L*phi_M is the same for all elements, therefore double and not double_v_t
+  typedef std::array<double_v_t, nDisplacementsDofsPerElement*nDisplacementsDofsPerElement> EvaluationsUVType;
   std::array<EvaluationsUVType, QuadratureDD::numberEvaluations()> evaluationsArrayUV{};
 
   // setup arrays used for integration
@@ -1378,7 +1378,7 @@ materialComputeJacobian()
           const int index = lDof*nDisplacementsDofsPerElement + mDof;
 
           // get result of quadrature
-          const double integratedValue = integratedValuesUV[index];
+          const double_v_t integratedValue = integratedValuesUV[index];
 
           // integratedValue is only ∫_Ω ρ0 ϕ^L ϕ^M dV,
           // but we need 1/dt δ_ab ∫_Ω ρ0 ϕ^L ϕ^M dV
@@ -1390,7 +1390,7 @@ materialComputeJacobian()
               if (aComponent != bComponent)
                 continue;
 
-              double resultingValue = 1./this->timeStepWidth_ * integratedValue;
+              double_v_t resultingValue = 1./this->timeStepWidth_ * integratedValue;
 
               // set entrie
               // parameters: componentNoRow, dofNoLocalRow, componentNoColumn, dofNoLocalColumn, value

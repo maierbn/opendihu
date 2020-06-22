@@ -406,17 +406,17 @@ setInformationToPreconditioner()
     // PCBJacobiSetTotalBlocks(PC pc, PetscInt nBlocks, const PetscInt lengthsOfBlocks[])
     ierr = PCBJacobiSetTotalBlocks(pc, this->nColumnSubmatricesSystemMatrix_, lengthsOfBlocks.data()); CHKERRV(ierr);
 #endif
-
   }
-
+  
   // set node positions
 
   // set the local node positions for the preconditioner
   int nNodesLocalMuscle = this->dataMultidomain_.functionSpace()->nNodesLocalWithoutGhosts();
   int nNodesLocalFat = this->dataFat_.functionSpace()->nNodesLocalWithoutGhosts() - nSharedDofsLocal_;
-  
+  int nNodesLocalBlock = nNodesLocalMuscle + nNodesLocalFat;
+
   std::vector<double> nodePositionCoordinatesForPreconditioner;
-  nodePositionCoordinatesForPreconditioner.reserve(3*(nNodesLocalMuscle + nNodesLocalFat));
+  nodePositionCoordinatesForPreconditioner.reserve(3*nNodesLocalBlock);
 
   // loop over muscle nodes and add their node positions
   for (dof_no_t dofNoLocalMuscle = 0; dofNoLocalMuscle < this->dataMultidomain_.functionSpace()->nDofsLocalWithoutGhosts(); dofNoLocalMuscle++)
@@ -441,19 +441,84 @@ setInformationToPreconditioner()
         nodePositionCoordinatesForPreconditioner.push_back(nodePosition[i]);
     }
   }
-  assert(nodePositionCoordinatesForPreconditioner.size() == 3*(nNodesLocalMuscle+nNodesLocalFat));
+  assert(nodePositionCoordinatesForPreconditioner.size() == 3*nNodesLocalBlock);
 
-  LOG(DEBUG) << "set coordinates to preconditioner, " << nodePositionCoordinatesForPreconditioner.size() << " node coordinates";
+  LOG(DEBUG) << "set coordinates to preconditioner, " << nNodesLocalBlock << " node coordinates";
 
-  ierr = PCSetCoordinates(pc, 3, nodePositionCoordinatesForPreconditioner.size(), nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
+  ierr = PCSetCoordinates(pc, 3, nNodesLocalBlock, nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
 
   // initialize preconditioner of alternative linear solver
   if (this->alternativeLinearSolver_)
   {
     PC pc;
     ierr = KSPGetPC(*this->alternativeLinearSolver_->ksp(), &pc); CHKERRV(ierr);
-    ierr = PCSetCoordinates(pc, 3, nodePositionCoordinatesForPreconditioner.size(), nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
+    ierr = PCSetCoordinates(pc, 3, nNodesLocalBlock, nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
   }
+
+  if (useBlockJacobiPreconditioner || useBlockGSPreconditioner)
+  {
+    // for block jacobi set sub solvers
+    // parse solver type of sub solver
+    std::string subSolverType = this->specificSettings_.getOptionString("subSolverType", "none");
+    std::string subPreconditionerType = this->specificSettings_.getOptionString("subPreconditionerType", "none");
+    
+    KSPType subKspType;
+    PCType subPcType;
+    Solver::Linear::parseSolverTypes(subSolverType, subPreconditionerType, subKspType, subPcType);
+      
+    // create internal data structures of ksp and pc, if not already done
+    ierr = PCSetUp(pc); CHKERRV(ierr);
+
+    // get sub ksp object
+    KSP *subKspPointer;
+    PetscInt nBlocksLocal;
+    PetscInt firstBlockNoGlobal;
+    ierr = PCBJacobiGetSubKSP(pc, &nBlocksLocal, &firstBlockNoGlobal, &subKspPointer); CHKERRV(ierr);
+        
+    LOG(INFO) << "using block jacobi, nBlocksLocal: " << nBlocksLocal << ", firstBlockNoGlobal: " << firstBlockNoGlobal 
+      << ", subSolverType: " << subSolverType << ", subPreconditionerType: " << subPreconditionerType;
+        
+    for (int subKspLocalNo = 0; subKspLocalNo < nBlocksLocal; subKspLocalNo++)
+    {
+      KSP subKsp = subKspPointer[subKspLocalNo];
+      
+      // set solver type
+      ierr = KSPSetType(subKsp, subKspType); CHKERRV(ierr);
+
+      // set options from command line, this overrides the python config
+      ierr = KSPSetFromOptions(subKsp); CHKERRV(ierr);
+
+      // extract preconditioner context
+      PC subPc;
+      ierr = KSPGetPC(subKsp, &subPc); CHKERRV(ierr);
+
+      // set type of preconditioner
+      ierr = PCSetType(subPc, subPcType); CHKERRV(ierr);
+
+      // set Hypre Options from Python config
+      if (subPcType == std::string(PCHYPRE))
+      {
+        std::string hypreOptions = this->specificSettings_.getOptionString("hypreOptions", "");
+        PetscOptionsInsertString(NULL, hypreOptions.c_str());
+        
+        // if one of the hypre preconditioners is in subPreconditionerType, subPcType was set to HYPRE, now set the chosen preconditioner as -sub_pc_hypre_type
+        if (subPreconditionerType == "euclid" || subPreconditionerType == "pilut" || subPreconditionerType == "parasails" 
+          || subPreconditionerType == "boomeramg" || subPreconditionerType == "ams" || subPreconditionerType == "ads")
+        {
+#if defined(PETSC_HAVE_HYPRE)
+          ierr = PCHYPRESetType(subPc, subPreconditionerType.c_str()); CHKERRV(ierr);
+#else
+          LOG(ERROR) << "Petsc is not compiled with HYPRE!";
+#endif          
+          LOG(DEBUG) << "set sub_pc_hypre_type to " << subPreconditionerType;
+        }
+      }
+      
+      // set coordinates
+      ierr = PCSetCoordinates(subPc, 3, nNodesLocalBlock, nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
+    }
+  }
+
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>

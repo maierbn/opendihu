@@ -100,13 +100,13 @@ if n_ranks != variables.n_subdomains:
       variables.n_subdomains_z = possible_partitionings[i][2]
 
 if variables.scenario_name is None:
-  variables.scenario_name = "{}_{}_dt{}_atol{}_rtol{}_theta{}_sym{}_lump{}_{}mus".format(variables.multidomain_solver_type, variables.multidomain_preconditioner_type, variables.dt_splitting, variables.multidomain_absolute_tolerance, variables.multidomain_relative_tolerance, variables.theta, variables.use_symmetric_preconditioner_matrix, variables.use_lumped_mass_matrix, len(variables.motor_units))
+  variables.scenario_name = "{}_{},hypre_dt{}_atol{}_rtol{}_theta{}_sym{}_lump{}_{}mus".format(variables.multidomain_solver_type, variables.multidomain_preconditioner_type, variables.dt_splitting, variables.multidomain_absolute_tolerance, variables.multidomain_relative_tolerance, variables.theta, variables.use_symmetric_preconditioner_matrix, variables.use_lumped_mass_matrix, len(variables.motor_units))
 
 if variables.initial_guess_nonzero is None:
   variables.initial_guess_nonzero = variables.multidomain_preconditioner_type != "lu"
 
 if variables.multidomain_preconditioner_type == "boomeramg":
-  variables.multidomain_max_iterations = 100        # if boomeramg has bad convergence, abort after 100 iterations and use alternative preconditioner
+  variables.multidomain_max_iterations = 1000        # if boomeramg has bad convergence, abort after 100 iterations and use alternative preconditioner
 
 # output information of run
 if rank_no == 0:
@@ -143,6 +143,9 @@ multidomain_solver = {
   # solver options
   "solverName":                       "multidomainLinearSolver",            # reference to the solver used for the global linear system of the multidomain eq.
   "alternativeSolverName":            "multidomainAlternativeLinearSolver", # reference to the alternative solver, which is used when the normal solver diverges
+  "subSolverType":                    "cg",                                 # sub solver when block jacobi preconditioner is used
+  "subPreconditionerType":            "boomeramg",                          # sub preconditioner when block jacobi preconditioner is used
+  "hypreOptions":                     "-pc_hypre_boomeramg_strong_threshold 0.7",       # additional options if a hypre preconditioner is selected
   "theta":                            variables.theta,                      # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
   "useLumpedMassMatrix":              variables.use_lumped_mass_matrix,     # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
   "useSymmetricPreconditionerMatrix": variables.use_symmetric_preconditioner_matrix,    # if the diagonal blocks of the system matrix should be used as preconditioner matrix

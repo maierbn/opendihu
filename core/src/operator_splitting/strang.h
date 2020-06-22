@@ -11,7 +11,7 @@ class Strang :
 {
 public:
   typedef typename TimeStepping1::FunctionSpace FunctionSpace;
-  typedef typename TimeStepping1::Data Data;
+  typedef typename OperatorSplitting<TimeStepping1, TimeStepping2>::Data Data;
   
   //! constructor
   Strang(DihuContext context);

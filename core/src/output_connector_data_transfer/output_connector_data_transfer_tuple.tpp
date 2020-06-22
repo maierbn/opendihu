@@ -21,17 +21,25 @@ void SolutionVectorMapping<
 {
   LOG(DEBUG) << "transfer tuple (1a), offsetSlotNoData1: " << offsetSlotNoData1 << ", offsetSlotNoData2: " << offsetSlotNoData2;
 
+  // copy outputConnection for second tuple
+  if (!outputConnection.subOutputConnection1())
+  {
+    outputConnection.subOutputConnection1() = std::make_shared<OutputConnection>(outputConnection);
+  }
+
   // do transfer with slots in first tuple part
   SolutionVectorMapping<
     OutputConnectorDataType1,
     Data::OutputConnectorData<FunctionSpaceType3,nComponents3a,nComponents3b>
-  >::transfer(std::get<0>(*transferableSolutionData1), transferableSolutionData3, outputConnection,
+  >::transfer(std::get<0>(*transferableSolutionData1), transferableSolutionData3, *outputConnection.subOutputConnection1(),
               offsetSlotNoData1, offsetSlotNoData2);
 
+  LOG(DEBUG) << "transfer tuple (1b), offsetSlotNoData1: " << offsetSlotNoData1 << ", offsetSlotNoData2: " << offsetSlotNoData2;
+
   // copy outputConnection for second tuple
-  if (!outputConnection.subOutputConnection())
+  if (!outputConnection.subOutputConnection2())
   {
-    outputConnection.subOutputConnection() = std::make_shared<OutputConnection>(outputConnection);
+    outputConnection.subOutputConnection2() = std::make_shared<OutputConnection>(outputConnection);
   }
 
   // first offset changes by number of slots that were present in the first tuple entry
@@ -40,13 +48,11 @@ void SolutionVectorMapping<
   // second offset does not change
   offsetSlotNoData2 += 0;
 
-  LOG(DEBUG) << "transfer tuple (1b), offsetSlotNoData1: " << offsetSlotNoData1 << ", offsetSlotNoData2: " << offsetSlotNoData2;
-
   // do transfer with slots in second tuple part
   SolutionVectorMapping<
     OutputConnectorDataType2,
     Data::OutputConnectorData<FunctionSpaceType3,nComponents3a,nComponents3b>
-  >::transfer(std::get<1>(*transferableSolutionData1), transferableSolutionData3, *outputConnection.subOutputConnection(),
+  >::transfer(std::get<1>(*transferableSolutionData1), transferableSolutionData3, *outputConnection.subOutputConnection2(),
               offsetSlotNoData1, offsetSlotNoData2);
 }
 
@@ -69,17 +75,25 @@ void SolutionVectorMapping<
 {
   LOG(DEBUG) << "transfer tuple (2a)";
 
+  // copy outputConnection for second tuple
+  if (!outputConnection.subOutputConnection1())
+  {
+    outputConnection.subOutputConnection1() = std::make_shared<OutputConnection>(outputConnection);
+  }
+
   // do transfer with slots in first tuple part
   SolutionVectorMapping<
     Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,
     OutputConnectorDataType2
-  >::transfer(transferableSolutionData1, std::get<0>(*transferableSolutionData2), outputConnection,
+  >::transfer(transferableSolutionData1, std::get<0>(*transferableSolutionData2), *outputConnection.subOutputConnection1(),
               offsetSlotNoData1, offsetSlotNoData2);
 
+  LOG(DEBUG) << "transfer tuple (2b)";
+
   // copy outputConnection for second tuple
-  if (!outputConnection.subOutputConnection())
+  if (!outputConnection.subOutputConnection2())
   {
-    outputConnection.subOutputConnection() = std::make_shared<OutputConnection>(outputConnection);
+    outputConnection.subOutputConnection2() = std::make_shared<OutputConnection>(outputConnection);
   }
 
   // first offset does not change
@@ -88,12 +102,114 @@ void SolutionVectorMapping<
   // second offset changes by number of slots that were present in the first tuple entry
   offsetSlotNoData2 += OutputConnectorDataHelper<OutputConnectorDataType2>::nSlots(std::get<0>(*transferableSolutionData2));
 
-  LOG(DEBUG) << "transfer tuple (2b)";
-
   // do transfer with slots in second tuple part
   SolutionVectorMapping<
     Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,
     OutputConnectorDataType3
-  >::transfer(transferableSolutionData1, std::get<1>(*transferableSolutionData2), *outputConnection.subOutputConnection(),
+  >::transfer(transferableSolutionData1, std::get<1>(*transferableSolutionData2), *outputConnection.subOutputConnection2(),
+              offsetSlotNoData1, offsetSlotNoData2);
+}
+
+template<typename OutputConnectorDataType1, typename OutputConnectorDataType2, typename OutputConnectorDataType3, typename OutputConnectorDataType4>
+void SolutionVectorMapping<
+  std::tuple<
+    std::shared_ptr<OutputConnectorDataType1>,
+    std::shared_ptr<OutputConnectorDataType2>
+  >,
+  std::tuple<
+    std::shared_ptr<OutputConnectorDataType3>,
+    std::shared_ptr<OutputConnectorDataType4>
+  >
+>
+::transfer(const std::shared_ptr<std::tuple<
+             std::shared_ptr<OutputConnectorDataType1>,
+             std::shared_ptr<OutputConnectorDataType2>
+           >> transferableSolutionData1,
+             std::shared_ptr<std::tuple<
+             std::shared_ptr<OutputConnectorDataType3>,
+             std::shared_ptr<OutputConnectorDataType4>
+           >> transferableSolutionData2,
+           OutputConnection &outputConnection, int offsetSlotNoData1, int offsetSlotNoData2)
+{
+  LOG(DEBUG) << "transfer tuple (3aa)";
+
+  // copy outputConnection for second tuple
+  if (!outputConnection.subOutputConnection1())
+  {
+    outputConnection.subOutputConnection1() = std::make_shared<OutputConnection>(outputConnection);
+  }
+
+  int initialOffsetSlotNoData1 = offsetSlotNoData1;
+  int initialOffsetSlotNoData2 = offsetSlotNoData2;
+
+  // do transfer with slots in first tuple part to first tuple part
+  SolutionVectorMapping<
+    OutputConnectorDataType1,
+    OutputConnectorDataType3
+  >::transfer(std::get<0>(*transferableSolutionData1), std::get<0>(*transferableSolutionData2), *outputConnection.subOutputConnection1(),
+              offsetSlotNoData1, offsetSlotNoData2);
+
+  LOG(DEBUG) << "transfer tuple (3ab)";
+
+  // copy outputConnection for second tuple
+  if (!outputConnection.subOutputConnection2())
+  {
+    outputConnection.subOutputConnection2() = std::make_shared<OutputConnection>(outputConnection);
+  }
+
+  // first offset does not change
+  offsetSlotNoData1 += 0;
+
+  // second offset changes by number of slots that were present in the first tuple entry
+  offsetSlotNoData2 += OutputConnectorDataHelper<OutputConnectorDataType3>::nSlots(std::get<0>(*transferableSolutionData2));
+
+  // do transfer with slots in second tuple part
+  SolutionVectorMapping<
+    OutputConnectorDataType1,
+    OutputConnectorDataType4
+  >::transfer(std::get<0>(*transferableSolutionData1), std::get<1>(*transferableSolutionData2), *outputConnection.subOutputConnection2(),
+              offsetSlotNoData1, offsetSlotNoData2);
+
+  LOG(DEBUG) << "transfer tuple (3ba)";
+  // reset offsets
+
+  // first offset changes by number of slots that were present in the first tuple entry
+  offsetSlotNoData1 = initialOffsetSlotNoData1 + OutputConnectorDataHelper<OutputConnectorDataType1>::nSlots(std::get<0>(*transferableSolutionData1));
+
+  // second offset is reset to the start
+  offsetSlotNoData2 = initialOffsetSlotNoData2;
+
+  // copy outputConnection for second tuple
+  if (!outputConnection.subOutputConnection3())
+  {
+    outputConnection.subOutputConnection3() = std::make_shared<OutputConnection>(outputConnection);
+  }
+
+  // do transfer with slots in second tuple part
+  SolutionVectorMapping<
+    OutputConnectorDataType2,
+    OutputConnectorDataType3
+  >::transfer(std::get<1>(*transferableSolutionData1), std::get<0>(*transferableSolutionData2), *outputConnection.subOutputConnection3(),
+              offsetSlotNoData1, offsetSlotNoData2);
+
+  LOG(DEBUG) << "transfer tuple (3bb)";
+
+  // first offset does not change
+  offsetSlotNoData1 += 0;
+
+  // second offset changes by number of slots that were present in the first tuple entry
+  offsetSlotNoData2 += OutputConnectorDataHelper<OutputConnectorDataType3>::nSlots(std::get<0>(*transferableSolutionData2));
+
+  // copy outputConnection for second tuple
+  if (!outputConnection.subOutputConnection4())
+  {
+    outputConnection.subOutputConnection4() = std::make_shared<OutputConnection>(outputConnection);
+  }
+
+  // do transfer with slots in second tuple part
+  SolutionVectorMapping<
+    OutputConnectorDataType2,
+    OutputConnectorDataType4
+  >::transfer(std::get<1>(*transferableSolutionData1), std::get<1>(*transferableSolutionData2), *outputConnection.subOutputConnection4(),
               offsetSlotNoData1, offsetSlotNoData2);
 }

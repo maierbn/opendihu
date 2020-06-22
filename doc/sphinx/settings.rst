@@ -30,6 +30,7 @@ The following pages contain all settings that are possible to specify for the di
    settings/dynamic_hyperelasticity
    settings/boundary_conditions
    settings/prescribed_values
+   settings/map_dofs
   
 .. Indices and tables
   ==================

@@ -39,7 +39,7 @@ getValue(dof_no_t dofNoLocal)
 template<typename FunctionSpaceType, int nComponents>
 std::ostream &operator<<(std::ostream &stream, const ComponentOfFieldVariable<FunctionSpaceType,nComponents> &rhs)
 {
-  stream << "<" << *(rhs.values) << " (componentNo " << rhs.componentNo << ", scalingFactor " << rhs.scalingFactor << ")>";
+  stream << "<" << *(rhs.values) << " (componentNo " << rhs.componentNo << ")>";
   return stream;
 }
 
@@ -75,16 +75,17 @@ nSlots()
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
 std::ostream &operator<<(std::ostream &stream, const OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2> &rhs)
 {
-  stream << "<";
+  stream << "<variable1=";
   for (const ComponentOfFieldVariable<FunctionSpaceType,nComponents1> &entry : rhs.variable1)
   {
-    stream << "[" << entry.values << ": " << *(entry.values) << "\"" << entry.values->name() << "\", component " << entry.componentNo << "], " << std::endl;
+    stream << "[" << entry.values << ": " << *(entry.values) << " name \"" << entry.values->name() << "\", component " << entry.componentNo << "], " << std::endl;
   }
-  stream << ";" << std::endl;
+  stream << "; variable2=" << std::endl;
   for (const ComponentOfFieldVariable<FunctionSpaceType,nComponents2> &entry : rhs.variable2)
   {
-    stream << "[" << entry.values << ": " << *(entry.values) << "\"" << entry.values->name() << "\", component " << entry.componentNo << "], " << std::endl;
+    stream << "[" << entry.values << ": " << *(entry.values) << " name \"" << entry.values->name() << "\", component " << entry.componentNo << "], " << std::endl;
   }
+  stream << ">";
   return stream;
 }
 

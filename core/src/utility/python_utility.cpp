@@ -926,7 +926,7 @@ void PythonUtility::checkForError()
 
       if (strValue != NULL)
       {
-        LOG(INFO) << convertFromPython<std::string>::get(strValue);
+        LOG(DEBUG) << convertFromPython<std::string>::get(strValue);
       }
       else
       {

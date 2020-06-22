@@ -136,7 +136,19 @@ class Package(object):
           sys.stdout.write('\nError: Compiler \"{}\" not found. Set the cc and CC variables appropriately.'.format(compiler))
           ctx.Log('Compiler \"{}\" not found.\n'.format(compiler))
           return False
-
+      
+      if output[0:3] == "gcc":
+        major_no = None
+        try:
+          gcc_version = output[0:output.find("\n")]
+          gcc_version = gcc_version[gcc_version.rfind(" ")+1:]
+          major_no = (int)(gcc_version[0:gcc_version.find(".")])
+          ctx.Log("GCC major version no: {}\n".format(major_no))
+        except:
+          pass
+        if major_no and major_no < 7:
+          print("\n\nError! You are using GCC version {}, but at least version 7 is required.\nInstall a newer version of GCC or adjust the cc and CC variables in user-variables.scons.py to specify a newer compiler.\n".format(gcc_version));
+          quit()
     Package.compilers_checked = True
     return True
     

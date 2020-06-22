@@ -67,22 +67,35 @@ protected:
     int outputConnectorArrayIndexFrom;   //< array index if the output connector slot consists of a vector of multiple layers, e.g. Multidomain with multiple compartments or fibers with even two nested MultipleInstances
     int outputConnectorArrayIndexTo;     //< array index if the output connector slot consists of a vector of multiple layers, e.g. Multidomain with multiple compartments or fibers with even two nested MultipleInstances
 
+    double thresholdValue;          //< if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
+    double valueToSet;              //< if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
+
     enum {
       modeCopyLocal,
       modeCopyLocalIfPositive,
+      modeLocalSetIfAboveThreshold,
+      modeCallback,
       modeCommunicate
     } mode;                         // how to handle multiple dofs that map on a single dof
 
     std::map<int,std::vector<int>> dofsMapping;     //< dofNoFrom : list of dofNosTo
 
     ValueCommunicator valueCommunicator;            //< the object that performs the MPI communication
-    std::map<int,std::vector<dof_no_t>> dofNosLocalOfValuesToSendToRanks;      //< for every rank the local dof nos of the values that will be sent to the rank
-    std::vector<dof_no_t> receivedValueDofNosLocal;                            //< for the received values the local dof nos where to store the values in the field variable
-    std::vector<dof_no_t> maskedDofNosLocal;                                   //< same as receivedValueDofNosLocal, but if mode==modeCopyLocalIfPositive, the dof nos for which the value is not positive are set to -1
+    std::map<int,std::vector<dof_no_t>> dofNosLocalOfValuesToSendToRanks; //< Only for modeCommunicate. For every rank the local dof nos of the values that will be sent to the rank
+    std::vector<dof_no_t> allDofNosToSetLocal;      //< For all modes except modeCallback. For the received values the local dof nos where to store the values in the field variable
+    std::vector<dof_no_t> dofNosToSetLocal;         //< For all modes except modeCallback. Temporary variable, the local dofs where to set the values that were retrieved from the dofs.
+
+    std::vector<dof_no_t> inputDofs;                //< Only for modeCallback. The input dofs for the callback.
+    std::vector<dof_no_t> outputDofs;               //< Only for modeCallback. The input dofs for the callback.
+
+    PyObject *callback;                             //< python callback to manipulate the input data
+    PyObject *slotNosPy;                            //< list [fromSlotNo, toSlotNo, fromArrayIndex, toArrayIndex]
+    PyObject *buffer;                               //< user buffer of the callback function
+    PyObject *outputValuesPy;                       //< python list of output values
   };
 
   //! execute the configured mapping of dofs, this gets called before and after advanceTimeSpan of the nested solver
-  void performMappings(std::vector<DofsMappingType> &mappings);
+  void performMappings(std::vector<DofsMappingType> &mappings, double currentTime);
 
   //! parse the python settings, one of "beforeComputation", "afterComputation" (this is settingsKey) and store in mappings
   void parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &mappings);

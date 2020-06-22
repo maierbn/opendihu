@@ -43,6 +43,9 @@ public:
 
   //! fill a vector of all local dof nos. of the element, including ghost dofs
   void getElementDofNosLocal(element_no_t elementNo, std::vector<dof_no_t> &localDofNos) const;
+
+  //! get a description of the function space, with mesh name and type
+  std::string getDescription() const;
 };
 
 /** Partial specialization for CompletePolynomials which do not need nodes and thus have no nodes functionality.

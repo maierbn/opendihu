@@ -70,15 +70,15 @@ setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpace
   // add all state and algebraic values for transfer (option "algebraicsForTransfer"), which are stored in this->data_.getOutputConnectorData()
   // at the end of outputConnectorDataTimeStepping
 
+  // The first "states" entry of statesToTransfer is the solution variable, component 0 (which is default) of the timestepping scheme and therefore
+  // the timestepping scheme has already added it to the outputConnectorDataTimeStepping object.
+  // Now remove it because we set all connections of the CellmlAdapter here.
+  outputConnectorDataTimeStepping->variable1.erase(outputConnectorDataTimeStepping->variable1.begin());
+
   // loop over states that should be transferred
   for (typename std::vector<::Data::ComponentOfFieldVariable<FunctionSpaceType,nStates_>>::iterator iter
     = this->data_.getOutputConnectorData()->variable1.begin(); iter != this->data_.getOutputConnectorData()->variable1.end(); iter++)
   {
-    // skip the first "states" entry of statesToTransfer, because this is the solution variable of the timestepping scheme and therefore
-    // the timestepping scheme has already added it to the outputConnectorDataTimeStepping object
-    if (iter == this->data_.getOutputConnectorData()->variable1.begin())
-      continue;
-
     int componentNo = iter->componentNo;
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nStates_>> values = iter->values;
 
@@ -198,6 +198,7 @@ initialize()
   {
     initializeStatesToEquilibriumTimestepWidth_ = this->specificSettings_.getOptionDouble("initializeStatesToEquilibriumTimestepWidth", 1e-4);
   }
+  LOG(DEBUG) << "Cellml statesForTransfer: " << data_.statesForTransfer();
 }
 
 
@@ -540,7 +541,7 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       }
     }
 
-    // create a string of parameter and contstant mappings
+    // create a string of parameter and constant mappings
     std::stringstream s;
     for (int i = 0; i < parametersUsedAsAlgebraic.size(); i++)
     {

@@ -59,6 +59,15 @@ parser.add_argument('--theta',                               help='parameter of 
 parser.add_argument('--use_lumped_mass_matrix',              help='If the formulation with lumbed mass matrix should be used.',           default=variables.use_lumped_mass_matrix, action='store_true')
 parser.add_argument('--use_symmetric_preconditioner_matrix', help='If the preconditioner matrix should be symmetric (only diagnoal part of system matrix).',  default=variables.use_symmetric_preconditioner_matrix, action='store_true')
 parser.add_argument('--initial_guess_nonzero',               help='If the initial guess to the linear solver should be the last solution.',  default=variables.initial_guess_nonzero, action='store_true')
+parser.add_argument('--sampling_stride_x',                   help='Stride to select the mesh points in x direction.',         type=int, default=variables.sampling_stride_x)
+parser.add_argument('--sampling_stride_y',                   help='Stride to select the mesh points in y direction.',         type=int, default=variables.sampling_stride_y)
+parser.add_argument('--sampling_stride_z',                   help='Stride to select the mesh points in z direction.',         type=int, default=variables.sampling_stride_z)
+parser.add_argument('--dt_0D',                               help='Timestep width of subcellular problem.',                   type=float, default=variables.dt_0D)
+parser.add_argument('--dt_multidomain',                      help='Timestep width of multidomain (diffusion) problem.',       type=float, default=variables.dt_multidomain)
+parser.add_argument('--dt_splitting',                        help='Timestep width of Strang splitting.',                      type=float, default=variables.dt_splitting)
+
+if variables.scenario_name:
+  parser.add_argument('--scenario_name',                       help='Name of the scenario in the log file.',                    type=str, default=variables.scenario_name)
 
 # parse command line arguments and assign values to variables module
 args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)

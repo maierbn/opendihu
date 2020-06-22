@@ -172,19 +172,24 @@ double_v_t computeDeterminant(const Tensor2<2> &jacobian)
 template<typename double_v_t>
 Tensor2<3,double_v_t> computeSymmetricInverse(const Tensor2<3,double_v_t> &matrix, double_v_t &determinant)
 {
+  // rename input values
+        double_v_t m11 = matrix[0][0];
+  const double_v_t m21 = matrix[0][1];
+  const double_v_t m31 = matrix[0][2];
+  //const double_v_t m12 = matrix[1][0];
+        double_v_t m22 = matrix[1][1];
+  const double_v_t m32 = matrix[1][2];
+        double_v_t m33 = matrix[2][2];
+
+  determinant = m11*m22*m33 - m11*sqr(m32) - sqr(m21)*m33 + 2*m21*m31*m32 - m22*sqr(m31);
+
   // regularize matrix if near singular, by adding ε*I (small values on diagonal)
   double_v_t regularizationEpsilon = 0;
   // where operator is documented here: https://vcdevel.github.io/Vc-1.4.1/group__Utilities.html#gaa18ac68167ac7614731134de7364a1d5
   Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE) | regularizationEpsilon = INVERSE_REGULARIZATION_EPSILON;
-
-  // rename input values
-  const double_v_t m11 = matrix[0][0] + regularizationEpsilon;
-  const double_v_t m21 = matrix[0][1];
-  const double_v_t m31 = matrix[0][2];
-  //const double_v_t m12 = matrix[1][0];
-  const double_v_t m22 = matrix[1][1] + regularizationEpsilon;
-  const double_v_t m32 = matrix[1][2];
-  const double_v_t m33 = matrix[2][2] + regularizationEpsilon;
+  m11 += regularizationEpsilon;
+  m22 += regularizationEpsilon;
+  m33 += regularizationEpsilon;
 
   determinant = m11*m22*m33 - m11*sqr(m32) - sqr(m21)*m33 + 2*m21*m31*m32 - m22*sqr(m31);
   double_v_t invDet = 1./determinant;
@@ -208,16 +213,21 @@ Tensor2<3,double_v_t> computeSymmetricInverse(const Tensor2<3,double_v_t> &matri
 template<typename double_v_t>
 Tensor2<2,double_v_t> computeSymmetricInverse(const Tensor2<2,double_v_t> &matrix, double_v_t &determinant)
 {
+  // rename input values
+        double_v_t m11 = matrix[0][0];
+  const double_v_t m21 = matrix[0][1];
+  //const double_v_t m12 = matrix[1][0];
+        double_v_t m22 = matrix[1][1];
+
+  determinant = m11*m22 - sqr(m21);
+
   // regularize matrix if near singular, by adding ε*I (small values on diagonal)
   double_v_t regularizationEpsilon = 0;
   // where operator is documented here: https://vcdevel.github.io/Vc-1.4.1/group__Utilities.html#gaa18ac68167ac7614731134de7364a1d5
   Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE) | regularizationEpsilon = INVERSE_REGULARIZATION_EPSILON;
 
-  // rename input values
-  const double_v_t m11 = matrix[0][0] + regularizationEpsilon;
-  const double_v_t m21 = matrix[0][1];
-  //const double_v_t m12 = matrix[1][0];
-  const double_v_t m22 = matrix[1][1] + regularizationEpsilon;
+  m11 += regularizationEpsilon;
+  m22 += regularizationEpsilon;
 
   determinant = m11*m22 - sqr(m21);
   double_v_t invDet = 1./determinant;
@@ -239,7 +249,7 @@ Tensor2<1,double_v_t> computeInverse(const Tensor2<1,double_v_t> &matrix, double
   // regularize matrix if near singular, by adding ε*I (small values on diagonal)
   double_v_t regularizationEpsilon = 0;
   // where operator is documented here: https://vcdevel.github.io/Vc-1.4.1/group__Utilities.html#gaa18ac68167ac7614731134de7364a1d5
-  Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE) | regularizationEpsilon = INVERSE_REGULARIZATION_EPSILON;
+  Vc::where(abs(matrix[0][0]) < INVERSE_REGULARIZATION_TOLERANCE) | regularizationEpsilon = INVERSE_REGULARIZATION_EPSILON;
 
   determinant = matrix[0][0] + regularizationEpsilon;
 
@@ -252,18 +262,23 @@ Tensor2<1,double_v_t> computeInverse(const Tensor2<1,double_v_t> &matrix, double
 template<typename double_v_t>
 Tensor2<2,double_v_t> computeInverse(const Tensor2<2,double_v_t> &matrix, double_v_t &determinant)
 {
+  // matrices are stored column-major
+
+  // rename input values
+        double_v_t m11 = matrix[0][0];
+  const double_v_t m21 = matrix[0][1];
+  const double_v_t m12 = matrix[1][0];
+        double_v_t m22 = matrix[1][1];
+
+  determinant =  m11*m22 - m12*m21;
+
   // regularize matrix if near singular, by adding ε*I (small values on diagonal)
   double_v_t regularizationEpsilon = 0;
   // where operator is documented here: https://vcdevel.github.io/Vc-1.4.1/group__Utilities.html#gaa18ac68167ac7614731134de7364a1d5
   Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE) | regularizationEpsilon = INVERSE_REGULARIZATION_EPSILON;
 
-  // matrices are stored column-major
-
-  // rename input values
-  const double_v_t m11 = matrix[0][0] + regularizationEpsilon;
-  const double_v_t m21 = matrix[0][1];
-  const double_v_t m12 = matrix[1][0];
-  const double_v_t m22 = matrix[1][1] + regularizationEpsilon;
+  m11 += regularizationEpsilon;
+  m22 += regularizationEpsilon;
 
   determinant =  m11*m22 - m12*m21;
   double_v_t invDet = 1./determinant;
@@ -282,23 +297,29 @@ Tensor2<2,double_v_t> computeInverse(const Tensor2<2,double_v_t> &matrix, double
 template<typename double_v_t>
 Tensor2<3,double_v_t> computeInverse(const Tensor2<3,double_v_t> &matrix, double_v_t &determinant)
 {
-  // regularize matrix if near singular, by adding ε*I (small values on diagonal)
-  double_v_t regularizationEpsilon = 0;
-  // where operator is documented here: https://vcdevel.github.io/Vc-1.4.1/group__Utilities.html#gaa18ac68167ac7614731134de7364a1d5
-  Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE) | regularizationEpsilon = INVERSE_REGULARIZATION_EPSILON;
-
-  // matrices are stored column-major
-
   // rename input values
-  const double_v_t m11 = matrix[0][0] + regularizationEpsilon;
+  // matrices are stored column-major
+        double_v_t m11 = matrix[0][0];
   const double_v_t m21 = matrix[0][1];
   const double_v_t m31 = matrix[0][2];
   const double_v_t m12 = matrix[1][0];
-  const double_v_t m22 = matrix[1][1] + regularizationEpsilon;
+        double_v_t m22 = matrix[1][1];
   const double_v_t m32 = matrix[1][2];
   const double_v_t m13 = matrix[2][0];
   const double_v_t m23 = matrix[2][1];
-  const double_v_t m33 = matrix[2][2] + regularizationEpsilon;
+        double_v_t m33 = matrix[2][2];
+
+  determinant =  m11*m22*m33 - m11*m23*m32 - m12*m21*m33 + m12*m23*m31 + m13*m21*m32 - m13*m22*m31;
+
+  // regularize matrix if near singular, by adding ε*I (small values on diagonal)
+  double_v_t regularizationEpsilon = 0;
+
+  // where operator is documented here: https://vcdevel.github.io/Vc-1.4.1/group__Utilities.html#gaa18ac68167ac7614731134de7364a1d5
+  Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE) | regularizationEpsilon = INVERSE_REGULARIZATION_EPSILON;
+
+  m11 += regularizationEpsilon;
+  m22 += regularizationEpsilon;
+  m33 += regularizationEpsilon;
 
   determinant =  m11*m22*m33 - m11*m23*m32 - m12*m21*m33 + m12*m23*m31 + m13*m21*m32 - m13*m22*m31;
   double_v_t invDet = 1./determinant;
@@ -317,7 +338,6 @@ Tensor2<3,double_v_t> computeInverse(const Tensor2<3,double_v_t> &matrix, double
 
   return result;
 }
-
 
 template<typename double_v_t=double>
 std::array<double_v_t,9> computeTransformationMatrixAndDeterminant(const std::array<VecD<3,double_v_t>,3> &jacobian, double_v_t &determinant)

@@ -266,8 +266,8 @@ config = {
         "logTimeStepWidthAsKey":  "dt_stimulation_check",
         "durationLogKey":         "duration_multidomain",
         "timeStepOutputInterval": 1,
-        "connectedSlotsTerm1To2": {1:3},
-        "connectedSlotsTerm2To1": {3:1},
+        "connectedSlotsTerm1To2": {0:5},  # {1:3}
+        "connectedSlotsTerm2To1": {5:0},
         
         # motoneuron
         "Term1": {    
@@ -320,14 +320,14 @@ config = {
         # Multidomain
         "Term2": {
           "MapDofs": {
-            "nAdditionalFieldVariables":  2,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
+            "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
             "meshName":                   "motoneuronMesh",               # the mesh on which the additional field variables will be defined
             
             # mapping from motoneuronMesh which contains on every rank as many nodes as there are motoneurons to the 3D domain
             # map from motoneuronMesh (algebraics) to 3Dmesh (solution)
             "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
               {                                                 
-                "fromOutputConnectorSlotNo":        3,                    # which fiber/compartment
+                "fromOutputConnectorSlotNo":        5,                    # which fiber/compartment
                 "toOutputConnectorSlotNo":          0,
                 "fromOutputConnectorArrayIndex":    0,
                 "toOutputConnectorArrayIndex":      mu_no,
@@ -406,7 +406,7 @@ config = {
         
                         # output writer for states, algebraics and parameters                
                         "OutputWriter" : [
-                          {"format": "Paraview", "outputInterval": (int)(1./variables.dt_0D*variables.output_timestep_multidomain), "filename": "out/" + variables.scenario_name + "/0D_all", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
+                          {"format": "Paraview", "outputInterval": (int)(2./variables.dt_0D*variables.output_timestep_multidomain), "filename": "out/" + variables.scenario_name + "/0D_all", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
                         ] if variables.states_output else []
                       },
 
@@ -491,7 +491,7 @@ config = {
           "OutputWriter" : [
             
             # Paraview files
-            {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+            #{"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/mechanics_u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             
             # Python callback function "postprocess"
             #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
@@ -505,7 +505,7 @@ config = {
           # 3. additional output writer that writes virtual work terms
           "dynamic": {    # output of the dynamic solver, has additional virtual work values 
             "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+              #{"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/mechanics_dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
               #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ],
           },

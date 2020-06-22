@@ -3,7 +3,8 @@
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 OutputConnection::OutputConnection(PythonConfig settings):
-  fieldVariableNamesInitialized_(false), transferDirectionTerm1To2_(true), slotInformationInitialized_(false), settings_(settings), subOutputConnection_(nullptr)
+  fieldVariableNamesInitialized_(false), transferDirectionTerm1To2_(true), slotInformationInitialized_(false),
+  settings_(settings), subOutputConnection1_(nullptr), subOutputConnection2_(nullptr), subOutputConnection3_(nullptr), subOutputConnection4_(nullptr)
 {
   // parse values from settings
   std::vector<int> indicesTerm1To2;
@@ -57,8 +58,15 @@ OutputConnection::OutputConnection(const OutputConnection &rhs) :
 void OutputConnection::setTransferDirection(bool term1To2)
 {
   transferDirectionTerm1To2_ = term1To2;
-  if (subOutputConnection_)
-    subOutputConnection_->setTransferDirection(term1To2);
+
+  if (subOutputConnection1_)
+    subOutputConnection1_->setTransferDirection(term1To2);
+  if (subOutputConnection2_)
+    subOutputConnection2_->setTransferDirection(term1To2);
+  if (subOutputConnection3_)
+    subOutputConnection3_->setTransferDirection(term1To2);
+  if (subOutputConnection4_)
+    subOutputConnection4_->setTransferDirection(term1To2);
 }
 
 
@@ -379,6 +387,8 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
           << DihuContext::solverStructureVisualizer()->getDiagram();
       return false;
     }
+
+    LOG(DEBUG) << "  yes, transfer to toVectorNo=" << toVectorNo << ", toVectorIndex=" << toVectorIndex << ", toIndex=" << toIndex;
   }
   else
   {
@@ -464,13 +474,30 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
           << DihuContext::solverStructureVisualizer()->getDiagram();
       return false;
     }
+
+    LOG(DEBUG) << "  yes, transfer to toVectorNo=" << toVectorNo << ", toVectorIndex=" << toVectorIndex << ", toIndex=" << toIndex;
   }
 
   // completed successfully
   return true;
 }
 
-std::shared_ptr<OutputConnection> &OutputConnection::subOutputConnection()
+std::shared_ptr<OutputConnection> &OutputConnection::subOutputConnection1()
 {
-  return subOutputConnection_;
+  return subOutputConnection1_;
+}
+
+std::shared_ptr<OutputConnection> &OutputConnection::subOutputConnection2()
+{
+  return subOutputConnection2_;
+}
+
+std::shared_ptr<OutputConnection> &OutputConnection::subOutputConnection3()
+{
+  return subOutputConnection3_;
+}
+
+std::shared_ptr<OutputConnection> &OutputConnection::subOutputConnection4()
+{
+  return subOutputConnection4_;
 }

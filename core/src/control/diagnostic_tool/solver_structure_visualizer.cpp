@@ -15,10 +15,11 @@ SolverStructureVisualizer::SolverStructureVisualizer()
   nDisableCalls_ = 0;
 }
 
-void SolverStructureVisualizer::addSolver(std::string name, bool hasInternalConnectionToFirstNestedSolver)
+void SolverStructureVisualizer::addSolver(std::string name, bool hasInternalConnectionToFirstNestedSolver, bool hasInternalConnectionToSecondNestedSolver)
 {
   LOG(DEBUG) << "SolverStructureVisualizer::addSolver(\"" <<  name << "\",hasInternalConnectionToFirstNestedSolver=" << hasInternalConnectionToFirstNestedSolver 
-    << ") under \"" << currentSolver_->parent->name << "\", nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_  << ", currently at \"" << currentSolver_->name << "\".";
+    << "," << hasInternalConnectionToSecondNestedSolver << ") under \"" << currentSolver_->parent->name << "\", nDisableCalls_: " << nDisableCalls_
+    << ", enabled: " << enabled_  << ", currently at \"" << currentSolver_->name << "\".";
 
   if (!enabled_)
     return;
@@ -33,6 +34,7 @@ void SolverStructureVisualizer::addSolver(std::string name, bool hasInternalConn
   }
   currentSolver_->name = name;
   currentSolver_->hasInternalConnectionToFirstNestedSolver = hasInternalConnectionToFirstNestedSolver;
+  currentSolver_->hasInternalConnectionToSecondNestedSolver = hasInternalConnectionToSecondNestedSolver;
 
   LOG(DEBUG) << "addSolver \"" << name << "\".";
 }
@@ -181,6 +183,32 @@ void SolverStructureVisualizer::parseOutputConnection(std::shared_ptr<solver_t> 
       }
     }
   }
+}
+
+//! add connections between slots that occur within the same solver
+void SolverStructureVisualizer::addSlotMapping(int slotNoFrom, int slotNoTo)
+{
+  if (!enabled_)
+    return;
+
+  // check if this mapping does not yet exist
+  bool mappingExists = false;
+  for (const solver_t::OutputConnectionRepresentation &mappingWithinSolver : currentSolver_->mappingsWithinSolver)
+  {
+    if (mappingWithinSolver.fromSlot == slotNoFrom && mappingWithinSolver.toSlot == slotNoTo)
+    {
+      mappingExists = true;
+      break;
+    }
+  }
+
+  if (mappingExists)
+    return;
+
+  solver_t::OutputConnectionRepresentation mappingWithinSolver;
+  mappingWithinSolver.fromSlot = slotNoFrom;
+  mappingWithinSolver.toSlot = slotNoTo;
+  currentSolver_->mappingsWithinSolver.push_back(mappingWithinSolver);
 }
 
 //! beginChild and addSolver will have no effect

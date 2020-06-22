@@ -54,26 +54,30 @@ initialize()
   // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
   DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
 
+  // add mappings to be visualized by solverStructureVisualizer
+  for (const DofsMappingType &mapping : mappingsBeforeComputation_)
+  {
+    DihuContext::solverStructureVisualizer()->addSlotMapping(mapping.outputConnectorSlotNoFrom, mapping.outputConnectorSlotNoTo);
+  }
+  for (const DofsMappingType &mapping : mappingsAfterComputation_)
+  {
+    DihuContext::solverStructureVisualizer()->addSlotMapping(mapping.outputConnectorSlotNoFrom, mapping.outputConnectorSlotNoTo);
+  }
 }
 
 template<typename FunctionSpaceType, typename NestedSolverType>
 void MapDofs<FunctionSpaceType,NestedSolverType>::
 parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &mappings)
 {
-  LOG(DEBUG) << "settingsKey " << settingsKey << ", specificSettings: " << this->specificSettings_;
   PyObject *listPy = this->specificSettings_.getOptionPyObject(settingsKey);
-  LOG(DEBUG) << "convert to list to get size";
   std::vector<PyObject *> list = PythonUtility::convertFromPython<std::vector<PyObject *>>::get(listPy);
-  LOG(DEBUG) << "size: " << list.size();
 
   PythonConfig mappingSpecification(this->specificSettings_, settingsKey);
-  LOG(DEBUG) << "mappingSpecification: " << mappingSpecification;
 
   // loop over items of the list under "beforeComputation" or "afterComputation"
   for (int i = 0; i < list.size(); i++)
   {
     PythonConfig currentMappingSpecification(mappingSpecification, i);
-    LOG(DEBUG) << "i=" << i << ", currentMappingSpecification: " << mappingSpecification;
 
     DofsMappingType newDofsMapping;
 
@@ -99,7 +103,7 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
     }
     else
     {
-      LOG(ERROR) << this->specificSettings_ << "[\"fromDofNosNumbering\"] is \"" << fromDofNosNumbering << ", but has to be \"global\" or \"local\". Assuming \"local\".";
+      LOG(ERROR) << currentMappingSpecification << "[\"fromDofNosNumbering\"] is \"" << fromDofNosNumbering << ", but has to be \"global\" or \"local\". Assuming \"local\".";
       newDofsMapping.dofNoIsGlobalFrom = false;
     }
 
@@ -114,7 +118,7 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
     }
     else
     {
-      LOG(ERROR) << this->specificSettings_ << "[\"toDofNosNumbering\"] is \"" << toDofNosNumbering << ", but has to be \"global\" or \"local\". Assuming \"local\".";
+      LOG(ERROR) << currentMappingSpecification << "[\"toDofNosNumbering\"] is \"" << toDofNosNumbering << ", but has to be \"global\" or \"local\". Assuming \"local\".";
       newDofsMapping.dofNoIsGlobalTo = false;
     }
 
@@ -132,10 +136,38 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
     {
       newDofsMapping.mode = DofsMappingType::modeCommunicate;
     }
+    else if (mode == "localSetIfAboveThreshold")
+    {
+      newDofsMapping.mode = DofsMappingType::modeLocalSetIfAboveThreshold;
+      newDofsMapping.thresholdValue = currentMappingSpecification.getOptionDouble("thresholdValue", 0);
+      newDofsMapping.valueToSet = currentMappingSpecification.getOptionDouble("valueToSet", 0);
+    }
+    else if (mode == "callback")
+    {
+      newDofsMapping.mode = DofsMappingType::modeCallback;
+      newDofsMapping.callback = currentMappingSpecification.getOptionPyObject("callback");
+
+      currentMappingSpecification.getOptionVector<dof_no_t>("inputDofs", newDofsMapping.inputDofs);
+      currentMappingSpecification.getOptionVector<dof_no_t>("outputDofs", newDofsMapping.outputDofs);
+
+      std::vector<int> slotNosList{
+        newDofsMapping.outputConnectorSlotNoFrom, newDofsMapping.outputConnectorSlotNoTo,
+        newDofsMapping.outputConnectorArrayIndexFrom, newDofsMapping.outputConnectorArrayIndexTo
+      };
+      // list [fromSlotNo, toSlotNo, fromArrayIndex, toArrayIndex]
+      newDofsMapping.slotNosPy = PythonUtility::convertToPython<std::vector<int>>::get(slotNosList);
+      newDofsMapping.buffer = PyDict_New();
+
+      // initialize outputValues as [None, None, ..., None]
+      int nInitialOutputValues = newDofsMapping.outputDofs.size();
+      newDofsMapping.outputValuesPy = PyList_New(Py_ssize_t(nInitialOutputValues));
+      for (int i = 0; i < nInitialOutputValues; i++)
+        PyList_SetItem(newDofsMapping.outputValuesPy, Py_ssize_t(i), Py_None);
+    }
     else
     {
       LOG(FATAL) << currentMappingSpecification << "[\"mode\"] is \"" << mode << "\", but allowed values are "
-        <<"\"copyLocal\", \"copyLocalIfPositive\" and \"communicate\".";
+        <<"\"copyLocal\", \"copyLocalIfPositive\", \"callback\" and \"communicate\".";
     }
 
     PyObject *object = currentMappingSpecification.getOptionPyObject("dofsMapping");
@@ -264,125 +296,179 @@ initializeCommunication(std::vector<DofsMappingType> &mappings)
     if (!meshPartitionBaseTo)
       LOG(FATAL) << "MapDofs: Could not get mesh partition for \"to\" function space for mapping " << mapping.outputConnectorSlotNoFrom << " -> " << mapping.outputConnectorSlotNoTo;
 
-    // convert from dof nos from global to local nos, discard values that are not on the local subdomain
-    if (mapping.dofNoIsGlobalFrom)
+    if (mapping.mode == DofsMappingType::modeCallback)
     {
-      // construct a new dofsMapping where all keys are local values and only include those that are local
-      std::map<int,std::vector<int>> localDofsMapping;
-      for (std::map<int,std::vector<int>>::iterator iter = mapping.dofsMapping.begin(); iter != mapping.dofsMapping.end(); iter++)
+      if (mapping.dofNoIsGlobalFrom)
       {
-        global_no_t dofNoGlobalPetsc = iter->first;
-        bool isLocal;
-        dof_no_t dofNoLocal = meshPartitionBaseFrom->getDofNoLocal(dofNoGlobalPetsc, isLocal);
-
-        if (isLocal)
+        // transform the global input dofs to local input dofs
+        std::vector<dof_no_t> localDofsMapping;
+        for (std::vector<dof_no_t>::iterator iter = mapping.inputDofs.begin(); iter != mapping.inputDofs.end(); iter++)
         {
-          localDofsMapping[dofNoLocal] = iter->second;
-        }
-      }
+          global_no_t dofNoGlobalPetsc = *iter;
+          bool isLocal;
+          dof_no_t dofNoLocal = meshPartitionBaseFrom->getDofNoLocal(dofNoGlobalPetsc, isLocal);
 
-      // assign to dofs mapping
-      mapping.dofsMapping = localDofsMapping;
-    }
-
-    // prepare communication if dofNoIsGlobalTo is global
-    if (mapping.mode == DofsMappingType::modeCommunicate && mapping.dofNoIsGlobalTo)
-    {
-      std::map<int,std::vector<int>> remoteDofNosGlobalNaturalAtRanks;
-
-      for (std::map<int,std::vector<int>>::iterator iter = mapping.dofsMapping.begin(); iter != mapping.dofsMapping.end(); iter++)
-      {
-        // if the "from" dofNo is local
-        if (iter->first != -1)
-        {
-          // loop over the "to" dofNos
-          for (int dofNoToGlobalNatural : iter->second)
+          if (isLocal)
           {
-            // get the rank on which the dofNoToGlobalNatural is located
-            int rankNo = meshPartitionBaseTo->getRankOfDofNoGlobalNatural(dofNoToGlobalNatural);
-
-            // store the global dof no at the foreign rank
-            remoteDofNosGlobalNaturalAtRanks[rankNo].push_back(dofNoToGlobalNatural);
-
-            // store the local dof at the local rank
-            mapping.dofNosLocalOfValuesToSendToRanks[rankNo].push_back(iter->first);
+            localDofsMapping.push_back(dofNoLocal);
           }
         }
+
+        LOG(DEBUG) << "inputDofs global: " << mapping.inputDofs << ", transformed to local: " << localDofsMapping;
+
+        // assign to dofs mapping
+        mapping.inputDofs = localDofsMapping;
       }
 
-      // initialize the communication data, send the global dof nos to the ranks where the data will be received
-      std::vector<int> ownDofNosGlobalNatural;
-      mapping.valueCommunicator.initialize(remoteDofNosGlobalNaturalAtRanks, ownDofNosGlobalNatural, data_.functionSpace()->meshPartition()->rankSubset());
-
-      // convert the own received dof nos from global natural ordering to local numbering
-      mapping.receivedValueDofNosLocal.clear();
-
-      for (int ownDofNoGlobalNatural : ownDofNosGlobalNatural)
+      if (mapping.dofNoIsGlobalTo)
       {
-        global_no_t nodeNoGlobalNatural = ownDofNoGlobalNatural;  // this is not implemented for Hermite, we assume node=dof
+        // transform the global input dofs to local input dofs
+        std::vector<dof_no_t> localDofsMapping;
+        for (std::vector<dof_no_t>::iterator iter = mapping.outputDofs.begin(); iter != mapping.outputDofs.end(); iter++)
+        {
+          global_no_t dofNoGlobalPetsc = *iter;
+          bool isLocal;
+          dof_no_t dofNoLocal = meshPartitionBaseTo->getDofNoLocal(dofNoGlobalPetsc, isLocal);
 
-        bool isOnLocalDomain;
-        node_no_t nodeNoLocal = meshPartitionBaseTo->getNodeNoLocalFromGlobalNatural(nodeNoGlobalNatural, isOnLocalDomain);
+          if (isLocal)
+          {
+            localDofsMapping.push_back(dofNoLocal);
+          }
+        }
 
-        if (!isOnLocalDomain)
-          LOG(FATAL) << "In MapDofs for mapping between output connector slots " << mapping.outputConnectorSlotNoFrom
-            << " -> " << mapping.outputConnectorSlotNoTo
-            << ", node in global natural numbering " << nodeNoGlobalNatural << " is not on local domain.";
+        LOG(DEBUG) << "outputDofs global: " << mapping.outputDofs << ", transformed to local: " << localDofsMapping;
 
-        dof_no_t dofNoLocal = nodeNoLocal;
-        mapping.receivedValueDofNosLocal.push_back(dofNoLocal);
+        // assign to dofs mapping
+        mapping.outputDofs = localDofsMapping;
       }
+      LOG(DEBUG) << "for modeCallbacke, initialized inputDofs: " << mapping.inputDofs << ", outputDofs: " << mapping.outputDofs;
     }
     else
     {
-      // no communication will take place
-      for (std::map<int,std::vector<int>>::iterator iter = mapping.dofsMapping.begin(); iter != mapping.dofsMapping.end(); iter++)
+      // convert from dof nos from global to local nos, discard values that are not on the local subdomain
+      if (mapping.dofNoIsGlobalFrom)
       {
-        // if the "from" dofNo is local
-        if (iter->first != -1)
+        // construct a new dofsMapping where all keys are local values and only include those that are local
+        std::map<int,std::vector<int>> localDofsMapping;
+        for (std::map<int,std::vector<int>>::iterator iter = mapping.dofsMapping.begin(); iter != mapping.dofsMapping.end(); iter++)
         {
-          // loop over the "to" dofNos
-          for (int dofNoTo : iter->second)
+          global_no_t dofNoGlobalPetsc = iter->first;
+          bool isLocal;
+          dof_no_t dofNoLocal = meshPartitionBaseFrom->getDofNoLocal(dofNoGlobalPetsc, isLocal);
+
+          if (isLocal)
           {
-            // if the dofs to map to are given as global natural no.s
-            if (mapping.dofNoIsGlobalTo)
+            localDofsMapping[dofNoLocal] = iter->second;
+          }
+        }
+
+        LOG(DEBUG) << "dofsMapping global: " << mapping.dofsMapping << " to local: " << localDofsMapping;
+
+        // assign to dofs mapping
+        mapping.dofsMapping = localDofsMapping;
+      }
+
+      // prepare communication if dofNoIsGlobalTo is global
+      if (mapping.mode == DofsMappingType::modeCommunicate && mapping.dofNoIsGlobalTo)
+      {
+        std::map<int,std::vector<int>> remoteDofNosGlobalNaturalAtRanks;
+
+        for (std::map<int,std::vector<int>>::iterator iter = mapping.dofsMapping.begin(); iter != mapping.dofsMapping.end(); iter++)
+        {
+          // if the "from" dofNo is local
+          if (iter->first != -1)
+          {
+            // loop over the "to" dofNos
+            for (int dofNoToGlobalNatural : iter->second)
             {
-              global_no_t nodeNoGlobalNatural = dofNoTo;  // this is not implemented for Hermite, we assume node=dof
+              // get the rank on which the dofNoToGlobalNatural is located
+              int rankNo = meshPartitionBaseTo->getRankOfDofNoGlobalNatural(dofNoToGlobalNatural);
 
-              bool isOnLocalDomain;
-              node_no_t nodeNoLocal = meshPartitionBaseTo->getNodeNoLocalFromGlobalNatural(nodeNoGlobalNatural, isOnLocalDomain);
+              // store the global dof no at the foreign rank
+              remoteDofNosGlobalNaturalAtRanks[rankNo].push_back(dofNoToGlobalNatural);
 
-              if (isOnLocalDomain)
+              // store the local dof at the local rank
+              mapping.dofNosLocalOfValuesToSendToRanks[rankNo].push_back(iter->first);
+            }
+          }
+        }
+
+        // initialize the communication data, send the global dof nos to the ranks where the data will be received
+        std::vector<int> ownDofNosGlobalNatural;
+        mapping.valueCommunicator.initialize(remoteDofNosGlobalNaturalAtRanks, ownDofNosGlobalNatural, data_.functionSpace()->meshPartition()->rankSubset());
+
+        // convert the own received dof nos from global natural ordering to local numbering
+        mapping.allDofNosToSetLocal.clear();
+
+        for (int ownDofNoGlobalNatural : ownDofNosGlobalNatural)
+        {
+          global_no_t nodeNoGlobalNatural = ownDofNoGlobalNatural;  // this is not implemented for Hermite, we assume node=dof
+
+          bool isOnLocalDomain;
+          node_no_t nodeNoLocal = meshPartitionBaseTo->getNodeNoLocalFromGlobalNatural(nodeNoGlobalNatural, isOnLocalDomain);
+
+          if (!isOnLocalDomain)
+            LOG(FATAL) << "In MapDofs for mapping between output connector slots " << mapping.outputConnectorSlotNoFrom
+              << " -> " << mapping.outputConnectorSlotNoTo
+              << ", node in global natural numbering " << nodeNoGlobalNatural << " is not on local domain.";
+
+          dof_no_t dofNoLocal = nodeNoLocal;
+          mapping.allDofNosToSetLocal.push_back(dofNoLocal);
+        }
+      }
+      else
+      {
+        // no communication will take place
+        for (std::map<int,std::vector<int>>::iterator iter = mapping.dofsMapping.begin(); iter != mapping.dofsMapping.end(); iter++)
+        {
+          // if the "from" dofNo is local
+          if (iter->first != -1)
+          {
+            // loop over the "to" dofNos
+            for (int dofNoTo : iter->second)
+            {
+              LOG(DEBUG) << "copy local dof " << iter->first << " -> " << dofNoTo;
+
+              // if the dofs to map to are given as global natural no.s
+              if (mapping.dofNoIsGlobalTo)
               {
-                dof_no_t dofNoToLocal = nodeNoLocal;
+                global_no_t nodeNoGlobalNatural = dofNoTo;  // this is not implemented for Hermite, we assume node=dof
+
+                bool isOnLocalDomain;
+                node_no_t nodeNoLocal = meshPartitionBaseTo->getNodeNoLocalFromGlobalNatural(nodeNoGlobalNatural, isOnLocalDomain);
+
+                if (isOnLocalDomain)
+                {
+                  dof_no_t dofNoToLocal = nodeNoLocal;
+
+                  // store the local dof at the local rank
+                  mapping.dofNosLocalOfValuesToSendToRanks[ownRankNo].push_back(iter->first);
+                  mapping.allDofNosToSetLocal.push_back(dofNoToLocal);
+                }
+              }
+              else
+              {
+                // if the dofs to map to are given as local numbers
+                dof_no_t dofNoToLocal = dofNoTo;
 
                 // store the local dof at the local rank
                 mapping.dofNosLocalOfValuesToSendToRanks[ownRankNo].push_back(iter->first);
-                mapping.receivedValueDofNosLocal.push_back(dofNoToLocal);
+                mapping.allDofNosToSetLocal.push_back(dofNoToLocal);
               }
-            }
-            else
-            {
-              // if the dofs to map to are given as local numbers
-              dof_no_t dofNoToLocal = dofNoTo;
-
-              // store the local dof at the local rank
-              mapping.dofNosLocalOfValuesToSendToRanks[ownRankNo].push_back(iter->first);
-              mapping.receivedValueDofNosLocal.push_back(dofNoToLocal);
             }
           }
         }
       }
+
+      // here, the following variables are set:
+      // std::map<int,std::vector<dof_no_t>> dofNosLocalOfValuesToSendToRanks;      //< for every rank the local dof nos of the values that will be sent to the rank
+      // std::vector<dof_no_t> allDofNosToSetLocal;                            //< for the received values the local dof nos where to store the values in the field variable
+
+      LOG(DEBUG) << "initialized mapping slots " << mapping.outputConnectorSlotNoFrom << " -> " << mapping.outputConnectorSlotNoTo;
+      LOG(DEBUG) << "  dofsMapping (local: " << (mapping.dofNoIsGlobalTo? "global" : "local") << ": " << mapping.dofsMapping;
+      LOG(DEBUG) << "  dofNosLocalOfValuesToSendToRanks: " << mapping.dofNosLocalOfValuesToSendToRanks;
+      LOG(DEBUG) << "  allDofNosToSetLocal:         " << mapping.allDofNosToSetLocal;
     }
-
-    // here, the following variables are set:
-    // std::map<int,std::vector<dof_no_t>> dofNosLocalOfValuesToSendToRanks;      //< for every rank the local dof nos of the values that will be sent to the rank
-    // std::vector<dof_no_t> receivedValueDofNosLocal;                            //< for the received values the local dof nos where to store the values in the field variable
-
-    LOG(DEBUG) << "initialized mapping slots " << mapping.outputConnectorSlotNoFrom << " -> " << mapping.outputConnectorSlotNoTo;
-    LOG(DEBUG) << "  dofsMapping (local: " << (mapping.dofNoIsGlobalTo? "global" : "local") << ": " << mapping.dofsMapping;
-    LOG(DEBUG) << "  dofNosLocalOfValuesToSendToRanks: " << mapping.dofNosLocalOfValuesToSendToRanks;
-    LOG(DEBUG) << "  receivedValueDofNosLocal:         " << mapping.receivedValueDofNosLocal;
 
   }  // loop over mappings
 }

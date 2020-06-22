@@ -151,6 +151,8 @@ config = {
 
 }
 
+/*
+ * this test is disabled, because it required LAPACK which is not default
 TEST(DiffusionTest, ImplicitEuler1DPOD)
 {
   
@@ -267,6 +269,7 @@ config = {
   // compare to full output of POD problem
   assertFileMatchesContent("diffusion1d_pod_full_0000004.py", referenceOutput);
 }
+*/
 
 TEST(DiffusionTest, CrankNicolson1D)
 {

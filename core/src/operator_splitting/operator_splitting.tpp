@@ -83,10 +83,12 @@ initialize()
   data_.setFunctionSpace(timeStepping1_.data().functionSpace());
   data_.initialize(timeStepping1_, timeStepping2_);
 
+#if 0
   LOG(DEBUG) << "initialize mappings between meshes \"" << timeStepping1_.data().functionSpace()->meshName() << "\" and \""
     << timeStepping2_.data().functionSpace()->meshName() << "\".";
   context_.mappingBetweenMeshesManager()->template initializeMappingsBetweenMeshes<typename TimeStepping1::FunctionSpace,typename TimeStepping2::FunctionSpace>(
     timeStepping1_.data().functionSpace(), timeStepping2_.data().functionSpace());
+#endif
 
   // log endTime parameters
   Control::PerformanceMeasurement::setParameter("endTime", endTime_);

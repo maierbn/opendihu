@@ -203,11 +203,11 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
     optimset_t optimset;
     optimset.tolx = 1e-10;     // tolerance on the simplex solutions coordinates
     optimset.tolf = 1e-10;     // tolerance on the function value
-    optimset.max_iter = 10000; // maximum number of allowed iterations
-    optimset.max_eval = 10000; // maximum number of allowed function evaluations
+    optimset.max_iter = 1000; // maximum number of allowed iterations
+    optimset.max_eval = 1000; // maximum number of allowed function evaluations
     optimset.verbose = 0;     // toggle verbose output during minimization
 
-    LOG(DEBUG) << "Nelder-Mead, startingPoint: " << xi;
+    VLOG(1) << "Nelder-Mead, startingPoint: " << xi;
 
     // call Nelder Mead algorithm to optimize
     MathUtility::NelderMead::optimize(D, &startingPoint, &solution,
@@ -221,7 +221,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
 
     residual = solution.fx;
 
-    LOG(DEBUG) << "Nelder-Mead, result: " << xi << ", residual: " << residual;
+    VLOG(1) << "Nelder-Mead, result: " << xi << ", residual: " << residual;
 
     // check if point is inside the element by looking at the value of xi
     pointIsInElement = true;

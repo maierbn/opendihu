@@ -39,7 +39,7 @@ getValue(dof_no_t dofNoLocal)
 template<typename FunctionSpaceType, int nComponents>
 std::ostream &operator<<(std::ostream &stream, const ComponentOfFieldVariable<FunctionSpaceType,nComponents> &rhs)
 {
-  stream << "<" << *(rhs.values) << " (componentNo " << rhs.componentNo << ")>";
+  stream << "(" << *(rhs.values) << " (componentNo " << rhs.componentNo << "))";
   return stream;
 }
 
@@ -75,17 +75,28 @@ nSlots()
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
 std::ostream &operator<<(std::ostream &stream, const OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2> &rhs)
 {
-  stream << "<variable1=";
-  for (const ComponentOfFieldVariable<FunctionSpaceType,nComponents1> &entry : rhs.variable1)
+  if (rhs.variable1.empty())
+    stream << "\t(variable1 empty\n";
+  else
   {
-    stream << "[" << entry.values << ": " << *(entry.values) << " name \"" << entry.values->name() << "\", component " << entry.componentNo << "], " << std::endl;
+    stream << "\t(variable1:\n";
+    for (const ComponentOfFieldVariable<FunctionSpaceType,nComponents1> &entry : rhs.variable1)
+    {
+      stream << "\t\t[" << entry.values << ": " << *(entry.values) << " name \"" << entry.values->name() << "\", component " << entry.componentNo << "], " << std::endl;
+    }
   }
-  stream << "; variable2=" << std::endl;
-  for (const ComponentOfFieldVariable<FunctionSpaceType,nComponents2> &entry : rhs.variable2)
+
+  if (rhs.variable2.empty())
+    stream << "\t, variable2 empty\n";
+  else
   {
-    stream << "[" << entry.values << ": " << *(entry.values) << " name \"" << entry.values->name() << "\", component " << entry.componentNo << "], " << std::endl;
+    stream << "\t, variable2:\n";
+    for (const ComponentOfFieldVariable<FunctionSpaceType,nComponents2> &entry : rhs.variable2)
+    {
+      stream << "\t\t[" << entry.values << ": " << *(entry.values) << " name \"" << entry.values->name() << "\", component " << entry.componentNo << "], " << std::endl;
+    }
   }
-  stream << ">";
+  stream << "\t)";
   return stream;
 }
 
@@ -93,9 +104,9 @@ std::ostream &operator<<(std::ostream &stream, const OutputConnectorData<Functio
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
 std::ostream &operator<<(std::ostream &stream, const std::shared_ptr<OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2>> &rhs)
 {
-  stream << rhs.get();
+  //stream << rhs.get();
   if (rhs)
-    stream << ":" << *rhs;
+    stream << *rhs;
   else
   {
     // the program should not have any OutputConnectorData pointer uninitialized any time after initialize()

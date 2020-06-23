@@ -36,7 +36,7 @@ void SolverStructureVisualizer::addSolver(std::string name, bool hasInternalConn
   currentSolver_->hasInternalConnectionToFirstNestedSolver = hasInternalConnectionToFirstNestedSolver;
   currentSolver_->hasInternalConnectionToSecondNestedSolver = hasInternalConnectionToSecondNestedSolver;
 
-  LOG(DEBUG) << "addSolver \"" << name << "\".";
+  LOG(DEBUG) << "addSolver \"" << name << "\" [" << currentSolver_ << "].";
 }
 
 //! indicate that all further calls to addSolver will be children of the current solver
@@ -55,8 +55,8 @@ void SolverStructureVisualizer::beginChild(std::string description)
   newChild->description = description;
   currentSolver_->children.push_back(newChild);
 
-  LOG(DEBUG) << "beginChild, now \"" << currentSolver_->name << "\" (" << currentSolver_
-    << ") has " << currentSolver_->children.size() << "children: 0=" << currentSolver_->children[0];
+  LOG(DEBUG) << "beginChild, now \"" << currentSolver_->name << "\" [" << currentSolver_
+    << "] has " << currentSolver_->children.size() << "children: 0=[" << currentSolver_->children[0] << "]";
 
   currentSolver_ = newChild;
 }
@@ -74,7 +74,7 @@ void SolverStructureVisualizer::endChild()
   if (!currentSolver_->parent)
     LOG(FATAL) << "endChild, no parent";
 
-  LOG(DEBUG) << "endChild, from \"" << currentSolver_->name << "\" back to \"" << currentSolver_->parent->name << "\".";
+  LOG(DEBUG) << "endChild, from \"" << currentSolver_->name << "\"  [" << currentSolver_ << "] back to \"" << currentSolver_->parent->name << "\" [" << currentSolver_->parent << "].";
 
 
   currentSolver_ = currentSolver_->parent;

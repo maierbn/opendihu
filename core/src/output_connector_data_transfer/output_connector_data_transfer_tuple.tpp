@@ -20,6 +20,15 @@ void SolutionVectorMapping<
            OutputConnection &outputConnection, int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer tuple (1a), offsetSlotNoData1: " << offsetSlotNoData1 << ", offsetSlotNoData2: " << offsetSlotNoData2;
+#ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
+  LOG(DEBUG) << "transferableSolutionData1: "
+    << OutputConnectorDataHelper<std::tuple<
+             std::shared_ptr<OutputConnectorDataType1>,
+             std::shared_ptr<OutputConnectorDataType2>
+        >>::getString(transferableSolutionData1);
+  LOG(DEBUG) << "transferableSolutionData2: "
+    << OutputConnectorDataHelper<Data::OutputConnectorData<FunctionSpaceType3,nComponents3a,nComponents3b>>::getString(transferableSolutionData3);
+#endif
 
   // copy outputConnection for second tuple
   if (!outputConnection.subOutputConnection1())
@@ -35,6 +44,15 @@ void SolutionVectorMapping<
               offsetSlotNoData1, offsetSlotNoData2);
 
   LOG(DEBUG) << "transfer tuple (1b), offsetSlotNoData1: " << offsetSlotNoData1 << ", offsetSlotNoData2: " << offsetSlotNoData2;
+#ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
+  LOG(DEBUG) << "transferableSolutionData1: "
+    << OutputConnectorDataHelper<std::tuple<
+             std::shared_ptr<OutputConnectorDataType1>,
+             std::shared_ptr<OutputConnectorDataType2>
+        >>::getString(transferableSolutionData1);
+  LOG(DEBUG) << "transferableSolutionData2: "
+    << OutputConnectorDataHelper<Data::OutputConnectorData<FunctionSpaceType3,nComponents3a,nComponents3b>>::getString(transferableSolutionData3);
+#endif
 
   // copy outputConnection for second tuple
   if (!outputConnection.subOutputConnection2())
@@ -74,6 +92,15 @@ void SolutionVectorMapping<
            OutputConnection &outputConnection, int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer tuple (2a)";
+#ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
+  LOG(DEBUG) << "transferableSolutionData1: "
+    << OutputConnectorDataHelper<Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>>::getString(transferableSolutionData1);
+  LOG(DEBUG) << "transferableSolutionData2: "
+    << OutputConnectorDataHelper<std::tuple<
+          std::shared_ptr<OutputConnectorDataType2>,
+          std::shared_ptr<OutputConnectorDataType3>
+        >>::getString(transferableSolutionData2);
+#endif
 
   // copy outputConnection for second tuple
   if (!outputConnection.subOutputConnection1())
@@ -89,6 +116,15 @@ void SolutionVectorMapping<
               offsetSlotNoData1, offsetSlotNoData2);
 
   LOG(DEBUG) << "transfer tuple (2b)";
+#ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
+  LOG(DEBUG) << "transferableSolutionData1: "
+    << OutputConnectorDataHelper<Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>>::getString(transferableSolutionData1);
+  LOG(DEBUG) << "transferableSolutionData2: "
+    << OutputConnectorDataHelper<std::tuple<
+          std::shared_ptr<OutputConnectorDataType2>,
+          std::shared_ptr<OutputConnectorDataType3>
+        >>::getString(transferableSolutionData2);
+#endif
 
   // copy outputConnection for second tuple
   if (!outputConnection.subOutputConnection2())

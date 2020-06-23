@@ -59,6 +59,9 @@ public:
   //! one more pointer of a second output connection, used for transfer betwen two tuples and therefore a forth output connection object is needed.
   std::shared_ptr<OutputConnection> &subOutputConnection4();
 
+  //! assemble some debugging information to the mapping that will be displayed on error
+  std::string getDebugInformation() const;
+
 private:
 
   //! initialize the slotInformation_ variable
@@ -66,9 +69,6 @@ private:
   void initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b> &transferableSolutionData1,
                                  const Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2);
 
-
-  //! assemble some debugging information to the mapping that will be displayed on error
-  std::string getDebugInformation() const;
 
   //! fill the look-up table slotInformation_
   void initializeSlotInformation();

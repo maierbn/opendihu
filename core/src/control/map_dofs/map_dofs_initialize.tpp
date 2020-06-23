@@ -70,6 +70,9 @@ void MapDofs<FunctionSpaceType,NestedSolverType>::
 parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &mappings)
 {
   PyObject *listPy = this->specificSettings_.getOptionPyObject(settingsKey);
+  if (listPy == Py_None)
+    return;
+
   std::vector<PyObject *> list = PythonUtility::convertFromPython<std::vector<PyObject *>>::get(listPy);
 
   PythonConfig mappingSpecification(this->specificSettings_, settingsKey);
@@ -171,7 +174,8 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
     }
 
     PyObject *object = currentMappingSpecification.getOptionPyObject("dofsMapping");
-    newDofsMapping.dofsMapping = PythonUtility::convertFromPython<std::map<int,std::vector<int>>>::get(object);
+    if (object != Py_None)
+      newDofsMapping.dofsMapping = PythonUtility::convertFromPython<std::map<int,std::vector<int>>>::get(object);
 
     LOG(DEBUG) << "Parsed mapping slots " << newDofsMapping.outputConnectorSlotNoFrom << " (arrayIndex " << newDofsMapping.outputConnectorArrayIndexFrom
       << ") -> " << newDofsMapping.outputConnectorSlotNoTo << " (arrayIndex " << newDofsMapping.outputConnectorArrayIndexTo << "), dofNos "

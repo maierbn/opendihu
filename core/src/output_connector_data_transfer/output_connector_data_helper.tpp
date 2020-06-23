@@ -125,6 +125,19 @@ slotGetValues(
   }
 }
 
+//! get a string representation of the output connector data for debugging
+template<typename OutputConnectorDataType>
+std::string OutputConnectorDataHelper<OutputConnectorDataType>::
+getString(std::shared_ptr<OutputConnectorDataType> outputConnectorData)
+{
+  if (!outputConnectorData)
+    return std::string("x");
+
+  std::stringstream s;
+  s << outputConnectorData;
+  return s.str();
+}
+
 // vector
 
 template<typename OutputConnectorDataType>
@@ -265,6 +278,31 @@ slotGetValues(
       << "from fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
       << ", at dofs " << dofNosLocal << " get values " << values;
   }
+}
+
+//! get a string representation of the output connector data for debugging
+template<typename OutputConnectorDataType>
+std::string OutputConnectorDataHelper<std::vector<std::shared_ptr<OutputConnectorDataType>>>::
+getString(std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>> outputConnectorData)
+{
+  if (!outputConnectorData)
+    return std::string("[x]");
+
+  if (!outputConnectorData->empty())
+  {
+    std::stringstream s;
+    s << "[";
+    for (int i = 0; i < outputConnectorData->size(); i++)
+    {
+      if (i != 0)
+        s << ", ";
+      s << OutputConnectorDataHelper<OutputConnectorDataType>::
+        getString((*outputConnectorData)[i]);
+    }
+    s << "]";
+    return s.str();
+  }
+  return std::string("[]");
 }
 
 // vector of vector
@@ -436,6 +474,39 @@ slotGetValues(
   }
 }
 
+
+template<typename OutputConnectorDataType>
+std::string OutputConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>>>>::
+getString(std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>>>> outputConnectorData)
+{
+  if (!outputConnectorData)
+    return std::string("[[x]]");
+  if (!outputConnectorData->empty())
+    if (!(*outputConnectorData)[0]->empty())
+    {
+      std::stringstream s;
+      s << "[";
+      for (int j = 0; j < outputConnectorData->size(); j++)
+      {
+        if (j != 0)
+          s << ", ";
+        s << "[";
+        for (int i = 0; i < (*outputConnectorData)[0]->size(); i++)
+        {
+          if (i != 0)
+            s << ", ";
+          s << OutputConnectorDataHelper<OutputConnectorDataType>::
+            getString((*(*outputConnectorData)[0])[0]);
+        }
+        s << "]";
+      }
+      s << "]";
+
+      return s.str();
+    }
+  return std::string("[[]]");
+}
+
 // tuple
 
 template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
@@ -521,4 +592,14 @@ slotGetValues(
     int offsetSlotNo = slotNo - nSlotsFirstTuple;
     OutputConnectorDataHelper<OutputConnectorDataType2>::slotGetValues(std::get<1>(*outputConnectorData), offsetSlotNo, arrayIndex, dofNosLocal, values);
   }
+}
+
+template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
+std::string OutputConnectorDataHelper<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>>::
+getString(std::shared_ptr<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>> outputConnectorData)
+{
+  std::stringstream s;
+  s << "{\n\t" << OutputConnectorDataHelper<OutputConnectorDataType1>::getString(std::get<0>(*outputConnectorData)) << "\n;\n\t"
+    << OutputConnectorDataHelper<OutputConnectorDataType2>::getString(std::get<1>(*outputConnectorData)) << "\n}";
+  return s.str();
 }

@@ -271,7 +271,7 @@ config = {
     "durationLogKey":         "duration_total",
     "timeStepOutputInterval": 1,
     "endTime":                variables.end_time,
-    "connectedSlotsTerm1To2": {1:2},          # transfer gamma to MuscleContractionSolver, the receiving slots are λ, λdot, γ
+    "connectedSlotsTerm1To2": {2:2},          # transfer gamma to MuscleContractionSolver, the receiving slots are λ, λdot, γ
     "connectedSlotsTerm2To1":  None,       # transfer nothing back
     
     # Multidomain with motoneuron

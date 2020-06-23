@@ -9,6 +9,7 @@
 #include "control/diagnostic_tool/performance_measurement.h"
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 #include "mesh/mesh_manager/mesh_manager.h"
+#include "output_connector_data_transfer/output_connector_data_helper.h"
 
 namespace OperatorSplitting
 {
@@ -104,6 +105,11 @@ initialize()
 
   // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
   DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+
+#ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
+  LOG(DEBUG) << "initialized operator splitting " << this->schemeName_ << ", getOutputConnectorData: "
+    << OutputConnectorDataHelper<OutputConnectorDataType>::getString(getOutputConnectorData());
+#endif
 
   initialized_ = true;
 }

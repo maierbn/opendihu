@@ -29,6 +29,9 @@ struct OutputConnectorDataHelper
     std::shared_ptr<OutputConnectorDataType> outputConnectorData,
     int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values
   );
+
+  //! get a string representation of the output connector data for debugging
+  static std::string getString(std::shared_ptr<OutputConnectorDataType> outputConnectorData);
 };
 
 template<typename OutputConnectorDataType>
@@ -54,6 +57,9 @@ struct OutputConnectorDataHelper<std::vector<std::shared_ptr<OutputConnectorData
     std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>> outputConnectorData,
     int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values
   );
+
+  //! get a string representation of the output connector data for debugging
+  static std::string getString(std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>> outputConnectorData);
 };
 
 template<typename OutputConnectorDataType>
@@ -79,6 +85,9 @@ struct OutputConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::sh
     std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>>>> outputConnectorData,
     int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values
   );
+
+  //! get a string representation of the output connector data for debugging
+  static std::string getString(std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>>>> outputConnectorData);
 };
 
 template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
@@ -104,6 +113,9 @@ struct OutputConnectorDataHelper<std::tuple<std::shared_ptr<OutputConnectorDataT
     std::shared_ptr<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>> outputConnectorData,
     int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values
   );
+
+  //! get a string representation of the output connector data for debugging
+  static std::string getString(std::shared_ptr<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>> outputConnectorData);
 };
 
 #include "output_connector_data_transfer/output_connector_data_helper.tpp"

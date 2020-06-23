@@ -4,6 +4,8 @@
 #include <tuple>
 #include "easylogging++.h"
 
+#include "output_connector_data_transfer/output_connector_data_helper.h"
+
 /** Transfer between two vectors of any type
  */
 template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
@@ -17,6 +19,15 @@ void SolutionVectorMapping<
 {
   // debugging and error output
   LOG(DEBUG) << "transfer vector (1)";
+  LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2 << ", outputConnection: " << outputConnection.getDebugInformation();
+#ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
+  LOG(DEBUG) << "transferableSolutionData1: "
+    << OutputConnectorDataHelper<std::vector<std::shared_ptr<OutputConnectorDataType1>>>::getString(transferableSolutionData1);
+  LOG(DEBUG) << "transferableSolutionData2: "
+    << OutputConnectorDataHelper<std::vector<std::shared_ptr<OutputConnectorDataType2>>>::getString(transferableSolutionData2);
+#endif
+
+
 
   VLOG(1) << "Solution vector mapping (output_connector_data_transfer_vector.tpp)";
   int nTransferableVariables = std::min(transferableSolutionData1->size(), transferableSolutionData2->size());
@@ -59,6 +70,16 @@ void SolutionVectorMapping<
 {
   // debugging and error output
   LOG(DEBUG) << "transfer vector (2)";
+  LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2 << ", outputConnection: " << outputConnection.getDebugInformation();
+#ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
+  LOG(DEBUG) << "transferableSolutionData1: "
+    << OutputConnectorDataHelper<std::vector<std::shared_ptr<
+      Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>
+    >>>::getString(transferableSolutionData1);
+  LOG(DEBUG) << "transferableSolutionData2: "
+    << OutputConnectorDataHelper<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>>::getString(transferableSolutionData2);
+#endif
+
   VLOG(1) << "Solution vector mapping (output_connector_data_transfer_vector.tpp)";
 
   if (transferableSolutionData1->empty())
@@ -286,6 +307,16 @@ void SolutionVectorMapping<
             int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer vector (3)";
+  LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2 << ", outputConnection: " << outputConnection.getDebugInformation();
+#ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
+  LOG(DEBUG) << "transferableSolutionData1: "
+    << OutputConnectorDataHelper<Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>>::getString(transferableSolutionData1);
+  LOG(DEBUG) << "transferableSolutionData2: "
+    << OutputConnectorDataHelper<std::vector<std::shared_ptr<
+          Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
+        >>>::getString(transferableSolutionData2);
+#endif
+
   VLOG(1) << "Solution vector mapping (output_connector_data_transfer_vector.tpp)";
 
   if (transferableSolutionData2->empty())

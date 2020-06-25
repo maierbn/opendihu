@@ -840,7 +840,7 @@ def set_stress_values(n_dofs_global, n_nodes_global_per_coordinate_direction, ti
       amplitude = min(1.0, current_time/1000)   # linear ramp to 1 after 1 s
       minimum_value = min(0.5, 0.5*current_time/1000)
       
-      values[local_dof_no] = (amplitude-minimum_value) * np.sin((current_time/100 + 0.2*k/mz + 0.1*i/mx) * 2*np.pi) ** 2 + minimum_value
+      values[local_dof_no] = (amplitude-minimum_value) * np.sin((current_time/1000 + 0.2*k/mz + 0.1*i/mx) * 2*np.pi) ** 2 + minimum_value
       
   
 # for debugging output show when the first 20 fibers will fire
@@ -904,12 +904,6 @@ if rank_no == 0 and not variables.disable_firing_output:
   t_end = timeit.default_timer()
   print("duration of assembling this list: {:.3f} s\n".format(t_end-t_start))  
   
-# compute partitioning
-  
-variables.n_fibers_per_subdomain_x = (int)(variables.n_fibers_x / variables.n_subdomains_x)
-variables.n_fibers_per_subdomain_y = (int)(variables.n_fibers_y / variables.n_subdomains_y)
-variables.n_points_per_subdomain_z = (int)(variables.n_points_whole_fiber / variables.n_subdomains_z)
-
 ####################################
 # set Dirichlet BC for the flow problem
 
@@ -1099,7 +1093,7 @@ if False:
     for i,factors_list in enumerate(variables.relative_factors.tolist()):
       print("MU {}, maximum fr: {}".format(i,max(factors_list)))
 
-n_points_global = variables.meshes["3Dmesh"]["nPointsGlobal"]
+n_points_global = variables.meshes["3Dmesh_elasticity_quadratic"]["nPointsGlobal"]
 n_points_global_x = n_points_global[0]
 n_points_global_y = n_points_global[1]
 n_points_global_z = n_points_global[2]
@@ -1116,9 +1110,9 @@ for j in range(n_points_global_y):
 # determine positions of muscle spindles
 muscle_spindle_node_nos = []
 for muscle_spindle_no in range(variables.n_muscle_spindles):
-  i = random.randint(0,n_points_global_x)
-  j = random.randint(0,n_points_global_y)
-  k = random.randint(0,n_points_global_z)
+  i = random.randrange(0,n_points_global_x)
+  j = random.randrange(0,n_points_global_y)
+  k = random.randrange(0,n_points_global_z)
   
   dof_no_global = k*n_points_global_x*n_points_global_y + j*n_points_global_x + i
   muscle_spindle_node_nos.append(dof_no_global)
@@ -1126,8 +1120,8 @@ for muscle_spindle_no in range(variables.n_muscle_spindles):
 # determine positions of golgi tendon organs
 golgi_tendon_organ_node_nos = []
 for golgi_tendon_organ_no in range(variables.n_golgi_tendon_organs):
-  i = random.randint(0,n_points_global_x)
-  j = random.randint(0,n_points_global_y)
+  i = random.randrange(0,n_points_global_x)
+  j = random.randrange(0,n_points_global_y)
   if golgi_tendon_organ_no % 2 == 0:
     k = int(0.1*n_points_global_z)
   else:

@@ -902,12 +902,6 @@ if rank_no == 0 and not variables.disable_firing_output:
   t_end = timeit.default_timer()
   print("duration of assembling this list: {:.3f} s\n".format(t_end-t_start))  
   
-# compute partitioning
-  
-variables.n_fibers_per_subdomain_x = (int)(variables.n_fibers_x / variables.n_subdomains_x)
-variables.n_fibers_per_subdomain_y = (int)(variables.n_fibers_y / variables.n_subdomains_y)
-variables.n_points_per_subdomain_z = (int)(variables.n_points_whole_fiber / variables.n_subdomains_z)
-
 ####################################
 # set Dirichlet BC for the flow problem
 

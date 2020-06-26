@@ -535,7 +535,7 @@ generateFinalDiagram()
             // check if it is connected to the current row
             if (std::find(connectionLine.begin(), connectionLine.end(), currentLineNo) != connectionLine.end())
             {
-              internalConnectionLinesColumns += "+";
+              internalConnectionLinesColumns += "├";
               connectionLineConnectsToTheRightInCurrentRow = true;
             }
             else

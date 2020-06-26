@@ -1,7 +1,7 @@
 import sys, os
 from distutils import sysconfig
-from Package import Package
-from Package import Package
+from .Package import Package
+from .Package import Package
 
 check_text = r'''
 #include <iostream>
@@ -156,18 +156,19 @@ class Base64(Package):
         self.check_text = check_text
         self.static = False
         
+    def check(self, ctx):
+        env = ctx.env
+        ctx.Message('Checking for Base64 ...        ')
+        self.check_options(env)
+
         # Setup the build handler.
         self.set_build_handler([
             'mkdir -p  ${PREFIX}/include',
-            'mkdir -p build && cd build && cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} ..',
-            'make install',
+            'pwd',                       # additional line by Aaron
+            'mkdir -p build && cd build && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} ..',
+            'cd build && make install',
         ])
         
-    def check(self, ctx):
-        env = ctx.env
-        ctx.Message('Checking for Base64 ... ')
-        self.check_options(env)
-
         res = super(Base64, self).check(ctx)
 
         self.check_required(res[0], ctx)

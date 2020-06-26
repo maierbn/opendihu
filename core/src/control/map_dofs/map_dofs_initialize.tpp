@@ -252,7 +252,7 @@ slotGetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLoc
     // get the actual values
     fieldVariable->getValues(componentNo, dofNosLocal, values);
 
-    LOG(DEBUG) << "slot " << slotNo << ": from fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
+    LOG(DEBUG) << "*slot " << slotNo << ": from fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
       << ", at dofs " << dofNosLocal << " get values " << values;
   }
 }
@@ -280,9 +280,10 @@ slotSetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLoc
 
     int componentNo = std::get<1>(*data_.getOutputConnectorData())->variable1[index].componentNo;  // should be 0
 
-    LOG(DEBUG) << "slot " << slotNo << ": in fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
+    LOG(DEBUG) << "*slot " << slotNo << ": in fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
       << ", set dofs " << dofNosLocal << " to values " << values;
     fieldVariable->setValues(componentNo, dofNosLocal, values, petscInsertMode);
+    LOG(DEBUG) << "fieldVariable: " << *fieldVariable;
   }
 }
 

@@ -92,6 +92,9 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
       header << sum.first << ";";
     }
 
+    // compose header
+    header << std::endl;
+
     // compose data
     data << StringUtility::timeToString(&tm) << ";";
     data << std::string(hostname) << ";";

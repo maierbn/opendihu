@@ -314,6 +314,7 @@ config = {
   
   # total solver
   "Coupling": {
+    "description":            "overall solver",    # description that will be shown in solver structure visualization
     "endTime":                variables.end_time,
     "timeStepWidth":          variables.dt_stimulation_check,
     "logTimeStepWidthAsKey":  "dt_neurons",
@@ -416,6 +417,7 @@ config = {
         "Term2": {
           # processed Golgi tendon sensor solver
           "Coupling": {
+            "description":            "processed Golgi tendon sensors",      # description that will be shown in solver structure visualization
             "endTime":                variables.end_time,
             "timeStepWidth":          max(variables.dt_golgi_tendon_organs,variables.dt_interneuron),
             "logTimeStepWidthAsKey":  "dt_golgi_tendon_organs",

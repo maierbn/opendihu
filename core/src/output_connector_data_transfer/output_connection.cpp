@@ -330,6 +330,7 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
 
 #ifndef NDEBUG
   VLOG(1) << "getSlotInformation(" << fromVectorNo << "," << fromVectorIndex << ")" << getDebugInformation();
+  LOG(DEBUG) << "getSlotInformation(" << fromVectorNo << "," << fromVectorIndex << "), " << (transferDirectionTerm1To2_? "1->2" : "2->1");
 #endif
 
   if (transferDirectionTerm1To2_)

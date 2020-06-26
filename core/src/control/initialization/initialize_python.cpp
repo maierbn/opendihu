@@ -239,7 +239,7 @@ void DihuContext::loadPythonScript(std::string text)
     emb::set_stderr(stderrWrite);
 
     // add callback function to capture stdout buffer
-    emb::stdout_write_type stdoutWrite = [&stdoutBuffer] (std::string s) {stdoutBuffer += s; };
+    emb::stdout_write_type stdoutWrite = [&stdoutBuffer] (std::string s) {std::cout << s; stdoutBuffer += s; };
     emb::set_stdout(stdoutWrite);
 
     // execute config script
@@ -248,9 +248,9 @@ void DihuContext::loadPythonScript(std::string text)
     emb::reset_stderr();
     emb::reset_stdout();
 
-    PythonUtility::checkForError();
-
     LOG(DEBUG) << stdoutBuffer;
+
+    PythonUtility::checkForError();
   }
   catch(...)
   {

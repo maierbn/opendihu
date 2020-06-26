@@ -52,11 +52,10 @@ initialize()
   DihuContext::solverStructureVisualizer()->addSolver(schemeName_, true, true);   // hasInternalConnectionToFirstNestedSolver=true (the two last arguments) means output connector data is shared with the first and second subsolvers
 
   // parse description for solverStructureVisualizer, if there was any
-  std::string description;
   if (this->specificSettings_.hasKey("description"))
-    description = this->specificSettings_.getOptionString("description", "");
+    description_ = this->specificSettings_.getOptionString("description", "");
 
-  DihuContext::solverStructureVisualizer()->setSolverDescription(description);
+  DihuContext::solverStructureVisualizer()->setSolverDescription(description_);
 
   TimeSteppingScheme::initialize();
   timeStepOutputInterval_ = specificSettings_.getOptionInt("timeStepOutputInterval", 100, PythonUtility::Positive);

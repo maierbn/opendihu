@@ -311,7 +311,7 @@ output(std::ostream &stream) const
   // only output if on rank 0
   if (this->functionSpace_->meshPartition()->ownRankNo() == 0)
   {
-    stream << "\"" << this->name_ << "\""
+    stream << "\"" << this->name_ << "\" on mesh \"" << this->functionSpace_->meshName() << "\""
       << ", isGeometryField: " << std::boolalpha << this->isGeometryField_
       << ", " << this->componentNames_.size() << (this->componentNames_.size() == 1? " component:" : " components: ");
     for (auto &componentName : this->componentNames_)

@@ -1,6 +1,6 @@
 import sys, os
 from distutils import sysconfig
-from Package import Package
+from .Package import Package
 
 check_text = r'''
 #include <stdlib.h>
@@ -15,15 +15,14 @@ class Cython(Package):
   
     def __init__(self, **kwargs):
         defaults = {
-            'download_url': 'https://pypi.python.org/packages/98/bb/cd2be435e28ee1206151793a528028e3dc9a787fe525049efb73637f52bb/Cython-0.27.2.tar.gz',
+            'download_url': 'https://files.pythonhosted.org/packages/b3/ae/971d3b936a7ad10e65cb7672356cff156000c5132cf406cb0f4d7a980fd3/Cython-0.28.3.tar.gz'
         }
         defaults.update(kwargs)
         super(Cython, self).__init__(**defaults)
         #self.ext = '.c'
-        #self.sub_dirs = [
-        #    ('include/mysql', 'lib'),
-        #    ('include/mysql', 'lib64'),
-        #]
+        self.sub_dirs = [
+            ('include', 'lib'),
+        ]
         #self.headers = ['mysql.h']
         self.libs = []
         self.extra_libs = []
@@ -32,16 +31,18 @@ class Cython(Package):
         
         # Setup the build handler.
         self.set_build_handler([
-            'mkdir -p install',
-            'export PYTHONPATH=$PYTHONPATH:${SOURCE_DIR}/install/lib/python2.7/site-packages/ && \
-            python setup.py install --prefix=install',
+            'mkdir -p ${PREFIX}/include',
+            '$export PYTHONPATH=$PYTHONPATH:${DEPENDENCIES_DIR}/python/install/lib/$(basename $(find ${DEPENDENCIES_DIR}/python/install/lib/ -maxdepth 1 -type d -name "python*"))/site-packages/ && \
+            ${DEPENDENCIES_DIR}/python/install/bin/python3 setup.py install --prefix ${DEPENDENCIES_DIR}/python/install',
+            'ln -s ${SOURCE_DIR}/bin ${PREFIX}/bin',
+            '$export PATH=${PREFIX}/bin:$PATH'
         ])
 
-        self.number_output_lines = 871
+        self.number_output_lines = 883
         
     def check(self, ctx):
         env = ctx.env
-        ctx.Message('Checking for Cython ... ')
+        ctx.Message('Checking for Cython ...        ')
         self.check_options(env)
 
         res = super(Cython, self).check(ctx)

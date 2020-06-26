@@ -139,11 +139,19 @@ void CellmlSourceCodeGeneratorBase::initializeSourceCode(
     parameterIndex++;
   }
 
-  LOG(INFO) << "CellML file \"" << sourceFilename_ << "\" with "
+  std::stringstream cellmlMessage;
+  cellmlMessage << "CellML file \"" << sourceFilename_ << "\" with "
     << nStates_ << " state" << (nStates_!=1? "s" : "") <<", " << nAlgebraicsInSource_
     << " algebraic" << (nAlgebraicsInSource_!=1? "s" : "")
     <<", specified " << nParameters_ << " parameter" << (nParameters_!=1? "s" : "") << ": " << s.str() << "\n";
 
+  // only print message if it has not already been printed
+  static std::vector<std::string> cellmlMessages;
+  if (std::find(cellmlMessages.begin(), cellmlMessages.end(), cellmlMessage.str()) == cellmlMessages.end())
+  {
+    LOG(INFO) << cellmlMessage.str();
+    cellmlMessages.push_back(cellmlMessage.str());
+  }
 
 #ifndef NDEBUG
   std::stringstream message;

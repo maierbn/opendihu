@@ -64,6 +64,7 @@ slotSetValues(
     LOG(DEBUG) << "slot " << slotNo << ": in fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
       << ", set dofs " << dofNosLocal << " to values " << values;
     fieldVariable->setValues(componentNo, dofNosLocal, values, petscInsertMode);
+    LOG(DEBUG) << "fieldVariable: " << *fieldVariable;
   }
   else
   {
@@ -78,6 +79,7 @@ slotSetValues(
     LOG(DEBUG) << "slot " << slotNo << ": in fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
       << ", set dofs " << dofNosLocal << " to values " << values;
     fieldVariable->setValues(componentNo, dofNosLocal, values, petscInsertMode);
+    LOG(DEBUG) << "fieldVariable: " << *fieldVariable;
   }
 }
 
@@ -244,6 +246,7 @@ slotSetValues(
       << "in fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
       << ", set dofs " << dofNosLocal << " to values " << values;
     fieldVariable->setValues(componentNo, dofNosLocal, values, petscInsertMode);
+    LOG(DEBUG) << "fieldVariable: " << *fieldVariable;
   }
   else
   {
@@ -259,6 +262,7 @@ slotSetValues(
       << "in fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
       << ", set dofs " << dofNosLocal << " to values " << values;
     fieldVariable->setValues(componentNo, dofNosLocal, values, petscInsertMode);
+    LOG(DEBUG) << "fieldVariable: " << *fieldVariable;
   }
 }
 
@@ -463,6 +467,7 @@ slotSetValues(
       << " in fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
       << ", set dofs " << dofNosLocal << " to values " << values;
     fieldVariable->setValues(componentNo, dofNosLocal, values, petscInsertMode);
+    LOG(DEBUG) << "fieldVariable: " << *fieldVariable;
   }
   else
   {
@@ -478,6 +483,7 @@ slotSetValues(
       << "in fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
       << ", set dofs " << dofNosLocal << " to values " << values;
     fieldVariable->setValues(componentNo, dofNosLocal, values, petscInsertMode);
+    LOG(DEBUG) << "fieldVariable: " << *fieldVariable;
   }
 }
 

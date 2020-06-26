@@ -30,6 +30,8 @@ bottom_traction = [0.0,0.0,0.0]        # [N]
 # -----------------
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
+import scipy
+import numpy as np
 
 n_compartments = 1
 
@@ -68,26 +70,27 @@ use_lumped_mass_matrix = False            # which formulation to use, the formul
 
 # timing parameters
 # -----------------
-end_time = 4000.0                   # [ms] end time of the simulation
+end_time = 10000.0                   # [ms] end time of the simulation
+end_time = 10.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
 dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
-dt_elasticity = 1e-1                # [ms] time step width of elasticity solver
+dt_elasticity = 1                   # [ms] time step width of elasticity solver
 
-dt_neurons = 1e-3                   # [ms] time step width for all neuron solvers
-dt_muscle_spindles = 1e-3           # [ms] timestep width of cellml solver of muscle spindles
-dt_golgi_tendon_organs = 1e-3       # [ms] timestep width of cellml solver of golgi tendon organs
-dt_muscle_spindles = 1e-3           # [ms] timestep width of cellml solver of muscle spindles
-dt_interneuron = 1e-3               # [ms] timstep width of the cellml solver for interneurons
-dt_motoneuron = 1e-3                # [ms] timstep width of the cellml solver for motoneurons
-dt_stimulation_check = 1e-3         # [ms] interval when to apply stimulation input to electro-mechanics solver
+dt_neurons = 1e-2                   # [ms] time step width for all neuron solvers
+dt_muscle_spindles     = dt_neurons # [ms] timestep width of cellml solver of muscle spindles
+dt_golgi_tendon_organs = dt_neurons # [ms] timestep width of cellml solver of golgi tendon organs
+dt_muscle_spindles     = dt_neurons # [ms] timestep width of cellml solver of muscle spindles
+dt_interneuron         = dt_neurons # [ms] timstep width of the cellml solver for interneurons
+dt_motoneuron          = dt_neurons # [ms] timstep width of the cellml solver for motoneurons
+dt_stimulation_check = dt_elasticity # [ms] interval when to apply stimulation input to electro-mechanics solver
 
-output_timestep_multidomain = 1e-1  # [ms] timestep for fiber output, 0.5
-output_timestep_elasticity = 1      # [ms] timestep for elasticity output files
-output_timestep_neurons = 1e-3      # [ms] timestep for output of files for neurons
-output_timestep_motoneuron = 1e-3   # [ms] timestep for output of files for motoneuron
+output_timestep_multidomain = 1     # [ms] timestep for fiber output, 0.5
+output_timestep_elasticity = dt_elasticity  # [ms] timestep for elasticity output files
+output_timestep_neurons = 1         # [ms] timestep for output of files for neurons
+output_timestep_motoneuron = 1      # [ms] timestep for output of files for motoneuron
 
 # input files
 #multidomain_cellml_file = "../../input/hodgkin_huxley-razumova.cellml"
@@ -122,6 +125,7 @@ muscle_spindle_mappings = {
   ("outputConnectorSlot", 1): "membrane/i_Stim",   # stimulation
 }
 muscle_spindle_parameters_initial_values = [0]    # [i_Stim]
+muscle_spindle_delay = 30             # [ms] signal delay between muscle spindle model and motoneuron model
 
 # golgi tendon organs
 n_golgi_tendon_organs = 4
@@ -132,6 +136,7 @@ golgi_tendon_organ_mappings = {
   ("outputConnectorSlot", 1): "membrane/i_Stim",   # stimulation
 }
 golgi_tendon_organ_parameters_initial_values = [0]    # [i_Stim]
+golgi_tendon_organ_delay = 30
 
 # inter neurons
 n_interneurons = 6
@@ -176,10 +181,29 @@ def callback_muscle_spindles_input(input_values, output_values, current_time, sl
   :param buffer:        A persistent helper buffer. This variable can be set to anything and will be provided back to 
                         this function every time. Using this buffer, it is possible to implement a time delay of signals.
   """
+  # map from λ in the 3D mesh to muscle spindles model input
   
   # get number of input and output values
-  n_input_values = len(input_values)      # =1 here (1 motoneuron)
-  n_output_values = len(output_values)    # =3 here (3 points in neuromuscular junction)
+  n_input_values = len(input_values)      # = n_muscle_spindles
+  n_output_values = len(output_values)    # = n_muscle_spindles
+  
+  # print for debugging
+  if current_time > 100 and current_time < 105:
+    print("stretch at muscle spindles: {}".format(input_values))
+  
+  for i in range(n_input_values):
+    stretch = input_values[i]
+    
+    # the first time when the stretch is not yet computed it has a value of 0, set to 1
+    if stretch == 0:
+      stretch = 1
+      
+    output_values[i] = abs(stretch-1) * 50
+    output_values[i] = 10
+  
+  print("stretch at muscle spindles: {}, output: {}".format(input_values, output_values))
+  return output_values
+  
 
 def callback_muscle_spindles_to_motoneurons(input_values, output_values, current_time, slot_nos, buffer):
   """
@@ -194,37 +218,43 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
   :param buffer:        A persistent helper buffer. This variable can be set to anything and will be provided back to 
                         this function every time. Using this buffer, it is possible to implement a time delay of signals.
   """
+  # mapping muscle spindles output -> motor neuron signals, delay signals by 
   
   # get number of input and output values
-  n_input_values = len(input_values)      # =1 here (1 motoneuron)
-  n_output_values = len(output_values)    # =3 here (3 points in neuromuscular junction)
+  n_input_values = len(input_values)      # = n_muscle_spindles
+  n_output_values = len(output_values)    # = n_muscle_spindles
   
   # initialize buffer the first time
   if 0 not in buffer:
-    buffer[0] = None
+    for muscle_spindle_index in range(n_input_values):
+      buffer[muscle_spindle_index] = None
   
-  # determine spike by threshold
-  if input_values[0] > 20:
-    buffer[0] = current_time    # store time of last activation in buffer[0]
+  # loop over muscle spindles
+  for muscle_spindle_index in range(n_input_values):
     
-  # if there has been a stimulation so far
-  if buffer[0] is not None:
-    
-    # convolute Dirac delta, kernel is a shifted and scaled gaussian
-    t_delay = 10              # [ms] delay of the signal
-    gaussian_std_dev = 0.1    # [ms] width of the gaussian curve
-    convolution_kernel = lambda t: scipy.stats.norm.pdf(t, loc=t_delay, scale=gaussian_std_dev)*np.sqrt(2*np.pi)*gaussian_std_dev
-    delayed_signal = convolution_kernel(current_time - buffer[0]) * 20
+    # determine spike by threshold
+    if input_values[muscle_spindle_index] > 20:
+      buffer[muscle_spindle_index] = current_time    # store time of last activation in buffer
       
-    # loop over output values and set all to the computed signal, cut off at 1e-5
-    if delayed_signal > 1e-5:
-      print("motoneuron t: {}, last_activation: {}, computed delayed_signal: {}".format(current_time, buffer[0], delayed_signal))
-      for i in range(n_output_values):
-        output_values[i] = delayed_signal
-    else:
-      for i in range(n_output_values):
-        output_values[i] = None     # do not set any values
+    # if there has been a stimulation so far
+    if buffer[muscle_spindle_index] is not None:
+      
+      # convolute Dirac delta, kernel is a shifted and scaled gaussian
+      t_delay = muscle_spindle_delay              # [ms] delay of the signal
+      gaussian_std_dev = 0.1                      # [ms] width of the gaussian curve
+      convolution_kernel = lambda t: scipy.stats.norm.pdf(t, loc=t_delay, scale=gaussian_std_dev)*np.sqrt(2*np.pi)*gaussian_std_dev
+      delayed_signal = convolution_kernel(current_time - buffer[muscle_spindle_index]) * 5
+        
+      # loop over output values and set all to the computed signal, cut off at 1e-5
+      if delayed_signal > 1e-5:
+        #print("muscle spindle t: {}, last_activation: {}, computed delayed_signal: {}".format(current_time, buffer[muscle_spindle_index], delayed_signal))
+        output_values[muscle_spindle_index] = delayed_signal
+      else:
+        output_values[muscle_spindle_index] = None     # do not set any values
     
+    
+  print("muscle_spindles_to_motoneurons: {} -> {}".format(input_values, output_values))
+  return output_values
 
 def callback_golgi_tendon_organs_input(input_values, output_values, current_time, slot_nos, buffer):
   """
@@ -239,10 +269,27 @@ def callback_golgi_tendon_organs_input(input_values, output_values, current_time
   :param buffer:        A persistent helper buffer. This variable can be set to anything and will be provided back to 
                         this function every time. Using this buffer, it is possible to implement a time delay of signals.
   """
+  # map from λ in the 3D mesh to golgi tendon organs
   
   # get number of input and output values
-  n_input_values = len(input_values)      # =1 here (1 motoneuron)
-  n_output_values = len(output_values)    # =3 here (3 points in neuromuscular junction)
+  n_input_values = len(input_values)      # = n_golgi_tendon_organs
+  n_output_values = len(output_values)    # = n_golgi_tendon_organs
+  
+  # print for debugging
+  if current_time > 100 and current_time < 105:
+    print("stretch at Golgi tendon organs: {}".format(input_values))
+    
+  for i in range(n_input_values):
+    stretch = input_values[i]
+    
+    # the first time when the stretch is not yet computed it has a value of 0, set to 1
+    if stretch == 0:
+      stretch = 1
+      
+    output_values[i] = abs(stretch-1) * 50
+    
+  #print("stretch at Golgi tendon organs: {}, output: {}".format(input_values, output_values))
+  return output_values
 
 def callback_golgi_tendon_organs_to_interneurons(input_values, output_values, current_time, slot_nos, buffer):
   """
@@ -257,10 +304,28 @@ def callback_golgi_tendon_organs_to_interneurons(input_values, output_values, cu
   :param buffer:        A persistent helper buffer. This variable can be set to anything and will be provided back to 
                         this function every time. Using this buffer, it is possible to implement a time delay of signals.
   """
+  # mapping Golgi tendon organs -> interneurons
   
   # get number of input and output values
-  n_input_values = len(input_values)      # =1 here (1 motoneuron)
-  n_output_values = len(output_values)    # =3 here (3 points in neuromuscular junction)
+  n_input_values = len(input_values)      # = n_golgi_tendon_organs
+  n_output_values = len(output_values)    # = n_interneurons
+  
+  # sum up all input signals and set all outputs to this sum
+  
+  # collect sum of all Golgi tendon organs
+  total_signal = 0
+  
+  # loop over Golgi tendon organs
+  for golgi_tendon_organ_index in range(n_input_values):
+    
+    # if input is active
+    if input_values[golgi_tendon_organ_index] > 20:
+      total_signal += input_values[golgi_tendon_organ_index]
+    
+  # set same value to all connected interneurons
+  for interneuron_index in range(n_output_values):
+    output_values[interneuron_index] = total_signal * 0.01
+  return output_values
 
 def callback_interneurons_to_motoneurons(input_values, output_values, current_time, slot_nos, buffer):
   """
@@ -275,11 +340,42 @@ def callback_interneurons_to_motoneurons(input_values, output_values, current_ti
   :param buffer:        A persistent helper buffer. This variable can be set to anything and will be provided back to 
                         this function every time. Using this buffer, it is possible to implement a time delay of signals.
   """
+  # mapping interneurons -> input for motor neurons, i.e. signal delay from interneurons to motoneurons
+  # the actual N->M mapping from interneurons to motoneurons is done by callback_motoneurons_input
   
   # get number of input and output values
-  n_input_values = len(input_values)      # =1 here (1 motoneuron)
-  n_output_values = len(output_values)    # =3 here (3 points in neuromuscular junction)
-
+  n_input_values = len(input_values)      # = n_interneurons
+  n_output_values = len(output_values)    # = n_interneurons
+  
+  # initialize buffer the first time
+  if 0 not in buffer:
+    for interneuron_index in range(n_input_values):
+      buffer[interneuron_index] = None
+  
+  # loop over interneurons
+  for interneuron_index in range(n_input_values):
+    
+    # determine spike by threshold
+    if input_values[interneuron_index] > 20:
+      buffer[interneuron_index] = current_time    # store time of last activation in buffer
+      
+    # if there has been a stimulation so far
+    if buffer[interneuron_index] is not None:
+      
+      # convolute Dirac delta, kernel is a shifted and scaled gaussian
+      t_delay = golgi_tendon_organ_delay          # [ms] delay of the signal
+      gaussian_std_dev = 0.1                      # [ms] width of the gaussian curve
+      convolution_kernel = lambda t: scipy.stats.norm.pdf(t, loc=t_delay, scale=gaussian_std_dev)*np.sqrt(2*np.pi)*gaussian_std_dev
+      delayed_signal = convolution_kernel(current_time - buffer[interneuron_index]) * 5
+        
+      # loop over output values and set all to the computed signal, cut off at 1e-5
+      if delayed_signal > 1e-5:
+        #print("interneuron t: {}, last_activation: {}, computed delayed_signal: {}".format(current_time, buffer[interneuron_index], delayed_signal))
+        output_values[interneuron_index] = delayed_signal
+      else:
+        output_values[interneuron_index] = None     # do not set any values
+  return output_values
+  
 def callback_motoneurons_input(input_values, output_values, current_time, slot_nos, buffer):
   """
   Callback function that transform a number of input_values to a number of output_values.
@@ -294,9 +390,30 @@ def callback_motoneurons_input(input_values, output_values, current_time, slot_n
                         this function every time. Using this buffer, it is possible to implement a time delay of signals.
   """
   
+  # map from delayed muscle spindle model outputs and delayed interneuron outputs to motoneuron inputs
+  
   # get number of input and output values
-  n_input_values = len(input_values)      # =1 here (1 motoneuron)
-  n_output_values = len(output_values)    # =3 here (3 points in neuromuscular junction)
+  n_input_values = len(input_values)      # = n_muscle_spindles + n_interneurons
+  n_output_values = len(output_values)    # = n_motoneurons
+  
+  # sum up all input signals and set all outputs to this sum
+  
+  # collect sum of all Golgi tendon organs
+  total_signal = 0
+  
+  # loop over Golgi tendon organs
+  for input_index in range(n_input_values):
+    
+    # if input is active
+    if input_values[input_index] > 20:
+      total_signal += input_values[input_index]
+    
+  # set same value to all connected motoneurons
+  for motoneuron_index in range(n_output_values):
+    output_values[motoneuron_index] = total_signal * 0.01
+    
+  print("motoneurons input: {}".format(input_values))
+  return output_values
   
 def callback_motoneuron_output(input_values, output_values, current_time, slot_nos, buffer):
   """
@@ -312,7 +429,10 @@ def callback_motoneuron_output(input_values, output_values, current_time, slot_n
                         this function every time. Using this buffer, it is possible to implement a time delay of signals.
   """
   
+  # This is callback is currently not used, because the MapDofs object has the mode set to "localSetIfAboveThreshold",
+  # which assigns the value 20 to all outputs if the input is above the threshold of 20
+  
   # get number of input and output values
-  n_input_values = len(input_values)      # =1 here (1 motoneuron)
-  n_output_values = len(output_values)    # =3 here (3 points in neuromuscular junction)
+  n_input_values = len(input_values)      # 1 (1 motoneuron)
+  n_output_values = len(output_values)    # =N (number of points in neuromuscular junction, this is all nodes in the x-y plane at the center of the muscle)
   

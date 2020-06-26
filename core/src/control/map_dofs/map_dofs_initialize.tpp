@@ -31,6 +31,12 @@ initialize()
   // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
   DihuContext::solverStructureVisualizer()->addSolver("MapDofs", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
 
+  // parse description for solverStructureVisualizer, if there was any
+  std::string description;
+  if (this->specificSettings_.hasKey("description"))
+    description = this->specificSettings_.getOptionString("description", "");
+  DihuContext::solverStructureVisualizer()->setSolverDescription(description);
+
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();
 
@@ -277,6 +283,30 @@ slotSetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLoc
     LOG(DEBUG) << "slot " << slotNo << ": in fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
       << ", set dofs " << dofNosLocal << " to values " << values;
     fieldVariable->setValues(componentNo, dofNosLocal, values, petscInsertMode);
+  }
+}
+
+template<typename FunctionSpaceType, typename NestedSolverType>
+void MapDofs<FunctionSpaceType,NestedSolverType>::
+slotSetRepresentationGlobal(int slotNo, int arrayIndex)
+{
+  // need function space of affected field variables
+  int nSlotsNestedSolver = OutputConnectorDataHelper<typename NestedSolverType::OutputConnectorDataType>::nSlots(
+    std::get<0>(*data_.getOutputConnectorData())
+  );
+  if (slotNo < nSlotsNestedSolver)
+  {
+    OutputConnectorDataHelper<typename NestedSolverType::OutputConnectorDataType>::slotSetRepresentationGlobal(
+      std::get<0>(*data_.getOutputConnectorData()), slotNo, arrayIndex
+    );
+  }
+  else
+  {
+    // get the field variable and component no for this slot
+    int index = slotNo - nSlotsNestedSolver;
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> fieldVariable
+      = std::get<1>(*data_.getOutputConnectorData())->variable1[index].values;
+    fieldVariable->setRepresentationGlobal();
   }
 }
 

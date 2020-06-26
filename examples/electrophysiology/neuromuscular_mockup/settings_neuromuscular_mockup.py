@@ -124,6 +124,18 @@ if rank_no == 0:
 # initialize all helper variables
 from helper import *
 
+
+# callback function that receives the whole result values and produces plots while the simulation is running
+def handle_result(n_instances, time_step_no, current_time, states, algebraics, name_information, additional_argument):
+    
+  print("handle result of muscle spindle")
+  #print(name_information)
+    
+  # asign some states to variables
+  Vm = states[name_information["stateNames"].index("membrane/V")]
+  print("Vm: {}".format(Vm))
+    
+
 if False:
   # settings for the multidomain solver
   multidomain_solver = {
@@ -307,13 +319,14 @@ config = {
     "logTimeStepWidthAsKey":  "dt_neurons",
     "durationLogKey":         "duration_total",
     "timeStepOutputInterval": 100,
-    "connectedSlotsTerm1To2": [],
-    "connectedSlotsTerm2To1": {10:1, 9:4},
+    "connectedSlotsTerm1To2": {8:1},          # connect motoneuron input
+    "connectedSlotsTerm2To1": {10:1, 9:4},    # connect input for muscle spindles and golgi tendon organs
 
     # muscle spindles, golgi tendon organs and interneurons
     "Term1": {
       # muscle spindles, golgi tendon organs and interneurons = motoneuron input solver
       "Coupling": {
+        "description":            "sensory organs and interneurons",    # description that will be shown in solver structure visualization
         "endTime":                variables.end_time,
         "timeStepWidth":          max(variables.dt_muscle_spindles,max(variables.dt_golgi_tendon_organs,variables.dt_interneuron)),
         "logTimeStepWidthAsKey":  "dt_neurons",
@@ -360,7 +373,7 @@ config = {
               "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
               "nAdditionalFieldVariables":    0,
                   
-              # cellml model of motorneuron
+              # cellml model of muscle spindle
               "CellML" : {
                 "modelFilename":                          variables.muscle_spindle_cellml_file,           # input C++ source file or cellml XML file
                 "initializeStatesToEquilibrium":          False,                                          # if the equilibrium values of the states should be computed before the simulation starts
@@ -381,6 +394,10 @@ config = {
                 "setSpecificStatesRepeatAfterFirstCall":  0.01,                                           # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
                 "setSpecificStatesCallEnableBegin":       0,                                              # [ms] first time when to call setSpecificStates
                 "additionalArgument":                     None,
+                                     
+                "handleResultFunction":                   handle_result,              # callback function that gets all current values and can do something with them
+                "handleResultCallInterval":               1,                          # interval in which handle_result will be called
+                "handleResultFunctionAdditionalParameter": None,                      # additional last argument for handle_result
                 
                 "mappings":                               variables.muscle_spindle_mappings,              # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
                 "parametersInitialValues":                variables.muscle_spindle_parameters_initial_values,  # initial values for the parameters: I_Stim, l_hs
@@ -564,6 +581,7 @@ config = {
       
       # motoneuron with electro-mechanics
       "Coupling": {
+        "description":            "motoneuron with electro-mechanics",    # description that will be shown in solver structure visualization
         "endTime":                variables.end_time,
         "timeStepWidth":          variables.dt_stimulation_check,
         "logTimeStepWidthAsKey":  "dt_stimulation_check",
@@ -652,7 +670,7 @@ config = {
         "Term2": {
           # map from λ in the 3D mesh to muscle spindles input
           "MapDofs": {
-            "description":                "λ->muscle spindles input",     # description that will be shown in solver structure visualization
+            "description":                "stretch->muscle spindles input", # description that will be shown in solver structure visualization
             "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
             "meshName":                   "muscleSpindleMesh",            # the mesh on which the additional field variables will be defined
             "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
@@ -676,7 +694,7 @@ config = {
               
             # map from λ in the 3D mesh to golgi tendon organs
             "MapDofs": {
-              "description":                "λ->Golgi tendon organs",      # description that will be shown in solver structure visualization
+              "description":                "stretch->Golgi tendon organs",      # description that will be shown in solver structure visualization
               "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
               "meshName":                   "golgiTendonOrganMesh",               # the mesh on which the additional field variables will be defined
               "beforeComputation":          None, 
@@ -852,6 +870,9 @@ config = {
     }
   }
 }
+
+with open("config.py", "w") as f:
+  f.write(str(config))
 
 # stop timer and calculate how long parsing lasted
 if rank_no == 0:

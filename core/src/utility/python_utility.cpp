@@ -1053,8 +1053,10 @@ std::string PythonUtility::pyUnicodeToString(PyObject* object)
   // PythonUtility::GlobalInterpreterLock lock;
   
   PyObject *asciiString = PyUnicode_AsASCIIString(object);
-  std::string result = PyBytes_AsString(asciiString);
-  Py_DECREF(asciiString);
+  std::string result;
+  if (asciiString)
+    result = PyBytes_AsString(asciiString);
+  Py_CLEAR(asciiString);
 
   return result;
 }

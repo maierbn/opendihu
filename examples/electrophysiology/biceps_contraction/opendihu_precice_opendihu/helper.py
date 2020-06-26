@@ -84,33 +84,33 @@ subfolder = ""
 if variables.paraview_output:
   if variables.adios_output:
     subfolder = "paraview/"
-  variables.output_writer_emg.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True})
-  variables.output_writer_elasticity.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "binary": True, "fixedFormat": False, "combineFiles": True})
-  variables.output_writer_fibers.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True})
+  variables.output_writer_emg.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
+  variables.output_writer_elasticity.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
+  variables.output_writer_fibers.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
   if variables.states_output:
-    variables.output_writer_0D_states.append({"format": "Paraview", "outputInterval": 1, "filename": "out/" + subfolder + variables.scenario_name + "/0D_states", "binary": True, "fixedFormat": False, "combineFiles": True})
+    variables.output_writer_0D_states.append({"format": "Paraview", "outputInterval": 1, "filename": "out/" + subfolder + variables.scenario_name + "/0D_states", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
 
 if variables.adios_output:
   if variables.paraview_output:
     subfolder = "adios/"
-  variables.output_writer_emg.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "useFrontBackBuffer": False, "combineNInstances": 1})
-  variables.output_writer_elasticity.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "useFrontBackBuffer": False})
-  variables.output_writer_fibers.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "combineNInstances": variables.n_subdomains_xy, "useFrontBackBuffer": False})
+  variables.output_writer_emg.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "useFrontBackBuffer": False, "combineNInstances": 1, "fileNumbering": "incremental"})
+  variables.output_writer_elasticity.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "useFrontBackBuffer": False, "fileNumbering": "incremental"})
+  variables.output_writer_fibers.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "combineNInstances": variables.n_subdomains_xy, "useFrontBackBuffer": False, "fileNumbering": "incremental"})
   #variables.output_writer_fibers.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/fibers", "combineNInstances": 1, "useFrontBackBuffer": False}
 
 if variables.python_output:
   if variables.adios_output:
     subfolder = "python/"
-  variables.output_writer_emg.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "binary": True})
-  variables.output_writer_elasticity.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "binary": True})
-  variables.output_writer_fibers.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "binary": True})
+  variables.output_writer_emg.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "binary": True, "fileNumbering": "incremental"})
+  variables.output_writer_elasticity.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "binary": True, "fileNumbering": "incremental"})
+  variables.output_writer_fibers.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "binary": True, "fileNumbering": "incremental"})
 
 if variables.exfile_output:
   if variables.adios_output:
     subfolder = "exfile/"
-  variables.output_writer_emg.append({"format": "Exfile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg"})
-  variables.output_writer_elasticity.append({"format": "Exfile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity"})
-  variables.output_writer_fibers.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers"})
+  variables.output_writer_emg.append({"format": "Exfile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/emg", "fileNumbering": "incremental"})
+  variables.output_writer_elasticity.append({"format": "Exfile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "fileNumbering": "incremental"})
+  variables.output_writer_fibers.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "fileNumbering": "incremental"})
 
 # set variable mappings for cellml model
 if "hodgkin_huxley" in variables.cellml_file:
@@ -348,10 +348,6 @@ if rank_no == 0:
     print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
     quit()
   
-variables.n_fibers_per_subdomain_x = (int)(variables.n_fibers_x / variables.n_subdomains_x)
-variables.n_fibers_per_subdomain_y = (int)(variables.n_fibers_y / variables.n_subdomains_y)
-variables.n_points_per_subdomain_z = (int)(variables.n_points_whole_fiber / variables.n_subdomains_z)
-
 ####################################
 # set Dirichlet BC for the flow problem
 

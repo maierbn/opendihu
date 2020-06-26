@@ -22,6 +22,9 @@ namespace TimeSteppingScheme
  * The two output connection slots are V_mk^(i) and V_mk^(i+1),
  * where V_mk^(i) is the input and should be connected to the output of the reaction term.
  * V_mk^(i+1) is the output and should be connected to the input of the reaction term.
+ *
+ * There are two additional output connection slots, active_stress_k (input of active stress from subcellular solver)
+ * and active_stress_total (output of total active stress)
  */
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 class MultidomainSolver :
@@ -77,6 +80,9 @@ protected:
 
   //! initialize the relative factors fr_k
   void initializeCompartmentRelativeFactors();
+
+  //! from the compartments active stress values compute the total active stress
+  void computeTotalActiveStress();
 
   Data dataMultidomain_;  //< the data object of the multidomain solver which stores all field variables and matrices
 

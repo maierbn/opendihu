@@ -1,5 +1,7 @@
 #include "control/map_dofs/map_dofs.h"
 
+#include "utility/python_capture_stderr.h"
+
 namespace Control
 {
 
@@ -50,6 +52,22 @@ setTimeSpan(double startTime, double endTime)
   nestedSolver_.setTimeSpan(startTime, endTime);
 }
 
+//! start time of time interval to be simulated
+template<typename FunctionSpaceType, typename NestedSolverType>
+double MapDofs<FunctionSpaceType,NestedSolverType>::
+startTime()
+{
+  return nestedSolver_.startTime();
+}
+
+//! end time of simulation
+template<typename FunctionSpaceType, typename NestedSolverType>
+double MapDofs<FunctionSpaceType,NestedSolverType>::
+endTime()
+{
+  return nestedSolver_.endTime();
+}
+
 template<typename FunctionSpaceType, typename NestedSolverType>
 void MapDofs<FunctionSpaceType,NestedSolverType>::
 performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
@@ -97,6 +115,14 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
       // get values of input dofs
       slotGetValues(mapping.outputConnectorSlotNoFrom, mapping.outputConnectorArrayIndexFrom, mapping.inputDofs, inputValues);
 
+#ifndef NDEBUG
+      std::string stdoutBuffer;
+
+      // add callback function to capture stdout buffer
+      emb::stdout_write_type stdoutWrite = [&stdoutBuffer] (std::string s) {stdoutBuffer += s; };
+      emb::set_stdout(stdoutWrite);
+#endif
+
       // python call back signature:
       // callback(input_values, output_values, current_time, slot_nos, buffer)
 
@@ -111,15 +137,22 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
       if (returnValue == NULL)
         PythonUtility::checkForError();
 
+#ifndef NDEBUG
+      LOG(DEBUG) << "callback output: " << stdoutBuffer;
+      emb::reset_stdout();
+#endif
+
       // select the dofs for which the output values were set to something different than None
       valuesToSet.clear();
       mapping.dofNosToSetLocal.clear();
 
+      PyObject *outputValuesPy = returnValue;
+
       // loop over the output values
-      int nOutputValues = PyList_Size(mapping.outputValuesPy);
+      int nOutputValues = PyList_Size(outputValuesPy);
       for (int outputValueNo = 0; outputValueNo < nOutputValues; outputValueNo++)
       {
-        PyObject *outputValue = PyList_GetItem(mapping.outputValuesPy, outputValueNo);
+        PyObject *outputValue = PyList_GetItem(outputValuesPy, outputValueNo);
 
         if (outputValue != Py_None)
         {
@@ -136,8 +169,15 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
       Py_CLEAR(arglist);
       Py_CLEAR(inputValuesPy);
 
+      LOG(DEBUG) << "slot " << mapping.outputConnectorSlotNoTo << ", set values from callback: " << valuesToSet << " at dofs: " << mapping.dofNosToSetLocal;
+
       // set values in target field variable
       slotSetValues(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
+
+
+      std::vector<double> values;
+      slotGetValues(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo, mapping.dofNosToSetLocal, values);
+      LOG(DEBUG) << "check get values: " << values;
     }
     else
     {
@@ -221,6 +261,9 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
         // set values
         slotSetValues(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
       }
+
+      // call setRepresentationGlobal on the field variable
+      slotSetRepresentationGlobal(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo);
     }
   }
 }

@@ -19,7 +19,6 @@ int main(int argc, char *argv[])
   Control::Coupling<
     // motoneuron input solver
     Control::Coupling<  
-      // mapping muscle spindles input
       // mapping muscle spindles -> motor neuron signals
       Control::MapDofs<
         HelperFunctionSpace,
@@ -33,7 +32,6 @@ int main(int argc, char *argv[])
       >,
       // processed Golgi tendon sensor solver
       Control::Coupling<
-        // mapping Golgi tendon organs input
         // mapping Golgi tendon organs -> interneurons
         Control::MapDofs<
           HelperFunctionSpace,
@@ -71,23 +69,35 @@ int main(int argc, char *argv[])
           >
         >
       >,
+      // map from λ in the 3D mesh to muscle spindles input
       Control::MapDofs<
         HelperFunctionSpace,
-        // electro-mechanics solver
-        Control::Coupling
-        <
-          // electrophysiology solver (mockup)
-          Control::MultipleInstances<
-            PrescribedValues<
-              FunctionSpace::FunctionSpace<
-                Mesh::StructuredDeformableOfDimension<3>,
-                BasisFunction::LagrangeOfOrder<1>
+        
+        // map from λ in the 3D mesh to golgi tendon organs
+        Control::MapDofs<
+          HelperFunctionSpace,
+          
+          // map from motoneuronMesh to stimulated nodes
+          Control::MapDofs<
+            HelperFunctionSpace,
+            
+            // electro-mechanics solver
+            Control::Coupling
+            <
+              // electrophysiology solver (mockup)
+              Control::MultipleInstances<
+                PrescribedValues<
+                  FunctionSpace::FunctionSpace<
+                    Mesh::StructuredDeformableOfDimension<3>,
+                    BasisFunction::LagrangeOfOrder<1>
+                  >
+                >
+              >,
+              // mechanics solver
+              MuscleContractionSolver<
+                Mesh::CompositeOfDimension<3>
               >
             >
-          >,
-          // mechanics solver
-          MuscleContractionSolver<
-            Mesh::CompositeOfDimension<3>
           >
         >
       >

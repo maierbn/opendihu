@@ -30,6 +30,12 @@ struct OutputConnectorDataHelper
     int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values
   );
 
+  //! call setRepresentationGlobal on the field variable
+  static void slotSetRepresentationGlobal(
+    std::shared_ptr<OutputConnectorDataType> outputConnectorData,
+    int slotNo, int arrayIndex
+  );
+
   //! get a string representation of the output connector data for debugging
   static std::string getString(std::shared_ptr<OutputConnectorDataType> outputConnectorData);
 };
@@ -56,6 +62,12 @@ struct OutputConnectorDataHelper<std::vector<std::shared_ptr<OutputConnectorData
   static void slotGetValues(
     std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>> outputConnectorData,
     int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values
+  );
+
+  //! call setRepresentationGlobal on the field variable
+  static void slotSetRepresentationGlobal(
+    std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>> outputConnectorData,
+    int slotNo, int arrayIndex
   );
 
   //! get a string representation of the output connector data for debugging
@@ -86,6 +98,12 @@ struct OutputConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::sh
     int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values
   );
 
+  //! call setRepresentationGlobal on the field variable
+  static void slotSetRepresentationGlobal(
+    std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>>>> outputConnectorData,
+    int slotNo, int arrayIndex
+  );
+
   //! get a string representation of the output connector data for debugging
   static std::string getString(std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>>>> outputConnectorData);
 };
@@ -112,6 +130,12 @@ struct OutputConnectorDataHelper<std::tuple<std::shared_ptr<OutputConnectorDataT
   static void slotGetValues(
     std::shared_ptr<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>> outputConnectorData,
     int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values
+  );
+
+  //! call setRepresentationGlobal on the field variable
+  static void slotSetRepresentationGlobal(
+    std::shared_ptr<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>> outputConnectorData,
+    int slotNo, int arrayIndex
   );
 
   //! get a string representation of the output connector data for debugging

@@ -45,6 +45,9 @@ initialize(int nCompartments)
     outputConnectorData_->at(compartmentNo) = std::make_shared<OutputConnectorData<FunctionSpaceType,1>>();
     outputConnectorData_->at(compartmentNo)->addFieldVariable(transmembranePotential_[compartmentNo]);          // V_mk^(i)
     outputConnectorData_->at(compartmentNo)->addFieldVariable(transmembranePotentialSolution_[compartmentNo]);  // V_mk^(i+1)
+
+    outputConnectorData_->at(compartmentNo)->addFieldVariable(activeStress_[compartmentNo]);  // activeStress_k
+    outputConnectorData_->at(compartmentNo)->addFieldVariable(activeStressTotal_);  // activeStressTotal_k
   }
 }
 
@@ -58,6 +61,7 @@ createPetscObjects()
   transmembranePotentialSolution_.reserve(nCompartments_);
   transmembranePotential_.reserve(nCompartments_);
   compartmentRelativeFactor_.reserve(nCompartments_);
+  activeStress_.reserve(nCompartments_);
 
   assert(this->functionSpace_);
 
@@ -74,6 +78,10 @@ createPetscObjects()
     std::stringstream compartmentRelativeFactorName;
     compartmentRelativeFactorName << "f_r_" << k;
     this->compartmentRelativeFactor_.push_back(this->functionSpace_->template createFieldVariable<1>(compartmentRelativeFactorName.str()));
+
+    std::stringstream activeStressName;
+    activeStressName << "active_stress_" << k;
+    this->activeStress_.push_back(this->functionSpace_->template createFieldVariable<1>(activeStressName.str()));
   }
 
   this->flowPotential_ = this->functionSpace_->template createFieldVariable<1>("flowPotential");
@@ -81,6 +89,7 @@ createPetscObjects()
   this->extraCellularPotential_ = this->functionSpace_->template createFieldVariable<1>("phi_e");
   this->zero_ = this->functionSpace_->template createFieldVariable<1>("zero");
   this->relativeFactorTotal_ = this->functionSpace_->template createFieldVariable<1>("Σf_r");
+  this->activeStressTotal_ = this->functionSpace_->template createFieldVariable<1>("activeStressTotal");
 }
 
 template<typename FunctionSpaceType>
@@ -137,9 +146,24 @@ compartmentRelativeFactor(int compartmentNo)
 
 template<typename FunctionSpaceType>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> Multidomain<FunctionSpaceType>::
+activeStress(int compartmentNo)
+{
+  assert(compartmentNo >= 0 && compartmentNo < nCompartments_);
+  return this->activeStress_[compartmentNo];
+}
+
+template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> Multidomain<FunctionSpaceType>::
 relativeFactorTotal()
 {
   return this->relativeFactorTotal_;
+}
+
+template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> Multidomain<FunctionSpaceType>::
+activeStressTotal()
+{
+  return this->activeStressTotal_;
 }
 
 template<typename FunctionSpaceType>
@@ -189,7 +213,7 @@ getFieldVariablesForOutputWriter()
   }
 
   return std::make_tuple(geometryField, this->fiberDirection_, this->flowPotential_, extraCellularPotential_,
-                         transmembranePotentials, compartmentRelativeFactors, relativeFactorTotal_);
+                         transmembranePotentials, compartmentRelativeFactors, relativeFactorTotal_, activeStressTotal_);
 }
 
 } // namespace

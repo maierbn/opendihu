@@ -154,15 +154,12 @@ from helper import *
 variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
 variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
-print("output_algebraic_index:",variables.output_algebraic_index)
-print("output_state_index:",variables.output_state_index)
-print("output_rwitrs: {}".format( variables.output_writer_fibers))
-
 # define the config dict
 config = {
   "scenarioName":          variables.scenario_name,
   "logFormat":             "csv",
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": variables.mappings_between_meshes,
   "Solvers": {
@@ -236,6 +233,7 @@ config = {
                   "inputMeshIsGlobal":            True,
                   "dirichletBoundaryConditions":  {},
                   "nAdditionalFieldVariables":    0,
+                  "checkForNanInf":               False,
                     
                   "CellML" : {
                       "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
@@ -270,7 +268,7 @@ config = {
                       "stimulationLogFilename":                 "out/stimulation.log",                          # a file that will contain the times of stimulations
                   },      
                   "OutputWriter" : [
-                    {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/0D_states({},{})".format(fiber_in_subdomain_coordinate_x,fiber_in_subdomain_coordinate_y), "binary": True, "fixedFormat": False, "combineFiles": True}
+                    {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/0D_states({},{})".format(fiber_in_subdomain_coordinate_x,fiber_in_subdomain_coordinate_y), "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
                   ] if variables.states_output else []
                   
                 },
@@ -297,6 +295,8 @@ config = {
                   "inputMeshIsGlobal":           True,
                   "solverName":                  "diffusionTermSolver",
                   "nAdditionalFieldVariables":   1,
+                  "checkForNanInf":               False,
+                  
                   "FiniteElementMethod" : {
                     "maxIterations":             1e4,
                     "relativeTolerance":         1e-10,
@@ -337,11 +337,12 @@ config = {
     "outputConnectorSlotIdGamma":     2,                         # which output slot is gamma to be transferred over the precice adapter, there are: λ, λdot, γ
     "MuscleContractionSolver": {
       "dynamic":                      False,                     # if the dynamic formulation with velocity or the quasi-static formulation is computed
+      "mapGeometryToMeshes":          [],
       "numberTimeSteps":              1,                         # only use 1 timestep per interval
       "timeStepOutputInterval":       100,                       # do not output time steps
       "Pmax": variables.pmax,                                    # maximum PK2 active stress
       "OutputWriter" : [
-        {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/mechanics", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+        {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/mechanics", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       ],
       "DynamicHyperelasticitySolver": {
         "timeStepWidth":              variables.dt_3D,           # time step width 

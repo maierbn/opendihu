@@ -79,7 +79,7 @@ public:
     std::vector<std::shared_ptr<FieldVariableType>>,  // transmembranePotentials
     std::vector<std::shared_ptr<FieldVariableType>>,  // compartmentRelativeFactors
     std::shared_ptr<FieldVariableType>,               // relativeFactorTotal
-    std::shared_ptr<FieldVariableType>                // activeStressTotal_
+    std::shared_ptr<FieldVariableType>                // activeStressTotal
   > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers

@@ -200,10 +200,15 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                           if (expression.code == "CONSTANTS")
                           {
                             // replace a single constant
-                            std::stringstream constantCode;
-                            constantCode << " Vc::double_v(Vc::One)*CONSTANTS[" << expression.arrayIndex << "]";
-                            expression.code = constantCode.str();
-                            expression.type = code_expression_t::otherCode;
+                            expression.type = code_expression_t::tree;
+                            expression.treeChildren.resize(2);
+
+                            expression.treeChildren[0].type = code_expression_t::otherCode;
+                            expression.treeChildren[0].code = " Vc::double_v(Vc::One)*";
+
+                            expression.treeChildren[1].type = code_expression_t::variableName;
+                            expression.treeChildren[1].code = "CONSTANTS";
+                            expression.treeChildren[1].arrayIndex = expression.arrayIndex;
                           }
                         }
                       });
@@ -212,10 +217,15 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                              && iifFunction.treeChildren[k].code == "CONSTANTS")
                     {
                       // replace a single constant
-                      std::stringstream constantCode;
-                      constantCode << " Vc::double_v(Vc::One)*CONSTANTS[" << iifFunction.treeChildren[k].arrayIndex << "]";
-                      iifFunction.treeChildren[k].code = constantCode.str();
-                      iifFunction.treeChildren[k].type = code_expression_t::otherCode;
+                      iifFunction.treeChildren[k].type = code_expression_t::tree;
+                      iifFunction.treeChildren[k].treeChildren.resize(2);
+
+                      iifFunction.treeChildren[k].treeChildren[0].type = code_expression_t::otherCode;
+                      iifFunction.treeChildren[k].treeChildren[0].code = " Vc::double_v(Vc::One)*";
+
+                      iifFunction.treeChildren[k].treeChildren[1].type = code_expression_t::variableName;
+                      iifFunction.treeChildren[k].treeChildren[1].code = "CONSTANTS";
+                      iifFunction.treeChildren[k].treeChildren[1].arrayIndex = iifFunction.treeChildren[k].arrayIndex;
                     }
                   }
                 }

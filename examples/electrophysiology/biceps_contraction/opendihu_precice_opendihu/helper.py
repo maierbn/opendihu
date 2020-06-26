@@ -351,27 +351,28 @@ if rank_no == 0:
 ####################################
 # set Dirichlet BC for the flow problem
 
-n_points_3D_mesh_linear_global_x = sum([n_sampled_points_in_subdomain_x(subdomain_coordinate_x) for subdomain_coordinate_x in range(variables.n_subdomains_x)])
-n_points_3D_mesh_linear_global_y = sum([n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(variables.n_subdomains_y)])
-n_points_3D_mesh_linear_global_z = sum([n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(variables.n_subdomains_z)])
-n_points_3D_mesh_linear_global = n_points_3D_mesh_linear_global_x*n_points_3D_mesh_linear_global_y*n_points_3D_mesh_linear_global_z
+# set boundary conditions for the elasticity
+# Note, we have a composite mesh, consisting of 3Dmesh_elasticity_quadratic and 3DFatMesh_elasticity_quadratic and this composite mesh has a numbering that goes over all dofs.
+# The following works because we index the first sub mesh and there first mesh of a composite mesh always has all own dofs with their normal no.s. (The 2nd mesh has the shared dofs to the first mesh removed in the numbering, i.e. they are not counted twice).
+[mx, my, mz] = variables.meshes["3Dmesh_quadratic"]["nPointsGlobal"]
+nx = (mx-1)//2
+ny = (my-1)//2
+nz = (mz-1)//2
 
-n_points_3D_mesh_quadratic_global_x = 2*n_points_3D_mesh_linear_global_x - 1
-n_points_3D_mesh_quadratic_global_y = 2*n_points_3D_mesh_linear_global_y - 1
-n_points_3D_mesh_quadratic_global_z = 2*n_points_3D_mesh_linear_global_z - 1
- 
-# set Dirichlet BC at top nodes for linear elasticity problem, fix muscle at top
+# set Dirichlet BC at top nodes for elasticity problem, fix muscle at top
 variables.elasticity_dirichlet_bc = {}
-for i in range(n_points_3D_mesh_quadratic_global_x*n_points_3D_mesh_quadratic_global_y):
-  variables.elasticity_dirichlet_bc[(n_points_3D_mesh_quadratic_global_z-1)*n_points_3D_mesh_quadratic_global_x*n_points_3D_mesh_quadratic_global_y + i] = 0.0
-    
+for j in range(my):
+  for i in range(mx):
+    variables.elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
+  
+# fix edge
+for i in range(mx):
+  variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
+  
+# fix corner completely
+variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
+
 # Neumann BC at bottom nodes, traction downwards
-nx = n_points_3D_mesh_linear_global_x-1
-ny = n_points_3D_mesh_linear_global_y-1
-nz = n_points_3D_mesh_linear_global_z-1
-variables.nx = nx
-variables.ny = ny
-variables.nz = nz
 variables.elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
 #variables.elasticity_neumann_bc = []
 
@@ -380,54 +381,3 @@ print("bottom_traction={}\n elasticity_neumann_bc={}".format(variables.bottom_tr
 #with open("mesh","w") as f:
 #  f.write(str(variables.meshes["3Dmesh_quadratic"]))
     
-# sanity checking at the end, is disabled and can be copied to after the config in the real settings file
-if False:
-  # check coupling instances
-  multiple_instances = config["Coupling"]["Term1"]["MultipleInstances"]
-  n_instances = multiple_instances["nInstances"]
-  instances_size = len(multiple_instances["instances"])
-  print("n_instances: {}".format(n_instances))
-
-  print("n subdomains: {} x {}".format(variables.n_subdomains_x, variables.n_subdomains_y))
-  print("n_fibers_per_subdomain_x: {} {}".format(variables.n_fibers_per_subdomain_x, variables.n_fibers_per_subdomain_y))
-
-  for subdomain_coordinate_y in range(variables.n_subdomains_y):
-    print("n_fibers_in_subdomain_y({}) = {}".format(subdomain_coordinate_y, n_fibers_in_subdomain_y(subdomain_coordinate_y)))
-
-  print("--")
-  for subdomain_coordinate_x in range(variables.n_subdomains_x):
-    print("n_fibers_in_subdomain_x({}) = {}".format(subdomain_coordinate_x, n_fibers_in_subdomain_x(subdomain_coordinate_x)))
-  print("--")
-
-  # check fiber no
-  counter = 0
-  for subdomain_coordinate_y in range(variables.n_subdomains_y):
-    for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):
-      for subdomain_coordinate_x in range(variables.n_subdomains_x):
-        for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
-          no = get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)
-          if no != counter:
-            print("error: get_fiber_no({},{},{},{}) = {}, counter = {}".format(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y,no,counter))
-          else:
-            print("   ok: get_fiber_no({},{},{},{}) = {}, counter = {}".format(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y,no,counter))
-          counter += 1
-          
-
-  if n_instances != instances_size or instances_size == 0:
-    print("Error with top-level multiple instances: nInstances: {}, size of instances: {}".format(n_instances, instances_size))
-
-  # loop over inner instances
-  for i in range(n_instances):
-    multiple_instances0 = multiple_instances["instances"][i]["StrangSplitting"]["Term1"]["MultipleInstances"]
-    n_instances0 = multiple_instances0["nInstances"]
-    instances_size0 = len(multiple_instances0["instances"])
-    
-    if n_instances0 != instances_size0 or instances_size0 == 0:
-      print("Error with Term1 {} multiple instances: nInstances: {}, size of instances: {}".format(i ,n_instances0, instances_size0))
-    
-    multiple_instances1 = multiple_instances["instances"][i]["StrangSplitting"]["Term2"]["MultipleInstances"]
-    n_instances1 = multiple_instances1["nInstances"]
-    instances_size1 = len(multiple_instances1["instances"])
-
-    if n_instances1 != instances_size1 or instances_size1 == 0:
-      print("Error with Term2 {} multiple instances: nInstances: {}, size of instances: {}".format(i, n_instances1, instances_size1))

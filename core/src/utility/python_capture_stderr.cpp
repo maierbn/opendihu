@@ -174,6 +174,9 @@ PyModuleDef embmodule =
 PyObject* g_stderr;
 PyObject* g_stderr_saved;
 
+PyObject* g_stdout;
+PyObject* g_stdout_saved;
+
 PyMODINIT_FUNC PyInit_emb(void)
 {
   g_stderr = 0;

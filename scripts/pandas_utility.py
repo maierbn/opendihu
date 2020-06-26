@@ -35,9 +35,6 @@ def remove_duplicates(seq):
   return [x for x in seq if not (x in seen or seen_add(x))]
 
 def determine_column_names(line):
-  if "~nDofs" in line:
-    pos = line.find("~nDofs")
-    line = line[0:pos]
   column_names = list(line.split(";"))
 
   # rename "n" columns 

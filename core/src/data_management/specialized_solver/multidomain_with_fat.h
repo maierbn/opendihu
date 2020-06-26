@@ -39,6 +39,7 @@ public:
     std::vector<std::shared_ptr<FieldVariableType>>,              // transmembranePotentials
     std::vector<std::shared_ptr<FieldVariableType>>,              // compartmentRelativeFactors
     std::shared_ptr<FieldVariableType>,                   // relativeFactorTotal
+    std::shared_ptr<FieldVariableType>,                // activeStressTotal
     std::shared_ptr<GeometryFieldVariableFatType>,   // fat layer geometry
     std::shared_ptr<FieldVariableFatType>            // fat layer phi_e
   > FieldVariablesForOutputWriter;

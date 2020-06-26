@@ -303,11 +303,10 @@ setInformationToPreconditioner()
   
   // set block information for block jacobi preconditioner
   // check, if block jacobi preconditioner is selected
-  PetscBool useBlockJacobiPreconditioner, useBlockGSPreconditioner;
+  PetscBool useBlockJacobiPreconditioner;
   PetscObjectTypeCompare((PetscObject)pc, PCBJACOBI, &useBlockJacobiPreconditioner);
-  PetscObjectTypeCompare((PetscObject)pc, PCSOR, &useBlockGSPreconditioner);
 
-  if (useBlockJacobiPreconditioner || useBlockGSPreconditioner)
+  if (useBlockJacobiPreconditioner)
   {
     // smaller blocks
 #if 1
@@ -455,7 +454,7 @@ setInformationToPreconditioner()
     ierr = PCSetCoordinates(pc, 3, nNodesLocalBlock, nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
   }
 
-  if (useBlockJacobiPreconditioner || useBlockGSPreconditioner)
+  if (useBlockJacobiPreconditioner)
   {
     // for block jacobi set sub solvers
     // parse solver type of sub solver

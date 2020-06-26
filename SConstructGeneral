@@ -22,8 +22,7 @@ import random
 import socket
 import platform
 
-sys.path.append("dependencies/scons-config/dist/scons_config-0.1-py2.7.egg")     # load scons_config
-#sys.path.append("dependencies/scons-config/dist/scons_config-0.1-py3.5.egg")     # load scons_config
+sys.path.append("dependencies/scons-config/dist/scons_config-0.1-py3.6.egg")     # load scons_config
 
 import sconsconfig
 from sconsconfig import packages, tools

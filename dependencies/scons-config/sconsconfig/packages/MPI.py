@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
       
     if use_showme:
       if True:
-     # try:
+      try:
         # try to get compiler and linker flags from mpicc, this directly has the needed includes paths
         #ctx.Message("Checking MPI "+str(ctx.env["mpiCC"])+" --showme") 
         cflags_command = "echo '{}' > .a && {} .a --showme:compile; rm .a".format(self.check_text, ctx.env["mpiCC"])
@@ -136,9 +136,9 @@ int main(int argc, char* argv[])
         res = self.try_link(ctx)
         use_mpi_dir = False
         
-     # except Exception as e: 
-     #   ctx.Message("MPI "+str(ctx.env["mpiCC"])+" --showme failed: \n"+str(e)+"\nNow considering MPI_DIR\n")
-     #   use_mpi_dir = True
+      except Exception as e: 
+        ctx.Message("MPI "+str(ctx.env["mpiCC"])+" --showme is not available: \n"+str(e)+"\nNow considering MPI_DIR\n")
+        use_mpi_dir = True
     
     if use_mpi_dir:
       # mpicc was not available (e.g. on hazel hen), now try to use the MPI_DIR variable, as usual

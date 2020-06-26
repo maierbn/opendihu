@@ -125,6 +125,36 @@ slotGetValues(
   }
 }
 
+//! get the values at given dofs at the field variable given by slotNo
+template<typename OutputConnectorDataType>
+void OutputConnectorDataHelper<OutputConnectorDataType>::
+slotSetRepresentationGlobal(
+  std::shared_ptr<OutputConnectorDataType> outputConnectorData,
+  int slotNo, int arrayIndex
+)
+{
+  if (!outputConnectorData)
+    return;
+
+  int nSlotsVariable1 = outputConnectorData->variable1.size();
+
+  // if the slot no corresponds to a field variables stored under variable1
+  if (slotNo < nSlotsVariable1)
+  {
+    std::shared_ptr<typename OutputConnectorDataType::FieldVariable1Type> fieldVariable
+      = outputConnectorData->variable1[slotNo].values;
+
+    fieldVariable->setRepresentationGlobal();
+  }
+  else
+  {
+    // if the slot no corresponds to a field variables stored under variable2
+    int index = slotNo - nSlotsVariable1;
+    std::shared_ptr<typename OutputConnectorDataType::FieldVariable2Type> fieldVariable
+      = outputConnectorData->variable2[index].values;
+  }
+}
+
 //! get a string representation of the output connector data for debugging
 template<typename OutputConnectorDataType>
 std::string OutputConnectorDataHelper<OutputConnectorDataType>::
@@ -277,6 +307,40 @@ slotGetValues(
     LOG(DEBUG) << "slot " << slotNo << ", array index " << arrayIndex << ": "
       << "from fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
       << ", at dofs " << dofNosLocal << " get values " << values;
+  }
+}
+
+//! get the values at given dofs at the field variable given by slotNo
+template<typename OutputConnectorDataType>
+void OutputConnectorDataHelper<std::vector<std::shared_ptr<OutputConnectorDataType>>>::
+slotSetRepresentationGlobal(
+  std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>> outputConnectorData,
+  int slotNo, int arrayIndex
+)
+{
+  if (!outputConnectorData)
+    return;
+  if (outputConnectorData->size() <= arrayIndex)
+    return;
+
+  int nSlotsVariable1 = (*outputConnectorData)[arrayIndex]->variable1.size();
+
+  // if the slot no corresponds to a field variables stored under variable1
+  if (slotNo < nSlotsVariable1)
+  {
+    std::shared_ptr<typename OutputConnectorDataType::FieldVariable1Type> fieldVariable
+      = (*outputConnectorData)[arrayIndex]->variable1[slotNo].values;
+
+    fieldVariable->setRepresentationGlobal();
+  }
+  else
+  {
+    // if the slot no corresponds to a field variables stored under variable2
+    int index = slotNo - nSlotsVariable1;
+    std::shared_ptr<typename OutputConnectorDataType::FieldVariable2Type> fieldVariable
+      = (*outputConnectorData)[arrayIndex]->variable2[index].values;
+
+    fieldVariable->setRepresentationGlobal();
   }
 }
 
@@ -474,6 +538,49 @@ slotGetValues(
   }
 }
 
+//! get the values at given dofs at the field variable given by slotNo
+template<typename OutputConnectorDataType>
+void OutputConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>>>>::
+slotSetRepresentationGlobal(
+  std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>>>> outputConnectorData,
+  int slotNo, int arrayIndex
+)
+{
+  if (!outputConnectorData)
+    return;
+  if (outputConnectorData->empty())
+    return;
+
+  int sizeFirstVector = outputConnectorData->size();
+  int sizeSecondVector = (*outputConnectorData)[0]->size();
+
+  if (arrayIndex >= sizeFirstVector*sizeSecondVector)
+    return;
+
+  int arrayIndex1 = arrayIndex / sizeSecondVector;
+  int arrayIndex2 = arrayIndex % sizeSecondVector;
+
+  int nSlotsVariable1 = (*(*outputConnectorData)[arrayIndex1])[arrayIndex2]->variable1.size();
+
+  // if the slot no corresponds to a field variables stored under variable1
+  if (slotNo < nSlotsVariable1)
+  {
+    std::shared_ptr<typename OutputConnectorDataType::FieldVariable1Type> fieldVariable
+      = (*(*outputConnectorData)[arrayIndex1])->variable1[slotNo].values;
+
+    fieldVariable->setRepresentationGlobal();
+  }
+  else
+  {
+    // if the slot no corresponds to a field variables stored under variable2
+    int index = slotNo - nSlotsVariable1;
+    std::shared_ptr<typename OutputConnectorDataType::FieldVariable2Type> fieldVariable
+      = (*(*outputConnectorData)[arrayIndex1])->variable2[index].values;
+
+    fieldVariable->setRepresentationGlobal();
+  }
+}
+
 
 template<typename OutputConnectorDataType>
 std::string OutputConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>>>>::
@@ -591,6 +698,31 @@ slotGetValues(
   {
     int offsetSlotNo = slotNo - nSlotsFirstTuple;
     OutputConnectorDataHelper<OutputConnectorDataType2>::slotGetValues(std::get<1>(*outputConnectorData), offsetSlotNo, arrayIndex, dofNosLocal, values);
+  }
+}
+
+//! get the values at given dofs at the field variable given by slotNo
+template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
+void OutputConnectorDataHelper<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>>::
+slotSetRepresentationGlobal(
+  std::shared_ptr<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>> outputConnectorData,
+  int slotNo, int arrayIndex
+)
+{
+  if (!outputConnectorData)
+    return;
+
+  int nSlotsFirstTuple = OutputConnectorDataHelper<OutputConnectorDataType1>::nSlots(std::get<0>(*outputConnectorData));
+  int nSlotsSecondTuple = OutputConnectorDataHelper<OutputConnectorDataType2>::nSlots(std::get<1>(*outputConnectorData));
+
+  if (slotNo < nSlotsFirstTuple)
+  {
+    OutputConnectorDataHelper<OutputConnectorDataType1>::slotSetRepresentationGlobal(std::get<0>(*outputConnectorData), slotNo, arrayIndex);
+  }
+  else if (slotNo < nSlotsFirstTuple + nSlotsSecondTuple)
+  {
+    int offsetSlotNo = slotNo - nSlotsFirstTuple;
+    OutputConnectorDataHelper<OutputConnectorDataType2>::slotSetRepresentationGlobal(std::get<1>(*outputConnectorData), offsetSlotNo, arrayIndex);
   }
 }
 

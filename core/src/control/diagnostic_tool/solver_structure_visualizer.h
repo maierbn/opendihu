@@ -29,6 +29,9 @@ public:
   //! add a solver to the diagram
   void addSolver(std::string name, bool hasInternalConnectionToFirstNestedSolver=false, bool hasInternalConnectionToSecondNestedSolver=false);
 
+  //! add a description for the current that will be included in the visualization, to be called after addSolver
+  void setSolverDescription(std::string description);
+
   //! indicate that all further calls to addSolver will be children of the current solver
   void beginChild(std::string description="");
 

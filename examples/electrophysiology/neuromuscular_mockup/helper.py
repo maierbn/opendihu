@@ -7,6 +7,7 @@ import pickle
 import sys,os
 import struct
 import argparse
+import random
 import time
 sys.path.insert(0, '..')
 import variables    # file variables.py
@@ -22,12 +23,12 @@ if variables.n_subdomains != n_ranks:
   print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\033[0m\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
   quit()
 
-variables.relative_factors_file = "compartments_relative_factors.{}.{}_mus_partitioning_{}x{}x{}".\
-  format(os.path.basename(variables.fiber_file),len(variables.motor_units),variables.n_subdomains_x,variables.n_subdomains_y,variables.n_subdomains_z)
-
+#variables.relative_factors_file = "compartments_relative_factors.{}.{}_mus_partitioning_{}x{}x{}".\
+#  format(os.path.basename(variables.fiber_file),len(variables.motor_units),variables.n_subdomains_x,variables.n_subdomains_y,variables.n_subdomains_z)
+#
 include_global_node_positions = False
-if not os.path.exists(variables.relative_factors_file) and rank_no == 0:
-  include_global_node_positions = True
+#if not os.path.exists(variables.relative_factors_file) and rank_no == 0:
+#  include_global_node_positions = True
 
   
 #############################
@@ -42,7 +43,7 @@ result = create_partitioned_meshes_for_settings(
 variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
 variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
-variables.n_compartments = len(variables.motor_units)
+#variables.n_compartments = len(variables.motor_units)
 
 #############################
 # create fat layer mesh
@@ -738,8 +739,9 @@ elif "hodgkin_huxley-razumova" in variables.cellml_file:   # this is (4, "Titin"
   variables.vm_value_stimulated = 20.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
 
 else:
-  print("\033[0;31mCellML file {} has no mappings implemented in helper.py\033[0m".format(variables.cellml_file))
-  quit()
+  pass
+  #print("\033[0;31mCellML file {} has no mappings implemented in helper.py\033[0m".format(variables.cellml_file))
+  #quit()
 
 # load MU distribution and firing times
 variables.firing_times = np.genfromtxt(variables.firing_times_file)
@@ -800,8 +802,46 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
     #print("n_nodes_global: {}, time_step_no: {}, current_time: {}, compartment_no: {}".format(n_nodes_global, time_step_no, current_time, compartment_no))
     #wait = input("Press any key to continue...")
 
-def set_dummy_stress(n_dofs_global, time_step_no, current_time, values, global_natural_dofs, compartment_no):
-  pass
+# callback function for artifical stress values, instead of multidomain
+def set_stress_values(n_dofs_global, n_nodes_global_per_coordinate_direction, time_step_no, current_time, values, global_natural_dofs, compartment_no):
+    # n_dofs_global:       (int) global number of dofs in the mesh where to set the values
+    # n_nodes_global_per_coordinate_direction (list of ints)   [mx, my, mz] number of global nodes in each coordinate direction. 
+    #                       For composite meshes, the values are only for the first submesh, for other meshes sum(...) equals n_dofs_global
+    # time_step_no:        (int)   current time step number
+    # current_time:        (float) the current simulation time
+    # values:              (list of floats) all current local values of the field variable, if there are multiple components, they are stored in struct-of-array memory layout 
+    #                       i.e. [point0_component0, point0_component1, ... point0_componentN, point1_component0, point1_component1, ...]
+    #                       After the call, these values will be assigned to the field variable.
+    # global_natural_dofs  (list of ints) for every local dof no. the dof no. in global natural ordering
+    # additional_argument: The value of the option "additionalArgument", can be any Python object.
+    
+    #print("compartment {}, n_nodes_global_per_coordinate_direction: {}, len(global_natural_dofs): {}, len(values): {}".format(compartment_no, n_nodes_global_per_coordinate_direction, len(global_natural_dofs), len(values)))
+     
+    mx = n_nodes_global_per_coordinate_direction[0]
+    my = n_nodes_global_per_coordinate_direction[1]
+    mz = n_nodes_global_per_coordinate_direction[2]
+    n_nodes = mx*my*mz
+    
+    # loop over nodes in compartment
+    for local_dof_no in range(n_nodes):
+      # get the global no. of the current dof
+      global_dof_no = global_natural_dofs[local_dof_no]
+        
+      i = global_dof_no % mx                    # index in x direction
+      j = int((global_dof_no % (mx*my)) / mx)   # index in y direction
+      k = int(global_dof_no / (mx*my))          # index in z direction
+
+      # now we know that values[local_dof_no] is the value at node (i,j,k) in the global mesh
+      if k > mz/2:
+        k = mz/2 - k
+      else:
+        k = k - mz/2
+      
+      amplitude = min(1.0, current_time/1000)   # linear ramp to 1 after 1 s
+      minimum_value = min(0.5, 0.5*current_time/1000)
+      
+      values[local_dof_no] = (amplitude-minimum_value) * np.sin((current_time/1000 + 0.2*k/mz + 0.1*i/mx) * 2*np.pi) ** 2 + minimum_value
+      
   
 # for debugging output show when the first 20 fibers will fire
 if rank_no == 0 and not variables.disable_firing_output:
@@ -1016,40 +1056,77 @@ def compute_compartment_relative_factors(mesh_node_positions, n_mesh_points_xy, 
 ####################################
 # load relative factors for motor units
 
-# determine relative factor fields fr(x) for compartments
-if not os.path.exists(variables.relative_factors_file):
+if False:
+  # determine relative factor fields fr(x) for compartments
+  if not os.path.exists(variables.relative_factors_file):
 
-  # the file does not yet exist, create it on rank 0
-  if rank_no == 0: 
-    
-    mesh_node_positions = variables.meshes["3Dmesh"]["globalNodePositions"]
-    n_points_global = variables.meshes["3Dmesh"]["nPointsGlobal"]
-    n_mesh_points_xy = n_points_global[0]*n_points_global[1]
-    n_mesh_points_z = n_points_global[2]
-    
-    print("Computing the relative MU factors, f_r, for {} motor units and {} mesh nodes, {} fibers. This may take a while ...".format(len(variables.motor_units), len(mesh_node_positions), len(variables.fibers)))
-    variables.relative_factors = compute_compartment_relative_factors(mesh_node_positions, n_mesh_points_xy, n_mesh_points_z, variables.fibers, variables.motor_units)
-    if rank_no == 0:
-      print("Save relative factors to file \"{}\".".format(variables.relative_factors_file))
-      with open(variables.relative_factors_file, "wb") as f:
-        pickle.dump(variables.relative_factors, f)
+    # the file does not yet exist, create it on rank 0
+    if rank_no == 0: 
+      
+      mesh_node_positions = variables.meshes["3Dmesh"]["globalNodePositions"]
+      n_points_global = variables.meshes["3Dmesh"]["nPointsGlobal"]
+      n_mesh_points_xy = n_points_global[0]*n_points_global[1]
+      n_mesh_points_z = n_points_global[2]
+      
+      print("Computing the relative MU factors, f_r, for {} motor units and {} mesh nodes, {} fibers. This may take a while ...".format(len(variables.motor_units), len(mesh_node_positions), len(variables.fibers)))
+      variables.relative_factors = compute_compartment_relative_factors(mesh_node_positions, n_mesh_points_xy, n_mesh_points_z, variables.fibers, variables.motor_units)
+      if rank_no == 0:
+        print("Save relative factors to file \"{}\".".format(variables.relative_factors_file))
+        with open(variables.relative_factors_file, "wb") as f:
+          pickle.dump(variables.relative_factors, f)
+    else:
+      # wait until file is created on rank 0
+      while not os.path.exists(variables.relative_factors_file):
+        time.sleep(1)
+
+  if os.path.exists(variables.relative_factors_file):
+    with open(variables.relative_factors_file, "rb") as f:
+      if rank_no == 0:
+        print("Load relative factors, f_r, from file \"{}\"".format(variables.relative_factors_file))
+      variables.relative_factors = pickle.load(f, encoding='latin1')
   else:
-    # wait until file is created on rank 0
-    while not os.path.exists(variables.relative_factors_file):
-      time.sleep(1)
+    print("\033[0;31mError: Could not load relative factors file \"{}\"\033[0m".format(variables.relative_factors_file))
+    quit()
 
-if os.path.exists(variables.relative_factors_file):
-  with open(variables.relative_factors_file, "rb") as f:
-    if rank_no == 0:
-      print("Load relative factors, f_r, from file \"{}\"".format(variables.relative_factors_file))
-    variables.relative_factors = pickle.load(f, encoding='latin1')
-else:
-  print("\033[0;31mError: Could not load relative factors file \"{}\"\033[0m".format(variables.relative_factors_file))
-  quit()
+  # debugging output
+  if rank_no == 0 and not variables.disable_firing_output:
+    for i,factors_list in enumerate(variables.relative_factors.tolist()):
+      print("MU {}, maximum fr: {}".format(i,max(factors_list)))
 
-# debugging output
-if rank_no == 0 and not variables.disable_firing_output:
-  for i,factors_list in enumerate(variables.relative_factors.tolist()):
-    print("MU {}, maximum fr: {}".format(i,max(factors_list)))
+n_points_global = variables.meshes["3Dmesh_elasticity_quadratic"]["nPointsGlobal"]
+n_points_global_x = n_points_global[0]
+n_points_global_y = n_points_global[1]
+n_points_global_z = n_points_global[2]
 
-    
+# determine positions of neuromuscular junctions
+stimulation_node_nos = []
+for j in range(n_points_global_y):
+  for i in range(n_points_global_x):
+    k = int(n_points_global_z / 2)
+  
+    dof_no_global = k*n_points_global_x*n_points_global_y + j*n_points_global_x + i
+    stimulation_node_nos.append(dof_no_global)
+
+# determine positions of muscle spindles
+muscle_spindle_node_nos = []
+for muscle_spindle_no in range(variables.n_muscle_spindles):
+  i = random.randrange(0,n_points_global_x)
+  j = random.randrange(0,n_points_global_y)
+  k = random.randrange(0,n_points_global_z)
+  
+  dof_no_global = k*n_points_global_x*n_points_global_y + j*n_points_global_x + i
+  muscle_spindle_node_nos.append(dof_no_global)
+
+# determine positions of golgi tendon organs
+golgi_tendon_organ_node_nos = []
+for golgi_tendon_organ_no in range(variables.n_golgi_tendon_organs):
+  i = random.randrange(0,n_points_global_x)
+  j = random.randrange(0,n_points_global_y)
+  if golgi_tendon_organ_no % 2 == 0:
+    k = int(0.1*n_points_global_z)
+  else:
+    k = int(0.9*n_points_global_z)
+  
+  dof_no_global = k*n_points_global_x*n_points_global_y + j*n_points_global_x + i
+  golgi_tendon_organ_node_nos.append(dof_no_global)
+

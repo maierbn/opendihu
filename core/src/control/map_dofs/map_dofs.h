@@ -47,6 +47,12 @@ public:
   //! set the time span of the nested solver
   void setTimeSpan(double startTime, double endTime);
 
+  //! start time of time interval to be simulated
+  double startTime();
+
+  //! end time of simulation
+  double endTime();
+
   //! return the data object of the timestepping scheme
   Data &data();
 
@@ -111,6 +117,9 @@ protected:
 
   //! get the values at given dofs at the field variable given by slotNo
   void slotGetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values);
+
+  //! call slotSetRepresentationGlobal on the field variable of the indicated slot
+  void slotSetRepresentationGlobal(int slotNo, int arrayIndex);
 
   DihuContext context_;             //< context object that gives access to global singleton and has python settings
   PythonConfig specificSettings_;   //< the python settings for this object

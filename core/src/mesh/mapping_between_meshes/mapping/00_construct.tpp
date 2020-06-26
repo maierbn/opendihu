@@ -181,7 +181,7 @@ MappingBetweenMeshesConstruct(std::shared_ptr<FunctionSpaceSourceType> functionS
       }
 
       // debugging output about how interpolation is done, only in debug mode
-//#ifndef NDEBUG
+#ifndef NDEBUG
       std::array<Vec3,FunctionSpaceTargetType::nDofsPerElement()> targetPositions;
       functionSpaceTarget->geometryField().getElementValues(targetMappingInfo.targetElements[0].elementNoLocal, targetPositions);
       Vec3 computedSourcePosition{0,0,0};
@@ -197,8 +197,7 @@ MappingBetweenMeshesConstruct(std::shared_ptr<FunctionSpaceSourceType> functionS
 
       LOG(DEBUG) << functionSpaceSource->meshName() << " dof " << sourceDofNoLocal << " value = " << position << " = " << targetPositions << " * " << targetMappingInfo.targetElements[0].scalingFactors
         << ", interpolation in element " << targetMappingInfo.targetElements[0].elementNoLocal << " of " << functionSpaceTarget->meshName();
-//#endif
-
+#endif
 
       targetMappingInfo_[sourceDofNoLocal] = targetMappingInfo;
 

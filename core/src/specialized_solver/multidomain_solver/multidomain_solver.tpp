@@ -126,6 +126,9 @@ advanceTimeSpan()
       Control::PerformanceMeasurement::start(this->durationLogKey_);
   }
   
+  // update total active stress
+  computeTotalActiveStress();
+
   // stop duration measurement
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
@@ -775,6 +778,28 @@ solveLinearSystem()
   
   // copy the values back from a single Vec that contains all entries to a nested Petsc Vec
   NestedMatVecUtility::fillNestedVec(singleSolution_, nestedSolution_);
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+computeTotalActiveStress()
+{
+  std::shared_ptr<typename Data::FieldVariableType> activeStressTotal = dataMultidomain_.activeStressTotal();
+  activeStressTotal->zeroEntries();
+
+  PetscErrorCode ierr;
+
+  for (int k = 0; k < nCompartments_; k++)
+  {
+    std::shared_ptr<typename Data::FieldVariableType> activeStressCompartment = dataMultidomain_.activeStress(k);
+    std::shared_ptr<typename Data::FieldVariableType> compartmentRelativeFactor = dataMultidomain_.compartmentRelativeFactor(k);
+
+    // Computes the componentwise multiplication w = x*y, any subset of the x, y, and w may be the same vector.
+    // VecPointwiseMult(Vec w, Vec x,Vec y)
+    ierr = VecPointwiseMult(activeStressCompartment->valuesGlobal(), activeStressCompartment->valuesGlobal(), compartmentRelativeFactor->valuesGlobal()); CHKERRV(ierr);
+
+    ierr = VecAXPY(activeStressTotal->valuesGlobal(), 1.0, activeStressCompartment->valuesGlobal());
+  }
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>

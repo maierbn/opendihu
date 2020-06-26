@@ -25,7 +25,7 @@ def n_fibers_in_subdomain_x(subdomain_coordinate_x):
     return variables.n_fibers_per_subdomain_x                             # low number of fibers
   else:
     #print("case c: {} + {}-1={}".format(variables.n_fibers_per_subdomain_x,variables.granularity,variables.n_fibers_per_subdomain_x + variables.granularity - 1))
-    return variables.n_fibers_per_subdomain_x + variables.granularity - 1 # last subdomain has low number of fibers + 1
+    return variables.n_fibers_per_subdomain_x + variables.granularity - 1 # last subdomain has low number of fibers + 1 (only for granularity==2)
   
 # number of fibers that are handled inside the subdomain y
 def n_fibers_in_subdomain_y(subdomain_coordinate_y):
@@ -36,7 +36,7 @@ def n_fibers_in_subdomain_y(subdomain_coordinate_y):
   elif subdomain_coordinate_y < variables.n_subdomains_y-1:
     return variables.n_fibers_per_subdomain_y                             # low number of fibers
   else:
-    return variables.n_fibers_per_subdomain_y + variables.granularity - 1 # last subdomain has low number of fibers + 1
+    return variables.n_fibers_per_subdomain_y + variables.granularity - 1 # last subdomain has low number of fibers + 1 (only for granularity==2)
 
 def n_fibers_in_previous_subdomains_x(subdomain_coordinate_x):
   # number of fibers handled in previous subdomains in x direction

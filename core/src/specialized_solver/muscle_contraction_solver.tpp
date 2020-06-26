@@ -403,7 +403,7 @@ mapGeometryToGivenMeshes()
     std::vector<Vec3> geometryValuesSource;
     geometryFieldSource->getValuesWithoutGhosts(geometryValuesSource);
 
-    LOG(INFO) << "geometryValuesSource: " << geometryValuesSource;
+    LOG(DEBUG) << "geometryValuesSource: " << geometryValuesSource;
 
     // loop over all given mesh names to which we should transfer the geometry
     for (std::string meshName : meshNamesOfGeometryToMapTo_)
@@ -419,9 +419,9 @@ mapGeometryToGivenMeshes()
         std::shared_ptr<TargetFieldVariableType1> geometryFieldTarget = std::make_shared<TargetFieldVariableType1>(
           this->context_.meshManager()->functionSpace<TargetFunctionSpaceType1>(meshName)->geometryField());
 
-        LOG(INFO) << "transfer geometry field to linear mesh, " << geometryFieldSource->functionSpace()->meshName() << " -> "
+        LOG(DEBUG) << "transfer geometry field to linear mesh, " << geometryFieldSource->functionSpace()->meshName() << " -> "
           << geometryFieldTarget->functionSpace()->meshName();
-        LOG(INFO) << StringUtility::demangle(typeid(SourceFunctionSpaceType).name()) << " -> " << StringUtility::demangle(typeid(TargetFunctionSpaceType1).name());
+        LOG(DEBUG) << StringUtility::demangle(typeid(SourceFunctionSpaceType).name()) << " -> " << StringUtility::demangle(typeid(TargetFunctionSpaceType1).name());
 
         // perform the mapping
         DihuContext::mappingBetweenMeshesManager()->template prepareMapping<SourceFieldVariableType,TargetFieldVariableType1>(geometryFieldSource, geometryFieldTarget, -1);
@@ -442,9 +442,9 @@ mapGeometryToGivenMeshes()
         std::shared_ptr<TargetFieldVariableType2> geometryFieldTarget = std::make_shared<TargetFieldVariableType2>(
           this->context_.meshManager()->functionSpace<TargetFunctionSpaceType2>(meshName)->geometryField());
 
-        LOG(INFO) << "transfer geometry field to quadratic mesh, " << geometryFieldSource->functionSpace()->meshName() << " -> "
+        LOG(DEBUG) << "transfer geometry field to quadratic mesh, " << geometryFieldSource->functionSpace()->meshName() << " -> "
           << geometryFieldTarget->functionSpace()->meshName();
-        LOG(INFO) << StringUtility::demangle(typeid(SourceFunctionSpaceType).name()) << " -> " << StringUtility::demangle(typeid(TargetFunctionSpaceType2).name());
+        LOG(DEBUG) << StringUtility::demangle(typeid(SourceFunctionSpaceType).name()) << " -> " << StringUtility::demangle(typeid(TargetFunctionSpaceType2).name());
 
         // perform the mapping
         DihuContext::mappingBetweenMeshesManager()->template prepareMapping<SourceFieldVariableType,TargetFieldVariableType2>(geometryFieldSource, geometryFieldTarget, -1);

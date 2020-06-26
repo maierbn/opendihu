@@ -800,8 +800,46 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
     #print("n_nodes_global: {}, time_step_no: {}, current_time: {}, compartment_no: {}".format(n_nodes_global, time_step_no, current_time, compartment_no))
     #wait = input("Press any key to continue...")
 
-def set_dummy_stress(n_dofs_global, time_step_no, current_time, values, global_natural_dofs, compartment_no):
-  pass
+# callback function for artifical stress values, instead of multidomain
+def set_stress_values(n_dofs_global, n_nodes_global_per_coordinate_direction, time_step_no, current_time, values, global_natural_dofs, compartment_no):
+    # n_dofs_global:       (int) global number of dofs in the mesh where to set the values
+    # n_nodes_global_per_coordinate_direction (list of ints)   [mx, my, mz] number of global nodes in each coordinate direction. 
+    #                       For composite meshes, the values are only for the first submesh, for other meshes sum(...) equals n_dofs_global
+    # time_step_no:        (int)   current time step number
+    # current_time:        (float) the current simulation time
+    # values:              (list of floats) all current local values of the field variable, if there are multiple components, they are stored in struct-of-array memory layout 
+    #                       i.e. [point0_component0, point0_component1, ... point0_componentN, point1_component0, point1_component1, ...]
+    #                       After the call, these values will be assigned to the field variable.
+    # global_natural_dofs  (list of ints) for every local dof no. the dof no. in global natural ordering
+    # additional_argument: The value of the option "additionalArgument", can be any Python object.
+    
+    #print("compartment {}, n_nodes_global_per_coordinate_direction: {}, len(global_natural_dofs): {}, len(values): {}".format(compartment_no, n_nodes_global_per_coordinate_direction, len(global_natural_dofs), len(values)))
+     
+    mx = n_nodes_global_per_coordinate_direction[0]
+    my = n_nodes_global_per_coordinate_direction[1]
+    mz = n_nodes_global_per_coordinate_direction[2]
+    n_nodes = mx*my*mz
+    
+    # loop over nodes in compartment
+    for local_dof_no in range(n_nodes):
+      # get the global no. of the current dof
+      global_dof_no = global_natural_dofs[local_dof_no]
+        
+      i = global_dof_no % mx                    # index in x direction
+      j = int((global_dof_no % (mx*my)) / mx)   # index in y direction
+      k = int(global_dof_no / (mx*my))          # index in z direction
+
+      # now we know that values[local_dof_no] is the value at node (i,j,k) in the global mesh
+      if k > mz/2:
+        k = mz/2 - k
+      else:
+        k = k - mz/2
+      
+      amplitude = min(1.0, current_time/1000)   # linear ramp to 1 after 1 s
+      minimum_value = min(0.5, 0.5*current_time/1000)
+      
+      values[local_dof_no] = (amplitude-minimum_value) * np.sin((current_time/100 + 0.2*k/mz + 0.1*i/mx) * 2*np.pi) ** 2 + minimum_value
+      
   
 # for debugging output show when the first 20 fibers will fire
 if rank_no == 0 and not variables.disable_firing_output:
@@ -1050,6 +1088,51 @@ else:
 # debugging output
 if rank_no == 0 and not variables.disable_firing_output:
   for i,factors_list in enumerate(variables.relative_factors.tolist()):
-    print("MU {}, maximum fr: {}".format(i,max(factors_list)))
+    print("{}: MU {}, maximum fr: {}".format(rank_no, i,max(factors_list)))
 
-    
+#######################################
+# prepare dofs mapping for motor units
+
+n_motor_units = len(variables.motor_units)
+
+# set the motoneuron mesh, which is a Mesh::StructuredRegularFixed<1>, i.e. it has no physical locations but is only logical
+# on every rank there are as many nodes as global motor units
+variables.meshes["motoneuronMesh"] = {
+  "nElements":              n_motor_units-1,
+  "physicalExtent":         n_motor_units,        # this mesh has no physical representation so this value is irrelevant
+  "physicalOffset":         [0,0,0],              # this mesh has no physical representation so this value is irrelevant
+  "nRanks":                 n_ranks,
+  "inputMeshIsGlobal":      False,
+  "setHermiteDerivatives":  False,
+  "logKey":                 "motoneuronMesh",
+}
+
+# determine global node nos of nodes that are at the center and will get stimulated
+n_nodes_x = variables.n_points_3D_mesh_global_x
+n_nodes_y = variables.n_points_3D_mesh_global_y
+n_nodes_z = variables.n_points_3D_mesh_global_z
+z_index_center = (int)(n_nodes_z/2)
+y_index_center = (int)(n_nodes_y/2)
+x_index_center = (int)(n_nodes_x/2)
+
+junction_nodes_global_nos = []
+
+for j in range(n_nodes_y):
+  for i in range(n_nodes_x):
+    global_no = z_index_center*n_nodes_x*n_nodes_y + j*n_nodes_x + i
+    junction_nodes_global_nos.append(global_no)
+
+# specify positions of contraction and velocity "sensors", Golgi tendon organs, muscle spindles
+golgi_tendon_organ_nodes_global_nos = []
+
+# loop over all nodes, select 3x3x2 nodes
+for j in range((int)(n_nodes_y/6),n_nodes_y,(int)(n_nodes_x/3)):
+  for i in range((int)(n_nodes_x/6),n_nodes_x,(int)(n_nodes_x/3)):
+  
+    k = (int)(0.1*n_nodes_z)
+    global_no = k*n_nodes_x*n_nodes_y + j*n_nodes_x + i
+    golgi_tendon_organ_nodes_global_nos.append(global_no)
+
+    k = (int)(0.9*n_nodes_z)
+    global_no = k*n_nodes_x*n_nodes_y + j*n_nodes_x + i
+    golgi_tendon_organ_nodes_global_nos.append(global_no)

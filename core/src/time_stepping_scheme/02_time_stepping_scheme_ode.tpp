@@ -106,6 +106,12 @@ initialize()
   // add this solver to the solvers diagram
   DihuContext::solverStructureVisualizer()->addSolver(this->name_);
 
+  // parse description for solverStructureVisualizer, if there was any
+  std::string description;
+  if (this->specificSettings_.hasKey("description"))
+    description = this->specificSettings_.getOptionString("description", "");
+  DihuContext::solverStructureVisualizer()->setSolverDescription(description);
+
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();
 

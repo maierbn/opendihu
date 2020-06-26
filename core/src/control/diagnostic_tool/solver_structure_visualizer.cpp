@@ -39,6 +39,22 @@ void SolverStructureVisualizer::addSolver(std::string name, bool hasInternalConn
   LOG(DEBUG) << "addSolver \"" << name << "\" [" << currentSolver_ << "].";
 }
 
+//! add a description for the current that will be included in the visualization, to be called after addSolver
+void SolverStructureVisualizer::setSolverDescription(std::string description)
+{
+  LOG(DEBUG) << "SolverStructureVisualizer::setSolverDescription(\"" <<  description << "\")"
+    << " under \"" << currentSolver_->parent->name << "\", nDisableCalls_: " << nDisableCalls_
+    << ", enabled: " << enabled_  << ", currently at \"" << currentSolver_->name << "\".";
+
+  if (!enabled_)
+    return;
+
+  if (!currentSolver_)
+    LOG(FATAL) << "addSolver on invalid currentSolver";
+
+  currentSolver_->description = description;
+}
+
 //! indicate that all further calls to addSolver will be children of the current solver
 void SolverStructureVisualizer::beginChild(std::string description)
 {

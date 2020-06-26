@@ -96,7 +96,6 @@ int main(int argc, char* argv[])
       use_mpi_dir = True
       
     if use_showme:
-      if True:
       try:
         # try to get compiler and linker flags from mpicc, this directly has the needed includes paths
         #ctx.Message("Checking MPI "+str(ctx.env["mpiCC"])+" --showme") 

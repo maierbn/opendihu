@@ -45,6 +45,7 @@ protected:
 
   std::shared_ptr<OutputConnectorDataType> outputConnectorData_;  //< the object that holds output connector data that will be transferred between solvers
   std::shared_ptr<TimeStepping1> timeStepping1_;                  //< pointer to the object of type TimeStepping1
+  std::shared_ptr<TimeStepping2> timeStepping2_;                  //< pointer to the object of type TimeStepping2
 };
 
 } // namespace Data

@@ -891,7 +891,7 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 [mx, my, mz] = variables.meshes["3Dmesh_elasticity_quadratic"]["nPointsGlobal"]
 [nx, ny, nz] = variables.meshes["3Dmesh_elasticity_quadratic"]["nElementsGlobal"]
 
-# set Dirichlet BC at top nodes for linear elasticity problem, fix muscle at top
+# set Dirichlet BC at top nodes for elasticity problem, fix muscle at top
 variables.elasticity_dirichlet_bc = {}
 for j in range(my):
   for i in range(mx):

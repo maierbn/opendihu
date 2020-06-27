@@ -25,17 +25,20 @@ MapDofs(DihuContext context) : Data<FunctionSpaceType>(context)
 //! create the additionalFieldVariables_
 template<typename FunctionSpaceType, typename NestedSolverType>
 void MapDofs<FunctionSpaceType, NestedSolverType>::
-initialize(int nAdditionalFieldVariables, std::shared_ptr<typename NestedSolverType::OutputConnectorDataType> nestedSolverOutputConnectorData)
+initialize(int nAdditionalFieldVariables, NestedSolverType &nestedSolver)
 {
   nAdditionalFieldVariables_ = nAdditionalFieldVariables;
 
   // call initialize of base class
   Data<FunctionSpaceType>::initialize();
 
+  // store the nested solver
+  nestedSolver_ = std::make_shared<NestedSolverType>(nestedSolver);
+
   // initialize output connector data
   outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
 
-  std::get<0>(*outputConnectorData_) = nestedSolverOutputConnectorData;
+  std::get<0>(*outputConnectorData_) = nestedSolver_->getOutputConnectorData();
   std::get<1>(*outputConnectorData_) = std::make_shared<OutputConnectorData<FunctionSpaceType,1>>();
 
   // add all additional field variables
@@ -72,6 +75,9 @@ template<typename FunctionSpaceType, typename NestedSolverType>
 std::shared_ptr<typename MapDofs<FunctionSpaceType, NestedSolverType>::OutputConnectorDataType> MapDofs<FunctionSpaceType, NestedSolverType>::
 getOutputConnectorData()
 {
+  // call getOutputConnectorData of the nested solver such that it can prepare the output connector slots
+  nestedSolver_->getOutputConnectorData();
+
   return outputConnectorData_;
 }
 

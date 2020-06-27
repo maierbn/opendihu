@@ -4,7 +4,7 @@
 
 #include "interfaces/runnable.h"
 #include "time_stepping_scheme/00_time_stepping_scheme.h"
-#include "data_management/specialized_solver/prescribed_values.h"   // adjust this include
+#include "data_management/specialized_solver/dummy.h"
 
 /** A dummy solver that does nothing.
   */
@@ -14,10 +14,10 @@ class Dummy :
 {
 public:
   //! make the FunctionSpace available
-  typedef FunctionSpace::GenericFunctionSpace FunctionSpace;
+  typedef FunctionSpace::Generic FunctionSpace;
 
   //! define the type of the data object
-  typedef ::Data::PrescribedValues<FunctionSpace> Data;
+  typedef ::Data::Dummy<FunctionSpace> Data;
 
   //! Define the type of data that will be transferred between solvers when there is a coupling scheme.
   typedef typename Data::OutputConnectorDataType OutputConnectorDataType;

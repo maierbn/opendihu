@@ -732,18 +732,49 @@ computePK2StressField()
         break;
       };
 
-      // compute the 3x3 jacobian of the parameter space to world space mapping
-      Tensor2_v_t<D> jacobianMaterial = DisplacementsFunctionSpace::computeJacobian(geometryReferenceValues, xi);
+      Tensor2_v_t<D> jacobianMaterial;
       double_v_t jacobianDeterminant;
-      Tensor2_v_t<D> inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, jacobianDeterminant);
+      Tensor2_v_t<D> inverseJacobianMaterial;
+      Tensor2_v_t<D> deformationGradient;
+      double_v_t deformationGradientDeterminant;
 
-      // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
-      // inverseJacobianMaterial[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
+      for (int nTries = 0; nTries < 3; nTries++)
+      {
+        // compute the 3x3 jacobian of the parameter space to world space mapping
+        jacobianMaterial = DisplacementsFunctionSpace::computeJacobian(geometryReferenceValues, xi);
+        inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, jacobianDeterminant);
 
-      // F
-      Tensor2_v_t<D> deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);
+        // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
+        // inverseJacobianMaterial[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
 
-      double_v_t deformationGradientDeterminant = MathUtility::computeDeterminant(deformationGradient);  // J
+        // F
+        deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);
+        deformationGradientDeterminant = MathUtility::computeDeterminant(deformationGradient);  // J
+
+        if (deformationGradientDeterminant > 0.2)
+          break;
+
+        // if J=det(F) is negative, move the point in the element, xi, a bit more to the center
+        for (int i = 0; i < 3; i++)
+        {
+          xi[i] = 0.5 + (xi[0]-0.5)*0.9;
+        }
+
+        LOG(DEBUG) << "element " << elementNoLocal << ", J=" << deformationGradientDeterminant << "," << jacobianDeterminant
+          << ", displacementsValues: " << displacementsValues[0] << "," << displacementsValues[1]
+          << ", deformationGradient: " << deformationGradient << ", inverseJacobianMaterial: " << inverseJacobianMaterial
+          << ", geometryReferenceValues: " << geometryReferenceValues[0] << "," << geometryReferenceValues[1]
+          << ", " << nTries << " retry with xi=" << xi;
+      }
+
+      if (deformationGradientDeterminant < 0)
+      {
+        LOG(ERROR) << "J = det(F) = " << deformationGradientDeterminant << " is negative, in computation of PK2 stresses.\n"
+          << "Element no. " << elementNoLocal << ", xi=" << xi << ", det(material jacobian): " << jacobianDeterminant
+          << ", displacementsValues: " << displacementsValues[0] << "," << displacementsValues[1]
+          << ", deformationGradient: " << deformationGradient << ", inverseJacobianMaterial: " << inverseJacobianMaterial
+          << ", geometryReferenceValues: " << geometryReferenceValues[0] << "," << geometryReferenceValues[1];
+      }
 
       // compute Fdot values
       Tensor2_v_t<D> Fdot = computeDeformationGradientTimeDerivative(velocitiesValues, inverseJacobianMaterial, xi);

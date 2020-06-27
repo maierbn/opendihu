@@ -376,8 +376,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.979899"
-     inkscape:cx="286.25407"
-     inkscape:cy="277.64055"
+     inkscape:cx="225.64491"
+     inkscape:cy="237.23445"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -7530,5 +7530,16 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACwCavDMUpvm+IKAAAAAElFTkSuQmCC
          x="89.832336"
          sodipodi:role="line"
          id="tspan13110">nodes</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11666656px;line-height:125%;font-family:'Univers for UniS 55 Roman';-inkscape-font-specification:'Univers for UniS 55 Roman, ';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#800000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="111.06824"
+       y="94.138222"
+       id="text13114"><tspan
+         sodipodi:role="line"
+         id="tspan13112"
+         x="111.06824"
+         y="94.138222"
+         style="font-size:1.41111112px;fill:#800000;stroke-width:0.26458332px">n_muscle_spindles + n_interneurons</tspan></text>
   </g>
 </svg>

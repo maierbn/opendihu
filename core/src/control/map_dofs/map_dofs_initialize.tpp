@@ -63,11 +63,17 @@ initialize()
   // add mappings to be visualized by solverStructureVisualizer
   for (const DofsMappingType &mapping : mappingsBeforeComputation_)
   {
-    DihuContext::solverStructureVisualizer()->addSlotMapping(mapping.outputConnectorSlotNoFrom, mapping.outputConnectorSlotNoTo);
+    for (int outputConnectorSlotNoTo : mapping.outputConnectorSlotNosTo)
+    {
+      DihuContext::solverStructureVisualizer()->addSlotMapping(mapping.outputConnectorSlotNoFrom, outputConnectorSlotNoTo);
+    }
   }
   for (const DofsMappingType &mapping : mappingsAfterComputation_)
   {
-    DihuContext::solverStructureVisualizer()->addSlotMapping(mapping.outputConnectorSlotNoFrom, mapping.outputConnectorSlotNoTo);
+    for (int outputConnectorSlotNoTo : mapping.outputConnectorSlotNosTo)
+    {
+      DihuContext::solverStructureVisualizer()->addSlotMapping(mapping.outputConnectorSlotNoFrom, outputConnectorSlotNoTo);
+    }
   }
 }
 
@@ -92,7 +98,7 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
 
     // parse options of this item
     newDofsMapping.outputConnectorSlotNoFrom = currentMappingSpecification.getOptionInt("fromOutputConnectorSlotNo", 0, PythonUtility::NonNegative);
-    newDofsMapping.outputConnectorSlotNoTo   = currentMappingSpecification.getOptionInt("toOutputConnectorSlotNo",   0, PythonUtility::NonNegative);
+    currentMappingSpecification.getOptionVector<int>("toOutputConnectorSlotNo", newDofsMapping.outputConnectorSlotNosTo);
 
     newDofsMapping.outputConnectorArrayIndexFrom = currentMappingSpecification.getOptionInt("fromOutputConnectorArrayIndex", 0, PythonUtility::NonNegative);
     newDofsMapping.outputConnectorArrayIndexTo   = currentMappingSpecification.getOptionInt("toOutputConnectorArrayIndex",   0, PythonUtility::NonNegative);
@@ -154,24 +160,54 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
     else if (mode == "callback")
     {
       newDofsMapping.mode = DofsMappingType::modeCallback;
+
+      // parse callback function
       newDofsMapping.callback = currentMappingSpecification.getOptionPyObject("callback");
 
+      // parse input and output dof nos
       currentMappingSpecification.getOptionVector<dof_no_t>("inputDofs", newDofsMapping.inputDofs);
-      currentMappingSpecification.getOptionVector<dof_no_t>("outputDofs", newDofsMapping.outputDofs);
+      PyObject *outputDofsObject = currentMappingSpecification.getOptionPyObject("outputDofs");
+      newDofsMapping.outputDofs = PythonUtility::convertFromPython<std::vector<std::vector<dof_no_t>>>::get(outputDofsObject);
 
+      // check that the number of output dof lists matches the number of output connector slots
+      int nOutputDofSlots = newDofsMapping.outputDofs.size();
+      int nOutputConnectorSlotNos = newDofsMapping.outputConnectorSlotNosTo.size();
+      if (nOutputDofSlots != nOutputConnectorSlotNos)
+      {
+        LOG(FATAL) << currentMappingSpecification << "[\"toOutputConnectorSlotNo\"] specifies " << nOutputConnectorSlotNos << " output connector slots, but "
+         << currentMappingSpecification << "[\"outputDofs\"] contains " << nOutputDofSlots << " lists of dofs.";
+      }
+
+      // create python list [fromSlotNo, [toSlotNos], fromArrayIndex, toArrayIndex]
+      // this list is needed as argument for the callback function
       std::vector<int> slotNosList{
-        newDofsMapping.outputConnectorSlotNoFrom, newDofsMapping.outputConnectorSlotNoTo,
+        newDofsMapping.outputConnectorSlotNoFrom, newDofsMapping.outputConnectorSlotNosTo[0],
         newDofsMapping.outputConnectorArrayIndexFrom, newDofsMapping.outputConnectorArrayIndexTo
       };
-      // list [fromSlotNo, toSlotNo, fromArrayIndex, toArrayIndex]
       newDofsMapping.slotNosPy = PythonUtility::convertToPython<std::vector<int>>::get(slotNosList);
+
+      // set the second list item in [fromSlotNo, [...], fromArrayIndex, toArrayIndex] to [toSlotNo0, toSlotNo1, ...]
+      std::vector<int> outputConnectorSlotNosToList = newDofsMapping.outputConnectorSlotNosTo;
+      PyObject *outputConnectorSlotNosToListPy = PythonUtility::convertToPython<std::vector<int>>::get(outputConnectorSlotNosToList);
+
+      PyList_SetItem(newDofsMapping.slotNosPy, Py_ssize_t(1), outputConnectorSlotNosToListPy);
+
+      // initialize the user buffer
       newDofsMapping.buffer = PyDict_New();
 
-      // initialize outputValues as [None, None, ..., None]
-      int nInitialOutputValues = newDofsMapping.outputDofs.size();
-      newDofsMapping.outputValuesPy = PyList_New(Py_ssize_t(nInitialOutputValues));
-      for (int i = 0; i < nInitialOutputValues; i++)
-        PyList_SetItem(newDofsMapping.outputValuesPy, Py_ssize_t(i), Py_None);
+      // initialize outputValues as [[None, None, ..., None],[...]]
+      newDofsMapping.outputValuesPy = PyList_New(Py_ssize_t(nOutputDofSlots));
+
+      for (int outputDofSlotIndex = 0; outputDofSlotIndex < nOutputDofSlots; outputDofSlotIndex++)
+      {
+        int nInitialOutputValues = newDofsMapping.outputDofs[outputDofSlotIndex].size();
+        PyObject *slotList = PyList_New(Py_ssize_t(nInitialOutputValues));
+
+        for (int i = 0; i < nInitialOutputValues; i++)
+          PyList_SetItem(slotList, Py_ssize_t(i), Py_None);
+
+        PyList_SetItem(newDofsMapping.outputValuesPy, Py_ssize_t(outputDofSlotIndex), slotList);
+      }
     }
     else
     {
@@ -184,7 +220,7 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
       newDofsMapping.dofsMapping = PythonUtility::convertFromPython<std::map<int,std::vector<int>>>::get(object);
 
     LOG(DEBUG) << "Parsed mapping slots " << newDofsMapping.outputConnectorSlotNoFrom << " (arrayIndex " << newDofsMapping.outputConnectorArrayIndexFrom
-      << ") -> " << newDofsMapping.outputConnectorSlotNoTo << " (arrayIndex " << newDofsMapping.outputConnectorArrayIndexTo << "), dofNos "
+      << ") -> " << newDofsMapping.outputConnectorSlotNosTo << " (arrayIndex " << newDofsMapping.outputConnectorArrayIndexTo << "), dofNos "
       << (newDofsMapping.dofNoIsGlobalFrom? "global" : "local") << " -> " << (newDofsMapping.dofNoIsGlobalTo? "global" : "local") << ", mode: " << mode;
     LOG(DEBUG) << "dofsMapping: " << newDofsMapping.dofsMapping;
 
@@ -323,13 +359,9 @@ initializeCommunication(std::vector<DofsMappingType> &mappings)
     // get the mesh partition of the "from" field variable
     std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBaseFrom = getMeshPartitionBase(mapping.outputConnectorSlotNoFrom, mapping.outputConnectorArrayIndexFrom);
 
-    // get the mesh partition of the "to" field variable
-    std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBaseTo = getMeshPartitionBase(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo);
-
     if (!meshPartitionBaseFrom)
-      LOG(FATAL) << "MapDofs: Could not get mesh partition for \"from\" function space for mapping " << mapping.outputConnectorSlotNoFrom << " -> " << mapping.outputConnectorSlotNoTo;
-    if (!meshPartitionBaseTo)
-      LOG(FATAL) << "MapDofs: Could not get mesh partition for \"to\" function space for mapping " << mapping.outputConnectorSlotNoFrom << " -> " << mapping.outputConnectorSlotNoTo;
+      LOG(FATAL) << "MapDofs: Could not get mesh partition for \"from\" function space for mapping " << mapping.outputConnectorSlotNoFrom
+        << " -> " << mapping.outputConnectorSlotNosTo;
 
     if (mapping.mode == DofsMappingType::modeCallback)
     {
@@ -358,28 +390,51 @@ initializeCommunication(std::vector<DofsMappingType> &mappings)
       if (mapping.dofNoIsGlobalTo)
       {
         // transform the global input dofs to local input dofs
-        std::vector<dof_no_t> localDofsMapping;
-        for (std::vector<dof_no_t>::iterator iter = mapping.outputDofs.begin(); iter != mapping.outputDofs.end(); iter++)
+        std::vector<std::vector<dof_no_t>> localDofsMapping;
+        localDofsMapping.resize(mapping.outputConnectorSlotNosTo.size());
+
+        // loop over the "to" slots
+        for (int toSlotIndex = 0; toSlotIndex < mapping.outputConnectorSlotNosTo.size(); toSlotIndex++)
         {
-          global_no_t dofNoGlobalPetsc = *iter;
-          bool isLocal;
-          dof_no_t dofNoLocal = meshPartitionBaseTo->getDofNoLocal(dofNoGlobalPetsc, isLocal);
+          int outputConnectorSlotNoTo = mapping.outputConnectorSlotNosTo[toSlotIndex];
 
-          if (isLocal)
+          // get the mesh partition of the "to" field variable
+          std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBaseTo = getMeshPartitionBase(outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo);
+
+          if (!meshPartitionBaseTo)
+            LOG(FATAL) << "MapDofs: Could not get mesh partition for \"to\" function space for mapping " << mapping.outputConnectorSlotNoFrom
+              << " -> " << outputConnectorSlotNoTo;
+
+          for (std::vector<dof_no_t>::iterator iter = mapping.outputDofs[toSlotIndex].begin(); iter != mapping.outputDofs[toSlotIndex].end(); iter++)
           {
-            localDofsMapping.push_back(dofNoLocal);
+            global_no_t dofNoGlobalPetsc = *iter;
+            bool isLocal;
+            dof_no_t dofNoLocal = meshPartitionBaseTo->getDofNoLocal(dofNoGlobalPetsc, isLocal);
+
+            if (isLocal)
+            {
+              localDofsMapping[toSlotIndex].push_back(dofNoLocal);
+            }
           }
+
+          LOG(DEBUG) << "outputDofs global: " << mapping.outputDofs[toSlotIndex] << ", transformed to local: " << localDofsMapping;
         }
-
-        LOG(DEBUG) << "outputDofs global: " << mapping.outputDofs << ", transformed to local: " << localDofsMapping;
-
         // assign to dofs mapping
         mapping.outputDofs = localDofsMapping;
       }
-      LOG(DEBUG) << "for modeCallbacke, initialized inputDofs: " << mapping.inputDofs << ", outputDofs: " << mapping.outputDofs;
+      LOG(DEBUG) << "for modeCallback, initialized inputDofs: " << mapping.inputDofs << ", outputDofs: " << mapping.outputDofs;
     }
     else
     {
+      // mode is not callback, this means we have exactly one output slot
+
+      // get the mesh partition of the "to" field variable
+      std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBaseTo = getMeshPartitionBase(mapping.outputConnectorSlotNosTo[0], mapping.outputConnectorArrayIndexTo);
+
+      if (!meshPartitionBaseTo)
+        LOG(FATAL) << "MapDofs: Could not get mesh partition for \"to\" function space for mapping " << mapping.outputConnectorSlotNoFrom
+          << " -> " << mapping.outputConnectorSlotNosTo[0];
+
       // convert from dof nos from global to local nos, discard values that are not on the local subdomain
       if (mapping.dofNoIsGlobalFrom)
       {
@@ -444,7 +499,7 @@ initializeCommunication(std::vector<DofsMappingType> &mappings)
 
           if (!isOnLocalDomain)
             LOG(FATAL) << "In MapDofs for mapping between output connector slots " << mapping.outputConnectorSlotNoFrom
-              << " -> " << mapping.outputConnectorSlotNoTo
+              << " -> " << mapping.outputConnectorSlotNosTo
               << ", node in global natural numbering " << nodeNoGlobalNatural << " is not on local domain.";
 
           dof_no_t dofNoLocal = nodeNoLocal;
@@ -499,12 +554,11 @@ initializeCommunication(std::vector<DofsMappingType> &mappings)
       // std::map<int,std::vector<dof_no_t>> dofNosLocalOfValuesToSendToRanks;      //< for every rank the local dof nos of the values that will be sent to the rank
       // std::vector<dof_no_t> allDofNosToSetLocal;                            //< for the received values the local dof nos where to store the values in the field variable
 
-      LOG(DEBUG) << "initialized mapping slots " << mapping.outputConnectorSlotNoFrom << " -> " << mapping.outputConnectorSlotNoTo;
+      LOG(DEBUG) << "initialized mapping slots " << mapping.outputConnectorSlotNoFrom << " -> " << mapping.outputConnectorSlotNosTo;
       LOG(DEBUG) << "  dofsMapping (local: " << (mapping.dofNoIsGlobalTo? "global" : "local") << ": " << mapping.dofsMapping;
       LOG(DEBUG) << "  dofNosLocalOfValuesToSendToRanks: " << mapping.dofNosLocalOfValuesToSendToRanks;
       LOG(DEBUG) << "  allDofNosToSetLocal:         " << mapping.allDofNosToSetLocal;
     }
-
   }  // loop over mappings
 }
 

@@ -389,7 +389,7 @@ mapGeometryToGivenMeshes()
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_map_geometry"));
 
-  LOG(INFO) << "mapGeometryToGivenMeshes: meshNamesOfGeometryToMapTo: " << meshNamesOfGeometryToMapTo_;
+  LOG(DEBUG) << "mapGeometryToGivenMeshes: meshNamesOfGeometryToMapTo: " << meshNamesOfGeometryToMapTo_;
   if (!meshNamesOfGeometryToMapTo_.empty())
   {
     using SourceFunctionSpaceType = typename StaticHyperelasticitySolverType::DisplacementsFunctionSpace;

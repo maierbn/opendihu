@@ -100,7 +100,7 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
       break;
     }
 
-    LOG(DEBUG) << "MapDofs::perform mapping slots " << mapping.outputConnectorSlotNoFrom << " -> " << mapping.outputConnectorSlotNoTo << ", " << modeString;
+    LOG(DEBUG) << "MapDofs::perform mapping slots " << mapping.outputConnectorSlotNoFrom << " -> " << mapping.outputConnectorSlotNosTo << ", " << modeString;
 
     // static variables for input and output of values
     static std::map<int,std::vector<double>> valuesToSendToRanks;
@@ -142,25 +142,39 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
       emb::reset_stdout();
 #endif
 
-      // select the dofs for which the output values were set to something different than None
-      valuesToSet.clear();
-      mapping.dofNosToSetLocal.clear();
+      //PyObject *outputValuesPy = returnValue;
+      PyObject *outputValuesPy = mapping.outputValuesPy;
 
-      PyObject *outputValuesPy = returnValue;
-
-      // loop over the output values
-      int nOutputValues = PyList_Size(outputValuesPy);
-      for (int outputValueNo = 0; outputValueNo < nOutputValues; outputValueNo++)
+      int nToSlots = PyList_Size(outputValuesPy);
+      // loop over the slots to which the output values should be transferred
+      for (int toSlotIndex = 0; toSlotIndex < nToSlots; toSlotIndex++)
       {
-        PyObject *outputValue = PyList_GetItem(outputValuesPy, outputValueNo);
+        PyObject *outputValuesSlotPy = PyList_GetItem(outputValuesPy, toSlotIndex);
 
-        if (outputValue != Py_None)
+        // select the dofs for which the output values were set to something different than None
+        valuesToSet.clear();
+        mapping.dofNosToSetLocal.clear();
+
+        // loop over the output values for the current slot
+        int nOutputValues = PyList_Size(outputValuesSlotPy);
+        for (int outputValueNo = 0; outputValueNo < nOutputValues; outputValueNo++)
         {
-          double value = PythonUtility::convertFromPython<double>::get(outputValue);
-          dof_no_t dofNoLocal = mapping.outputDofs[outputValueNo];
-          valuesToSet.push_back(value);
-          mapping.dofNosToSetLocal.push_back(dofNoLocal);
+          PyObject *outputValue = PyList_GetItem(outputValuesSlotPy, outputValueNo);
+
+          if (outputValue != Py_None)
+          {
+            double value = PythonUtility::convertFromPython<double>::get(outputValue);
+            dof_no_t dofNoLocal = mapping.outputDofs[toSlotIndex][outputValueNo];
+            valuesToSet.push_back(value);
+            mapping.dofNosToSetLocal.push_back(dofNoLocal);
+          }
         }
+
+        LOG(DEBUG) << "slot " << mapping.outputConnectorSlotNosTo[toSlotIndex] << " (index " << toSlotIndex << "/" << mapping.outputConnectorSlotNosTo.size() << ")"
+          << ", set values from callback: " << valuesToSet << " at dofs: " << mapping.dofNosToSetLocal;
+
+        // set values in target field variable
+        slotSetValues(mapping.outputConnectorSlotNosTo[toSlotIndex], mapping.outputConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
       }
 
       // decrement reference counters for python objects
@@ -168,20 +182,9 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
       Py_CLEAR(returnValue);
       Py_CLEAR(arglist);
       Py_CLEAR(inputValuesPy);
-
-      LOG(DEBUG) << "slot " << mapping.outputConnectorSlotNoTo << ", set values from callback: " << valuesToSet << " at dofs: " << mapping.dofNosToSetLocal;
-
-      // set values in target field variable
-      slotSetValues(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
-
-
-      std::vector<double> values;
-      slotGetValues(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo, mapping.dofNosToSetLocal, values);
-      LOG(DEBUG) << "check get values: " << values;
     }
     else
     {
-
       // get input values from the selected slot
       // loop over the ranks and the dofs that have to be send to them
       for (std::pair<int,std::vector<dof_no_t>> rankNoAndDofNosLocal : mapping.dofNosLocalOfValuesToSendToRanks)
@@ -204,7 +207,7 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
 
         // set values
         // set valuesToSet at dofs allDofNosToSetLocal
-        slotSetValues(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo, mapping.allDofNosToSetLocal, valuesToSet, INSERT_VALUES);
+        slotSetValues(mapping.outputConnectorSlotNosTo[0], mapping.outputConnectorArrayIndexTo, mapping.allDofNosToSetLocal, valuesToSet, INSERT_VALUES);
       }
       else if (mapping.mode == DofsMappingType::modeCopyLocal)
       {
@@ -213,7 +216,7 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
 
         // set values
         // set valuesToSet at dofs allDofNosToSetLocal
-        slotSetValues(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo, mapping.allDofNosToSetLocal, valuesToSet, INSERT_VALUES);
+        slotSetValues(mapping.outputConnectorSlotNosTo[0], mapping.outputConnectorArrayIndexTo, mapping.allDofNosToSetLocal, valuesToSet, INSERT_VALUES);
       }
       else if (mapping.mode == DofsMappingType::modeCopyLocalIfPositive)
       {
@@ -235,7 +238,7 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
         }
 
         // set values
-        slotSetValues(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
+        slotSetValues(mapping.outputConnectorSlotNosTo[0], mapping.outputConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
       }
       else if (mapping.mode == DofsMappingType::modeLocalSetIfAboveThreshold)
       {
@@ -259,11 +262,11 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
           << ", values to be set: " << valuesToSet;
 
         // set values
-        slotSetValues(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
+        slotSetValues(mapping.outputConnectorSlotNosTo[0], mapping.outputConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
       }
 
-      // call setRepresentationGlobal on the field variable
-      slotSetRepresentationGlobal(mapping.outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo);
+      // call setRepresentationGlobal on the field variable, not needed
+      //slotSetRepresentationGlobal(mapping.outputConnectorSlotNosTo[0], mapping.outputConnectorArrayIndexTo);
     }
   }
 }

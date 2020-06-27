@@ -54,7 +54,9 @@ if not env['no_tests']:
 
   # ---- parallel unit tests: 2 ranks ----
   if True:
-    src_files = ['src/2_ranks/laplace.cpp',
+    src_files = ['src/2_ranks/laplace_1d.cpp',
+                 'src/2_ranks/laplace_2d.cpp',
+                 'src/2_ranks/laplace_3d.cpp',
                  'src/2_ranks/diffusion.cpp',
                  'src/2_ranks/poisson.cpp',
                  'src/2_ranks/neumann_boundary_conditions.cpp',

@@ -339,7 +339,7 @@ config = {
         "Term1": {
           # mapping muscle spindles output -> motor neuron signals
           "MapDofs": {
-            "description":                "spindles -> MN",               # description that will be shown in solver structure visualization
+            "description":                "callback_muscle_spindles_to_motoneurons",   # description that will be shown in solver structure visualization
             "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
             "meshName":                   "muscleSpindleAndInterneuronMesh",  # the mesh on which the additional field variables will be defined
             "beforeComputation": None,
@@ -354,7 +354,7 @@ config = {
                 "toDofNosNumbering":                "local",
                 "dofsMapping":                      None,
                 "inputDofs":                        list(range(variables.n_muscle_spindles)),   # [0,1,...,n_muscle_spindles], this is for mesh "muscleSpindleMesh"
-                "outputDofs":                       list(range(variables.n_muscle_spindles)),   # [0,1,...,n_muscle_spindles], this is for mesh "muscleSpindleAndInterneuronMesh"
+                "outputDofs":                       [list(range(variables.n_muscle_spindles))],   # [0,1,...,n_muscle_spindles], this is for mesh "muscleSpindleAndInterneuronMesh"
                 "callback":                         variables.callback_muscle_spindles_to_motoneurons,
                 #"thresholdValue":                   20,                  # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
                 #"valueToSet":                       20,                  # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
@@ -401,7 +401,7 @@ config = {
                 "handleResultFunctionAdditionalParameter": None,                      # additional last argument for handle_result
                 
                 "mappings":                               variables.muscle_spindle_mappings,              # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
-                "parametersInitialValues":                variables.muscle_spindle_parameters_initial_values,  # initial values for the parameters: I_Stim, l_hs
+                "parametersInitialValues":                variables.muscle_spindle_parameters_initial_values,  # initial values for the parameters, either once for all instances, or for all instances in array of struct ordering with nParameters_ parameters per instance: [inst0p0, inst0p1, ... inst0pn, inst1p0, inst1p1, ...]
                 
                 "meshName":                               "muscleSpindleMesh",                                       
                 "stimulationLogFilename":                 "out/stimulation.log",
@@ -429,7 +429,7 @@ config = {
             "Term1": {
               # mapping Golgi tendon organs -> interneurons
               "MapDofs": {
-                "description":                "Golgi -> interneurons",       # description that will be shown in solver structure visualization
+                "description":                "callback_golgi_tendon_organs_to_interneurons",       # description that will be shown in solver structure visualization
                 "nAdditionalFieldVariables":  1,                             # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
                 "meshName":                   "interneuronMesh",             # the mesh on which the additional field variables will be defined
                 "beforeComputation": None,
@@ -444,7 +444,7 @@ config = {
                     "toDofNosNumbering":                "local",
                     "dofsMapping":                      None,
                     "inputDofs":                        list(range(variables.n_golgi_tendon_organs)),   # [0,1,...,n_golgi_tendon_organs], this is for mesh "golgiTendonOrganMesh"
-                    "outputDofs":                       list(range(variables.n_interneurons)),          # [0,1,...,n_interneurons]         this is for mesh "interneuronMesh"
+                    "outputDofs":                       [list(range(variables.n_interneurons))],          # [0,1,...,n_interneurons]         this is for mesh "interneuronMesh"
                     "callback":                         variables.callback_golgi_tendon_organs_to_interneurons,
                     #"thresholdValue":                   20,                 # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
                     #"valueToSet":                       20,                 # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
@@ -486,7 +486,7 @@ config = {
                     "additionalArgument":                     None,
                     
                     "mappings":                               variables.golgi_tendon_organ_mappings,          # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
-                    "parametersInitialValues":                variables.golgi_tendon_organ_parameters_initial_values,    # initial values for the parameters: I_Stim, l_hs
+                    "parametersInitialValues":                variables.golgi_tendon_organ_parameters_initial_values,    # # initial values for the parameters, either once for all instances, or for all instances in array of struct ordering with nParameters_ parameters per instance: [inst0p0, inst0p1, ... inst0pn, inst1p0, inst1p1, ...]
                     
                     "meshName":                               "golgiTendonOrganMesh",                         
                     "stimulationLogFilename":                 "out/stimulation.log",
@@ -502,7 +502,7 @@ config = {
             "Term2": {
               # mapping interneurons -> input for motor neurons
               "MapDofs": {
-                "description":                "interneurons -> motoneurons",  # description that will be shown in solver structure visualization
+                "description":                "callback_interneurons_to_motoneurons",  # description that will be shown in solver structure visualization
                 "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
                 "meshName":                   "muscleSpindleAndInterneuronMesh", # the mesh on which the additional field variables will be defined
                 "beforeComputation": None,                                    # transfer/mapping of dofs that will be performed before the computation of the nested solver
@@ -517,7 +517,7 @@ config = {
                     "toDofNosNumbering":                "local",
                     "dofsMapping":                      None,
                     "inputDofs":                        list(range(variables.n_interneurons)),   # [0,1,...,n_interneurons]
-                    "outputDofs":                       list(range(variables.n_muscle_spindles,variables.n_muscle_spindles+variables.n_interneurons)),          # [n_muscle_spindles,n_muscle_spindles+1,...,n_muscle_spindles+n_interneurons]
+                    "outputDofs":                       [list(range(variables.n_muscle_spindles,variables.n_muscle_spindles+variables.n_interneurons))],          # [n_muscle_spindles,n_muscle_spindles+1,...,n_muscle_spindles+n_interneurons]
                     "callback":                         variables.callback_interneurons_to_motoneurons,
                     #"thresholdValue":                   20,                    # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
                     #"valueToSet":                       20,                   # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
@@ -560,7 +560,7 @@ config = {
                     "additionalArgument":                     None,
                     
                     "mappings":                               variables.interneuron_mappings,                 # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
-                    "parametersInitialValues":                variables.interneuron_parameters_initial_values, # initial values for the parameters: I_Stim, l_hs
+                    "parametersInitialValues":                variables.interneuron_parameters_initial_values, # # initial values for the parameters, either once for all instances, or for all instances in array of struct ordering with nParameters_ parameters per instance: [inst0p0, inst0p1, ... inst0pn, inst1p0, inst1p1, ...]
                     
                     "meshName":                               "interneuronMesh",                           
                     "stimulationLogFilename":                 "out/stimulation.log",
@@ -596,7 +596,7 @@ config = {
         "Term1": { 
           # mapping motor neuron signals + cortical input to actual inputs
           "MapDofs": {
-            "description":                "spindles+interneurons+CI -> MN", # description that will be shown in solver structure visualization
+            "description":                "callback_motoneurons_input",   # description that will be shown in solver structure visualization
             "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
             "meshName":                   "muscleSpindleAndInterneuronMesh",               # the mesh on which the additional field variables will be defined
             "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
@@ -610,7 +610,7 @@ config = {
                 "toDofNosNumbering":                "local",
                 "dofsMapping":                      None,
                 "inputDofs":                        list(range(variables.n_muscle_spindles+variables.n_interneurons)),   # [0,1,...,n_muscle_spindles,...,n_muscle_spindles+n_interneurons]
-                "outputDofs":                       list(range(variables.n_motoneurons)),   # [0,1,...,n_motoneurons]
+                "outputDofs":                       [list(range(variables.n_motoneurons))],   # [0,1,...,n_motoneurons]
                 "callback":                         variables.callback_motoneurons_input,
                 #"thresholdValue":                   20,                   # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
                 #"valueToSet":                       20,                   # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
@@ -654,7 +654,7 @@ config = {
                 "additionalArgument":                     None,
                 
                 "mappings":                               variables.motoneuron_mappings,                  # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
-                "parametersInitialValues":                variables.motoneuron_parameters_initial_values, # initial values for the parameters: I_Stim, l_hs
+                "parametersInitialValues":                variables.motoneuron_parameters_initial_values, # initial values for the parameters, either once for all instances, or for all instances in array of struct ordering with nParameters_ parameters per instance: [inst0p0, inst0p1, ... inst0pn, inst1p0, inst1p1, ...]
                 
                 "meshName":                               "motoneuronMesh",                               # use the linear mesh, it was partitioned by the helper.py script which called opendihu/scripts/create_partitioned_meshes_for_settings.py
                 "stimulationLogFilename":                 "out/stimulation.log",
@@ -672,7 +672,7 @@ config = {
         "Term2": {
           # map from λ in the 3D mesh to muscle spindles input
           "MapDofs": {
-            "description":                "stretch->muscle spindles input", # description that will be shown in solver structure visualization
+            "description":                "callback_muscle_spindles_input", # description that will be shown in solver structure visualization
             "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
             "meshName":                   "muscleSpindleMesh",            # the mesh on which the additional field variables will be defined
             "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
@@ -686,7 +686,7 @@ config = {
                 "toDofNosNumbering":                "local",
                 "dofsMapping":                      None,
                 "inputDofs":                        muscle_spindle_node_nos,          # nodes are set at bottom in helper.py
-                "outputDofs":                       list(range(variables.n_muscle_spindles)),   # [0,1,...,n_muscle_spindles]
+                "outputDofs":                       [list(range(variables.n_muscle_spindles))],   # [0,1,...,n_muscle_spindles]
                 "callback":                         variables.callback_muscle_spindles_input,
                 #"thresholdValue":                   20,                  # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
                 #"valueToSet":                       20,                  # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
@@ -696,7 +696,7 @@ config = {
               
             # map from λ in the 3D mesh to golgi tendon organs
             "MapDofs": {
-              "description":                "stretch->Golgi tendon organs",      # description that will be shown in solver structure visualization
+              "description":                "callback_golgi_tendon_organs_input",      # description that will be shown in solver structure visualization
               "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
               "meshName":                   "golgiTendonOrganMesh",               # the mesh on which the additional field variables will be defined
               "beforeComputation":          None, 
@@ -711,7 +711,7 @@ config = {
                   "toDofNosNumbering":                "local",
                   "dofsMapping":                      None,
                   "inputDofs":                        golgi_tendon_organ_node_nos,          # nodes are set at bottom in helper.py
-                  "outputDofs":                       list(range(variables.n_golgi_tendon_organs)),   # [0,1,...,n_golgi_tendon_organs]
+                  "outputDofs":                       [list(range(variables.n_golgi_tendon_organs))],   # [0,1,...,n_golgi_tendon_organs]
                   "callback":                         variables.callback_golgi_tendon_organs_input,
                   #"thresholdValue":                   20,                 # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
                   #"valueToSet":                       20,                 # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.

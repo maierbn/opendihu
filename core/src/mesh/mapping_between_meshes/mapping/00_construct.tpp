@@ -64,7 +64,7 @@ MappingBetweenMeshesConstruct(std::shared_ptr<FunctionSpaceSourceType> functionS
     // i.e. if the point is outside of the actual mesh, then it is assumed (for the mapping) that it is inside the nearest element.
     // if xi tolerance was not set, set to default value
     if (xiTolerance <= 0)
-      xiTolerance = 1e-2;
+      xiTolerance = 1e-1;
       
     bool startSearchInCurrentElement = true;    // start in element 0, maybe this is already the first element (it is if both meshes are completely aligned)
     int nSourceDofsOutsideTargetMesh = 0;

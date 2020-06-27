@@ -48,7 +48,7 @@ if not env['no_tests']:
     program = env.Program('1_rank_tests', source=src_files)
 
     # add command that runs the tests after build
-    test = env.Command(target = 'test1', source = './1_rank_tests', action = 'cd testing/unit_testing/'+variant_directory+' && ./1_rank_tests || sudo -n ./1_rank_tests -on_error_attach_debugger')
+    test = env.Command(target = 'test1', source = './1_rank_tests', action = 'cd testing/unit_testing/'+variant_directory+' && mpirun -n 1 --allow-run-as-root ./1_rank_tests')
     AlwaysBuild(test)
 
 
@@ -72,7 +72,7 @@ if not env['no_tests']:
     program = env.Program('2_ranks_tests', source=src_files)
 
     # Add command that runs the tests after build, there is a construction that some MPI ranks can fail after they are successfully done because they are aborted because MPI_Finalize cannot be called in unit tests because after that MPI_Init cannot be called again and this would be needed to run multiple unit tests in one executable.
-    test = env.Command(target = 'test2', source = './2_ranks_tests', action = 'cd testing/unit_testing/'+variant_directory+' && mpirun -n 2 -quiet --allow-run-as-root ./2_ranks_tests || [ -f "SUCCESS2" ]')
+    test = env.Command(target = 'test2', source = './2_ranks_tests', action = 'cd testing/unit_testing/'+variant_directory+' && mpirun -n 2 --allow-run-as-root ./2_ranks_tests || [ -f "SUCCESS2" ]')
     AlwaysBuild(test)
 
   # ---- parallel unit tests: 6 ranks ----
@@ -83,7 +83,7 @@ if not env['no_tests']:
     program = env.Program('6_ranks_tests', source=src_files)
 
     # add command that runs the tests after build
-    test = env.Command(target = 'test6', source = './6_ranks_tests', action = 'cd testing/unit_testing/'+variant_directory+' && mpirun -n 6 -quiet --allow-run-as-root ./6_ranks_tests || [ -f "SUCCESS6" ]')
+    test = env.Command(target = 'test6', source = './6_ranks_tests', action = 'cd testing/unit_testing/'+variant_directory+' && mpirun -n 6 --allow-run-as-root ./6_ranks_tests || [ -f "SUCCESS6" ]')
     AlwaysBuild(test)
 
   # ---- test compilation of examples ----

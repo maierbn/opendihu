@@ -18,13 +18,18 @@ int main(int argc, char *argv[])
   PreciceAdapter::ContractionDirichletBoundaryConditions<
     Control::Coupling<
       Control::MultipleInstances<
-        Control::MultipleInstances<
-          PrescribedValues<
-            FunctionSpace::FunctionSpace<
-              Mesh::StructuredDeformableOfDimension<1>,
-              BasisFunction::LagrangeOfOrder<1>
+        OperatorSplitting::Godunov<
+          Control::MultipleInstances<
+            // this would be the subcellular model solver
+            // prescribe values on fibers
+            PrescribedValues<
+              FunctionSpace::FunctionSpace<
+                Mesh::StructuredDeformableOfDimension<1>,
+                BasisFunction::LagrangeOfOrder<1>
+              >
             >
-          >
+          >,
+          Dummy   // this would be the diffusion solver 
         >
       >,
       MuscleContractionSolver<>

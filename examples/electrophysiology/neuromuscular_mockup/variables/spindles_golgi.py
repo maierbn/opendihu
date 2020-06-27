@@ -1,6 +1,6 @@
 
 # scenario name for log file
-scenario_name = "coarse"
+scenario_name = "spindles"
 
 # material parameters
 # --------------------
@@ -117,9 +117,8 @@ sampling_factor_elasticity_fat_y = 0.5
 
 # neurons and sensors
 # muscle spindles
-n_muscle_spindles = 6
+n_muscle_spindles = 1
 muscle_spindle_cellml_file = "../../input/hodgkin_huxley_1952.cellml"
-muscle_spindle_cellml_file = "../../input/spindle.cellml"
 muscle_spindle_mappings = {
   ("parameter", 0):           "membrane/i_Stim",   # stimulation
   ("outputConnectorSlot", 0): "membrane/V",        # voltage
@@ -129,7 +128,7 @@ muscle_spindle_parameters_initial_values = [0]    # [i_Stim]
 muscle_spindle_delay = 30             # [ms] signal delay between muscle spindle model and motoneuron model
 
 # golgi tendon organs
-n_golgi_tendon_organs = 4
+n_golgi_tendon_organs = 1
 golgi_tendon_organ_cellml_file = "../../input/hodgkin_huxley_1952.cellml"
 golgi_tendon_organ_mappings = {
   ("parameter", 0):           "membrane/i_Stim",   # stimulation
@@ -139,8 +138,8 @@ golgi_tendon_organ_mappings = {
 golgi_tendon_organ_parameters_initial_values = [0]    # [i_Stim]
 golgi_tendon_organ_delay = 30
 
-# inter neurons
-n_interneurons = 6
+# interneurons
+n_interneurons = 1
 interneuron_cellml_file = "../../input/hodgkin_huxley_1952.cellml"
 interneuron_mappings = {
   ("parameter", 0):           "membrane/i_Stim",   # stimulation
@@ -150,13 +149,32 @@ interneuron_mappings = {
 interneuron_parameters_initial_values = [0]    # [i_Stim]
 
 # motor neurons
-n_motoneurons = 4
+n_motoneurons = 3
 motoneuron_cellml_file = "../../input/WSBM_1457_MN_Cisi_Kohn_2008.cellml"
 motoneuron_mappings = {
   ("parameter", 0):           "motor_neuron/drive",   # stimulation
+  ("parameter", 1):           "lumped_geometry_parameters/C_m",
+  ("parameter", 2):           "lumped_geometry_parameters/R_md",
   ("outputConnectorSlot", 0): "motor_neuron/V_s",     # voltage
+  ("outputConnectorSlot", 1): "motor_neuron/drive",   # stimulation
 }
-motoneuron_parameters_initial_values = [0.01]    # [drive]
+# initial values for the parameters, either once for all instances, or for all instances in array of struct ordering with nParameters_ parameters per instance: [inst0p0, inst0p1, ... inst0pn, inst1p0, inst1p1, ...]
+motoneuron_parameters_initial_values = []
+for i in range(n_motoneurons):
+  
+  # compute a scaling factor that runs exponentially from min_factor to max_factor
+  min_factor = 0.5
+  max_factor = 2.0
+  
+  # ansatz scaling_factor(i) = c1 + c2*exp(i),
+  # scaling_factor(0) = min = c1 + c2  =>  c1 = min - c2
+  # scaling_factor(n_motoneurons-1) = max = min - c2 + c2*exp(n_motoneurons-1)  =>  max = min + c2*(exp(n_motoneurons-1) - 1)  =>  c2 = (max - min) / (exp(n_motoneurons-1) - 1)
+  c2 = (max_factor - min_factor) / (np.exp(n_motoneurons-1) - 1)
+  c1 = min_factor - c2
+  scaling_factor = c1 + c2*np.exp(i)
+  
+  # add parameter values for motoneuron i
+  motoneuron_parameters_initial_values += [0.01, 1*scaling_factor, 14.4*scaling_factor]
 
 # other options
 paraview_output = True
@@ -174,7 +192,9 @@ def callback_muscle_spindles_input(input_values, output_values, current_time, sl
   Callback function that transform a number of input_values to a number of output_values.
   This function gets called by a MapDofs object.
   :param input_values: (list of float values) The input values from the slot as defined in the MapDofs settings.
-  :param output_values: (list of float values) Initially, this is a list of the form [None, None, ..., None] with the size matching 
+  :param output_values: (list of list of float values) output_values[slotIndex][valueIndex]
+                        The output values buffer, potentially for multiple slots.
+                        Initially, this is a list of the form [[None, None, ..., None]] with the size matching 
                         the number of required output values. The function should set some of the entries to a computed value.
                         The entries that are not None will be set in the output slot at the dofs defined by MapDofs.
   :param current_time:  Current simulation time.
@@ -186,11 +206,7 @@ def callback_muscle_spindles_input(input_values, output_values, current_time, sl
   
   # get number of input and output values
   n_input_values = len(input_values)      # = n_muscle_spindles
-  n_output_values = len(output_values)    # = n_muscle_spindles
-  
-  # print for debugging
-  if current_time > 100 and current_time < 105:
-    print("stretch at muscle spindles: {}".format(input_values))
+  n_output_values = len(output_values[0]) # = n_muscle_spindles (per output slot if there are multiple)
   
   for i in range(n_input_values):
     stretch = input_values[i]
@@ -199,18 +215,18 @@ def callback_muscle_spindles_input(input_values, output_values, current_time, sl
     if stretch == 0:
       stretch = 1
       
-    output_values[i] = abs(stretch-1) * 50
-    output_values[i] = 10
+    output_values[0][i] = abs(stretch-1) * 50
   
   print("stretch at muscle spindles: {}, output: {}".format(input_values, output_values))
-  return output_values
   
 def callback_muscle_spindles_to_motoneurons(input_values, output_values, current_time, slot_nos, buffer):
   """
   Callback function that transform a number of input_values to a number of output_values.
   This function gets called by a MapDofs object.
   :param input_values: (list of float values) The input values from the slot as defined in the MapDofs settings.
-  :param output_values: (list of float values) Initially, this is a list of the form [None, None, ..., None] with the size matching 
+  :param output_values: (list of list of float values) output_values[slotIndex][valueIndex]
+                        The output values buffer, potentially for multiple slots.
+                        Initially, this is a list of the form [[None, None, ..., None]] with the size matching 
                         the number of required output values. The function should set some of the entries to a computed value.
                         The entries that are not None will be set in the output slot at the dofs defined by MapDofs.
   :param current_time:  Current simulation time.
@@ -222,7 +238,7 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
   
   # get number of input and output values
   n_input_values = len(input_values)      # = n_muscle_spindles
-  n_output_values = len(output_values)    # = n_muscle_spindles
+  n_output_values = len(output_values[0]) # = n_muscle_spindles (per output slot if there are multiple)
   
   # initialize buffer the first time
   if 0 not in buffer:
@@ -248,20 +264,20 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
       # loop over output values and set all to the computed signal, cut off at 1e-5
       if delayed_signal > 1e-5:
         #print("muscle spindle t: {}, last_activation: {}, computed delayed_signal: {}".format(current_time, buffer[muscle_spindle_index], delayed_signal))
-        output_values[muscle_spindle_index] = delayed_signal
+        output_values[0][muscle_spindle_index] = delayed_signal
       else:
-        output_values[muscle_spindle_index] = None     # do not set any values
-    
+        output_values[0][muscle_spindle_index] = None     # do not set any values
     
   print("muscle_spindles_to_motoneurons: {} -> {}".format(input_values, output_values))
-  return output_values
 
 def callback_golgi_tendon_organs_input(input_values, output_values, current_time, slot_nos, buffer):
   """
   Callback function that transform a number of input_values to a number of output_values.
   This function gets called by a MapDofs object.
   :param input_values: (list of float values) The input values from the slot as defined in the MapDofs settings.
-  :param output_values: (list of float values) Initially, this is a list of the form [None, None, ..., None] with the size matching 
+  :param output_values: (list of list of float values) output_values[slotIndex][valueIndex]
+                        The output values buffer, potentially for multiple slots.
+                        Initially, this is a list of the form [[None, None, ..., None]] with the size matching 
                         the number of required output values. The function should set some of the entries to a computed value.
                         The entries that are not None will be set in the output slot at the dofs defined by MapDofs.
   :param current_time:  Current simulation time.
@@ -273,7 +289,7 @@ def callback_golgi_tendon_organs_input(input_values, output_values, current_time
   
   # get number of input and output values
   n_input_values = len(input_values)      # = n_golgi_tendon_organs
-  n_output_values = len(output_values)    # = n_golgi_tendon_organs
+  n_output_values = len(output_values[0]) # = n_golgi_tendon_organs (per output slot if there are multiple)
   
   # print for debugging
   if current_time > 100 and current_time < 105:
@@ -286,17 +302,18 @@ def callback_golgi_tendon_organs_input(input_values, output_values, current_time
     if stretch == 0:
       stretch = 1
       
-    output_values[i] = abs(stretch-1) * 50
+    output_values[0][i] = abs(stretch-1) * 50
     
   #print("stretch at Golgi tendon organs: {}, output: {}".format(input_values, output_values))
-  return output_values
 
 def callback_golgi_tendon_organs_to_interneurons(input_values, output_values, current_time, slot_nos, buffer):
   """
   Callback function that transform a number of input_values to a number of output_values.
   This function gets called by a MapDofs object.
   :param input_values: (list of float values) The input values from the slot as defined in the MapDofs settings.
-  :param output_values: (list of float values) Initially, this is a list of the form [None, None, ..., None] with the size matching 
+  :param output_values: (list of list of float values) output_values[slotIndex][valueIndex]
+                        The output values buffer, potentially for multiple slots.
+                        Initially, this is a list of the form [[None, None, ..., None]] with the size matching 
                         the number of required output values. The function should set some of the entries to a computed value.
                         The entries that are not None will be set in the output slot at the dofs defined by MapDofs.
   :param current_time:  Current simulation time.
@@ -308,7 +325,7 @@ def callback_golgi_tendon_organs_to_interneurons(input_values, output_values, cu
   
   # get number of input and output values
   n_input_values = len(input_values)      # = n_golgi_tendon_organs
-  n_output_values = len(output_values)    # = n_interneurons
+  n_output_values = len(output_values[0]) # = n_interneurons (per output slot if there are multiple)
   
   # sum up all input signals and set all outputs to this sum
   
@@ -324,15 +341,16 @@ def callback_golgi_tendon_organs_to_interneurons(input_values, output_values, cu
     
   # set same value to all connected interneurons
   for interneuron_index in range(n_output_values):
-    output_values[interneuron_index] = total_signal * 0.01
-  return output_values
+    output_values[0][interneuron_index] = total_signal * 0.01
 
 def callback_interneurons_to_motoneurons(input_values, output_values, current_time, slot_nos, buffer):
   """
   Callback function that transform a number of input_values to a number of output_values.
   This function gets called by a MapDofs object.
   :param input_values: (list of float values) The input values from the slot as defined in the MapDofs settings.
-  :param output_values: (list of float values) Initially, this is a list of the form [None, None, ..., None] with the size matching 
+  :param output_values: (list of list of float values) output_values[slotIndex][valueIndex]
+                        The output values buffer, potentially for multiple slots.
+                        Initially, this is a list of the form [[None, None, ..., None]] with the size matching 
                         the number of required output values. The function should set some of the entries to a computed value.
                         The entries that are not None will be set in the output slot at the dofs defined by MapDofs.
   :param current_time:  Current simulation time.
@@ -345,7 +363,7 @@ def callback_interneurons_to_motoneurons(input_values, output_values, current_ti
   
   # get number of input and output values
   n_input_values = len(input_values)      # = n_interneurons
-  n_output_values = len(output_values)    # = n_interneurons
+  n_output_values = len(output_values[0]) # = n_interneurons (per output slot if there are multiple)
   
   # initialize buffer the first time
   if 0 not in buffer:
@@ -371,17 +389,18 @@ def callback_interneurons_to_motoneurons(input_values, output_values, current_ti
       # loop over output values and set all to the computed signal, cut off at 1e-5
       if delayed_signal > 1e-5:
         #print("interneuron t: {}, last_activation: {}, computed delayed_signal: {}".format(current_time, buffer[interneuron_index], delayed_signal))
-        output_values[interneuron_index] = delayed_signal
+        output_values[0][interneuron_index] = delayed_signal
       else:
-        output_values[interneuron_index] = None     # do not set any values
-  return output_values
+        output_values[0][interneuron_index] = None     # do not set any values
   
 def callback_motoneurons_input(input_values, output_values, current_time, slot_nos, buffer):
   """
   Callback function that transform a number of input_values to a number of output_values.
   This function gets called by a MapDofs object.
   :param input_values: (list of float values) The input values from the slot as defined in the MapDofs settings.
-  :param output_values: (list of float values) Initially, this is a list of the form [None, None, ..., None] with the size matching 
+  :param output_values: (list of list of float values) output_values[slotIndex][valueIndex]
+                        The output values buffer, potentially for multiple slots.
+                        Initially, this is a list of the form [[None, None, ..., None]] with the size matching 
                         the number of required output values. The function should set some of the entries to a computed value.
                         The entries that are not None will be set in the output slot at the dofs defined by MapDofs.
   :param current_time:  Current simulation time.
@@ -394,7 +413,7 @@ def callback_motoneurons_input(input_values, output_values, current_time, slot_n
   
   # get number of input and output values
   n_input_values = len(input_values)      # = n_muscle_spindles + n_interneurons
-  n_output_values = len(output_values)    # = n_motoneurons
+  n_output_values = len(output_values[0]) # = n_motoneurons (per output slot if there are multiple)
   
   # sum up all input signals and set all outputs to this sum
   
@@ -403,24 +422,25 @@ def callback_motoneurons_input(input_values, output_values, current_time, slot_n
   
   # loop over input values
   for input_index in range(n_input_values):
-    
-    # if input is active
-    if input_values[input_index] > 20:
-      total_signal += input_values[input_index]
+    total_signal += input_values[input_index]
     
   # set same value to all connected motoneurons
   for motoneuron_index in range(n_output_values):
-    output_values[motoneuron_index] = total_signal * 0.01
+    output_values[0][motoneuron_index] = total_signal
+    
+  # add cortical input
+  total_signal += 2
     
   print("motoneurons input: {}".format(input_values))
-  return output_values
   
 def callback_motoneuron_output(input_values, output_values, current_time, slot_nos, buffer):
   """
   Callback function that transform a number of input_values to a number of output_values.
   This function gets called by a MapDofs object.
   :param input_values: (list of float values) The input values from the slot as defined in the MapDofs settings.
-  :param output_values: (list of float values) Initially, this is a list of the form [None, None, ..., None] with the size matching 
+  :param output_values: (list of list of float values) output_values[slotIndex][valueIndex]
+                        The output values buffer, potentially for multiple slots.
+                        Initially, this is a list of the form [[None, None, ..., None]] with the size matching 
                         the number of required output values. The function should set some of the entries to a computed value.
                         The entries that are not None will be set in the output slot at the dofs defined by MapDofs.
   :param current_time:  Current simulation time.
@@ -434,5 +454,5 @@ def callback_motoneuron_output(input_values, output_values, current_time, slot_n
   
   # get number of input and output values
   n_input_values = len(input_values)      # 1 (1 motoneuron)
-  n_output_values = len(output_values)    # =N (number of points in neuromuscular junction, this is all nodes in the x-y plane at the center of the muscle)
+  n_output_values = len(output_values[0]) # =N (number of points in neuromuscular junction, this is all nodes in the x-y plane at the center of the muscle)
   

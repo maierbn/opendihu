@@ -9,7 +9,7 @@ template<typename NestedSolver>
 ContractionDirichletBoundaryConditions<NestedSolver>::
 ContractionDirichletBoundaryConditions(DihuContext context) :
   Runnable(),
-  context_(context["ContractionDirichletBoundaryConditions"]), nestedSolver_(this->context_), initialized_(false)
+  context_(context["PreciceContractionDirichletBoundaryConditions"]), nestedSolver_(this->context_), initialized_(false)
 {
   // get python settings object from context
   this->specificSettings_ = this->context_.getPythonConfig();

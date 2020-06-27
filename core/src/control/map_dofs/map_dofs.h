@@ -66,8 +66,8 @@ protected:
    */
   struct DofsMappingType
   {
-    int outputConnectorSlotNoFrom;  //< field variable no from which to get the dofs
-    int outputConnectorSlotNoTo;    //< field variable no to which to write the dofs to
+    int outputConnectorSlotNoFrom;  //< slot no, i.e. a field variable from which to get the dofs
+    std::vector<int> outputConnectorSlotNosTo;    //< slots nos, i.e. field variables to which to write the dofs to
     bool dofNoIsGlobalFrom;         //< if the keys in dofsMapping specify global nos
     bool dofNoIsGlobalTo;           //< if the values in dofsMapping specify global nos
     int outputConnectorArrayIndexFrom;   //< array index if the output connector slot consists of a vector of multiple layers, e.g. Multidomain with multiple compartments or fibers with even two nested MultipleInstances
@@ -92,7 +92,7 @@ protected:
     std::vector<dof_no_t> dofNosToSetLocal;         //< For all modes except modeCallback. Temporary variable, the local dofs where to set the values that were retrieved from the dofs.
 
     std::vector<dof_no_t> inputDofs;                //< Only for modeCallback. The input dofs for the callback.
-    std::vector<dof_no_t> outputDofs;               //< Only for modeCallback. The input dofs for the callback.
+    std::vector<std::vector<dof_no_t>> outputDofs;  //< Only for modeCallback. outputDofs[slotIndex], the output dofs for the callback.
 
     PyObject *callback;                             //< python callback to manipulate the input data
     PyObject *slotNosPy;                            //< list [fromSlotNo, toSlotNo, fromArrayIndex, toArrayIndex]

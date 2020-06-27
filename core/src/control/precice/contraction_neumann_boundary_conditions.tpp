@@ -11,7 +11,7 @@ template<typename NestedSolver>
 ContractionNeumannBoundaryConditions<NestedSolver>::
 ContractionNeumannBoundaryConditions(DihuContext context) :
   Runnable(),
-  context_(context["ContractionNeumannBoundaryConditions"]), nestedSolver_(this->context_), initialized_(false)
+  context_(context["PreciceContractionNeumannBoundaryConditions"]), nestedSolver_(this->context_), initialized_(false)
 {
   // get python settings object from context
   this->specificSettings_ = this->context_.getPythonConfig();

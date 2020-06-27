@@ -1,7 +1,6 @@
-#include "specialized_solver/prescribed_values.h"
+#include "specialized_solver/dummy.h"
 
-#include <omp.h>
-#include <sstream>
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
 
 Dummy::
 Dummy(DihuContext context) :

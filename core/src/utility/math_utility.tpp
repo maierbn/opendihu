@@ -91,7 +91,6 @@ double distance(const VecD<D> node1, const VecD<D> node2)
 template<typename double_v_t>
 double_v_t computeIntegrationFactor(const std::array<VecD<3,double_v_t>,1> &jacobian)
 {
-  LOG(DEBUG) << "1D integration factor, jacobian[0]: " << jacobian;
   return length(jacobian[0]);
 }
 

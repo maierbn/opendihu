@@ -3,6 +3,7 @@
 #include "function_space/function_space.h"
 #include "mesh/structured_regular_fixed.h"
 #include "mesh/unstructured_deformable.h"
+#include "utility/python_utility.h"
 
 namespace MappingBetweenMeshes
 {
@@ -27,7 +28,7 @@ void ManagerInitialize::storeMappingBetweenMeshes(std::string sourceMeshName, Py
       // create new entry of settings in mappingsBetweenMeshes_
       MappingWithSettings mappingWithSettings;
       mappingWithSettings.mapping = nullptr;
-      mappingWithSettings.xiTolerance = 0.0;
+      mappingWithSettings.xiTolerance = 0.1;
       mappingWithSettings.enableWarnings = true;
       mappingWithSettings.compositeUseOnlyInitializedMappings = false;
       mappingWithSettings.isEnabledFixUnmappedDofs = true;

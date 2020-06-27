@@ -46,7 +46,7 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<
   LOG(DEBUG) << "transfer fibers_emg (1)";
 
   assert(transferableSolutionData1->size() > 0);
-  assert((*transferableSolutionData1)[0]->size() > 0);
+  assert(std::get<0>(*(*transferableSolutionData1)[0])->size() > 0);
 
   std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1Front
     = (*std::get<0>(*(*transferableSolutionData1)[0]))[0];
@@ -267,7 +267,7 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
   LOG(DEBUG) << "transfer fibers_emg (2)";
 
   assert(transferableSolutionData2->size() > 0);
-  assert((*transferableSolutionData2)[0]->size() > 0);
+  assert(std::get<0>(*(*transferableSolutionData2)[0])->size() > 0);
 
   std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2Front
     = (*std::get<0>(*(*transferableSolutionData2)[0]))[0];

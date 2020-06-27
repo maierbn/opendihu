@@ -66,6 +66,7 @@ motor_units = [
 # timing parameters
 # -----------------
 end_time = 4000.0                      # [ms] end time of the simulation
+end_time = 1.0                      # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
 dt_0D = 3e-3                        # [ms] timestep width of ODEs (2e-3)
@@ -88,7 +89,7 @@ python_output = False
 #fiber_file="../../input/13x13fibers.bin"
 #fiber_file="../../input/37x37fibers.bin"
 #fiber_file="../../input/left_biceps_brachii_37x37fibers.bin"
-fiber_file = "../../input/left_biceps_brachii_7x7fibers.bin"
+fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
 firing_times_file = "../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"
 

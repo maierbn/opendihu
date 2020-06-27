@@ -837,8 +837,8 @@ def set_stress_values(n_dofs_global, n_nodes_global_per_coordinate_direction, ti
       else:
         k = k - mz/2
       
-      amplitude = min(1.0, current_time/1000)   # linear ramp to 1 after 1 s
-      minimum_value = min(0.5, 0.5*current_time/1000)
+      amplitude = min(0.1, current_time/100)   # linear ramp to 1 after 1 s
+      minimum_value = min(0.05, 0.5*current_time/100)
       
       values[local_dof_no] = (amplitude-minimum_value) * np.sin((current_time/1000 + 0.2*k/mz + 0.1*i/mx) * 2*np.pi) ** 2 + minimum_value
       

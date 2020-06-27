@@ -17,6 +17,8 @@ void FieldVariableGradient<FunctionSpaceType,1,::Mesh::isStructured<typename Fun
 computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSpaceType::dim()>> gradientField,
                      std::shared_ptr<FieldVariable<FunctionSpaceType,1>> jacobianConditionNumberField)
 {
+  LOG(DEBUG) << "computeGradientField (structured), functionSpaceType: " << StringUtility::demangle(typeid(FunctionSpaceType).name());
+
   this->values_->setRepresentationGlobal();
   this->values_->startGhostManipulation();
 
@@ -113,9 +115,10 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       Tensor2<D> inverseJacobianParameterSpace = MathUtility::template computeInverse<double>(jacobianParameterSpace, jacobianDeterminant);
 
       // estimate condition value of jacobian
-      double conditionNumber = MathUtility::estimateConditionNumber(jacobianParameterSpace, inverseJacobianParameterSpace);
       if (jacobianConditionNumberField != nullptr)
       {
+        double conditionNumber = MathUtility::estimateConditionNumber(jacobianParameterSpace, inverseJacobianParameterSpace);
+
         conditionNumber /= nAdjacentElements[dofNo];
         jacobianConditionNumberField->setValue(dofNo, conditionNumber, ADD_VALUES);
       }
@@ -253,6 +256,8 @@ void FieldVariableGradient<FunctionSpaceType,1,::Mesh::UnstructuredDeformableOfD
 computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSpaceType::dim()>> gradientField,
                      std::shared_ptr<FieldVariable<FunctionSpaceType,1>> jacobianConditionNumberField)
 {
+  LOG(DEBUG) << "computeGradientField (unstructured), functionSpaceType: " << StringUtility::demangle(typeid(FunctionSpaceType).name());
+
   this->values_->setRepresentationGlobal();
   this->values_->startGhostManipulation();
 

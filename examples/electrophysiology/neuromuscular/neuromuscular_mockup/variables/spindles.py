@@ -54,8 +54,8 @@ multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the mul
 # elasticity
 elasticity_solver_type = "lu"
 elasticity_preconditioner_type = "none"
-snes_max_iterations = 10                  # maximum number of iterations in the nonlinear solver
-snes_rebuild_jacobian_frequency = 2       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+snes_max_iterations = 25                  # maximum number of iterations in the nonlinear solver
+snes_rebuild_jacobian_frequency = 5       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
 snes_relative_tolerance = 1e-5      # relative tolerance of the nonlinear solver
 snes_absolute_tolerance = 1e-5      # absolute tolerance of the nonlinear solver
 relative_tolerance = 1e-5           # relative tolerance of the residual of the linear solver
@@ -77,7 +77,7 @@ stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, ad
 dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
-dt_elasticity = 1                   # [ms] time step width of elasticity solver
+dt_elasticity = 10                   # [ms] time step width of elasticity solver
 
 dt_neurons = 1e-2                   # [ms] time step width for all neuron solvers
 dt_muscle_spindles     = dt_neurons # [ms] timestep width of cellml solver of muscle spindles
@@ -106,13 +106,13 @@ fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1
 sampling_stride_y = 1
-sampling_stride_z = 50
+sampling_stride_z = 72
 sampling_stride_fat = 1
 
 # how much of the multidomain mesh is used for elasticity
 sampling_factor_elasticity_x = 0.5    
 sampling_factor_elasticity_y = 0.5
-sampling_factor_elasticity_z = 0.3
+sampling_factor_elasticity_z = 0.5
 sampling_factor_elasticity_fat_y = 0.5
 
 # neurons and sensors
@@ -163,7 +163,7 @@ motoneuron_parameters_initial_values = []
 for i in range(n_motoneurons):
   
   # compute a scaling factor that runs exponentially from min_factor to max_factor
-  min_factor = 0.5
+  min_factor = 0.9
   max_factor = 2.0
   
   # ansatz scaling_factor(i) = c1 + c2*exp(i),
@@ -215,7 +215,7 @@ def callback_muscle_spindles_input(input_values, output_values, current_time, sl
     if stretch == 0:
       stretch = 1
       
-    output_values[0][i] = abs(stretch-1) * 50
+    output_values[0][i] = abs(stretch-1) * 150
   
   print("stretch at muscle spindles: {}, output: {}".format(input_values, output_values))
   
@@ -249,7 +249,7 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
   for muscle_spindle_index in range(n_input_values):
     
     # determine spike by threshold
-    if input_values[muscle_spindle_index] > 20:
+    if input_values[muscle_spindle_index] > 0:
       buffer[muscle_spindle_index] = current_time    # store time of last activation in buffer
       
     # if there has been a stimulation so far
@@ -257,7 +257,7 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
       
       # convolute Dirac delta, kernel is a shifted and scaled gaussian
       t_delay = muscle_spindle_delay              # [ms] delay of the signal
-      gaussian_std_dev = 0.1                      # [ms] width of the gaussian curve
+      gaussian_std_dev = 10                      # [ms] width of the gaussian curve
       convolution_kernel = lambda t: scipy.stats.norm.pdf(t, loc=t_delay, scale=gaussian_std_dev)*np.sqrt(2*np.pi)*gaussian_std_dev
       delayed_signal = convolution_kernel(current_time - buffer[muscle_spindle_index]) * 5
         
@@ -267,7 +267,7 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
         output_values[0][muscle_spindle_index] = delayed_signal
       else:
         output_values[0][muscle_spindle_index] = None     # do not set any values
-    
+        
   print("muscle_spindles_to_motoneurons: {} -> {}".format(input_values, output_values))
 
 def callback_golgi_tendon_organs_input(input_values, output_values, current_time, slot_nos, buffer):
@@ -302,7 +302,7 @@ def callback_golgi_tendon_organs_input(input_values, output_values, current_time
     if stretch == 0:
       stretch = 1
       
-    output_values[0][i] = abs(stretch-1) * 50
+    output_values[0][i] = abs(stretch-1) * 200
     
   print("stretch at Golgi tendon organs: {}, output: {}".format(input_values, output_values))
 
@@ -342,6 +342,29 @@ def callback_golgi_tendon_organs_to_interneurons(input_values, output_values, cu
   # set same value to all connected interneurons
   for interneuron_index in range(n_output_values):
     output_values[0][interneuron_index] = total_signal * 0.01
+    
+  # initialize buffer the first time
+  if 0 not in buffer:
+    for golgi_tendon_organ_index in range(n_input_values):
+      buffer[golgi_tendon_organ_index] = None
+  
+  # loop over golgi tendon organ inputs
+  for golgi_tendon_organ_index in range(n_input_values):
+    
+    # determine spike by threshold
+    if input_values[golgi_tendon_organ_index] > 20:
+      buffer[golgi_tendon_organ_index] = current_time    # store time of last activation in buffer
+      
+    # if there has been a stimulation so far
+    if buffer[golgi_tendon_organ_index] is not None:
+      
+      # convolute Dirac delta, kernel is a shifted and scaled gaussian
+      t_delay = 0                   # [ms] delay of the signal
+      gaussian_std_dev = 10         # [ms] width of the gaussian curve
+      convolution_kernel = lambda t: scipy.stats.norm.pdf(t, loc=t_delay, scale=gaussian_std_dev)*np.sqrt(2*np.pi)*gaussian_std_dev
+      delayed_signal = convolution_kernel(current_time - buffer[golgi_tendon_organ_index]) * 5
+        
+      output_values[0][golgi_tendon_organ_index] = delayed_signal
   
   print("golgi_tendon_organs_to_interneurons input: {}, output: {}".format(input_values, output_values))
 
@@ -376,7 +399,7 @@ def callback_interneurons_to_motoneurons(input_values, output_values, current_ti
   for interneuron_index in range(n_input_values):
     
     # determine spike by threshold
-    if input_values[interneuron_index] > 20:
+    if input_values[interneuron_index] > 0:
       buffer[interneuron_index] = current_time    # store time of last activation in buffer
       
     # if there has been a stimulation so far
@@ -384,7 +407,7 @@ def callback_interneurons_to_motoneurons(input_values, output_values, current_ti
       
       # convolute Dirac delta, kernel is a shifted and scaled gaussian
       t_delay = golgi_tendon_organ_delay          # [ms] delay of the signal
-      gaussian_std_dev = 0.1                      # [ms] width of the gaussian curve
+      gaussian_std_dev = 10                       # [ms] width of the gaussian curve
       convolution_kernel = lambda t: scipy.stats.norm.pdf(t, loc=t_delay, scale=gaussian_std_dev)*np.sqrt(2*np.pi)*gaussian_std_dev
       delayed_signal = convolution_kernel(current_time - buffer[interneuron_index]) * 5
         
@@ -428,12 +451,13 @@ def callback_motoneurons_input(input_values, output_values, current_time, slot_n
   for input_index in range(n_input_values):
     total_signal += input_values[input_index]
     
+  # add cortical input
+  total_signal += 2
+  
   # set same value to all connected motoneurons
   for motoneuron_index in range(n_output_values):
     output_values[0][motoneuron_index] = total_signal
     
-  # add cortical input
-  total_signal += 2
     
   print("motoneurons input: {}, output: {}".format(input_values, output_values))
   

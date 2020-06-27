@@ -79,7 +79,7 @@ initialize()
   }
   if (this->outputWriterManager_.hasOutputWriters())
   {
-    LOG(INFO) << "CellML has output writers. This will be slow if it outputs lots of data and should only be used for debugging.";
+    LOG(DEBUG) << "CellML has output writers. This will be slow if it outputs lots of data and should only be used for debugging.";
   }
 
   this->internalTimeStepNo_ = 0;

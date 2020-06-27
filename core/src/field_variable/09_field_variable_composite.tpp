@@ -59,7 +59,7 @@ updateSubFieldVariables()
   // get subFunctionSpaces
   std::vector<std::shared_ptr<SubFunctionSpaceType>> subFunctionSpaces = this->functionSpace_->subFunctionSpaces();
 
-  subFieldVariables_.resize(subFunctionSpaces.size());
+  subFieldVariables_.resize(subFunctionSpaces.size(), nullptr);
 
   // get own values
   std::vector<VecD<nComponents>> ownValues;
@@ -132,11 +132,19 @@ void FieldVariableComposite<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimens
 computeGradientField(std::shared_ptr<FieldVariable<::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,FunctionSpaceType::dim()>> gradientField,
                      std::shared_ptr<FieldVariable<::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,1>> jacobianConditionNumberField)
 {
+  LOG(DEBUG) << "computeGradientField (composite), functionSpaceType: " << StringUtility::demangle(typeid(FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>).name());
+
+  assert(gradientField);
+  updateSubFieldVariables();
+
   // loop over sub field variables
   int subFieldVariableNo = 0;
   for (std::shared_ptr<FieldVariable<SubFunctionSpaceType,nComponents>> subFieldVariable : subFieldVariables_)
   {
-    subFieldVariable->computeGradientField(gradientField->subFieldVariable(subFieldVariableNo), jacobianConditionNumberField->subFieldVariable(subFieldVariableNo));
+    if (jacobianConditionNumberField)
+      subFieldVariable->computeGradientField(gradientField->subFieldVariable(subFieldVariableNo), jacobianConditionNumberField->subFieldVariable(subFieldVariableNo));
+    else
+      subFieldVariable->computeGradientField(gradientField->subFieldVariable(subFieldVariableNo));
 
     subFieldVariableNo++;
   }

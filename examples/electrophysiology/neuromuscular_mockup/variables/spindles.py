@@ -1,6 +1,6 @@
 
 # scenario name for log file
-scenario_name = "coarse"
+scenario_name = "spindles"
 
 # material parameters
 # --------------------
@@ -117,9 +117,8 @@ sampling_factor_elasticity_fat_y = 0.5
 
 # neurons and sensors
 # muscle spindles
-n_muscle_spindles = 6
+n_muscle_spindles = 1
 muscle_spindle_cellml_file = "../../input/hodgkin_huxley_1952.cellml"
-muscle_spindle_cellml_file = "../../input/spindle.cellml"
 muscle_spindle_mappings = {
   ("parameter", 0):           "membrane/i_Stim",   # stimulation
   ("outputConnectorSlot", 0): "membrane/V",        # voltage
@@ -129,7 +128,7 @@ muscle_spindle_parameters_initial_values = [0]    # [i_Stim]
 muscle_spindle_delay = 30             # [ms] signal delay between muscle spindle model and motoneuron model
 
 # golgi tendon organs
-n_golgi_tendon_organs = 4
+n_golgi_tendon_organs = 0
 golgi_tendon_organ_cellml_file = "../../input/hodgkin_huxley_1952.cellml"
 golgi_tendon_organ_mappings = {
   ("parameter", 0):           "membrane/i_Stim",   # stimulation
@@ -140,7 +139,7 @@ golgi_tendon_organ_parameters_initial_values = [0]    # [i_Stim]
 golgi_tendon_organ_delay = 30
 
 # inter neurons
-n_interneurons = 6
+n_interneurons = 0
 interneuron_cellml_file = "../../input/hodgkin_huxley_1952.cellml"
 interneuron_mappings = {
   ("parameter", 0):           "membrane/i_Stim",   # stimulation
@@ -188,10 +187,6 @@ def callback_muscle_spindles_input(input_values, output_values, current_time, sl
   n_input_values = len(input_values)      # = n_muscle_spindles
   n_output_values = len(output_values)    # = n_muscle_spindles
   
-  # print for debugging
-  if current_time > 100 and current_time < 105:
-    print("stretch at muscle spindles: {}".format(input_values))
-  
   for i in range(n_input_values):
     stretch = input_values[i]
     
@@ -200,7 +195,6 @@ def callback_muscle_spindles_input(input_values, output_values, current_time, sl
       stretch = 1
       
     output_values[i] = abs(stretch-1) * 50
-    output_values[i] = 10
   
   print("stretch at muscle spindles: {}, output: {}".format(input_values, output_values))
   return output_values
@@ -402,16 +396,16 @@ def callback_motoneurons_input(input_values, output_values, current_time, slot_n
   # collect sum of all Golgi tendon organs
   total_signal = 0
   
-  # loop over Golgi tendon organs
+  # loop over input values
   for input_index in range(n_input_values):
-    
-    # if input is active
-    if input_values[input_index] > 20:
-      total_signal += input_values[input_index]
+    total_signal += input_values[input_index]
     
   # set same value to all connected motoneurons
   for motoneuron_index in range(n_output_values):
-    output_values[motoneuron_index] = total_signal * 0.01
+    output_values[motoneuron_index] = total_signal
+    
+  # add cortical input
+  total_signal += 2
     
   print("motoneurons input: {}".format(input_values))
   return output_values

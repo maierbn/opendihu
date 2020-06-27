@@ -205,7 +205,6 @@ def callback_muscle_spindles_input(input_values, output_values, current_time, sl
   print("stretch at muscle spindles: {}, output: {}".format(input_values, output_values))
   return output_values
   
-
 def callback_muscle_spindles_to_motoneurons(input_values, output_values, current_time, slot_nos, buffer):
   """
   Callback function that transform a number of input_values to a number of output_values.
@@ -402,7 +401,7 @@ def callback_motoneurons_input(input_values, output_values, current_time, slot_n
   # collect sum of all Golgi tendon organs
   total_signal = 0
   
-  # loop over Golgi tendon organs
+  # loop over input values
   for input_index in range(n_input_values):
     
     # if input is active

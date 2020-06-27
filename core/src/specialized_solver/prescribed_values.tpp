@@ -3,6 +3,8 @@
 #include <omp.h>
 #include <sstream>
 
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
+
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
 PrescribedValues<FunctionSpaceType,nComponents1,nComponents2>::
 PrescribedValues(DihuContext context) :

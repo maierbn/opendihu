@@ -20,6 +20,7 @@ void SolutionVectorMapping<
   LOG(DEBUG) << "transferableSolutionData1: " << transferableSolutionData1;
   LOG(DEBUG) << "transferableSolutionData2: " << transferableSolutionData2;
   LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2;
+
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
   LOG(DEBUG) << "outputConnection: " << outputConnection.getDebugInformation();
 #endif

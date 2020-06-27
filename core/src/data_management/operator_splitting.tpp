@@ -23,6 +23,7 @@ initialize(TimeStepping1 &timeStepping1, TimeStepping2 &timeStepping2)
   std::get<1>(*outputConnectorData_) = timeStepping2.getOutputConnectorData();
 
   timeStepping1_ = std::make_shared<TimeStepping1>(timeStepping1);
+  timeStepping2_ = std::make_shared<TimeStepping2>(timeStepping2);
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -30,6 +31,10 @@ std::shared_ptr<typename OperatorSplitting<TimeStepping1,TimeStepping2>::OutputC
 OperatorSplitting<TimeStepping1,TimeStepping2>::
 getOutputConnectorData()
 {
+  // get the output connector data again, such that prepareForGetOutputConnectorData() will be called
+  std::get<0>(*outputConnectorData_) = timeStepping1_->getOutputConnectorData();
+  std::get<1>(*outputConnectorData_) = timeStepping2_->getOutputConnectorData();
+
   return outputConnectorData_;
 }
 

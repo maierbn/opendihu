@@ -51,7 +51,7 @@ initialize()
   data_.setFunctionSpace(functionSpace);
 
   // initialize data, i.e. create additional field variables
-  data_.initialize(nAdditionalFieldVariables, nestedSolver_.getOutputConnectorData());
+  data_.initialize(nAdditionalFieldVariables, nestedSolver_);
 
   // prepare communication by initializing mappings
   initializeCommunication(mappingsBeforeComputation_);

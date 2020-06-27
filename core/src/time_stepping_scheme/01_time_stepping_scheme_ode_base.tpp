@@ -123,7 +123,6 @@ std::shared_ptr<typename TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponent
 TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
 getOutputConnectorData()
 {
-  //LOG(TRACE) << "\ncall prepareForGetOutputConnectorData";
   prepareForGetOutputConnectorData();
 
   return this->data_->getOutputConnectorData();

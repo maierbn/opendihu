@@ -444,7 +444,7 @@ config = {
                     "toDofNosNumbering":                "local",
                     "dofsMapping":                      None,
                     "inputDofs":                        list(range(variables.n_golgi_tendon_organs)),   # [0,1,...,n_golgi_tendon_organs], this is for mesh "golgiTendonOrganMesh"
-                    "outputDofs":                       [list(range(variables.n_interneurons)),          # [0,1,...,n_interneurons]         this is for mesh "interneuronMesh"
+                    "outputDofs":                       [list(range(variables.n_interneurons))],          # [0,1,...,n_interneurons]         this is for mesh "interneuronMesh"
                     "callback":                         variables.callback_golgi_tendon_organs_to_interneurons,
                     #"thresholdValue":                   20,                 # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
                     #"valueToSet":                       20,                 # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.

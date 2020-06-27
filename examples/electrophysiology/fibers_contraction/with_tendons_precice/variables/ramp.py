@@ -107,13 +107,13 @@ stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, ad
 dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_1D = 1e-3                        # [ms] timestep width of diffusion (1e-3)
 dt_splitting = 1e-3                 # [ms] overall timestep width of strang splitting (1e-3)
-dt_3D = 1e0                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
+dt_3D = 1                           # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep_fibers = 4e0       # [ms] timestep for fiber output, 0.5
 output_timestep_3D = 4e0              # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
 
 
 # input files
-fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
+fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin.swapped"
 #fiber_file = "../../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency

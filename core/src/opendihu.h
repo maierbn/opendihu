@@ -47,6 +47,7 @@
 #include "specialized_solver/prescribed_values.h"
 #include "specialized_solver/my_new_solver/my_new_static_solver.h"
 #include "specialized_solver/my_new_solver/my_new_timestepping_solver.h"
+#include "specialized_solver/dummy.h"
 #include "specialized_solver/muscle_contraction_solver.h"
 #include "time_stepping_scheme/heun_adaptive.h"
 

@@ -172,4 +172,18 @@ void DihuContext::initializeLogging(int &argc, char *argv[])
   el::Loggers::reconfigureAllLoggers(conf);
   el::Loggers::removeFlag(el::LoggingFlag::AllowVerboseIfModuleNotSpecified);
   LOG(DEBUG) << "Log to \"" << logFilesPath << "\".";
+
+#if 0
+  // configure additional special logger
+  el::Loggers::getLogger("special");
+
+  // configure control and numerics logger to use different log files
+  el::Configurations configuration;
+  configuration.setToDefault();
+
+  configuration.setGlobally(el::ConfigurationType::Filename, "special.log");
+  el::Loggers::reconfigureLogger("special", configuration);
+
+  CLOG(INFO, "special") << "starting special log";
+#endif
 }

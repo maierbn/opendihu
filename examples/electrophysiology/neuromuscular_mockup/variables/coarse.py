@@ -71,7 +71,7 @@ use_lumped_mass_matrix = False            # which formulation to use, the formul
 # timing parameters
 # -----------------
 end_time = 10000.0                   # [ms] end time of the simulation
-end_time = 10.0                   # [ms] end time of the simulation
+#end_time = 1.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
 dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
@@ -119,6 +119,7 @@ sampling_factor_elasticity_fat_y = 0.5
 # muscle spindles
 n_muscle_spindles = 6
 muscle_spindle_cellml_file = "../../input/hodgkin_huxley_1952.cellml"
+muscle_spindle_cellml_file = "../../input/spindle.cellml"
 muscle_spindle_mappings = {
   ("parameter", 0):           "membrane/i_Stim",   # stimulation
   ("outputConnectorSlot", 0): "membrane/V",        # voltage

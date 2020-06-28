@@ -126,10 +126,11 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlge
   // y_n+1 = y_n + 0.5*[rhs(y_n) + rhs(y*)]
 
   // loop over point buffers, i.e., sets of 4 neighouring points of the fiber
-  int nPointBuffers = fiberPointBuffers_.size();
+  const int nPointBuffers = fiberPointBuffers_.size();
+  const double factorForForDataNo = Vc::double_v::Size / fiberData_[0].valuesLength;
   for (global_no_t pointBuffersNo = 0; pointBuffersNo < nPointBuffers; pointBuffersNo++)
   {
-    int fiberDataNo = pointBuffersNo * Vc::double_v::Size / fiberData_[0].valuesLength;
+    int fiberDataNo = pointBuffersNo * factorForForDataNo;
     int indexInFiber = pointBuffersNo * Vc::double_v::Size - fiberData_[fiberDataNo].valuesOffset;
 
     // determine if current point is at center of fiber
@@ -503,17 +504,23 @@ isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointI
   // check if time has come to call setSpecificStates
   bool checkStimulation = false;
 
-  VLOG(1) << "currentTime: " << currentTime << ", lastStimulationCheckTime: " << lastStimulationCheckTime << ", next time point: " << lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter);
-  VLOG(1) << "setSpecificStatesCallFrequency: " << setSpecificStatesCallFrequency << ", currentJitter: " << currentJitter << ", setSpecificStatesCallEnableBegin: " << setSpecificStatesCallEnableBegin;
+  if (VLOG_IS_ON(1))
+  {
+    VLOG(1) << "currentTime: " << currentTime << ", lastStimulationCheckTime: " << lastStimulationCheckTime << ", next time point: " << lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter);
+    VLOG(1) << "setSpecificStatesCallFrequency: " << setSpecificStatesCallFrequency << ", currentJitter: " << currentJitter << ", setSpecificStatesCallEnableBegin: " << setSpecificStatesCallEnableBegin;
+  }
 
   if (currentTime >= lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter)
       && currentTime >= setSpecificStatesCallEnableBegin-1e-13)
   {
-    VLOG(1) << "-> checkStimulation";
     checkStimulation = true;
 
-    VLOG(1) << "check if stimulation is over: duration already: " << currentTime - (lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter))
-      << ", setSpecificStatesRepeatAfterFirstCall: " << setSpecificStatesRepeatAfterFirstCall;
+    if (VLOG_IS_ON(1))
+    {
+      VLOG(1) << "-> checkStimulation";
+      VLOG(1) << "check if stimulation is over: duration already: " << currentTime - (lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter))
+        << ", setSpecificStatesRepeatAfterFirstCall: " << setSpecificStatesRepeatAfterFirstCall;
+    }
 
     // if current stimulation is over
     if (setSpecificStatesRepeatAfterFirstCall != 0
@@ -544,7 +551,7 @@ isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointI
     checkStimulation
     && firingEvents_[firingEventsIndex % firingEvents_.size()][motorUnitNo % firingEvents_[firingEventsIndex % firingEvents_.size()].size()];
 
-  if (checkStimulation)
+  if (checkStimulation && VLOG_IS_ON(1))
   {
     VLOG(1) << "setSpecificStatesCallFrequency: " << setSpecificStatesCallFrequency << ", firingEventsIndex: " << firingEventsIndex << ", fires: "
       << firingEvents_[firingEventsIndex % firingEvents_.size()][motorUnitNo % firingEvents_[firingEventsIndex % firingEvents_.size()].size()];

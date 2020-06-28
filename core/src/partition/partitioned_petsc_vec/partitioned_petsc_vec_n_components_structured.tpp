@@ -431,7 +431,8 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
     {
       // shift indices
       std::vector<PetscInt> &indices = temporaryIndicesVector_;
-      indices.resize(ni);
+      if (indices.size() < ni)
+        indices.resize(ni);
       for (int i = 0; i < ni; i++)
       {
         indices[i] = ix[i] + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts();

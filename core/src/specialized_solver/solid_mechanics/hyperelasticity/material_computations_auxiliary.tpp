@@ -760,11 +760,13 @@ computePK2StressField()
           xi[i] = 0.5 + (xi[0]-0.5)*0.9;
         }
 
+#ifndef NDEBUG
         LOG(DEBUG) << "element " << elementNoLocal << ", J=" << deformationGradientDeterminant << "," << jacobianDeterminant
           << ", displacementsValues: " << displacementsValues[0] << "," << displacementsValues[1]
           << ", deformationGradient: " << deformationGradient << ", inverseJacobianMaterial: " << inverseJacobianMaterial
           << ", geometryReferenceValues: " << geometryReferenceValues[0] << "," << geometryReferenceValues[1]
           << ", " << nTries << " retry with xi=" << xi;
+#endif
       }
 
       if (deformationGradientDeterminant < 0)

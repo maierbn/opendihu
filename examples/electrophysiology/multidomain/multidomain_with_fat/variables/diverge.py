@@ -72,13 +72,13 @@ end_time = 40*dt_0D
 scenario_name = "{}_{}_dt{}_atol{}_rtol{}_theta{}_sym{}_lump{}".format(multidomain_solver_type, multidomain_preconditioner_type, dt_splitting, multidomain_absolute_tolerance, multidomain_relative_tolerance, theta, use_symmetric_preconditioner_matrix, use_lumped_mass_matrix)
 
 # input files
-#cellml_file = "../../input/hodgkin_huxley_1952.c"
-cellml_file = "../../input/new_slow_TK_2014_12_08.c"
-#fiber_file = "../../input/left_biceps_brachii_7x7fibers.bin"
-#fiber_file = "../../input/small_5x5x11.bin"
-fiber_file = "../../input/box_3x3x17.bin"
+#cellml_file = "../../../input/hodgkin_huxley_1952.c"
+cellml_file = "../../../input/new_slow_TK_2014_12_08.c"
+#fiber_file = "../../../input/left_biceps_brachii_7x7fibers.bin"
+#fiber_file = "../../../input/small_5x5x11.bin"
+fiber_file = "../../../input/box_3x3x17.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
-firing_times_file = "../../input/MU_firing_times_immediately.txt"
+firing_times_file = "../../../input/MU_firing_times_immediately.txt"
 
 
 # stride for sampling the 3D elements from the fiber data

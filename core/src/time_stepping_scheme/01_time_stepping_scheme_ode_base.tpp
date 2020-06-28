@@ -108,13 +108,19 @@ checkForNanInf(int timeStepNo, double currentTime)
 {
   if (checkForNanInf_)
   {
-    if (this->data_->solution()->containsNanOrInf())
+    // only check every 10th time step
+    static int counter = 0;
+    if (counter % 10 == 0)
     {
-      LOG(ERROR) << "In " << name_ << ", timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime << ": Solution contains Nan or Inf. "
-        << "This probably means that the timestep width, " << this->timeStepWidth_ << ", is too high.";
-      LOG(ERROR) << *this->data_->solution();
-      LOG(FATAL) << "Abort because of nan or inf in solution. Set option \"checkForNanInf\": False to avoid this.";
+      if (this->data_->solution()->containsNanOrInf())
+      {
+        LOG(ERROR) << "In " << name_ << ", timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime << ": Solution contains Nan or Inf. "
+          << "This probably means that the timestep width, " << this->timeStepWidth_ << ", is too high.";
+        LOG(ERROR) << *this->data_->solution();
+        LOG(FATAL) << "Abort because of nan or inf in solution. Set option \"checkForNanInf\": False to avoid this.";
+      }
     }
+    counter++;
   }
 }
 

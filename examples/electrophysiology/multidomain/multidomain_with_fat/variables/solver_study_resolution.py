@@ -76,12 +76,12 @@ output_timestep_multidomain = 5     # [ms] timestep for multidomain output
 #end_time = 1e-2
 
 # input files
-cellml_file = "../../input/hodgkin_huxley_1952.c"
-cellml_file = "../../input/new_slow_TK_2014_12_08.c"
-fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
-fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
+cellml_file = "../../../input/hodgkin_huxley_1952.c"
+cellml_file = "../../../input/new_slow_TK_2014_12_08.c"
+fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
+fiber_file = "../../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
-firing_times_file = "../../input/MU_firing_times_immediately.txt"
+firing_times_file = "../../../input/MU_firing_times_immediately.txt"
 
 
 # stride for sampling the 3D elements from the fiber data

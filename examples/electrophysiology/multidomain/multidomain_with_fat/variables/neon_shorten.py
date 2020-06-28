@@ -35,15 +35,17 @@ motor_units = [
   {"fiber_no": 50, "standard_deviation": 0.2, "maximum": 0.2, "radius": 72.00, "cm": 1.00, "activation_start_time": 1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
   {"fiber_no": 25, "standard_deviation": 0.2, "maximum": 0.2, "radius": 80.00, "cm": 1.00, "activation_start_time": 1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # high number of fibers
 ]
+#motor_units=motor_units[0:1]
+
 # solvers
 # -------
 multidomain_solver_type = "gmres"          # solver for the multidomain problem
-#multidomain_preconditioner_type = "bjacobi"   # preconditioner
+multidomain_preconditioner_type = "bjacobi"   # preconditioner
 #multidomain_preconditioner_type = "boomeramg"   # preconditioner
-multidomain_preconditioner_type = "euclid"   # preconditioner
+#multidomain_preconditioner_type = "euclid"   # preconditioner
 
 multidomain_alternative_solver_type = "gmres"            # alternative solver, used when normal solver diverges
-multidomain_alternative_preconditioner_type = "none"    # preconditioner of the alternative solver
+multidomain_alternative_preconditioner_type = "euclid"    # preconditioner of the alternative solver
 
 # set initial guess to zero for direct solver
 initial_guess_nonzero = "lu" not in multidomain_solver_type 
@@ -66,23 +68,25 @@ dt_multidomain = 1e-3               # [ms] timestep width of the multidomain sol
 dt_splitting = 1e-3                 # [ms] overall timestep width of strang splitting (3e-3)
 output_timestep_multidomain = 2e-1  # [ms] timestep for multidomain output
 output_timestep_multidomain = 5     # [ms] timestep for multidomain output
-output_timestep_multidomain = 1e-2  # [ms] timestep for multidomain output
-output_timestep_0D_states = 2e-3    # [ms] timestep for output files of 0D subcellular model states
-end_time = 1e-2
+output_timestep_multidomain = 2e-1     # [ms] timestep for multidomain output
+#output_timestep_0D_states = 1e-2    # [ms] timestep for output files of 0D subcellular model states
+end_time = 5
 
-scenario_name = "{}_{}_dt{}_atol{}_rtol{}_theta{}_sym{}_lump{}".format(multidomain_solver_type, multidomain_preconditioner_type, dt_splitting, multidomain_absolute_tolerance, multidomain_relative_tolerance, theta, use_symmetric_preconditioner_matrix, use_lumped_mass_matrix)
+scenario_name = "{}_{}_shorten_dt{}_atol{}_rtol{}_theta{}_sym{}_lump{}".format(multidomain_solver_type, multidomain_preconditioner_type, dt_splitting, multidomain_absolute_tolerance, multidomain_relative_tolerance, theta, use_symmetric_preconditioner_matrix, use_lumped_mass_matrix)
 
 # input files
-cellml_file = "../../input/hodgkin_huxley_1952.c"
-fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
-fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
+#cellml_file = "../../../input/hodgkin_huxley_1952.c"
+cellml_file = "../../../input/new_slow_TK_2014_12_08.c"
+fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
+fiber_file = "../../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
-firing_times_file = "../../input/MU_firing_times_immediately.txt"
-firing_times_file = "../../input/MU_firing_times_always.txt"
+firing_times_file = "../../../input/MU_firing_times_immediately.txt"
+firing_times_file = "../../../input/MU_firing_times_always.txt"
 
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
+# If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1
 sampling_stride_y = 1
 sampling_stride_z = 20
@@ -93,8 +97,9 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-states_output = True
-disable_firing_output = False
+states_output = False    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
+show_linear_solver_output = True    # if every solve of multidomain diffusion should be printed
+disable_firing_output = False   # if information about firing of MUs should be printed
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(mu_no):

@@ -51,15 +51,15 @@ output_timestep_elasticity = 0.1    # [ms] timestep for elasticity output files
 # input files
 # -----------
 # CellML model, Shorten or Hodgkin-Huxley
-#cellml_file = "../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
-#cellml_file = "../../input/shorten.cpp"
-#cellml_file = "../../input/hodgkin_huxley_1952.c"
+#cellml_file = "../../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
+#cellml_file = "../../../input/shorten.cpp"
+#cellml_file = "../../../input/hodgkin_huxley_1952.c"
 
 # Fiber geometry, binary file
-#fiber_file = "../../input/3000fibers.bin"
-#fiber_file = "../../input/7x7fibers.bin"
-fiber_file = "../../input/13x13fibers.bin"
-#fiber_file = "../../input/49fibers.bin"
+#fiber_file = "../../../input/3000fibers.bin"
+#fiber_file = "../../../input/7x7fibers.bin"
+fiber_file = "../../../input/13x13fibers.bin"
+#fiber_file = "../../../input/49fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 
 load_fiber_data = False             # If the fiber geometry data should be loaded completely in the python script. If True, this reads the binary file and assigns the node positions in the config. If False, the C++ code will read the binary file and only extract the local node positions. This is more performant for highly parallel runs.
@@ -76,8 +76,8 @@ use_lumped_mass_matrix = False      # which formulation to use, the formulation 
 show_linear_solver_output = True    # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
 
 # motor unit stimulation times
-firing_times_file = "../../input/MU_firing_times_real.txt"
-#firing_times_file = "../../input/MU_firing_times_immediately.txt"
+firing_times_file = "../../../input/MU_firing_times_real.txt"
+#firing_times_file = "../../../input/MU_firing_times_immediately.txt"
 
 # partitioning
 # ------------

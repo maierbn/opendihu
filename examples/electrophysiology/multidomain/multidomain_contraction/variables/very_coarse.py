@@ -1,6 +1,6 @@
 
 # scenario name for log file
-scenario_name = "coarse"
+scenario_name = "very_coarse"
 
 # Fixed units in cellMl models:
 # These define the unit system.
@@ -122,7 +122,7 @@ multidomain_absolute_tolerance = 1e-15 # absolute residual tolerance for the mul
 multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
 
 # elasticity
-elasticity_solver_type = "lu"
+elasticity_solver_type = "gmres"
 elasticity_preconditioner_type = "none"
 snes_max_iterations = 10                  # maximum number of iterations in the nonlinear solver
 snes_rebuild_jacobian_frequency = 2       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
@@ -151,27 +151,27 @@ output_timestep_multidomain = 1e-1  # [ms] timestep for fiber output, 0.5
 output_timestep_elasticity = dt_elasticity      # [ms] timestep for elasticity output files
 
 # input files
-#cellml_file = "../../input/new_slow_TK_2014_12_08.c"
-cellml_file = "../../input/hodgkin_huxley-razumova.cellml"
+#cellml_file = "../../../input/new_slow_TK_2014_12_08.c"
+cellml_file = "../../../input/hodgkin_huxley-razumova.cellml"
 
-fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
-fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
+fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
+#fiber_file = "../../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
-firing_times_file = "../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-firing_times_file = "../../input/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"
+firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+firing_times_file = "../../../input/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
-sampling_stride_x = 1
-sampling_stride_y = 1
+sampling_stride_x = 3
+sampling_stride_y = 3
 sampling_stride_z = 50
-sampling_stride_fat = 1
+sampling_stride_fat = 2
 
 # how much of the multidomain mesh is used for elasticity
-sampling_factor_elasticity_x = 0.5    
-sampling_factor_elasticity_y = 0.5
+sampling_factor_elasticity_x = 0.7   
+sampling_factor_elasticity_y = 0.7
 sampling_factor_elasticity_z = 0.3
 sampling_factor_elasticity_fat_y = 0.5
 

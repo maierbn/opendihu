@@ -24,10 +24,10 @@ dt_3D = 1e-3                      # overall timestep width of splitting
 output_timestep = 1               # timestep for output files
 
 # input files
-fiber_file = "../input/laplace3d_structured_linear"
-fiber_distribution_file = "../input/MU_fibre_distribution_3780.txt"
-firing_times_file = "../input/MU_firing_times_load_balancing.txt"
-cellml_file = "../input/hodgkin_huxley_1952.c"
+fiber_file = "../../input/laplace3d_structured_linear"
+fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
+firing_times_file = "../../input/MU_firing_times_load_balancing.txt"
+cellml_file = "../../input/hodgkin_huxley_1952.c"
 
 # get own rank no and number of ranks
 rank_no = (int)(sys.argv[-2])

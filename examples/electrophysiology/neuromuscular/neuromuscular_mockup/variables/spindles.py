@@ -70,8 +70,8 @@ use_lumped_mass_matrix = False            # which formulation to use, the formul
 
 # timing parameters
 # -----------------
-end_time = 10000.0                   # [ms] end time of the simulation
-#end_time = 1.0                   # [ms] end time of the simulation
+#end_time = 10000.0                   # [ms] end time of the simulation
+end_time = 1000.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
 dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
@@ -217,7 +217,7 @@ def callback_muscle_spindles_input(input_values, output_values, current_time, sl
       
     output_values[0][i] = abs(stretch-1) * 150
   
-  print("stretch at muscle spindles: {}, output: {}".format(input_values, output_values))
+  #print("stretch at muscle spindles: {}, output: {}".format(input_values, output_values))
   
 def callback_muscle_spindles_to_motoneurons(input_values, output_values, current_time, slot_nos, buffer):
   """
@@ -268,7 +268,7 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
       else:
         output_values[0][muscle_spindle_index] = None     # do not set any values
         
-  print("muscle_spindles_to_motoneurons: {} -> {}".format(input_values, output_values))
+  #print("muscle_spindles_to_motoneurons: {} -> {}".format(input_values, output_values))
 
 def callback_golgi_tendon_organs_input(input_values, output_values, current_time, slot_nos, buffer):
   """
@@ -304,7 +304,7 @@ def callback_golgi_tendon_organs_input(input_values, output_values, current_time
       
     output_values[0][i] = abs(stretch-1) * 200
     
-  print("stretch at Golgi tendon organs: {}, output: {}".format(input_values, output_values))
+  #print("stretch at Golgi tendon organs: {}, output: {}".format(input_values, output_values))
 
 def callback_golgi_tendon_organs_to_interneurons(input_values, output_values, current_time, slot_nos, buffer):
   """
@@ -366,7 +366,7 @@ def callback_golgi_tendon_organs_to_interneurons(input_values, output_values, cu
         
       output_values[0][golgi_tendon_organ_index] = delayed_signal
   
-  print("golgi_tendon_organs_to_interneurons input: {}, output: {}".format(input_values, output_values))
+  #print("golgi_tendon_organs_to_interneurons input: {}, output: {}".format(input_values, output_values))
 
 def callback_interneurons_to_motoneurons(input_values, output_values, current_time, slot_nos, buffer):
   """
@@ -418,7 +418,7 @@ def callback_interneurons_to_motoneurons(input_values, output_values, current_ti
       else:
         output_values[0][interneuron_index] = None     # do not set any values
   
-  print("interneurons_to_motoneurons input: {}, output: {}".format(input_values, output_values))
+  #print("interneurons_to_motoneurons input: {}, output: {}".format(input_values, output_values))
   
 def callback_motoneurons_input(input_values, output_values, current_time, slot_nos, buffer):
   """
@@ -449,17 +449,16 @@ def callback_motoneurons_input(input_values, output_values, current_time, slot_n
   
   # loop over input values
   for input_index in range(n_input_values):
-    total_signal += input_values[input_index]
+    total_signal += input_values[input_index] * 1e-3
     
   # add cortical input
-  total_signal += 2
+  total_signal += 2e-3
   
   # set same value to all connected motoneurons
   for motoneuron_index in range(n_output_values):
     output_values[0][motoneuron_index] = total_signal
     
-    
-  print("motoneurons input: {}, output: {}".format(input_values, output_values))
+  #print("motoneurons input: {}, output: {}".format(input_values, output_values))
   
 def callback_motoneuron_output(input_values, output_values, current_time, slot_nos, buffer):
   """

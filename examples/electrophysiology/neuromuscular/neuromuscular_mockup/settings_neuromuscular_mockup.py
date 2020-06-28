@@ -396,7 +396,7 @@ config = {
                 "setSpecificStatesCallEnableBegin":       0,                                              # [ms] first time when to call setSpecificStates
                 "additionalArgument":                     None,
                                      
-                "handleResultFunction":                   handle_result,              # callback function that gets all current values and can do something with them
+                "handleResultFunction":                   None, #handle_result,              # callback function that gets all current values and can do something with them
                 "handleResultCallInterval":               1,                          # interval in which handle_result will be called
                 "handleResultFunctionAdditionalParameter": None,                      # additional last argument for handle_result
                 

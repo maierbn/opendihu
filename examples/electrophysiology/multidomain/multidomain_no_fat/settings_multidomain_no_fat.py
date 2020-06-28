@@ -27,23 +27,23 @@ solver_tolerance = 1e-10
 #Am = 0.1
 
 # input files, these are old files, better use "left_biceps_brachii_*"
-#fiber_file = "../input/scaled_mesh_tiny"
-#fiber_file = "../input/scaled_mesh_small"
-fiber_file = "../input/scaled_mesh_normal"
-#fiber_file = "../input/scaled_mesh_big"
+#fiber_file = "../../../input/scaled_mesh_tiny"
+#fiber_file = "../../../input/scaled_mesh_small"
+fiber_file = "../../../input/scaled_mesh_normal"
+#fiber_file = "../../../input/scaled_mesh_big"
 
-#fiber_file = "../input/laplace3d_structured_linear"
-#fiber_file = "../../input/7x7fibers.bin"
-fiber_file = "../../input/left_biceps_brachii_7x7fibers.bin"
+#fiber_file = "../../../input/laplace3d_structured_linear"
+#fiber_file = "../../../input/7x7fibers.bin"
+fiber_file = "../../../input/left_biceps_brachii_7x7fibers.bin"
 
 # stride which points to select for the 3D mesh, along the muscle (z-direction)
 sampling_stride_z = 20
 
 
-cellml_file = "../../input/hodgkin_huxley_1952.c"
-fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
-#firing_times_file = "../../input/MU_firing_times_real.txt"
-firing_times_file = "../../input/MU_firing_times_immediately.txt"
+cellml_file = "../../../input/hodgkin_huxley_1952.c"
+fiber_distribution_file = "../../../input/MU_fibre_distribution_3780.txt"
+#firing_times_file = "../../../input/MU_firing_times_real.txt"
+firing_times_file = "../../../input/MU_firing_times_immediately.txt"
 
 # motor unit parameters
 motor_units = [

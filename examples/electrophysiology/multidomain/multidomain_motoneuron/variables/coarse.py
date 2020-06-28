@@ -1,6 +1,6 @@
 
 # scenario name for log file
-scenario_name = "ramp"
+scenario_name = "coarse"
 
 # Fixed units in cellMl models:
 # These define the unit system.
@@ -103,7 +103,18 @@ motor_units = [
   {"fiber_no": 50, "standard_deviation": 0.2, "maximum": 0.2, "radius": 72.00, "cm": 1.00, "activation_start_time": 1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
   {"fiber_no": 25, "standard_deviation": 0.2, "maximum": 0.2, "radius": 80.00, "cm": 1.00, "activation_start_time": 1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # high number of fibers
 ]
-motor_units=motor_units[0:1]
+motor_units = motor_units[0:3]  # only use 3 motor units
+motoneuron_mappings = {
+  ("parameter", 0):           "membrane/i_Stim",  
+  ("outputConnectorSlot", 0): "membrane/V",
+}
+
+
+motoneuron_stimulation_current = 5    # [mV] constant stimulation current of the motoneuron
+
+# set values for parameters: [i_Stim, V_threshold, V_firing], 
+# i_Stim = stimulation current of motoneuron, V_threshold = threshold if trans-membrane voltage is above, motoneuron fires, V_firing = value of Vm to set if motoneuron fires
+motoneuron_parameters_initial_values = [motoneuron_stimulation_current]
 
 # solvers
 # -------
@@ -122,7 +133,7 @@ multidomain_absolute_tolerance = 1e-15 # absolute residual tolerance for the mul
 multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
 
 # elasticity
-elasticity_solver_type = "gmres"
+elasticity_solver_type = "lu"
 elasticity_preconditioner_type = "none"
 snes_max_iterations = 10                  # maximum number of iterations in the nonlinear solver
 snes_rebuild_jacobian_frequency = 2       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
@@ -140,39 +151,44 @@ use_lumped_mass_matrix = False            # which formulation to use, the formul
 
 # timing parameters
 # -----------------
-end_time = 4000.0                   # [ms] end time of the simulation
+end_time = 3e-2                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
+dt_motoneuron = 1e-3                # [ms] timestep width for motoneurons 
+dt_stimulation_check = 1e-2         # [ms] timestep width for when to check if the motoneurons stimulated 
 dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
-dt_elasticity = 1e-1                # [ms] time step width of elasticity solver
-output_timestep_multidomain = dt_multidomain     # [ms] timestep for fiber output, 0.5
+dt_elasticity = 1e-2                # [ms] time step width of elasticity solver
+output_timestep_multidomain = 1e-2 #2e0  # [ms] timestep for fiber output, 0.5
+output_timestep_motoneuron = 1e0   # [ms] timestep for output of motoneuron
 output_timestep_elasticity = dt_elasticity      # [ms] timestep for elasticity output files
 
 # input files
-cellml_file = "../../input/new_slow_TK_2014_12_08.c"
-#cellml_file = "../../input/hodgkin_huxley-razumova.cellml"
+#motoneuron_cellml_file = "../../../input/motoneuron_hodgkin_huxley.cellml"
+motoneuron_cellml_file = "../../../input/hodgkin_huxley_1952.cellml"
+#cellml_file = "../../../input/new_slow_TK_2014_12_08.c"
+cellml_file = "../../../input/hodgkin_huxley-razumova.cellml"
 
-fiber_file = "../../input/left_biceps_brachii_9x9fibers.bin"
-fiber_file = "../../input/left_biceps_brachii_13x13fibers.bin"
+#fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
+fiber_file = "../../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
-firing_times_file = "../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-firing_times_file = "../../input/MU_firing_times_never.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-fiber_distribution_file = "../../input/MU_fibre_distribution_10MUs.txt"
+firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+firing_times_file = "../../../input/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1
 sampling_stride_y = 1
-sampling_stride_z = 2 #20
+sampling_stride_z = 22
 sampling_stride_fat = 1
 
 # how much of the multidomain mesh is used for elasticity
 sampling_factor_elasticity_x = 0.5    
 sampling_factor_elasticity_y = 0.5
-sampling_factor_elasticity_z = 0.1
+sampling_factor_elasticity_z = 0.3
 sampling_factor_elasticity_fat_y = 0.5
 
 # other options
@@ -181,7 +197,7 @@ adios_output = False
 exfile_output = False
 python_output = False
 states_output = True    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
-show_linear_solver_output = True    # if every solve of multidomain diffusion should be printed
+show_linear_solver_output = False    # if every solve of multidomain diffusion should be printed
 disable_firing_output = False   # if information about firing of MUs should be printed
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's

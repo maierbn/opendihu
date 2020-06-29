@@ -70,6 +70,10 @@ PRECICE_DOWNLOAD = False
 #MPI_DIR = "/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
 MPI_DIR = "/usr/lib/x86_64-linux-gnu/openmpi"    # standard path for openmpi on ubuntu >18.04
 
+# Vectorized code for matrix assembly
+# Set to True for fastest code, set to False for faster compilation
+USE_VECTORIZED_FE_MATRIX_ASSEMBLY = False
+
 # chaste and dependencies
 have_chaste = False
 VTK_DOWNLOAD = have_chaste

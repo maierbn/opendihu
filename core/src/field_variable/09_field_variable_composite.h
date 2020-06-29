@@ -48,6 +48,9 @@ public:
 
 protected:
 
+  //! set the values in the own field variable from the values in the sub field variables, this is the reverse action of updateSubFieldVariables()
+  void updateMainFieldVariableFromSubFieldVariables();
+
   std::vector<std::shared_ptr<FieldVariable<SubFunctionSpaceType,nComponents>>> subFieldVariables_;     //< field variables that have the values of this field variable on the submeshes
   std::vector<VecD<nComponents>> subFieldVariableValues_;     //< temporary buffer
 };

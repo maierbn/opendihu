@@ -51,6 +51,7 @@ class PETSc(Package):
     
     # --with-cc='+env["CC"]+'\
     # --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
+    # --with-cc='+env["mpicc"]+'\
     
     # debugging build handler 
     if self.have_option(env, "PETSC_DEBUG"):
@@ -59,7 +60,6 @@ class PETSc(Package):
       self.set_build_handler([
         'mkdir -p ${PREFIX}',
         './configure --prefix=${PREFIX} --with-debugging=yes --with-shared-libraries=1 \
-          --with-cc='+env["mpicc"]+'\
           --download-fblaslapack=1 \
           --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
          | tee out.txt',
@@ -77,7 +77,6 @@ class PETSc(Package):
           'mkdir -p ${PREFIX}',
           #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
           './configure --prefix=${PREFIX} --with-debugging=no --with-shared-libraries=1 \
-          --with-cc='+env["mpicc"]+'\
           --download-fblaslapack=1 \
           --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
           COPTFLAGS=-O3\
@@ -94,7 +93,6 @@ class PETSc(Package):
           'mkdir -p ${PREFIX}',
           #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
           './configure --prefix=${PREFIX} --with-debugging=no --with-shared-libraries=1 \
-          --with-cc='+env["mpicc"]+'\
           --download-fblaslapack=1 \
           --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
           COPTFLAGS=-O3\
@@ -145,9 +143,9 @@ class PETSc(Package):
         self.set_build_handler([
           'mkdir -p ${PREFIX}',
           './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
-          --with-cc='+env["mpicc"]+'\
-          COPTFLAGS=-O3\
-          CXXOPTFLAGS=-O3\
+          --with-mpi-dir=${MPI_DIR} \
+          COPTFLAGS=-O3 \
+          CXXOPTFLAGS=-O3 \
           FOPTFLAGS=-O3 | tee out.txt',
         '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt || make',
         '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt) || make install',

@@ -33,7 +33,7 @@ The framework and its applications are constantly extended. However, there are s
    :caption: Next pages to read
    
    user/features
-   user/framework_structure
    user/installation
+   user/framework_structure
    user/getting_started
    

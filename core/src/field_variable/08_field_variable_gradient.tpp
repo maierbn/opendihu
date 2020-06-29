@@ -89,6 +89,8 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
     const int nDofsPerNode = this->functionSpace_->nDofsPerNode();
     std::array<double,D> xi;
 
+    LOG(DEBUG) << "mesh " << this->functionSpace_->meshName() << " element " << elementNoLocal << ", values: " << solutionValues;
+
     // loop over dofs in element, where to compute the gradient
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
     {
@@ -127,6 +129,8 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       // get gradient at dof
       std::array<double,D> gradPhiWorldSpace = this->functionSpace_->interpolateGradientInElement(solutionValues, inverseJacobianParameterSpace, xi);
 
+      LOG(DEBUG) << "   dof " << dofIndex << ", dofNo " << dofNo << ", nAdjacentElements: " << nAdjacentElements[dofNo] << ", gradPhiWorldSpace: " << gradPhiWorldSpace << ", inverseJacobianParameterSpace: " << inverseJacobianParameterSpace;
+
       // scale value
       gradPhiWorldSpace /= nAdjacentElements[dofNo];
 
@@ -135,7 +139,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       {
         int rankNo = DihuContext::ownRankNoCommWorld();
 
-          if ((rankNo == 0 && dofNo == 150) || (rankNo == 1 && dofNo == 0))
+        if ((rankNo == 0 && dofNo == 150) || (rankNo == 1 && dofNo == 0))
         {
           LOG(DEBUG) << "dofNo " << dofNo << " gradPhiWorldSpace: " << gradPhiWorldSpace << ", nAdjacentElements[dofNo]: " << nAdjacentElements[dofNo]
             << ",geometryValues: " << geometryValues << ", for this dof: " << geometryValues[dofIndex];
@@ -190,6 +194,9 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
 
   gradientField->finishGhostManipulation();
   approximatedGradientField->finishGhostManipulation();
+
+  LOG(DEBUG) << "gradientField: " << *gradientField;
+  LOG(DEBUG) << "approximatedGradientField: " << *approximatedGradientField;
 
   if (jacobianConditionNumberField)
   {

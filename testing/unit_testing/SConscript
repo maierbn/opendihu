@@ -48,7 +48,7 @@ if not env['no_tests']:
     program = env.Program('1_rank_tests', source=src_files)
 
     # add command that runs the tests after build
-    test = env.Command(target = 'test1', source = './1_rank_tests', action = 'cd testing/unit_testing/'+variant_directory+' && mpirun -n 1 --allow-run-as-root -quiet ./1_rank_tests')
+    test = env.Command(target = 'test1', source = './1_rank_tests', action = 'cd testing/unit_testing/'+variant_directory+' && mpirun -n 1 --allow-run-as-root -quiet ./1_rank_tests || [ -f "SUCCESS1" ]')
     AlwaysBuild(test)
 
 

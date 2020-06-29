@@ -751,7 +751,7 @@ computePK2StressField()
         deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);
         deformationGradientDeterminant = MathUtility::computeDeterminant(deformationGradient);  // J
 
-        if (deformationGradientDeterminant > 0.2)
+        if (Vc::all_of(deformationGradientDeterminant > 0.2))
           break;
 
         // if J=det(F) is negative, move the point in the element, xi, a bit more to the center
@@ -769,7 +769,7 @@ computePK2StressField()
 #endif
       }
 
-      if (deformationGradientDeterminant < 0)
+      if (Vc::any_of(deformationGradientDeterminant < 0))
       {
         LOG(ERROR) << "J = det(F) = " << deformationGradientDeterminant << " is negative, in computation of PK2 stresses.\n"
           << "Element no. " << elementNoLocal << ", xi=" << xi << ", det(material jacobian): " << jacobianDeterminant

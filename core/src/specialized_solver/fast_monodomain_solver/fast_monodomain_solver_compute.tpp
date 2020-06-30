@@ -22,7 +22,7 @@ advanceTimeSpan()
 
   //Control::PerformanceMeasurement::startFlops();
 
-  // do computation of own fibers, HH is hardcoded, stimulation from parsed MU and firing_times files
+  // do computation of own fibers, stimulation from parsed MU and firing_times files
   computeMonodomain();
 
   //Control::PerformanceMeasurement::endFlops();
@@ -160,12 +160,6 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlge
       // check if current point will be stimulated
       const bool stimulateCurrentPoint = isCurrentPointStimulated(fiberDataNo, currentTime, currentPointIsInCenter);
       const bool argumentStoreAlgebraics = storeAlgebraicsForTransfer && timeStepNo == nTimeSteps-1;
-
-      if (stimulateCurrentPoint)
-      {
-        LOG(INFO) << "t: " << currentTime << ", stimulate fiber " << fiberData_[fiberDataNo].fiberNoGlobal
-          << ", MU " << fiberData_[fiberDataNo].motorUnitNo;
-      }
 
       // if the current point does not need to get computed because the value won't change
       if (isEquilibriumAccelerationCurrentPointDisabled(stimulateCurrentPoint, pointBuffersNo))

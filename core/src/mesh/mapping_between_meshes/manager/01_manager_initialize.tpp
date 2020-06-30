@@ -36,7 +36,7 @@ createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpac
   if (!hasMappingBetweenMeshes(functionSpaceSource, functionSpaceTarget))
   {
     this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].xiTolerance = 0.1;
-    this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].enableWarnings = true;
+    this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].enableWarnings = false;
     this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].compositeUseOnlyInitializedMappings = false;
     this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].isEnabledFixUnmappedDofs = false;
   }

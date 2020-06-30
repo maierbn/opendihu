@@ -374,7 +374,7 @@ class Package(object):
       print(('  - Set %s_DOWNLOAD to True to automatically download and install the package.'%upp))
       print(('    If you additionally set %s_REDOWNLOAD to True it forces a fresh download '%upp))
       print('    if it was already done earlier.')
-      print('If you already did that, the build system might have a bug. Inspect "config.log" to see what went wrong.')
+      print('If you already did that, something went wrong. Inspect "config.log" to see what went wrong.\n\nSometimes it helps to delete the cache and try again:\nrm -rf .scon*')
       sys.exit(1)
 
     # If the package is not required but was found anyway, add a preprocessor

@@ -25,7 +25,21 @@ initialize(std::shared_ptr<FunctionSpaceType> functionSpace,
 {
   LOG(DEBUG) << "DiffusionTensorDirectional::initialize";
   useAdditionalDiffusionTensor_ = useAdditionalDiffusionTensor;
+
   direction_ = direction;
+
+  // normalize direction field variable
+  std::vector<Vec3> directionValues;
+  direction_->getValuesWithoutGhosts(directionValues);
+
+  for (Vec3 &directionValue : directionValues)
+  {
+    MathUtility::normalize<3,double>(directionValue);
+  }
+
+  direction_->setValuesWithoutGhosts(directionValues);
+  LOG(INFO) << "normalized direction: " << *direction_;
+
   spatiallyVaryingPrefactor_ = spatiallyVaryingPrefactor;
   this->dataFunctionSpace_ = functionSpace;
 

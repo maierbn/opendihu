@@ -127,7 +127,7 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlge
 
   // loop over point buffers, i.e., sets of 4 neighouring points of the fiber
   const int nPointBuffers = fiberPointBuffers_.size();
-  const double factorForForDataNo = Vc::double_v::Size / fiberData_[0].valuesLength;
+  const double factorForForDataNo = (double)Vc::double_v::Size / fiberData_[0].valuesLength;
   for (global_no_t pointBuffersNo = 0; pointBuffersNo < nPointBuffers; pointBuffersNo++)
   {
     int fiberDataNo = pointBuffersNo * factorForForDataNo;

@@ -215,9 +215,9 @@ solveLinearSystem()
 
   // solve the system, KSPSolve(ksp,b,x)
 #ifndef NDEBUG
-  this->linearSolver_->solve(rightHandSide, solution);
-#else
   this->linearSolver_->solve(rightHandSide, solution, "Linear system of bidomain problem solved");
+#else
+  this->linearSolver_->solve(rightHandSide, solution);
 #endif
 }
 

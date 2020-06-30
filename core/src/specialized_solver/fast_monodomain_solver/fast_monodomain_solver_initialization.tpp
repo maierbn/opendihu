@@ -192,6 +192,8 @@ initialize()
         assert(fiberFunctionSpace);
         assert(motorUnitNo_.size() > 0);
         
+        LOG(DEBUG) << "Fiber " << fiberNoGlobal << " (i,j)=(" << i << "," << j << ") is MU " << motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
+
         fiberData_.at(fiberDataNo).valuesLength = fiberFunctionSpace->nDofsGlobal();
         fiberData_.at(fiberDataNo).fiberNoGlobal = fiberNoGlobal;
         fiberData_.at(fiberDataNo).motorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
@@ -215,6 +217,9 @@ initialize()
 
         // find out first stimulation time of any fiber
         int firingEventsIndex = round(fiberData_.at(fiberDataNo).setSpecificStatesCallEnableBegin * fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency);
+        if (firingEventsIndex < 0)
+          firingEventsIndex = 0;
+
         // only if there is a chance that the current fiber will stimulate before the currently firstStimulationTime, because of setSpecificStatesCallEnableBegin
         if (firstStimulationTime == -1 || firstStimulationTime > fiberData_.at(fiberDataNo).setSpecificStatesCallEnableBegin)
         {

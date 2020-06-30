@@ -33,9 +33,16 @@ createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpac
   std::string sourceMeshName = functionSpaceSource->meshName();
   std::string targetMeshName = functionSpaceTarget->meshName();
 
-  // check if the mapping already existed
-  if (this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping)
+  if (!hasMappingBetweenMeshes(functionSpaceSource, functionSpaceTarget))
   {
+    this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].xiTolerance = 0.1;
+    this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].enableWarnings = true;
+    this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].compositeUseOnlyInitializedMappings = false;
+    this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].isEnabledFixUnmappedDofs = false;
+  }
+  else if (this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping)
+  {
+    // check if the mapping already existed
     LOG(WARNING) << "Mapping from mesh \"" << sourceMeshName << "\" to mesh \"" << targetMeshName << "\" is already defined.";
   }
 

@@ -1,6 +1,5 @@
 import sys, os
 import socket
-from distutils import sysconfig
 from .Package import Package
 
 petsc_text = r'''
@@ -16,32 +15,6 @@ int main(int argc, char* argv[]) {
    return EXIT_SUCCESS;
 }
 '''
-
-def parse_conf(ctx, conf_path, lib_dirs, libs):
-  vars = {}
-  sysconfig.parse_makefile(conf_path, vars)
-  flag_dict = ctx.env.ParseFlags(vars['PACKAGES_LIBS'])
-  lib_dirs.extend(flag_dict['LIBPATH'])
-  for ii in range(len(libs)):
-    libs[ii].extend(flag_dict['LIBS'])
-
-def find_conf(ctx, base, inc_dirs, lib_dirs, libs, extra_libs):
-  # PETSc 3.1
-  conf_path = os.path.join(base, 'conf', 'petscvariables')
-  if os.path.exists(conf_path):
-      parse_conf(ctx, conf_path, lib_dirs, libs)
-
-  # PETSC 2.3.3
-  conf_path = os.path.join(base, 'bmake', 'petscconf')
-  if os.path.exists(conf_path):
-    vars = {}
-    sysconfig.parse_makefile(conf_path, vars)
-    if 'PETSC_ARCH' in vars:
-        arch = vars['PETSC_ARCH']
-        inc_dirs.extend([os.path.join(base, 'bmake', arch)])
-        lib_dirs.extend([os.path.join(base, 'lib', arch)])
-        conf_path = os.path.join(base, 'bmake', arch, 'petscconf')
-        parse_conf(ctx, conf_path, lib_dirs, libs)
 
 class PETSc(Package):
 
@@ -136,7 +109,7 @@ class PETSc(Package):
     ctx.Message('Checking for PETSc ...         ')
     self.check_options(env)
 
-    res = super(PETSc, self).check(ctx, loc_callback=find_conf)
+    res = super(PETSc, self).check(ctx)
     #self.check_required(res[0], ctx)
   
     # if installation of petsc fails, retry without mumps and extra packages like parmetis, hdf5 or hypre
@@ -179,7 +152,7 @@ class PETSc(Package):
       
       self.number_output_lines = 3990
       
-      res = super(PETSc, self).check(ctx, loc_callback=find_conf)
+      res = super(PETSc, self).check(ctx)
       self.check_required(res[0], ctx)
     
     self.check_required(res[0], ctx)

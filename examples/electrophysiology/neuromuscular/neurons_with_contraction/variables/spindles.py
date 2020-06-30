@@ -151,23 +151,7 @@ interneuron_mappings = {
 }
 # initial values for the parameters, either once for all instances, or for all instances in array of struct ordering with nParameters_ parameters per instance: [inst0p0, inst0p1, ... inst0pn, inst1p0, inst1p1, ...]
 interneuron_parameters_initial_values = []    # [i_Stim, Cm]
-for i in range(n_interneurons):
-  
-  # compute a scaling factor that runs exponentially from min_factor to max_factor
-  min_factor = 0.5
-  max_factor = 2.0
-  
-  # ansatz scaling_factor(i) = c1 + c2*exp(i),
-  # scaling_factor(0) = min = c1 + c2  =>  c1 = min - c2
-  # scaling_factor(n-1) = max = min - c2 + c2*exp(n-1)  =>  max = min + c2*(exp(n-1) - 1)  =>  c2 = (max - min) / (exp(n-1) - 1)
-  c2 = (max_factor - min_factor) / (np.exp(n_interneurons-1) - 1)
-  c1 = min_factor - c2
-  scaling_factor = c1 + c2*np.exp(i)
-  
-  # add parameter values for motoneuron i
-  interneuron_parameters_initial_values += [0.0, 1*scaling_factor]
-  
-print(interneuron_parameters_initial_values)
+interneuron_parameters_initial_values += [0.0, 1]
   
 # motor neurons
 n_motoneurons = 3

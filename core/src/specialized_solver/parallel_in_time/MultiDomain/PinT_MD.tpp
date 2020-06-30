@@ -211,7 +211,7 @@ run()
   // Define XBraid parameters
 
   // int       max_levels    = 3;
-  int       nrelax        = 1;
+  int       nrelax        = 2;
   int       skip          = 0;
   double    tol           = 1.0e-07;
   int       cfactor       = 10;

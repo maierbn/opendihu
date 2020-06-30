@@ -253,10 +253,27 @@ getMeshPartitionBase(int slotNo, int arrayIndex)
   else
   {
     int index = slotNo - nSlotsNestedSolver;
-    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> fieldVariable
-      = std::get<1>(*data_.getOutputConnectorData())->variable1[index].values;
+    int nFieldVariables = std::get<1>(*data_.getOutputConnectorData())->variable1.size();
+    if (index < nFieldVariables)
+    {
 
-    return fieldVariable->functionSpace()->meshPartitionBase();
+      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> fieldVariable
+        = std::get<1>(*data_.getOutputConnectorData())->variable1[index].values;
+
+      if (fieldVariable->functionSpace())
+      {
+        return fieldVariable->functionSpace()->meshPartitionBase();
+      }
+      else
+      {
+        LOG(ERROR) << this->specificSettings_ << " Slot " << slotNo << " refers to a not initialized field variable.";
+      }
+    }
+    else
+    {
+      LOG(ERROR) << this->specificSettings_ << " Slot " << slotNo << " refers to a non-existing field variable, "
+        << "index=" << index << " but number of available field variables: " << nFieldVariables;
+    }
   }
 
   return nullptr;

@@ -42,14 +42,14 @@ public:
   //! initialize the subFieldVariables_ vector or update the value if it was already initialized, such that subFieldVariable() gets the most recent values
   void updateSubFieldVariables();
 
+  //! set the values in the own field variable from the values in the sub field variables, this is the reverse action of updateSubFieldVariables()
+  void updateMainFieldVariableFromSubFieldVariables();
+
   //! fill the gradient field with the gradient values in world coordinates of this field variable. This is only possible for scalar fields.
   void computeGradientField(std::shared_ptr<FieldVariable<::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>, FunctionSpaceType::dim()>> gradientField,
                             std::shared_ptr<FieldVariable<::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,1>> jacobianConditionNumber = nullptr);
 
 protected:
-
-  //! set the values in the own field variable from the values in the sub field variables, this is the reverse action of updateSubFieldVariables()
-  void updateMainFieldVariableFromSubFieldVariables();
 
   std::vector<std::shared_ptr<FieldVariable<SubFunctionSpaceType,nComponents>>> subFieldVariables_;     //< field variables that have the values of this field variable on the submeshes
   std::vector<VecD<nComponents>> subFieldVariableValues_;     //< temporary buffer

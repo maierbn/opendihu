@@ -27,6 +27,21 @@ MappingBetweenMeshesConstruct(std::shared_ptr<FunctionSpaceSourceType> functionS
   }
   else 
   {
+    if (!functionSpaceSource || !functionSpaceTarget)
+    {
+      LOG(FATAL) << "Cannot create mapping, function spaces are not set.";
+    }
+    if (functionSpaceSource->nElementsLocal() == 0)
+    {
+      LOG(FATAL) << "Cannot create mapping from mesh \"" << functionSpaceSource->meshName() << "\" of 0 elements (degenerate mesh with one node). \n"
+        << "Such meshes are fine in general, but you cannot map between them.";
+    }
+    if (functionSpaceTarget->nElementsLocal() == 0)
+    {
+      LOG(FATAL) << "Cannot create mapping to mesh \"" << functionSpaceTarget->meshName() << "\" of 0 elements (degenerate mesh with one node). \n"
+        << "Such meshes are fine in general, but you cannot map between them.";
+    }
+
     // create the mapping
     Control::PerformanceMeasurement::start("durationComputeMappingBetweenMeshes");
 
@@ -228,8 +243,8 @@ MappingBetweenMeshesConstruct(std::shared_ptr<FunctionSpaceSourceType> functionS
     {
       LOG(INFO) << "Successfully initialized mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
         << functionSpaceTarget->meshName() << "\", " << nSourceDofsOutsideTargetMesh << "/" << nDofsLocalSource << " source dofs are outside the target mesh. "
-        << (!enableWarnings ? "\"enableWarnings: False\"" : "\"enableWarnings: True\"")
-        << " \"xiTolerance\": " << xiTolerance << ", total duration of all mappings: " << Control::PerformanceMeasurement::getDuration("durationComputeMappingBetweenMeshes") << " s";
+        << (!enableWarnings ? "\"enableWarnings\": False, " : "\"enableWarnings\": True, ")
+        << "\"xiTolerance\": " << xiTolerance << ", total duration of all mappings: " << Control::PerformanceMeasurement::getDuration("durationComputeMappingBetweenMeshes") << " s";
     }
 
     // add statistics to log

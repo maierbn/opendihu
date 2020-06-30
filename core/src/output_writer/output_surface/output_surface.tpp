@@ -54,8 +54,6 @@ initialize()
   if (!sampledPoints_.empty())
     filename_ = specificSettings.getOptionString("filename", "out/sampledPoints.csv");
 
-  initializeSampledPoints();
-
   LOG(DEBUG) << "OutputSurface: initialize output writers";
 
   // initialize output writer to use smaller rank subset that only contains the ranks that have parts of the surface
@@ -64,7 +62,10 @@ initialize()
   {
     rankSubset_ = data_.functionSpace()->meshPartition()->rankSubset();
     outputWriterManager_.initialize(context_, specificSettings, rankSubset_);
+
+    initializeSampledPoints();
   }
+
   initialized_ = true;
 }
 

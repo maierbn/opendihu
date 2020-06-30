@@ -38,12 +38,12 @@ if ".py" in sys.argv[0]:
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
   if rank_no == 0:
-    print("Warning: There is no variables file, e.g:\n ./neuromuscular_mockup ../settings_neuromuscular_mockup.py coarse.py\n")
+    print("Warning: There is no variables file, e.g:\n ./only_neurons ../settings_only_neurons.py spindles.py\n")
   exit(0)
   
 # -------------------------------------------------------- begin parameters ---------------------------------------------------------
 # -------------------------------------------------------- end parameters ------------------------------------------------------------
-parser = argparse.ArgumentParser(description='neuromuscular_mockup')
+parser = argparse.ArgumentParser(description='only_neurons')
 parser.add_argument('--scenario_name',                       help='The name to identify this run in the log.',   default=variables.scenario_name)
 parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',    type=int)
 parser.add_argument('--n_subdomains_x', '-x',                help='Number of subdomains in x direction.',        type=int, default=variables.n_subdomains_x)
@@ -321,7 +321,7 @@ config = {
     "durationLogKey":         "duration_total",
     "timeStepOutputInterval": 100,
     "connectedSlotsTerm1To2": {8:2},          # connect motoneuron input
-    "connectedSlotsTerm2To1": {11:1, 10:4},    # connect input for muscle spindles and golgi tendon organs
+    "connectedSlotsTerm2To1": {7:1, 6:4},     # connect input for muscle spindles and golgi tendon organs
 
     # muscle spindles, golgi tendon organs and interneurons
     "Term1": {
@@ -329,7 +329,7 @@ config = {
       "Coupling": {
         "description":            "sensory organs and interneurons",    # description that will be shown in solver structure visualization
         "endTime":                variables.end_time,
-        "timeStepWidth":          max(variables.dt_muscle_spindles,max(variables.dt_golgi_tendon_organs,variables.dt_interneuron)),
+        "timeStepWidth":          variables.dt_neuron_transfer,
         "logTimeStepWidthAsKey":  "dt_neurons",
         "durationLogKey":         "duration_total",
         "timeStepOutputInterval": 100,
@@ -419,7 +419,7 @@ config = {
           "Coupling": {
             "description":            "processed Golgi tendon sensors",      # description that will be shown in solver structure visualization
             "endTime":                variables.end_time,
-            "timeStepWidth":          max(variables.dt_golgi_tendon_organs,variables.dt_interneuron),
+            "timeStepWidth":          variables.dt_neuron_transfer,
             "logTimeStepWidthAsKey":  "dt_golgi_tendon_organs",
             "durationLogKey":         "duration_golgi_tendon",
             "timeStepOutputInterval": 100,
@@ -589,7 +589,7 @@ config = {
         "logTimeStepWidthAsKey":  "dt_stimulation_check",
         "durationLogKey":         "duration_multidomain",
         "timeStepOutputInterval": 100,
-        "connectedSlotsTerm1To2": {0:6},      # slot connections between motoneuron and MapDofs object which maps values to nodes of the fiber mesh 
+        "connectedSlotsTerm1To2": {0:2},      # slot connections between motoneuron and MapDofs object which maps values to nodes of the fiber mesh 
         "connectedSlotsTerm2To1": [],
         
         # motoneuron
@@ -677,15 +677,15 @@ config = {
             "meshName":                   "muscleSpindleMesh",            # the mesh on which the additional field variables will be defined
             "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
               {                                                 
-                "fromOutputConnectorSlotNo":        2,
-                "toOutputConnectorSlotNo":          8,
+                "fromOutputConnectorSlotNo":        1,
+                "toOutputConnectorSlotNo":          4,
                 "fromOutputConnectorArrayIndex":    0,                    # which fiber/compartment, this does not matter here because all compartment meshes have the same displacements
                 "toOutputConnectorArrayIndex":      0,
                 "mode":                             "callback",           # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
                 "fromDofNosNumbering":              "global",
                 "toDofNosNumbering":                "local",
                 "dofsMapping":                      None,
-                "inputDofs":                        muscle_spindle_node_nos,          # nodes are set at bottom in helper.py
+                "inputDofs":                        None,          # nodes are set at bottom in helper.py
                 "outputDofs":                       [list(range(variables.n_muscle_spindles))],   # [0,1,...,n_muscle_spindles]
                 "callback":                         variables.callback_muscle_spindles_input,
                 #"thresholdValue":                   20,                  # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
@@ -702,15 +702,15 @@ config = {
               "beforeComputation":          None, 
               "afterComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
                 {                                                 
-                  "fromOutputConnectorSlotNo":        2,
-                  "toOutputConnectorSlotNo":          7,
+                  "fromOutputConnectorSlotNo":        1,
+                  "toOutputConnectorSlotNo":          3,
                   "fromOutputConnectorArrayIndex":    0,                   # which fiber/compartment, this does not matter here because all compartment meshes have the same displacements
                   "toOutputConnectorArrayIndex":      0,
                   "mode":                             "callback",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
                   "fromDofNosNumbering":              "global",
                   "toDofNosNumbering":                "local",
                   "dofsMapping":                      None,
-                  "inputDofs":                        golgi_tendon_organ_node_nos,          # nodes are set at bottom in helper.py
+                  "inputDofs":                        None,          # nodes are set at bottom in helper.py
                   "outputDofs":                       [list(range(variables.n_golgi_tendon_organs))],   # [0,1,...,n_golgi_tendon_organs]
                   "callback":                         variables.callback_golgi_tendon_organs_input,
                   #"thresholdValue":                   20,                 # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
@@ -726,7 +726,7 @@ config = {
                 "beforeComputation":          None, 
                 "afterComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
                   {
-                    "fromOutputConnectorSlotNo":        6,
+                    "fromOutputConnectorSlotNo":        2,
                     "toOutputConnectorSlotNo":          0,
                     "fromOutputConnectorArrayIndex":    0,
                     "toOutputConnectorArrayIndex":      compartment_no,      # which motor unit
@@ -735,7 +735,7 @@ config = {
                     "toDofNosNumbering":                "global",
                     "dofsMapping":                      None,
                     "inputDofs":                        compartment_no,
-                    "outputDofs":                       stimulation_node_nos,
+                    "outputDofs":                       None,
                     #"callback":                         variables.callback_motoneuron_output,
                     "thresholdValue":                   20,                    # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
                     "valueToSet":                       20,                   # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
@@ -743,126 +743,22 @@ config = {
                 for compartment_no in range(variables.n_compartments)],
                   
                 # electro-mechanics solver
-                "Coupling": {
-                  "description":            "electro-mechanics solver",   # description that will be shown in solver structure visualization
-                  "timeStepWidth":          variables.dt_elasticity,  # 1e-1
-                  "logTimeStepWidthAsKey":  "dt_elasticity",
-                  "durationLogKey":         "duration_total",
-                  "timeStepOutputInterval": 1,
-                  "endTime":                variables.end_time,
-                  "connectedSlotsTerm1To2": {1:2},          # transfer gamma to MuscleContractionSolver, the receiving slots are λ, λdot, γ
-                  "connectedSlotsTerm2To1":  None,       # transfer nothing back
-                  "Term1": {        # multidomain
-                    
-                    # electrophysiology solver (mockup)
-                    "MultipleInstances": {
-                      "nInstances": variables.n_compartments,  
-                      "instances": [        # settings for each motor unit, `i` is the index of the motor unit
-                      {
-                        "ranks": list(range(n_ranks)),
-                        "PrescribedValues": {
-                          "meshName":               "3Dmesh",      # reference to the multidomain mesh
-                          "numberTimeSteps":        1,             # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step
-                          "timeStepOutputInterval": 20,            # if the time step should be written to console, a value > 10 produces no output
-                          
-                          # a list of field variables that will get values assigned in every timestep, by the provided callback function
-                          "fieldVariables1": [
-                            {"name": "Vm_input", "callback": None},
-                            {"name": "stress", "callback": set_stress_values},
-                          ],
-                          "fieldVariables2":     [],
-                          "additionalArgument":  compartment_no,         # a custom argument to the fieldVariables callback functions, this will be passed on as the last argument
-                          
-                          "OutputWriter" : [
-                            #{"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/prescribed_stress{}".format(compartment_no), "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
-                          ]
-                        },
-                      } for compartment_no in range(variables.n_compartments)]
-                    },
-                  },
-                  "Term2": {        # solid mechanics
-                    "MuscleContractionSolver": {
-                      "numberTimeSteps":              1,                         # only use 1 timestep per interval
-                      "timeStepOutputInterval":       100,                       # do not output time steps
-                      "Pmax":                         variables.pmax,            # maximum PK2 active stress
-                      "OutputWriter" : [
-                        {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
-                      ],
-                      "mapGeometryToMeshes":          ["3Dmesh","3DFatMesh"],    # the mesh names of the meshes that will get the geometry transferred
-                      "dynamic":                      True,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
-                      
-                      # the actual solid mechanics solver, this is either "DynamicHyperelasticitySolver" or "HyperelasticitySolver", depending on the value of "dynamic"
-                      "DynamicHyperelasticitySolver": {
-                        "timeStepWidth":              variables.dt_elasticity,           # time step width 
-                        "durationLogKey":             "duration_mechanics",               # key to find duration of this solver in the log file
-                        "timeStepOutputInterval":     1,                         # how often the current time step should be printed to console
-                        
-                        "materialParameters":         variables.material_parameters,  # material parameters of the Mooney-Rivlin material
-                        "density":                    variables.rho,             # density of the material
-                        "displacementsScalingFactor": 1.0,                       # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
-                        "residualNormLogFilename":    "log_residual_norm.txt",   # log file where residual norm values of the nonlinear solver will be written
-                        "useAnalyticJacobian":        True,                      # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
-                        "useNumericJacobian":         False,                     # whether to use the numerically computed jacobian matrix in the nonlinear solver (slow), only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
-                          
-                        "dumpDenseMatlabVariables":   False,                     # whether to have extra output of matlab vectors, x,r, jacobian matrix (very slow)
-                        # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
-                        
-                        # mesh
-                        "inputMeshIsGlobal":          True,                     # the mesh is given locally
-                        "meshName":                   ["3Dmesh_elasticity_quadratic", "3DFatMesh_elasticity_quadratic"],       # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
-                        "fiberMeshNames":             [],                       # fiber meshes that will be used to determine the fiber direction, there are no fibers in multidomain, so this is empty
-                        "fiberDirection":             [0,0,1],                  # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
+                "PrescribedValues": {
+                  "meshName":               "3Dmesh",      # reference to the multidomain mesh
+                  "numberTimeSteps":        1,             # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step
+                  "timeStepOutputInterval": 20,            # if the time step should be written to console, a value > 10 produces no output
                   
-                        # solving
-                        "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
-                        #"loadFactors":                [0.5, 1.0],                # load factors for every timestep
-                        "loadFactors":                [],                        # no load factors, solve problem directly
-                        "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
-                        
-                        # boundary and initial conditions
-                        "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
-                        "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
-                        "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
-                        "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
-                        "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
-                        
-                        "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-                        "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-                        "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
-                        "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
-                        
-                        # define which file formats should be written
-                        # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
-                        "OutputWriter" : [
-                          
-                          # Paraview files
-                          {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/mechanics_uv_stress", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-                          
-                          # Python callback function "postprocess"
-                          #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
-                        ],
-                        # 2. additional output writer that writes also the hydrostatic pressure
-                        "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
-                          "OutputWriter" : [
-                            #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/p", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-                          ]
-                        },
-                        # 3. additional output writer that writes virtual work terms
-                        "dynamic": {    # output of the dynamic solver, has additional virtual work values 
-                          "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-                            {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/mechanics_virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-                            #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-                          ],
-                        },
-                        # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
-                        "LoadIncrements": {   
-                          "OutputWriter" : [
-                            #{"format": "Paraview", "outputInterval": 1, "filename": "out/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-                          ]
-                        },
-                      }
-                    }
-                  }
+                  # a list of field variables that will get values assigned in every timestep, by the provided callback function
+                  "fieldVariables1": [
+                    {"name": "Vm_input", "callback": None},
+                    {"name": "stress", "callback": None},
+                  ],
+                  "fieldVariables2":     [],
+                  "additionalArgument":  None,         # a custom argument to the fieldVariables callback functions, this will be passed on as the last argument
+                  
+                  "OutputWriter" : [
+                    #{"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/prescribed_stress{}".format(compartment_no), "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
+                  ]
                 }
               }
             }

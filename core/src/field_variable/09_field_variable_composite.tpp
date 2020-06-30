@@ -221,7 +221,7 @@ computeGradientField(std::shared_ptr<FieldVariable<::FunctionSpace::FunctionSpac
 
     subFieldVariableNo++;
   }
-  updateMainFieldVariableFromSubFieldVariables();
+  gradientField->updateMainFieldVariableFromSubFieldVariables();
 
   LOG(DEBUG) << "gradientField: " << *gradientField;
   LOG(DEBUG) << "gradientField[0]: " << *gradientField->subFieldVariableWithoutUpdate(0);

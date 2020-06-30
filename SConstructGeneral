@@ -183,7 +183,10 @@ if os.environ.get("PE_ENV") == None:
   if "notifyset" not in env:
     env["notifyset"] = True
     target='notify-send'+str(random.random())
-    notify = env.Command(target=target, source = None, action = 'notify-send "Compilation of opendihu core completed." "You can now abort compilation of unit tests, if not needed." -a opendihu || true')
+    if env['no_tests']:
+      notify = env.Command(target=target, source = None, action = 'notify-send "Compilation of opendihu core completed." -a opendihu || true')
+    else:
+      notify = env.Command(target=target, source = None, action = 'notify-send "Compilation of opendihu core completed." "You can now abort compilation of unit tests, if not needed." -a opendihu || true')
     #AlwaysBuild('notify-send')
     if env["BUILD_TYPE"] == "debug":
       Depends(notify, 'core/build_debug/libopendihud.a')

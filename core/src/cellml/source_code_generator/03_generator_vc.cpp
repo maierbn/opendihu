@@ -401,12 +401,12 @@ Vc::double_v exponential(Vc::double_v x)
 Vc::double_v pow(Vc::double_v basis, Vc::double_v exponent)
 {
   // Note, there is no pow function defined by Vc.
-  return exponential(Vc::log(basis)*exponent);
+  return Vc::exp(Vc::log(basis)*exponent);
 }
 
 Vc::double_v pow(Vc::double_v basis, double exponent)
 {
-  return exponential(Vc::log(basis)*exponent);
+  return Vc::exp(Vc::log(basis)*exponent);
 }
 
 )";

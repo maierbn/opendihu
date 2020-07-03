@@ -105,15 +105,17 @@ my_Access_MD(braid_App          app,
    /* Print solution to file if simulation is over */
    if(done)
    {
-      //MPI_Comm_rank( (app->comm), &rank);
+      MPI_Comm_rank( (app->comm), &rank);
       //sprintf(filename, "%s.%07d.%05d", "PinT_diffusion.out", index, rank);
       //save_solution(filename, u->values, u->size, app->xstart,
       //      app->xstop, app->ntime, app->tstart, app->tstop);
       std::shared_ptr<typename _braid_App_struct::NestedSolverMD> MultiDomainSolver = (*app->MultiDomainSolvers)[0];
+      //if (rank == 0){
       MultiDomainSolver->setSolution(u->values);
       MultiDomainSolver->printSolution(index, t);
-
-      //std::cout << index << "index \n";
+      //}
+          
+      std::cout << index << "index \n";
       //for(int i = 0; i < u->size; i++)
       //{
       //   std::cout << "\n" << u->values[i];

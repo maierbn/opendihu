@@ -786,7 +786,8 @@ solveLinearSystem()
     }
     else
     {
-      LOG(WARNING) << "Solver has not converged, try again " << solveNo << "/3";
+      //LOG(WARNING) << "Solver has not converged, try again " << solveNo << "/3";
+      break;
     }
   }
 

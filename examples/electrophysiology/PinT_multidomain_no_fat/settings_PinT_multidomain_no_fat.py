@@ -68,7 +68,7 @@ n_compartments = len(motor_units)
 # own MPI rank no and number of MPI ranks
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
-n_ranks_space = 2
+n_ranks_space = 1
 
 # load MU distribution and firing times
 fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
@@ -172,9 +172,7 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
   
   # determine if fiber gets stimulated at the current time
   is_compartment_gets_stimulated = compartment_gets_stimulated(compartment_no, current_time)
-
   if is_compartment_gets_stimulated:  
-    
     n_nodes_x = n_linear_elements_per_coordinate_direction[0]+1
     n_nodes_y = n_linear_elements_per_coordinate_direction[1]+1
     n_nodes_z = n_linear_elements_per_coordinate_direction[2]+1
@@ -210,7 +208,7 @@ multidomain_solver = {
   "nCompartments":                    n_compartments,                     # number of compartments
   "am":                               Am,                                 # Am parameter (ration of surface to volume of fibers)
   "cm":                               Cm,                                 # Cm parameter (capacitance of the cellular membrane)
-  "timeStepWidth":                    dt_multidomain,                     # time step width of the diffusion, i.e. the global linear system in the multidomain solver
+  "timeStepWidth":                    1, #dt_multidomain,                     # time step width of the diffusion, i.e. the global linear system in the multidomain solver
   "endTime":                          end_time,                           # end time, this is not relevant because it will be overridden by the splitting scheme
   "timeStepOutputInterval":           100,                                # how often the output timestep should be printed
   "solverName":                       "activationSolver",                 # reference to the solver used for the global linear system of the multidomain eq.
@@ -293,8 +291,8 @@ config = {
   },
   "PinTMD": {
     "tstart": 0,                    # Start time
-    "tstop": 10,         #end_time            # End time
-    "ntime": 20,                      # number of time steps
+    "tstop": 1,         #end_time            # End time
+    "ntime": 333,                      # number of time steps
     "nspace":   1567,#8235, #3135,
     "Initial Guess": [2,2,4,5,2,2,2,0],
     "option1": "blabla",              # another example option that is parsed in the data object
@@ -321,7 +319,7 @@ config = {
             {
               "ranks": list(range(n_ranks_space)),
               "Heun" : {
-                "timeStepWidth": dt_0D,  # 5e-5
+                "timeStepWidth": 1, #dt_0D,  # 5e-5
                 "logTimeStepWidthAsKey":        "dt_0D",
                 "durationLogKey":               "duration_0D",
                 "initialValues":                [],
@@ -378,7 +376,7 @@ config = {
         }
       },
       "OutputWriter": [
-        #{"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
+        #{"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": False, "fixedFormat": False, "combineFiles": False, "fileNumbering": "timeStepIndex"},
       ]
     } for j in range (NumberOfMultiDomainSolvers)] 
   },

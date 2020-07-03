@@ -138,6 +138,26 @@ updateDirichletBoundaryConditions(std::vector<std::pair<global_no_t,std::array<d
 
 template<typename Term,typename MeshType>
 void DynamicHyperelasticitySolver<Term,MeshType>::
+addDirichletBoundaryConditions(std::vector<typename SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpace,6>::ElementWithNodes> &boundaryConditionElements, bool overwriteBcOnSameDof)
+{
+  hyperelasticitySolver_.addDirichletBoundaryConditions(boundaryConditionElements, overwriteBcOnSameDof);
+
+  // recreate all vectors
+  uvp_ = hyperelasticitySolver_.createPartitionedPetscVec("uvp");
+
+  //uvp_->startGhostManipulation();
+  uvp_->zeroGhostBuffer();
+  uvp_->finishGhostManipulation();
+
+  PetscErrorCode ierr;
+  ierr = VecDuplicate(uvp_->valuesGlobal(), &internalVirtualWork_); CHKERRV(ierr);
+  ierr = VecDuplicate(uvp_->valuesGlobal(), &accelerationTerm_); CHKERRV(ierr);
+  ierr = VecDuplicate(uvp_->valuesGlobal(), &externalVirtualWorkDead_); CHKERRV(ierr);
+
+}
+
+template<typename Term,typename MeshType>
+void DynamicHyperelasticitySolver<Term,MeshType>::
 callUpdateNeumannBoundaryConditionsFunction(double t)
 {
   if (pythonUpdateNeumannBoundaryConditionsFunction_ == NULL)

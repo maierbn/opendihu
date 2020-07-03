@@ -109,7 +109,7 @@ mapLowToHighDimension(
   // loop over all local dofs of the source functionSpace
   for (dof_no_t sourceDofNoLocal = 0; sourceDofNoLocal != nDofsLocalSource; sourceDofNoLocal++)
   {
-    LOG(DEBUG) << "source dof " << sourceDofNoLocal << " map: " << this->targetMappingInfo_[sourceDofNoLocal].mapThisDof
+    VLOG(1) << "source dof " << sourceDofNoLocal << " map: " << this->targetMappingInfo_[sourceDofNoLocal].mapThisDof
       << ", has " << this->targetMappingInfo_[sourceDofNoLocal].targetElements.size() << " entry in target elements";
 
     // if target dof is outside of source mesh

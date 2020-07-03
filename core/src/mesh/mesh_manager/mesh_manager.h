@@ -79,6 +79,9 @@ public:
   //! \param name is the name of the Petsc Vec, used for debugging output.
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic,1>> createGenericFieldVariable(int nEntries, std::string name);
 
+  //! remove a function space if it exists
+  void deleteFunctionSpace(std::string meshName);
+
   friend class NodePositionsTester;    //< a class used for testing
 
 private:

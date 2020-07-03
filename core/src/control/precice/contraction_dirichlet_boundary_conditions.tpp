@@ -9,7 +9,9 @@ template<typename NestedSolver>
 ContractionDirichletBoundaryConditions<NestedSolver>::
 ContractionDirichletBoundaryConditions(DihuContext context) :
   Runnable(),
-  context_(context["PreciceContractionDirichletBoundaryConditions"]), nestedSolver_(this->context_), initialized_(false)
+  context_(context["PreciceContractionDirichletBoundaryConditions"]),
+  nestedSolver_(this->context_), maximumPreciceTimestepSize_(0), timeStepOutputInterval_(1),
+  haveCouplingSurfaceBottom_(false), haveCouplingSurfaceTop_(false), initialized_(false)
 {
   // get python settings object from context
   this->specificSettings_ = this->context_.getPythonConfig();
@@ -20,6 +22,8 @@ void ContractionDirichletBoundaryConditions<NestedSolver>::
 initialize()
 {
 #ifdef HAVE_PRECICE
+
+  LOG(DEBUG) << "initialize precice adapter for muscle, initialized_=" << initialized_;
 
   // make sure that we initialize only once, in the next call, initialized_ is true
   if (initialized_)
@@ -36,7 +40,8 @@ initialize()
   // call initialize of the nested solver
   nestedSolver_.initialize();
 
-  initializeDirichletBoundaryConditions();
+  // initialize function space
+  functionSpace_ = nestedSolver_.timeStepping2().data().functionSpace();
 
   // indicate in solverStructureVisualizer that the child solver initialization is done
   DihuContext::solverStructureVisualizer()->endChild();
@@ -48,69 +53,150 @@ initialize()
   const std::string solverName = "MuscleSolver";
   const std::string configFileName = this->specificSettings_.getOptionString("preciceConfigFilename", "../precice-config.xml");
 
-  // initialize function space
-  functionSpace_ = nestedSolver_.timeStepping2().data().functionSpace();
-
   int rankNo = functionSpace_->meshPartition()->rankSubset()->ownRankNo();
   int nRanks = functionSpace_->meshPartition()->rankSubset()->size();
 
-  // initialize interface to precice for the bottom surface mesh
-  preciceSolverInterfaceBottom_ = std::make_unique<precice::SolverInterface>(solverName, configFileName, rankNo, nRanks);
+  // parse settings for coupling participants / tendons
+  // loop over items of the key "CouplingParticipants"
+  std::string settingsKey("couplingParticipants");
+  PyObject *listPy = this->specificSettings_.getOptionPyObject(settingsKey);
+  std::vector<PyObject *> list = PythonUtility::convertFromPython<std::vector<PyObject *>>::get(listPy);
+  PythonConfig couplingParticipantConfig(this->specificSettings_, settingsKey);
+
+  // loop over items of the list under "couplingParticipants"
+  for (int i = 0; i < list.size(); i++)
+  {
+    PythonConfig currentCouplingParticipantConfig(couplingParticipantConfig, i);
+
+    CouplingParticipant couplingParticipant;
+
+    // initialize if this participant (tendon) is attached at bottom or top of muscle mesh
+    couplingParticipant.isCouplingSurfaceBottom = currentCouplingParticipantConfig.getOptionBool("isCouplingSurfaceBottom", true);
+
+    // initialize interface to precice for the bottom surface mesh
+    couplingParticipant.preciceSolverInterface = std::make_shared<precice::SolverInterface>(solverName, configFileName, rankNo, nRanks);
+
+    couplingParticipants_.push_back(couplingParticipant);
+
+    if (couplingParticipant.isCouplingSurfaceBottom)
+    {
+      haveCouplingSurfaceBottom_ = true;
+
+      // get the mesh id of the bottom mesh
+      std::string meshName = "MuscleMeshBottom";
+      preciceMeshIdBottom_ = couplingParticipant.preciceSolverInterface->getMeshID(meshName);
+    }
+    else
+    {
+      haveCouplingSurfaceTop_ = true;
+
+      // get the mesh id of the top mesh
+      std::string meshName = "MuscleMeshTop";
+      preciceMeshIdTop_ = couplingParticipant.preciceSolverInterface->getMeshID(meshName);
+    }
+  }
+
+  initializeDirichletBoundaryConditions();
 
   std::vector<Vec3> geometryValues;
   functionSpace_->geometryField().getValuesWithoutGhosts(geometryValues);
 
   // store the node positions to precice
-  std::string meshName = "MuscleMeshBottom";
-  preciceMeshIdBottom_ = preciceSolverInterfaceBottom_->getMeshID(meshName);
 
-  // bottom coupling surface
-  // get nodes at coupling surface
+  // initialize coupling surfaces
+  // get nodes at coupling surfaces
   const int nNodesX = functionSpace_->nNodesLocalWithoutGhosts(0);
   const int nNodesY = functionSpace_->nNodesLocalWithoutGhosts(1);
-  nNodesBottomSurfaceLocal_ = nNodesX * nNodesY;
+  const int nNodesZ = functionSpace_->nNodesLocalWithoutGhosts(2);
+  nNodesSurfaceLocal_ = nNodesX * nNodesY;
 
-  std::vector<double> geometryValuesSurfacePrecice(3*nNodesBottomSurfaceLocal_);
-  preciceVertexIdsBottom_.resize(nNodesBottomSurfaceLocal_);
+  std::vector<double> geometryValuesBottomSurfacePrecice(3*nNodesSurfaceLocal_);
+  std::vector<double> geometryValuesTopSurfacePrecice(3*nNodesSurfaceLocal_);
 
   // loop over nodes
-  const int nodeIndexZ = 0;
   for (int nodeIndexY = 0; nodeIndexY < nNodesY; nodeIndexY++)
   {
     for (int nodeIndexX = 0; nodeIndexX < nNodesX; nodeIndexX++)
     {
-      node_no_t nodeNoLocal =
-        nodeIndexZ * nNodesX * nNodesY
+      node_no_t nodeNoLocal = nodeIndexY * nNodesX + nodeIndexX;
+      dof_no_t bottomDofNoLocal = nodeIndexY * nNodesX + nodeIndexX;
+      dof_no_t topDofNoLocal =
+        (nNodesZ-1) * nNodesX * nNodesY
         + nodeIndexY * nNodesX
         + nodeIndexX;
-      dof_no_t dofNoLocal = nodeNoLocal;
 
       for (int i = 0; i < 3; i++)
       {
-        geometryValuesSurfacePrecice[3*nodeNoLocal + i] = geometryValues[dofNoLocal][i];
+        geometryValuesBottomSurfacePrecice[3*nodeNoLocal + i] = geometryValues[bottomDofNoLocal][i];
+        geometryValuesTopSurfacePrecice[3*nodeNoLocal + i] = geometryValues[topDofNoLocal][i];
       }
     }
   }
 
-  LOG(DEBUG) << "setMeshVertices to precice for bottom mesh, " << 3*nNodesBottomSurfaceLocal_ << " values";
+  LOG(DEBUG) << "setMeshVertices to precice for surface meshes, " << 3*nNodesSurfaceLocal_ << " values each";
 
-  //preciceSolverInterfaceBottom_->setMeshVertices(preciceMeshId_, int size, double* positions, int* ids);
-  preciceSolverInterfaceBottom_->setMeshVertices(preciceMeshIdBottom_, nNodesBottomSurfaceLocal_, geometryValuesSurfacePrecice.data(), preciceVertexIdsBottom_.data());
+  if (haveCouplingSurfaceBottom_)
+  {
+    preciceVertexIdsBottom_.resize(nNodesSurfaceLocal_);
 
-  LOG(DEBUG) << "precice defined vertexIds: " << preciceVertexIdsBottom_;
+    // initialize all precice solver interfaces that use the bottom interface
 
-  // initialize data ids
-  preciceDataIdDisplacements_ = preciceSolverInterfaceBottom_->getDataID("Displacements", preciceMeshIdBottom_);
-  preciceDataIdTraction_      = preciceSolverInterfaceBottom_->getDataID("Traction",      preciceMeshIdBottom_);
+    // loop over coupling participants
+    for (CouplingParticipant &couplingParticipant : couplingParticipants_)
+    {
+      if (couplingParticipant.isCouplingSurfaceBottom)
+      {
+        std::shared_ptr<precice::SolverInterface> preciceSolverInterface = couplingParticipant.preciceSolverInterface;
 
-  LOG(DEBUG) << "data id displacements: " << preciceDataIdDisplacements_;
-  LOG(DEBUG) << "data id traction: " << preciceDataIdTraction_;
+        //preciceSolverInterface->setMeshVertices(preciceMeshId_, int size, double* positions, int* ids);
+        preciceSolverInterface->setMeshVertices(preciceMeshIdBottom_, nNodesSurfaceLocal_, geometryValuesBottomSurfacePrecice.data(), preciceVertexIdsBottom_.data());
 
-  maximumPreciceTimestepSize_ = preciceSolverInterfaceBottom_->initialize();
+        LOG(DEBUG) << "precice defined vertexIds: " << preciceVertexIdsBottom_;
+
+        // initialize data ids
+        preciceDataIdDisplacements_ = preciceSolverInterface->getDataID("Displacements", preciceMeshIdBottom_);
+        preciceDataIdVelocity_      = preciceSolverInterface->getDataID("Velocity",      preciceMeshIdBottom_);
+        preciceDataIdTraction_      = preciceSolverInterface->getDataID("Traction",      preciceMeshIdBottom_);
+
+        LOG(DEBUG) << "data id displacements: " << preciceDataIdDisplacements_;
+        LOG(DEBUG) << "data id traction: " << preciceDataIdTraction_;
+
+        maximumPreciceTimestepSize_ = std::max(maximumPreciceTimestepSize_, preciceSolverInterface->initialize());
+      }
+    }
+  }
+
+  if (haveCouplingSurfaceTop_)
+  {
+    preciceVertexIdsTop_.resize(nNodesSurfaceLocal_);
+
+    // loop over coupling participants
+    for (CouplingParticipant &couplingParticipant : couplingParticipants_)
+    {
+      if (!couplingParticipant.isCouplingSurfaceBottom)
+      {
+        std::shared_ptr<precice::SolverInterface> preciceSolverInterface = couplingParticipant.preciceSolverInterface;
+
+        //preciceSolverInterface->setMeshVertices(preciceMeshId_, int size, double* positions, int* ids);
+        preciceSolverInterface->setMeshVertices(preciceMeshIdTop_, nNodesSurfaceLocal_, geometryValuesTopSurfacePrecice.data(), preciceVertexIdsTop_.data());
+
+        LOG(DEBUG) << "precice defined vertexIds: " << preciceVertexIdsTop_;
+
+        // initialize data ids
+        preciceDataIdDisplacements_ = preciceSolverInterface->getDataID("Displacements", preciceMeshIdTop_);
+        preciceDataIdVelocity_      = preciceSolverInterface->getDataID("Velocity",      preciceMeshIdTop_);
+        preciceDataIdTraction_      = preciceSolverInterface->getDataID("Traction",      preciceMeshIdTop_);
+
+        LOG(DEBUG) << "data id displacements: " << preciceDataIdDisplacements_;
+        LOG(DEBUG) << "data id traction: " << preciceDataIdTraction_;
+
+        maximumPreciceTimestepSize_ = std::max(maximumPreciceTimestepSize_, preciceSolverInterface->initialize());
+      }
+    }
+  }
 
   timeStepWidth_ = this->specificSettings_.getOptionDouble("timestepWidth", 0.01, PythonUtility::Positive);
   LOG(DEBUG) << "precice initialization done, dt: " << maximumPreciceTimestepSize_ << "," << timeStepWidth_;
-
 
   initialized_ = true;
 
@@ -130,31 +216,51 @@ initializeDirichletBoundaryConditions()
 
   int nElementsX = functionSpace_->meshPartition()->nElementsLocal(0);
   int nElementsY = functionSpace_->meshPartition()->nElementsLocal(1);
-  int elementIndexZ = 0;
+  int nElementsZ = functionSpace_->meshPartition()->nElementsLocal(2);
 
-  // loop over elements
-  for (int elementIndexY = 0; elementIndexY < nElementsY; elementIndexY++)
+  std::vector<int> elementIndicesZ;
+
+  if (haveCouplingSurfaceBottom_)
   {
-    for (int elementIndexX = 0; elementIndexX < nElementsX; elementIndexX++)
-    {
-      ElementWithNodesType elementWithNodes;
-      elementWithNodes.elementNoLocal = elementIndexZ*nElementsX*nElementsY + elementIndexY * nElementsX + elementIndexX;
+    elementIndicesZ.push_back(0);
+  }
 
-      for (int indexY = 0; indexY < 3; indexY++)
+  if (haveCouplingSurfaceTop_)
+  {
+    elementIndicesZ.push_back(nElementsZ-1);
+  }
+
+  // for either or both of surface and bottom coupling mesh
+  for (int elementIndexZ : elementIndicesZ)
+  {
+    int indexZ = 0;
+    if (elementIndexZ > 0)
+      indexZ = 2;
+
+    // loop over elements
+    for (int elementIndexY = 0; elementIndexY < nElementsY; elementIndexY++)
+    {
+      for (int elementIndexX = 0; elementIndexX < nElementsX; elementIndexX++)
       {
-        for (int indexX = 0; indexX < 3; indexX++)
+        ElementWithNodesType elementWithNodes;
+        elementWithNodes.elementNoLocal = elementIndexZ*nElementsX*nElementsY + elementIndexY * nElementsX + elementIndexX;
+
+        for (int indexY = 0; indexY < 3; indexY++)
         {
-          int elementalDofIndex = indexY * 3 + indexX;
-          elementWithNodes.elementalDofIndex.push_back(std::pair<int,VecD<6>>(elementalDofIndex, VecD<6>{0,0,0,0,0,0}));
+          for (int indexX = 0; indexX < 3; indexX++)
+          {
+            int elementalDofIndex = indexZ * 9 + indexY * 3 + indexX;
+            elementWithNodes.elementalDofIndex.push_back(std::pair<int,VecD<6>>(elementalDofIndex, VecD<6>{0,0,0,0,0,0}));
+          }
         }
+        dirichletBoundaryConditionElements.push_back(elementWithNodes);
       }
-      dirichletBoundaryConditionElements.push_back(elementWithNodes);
     }
   }
 
   // add the dirichlet bc values
   bool overwriteBcOnSameDof = true;
-  nestedSolver_.timeStepping2().dynamicHyperelasticitySolver()->hyperelasticitySolver().dirichletBoundaryConditions()->addBoundaryConditions(dirichletBoundaryConditionElements, overwriteBcOnSameDof);
+  nestedSolver_.timeStepping2().dynamicHyperelasticitySolver()->addDirichletBoundaryConditions(dirichletBoundaryConditionElements, overwriteBcOnSameDof);
 }
 
 template<typename NestedSolver>
@@ -166,55 +272,74 @@ run()
   // initialize everything
   initialize();
 
-  if (preciceSolverInterfaceBottom_->isActionRequired(precice::constants::actionWriteInitialData()))
+  // perform initial data transfer for all participants, if required
+  for (const CouplingParticipant &couplingParticipant : couplingParticipants_)
   {
-    LOG(DEBUG) << "isActionRequired(actionWriteInitialData) is true";
+    if (couplingParticipant.preciceSolverInterface->isActionRequired(precice::constants::actionWriteInitialData()))
+    {
+      // writeData for this participant
+      preciceWriteData(couplingParticipant);
 
-    // writeData
-    preciceWriteData();
+      couplingParticipant.preciceSolverInterface->markActionFulfilled(precice::constants::actionWriteInitialData());
 
-    preciceSolverInterfaceBottom_->markActionFulfilled(precice::constants::actionWriteInitialData());
-    // initialize data in precice
-    LOG(DEBUG) << "precice::initializeData";
-    preciceSolverInterfaceBottom_->initializeData();
-
+      // initialize data in precice
+      couplingParticipant.preciceSolverInterface->initializeData();
+    }
   }
-  else
-  {
-    LOG(DEBUG) << "isActionRequired(actionWriteInitialData) is false";
-  }
-
-  //std::shared_ptr<::Data::OutputConnectorData<::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, ::BasisFunction::LagrangeOfOrder<2> >, 1, 1> > connectorData
-  //  = getOutputConnectorData();
 
   // perform the computation of this solver
+  double currentTime = 0;
 
   // main simulation loop of adapter
-  for (int timeStepNo = 0; preciceSolverInterfaceBottom_->isCouplingOngoing(); timeStepNo++)
+  for (int timeStepNo = 0; couplingParticipants_[0].preciceSolverInterface->isCouplingOngoing(); timeStepNo++)
   {
-
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
+    {
+      LOG(INFO) << "Precice (Dirichlet) coupling, timestep " << timeStepNo << ", t=" << currentTime;
+    }
     // read displacement values
-    preciceReadData();
+    for (const CouplingParticipant &couplingParticipant : couplingParticipants_)
+    {
+      preciceReadData(couplingParticipant);
+    }
 
     // compute the time step width such that it fits in the remaining time in the current time window
-    //int timeStepWidth = std::min(maximumPreciceTimestepSize_, timeStepWidth_);
+    double timeStepWidth = std::min(maximumPreciceTimestepSize_, timeStepWidth_);
 
-    // hard-code 1 time step for the static problem
-    double timeStepWidth = maximumPreciceTimestepSize_;
+    // set time span in nested solver
+    nestedSolver_.setTimeSpan(currentTime, currentTime+timeStepWidth);
 
-    // call the nested solver
-    nestedSolver_.run();
+    // call the nested solver to proceed with the simulation for the assigned time span
+    nestedSolver_.advanceTimeSpan();
 
     // write traction data to precice
-    preciceWriteData();
+    for (const CouplingParticipant &couplingParticipant : couplingParticipants_)
+    {
+      preciceWriteData(couplingParticipant);
+    }
+
+    // increase current simulation time
+    currentTime += timeStepWidth;
 
     LOG(DEBUG) << "precice::advance(" << timeStepWidth << "), maximumPreciceTimestepSize_: " << maximumPreciceTimestepSize_;
 
     // advance timestepping in precice
-    maximumPreciceTimestepSize_ = preciceSolverInterfaceBottom_->advance(timeStepWidth);
-  }
-  preciceSolverInterfaceBottom_->finalize();
+    maximumPreciceTimestepSize_ = 0;
+    for (const CouplingParticipant &couplingParticipant : couplingParticipants_)
+    {
+      double maximumPreciceTimestepSize = couplingParticipant.preciceSolverInterface->advance(timeStepWidth);
+      maximumPreciceTimestepSize_ = std::max(maximumPreciceTimestepSize_, maximumPreciceTimestepSize);
+    }
+  }   // loop over time steps
 
+  // finalize all precice interfaces
+  for (const CouplingParticipant &couplingParticipant : couplingParticipants_)
+  {
+    couplingParticipant.preciceSolverInterface->finalize();
+  }
+
+#else
+  LOG(FATAL) << "Not compiled with preCICE!";
 #endif
 }
 
@@ -222,9 +347,9 @@ run()
 
 template<typename NestedSolver>
 void ContractionDirichletBoundaryConditions<NestedSolver>::
-preciceReadData()
+preciceReadData(const ContractionDirichletBoundaryConditions<NestedSolver>::CouplingParticipant &couplingParticipant)
 {
-  if (!preciceSolverInterfaceBottom_->isReadDataAvailable())
+  if (!couplingParticipant.preciceSolverInterface->isReadDataAvailable())
     return;
 
   LOG(DEBUG) << "read data from precice (displacement)";
@@ -232,20 +357,28 @@ preciceReadData()
   // bottom coupling surface
 
   // read displacement values from precice
-  std::vector<double> displacementValues(nNodesBottomSurfaceLocal_*3);
-  std::vector<double> velocityValues(nNodesBottomSurfaceLocal_*3);
+  std::vector<double> displacementValues(nNodesSurfaceLocal_*3);
+  std::vector<double> velocityValues(nNodesSurfaceLocal_*3);
 
-  preciceSolverInterfaceBottom_->readBlockVectorData(preciceDataIdDisplacements_, nNodesBottomSurfaceLocal_,
-                                                     preciceVertexIdsBottom_.data(), displacementValues.data());
+  if (couplingParticipant.isCouplingSurfaceBottom)
+  {
+    couplingParticipant.preciceSolverInterface->readBlockVectorData(preciceDataIdDisplacements_, nNodesSurfaceLocal_,
+                                                                    preciceVertexIdsBottom_.data(), displacementValues.data());
 
-  preciceSolverInterfaceBottom_->readBlockVectorData(preciceDataIdVelocity_, nNodesBottomSurfaceLocal_,
-                                                     preciceVertexIdsBottom_.data(), velocityValues.data());
+    couplingParticipant.preciceSolverInterface->readBlockVectorData(preciceDataIdVelocity_, nNodesSurfaceLocal_,
+                                                                    preciceVertexIdsBottom_.data(), velocityValues.data());
+  }
+  else
+  {
+    couplingParticipant.preciceSolverInterface->readBlockVectorData(preciceDataIdDisplacements_, nNodesSurfaceLocal_,
+                                                                    preciceVertexIdsTop_.data(), displacementValues.data());
+
+    couplingParticipant.preciceSolverInterface->readBlockVectorData(preciceDataIdVelocity_, nNodesSurfaceLocal_,
+                                                                    preciceVertexIdsTop_.data(), velocityValues.data());
+  }
   // loop over nodes to set the received values
   std::vector<std::pair<global_no_t,std::array<double,6>>> newDirichletBCValues;
-  newDirichletBCValues.reserve(nNodesBottomSurfaceLocal_);
-
-  std::vector<double> geometryValuesSurfacePrecice(3*nNodesBottomSurfaceLocal_);
-  preciceVertexIdsBottom_.resize(nNodesBottomSurfaceLocal_);
+  newDirichletBCValues.reserve(nNodesSurfaceLocal_);
 
   // loop over nodes
   const int nNodesX = functionSpace_->nNodesLocalWithoutGhosts(0);
@@ -280,14 +413,17 @@ preciceReadData()
   LOG(DEBUG) << "dirichlet bc to set: " << newDirichletBCValues;
 
   //! set new dirichlet boundary condition values
+
+  // The nested solver is Control::Coupling<   (electrophysiology), MuscleContractionSolver<> >
+  // Set the bc in the dynamic solver of the MuscleContractionSolver
   nestedSolver_.timeStepping2().dynamicHyperelasticitySolver()->updateDirichletBoundaryConditions(newDirichletBCValues);
 }
 
 template<typename NestedSolver>
 void ContractionDirichletBoundaryConditions<NestedSolver>::
-preciceWriteData()
+preciceWriteData(const ContractionDirichletBoundaryConditions<NestedSolver>::CouplingParticipant &couplingParticipant)
 {
-  if (!preciceSolverInterfaceBottom_->isWriteDataRequired(timeStepWidth_))
+  if (!couplingParticipant.preciceSolverInterface->isWriteDataRequired(timeStepWidth_))
     return;
 
   // write traction data to precice
@@ -296,7 +432,7 @@ preciceWriteData()
   std::vector<Vec3> tractionValues;
   nestedSolver_.timeStepping2().data().materialTraction()->getValuesWithoutGhosts(tractionValues);
 
-  std::vector<double> tractionValuesPrecice(3*nNodesBottomSurfaceLocal_);
+  std::vector<double> tractionValuesPrecice(3*nNodesSurfaceLocal_);
 
   const int nNodesX = functionSpace_->nNodesLocalWithoutGhosts(0);
   const int nNodesY = functionSpace_->nNodesLocalWithoutGhosts(1);
@@ -320,9 +456,18 @@ preciceWriteData()
 
   LOG(DEBUG) << "write traction data to precice: " << tractionValuesPrecice;
 
-  // write geometry values in precice
-  preciceSolverInterfaceBottom_->writeBlockVectorData(preciceDataIdTraction_, nNodesBottomSurfaceLocal_,
-                                                      preciceVertexIdsBottom_.data(), tractionValuesPrecice.data());
+  if (couplingParticipant.isCouplingSurfaceBottom)
+  {
+    // write geometry values in precice
+    couplingParticipant.preciceSolverInterface->writeBlockVectorData(preciceDataIdTraction_, nNodesSurfaceLocal_,
+                                                                     preciceVertexIdsBottom_.data(), tractionValuesPrecice.data());
+  }
+  else
+  {
+    // write geometry values in precice
+    couplingParticipant.preciceSolverInterface->writeBlockVectorData(preciceDataIdTraction_, nNodesSurfaceLocal_,
+                                                                     preciceVertexIdsTop_.data(), tractionValuesPrecice.data());
+  }
 
   LOG(DEBUG) << "write traction data to precice complete";
 }

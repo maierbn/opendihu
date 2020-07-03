@@ -423,14 +423,15 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) co
 #endif
     }
 
-    VLOG(1) << "non-bc global indices: " << indices;
-
     // this wraps the standard PETSc VecGetValues on the local vector
     ierr = VecGetValues(vectorCombinedWithoutDirichletDofsGlobal_, ni, indices.data(), y); CHKERRV(ierr);
 
+#ifndef NDEBUG
+    VLOG(1) << "non-bc global indices: " << indices;
     VLOG(1) << "got values: ";
     for (dof_no_t i = 0; i < ni; i++)
       VLOG(1) << y[i];
+#endif
 
     // replace dirichlet BC values with the prescribed values
     for (dof_no_t i = 0; i < ni; i++)
@@ -441,6 +442,7 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) co
       }
     }
 
+#ifndef NDEBUG
     VLOG(1) << "modified values: ";
     for (dof_no_t i = 0; i < ni; i++)
       VLOG(1) << y[i];
@@ -450,6 +452,7 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) co
       << "\n boundaryConditionValues: " << boundaryConditionValues_[componentNo] << "\nmodified values: ";
     for (dof_no_t i = 0; i < ni; i++)
       VLOG(1) << "local index " << ix[i] << " global " << indices[i] << ", isPrescribed: " << isPrescribed_[componentNo][ix[i]] << ", bc value: " << boundaryConditionValues_[componentNo][ix[i]] << ", final value: " << y[i];
+#endif
   }
   else if (this->currentRepresentation_ == Partition::values_representation_t::representationCombinedLocal)
   {
@@ -461,15 +464,16 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) co
       indices[i] = nonBCDofNoLocal(componentNo, ix[i]);
     }
 
-    VLOG(1) << "non-bc local indices: " << indices;
-
     // this wraps the standard PETSc VecGetValues on the local vector
     PetscErrorCode ierr;
     ierr = VecGetValues(vectorCombinedWithoutDirichletDofsLocal_, ni, indices.data(), y); CHKERRV(ierr);
 
+#ifndef NDEBUG
+    VLOG(1) << "non-bc local indices: " << indices;
     VLOG(1) << "got values: ";
     for (dof_no_t i = 0; i < ni; i++)
       VLOG(1) << y[i];
+#endif
 
     // replace dirichlet BC values with the prescribed values
     for (dof_no_t i = 0; i < ni; i++)
@@ -480,11 +484,13 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) co
       }
     }
 
+#ifndef NDEBUG
     VLOG(1) << "component " << componentNo << ", nComponentsDirichletBc: " << nComponentsDirichletBc
       << "\n isPrescribed: " << isPrescribed_[componentNo]
       << "\n boundaryConditionValues: " << boundaryConditionValues_[componentNo] << "\nmodified values: ";
     for (dof_no_t i = 0; i < ni; i++)
       VLOG(1) << "local index " << ix[i] << ", value: " << y[i];
+#endif
   }
 }
 
@@ -590,6 +596,7 @@ updateDirichletBoundaryConditions(const std::vector<std::pair<global_no_t,std::a
   {
     dof_no_t dofNoLocal = newValues[itemIndex].first;
 
+    // transform global dof no to local dof no if needed
     if (inputMeshIsGlobal)
     {
       global_no_t dofNoGlobal = newValues[itemIndex].first;
@@ -601,6 +608,7 @@ updateDirichletBoundaryConditions(const std::vector<std::pair<global_no_t,std::a
         continue;
     }
 
+    // assign new values
     std::array<double,nComponentsDirichletBc> values = newValues[itemIndex].second;
 
     for (int componentNo = 0; componentNo < nComponentsDirichletBc; componentNo++)

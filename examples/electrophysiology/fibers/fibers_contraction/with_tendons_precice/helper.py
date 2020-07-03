@@ -417,24 +417,18 @@ variables.fiber_mesh_names = [mesh_name for mesh_name in variables.meshes.keys()
 variables.elasticity_dirichlet_bc = {}
 for j in range(my):
   for i in range(mx):
-    variables.elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
+    variables.elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [0.0,0.0,None,None,None,None]
   
-# fix edge
-for i in range(mx):
-  variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
-  
-# fix corner completely
-variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
-
-    
-# Neumann BC at bottom nodes, traction downwards
-nx = n_points_3D_mesh_linear_global_x-1
-ny = n_points_3D_mesh_linear_global_y-1
-nz = n_points_3D_mesh_linear_global_z-1
-variables.nx = nx
-variables.ny = ny
-variables.nz = nz
-variables.elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
+# fix muscle at bottom
+if False:
+  k = 0
+  for j in range(my):
+    for i in range(mx):
+      variables.elasticity_dirichlet_bc[k*mx*my + j*mx + i] = [0.0,0.0,0.0,0.0,0.0,0.0]
+      
+# Neumann BC at top nodes, traction upwards
+k = nz-1
+variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": [0.0,0.0,10.0], "face": "2+"} for j in range(ny) for i in range(nx)]
 #variables.elasticity_neumann_bc = []
 
 #with open("mesh","w") as f:

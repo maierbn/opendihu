@@ -17,7 +17,7 @@ template<typename Term,typename MeshType,int nDisplacementComponents>
 HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 HyperelasticitySolver(DihuContext context, std::string settingsKey) :
   context_(context[settingsKey]), data_(context_), pressureDataCopy_(context_), initialized_(false),
-  endTime_(0), lastNorm_(0), secondLastNorm_(0), currentLoadFactor_(1.0)
+  endTime_(0), lastNorm_(0), secondLastNorm_(0), currentLoadFactor_(1.0), lastSolveSucceeded_(true)
 {
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
@@ -413,6 +413,7 @@ initializePetscVariables()
   PetscErrorCode ierr;
   ierr = VecDuplicate(solverVariableResidual_, &zeros_); CHKERRV(ierr);
   ierr = VecZeroEntries(zeros_); CHKERRV(ierr);
+  ierr = VecDuplicate(solverVariableResidual_, &lastSolution_); CHKERRV(ierr);
 
   LOG(DEBUG) << "for debugging: " << combinedVecSolution_->getString();
 
@@ -510,5 +511,81 @@ updateNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<typena
   // compute new value for the rhs, δW_ext,dead = int_Ω B^L * phi^L * phi^M * δu^M dx + int_∂Ω T^L * phi^L * phi^M * δu^M dS
   materialComputeExternalVirtualWorkDead();
 }
+
+template<typename Term,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+addDirichletBoundaryConditions(std::vector<typename DirichletBoundaryConditions<DisplacementsFunctionSpace,nDisplacementComponents>::ElementWithNodes> &boundaryConditionElements, bool overwriteBcOnSameDof)
+{
+  dirichletBoundaryConditions_->addBoundaryConditions(boundaryConditionElements, overwriteBcOnSameDof);
+
+  // save previous values
+  std::array<std::vector<double>, nDisplacementComponents+1> combinedSolutionValues;
+  std::array<std::vector<double>, nDisplacementComponents+1> combinedResidualValues;
+  std::array<std::vector<double>, nDisplacementComponents+1> combinedVecExternalVirtualWorkDeadValues;
+
+  int nDisplacementsVelocityValues = this->displacementsFunctionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
+  int nPressureValues = this->pressureFunctionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
+  std::vector<int> indices(nDisplacementsVelocityValues);
+  std::iota(indices.begin(), indices.end(), 0);
+
+  // loop over displacement components and one pressure component
+  for (int componentNo = 0; componentNo < nDisplacementComponents+1; componentNo++)
+  {
+    int nValues = nDisplacementsVelocityValues;
+    if (componentNo == nDisplacementComponents)
+      nValues = nPressureValues;
+
+    // solution vector
+    combinedSolutionValues[componentNo].resize(nValues);
+    combinedVecSolution_->getValues(componentNo, nValues, indices.data(), combinedSolutionValues[componentNo].data());
+
+    // residual vector
+    combinedResidualValues[componentNo].resize(nValues);
+    combinedVecResidual_->getValues(componentNo, nValues, indices.data(), combinedResidualValues[componentNo].data());
+
+    // vector for the external virtual work contribution that does not depend on u, δW_ext,dead (this is the same as δW_ext for static case)
+    combinedVecExternalVirtualWorkDeadValues[componentNo].resize(nValues);
+    combinedVecExternalVirtualWorkDead_->getValues(componentNo, nValues, indices.data(), combinedVecExternalVirtualWorkDeadValues[componentNo].data());
+  }
+
+  // remove generic meshes "genericMesh" and "genericMeshForMatrixcombinedJacobian"
+  DihuContext::meshManager()->deleteFunctionSpace("genericMesh");
+  DihuContext::meshManager()->deleteFunctionSpace("genericMeshForMatrixcombinedJacobian");
+
+  // create new vectors and matrices with the updated boundary conditions
+  initializePetscVariables();
+
+  // restore previous values, except for the new Dirichlet values
+  // loop over displacement components and one pressure component
+  for (int componentNo = 0; componentNo < nDisplacementComponents+1; componentNo++)
+  {
+    int nValues = nDisplacementsVelocityValues;
+    if (componentNo == nDisplacementComponents)
+      nValues = nPressureValues;
+
+    // solution vector
+    combinedSolutionValues[componentNo].resize(nValues);
+    combinedVecSolution_->setValues(componentNo, nValues, indices.data(), combinedSolutionValues[componentNo].data());
+
+    // residual vector
+    combinedResidualValues[componentNo].resize(nValues);
+    combinedVecResidual_->getValues(componentNo, nValues, indices.data(), combinedResidualValues[componentNo].data());
+
+    // vector for the external virtual work contribution that does not depend on u, δW_ext,dead (this is the same as δW_ext for static case)
+    combinedVecExternalVirtualWorkDeadValues[componentNo].resize(nValues);
+    combinedVecExternalVirtualWorkDead_->getValues(componentNo, nValues, indices.data(), combinedVecExternalVirtualWorkDeadValues[componentNo].data());
+  }
+
+  combinedVecSolution_->startGhostManipulation();
+  combinedVecSolution_->finishGhostManipulation();
+
+  combinedVecResidual_->startGhostManipulation();
+  combinedVecResidual_->finishGhostManipulation();
+
+  PetscErrorCode ierr;
+  ierr = VecAssemblyBegin(solverVariableSolution_); CHKERRV(ierr);
+  ierr = VecAssemblyEnd(solverVariableSolution_); CHKERRV(ierr);
+}
+
 
 } // namespace SpatialDiscretization

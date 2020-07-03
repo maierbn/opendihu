@@ -46,11 +46,11 @@ variables.scenario_name = "tendon_top_b"
 variables.is_bottom_tendon = False        # whether the tendon is at the bottom (negative z-direction), this is important for the boundary conditions
 
 # input mesh file
-fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_tendon1.bin"        # bottom tendon
-#fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_tendon2a.bin"
-#fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_tendon2b.bin"
-#fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_7x7fibers.bin"
-#fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_7x7fibers.bin"
+fiber_file = "../../../../input/left_biceps_brachii_tendon1.bin"        # bottom tendon
+#fiber_file = "../../../../input/left_biceps_brachii_tendon2a.bin"
+#fiber_file = "../../../../input/left_biceps_brachii_tendon2b.bin"
+#fiber_file = "../../../../input/left_biceps_brachii_7x7fibers.bin"
+#fiber_file = "../../../../input/left_biceps_brachii_7x7fibers.bin"
 
 load_fiber_data = False             # If the fiber geometry data should be loaded completely in the python script. If True, this reads the binary file and assigns the node positions in the config. If False, the C++ code will read the binary file and only extract the local node positions. This is more performant for highly parallel runs.
 

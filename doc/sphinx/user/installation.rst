@@ -121,6 +121,8 @@ This can be done by adding the following lines to your `~/.bashrc` script or `~/
 
 (Replace the first line with your path).
 Setting these variables is recommended but not required.
+This `~/.bashrc` or `~/.bash_aliases` file will be executed whenever you start a new `bash` instance. 
+In order for the variable assignments to take effect either close and reopen the console window or source the file yourself, by executing ``. ~/.bashrc``.
 
 Building with scons
 ^^^^^^^^^^^^^^^^^^^^^^^^

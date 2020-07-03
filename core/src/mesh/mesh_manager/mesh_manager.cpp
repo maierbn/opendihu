@@ -288,4 +288,14 @@ bool Manager::hasFunctionSpace(std::string meshName)
   return functionSpaces_.find(meshName) != functionSpaces_.end();
 }
 
+//! remove a function space if it exists
+void Manager::deleteFunctionSpace(std::string meshName)
+{
+  if (hasFunctionSpace(meshName))
+  {
+    LOG(DEBUG) << "deleteFunctionSpace(" << meshName << ")";
+    functionSpaces_.erase(meshName);
+  }
+}
+
 } // namespace

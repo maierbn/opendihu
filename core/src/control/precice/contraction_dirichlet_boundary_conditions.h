@@ -60,13 +60,19 @@ protected:
   void initializeDirichletBoundaryConditions();
 
 #ifdef HAVE_PRECICE
+  struct CouplingParticipant
+  {
+    bool isCouplingSurfaceBottom;                                      //< if the coupling surface where the tendon is attached is at the bottom of the muscle (z-)
+    std::shared_ptr<precice::SolverInterface> preciceSolverInterface;  //< the precice solver interface that makes all preCICE functionality accessible
+  };
+  std::vector<CouplingParticipant> couplingParticipants_;     //< all coupling interface to different tendons
+
   //! read the data from the other partiticipant
-  void preciceReadData();
+  void preciceReadData(const CouplingParticipant &couplingParticipant);
 
   //! write the data to the other partiticipant
-  void preciceWriteData();
+  void preciceWriteData(const CouplingParticipant &couplingParticipant);
 
-  std::unique_ptr<precice::SolverInterface> preciceSolverInterfaceBottom_;  //< the precice solver interface that makes all preCICE functionality accessible
 #endif
 
   DihuContext context_;                       //< object that contains the python config for the current context and the global singletons meshManager and solverManager
@@ -77,14 +83,20 @@ protected:
 
   double maximumPreciceTimestepSize_;         //< maximum timestep size that precice will allow for the current time step
   double timeStepWidth_;                      //< timestep width of the solver
+  int timeStepOutputInterval_;                //< interval in which to output current time
+
+  bool haveCouplingSurfaceBottom_;            //< if there is a coupling surface at the bottom of the muscle
+  bool haveCouplingSurfaceTop_;               //< if there is a coupling surface at the top of the muscle
 
   std::vector<int> preciceVertexIdsBottom_;   //< the vertex ids in precice of the geometry values at the bottom of the mesh
-  int preciceMeshIdBottom_;                   //< mesh ID of precice of the mesh that contains all nodes
+  std::vector<int> preciceVertexIdsTop_;      //< the vertex ids in precice of the geometry values at the top of the mesh
+  int preciceMeshIdBottom_;                   //< mesh ID of precice of the surface mesh at the bottom that contains all nodes
+  int preciceMeshIdTop_;                      //< mesh ID of precice of the surafce mesh at the top that contains all nodes
   int preciceDataIdDisplacements_;            //< data ID of precice of the displacements field to be exchanged
   int preciceDataIdVelocity_;                 //< data ID of precice of the velocity field to be exchanged
   int preciceDataIdTraction_;                 //< data ID of precice of the traction field to be exchanged
 
-  int nNodesBottomSurfaceLocal_;              //< number of nodes on the bottom surface where the tendon is coupled
+  int nNodesSurfaceLocal_;                    //< number of nodes on the bottom or top surface where the tendon is coupled
 
   std::vector<double> tractionValuesBottom_;  //< traction values to be transferred, in array-of-struct order (x,y,z,x,y,z,...)
   std::vector<double> tractionValuesTop_;     //< traction values to be transferred

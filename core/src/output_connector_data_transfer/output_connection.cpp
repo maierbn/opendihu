@@ -385,7 +385,10 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
     if (toIndex == -1)
       return false;
 
-    toVectorNo = std::min(1,int(toIndex/nFieldVariablesTerm2Vector1_));
+    if (nFieldVariablesTerm2Vector1_ == 0)
+      toVectorNo = 1;
+    else
+      toVectorNo = std::min(1,int(toIndex/nFieldVariablesTerm2Vector1_));
     toVectorIndex = toIndex - toVectorNo*nFieldVariablesTerm2Vector1_;
 
     avoidCopyIfPossible = connectorTerm1To2_[fromIndex].avoidCopyIfPossible;
@@ -472,7 +475,10 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
     if (toIndex == -1)
       return false;
 
-    toVectorNo = std::min(1,int(toIndex/nFieldVariablesTerm1Vector1_));
+    if (nFieldVariablesTerm1Vector1_ == 0)
+      toVectorNo = 1;
+    else
+      toVectorNo = std::min(1,int(toIndex/nFieldVariablesTerm1Vector1_));
     toVectorIndex = toIndex - toVectorNo*nFieldVariablesTerm1Vector1_;
 
     LOG(DEBUG) << "toVectorNo=" << toVectorNo << ", toVectorIndex=" << toVectorIndex << ", toIndex=" << toIndex;

@@ -28,13 +28,15 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
         // we look for occurences of functions and ternary operators, these can be detected in a tree node
         if (expression.type == code_expression_t::tree)
         {
-
-          std::stringstream a;
-          for (int i = 0; i < expression.treeChildren.size(); i++)
+          if (VLOG_IS_ON(1))
           {
-            a << "[" << expression.treeChildren[i].code << "] ";
+            std::stringstream a;
+            for (int i = 0; i < expression.treeChildren.size(); i++)
+            {
+              a << "[" << expression.treeChildren[i].code << "] ";
+            }
+            VLOG(1) << "check expression: tree with " << expression.treeChildren.size() << " children: " << a.str();
           }
-          VLOG(1) << "check expression: tree with " << expression.treeChildren.size() << " children: " << a.str();
 
           // loop over children of the tree node
           for (int i = 0; i < expression.treeChildren.size(); i++)
@@ -48,6 +50,7 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                   && innerExpression.code.find("pow") == innerExpression.code.length()-3)
               {
                 int exponent = 0;
+                bool isIntegerExponent = false;
 
                 VLOG(1) << "found pow at i=" << i << " of [" << innerExpression.code << "]";
 
@@ -75,10 +78,17 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                   StringUtility::trim(codeExponent);
                   // exponent can also be "- 1.0000", so remove all whitespace in the inner
                   codeExponent.erase(std::remove(codeExponent.begin(), codeExponent.end(), ' '), codeExponent.end());
+                  
+                  isIntegerExponent = codeExponent.find_first_not_of("0123456789+-") == std::string::npos;
                   exponent = atoi(codeExponent.c_str());
-
-                  // remove ", exponent" from code
-                  expressionExponent.code = code.substr(0, posComma);
+                  if (exponent == 0)
+                    isIntegerExponent = false;
+                    
+                  if (isIntegerExponent)
+                  {
+                    // remove ", exponent" from code
+                    expressionExponent.code = code.substr(0, posComma);
+                  }
                 }
                 else if (expressionExponent.type == code_expression_t::tree)
                 {
@@ -91,29 +101,44 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                   StringUtility::trim(codeExponent);
                   // exponent can also be "- 1.0000", so remove all whitespace in the inner
                   codeExponent.erase(std::remove(codeExponent.begin(), codeExponent.end(), ' '), codeExponent.end());
+                  
+                  isIntegerExponent = codeExponent.find_first_not_of("0123456789+-") == std::string::npos;
                   exponent = atoi(codeExponent.c_str());
+                  if (exponent == 0)
+                    isIntegerExponent = false;
 
-                  // remove ", exponent" from code
-                  expressionExponent.treeChildren.back().code = code.substr(0, posComma);
+                  if (isIntegerExponent)
+                  {
+                    // remove ", exponent" from code
+                    expressionExponent.treeChildren.back().code = code.substr(0, posComma);
+                  }
                 }
-
-                // compose name of helper function: pow<exponent>
-                std::stringstream s;
-                if (exponent > 0)
+                
+                // if the exponent of the pow function is just a single integer number
+                if (isIntegerExponent)
                 {
-                  s << "pow" << exponent;
-                }
-                else
-                {
-                  // a negative exponent, e.g. "pow(x,-2)" yields "powReciprocal2(x)"
-                  s << "powReciprocal" << -exponent;
-                }
-                std::string helperFunction = s.str();
-                helperFunctions.insert(helperFunction);
+                  // compose name of helper function: pow<exponent>
+                  std::stringstream s;
+                  if (exponent > 0)
+                  {
+                    s << "pow" << exponent;
+                  }
+                  else
+                  {
+                    // a negative exponent, e.g. "pow(x,-2)" yields "powReciprocal2(x)"
+                    s << "powReciprocal" << -exponent;
+                  }
+                  std::string helperFunction = s.str();
+                  helperFunctions.insert(helperFunction);
 
-                // replace "pow" by e.g. "pow3" for exponent 3
-                std::size_t posPow = innerExpression.code.find("pow");
-                innerExpression.code = innerExpression.code.substr(0, posPow) + helperFunction;
+                  // replace "pow" by e.g. "pow3" for exponent 3
+                  std::size_t posPow = innerExpression.code.find("pow");
+                  innerExpression.code = innerExpression.code.substr(0, posPow) + helperFunction;
+                }
+                else 
+                {
+                  helperFunctions.insert("pow");
+                }
               }
               else if (innerExpression.code == "?")
               {
@@ -177,6 +202,8 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                     {
                       std::string code = iifFunction.treeChildren[k].code;
                       StringUtility::trim(code);
+                      // code can also be "- 1.0000", so remove all whitespace in the inner
+                      code.erase(std::remove(code.begin(), code.end(), ' '), code.end());
 
                       if (code == "0.00000")
                       {
@@ -188,7 +215,7 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                       }
                       else if (atof(code.c_str()) != 0.0)   // if there is numeric code, not just '('s
                       {
-                        iifFunction.treeChildren[k].code = " Vc::double_v(Vc::One)*" + iifFunction.treeChildren[k].code;
+                        iifFunction.treeChildren[k].code = " (Vc::double_v(Vc::One)*(" + iifFunction.treeChildren[k].code + "))";
                       }
                     }
                     else if (iifFunction.treeChildren[k].type == code_expression_t::tree)
@@ -201,14 +228,17 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                           {
                             // replace a single constant
                             expression.type = code_expression_t::tree;
-                            expression.treeChildren.resize(2);
+                            expression.treeChildren.resize(3);
 
                             expression.treeChildren[0].type = code_expression_t::otherCode;
-                            expression.treeChildren[0].code = " Vc::double_v(Vc::One)*";
+                            expression.treeChildren[0].code = "(Vc::double_v(Vc::One)*";
 
                             expression.treeChildren[1].type = code_expression_t::variableName;
                             expression.treeChildren[1].code = "CONSTANTS";
                             expression.treeChildren[1].arrayIndex = expression.arrayIndex;
+                            
+                            expression.treeChildren[2].type = code_expression_t::otherCode;
+                            expression.treeChildren[2].code = ")";
                           }
                         }
                       });
@@ -218,20 +248,27 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                     {
                       // replace a single constant
                       iifFunction.treeChildren[k].type = code_expression_t::tree;
-                      iifFunction.treeChildren[k].treeChildren.resize(2);
+                      iifFunction.treeChildren[k].treeChildren.resize(3);
 
                       iifFunction.treeChildren[k].treeChildren[0].type = code_expression_t::otherCode;
-                      iifFunction.treeChildren[k].treeChildren[0].code = " Vc::double_v(Vc::One)*";
+                      iifFunction.treeChildren[k].treeChildren[0].code = "(Vc::double_v(Vc::One)*";
 
                       iifFunction.treeChildren[k].treeChildren[1].type = code_expression_t::variableName;
                       iifFunction.treeChildren[k].treeChildren[1].code = "CONSTANTS";
                       iifFunction.treeChildren[k].treeChildren[1].arrayIndex = iifFunction.treeChildren[k].arrayIndex;
+                      
+                      iifFunction.treeChildren[k].treeChildren[2].type = code_expression_t::otherCode;
+                      iifFunction.treeChildren[k].treeChildren[2].code = ")";
                     }
                   }
                 }
 
                 expression = iifFunction;
                 break;
+              }
+              else if (innerExpression.code == "fabs")
+              {
+                innerExpression.code = "Vc::abs";
               }
             }
           }
@@ -272,6 +309,11 @@ std::string CellmlSourceCodeGeneratorVc::defineHelperFunctions(std::set<std::str
       if (functionName.find("pow") != std::string::npos)
       {
         int exponent = atoi(functionName.substr(3).c_str());
+        if (exponent == 0)
+        {
+          helperFunctions.insert("exponential");
+          continue;
+        }
 
         if (functionName.find("powReciprocal") != std::string::npos)
           exponent = atoi(functionName.substr(std::string("powReciprocal").length()).c_str());
@@ -300,7 +342,15 @@ std::string CellmlSourceCodeGeneratorVc::defineHelperFunctions(std::set<std::str
   for (std::set<std::string>::iterator iter = helperFunctions.begin(); iter != helperFunctions.end(); iter++)
   {
     std::string functionName = *iter;
-    sourceCode << "Vc::double_v " << functionName << "(Vc::double_v x);" << std::endl;
+    if (functionName == "pow")
+    {
+      sourceCode << "Vc::double_v pow(Vc::double_v basis, Vc::double_v exponent);" << std::endl;
+      sourceCode << "Vc::double_v pow(Vc::double_v basis, double exponent);" << std::endl;
+    }
+    else
+    {
+      sourceCode << "Vc::double_v " << functionName << "(Vc::double_v x);" << std::endl;
+    }
   }
 
   // define exp function if needed
@@ -343,6 +393,24 @@ Vc::double_v exponential(Vc::double_v x)
 )";
     }
   }
+  
+  // define pow function if needed
+  if (helperFunctions.find("pow") != helperFunctions.end())
+  {
+    sourceCode << R"(
+Vc::double_v pow(Vc::double_v basis, Vc::double_v exponent)
+{
+  // Note, there is no pow function defined by Vc.
+  return Vc::exp(Vc::log(basis)*exponent);
+}
+
+Vc::double_v pow(Vc::double_v basis, double exponent)
+{
+  return Vc::exp(Vc::log(basis)*exponent);
+}
+
+)";
+  }
 
   // generate other helper functions
   for (std::set<std::string>::iterator iter = helperFunctions.begin(); iter != helperFunctions.end(); iter++)
@@ -356,53 +424,56 @@ Vc::double_v exponential(Vc::double_v x)
     if (functionName.find("pow") != std::string::npos)
     {
       int exponent = atoi(functionName.substr(3).c_str());
-      if (functionName.find("powReciprocal") != std::string::npos)
+      if (exponent != 0)
       {
-        exponent = -atoi(functionName.substr(std::string("powReciprocal").length()).c_str());
-      }
-      if (exponent == 2)
-      {
-      sourceCode << R"(
+        if (functionName.find("powReciprocal") != std::string::npos)
+        {
+          exponent = -atoi(functionName.substr(std::string("powReciprocal").length()).c_str());
+        }
+        if (exponent == 2)
+        {
+        sourceCode << R"(
 Vc::double_v pow2(Vc::double_v x)
 {
   return x*x;
 }
 )";
-      }
-      else
-      {
-        int exponent0 = int(fabs(exponent)/2);
-        int otherExponent = fabs(exponent) - exponent0;
-        sourceCode << "Vc::double_v pow" << (exponent < 0? "Reciprocal" : "")
-          << fabs(exponent) << "(Vc::double_v x)" << std::endl
-          << "{" << std::endl
-          << "  return ";
-        if (exponent < 0)
-          sourceCode << "1./(";
-
-        // if exponent == 1 => exponent0 == 0
-        if (exponent0 == 0)
-        {
-          sourceCode << "x";
         }
         else
         {
-          if (exponent0 == 1)
+          int exponent0 = int(fabs(exponent)/2);
+          int otherExponent = fabs(exponent) - exponent0;
+          sourceCode << "Vc::double_v pow" << (exponent < 0? "Reciprocal" : "")
+            << fabs(exponent) << "(Vc::double_v x)" << std::endl
+            << "{" << std::endl
+            << "  return ";
+          if (exponent < 0)
+            sourceCode << "1./(";
+
+          // if exponent == 1 => exponent0 == 0
+          if (exponent0 == 0)
           {
-            sourceCode << "x*(";
+            sourceCode << "x";
           }
           else
           {
-            sourceCode << "pow" << exponent0 << "(";
+            if (exponent0 == 1)
+            {
+              sourceCode << "x*(";
+            }
+            else
+            {
+              sourceCode << "pow" << exponent0 << "(";
+            }
+            sourceCode << "pow" << otherExponent << "(x))";
           }
-          sourceCode << "pow" << otherExponent << "(x))";
+
+          if (exponent < 0)
+            sourceCode << ")";
+          sourceCode << ";" << std::endl;
+
+          sourceCode << "}" << std::endl << std::endl;
         }
-
-        if (exponent < 0)
-          sourceCode << ")";
-        sourceCode << ";" << std::endl;
-
-        sourceCode << "}" << std::endl << std::endl;
       }
     }
   }

@@ -1,1 +1,1 @@
-cd $OPENDIHU_HOME && time python2.7 $OPENDIHU_HOME/dependencies/scons/scons.py BUILD_TYPE=debug no_tests=True -j 4 $* && (cd - && echo opendihu debug build without tests succeeded) || (echo opendihu debug build without tests failed && cd - && exit -1)
+cd $OPENDIHU_HOME && time $OPENDIHU_HOME/dependencies/scons/scons.py BUILD_TYPE=debug no_tests=True -j 4 $* && (cd - && echo opendihu debug build without tests succeeded) || (echo opendihu debug build without tests failed && cd - && exit -1)

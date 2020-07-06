@@ -46,7 +46,7 @@ nonlinearSolve()
     }
     if (currentLoadFactor_ < loadFactorGiveUpThreshold_)
     {
-      LOG(ERROR) << "Nonlinear solve failed after " << loadFactorIndex << " tries. Load factor is below threshold of " << loadFactorGiveUpThreshold_ << ", giving up.";
+      LOG(ERROR) << "Nonlinear solve failed at load factor no. " << loadFactorIndex << ". Load factor is below threshold of " << loadFactorGiveUpThreshold_ << ", giving up.";
       break;
     }
 

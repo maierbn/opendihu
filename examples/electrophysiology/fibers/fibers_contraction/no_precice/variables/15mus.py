@@ -137,7 +137,7 @@ cellml_file             = "../../../../input/new_slow_TK_2014_12_08.c"
 # a higher number leads to less 3D elements
 sampling_stride_x = 1
 sampling_stride_y = 1
-sampling_stride_z = 20
+sampling_stride_z = 40      # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40
 
 # other options
 paraview_output = True

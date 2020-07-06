@@ -338,6 +338,7 @@ protected:
   double currentLoadFactor_;                                //< current value of the load factor, this value is passed to materialComputeResidual(), 1.0 means normal computation, any lower value reduces the right hand side (scales body and traction forces)
   int nNonlinearSolveCalls_;                                //< how often the nonlinear solve should be called in sequence
   bool lastSolveSucceeded_;                                 //< if the last computation of the residual or jacobian succeeded, if this is false, it indicates that there was a negative jacobian
+  double loadFactorGiveUpThreshold_;                        //< a threshold for the load factor, if it is below, the solve is aborted
 
   std::vector<double> loadFactors_;                         //< vector of load factors, 1.0 means normal computation, any lower value reduces the right hand side (scales body and traction forces)
 

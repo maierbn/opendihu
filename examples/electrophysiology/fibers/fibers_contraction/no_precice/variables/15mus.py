@@ -1,6 +1,6 @@
 
 # scenario name for log file
-scenario_name = "ramp_notfast"
+scenario_name = "15mus"
 
 # Fixed units in cellMl models:
 # These define the unit system.
@@ -86,18 +86,32 @@ Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
 # radius: [μm], stimulation frequency [Hz], jitter [-]
-motor_units = [
-  {"radius": 40.00, "activation_start_time": 0.0, "stimulation_frequency": 23.92, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # low number of fibers
-  {"radius": 42.35, "activation_start_time": 0.2, "stimulation_frequency": 23.36, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 45.00, "activation_start_time": 0.4, "stimulation_frequency": 23.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 48.00, "activation_start_time": 0.6, "stimulation_frequency": 22.46, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 51.42, "activation_start_time": 0.8, "stimulation_frequency": 20.28, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 55.38, "activation_start_time": 1.0, "stimulation_frequency": 16.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 60.00, "activation_start_time": 1.2, "stimulation_frequency": 12.05, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 65.45, "activation_start_time": 1.4, "stimulation_frequency": 10.03, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 72.00, "activation_start_time": 1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 80.00, "activation_start_time": 1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # high number of fibers
-]
+
+motor_units = []
+n_motorunits = 15
+for mu_no in range(n_motorunits):
+  
+  # compute a scaling factor that runs exponentially from min_factor to max_factor
+  min_factor = 1.0
+  max_factor = 2.0
+  
+  # ansatz scaling_factor(i) = c1 + c2*exp(i),
+  # scaling_factor(0) = min = c1 + c2  =>  c1 = min - c2
+  # scaling_factor(n-1) = max = min - c2 + c2*exp(n-1)  =>  max = min + c2*(exp(n-1) - 1)  =>  c2 = (max - min) / (exp(n-1) - 1)
+  c2 = (max_factor - min_factor) / (np.exp(n_motorunits-1) - 1)
+  c1 = min_factor - c2
+  scaling_factor = c1 + c2*np.exp(mu_no)
+  
+  motor_units.append({
+    "radius": 40.00*scaling_factor,
+    "activation_start_time": 2.5*mu_no/14., 
+    "stimulation_frequency": 24.00 - (scaling_factor-1)*16, 
+    "jitter": [0.1*random.uniform(-1,1) for i in range(100)]
+  })
+  
+print("motor units: ")
+print(motor_units)
+  
 
 # timing parameters
 # -----------------
@@ -108,23 +122,23 @@ dt_0D = 1e-4                        # [ms] timestep width of ODEs (1e-3)
 dt_1D = 1e-4                        # [ms] timestep width of diffusion (1e-3)
 dt_splitting = 1e-4                 # [ms] overall timestep width of strang splitting (1e-3)
 dt_3D = 1e0                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep_fibers = 0.01       # [ms] timestep for fiber output, 0.5
+output_timestep_fibers = 0.5       # [ms] timestep for fiber output, 0.5
 output_timestep_3D = 1              # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
 
 
 # input files
-fiber_file = "../../../../input/left_biceps_brachii_9x9fibers.bin"
-#fiber_file = "../../../../input/left_biceps_brachii_13x13fibers.bin"
+#fiber_file = "../../../../input/left_biceps_brachii_9x9fibers.bin"
+fiber_file = "../../../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-fiber_distribution_file = "../../../../input/MU_fibre_distribution_10MUs.txt"
+fiber_distribution_file = "../../../../input/MU_fibre_distribution_15MUs_13x13fibers.txt"
 cellml_file             = "../../../../input/new_slow_TK_2014_12_08.c"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
-sampling_stride_x = 2
-sampling_stride_y = 2
-sampling_stride_z = 74
+sampling_stride_x = 1
+sampling_stride_y = 1
+sampling_stride_z = 20
 
 # other options
 paraview_output = True
@@ -132,6 +146,8 @@ adios_output = False
 exfile_output = False
 python_output = False
 disable_firing_output = False
+fast_monodomain_solver_optimizations = True   # enable the optimizations in the fast multidomain solver
+use_analytic_jacobian = True        # If the analytic jacobian should be used for the mechanics problem.
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):
@@ -156,5 +172,5 @@ def get_specific_states_frequency_jitter(fiber_no, mu_no):
   return motor_units[mu_no % len(motor_units)]["jitter"]
 
 def get_specific_states_call_enable_begin(fiber_no, mu_no):
-  return 0
+  return 1
   #return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3

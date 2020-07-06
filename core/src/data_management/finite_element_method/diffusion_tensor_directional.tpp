@@ -38,7 +38,6 @@ initialize(std::shared_ptr<FunctionSpaceType> functionSpace,
   }
 
   direction_->setValuesWithoutGhosts(directionValues);
-  LOG(INFO) << "normalized direction: " << *direction_;
 
   spatiallyVaryingPrefactor_ = spatiallyVaryingPrefactor;
   this->dataFunctionSpace_ = functionSpace;

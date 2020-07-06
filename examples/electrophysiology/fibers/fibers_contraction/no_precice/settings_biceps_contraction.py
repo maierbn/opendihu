@@ -58,6 +58,8 @@ parser.add_argument('--dt_1D',                               help='The timestep 
 parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',             type=float, default=variables.dt_splitting)
 parser.add_argument('--dt_3D',                               help='The timestep for the 3D model, i.e. dynamic solid mechanics.', type=float, default=variables.dt_3D)
 parser.add_argument('--disable_firing_output',               help='Disables the initial list of fiber firings.', default=variables.disable_firing_output, action='store_true')
+parser.add_argument('--fast_monodomain_solver_optimizations',help='Enable the optimizations for fibers.',        default=variables.fast_monodomain_solver_optimizations, action='store_true')
+parser.add_argument('--use_analytic_jacobian',               help='If the analytic jacobian should be used for the mechanics problem.',  default=variables.use_analytic_jacobian, action='store_true')
 parser.add_argument('--v',                                   help='Enable full verbosity in c++ code')
 parser.add_argument('-v',                                    help='Enable verbosity level in c++ code', action="store_true")
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
@@ -371,8 +373,8 @@ config = {
       },
       "fiberDistributionFile":    variables.fiber_distribution_file,   # for FastMonodomainSolver, e.g. MU_fibre_distribution_3780.txt
       "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
-      "onlyComputeIfHasBeenStimulated": True,                          # only compute fibers after they have been stimulated for the first time
-      "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again      
+      "onlyComputeIfHasBeenStimulated": variables.fast_monodomain_solver_optimizations,                          # only compute fibers after they have been stimulated for the first time
+      "disableComputationWhenStatesAreCloseToEquilibrium": variables.fast_monodomain_solver_optimizations,       # optimization where states that are close to their equilibrium will not be computed again      
       "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set      
     },
     "Term2": {        # solid mechanics
@@ -396,8 +398,8 @@ config = {
           "density":                    variables.rho,             # density of the material
           "displacementsScalingFactor": 1.0,                       # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
           "residualNormLogFilename":    "log_residual_norm.txt",   # log file where residual norm values of the nonlinear solver will be written
-          "useAnalyticJacobian":        True,                      # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
-          "useNumericJacobian":         False,                     # whether to use the numerically computed jacobian matrix in the nonlinear solver (slow), only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
+          "useAnalyticJacobian":        variables.use_analytic_jacobian,      # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
+          "useNumericJacobian":         not variables.use_analytic_jacobian,  # whether to use the numerically computed jacobian matrix in the nonlinear solver (slow), only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
             
           "dumpDenseMatlabVariables":   False,                     # whether to have extra output of matlab vectors, x,r, jacobian matrix (very slow)
           # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian

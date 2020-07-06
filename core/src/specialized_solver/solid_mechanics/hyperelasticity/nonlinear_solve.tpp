@@ -44,6 +44,11 @@ nonlinearSolve()
     {
       LOG(INFO) << "Nonlinear Solver: load factor " << loadFactor << " of list " << loadFactors;
     }
+    if (currentLoadFactor_ < loadFactorGiveUpThreshold_)
+    {
+      LOG(ERROR) << "Nonlinear solve failed after " << loadFactorIndex << " tries. Load factor is below threshold of " << loadFactorGiveUpThreshold_ << ", giving up.";
+      break;
+    }
 
 
     // try two times to solve the nonlinear problem

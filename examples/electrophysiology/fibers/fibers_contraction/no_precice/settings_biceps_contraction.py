@@ -142,6 +142,7 @@ if False:
           print("({},{}) n instances: {}".format(fiber_in_subdomain_coordinate_x,fiber_in_subdomain_coordinate_y,
               n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y)))
 
+print("vm_stim: {}".format(variables.vm_value_stimulated))
 
 # define the config dict
 config = {
@@ -173,8 +174,8 @@ config = {
     "mechanicsSolver": {   # solver for the dynamic mechanics problem
       "relativeTolerance":  1e-5,           # 1e-10 relative tolerance of the linear solver
       "absoluteTolerance":  1e-10,          # 1e-10 absolute tolerance of the residual of the linear solver
-      "solverType":         "preonly",      # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
-      "preconditionerType": "lu",           # type of the preconditioner
+      "solverType":         "gmres",      # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
+      "preconditionerType": "euclid",           # type of the preconditioner
       "maxIterations":       1e4,           # maximum number of iterations in the linear solver
       "snesMaxFunctionEvaluations": 1e8,    # maximum number of function iterations
       "snesMaxIterations":   10,            # maximum number of iterations in the nonlinear solver
@@ -413,6 +414,7 @@ config = {
           # solving
           "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
           #"loadFactors":                [0.25, 0.66, 1.0],                # load factors for every timestep
+          "loadFactorGiveUpThreshold":   1,                      # when to abort the solve
           "loadFactors":                [],                        # no load factors, solve problem directly
           "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
           
@@ -433,7 +435,7 @@ config = {
           "OutputWriter" : [
             
             # Paraview files
-            #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+            {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             
             # Python callback function "postprocess"
             #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
@@ -441,7 +443,7 @@ config = {
           # 2. additional output writer that writes also the hydrostatic pressure
           "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
             "OutputWriter" : [
-              #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/p", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/p", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ]
           },
           # 3. additional output writer that writes virtual work terms
@@ -454,7 +456,7 @@ config = {
           # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
           "LoadIncrements": {   
             "OutputWriter" : [
-              #{"format": "Paraview", "outputInterval": 1, "filename": "out/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ]
           },
         }

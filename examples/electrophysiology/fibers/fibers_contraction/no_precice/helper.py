@@ -285,11 +285,11 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibe
       nodes_to_stimulate_global.insert(0, innervation_node_global-1)
     if innervation_node_global < n_nodes_global-1:
       nodes_to_stimulate_global.append(innervation_node_global+1)
-    if rank_no == 0:
-      print("t: {}, stimulate fiber {} at nodes {}".format(current_time, fiber_no, nodes_to_stimulate_global))
+    #if rank_no == 0:
+    #  print("t: {}, stimulate fiber {} at nodes {}".format(current_time, fiber_no, nodes_to_stimulate_global))
 
     for node_no_global in nodes_to_stimulate_global:
-      states[(node_no_global,0,0)] = 20.0   # key: ((x,y,z),nodal_dof_index,state_no)
+      states[(node_no_global,0,0)] = variables.vm_value_stimulated   # key: ((x,y,z),nodal_dof_index,state_no)
 
 # callback function for artifical stress values, instead of monodomain
 def set_stress_values(n_dofs_global, n_nodes_global_per_coordinate_direction, time_step_no, current_time, values, global_natural_dofs, fiber_no):

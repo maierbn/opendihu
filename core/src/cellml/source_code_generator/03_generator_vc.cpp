@@ -79,7 +79,8 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                   // exponent can also be "- 1.0000", so remove all whitespace in the inner
                   codeExponent.erase(std::remove(codeExponent.begin(), codeExponent.end(), ' '), codeExponent.end());
                   
-                  isIntegerExponent = codeExponent.find_first_not_of("0123456789+-") == std::string::npos;
+                  isIntegerExponent = codeExponent.find_first_not_of("0123456789+-.") == std::string::npos;
+                  //LOG(INFO) << "codeExponent: [" << codeExponent << "], isIntegerExponent=" << isIntegerExponent << " (" << codeExponent.find_first_not_of("0123456789+-") << ", " << std::string::npos << ")";
                   exponent = atoi(codeExponent.c_str());
                   if (exponent == 0)
                     isIntegerExponent = false;
@@ -102,7 +103,8 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                   // exponent can also be "- 1.0000", so remove all whitespace in the inner
                   codeExponent.erase(std::remove(codeExponent.begin(), codeExponent.end(), ' '), codeExponent.end());
                   
-                  isIntegerExponent = codeExponent.find_first_not_of("0123456789+-") == std::string::npos;
+                  isIntegerExponent = codeExponent.find_first_not_of("0123456789+-.") == std::string::npos;
+                  //LOG(INFO) << "codeExponent: [" << codeExponent << "], isIntegerExponent=" << isIntegerExponent << " (" << codeExponent.find_first_not_of("0123456789+-") << ", " << std::string::npos << ")";
                   exponent = atoi(codeExponent.c_str());
                   if (exponent == 0)
                     isIntegerExponent = false;
@@ -400,13 +402,22 @@ Vc::double_v exponential(Vc::double_v x)
     sourceCode << R"(
 Vc::double_v pow(Vc::double_v basis, Vc::double_v exponent)
 {
+  Vc::double_v result;
+  for (int i = 0; i < Vc::double_v::size(); i++)
+  {
+    result[i] = std::pow(basis[i], exponent[i]);
+  }
+  return result;
+
+  //return basis.apply([exponent](double v){return std::pow(v, exponent);});
   // Note, there is no pow function defined by Vc.
-  return Vc::exp(Vc::log(basis)*exponent);
+  //return Vc::exp(Vc::log(basis)*exponent);
 }
 
 Vc::double_v pow(Vc::double_v basis, double exponent)
 {
-  return Vc::exp(Vc::log(basis)*exponent);
+  return basis.apply([exponent](double v){return std::pow(v, exponent);});
+  //return Vc::exp(Vc::log(basis)*exponent);
 }
 
 )";
@@ -421,15 +432,27 @@ Vc::double_v pow(Vc::double_v basis, double exponent)
     if (functionName == "exponential")
       continue;
 
+    // generate pow functions with integer exponents
     if (functionName.find("pow") != std::string::npos)
     {
-      int exponent = atoi(functionName.substr(3).c_str());
+      int exponent = 0;
+      if (functionName.find("powReciprocal") != std::string::npos)
+      {
+        exponent = atoi(functionName.substr(13).c_str());
+      }
+      else 
+      {
+        exponent = atoi(functionName.substr(3).c_str());
+      }
+      
       if (exponent != 0)
       {
+        // for negative exponent, negative exponent
         if (functionName.find("powReciprocal") != std::string::npos)
         {
           exponent = -atoi(functionName.substr(std::string("powReciprocal").length()).c_str());
         }
+        // special implementation for exponent 2 (square function)
         if (exponent == 2)
         {
         sourceCode << R"(

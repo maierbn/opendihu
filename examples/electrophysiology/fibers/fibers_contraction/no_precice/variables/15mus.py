@@ -83,6 +83,7 @@ Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 
 # timing and activation parameters
 # -----------------
 # motor units from paper Klotz2019 "Modelling the electrical activity of skeletal muscle tissue using a multi‐domain approach"
+import numpy as np
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
 # radius: [μm], stimulation frequency [Hz], jitter [-]
@@ -109,8 +110,6 @@ for mu_no in range(n_motorunits):
     "jitter": [0.1*random.uniform(-1,1) for i in range(100)]
   })
   
-print("motor units: ")
-print(motor_units)
   
 
 # timing parameters
@@ -146,8 +145,9 @@ adios_output = False
 exfile_output = False
 python_output = False
 disable_firing_output = False
-fast_monodomain_solver_optimizations = True   # enable the optimizations in the fast multidomain solver
-use_analytic_jacobian = True        # If the analytic jacobian should be used for the mechanics problem.
+fast_monodomain_solver_optimizations = False # enable the optimizations in the fast multidomain solver
+use_analytic_jacobian = False        # If the analytic jacobian should be used for the mechanics problem.
+use_vc = False                       # If the vc optimization type should be used for CellmlAdapter
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):

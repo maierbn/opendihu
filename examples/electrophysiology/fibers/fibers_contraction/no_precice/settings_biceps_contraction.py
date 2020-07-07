@@ -66,7 +66,7 @@ parser.add_argument('-v',                                    help='Enable verbos
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
 
-print(variables.use_analytic_jacobian)
+use_analytic_jacobian = True  # force analytic jacobian, otherwise it will take too long
 
 # parse command line arguments and assign values to variables module
 args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)

@@ -131,7 +131,7 @@ try:
     MPI_DIR = os.environ["MPT_ROOT"]
     LAPACK_DOWNLOAD = False
     PETSC_DOWNLOAD = False
-    PETSC_DIR = os.environ["PETSC_ROOT"]
+    #PETSC_DIR = os.environ["PETSC_ROOT"]
     PYTHONPACKAGES_DOWNLOAD = False
     GOOGLETEST_DOWNLOAD = True 
     XBRAID_DOWNLOAD = True

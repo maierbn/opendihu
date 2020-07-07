@@ -91,8 +91,8 @@ private:
   int nFieldVariablesTerm2Vector2_; //< the number of slots of term 2 in vector 2
   bool transferDirectionTerm1To2_;  //< if the current mapping is from term 1 to 2
 
-  int offsetSlotNoData1_;           //< an offset value for the slot no on transferableSolutionData1, this is the first slot no
-  int offsetSlotNoData2_;
+  int offsetSlotNoData1_;           //< an offset value for the slot no on term1 (this is for transferableSolutionData1 if 1->2 and for transferableSolutionData2 if 2->1), i.e. different than the argument `offsetSlotNoData1` to initialize
+  int offsetSlotNoData2_;           //< an offset value for the slot no on term2 (this is for transferableSolutionData2 if 1->2 and for transferableSolutionData1 if 2->1), i.e. different than the argument `offsetSlotNoData2` to initialize
 
   struct Result
   {

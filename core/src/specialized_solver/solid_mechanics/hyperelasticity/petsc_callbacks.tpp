@@ -34,6 +34,7 @@ PetscErrorCode nonlinearFunction(SNES snes, Vec x, Vec f, void *context)
     VecNorm(f, NORM_2, &functionNorm);
     VLOG(1) << "function norm: " << functionNorm;
   }
+
   return 0;
 }
 

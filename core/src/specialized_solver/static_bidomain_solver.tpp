@@ -117,11 +117,15 @@ initialize()
   DihuContext::solverStructureVisualizer()->enable();
   DihuContext::solverStructureVisualizer()->beginChild("Activation Transmembrane");
 
+  LOG(DEBUG) << "fem flow solution: " << *finiteElementMethodPotentialFlow_.data().solution();
   LOG(DEBUG) << "compute gradient field";
 
   // compute a gradient field from the solution of the potential flow
   data_.flowPotential()->setValues(*finiteElementMethodPotentialFlow_.data().solution());
+  LOG(DEBUG) << "flow potential: " << *data_.flowPotential();
+
   data_.flowPotential()->computeGradientField(data_.fiberDirection());
+  // note, fiberDirection is not normalized, it gets normalized in the initialize method of the finite element data class (diffusion_tensor_directional.tpp)
 
   VLOG(1) << "flow potential: " << *data_.flowPotential();
   VLOG(1) << "fiber direction: " << *data_.fiberDirection();
@@ -211,9 +215,9 @@ solveLinearSystem()
 
   // solve the system, KSPSolve(ksp,b,x)
 #ifndef NDEBUG
-  this->linearSolver_->solve(rightHandSide, solution);
-#else
   this->linearSolver_->solve(rightHandSide, solution, "Linear system of bidomain problem solved");
+#else
+  this->linearSolver_->solve(rightHandSide, solution);
 #endif
 }
 

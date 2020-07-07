@@ -208,6 +208,7 @@ void DihuContext::loadPythonScript(std::string text)
   // execute python code
   int ret = 0;
   std::string errorBuffer;
+  std::string stdoutBuffer;
   LOG(INFO) << std::string(40, '-') << " begin python output " << std::string(40, '-');
   try
   {
@@ -234,13 +235,20 @@ void DihuContext::loadPythonScript(std::string text)
     }
 
     // add callback function to capture stderr buffer
-    emb::stderr_write_type write = [&errorBuffer] (std::string s) {errorBuffer += s; };
-    emb::set_stderr(write);
+    emb::stderr_write_type stderrWrite = [&errorBuffer] (std::string s) {errorBuffer += s; };
+    emb::set_stderr(stderrWrite);
+
+    // add callback function to capture stdout buffer
+    emb::stdout_write_type stdoutWrite = [&stdoutBuffer] (std::string s) {std::cout << s; stdoutBuffer += s; };
+    emb::set_stdout(stdoutWrite);
 
     // execute config script
     ret = PyRun_SimpleString(pythonScriptText_.c_str());
 
     emb::reset_stderr();
+    emb::reset_stdout();
+
+    LOG(DEBUG) << stdoutBuffer;
 
     PythonUtility::checkForError();
   }

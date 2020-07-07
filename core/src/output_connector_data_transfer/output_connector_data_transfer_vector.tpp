@@ -19,8 +19,8 @@ void SolutionVectorMapping<
 {
   // debugging and error output
   LOG(DEBUG) << "transfer vector (1)";
-  LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2 << ", outputConnection: " << outputConnection.getDebugInformation();
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
+  LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2 << ", outputConnection: " << outputConnection.getDebugInformation();
   LOG(DEBUG) << "transferableSolutionData1: "
     << OutputConnectorDataHelper<std::vector<std::shared_ptr<OutputConnectorDataType1>>>::getString(transferableSolutionData1);
   LOG(DEBUG) << "transferableSolutionData2: "
@@ -70,8 +70,8 @@ void SolutionVectorMapping<
 {
   // debugging and error output
   LOG(DEBUG) << "transfer vector (2)";
-  LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2 << ", outputConnection: " << outputConnection.getDebugInformation();
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
+  LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2 << ", outputConnection: " << outputConnection.getDebugInformation();
   LOG(DEBUG) << "transferableSolutionData1: "
     << OutputConnectorDataHelper<std::vector<std::shared_ptr<
       Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>
@@ -307,8 +307,8 @@ void SolutionVectorMapping<
             int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer vector (3)";
-  LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2 << ", outputConnection: " << outputConnection.getDebugInformation();
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
+  LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2 << ", outputConnection: " << outputConnection.getDebugInformation();
   LOG(DEBUG) << "transferableSolutionData1: "
     << OutputConnectorDataHelper<Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>>::getString(transferableSolutionData1);
   LOG(DEBUG) << "transferableSolutionData2: "

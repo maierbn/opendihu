@@ -158,6 +158,8 @@ initialize()
   LOG(DEBUG) << "nFibers: " << nFibers << ", nFibersToCompute_: " << nFibersToCompute_;
 
   // determine total number of CellML instances to compute on this rank
+  double firstStimulationTime = -1;
+  int firstStimulationMotorUnitNo = 0;
   nInstancesToCompute_ = 0;
   int fiberDataNo = 0;
   fiberNo = 0;
@@ -190,6 +192,8 @@ initialize()
         assert(fiberFunctionSpace);
         assert(motorUnitNo_.size() > 0);
         
+        LOG(DEBUG) << "Fiber " << fiberNoGlobal << " (i,j)=(" << i << "," << j << ") is MU " << motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
+
         fiberData_.at(fiberDataNo).valuesLength = fiberFunctionSpace->nDofsGlobal();
         fiberData_.at(fiberDataNo).fiberNoGlobal = fiberNoGlobal;
         fiberData_.at(fiberDataNo).motorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
@@ -211,11 +215,47 @@ initialize()
           fiberData_.at(fiberDataNo).valuesOffset = fiberData_.at(fiberDataNo-1).valuesOffset + fiberData_.at(fiberDataNo-1).valuesLength;
         }
 
+        // find out first stimulation time of any fiber
+        int firingEventsIndex = round(fiberData_.at(fiberDataNo).setSpecificStatesCallEnableBegin * fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency);
+        if (firingEventsIndex < 0)
+          firingEventsIndex = 0;
+
+        // only if there is a chance that the current fiber will stimulate before the currently firstStimulationTime, because of setSpecificStatesCallEnableBegin
+        if (firstStimulationTime == -1 || firstStimulationTime > fiberData_.at(fiberDataNo).setSpecificStatesCallEnableBegin)
+        {
+          // start at index in firingEvents_, that comes as setSpecificStatesCallEnableBegin, then step over next timesteps until the next stimulation is found
+          int nFiringEvents = firingEvents_.size();
+          for (int i = firingEventsIndex % nFiringEvents; i < nFiringEvents; i++)
+          {
+            // if there is a stimulation at the current timestep
+            int motorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
+            if (firingEvents_[i][motorUnitNo % firingEvents_[i].size()])
+            {
+              // compute current time
+              int firstFiringEventIndex = int(firingEventsIndex / nFiringEvents)*nFiringEvents + i;
+              double firstStimulationTimeMotorUnit = firstFiringEventIndex / fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency;
+
+              LOG(DEBUG) << "  Motor unit " << motorUnitNo << " fires at " << firstStimulationTimeMotorUnit;  // this output does not get called for all motor units!
+
+              // if this time is smaller than currently saved firstStimulationTime, or firstStimulationTime has not yet been initialized
+              if (firstStimulationTime == -1 || firstStimulationTimeMotorUnit < firstStimulationTime)
+              {
+                // store new firstStimulationTime and save motor unit no.
+                firstStimulationMotorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
+                firstStimulationTime = firstStimulationTimeMotorUnit;
+              }
+              break;
+            }
+          }
+        }
+
         // increase index for fiberData_ struct
         fiberDataNo++;
       }
     }
   }
+
+  LOG(INFO) << "Time of first stimulation: " << firstStimulationTime << ", motor unit " << firstStimulationMotorUnitNo;
 
   // get the states and algebraics no.s to be transferred as output connector data
   CellmlAdapterType &cellmlAdapter = instances[0].timeStepping1().instancesLocal()[0].discretizableInTime();

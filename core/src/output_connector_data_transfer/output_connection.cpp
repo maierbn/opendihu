@@ -53,6 +53,7 @@ OutputConnection::OutputConnection(const OutputConnection &rhs) :
 {
   connectorForVisualizerTerm1To2_ = rhs.connectorForVisualizerTerm1To2_;
   connectorForVisualizerTerm2To1_ = rhs.connectorForVisualizerTerm2To1_;
+  transferDirectionTerm1To2_ = rhs.transferDirectionTerm1To2_;
 }
 
 void OutputConnection::setTransferDirection(bool term1To2)
@@ -149,11 +150,18 @@ std::string OutputConnection::getDebugInformation() const
 
     if (vectorNo == 0)
     {
-      result << fieldVariableNamesTerm1Vector1_[vectorIndex];
+      if (vectorIndex >= 0 && vectorIndex < fieldVariableNamesTerm1Vector1_.size())
+      {
+        result << fieldVariableNamesTerm1Vector1_[vectorIndex];
+      }
+      else
+      {
+        result << "(out of range)";
+      }
     }
     else
     {
-      if (vectorIndex < fieldVariableNamesTerm1Vector2_.size())
+      if (vectorIndex >= 0 && vectorIndex < fieldVariableNamesTerm1Vector2_.size())
       {
         result << fieldVariableNamesTerm1Vector2_[vectorIndex];
       }
@@ -178,11 +186,18 @@ std::string OutputConnection::getDebugInformation() const
 
       if (vectorNo == 0)
       {
-        result << fieldVariableNamesTerm2Vector1_[vectorIndex];
+        if (vectorIndex >= 0 && vectorIndex < fieldVariableNamesTerm2Vector1_.size())
+        {
+          result << fieldVariableNamesTerm2Vector1_[vectorIndex];
+        }
+        else
+        {
+          result << "(out of range)";
+        }
       }
       else
       {
-        if (vectorIndex < fieldVariableNamesTerm2Vector2_.size())
+        if (vectorIndex >= 0 && vectorIndex < fieldVariableNamesTerm2Vector2_.size())
         {
           result << fieldVariableNamesTerm2Vector2_[vectorIndex];
         }
@@ -222,11 +237,18 @@ std::string OutputConnection::getDebugInformation() const
 
     if (vectorNo == 0)
     {
-      result << fieldVariableNamesTerm2Vector1_[vectorIndex];
+      if (vectorIndex >= 0 && vectorIndex < fieldVariableNamesTerm2Vector1_.size())
+      {
+        result << fieldVariableNamesTerm2Vector1_[vectorIndex];
+      }
+      else
+      {
+        result << "(out of range)";
+      }
     }
     else
     {
-      if (vectorIndex < fieldVariableNamesTerm2Vector2_.size())
+      if (vectorIndex >= 0 && vectorIndex < fieldVariableNamesTerm2Vector2_.size())
       {
         result << fieldVariableNamesTerm2Vector2_[vectorIndex];
       }
@@ -251,11 +273,18 @@ std::string OutputConnection::getDebugInformation() const
 
       if (vectorNo == 0)
       {
-        result << fieldVariableNamesTerm1Vector1_[vectorIndex];
+        if (vectorIndex >= 0 && vectorIndex < fieldVariableNamesTerm1Vector1_.size())
+        {
+          result << fieldVariableNamesTerm1Vector1_[vectorIndex];
+        }
+        else
+        {
+          result << "(out of range)";
+        }
       }
       else
       {
-        if (vectorIndex < fieldVariableNamesTerm1Vector2_.size())
+        if (vectorIndex >= 0 && vectorIndex < fieldVariableNamesTerm1Vector2_.size())
         {
           result << fieldVariableNamesTerm1Vector2_[vectorIndex];
         }
@@ -301,6 +330,7 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
 
 #ifndef NDEBUG
   VLOG(1) << "getSlotInformation(" << fromVectorNo << "," << fromVectorIndex << ")" << getDebugInformation();
+  LOG(DEBUG) << "getSlotInformation(" << fromVectorNo << "," << fromVectorIndex << "), " << (transferDirectionTerm1To2_? "1->2" : "2->1");
 #endif
 
   if (transferDirectionTerm1To2_)
@@ -355,7 +385,10 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
     if (toIndex == -1)
       return false;
 
-    toVectorNo = std::min(1,int(toIndex/nFieldVariablesTerm2Vector1_));
+    if (nFieldVariablesTerm2Vector1_ == 0)
+      toVectorNo = 1;
+    else
+      toVectorNo = std::min(1,int(toIndex/nFieldVariablesTerm2Vector1_));
     toVectorIndex = toIndex - toVectorNo*nFieldVariablesTerm2Vector1_;
 
     avoidCopyIfPossible = connectorTerm1To2_[fromIndex].avoidCopyIfPossible;
@@ -388,7 +421,8 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
       return false;
     }
 
-    LOG(DEBUG) << "  yes, transfer to toVectorNo=" << toVectorNo << ", toVectorIndex=" << toVectorIndex << ", toIndex=" << toIndex;
+    LOG(DEBUG) << "  yes, transfer fromVectorNo=" << fromVectorNo << ", fromVectorIndex=" << fromVectorIndex << "(fromIndex " << fromIndex << ")"
+      << " to toVectorNo=" << toVectorNo << ", toVectorIndex=" << toVectorIndex << ", toIndex=" << toIndex;
   }
   else
   {
@@ -441,7 +475,10 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
     if (toIndex == -1)
       return false;
 
-    toVectorNo = std::min(1,int(toIndex/nFieldVariablesTerm1Vector1_));
+    if (nFieldVariablesTerm1Vector1_ == 0)
+      toVectorNo = 1;
+    else
+      toVectorNo = std::min(1,int(toIndex/nFieldVariablesTerm1Vector1_));
     toVectorIndex = toIndex - toVectorNo*nFieldVariablesTerm1Vector1_;
 
     LOG(DEBUG) << "toVectorNo=" << toVectorNo << ", toVectorIndex=" << toVectorIndex << ", toIndex=" << toIndex;
@@ -475,7 +512,8 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
       return false;
     }
 
-    LOG(DEBUG) << "  yes, transfer to toVectorNo=" << toVectorNo << ", toVectorIndex=" << toVectorIndex << ", toIndex=" << toIndex;
+    LOG(DEBUG) << "  yes, transfer transfer fromVectorNo=" << fromVectorNo << ", fromVectorIndex=" << fromVectorIndex << "(fromIndex " << fromIndex << ") "
+      << "to toVectorNo=" << toVectorNo << ", toVectorIndex=" << toVectorIndex << ", toIndex=" << toIndex;
   }
 
   // completed successfully

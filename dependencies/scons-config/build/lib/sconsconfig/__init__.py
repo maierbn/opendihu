@@ -1,5 +1,5 @@
-from utils import conv
-import packages
+from .utils import conv
+from . import packages
 
 enabled_packages = []
 package_map = {}
@@ -9,7 +9,7 @@ def select(*args):
     packages = args
     
     for pkg in packages:
-        if type(pkg) in map(type, enabled_packages):    # if an object of the same class ('type') is already in enabled_packages, skip
+        if type(pkg) in list(map(type, enabled_packages)):    # if an object of the same class ('type') is already in enabled_packages, skip
             continue
         enabled_packages.append(pkg)
         package_map[pkg.__module__] = pkg
@@ -43,7 +43,7 @@ def configure(env, vars):
     vars.Save('config.py', env)
 
     # Restore any one-shot options we stripped out earlier.
-    for k,v in bkp.iteritems():
+    for k,v in bkp.items():
         env[k] = v
 
     # Perform the configuration.

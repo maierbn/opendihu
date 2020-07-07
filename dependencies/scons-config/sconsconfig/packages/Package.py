@@ -374,7 +374,7 @@ class Package(object):
       print(('  - Set %s_DOWNLOAD to True to automatically download and install the package.'%upp))
       print(('    If you additionally set %s_REDOWNLOAD to True it forces a fresh download '%upp))
       print('    if it was already done earlier.')
-      print('If you already did that, the build system might have a bug. Inspect "config.log" to see what went wrong.')
+      print('If you already did that, something went wrong. Inspect "config.log" to see what went wrong.\n\nSometimes it helps to delete the cache and try again:\nrm -rf .scon*')
       sys.exit(1)
 
     # If the package is not required but was found anyway, add a preprocessor
@@ -542,15 +542,28 @@ class Package(object):
 
     ctx.Log("Downloading file from " + self.download_url + "\n")
     try:
+      # normal download with python3
       import urllib.request, urllib.parse, urllib.error
+      
     except Exception as e:
-      ctx.Log("Failed to download file: Could not import urllib\n")
-      print(e)
-      return False
+      # try with python2
+      ctx.Log("Failed to download file: Could not import urllib.request\n")
+      ctx.Log('Warning! You are running scons with python2.7, but python3 is required.\nPlease use the scons installation under\ndependencies/scons/scons.py\n\nNow trying to use libraries for python2.7 ... ')
+      try:
+        import urllib
+        urllib.urlretrieve(self.download_url, filename)
+        sys.stdout.write('done.\n')
+        return True
+      
+      except Exception as e:
+        ctx.Log("Failed to download file with python2.7.\nPlease use the scons installation under\ndependencies/scons/scons.py\n")
+        return False
+        
     try:
       urllib.request.urlretrieve(self.download_url, filename)
       sys.stdout.write('done.\n')
       return True
+      
     except Exception as e:
       sys.stdout.write('failed.\n')
       print(e)
@@ -671,8 +684,6 @@ class Package(object):
 
   def auto_build(self, ctx, install_dir, source_dir, dependencies_dir):
     sys.stdout.write('  Building package {}, this could take a while ... \n'.format(self.name))
-    if self.name  == "Python":
-      sys.stdout.write('  Note, building package {}, takes REALLY long so be patient! \n'.format(self.name))
       
     sys.stdout.flush()
     ctx.Log("Building package in " + install_dir + "\n")
@@ -950,7 +961,14 @@ class Package(object):
       
       if os.path.isfile(str(ctx.lastTarget)+".out"):
         with open(str(ctx.lastTarget)+".out", "rb") as f:
-          ctx.Log("Program output: \""+f.read()+"\"\n")
+          try:
+            output = f.read()
+            if isinstance(output, str):
+              ctx.Log("Program output: \""+output+"\"\n")
+            else:
+              ctx.Log("Program output: \""+output.decode('utf-8')+"\"\n")
+          except:
+              ctx.Log("(Could not load output)\n")
  
       disable_checks = False
       if ctx.env.get('DISABLE_CHECKS', []):

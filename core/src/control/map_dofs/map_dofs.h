@@ -47,6 +47,12 @@ public:
   //! set the time span of the nested solver
   void setTimeSpan(double startTime, double endTime);
 
+  //! start time of time interval to be simulated
+  double startTime();
+
+  //! end time of simulation
+  double endTime();
+
   //! return the data object of the timestepping scheme
   Data &data();
 
@@ -60,8 +66,8 @@ protected:
    */
   struct DofsMappingType
   {
-    int outputConnectorSlotNoFrom;  //< field variable no from which to get the dofs
-    int outputConnectorSlotNoTo;    //< field variable no to which to write the dofs to
+    int outputConnectorSlotNoFrom;  //< slot no, i.e. a field variable from which to get the dofs
+    std::vector<int> outputConnectorSlotNosTo;    //< slots nos, i.e. field variables to which to write the dofs to
     bool dofNoIsGlobalFrom;         //< if the keys in dofsMapping specify global nos
     bool dofNoIsGlobalTo;           //< if the values in dofsMapping specify global nos
     int outputConnectorArrayIndexFrom;   //< array index if the output connector slot consists of a vector of multiple layers, e.g. Multidomain with multiple compartments or fibers with even two nested MultipleInstances
@@ -86,7 +92,7 @@ protected:
     std::vector<dof_no_t> dofNosToSetLocal;         //< For all modes except modeCallback. Temporary variable, the local dofs where to set the values that were retrieved from the dofs.
 
     std::vector<dof_no_t> inputDofs;                //< Only for modeCallback. The input dofs for the callback.
-    std::vector<dof_no_t> outputDofs;               //< Only for modeCallback. The input dofs for the callback.
+    std::vector<std::vector<dof_no_t>> outputDofs;  //< Only for modeCallback. outputDofs[slotIndex], the output dofs for the callback.
 
     PyObject *callback;                             //< python callback to manipulate the input data
     PyObject *slotNosPy;                            //< list [fromSlotNo, toSlotNo, fromArrayIndex, toArrayIndex]
@@ -111,6 +117,9 @@ protected:
 
   //! get the values at given dofs at the field variable given by slotNo
   void slotGetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values);
+
+  //! call slotSetRepresentationGlobal on the field variable of the indicated slot
+  void slotSetRepresentationGlobal(int slotNo, int arrayIndex);
 
   DihuContext context_;             //< context object that gives access to global singleton and has python settings
   PythonConfig specificSettings_;   //< the python settings for this object

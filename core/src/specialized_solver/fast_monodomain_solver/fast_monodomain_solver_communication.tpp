@@ -160,9 +160,12 @@ fetchFiberData()
             fiberPointBuffersParameters_[pointBuffersNo][parameterNo][entryNo] = parametersReceiveBuffer[instanceNo*nParametersPerInstance + parameterNo];
           }
 
-          if (entryNo == Vc::double_v::Size-1)
+          if (VLOG_IS_ON(1))
           {
-            LOG(DEBUG) << "stored " << nParametersPerInstance << " parameters in buffer no " << pointBuffersNo << ": " << fiberPointBuffersParameters_[pointBuffersNo];
+            if (entryNo == Vc::double_v::Size-1)
+            {
+              VLOG(1) << "stored " << nParametersPerInstance << " parameters in buffer no " << pointBuffersNo << ": " << fiberPointBuffersParameters_[pointBuffersNo];
+            }
           }
         }
       }

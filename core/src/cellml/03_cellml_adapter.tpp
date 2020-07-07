@@ -79,7 +79,7 @@ initialize()
   }
   if (this->outputWriterManager_.hasOutputWriters())
   {
-    LOG(INFO) << "CellML has output writers. This will be slow if it outputs lots of data and should only be used for debugging.";
+    LOG(DEBUG) << "CellML has output writers. This will be slow if it outputs lots of data and should only be used for debugging.";
   }
 
   this->internalTimeStepNo_ = 0;
@@ -175,6 +175,20 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   // handle callback functions "setSpecificParameters" and "setSpecificStates"
   checkCallbackParameters(currentTime);
   checkCallbackStates(currentTime, statesLocal);
+
+#if 0
+  if (this->sourceToCompileFilename_.substr(0, 11) == "src/spindle")
+  {
+    CLOG(INFO, "special") << "CellML \"" << this->sourceToCompileFilename_ << "\" parameters:";
+    for (int instanceNo = 0; instanceNo < this->nInstances_; instanceNo++)
+    {
+      for (int parameterNo = 0; parameterNo < this->cellmlSourceCodeGenerator_.nParameters(); parameterNo++)
+      {
+        CLOG(INFO, "special") << "  instance " << instanceNo << " parameter " << parameterNo << ": " << this->data_.parameterValues()[parameterNo*this->nInstances_ + instanceNo];
+      }
+    }
+  }
+#endif
 
   // call actual rhs method
   if (this->rhsRoutine_)
@@ -313,6 +327,8 @@ template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 prepareForGetOutputConnectorData()
 {
+  // This method is called before getOutputConnectorData() of the timestepping scheme.
+
   // make representation of algebraics global, such that field variables in outputConnectorData that share the Petsc Vec's with
   // algebraics have the correct data assigned
   LOG(DEBUG) << "Transform algebraics and parameters field variables to global representation in order to transfer them to other solver, such that extracted component-field variables in timestepping scheme have the correct values.";

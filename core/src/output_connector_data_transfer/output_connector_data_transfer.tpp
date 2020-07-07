@@ -17,10 +17,12 @@ void SolutionVectorMapping<
 {
   LOG(DEBUG) << "transfer standard, type1: " << FunctionSpaceType1::dim() << "D " << nComponents1a << "," << nComponents1b << " comp.,"
     << " type2: " << FunctionSpaceType2::dim() << "D " << nComponents2a << "," << nComponents2b << "comp.";
+//  LOG(DEBUG) << "transferableSolutionData1: " << transferableSolutionData1;
+//  LOG(DEBUG) << "transferableSolutionData2: " << transferableSolutionData2;
+  LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2;
+
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
-  LOG(DEBUG) << "transferableSolutionData1: " << transferableSolutionData1;
-  LOG(DEBUG) << "transferableSolutionData2: " << transferableSolutionData2;
-  LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2 << ", outputConnection: " << outputConnection.getDebugInformation();
+  LOG(DEBUG) << "outputConnection: " << outputConnection.getDebugInformation();
 #endif
 
   // initialize output connection object
@@ -38,10 +40,11 @@ void SolutionVectorMapping<
     bool avoidCopyIfPossible = true;
     bool slotIsConnected = outputConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
-    LOG(DEBUG) << "slot from variable1, index " << fromVectorIndex << " not connected";
-
     if (!slotIsConnected)
+    {
+      LOG(DEBUG) << "slot from variable1, index " << fromVectorIndex << " not connected";
       continue;
+    }
 
     std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1->variable1[fromVectorIndex].values;
     int componentNo1 = transferableSolutionData1->variable1[fromVectorIndex].componentNo;
@@ -111,10 +114,11 @@ void SolutionVectorMapping<
     bool avoidCopyIfPossible = true;
     bool slotIsConnected = outputConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
-    LOG(DEBUG) << "slot from variable2, index " << fromVectorIndex << "  not connected";
-
     if (!slotIsConnected)
+    {
+      LOG(DEBUG) << "slot from variable2, index " << fromVectorIndex << "  not connected";
       continue;
+    }
 
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b> FieldVariable1;
 
@@ -198,6 +202,4 @@ void SolutionVectorMapping<
   }
 
   LOG(DEBUG) << "at the end of output_connector_data_transfer_cellml.";
-  LOG(DEBUG) << "transferableSolutionData1: " << *transferableSolutionData1;
-  LOG(DEBUG) << "transferableSolutionData2: " << *transferableSolutionData2;
 }

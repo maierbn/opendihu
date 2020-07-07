@@ -7,18 +7,26 @@
 #include "mesh/mapping_between_meshes/mapping/02_composite.h"
 #include "mesh/mesh_manager/mesh_manager.h"
 
-template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
+template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename OutputConnectorDataType1c, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
 void SolutionVectorMapping<
   std::vector<std::shared_ptr<
-    std::vector<std::shared_ptr<
-      Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>   // 1D fibers
-    >>
+    std::tuple<std::shared_ptr<
+      std::vector<std::shared_ptr<
+        Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>   // 1D fibers
+      >>>,
+      OutputConnectorDataType1c
+    >
   >>,
   Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>  // 3D field variable
 >::
-transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<
-           Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>   // 1D fibers
-         >>>>> transferableSolutionData1,
+transfer(const std::shared_ptr<std::vector<std::shared_ptr<
+           std::tuple<std::shared_ptr<
+             std::vector<std::shared_ptr<
+               Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>   // 1D fibers
+             >>>,
+             OutputConnectorDataType1c
+           >
+         >>> transferableSolutionData1,
          std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
          OutputConnection &outputConnection,
          int offsetSlotNoData1, int offsetSlotNoData2)
@@ -38,10 +46,10 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
   LOG(DEBUG) << "transfer fibers_emg (1)";
 
   assert(transferableSolutionData1->size() > 0);
-  assert((*transferableSolutionData1)[0]->size() > 0);
+  assert(std::get<0>(*(*transferableSolutionData1)[0])->size() > 0);
 
   std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1Front
-    = (*(*transferableSolutionData1)[0])[0];
+    = (*std::get<0>(*(*transferableSolutionData1)[0]))[0];
 
   // initialize output connection object
   outputConnection.initialize(*transferableSolutionData1Front, *transferableSolutionData2, offsetSlotNoData1, offsetSlotNoData2);
@@ -88,13 +96,13 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
       // loop over vector of fibers
       for (int fiberIndexI = 0; fiberIndexI < transferableSolutionData1->size(); fiberIndexI++)
       {
-        for (int fiberIndexJ = 0; fiberIndexJ < (*transferableSolutionData1)[fiberIndexI]->size(); fiberIndexJ++)
+        for (int fiberIndexJ = 0; fiberIndexJ < std::get<0>(*(*transferableSolutionData1)[fiberIndexI])->size(); fiberIndexJ++)
         {
           // map from transferableSolutionData1->variable1 to transferableSolutionData2->variable1
 
           typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a> FieldVariable1;
-          std::shared_ptr<FieldVariable1> fieldVariable1 = (*(*transferableSolutionData1)[fiberIndexI])[fiberIndexJ]->variable1[fromVectorIndex].values;
-          int componentNo1 = (*(*transferableSolutionData1)[fiberIndexI])[fiberIndexJ]->variable1[fromVectorIndex].componentNo;
+          std::shared_ptr<FieldVariable1> fieldVariable1 = (*std::get<0>(*(*transferableSolutionData1)[fiberIndexI]))[fiberIndexJ]->variable1[fromVectorIndex].values;
+          int componentNo1                               = (*std::get<0>(*(*transferableSolutionData1)[fiberIndexI]))[fiberIndexJ]->variable1[fromVectorIndex].componentNo;
 
           // map values
           DihuContext::mappingBetweenMeshesManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo1, componentNo2, avoidCopyIfPossible);
@@ -119,13 +127,13 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
       // loop over vector of fibers
       for (int fiberIndexI = 0; fiberIndexI < transferableSolutionData1->size(); fiberIndexI++)
       {
-        for (int fiberIndexJ = 0; fiberIndexJ < (*transferableSolutionData1)[fiberIndexI]->size(); fiberIndexJ++)
+        for (int fiberIndexJ = 0; fiberIndexJ < std::get<0>(*(*transferableSolutionData1)[fiberIndexI])->size(); fiberIndexJ++)
         {
           // map from transferableSolutionData1->variable1 to transferableSolutionData2->variable2
 
           typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a> FieldVariable1;
-          std::shared_ptr<FieldVariable1> fieldVariable1 = (*(*transferableSolutionData1)[fiberIndexI])[fiberIndexJ]->variable1[fromVectorIndex].values;
-          int componentNo1 = (*(*transferableSolutionData1)[fiberIndexI])[fiberIndexJ]->variable1[fromVectorIndex].componentNo;
+          std::shared_ptr<FieldVariable1> fieldVariable1 = (*std::get<0>(*(*transferableSolutionData1)[fiberIndexI]))[fiberIndexJ]->variable1[fromVectorIndex].values;
+          int componentNo1                               = (*std::get<0>(*(*transferableSolutionData1)[fiberIndexI]))[fiberIndexJ]->variable1[fromVectorIndex].componentNo;
 
           // map values
           DihuContext::mappingBetweenMeshesManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo1, componentNo2, avoidCopyIfPossible);
@@ -179,13 +187,13 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
       // loop over vector of fibers
       for (int fiberIndexI = 0; fiberIndexI < transferableSolutionData1->size(); fiberIndexI++)
       {
-        for (int fiberIndexJ = 0; fiberIndexJ < (*transferableSolutionData1)[fiberIndexI]->size(); fiberIndexJ++)
+        for (int fiberIndexJ = 0; fiberIndexJ < std::get<0>(*(*transferableSolutionData1)[fiberIndexI])->size(); fiberIndexJ++)
         {
           // map from transferableSolutionData1->variable2 to transferableSolutionData2->variable1
 
           typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b> FieldVariable1;
-          std::shared_ptr<FieldVariable1> fieldVariable1 = (*(*transferableSolutionData1)[fiberIndexI])[fiberIndexJ]->variable2[fromVectorIndex].values;
-          int componentNo1 = (*(*transferableSolutionData1)[fiberIndexI])[fiberIndexJ]->variable2[fromVectorIndex].componentNo;
+          std::shared_ptr<FieldVariable1> fieldVariable1 = (*std::get<0>(*(*transferableSolutionData1)[fiberIndexI]))[fiberIndexJ]->variable2[fromVectorIndex].values;
+          int componentNo1                               = (*std::get<0>(*(*transferableSolutionData1)[fiberIndexI]))[fiberIndexJ]->variable2[fromVectorIndex].componentNo;
 
           // map values
           DihuContext::mappingBetweenMeshesManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo1, componentNo2, avoidCopyIfPossible);
@@ -210,13 +218,13 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
       // loop over vector of fibers
       for (int fiberIndexI = 0; fiberIndexI < transferableSolutionData1->size(); fiberIndexI++)
       {
-        for (int fiberIndexJ = 0; fiberIndexJ < (*transferableSolutionData1)[fiberIndexI]->size(); fiberIndexJ++)
+        for (int fiberIndexJ = 0; fiberIndexJ < std::get<0>(*(*transferableSolutionData1)[fiberIndexI])->size(); fiberIndexJ++)
         {
           // map from transferableSolutionData1->variable2 to transferableSolutionData2->variable2
 
           typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b> FieldVariable1;
-          std::shared_ptr<FieldVariable1> fieldVariable1 = (*(*transferableSolutionData1)[fiberIndexI])[fiberIndexJ]->variable2[fromVectorIndex].values;
-          int componentNo1 = (*(*transferableSolutionData1)[fiberIndexI])[fiberIndexJ]->variable2[fromVectorIndex].componentNo;
+          std::shared_ptr<FieldVariable1> fieldVariable1 = (*std::get<0>(*(*transferableSolutionData1)[fiberIndexI]))[fiberIndexJ]->variable2[fromVectorIndex].values;
+          int componentNo1                               = (*std::get<0>(*(*transferableSolutionData1)[fiberIndexI]))[fiberIndexJ]->variable2[fromVectorIndex].componentNo;
 
           // map values
           DihuContext::mappingBetweenMeshesManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo1, componentNo2, avoidCopyIfPossible);
@@ -232,29 +240,37 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shar
 }
 
 
-template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
+template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b, typename OutputConnectorDataType2c>
 void SolutionVectorMapping<
   Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,  // <3D field variable>
   std::vector<std::shared_ptr<
-    std::vector<std::shared_ptr<
-      Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>   // 1D fibers
-    >>
+    std::tuple<std::shared_ptr<
+      std::vector<std::shared_ptr<
+        Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>   // 1D fibers
+      >>>,
+      OutputConnectorDataType2c
+    >
   >>
 >::
 transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1,
-         std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<
-           Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>   // 1D fibers
-         >>>>> transferableSolutionData2,
+         std::shared_ptr<std::vector<std::shared_ptr<
+           std::tuple<std::shared_ptr<
+             std::vector<std::shared_ptr<
+               Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>   // 1D fibers
+             >>>,
+             OutputConnectorDataType2c
+           >
+         >>> transferableSolutionData2,
          OutputConnection &outputConnection,
          int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer fibers_emg (2)";
 
   assert(transferableSolutionData2->size() > 0);
-  assert((*transferableSolutionData2)[0]->size() > 0);
+  assert(std::get<0>(*(*transferableSolutionData2)[0])->size() > 0);
 
   std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2Front
-    = (*(*transferableSolutionData2)[0])[0];
+    = (*std::get<0>(*(*transferableSolutionData2)[0]))[0];
 
   // initialize output connection object
   outputConnection.initialize(*transferableSolutionData1, *transferableSolutionData2Front, offsetSlotNoData1, offsetSlotNoData2);
@@ -301,13 +317,13 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
       // loop over vector of fibers
       for (int fiberIndexI = 0; fiberIndexI < transferableSolutionData2->size(); fiberIndexI++)
       {
-        for (int fiberIndexJ = 0; fiberIndexJ < (*transferableSolutionData2)[fiberIndexI]->size(); fiberIndexJ++)
+        for (int fiberIndexJ = 0; fiberIndexJ < std::get<0>(*(*transferableSolutionData2)[fiberIndexI])->size(); fiberIndexJ++)
         {
           // map from transferableSolutionData1->variable1 to transferableSolutionData2->variable1
 
           typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a> FieldVariable2;
-          std::shared_ptr<FieldVariable2> &fieldVariable2 = (*(*transferableSolutionData2)[fiberIndexI])[fiberIndexJ]->variable1[fromVectorIndex].values;
-          int componentNo2                                = (*(*transferableSolutionData2)[fiberIndexI])[fiberIndexJ]->variable1[fromVectorIndex].componentNo;
+          std::shared_ptr<FieldVariable2> &fieldVariable2 = (*std::get<0>(*(*transferableSolutionData2)[fiberIndexI]))[fiberIndexJ]->variable1[fromVectorIndex].values;
+          int componentNo2                                = (*std::get<0>(*(*transferableSolutionData2)[fiberIndexI]))[fiberIndexJ]->variable1[fromVectorIndex].componentNo;
 
           // map values
           DihuContext::mappingBetweenMeshesManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo1, componentNo2, avoidCopyIfPossible);
@@ -332,13 +348,13 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
       // loop over vector of fibers
       for (int fiberIndexI = 0; fiberIndexI < transferableSolutionData2->size(); fiberIndexI++)
       {
-        for (int fiberIndexJ = 0; fiberIndexJ < (*transferableSolutionData2)[fiberIndexI]->size(); fiberIndexJ++)
+        for (int fiberIndexJ = 0; fiberIndexJ < std::get<0>(*(*transferableSolutionData2)[fiberIndexI])->size(); fiberIndexJ++)
         {
           // map from transferableSolutionData1->variable1 to transferableSolutionData2->variable2
 
           typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2b> FieldVariable2;
-          std::shared_ptr<FieldVariable2> &fieldVariable2 = (*(*transferableSolutionData2)[fiberIndexI])[fiberIndexJ]->variable2[fromVectorIndex].values;
-          int componentNo2                                = (*(*transferableSolutionData2)[fiberIndexI])[fiberIndexJ]->variable2[fromVectorIndex].componentNo;
+          std::shared_ptr<FieldVariable2> &fieldVariable2 = (*std::get<0>(*(*transferableSolutionData2)[fiberIndexI]))[fiberIndexJ]->variable2[fromVectorIndex].values;
+          int componentNo2                                = (*std::get<0>(*(*transferableSolutionData2)[fiberIndexI]))[fiberIndexJ]->variable2[fromVectorIndex].componentNo;
 
           // map values
           DihuContext::mappingBetweenMeshesManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo1, componentNo2, avoidCopyIfPossible);
@@ -392,13 +408,13 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
       // loop over vector of fibers
       for (int fiberIndexI = 0; fiberIndexI < transferableSolutionData2->size(); fiberIndexI++)
       {
-        for (int fiberIndexJ = 0; fiberIndexJ < (*transferableSolutionData2)[fiberIndexI]->size(); fiberIndexJ++)
+        for (int fiberIndexJ = 0; fiberIndexJ < std::get<0>(*(*transferableSolutionData2)[fiberIndexI])->size(); fiberIndexJ++)
         {
           // map from transferableSolutionData1->variable2 to transferableSolutionData2->variable1
 
           typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a> FieldVariable2;
-          std::shared_ptr<FieldVariable2> &fieldVariable2 = (*(*transferableSolutionData2)[fiberIndexI])[fiberIndexJ]->variable1[fromVectorIndex].values;
-          int componentNo2                                = (*(*transferableSolutionData2)[fiberIndexI])[fiberIndexJ]->variable1[fromVectorIndex].componentNo;
+          std::shared_ptr<FieldVariable2> &fieldVariable2 = (*std::get<0>(*(*transferableSolutionData2)[fiberIndexI]))[fiberIndexJ]->variable1[fromVectorIndex].values;
+          int componentNo2                                = (*std::get<0>(*(*transferableSolutionData2)[fiberIndexI]))[fiberIndexJ]->variable1[fromVectorIndex].componentNo;
 
           // map values
           DihuContext::mappingBetweenMeshesManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo1, componentNo2, avoidCopyIfPossible);
@@ -423,13 +439,13 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
       // loop over vector of fibers
       for (int fiberIndexI = 0; fiberIndexI < transferableSolutionData2->size(); fiberIndexI++)
       {
-        for (int fiberIndexJ = 0; fiberIndexJ < (*transferableSolutionData2)[fiberIndexI]->size(); fiberIndexJ++)
+        for (int fiberIndexJ = 0; fiberIndexJ < std::get<0>(*(*transferableSolutionData2)[fiberIndexI])->size(); fiberIndexJ++)
         {
           // map from transferableSolutionData1->variable2 to transferableSolutionData2->variable2
 
           typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2b> FieldVariable2;
-          std::shared_ptr<FieldVariable2> &fieldVariable2 = (*(*transferableSolutionData2)[fiberIndexI])[fiberIndexJ]->variable2[fromVectorIndex].values;
-          int componentNo2                                = (*(*transferableSolutionData2)[fiberIndexI])[fiberIndexJ]->variable2[fromVectorIndex].componentNo;
+          std::shared_ptr<FieldVariable2> &fieldVariable2 = (*std::get<0>(*(*transferableSolutionData2)[fiberIndexI]))[fiberIndexJ]->variable2[fromVectorIndex].values;
+          int componentNo2                                = (*std::get<0>(*(*transferableSolutionData2)[fiberIndexI]))[fiberIndexJ]->variable2[fromVectorIndex].componentNo;
 
           // map values
           DihuContext::mappingBetweenMeshesManager()->template map<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo1, componentNo2, avoidCopyIfPossible);
@@ -459,10 +475,10 @@ transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nCom
     // loop over vector of fibers
     for (int fiberIndexI = 0; fiberIndexI < transferableSolutionData2->size(); fiberIndexI++)
     {
-      for (int fiberIndexJ = 0; fiberIndexJ < (*transferableSolutionData2)[fiberIndexI]->size(); fiberIndexJ++)
+      for (int fiberIndexJ = 0; fiberIndexJ < std::get<0>(*(*transferableSolutionData2)[fiberIndexI])->size(); fiberIndexJ++)
       {
         // map from transferableSolutionData1->geometryField to transferableSolutionData2->variable1[0]->geometryField
-        std::shared_ptr<FieldVariableTarget> geometryFieldTarget = std::make_shared<FieldVariableTarget>((*(*transferableSolutionData2)[fiberIndexI])[fiberIndexJ]->variable1[0].values->functionSpace()->geometryField());
+        std::shared_ptr<FieldVariableTarget> geometryFieldTarget = std::make_shared<FieldVariableTarget>((*std::get<0>(*(*transferableSolutionData2)[fiberIndexI]))[fiberIndexJ]->variable1[0].values->functionSpace()->geometryField());
 
         // map the whole geometry field (all components, -1), do not avoid copy
         DihuContext::mappingBetweenMeshesManager()->template map<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, geometryFieldTarget, -1, -1, false);

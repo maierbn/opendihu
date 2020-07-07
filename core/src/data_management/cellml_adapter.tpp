@@ -114,13 +114,10 @@ template <int nStates, int nAlgebraics, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
 prepareParameterValues()
 {
-  //LOG(DEBUG) << "parameters: " << *this->parameters_;
-
   this->parameters_->setRepresentationContiguous();
   PetscErrorCode ierr;
   Vec contiguousVec = this->parameters_->getValuesContiguous();
   ierr = VecGetArray(contiguousVec, &parameterValues_); CHKERRV(ierr);
-
 #if 0
   PetscInt nValues;
   ierr = VecGetLocalSize(contiguousVec, &nValues); CHKERRV(ierr);

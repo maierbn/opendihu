@@ -25,7 +25,7 @@ advanceTimeSpan()
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
 
-  LOG(DEBUG) << "  CouplingOrGodunov::advanceTimeSpan: timeSpan=[" << this->startTime_<< "," << this->endTime_<< "]"
+  LOG(DEBUG) << "  CouplingOrGodunov(\"" << this->description_ << "\")::advanceTimeSpan: timeSpan=[" << this->startTime_<< "," << this->endTime_<< "]"
     << ", n steps: " << this->numberTimeSteps_<< ", timeStepWidth=" << this->timeStepWidth_;
 
   // loop over time steps
@@ -36,15 +36,15 @@ advanceTimeSpan()
     {
       LOG(INFO) << this->schemeName_ << ", timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
-    LOG(DEBUG) << "  CouplingOrGodunov: time step " << timeStepNo << ", t: " << currentTime;
+    LOG(DEBUG) << "  CouplingOrGodunov(\"" << this->description_ << "\"): time step " << timeStepNo << ", t: " << currentTime;
 
 
     // --------------- time stepping 1, time span = [0,dt] -------------------------
-    LOG(DEBUG) << "  CouplingOrGodunov: timeStepping1 setTimeSpan [" << currentTime << ", " << currentTime+this->timeStepWidth_<< "]";
+    LOG(DEBUG) << "  CouplingOrGodunov(\"" << this->description_ << "\"): timeStepping1 setTimeSpan [" << currentTime << ", " << currentTime+this->timeStepWidth_<< "]";
     // set timespan for timestepping1
     this->timeStepping1_.setTimeSpan(currentTime, currentTime+this->timeStepWidth_);
 
-    LOG(DEBUG) << "  CouplingOrGodunov: timeStepping1 advanceTimeSpan";
+    LOG(DEBUG) << "  CouplingOrGodunov(\"" << this->description_ << "\"): timeStepping1 advanceTimeSpan";
 
     if (this->durationLogKey_ != "")
     {
@@ -61,7 +61,7 @@ advanceTimeSpan()
     }
 
     // --------------- data transfer 1->2 -------------------------
-    LOG(DEBUG) << "  CouplingOrGodunov: transfer timeStepping1 -> timeStepping2";
+    LOG(DEBUG) << "  CouplingOrGodunov(\"" << this->description_ << "\"): transfer timeStepping1 -> timeStepping2";
 
     // set transfer direction 1->2
     this->outputConnection_->setTransferDirection(true);
@@ -83,11 +83,11 @@ advanceTimeSpan()
     }
 
     // --------------- time stepping 2, time span = [0,dt] -------------------------
-    LOG(DEBUG) << "  CouplingOrGodunov: timeStepping2 setTimeSpan [" << currentTime << ", " << currentTime+this->timeStepWidth_<< "]";
+    LOG(DEBUG) << "  CouplingOrGodunov(\"" << this->description_ << "\"): timeStepping2 setTimeSpan [" << currentTime << ", " << currentTime+this->timeStepWidth_<< "]";
     // set timespan for timestepping2
     this->timeStepping2_.setTimeSpan(currentTime, currentTime+this->timeStepWidth_);
 
-    LOG(DEBUG) << "  CouplingOrGodunov: timeStepping2 advanceTimeSpan";
+    LOG(DEBUG) << "  CouplingOrGodunov(\"" << this->description_ << "\"): timeStepping2 advanceTimeSpan";
     // advance simulation by time span
     this->timeStepping2_.advanceTimeSpan();
 
@@ -98,7 +98,7 @@ advanceTimeSpan()
     }
 
     // --------------- data transfer 2->1 -------------------------
-    LOG(DEBUG) << "  CouplingOrGodunov: transfer timeStepping2 -> timeStepping1";
+    LOG(DEBUG) << "  CouplingOrGodunov(\"" << this->description_ << "\"): transfer timeStepping2 -> timeStepping1";
 
     // set transfer direction 2->1
     this->outputConnection_->setTransferDirection(false);

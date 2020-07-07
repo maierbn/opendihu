@@ -67,7 +67,8 @@ template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpaceType,nStates_>> outputConnectorDataTimeStepping)
 {
-  // add all state and algebraic values for transfer (option "algebraicsForTransfer"), which are stored in this->data_.getOutputConnectorData()
+  // This method is called once in initialize() of the timestepping scheme.
+  // Add all state and algebraic values for transfer (option "algebraicsForTransfer"), which are stored in this->data_.getOutputConnectorData()
   // at the end of outputConnectorDataTimeStepping
 
   // The first "states" entry of statesToTransfer is the solution variable, component 0 (which is default) of the timestepping scheme and therefore

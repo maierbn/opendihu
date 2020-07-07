@@ -65,6 +65,7 @@ protected:
 
   int timeStepOutputInterval_;      //< time step number and time is output every timeStepOutputInterval_ time steps
   std::string schemeName_;          //< the key as in the contig, i.e. "Strang" or "Godunov" or "Coupling", only for debugging outputs
+  std::string description_;         //< a description that will be printed in debugging output and in the solver structure visualization
   std::string logKeyTimeStepping1AdvanceTimeSpan_;  //< key for logging of the duration of the advanceTimeSpan() call of timeStepping1
   std::string logKeyTimeStepping2AdvanceTimeSpan_;  //< key for logging of the duration of the advanceTimeSpan() call of timeStepping2
   std::string logKeyTransfer12_;    //< key for logging of the duration of data transfer from timestepping 1 to 2

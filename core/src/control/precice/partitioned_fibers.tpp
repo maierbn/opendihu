@@ -54,8 +54,13 @@ initialize()
   const int nStates = NestedSolver::CellmlAdapterType::nStates();
 
   std::shared_ptr<std::vector<
-    std::shared_ptr<std::vector<
-      std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> >
+    std::shared_ptr<std::tuple<
+      std::shared_ptr<std::vector<
+        std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> >
+      >>,
+      std::shared_ptr<std::vector<
+        std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, 1, 1> >
+      >>
     >>
   >> data = nestedSolver_.getOutputConnectorData();
 
@@ -64,11 +69,11 @@ initialize()
   // loop over fibers
   for (int i = 0; i < data->size(); i++)
   {
-    for (int j = 0; j < data->at(i)->size(); j++, nFibers++)
+    for (int j = 0; j < std::get<0>(*data->at(i))->size(); j++, nFibers++)
     {
       // get data of single fiber
       std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> > fiberData
-        = data->at(i)->at(j);
+        = std::get<0>(*data->at(i))->at(j);
 
       // get function space of this fiber
       assert(!fiberData->variable1.empty());
@@ -116,11 +121,11 @@ initialize()
   int fiberNo = 0;
   for (int i = 0; i < data->size(); i++)
   {
-    for (int j = 0; j < data->at(i)->size(); j++, fiberNo++)
+    for (int j = 0; j < std::get<0>(*data->at(i))->size(); j++, fiberNo++)
     {
       // get data of single fiber
       std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> > fiberData
-        = data->at(i)->at(j);
+        = std::get<0>(*data->at(i))->at(j);
 
       // get function space of this fiber
       assert(!fiberData->variable1.empty());
@@ -263,8 +268,13 @@ preciceReadData()
   const int nStates = NestedSolver::CellmlAdapterType::nStates();
 
   std::shared_ptr<std::vector<
-    std::shared_ptr<std::vector<
-      std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> >
+    std::shared_ptr<std::tuple<
+      std::shared_ptr<std::vector<
+        std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> >
+      >>,
+      std::shared_ptr<std::vector<
+        std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, 1, 1> >
+      >>
     >>
   >> data = nestedSolver_.getOutputConnectorData();
 
@@ -272,11 +282,11 @@ preciceReadData()
   int fiberNo = 0;
   for (int i = 0; i < data->size(); i++)
   {
-    for (int j = 0; j < data->at(i)->size(); j++, fiberNo++)
+    for (int j = 0; j < std::get<0>(*data->at(i))->size(); j++, fiberNo++)
     {
       // get data for a single fiber
       std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> > fiberData
-        = data->at(i)->at(j);
+        = std::get<0>(*data->at(i))->at(j);
 
       // get function space
       assert(!fiberData->variable1.empty());
@@ -333,8 +343,13 @@ preciceWriteData()
   const int nStates = NestedSolver::CellmlAdapterType::nStates();
 
   std::shared_ptr<std::vector<
-    std::shared_ptr<std::vector<
-      std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> >
+    std::shared_ptr<std::tuple<
+      std::shared_ptr<std::vector<
+        std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> >
+      >>,
+      std::shared_ptr<std::vector<
+        std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, 1, 1> >
+      >>
     >>
   >> data = nestedSolver_.getOutputConnectorData();
 
@@ -342,11 +357,11 @@ preciceWriteData()
   int fiberNo = 0;
   for (int i = 0; i < data->size(); i++)
   {
-    for (int j = 0; j < data->at(i)->size(); j++, fiberNo++)
+    for (int j = 0; j < std::get<0>(*data->at(i))->size(); j++, fiberNo++)
     {
       // get data for a single fiber
       std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> > fiberData
-        = data->at(i)->at(j);
+        = std::get<0>(*data->at(i))->at(j);
 
         // get function space
       assert(!fiberData->variable1.empty());

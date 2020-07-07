@@ -36,14 +36,15 @@ double_v_t norm(const VecD<D,double_v_t> node)
 template<int D, typename double_v_t>
 VecD<D> normalized(VecD<D,double_v_t> &vector)
 {
-  double_v_t factor = 1./norm<D,double_v_t>(vector);
-  return vector * factor;
+  double_v_t inverseNorm = 1./norm<D,double_v_t>(vector);
+  return vector * inverseNorm;
 }
 
 template<int D, typename double_v_t>
 void normalize(VecD<D,double_v_t> &vector)
 {
-  vector = vector * 1./norm<D,double_v_t>(vector);
+  double_v_t inverseNorm = 1./norm<D,double_v_t>(vector);
+  vector = vector * inverseNorm;
 }
 
 template<typename T>
@@ -91,7 +92,6 @@ double distance(const VecD<D> node1, const VecD<D> node2)
 template<typename double_v_t>
 double_v_t computeIntegrationFactor(const std::array<VecD<3,double_v_t>,1> &jacobian)
 {
-  LOG(DEBUG) << "1D integration factor, jacobian[0]: " << jacobian;
   return length(jacobian[0]);
 }
 

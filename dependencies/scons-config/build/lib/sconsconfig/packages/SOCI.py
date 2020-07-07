@@ -1,5 +1,5 @@
 import sys, os
-from Package import Package
+from .Package import Package
 import sconsconfig as config
 
 class SOCI(Package):
@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
             },
         }
         found = False
-        for be, opts in backends.iteritems():
+        for be, opts in backends.items():
             self.libs = [opts['libs']]
             self.extra_libs = [opts.get('extra_libs', [])]
             res = super(SOCI, self).check(ctx)

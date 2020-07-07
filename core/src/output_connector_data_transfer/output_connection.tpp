@@ -15,6 +15,9 @@ initialize(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nCom
     nFieldVariablesTerm1Vector2_ = transferableSolutionData1.variable2.size();
     nFieldVariablesTerm2Vector1_ = transferableSolutionData2.variable1.size();
     nFieldVariablesTerm2Vector2_ = transferableSolutionData2.variable2.size();
+
+    offsetSlotNoData1_ = offsetSlotNoData1;
+    offsetSlotNoData2_ = offsetSlotNoData2;
   }
   else
   {
@@ -22,6 +25,9 @@ initialize(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nCom
     nFieldVariablesTerm1Vector2_ = transferableSolutionData2.variable2.size();
     nFieldVariablesTerm2Vector1_ = transferableSolutionData1.variable1.size();
     nFieldVariablesTerm2Vector2_ = transferableSolutionData1.variable2.size();
+
+    offsetSlotNoData1_ = offsetSlotNoData2;
+    offsetSlotNoData2_ = offsetSlotNoData1;
   }
 
   if (!fieldVariableNamesInitialized_)
@@ -103,9 +109,6 @@ initialize(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nCom
     //         2 |   2
     //           +-->3
 
-    offsetSlotNoData1_ = offsetSlotNoData1;
-    offsetSlotNoData2_ = offsetSlotNoData2;
-
     // compute connectorTerm1To2_ from connectorForVisualizerTerm1To2_
     for (int globalSlotNo1 = offsetSlotNoData1_; globalSlotNo1 < connectorForVisualizerTerm1To2_.size(); globalSlotNo1++)
     {
@@ -175,6 +178,9 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
 {
   if (slotInformationInitialized_)
     return;
+
+  // save previous value of the variable transferDirectionTerm1To2_
+  bool previousTransferDirectionTerm1To2 = transferDirectionTerm1To2_;
 
   // variable1 from 1 to 2
   // ----------------------
@@ -514,11 +520,14 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
     }
   }
 
-  LOG(DEBUG) << "now initialize lookup-table.";
-
   // fill look-up table slotInformation_[transferDirectionTerm1To2][fromVectorNo][fromVectorIndex]
   for (int transferDirectionTerm1To2 = 0; transferDirectionTerm1To2 < 2; transferDirectionTerm1To2++)
   {
+    if (transferDirectionTerm1To2 == 0)
+      LOG(DEBUG) << "initialize lookup-table for terms 2->1";
+    else
+      LOG(DEBUG) << "initialize lookup-table for terms 1->2";
+
     for (int fromVectorNo = 0; fromVectorNo < 2; fromVectorNo++)
     {
       // iterate to the next fromVectorIndex until there were 3 unconnected slots, then it is assumed that there are no more
@@ -539,6 +548,9 @@ initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nCo
       }
     }
   }
+  LOG(DEBUG) << "lookup-table initialization done";
 
+  // restore previous value of the variable transferDirectionTerm1To2_
+  transferDirectionTerm1To2_ = previousTransferDirectionTerm1To2;
   slotInformationInitialized_ = true;
 }

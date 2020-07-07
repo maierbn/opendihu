@@ -737,11 +737,11 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
     if (PyDict_Contains((PyObject *)settings, key))
     {
       // extract the value of the key and check its type
-      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
-      if (PyList_Check(value))
+      PyObject *valuePy = PyDict_GetItem((PyObject *)settings, key);
+      if (PyList_Check(valuePy))
       {
         // it is a list
-        int listNEntries = PyList_Size(value);
+        int listNEntries = PyList_Size(valuePy);
 
         // do nothing if it is an empty list
         if (listNEntries == 0)
@@ -761,8 +761,8 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
       else
       {
         // not a list, but a different entry (only 1 entry)
-        std::string value = PythonUtility::getOptionString(settings, keyString, pathString, 0);
-        values.push_back(value);
+        std::string resultValue = PythonUtility::convertFromPython<std::string>::get(valuePy);
+        values.push_back(resultValue);
       }
     }
     else
@@ -1053,8 +1053,10 @@ std::string PythonUtility::pyUnicodeToString(PyObject* object)
   // PythonUtility::GlobalInterpreterLock lock;
   
   PyObject *asciiString = PyUnicode_AsASCIIString(object);
-  std::string result = PyBytes_AsString(asciiString);
-  Py_DECREF(asciiString);
+  std::string result;
+  if (asciiString)
+    result = PyBytes_AsString(asciiString);
+  Py_CLEAR(asciiString);
 
   return result;
 }

@@ -315,7 +315,7 @@ setRepresentationLocal()
   else if (this->currentRepresentation_ == Partition::values_representation_t::representationInvalid)
   {
     LOG(FATAL) << "\"" << this->name_ << "\" setRepresentationLocal, previous representation: "
-    << this->getCurrentRepresentationString() << ". This is not directly possible, call restoreExtractedComponent instead.";
+      << this->getCurrentRepresentationString() << ". This is not directly possible, call restoreExtractedComponent instead.";
   }
   else if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
   {
@@ -431,7 +431,8 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
     {
       // shift indices
       std::vector<PetscInt> &indices = temporaryIndicesVector_;
-      indices.resize(ni);
+      if (indices.size() < ni)
+        indices.resize(ni);
       for (int i = 0; i < ni; i++)
       {
         indices[i] = ix[i] + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts();

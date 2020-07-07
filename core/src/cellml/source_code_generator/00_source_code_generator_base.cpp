@@ -4,6 +4,10 @@
 
 #include <vector>
 #include <iostream>
+#include <thread>
+#include <chrono>
+#include <sys/stat.h> // stat
+#include <unistd.h>   // stat
 #include <sstream>
 #include "easylogging++.h"
 #include "utility/vector_operators.h"
@@ -249,8 +253,25 @@ void CellmlSourceCodeGeneratorBase::convertFromXmlToC()
     }
   }
 
-  // wait on all ranks until conversion is finished
-  MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");
+  //LOG(DEBUG) << "MPI barrier, wait on all ranks until conversion is finished, n ranks: " << DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->size();
+
+  // wait on all ranks until conversion is finished, this fails with multiple ranks in x,y and z direction
+  //MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");
+
+  // wait until file exists
+  for (;;)
+  {
+    struct stat buffer;
+    // if file cFilename exists, exit infinite loop
+    if (stat(cFilename.c_str(), &buffer) == 0)
+    {
+      break;
+    }
+
+    // yield to other processes
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    std::this_thread::yield();
+  }
 
   sourceFilename_ = cFilename;
 }

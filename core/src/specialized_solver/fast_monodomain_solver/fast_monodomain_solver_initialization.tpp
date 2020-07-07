@@ -496,8 +496,11 @@ initializeCellMLSourceFile()
     }
   }
 
-  // barrier to wait until the one rank that compiles the library has finished
-  MPIUtility::handleReturnValue(MPI_Barrier(MPI_COMM_WORLD), "MPI_Barrier");
+  // barrier disabled because in interferes with the barrier in 00_source_code_generator_base.cpp
+  //LOG(ERROR) << "MPI barrier in fast_monodomain_solver on MPI_COMM_WORLD";
+
+  // wait on all ranks until conversion is finished
+  MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");
 
   // load the rhs library
   void *handle = CellmlAdapterType::loadRhsLibraryGetHandle(libraryFilename);

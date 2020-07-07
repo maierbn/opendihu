@@ -36,7 +36,7 @@ if ".py" in sys.argv[0]:
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
   if rank_no == 0:
-    print("Warning: There is no variables file, e.g:\n ./multidomain_contraction ../settings_multidomain_contraction.py ramp.py\n")
+    print("Warning: There is no variables file, e.g:\n ./multidomain_contraction ../settings_multidomain_contraction.py coarse.py\n")
   exit(0)
   
 # -------------------------------------------------------- begin parameters ---------------------------------------------------------

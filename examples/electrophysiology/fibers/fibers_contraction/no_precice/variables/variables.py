@@ -57,7 +57,9 @@ paraview_output = False             # If the paraview output writer should be en
 adios_output = False                # If the MegaMol/ADIOS output writer should be enabled
 python_output = False               # If the Python output writer should be enabled
 exfile_output = False               # If the Exfile output writer should be enabled
-
+fast_monodomain_solver_optimizations = True   # enable the optimizations in the fast multidomain solver
+use_analytic_jacobian = True        # If the analytic jacobian should be used for the mechanics problem.
+use_vc = True                       # If the vc optimization type should be used for CellmlAdapter
 
 # motor unit stimulation times
 fiber_distribution_file = "../../../../input/MU_fibre_distribution_3780.txt"

@@ -17,8 +17,8 @@ void SolutionVectorMapping<
 {
   LOG(DEBUG) << "transfer standard, type1: " << FunctionSpaceType1::dim() << "D " << nComponents1a << "," << nComponents1b << " comp.,"
     << " type2: " << FunctionSpaceType2::dim() << "D " << nComponents2a << "," << nComponents2b << "comp.";
-  LOG(DEBUG) << "transferableSolutionData1: " << transferableSolutionData1;
-  LOG(DEBUG) << "transferableSolutionData2: " << transferableSolutionData2;
+//  LOG(DEBUG) << "transferableSolutionData1: " << transferableSolutionData1;
+//  LOG(DEBUG) << "transferableSolutionData2: " << transferableSolutionData2;
   LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2;
 
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
@@ -202,6 +202,4 @@ void SolutionVectorMapping<
   }
 
   LOG(DEBUG) << "at the end of output_connector_data_transfer_cellml.";
-  LOG(DEBUG) << "transferableSolutionData1: " << *transferableSolutionData1;
-  LOG(DEBUG) << "transferableSolutionData2: " << *transferableSolutionData2;
 }

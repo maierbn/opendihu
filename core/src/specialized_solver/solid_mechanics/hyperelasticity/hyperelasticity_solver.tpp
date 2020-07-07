@@ -32,6 +32,7 @@ HyperelasticitySolver(DihuContext context, std::string settingsKey) :
   useAnalyticJacobian_  = this->specificSettings_.getOptionBool("useAnalyticJacobian", true);
   useNumericJacobian_   = this->specificSettings_.getOptionBool("useNumericJacobian", true);
   nNonlinearSolveCalls_ = this->specificSettings_.getOptionInt("nNonlinearSolveCalls", 1, PythonUtility::Positive);
+  loadFactorGiveUpThreshold_ = this->specificSettings_.getOptionDouble("loadFactorGiveUpThreshold", 1e-5, PythonUtility::Positive);
 
   // parse constant body force, a value of "None" yields the default value, (0,0,0)
   constantBodyForce_ = this->specificSettings_.template getOptionArray<double,3>("constantBodyForce", Vec3{0.0,0.0,0.0});

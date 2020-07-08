@@ -66,7 +66,7 @@ parser.add_argument('-v',                                    help='Enable verbos
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
 
-use_analytic_jacobian = True  # force analytic jacobian, otherwise it will take too long
+variables.use_analytic_jacobian = True  # force analytic jacobian, otherwise it will take too long
 
 # parse command line arguments and assign values to variables module
 args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
@@ -180,8 +180,8 @@ config = {
     "mechanicsSolver": {   # solver for the dynamic mechanics problem
       "relativeTolerance":  1e-5,           # 1e-10 relative tolerance of the linear solver
       "absoluteTolerance":  1e-10,          # 1e-10 absolute tolerance of the residual of the linear solver
-      "solverType":         "gmres",      # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
-      "preconditionerType": "euclid",           # type of the preconditioner
+      "solverType":         "lu",      # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
+      "preconditionerType": "none",           # type of the preconditioner
       "maxIterations":       1e4,           # maximum number of iterations in the linear solver
       "snesMaxFunctionEvaluations": 1e8,    # maximum number of function iterations
       "snesMaxIterations":   10,            # maximum number of iterations in the nonlinear solver
@@ -472,6 +472,8 @@ config = {
   }
 }
 
+print("analytic jacobian: ",config["Coupling"]["Term2"]["MuscleContractionSolver"]["DynamicHyperelasticitySolver"]["useAnalyticJacobian"])
+print("numeric jacobian: ",config["Coupling"]["Term2"]["MuscleContractionSolver"]["DynamicHyperelasticitySolver"]["useNumericJacobian"])
 
 # stop timer and calculate how long parsing lasted
 if rank_no == 0:

@@ -1,4 +1,4 @@
-mpirun -n 24 ./biceps_contraction_not_fast ../settings_biceps_contraction.py 15mus.py \
+mpirun -n 12 ./biceps_contraction_not_fast ../settings_biceps_contraction.py 15mus.py \
   --end_time 1 \
   --scenario_name b
 

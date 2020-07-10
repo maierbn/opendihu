@@ -127,9 +127,8 @@ class PETSc(Package):
         self.set_build_handler([
           'mkdir -p ${PREFIX}',
           './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
-            --with-mpi-dir=${MPI_DIR} --with-batch\
-            --download-fblaslapack=1 \
-            ' | tee out.txt',
+            --with-mpi-dir=${MPI_DIR} --with-batch \
+            --download-fblaslapack=1 ' | tee out.txt',
           '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
           '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
         ])

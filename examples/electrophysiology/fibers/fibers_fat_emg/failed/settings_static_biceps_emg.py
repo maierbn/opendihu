@@ -351,7 +351,7 @@ config = {
               },
             }],
             "OutputWriter": [
-              {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_smaller_files), "filename": "out/" + variables.scenario_name + "/emg_fat", "binary": True, "fixedFormat": False, "combineFiles": True},
+              {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_smaller_files), "filename": "out/" + variables.scenario_name + "/hd_emg_fat", "binary": True, "fixedFormat": False, "combineFiles": True},
             ]  
           },
         },

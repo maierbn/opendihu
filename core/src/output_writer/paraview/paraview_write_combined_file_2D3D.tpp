@@ -718,9 +718,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
     VLOG(1) << "  " << iter->str();
   }
 
-  LOG(ERROR) << "open MPI file \"" << filenameStr << "\" for rankSubset " << *this->rankSubset_;
-
-  //MPI_Barrier(this->rankSubset_->mpiCommunicator());
+  LOG(DEBUG) << "open MPI file \"" << filenameStr << "\" for rankSubset " << *this->rankSubset_;
 
   // open file
   MPI_File fileHandle;

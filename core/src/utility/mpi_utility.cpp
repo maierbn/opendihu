@@ -13,25 +13,24 @@ namespace MPIUtility
   
 void handleReturnValue(int returnValue, std::string descriptor, MPI_Status *status)
 {
+  // if MPI call failed, output result
   if (status != MPI_STATUS_IGNORE && status != nullptr)
   {
     /*
      * typedef struct _MPI_Status {
-  int count;
-  int cancelled;
-  int MPI_SOURCE;
-  int MPI_TAG;
-  int MPI_ERROR;
-} MPI_Status, *PMPI_Status;
-*/
-
+        int count;
+        int cancelled;
+        int MPI_SOURCE;
+        int MPI_TAG;
+        int MPI_ERROR;
+      } MPI_Status, *PMPI_Status;
+    */
     //LOG(DEBUG) << "MPI status: count=" << status->_ucount << ", cancelled=" << status->_cancelled << ", MPI_SOURCE=" << status->MPI_SOURCE
     //  << ", MPI_TAG=" << status->MPI_TAG << ", MPI_ERROR=" << status->MPI_ERROR;
-
   }
 
-  CLOG(INFO, "mpi") << descriptor << " -> " << returnValue;
-    //<< ", MPI status: count=" << status->_ucount << ", cancelled=" << status->_cancelled << ", MPI_SOURCE=" << status->MPI_SOURCE;
+  // in order for the following line to work, enable initialization of this logger in control/initialization/initialize_logging.cpp
+  //CLOG(INFO, "mpi") << descriptor << " -> " << returnValue;
 
   if (returnValue == MPI_SUCCESS)
     return;

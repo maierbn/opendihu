@@ -12,6 +12,7 @@ Generic::Generic(DihuContext context, PythonConfig specificSettings, std::shared
   // get the rank subset of all processes that collectively call the write methods
   if (!rankSubset_)
   {
+    LOG(DEBUG) << "Creating new OutputWriter and rankSubset is nullptr, now using rankSubsetForCollectiveOperations.";
     rankSubset_ = this->context_.partitionManager()->rankSubsetForCollectiveOperations();
   }
   VLOG(1) << "OutputWriter::Generic constructor, rankSubset: " << *rankSubset_;

@@ -71,25 +71,27 @@ public:
 
 protected:
 
-  DihuContext context_; //< the context object that holds the config for this class
-  PythonConfig specificSettings_;    //< config for this object
-  OutputWriter::Manager outputWriterManager_; //< manager object holding all output writer
+  DihuContext context_;                         //< the context object that holds the config for this class
+  PythonConfig specificSettings_;               //< config for this object
+  OutputWriter::Manager outputWriterManager_;   //< manager object holding all output write
+  Data data_;                                   //< the data object
 
-  int nInstances_; //< number of instances that are given by config
-  int nInstancesComputedGlobally_; //< number of instances that any process will compute
-  std::vector<TimeSteppingScheme> instancesLocal_;   //< the instances of the problem that are computed on the local rank
-  int nInstancesLocal_;   //< the number of local instances, i.e. the size of the instancesLocal_ vector
-
-  std::shared_ptr<Partition::RankSubset> rankSubsetAllComputedInstances_;   //< the rank nos of all computed instances of this MultipleInstances object
-  std::string logKey_;   //< the key under which the duration of all instances together is saved in the log
-
-  Data data_;  //< the data object
   std::shared_ptr<OutputConnectorDataType> outputConnectorData_;       //< the outputConnectorData as vector of references o f teh outputConnectorData's of the instances
 
-  bool outputInitializeThisInstance_;   //< if this instance displays progress of initialization
+  int nInstances_;                              //< number of instances that are given by config
+  int nInstancesComputedGlobally_;              //< number of instances that any process will compute
+  int nInstancesLocal_;                         //< the number of local instances, i.e. the size of the instancesLocal_ vector
+
+  std::vector<TimeSteppingScheme> instancesLocal_;   //< the instances of the problem that are computed on the local rank
+  std::vector<std::shared_ptr<Partition::RankSubset>> rankSubsetsLocal_;  //< the rankSubset corresponding to the instances in instancesLocal_
+
+  std::shared_ptr<Partition::RankSubset> rankSubsetAllComputedInstances_;   //< the rank nos of all computed instances of this MultipleInstances object
+  std::string logKey_;                          //< the key under which the duration of all instances together is saved in the log
+
+  bool outputInitializeThisInstance_;           //< if this instance displays progress of initialization
 };
 
-extern bool outputInitialize_;   //< if the message about initialization was already printed
+extern bool outputInitialize_;                  //< if the message about initialization was already printed
 
 }  // namespace
 

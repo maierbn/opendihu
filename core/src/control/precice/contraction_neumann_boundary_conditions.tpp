@@ -54,9 +54,8 @@ initialize()
 
   preciceSolverInterface_ = std::make_unique<precice::SolverInterface>(solverName, configFileName, rankNo, nRanks);
 
-  // store the node positions to precice
-  std::string meshName = "TendonMeshTop";
-  preciceMeshId_ = preciceSolverInterface_->getMeshID(meshName);
+  // get the parameter if the coupling surface is at z- or at z+
+  isCouplingSurfaceBottom_ = this->specificSettings_.getOptionBool("isCouplingSurfaceBottom", false);
 
 
   std::vector<Vec3> geometryValues;
@@ -65,52 +64,70 @@ initialize()
   // get nodes at coupling surface
   const int nNodesX = functionSpace_->nNodesLocalWithoutGhosts(0);
   const int nNodesY = functionSpace_->nNodesLocalWithoutGhosts(1);
-  nNodesSurfaceLocal_ = nNodesX * nNodesY;
+  nNodesSurfaceLocal_ = 0;
+
+  // determine if the own rank is at the bottom/top in z direction of the total partitioning
+  bool isBottomRank = functionSpace_->meshPartition()->ownRankPartitioningIndex(2) == 0;
+  bool isTopRank = functionSpace_->meshPartition()->ownRankPartitioningIndex(2) == functionSpace_->meshPartition()->nRanks(2)-1;
+
+  // store the node positions to precice
+  if (isCouplingSurfaceBottom_)
+  {
+    preciceMeshId_ = preciceSolverInterface_->getMeshID("TendonMeshBottom");
+    if (!isBottomRank)
+      nNodesSurfaceLocal_ = nNodesX * nNodesY;
+  }
+  else
+  {
+    preciceMeshId_ = preciceSolverInterface_->getMeshID("TendonMeshTop");
+    if (!isTopRank)
+      nNodesSurfaceLocal_ = nNodesX * nNodesY;
+  }
 
   std::vector<double> geometryValuesSurfacePrecice(3*nNodesSurfaceLocal_);
   preciceVertexIds_.resize(nNodesSurfaceLocal_);
-
-  // get the parameter if the coupling surface is at z- or at z+
-  isCouplingSurfaceBottom_ = this->specificSettings_.getOptionBool("isCouplingSurfaceBottom", false);
 
   int nodeIndexZ = functionSpace_->nNodesLocalWithoutGhosts(2) - 1;
   if (isCouplingSurfaceBottom_)
     nodeIndexZ = 0;
 
-  // loop over nodes
-  for (int nodeIndexY = 0; nodeIndexY < nNodesY; nodeIndexY++)
+  if (nNodesSurfaceLocal_ != 0)
   {
-    for (int nodeIndexX = 0; nodeIndexX < nNodesX; nodeIndexX++)
+    // loop over nodes
+    for (int nodeIndexY = 0; nodeIndexY < nNodesY; nodeIndexY++)
     {
-      node_no_t nodeNoLocal =
-        nodeIndexZ * nNodesX * nNodesY
-        + nodeIndexY * nNodesX
-        + nodeIndexX;
-      dof_no_t dofNoLocal = nodeNoLocal;
-
-      int valueIndex = nodeIndexY*nNodesX + nodeIndexX;
-
-      for (int i = 0; i < 3; i++)
+      for (int nodeIndexX = 0; nodeIndexX < nNodesX; nodeIndexX++)
       {
-        geometryValuesSurfacePrecice[3*valueIndex + i] = geometryValues[dofNoLocal][i];
+        node_no_t nodeNoLocal =
+          nodeIndexZ * nNodesX * nNodesY
+          + nodeIndexY * nNodesX
+          + nodeIndexX;
+        dof_no_t dofNoLocal = nodeNoLocal;
+
+        int valueIndex = nodeIndexY*nNodesX + nodeIndexX;
+
+        for (int i = 0; i < 3; i++)
+        {
+          geometryValuesSurfacePrecice[3*valueIndex + i] = geometryValues[dofNoLocal][i];
+        }
       }
     }
+
+    LOG(DEBUG) << "setMeshVertices to precice, " << 3*nNodesSurfaceLocal_ << " values";
+
+    //preciceSolverInterface_->setMeshVertices(preciceMeshId_, int size, double* positions, int* ids);
+    preciceSolverInterface_->setMeshVertices(preciceMeshId_, nNodesSurfaceLocal_, geometryValuesSurfacePrecice.data(), preciceVertexIds_.data());
+
+    LOG(DEBUG) << "precice defined vertexIds: " << preciceVertexIds_;
+
+    // initialize data ids
+    preciceDataIdDisplacements_ = preciceSolverInterface_->getDataID("Displacements", preciceMeshId_);
+    preciceDataIdVelocity_      = preciceSolverInterface_->getDataID("Velocity",      preciceMeshId_);
+    preciceDataIdTraction_      = preciceSolverInterface_->getDataID("Traction",      preciceMeshId_);
+
+    LOG(DEBUG) << "data id displacements: " << preciceDataIdDisplacements_;
+    LOG(DEBUG) << "data id traction: " << preciceDataIdTraction_;
   }
-
-  LOG(DEBUG) << "setMeshVertices to precice, " << 3*nNodesSurfaceLocal_ << " values";
-
-  //preciceSolverInterface_->setMeshVertices(preciceMeshId_, int size, double* positions, int* ids);
-  preciceSolverInterface_->setMeshVertices(preciceMeshId_, nNodesSurfaceLocal_, geometryValuesSurfacePrecice.data(), preciceVertexIds_.data());
-
-  LOG(DEBUG) << "precice defined vertexIds: " << preciceVertexIds_;
-
-  // initialize data ids
-  preciceDataIdDisplacements_ = preciceSolverInterface_->getDataID("Displacements", preciceMeshId_);
-  preciceDataIdVelocity_      = preciceSolverInterface_->getDataID("Velocity",      preciceMeshId_);
-  preciceDataIdTraction_      = preciceSolverInterface_->getDataID("Traction",      preciceMeshId_);
-
-  LOG(DEBUG) << "data id displacements: " << preciceDataIdDisplacements_;
-  LOG(DEBUG) << "data id traction: " << preciceDataIdTraction_;
 
   maximumPreciceTimestepSize_ = preciceSolverInterface_->initialize();
 

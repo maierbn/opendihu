@@ -96,7 +96,8 @@ protected:
   int preciceDataIdVelocity_;                 //< data ID of precice of the velocity field to be exchanged
   int preciceDataIdTraction_;                 //< data ID of precice of the traction field to be exchanged
 
-  int nNodesSurfaceLocal_;                    //< number of nodes on the bottom or top surface where the tendon is coupled
+  int nNodesBottomSurfaceLocal_;              //< number of nodes on the bottom surface where the tendon is coupled
+  int nNodesTopSurfaceLocal_;                 //< number of nodes on the top surface where the tendon is coupled
 
   std::vector<double> tractionValuesBottom_;  //< traction values to be transferred, in array-of-struct order (x,y,z,x,y,z,...)
   std::vector<double> tractionValuesTop_;     //< traction values to be transferred

@@ -141,12 +141,12 @@ void Manager::loadGeometryFromFile()
     int filenameLength = filename.length();
 
     // broadcast length of filename
-    MPIUtility::handleReturnValue(MPI_Bcast(&filenameLength, 1, MPI_INT, nodePositionsAreInFileOnRankGlobal, mpiCommunicator), "MPI_Bcast");
+    MPIUtility::handleReturnValue(MPI_Bcast(&filenameLength, 1, MPI_INT, nodePositionsAreInFileOnRankGlobal, mpiCommunicator), "MPI_Bcast (1)");
 
     // broadcast filename
     std::vector<char> receiveBuffer(filenameLength+1, char(0));
     strcpy(receiveBuffer.data(), filename.c_str());
-    MPIUtility::handleReturnValue(MPI_Bcast(receiveBuffer.data(), filenameLength, MPI_CHAR, nodePositionsAreInFileOnRankGlobal, mpiCommunicator), "MPI_Bcast");
+    MPIUtility::handleReturnValue(MPI_Bcast(receiveBuffer.data(), filenameLength, MPI_CHAR, nodePositionsAreInFileOnRankGlobal, mpiCommunicator), "MPI_Bcast (2)");
 
     std::string openFileName(receiveBuffer.begin(), receiveBuffer.end());
     while (openFileName[openFileName.length()-1] == 0)

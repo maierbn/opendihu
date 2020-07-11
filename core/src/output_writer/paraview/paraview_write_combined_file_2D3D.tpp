@@ -256,11 +256,11 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
   int filenameLength = filename.length();
 
   // broadcast length of filename
-  MPIUtility::handleReturnValue(MPI_Bcast(&filenameLength, 1, MPI_INT, 0, this->rankSubset_->mpiCommunicator()));
+  MPIUtility::handleReturnValue(MPI_Bcast(&filenameLength, 1, MPI_INT, 0, this->rankSubset_->mpiCommunicator()), "MPI_Bcast (5)");
 
   std::vector<char> receiveBuffer(filenameLength+1, char(0));
   strcpy(receiveBuffer.data(), filename.c_str());
-  MPIUtility::handleReturnValue(MPI_Bcast(receiveBuffer.data(), filenameLength, MPI_CHAR, 0, this->rankSubset_->mpiCommunicator()));
+  MPIUtility::handleReturnValue(MPI_Bcast(receiveBuffer.data(), filenameLength, MPI_CHAR, 0, this->rankSubset_->mpiCommunicator()), "MPI_Bcast (6)");
 
   std::string filenameStr(receiveBuffer.begin(), receiveBuffer.end());
 
@@ -718,7 +718,9 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
     VLOG(1) << "  " << iter->str();
   }
 
-  LOG(DEBUG) << "open MPI file \"" << filenameStr << "\" for rankSubset " << *this->rankSubset_;
+  LOG(ERROR) << "open MPI file \"" << filenameStr << "\" for rankSubset " << *this->rankSubset_;
+
+  //MPI_Barrier(this->rankSubset_->mpiCommunicator());
 
   // open file
   MPI_File fileHandle;

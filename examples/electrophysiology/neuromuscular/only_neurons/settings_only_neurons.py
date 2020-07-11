@@ -122,8 +122,8 @@ if rank_no == 0:
   t_start_script = timeit.default_timer()
     
 # initialize all helper variables
-from helper import *
-
+#from helper import *
+variables.meshes = {}
 
 # callback function that receives the whole result values and produces plots while the simulation is running
 def handle_result(n_instances, time_step_no, current_time, states, algebraics, name_information, additional_argument):
@@ -208,7 +208,7 @@ if False:
       #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True, "fileNumbering": "incremental"},
     ]
   }
-
+  
 # add neuron meshes
 variables.meshes.update(
 {

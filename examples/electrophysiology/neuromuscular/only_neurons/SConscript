@@ -11,4 +11,4 @@ Import('env')     # import Environment object from calling SConstruct
 if not env['no_examples']:
     
   # create the main executable
-  env.Program(target = 'only_neurons', source = "src/only_neurons.cpp")
+  env.Program(target = 'only_neurons_1', source = "src/only_neurons_1.cpp")

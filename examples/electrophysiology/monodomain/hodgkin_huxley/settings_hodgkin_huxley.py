@@ -24,7 +24,7 @@ innervation_zone_width = 0.  # [cm]
 solver_type = "gmres"
 
 # timing parameters
-stimulation_frequency = 1000*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
+stimulation_frequency = 300*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 
 dt_0D = 2e-3                     # timestep width of ODEs
 dt_1D = 4e-3                     # timestep width of diffusion

@@ -99,12 +99,13 @@ dt_0D = 1e-4                        # [ms] timestep width of ODEs (1e-3)
 dt_1D = 1e-4                        # [ms] timestep width of diffusion (1e-3)
 dt_splitting = 1e-4                 # [ms] overall timestep width of strang splitting (1e-3)
 dt_3D = 1e-1                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep_fibers = 1e-3       # [ms] timestep for fiber output, 0.5
+output_timestep_fibers = 1          # [ms] timestep for fiber output, 0.5
 output_timestep_3D = 1              # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
 
 
 # input files
 fiber_file = "../../../../input/left_biceps_brachii_3x3fibers.bin"
+fiber_file = "../../../../input/left_biceps_brachii_7x7fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../../../input/MU_fibre_distribution_10MUs.txt"

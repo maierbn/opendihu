@@ -170,11 +170,11 @@ initialize()
 
   // set the nullspace of the matrix
   // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
-  MatNullSpace const_functions;
-  MatNullSpaceCreate(PETSC_COMM_WORLD, PETSC_TRUE, 0, nullptr, &const_functions);
-  MatSetNullSpace(systemMatrix, const_functions);
-  MatSetNearNullSpace(systemMatrix, const_functions); // for multigrid methods
-  MatNullSpaceDestroy(&const_functions);
+  MatNullSpace constantFunctions;
+  MatNullSpaceCreate(rankSubset_->mpiCommunicator(), PETSC_TRUE, 0, nullptr, &constantFunctions);
+  MatSetNullSpace(systemMatrix, constantFunctions);
+  MatSetNearNullSpace(systemMatrix, constantFunctions); // for multigrid methods
+  MatNullSpaceDestroy(&constantFunctions);
 
   // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
   DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());

@@ -115,7 +115,6 @@ my_Access_MD(braid_App          app,
       MultiDomainSolver->printSolution(index, t);
       //}
           
-      std::cout << index << "index \n";
       //for(int i = 0; i < u->size; i++)
       //{
       //   std::cout << "\n" << u->values[i];

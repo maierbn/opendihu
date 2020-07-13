@@ -59,10 +59,10 @@ initialize()
     MultiDomainConfigs.push_back(MultiDomainConfig);
   }
   */
-  pid_t pid = getpid();
-  printf("pid: %d", pid);
+  //pid_t pid = getpid();
+  //printf("pid: %d", pid);
 
-  std::this_thread::sleep_for (std::chrono::seconds(10));
+  //std::this_thread::sleep_for (std::chrono::seconds(10));
 
   // parse all settings in TimeSteppingScheme
   PyObject *MultiDomainConfig = this->specificSettings_.template getOptionListBegin<PyObject *>("TimeSteppingScheme");
@@ -211,10 +211,10 @@ run()
   // Define XBraid parameters
 
   // int       max_levels    = 3;
-  int       nrelax        = 1;
+  int       nrelax        = 2;
   int       skip          = 0;
   double    tol           = 1.0e-07;
-  int       cfactor       = 10;
+  int       cfactor       = 2;
   int       max_iter      = 100;
   int       min_coarse    = 3;
   int       fmg           = 0;

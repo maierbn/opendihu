@@ -36,6 +36,7 @@ solver_tolerance = 1e-10
 #fiber_file = "../input/laplace3d_structured_linear"
 #fiber_file = "../../input/7x7fibers.bin"
 fiber_file = "../../input/left_biceps_brachii_7x7fibers.bin"
+#fiber_file =  "./left_biceps_brachii_7x7fibers74.bin.compartment_relative_factors"
 
 # stride which points to select for the 3D mesh, along the muscle (z-direction)
 sampling_stride_z = 20
@@ -57,7 +58,8 @@ motor_units = [
 # for debugging use the following, non-physiological values. This produces a fast simulation
 #if True:
 #end_time = 0.1
-end_time = 0.1
+end_time = 4
+ntime = 1337
 Am = 1.0
 sampling_stride_z = 200 #muscle 74 200
 motor_units = motor_units[0:2]    # only 2 motor units [0:2] [0:1]
@@ -125,6 +127,11 @@ def compartment_gets_stimulated(compartment_no, current_time):
   index = int(current_time * stimulation_frequency)
   n_firing_times = np.size(firing_times,0)
   return firing_times[index % n_firing_times, mu_no] == 1
+
+def PinT_stimulation(current_time):
+  timestep_width = end_time/ntime
+  #print("test {}".format(current_time % (3333 * timestep_width)))
+  return current_time % (3333 * timestep_width) == 0 
   
 def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, compartment_no):
   
@@ -170,30 +177,32 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
 # callback function that can set states, i.e. prescribed values for stimulation
 def set_specific_states(n_nodes_global, time_step_no, current_time, states, compartment_no):
   
-  # determine if fiber gets stimulated at the current time
-  is_compartment_gets_stimulated = compartment_gets_stimulated(compartment_no, current_time)
-  if is_compartment_gets_stimulated:  
-    n_nodes_x = n_linear_elements_per_coordinate_direction[0]+1
-    n_nodes_y = n_linear_elements_per_coordinate_direction[1]+1
-    n_nodes_z = n_linear_elements_per_coordinate_direction[2]+1
-    z_index_center = (int)(n_nodes_z/2)
-    y_index_center = (int)(n_nodes_y/2)
-    x_index_center = (int)(n_nodes_x/2)
-    
-    for k in range(n_nodes_z):
-      if z_index_center-1 <= k <= z_index_center+1:
-        for j in range(n_nodes_y):
-          if y_index_center-1 <= j <= y_index_center+1:
-            for i in range(n_nodes_x):
-              if x_index_center-1 <= i <= x_index_center+1:
-                key = ((i,j,k),0,0)        # key: ((x,y,z),nodal_dof_index,state_no)
-                states[key] = 20.0
-                #print("set states at ({},{},{}) to 40".format(i,j,k))
+  PinT = PinT_stimulation(current_time)
+  if PinT:
+    # determine if fiber gets stimulated at the current time
+    is_compartment_gets_stimulated = compartment_gets_stimulated(compartment_no, current_time)
+    if is_compartment_gets_stimulated:  
+      n_nodes_x = n_linear_elements_per_coordinate_direction[0]+1
+      n_nodes_y = n_linear_elements_per_coordinate_direction[1]+1
+      n_nodes_z = n_linear_elements_per_coordinate_direction[2]+1
+      z_index_center = (int)(n_nodes_z/2)
+      y_index_center = (int)(n_nodes_y/2)
+      x_index_center = (int)(n_nodes_x/2)
+      
+      for k in range(n_nodes_z):
+        if z_index_center-1 <= k <= z_index_center+1:
+          for j in range(n_nodes_y):
+            if y_index_center-1 <= j <= y_index_center+1:
+              for i in range(n_nodes_x):
+                if x_index_center-1 <= i <= x_index_center+1:
+                  key = ((i,j,k),0,0)        # key: ((x,y,z),nodal_dof_index,state_no)
+                  states[key] = 20.0
+                  #print("set states at ({},{},{}) to 40".format(i,j,k))
 
-    #print("states: {}".format(states))
-    #print("n_nodes: ({},{},{})".format(n_nodes_x, n_nodes_y, n_nodes_z))
-    #print("n_nodes_global: {}, time_step_no: {}, current_time: {}, compartment_no: {}".format(n_nodes_global, time_step_no, current_time, compartment_no))
-    #wait = input("Press any key to continue...")
+      print("states: {}".format(states))
+      print("n_nodes: ({},{},{})".format(n_nodes_x, n_nodes_y, n_nodes_z))
+      print("n_nodes_global: {}, time_step_no: {}, current_time: {}, compartment_no: {}".format(n_nodes_global, time_step_no, current_time, compartment_no))
+      #wait = input("Press any key to continue...")
     
 # boundary conditions for potential flow
 potential_flow_bc = {}
@@ -291,8 +300,8 @@ config = {
   },
   "PinTMD": {
     "tstart": 0,                    # Start time
-    "tstop": 1,         #end_time            # End time
-    "ntime": 333,                      # number of time steps
+    "tstop": end_time,         #end_time            # End time
+    "ntime": ntime,                      # number of time steps
     "nspace":   1567,#8235, #3135,
     "Initial Guess": [2,2,4,5,2,2,2,0],
     "option1": "blabla",              # another example option that is parsed in the data object
@@ -327,7 +336,7 @@ config = {
                 "inputMeshIsGlobal":            True,
                 "dirichletBoundaryConditions":  {},
                 "nAdditionalFieldVariables":    0,
-                "checkForNanInf":               True,
+                "checkForNanInf":               False,
                     
                 "CellML" : {
                   "modelFilename":                          cellml_file,                            # input C++ source file or cellml XML file
@@ -377,6 +386,8 @@ config = {
       },
       "OutputWriter": [
         #{"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": False, "fixedFormat": False, "combineFiles": False, "fileNumbering": "timeStepIndex"},
+        {"format": "PythonFile", "filename": "out/fiberp", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+
       ]
     } for j in range (NumberOfMultiDomainSolvers)] 
   },

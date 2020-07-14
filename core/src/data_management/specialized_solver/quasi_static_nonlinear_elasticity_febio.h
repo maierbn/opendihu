@@ -9,7 +9,7 @@
 #include "data_management/data.h"
 #include "field_variable/field_variable.h"
 #include "function_space/function_space.h"
-#include "data_management/output_connector_data.h"
+#include "output_connector_data_transfer/output_connector_data.h"
 
 namespace Data
 {

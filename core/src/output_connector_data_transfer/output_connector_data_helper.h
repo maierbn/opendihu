@@ -36,6 +36,9 @@ struct OutputConnectorDataHelper
     int slotNo, int arrayIndex
   );
 
+  //! collect all slot names
+  static void getSlotNames(std::shared_ptr<OutputConnectorDataType> outputConnectorData, std::vector<std::string> &slotNames);
+
   //! get a string representation of the output connector data for debugging
   static std::string getString(std::shared_ptr<OutputConnectorDataType> outputConnectorData);
 };
@@ -68,6 +71,12 @@ struct OutputConnectorDataHelper<std::vector<std::shared_ptr<OutputConnectorData
   static void slotSetRepresentationGlobal(
     std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>> outputConnectorData,
     int slotNo, int arrayIndex
+  );
+
+  //! collect all slot names
+  static void getSlotNames(
+    std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>> outputConnectorData,
+    std::vector<std::string> &slotNames
   );
 
   //! get a string representation of the output connector data for debugging
@@ -104,6 +113,12 @@ struct OutputConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::sh
     int slotNo, int arrayIndex
   );
 
+  //! collect all slot names
+  static void getSlotNames(
+    std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>>>> outputConnectorData,
+    std::vector<std::string> &slotNames
+  );
+
   //! get a string representation of the output connector data for debugging
   static std::string getString(std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>>>> outputConnectorData);
 };
@@ -136,6 +151,12 @@ struct OutputConnectorDataHelper<std::tuple<std::shared_ptr<OutputConnectorDataT
   static void slotSetRepresentationGlobal(
     std::shared_ptr<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>> outputConnectorData,
     int slotNo, int arrayIndex
+  );
+
+  //! collect all slot names
+  static void getSlotNames(
+    std::shared_ptr<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>> outputConnectorData,
+    std::vector<std::string> &slotNames
   );
 
   //! get a string representation of the output connector data for debugging

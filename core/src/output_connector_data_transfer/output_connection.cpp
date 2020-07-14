@@ -30,21 +30,7 @@ OutputConnection::OutputConnection(PythonConfig settings):
     connectorForVisualizerTerm2To1_.push_back(connector);
   }
 
-  // if field variable gets mapped in both directions, set avoidCopyIfPossible to true
-  for (int i = 0; i < connectorForVisualizerTerm1To2_.size(); i++)
-  {
-    int mappedIndex = connectorForVisualizerTerm1To2_[i].index;
-
-    // check if other direction is mapped the same way
-    if (connectorForVisualizerTerm2To1_.size() > mappedIndex)
-    {
-      if (connectorForVisualizerTerm2To1_[mappedIndex].index == i)
-      {
-        connectorForVisualizerTerm1To2_[i].avoidCopyIfPossible = true;
-        connectorForVisualizerTerm2To1_[i].avoidCopyIfPossible = true;
-      }
-    }
-  }
+  updateAvoidCopyIfPossible();
 }
 
 //! copy constructor
@@ -54,6 +40,62 @@ OutputConnection::OutputConnection(const OutputConnection &rhs) :
   connectorForVisualizerTerm1To2_ = rhs.connectorForVisualizerTerm1To2_;
   connectorForVisualizerTerm2To1_ = rhs.connectorForVisualizerTerm2To1_;
   transferDirectionTerm1To2_ = rhs.transferDirectionTerm1To2_;
+}
+
+void OutputConnection::addConnectionTerm1ToTerm2(int slotNoFrom, int slotNoTo)
+{
+  // check if connection is already present
+  if (connectorForVisualizerTerm1To2_.size() > slotNoFrom)
+  {
+    if (connectorForVisualizerTerm1To2_[slotNoFrom].index == slotNoTo)
+    {
+      // connection is already contained, return
+      return;
+    }
+  }
+
+  // resize number of entries in connectorForVisualizerTerm1To2_
+  if (connectorForVisualizerTerm1To2_.size() <= slotNoFrom)
+  {
+    Connector unconnected;
+    unconnected.index = -1;
+    unconnected.avoidCopyIfPossible = false;
+    connectorForVisualizerTerm1To2_.resize(slotNoFrom, unconnected);
+  }
+
+  // set new connection
+  connectorForVisualizerTerm1To2_[slotNoFrom].index = slotNoTo;
+
+  // set the avoidCopyIfPossible value
+  updateAvoidCopyIfPossible();
+}
+
+void OutputConnection::addConnectionTerm2ToTerm1(int slotNoFrom, int slotNoTo)
+{
+  // check if connection is already present
+  if (connectorForVisualizerTerm2To1_.size() > slotNoFrom)
+  {
+    if (connectorForVisualizerTerm2To1_[slotNoFrom].index == slotNoTo)
+    {
+      // connection is already contained, return
+      return;
+    }
+  }
+
+  // resize number of entries in connectorForVisualizerTerm2To1_
+  if (connectorForVisualizerTerm2To1_.size() <= slotNoFrom)
+  {
+    Connector unconnected;
+    unconnected.index = -1;
+    unconnected.avoidCopyIfPossible = false;
+    connectorForVisualizerTerm2To1_.resize(slotNoFrom, unconnected);
+  }
+
+  // set new connection
+  connectorForVisualizerTerm2To1_[slotNoFrom].index = slotNoTo;
+
+  // set the avoidCopyIfPossible value
+  updateAvoidCopyIfPossible();
 }
 
 void OutputConnection::setTransferDirection(bool term1To2)
@@ -70,6 +112,24 @@ void OutputConnection::setTransferDirection(bool term1To2)
     subOutputConnection4_->setTransferDirection(term1To2);
 }
 
+void OutputConnection::updateAvoidCopyIfPossible()
+{
+  // if field variable gets mapped in both directions, set avoidCopyIfPossible to true
+  for (int i = 0; i < connectorForVisualizerTerm1To2_.size(); i++)
+  {
+    int mappedIndex = connectorForVisualizerTerm1To2_[i].index;
+
+    // check if other direction is mapped the same way
+    if (connectorForVisualizerTerm2To1_.size() > mappedIndex)
+    {
+      if (connectorForVisualizerTerm2To1_[mappedIndex].index == i)
+      {
+        connectorForVisualizerTerm1To2_[i].avoidCopyIfPossible = true;
+        connectorForVisualizerTerm2To1_[i].avoidCopyIfPossible = true;
+      }
+    }
+  }
+}
 
 //! get the connectors from term 1 to term 2
 const std::vector<OutputConnection::Connector> &OutputConnection::connectorForVisualizerTerm1To2() const

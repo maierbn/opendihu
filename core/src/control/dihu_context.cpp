@@ -29,6 +29,7 @@
 #include "partition/partition_manager.h"
 #include "control/diagnostic_tool/stimulation_logging.h"
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
+#include "output_connector_data_transfer/global_connections_by_slot_name.h"
 
 #include "easylogging++.h"
 #include "control/python_config/settings_file_name.h"
@@ -52,6 +53,7 @@ std::shared_ptr<Mesh::Manager>                  DihuContext::meshManager_       
 std::shared_ptr<Solver::Manager>                DihuContext::solverManager_               = nullptr;
 std::shared_ptr<Partition::Manager>             DihuContext::partitionManager_            = nullptr;
 std::shared_ptr<SolverStructureVisualizer>      DihuContext::solverStructureVisualizer_   = nullptr;
+std::shared_ptr<GlobalConnectionsBySlotName>    DihuContext::globalConnectionsBySlotName_ = nullptr;
 
 // other global variables that are needed in static methods
 std::string DihuContext::solverStructureDiagramFile_ = "";              //< filename of the solver structure diagram file
@@ -323,6 +325,11 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
   {
     solverStructureVisualizer_ = std::make_shared<SolverStructureVisualizer>();
   }
+
+  if (!globalConnectionsBySlotName_)
+  {
+    globalConnectionsBySlotName_ = std::make_shared<GlobalConnectionsBySlotName>(pythonConfig_);
+  }
 }
 
 DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings, bool doNotFinalizeMpi) :
@@ -453,6 +460,11 @@ std::shared_ptr<Solver::Manager> DihuContext::solverManager() const
 std::shared_ptr<SolverStructureVisualizer> DihuContext::solverStructureVisualizer()
 {
   return solverStructureVisualizer_;
+}
+
+std::shared_ptr<GlobalConnectionsBySlotName> DihuContext::globalConnectionsBySlotName()
+{
+  return globalConnectionsBySlotName_;
 }
 
 void DihuContext::writeSolverStructureDiagram()

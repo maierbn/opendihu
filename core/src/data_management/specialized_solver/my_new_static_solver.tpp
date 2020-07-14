@@ -32,11 +32,14 @@ initialize()
   outputConnectorData_->addFieldVariable(this->solution_, 0);
 
   // There is addFieldVariable(...) and addFieldVariable2(...) for the two different field variable types,
-  // Refer to "data_management/output_connector_data.h" for details.
+  // Refer to "output_connector_data_transfer/output_connector_data.h" for details.
 
   // you can also access settings from the python config here:
   std::string option1 = this->context_.getPythonConfig().getOptionString("option1", "default string");
   LOG(DEBUG) << "In data object, parsed option1: [" << option1 << "].";
+
+  // parse slot names for all output connector data slots. here we only expect one value because we have set one slot (fieldVariable solution)
+  this->context_.getPythonConfig().getOptionVector("slotNames", outputConnectorData_->slotNames);
 }
 
 template<typename FunctionSpaceType>

@@ -4,7 +4,7 @@
 
 #include "function_space/function_space.h"
 #include "time_stepping_scheme/02_time_stepping_scheme_ode.h"
-#include "data_management/output_connector_data.h"
+#include "output_connector_data_transfer/output_connector_data.h"
 #include "data_management/time_stepping/time_stepping_reduced.h"
 #include "model_order_reduction/model_order_reduction.h"
 

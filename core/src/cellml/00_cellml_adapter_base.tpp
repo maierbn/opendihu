@@ -8,7 +8,7 @@
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include "utility/string_utility.h"
-#include "data_management/output_connector_data.h"
+#include "output_connector_data_transfer/output_connector_data.h"
 #include "mesh/mesh_manager/mesh_manager.h"
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
@@ -60,6 +60,7 @@ template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 setSolutionVariable(std::shared_ptr<FieldVariableStates> states)
 {
+  // this will be called by the time stepping scheme after initialize()
   this->data_.setStatesVariable(states);
 }
 
@@ -172,17 +173,18 @@ initialize()
   std::vector<int> &parametersForTransfer = data_.parametersForTransfer();
 
   std::vector<std::string> parameterNames;
+  std::vector<std::string> slotNames;         //< names of data slots
 
   // parse the source code and initialize the names of states, algebraics and constants, which are needed for initializeMappings
   cellmlSourceCodeGenerator_.initializeNames(modelFilename, nInstances_, nStates_, nAlgebraics_);
 
   // initialize all information from python settings key "mappings", this sets parametersUsedAsAlgebraics/States and outputAlgebraic/StatesIndex
   initializeMappings(parametersUsedAsAlgebraic, parametersUsedAsConstant,
-                     statesForTransfer, algebraicsForTransfer, parametersForTransfer, parameterNames);
+                     statesForTransfer, algebraicsForTransfer, parametersForTransfer, parameterNames, slotNames);
 
   // initialize data, i.e. states and algebraics field variables
   data_.setFunctionSpace(functionSpace_);
-  data_.setAlgebraicAndParameterNames(cellmlSourceCodeGenerator_.algebraicNames(), parameterNames);
+  data_.setAlgebraicAndParameterNames(cellmlSourceCodeGenerator_.algebraicNames(), parameterNames, slotNames);
   data_.initialize();
 
   // get the data_.parameters() raw pointer
@@ -206,7 +208,8 @@ initialize()
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int> &parametersUsedAsConstant,
-                   std::vector<int> &statesForTransfer, std::vector<int> &algebraicsForTransfer, std::vector<int> &parametersForTransfer, std::vector<std::string> &parameterNames)
+                   std::vector<int> &statesForTransfer, std::vector<int> &algebraicsForTransfer, std::vector<int> &parametersForTransfer,
+                   std::vector<std::string> &parameterNames, std::vector<std::string> &slotNames)
 {
   if (this->specificSettings_.hasKey("mappings"))
   {
@@ -217,6 +220,7 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       ("parameter",1): ("algebraic",0),
       ("parameter",2): ("constant",0),
       ("outputConnectorSlot",0): ("parameter",0),
+      ("outputConnectorSlot",1,"slotName"): ("parameter",1),
     }
     */
     const std::vector<std::string> &algebraicNames = cellmlSourceCodeGenerator_.algebraicNames();
@@ -236,7 +240,8 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
     }
     */
     using ValueTupleType = std::pair<std::string,PyObject *>;
-    using KeyTupleType = std::pair<std::string,int>;
+    using KeyTupleType = std::tuple<std::string,int,std::string>;   // ("parameter" or "outputConnectorSlot"), no., "slotName"
+    int slotNoCounter = 0;
 
     std::vector<std::pair<KeyTupleType,ValueTupleType>> tupleEntries;
 
@@ -248,27 +253,64 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       KeyTupleType keyTuple;
       ValueTupleType valueTuple;
 
+      // parse key tuple
       if (PyTuple_Check(item.first))
       {
-        keyTuple = PythonUtility::convertFromPython<KeyTupleType>::get(item.first);
+        int nEntries = PyTuple_Size(item.first);
+        // item.first is either ("outputConnectorSlot",0) or ("outputConnectorSlot","slotName")
+
+        // parse first entry
+        PyObject *firstEntry = PyTuple_GetItem(item.first, (Py_ssize_t)0);
+        std::get<0>(keyTuple) = PythonUtility::convertFromPython<std::string>::get(firstEntry);
+
+        if (nEntries == 2)
+        {
+          PyObject *secondEntry = PyTuple_GetItem(item.first, (Py_ssize_t)1);
+          if (PyLong_Check(secondEntry))
+          {
+            // parse slot no.
+            std::get<1>(keyTuple) = PythonUtility::convertFromPython<int>::get(secondEntry);
+            slotNoCounter = std::get<1>(keyTuple)+1;
+          }
+          else
+          {
+            // parse slotName
+            std::get<2>(keyTuple) = PythonUtility::convertFromPython<std::string>::get(secondEntry);
+
+            // set slot no
+            std::get<1>(keyTuple) = slotNoCounter;
+            slotNoCounter++;
+          }
+        }
+        else if (nEntries == 3)
+        {
+          keyTuple = PythonUtility::convertFromPython<KeyTupleType>::get(item.first);
+        }
+        else
+        {
+          LOG(FATAL) << this->specificSettings_ << ": Item is not a tuple with 2 or 3 entries.";
+        }
 
         // if tuple is not parameter or outputConnectorSlot
-        if (keyTuple.first != "parameter" && keyTuple.first != "outputConnectorSlot")
+        if (std::get<0>(keyTuple) != "parameter" && std::get<0>(keyTuple) != "outputConnectorSlot")
         {
-          keyTuple.first = "parameter";
+          std::get<0>(keyTuple) = "parameter";
           LOG(ERROR) << this->specificSettings_ << "[\"mappings\"], key " << item.first << " is not a tuple (\"parameter\",index) "
-            << "or (\"outputConnectorSlot\",index). Assuming (\"parameter\", " << keyTuple.second << ")";
+            << "or (\"outputConnectorSlot\",index) or (\"outputConnectorSlot\",\"slotName\"). "
+            << "Assuming (\"parameter\", " << std::get<1>(keyTuple) << ")";
         }
       }
       else
       {
         int index = PythonUtility::convertFromPython<int>::get(item.first);
-        keyTuple = std::pair<std::string,int>("parameter", index);
+        keyTuple = std::tuple<std::string,int,std::string>("parameter", index, "");
 
         LOG(ERROR) << this->specificSettings_ << "[\"mappings\"], key " << item.first << " is not a tuple (\"parameter\",index) "
-          << "or (\"outputConnectorSlot\",index). Assuming (\"parameter\", " << index << ")";
+          << "or (\"outputConnectorSlot\",index) or (\"outputConnectorSlot\",\"slotName\"). "
+          << "Assuming (\"parameter\", " << index << ")";
       }
 
+      // parse value tuple
       if (PyTuple_Check(item.second))
       {
         valueTuple = PythonUtility::convertFromPython<ValueTupleType>::get(item.second);
@@ -363,8 +405,8 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       const std::pair<KeyTupleType,ValueTupleType> &a,
       const std::pair<KeyTupleType,ValueTupleType> &b)
     {
-      return a.first.first.length() < b.first.first.length() ||
-        (a.first.first.length() == b.first.first.length() && a.first.second < b.first.second);
+      return std::get<0>(a.first).length() < std::get<0>(b.first).length() ||
+        (std::get<0>(a.first).length() == std::get<0>(b.first).length() && std::get<1>(a.first) < std::get<1>(b.first));
     });
 
     LOG(DEBUG) << "sorted tupleEntries: " << tupleEntries;
@@ -481,9 +523,9 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       KeyTupleType keyTuple = tupleEntry.first;
 
       // handle parameter
-      if (keyTuple.first == "parameter")
+      if (std::get<0>(keyTuple) == "parameter")
       {
-        int parameterNo = keyTuple.second;    // the no. of the parameter
+        int parameterNo = std::get<1>(keyTuple);    // the no. of the parameter
 
         LOG(DEBUG) << "parameter " << parameterNo << " to \"" << valueTuple.first << "\", fieldNo " << fieldNo;
 
@@ -505,9 +547,12 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       {
         // output connector slots
 
-        int slotNo = keyTuple.second;    // the no. of the output connector slot
+        int slotNo = std::get<1>(keyTuple);    // the no. of the output connector slot
+        std::string slotName = std::get<2>(keyTuple);
 
-        LOG(DEBUG) << "output connector slot " << slotNo << " to \"" << valueTuple.first << "\", fieldNo " << fieldNo;
+        slotNames.push_back(slotName);
+
+        LOG(DEBUG) << "output connector slot " << slotNo << " (\"" << slotName << "\") to \"" << valueTuple.first << "\", fieldNo " << fieldNo;
 
         if (valueTuple.first == "state")
         {
@@ -529,7 +574,7 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
           {
             int parameterNo = parametersUsedAsAlgebraic.size() + parameter - parametersUsedAsConstant.begin();
             parametersForTransfer.push_back(parameterNo);
-            LOG(DEBUG) << "Constant " << valueTuple.second << " was set as output connector slot " << slotNo
+            LOG(DEBUG) << "Constant " << valueTuple.second << " was set as output connector slot " << slotNo << " (\"" << slotName << "\")"
               << " and is mapped to parameter " << parameterNo;
           }
           else
@@ -581,6 +626,7 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
   LOG(DEBUG) << "algebraicsForTransfer:     " << algebraicsForTransfer;
   LOG(DEBUG) << "parametersForTransfer:     " << parametersForTransfer;
 
+  // output warning if old settings are used
   if (this->specificSettings_.hasKey("outputAlgebraicIndex") || this->specificSettings_.hasKey("outputIntermediateIndex"))
   {
     LOG(WARNING) << specificSettings_ << "[\"outputAlgebraicIndex\"] is no longer a valid option, use \"algebraicsForTransfer\" instead!";

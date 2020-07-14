@@ -8,7 +8,7 @@
 #include "output_writer/manager.h"
 #include "function_space/function_space.h"
 #include "data_management/cellml_adapter.h"
-#include "data_management/output_connector_data.h"
+#include "output_connector_data_transfer/output_connector_data.h"
 #include "cellml/source_code_generator/source_code_generator.h"
 
 
@@ -65,7 +65,8 @@ public:
 
   //! initialize all information from python settings key "mappings", this sets parametersUsedAsAlgebraics/States and outputAlgebraic/StatesIndex
   void initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int> &parametersUsedAsConstant,
-                          std::vector<int> &statesForTransfer, std::vector<int> &algebraicsForTransfer, std::vector<int> &parametersForTransfer, std::vector<std::string> &parameterNames);
+                          std::vector<int> &statesForTransfer, std::vector<int> &algebraicsForTransfer, std::vector<int> &parametersForTransfer,
+                          std::vector<std::string> &parameterNames, std::vector<std::string> &slotNames);
 
   //! set the solution field variable in the data object, that actual data is stored in the timestepping scheme object
   void setSolutionVariable(std::shared_ptr<FieldVariableStates> states);

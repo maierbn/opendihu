@@ -46,6 +46,9 @@ initialize(int nAdditionalFieldVariables, NestedSolverType &nestedSolver)
   {
     std::get<1>(*outputConnectorData_)->addFieldVariable(additionalFieldVariables_[additionalFieldVariableNo]);
   }
+
+  // parse slot names of the additional field variables
+  this->context_.getPythonConfig().getOptionVector("additionalSlotNames", std::get<1>(*outputConnectorData_)->slotNames);
 }
 
 template<typename FunctionSpaceType, typename NestedSolverType>

@@ -1,7 +1,8 @@
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
-#include "data_management/output_connector_data.h"
+#include "output_connector_data_transfer/output_connector_data.h"
 #include "output_connector_data_transfer/output_connection.h"
+#include "output_connector_data_transfer/global_connections_by_slot_name.h"
 #include "output_writer/generic.h"
 #include "utility/string_utility.h"
 
@@ -40,7 +41,7 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
   // print the output slots of the solver, store the line nos of each slot to slotLineNos
   if (!currentSolver_->outputSlots.empty())
   {
-    result << lineStart.str() << "│  output slots: \n";
+    result << lineStart.str() << "│  data slots: \n";
 
     // loop over the output connector slots of the current solver
     for (int i = 0; i < currentSolver_->outputSlots.size(); i++)
@@ -49,6 +50,7 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
       std::string fieldVariableName = currentSolver_->outputSlots[i].fieldVariableName;
       std::string componentName = currentSolver_->outputSlots[i].componentName;
       std::string meshDescription = currentSolver_->outputSlots[i].meshDescription;
+      std::string slotName = currentSolver_->outputSlots[i].slotName;
 
       std::stringstream s;
       s << lineStart.str() << "│  ";
@@ -153,9 +155,21 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
         s << outputSlotString;
       }
 
+      // make the length of the slot name equal to 6 characters
+      int slotNameInitialLength = StringUtility::stringLength(slotName);
+      if (slotNameInitialLength > 6)
+      {
+        slotName = slotName.substr(0, 6);
+      }
+      else if (slotNameInitialLength < 6)
+      {
+        slotName = std::string(6-slotNameInitialLength, ' ') + slotName;
+      }
+
       s << std::string(requiredLineLength - currentLineLength, ' ')     // fill with spaces
         << mappingString      // add mapping string, if any
-        << " ¤" << i << "\n";
+        << " " << slotName
+        << "¤" << i << "\n";
       result << s.str();
 
       // store line no
@@ -169,8 +183,6 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
 
     result << lineStart.str() << "│\n";
   }
-
-  // maybe todo for later: show also internal connections of all slots to the first subsolver
 
   // print the output slot connections of the solver
   std::vector<solver_t::OutputConnectionRepresentation> &outputConnections = currentSolver_->outputConnections;
@@ -465,6 +477,8 @@ generateFinalDiagram()
   LOG(DEBUG) << "nColumnsForInternalConnectionLines: " << nColumnsForInternalConnectionLines;
 
   std::size_t pos = 0;
+  diagram += DihuContext::globalConnectionsBySlotName()->getDescriptionForDiagram();
+
   diagram += "Solver structure: \n\n";
 
   // print actual diagram, into std::string diagram

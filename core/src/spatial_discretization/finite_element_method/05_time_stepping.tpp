@@ -101,6 +101,7 @@ template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, 
 void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> solution)
 {
+  // this will be called by the time stepping scheme after initialize()
   this->data_.setSolutionVariable(solution);
 }
 

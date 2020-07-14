@@ -10,6 +10,7 @@
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 #include "mesh/mesh_manager/mesh_manager.h"
 #include "output_connector_data_transfer/output_connector_data_helper.h"
+#include "output_connector_data_transfer/global_connections_by_slot_name.h"
 
 namespace OperatorSplitting
 {
@@ -105,6 +106,9 @@ initialize()
   logKeyTimeStepping2AdvanceTimeSpan_ = this->durationLogKey_ + std::string("_advanceTimeSpan2");  //< key for logging of the duration of the advanceTimeSpan() call of timeStepping2
   logKeyTransfer12_ = this->durationLogKey_ + std::string("_transfer12");  //< key for logging of the duration of data transfer from timestepping 1 to 2
   logKeyTransfer21_ = this->durationLogKey_ + std::string("_transfer21");  //< key for logging of the duration of data transfer from timestepping 2 to 1
+
+  // add the slot connections that were given in the global field "connectedSlots" to the outputConnection_ object of this splitting scheme
+  DihuContext::globalConnectionsBySlotName()->addConnections(this->data_.getOutputConnectorData(), outputConnection_);
 
   // set the outputConnection information about how the slots are connected to appear in the solver diagram
   DihuContext::solverStructureVisualizer()->addOutputConnection(outputConnection_);

@@ -44,6 +44,8 @@ struct OutputConnectorData
 
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField = nullptr;   //< geometry field to be transferred if set
 
+  std::vector<std::string> slotNames;                                                 //< names for all slots of variable1 and variable2, used for connecting slots by their name, not number
+
   //! define types of the two possible field variables
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nComponents1> FieldVariable1Type;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nComponents2> FieldVariable2Type;
@@ -71,4 +73,4 @@ std::ostream &operator<<(std::ostream &stream, const std::shared_ptr<OutputConne
 
 } // namespace
 
-#include "data_management/output_connector_data.tpp"
+#include "output_connector_data_transfer/output_connector_data.tpp"

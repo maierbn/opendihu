@@ -90,16 +90,8 @@ public:
   static void getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, int nEntries, std::vector<double> &values);
 
   //! extract a vector with unknown number of nEntries, must be a list
-  static void getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<double> &values);
-
-  //! extract a vector with unknown number of nEntries, must be a list
-  static void getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<int> &values);
-
-  //! extract a vector with unknown number of nEntries, must be a list
-  static void getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<std::string> &values);
-
-  //! extract a vector with unknown number of nEntries, must be a list
-  static void getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<PyObject *> &values);
+  template<typename ValueType>
+  static void getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<ValueType> &values);
 
   //! recursively print python dictionary to VLOG(1)
   static void printDict(PyObject *dict);

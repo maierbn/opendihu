@@ -36,6 +36,9 @@ initialize()
   // there is only one slot: the activation field variable
   outputConnectorData_->addFieldVariable(this->activation_);
   outputConnectorData_->addGeometryField(std::make_shared<VectorFieldVariableType>(this->functionSpace_->geometryField()));
+
+  // parse slot names for all output connector data slots
+  this->context_.getPythonConfig().getOptionVector("slotNames", outputConnectorData_->slotNames);
 }
 
 template<typename DataLinearElasticityType>

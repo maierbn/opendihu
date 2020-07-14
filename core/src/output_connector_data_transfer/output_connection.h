@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 
 #include "control/python_config/python_config.h"
-#include "data_management/output_connector_data.h"
+#include "output_connector_data_transfer/output_connector_data.h"
 
 /** This specifies the connections of data slots between two terms, Term 1 and Term 2.
  *  Each term is assumed to have data of type Data::OutputConnectorData which has the two vectors variable1 and variable2.
@@ -41,6 +41,12 @@ public:
     bool avoidCopyIfPossible;   //< if the field variable should be reused
   };
 
+  //! add a connection between two slots, this method is needed by the class GlobalConnectionsBySlotName that adds connections from the settings "connectedSlots"
+  void addConnectionTerm1ToTerm2(int slotNoFrom, int slotNoTo);
+
+  //! add a connection between two slots, this method is needed by the class GlobalConnectionsBySlotName that adds connections from the settings "connectedSlots"
+  void addConnectionTerm2ToTerm1(int slotNoFrom, int slotNoTo);
+
   //! get the connectors from term 1 to term 2
   const std::vector<Connector> &connectorForVisualizerTerm1To2() const;
 
@@ -72,6 +78,9 @@ private:
 
   //! fill the look-up table slotInformation_
   void initializeSlotInformation();
+
+  //! set the "avoidCopyIfPossible" variables of the OutputConnectors to true
+  void updateAvoidCopyIfPossible();
 
   std::vector<Connector> connectorTerm1To2_;    //< the connector information which variables to map to which for mapping from term 1 to term 2, this differs from connectorForVisualizerTerm1To2_ in that it respects the offsets
   std::vector<Connector> connectorTerm2To1_;    //< the connector information for mapping from term 2 to term 1

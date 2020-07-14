@@ -243,6 +243,44 @@ std::array<ValueType, D> PythonUtility::getOptionArray(PyObject* settings, std::
   return result;
 }
 
+template<typename ValueType>
+void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<ValueType> &values)
+{
+  if (settings)
+  {
+    // check if input dictionary contains the key
+    PyObject *key = PyUnicode_FromString(keyString.c_str());
+    if (PyDict_Contains((PyObject *)settings, key))
+    {
+      // extract the value of the key and check its type
+      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
+      if (PyList_Check(value))
+      {
+        // it is a list
+        int listNEntries = PyList_Size(value);
+
+        // do nothing if it is an empty list
+        if (listNEntries == 0)
+          return;
+
+        values = convertFromPython<std::vector<ValueType>>::get(value);
+      }
+      else
+      {
+        // not a list, but a single entry (only 1 entry)
+        ValueType item = convertFromPython<ValueType>::get(value);
+        values.push_back(item);
+      }
+    }
+    else
+    {
+      LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming vector " << values;
+    }
+    Py_CLEAR(key);
+  }
+}
+
+
 template<int D>
 PyObject *PythonUtility::convertToPythonList(std::array<long,D> &data)
 {

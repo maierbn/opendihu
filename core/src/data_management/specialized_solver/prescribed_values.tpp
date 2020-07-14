@@ -52,7 +52,10 @@ initialize(std::vector<std::string> fieldVariable1Names, std::vector<std::string
     outputConnectorData_->addFieldVariable2(this->fieldVariables2_[fieldVariable2No], 0);
   }
 
-  LOG(DEBUG) << "create outptuConnectorData: " << *this->outputConnectorData_;
+  LOG(DEBUG) << "create outputConnectorData: " << *this->outputConnectorData_;
+
+  // parse slot names for all output connector data slots
+  this->context_.getPythonConfig().getOptionVector("slotNames", outputConnectorData_->slotNames);
 }
 
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>

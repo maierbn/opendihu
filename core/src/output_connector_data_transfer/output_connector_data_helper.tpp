@@ -157,6 +157,17 @@ slotSetRepresentationGlobal(
   }
 }
 
+//! collect all slot names
+template<typename OutputConnectorDataType>
+void OutputConnectorDataHelper<OutputConnectorDataType>::
+getSlotNames(std::shared_ptr<OutputConnectorDataType> outputConnectorData, std::vector<std::string> &slotNames)
+{
+  if (!outputConnectorData)
+    return;
+
+  slotNames.insert(slotNames.end(), outputConnectorData->slotNames.begin(), outputConnectorData->slotNames.end());
+}
+
 //! get a string representation of the output connector data for debugging
 template<typename OutputConnectorDataType>
 std::string OutputConnectorDataHelper<OutputConnectorDataType>::
@@ -345,6 +356,27 @@ slotSetRepresentationGlobal(
       = (*outputConnectorData)[arrayIndex]->variable2[index].values;
 
     fieldVariable->setRepresentationGlobal();
+  }
+}
+
+//! collect all slot names
+template<typename OutputConnectorDataType>
+void OutputConnectorDataHelper<std::vector<std::shared_ptr<OutputConnectorDataType>>>::
+getSlotNames(
+  std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>> outputConnectorData,
+  std::vector<std::string> &slotNames
+)
+{
+  if (!outputConnectorData)
+    return;
+
+  if (!outputConnectorData->empty())
+  {
+    for (int i = 0; i < outputConnectorData->size(); i++)
+    {
+      OutputConnectorDataHelper<OutputConnectorDataType>::
+        getSlotNames((*outputConnectorData)[i], slotNames);
+    }
   }
 }
 
@@ -587,7 +619,33 @@ slotSetRepresentationGlobal(
   }
 }
 
+//! collect all slot names
+template<typename OutputConnectorDataType>
+void OutputConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>>>>::
+getSlotNames(
+  std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>>>> outputConnectorData,
+  std::vector<std::string> &slotNames
+)
+{
+  if (!outputConnectorData)
+    return;
+  if (outputConnectorData->empty())
+    return;
 
+  if (!(*outputConnectorData)[0]->empty())
+  {
+    for (int j = 0; j < outputConnectorData->size(); j++)
+    {
+      for (int i = 0; i < (*outputConnectorData)[0]->size(); i++)
+      {
+        OutputConnectorDataHelper<OutputConnectorDataType>::
+          getSlotNames((*(*outputConnectorData)[0])[0], slotNames);
+      }
+    }
+  }
+}
+
+//! get a string representation of the output connector data for debugging
 template<typename OutputConnectorDataType>
 std::string OutputConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>>>>::
 getString(std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<OutputConnectorDataType>>>>> outputConnectorData)
@@ -732,6 +790,19 @@ slotSetRepresentationGlobal(
   }
 }
 
+//! collect all slot names
+template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
+void OutputConnectorDataHelper<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>>::
+getSlotNames(
+  std::shared_ptr<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>> outputConnectorData,
+  std::vector<std::string> &slotNames
+)
+{
+  OutputConnectorDataHelper<OutputConnectorDataType1>::getSlotNames(std::get<0>(*outputConnectorData), slotNames);
+  OutputConnectorDataHelper<OutputConnectorDataType2>::getSlotNames(std::get<1>(*outputConnectorData), slotNames);
+}
+
+//! get a string representation of the output connector data for debugging
 template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
 std::string OutputConnectorDataHelper<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>>::
 getString(std::shared_ptr<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>> outputConnectorData)

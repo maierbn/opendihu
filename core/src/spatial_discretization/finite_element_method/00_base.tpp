@@ -26,7 +26,7 @@ namespace SpatialDiscretization
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
 FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 FiniteElementMethodBase(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace) :
-  context_(context["FiniteElementMethod"]), data_(context["FiniteElementMethod"]), specificSettings_(context_.getPythonConfig()), initialized_(false)
+  context_(context["FiniteElementMethod"]), data_(context_), specificSettings_(context_.getPythonConfig()), initialized_(false)
 {
   LOG(DEBUG) << "FiniteElementMethodBase constructor, context: " << this->context_.getPythonConfig();
   outputWriterManager_.initialize(context_, specificSettings_);
@@ -93,6 +93,7 @@ initialize()
   // initialize spatial parameter prefactor
   prefactor_.initialize(specificSettings_, "prefactor", 1.0, this->data_.functionSpace());
 
+  // compute the stiffness matrix
   setStiffnessMatrix();
 
   // save the stiffness matrix also in the other slot, that will not be overwritten by applyBoundaryConditions

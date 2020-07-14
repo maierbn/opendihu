@@ -86,6 +86,7 @@ public:
       std::string componentName;      //< the name of the component that will be written in the diagram
       int nComponents;                //< number of components the field variable has in order to distinguish scalar field variables
       std::string meshDescription;    //< string information of the mesh, from FunctionSpace::getDescription()
+      std::string slotName;           //< slot name if given
     };
 
     std::vector<OutputSlot> outputSlots;

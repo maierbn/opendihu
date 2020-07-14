@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 
 #include "data_management/specialized_solver/quasi_static_nonlinear_elasticity_febio.h"
-#include "data_management/output_connector_data.h"
+#include "output_connector_data_transfer/output_connector_data.h"
 #include "output_writer/manager.h"
 
 namespace TimeSteppingScheme

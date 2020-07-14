@@ -4,7 +4,7 @@
 
 #include "data_management/specialized_solver/quasi_static_nonlinear_elasticity_febio.h"
 #include "specialized_solver/solid_mechanics/quasi_static/febio/nonlinear_elasticity_solver_febio.h"
-#include "data_management/output_connector_data.h"
+#include "output_connector_data_transfer/output_connector_data.h"
 #include "output_writer/manager.h"
 
 namespace TimeSteppingScheme

@@ -43,7 +43,10 @@ initialize()
   outputConnectorData_->addFieldVariable2(this->materialTraction_);
 
   // There is addFieldVariable(...) and addFieldVariable2(...) for the two different field variable types,
-  // Refer to "data_management/output_connector_data.h" for details.
+  // Refer to "output_connector_data_transfer/output_connector_data.h" for details.
+
+  // parse slot names of the field variables
+  this->context_.getPythonConfig().getOptionVector("slotNames", outputConnectorData_->slotNames);
 }
 
 template<typename FunctionSpaceType>

@@ -72,10 +72,12 @@ Copy any existing example and delete everything except `SConscript`, `SConstruct
 Input files
 -------------
 
-Sometimes, additional input files are required. If they are big, they are not present in the git, as is the case for all electrophysiology examples. These have an `opendihu/examples/electrophysiology/input` directory with binary data, ask someone to get the files.
+Sometimes, additional input files are required. If they are big, they are not included in the git repository, but hosted somewhere else. This is the case for all electrophysiology examples. These have an `opendihu/examples/electrophysiology/input` directory with binary data. There is a readme file that contains a link where to download these files.
 
 Existing examples
 ------------------
+
+This list is out of date.
 
 The existing examples demonstrate some features or are interesting for the ongoing research.
 

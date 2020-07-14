@@ -40,6 +40,10 @@ initialize()
 
   outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
   outputConnectorData_->addFieldVariable(this->solution());
+
+  // parse slot names of the additional field variables
+  std::string slotName = this->context_.getPythonConfig().getOptionString("slotName", "");
+  outputConnectorData_->slotNames.push_back(slotName);
 }
 template<typename FunctionSpaceType, int nComponents>
 void FiniteElementsBase<FunctionSpaceType,nComponents>::
@@ -169,6 +173,7 @@ template<typename FunctionSpaceType, int nComponents>
 void FiniteElementsBase<FunctionSpaceType,nComponents>::
 setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> solution)
 {
+  // this will be called by the time stepping scheme after initialize()
   this->solution_ = solution;
 }
 

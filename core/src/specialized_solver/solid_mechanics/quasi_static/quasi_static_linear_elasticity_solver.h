@@ -9,7 +9,7 @@
 #include "equation/linear_elasticity.h"
 #include "data_management/specialized_solver/quasi_static_linear_elasticity.h"
 #include "spatial_discretization/finite_element_method/finite_element_method.h"
-#include "data_management/output_connector_data.h"
+#include "output_connector_data_transfer/output_connector_data.h"
 
 namespace TimeSteppingScheme
 {

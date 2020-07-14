@@ -44,6 +44,10 @@ initializeOutputConnectorData()
   {
     outputConnectorData_->addFieldVariable2(this->parameters(), *iter);
   }
+
+  // add slot names if given
+  outputConnectorData_->slotNames.assign(slotNames_.begin(), slotNames_.end());
+
   LOG(DEBUG) << "outputConnectorData: " << *outputConnectorData_;
 }
 
@@ -51,6 +55,7 @@ template <int nStates, int nAlgebraics, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
 setStatesVariable(std::shared_ptr<CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::FieldVariableStates> states)
 {
+  // this will be called by the time stepping scheme after initialize()
   this->states_ = states;
 
   // after states variable has been set, continue initialize of output connector data
@@ -59,10 +64,11 @@ setStatesVariable(std::shared_ptr<CellmlAdapter<nStates,nAlgebraics,FunctionSpac
 
 template <int nStates, int nAlgebraics, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
-setAlgebraicAndParameterNames(const std::vector<std::string> &algebraicNames, const std::vector<std::string> &parameterNames)
+setAlgebraicAndParameterNames(const std::vector<std::string> &algebraicNames, const std::vector<std::string> &parameterNames, const std::vector<std::string> &slotNames)
 {
   algebraicNames_ = algebraicNames;
   parameterNames_ = parameterNames;
+  slotNames_ = slotNames;
 }
 
 template <int nStates, int nAlgebraics, typename FunctionSpaceType>
@@ -71,7 +77,7 @@ createPetscObjects()
 {
   // The states field variable is allocated by the timestepping class because this is the solution vector that the timestepping scheme operates on.
   // It gets then passed to this class by the call to setStatesVariable.
-  // Therefore, here we only create the algebraics and the parameters field variables
+  // Therefore, here we only create the algebraics and the parameters field variables.
   this->algebraics_ = this->functionSpace_->template createFieldVariable<nAlgebraics>("algebraics", algebraicNames_);
   this->algebraics_->setRepresentationContiguous();
 

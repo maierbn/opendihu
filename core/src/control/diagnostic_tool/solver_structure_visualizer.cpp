@@ -1,6 +1,6 @@
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
-#include "data_management/output_connector_data.h"
+#include "output_connector_data_transfer/output_connector_data.h"
 #include "output_connector_data_transfer/output_connection.h"
 
 //! constructor

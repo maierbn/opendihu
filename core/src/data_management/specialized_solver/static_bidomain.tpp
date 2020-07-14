@@ -32,6 +32,9 @@ initialize()
 
   outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
   outputConnectorData_->addFieldVariable(this->transmembranePotential_);
+
+  // parse slot names for all output connector data slots, only one slot here
+  this->context_.getPythonConfig().getOptionVector("slotNames", outputConnectorData_->slotNames);
 }
 
 template<typename FunctionSpaceType>

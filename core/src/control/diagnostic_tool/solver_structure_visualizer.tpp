@@ -1,6 +1,6 @@
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
-#include "data_management/output_connector_data.h"
+#include "output_connector_data_transfer/output_connector_data.h"
 
 //! add a solver to the diagram
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
@@ -37,6 +37,8 @@ setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceTy
     newOutputSlot.nComponents = nComponents1;
     newOutputSlot.variableNo = 1;
     newOutputSlot.meshDescription = entry.values->functionSpace()->getDescription();
+    if (outputConnectorData->slotNames.size() > i)
+      newOutputSlot.slotName = outputConnectorData->slotNames[i];
 
     currentSolver_->outputSlots.push_back(newOutputSlot);
 
@@ -69,6 +71,9 @@ setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceTy
     newOutputSlot.nComponents = nComponents2;
     newOutputSlot.variableNo = 2;
     newOutputSlot.meshDescription = entry.values->functionSpace()->getDescription();
+
+    if (outputConnectorData->slotNames.size() > outputConnectorData->variable1.size()+i)
+      newOutputSlot.slotName = outputConnectorData->slotNames[outputConnectorData->variable1.size()+i];
 
     currentSolver_->outputSlots.push_back(newOutputSlot);
 

@@ -1,6 +1,6 @@
 .PHONY: clean all
 
-all: debug release
+all: debug_without_tests release
 
 #ifneq ("$(wildcard ./dependencies/$(python)/install/bin/python3)","")
 #	python=./dependencies/$(python)/install/bin/python3

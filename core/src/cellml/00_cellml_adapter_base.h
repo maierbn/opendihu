@@ -8,7 +8,7 @@
 #include "output_writer/manager.h"
 #include "function_space/function_space.h"
 #include "data_management/cellml_adapter.h"
-#include "output_connector_data_transfer/output_connector_data.h"
+#include "slot_connection/slot_connector_data.h"
 #include "cellml/source_code_generator/source_code_generator.h"
 
 
@@ -31,12 +31,12 @@ public:
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nStates_> FieldVariableStates;
   typedef Data::CellmlAdapter<nStates_, nAlgebraics_, FunctionSpaceType> Data;
 
-/** The data type of the output connector of the CellML adapter.
+/** The data type of the slot connector of the CellML adapter.
  *  This is the data that will be transferred to connected solvers.
  *  The first value, value0, is the state variable and can, e.g., be configured to contain Vm (by setting "outputStateIndex" in python settings).
  *  The second value, value1, can, e.g., be configured to contain alpha (by setting "outputAlgebraicIndex" in python settings).
  */
-  typedef ::Data::OutputConnectorData<FunctionSpaceType,nStates_,nAlgebraics_> OutputConnectorDataType;
+  typedef ::Data::SlotConnectorData<FunctionSpaceType,nStates_,nAlgebraics_> SlotConnectorDataType;
 
   //! constructor from context
   CellmlAdapterBase(DihuContext context, bool initializeOutputWriter);
@@ -71,9 +71,9 @@ public:
   //! set the solution field variable in the data object, that actual data is stored in the timestepping scheme object
   void setSolutionVariable(std::shared_ptr<FieldVariableStates> states);
 
-  //! pass on the output connector data object from the timestepping scheme object to be modified,
-  //! if there are algebraics for transfer, they will be set in the outputConnectorDataTimeStepping
-  void setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpaceType,nStates_>> outputConnectorDataTimeStepping);
+  //! pass on the slot connector data object from the timestepping scheme object to be modified,
+  //! if there are algebraics for transfer, they will be set in the slotConnectorDataTimeStepping
+  void setSlotConnectorData(std::shared_ptr<::Data::SlotConnectorData<FunctionSpaceType,nStates_>> slotConnectorDataTimeStepping);
 
   //! return the mesh
   std::shared_ptr<FunctionSpaceType> functionSpace();
@@ -81,10 +81,10 @@ public:
   //! get number of instances, number of algebraics and number of parameters
   void getNumbers(int &nInstances, int &nAlgebraics, int &nParameters);
 
-  //! return a reference to statesForTransfer, the states that should be used for output connector data transfer
+  //! return a reference to statesForTransfer, the states that should be used for slot connector data transfer
   std::vector<int> &statesForTransfer();
 
-  //! return a reference to algebraicsForTransfer, the algebraics that should be used for output connector data transfer
+  //! return a reference to algebraicsForTransfer, the algebraics that should be used for slot connector data transfer
   std::vector<int> &algebraicsForTransfer();
 
   //! get a vector with the names of the states
@@ -103,8 +103,8 @@ public:
   CellmlSourceCodeGenerator &cellmlSourceCodeGenerator();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the output_connector_data class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
 protected:
 

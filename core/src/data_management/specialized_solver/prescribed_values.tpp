@@ -33,8 +33,8 @@ initialize(std::vector<std::string> fieldVariable1Names, std::vector<std::string
   // call initialize of base class, this calls createPetscObjects()
   Data<FunctionSpaceType>::initialize();
 
-  // create th output connector data object
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+  // create th slot connector data object
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
 
   // add all needed field variables to be transferred
 
@@ -42,20 +42,20 @@ initialize(std::vector<std::string> fieldVariable1Names, std::vector<std::string
   for (int fieldVariable1No = 0; fieldVariable1No < this->fieldVariables1_.size(); fieldVariable1No++)
   {
     // add component 0 of the field variable, the component 0 is hard-coded for now
-    outputConnectorData_->addFieldVariable(this->fieldVariables1_[fieldVariable1No], 0);
+    slotConnectorData_->addFieldVariable(this->fieldVariables1_[fieldVariable1No], 0);
   }
 
   // add field variables with `nComponents2` components
   for (int fieldVariable2No = 0; fieldVariable2No < this->fieldVariables2_.size(); fieldVariable2No++)
   {
     // add component 0 of the field variable, the component 0 is hard-coded for now
-    outputConnectorData_->addFieldVariable2(this->fieldVariables2_[fieldVariable2No], 0);
+    slotConnectorData_->addFieldVariable2(this->fieldVariables2_[fieldVariable2No], 0);
   }
 
-  LOG(DEBUG) << "create outputConnectorData: " << *this->outputConnectorData_;
+  LOG(DEBUG) << "create slotConnectorData: " << *this->slotConnectorData_;
 
-  // parse slot names for all output connector data slots
-  this->context_.getPythonConfig().getOptionVector("slotNames", outputConnectorData_->slotNames);
+  // parse slot names for all slot connector data slots
+  this->context_.getPythonConfig().getOptionVector("slotNames", slotConnectorData_->slotNames);
 }
 
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
@@ -83,24 +83,24 @@ template<typename FunctionSpaceType, int nComponents1, int nComponents2>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents1>> PrescribedValues<FunctionSpaceType,nComponents1,nComponents2>::
 fieldVariable1(int index)
 {
-  assert(index < this->outputConnectorData_->variable1.size());
-  return this->outputConnectorData_->variable1[index].values;
+  assert(index < this->slotConnectorData_->variable1.size());
+  return this->slotConnectorData_->variable1[index].values;
 }
 
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents2>> PrescribedValues<FunctionSpaceType,nComponents1,nComponents2>::
 fieldVariable2(int index)
 {
-  assert(index < this->outputConnectorData_->variable2.size());
-  return this->outputConnectorData_->variable2[index].values;
+  assert(index < this->slotConnectorData_->variable2.size());
+  return this->slotConnectorData_->variable2[index].values;
 }
 
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
-std::shared_ptr<typename PrescribedValues<FunctionSpaceType,nComponents1,nComponents2>::OutputConnectorDataType> PrescribedValues<FunctionSpaceType,nComponents1,nComponents2>::
-getOutputConnectorData()
+std::shared_ptr<typename PrescribedValues<FunctionSpaceType,nComponents1,nComponents2>::SlotConnectorDataType> PrescribedValues<FunctionSpaceType,nComponents1,nComponents2>::
+getSlotConnectorData()
 {
-  // return the output connector data object
-  return this->outputConnectorData_;
+  // return the slot connector data object
+  return this->slotConnectorData_;
 }
 
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
@@ -113,7 +113,7 @@ getFieldVariablesForOutputWriter()
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
 
-  // update the pointer of the field variables, because the most recent field variable may be in outputConnectorData_
+  // update the pointer of the field variables, because the most recent field variable may be in slotConnectorData_
   // (it could have been changed during transfer)
   for (int fieldVariable1No = 0; fieldVariable1No < fieldVariables1_.size(); fieldVariable1No++)
   {

@@ -3,28 +3,28 @@
 #include <Python.h>  // has to be the first included header
 
 #include "control/python_config/python_config.h"
-#include "output_connector_data_transfer/output_connector_data.h"
+#include "slot_connection/slot_connector_data.h"
 
 /** This specifies the connections of data slots between two terms, Term 1 and Term 2.
- *  Each term is assumed to have data of type Data::OutputConnectorData which has the two vectors variable1 and variable2.
+ *  Each term is assumed to have data of type Data::SlotConnectorData which has the two vectors variable1 and variable2.
  *  Each variable vector can hold multiple components of field variables of the same type (number of components of the field variable).
  *  One such component is referred to as "slot". In the settings, there is the specification which slots to map to which slots by the fields
  *  "connectedSlotsTerm2To1" and "connectedSlotsTerm1To2".
  *
  */
-class OutputConnection
+class SlotConnection
 {
 public:
   //! parse connection settings from python settings
-  OutputConnection(PythonConfig settings);
+  SlotConnection(PythonConfig settings);
 
   //! copy constructor
-  OutputConnection(const OutputConnection &rhs);
+  SlotConnection(const SlotConnection &rhs);
 
   //! set the number of field variable components between which data will be transferred, this has to be done initially
   template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
-  void initialize(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b> &transferableSolutionData1,
-                  const Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2,
+  void initialize(const Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b> &transferableSolutionData1,
+                  const Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2,
                   int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 
   //! set current transfer direction that will be taken into account for mapTo
@@ -53,17 +53,17 @@ public:
   //! get the connectors from term 2 to term 1
   const std::vector<Connector> &connectorForVisualizerTerm2To1() const;
 
-  //! a pointer of a second output connection, used when the OutputConnectorData is a tuple of two OutputConnectorData types and therefore another output connection object is needed.
-  std::shared_ptr<OutputConnection> &subOutputConnection1();
+  //! a pointer of a second output connection, used when the SlotConnectorData is a tuple of two SlotConnectorData types and therefore another output connection object is needed.
+  std::shared_ptr<SlotConnection> &subSlotConnection1();
 
   //! one more pointer of a second output connection, used for transfer betwen two tuples and therefore a second output connection object is needed.
-  std::shared_ptr<OutputConnection> &subOutputConnection2();
+  std::shared_ptr<SlotConnection> &subSlotConnection2();
 
   //! one more pointer of a second output connection, used for transfer betwen two tuples and therefore a third output connection object is needed.
-  std::shared_ptr<OutputConnection> &subOutputConnection3();
+  std::shared_ptr<SlotConnection> &subSlotConnection3();
 
   //! one more pointer of a second output connection, used for transfer betwen two tuples and therefore a forth output connection object is needed.
-  std::shared_ptr<OutputConnection> &subOutputConnection4();
+  std::shared_ptr<SlotConnection> &subSlotConnection4();
 
   //! assemble some debugging information to the mapping that will be displayed on error
   std::string getDebugInformation() const;
@@ -72,14 +72,14 @@ private:
 
   //! initialize the slotInformation_ variable
   template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
-  void initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b> &transferableSolutionData1,
-                                 const Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2);
+  void initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b> &transferableSolutionData1,
+                                 const Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2);
 
 
   //! fill the look-up table slotInformation_
   void initializeSlotInformation();
 
-  //! set the "avoidCopyIfPossible" variables of the OutputConnectors to true
+  //! set the "avoidCopyIfPossible" variables of the SlotConnectors to true
   void updateAvoidCopyIfPossible();
 
   std::vector<Connector> connectorTerm1To2_;    //< the connector information which variables to map to which for mapping from term 1 to term 2, this differs from connectorForVisualizerTerm1To2_ in that it respects the offsets
@@ -115,10 +115,10 @@ private:
   bool slotInformationInitialized_;                                   //< if slotInformation has been initialized
 
   PythonConfig settings_;                                             //< the settings object
-  std::shared_ptr<OutputConnection> subOutputConnection1_;             //< a first output connection object
-  std::shared_ptr<OutputConnection> subOutputConnection2_;             //< a second output connection object
-  std::shared_ptr<OutputConnection> subOutputConnection3_;            //< a third output connection object
-  std::shared_ptr<OutputConnection> subOutputConnection4_;            //< a forth output connection object
+  std::shared_ptr<SlotConnection> subSlotConnection1_;             //< a first output connection object
+  std::shared_ptr<SlotConnection> subSlotConnection2_;             //< a second output connection object
+  std::shared_ptr<SlotConnection> subSlotConnection3_;            //< a third output connection object
+  std::shared_ptr<SlotConnection> subSlotConnection4_;            //< a forth output connection object
 };
 
-#include "output_connector_data_transfer/output_connection.tpp"
+#include "slot_connection/slot_connection.tpp"

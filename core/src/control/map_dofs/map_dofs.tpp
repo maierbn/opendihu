@@ -100,7 +100,7 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
       break;
     }
 
-    LOG(DEBUG) << "MapDofs::perform mapping slots " << mapping.outputConnectorSlotNoFrom << " -> " << mapping.outputConnectorSlotNosTo << ", " << modeString;
+    LOG(DEBUG) << "MapDofs::perform mapping slots " << mapping.connectorSlotNoFrom << " -> " << mapping.connectorSlotNosTo << ", " << modeString;
 
     // static variables for input and output of values
     static std::map<int,std::vector<double>> valuesToSendToRanks;
@@ -113,7 +113,7 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
     if (mapping.mode == DofsMappingType::modeCallback)
     {
       // get values of input dofs
-      slotGetValues(mapping.outputConnectorSlotNoFrom, mapping.outputConnectorArrayIndexFrom, mapping.inputDofs, inputValues);
+      slotGetValues(mapping.connectorSlotNoFrom, mapping.slotConnectorArrayIndexFrom, mapping.inputDofs, inputValues);
 
 #ifndef NDEBUG
       std::string stdoutBuffer;
@@ -170,11 +170,11 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
           }
         }
 
-        LOG(DEBUG) << "slot " << mapping.outputConnectorSlotNosTo[toSlotIndex] << " (index " << toSlotIndex << "/" << mapping.outputConnectorSlotNosTo.size() << ")"
+        LOG(DEBUG) << "slot " << mapping.connectorSlotNosTo[toSlotIndex] << " (index " << toSlotIndex << "/" << mapping.connectorSlotNosTo.size() << ")"
           << ", set values from callback: " << valuesToSet << " at dofs: " << mapping.dofNosToSetLocal;
 
         // set values in target field variable
-        slotSetValues(mapping.outputConnectorSlotNosTo[toSlotIndex], mapping.outputConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
+        slotSetValues(mapping.connectorSlotNosTo[toSlotIndex], mapping.slotConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
       }
 
       // decrement reference counters for python objects
@@ -195,7 +195,7 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
 
         // get values at those dof nos
         valuesToSendToRanks[rankNo].clear();
-        slotGetValues(mapping.outputConnectorSlotNoFrom, mapping.outputConnectorArrayIndexFrom, dofNosLocal, valuesToSendToRanks[rankNo]);
+        slotGetValues(mapping.connectorSlotNoFrom, mapping.slotConnectorArrayIndexFrom, dofNosLocal, valuesToSendToRanks[rankNo]);
       }
 
       LOG(DEBUG) << "get values " << valuesToSendToRanks;
@@ -207,7 +207,7 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
 
         // set values
         // set valuesToSet at dofs allDofNosToSetLocal
-        slotSetValues(mapping.outputConnectorSlotNosTo[0], mapping.outputConnectorArrayIndexTo, mapping.allDofNosToSetLocal, valuesToSet, INSERT_VALUES);
+        slotSetValues(mapping.connectorSlotNosTo[0], mapping.slotConnectorArrayIndexTo, mapping.allDofNosToSetLocal, valuesToSet, INSERT_VALUES);
       }
       else if (mapping.mode == DofsMappingType::modeCopyLocal)
       {
@@ -216,7 +216,7 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
 
         // set values
         // set valuesToSet at dofs allDofNosToSetLocal
-        slotSetValues(mapping.outputConnectorSlotNosTo[0], mapping.outputConnectorArrayIndexTo, mapping.allDofNosToSetLocal, valuesToSet, INSERT_VALUES);
+        slotSetValues(mapping.connectorSlotNosTo[0], mapping.slotConnectorArrayIndexTo, mapping.allDofNosToSetLocal, valuesToSet, INSERT_VALUES);
       }
       else if (mapping.mode == DofsMappingType::modeCopyLocalIfPositive)
       {
@@ -238,7 +238,7 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
         }
 
         // set values
-        slotSetValues(mapping.outputConnectorSlotNosTo[0], mapping.outputConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
+        slotSetValues(mapping.connectorSlotNosTo[0], mapping.slotConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
       }
       else if (mapping.mode == DofsMappingType::modeLocalSetIfAboveThreshold)
       {
@@ -262,11 +262,11 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
           << ", values to be set: " << valuesToSet;
 
         // set values
-        slotSetValues(mapping.outputConnectorSlotNosTo[0], mapping.outputConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
+        slotSetValues(mapping.connectorSlotNosTo[0], mapping.slotConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
       }
 
       // call setRepresentationGlobal on the field variable, not needed
-      //slotSetRepresentationGlobal(mapping.outputConnectorSlotNosTo[0], mapping.outputConnectorArrayIndexTo);
+      //slotSetRepresentationGlobal(mapping.connectorSlotNosTo[0], mapping.slotConnectorArrayIndexTo);
     }
   }
 }
@@ -280,12 +280,12 @@ data()
 }
 
 //! Get the data that will be transferred in the operator splitting or coupling to the other term of the splitting/coupling.
-//! the transfer is done by the output_connector_data_transfer class
+//! the transfer is done by the slot_connector_data_transfer class
 template<typename FunctionSpaceType, typename NestedSolverType>
-std::shared_ptr<typename MapDofs<FunctionSpaceType,NestedSolverType>::OutputConnectorDataType> MapDofs<FunctionSpaceType,NestedSolverType>::
-getOutputConnectorData()
+std::shared_ptr<typename MapDofs<FunctionSpaceType,NestedSolverType>::SlotConnectorDataType> MapDofs<FunctionSpaceType,NestedSolverType>::
+getSlotConnectorData()
 {
-  return data_.getOutputConnectorData();
+  return data_.getSlotConnectorData();
 }
 
 }  // namespace Control

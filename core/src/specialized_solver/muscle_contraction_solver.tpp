@@ -190,8 +190,8 @@ initialize()
                             setGeometryFieldForTransfer);
   }
 
-  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
   initialized_ = true;
 }
@@ -477,10 +477,10 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
+//! the transfer is done by the slot_connector_data_transfer class
 template<typename MeshType>
-std::shared_ptr<typename MuscleContractionSolver<MeshType>::OutputConnectorDataType> MuscleContractionSolver<MeshType>::
-getOutputConnectorData()
+std::shared_ptr<typename MuscleContractionSolver<MeshType>::SlotConnectorDataType> MuscleContractionSolver<MeshType>::
+getSlotConnectorData()
 {
-  return data_.getOutputConnectorData();
+  return data_.getSlotConnectorData();
 }

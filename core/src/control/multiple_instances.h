@@ -22,7 +22,7 @@ class MultipleInstances: public Runnable, public Multipliable
 {
 public:
 
-  typedef std::vector<std::shared_ptr<typename TimeSteppingScheme::OutputConnectorDataType>> OutputConnectorDataType;
+  typedef std::vector<std::shared_ptr<typename TimeSteppingScheme::SlotConnectorDataType>> SlotConnectorDataType;
   typedef typename TimeSteppingScheme::FunctionSpace FunctionSpace;
   typedef typename ::Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> Data;
   typedef TimeSteppingScheme TimeSteppingSchemeType;
@@ -43,8 +43,8 @@ public:
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! run solution process
   void run();
@@ -53,7 +53,7 @@ public:
   void reset();
 
   //! output the given data for debugging
-  std::string getString(std::shared_ptr<OutputConnectorDataType> data);
+  std::string getString(std::shared_ptr<SlotConnectorDataType> data);
 
   //! the FastMonodomainSolver accesses the internals of MultipleInstances
   std::vector<TimeSteppingScheme> &instancesLocal();
@@ -76,7 +76,7 @@ protected:
   OutputWriter::Manager outputWriterManager_;   //< manager object holding all output write
   Data data_;                                   //< the data object
 
-  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;       //< the outputConnectorData as vector of references o f teh outputConnectorData's of the instances
+  std::shared_ptr<SlotConnectorDataType> slotConnectorData_;       //< the slotConnectorData as vector of references o f teh slotConnectorData's of the instances
 
   int nInstances_;                              //< number of instances that are given by config
   int nInstancesComputedGlobally_;              //< number of instances that any process will compute

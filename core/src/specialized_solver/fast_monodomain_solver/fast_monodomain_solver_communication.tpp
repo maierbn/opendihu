@@ -316,7 +316,7 @@ updateFiberData()
       VLOG(1) << "Scatterv furtherStatesAndAlgebraicsValues from rank " << computingRank << ", sizes: " << nValuesOnRanks << ", offsets: " << offsetsOnRanks
         << ", sendBuffer: " << sendBuffer << ", received local values: " << valuesLocal;
 
-      // store received states and algebraics values in diffusion outputConnectorData
+      // store received states and algebraics values in diffusion slotConnectorData
       // loop over further states to transfer
       int furtherDataIndex = 0;
       for (int stateIndex = 1; stateIndex < statesForTransfer_.size(); stateIndex++, furtherDataIndex++)
@@ -325,7 +325,7 @@ updateFiberData()
 
         // get field variable
         std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable1
-          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable1;
+          = instances[i].timeStepping2().instancesLocal()[j].getSlotConnectorData()->variable1;
 
         if (stateIndex >= variable1.size())
         {
@@ -342,7 +342,7 @@ updateFiberData()
 
         // store in cellmlAdapter
         std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,nStates>> fieldVariableStatesCellML
-          = instances[i].timeStepping1().instancesLocal()[j].getOutputConnectorData()->variable1[stateIndex].values;
+          = instances[i].timeStepping1().instancesLocal()[j].getSlotConnectorData()->variable1[stateIndex].values;
 
         const int componentNo = statesForTransfer_[stateIndex];
 
@@ -359,7 +359,7 @@ updateFiberData()
 
         // get field variable
         std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable2
-          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable2;
+          = instances[i].timeStepping2().instancesLocal()[j].getSlotConnectorData()->variable2;
 
         if (algebraicIndex >= variable2.size())
         {
@@ -377,7 +377,7 @@ updateFiberData()
 
         // store in CellmlAdapter
         std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableAlgebraicsCellML
-          = instances[i].timeStepping1().instancesLocal()[j].getOutputConnectorData()->variable2[algebraicIndex].values;
+          = instances[i].timeStepping1().instancesLocal()[j].getSlotConnectorData()->variable2[algebraicIndex].values;
 
         //const int componentNo = algebraicsForTransfer_[algebraicIndex];
 

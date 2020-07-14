@@ -121,7 +121,7 @@ initialize()
 
   // add this solver to the solvers diagram
   DihuContext::solverStructureVisualizer()->addSolver("FiniteElementMethod");
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
   initialized_ = true;
 }
@@ -202,11 +202,11 @@ solve()
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
-std::shared_ptr<typename FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::OutputConnectorDataType>
+std::shared_ptr<typename FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::SlotConnectorDataType>
 FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  return data_.getOutputConnectorData();
+  return data_.getSlotConnectorData();
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents>

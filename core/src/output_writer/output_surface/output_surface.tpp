@@ -431,10 +431,10 @@ data()
 }
 
 template<typename Solver>
-std::shared_ptr<typename OutputSurface<Solver>::OutputConnectorDataType> OutputSurface<Solver>::
-getOutputConnectorData()
+std::shared_ptr<typename OutputSurface<Solver>::SlotConnectorDataType> OutputSurface<Solver>::
+getSlotConnectorData()
 {
-  return solver_.getOutputConnectorData();
+  return solver_.getSlotConnectorData();
 }
 
 }  // namespace OutputWriter

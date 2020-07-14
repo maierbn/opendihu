@@ -24,9 +24,9 @@ class TimeSteppingSchemeOdeBaseDiscretizable:
 public:
   typedef DiscretizableInTimeType DiscretizableInTime;
   typedef typename DiscretizableInTimeType::FunctionSpace FunctionSpace;
-  //typedef typename DiscretizableInTimeType::OutputConnectorDataType OutputConnectorDataType;
+  //typedef typename DiscretizableInTimeType::SlotConnectorDataType SlotConnectorDataType;
 
-  //using TimeSteppingSchemeOdeOutputConnectorDataType<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents(), DiscretizableInTimeType>::OutputConnectorDataType;
+  //using TimeSteppingSchemeOdeSlotConnectorDataType<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents(), DiscretizableInTimeType>::SlotConnectorDataType;
 
   //! constructor
   TimeSteppingSchemeOdeBaseDiscretizable(DihuContext context, std::string name);
@@ -56,8 +56,8 @@ protected:
   //! read initial values from settings and set field accordingly
   void setInitialValues();
 
-  //! prepare the discretizableInTime object for the following call to getOutputConnectorData()
-  virtual void prepareForGetOutputConnectorData() override;
+  //! prepare the discretizableInTime object for the following call to getSlotConnectorData()
+  virtual void prepareForGetSlotConnectorData() override;
 
   //int timeStepOutputInterval_;    //< time step number and time is output every timeStepOutputInterval_ time steps
   DiscretizableInTimeType discretizableInTime_;    //< the object to be discretized

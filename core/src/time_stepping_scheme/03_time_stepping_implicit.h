@@ -20,7 +20,7 @@ public:
   
   typedef typename DiscretizableInTimeType::FunctionSpace FunctionSpace;
   typedef Data::TimeSteppingImplicit<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()> DataImplicit;
-  typedef typename DataImplicit::OutputConnectorDataType OutputConnectorDataType;
+  typedef typename DataImplicit::SlotConnectorDataType SlotConnectorDataType;
 
 
   //! constructor
@@ -39,9 +39,9 @@ public:
   DataImplicit &dataImplicit();
   
   //! output the given data for debugging
-  //virtual std::string getString(typename TimeSteppingSchemeOde<DiscretizableInTimeType>::OutputConnectorDataType &data);
+  //virtual std::string getString(typename TimeSteppingSchemeOde<DiscretizableInTimeType>::SlotConnectorDataType &data);
 
-  //! there should be no getOutputConnectorData here!
+  //! there should be no getSlotConnectorData here!
 
 protected:
   

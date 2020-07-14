@@ -88,12 +88,12 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
+//! the transfer is done by the slot_connector_data_transfer class
 template<typename TimeStepping>
-std::shared_ptr<typename LoadBalancingBase<TimeStepping>::OutputConnectorDataType> LoadBalancingBase<TimeStepping>::
-getOutputConnectorData()
+std::shared_ptr<typename LoadBalancingBase<TimeStepping>::SlotConnectorDataType> LoadBalancingBase<TimeStepping>::
+getSlotConnectorData()
 {
-  return timeSteppingScheme_.getOutputConnectorData();
+  return timeSteppingScheme_.getSlotConnectorData();
 }
 
 } // namespace

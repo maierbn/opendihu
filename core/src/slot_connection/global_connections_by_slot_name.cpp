@@ -1,4 +1,4 @@
-#include "output_connector_data_transfer/global_connections_by_slot_name.h"
+#include "slot_connection/global_connections_by_slot_name.h"
 
 #include "utility/python_utility.h"
 

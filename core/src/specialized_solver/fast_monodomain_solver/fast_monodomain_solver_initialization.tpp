@@ -33,7 +33,7 @@ initialize()
   }
 
   // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver("FastMonodomainSolver", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
+  DihuContext::solverStructureVisualizer()->addSolver("FastMonodomainSolver", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means slot connector data is shared with the first subsolver
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();
@@ -257,7 +257,7 @@ initialize()
 
   LOG(INFO) << "Time of first stimulation: " << firstStimulationTime << ", motor unit " << firstStimulationMotorUnitNo;
 
-  // get the states and algebraics no.s to be transferred as output connector data
+  // get the states and algebraics no.s to be transferred as slot connector data
   CellmlAdapterType &cellmlAdapter = instances[0].timeStepping1().instancesLocal()[0].discretizableInTime();
   statesForTransfer_ = cellmlAdapter.statesForTransfer();
   algebraicsForTransfer_ = cellmlAdapter.algebraicsForTransfer();
@@ -333,7 +333,7 @@ initialize()
 
         // get field variable
         std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable1
-          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable1;
+          = instances[i].timeStepping2().instancesLocal()[j].getSlotConnectorData()->variable1;
 
         if (stateIndex >= variable1.size())
         {
@@ -364,7 +364,7 @@ initialize()
 
         // get field variable
         std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable2
-          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable2;
+          = instances[i].timeStepping2().instancesLocal()[j].getSlotConnectorData()->variable2;
 
         if (algebraicIndex >= variable2.size())
         {

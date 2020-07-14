@@ -1,12 +1,12 @@
-#include "output_connector_data_transfer/output_connection.h"
+#include "slot_connection/slot_connection.h"
 
 template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
-void OutputConnection::
-initialize(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b> &transferableSolutionData1,
-           const Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2,
+void SlotConnection::
+initialize(const Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b> &transferableSolutionData1,
+           const Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2,
            int offsetSlotNoData1, int offsetSlotNoData2)
 {
-  LOG(DEBUG) << "OutputConnection::initialize, " << (transferDirectionTerm1To2_? "1->2" : "2->1") << ", offsets: " << offsetSlotNoData1 << "," << offsetSlotNoData2
+  LOG(DEBUG) << "SlotConnection::initialize, " << (transferDirectionTerm1To2_? "1->2" : "2->1") << ", offsets: " << offsetSlotNoData1 << "," << offsetSlotNoData2
     << ", initialized: " << fieldVariableNamesInitialized_;
 
   if (transferDirectionTerm1To2_)
@@ -95,12 +95,12 @@ initialize(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nCom
     //
     // if connectorForVisualizerTerm1To2_ is:
     // slots data1  data2
-    //       [ 0 +-->0 ] <-- handled in a previous OutputConnection object
+    //       [ 0 +-->0 ] <-- handled in a previous SlotConnection object
     //       [ 1-+   1
     //         2---->2
     //         3--+  3
     //         4  +->4
-    // In this example, the OutputConnection object consideres only (global) slots 2,3,4 which become 0,1,2 for data1 and for data2 1-4 which become 0-3.
+    // In this example, the SlotConnection object consideres only (global) slots 2,3,4 which become 0,1,2 for data1 and for data2 1-4 which become 0-3.
     //
     // this leads to connectorTerm1To2_:
     // slots data1  data2
@@ -172,9 +172,9 @@ initialize(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nCom
 }
 
 template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
-void OutputConnection::
-initializeSlotInformation(const Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b> &transferableSolutionData1,
-                          const Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2)
+void SlotConnection::
+initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b> &transferableSolutionData1,
+                          const Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2)
 {
   if (slotInformationInitialized_)
     return;

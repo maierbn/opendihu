@@ -845,8 +845,8 @@ initialize()
   // add this solver to the solvers diagram
   DihuContext::solverStructureVisualizer()->addSolver(solverName_);
 
-  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
@@ -866,19 +866,19 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
+//! the transfer is done by the slot_connector_data_transfer class
 
-std::shared_ptr<typename NonlinearElasticitySolverFebio::OutputConnectorDataType>
+std::shared_ptr<typename NonlinearElasticitySolverFebio::SlotConnectorDataType>
 NonlinearElasticitySolverFebio::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  return this->data_.getOutputConnectorData();
+  return this->data_.getSlotConnectorData();
 }
 
 //! output the given data for debugging
 
 std::string NonlinearElasticitySolverFebio::
-getString(std::shared_ptr<typename NonlinearElasticitySolverFebio::OutputConnectorDataType> data)
+getString(std::shared_ptr<typename NonlinearElasticitySolverFebio::SlotConnectorDataType> data)
 {
   std::stringstream s;
   //s << "<NonlinearElasticitySolverFebio:" << *data.activation() << ">";

@@ -17,7 +17,7 @@ public:
   // Classes that derive from DiscretizableInTime must define a constexpr nComponents that specifies the number of components in the solution field variable
   //typedef .. nComponents;
 
-  //typedef ..OutputConnectorDataType;
+  //typedef ..SlotConnectorDataType;
 
 
   //! initialize timestepping
@@ -36,11 +36,11 @@ public:
   virtual int nComponentsNode();
 
   //! Get the data that will be transferred in the operator splitting to the other term of the splitting.
-  //! The transfer is done by the output_connector_data_transfer class.
-  //virtual std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! The transfer is done by the slot_connector_data_transfer class.
+  //virtual std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
-  //! this will be called right before getOutputConnectorData
-  virtual void prepareForGetOutputConnectorData();
+  //! this will be called right before getSlotConnectorData
+  virtual void prepareForGetSlotConnectorData();
 
   //! set initial values and return true or don't do anything and return false
   // this could use std::any (c++17)

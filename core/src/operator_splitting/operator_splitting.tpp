@@ -9,8 +9,8 @@
 #include "control/diagnostic_tool/performance_measurement.h"
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 #include "mesh/mesh_manager/mesh_manager.h"
-#include "output_connector_data_transfer/output_connector_data_helper.h"
-#include "output_connector_data_transfer/global_connections_by_slot_name.h"
+#include "slot_connection/slot_connector_data_helper.h"
+#include "slot_connection/global_connections_by_slot_name.h"
 
 namespace OperatorSplitting
 {
@@ -29,7 +29,7 @@ OperatorSplitting(DihuContext context, std::string schemeName) :
   specificSettings_ = PythonConfig(topLevelSettings, schemeName);
   schemeName_ = schemeName;
 
-  outputConnection_ = std::make_shared<OutputConnection>(specificSettings_);
+  outputConnection_ = std::make_shared<SlotConnection>(specificSettings_);
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -50,7 +50,7 @@ initialize()
   LOG(TRACE) << "  OperatorSplitting::initialize";
 
   // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver(schemeName_, true, true);   // hasInternalConnectionToFirstNestedSolver=true (the two last arguments) means output connector data is shared with the first and second subsolvers
+  DihuContext::solverStructureVisualizer()->addSolver(schemeName_, true, true);   // hasInternalConnectionToFirstNestedSolver=true (the two last arguments) means slot connector data is shared with the first and second subsolvers
 
   // parse description for solverStructureVisualizer, if there was any
   if (this->specificSettings_.hasKey("description"))
@@ -87,7 +87,7 @@ initialize()
   // indicate in solverStructureVisualizer that the child solver initialization is done
   DihuContext::solverStructureVisualizer()->endChild();
 
-  // initialize data object, i.e. outputConnectorData
+  // initialize data object, i.e. slotConnectorData
   data_.setFunctionSpace(timeStepping1_.data().functionSpace());
   data_.initialize(timeStepping1_, timeStepping2_);
 
@@ -108,17 +108,17 @@ initialize()
   logKeyTransfer21_ = this->durationLogKey_ + std::string("_transfer21");  //< key for logging of the duration of data transfer from timestepping 2 to 1
 
   // add the slot connections that were given in the global field "connectedSlots" to the outputConnection_ object of this splitting scheme
-  DihuContext::globalConnectionsBySlotName()->addConnections(this->data_.getOutputConnectorData(), outputConnection_);
+  DihuContext::globalConnectionsBySlotName()->addConnections(this->data_.getSlotConnectorData(), outputConnection_);
 
   // set the outputConnection information about how the slots are connected to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->addOutputConnection(outputConnection_);
+  DihuContext::solverStructureVisualizer()->addSlotConnection(outputConnection_);
 
-  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
-  LOG(DEBUG) << "initialized operator splitting " << this->schemeName_ << ", getOutputConnectorData: "
-    << OutputConnectorDataHelper<OutputConnectorDataType>::getString(getOutputConnectorData());
+  LOG(DEBUG) << "initialized operator splitting " << this->schemeName_ << ", getSlotConnectorData: "
+    << SlotConnectorDataHelper<SlotConnectorDataType>::getString(getSlotConnectorData());
 #endif
 
   initialized_ = true;
@@ -156,11 +156,11 @@ run()
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
-std::shared_ptr<typename OperatorSplitting<TimeStepping1, TimeStepping2>::OutputConnectorDataType>
+std::shared_ptr<typename OperatorSplitting<TimeStepping1, TimeStepping2>::SlotConnectorDataType>
 OperatorSplitting<TimeStepping1, TimeStepping2>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  return data_.getOutputConnectorData();
+  return data_.getSlotConnectorData();
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -189,7 +189,7 @@ timeStepping2()
 //! output the given data for debugging
 template<typename TimeStepping1, typename TimeStepping2>
 std::string OperatorSplitting<TimeStepping1, TimeStepping2>::
-getString(std::shared_ptr<typename OperatorSplitting<TimeStepping1, TimeStepping2>::OutputConnectorDataType> data)
+getString(std::shared_ptr<typename OperatorSplitting<TimeStepping1, TimeStepping2>::SlotConnectorDataType> data)
 {
   std::stringstream s;
   s << "<" << schemeName_ << ",Term1:" << data << ">";

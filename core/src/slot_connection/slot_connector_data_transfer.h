@@ -9,7 +9,7 @@
 #include "mesh/mesh.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "cellml/00_cellml_adapter_base.h"
-#include "output_connector_data_transfer/output_connection.h"
+#include "slot_connection/slot_connection.h"
 
 /**
  * The Data classes contain each a vector that stores the solution. Often, the values need to be accessed to
@@ -22,36 +22,36 @@
  *
  * The data is also scaled with a prefactor, that can be given. This is needed for the results of the cellml class.
  */
-template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
-class SolutionVectorMapping
+template<typename SlotConnectorDataType1, typename SlotConnectorDataType2>
+class SlotConnectorDataTransfer
 {
 };
 
 /** Transfer between a pair of states and algebraics field variables from CellML, with given component numbers each, to a normal field variable with component no, both field variables have a component no. != 1
  *
  *   template<typename FunctionSpaceType, int nComponents1, int nComponents2>
- *   struct OutputConnectorData
+ *   struct SlotConnectorData
  *   {
  *     std::vector<ComponentOfFieldVariable<FunctionSpaceType,nComponents1>> variable1;    //< vector of indications of components of field variables, the field variables have all the same number of components
  *     std::vector<ComponentOfFieldVariable<FunctionSpaceType,nComponents2>> variable2;    //< second vector with different number of components for the field variables
  *   }
  */
 template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
-class SolutionVectorMapping<
-  Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,      //< algebraics and states from cellmlAdapter
-  Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
+class SlotConnectorDataTransfer<
+  Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,      //< algebraics and states from cellmlAdapter
+  Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
 >
 {
 public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
-  static void transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1,
-                       std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
-                       OutputConnection &outputConnection,
+  static void transfer(const std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1,
+                       std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
+                       SlotConnection &outputConnection,
                        int offsetSlotNoData1=0, int offsetSlotNoData2=0
                       );
 };
 
-#include "output_connector_data_transfer/output_connector_data_transfer.tpp"
-#include "output_connector_data_transfer/output_connector_data_transfer_fibers_emg.h"
-#include "output_connector_data_transfer/output_connector_data_transfer_vector.h"
-#include "output_connector_data_transfer/output_connector_data_transfer_tuple.h"
+#include "slot_connection/slot_connector_data_transfer.tpp"
+#include "slot_connection/slot_connector_data_transfer_fibers_emg.h"
+#include "slot_connection/slot_connector_data_transfer_vector.h"
+#include "slot_connection/slot_connector_data_transfer_tuple.h"

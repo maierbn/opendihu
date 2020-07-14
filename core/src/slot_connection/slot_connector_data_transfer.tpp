@@ -1,4 +1,4 @@
-#include "output_connector_data_transfer/output_connector_data_transfer.h"
+#include "slot_connection/slot_connector_data_transfer.h"
 
 #include <vector>
 #include <tuple>
@@ -8,12 +8,12 @@
 /** Transfer between two field variables with given component number
  */
 template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
-void SolutionVectorMapping<
-  Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,
-  Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
->::transfer(const std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1,
-            std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
-            OutputConnection &outputConnection, int offsetSlotNoData1, int offsetSlotNoData2)
+void SlotConnectorDataTransfer<
+  Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,
+  Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
+>::transfer(const std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1,
+            std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
+            SlotConnection &outputConnection, int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer standard, type1: " << FunctionSpaceType1::dim() << "D " << nComponents1a << "," << nComponents1b << " comp.,"
     << " type2: " << FunctionSpaceType2::dim() << "D " << nComponents2a << "," << nComponents2b << "comp.";
@@ -201,5 +201,5 @@ void SolutionVectorMapping<
     DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<FieldVariableSource,FieldVariableTarget>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
   }
 
-  LOG(DEBUG) << "at the end of output_connector_data_transfer_cellml.";
+  LOG(DEBUG) << "at the end of slot_connector_data_transfer_cellml.";
 }

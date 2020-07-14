@@ -176,8 +176,8 @@ initialize()
   MatSetNearNullSpace(systemMatrix, constantFunctions); // for multigrid methods
   MatNullSpaceDestroy(&constantFunctions);
 
-  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
@@ -302,19 +302,19 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
+//! the transfer is done by the slot_connector_data_transfer class
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
-std::shared_ptr<typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::OutputConnectorDataType>
+std::shared_ptr<typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::SlotConnectorDataType>
 StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  return this->data_.getOutputConnectorData();  // transmembranePotential
+  return this->data_.getSlotConnectorData();  // transmembranePotential
 }
 
 //! output the given data for debugging
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 std::string StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-getString(std::shared_ptr<typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::OutputConnectorDataType> data)
+getString(std::shared_ptr<typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::SlotConnectorDataType> data)
 {
   std::stringstream s;
   s << "<StaticBidomain:" << data << ">";

@@ -9,7 +9,7 @@
 #include "equation/linear_elasticity.h"
 #include "data_management/specialized_solver/quasi_static_linear_elasticity.h"
 #include "spatial_discretization/finite_element_method/finite_element_method.h"
-#include "output_connector_data_transfer/output_connector_data.h"
+#include "slot_connection/slot_connector_data.h"
 
 namespace TimeSteppingScheme
 {
@@ -25,7 +25,7 @@ public:
   typedef typename Data::FiniteElements<FunctionSpace,3,Equation::Static::LinearElasticityActiveStress> DataLinearElasticityType;
   typedef Data::QuasiStaticLinearElasticity<DataLinearElasticityType> Data;
   typedef FieldVariable::FieldVariable<FunctionSpace,1> FieldVariableType;
-  typedef typename Data::OutputConnectorDataType OutputConnectorDataType;
+  typedef typename Data::SlotConnectorDataType SlotConnectorDataType;
 
   typedef ::SpatialDiscretization::FiniteElementMethod<       //FEM for initial potential flow, fiber directions
         typename FunctionSpace::Mesh,
@@ -56,11 +56,11 @@ public:
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! output the given data for debugging
-  std::string getString(std::shared_ptr<OutputConnectorDataType> data);
+  std::string getString(std::shared_ptr<SlotConnectorDataType> data);
 
 protected:
 

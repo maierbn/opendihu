@@ -6,7 +6,7 @@
 namespace Data
 {
 
-/** The data type for the outputConnector of the TimeStepping class.
+/** The data type for the slotConnector of the TimeStepping class.
   *  This is the data that will be transferred to connected classes in the nested structure.
   */
 template<typename FunctionSpaceType, int nComponents>
@@ -33,11 +33,11 @@ template<typename FunctionSpaceType, int nComponents>
 std::ostream &operator<<(std::ostream &stream, const ComponentOfFieldVariable<FunctionSpaceType,nComponents> &rhs);
 
 /** This is a general data type that can contain multiple field variables with designated components.
- *  They are used for the outputConnector of different solvers.
+ *  They are used for the slotConnector of different solvers.
  *  This particular struct is, for example, used for the CellMLAdapter, where the two variables store states and algebraics to be passed to the next solver.
  */
 template<typename FunctionSpaceType, int nComponents1, int nComponents2=1>
-struct OutputConnectorData
+struct SlotConnectorData
 {
   std::vector<ComponentOfFieldVariable<FunctionSpaceType,nComponents1>> variable1;    //< vector of indications of components of field variables, the field variables have all the same number of components
   std::vector<ComponentOfFieldVariable<FunctionSpaceType,nComponents2>> variable2;    //< second vector with different number of components for the field variables
@@ -59,18 +59,18 @@ struct OutputConnectorData
   //! assign a geometry field, this means that geometry data will be transferred
   void addGeometryField(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField);
 
-  //! get the number of slots that is contained in this OutputConnectorData, this is equal to variable1.size() + variable2.size()
+  //! get the number of slots that is contained in this SlotConnectorData, this is equal to variable1.size() + variable2.size()
   int nSlots();
 };
 
 // operator used for output
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
-std::ostream &operator<<(std::ostream &stream, const OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2> &rhs);
+std::ostream &operator<<(std::ostream &stream, const SlotConnectorData<FunctionSpaceType,nComponents1,nComponents2> &rhs);
 
 // operator used for output
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
-std::ostream &operator<<(std::ostream &stream, const std::shared_ptr<OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2>> &rhs);
+std::ostream &operator<<(std::ostream &stream, const std::shared_ptr<SlotConnectorData<FunctionSpaceType,nComponents1,nComponents2>> &rhs);
 
 } // namespace
 
-#include "output_connector_data_transfer/output_connector_data.tpp"
+#include "slot_connection/slot_connector_data.tpp"

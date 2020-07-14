@@ -146,13 +146,13 @@ nComponents()
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
-std::shared_ptr<typename FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::OutputConnectorDataType>
+std::shared_ptr<typename FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::SlotConnectorDataType>
 FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
   // check for nans or infs
   //this->data_.solution()->checkNanInf();
-  return this->data_.getOutputConnectorData();
+  return this->data_.getSlotConnectorData();
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>

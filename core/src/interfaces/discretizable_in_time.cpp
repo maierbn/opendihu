@@ -14,7 +14,7 @@ void DiscretizableInTime::getComponentNames(std::vector<std::string> &componentN
   // no special component names here, this is e.g. overloaded in cellML adapter where component names are availableq
 }
 
-void DiscretizableInTime::prepareForGetOutputConnectorData()
+void DiscretizableInTime::prepareForGetSlotConnectorData()
 {
 
 }

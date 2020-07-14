@@ -33,7 +33,7 @@ initialize()
   // initialize() will be called before the simulation starts.
 
   // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver("PreciceAdapter::ContractionNeumannBoundaryConditions", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
+  DihuContext::solverStructureVisualizer()->addSolver("PreciceAdapter::ContractionNeumannBoundaryConditions", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means slot connector data is shared with the first subsolver
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();
@@ -168,8 +168,8 @@ run()
     LOG(DEBUG) << "isActionRequired(actionWriteInitialData) is false";
   }
 
-  //std::shared_ptr<::Data::OutputConnectorData<::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, ::BasisFunction::LagrangeOfOrder<2> >, 1, 1> > connectorData
-  //  = getOutputConnectorData();
+  //std::shared_ptr<::Data::SlotConnectorData<::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, ::BasisFunction::LagrangeOfOrder<2> >, 1, 1> > connectorData
+  //  = getSlotConnectorData();
 
   // perform the computation of this solver
   double currentTime = 0;
@@ -339,7 +339,7 @@ preciceReadData()
   // set Neumann BCs in the static hyperelasticity of the TimeSteppingScheme::DynamicHyperelasticitySolver solver
   nestedSolver_.hyperelasticitySolver().updateNeumannBoundaryConditions(neumannBoundaryConditions);
 
-  //getOutputConnectorData()->variable1[outputConnectorSlotIdGamma_].setValuesWithoutGhosts(gammaValues);
+  //getSlotConnectorData()->variable1[connectorSlotIdGamma_].setValuesWithoutGhosts(gammaValues);
 
   LOG(DEBUG) << "read data from precice complete, traction values: " << tractionValues;
 }

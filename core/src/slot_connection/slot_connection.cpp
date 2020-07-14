@@ -1,10 +1,10 @@
-#include "output_connector_data_transfer/output_connection.h"
+#include "slot_connection/slot_connection.h"
 
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
-OutputConnection::OutputConnection(PythonConfig settings):
+SlotConnection::SlotConnection(PythonConfig settings):
   fieldVariableNamesInitialized_(false), transferDirectionTerm1To2_(true), slotInformationInitialized_(false),
-  settings_(settings), subOutputConnection1_(nullptr), subOutputConnection2_(nullptr), subOutputConnection3_(nullptr), subOutputConnection4_(nullptr)
+  settings_(settings), subSlotConnection1_(nullptr), subSlotConnection2_(nullptr), subSlotConnection3_(nullptr), subSlotConnection4_(nullptr)
 {
   // parse values from settings
   std::vector<int> indicesTerm1To2;
@@ -34,7 +34,7 @@ OutputConnection::OutputConnection(PythonConfig settings):
 }
 
 //! copy constructor
-OutputConnection::OutputConnection(const OutputConnection &rhs) :
+SlotConnection::SlotConnection(const SlotConnection &rhs) :
   fieldVariableNamesInitialized_(false), transferDirectionTerm1To2_(true), slotInformationInitialized_(false)
 {
   connectorForVisualizerTerm1To2_ = rhs.connectorForVisualizerTerm1To2_;
@@ -42,7 +42,7 @@ OutputConnection::OutputConnection(const OutputConnection &rhs) :
   transferDirectionTerm1To2_ = rhs.transferDirectionTerm1To2_;
 }
 
-void OutputConnection::addConnectionTerm1ToTerm2(int slotNoFrom, int slotNoTo)
+void SlotConnection::addConnectionTerm1ToTerm2(int slotNoFrom, int slotNoTo)
 {
   // check if connection is already present
   if (connectorForVisualizerTerm1To2_.size() > slotNoFrom)
@@ -70,7 +70,7 @@ void OutputConnection::addConnectionTerm1ToTerm2(int slotNoFrom, int slotNoTo)
   updateAvoidCopyIfPossible();
 }
 
-void OutputConnection::addConnectionTerm2ToTerm1(int slotNoFrom, int slotNoTo)
+void SlotConnection::addConnectionTerm2ToTerm1(int slotNoFrom, int slotNoTo)
 {
   // check if connection is already present
   if (connectorForVisualizerTerm2To1_.size() > slotNoFrom)
@@ -98,21 +98,21 @@ void OutputConnection::addConnectionTerm2ToTerm1(int slotNoFrom, int slotNoTo)
   updateAvoidCopyIfPossible();
 }
 
-void OutputConnection::setTransferDirection(bool term1To2)
+void SlotConnection::setTransferDirection(bool term1To2)
 {
   transferDirectionTerm1To2_ = term1To2;
 
-  if (subOutputConnection1_)
-    subOutputConnection1_->setTransferDirection(term1To2);
-  if (subOutputConnection2_)
-    subOutputConnection2_->setTransferDirection(term1To2);
-  if (subOutputConnection3_)
-    subOutputConnection3_->setTransferDirection(term1To2);
-  if (subOutputConnection4_)
-    subOutputConnection4_->setTransferDirection(term1To2);
+  if (subSlotConnection1_)
+    subSlotConnection1_->setTransferDirection(term1To2);
+  if (subSlotConnection2_)
+    subSlotConnection2_->setTransferDirection(term1To2);
+  if (subSlotConnection3_)
+    subSlotConnection3_->setTransferDirection(term1To2);
+  if (subSlotConnection4_)
+    subSlotConnection4_->setTransferDirection(term1To2);
 }
 
-void OutputConnection::updateAvoidCopyIfPossible()
+void SlotConnection::updateAvoidCopyIfPossible()
 {
   // if field variable gets mapped in both directions, set avoidCopyIfPossible to true
   for (int i = 0; i < connectorForVisualizerTerm1To2_.size(); i++)
@@ -132,18 +132,18 @@ void OutputConnection::updateAvoidCopyIfPossible()
 }
 
 //! get the connectors from term 1 to term 2
-const std::vector<OutputConnection::Connector> &OutputConnection::connectorForVisualizerTerm1To2() const
+const std::vector<SlotConnection::Connector> &SlotConnection::connectorForVisualizerTerm1To2() const
 {
   return connectorForVisualizerTerm1To2_;
 }
 
 //! get the connectors from term 2 to term 1
-const std::vector<OutputConnection::Connector> &OutputConnection::connectorForVisualizerTerm2To1() const
+const std::vector<SlotConnection::Connector> &SlotConnection::connectorForVisualizerTerm2To1() const
 {
   return connectorForVisualizerTerm2To1_;
 }
 
-std::string OutputConnection::getDebugInformation() const
+std::string SlotConnection::getDebugInformation() const
 {
   std::stringstream result;
 
@@ -369,7 +369,7 @@ std::string OutputConnection::getDebugInformation() const
   return result.str();
 }
 
-bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
+bool SlotConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
                                           int &toVectorNo, int &toVectorIndex, bool &avoidCopyIfPossible, bool disableWarnings) const
 {
   // in release target, use precomputed look-up table for slot connection indices
@@ -384,7 +384,7 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
   }
 #endif
 
-  disableWarnings = true;   // do not show warnings, they would also appear if OutputConnectionDataType is a tuple, this is the case for MapDofs
+  disableWarnings = true;   // do not show warnings, they would also appear if SlotConnectionDataType is a tuple, this is the case for MapDofs
 
   // fromVectorNo and toVectorNo are 0 or 1
 
@@ -580,22 +580,22 @@ bool OutputConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
   return true;
 }
 
-std::shared_ptr<OutputConnection> &OutputConnection::subOutputConnection1()
+std::shared_ptr<SlotConnection> &SlotConnection::subSlotConnection1()
 {
-  return subOutputConnection1_;
+  return subSlotConnection1_;
 }
 
-std::shared_ptr<OutputConnection> &OutputConnection::subOutputConnection2()
+std::shared_ptr<SlotConnection> &SlotConnection::subSlotConnection2()
 {
-  return subOutputConnection2_;
+  return subSlotConnection2_;
 }
 
-std::shared_ptr<OutputConnection> &OutputConnection::subOutputConnection3()
+std::shared_ptr<SlotConnection> &SlotConnection::subSlotConnection3()
 {
-  return subOutputConnection3_;
+  return subSlotConnection3_;
 }
 
-std::shared_ptr<OutputConnection> &OutputConnection::subOutputConnection4()
+std::shared_ptr<SlotConnection> &SlotConnection::subSlotConnection4()
 {
-  return subOutputConnection4_;
+  return subSlotConnection4_;
 }

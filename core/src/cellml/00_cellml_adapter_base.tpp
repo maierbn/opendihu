@@ -8,7 +8,7 @@
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include "utility/string_utility.h"
-#include "output_connector_data_transfer/output_connector_data.h"
+#include "slot_connection/slot_connector_data.h"
 #include "mesh/mesh_manager/mesh_manager.h"
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
@@ -66,20 +66,20 @@ setSolutionVariable(std::shared_ptr<FieldVariableStates> states)
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
-setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpaceType,nStates_>> outputConnectorDataTimeStepping)
+setSlotConnectorData(std::shared_ptr<::Data::SlotConnectorData<FunctionSpaceType,nStates_>> slotConnectorDataTimeStepping)
 {
   // This method is called once in initialize() of the timestepping scheme.
-  // Add all state and algebraic values for transfer (option "algebraicsForTransfer"), which are stored in this->data_.getOutputConnectorData()
-  // at the end of outputConnectorDataTimeStepping
+  // Add all state and algebraic values for transfer (option "algebraicsForTransfer"), which are stored in this->data_.getSlotConnectorData()
+  // at the end of slotConnectorDataTimeStepping
 
   // The first "states" entry of statesToTransfer is the solution variable, component 0 (which is default) of the timestepping scheme and therefore
-  // the timestepping scheme has already added it to the outputConnectorDataTimeStepping object.
+  // the timestepping scheme has already added it to the slotConnectorDataTimeStepping object.
   // Now remove it because we set all connections of the CellmlAdapter here.
-  outputConnectorDataTimeStepping->variable1.erase(outputConnectorDataTimeStepping->variable1.begin());
+  slotConnectorDataTimeStepping->variable1.erase(slotConnectorDataTimeStepping->variable1.begin());
 
   // loop over states that should be transferred
   for (typename std::vector<::Data::ComponentOfFieldVariable<FunctionSpaceType,nStates_>>::iterator iter
-    = this->data_.getOutputConnectorData()->variable1.begin(); iter != this->data_.getOutputConnectorData()->variable1.end(); iter++)
+    = this->data_.getSlotConnectorData()->variable1.begin(); iter != this->data_.getSlotConnectorData()->variable1.end(); iter++)
   {
     int componentNo = iter->componentNo;
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nStates_>> values = iter->values;
@@ -88,22 +88,22 @@ setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpace
 
     // The state field variables have 'nStates_' components and can be reused.
     std::string name = values->componentName(componentNo);
-    LOG(DEBUG) << "CellmlAdapterBase::setOutputConnectorData add FieldVariable " << *values << " (" << values->name() << ") for state " << componentNo << "," << name;
+    LOG(DEBUG) << "CellmlAdapterBase::setSlotConnectorData add FieldVariable " << *values << " (" << values->name() << ") for state " << componentNo << "," << name;
 
-    // add this component to outputConnector of data time stepping
-    outputConnectorDataTimeStepping->addFieldVariable(values, componentNo);
+    // add this component to slotConnector of data time stepping
+    slotConnectorDataTimeStepping->addFieldVariable(values, componentNo);
   }
 
   // loop over algebraics that should be transferred
   for (typename std::vector<::Data::ComponentOfFieldVariable<FunctionSpaceType,nAlgebraics_>>::iterator iter
-    = this->data_.getOutputConnectorData()->variable2.begin(); iter != this->data_.getOutputConnectorData()->variable2.end(); iter++)
+    = this->data_.getSlotConnectorData()->variable2.begin(); iter != this->data_.getSlotConnectorData()->variable2.end(); iter++)
   {
     int componentNo = iter->componentNo;
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nAlgebraics_>> values = iter->values;
 
     values->setRepresentationGlobal();
 
-    // The algebraic field variables have 'nAlgebraics_' components, but the field variables in the outputConnectorDataTimeStepping object
+    // The algebraic field variables have 'nAlgebraics_' components, but the field variables in the slotConnectorDataTimeStepping object
     // have only 1 component. Therefore, we create new field variables with 1 components each that reuse the Petsc Vec's of the algebraic field variables.
 
     // get the parameters to create the new field variable
@@ -115,11 +115,11 @@ setOutputConnectorData(std::shared_ptr<::Data::OutputConnectorData<FunctionSpace
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> newFieldVariable
       = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,1>>(*values, name, componentNames, reuseData, componentNo);
 
-    LOG(DEBUG) << "CellmlAdapterBase::setOutputConnectorData add FieldVariable2 " << newFieldVariable << " with name " << name << " for component no " << componentNo
+    LOG(DEBUG) << "CellmlAdapterBase::setSlotConnectorData add FieldVariable2 " << newFieldVariable << " with name " << name << " for component no " << componentNo
       << ", this reuses the data from \"" << values->name() << "\".";
 
-    // add this component to outputConnector of data time stepping
-    outputConnectorDataTimeStepping->addFieldVariable2(newFieldVariable);
+    // add this component to slotConnector of data time stepping
+    slotConnectorDataTimeStepping->addFieldVariable2(newFieldVariable);
   }
 }
 
@@ -219,8 +219,8 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       ("parameter",0): ("state",0),
       ("parameter",1): ("algebraic",0),
       ("parameter",2): ("constant",0),
-      ("outputConnectorSlot",0): ("parameter",0),
-      ("outputConnectorSlot",1,"slotName"): ("parameter",1),
+      ("connectorSlot",0): ("parameter",0),
+      ("connectorSlot",1,"slotName"): ("parameter",1),
     }
     */
     const std::vector<std::string> &algebraicNames = cellmlSourceCodeGenerator_.algebraicNames();
@@ -235,12 +235,12 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       ("parameter",0): ("state","membrane/V"),
       ("parameter",1): ("algebraic","razumova/activestress"),
       ("parameter",2): ("constant",0),
-      ("outputConnectorSlot",0): ("parameter",0),
-      ("outputConnectorSlot",1): "razumova/l_hs",       #<-- this will be converted now
+      ("connectorSlot",0): ("parameter",0),
+      ("connectorSlot",1): "razumova/l_hs",       #<-- this will be converted now
     }
     */
     using ValueTupleType = std::pair<std::string,PyObject *>;
-    using KeyTupleType = std::tuple<std::string,int,std::string>;   // ("parameter" or "outputConnectorSlot"), no., "slotName"
+    using KeyTupleType = std::tuple<std::string,int,std::string>;   // ("parameter" or "connectorSlot"), no., "slotName"
     int slotNoCounter = 0;
 
     std::vector<std::pair<KeyTupleType,ValueTupleType>> tupleEntries;
@@ -257,7 +257,7 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       if (PyTuple_Check(item.first))
       {
         int nEntries = PyTuple_Size(item.first);
-        // item.first is either ("outputConnectorSlot",0) or ("outputConnectorSlot","slotName")
+        // item.first is either ("connectorSlot",0) or ("connectorSlot","slotName")
 
         // parse first entry
         PyObject *firstEntry = PyTuple_GetItem(item.first, (Py_ssize_t)0);
@@ -291,12 +291,12 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
           LOG(FATAL) << this->specificSettings_ << ": Item is not a tuple with 2 or 3 entries.";
         }
 
-        // if tuple is not parameter or outputConnectorSlot
-        if (std::get<0>(keyTuple) != "parameter" && std::get<0>(keyTuple) != "outputConnectorSlot")
+        // if tuple is not parameter or connectorSlot
+        if (std::get<0>(keyTuple) != "parameter" && std::get<0>(keyTuple) != "connectorSlot")
         {
           std::get<0>(keyTuple) = "parameter";
           LOG(ERROR) << this->specificSettings_ << "[\"mappings\"], key " << item.first << " is not a tuple (\"parameter\",index) "
-            << "or (\"outputConnectorSlot\",index) or (\"outputConnectorSlot\",\"slotName\"). "
+            << "or (\"connectorSlot\",index) or (\"connectorSlot\",\"slotName\"). "
             << "Assuming (\"parameter\", " << std::get<1>(keyTuple) << ")";
         }
       }
@@ -306,7 +306,7 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
         keyTuple = std::tuple<std::string,int,std::string>("parameter", index, "");
 
         LOG(ERROR) << this->specificSettings_ << "[\"mappings\"], key " << item.first << " is not a tuple (\"parameter\",index) "
-          << "or (\"outputConnectorSlot\",index) or (\"outputConnectorSlot\",\"slotName\"). "
+          << "or (\"connectorSlot\",index) or (\"connectorSlot\",\"slotName\"). "
           << "Assuming (\"parameter\", " << index << ")";
       }
 
@@ -400,7 +400,7 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       tupleEntries.push_back(std::pair<KeyTupleType,ValueTupleType>(keyTuple, valueTuple));
     }
 
-    // sort the tupleEntries by no of the key, i.e. parameter no. and output connector slot no.
+    // sort the tupleEntries by no of the key, i.e. parameter no. and connector slot no.
     std::sort(tupleEntries.begin(), tupleEntries.end(), [](
       const std::pair<KeyTupleType,ValueTupleType> &a,
       const std::pair<KeyTupleType,ValueTupleType> &b)
@@ -418,8 +418,8 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       ("parameter",0): ("state","membrane/V"),                      #<-- this will be converted now
       ("parameter",1): ("algebraic","razumova/activestress"),    #<-- this will be converted now
       ("parameter",2): ("constant",0),
-      ("outputConnectorSlot",0): ("parameter",0),
-      ("outputConnectorSlot",1): ("algebraic", "razumova/l_hs"), #<-- this will be converted now
+      ("connectorSlot",0): ("parameter",0),
+      ("connectorSlot",1): ("algebraic", "razumova/l_hs"), #<-- this will be converted now
     }
     */
     // result is settings for parametersUsedAsAlgebraic, statesForTransfer, algebraicsForTransfer and parametersForTransfer
@@ -545,14 +545,19 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
       }
       else
       {
-        // output connector slots
+        if (std::get<0>(keyTuple) == "outputConnectorSlot")
+          LOG(WARNING) << this->specificSettings_ << ": Note, you named the slots \"outputConnectorSlot\", "
+            << " but the name has been changed to only \"connectorSlot\", because it can be input and output. Consider renaming it.\n"
+            << "Actually every string other than \"parameter\" is treated as connector slot so it is no breaking change.";
 
-        int slotNo = std::get<1>(keyTuple);    // the no. of the output connector slot
+        // connector slots
+
+        int slotNo = std::get<1>(keyTuple);    // the no. of the connector slot
         std::string slotName = std::get<2>(keyTuple);
 
         slotNames.push_back(slotName);
 
-        LOG(DEBUG) << "output connector slot " << slotNo << " (\"" << slotName << "\") to \"" << valueTuple.first << "\", fieldNo " << fieldNo;
+        LOG(DEBUG) << "connector slot " << slotNo << " (\"" << slotName << "\") to \"" << valueTuple.first << "\", fieldNo " << fieldNo;
 
         if (valueTuple.first == "state")
         {
@@ -574,13 +579,13 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
           {
             int parameterNo = parametersUsedAsAlgebraic.size() + parameter - parametersUsedAsConstant.begin();
             parametersForTransfer.push_back(parameterNo);
-            LOG(DEBUG) << "Constant " << valueTuple.second << " was set as output connector slot " << slotNo << " (\"" << slotName << "\")"
+            LOG(DEBUG) << "Constant " << valueTuple.second << " was set as connector slot " << slotNo << " (\"" << slotName << "\")"
               << " and is mapped to parameter " << parameterNo;
           }
           else
           {
             LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], you can only connect states, algebraics and parameters "
-              << "to outputConnectorSlots, not constants (\"" << valueTuple.second << "\" is a " << valueTuple.first << "). \n"
+              << "to connectorSlots, not constants (\"" << valueTuple.second << "\" is a " << valueTuple.first << "). \n"
               << "You can use it for a slot if you define it as parameter first.";
           }
         }
@@ -755,9 +760,9 @@ nAlgebraics() const
 }
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
-std::shared_ptr<typename CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::OutputConnectorDataType>
+std::shared_ptr<typename CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::SlotConnectorDataType>
 CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  return this->data_.getOutputConnectorData();
+  return this->data_.getSlotConnectorData();
 }

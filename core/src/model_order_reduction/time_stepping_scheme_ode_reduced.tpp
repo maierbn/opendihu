@@ -134,11 +134,11 @@ namespace ModelOrderReduction
 
     LOG(DEBUG) << "fullTimestepping_ has function space: " << this->fullTimestepping_.data().functionSpace()->meshName();
 
-    outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
-    outputConnectorData_->addFieldVariable(this->data_->solution());
+    slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
+    slotConnectorData_->addFieldVariable(this->data_->solution());
 
-    // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
-    DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+    // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+    DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
     initialized_ = true;
   }
@@ -162,10 +162,10 @@ namespace ModelOrderReduction
   }
 
   template<typename TimeSteppingType>
-  std::shared_ptr<typename TimeSteppingSchemeOdeReduced<TimeSteppingType>::OutputConnectorDataType>
+  std::shared_ptr<typename TimeSteppingSchemeOdeReduced<TimeSteppingType>::SlotConnectorDataType>
   TimeSteppingSchemeOdeReduced<TimeSteppingType>::
-  getOutputConnectorData()
+  getSlotConnectorData()
   {
-    return outputConnectorData_;
+    return slotConnectorData_;
   }
 } //namespace

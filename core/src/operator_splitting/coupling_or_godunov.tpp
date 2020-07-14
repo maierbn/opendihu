@@ -2,7 +2,7 @@
 
 #include "utility/python_utility.h"
 #include "data_management/time_stepping/time_stepping.h"
-#include "output_connector_data_transfer/output_connector_data_transfer.h"
+#include "slot_connection/slot_connector_data_transfer.h"
 
 namespace OperatorSplitting
 {
@@ -67,14 +67,14 @@ advanceTimeSpan()
     this->outputConnection_->setTransferDirection(true);
 
     if (VLOG_IS_ON(1))
-      VLOG(1) << "  before transfer 1->2 timeStepping1_.getOutputConnectorData(): " << this->timeStepping1_.getOutputConnectorData();
+      VLOG(1) << "  before transfer 1->2 timeStepping1_.getSlotConnectorData(): " << this->timeStepping1_.getSlotConnectorData();
 
     // transfer to timestepping2_
-    SolutionVectorMapping<typename TimeStepping1::OutputConnectorDataType, typename TimeStepping2::OutputConnectorDataType>::
-      transfer(this->timeStepping1_.getOutputConnectorData(), this->timeStepping2_.getOutputConnectorData(), *this->outputConnection_);
+    SlotConnectorDataTransfer<typename TimeStepping1::SlotConnectorDataType, typename TimeStepping2::SlotConnectorDataType>::
+      transfer(this->timeStepping1_.getSlotConnectorData(), this->timeStepping2_.getSlotConnectorData(), *this->outputConnection_);
 
     if (VLOG_IS_ON(1))
-      VLOG(1) << "  after transfer 1->2 timeStepping2_.getOutputConnectorData(): " << this->timeStepping2_.getOutputConnectorData();
+      VLOG(1) << "  after transfer 1->2 timeStepping2_.getSlotConnectorData(): " << this->timeStepping2_.getSlotConnectorData();
 
     if (this->durationLogKey_ != "")
     {
@@ -104,14 +104,14 @@ advanceTimeSpan()
     this->outputConnection_->setTransferDirection(false);
 
     if (VLOG_IS_ON(1))
-      VLOG(1) << "  before transfer 2->1: timeStepping2_.getOutputConnectorData(): " << this->timeStepping2_.getOutputConnectorData();
+      VLOG(1) << "  before transfer 2->1: timeStepping2_.getSlotConnectorData(): " << this->timeStepping2_.getSlotConnectorData();
 
     // transfer to timestepping1_
-    SolutionVectorMapping<typename TimeStepping2::OutputConnectorDataType, typename TimeStepping1::OutputConnectorDataType>::
-      transfer(this->timeStepping2_.getOutputConnectorData(), this->timeStepping1_.getOutputConnectorData(), *this->outputConnection_);
+    SlotConnectorDataTransfer<typename TimeStepping2::SlotConnectorDataType, typename TimeStepping1::SlotConnectorDataType>::
+      transfer(this->timeStepping2_.getSlotConnectorData(), this->timeStepping1_.getSlotConnectorData(), *this->outputConnection_);
 
     if (VLOG_IS_ON(1))
-      VLOG(1) << "  after transfer 2->1: timeStepping1_.getOutputConnectorData(): " << this->timeStepping1_.getOutputConnectorData();
+      VLOG(1) << "  after transfer 2->1: timeStepping1_.getSlotConnectorData(): " << this->timeStepping1_.getSlotConnectorData();
 
 
     if (this->durationLogKey_ != "")

@@ -140,8 +140,8 @@ initialize()
   // pass the solution field variable on to the discretizableInTime object, by this e.g. CellMLAdapter gets the solution field variable
   discretizableInTime_.setSolutionVariable(this->data_->solution());
 
-  // pass the full output connector data to the discretizableInTime object, by this e.g. CellMLAdapter can set additional algebraic variables that will be used further
-  discretizableInTime_.setOutputConnectorData(this->data_->getOutputConnectorData());
+  // pass the full slot connector data to the discretizableInTime object, by this e.g. CellMLAdapter can set additional algebraic variables that will be used further
+  discretizableInTime_.setSlotConnectorData(this->data_->getSlotConnectorData());
 
   // parse boundary conditions, needs functionSpace set
   // initialize dirichlet boundary conditions object which parses dirichlet boundary condition dofs and values from config
@@ -169,17 +169,17 @@ initialize()
   
   this->data_->print();
 
-  // set the output connector data to the solverStructureVisualizer which can then include it in the structured solvers diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(this->getOutputConnectorData());
+  // set the slot connector data to the solverStructureVisualizer which can then include it in the structured solvers diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(this->getSlotConnectorData());
   
   initialized_ = true;
 }
 
 template<typename DiscretizableInTimeType>
 void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
-prepareForGetOutputConnectorData()
+prepareForGetSlotConnectorData()
 {
-  discretizableInTime_.prepareForGetOutputConnectorData();
+  discretizableInTime_.prepareForGetSlotConnectorData();
 }
 
 

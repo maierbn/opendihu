@@ -292,7 +292,7 @@ initialize()
   }
 
   // add this solver to the solvers diagram
-  DihuContext::solverStructureVisualizer()->addSolver("MultipleInstances", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
+  DihuContext::solverStructureVisualizer()->addSolver("MultipleInstances", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means slot connector data is shared with the first subsolver
   DihuContext::solverStructureVisualizer()->beginChild();
 
   double progress = 0;
@@ -345,17 +345,17 @@ initialize()
   // initialize data object with all instances
   data_.setInstancesData(instancesLocal_);
 
-  // initialize output connector data
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
-  outputConnectorData_->reserve(nInstancesLocal_);
+  // initialize slot connector data
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
+  slotConnectorData_->reserve(nInstancesLocal_);
   for (int i = 0; i < nInstancesLocal_; i++)
   {
-    VLOG(1) << "MultipleInstances::getOutputConnectorData";
-    outputConnectorData_->push_back(instancesLocal_[i].getOutputConnectorData());
+    VLOG(1) << "MultipleInstances::getSlotConnectorData";
+    slotConnectorData_->push_back(instancesLocal_[i].getSlotConnectorData());
 
     if (VLOG_IS_ON(1))
     {
-      VLOG(1) << "instance " << i << "/" << nInstancesLocal_ << " is " << (*outputConnectorData_)[i];
+      VLOG(1) << "instance " << i << "/" << nInstancesLocal_ << " is " << (*slotConnectorData_)[i];
     }
   }
 
@@ -456,18 +456,18 @@ reset()
 }
 
 template<typename TimeSteppingScheme>
-std::shared_ptr<typename MultipleInstances<TimeSteppingScheme>::OutputConnectorDataType>
+std::shared_ptr<typename MultipleInstances<TimeSteppingScheme>::SlotConnectorDataType>
 MultipleInstances<TimeSteppingScheme>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  // call getOutputConnectorData on all instances such that they can prepare themselves
-  // (e.g. timestepping schemes call prepareForGetOutputConnectorData)
+  // call getSlotConnectorData on all instances such that they can prepare themselves
+  // (e.g. timestepping schemes call prepareForGetSlotConnectorData)
   for (int i = 0; i < nInstancesLocal_; i++)
   {
-    instancesLocal_[i].getOutputConnectorData();
+    instancesLocal_[i].getSlotConnectorData();
   }
 
-  return outputConnectorData_;
+  return slotConnectorData_;
 }
 
 
@@ -512,7 +512,7 @@ writeOutput(int timeStepNo, double currentTime, int callCountIncrement)
 
 template<typename TimeSteppingScheme>
 std::string MultipleInstances<TimeSteppingScheme>::
-getString(std::shared_ptr<typename MultipleInstances<TimeSteppingScheme>::OutputConnectorDataType> data)
+getString(std::shared_ptr<typename MultipleInstances<TimeSteppingScheme>::SlotConnectorDataType> data)
 {
   std::stringstream s;
   s << "<MultipleInstances(" << nInstancesLocal_ << "):";

@@ -18,7 +18,7 @@ class FiniteElementMethodTimeStepping :
   public Splittable
 {
 public:
-  typedef Data::OutputConnectorData<FunctionSpaceType,1> OutputConnectorDataType;  // type of return value of getOutputConnectorData
+  typedef Data::SlotConnectorData<FunctionSpaceType,1> SlotConnectorDataType;  // type of return value of getSlotConnectorData
 
   //! constructor, if function space is not given, create new one according to settings
   //! if the function space is given as parameter, is has to be already initialize()d
@@ -56,13 +56,13 @@ public:
   //! return the mesh that is stored in the data class
   std::shared_ptr<FunctionSpaceType> functionSpace();
 
-  //! pass on the output connector data object from the timestepping scheme object to be modified,
+  //! pass on the slot connector data object from the timestepping scheme object to be modified,
   //! this is needed for other DiscretizableInTime objects, but not for finite element method
-  void setOutputConnectorData(std::shared_ptr<Data::OutputConnectorData<FunctionSpaceType,nComponents_>> outputConnectorDataTimeStepping){}
+  void setSlotConnectorData(std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType,nComponents_>> slotConnectorDataTimeStepping){}
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   typedef FunctionSpaceType FunctionSpace;   //< the FunctionSpace type needed for time stepping scheme
 

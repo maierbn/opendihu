@@ -2,7 +2,7 @@
 
 #include "utility/python_utility.h"
 #include "data_management/time_stepping/time_stepping.h"
-#include "output_connector_data_transfer/output_connector_data.h"
+#include "slot_connection/slot_connector_data.h"
 
 namespace OperatorSplitting
 {
@@ -80,8 +80,8 @@ advanceTimeSpan()
     this->outputConnection_->setTransferDirection(true);
 
     // transfer to timestepping2_
-    SolutionVectorMapping<typename TimeStepping1::OutputConnectorDataType, typename TimeStepping2::OutputConnectorDataType>::
-      transfer(this->timeStepping1_.getOutputConnectorData(), this->timeStepping2_.getOutputConnectorData(), *this->outputConnection_);
+    SlotConnectorDataTransfer<typename TimeStepping1::SlotConnectorDataType, typename TimeStepping2::SlotConnectorDataType>::
+      transfer(this->timeStepping1_.getSlotConnectorData(), this->timeStepping2_.getSlotConnectorData(), *this->outputConnection_);
 
     if (this->durationLogKey_ != "")
     {
@@ -111,8 +111,8 @@ advanceTimeSpan()
     this->outputConnection_->setTransferDirection(false);
 
     // scale solution in timeStepping2 and transfer to timestepping1_
-    SolutionVectorMapping<typename TimeStepping2::OutputConnectorDataType, typename TimeStepping1::OutputConnectorDataType>::
-      transfer(this->timeStepping2_.getOutputConnectorData(), this->timeStepping1_.getOutputConnectorData(), *this->outputConnection_);
+    SlotConnectorDataTransfer<typename TimeStepping2::SlotConnectorDataType, typename TimeStepping1::SlotConnectorDataType>::
+      transfer(this->timeStepping2_.getSlotConnectorData(), this->timeStepping1_.getSlotConnectorData(), *this->outputConnection_);
 
     if (this->durationLogKey_ != "")
     {
@@ -152,8 +152,8 @@ advanceTimeSpan()
     this->outputConnection_->setTransferDirection(true);
 
     // transfer to timestepping2_
-    SolutionVectorMapping<typename TimeStepping1::OutputConnectorDataType, typename TimeStepping2::OutputConnectorDataType>::
-      transfer(this->timeStepping1_.getOutputConnectorData(), this->timeStepping2_.getOutputConnectorData(), this->outputConnection_);
+    SlotConnectorDataTransfer<typename TimeStepping1::SlotConnectorDataType, typename TimeStepping2::SlotConnectorDataType>::
+      transfer(this->timeStepping1_.getSlotConnectorData(), this->timeStepping2_.getSlotConnectorData(), this->outputConnection_);
 #endif
 
     // advance simulation time

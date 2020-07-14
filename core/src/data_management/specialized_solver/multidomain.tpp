@@ -35,19 +35,19 @@ initialize(int nCompartments)
   // call initialize of base class
   Data<FunctionSpaceType>::initialize();
 
-  // initialize output connector data
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
-  outputConnectorData_->resize(nCompartments_);
+  // initialize slot connector data
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
+  slotConnectorData_->resize(nCompartments_);
 
   // set the two slots V_mk^(i) and V_mk^(i+1) for all compartments
   for (int compartmentNo = 0; compartmentNo < nCompartments_; compartmentNo++)
   {
-    outputConnectorData_->at(compartmentNo) = std::make_shared<OutputConnectorData<FunctionSpaceType,1>>();
-    outputConnectorData_->at(compartmentNo)->addFieldVariable(transmembranePotential_[compartmentNo]);          // V_mk^(i)
-    outputConnectorData_->at(compartmentNo)->addFieldVariable(transmembranePotentialSolution_[compartmentNo]);  // V_mk^(i+1)
+    slotConnectorData_->at(compartmentNo) = std::make_shared<SlotConnectorData<FunctionSpaceType,1>>();
+    slotConnectorData_->at(compartmentNo)->addFieldVariable(transmembranePotential_[compartmentNo]);          // V_mk^(i)
+    slotConnectorData_->at(compartmentNo)->addFieldVariable(transmembranePotentialSolution_[compartmentNo]);  // V_mk^(i+1)
 
-    outputConnectorData_->at(compartmentNo)->addFieldVariable(activeStress_[compartmentNo]);  // activeStress_k
-    outputConnectorData_->at(compartmentNo)->addFieldVariable(activeStressTotal_);  // activeStressTotal_k
+    slotConnectorData_->at(compartmentNo)->addFieldVariable(activeStress_[compartmentNo]);  // activeStress_k
+    slotConnectorData_->at(compartmentNo)->addFieldVariable(activeStressTotal_);  // activeStressTotal_k
   }
 }
 
@@ -174,10 +174,10 @@ zero()
 }
 
 template<typename FunctionSpaceType>
-std::shared_ptr<typename Multidomain<FunctionSpaceType>::OutputConnectorDataType> Multidomain<FunctionSpaceType>::
-getOutputConnectorData()
+std::shared_ptr<typename Multidomain<FunctionSpaceType>::SlotConnectorDataType> Multidomain<FunctionSpaceType>::
+getSlotConnectorData()
 {
-  return outputConnectorData_;
+  return slotConnectorData_;
 }
 
 template<typename FunctionSpaceType>

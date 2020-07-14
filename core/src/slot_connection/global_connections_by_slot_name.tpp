@@ -1,34 +1,34 @@
-#include "output_connector_data_transfer/global_connections_by_slot_name.h"
+#include "slot_connection/global_connections_by_slot_name.h"
 
 #include "utility/python_utility.h"
-#include "output_connector_data_transfer/output_connector_data_helper.h"
+#include "slot_connection/slot_connector_data_helper.h"
 
 //! add all parsed slot connections to the outputConnection_ object of a splitting scheme
-template<typename OutputConnectorDataType1, typename OutputConnectorDataType2>
+template<typename SlotConnectorDataType1, typename SlotConnectorDataType2>
 void GlobalConnectionsBySlotName::
 addConnections(
-  std::shared_ptr<std::tuple<std::shared_ptr<OutputConnectorDataType1>,std::shared_ptr<OutputConnectorDataType2>>> outputConnectorData,
-  std::shared_ptr<OutputConnection> outputConnection
+  std::shared_ptr<std::tuple<std::shared_ptr<SlotConnectorDataType1>,std::shared_ptr<SlotConnectorDataType2>>> slotConnectorData,
+  std::shared_ptr<SlotConnection> outputConnection
 )
 {
-  if (!outputConnectorData)
+  if (!slotConnectorData)
     return;
 
   std::vector<std::string> slotNamesTerm1;
   std::vector<std::string> slotNamesTerm2;
-  OutputConnectorDataHelper<OutputConnectorDataType1>::getSlotNames(std::get<0>(*outputConnectorData), slotNamesTerm1);
-  OutputConnectorDataHelper<OutputConnectorDataType2>::getSlotNames(std::get<1>(*outputConnectorData), slotNamesTerm2);
+  SlotConnectorDataHelper<SlotConnectorDataType1>::getSlotNames(std::get<0>(*slotConnectorData), slotNamesTerm1);
+  SlotConnectorDataHelper<SlotConnectorDataType2>::getSlotNames(std::get<1>(*slotConnectorData), slotNamesTerm2);
 
   // loop over global connections
   for (std::pair<std::string,std::string> connectedSlotNames : connections_)
   {
     // direction Term1 -> Term2
 
-    // determine slot no.s for current outputConnectorData
+    // determine slot no.s for current slotConnectorData
     std::vector<std::string>::iterator iterFrom = std::find(slotNamesTerm1.begin(), slotNamesTerm1.end(), connectedSlotNames.first);
     std::vector<std::string>::iterator iterTo   = std::find(slotNamesTerm2.begin(), slotNamesTerm2.end(), connectedSlotNames.second);
 
-    // if the "from" and "to" slot names match to slot names in the current outputConnectorData
+    // if the "from" and "to" slot names match to slot names in the current slotConnectorData
     if (iterFrom != slotNamesTerm1.end() && iterTo != slotNamesTerm2.end())
     {
       // determine slot nos
@@ -41,11 +41,11 @@ addConnections(
 
     // direction Term2 -> Term1
 
-    // determine slot no.s for current outputConnectorData
+    // determine slot no.s for current slotConnectorData
     iterFrom = std::find(slotNamesTerm2.begin(), slotNamesTerm2.end(), connectedSlotNames.first);
     iterTo   = std::find(slotNamesTerm1.begin(), slotNamesTerm1.end(), connectedSlotNames.second);
 
-    // if the "from" and "to" slot names match to slot names in the current outputConnectorData
+    // if the "from" and "to" slot names match to slot names in the current slotConnectorData
     if (iterFrom != slotNamesTerm2.end() && iterTo != slotNamesTerm1.end())
     {
       // determine slot nos

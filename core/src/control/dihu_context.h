@@ -79,7 +79,7 @@ public:
   //! return the object that collects information about all nested solvers and produces a diagram, also with data connections
   static std::shared_ptr<SolverStructureVisualizer> solverStructureVisualizer();
 
-  //! return the object that collects the output connector slots connections given under setting "connectedSlots"
+  //! return the object that collects the connector slots connections given under setting "connectedSlots"
   static std::shared_ptr<GlobalConnectionsBySlotName> globalConnectionsBySlotName();
 
   //! writes out the diagram file using the solverStructureVisualizer
@@ -153,7 +153,7 @@ private:
   static std::shared_ptr<MappingBetweenMeshes::Manager>   mappingBetweenMeshesManager_;   //< object that store all mappings between meshes
   static std::shared_ptr<Solver::Manager>                 solverManager_;                 //< object that saves all solver configurations that are used
   static std::shared_ptr<Partition::Manager>              partitionManager_;              //< partition manager object that creates and manages partitionings
-  static std::shared_ptr<GlobalConnectionsBySlotName>     globalConnectionsBySlotName_;   //< object that collects the output connector slots connections given under setting "connectedSlots"
+  static std::shared_ptr<GlobalConnectionsBySlotName>     globalConnectionsBySlotName_;   //< object that collects the connector slots connections given under setting "connectedSlots"
 
   static int nRanksCommWorld_;                        //< number of ranks in MPI_COMM_WORLD
   static int ownRankNoCommWorld_;                     //< the own rank no in MPI_COMM_WORLD, using MPI_COMM_WORLD should be avoided in the program, instead use this global variable

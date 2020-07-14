@@ -29,7 +29,7 @@
 #include "partition/partition_manager.h"
 #include "control/diagnostic_tool/stimulation_logging.h"
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
-#include "output_connector_data_transfer/global_connections_by_slot_name.h"
+#include "slot_connection/global_connections_by_slot_name.h"
 
 #include "easylogging++.h"
 #include "control/python_config/settings_file_name.h"

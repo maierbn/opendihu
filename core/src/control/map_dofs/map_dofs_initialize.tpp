@@ -1,6 +1,6 @@
 #include "control/map_dofs/map_dofs.h"
 
-#include "output_connector_data_transfer/output_connector_data_helper.h"
+#include "slot_connection/slot_connector_data_helper.h"
 
 namespace Control
 {
@@ -29,7 +29,7 @@ initialize()
   parseMappingFromSettings("afterComputation", mappingsAfterComputation_);
 
   // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver("MapDofs", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
+  DihuContext::solverStructureVisualizer()->addSolver("MapDofs", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means slot connector data is shared with the first subsolver
 
   // parse description for solverStructureVisualizer, if there was any
   std::string description;
@@ -57,22 +57,22 @@ initialize()
   initializeCommunication(mappingsBeforeComputation_);
   initializeCommunication(mappingsAfterComputation_);
 
-  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
   // add mappings to be visualized by solverStructureVisualizer
   for (const DofsMappingType &mapping : mappingsBeforeComputation_)
   {
-    for (int outputConnectorSlotNoTo : mapping.outputConnectorSlotNosTo)
+    for (int connectorSlotNoTo : mapping.connectorSlotNosTo)
     {
-      DihuContext::solverStructureVisualizer()->addSlotMapping(mapping.outputConnectorSlotNoFrom, outputConnectorSlotNoTo);
+      DihuContext::solverStructureVisualizer()->addSlotMapping(mapping.connectorSlotNoFrom, connectorSlotNoTo);
     }
   }
   for (const DofsMappingType &mapping : mappingsAfterComputation_)
   {
-    for (int outputConnectorSlotNoTo : mapping.outputConnectorSlotNosTo)
+    for (int connectorSlotNoTo : mapping.connectorSlotNosTo)
     {
-      DihuContext::solverStructureVisualizer()->addSlotMapping(mapping.outputConnectorSlotNoFrom, outputConnectorSlotNoTo);
+      DihuContext::solverStructureVisualizer()->addSlotMapping(mapping.connectorSlotNoFrom, connectorSlotNoTo);
     }
   }
 }
@@ -97,11 +97,11 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
     DofsMappingType newDofsMapping;
 
     // parse options of this item
-    newDofsMapping.outputConnectorSlotNoFrom = currentMappingSpecification.getOptionInt("fromOutputConnectorSlotNo", 0, PythonUtility::NonNegative);
-    currentMappingSpecification.getOptionVector<int>("toOutputConnectorSlotNo", newDofsMapping.outputConnectorSlotNosTo);
+    newDofsMapping.connectorSlotNoFrom = currentMappingSpecification.getOptionInt("fromSlotConnectorSlotNo", 0, PythonUtility::NonNegative);
+    currentMappingSpecification.getOptionVector<int>("toSlotConnectorSlotNo", newDofsMapping.connectorSlotNosTo);
 
-    newDofsMapping.outputConnectorArrayIndexFrom = currentMappingSpecification.getOptionInt("fromOutputConnectorArrayIndex", 0, PythonUtility::NonNegative);
-    newDofsMapping.outputConnectorArrayIndexTo   = currentMappingSpecification.getOptionInt("toOutputConnectorArrayIndex",   0, PythonUtility::NonNegative);
+    newDofsMapping.slotConnectorArrayIndexFrom = currentMappingSpecification.getOptionInt("fromSlotConnectorArrayIndex", 0, PythonUtility::NonNegative);
+    newDofsMapping.slotConnectorArrayIndexTo   = currentMappingSpecification.getOptionInt("toSlotConnectorArrayIndex",   0, PythonUtility::NonNegative);
 
     // parse if dof nos are given as global or local nos
     std::string fromDofNosNumbering = currentMappingSpecification.getOptionString("fromDofNosNumbering", "global");
@@ -169,28 +169,28 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
       PyObject *outputDofsObject = currentMappingSpecification.getOptionPyObject("outputDofs");
       newDofsMapping.outputDofs = PythonUtility::convertFromPython<std::vector<std::vector<dof_no_t>>>::get(outputDofsObject);
 
-      // check that the number of output dof lists matches the number of output connector slots
+      // check that the number of output dof lists matches the number of connector slots
       int nOutputDofSlots = newDofsMapping.outputDofs.size();
-      int nOutputConnectorSlotNos = newDofsMapping.outputConnectorSlotNosTo.size();
-      if (nOutputDofSlots != nOutputConnectorSlotNos)
+      int nSlotConnectorSlotNos = newDofsMapping.connectorSlotNosTo.size();
+      if (nOutputDofSlots != nSlotConnectorSlotNos)
       {
-        LOG(FATAL) << currentMappingSpecification << "[\"toOutputConnectorSlotNo\"] specifies " << nOutputConnectorSlotNos << " output connector slots, but "
+        LOG(FATAL) << currentMappingSpecification << "[\"toSlotConnectorSlotNo\"] specifies " << nSlotConnectorSlotNos << " connector slots, but "
          << currentMappingSpecification << "[\"outputDofs\"] contains " << nOutputDofSlots << " lists of dofs.";
       }
 
       // create python list [fromSlotNo, [toSlotNos], fromArrayIndex, toArrayIndex]
       // this list is needed as argument for the callback function
       std::vector<int> slotNosList{
-        newDofsMapping.outputConnectorSlotNoFrom, newDofsMapping.outputConnectorSlotNosTo[0],
-        newDofsMapping.outputConnectorArrayIndexFrom, newDofsMapping.outputConnectorArrayIndexTo
+        newDofsMapping.connectorSlotNoFrom, newDofsMapping.connectorSlotNosTo[0],
+        newDofsMapping.slotConnectorArrayIndexFrom, newDofsMapping.slotConnectorArrayIndexTo
       };
       newDofsMapping.slotNosPy = PythonUtility::convertToPython<std::vector<int>>::get(slotNosList);
 
       // set the second list item in [fromSlotNo, [...], fromArrayIndex, toArrayIndex] to [toSlotNo0, toSlotNo1, ...]
-      std::vector<int> outputConnectorSlotNosToList = newDofsMapping.outputConnectorSlotNosTo;
-      PyObject *outputConnectorSlotNosToListPy = PythonUtility::convertToPython<std::vector<int>>::get(outputConnectorSlotNosToList);
+      std::vector<int> connectorSlotNosToList = newDofsMapping.connectorSlotNosTo;
+      PyObject *connectorSlotNosToListPy = PythonUtility::convertToPython<std::vector<int>>::get(connectorSlotNosToList);
 
-      PyList_SetItem(newDofsMapping.slotNosPy, Py_ssize_t(1), outputConnectorSlotNosToListPy);
+      PyList_SetItem(newDofsMapping.slotNosPy, Py_ssize_t(1), connectorSlotNosToListPy);
 
       // initialize the user buffer
       newDofsMapping.buffer = PyDict_New();
@@ -219,8 +219,8 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
     if (object != Py_None)
       newDofsMapping.dofsMapping = PythonUtility::convertFromPython<std::map<int,std::vector<int>>>::get(object);
 
-    LOG(DEBUG) << "Parsed mapping slots " << newDofsMapping.outputConnectorSlotNoFrom << " (arrayIndex " << newDofsMapping.outputConnectorArrayIndexFrom
-      << ") -> " << newDofsMapping.outputConnectorSlotNosTo << " (arrayIndex " << newDofsMapping.outputConnectorArrayIndexTo << "), dofNos "
+    LOG(DEBUG) << "Parsed mapping slots " << newDofsMapping.connectorSlotNoFrom << " (arrayIndex " << newDofsMapping.slotConnectorArrayIndexFrom
+      << ") -> " << newDofsMapping.connectorSlotNosTo << " (arrayIndex " << newDofsMapping.slotConnectorArrayIndexTo << "), dofNos "
       << (newDofsMapping.dofNoIsGlobalFrom? "global" : "local") << " -> " << (newDofsMapping.dofNoIsGlobalTo? "global" : "local") << ", mode: " << mode;
     LOG(DEBUG) << "dofsMapping: " << newDofsMapping.dofsMapping;
 
@@ -234,31 +234,31 @@ getMeshPartitionBase(int slotNo, int arrayIndex)
 {
   /*
   typedef std::tuple<
-    std::shared_ptr<typename NestedSolverType::OutputConnectorDataType>,
-    std::shared_ptr<OutputConnectorData<FunctionSpaceType,1>>
-  > OutputConnectorDataType;
+    std::shared_ptr<typename NestedSolverType::SlotConnectorDataType>,
+    std::shared_ptr<SlotConnectorData<FunctionSpaceType,1>>
+  > SlotConnectorDataType;
   */
 
   // need function space of affected field variables
-  int nSlotsNestedSolver = OutputConnectorDataHelper<typename NestedSolverType::OutputConnectorDataType>::nSlots(
-    std::get<0>(*data_.getOutputConnectorData())
+  int nSlotsNestedSolver = SlotConnectorDataHelper<typename NestedSolverType::SlotConnectorDataType>::nSlots(
+    std::get<0>(*data_.getSlotConnectorData())
   );
 
   if (slotNo < nSlotsNestedSolver)
   {
-    return OutputConnectorDataHelper<typename NestedSolverType::OutputConnectorDataType>::getMeshPartitionBase(
-      std::get<0>(*data_.getOutputConnectorData()), slotNo, arrayIndex
+    return SlotConnectorDataHelper<typename NestedSolverType::SlotConnectorDataType>::getMeshPartitionBase(
+      std::get<0>(*data_.getSlotConnectorData()), slotNo, arrayIndex
     );
   }
   else
   {
     int index = slotNo - nSlotsNestedSolver;
-    int nFieldVariables = std::get<1>(*data_.getOutputConnectorData())->variable1.size();
+    int nFieldVariables = std::get<1>(*data_.getSlotConnectorData())->variable1.size();
     if (index < nFieldVariables)
     {
 
       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> fieldVariable
-        = std::get<1>(*data_.getOutputConnectorData())->variable1[index].values;
+        = std::get<1>(*data_.getSlotConnectorData())->variable1[index].values;
 
       if (fieldVariable->functionSpace())
       {
@@ -284,13 +284,13 @@ void MapDofs<FunctionSpaceType,NestedSolverType>::
 slotGetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values)
 {
   // need function space of affected field variables
-  int nSlotsNestedSolver = OutputConnectorDataHelper<typename NestedSolverType::OutputConnectorDataType>::nSlots(
-    std::get<0>(*data_.getOutputConnectorData())
+  int nSlotsNestedSolver = SlotConnectorDataHelper<typename NestedSolverType::SlotConnectorDataType>::nSlots(
+    std::get<0>(*data_.getSlotConnectorData())
   );
   if (slotNo < nSlotsNestedSolver)
   {
-    OutputConnectorDataHelper<typename NestedSolverType::OutputConnectorDataType>::slotGetValues(
-      std::get<0>(*data_.getOutputConnectorData()), slotNo, arrayIndex, dofNosLocal, values
+    SlotConnectorDataHelper<typename NestedSolverType::SlotConnectorDataType>::slotGetValues(
+      std::get<0>(*data_.getSlotConnectorData()), slotNo, arrayIndex, dofNosLocal, values
     );
   }
   else
@@ -298,9 +298,9 @@ slotGetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLoc
     // get the field variable and component no for this slot
     int index = slotNo - nSlotsNestedSolver;
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> fieldVariable
-      = std::get<1>(*data_.getOutputConnectorData())->variable1[index].values;
+      = std::get<1>(*data_.getSlotConnectorData())->variable1[index].values;
 
-    int componentNo = std::get<1>(*data_.getOutputConnectorData())->variable1[index].componentNo;  // should be 0
+    int componentNo = std::get<1>(*data_.getSlotConnectorData())->variable1[index].componentNo;  // should be 0
 
     // get the actual values
     fieldVariable->getValues(componentNo, dofNosLocal, values);
@@ -315,13 +315,13 @@ void MapDofs<FunctionSpaceType,NestedSolverType>::
 slotSetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode)
 {
   // need function space of affected field variables
-  int nSlotsNestedSolver = OutputConnectorDataHelper<typename NestedSolverType::OutputConnectorDataType>::nSlots(
-    std::get<0>(*data_.getOutputConnectorData())
+  int nSlotsNestedSolver = SlotConnectorDataHelper<typename NestedSolverType::SlotConnectorDataType>::nSlots(
+    std::get<0>(*data_.getSlotConnectorData())
   );
   if (slotNo < nSlotsNestedSolver)
   {
-    OutputConnectorDataHelper<typename NestedSolverType::OutputConnectorDataType>::slotSetValues(
-      std::get<0>(*data_.getOutputConnectorData()), slotNo, arrayIndex, dofNosLocal, values, petscInsertMode
+    SlotConnectorDataHelper<typename NestedSolverType::SlotConnectorDataType>::slotSetValues(
+      std::get<0>(*data_.getSlotConnectorData()), slotNo, arrayIndex, dofNosLocal, values, petscInsertMode
     );
   }
   else
@@ -329,9 +329,9 @@ slotSetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLoc
     // get the field variable and component no for this slot
     int index = slotNo - nSlotsNestedSolver;
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> fieldVariable
-      = std::get<1>(*data_.getOutputConnectorData())->variable1[index].values;
+      = std::get<1>(*data_.getSlotConnectorData())->variable1[index].values;
 
-    int componentNo = std::get<1>(*data_.getOutputConnectorData())->variable1[index].componentNo;  // should be 0
+    int componentNo = std::get<1>(*data_.getSlotConnectorData())->variable1[index].componentNo;  // should be 0
 
     LOG(DEBUG) << "*slot " << slotNo << ": in fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
       << ", set dofs " << dofNosLocal << " to values " << values;
@@ -345,13 +345,13 @@ void MapDofs<FunctionSpaceType,NestedSolverType>::
 slotSetRepresentationGlobal(int slotNo, int arrayIndex)
 {
   // need function space of affected field variables
-  int nSlotsNestedSolver = OutputConnectorDataHelper<typename NestedSolverType::OutputConnectorDataType>::nSlots(
-    std::get<0>(*data_.getOutputConnectorData())
+  int nSlotsNestedSolver = SlotConnectorDataHelper<typename NestedSolverType::SlotConnectorDataType>::nSlots(
+    std::get<0>(*data_.getSlotConnectorData())
   );
   if (slotNo < nSlotsNestedSolver)
   {
-    OutputConnectorDataHelper<typename NestedSolverType::OutputConnectorDataType>::slotSetRepresentationGlobal(
-      std::get<0>(*data_.getOutputConnectorData()), slotNo, arrayIndex
+    SlotConnectorDataHelper<typename NestedSolverType::SlotConnectorDataType>::slotSetRepresentationGlobal(
+      std::get<0>(*data_.getSlotConnectorData()), slotNo, arrayIndex
     );
   }
   else
@@ -359,7 +359,7 @@ slotSetRepresentationGlobal(int slotNo, int arrayIndex)
     // get the field variable and component no for this slot
     int index = slotNo - nSlotsNestedSolver;
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> fieldVariable
-      = std::get<1>(*data_.getOutputConnectorData())->variable1[index].values;
+      = std::get<1>(*data_.getSlotConnectorData())->variable1[index].values;
     fieldVariable->setRepresentationGlobal();
   }
 }
@@ -374,11 +374,11 @@ initializeCommunication(std::vector<DofsMappingType> &mappings)
   for (DofsMappingType &mapping : mappings)
   {
     // get the mesh partition of the "from" field variable
-    std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBaseFrom = getMeshPartitionBase(mapping.outputConnectorSlotNoFrom, mapping.outputConnectorArrayIndexFrom);
+    std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBaseFrom = getMeshPartitionBase(mapping.connectorSlotNoFrom, mapping.slotConnectorArrayIndexFrom);
 
     if (!meshPartitionBaseFrom)
-      LOG(FATAL) << "MapDofs: Could not get mesh partition for \"from\" function space for mapping " << mapping.outputConnectorSlotNoFrom
-        << " -> " << mapping.outputConnectorSlotNosTo;
+      LOG(FATAL) << "MapDofs: Could not get mesh partition for \"from\" function space for mapping " << mapping.connectorSlotNoFrom
+        << " -> " << mapping.connectorSlotNosTo;
 
     if (mapping.mode == DofsMappingType::modeCallback)
     {
@@ -408,19 +408,19 @@ initializeCommunication(std::vector<DofsMappingType> &mappings)
       {
         // transform the global input dofs to local input dofs
         std::vector<std::vector<dof_no_t>> localDofsMapping;
-        localDofsMapping.resize(mapping.outputConnectorSlotNosTo.size());
+        localDofsMapping.resize(mapping.connectorSlotNosTo.size());
 
         // loop over the "to" slots
-        for (int toSlotIndex = 0; toSlotIndex < mapping.outputConnectorSlotNosTo.size(); toSlotIndex++)
+        for (int toSlotIndex = 0; toSlotIndex < mapping.connectorSlotNosTo.size(); toSlotIndex++)
         {
-          int outputConnectorSlotNoTo = mapping.outputConnectorSlotNosTo[toSlotIndex];
+          int connectorSlotNoTo = mapping.connectorSlotNosTo[toSlotIndex];
 
           // get the mesh partition of the "to" field variable
-          std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBaseTo = getMeshPartitionBase(outputConnectorSlotNoTo, mapping.outputConnectorArrayIndexTo);
+          std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBaseTo = getMeshPartitionBase(connectorSlotNoTo, mapping.slotConnectorArrayIndexTo);
 
           if (!meshPartitionBaseTo)
-            LOG(FATAL) << "MapDofs: Could not get mesh partition for \"to\" function space for mapping " << mapping.outputConnectorSlotNoFrom
-              << " -> " << outputConnectorSlotNoTo;
+            LOG(FATAL) << "MapDofs: Could not get mesh partition for \"to\" function space for mapping " << mapping.connectorSlotNoFrom
+              << " -> " << connectorSlotNoTo;
 
           for (std::vector<dof_no_t>::iterator iter = mapping.outputDofs[toSlotIndex].begin(); iter != mapping.outputDofs[toSlotIndex].end(); iter++)
           {
@@ -446,11 +446,11 @@ initializeCommunication(std::vector<DofsMappingType> &mappings)
       // mode is not callback, this means we have exactly one output slot
 
       // get the mesh partition of the "to" field variable
-      std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBaseTo = getMeshPartitionBase(mapping.outputConnectorSlotNosTo[0], mapping.outputConnectorArrayIndexTo);
+      std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBaseTo = getMeshPartitionBase(mapping.connectorSlotNosTo[0], mapping.slotConnectorArrayIndexTo);
 
       if (!meshPartitionBaseTo)
-        LOG(FATAL) << "MapDofs: Could not get mesh partition for \"to\" function space for mapping " << mapping.outputConnectorSlotNoFrom
-          << " -> " << mapping.outputConnectorSlotNosTo[0];
+        LOG(FATAL) << "MapDofs: Could not get mesh partition for \"to\" function space for mapping " << mapping.connectorSlotNoFrom
+          << " -> " << mapping.connectorSlotNosTo[0];
 
       // convert from dof nos from global to local nos, discard values that are not on the local subdomain
       if (mapping.dofNoIsGlobalFrom)
@@ -515,8 +515,8 @@ initializeCommunication(std::vector<DofsMappingType> &mappings)
           node_no_t nodeNoLocal = meshPartitionBaseTo->getNodeNoLocalFromGlobalNatural(nodeNoGlobalNatural, isOnLocalDomain);
 
           if (!isOnLocalDomain)
-            LOG(FATAL) << "In MapDofs for mapping between output connector slots " << mapping.outputConnectorSlotNoFrom
-              << " -> " << mapping.outputConnectorSlotNosTo
+            LOG(FATAL) << "In MapDofs for mapping between connector slots " << mapping.connectorSlotNoFrom
+              << " -> " << mapping.connectorSlotNosTo
               << ", node in global natural numbering " << nodeNoGlobalNatural << " is not on local domain.";
 
           dof_no_t dofNoLocal = nodeNoLocal;
@@ -574,7 +574,7 @@ initializeCommunication(std::vector<DofsMappingType> &mappings)
       // std::map<int,std::vector<dof_no_t>> dofNosLocalOfValuesToSendToRanks;      //< for every rank the local dof nos of the values that will be sent to the rank
       // std::vector<dof_no_t> allDofNosToSetLocal;                            //< for the received values the local dof nos where to store the values in the field variable
 
-      LOG(DEBUG) << "initialized mapping slots " << mapping.outputConnectorSlotNoFrom << " -> " << mapping.outputConnectorSlotNosTo;
+      LOG(DEBUG) << "initialized mapping slots " << mapping.connectorSlotNoFrom << " -> " << mapping.connectorSlotNosTo;
       LOG(DEBUG) << "  dofsMapping (local: " << (mapping.dofNoIsGlobalTo? "global" : "local") << ": " << mapping.dofsMapping;
       LOG(DEBUG) << "  dofNosLocalOfValuesToSendToRanks: " << mapping.dofNosLocalOfValuesToSendToRanks;
       LOG(DEBUG) << "  allDofNosToSetLocal:         " << mapping.allDofNosToSetLocal;

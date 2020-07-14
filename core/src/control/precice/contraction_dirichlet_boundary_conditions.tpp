@@ -32,7 +32,7 @@ initialize()
   // initialize() will be called before the simulation starts.
 
   // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver("PreciceAdapter::ContractionDirichletBoundaryConditions", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
+  DihuContext::solverStructureVisualizer()->addSolver("PreciceAdapter::ContractionDirichletBoundaryConditions", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means slot connector data is shared with the first subsolver
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();
@@ -46,8 +46,8 @@ initialize()
   // indicate in solverStructureVisualizer that the child solver initialization is done
   DihuContext::solverStructureVisualizer()->endChild();
 
-  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
   // initialize precice
   const std::string solverName = "MuscleSolver";
@@ -538,14 +538,14 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
+//! the transfer is done by the slot_connector_data_transfer class
 template<typename NestedSolver>
-std::shared_ptr<typename ContractionDirichletBoundaryConditions<NestedSolver>::OutputConnectorDataType> ContractionDirichletBoundaryConditions<NestedSolver>::
-getOutputConnectorData()
+std::shared_ptr<typename ContractionDirichletBoundaryConditions<NestedSolver>::SlotConnectorDataType> ContractionDirichletBoundaryConditions<NestedSolver>::
+getSlotConnectorData()
 {
   //! This is relevant only, if this solver is part of a splitting or coupling scheme. Then this method returns the values/variables that will be
   // transferred to the other solvers. We can just reuse the values of the nestedSolver_.
-  return nestedSolver_.getOutputConnectorData();
+  return nestedSolver_.getSlotConnectorData();
 }
 
 }  // namespace

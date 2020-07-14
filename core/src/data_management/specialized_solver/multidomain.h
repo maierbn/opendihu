@@ -22,7 +22,7 @@ public:
 
   typedef FieldVariable::FieldVariable<FunctionSpaceType,1> FieldVariableType;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,3> GradientFieldVariableType;
-  typedef std::vector<std::shared_ptr<OutputConnectorData<FunctionSpaceType,1>>> OutputConnectorDataType;   // contains V_mk^(i), V_mk^(i+1) for every compartment k, activeStress_k, activeStressTotal_
+  typedef std::vector<std::shared_ptr<SlotConnectorData<FunctionSpaceType,1>>> SlotConnectorDataType;   // contains V_mk^(i), V_mk^(i+1) for every compartment k, activeStress_k, activeStressTotal_
 
   //! constructor
   Multidomain(DihuContext context);
@@ -67,7 +67,7 @@ public:
   void print();
 
   //! get the output connection da
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
 
   //! field variables that will be output by outputWriters
@@ -103,7 +103,7 @@ private:
   std::shared_ptr<FieldVariableType> zero_;                                         //< a field variable with constant value of zero, needed for the nested rhs vector
   //std::vector<Vec> subvectorsSolution_;                                           //< a vector of the Petsc vecs that are used during computation
 
-  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;                    //< the object that stores all components of field variables that will be transferred to other solvers
+  std::shared_ptr<SlotConnectorDataType> slotConnectorData_;                    //< the object that stores all components of field variables that will be transferred to other solvers
 
 };
 

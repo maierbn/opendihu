@@ -70,8 +70,8 @@ public:
   //! if the class should handle Dirichlet boundary conditions, this does not apply here
   void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled){};
 
-  //! after this call, getOutputConnectorData() will be called, transfer algebraic field variable to global representation
-  void prepareForGetOutputConnectorData();
+  //! after this call, getSlotConnectorData() will be called, transfer algebraic field variable to global representation
+  void prepareForGetSlotConnectorData();
 
   //! the FastMonodomainSolver accesses the internals of CellmlAdapter
   template<int a, int b, typename c> friend class FastMonodomainSolverBase;

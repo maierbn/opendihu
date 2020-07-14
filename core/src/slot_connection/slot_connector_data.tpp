@@ -1,4 +1,4 @@
-#include "output_connector_data_transfer/output_connector_data.h"
+#include "slot_connection/slot_connector_data.h"
 
 namespace Data
 {
@@ -44,28 +44,28 @@ std::ostream &operator<<(std::ostream &stream, const ComponentOfFieldVariable<Fu
 }
 
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
-void OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2>::
+void SlotConnectorData<FunctionSpaceType,nComponents1,nComponents2>::
 addFieldVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents1>> fieldVariable, int componentNo)
 {
   variable1.push_back(ComponentOfFieldVariable<FunctionSpaceType,nComponents1>(fieldVariable, componentNo));
 }
 
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
-void OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2>::
+void SlotConnectorData<FunctionSpaceType,nComponents1,nComponents2>::
 addFieldVariable2(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents2>> fieldVariable, int componentNo)
 {
   variable2.push_back(ComponentOfFieldVariable<FunctionSpaceType,nComponents2>(fieldVariable, componentNo));
 }
 
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
-void OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2>::
+void SlotConnectorData<FunctionSpaceType,nComponents1,nComponents2>::
 addGeometryField(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> _geometryField)
 {
   geometryField = _geometryField;
 }
 
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
-int OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2>::
+int SlotConnectorData<FunctionSpaceType,nComponents1,nComponents2>::
 nSlots()
 {
   return variable1.size() + variable2.size();
@@ -73,7 +73,7 @@ nSlots()
 
 // operator used for output
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
-std::ostream &operator<<(std::ostream &stream, const OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2> &rhs)
+std::ostream &operator<<(std::ostream &stream, const SlotConnectorData<FunctionSpaceType,nComponents1,nComponents2> &rhs)
 {
   if (rhs.variable1.empty())
     stream << "\t(variable1 empty\n";
@@ -102,15 +102,15 @@ std::ostream &operator<<(std::ostream &stream, const OutputConnectorData<Functio
 
 // operator used for output
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
-std::ostream &operator<<(std::ostream &stream, const std::shared_ptr<OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2>> &rhs)
+std::ostream &operator<<(std::ostream &stream, const std::shared_ptr<SlotConnectorData<FunctionSpaceType,nComponents1,nComponents2>> &rhs)
 {
   //stream << rhs.get();
   if (rhs)
     stream << *rhs;
   else
   {
-    // the program should not have any OutputConnectorData pointer uninitialized any time after initialize()
-    LOG(FATAL) << "OutputConnectorData is null!";
+    // the program should not have any SlotConnectorData pointer uninitialized any time after initialize()
+    LOG(FATAL) << "SlotConnectorData is null!";
   }
   return stream;
 }

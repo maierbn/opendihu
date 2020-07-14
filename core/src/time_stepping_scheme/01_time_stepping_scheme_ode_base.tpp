@@ -125,13 +125,13 @@ checkForNanInf(int timeStepNo, double currentTime)
 }
 
 template<typename FunctionSpaceType, int nComponents>
-std::shared_ptr<typename TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::OutputConnectorDataType>
+std::shared_ptr<typename TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::SlotConnectorDataType>
 TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  prepareForGetOutputConnectorData();
+  prepareForGetSlotConnectorData();
 
-  return this->data_->getOutputConnectorData();
+  return this->data_->getSlotConnectorData();
 }
 
 

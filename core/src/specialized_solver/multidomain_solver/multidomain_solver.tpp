@@ -197,7 +197,7 @@ initializeObjects()
   dataMultidomain_.setFunctionSpace(finiteElementMethodPotentialFlow_.functionSpace());
   dataMultidomain_.initialize(nCompartments_);
 
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
   LOG(INFO) << "Run potential flow simulation for fiber directions.";
 
@@ -810,15 +810,15 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
+//! the transfer is done by the slot_connector_data_transfer class
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
-std::shared_ptr<typename MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::OutputConnectorDataType>
+std::shared_ptr<typename MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::SlotConnectorDataType>
 MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  LOG(DEBUG) << "getOutputConnectorData, size of Vm vector: " << this->dataMultidomain_.transmembranePotential().size();
+  LOG(DEBUG) << "getSlotConnectorData, size of Vm vector: " << this->dataMultidomain_.transmembranePotential().size();
 
-  return dataMultidomain_.getOutputConnectorData();
+  return dataMultidomain_.getSlotConnectorData();
 }
 
 } // namespace TimeSteppingScheme

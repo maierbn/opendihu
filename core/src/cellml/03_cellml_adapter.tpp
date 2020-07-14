@@ -325,11 +325,11 @@ checkCallbackAlgebraics(double currentTime, double *statesLocal, double *algebra
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
-prepareForGetOutputConnectorData()
+prepareForGetSlotConnectorData()
 {
-  // This method is called before getOutputConnectorData() of the timestepping scheme.
+  // This method is called before getSlotConnectorData() of the timestepping scheme.
 
-  // make representation of algebraics global, such that field variables in outputConnectorData that share the Petsc Vec's with
+  // make representation of algebraics global, such that field variables in slotConnectorData that share the Petsc Vec's with
   // algebraics have the correct data assigned
   LOG(DEBUG) << "Transform algebraics and parameters field variables to global representation in order to transfer them to other solver, such that extracted component-field variables in timestepping scheme have the correct values.";
 

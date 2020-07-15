@@ -54,7 +54,7 @@ motor_units = [
 
 
 # for debugging use the following, non-physiological values. This produces a fast simulation
-end_time = 4 #???
+end_time = 2 #???
 Am = 1.0
 sampling_stride_z = 200 #74 200
 motor_units = motor_units[0:2]    # only 2 motor units motor_units = motor_units[0:2]
@@ -196,9 +196,9 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
                 states[key] = 20.0
                 #print("set states at ({},{},{}) to 40".format(i,j,k))
 
-    print("states: {}".format(states))
-    print("n_nodes: ({},{},{})".format(n_nodes_x, n_nodes_y, n_nodes_z))
-    print("n_nodes_global: {}, time_step_no: {}, current_time: {}, compartment_no: {}".format(n_nodes_global, time_step_no, current_time, compartment_no))
+    #print("states: {}".format(states))
+    #print("n_nodes: ({},{},{})".format(n_nodes_x, n_nodes_y, n_nodes_z))
+    #print("n_nodes_global: {}, time_step_no: {}, current_time: {}, compartment_no: {}".format(n_nodes_global, time_step_no, current_time, compartment_no))
     #wait = input("Press any key to continue...")
     
 # boundary conditions for potential flow
@@ -343,7 +343,7 @@ config = {
               # stimulation callbacks
               #"statesInitialValues": [],
               "setSpecificStatesFunction":              set_specific_states,                    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-              "setSpecificStatesCallInterval":          1, #int(1./stimulation_frequency/dt_0D),    # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
+              "setSpecificStatesCallInterval":          int(1./stimulation_frequency/dt_0D),    # set_specific_states should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
               "setSpecificStatesCallFrequency":         0,                                      # set_specific_states should be called  stimulation_frequency times per ms
               "setSpecificStatesFrequencyJitter":       0,                                      # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
               "setSpecificStatesRepeatAfterFirstCall":  0.01,                                   # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
@@ -363,7 +363,7 @@ config = {
                 #{"format": "Paraview", "outputInterval": 1, "filename": "out/output", "binary": False, "fixedFormat": False, "combineFiles": True},
                 #{"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
                 #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_multidomain*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-                #{"format": "PythonFile", "filename": "out/cellml", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+                {"format": "PythonFile", "filename": "out/cellml", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
               ]
             }
           }

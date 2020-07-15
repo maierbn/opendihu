@@ -58,8 +58,8 @@ motor_units = [
 # for debugging use the following, non-physiological values. This produces a fast simulation
 #if True:
 #end_time = 0.1
-end_time = 4
-ntime = 1337
+end_time = 2
+ntime = 2672 #1337
 Am = 1.0
 sampling_stride_z = 200 #muscle 74 200
 motor_units = motor_units[0:2]    # only 2 motor units [0:2] [0:1]
@@ -199,9 +199,9 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
                   states[key] = 20.0
                   #print("set states at ({},{},{}) to 40".format(i,j,k))
 
-      print("states: {}".format(states))
-      print("n_nodes: ({},{},{})".format(n_nodes_x, n_nodes_y, n_nodes_z))
-      print("n_nodes_global: {}, time_step_no: {}, current_time: {}, compartment_no: {}".format(n_nodes_global, time_step_no, current_time, compartment_no))
+      #print("states: {}".format(states))
+      #print("n_nodes: ({},{},{})".format(n_nodes_x, n_nodes_y, n_nodes_z))
+      #print("n_nodes_global: {}, time_step_no: {}, current_time: {}, compartment_no: {}".format(n_nodes_global, time_step_no, current_time, compartment_no))
       #wait = input("Press any key to continue...")
     
 # boundary conditions for potential flow
@@ -386,7 +386,7 @@ config = {
       },
       "OutputWriter": [
         #{"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": False, "fixedFormat": False, "combineFiles": False, "fileNumbering": "timeStepIndex"},
-        {"format": "PythonFile", "filename": "out/fiberp", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+        #{"format": "PythonFile", "filename": "out/fiberp", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "timeStepIndex"},
 
       ]
     } for j in range (NumberOfMultiDomainSolvers)] 

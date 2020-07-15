@@ -1,12 +1,17 @@
-Output Connector Slots
+Connector Slots
 ===================================
 
-Each solver has multiple *output connector slots* where field variables are exposed to surrounding solvers. 
+Each solver has multiple *connector slots* where field variables are exposed to surrounding solvers. 
 When using a :doc:`/settings/coupling` or :doc:`/settings/splitting` scheme, data will be transferred between the two involved solvers.
 
 After solution of term 1 is complete, all slots of term 2 will get the values of the connected slots from term 1. After the solution of term 2 is complete, the opposite connections will be used.
 
-The connections between the slots of two solvers has to be specified in the settings.
+The connections between the slots of two solvers have to be specified in the settings. There are two possibilities
+
+* Either in the Coupling or Splitting scheme itself using the ``connectedSlotsTerm1To2`` and ``connectedSlotsTerm2To1`` options.
+* Or globally with the ``"connectedSlots"`` option and referencing the slots by slot names.
+
+The first possibility is shown below.
 The following is an example of two solvers within a `StrangSplitting`:
 
 .. code-block:: python
@@ -126,3 +131,28 @@ The following is an example for such a file. It is from the ``fibers_emg`` examp
     ═══ ... reuse field variable, no copy
     ──> ... copy data in direction of arrow
 
+Using global slot names
+-----------------------------------
+Another possibility that is advantageous for more complex examples is to specify all slot connections globally.
+This required that all connector slots have names assigned. These names have to be set by options in the solvers, usually ``slotNames`` (e.g. :doc:`static_bidomain_solver`, :doc:`muscle_contraction_solver`, :doc:`quasi_static_linear_elasticity_solver`) or ``additionalSlotNames`` (e.g. any :doc:`timestepping_schemes_ode`, :doc:`map_dofs`). For the :doc:`cellml_adapter`, the slot names are directly given in the ``mappings`` option.
+
+Then you can define the option
+
+.. code-block:: python
+
+  config = {
+    ...
+    "connectedSlots": [
+      ("mn_out", "mn"),
+      ("in_g",   "in_in"),
+      ("msin_s", "msin_i"),
+      ("msin_i", "msin_m"),
+      ("gt",     "gt_in"),
+      ("ms",     "ms_in"),
+    ],
+    ...
+  }
+
+It is a list of tuples with ``("fromName", "toName")`` entries. 
+
+Note that the slot names must be 6 characters long or less. This restriction is because of the solver structure visualization. (Actually they can be any length but only the first 6 characters will be shown in the solver structure file.)

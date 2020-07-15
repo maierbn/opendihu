@@ -41,6 +41,7 @@ The python settings are as given below:
     "meshName":            "mesh",        # the mesh to use for the field variables
     "numberTimeSteps":     1,             # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step
     "timeStepOutputInterval": 10,         # if the time step should be written to console, a value > 1 produces no output
+    "slotNames":           ["reac"],      # list of names of the connector slots, maximum length is 6 characters per name
     
     # a list of field variables that will get values assigned in every timestep, by the provided callback function
     "fieldVariables1": [
@@ -61,10 +62,14 @@ meshName
 ----------
 The :doc:`mesh` on which the field variable will live. It is also possible to specify the mesh in-line, as explained for :ref:`Finite Element Method <femesh>`.
 
+slotNames
+----------
+A list of strings, names for the connector slots. Each name should be smaller or equal than 6 characters. 
+In general, named slots are used to connect the slots from a global setting "connectedSlots". See :doc:`output_connector_slots` for details.
+
 additionalArgument
 ----------------------
 This is a custom argument that will be passed to the fieldVariables callback functions as the last argument.
-
 
 
 Callback Function
@@ -103,4 +108,15 @@ The following example also shows, how one can iterate over the local values.
       x = np.linalg.norm(np.array((i,j)) - center)
       values[local_dof_no] = scipy.stats.norm.pdf(x)
       
+Dummy
+=================
 
+The `Dummy` class can be used as a placeholder, e.g. in a Coupling scheme when the second Term is not yet implemented but the first one should already be tested.
+
+It is used without any template argument:
+
+.. code-block:: c
+
+  Dummy
+  
+It does not have any Python settings. Also there are no field variables and no connector slots.

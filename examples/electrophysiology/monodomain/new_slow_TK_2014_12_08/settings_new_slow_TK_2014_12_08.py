@@ -70,8 +70,8 @@ if "shorten" in cellml_file:
   mappings = {
     ("parameter", 0):           "wal_environment/I_HH",
     ("parameter", 1):           "razumova/L_S",                    # parameter 1 fiber stretch λ
-    ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
-    ("outputConnectorSlot", 1): ("intermediate", "razumova/stress"),  # expose intermediate 12 = γ to the operator splitting
+    ("connectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
+    ("connectorSlot", 1): ("intermediate", "razumova/stress"),  # expose intermediate 12 = γ to the operator splitting
   }
   parameters_initial_values = [0.0, 1.0]
   nodal_stimulation_current = 400.
@@ -81,8 +81,8 @@ elif "new_slow_TK_2014_12_08" in cellml_file:
   mappings = {
     ("parameter", 0):           "wal_environment/I_HH",
     ("parameter", 1):           "razumova/L_S",                    # parameter 1 fiber stretch λ
-    ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
-    ("outputConnectorSlot", 1): ("intermediate", "razumova/stress"),  # expose intermediate 12 = γ to the operator splitting
+    ("connectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
+    ("connectorSlot", 1): ("intermediate", "razumova/stress"),  # expose intermediate 12 = γ to the operator splitting
   }
   parameters_initial_values = [0.0, 1.0]
   nodal_stimulation_current = 400.

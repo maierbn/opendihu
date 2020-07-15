@@ -71,11 +71,11 @@ if rank_no == 0:
 if "hodgkin_huxley" in cellml_file:
   mappings = {
     ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
-    ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
-    ("outputConnectorSlot", 1): ("state", "sodium_channel_m_gate/m"),     # expose state 1 = m
-    ("outputConnectorSlot", 2): ("state", "sodium_channel_h_gate/h"),     # expose state 2 = h
-    ("outputConnectorSlot", 3): ("state", "potassium_channel_n_gate/n"),  # expose state 3 = n
-    ("outputConnectorSlot", 4): ("algebraic", "leakage_current/i_L"),  # expose algebraic 8 = leakage current
+    ("connectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+    ("connectorSlot", 1): ("state", "sodium_channel_m_gate/m"),     # expose state 1 = m
+    ("connectorSlot", 2): ("state", "sodium_channel_h_gate/h"),     # expose state 2 = h
+    ("connectorSlot", 3): ("state", "potassium_channel_n_gate/n"),  # expose state 3 = n
+    ("connectorSlot", 4): ("algebraic", "leakage_current/i_L"),  # expose algebraic 8 = leakage current
   }
   parameters_initial_values = [0.0]
   nodal_stimulation_current = 40.

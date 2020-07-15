@@ -36,4 +36,5 @@ The framework and its applications are constantly extended. However, there are s
    user/installation
    user/framework_structure
    user/getting_started
+   user/examples
    

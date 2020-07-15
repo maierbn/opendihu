@@ -10,5 +10,4 @@ Import('env')     # import Environment object from calling SConstruct
 # if the option no_examples was given, quit the script
 if not env['no_examples']:
   env.Program(target = 'lin_elasticity_with_fibers', source = "src/lin_elasticity_with_fibers.cpp")
-  #env.Program(target = 'lin_elasticity_with_fibers_quadratic', source = "src/quadratic.cpp")
   

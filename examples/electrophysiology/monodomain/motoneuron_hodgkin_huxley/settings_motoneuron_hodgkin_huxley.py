@@ -43,8 +43,8 @@ motoneuron_mappings = {
   ("parameter", 2):           "firing_threshold/V_firing",
   ("parameter", 3):           "firing_threshold/V_extern_in",
   
-  ("outputConnectorSlot", 0): "firing_threshold/V_extern_in",
-  ("outputConnectorSlot", 1): "firing_threshold/V_extern_out",
+  ("connectorSlot", 0): "firing_threshold/V_extern_in",
+  ("connectorSlot", 1): "firing_threshold/V_extern_out",
 }
 
 # set values for parameters: [i_Stim, V_threshold, V_firing, V_extern_in], 
@@ -67,7 +67,7 @@ if rank_no == 0:
 if "hodgkin_huxley" in monodomain_cellml_file:
   mappings = {
     ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
-    ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+    ("connectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
   }
   parameters_initial_values = [0.0]
     
@@ -172,8 +172,8 @@ config = {
         # map from motoneuronMesh (algebraics) to 3Dmesh (solution)
         "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
           {                                                 
-            "fromOutputConnectorSlotNo":        2,                    # which fiber/compartment
-            "toOutputConnectorSlotNo":          0,
+            "fromConnectorSlotNo":        2,                    # which fiber/compartment
+            "toConnectorSlotNo":          0,
             "fromOutputConnectorArrayIndex":    0,
             "toOutputConnectorArrayIndex":      0,
             "fromDofNosNumbering":              "local",
@@ -186,8 +186,8 @@ config = {
         # map from 3Dmesh to motoneuronMesh
         "afterComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
           {                                                 
-            "fromOutputConnectorSlotNo":        0,
-            "toOutputConnectorSlotNo":          3,
+            "fromConnectorSlotNo":        0,
+            "toConnectorSlotNo":          3,
             "fromOutputConnectorArrayIndex":    0,                    # which fiber/compartment
             "toOutputConnectorArrayIndex":      0,
             "fromDofNosNumbering":              "global",

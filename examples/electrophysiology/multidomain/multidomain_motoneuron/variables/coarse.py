@@ -105,7 +105,7 @@ motor_units = [
 motor_units = motor_units[0:3]  # only use 3 motor units
 motoneuron_mappings = {
   ("parameter", 0):           "membrane/i_Stim",  
-  ("outputConnectorSlot", 0): "membrane/V",
+  ("connectorSlot", 0): "membrane/V",
 }
 
 

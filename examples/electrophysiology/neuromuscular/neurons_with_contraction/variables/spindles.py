@@ -123,8 +123,8 @@ n_muscle_spindles = 1
 muscle_spindle_cellml_file = "../../../input/hodgkin_huxley_1952.cellml"
 muscle_spindle_mappings = {
   ("parameter", 0):           "membrane/i_Stim",   # stimulation
-  ("outputConnectorSlot", 0): "membrane/V",        # voltage
-  ("outputConnectorSlot", 1): "membrane/i_Stim",   # stimulation
+  ("connectorSlot", 0): "membrane/V",        # voltage
+  ("connectorSlot", 1): "membrane/i_Stim",   # stimulation
 }
 muscle_spindle_parameters_initial_values = [0]    # [i_Stim]
 muscle_spindle_delay = 30             # [ms] signal delay between muscle spindle model and motoneuron model
@@ -134,8 +134,8 @@ n_golgi_tendon_organs = 1
 golgi_tendon_organ_cellml_file = "../../../input/hodgkin_huxley_1952.cellml"
 golgi_tendon_organ_mappings = {
   ("parameter", 0):           "membrane/i_Stim",   # stimulation
-  ("outputConnectorSlot", 0): "membrane/V",        # voltage
-  ("outputConnectorSlot", 1): "membrane/i_Stim",   # stimulation
+  ("connectorSlot", 0): "membrane/V",        # voltage
+  ("connectorSlot", 1): "membrane/i_Stim",   # stimulation
 }
 golgi_tendon_organ_parameters_initial_values = [0]    # [i_Stim]
 golgi_tendon_organ_delay = 30
@@ -146,8 +146,8 @@ interneuron_cellml_file = "../../../input/hodgkin_huxley_1952.cellml"
 interneuron_mappings = {
   ("parameter", 0):           "membrane/i_Stim",   # stimulation
   ("parameter", 1):           "membrane/Cm",       # stimulation
-  ("outputConnectorSlot", 0): "membrane/V",        # voltage
-  ("outputConnectorSlot", 1): "membrane/i_Stim",   # stimulation
+  ("connectorSlot", 0): "membrane/V",        # voltage
+  ("connectorSlot", 1): "membrane/i_Stim",   # stimulation
 }
 # initial values for the parameters, either once for all instances, or for all instances in array of struct ordering with nParameters_ parameters per instance: [inst0p0, inst0p1, ... inst0pn, inst1p0, inst1p1, ...]
 interneuron_parameters_initial_values = []    # [i_Stim, Cm]
@@ -160,8 +160,8 @@ motoneuron_mappings = {
   ("parameter", 0):           "motor_neuron/drive",   # stimulation
   ("parameter", 1):           "lumped_geometry_parameters/C_m",
   ("parameter", 2):           "lumped_geometry_parameters/R_md",
-  ("outputConnectorSlot", 0): "motor_neuron/V_s",     # voltage
-  ("outputConnectorSlot", 1): "motor_neuron/drive",   # stimulation
+  ("connectorSlot", 0): "motor_neuron/V_s",     # voltage
+  ("connectorSlot", 1): "motor_neuron/drive",   # stimulation
 }
 # initial values for the parameters, either once for all instances, or for all instances in array of struct ordering with nParameters_ parameters per instance: [inst0p0, inst0p1, ... inst0pn, inst1p0, inst1p1, ...]
 motoneuron_parameters_initial_values = []

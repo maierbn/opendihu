@@ -74,9 +74,9 @@ if "hodgkin_huxley-razumova" in cellml_file:
   mappings = {
     ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
     ("parameter", 1):           "Razumova/l_hs",            # parameter 1 is fiber stretch λ
-    ("outputConnectorSlot", 0): "membrane/V",               # expose Vm to the operator splitting
-    ("outputConnectorSlot", 1): "Razumova/activation",      # expose activation .
-    ("outputConnectorSlot", 2): "Razumova/activestress",
+    ("connectorSlot", 0): "membrane/V",               # expose Vm to the operator splitting
+    ("connectorSlot", 1): "Razumova/activation",      # expose activation .
+    ("connectorSlot", 2): "Razumova/activestress",
    }
   parameters_initial_values = [0.0, 1.0]
   nodal_stimulation_current = 400.

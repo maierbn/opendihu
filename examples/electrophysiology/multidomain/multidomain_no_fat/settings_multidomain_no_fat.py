@@ -102,7 +102,7 @@ if "hodgkin_huxley" in cellml_file:
   # parameters: I_stim
   mappings = {
     ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
-    ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+    ("connectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
   }
   parameters_initial_values = [0.0]                         # initial value for stimulation current
   nodal_stimulation_current = 40.                           # not used

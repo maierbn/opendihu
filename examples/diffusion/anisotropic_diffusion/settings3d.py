@@ -1,1 +1,0 @@
-/store/software/performance/opendihu/10_anisotropic_diffusion/anisotropic_diffusion/settings.py

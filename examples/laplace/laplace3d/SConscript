@@ -12,8 +12,7 @@ if not env['no_examples']:
     
   # create the main executable
   env.Program(target = 'laplace_structured_deformable', source = "src/laplace_structured_deformable.cpp")
-#  env.Program(target = 'laplace_regular_fixed', source = "src/laplace_regular_fixed.cpp")
-  #env.Program(target = 'laplace_unstructured', source = "src/laplace_unstructured.cpp")
-  #env.Program(target = 'laplace_hermite', source = "src/laplace_hermite.cpp")
-  #env.Program(target = 'laplace_hermite2', source = "src/laplace_hermite2.cpp")
-  #env.Program(target = 'petsc_test', source = "src/petsc_test.cpp")
+  env.Program(target = 'laplace_regular_fixed', source = "src/laplace_regular_fixed.cpp")
+  env.Program(target = 'laplace_unstructured', source = "src/laplace_unstructured.cpp")
+  env.Program(target = 'laplace_hermite', source = "src/laplace_hermite.cpp")
+  env.Program(target = 'petsc_test', source = "src/petsc_test.cpp")

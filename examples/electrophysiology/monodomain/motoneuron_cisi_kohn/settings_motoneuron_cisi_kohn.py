@@ -40,7 +40,7 @@ scenario_name = ""
 if "WSBM_1457_MN_Cisi_Kohn_2008" in motoneuron_cellml_file:
   motoneuron_mappings = {
     ("parameter", 0):           "motor_neuron/drive",   # stimulation
-    ("outputConnectorSlot", 0): "motor_neuron/V_s",     # voltage
+    ("connectorSlot", 0): "motor_neuron/V_s",     # voltage
   }
 
   # set values for parameters: [drive]
@@ -62,7 +62,7 @@ if rank_no == 0:
 if "hodgkin_huxley" in monodomain_cellml_file:
   mappings = {
     ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
-    ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+    ("connectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
   }
   parameters_initial_values = [0.0]
     
@@ -212,8 +212,8 @@ config = {
         # map from motoneuronMesh (algebraics) to 3Dmesh (solution)
         "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
           {                                                 
-            "fromOutputConnectorSlotNo":        2,
-            "toOutputConnectorSlotNo":          0,
+            "fromConnectorSlotNo":        2,
+            "toConnectorSlotNo":          0,
             "fromOutputConnectorArrayIndex":    0,                    # which fiber/compartment
             "toOutputConnectorArrayIndex":      0,
             "mode":                             "callback",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"

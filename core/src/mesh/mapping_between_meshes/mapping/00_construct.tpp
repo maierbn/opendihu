@@ -33,13 +33,15 @@ MappingBetweenMeshesConstruct(std::shared_ptr<FunctionSpaceSourceType> functionS
     }
     if (functionSpaceSource->nElementsLocal() == 0)
     {
-      LOG(FATAL) << "Cannot create mapping from mesh \"" << functionSpaceSource->meshName() << "\" of 0 elements (degenerate mesh with one node). \n"
-        << "Such meshes are fine in general, but you cannot map between them.";
+      LOG(ERROR) << "Cannot create mapping from mesh \"" << functionSpaceSource->meshName() << "\" of 0 elements (degenerate mesh with one node) to mesh \"" << functionSpaceTarget->meshName() << "\". \n"
+        << "Such meshes are fine in general, but you cannot map between them.\nLook in the solver structure file, maybe some slot connections are wrong?";
+      return;
     }
     if (functionSpaceTarget->nElementsLocal() == 0)
     {
-      LOG(FATAL) << "Cannot create mapping to mesh \"" << functionSpaceTarget->meshName() << "\" of 0 elements (degenerate mesh with one node). \n"
-        << "Such meshes are fine in general, but you cannot map between them.";
+      LOG(ERROR) << "Cannot create mapping from mesh \"" << functionSpaceSource->meshName() << "\" to mesh \"" << functionSpaceTarget->meshName() << "\" of 0 elements (degenerate mesh with one node). \n"
+        << "Such meshes are fine in general, but you cannot map between them.\nLook in the solver structure file, maybe some slot connections are wrong?";
+      return;
     }
 
     // create the mapping

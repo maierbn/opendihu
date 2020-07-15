@@ -35,6 +35,9 @@ initialize()
 
   // parse slot names for all slot connector data slots, only one slot here
   this->context_.getPythonConfig().getOptionVector("slotNames", slotConnectorData_->slotNames);
+
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
 }
 
 template<typename FunctionSpaceType>

@@ -14,8 +14,11 @@ class Coupling :
 public:
   //! constructor
   Coupling(DihuContext context);
+
+  //! constructor where the two timestepping schemes have to be initialized before this constructor
+  Coupling(DihuContext context, TimeStepping1 &&timeStepping1, TimeStepping2 &&timeStepping2);
 };
 
 }  // namespace
 
-#include "control/coupling.tpp"
+#include "control/coupling/coupling.tpp"

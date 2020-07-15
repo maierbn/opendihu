@@ -14,13 +14,13 @@ void SlotConnectorDataTransfer<
   std::vector<std::shared_ptr<SlotConnectorDataType2>>
 >::transfer(const std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType1>>> transferableSolutionData1,
             std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType2>>> transferableSolutionData2,
-            SlotConnection &outputConnection,
+            SlotsConnection &slotsConnection,
             int offsetSlotNoData1, int offsetSlotNoData2)
 {
   // debugging and error output
   LOG(DEBUG) << "transfer vector (1)";
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
-  LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2 << ", outputConnection: " << outputConnection.getDebugInformation();
+  LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2 << ", slotsConnection: " << slotsConnection.getDebugInformation();
   LOG(DEBUG) << "transferableSolutionData1: "
     << SlotConnectorDataHelper<std::vector<std::shared_ptr<SlotConnectorDataType1>>>::getString(transferableSolutionData1);
   LOG(DEBUG) << "transferableSolutionData2: "
@@ -45,7 +45,7 @@ void SlotConnectorDataTransfer<
     SlotConnectorDataTransfer<SlotConnectorDataType1,SlotConnectorDataType2>::transfer(
       (*transferableSolutionData1)[i],
       (*transferableSolutionData2)[i],
-      outputConnection,
+      slotsConnection,
       offsetSlotNoData1, offsetSlotNoData2
     );
   }
@@ -65,13 +65,13 @@ void SlotConnectorDataTransfer<
               Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>
             >>> transferableSolutionData1,
             std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
-            SlotConnection &outputConnection,
+            SlotsConnection &slotsConnection,
             int offsetSlotNoData1, int offsetSlotNoData2)
 {
   // debugging and error output
   LOG(DEBUG) << "transfer vector (2)";
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
-  LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2 << ", outputConnection: " << outputConnection.getDebugInformation();
+  LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2 << ", slotsConnection: " << slotsConnection.getDebugInformation();
   LOG(DEBUG) << "transferableSolutionData1: "
     << SlotConnectorDataHelper<std::vector<std::shared_ptr<
       Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>
@@ -97,7 +97,7 @@ void SlotConnectorDataTransfer<
    *  Each object of type SlotConnectorData contains possibly two different types of field variables, variable1 and variable2.
    *  For cellML, these are for storing states and algebraics.
    *  Now this method maps components of field variables (i.e., scalar field variables) from 1 to 2 according to the slot connections
-   *  given by "outputConnection".
+   *  given by "slotsConnection".
    *  We iterate over "1".variable1 and transfer data to "2".variable1 and "2".variable2. Then we iterate over "1".variable2
    *  and again map data to "2".variable1 and "2".variable2.
    */
@@ -106,7 +106,7 @@ void SlotConnectorDataTransfer<
   SlotConnectorDataTransfer<SlotConnectorDataType1,SlotConnectorDataType2>::transfer(
     (*transferableSolutionData1)[0],
     transferableSolutionData2,
-    outputConnection
+    slotsConnection
   );
   */
 
@@ -116,7 +116,7 @@ void SlotConnectorDataTransfer<
     = (*transferableSolutionData1)[0];
 
   // initialize output connection object
-  outputConnection.initialize(*transferableSolutionData1Front, *transferableSolutionData2, offsetSlotNoData1, offsetSlotNoData2);
+  slotsConnection.initialize(*transferableSolutionData1Front, *transferableSolutionData2, offsetSlotNoData1, offsetSlotNoData2);
 
   // for the first vector of variables (the "states" in case of CellMLAdapter)
   for (int i = 0; i < transferableSolutionData1Front->variable1.size(); i++)
@@ -126,7 +126,7 @@ void SlotConnectorDataTransfer<
     int toVectorNo = 0;
     int toVectorIndex = 0;
     bool avoidCopyIfPossible = true;
-    bool slotIsConnected = outputConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
+    bool slotIsConnected = slotsConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
     if (!slotIsConnected)
       continue;
@@ -211,7 +211,7 @@ void SlotConnectorDataTransfer<
     int toVectorNo = 0;
     int toVectorIndex = 0;
     bool avoidCopyIfPossible = true;
-    bool slotIsConnected = outputConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
+    bool slotIsConnected = slotsConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
     if (!slotIsConnected)
       continue;
@@ -303,12 +303,12 @@ void SlotConnectorDataTransfer<
             std::shared_ptr<std::vector<std::shared_ptr<
               Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
             >>> transferableSolutionData2,
-            SlotConnection &outputConnection,
+            SlotsConnection &slotsConnection,
             int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer vector (3)";
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
-  LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2 << ", outputConnection: " << outputConnection.getDebugInformation();
+  LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2 << ", slotsConnection: " << slotsConnection.getDebugInformation();
   LOG(DEBUG) << "transferableSolutionData1: "
     << SlotConnectorDataHelper<Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>>::getString(transferableSolutionData1);
   LOG(DEBUG) << "transferableSolutionData2: "
@@ -330,7 +330,7 @@ void SlotConnectorDataTransfer<
   SlotConnectorDataTransfer<SlotConnectorDataType1,SlotConnectorDataType2>::transfer(
     transferableSolutionData1,
     (*transferableSolutionData2)[0],
-    outputConnection
+    slotsConnection
   );*/
 
   // the following is analogous to the code in slot_connector_data_transfer_fibers_emg.tpp where there are two nested vectors, here it is only one
@@ -341,7 +341,7 @@ void SlotConnectorDataTransfer<
     = (*transferableSolutionData2)[0];
 
   // initialize output connection object
-  outputConnection.initialize(*transferableSolutionData1, *transferableSolutionData2Front, offsetSlotNoData1, offsetSlotNoData2);
+  slotsConnection.initialize(*transferableSolutionData1, *transferableSolutionData2Front, offsetSlotNoData1, offsetSlotNoData2);
 
   // for the first vector of variables (the "states" in case of CellMLAdapter)
   for (int i = 0; i < transferableSolutionData1->variable1.size(); i++)
@@ -351,7 +351,7 @@ void SlotConnectorDataTransfer<
     int toVectorNo = 0;
     int toVectorIndex = 0;
     bool avoidCopyIfPossible = true;
-    bool slotIsConnected = outputConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
+    bool slotIsConnected = slotsConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
     if (!slotIsConnected)
       continue;
@@ -436,7 +436,7 @@ void SlotConnectorDataTransfer<
     int toVectorNo = 0;
     int toVectorIndex = 0;
     bool avoidCopyIfPossible = true;
-    bool slotIsConnected = outputConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
+    bool slotIsConnected = slotsConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
     if (!slotIsConnected)
       continue;

@@ -126,6 +126,7 @@ protected:
   NestedSolverType nestedSolver_;   //< the nested solver that will be called in advanceTimeSpan
 
   Data data_;                       //< the data object that stores the additional field variables
+  std::vector<std::string> slotNames_;                        //< names of all slots
 
   std::vector<DofsMappingType> mappingsBeforeComputation_;    //< settings for all mappings that should be done before the computation
   std::vector<DofsMappingType> mappingsAfterComputation_;     //< settings for all mappings that should be done after the computation

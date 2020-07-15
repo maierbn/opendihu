@@ -56,6 +56,9 @@ initialize(std::vector<std::string> fieldVariable1Names, std::vector<std::string
 
   // parse slot names for all slot connector data slots
   this->context_.getPythonConfig().getOptionVector("slotNames", slotConnectorData_->slotNames);
+
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
 }
 
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>

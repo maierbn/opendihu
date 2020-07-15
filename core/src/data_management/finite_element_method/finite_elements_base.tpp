@@ -44,6 +44,9 @@ initialize()
   // parse slot names of the additional field variables
   std::string slotName = this->context_.getPythonConfig().getOptionString("slotName", "");
   slotConnectorData_->slotNames.push_back(slotName);
+
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
 }
 template<typename FunctionSpaceType, int nComponents>
 void FiniteElementsBase<FunctionSpaceType,nComponents>::

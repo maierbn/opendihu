@@ -12,14 +12,14 @@
  *  "connectedSlotsTerm2To1" and "connectedSlotsTerm1To2".
  *
  */
-class SlotConnection
+class SlotsConnection
 {
 public:
   //! parse connection settings from python settings
-  SlotConnection(PythonConfig settings);
+  SlotsConnection(PythonConfig settings);
 
   //! copy constructor
-  SlotConnection(const SlotConnection &rhs);
+  SlotsConnection(const SlotsConnection &rhs);
 
   //! set the number of field variable components between which data will be transferred, this has to be done initially
   template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>
@@ -54,16 +54,16 @@ public:
   const std::vector<Connector> &connectorForVisualizerTerm2To1() const;
 
   //! a pointer of a second output connection, used when the SlotConnectorData is a tuple of two SlotConnectorData types and therefore another output connection object is needed.
-  std::shared_ptr<SlotConnection> &subSlotConnection1();
+  std::shared_ptr<SlotsConnection> &subSlotsConnection1();
 
   //! one more pointer of a second output connection, used for transfer betwen two tuples and therefore a second output connection object is needed.
-  std::shared_ptr<SlotConnection> &subSlotConnection2();
+  std::shared_ptr<SlotsConnection> &subSlotsConnection2();
 
   //! one more pointer of a second output connection, used for transfer betwen two tuples and therefore a third output connection object is needed.
-  std::shared_ptr<SlotConnection> &subSlotConnection3();
+  std::shared_ptr<SlotsConnection> &subSlotsConnection3();
 
   //! one more pointer of a second output connection, used for transfer betwen two tuples and therefore a forth output connection object is needed.
-  std::shared_ptr<SlotConnection> &subSlotConnection4();
+  std::shared_ptr<SlotsConnection> &subSlotsConnection4();
 
   //! assemble some debugging information to the mapping that will be displayed on error
   std::string getDebugInformation() const;
@@ -103,6 +103,8 @@ private:
   int offsetSlotNoData1_;           //< an offset value for the slot no on term1 (this is for transferableSolutionData1 if 1->2 and for transferableSolutionData2 if 2->1), i.e. different than the argument `offsetSlotNoData1` to initialize
   int offsetSlotNoData2_;           //< an offset value for the slot no on term2 (this is for transferableSolutionData2 if 1->2 and for transferableSolutionData1 if 2->1), i.e. different than the argument `offsetSlotNoData2` to initialize
 
+  int aa_ = 0;
+
   struct Result
   {
     int toVectorNo;
@@ -115,10 +117,10 @@ private:
   bool slotInformationInitialized_;                                   //< if slotInformation has been initialized
 
   PythonConfig settings_;                                             //< the settings object
-  std::shared_ptr<SlotConnection> subSlotConnection1_;             //< a first output connection object
-  std::shared_ptr<SlotConnection> subSlotConnection2_;             //< a second output connection object
-  std::shared_ptr<SlotConnection> subSlotConnection3_;            //< a third output connection object
-  std::shared_ptr<SlotConnection> subSlotConnection4_;            //< a forth output connection object
+  std::shared_ptr<SlotsConnection> subSlotsConnection1_;             //< a first output connection object
+  std::shared_ptr<SlotsConnection> subSlotsConnection2_;             //< a second output connection object
+  std::shared_ptr<SlotsConnection> subSlotsConnection3_;            //< a third output connection object
+  std::shared_ptr<SlotsConnection> subSlotsConnection4_;            //< a forth output connection object
 };
 
-#include "slot_connection/slot_connection.tpp"
+#include "slot_connection/slots_connection.tpp"

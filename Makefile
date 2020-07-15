@@ -136,3 +136,6 @@ precice1:
 
 multidomain_neuromuscular:
 	cd examples/electrophysiology/multidomain_neuromuscular && $(python) ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+only_neurons:
+	cd examples/electrophysiology/neuromuscular/only_neurons_flat && $(python) ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

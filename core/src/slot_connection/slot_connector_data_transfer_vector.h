@@ -7,7 +7,7 @@
 #include "data_management/data.h"
 #include "control/types.h"
 #include "mesh/mesh.h"
-#include "slot_connection/slot_connection.h"
+#include "slot_connection/slots_connection.h"
 
 /**
  * The Data classes contain each a vector that stores the solution. Often, the values need to be accessed to
@@ -31,7 +31,7 @@ public:
   //! transfer the data from transferableSolutionData1 to transferableSolutionData2, as efficient as possible, where there are multiple slots that could be transferred (e.g. at cellmlAdapter), use the one specified by transferSlotName
   static void transfer(const std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType1>>> transferableSolutionData1,
                        std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType2>>> transferableSolutionData2,
-                       SlotConnection &outputConnection,
+                       SlotsConnection &slotsConnection,
                        int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 };
 
@@ -51,7 +51,7 @@ public:
                          Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>
                        >>> transferableSolutionData1,
                        std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
-                       SlotConnection &outputConnection,
+                       SlotsConnection &slotsConnection,
                        int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 };
 
@@ -71,7 +71,7 @@ public:
                        std::shared_ptr<std::vector<std::shared_ptr<
                          Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
                        >>> transferableSolutionData2,
-                       SlotConnection &outputConnection,
+                       SlotsConnection &slotsConnection,
                        int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 };
 

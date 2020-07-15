@@ -13,7 +13,7 @@ void SlotConnectorDataTransfer<
   Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
 >::transfer(const std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1,
             std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
-            SlotConnection &outputConnection, int offsetSlotNoData1, int offsetSlotNoData2)
+            SlotsConnection &slotsConnection, int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer standard, type1: " << FunctionSpaceType1::dim() << "D " << nComponents1a << "," << nComponents1b << " comp.,"
     << " type2: " << FunctionSpaceType2::dim() << "D " << nComponents2a << "," << nComponents2b << "comp.";
@@ -22,11 +22,11 @@ void SlotConnectorDataTransfer<
   LOG(DEBUG) << "offsetSlot: " << offsetSlotNoData1 << ", " << offsetSlotNoData2;
 
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
-  LOG(DEBUG) << "outputConnection: " << outputConnection.getDebugInformation();
+  LOG(DEBUG) << "slotsConnection: " << slotsConnection.getDebugInformation();
 #endif
 
   // initialize output connection object
-  outputConnection.initialize(*transferableSolutionData1, *transferableSolutionData2, offsetSlotNoData1, offsetSlotNoData2);
+  slotsConnection.initialize(*transferableSolutionData1, *transferableSolutionData2, offsetSlotNoData1, offsetSlotNoData2);
 
   typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a> FieldVariable1;
 
@@ -38,7 +38,7 @@ void SlotConnectorDataTransfer<
     int toVectorNo = 0;
     int toVectorIndex = 0;
     bool avoidCopyIfPossible = true;
-    bool slotIsConnected = outputConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
+    bool slotIsConnected = slotsConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
     if (!slotIsConnected)
     {
@@ -112,7 +112,7 @@ void SlotConnectorDataTransfer<
     int toVectorNo = 0;
     int toVectorIndex = 0;
     bool avoidCopyIfPossible = true;
-    bool slotIsConnected = outputConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
+    bool slotIsConnected = slotsConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
     if (!slotIsConnected)
     {

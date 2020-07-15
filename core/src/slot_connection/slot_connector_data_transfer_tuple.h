@@ -4,7 +4,7 @@
 #include <petscmat.h>
 #include <tuple>
 
-#include "slot_connection/slot_connection.h"
+#include "slot_connection/slots_connection.h"
 
 /**
  * Tuple
@@ -25,7 +25,7 @@ public:
                          std::shared_ptr<SlotConnectorDataType2>
                        >> transferableSolutionData1,
                        std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType3,nComponents3a,nComponents3b>> transferableSolutionData3,
-                       SlotConnection &outputConnection,
+                       SlotsConnection &slotsConnection,
                        int offsetSlotNoData1=0, int offsetSlotNoData2=0
                       );
 };
@@ -47,7 +47,7 @@ public:
                          std::shared_ptr<SlotConnectorDataType2>,
                          std::shared_ptr<SlotConnectorDataType3>
                        >> transferableSolutionData2,
-                       SlotConnection &outputConnection, int offsetSlotNoData1=0, int offsetSlotNoData2=0);
+                       SlotsConnection &slotsConnection, int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 };
 
 
@@ -74,7 +74,7 @@ public:
                          std::shared_ptr<SlotConnectorDataType3>,
                          std::shared_ptr<SlotConnectorDataType4>
                        >> transferableSolutionData2,
-                       SlotConnection &outputConnection, int offsetSlotNoData1=0, int offsetSlotNoData2=0);
+                       SlotsConnection &slotsConnection, int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 };
 
 #include "slot_connection/slot_connector_data_transfer_tuple.tpp"

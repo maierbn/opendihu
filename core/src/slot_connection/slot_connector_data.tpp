@@ -96,7 +96,12 @@ std::ostream &operator<<(std::ostream &stream, const SlotConnectorData<FunctionS
       stream << "\t\t[" << entry.values << ": " << *(entry.values) << " name \"" << entry.values->name() << "\", component " << entry.componentNo << "], " << std::endl;
     }
   }
-  stream << "\t)";
+  stream << "\t), slotNames: ";
+  for (std::string slotName : rhs.slotNames)
+  {
+    stream << " " << slotName;
+  }
+
   return stream;
 }
 

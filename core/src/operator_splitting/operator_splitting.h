@@ -26,6 +26,9 @@ public:
   //! constructor
   OperatorSplitting(DihuContext context, std::string schemeName);
 
+  //! constructor, the two timestepping schemes are to be initialize before this constructor. This is needed for MultipleCoupling class.
+  OperatorSplitting(DihuContext context, std::string schemeName, TimeStepping1 &&timeStepping1, TimeStepping2 &&timeStepping2);
+
   //! destructor
   virtual ~OperatorSplitting() {}
 
@@ -71,7 +74,7 @@ protected:
   std::string logKeyTransfer12_;    //< key for logging of the duration of data transfer from timestepping 1 to 2
   std::string logKeyTransfer21_;    //< key for logging of the duration of data transfer from timestepping 2 to 1
 
-  std::shared_ptr<SlotConnection> outputConnection_; //< information regarding the mapping between the data slots of the two terms
+  std::shared_ptr<SlotsConnection> slotsConnection_; //< information regarding the mapping between the data slots of the two terms
 
   bool initialized_;                //< if initialize() was already called
 };

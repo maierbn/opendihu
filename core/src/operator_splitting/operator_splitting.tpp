@@ -29,7 +29,22 @@ OperatorSplitting(DihuContext context, std::string schemeName) :
   specificSettings_ = PythonConfig(topLevelSettings, schemeName);
   schemeName_ = schemeName;
 
-  outputConnection_ = std::make_shared<SlotConnection>(specificSettings_);
+  slotsConnection_ = std::make_shared<SlotsConnection>(specificSettings_);
+}
+
+template<typename TimeStepping1, typename TimeStepping2>
+OperatorSplitting<TimeStepping1, TimeStepping2>::
+OperatorSplitting(DihuContext context, std::string schemeName, TimeStepping1 &&timeStepping1, TimeStepping2 &&timeStepping2) :
+  ::TimeSteppingScheme::TimeSteppingScheme(context),
+  timeStepping1_(std::move(timeStepping1)),
+  timeStepping2_(std::move(timeStepping2)),
+  data_(context_),
+  initialized_(false)
+{
+  specificSettings_ = context_.getPythonConfig();
+  schemeName_ = schemeName;
+
+  slotsConnection_ = std::make_shared<SlotsConnection>(specificSettings_);
 }
 
 template<typename TimeStepping1, typename TimeStepping2>
@@ -107,11 +122,11 @@ initialize()
   logKeyTransfer12_ = this->durationLogKey_ + std::string("_transfer12");  //< key for logging of the duration of data transfer from timestepping 1 to 2
   logKeyTransfer21_ = this->durationLogKey_ + std::string("_transfer21");  //< key for logging of the duration of data transfer from timestepping 2 to 1
 
-  // add the slot connections that were given in the global field "connectedSlots" to the outputConnection_ object of this splitting scheme
-  DihuContext::globalConnectionsBySlotName()->addConnections(this->data_.getSlotConnectorData(), outputConnection_);
+  // add the slot connections that were given in the global field "connectedSlots" to the slotConnection_ object of this splitting scheme
+  DihuContext::globalConnectionsBySlotName()->addConnections(this->data_.getSlotConnectorData(), slotsConnection_);
 
-  // set the outputConnection information about how the slots are connected to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->addSlotConnection(outputConnection_);
+  // set the slotConnection information about how the slots are connected to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->addSlotsConnection(slotsConnection_);
 
   // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
   DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());

@@ -8,13 +8,6 @@ namespace OperatorSplitting
 {
 
 template<typename TimeStepping1, typename TimeStepping2>
-CouplingOrGodunov<TimeStepping1,TimeStepping2>::
-CouplingOrGodunov(DihuContext context, std::string name) :
-  OperatorSplitting<TimeStepping1,TimeStepping2>(context, name)  // name is "GodunovSplitting" for Godunov and "Coupling" for Coupling
-{
-}
-
-template<typename TimeStepping1, typename TimeStepping2>
 void CouplingOrGodunov<TimeStepping1,TimeStepping2>::
 advanceTimeSpan()
 {
@@ -64,14 +57,14 @@ advanceTimeSpan()
     LOG(DEBUG) << "  CouplingOrGodunov(\"" << this->description_ << "\"): transfer timeStepping1 -> timeStepping2";
 
     // set transfer direction 1->2
-    this->outputConnection_->setTransferDirection(true);
+    this->slotsConnection_->setTransferDirection(true);
 
     if (VLOG_IS_ON(1))
       VLOG(1) << "  before transfer 1->2 timeStepping1_.getSlotConnectorData(): " << this->timeStepping1_.getSlotConnectorData();
 
     // transfer to timestepping2_
     SlotConnectorDataTransfer<typename TimeStepping1::SlotConnectorDataType, typename TimeStepping2::SlotConnectorDataType>::
-      transfer(this->timeStepping1_.getSlotConnectorData(), this->timeStepping2_.getSlotConnectorData(), *this->outputConnection_);
+      transfer(this->timeStepping1_.getSlotConnectorData(), this->timeStepping2_.getSlotConnectorData(), *this->slotsConnection_);
 
     if (VLOG_IS_ON(1))
       VLOG(1) << "  after transfer 1->2 timeStepping2_.getSlotConnectorData(): " << this->timeStepping2_.getSlotConnectorData();
@@ -101,14 +94,14 @@ advanceTimeSpan()
     LOG(DEBUG) << "  CouplingOrGodunov(\"" << this->description_ << "\"): transfer timeStepping2 -> timeStepping1";
 
     // set transfer direction 2->1
-    this->outputConnection_->setTransferDirection(false);
+    this->slotsConnection_->setTransferDirection(false);
 
     if (VLOG_IS_ON(1))
       VLOG(1) << "  before transfer 2->1: timeStepping2_.getSlotConnectorData(): " << this->timeStepping2_.getSlotConnectorData();
 
     // transfer to timestepping1_
     SlotConnectorDataTransfer<typename TimeStepping2::SlotConnectorDataType, typename TimeStepping1::SlotConnectorDataType>::
-      transfer(this->timeStepping2_.getSlotConnectorData(), this->timeStepping1_.getSlotConnectorData(), *this->outputConnection_);
+      transfer(this->timeStepping2_.getSlotConnectorData(), this->timeStepping1_.getSlotConnectorData(), *this->slotsConnection_);
 
     if (VLOG_IS_ON(1))
       VLOG(1) << "  after transfer 2->1: timeStepping1_.getSlotConnectorData(): " << this->timeStepping1_.getSlotConnectorData();

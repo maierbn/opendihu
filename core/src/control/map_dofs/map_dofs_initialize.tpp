@@ -22,12 +22,6 @@ initialize()
 {
   LOG(DEBUG) << "initialize MapDofs";
 
-  // parse settings
-  int nAdditionalFieldVariables = this->specificSettings_.getOptionInt("nAdditionalFieldVariables", 0, PythonUtility::NonNegative);
-
-  parseMappingFromSettings("beforeComputation", mappingsBeforeComputation_);
-  parseMappingFromSettings("afterComputation", mappingsAfterComputation_);
-
   // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
   DihuContext::solverStructureVisualizer()->addSolver("MapDofs", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means slot connector data is shared with the first subsolver
 
@@ -46,12 +40,21 @@ initialize()
   // indicate in solverStructureVisualizer that the child solver initialization is done
   DihuContext::solverStructureVisualizer()->endChild();
 
+  // parse settings
+  int nAdditionalFieldVariables = this->specificSettings_.getOptionInt("nAdditionalFieldVariables", 0, PythonUtility::NonNegative);
+
   // create function space to use for the additional field variables
   std::shared_ptr<FunctionSpaceType> functionSpace = context_.meshManager()->functionSpace<FunctionSpaceType>(specificSettings_);
   data_.setFunctionSpace(functionSpace);
 
   // initialize data, i.e. create additional field variables
   data_.initialize(nAdditionalFieldVariables, nestedSolver_);
+
+  // get all available slot names
+  SlotConnectorDataHelper<SlotConnectorDataType>::getSlotNames(getSlotConnectorData(), slotNames_);
+
+  parseMappingFromSettings("beforeComputation", mappingsBeforeComputation_);
+  parseMappingFromSettings("afterComputation", mappingsAfterComputation_);
 
   // prepare communication by initializing mappings
   initializeCommunication(mappingsBeforeComputation_);
@@ -81,6 +84,8 @@ template<typename FunctionSpaceType, typename NestedSolverType>
 void MapDofs<FunctionSpaceType,NestedSolverType>::
 parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &mappings)
 {
+
+  // parse list items under settingsKey="beforeComputation" or "afterComputation"
   PyObject *listPy = this->specificSettings_.getOptionPyObject(settingsKey);
   if (listPy == Py_None)
     return;
@@ -96,9 +101,97 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
 
     DofsMappingType newDofsMapping;
 
+    // output errors if the old options are used
+    if (currentMappingSpecification.hasKey("fromOutputConnectorSlotNo"))
+    {
+      LOG(ERROR) << currentMappingSpecification << ": Option \"fromOutputConnectorSlotNo\" has been renamed to \"fromConnectorSlot\".";
+    }
+    if (currentMappingSpecification.hasKey("toOutputConnectorSlotNo"))
+    {
+      LOG(ERROR) << currentMappingSpecification << ": Option \"toOutputConnectorSlotNo\" has been renamed to \"toConnectorSlots\".";
+    }
+    if (currentMappingSpecification.hasKey("fromOutputConnectorArrayIndex"))
+    {
+      LOG(ERROR) << currentMappingSpecification << ": Option \"fromOutputConnectorArrayIndex\" has been renamed to \"fromSlotConnectorArrayIndex\".";
+    }
+    if (currentMappingSpecification.hasKey("toOutputConnectorArrayIndex"))
+    {
+      LOG(ERROR) << currentMappingSpecification << ": Option \"toOutputConnectorArrayIndex\" has been renamed to \"toSlotConnectorArrayIndex\".";
+    }
+
     // parse options of this item
-    newDofsMapping.connectorSlotNoFrom = currentMappingSpecification.getOptionInt("fromSlotConnectorSlotNo", 0, PythonUtility::NonNegative);
-    currentMappingSpecification.getOptionVector<int>("toSlotConnectorSlotNo", newDofsMapping.connectorSlotNosTo);
+    // parse fromConnectorSlot, either as integer value (then it is the no.) or as string (then it is the slot name)
+    PyObject *fromConnectorSlotPy = currentMappingSpecification.getOptionPyObject("fromConnectorSlot");
+    if (PyLong_Check(fromConnectorSlotPy))
+    {
+      // parse slot no
+      newDofsMapping.connectorSlotNoFrom = currentMappingSpecification.getOptionInt("fromConnectorSlot", 0, PythonUtility::NonNegative);
+    }
+    else
+    {
+      // if the option is not an integer, it is interpreted as string as the slot name
+      std::string slotName = currentMappingSpecification.getOptionString("fromConnectorSlot", "");
+
+      // check if this slot name exists
+      std::vector<std::string>::iterator iter = std::find(slotNames_.begin(), slotNames_.end(), slotName);
+      if (iter == slotNames_.end())
+      {
+        LOG(FATAL) << currentMappingSpecification << "[\"fromConnectorSlot\"] = " << slotName << " is interpreted as slot name, but there is no such slot. Available slot names: " << slotNames_;
+      }
+      newDofsMapping.connectorSlotNoFrom = std::distance(slotNames_.begin(), iter);
+    }
+
+    // parse toConnectorSlotNo, either as integer value (then it is the no.) or as string (then it is the slot name)
+    PyObject *toConnectorSlotsPy = currentMappingSpecification.getOptionPyObject("toConnectorSlots");
+    if (PyList_Check(toConnectorSlotsPy))
+    {
+      int nEntries = PyList_Size(toConnectorSlotsPy);
+      if (nEntries == 0)
+        LOG(FATAL) << currentMappingSpecification << "[\"toConnectorSlots\"] is an empty list.";
+
+      std::vector<PyObject *> toConnectorSlotsItemsPy;
+      currentMappingSpecification.getOptionVector<PyObject *>("toConnectorSlots", toConnectorSlotsItemsPy);
+
+      for (PyObject *toConnectorSlotPy : toConnectorSlotsItemsPy)
+      {
+        if (PyLong_Check(toConnectorSlotPy))
+        {
+          // parse slot no
+          newDofsMapping.connectorSlotNosTo.push_back(PythonUtility::convertFromPython<int>::get(toConnectorSlotPy, 0));
+        }
+        else
+        {
+          // if the option is not an integer, it is interpreted as string as the slot name
+          std::string slotName = PythonUtility::convertFromPython<std::string>::get(toConnectorSlotPy);
+
+          // check if this slot name exists
+          std::vector<std::string>::iterator iter = std::find(slotNames_.begin(), slotNames_.end(), slotName);
+          if (iter == slotNames_.end())
+          {
+            LOG(FATAL) << currentMappingSpecification << "[\"toConnectorSlots\"][...] = " << slotName << " is interpreted as slot name, but there is no such slot. Available slot names: " << slotNames_;
+          }
+          newDofsMapping.connectorSlotNosTo.push_back(std::distance(slotNames_.begin(), iter));
+        }
+      }
+    }
+    else if (PyLong_Check(toConnectorSlotsPy))
+    {
+      // parse slot no
+      newDofsMapping.connectorSlotNosTo.push_back(currentMappingSpecification.getOptionInt("toConnectorSlots", 0, PythonUtility::NonNegative));
+    }
+    else
+    {
+      // if the option is not an integer, it is interpreted as string as the slot name
+      std::string slotName = currentMappingSpecification.getOptionString("toConnectorSlots", "");
+
+      // check if this slot name exists
+      std::vector<std::string>::iterator iter = std::find(slotNames_.begin(), slotNames_.end(), slotName);
+      if (iter == slotNames_.end())
+      {
+        LOG(FATAL) << currentMappingSpecification << "[\"toConnectorSlots\"] = " << slotName << " is interpreted as slot name, but there is no such slot. Available slot names: " << slotNames_;
+      }
+      newDofsMapping.connectorSlotNosTo.push_back(std::distance(slotNames_.begin(), iter));
+    }
 
     newDofsMapping.slotConnectorArrayIndexFrom = currentMappingSpecification.getOptionInt("fromSlotConnectorArrayIndex", 0, PythonUtility::NonNegative);
     newDofsMapping.slotConnectorArrayIndexTo   = currentMappingSpecification.getOptionInt("toSlotConnectorArrayIndex",   0, PythonUtility::NonNegative);
@@ -171,10 +264,10 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
 
       // check that the number of output dof lists matches the number of connector slots
       int nOutputDofSlots = newDofsMapping.outputDofs.size();
-      int nSlotConnectorSlotNos = newDofsMapping.connectorSlotNosTo.size();
-      if (nOutputDofSlots != nSlotConnectorSlotNos)
+      int nConnectorSlotNos = newDofsMapping.connectorSlotNosTo.size();
+      if (nOutputDofSlots != nConnectorSlotNos)
       {
-        LOG(FATAL) << currentMappingSpecification << "[\"toSlotConnectorSlotNo\"] specifies " << nSlotConnectorSlotNos << " connector slots, but "
+        LOG(FATAL) << currentMappingSpecification << "[\"toConnectorSlotNo\"] specifies " << nConnectorSlotNos << " connector slots, but "
          << currentMappingSpecification << "[\"outputDofs\"] contains " << nOutputDofSlots << " lists of dofs.";
       }
 
@@ -297,10 +390,24 @@ slotGetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLoc
   {
     // get the field variable and component no for this slot
     int index = slotNo - nSlotsNestedSolver;
+
+    int nAdditionalSlots = std::get<1>(*data_.getSlotConnectorData())->variable1.size();
+    if (index < 0 || index >= nAdditionalSlots)
+    {
+      LOG(FATAL) << "In MapDofs, cannot get values for slot " << slotNo << ", number of slots: " << nSlotsNestedSolver + nAdditionalSlots
+        << " (nested solver has " << nSlotsNestedSolver << " slots and there " << (nAdditionalSlots==1? "is ": "are ") << nAdditionalSlots << " additional slot" << (nAdditionalSlots==1? "" : "s") << ")";
+    }
+
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> fieldVariable
       = std::get<1>(*data_.getSlotConnectorData())->variable1[index].values;
 
     int componentNo = std::get<1>(*data_.getSlotConnectorData())->variable1[index].componentNo;  // should be 0
+
+    if (!fieldVariable)
+    {
+      LOG(FATAL) << "In MapDofs, cannot get values, field variable is not set for slot " << slotNo << ", number of slots: " << nSlotsNestedSolver + nAdditionalSlots
+        << " (nested solver has " << nSlotsNestedSolver << " slots and there " << (nAdditionalSlots==1? "is ": "are ") << nAdditionalSlots << " additional slot" << (nAdditionalSlots==1? "" : "s") << ")";
+    }
 
     // get the actual values
     fieldVariable->getValues(componentNo, dofNosLocal, values);
@@ -328,10 +435,24 @@ slotSetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLoc
   {
     // get the field variable and component no for this slot
     int index = slotNo - nSlotsNestedSolver;
+
+    int nAdditionalSlots = std::get<1>(*data_.getSlotConnectorData())->variable1.size();
+    if (index < 0 || index >= nAdditionalSlots)
+    {
+      LOG(FATAL) << "In MapDofs, cannot set values for slot " << slotNo << ", number of slots: " << nSlotsNestedSolver + nAdditionalSlots
+        << " (nested solver has " << nSlotsNestedSolver << " slots and there " << (nAdditionalSlots==1? "is ": "are ") << nAdditionalSlots << " additional slot" << (nAdditionalSlots==1? "" : "s") << ")";
+    }
+
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> fieldVariable
       = std::get<1>(*data_.getSlotConnectorData())->variable1[index].values;
 
     int componentNo = std::get<1>(*data_.getSlotConnectorData())->variable1[index].componentNo;  // should be 0
+
+    if (!fieldVariable)
+    {
+      LOG(FATAL) << "In MapDofs, cannot set values, field variable is not set for slot " << slotNo << ", number of slots: " << nSlotsNestedSolver + nAdditionalSlots
+        << " (nested solver has " << nSlotsNestedSolver << " slots and there " << (nAdditionalSlots==1? "is ": "are ") << nAdditionalSlots << " additional slot" << (nAdditionalSlots==1? "" : "s") << ")";
+    }
 
     LOG(DEBUG) << "*slot " << slotNo << ": in fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
       << ", set dofs " << dofNosLocal << " to values " << values;

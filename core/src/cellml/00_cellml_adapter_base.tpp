@@ -77,6 +77,13 @@ setSlotConnectorData(std::shared_ptr<::Data::SlotConnectorData<FunctionSpaceType
   // Now remove it because we set all connections of the CellmlAdapter here.
   slotConnectorDataTimeStepping->variable1.erase(slotConnectorDataTimeStepping->variable1.begin());
 
+  LOG(DEBUG) << "CellmlAdapterBase::setSlotConnectorData previous slot names: " << slotConnectorDataTimeStepping->slotNames;
+  // also remove first slot name, if there is any
+  if (!slotConnectorDataTimeStepping->slotNames.empty())
+  {
+    slotConnectorDataTimeStepping->slotNames.erase(slotConnectorDataTimeStepping->slotNames.begin());
+  }
+
   // loop over states that should be transferred
   for (typename std::vector<::Data::ComponentOfFieldVariable<FunctionSpaceType,nStates_>>::iterator iter
     = this->data_.getSlotConnectorData()->variable1.begin(); iter != this->data_.getSlotConnectorData()->variable1.end(); iter++)
@@ -121,6 +128,13 @@ setSlotConnectorData(std::shared_ptr<::Data::SlotConnectorData<FunctionSpaceType
     // add this component to slotConnector of data time stepping
     slotConnectorDataTimeStepping->addFieldVariable2(newFieldVariable);
   }
+
+  // set the slot names
+  std::vector<std::string> &ownSlotNames = this->data_.getSlotConnectorData()->slotNames;
+  std::vector<std::string> &timeSteppingSlotNames = slotConnectorDataTimeStepping->slotNames;
+  timeSteppingSlotNames.insert(timeSteppingSlotNames.end(), ownSlotNames.begin(), ownSlotNames.end());
+
+  LOG(DEBUG) << "CellmlAdapterBase::setSlotConnectorData new slot names: " << slotConnectorDataTimeStepping->slotNames;
 }
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
@@ -296,8 +310,7 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
         {
           std::get<0>(keyTuple) = "parameter";
           LOG(ERROR) << this->specificSettings_ << "[\"mappings\"], key " << item.first << " is not a tuple (\"parameter\",index) "
-            << "or (\"connectorSlot\",index) or (\"connectorSlot\",\"slotName\"). "
-            << "Assuming (\"parameter\", " << std::get<1>(keyTuple) << ")";
+            << "or (\"connectorSlot\",index) or (\"connectorSlot\",\"slotName\"). ";
         }
       }
       else
@@ -306,8 +319,7 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
         keyTuple = std::tuple<std::string,int,std::string>("parameter", index, "");
 
         LOG(ERROR) << this->specificSettings_ << "[\"mappings\"], key " << item.first << " is not a tuple (\"parameter\",index) "
-          << "or (\"connectorSlot\",index) or (\"connectorSlot\",\"slotName\"). "
-          << "Assuming (\"parameter\", " << index << ")";
+          << "or (\"connectorSlot\",index) or (\"connectorSlot\",\"slotName\"). ";
       }
 
       // parse value tuple
@@ -539,16 +551,19 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
         }
         else
         {
-          LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], you can map "
-            << "paramaters only to algebraics and constants, not states.";
+          LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], "
+            << "(paramater, " << parameterNo << "): (" << valueTuple.first << ", " << stateNames[fieldNo] << " (state no. " << fieldNo << ")), "
+            << "you can map paramaters only to algebraics and constants, not states.";
         }
       }
       else
       {
         if (std::get<0>(keyTuple) == "outputConnectorSlot")
+        {
           LOG(WARNING) << this->specificSettings_ << ": Note, you named the slots \"outputConnectorSlot\", "
             << " but the name has been changed to only \"connectorSlot\", because it can be input and output. Consider renaming it.\n"
             << "Actually every string other than \"parameter\" is treated as connector slot so it is no breaking change.";
+        }
 
         // connector slots
 
@@ -630,6 +645,7 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
   LOG(DEBUG) << "statesForTransfer:         " << statesForTransfer;
   LOG(DEBUG) << "algebraicsForTransfer:     " << algebraicsForTransfer;
   LOG(DEBUG) << "parametersForTransfer:     " << parametersForTransfer;
+  LOG(DEBUG) << "slotNames: " << slotNames;
 
   // output warning if old settings are used
   if (this->specificSettings_.hasKey("outputAlgebraicIndex") || this->specificSettings_.hasKey("outputIntermediateIndex"))

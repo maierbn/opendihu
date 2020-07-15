@@ -48,6 +48,11 @@ initializeSlotConnectorData()
   // add slot names if given
   slotConnectorData_->slotNames.assign(slotNames_.begin(), slotNames_.end());
 
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
+
+  LOG(DEBUG) << "set slot names: " << slotNames_ << " -> " << slotConnectorData_->slotNames;
+
   LOG(DEBUG) << "slotConnectorData: " << *slotConnectorData_;
 }
 

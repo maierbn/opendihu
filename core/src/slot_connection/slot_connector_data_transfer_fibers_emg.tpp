@@ -28,7 +28,7 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<
            >
          >>> transferableSolutionData1,
          std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
-         SlotConnection &outputConnection,
+         SlotsConnection &slotsConnection,
          int offsetSlotNoData1, int offsetSlotNoData2)
 {
   /** Explanation: map values from transferableSolutionData1 to transferableSolutionData2.
@@ -38,7 +38,7 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<
    *  Each object of type SlotConnectorData contains possibly two different types of field variables, variable1 and variable2.
    *  For cellML, these are for storing states and algebraics.
    *  Now this method maps components of field variables (i.e., scalar field variables) from 1 to 2 according to the slot connections
-   *  given by "outputConnection".
+   *  given by "slotsConnection".
    *  We iterate over "1".variable1 and transfer data to "2".variable1 and "2".variable2. Then we iterate over "1".variable2
    *  and again map data to "2".variable1 and "2".variable2.
    */
@@ -52,7 +52,7 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<
     = (*std::get<0>(*(*transferableSolutionData1)[0]))[0];
 
   // initialize output connection object
-  outputConnection.initialize(*transferableSolutionData1Front, *transferableSolutionData2, offsetSlotNoData1, offsetSlotNoData2);
+  slotsConnection.initialize(*transferableSolutionData1Front, *transferableSolutionData2, offsetSlotNoData1, offsetSlotNoData2);
 
   // for the first vector of variables (the "states" in case of CellMLAdapter)
   for (int i = 0; i < transferableSolutionData1Front->variable1.size(); i++)
@@ -62,7 +62,7 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<
     int toVectorNo = 0;
     int toVectorIndex = 0;
     bool avoidCopyIfPossible = true;
-    bool slotIsConnected = outputConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
+    bool slotIsConnected = slotsConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
     if (!slotIsConnected)
       continue;
@@ -153,7 +153,7 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<
     int toVectorNo = 0;
     int toVectorIndex = 0;
     bool avoidCopyIfPossible = true;
-    bool slotIsConnected = outputConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
+    bool slotIsConnected = slotsConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
     if (!slotIsConnected)
       continue;
@@ -261,7 +261,7 @@ transfer(const std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType1,nCompo
              SlotConnectorDataType2c
            >
          >>> transferableSolutionData2,
-         SlotConnection &outputConnection,
+         SlotsConnection &slotsConnection,
          int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer fibers_emg (2)";
@@ -273,7 +273,7 @@ transfer(const std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType1,nCompo
     = (*std::get<0>(*(*transferableSolutionData2)[0]))[0];
 
   // initialize output connection object
-  outputConnection.initialize(*transferableSolutionData1, *transferableSolutionData2Front, offsetSlotNoData1, offsetSlotNoData2);
+  slotsConnection.initialize(*transferableSolutionData1, *transferableSolutionData2Front, offsetSlotNoData1, offsetSlotNoData2);
 
   // for the first vector of variables (the "states" in case of CellMLAdapter)
   for (int i = 0; i < transferableSolutionData1->variable1.size(); i++)
@@ -283,7 +283,7 @@ transfer(const std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType1,nCompo
     int toVectorNo = 0;
     int toVectorIndex = 0;
     bool avoidCopyIfPossible = true;
-    bool slotIsConnected = outputConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
+    bool slotIsConnected = slotsConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
     if (!slotIsConnected)
       continue;
@@ -374,7 +374,7 @@ transfer(const std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType1,nCompo
     int toVectorNo = 0;
     int toVectorIndex = 0;
     bool avoidCopyIfPossible = true;
-    bool slotIsConnected = outputConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
+    bool slotIsConnected = slotsConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
     if (!slotIsConnected)
       continue;

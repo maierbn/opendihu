@@ -1,11 +1,16 @@
-#include "slot_connection/slot_connection.h"
+#include "slot_connection/slots_connection.h"
 
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
-SlotConnection::SlotConnection(PythonConfig settings):
+int counter = 0;
+
+SlotsConnection::SlotsConnection(PythonConfig settings):
   fieldVariableNamesInitialized_(false), transferDirectionTerm1To2_(true), slotInformationInitialized_(false),
-  settings_(settings), subSlotConnection1_(nullptr), subSlotConnection2_(nullptr), subSlotConnection3_(nullptr), subSlotConnection4_(nullptr)
+  settings_(settings), subSlotsConnection1_(nullptr), subSlotsConnection2_(nullptr), subSlotsConnection3_(nullptr), subSlotsConnection4_(nullptr)
 {
+  counter++;
+  aa_ = counter;
+
   // parse values from settings
   std::vector<int> indicesTerm1To2;
   std::vector<int> indicesTerm2To1;
@@ -34,25 +39,35 @@ SlotConnection::SlotConnection(PythonConfig settings):
 }
 
 //! copy constructor
-SlotConnection::SlotConnection(const SlotConnection &rhs) :
+SlotsConnection::SlotsConnection(const SlotsConnection &rhs) :
   fieldVariableNamesInitialized_(false), transferDirectionTerm1To2_(true), slotInformationInitialized_(false)
 {
   connectorForVisualizerTerm1To2_ = rhs.connectorForVisualizerTerm1To2_;
   connectorForVisualizerTerm2To1_ = rhs.connectorForVisualizerTerm2To1_;
   transferDirectionTerm1To2_ = rhs.transferDirectionTerm1To2_;
+
+  counter--;
+  counter += 100;
+  aa_ = counter;
 }
 
-void SlotConnection::addConnectionTerm1ToTerm2(int slotNoFrom, int slotNoTo)
+void SlotsConnection::addConnectionTerm1ToTerm2(int slotNoFrom, int slotNoTo)
 {
   // check if connection is already present
   if (connectorForVisualizerTerm1To2_.size() > slotNoFrom)
   {
     if (connectorForVisualizerTerm1To2_[slotNoFrom].index == slotNoTo)
     {
+      LOG(DEBUG) << "addConnectionTerm1ToTerm2(" << slotNoFrom << "," << slotNoTo << "), is already contained";
+
       // connection is already contained, return
       return;
     }
   }
+
+
+  LOG(INFO) << aa_ << ": addConnectionTerm1ToTerm2";
+
 
   // resize number of entries in connectorForVisualizerTerm1To2_
   if (connectorForVisualizerTerm1To2_.size() <= slotNoFrom)
@@ -60,27 +75,44 @@ void SlotConnection::addConnectionTerm1ToTerm2(int slotNoFrom, int slotNoTo)
     Connector unconnected;
     unconnected.index = -1;
     unconnected.avoidCopyIfPossible = false;
-    connectorForVisualizerTerm1To2_.resize(slotNoFrom, unconnected);
+    connectorForVisualizerTerm1To2_.resize(slotNoFrom+1, unconnected);
   }
 
   // set new connection
   connectorForVisualizerTerm1To2_[slotNoFrom].index = slotNoTo;
 
+  LOG(DEBUG) << "set new connection";
+
   // set the avoidCopyIfPossible value
   updateAvoidCopyIfPossible();
+
+  // look-up table has to initialized again
+  slotInformationInitialized_ = false;
+  fieldVariableNamesInitialized_ = false;
+
+  std::stringstream s;
+  for (int i = 0; i < connectorForVisualizerTerm1To2_.size(); i++)
+  {
+    s << "  " << i << "->" << connectorForVisualizerTerm1To2_[i].index << " " << connectorForVisualizerTerm1To2_[i].avoidCopyIfPossible << "\n";
+  }
+  LOG(DEBUG) << s.str();
 }
 
-void SlotConnection::addConnectionTerm2ToTerm1(int slotNoFrom, int slotNoTo)
+void SlotsConnection::addConnectionTerm2ToTerm1(int slotNoFrom, int slotNoTo)
 {
   // check if connection is already present
   if (connectorForVisualizerTerm2To1_.size() > slotNoFrom)
   {
     if (connectorForVisualizerTerm2To1_[slotNoFrom].index == slotNoTo)
     {
+      LOG(DEBUG) << "addConnectionTerm2ToTerm1(" << slotNoFrom << "," << slotNoTo << "), is already contained";
+
       // connection is already contained, return
       return;
     }
   }
+
+  LOG(INFO) << aa_ << ": addConnectionTerm2ToTerm1";
 
   // resize number of entries in connectorForVisualizerTerm2To1_
   if (connectorForVisualizerTerm2To1_.size() <= slotNoFrom)
@@ -88,31 +120,44 @@ void SlotConnection::addConnectionTerm2ToTerm1(int slotNoFrom, int slotNoTo)
     Connector unconnected;
     unconnected.index = -1;
     unconnected.avoidCopyIfPossible = false;
-    connectorForVisualizerTerm2To1_.resize(slotNoFrom, unconnected);
+    connectorForVisualizerTerm2To1_.resize(slotNoFrom+1, unconnected);
   }
 
   // set new connection
   connectorForVisualizerTerm2To1_[slotNoFrom].index = slotNoTo;
 
+  LOG(DEBUG) << "set new connection";
+
   // set the avoidCopyIfPossible value
   updateAvoidCopyIfPossible();
+
+  // look-up table has to initialized again
+  slotInformationInitialized_ = false;
+  fieldVariableNamesInitialized_ = false;
+
+  std::stringstream s;
+  for (int i = 0; i < connectorForVisualizerTerm2To1_.size(); i++)
+  {
+    s << "  " << i << "->" << connectorForVisualizerTerm2To1_[i].index << " " << connectorForVisualizerTerm2To1_[i].avoidCopyIfPossible << "\n";
+  }
+  LOG(DEBUG) << s.str();
 }
 
-void SlotConnection::setTransferDirection(bool term1To2)
+void SlotsConnection::setTransferDirection(bool term1To2)
 {
   transferDirectionTerm1To2_ = term1To2;
 
-  if (subSlotConnection1_)
-    subSlotConnection1_->setTransferDirection(term1To2);
-  if (subSlotConnection2_)
-    subSlotConnection2_->setTransferDirection(term1To2);
-  if (subSlotConnection3_)
-    subSlotConnection3_->setTransferDirection(term1To2);
-  if (subSlotConnection4_)
-    subSlotConnection4_->setTransferDirection(term1To2);
+  if (subSlotsConnection1_)
+    subSlotsConnection1_->setTransferDirection(term1To2);
+  if (subSlotsConnection2_)
+    subSlotsConnection2_->setTransferDirection(term1To2);
+  if (subSlotsConnection3_)
+    subSlotsConnection3_->setTransferDirection(term1To2);
+  if (subSlotsConnection4_)
+    subSlotsConnection4_->setTransferDirection(term1To2);
 }
 
-void SlotConnection::updateAvoidCopyIfPossible()
+void SlotsConnection::updateAvoidCopyIfPossible()
 {
   // if field variable gets mapped in both directions, set avoidCopyIfPossible to true
   for (int i = 0; i < connectorForVisualizerTerm1To2_.size(); i++)
@@ -132,18 +177,18 @@ void SlotConnection::updateAvoidCopyIfPossible()
 }
 
 //! get the connectors from term 1 to term 2
-const std::vector<SlotConnection::Connector> &SlotConnection::connectorForVisualizerTerm1To2() const
+const std::vector<SlotsConnection::Connector> &SlotsConnection::connectorForVisualizerTerm1To2() const
 {
   return connectorForVisualizerTerm1To2_;
 }
 
 //! get the connectors from term 2 to term 1
-const std::vector<SlotConnection::Connector> &SlotConnection::connectorForVisualizerTerm2To1() const
+const std::vector<SlotsConnection::Connector> &SlotsConnection::connectorForVisualizerTerm2To1() const
 {
   return connectorForVisualizerTerm2To1_;
 }
 
-std::string SlotConnection::getDebugInformation() const
+std::string SlotsConnection::getDebugInformation() const
 {
   std::stringstream result;
 
@@ -369,22 +414,37 @@ std::string SlotConnection::getDebugInformation() const
   return result.str();
 }
 
-bool SlotConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
+bool SlotsConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
                                           int &toVectorNo, int &toVectorIndex, bool &avoidCopyIfPossible, bool disableWarnings) const
 {
+
+  //LOG(INFO) << aa_ << ": SlotsConnection::getSlotInformation(" << fromVectorNo << "," << fromVectorIndex << "), slotInformationInitialized_=" << slotInformationInitialized_;
+
   // in release target, use precomputed look-up table for slot connection indices
 #ifdef NDEBUG
+
+  bool toVectorNoLut = false;
+  bool toVectorIndexLut = -100;
+  bool avoidCopyIfPossibleLut = false;
+  bool resultLut = false;
+
   if (slotInformationInitialized_)
   {
     const Result &result = slotInformation_[transferDirectionTerm1To2_][fromVectorNo][fromVectorIndex];
     toVectorNo = result.toVectorNo;
     toVectorIndex = result.toVectorIndex;
     avoidCopyIfPossible = result.avoidCopyIfPossible;
-    return result.successful;
+    //return result.successful;
+
+    toVectorNoLut = toVectorNo;
+    toVectorIndexLut = toVectorIndex;
+    avoidCopyIfPossibleLut = avoidCopyIfPossible;
+    resultLut = result.successful;
   }
 #endif
 
-  disableWarnings = true;   // do not show warnings, they would also appear if SlotConnectionDataType is a tuple, this is the case for MapDofs
+
+  disableWarnings = true;   // do not show warnings, they would also appear if SlotsConnectionDataType is a tuple, this is the case for MapDofs
 
   // fromVectorNo and toVectorNo are 0 or 1
 
@@ -411,6 +471,9 @@ bool SlotConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
           << "or unneccessary slots have been created (e.g. algebraics in cellml that are not used further)."
           << getDebugInformation()
           << DihuContext::solverStructureVisualizer()->getDiagram();
+
+      if (slotInformationInitialized_ && resultLut)
+        LOG(INFO) << aa_ << "return false (lut: " << resultLut << "): toVectorNo=" << toVectorNoLut << "," << toVectorNo << ", toVectorIndex=" << toVectorIndexLut << "," << toVectorIndex << ", avoidCopyIfPossible=" << avoidCopyIfPossibleLut << "," << avoidCopyIfPossible;
       return false;
     }
 
@@ -424,6 +487,9 @@ bool SlotConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
           << "or unneccessary slots have been created (e.g. algebraics in cellml that are not used further)."
           << getDebugInformation()
           << DihuContext::solverStructureVisualizer()->getDiagram();
+
+          if (slotInformationInitialized_ && resultLut)
+      LOG(INFO) << aa_ << "return false (lut: " << resultLut << "): toVectorNo=" << toVectorNoLut << "," << toVectorNo << ", toVectorIndex=" << toVectorIndexLut << "," << toVectorIndex << ", avoidCopyIfPossible=" << avoidCopyIfPossibleLut << "," << avoidCopyIfPossible;
       return false;
     }
     else if (fromVectorNo == 1 && fromVectorIndex >= nFieldVariablesTerm1Vector2_)
@@ -436,6 +502,8 @@ bool SlotConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
           << "or unneccessary slots have been created (e.g. algebraics in cellml that are not used further)."
           << getDebugInformation()
           << DihuContext::solverStructureVisualizer()->getDiagram();
+          if (slotInformationInitialized_ && resultLut)
+      LOG(INFO) << aa_ << "return false (lut: " << resultLut << "): toVectorNo=" << toVectorNoLut << "," << toVectorNo << ", toVectorIndex=" << toVectorIndexLut << "," << toVectorIndex << ", avoidCopyIfPossible=" << avoidCopyIfPossibleLut << "," << avoidCopyIfPossible;
       return false;
     }
 
@@ -443,7 +511,10 @@ bool SlotConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
 
     // if toIndex is set to None in the python config, this means we do not want to have a connection in this slot and it is no warning
     if (toIndex == -1)
+    {if (slotInformationInitialized_ && resultLut)
+      LOG(INFO) << aa_ << "return false (lut: " << resultLut << "): toVectorNo=" << toVectorNoLut << "," << toVectorNo << ", toVectorIndex=" << toVectorIndexLut << "," << toVectorIndex << ", avoidCopyIfPossible=" << avoidCopyIfPossibleLut << "," << avoidCopyIfPossible;
       return false;
+    }
 
     if (nFieldVariablesTerm2Vector1_ == 0)
       toVectorNo = 1;
@@ -465,6 +536,8 @@ bool SlotConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
           << "or unneccessary slots have been created (e.g. algebraics in cellml that are not used further)."
           << getDebugInformation()
           << DihuContext::solverStructureVisualizer()->getDiagram();
+if (slotInformationInitialized_ && resultLut)
+      LOG(INFO) << aa_ << "return false (lut: " << resultLut << "): toVectorNo=" << toVectorNoLut << "," << toVectorNo << ", toVectorIndex=" << toVectorIndexLut << "," << toVectorIndex << ", avoidCopyIfPossible=" << avoidCopyIfPossibleLut << "," << avoidCopyIfPossible;
       return false;
     }
     else if (toVectorNo == 1 && toVectorIndex >= nFieldVariablesTerm2Vector2_)
@@ -478,6 +551,8 @@ bool SlotConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
           << "or unneccessary slots have been created (e.g. algebraics in cellml that are not used further)."
           << getDebugInformation()
           << DihuContext::solverStructureVisualizer()->getDiagram();
+          if (slotInformationInitialized_ && resultLut)
+      LOG(INFO) << aa_ << "return false (lut: " << resultLut << "): toVectorNo=" << toVectorNoLut << "," << toVectorNo << ", toVectorIndex=" << toVectorIndexLut << "," << toVectorIndex << ", avoidCopyIfPossible=" << avoidCopyIfPossibleLut << "," << avoidCopyIfPossible;
       return false;
     }
 
@@ -503,6 +578,8 @@ bool SlotConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
           << "or unneccessary slots have been created (e.g. algebraics in cellml that are not used further)."
           << getDebugInformation()
           << DihuContext::solverStructureVisualizer()->getDiagram();
+          if (slotInformationInitialized_ && resultLut)
+      LOG(INFO) << aa_ << "return false (lut: " << resultLut << "): toVectorNo=" << toVectorNoLut << "," << toVectorNo << ", toVectorIndex=" << toVectorIndexLut << "," << toVectorIndex << ", avoidCopyIfPossible=" << avoidCopyIfPossibleLut << "," << avoidCopyIfPossible;
       return false;
     }
 
@@ -515,6 +592,8 @@ bool SlotConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
           << "or unneccessary slots have been created (e.g. algebraics in cellml that are not used further)."
           << getDebugInformation()
           << DihuContext::solverStructureVisualizer()->getDiagram();
+          if (slotInformationInitialized_ && resultLut)
+      LOG(INFO) << aa_ << "return false (lut: " << resultLut << "): toVectorNo=" << toVectorNoLut << "," << toVectorNo << ", toVectorIndex=" << toVectorIndexLut << "," << toVectorIndex << ", avoidCopyIfPossible=" << avoidCopyIfPossibleLut << "," << avoidCopyIfPossible;
       return false;
     }
     else if (fromVectorNo == 1 && fromVectorIndex >= nFieldVariablesTerm2Vector2_)
@@ -526,6 +605,8 @@ bool SlotConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
           << "or unneccessary slots have been created (e.g. algebraics in cellml that are not used further)."
           << getDebugInformation()
           << DihuContext::solverStructureVisualizer()->getDiagram();
+          if (slotInformationInitialized_ && resultLut)
+      LOG(INFO) << aa_ << "return false (lut: " << resultLut << "): toVectorNo=" << toVectorNoLut << "," << toVectorNo << ", toVectorIndex=" << toVectorIndexLut << "," << toVectorIndex << ", avoidCopyIfPossible=" << avoidCopyIfPossibleLut << "," << avoidCopyIfPossible;
       return false;
     }
 
@@ -533,7 +614,11 @@ bool SlotConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
 
     // if toIndex is set to None in the python config, this means we do not want to have a connection in this slot and it is no warning
     if (toIndex == -1)
+    {
+      if (slotInformationInitialized_ && resultLut)
+      LOG(INFO) << aa_ << "return false (lut: " << resultLut << "): toVectorNo=" << toVectorNoLut << "," << toVectorNo << ", toVectorIndex=" << toVectorIndexLut << "," << toVectorIndex << ", avoidCopyIfPossible=" << avoidCopyIfPossibleLut << "," << avoidCopyIfPossible;
       return false;
+    }
 
     if (nFieldVariablesTerm1Vector1_ == 0)
       toVectorNo = 1;
@@ -556,6 +641,8 @@ bool SlotConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
           << "or unneccessary slots have been created (e.g. algebraics in cellml that are not used further)."
           << getDebugInformation()
           << DihuContext::solverStructureVisualizer()->getDiagram();
+          if (slotInformationInitialized_ && resultLut)
+      LOG(INFO) << aa_ << "return false (lut: " << resultLut << "): toVectorNo=" << toVectorNoLut << "," << toVectorNo << ", toVectorIndex=" << toVectorIndexLut << "," << toVectorIndex << ", avoidCopyIfPossible=" << avoidCopyIfPossibleLut << "," << avoidCopyIfPossible;
       return false;
     }
     else if (toVectorNo == 1 && toVectorIndex >= nFieldVariablesTerm1Vector2_)
@@ -569,6 +656,8 @@ bool SlotConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
           << "or unneccessary slots have been created (e.g. algebraics in cellml that are not used further)."
           << getDebugInformation()
           << DihuContext::solverStructureVisualizer()->getDiagram();
+          if (slotInformationInitialized_ && resultLut)
+      LOG(INFO) << aa_ << "return false (lut: " << resultLut << "): toVectorNo=" << toVectorNoLut << "," << toVectorNo << ", toVectorIndex=" << toVectorIndexLut << "," << toVectorIndex << ", avoidCopyIfPossible=" << avoidCopyIfPossibleLut << "," << avoidCopyIfPossible;
       return false;
     }
 
@@ -577,25 +666,27 @@ bool SlotConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
   }
 
   // completed successfully
+  if (slotInformationInitialized_ && !resultLut)
+  LOG(INFO) << aa_ << "return true (lut: " << resultLut << "): toVectorNo=" << toVectorNoLut << "," << toVectorNo << ", toVectorIndex=" << toVectorIndexLut << "," << toVectorIndex << ", avoidCopyIfPossible=" << avoidCopyIfPossibleLut << "," << avoidCopyIfPossible;
   return true;
 }
 
-std::shared_ptr<SlotConnection> &SlotConnection::subSlotConnection1()
+std::shared_ptr<SlotsConnection> &SlotsConnection::subSlotsConnection1()
 {
-  return subSlotConnection1_;
+  return subSlotsConnection1_;
 }
 
-std::shared_ptr<SlotConnection> &SlotConnection::subSlotConnection2()
+std::shared_ptr<SlotsConnection> &SlotsConnection::subSlotsConnection2()
 {
-  return subSlotConnection2_;
+  return subSlotsConnection2_;
 }
 
-std::shared_ptr<SlotConnection> &SlotConnection::subSlotConnection3()
+std::shared_ptr<SlotsConnection> &SlotsConnection::subSlotsConnection3()
 {
-  return subSlotConnection3_;
+  return subSlotsConnection3_;
 }
 
-std::shared_ptr<SlotConnection> &SlotConnection::subSlotConnection4()
+std::shared_ptr<SlotsConnection> &SlotsConnection::subSlotsConnection4()
 {
-  return subSlotConnection4_;
+  return subSlotsConnection4_;
 }

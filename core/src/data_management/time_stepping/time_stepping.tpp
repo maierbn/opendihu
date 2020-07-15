@@ -76,6 +76,9 @@ createPetscObjects()
 
   // parse slot names of the additional field variables
   this->context_.getPythonConfig().getOptionVector("additionalSlotNames", slotConnectorData_->slotNames);
+
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
 }
 
 template<typename FunctionSpaceType,int nComponents>

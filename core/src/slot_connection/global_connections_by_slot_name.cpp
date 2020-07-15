@@ -18,7 +18,7 @@ std::string GlobalConnectionsBySlotName::getDescriptionForDiagram()
 
   if (!connections_.empty())
   {
-    s << "The following data slot connection were given by the setting \"connectionSlots\":\n";
+    s << "The following data slot connection were given by the setting \"connectedSlots\":\n";
     for (std::vector<std::pair<std::string,std::string>>::iterator iter = connections_.begin(); iter != connections_.end(); iter++)
     {
       // check if reverse connection is also contained
@@ -37,15 +37,28 @@ std::string GlobalConnectionsBySlotName::getDescriptionForDiagram()
         }
       }
 
+      std::string fromSlotName = (*iter).first;
+      std::string toSlotName = (*iter).second;
+
+      if (fromSlotName.length() < 6)
+      {
+        fromSlotName = std::string(6-fromSlotName.length(), ' ') + fromSlotName;
+      }
+      if (toSlotName.length() < 6)
+      {
+        toSlotName += std::string(6-toSlotName.length(), ' ');
+      }
+
       if (reverseConnectionAlsoContained)
       {
-        s << "  " << (*iter).first << "¤ <─> ¤" << (*iter).second << "\n";
+        s << "  " << fromSlotName << " ¤ <─> ¤ " << toSlotName << "\n";
       }
       else if (!connectionAlreadyDisplayed)
       {
-        s << "  " << (*iter).first << "¤ ─> ¤" << (*iter).second << "\n";
+        s << "  " << fromSlotName << " ¤ ──> ¤ " << toSlotName << "\n";
       }
     }
+    s << "\n";
   }
   return s.str();
 }

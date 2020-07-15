@@ -263,13 +263,23 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
         if (listNEntries == 0)
           return;
 
+        // get the first value from the list
+        ValueType currentValue = PythonUtility::getOptionListBegin<ValueType>(settings, keyString, pathString);
+
+        // loop over other values
+        for (;
+            !PythonUtility::getOptionListEnd(settings, keyString, pathString);
+            PythonUtility::getOptionListNext<ValueType>(settings, keyString, pathString, currentValue))
+        {
+          values.push_back(currentValue);
+        }
+
         values = convertFromPython<std::vector<ValueType>>::get(value);
       }
       else
       {
-        // not a list, but a single entry (only 1 entry)
-        ValueType item = convertFromPython<ValueType>::get(value);
-        values.push_back(item);
+        // Convert using the convertFromPython helper. This is less efficient because the vector gets copied.
+        values = convertFromPython<std::vector<ValueType>>::get(value);
       }
     }
     else
@@ -279,7 +289,6 @@ void PythonUtility::getOptionVector(const PyObject *settings, std::string keyStr
     Py_CLEAR(key);
   }
 }
-
 
 template<int D>
 PyObject *PythonUtility::convertToPythonList(std::array<long,D> &data)

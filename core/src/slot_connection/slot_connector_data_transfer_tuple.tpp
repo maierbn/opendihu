@@ -17,7 +17,7 @@ void SlotConnectorDataTransfer<
              std::shared_ptr<SlotConnectorDataType2>
            >> transferableSolutionData1,
            std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType3,nComponents3a,nComponents3b>> transferableSolutionData3,
-           SlotConnection &outputConnection, int offsetSlotNoData1, int offsetSlotNoData2)
+           SlotsConnection &slotsConnection, int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer tuple (1a), offsetSlotNoData1: " << offsetSlotNoData1 << ", offsetSlotNoData2: " << offsetSlotNoData2;
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
@@ -30,17 +30,17 @@ void SlotConnectorDataTransfer<
     << SlotConnectorDataHelper<Data::SlotConnectorData<FunctionSpaceType3,nComponents3a,nComponents3b>>::getString(transferableSolutionData3);
 #endif
 
-  // copy outputConnection for second tuple
-  if (!outputConnection.subSlotConnection1())
+  // copy slotsConnection for second tuple
+  if (!slotsConnection.subSlotsConnection1())
   {
-    outputConnection.subSlotConnection1() = std::make_shared<SlotConnection>(outputConnection);
+    slotsConnection.subSlotsConnection1() = std::make_shared<SlotsConnection>(slotsConnection);
   }
 
   // do transfer with slots in first tuple part
   SlotConnectorDataTransfer<
     SlotConnectorDataType1,
     Data::SlotConnectorData<FunctionSpaceType3,nComponents3a,nComponents3b>
-  >::transfer(std::get<0>(*transferableSolutionData1), transferableSolutionData3, *outputConnection.subSlotConnection1(),
+  >::transfer(std::get<0>(*transferableSolutionData1), transferableSolutionData3, *slotsConnection.subSlotsConnection1(),
               offsetSlotNoData1, offsetSlotNoData2);
 
   LOG(DEBUG) << "transfer tuple (1b), offsetSlotNoData1: " << offsetSlotNoData1 << ", offsetSlotNoData2: " << offsetSlotNoData2;
@@ -54,10 +54,10 @@ void SlotConnectorDataTransfer<
     << SlotConnectorDataHelper<Data::SlotConnectorData<FunctionSpaceType3,nComponents3a,nComponents3b>>::getString(transferableSolutionData3);
 #endif
 
-  // copy outputConnection for second tuple
-  if (!outputConnection.subSlotConnection2())
+  // copy slotsConnection for second tuple
+  if (!slotsConnection.subSlotsConnection2())
   {
-    outputConnection.subSlotConnection2() = std::make_shared<SlotConnection>(outputConnection);
+    slotsConnection.subSlotsConnection2() = std::make_shared<SlotsConnection>(slotsConnection);
   }
 
   // first offset changes by number of slots that were present in the first tuple entry
@@ -70,7 +70,7 @@ void SlotConnectorDataTransfer<
   SlotConnectorDataTransfer<
     SlotConnectorDataType2,
     Data::SlotConnectorData<FunctionSpaceType3,nComponents3a,nComponents3b>
-  >::transfer(std::get<1>(*transferableSolutionData1), transferableSolutionData3, *outputConnection.subSlotConnection2(),
+  >::transfer(std::get<1>(*transferableSolutionData1), transferableSolutionData3, *slotsConnection.subSlotsConnection2(),
               offsetSlotNoData1, offsetSlotNoData2);
 }
 
@@ -89,7 +89,7 @@ void SlotConnectorDataTransfer<
              std::shared_ptr<SlotConnectorDataType2>,
              std::shared_ptr<SlotConnectorDataType3>
            >> transferableSolutionData2,
-           SlotConnection &outputConnection, int offsetSlotNoData1, int offsetSlotNoData2)
+           SlotsConnection &slotsConnection, int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer tuple (2a)";
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
@@ -102,17 +102,17 @@ void SlotConnectorDataTransfer<
         >>::getString(transferableSolutionData2);
 #endif
 
-  // copy outputConnection for second tuple
-  if (!outputConnection.subSlotConnection1())
+  // copy slotsConnection for second tuple
+  if (!slotsConnection.subSlotsConnection1())
   {
-    outputConnection.subSlotConnection1() = std::make_shared<SlotConnection>(outputConnection);
+    slotsConnection.subSlotsConnection1() = std::make_shared<SlotsConnection>(slotsConnection);
   }
 
   // do transfer with slots in first tuple part
   SlotConnectorDataTransfer<
     Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,
     SlotConnectorDataType2
-  >::transfer(transferableSolutionData1, std::get<0>(*transferableSolutionData2), *outputConnection.subSlotConnection1(),
+  >::transfer(transferableSolutionData1, std::get<0>(*transferableSolutionData2), *slotsConnection.subSlotsConnection1(),
               offsetSlotNoData1, offsetSlotNoData2);
 
   LOG(DEBUG) << "transfer tuple (2b)";
@@ -126,10 +126,10 @@ void SlotConnectorDataTransfer<
         >>::getString(transferableSolutionData2);
 #endif
 
-  // copy outputConnection for second tuple
-  if (!outputConnection.subSlotConnection2())
+  // copy slotsConnection for second tuple
+  if (!slotsConnection.subSlotsConnection2())
   {
-    outputConnection.subSlotConnection2() = std::make_shared<SlotConnection>(outputConnection);
+    slotsConnection.subSlotsConnection2() = std::make_shared<SlotsConnection>(slotsConnection);
   }
 
   // first offset does not change
@@ -142,7 +142,7 @@ void SlotConnectorDataTransfer<
   SlotConnectorDataTransfer<
     Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,
     SlotConnectorDataType3
-  >::transfer(transferableSolutionData1, std::get<1>(*transferableSolutionData2), *outputConnection.subSlotConnection2(),
+  >::transfer(transferableSolutionData1, std::get<1>(*transferableSolutionData2), *slotsConnection.subSlotsConnection2(),
               offsetSlotNoData1, offsetSlotNoData2);
 }
 
@@ -165,14 +165,14 @@ void SlotConnectorDataTransfer<
              std::shared_ptr<SlotConnectorDataType3>,
              std::shared_ptr<SlotConnectorDataType4>
            >> transferableSolutionData2,
-           SlotConnection &outputConnection, int offsetSlotNoData1, int offsetSlotNoData2)
+           SlotsConnection &slotsConnection, int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer tuple (3aa)";
 
-  // copy outputConnection for second tuple
-  if (!outputConnection.subSlotConnection1())
+  // copy slotsConnection for second tuple
+  if (!slotsConnection.subSlotsConnection1())
   {
-    outputConnection.subSlotConnection1() = std::make_shared<SlotConnection>(outputConnection);
+    slotsConnection.subSlotsConnection1() = std::make_shared<SlotsConnection>(slotsConnection);
   }
 
   int initialOffsetSlotNoData1 = offsetSlotNoData1;
@@ -182,15 +182,15 @@ void SlotConnectorDataTransfer<
   SlotConnectorDataTransfer<
     SlotConnectorDataType1,
     SlotConnectorDataType3
-  >::transfer(std::get<0>(*transferableSolutionData1), std::get<0>(*transferableSolutionData2), *outputConnection.subSlotConnection1(),
+  >::transfer(std::get<0>(*transferableSolutionData1), std::get<0>(*transferableSolutionData2), *slotsConnection.subSlotsConnection1(),
               offsetSlotNoData1, offsetSlotNoData2);
 
   LOG(DEBUG) << "transfer tuple (3ab)";
 
-  // copy outputConnection for second tuple
-  if (!outputConnection.subSlotConnection2())
+  // copy slotsConnection for second tuple
+  if (!slotsConnection.subSlotsConnection2())
   {
-    outputConnection.subSlotConnection2() = std::make_shared<SlotConnection>(outputConnection);
+    slotsConnection.subSlotsConnection2() = std::make_shared<SlotsConnection>(slotsConnection);
   }
 
   // first offset does not change
@@ -203,7 +203,7 @@ void SlotConnectorDataTransfer<
   SlotConnectorDataTransfer<
     SlotConnectorDataType1,
     SlotConnectorDataType4
-  >::transfer(std::get<0>(*transferableSolutionData1), std::get<1>(*transferableSolutionData2), *outputConnection.subSlotConnection2(),
+  >::transfer(std::get<0>(*transferableSolutionData1), std::get<1>(*transferableSolutionData2), *slotsConnection.subSlotsConnection2(),
               offsetSlotNoData1, offsetSlotNoData2);
 
   LOG(DEBUG) << "transfer tuple (3ba)";
@@ -215,17 +215,17 @@ void SlotConnectorDataTransfer<
   // second offset is reset to the start
   offsetSlotNoData2 = initialOffsetSlotNoData2;
 
-  // copy outputConnection for second tuple
-  if (!outputConnection.subSlotConnection3())
+  // copy slotsConnection for second tuple
+  if (!slotsConnection.subSlotsConnection3())
   {
-    outputConnection.subSlotConnection3() = std::make_shared<SlotConnection>(outputConnection);
+    slotsConnection.subSlotsConnection3() = std::make_shared<SlotsConnection>(slotsConnection);
   }
 
   // do transfer with slots in second tuple part
   SlotConnectorDataTransfer<
     SlotConnectorDataType2,
     SlotConnectorDataType3
-  >::transfer(std::get<1>(*transferableSolutionData1), std::get<0>(*transferableSolutionData2), *outputConnection.subSlotConnection3(),
+  >::transfer(std::get<1>(*transferableSolutionData1), std::get<0>(*transferableSolutionData2), *slotsConnection.subSlotsConnection3(),
               offsetSlotNoData1, offsetSlotNoData2);
 
   LOG(DEBUG) << "transfer tuple (3bb)";
@@ -236,16 +236,16 @@ void SlotConnectorDataTransfer<
   // second offset changes by number of slots that were present in the first tuple entry
   offsetSlotNoData2 += SlotConnectorDataHelper<SlotConnectorDataType3>::nSlots(std::get<0>(*transferableSolutionData2));
 
-  // copy outputConnection for second tuple
-  if (!outputConnection.subSlotConnection4())
+  // copy slotsConnection for second tuple
+  if (!slotsConnection.subSlotsConnection4())
   {
-    outputConnection.subSlotConnection4() = std::make_shared<SlotConnection>(outputConnection);
+    slotsConnection.subSlotsConnection4() = std::make_shared<SlotsConnection>(slotsConnection);
   }
 
   // do transfer with slots in second tuple part
   SlotConnectorDataTransfer<
     SlotConnectorDataType2,
     SlotConnectorDataType4
-  >::transfer(std::get<1>(*transferableSolutionData1), std::get<1>(*transferableSolutionData2), *outputConnection.subSlotConnection4(),
+  >::transfer(std::get<1>(*transferableSolutionData1), std::get<1>(*transferableSolutionData2), *slotsConnection.subSlotsConnection4(),
               offsetSlotNoData1, offsetSlotNoData2);
 }

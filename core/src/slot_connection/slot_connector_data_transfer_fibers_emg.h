@@ -7,7 +7,7 @@
 #include "data_management/data.h"
 #include "control/types.h"
 #include "mesh/mesh.h"
-#include "slot_connection/slot_connection.h"
+#include "slot_connection/slots_connection.h"
 
 /** Transfer between the output from cubes partitioned fibers (MultipleInstances<Strang<MultipleInstances<...) and StaticBidomainSolver
  *
@@ -42,7 +42,7 @@ public:
                          >
                        >>> transferableSolutionData1,
                        std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
-                       SlotConnection &outputConnection,
+                       SlotsConnection &slotsConnection,
                        int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 };
 
@@ -70,7 +70,7 @@ public:
                             SlotConnectorDataType2c
                           >
                         >>> transferableSolutionData2,
-                       SlotConnection &outputConnection,
+                       SlotsConnection &slotsConnection,
                        int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 };
 

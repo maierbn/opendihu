@@ -14,7 +14,7 @@ namespace Data{
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
 class SlotConnectorData;
 }
-class SlotConnection;
+class SlotsConnection;
 
 /** Class that collects information about all nested solvers and produces a diagram as txt file.
  *
@@ -39,7 +39,7 @@ public:
   void endChild();
 
   //! add the output connection information between two children to the current solver
-  void addSlotConnection(std::shared_ptr<SlotConnection> outputConnection);
+  void addSlotsConnection(std::shared_ptr<SlotsConnection> slotsConnection);
 
   //! set the slot connector data
   template<typename FunctionSpaceType, int nComponents1, int nComponents2>
@@ -91,11 +91,11 @@ public:
 
     std::vector<OutputSlot> outputSlots;
 
-    std::shared_ptr<SlotConnection> outputConnection; //< pointer to the actual outputConnection object of the operator splitting
+    std::shared_ptr<SlotsConnection> slotsConnection; //< pointer to the actual slotsConnection object of the operator splitting
 
     /** connection between two output slots of two children
      */
-    struct SlotConnectionRepresentation
+    struct SlotsConnectionRepresentation
     {
       int fromSlot;
       int toSlot;
@@ -103,8 +103,8 @@ public:
       bool involvesMapping;
     };
 
-    std::vector<SlotConnectionRepresentation> outputConnections;    //< connections between output slots
-    std::vector<SlotConnectionRepresentation> mappingsWithinSolver; //< "connections" within the same solver, this is used for MapDofs
+    std::vector<SlotsConnectionRepresentation> slotsConnections;    //< connections between output slots
+    std::vector<SlotsConnectionRepresentation> mappingsWithinSolver; //< "connections" within the same solver, this is used for MapDofs
 
     std::vector<std::shared_ptr<solver_t>> children;    //< the nested solvers inside the current solver
     std::shared_ptr<solver_t> parent;                   //< pointer to the parent of the current nested solver
@@ -142,7 +142,7 @@ protected:
       int lineNoFrom;   //< row where the line starts
       int lineNoTo;     //< row where the line ends
       int lineColumn;   //< lineColumn is the horizontal position of the vertical data connection line
-      SolverStructureVisualizer::solver_t::SlotConnectionRepresentation::slot_connection_t lineType;      //< type of the line if it is copy or reuse
+      SolverStructureVisualizer::solver_t::SlotsConnectionRepresentation::slot_connection_t lineType;      //< type of the line if it is copy or reuse
       bool involvesMapping;   //< if the line is a mapping
     };
     std::vector<ExternalConnectionLine> externalConnectionLines_; //< connection lines contains the following information: <lineNoFrom, lineNoTo, lineColumn, lineType>
@@ -152,8 +152,8 @@ protected:
     std::vector<std::string> referencedMeshNames_;                //< all occuring mesh names
   };
 
-  //! in the currentSolver_ fill outputConnections vector from outputConnection
-  static void parseSlotConnection(std::shared_ptr<solver_t> currentSolver);
+  //! in the currentSolver_ fill slotsConnections vector from slotsConnection
+  static void parseSlotsConnection(std::shared_ptr<solver_t> currentSolver);
 
   std::shared_ptr<solver_t> solverRoot_;          //< the whole nested solver structure
   std::shared_ptr<solver_t> currentSolver_;       //< a pointer to the current solver for which call to addSolver sets the name and data

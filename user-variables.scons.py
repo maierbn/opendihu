@@ -18,7 +18,7 @@
 # set compiler to use
 cc = "gcc"   # c compiler
 CC = "g++"   # c++ compiler
-mpiCC = "/store/software/opendihu/dependencies/mpi_debug/install/bin/mpic++"
+mpiCC = "mpic++"
 
 cmake="cmake"
 
@@ -62,14 +62,13 @@ XBRAID_DOWNLOAD = True
 OPENCOR_DOWNLOAD = True
 
 # preCICE coupling library
-LIBXML2_DOWNLOAD = True
+LIBXML2_DOWNLOAD = False
 PRECICE_DOWNLOAD = False
 
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
 #MPI_DIR = "/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
 MPI_DIR = "/usr/lib/x86_64-linux-gnu/openmpi"    # standard path for openmpi on ubuntu >18.04
-MPI_DIR = "/store/software/opendihu/dependencies/mpi_debug/install"    # custom mpi
 
 # Vectorized code for matrix assembly
 # Set to True for fastest code, set to False for faster compilation
@@ -132,7 +131,7 @@ try:
     MPI_DIR = os.environ["MPT_ROOT"]
     LAPACK_DOWNLOAD = False
     PETSC_DOWNLOAD = False
-    #PETSC_DIR = os.environ["PETSC_ROOT"]
+    PETSC_DIR = os.environ["PETSC_ROOT"]
     PYTHONPACKAGES_DOWNLOAD = False
     GOOGLETEST_DOWNLOAD = True 
     XBRAID_DOWNLOAD = True
@@ -154,7 +153,7 @@ if False:
   MPI_DOWNLOAD = True
   MPI_IGNORE_MPICC = True    # this downloads and builds openmpi
 
-PETSC_DEBUG = True            # this enables debugging flags such that valgrind memcheck can track MPI errors
+#PETSC_DEBUG = True            # this enables debugging flags such that valgrind memcheck can track MPI errors
 
 # specialized settings for supercomputer (HazelHen)
 import os

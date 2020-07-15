@@ -116,11 +116,11 @@ config = {
     ("msin_s", "msin_i"),
     ("msin_i", "msin_m"),
     ("gt",     "gt_in"),
-    #("ms0",    "ms_in0"),
-    #("ms1",    "ms_in1"),
-    #("ms2",    "ms_in2"),
-    #("ms3",    "ms_in3"),
-    #("ms4",    "ms_in4"),
+    ("ms0",    "ms_in0"),
+    ("ms1",    "ms_in1"),
+    ("ms2",    "ms_in2"),
+    ("ms3",    "ms_in3"),
+    ("ms4",    "ms_in4"),
   ],
   
   # global coupling scheme

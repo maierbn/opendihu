@@ -444,27 +444,28 @@ streamline_tracer
 Solid Mechanics
 --------------------
 
-linear_elasticity
+Linear Elasticity
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 For scenarios (1) and (2), this solves linear elasticity
 
 .. math::
-  \textbf{C}Δ\textbf{u} = \textbf{f}, \textbf{C} \in \mathbb{R}^2->\mathbb{R}^2, \textbf{u}, \textbf{f} \in \mathbb{R}^2
+  \textbf{C}Δ\textbf{u} = \textbf{f}, \textbf{C} \in \mathbb{R}^2\times\mathbb{R}^2, \textbf{u}, \textbf{f} \in \mathbb{R}^2
   
 The 4th order elasticity tensor has the entries 
 
-.. math:
-  C_{abcd} = K \delta_{ab}  \delta_{cd} + \mu \big(\delta_{ac}  \delta_{bd} + \delta_{ad}  \delta_{bc} - \dfrac{2}{3}  \delta_{ab} \delta_{cd}\big);
+.. math::
+
+  C_{abcd} = K \delta_{ab}  \delta_{cd} + \mu \big(\delta_{ac}  \delta_{bd} + \delta_{ad}  \delta_{bc} - \dfrac{2}{3}  \delta_{ab} \delta_{cd}\big)
   
 with shear modulus :math:`\mu` and bulk modulus :math:`K`.
 It shows how the normal `FiniteElementMethod` class can be used for this problem.
 
-For scenarios (3), (4) and (5), it additionally considers an active stress term.
+For scenarios (3), (4) and (5), an active stress term is additionally considered, such that the 2nd Piola-Kirchhoff stress tensor is given as :math:`S = S_\text{passive} + S_\text{active}`.
   
 .. code-block:: bash
 
-  cd $OPENDIHU_HOME/examples/examples/solid_mechanics/linear_elasticity/box
+  cd $OPENDIHU_HOME/examples/solid_mechanics/linear_elasticity/box
   mkorn && sr       # build
   cd build_release
   ./linear_elasticity_2d ../settings_linear_elasticity_2d.py    # (1)
@@ -513,7 +514,7 @@ Scenario (3): This is a dynamic problem. An active stress value is prescribed ov
   
 Scenario (5): An active stress value is prescribed over time at multiple 1D fibers (shown as spheres). This value gets mapped to the 3D mesh and used in the elasticity computation. This can also be seen as muscle tissue, which is bending up and down periodically.
 
-mooney_rivlin_isotropic
+Mooney-Rivlin isotropic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Solves a static 3D nonlinear, incompressible solid mechanics problem with Mooney-Rivlin material. The strain energy function is formulated using the reduced invariants as follows.
@@ -554,7 +555,7 @@ Possible scenarios:
   
   The residual norm of the nonlinear solver over time steps. The Jacobian matrix is formed analytically every 5th iteration, in total three times (before iterations 1, 6, 11). It can be seen that the residual norm drops after every new Jacobian and then only increases a little more.
 
-mooney_rivlin_transiso
+Mooney-Rivlin transiso
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Solves a static 3D nonlinear solid mechanics problem, now with transversely isotropic Mooney-Rivlin material, i.e. with 4 material parameters.
@@ -593,69 +594,243 @@ Possible scenarios:
   Scenario (2): A deformed muscle geometry, material parameters :math:`c_1 = 3.176e-10, c_2 = 1.813, b  = 1.075e-2, d  = 9.1733`. The muscle is fixed at the left end and pulled upwards by a force of 0.1 N.
 
 
-dynamic_mooney_rivlin
+Dynamic Mooney-Rivlin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following examples are contained under the `dynamic_mooney_rivlin` directory:
 
 .. code-block:: bash
 
-  cd $OPENDIHU_HOME/examples/examples/solid_mechanics/dynamic_mooney_rivlin/rod
+  cd $OPENDIHU_HOME/examples/solid_mechanics/dynamic_mooney_rivlin/rod
   mkorn && sr       # build
   cd build_release
-  ./linear_elasticity_2d ../settings_linear_elasticity_2d.py    # (1)
-  ./linear_elasticity_3d ../settings_linear_elasticity_3d.py    # (2)
+  ./dynamic_transversely_isotropic ../settings_dynamic.py    # (1)
   
-  cd $OPENDIHU_HOME/examples/examples/solid_mechanics/dynamic_mooney_rivlin/gelatine1
+  cd $OPENDIHU_HOME/examples/solid_mechanics/dynamic_mooney_rivlin/gelatine1
   mkorn && sr       # build
   cd build_release
-  ./linear_elasticity_2d ../settings_linear_elasticity_2d.py    # (1)
-  ./linear_elasticity_3d ../settings_linear_elasticity_3d.py    # (2)
+  ./dynamic ../settings_gelatine1.py              # (2)
   
   cd $OPENDIHU_HOME/examples/solid_mechanics/dynamic_mooney_rivlin/gelatine2
   mkorn && sr       # build
   cd build_release
-  ./lin_elasticity_with_3d_activation_linear ../settings.py     # (3)
-  ./lin_elasticity_with_3d_activation_quadratic ../settings.py  # (4) does not converge
+  ./dynamic ../settings_gelatine2.py              # (3)
   
   cd $OPENDIHU_HOME/examples/solid_mechanics/dynamic_mooney_rivlin/muscle
   mkorn && sr       # build
   cd build_release
-  ./lin_elasticity_with_fibers ../settings_fibers.py            # (5)
+  ./dynamic_transversely_isotropic ../settings_muscle.py    # (4)
 
   cd $OPENDIHU_HOME/examples/solid_mechanics/dynamic_mooney_rivlin/muscle_with_fat
   mkorn && sr       # build
   cd build_release
-  ./lin_elasticity_with_fibers ../settings_fibers.py            # (5)
+  mpirun -n 2 ./muscle_with_fat ../settings_muscle_with_fat.py coarse.py    # (5)
 
   cd $OPENDIHU_HOME/examples/solid_mechanics/dynamic_mooney_rivlin/tendon
   mkorn && sr       # build
   cd build_release
-  ./lin_elasticity_with_fibers ../settings_fibers.py            # (5)
+  ./tendon ../settings_tendon.py tendon_bottom    # (6)
+  ./tendon ../settings_tendon.py tendon_top_a     # (7)
+  ./tendon ../settings_tendon.py tendon_top_b     # (8)
 
-.. _linear_elasticity_1:
-.. figure:: examples/linear_elasticity_1.png
+.. raw:: html
+
+  <iframe width="600" height="400" src="https://www.youtube.com/embed/RcehAfDiD-k" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+Scenario (1)
+
+.. _dynamic_mooney_rivlin_2:
+.. image:: examples/dynamic_mooney_rivlin_2_1.png
+  :width: 13%
+.. image:: examples/dynamic_mooney_rivlin_2_2.png
+  :width: 13%
+.. image:: examples/dynamic_mooney_rivlin_2_3.png
+  :width: 13%
+.. image:: examples/dynamic_mooney_rivlin_2_4.png
+  :width: 13%
+.. image:: examples/dynamic_mooney_rivlin_2_5.png
+  :width: 13%
+.. image:: examples/dynamic_mooney_rivlin_2_6.png
+  :width: 13%
+.. image:: examples/dynamic_mooney_rivlin_2_7.png
+  :width: 13%
+  
+Scenario (2): A piece of gelatine the gets moved to the right. This is realized with Dirichlet boundary conditions that can be updated over time by a python callback function. 
+
+.. _dynamic_mooney_rivlin_3:
+.. image:: examples/dynamic_mooney_rivlin_3_1.png
+  :width: 13%
+.. image:: examples/dynamic_mooney_rivlin_3_2.png
+  :width: 13%
+.. image:: examples/dynamic_mooney_rivlin_3_3.png
+  :width: 13%
+.. image:: examples/dynamic_mooney_rivlin_3_4.png
+  :width: 13%
+.. image:: examples/dynamic_mooney_rivlin_3_5.png
+  :width: 13%
+.. image:: examples/dynamic_mooney_rivlin_3_6.png
+  :width: 13%
+.. image:: examples/dynamic_mooney_rivlin_3_7.png
+  :width: 13%
+  
+Scenario (3): A piece of gelatine moves from a varying force, this time in the longer direction of the hexaeder. This is realized with a traction force on the bottom that changes according to a sin function. This is a Neumann boundary condition that gets updated over time by a python callback function. The arrows visualize the current velocity vectors.
+
+.. _dynamic_mooney_rivlin_4:
+.. figure:: examples/dynamic_mooney_rivlin_4.png
   :width: 60%
   
-  Scenario (1): Neumann boundary conditions as black arrows (traction). This has been visualized using Arrow Glyphs and Warp filters in ParaView.
+  Scenario (4): Dynamic simulation of muscle without active stress. The arrows indicate the velocity, colorung of the muscle volume is the 2nd Piola-Kirchhoff stress.
 
-.. _linear_elasticity_2:
-.. figure:: examples/linear_elasticity_2.png
+.. _dynamic_mooney_rivlin_5:
+.. figure:: examples/dynamic_mooney_rivlin_5.png
   :width: 60%
   
+  Scenario (5): Dynamic simulation of muscle with fat layer, active stress is prescribed in the muscle domain.
+
+.. _dynamic_mooney_rivlin_6:
+.. figure:: examples/dynamic_mooney_rivlin_6.png
+  :width: 60%
+  
+  Scenario (6), the bottom tendon.
+  
+.. _dynamic_mooney_rivlin_7:
+.. figure:: examples/dynamic_mooney_rivlin_7.png
+  :width: 60%
+  
+  Scenarios (7) and (8), the two top tendons.
+  
+Scenarios (6), (7) and (8) use the tendon material from `Carniel, T. A., & Fancello, E. A. (2017). A transversely isotropic coupled hyperelastic model for the mechanical behavior of tendons. Journal of biomechanics, 54, 49-57. <https://www.sciencedirect.com/science/article/abs/pii/S0021929017300726>`_
 
 
-mooney_rivlin_febio
+Mooney-Rivlin with FEBio
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-shear_test
+This example uses `FEBio <https://febio.org/>`_ to compute deformation of a Mooney-Rivlin material. 
+The same scenario is also simulated with opendihu and the results are compared. 
+
+This example needs FEBio installed. More specifically, you need to ensure that ``febio3`` runs the febio executable
+
+.. code-block:: bash
+
+  cd $OPENDIHU_HOME/examples/solid_mechanics/mooney_rivlin_febio
+  mkorn && sr       # build
+  cd build_release
+  ./febio ../settings_both.py
+  ./opendihu ../settings_both.py
+  
+After running both programs (`./febio` and `./opendihu`) there should be an output like
+
+.. code-block:: bash
+
+  rms: 2.5842881150700362e-06
+  
+This is the root mean square error between both results. If it is small like this, the results match.
+
+If you get a message ``Error: Running febio failed with error code 256``, then febio is not installed or something failed with febio. 
+  
+.. _mooney_rivlin_febio_1:
+.. figure:: examples/mooney_rivlin_febio_1.png
+  :width: 60%
+  
+  Scenario for comparison of the results of FEBio and opendihu: The initial block (black lines) is extended to the right by a force. The result of opendihu is visualized by white tubes, the result of FEBio is visualized by the green solid. The results match.
+
+Tensile Test
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-tensile_test
+This example simulates a tensile test, where a block is extended uniaxially. The results for different materials are compared, also the same material with FEBio and opendihu.
+
+.. code-block:: bash
+
+  cd $OPENDIHU_HOME/examples/solid_mechanics/tensile_test
+  mkorn && sr       # build
+  cd build_release
+  ../run_force.sh
+  cd ..
+  ./plot_force.py
+  
+The `run_force.sh` script executes all simulations that are required for the tensile test. The script `plot_force.py` creates a plot of all results.
+  
+The following materials are used:
+  
+* Compressible Mooney-Rivlin:
+
+  .. math::
+  
+    Ψ(I_1,I_2,I_3) = c\,(\sqrt{I_3} - 1)^2 - d\cdot\ln(\sqrt{I_3}) + c_1\,(I_1 - 3) + c_2\,(I_2 - 3), \\
+    d = 2(c_1 + 2c_2)
+    
+* Compressible Mooney-Rivlin, decoupled form:
+
+  .. math::
+  
+    Ψ_\text{iso}(\bar{I}_1,\bar{I}_2) = c_1 (\bar{I}_1 - 3) + c_2 (\bar{I}_2 - 3),\\
+    G = \dfrac{1}{4} \big(J^2 - 1 - 2\,\ln(J)\big),\\
+    Ψ_\text{vol} = \kappa \cdot G
+
+* Nearly incompressible Mooney-Rivlin:
+
+  .. math::
+    
+    Ψ(I_1,I_2,I_3) = \kappa\cdot (\sqrt{I_3} - 1)^2 - d\cdot \ln(\sqrt{I_3}) + c_1 (I_1 - 3) + c_2 (I_2 - 3),\\
+    d = 2(c_1 + 2c_2)
+
+* `Nearly incompressible Mooney-Rivlin (FEBio) <https://help.febio.org/FEBio/FEBio_um_2_9/FEBio_um_2-9-4.1.2.8.html#toc-Subsubsection-4.1.2.8>`_:
+
+  .. math::
+    
+    Ψ_\text{iso}(\bar{I}_1,\bar{I}_2) = c_1 (\bar{I}_1 - 3) + c_2 (\bar{I}_2 - 3),\\
+    G = \dfrac{1}{2} \big(\ln(J)\big)^2,\\
+    Ψ_\text{vol} = \kappa \cdot G
+
+* Nearly incompressible Mooney-Rivlin, decoupled form:
+
+  .. math::
+    
+    Ψ_\text{iso}(\bar{I}_1,\bar{I}_2) = c_1 (\bar{I}_1 - 3) + c_2 (\bar{I}_2 - 3)
+    G = \dfrac{1}{4} \big(J^2 - 1 - 2\,ln(J)\big),\\
+    Ψ_\text{vol}(J) = \kappa \cdot G
+
+* Incompressible Mooney-Rivlin:
+
+  .. math::
+    
+    Ψ_\text{iso}(\bar{I}_1,\bar{I}_2) = c_1 (\bar{I}_1 - 3) + c_2 (\bar{I}_2 - 3)
+
+.. _tensile_test:
+.. figure:: examples/tensile_test_1.png
+  :width: 100%
+  
+  Result of the tensile test, stress-strain curves for different materials. It can be seen that for the incompressible material all the curves of the different formulations in opendihu and the curve for FEBio match and therefore the opendihu implementation is validated. The two compressible formulations cannot be compared because they have different parameters.
+
+Shear Test
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This example simulates a shear test. The results for different materials are compared, the materials are the same as for the tensile test.
+
+.. code-block:: bash
+
+  cd $OPENDIHU_HOME/examples/solid_mechanics/shear_test
+  mkorn && sr       # build
+  cd build_release
+  ../run_force.sh
+  cd ..
+  ./plot_force.py
+  
+The `run_force.sh` script executes all simulations that are required for the shear test. The script `plot_force.py` creates a plot of all results.
+  
+.. _shear_test:
+.. figure:: examples/shear_test_1.png
+  :width: 100%
+  
+  Result of the shear test, stress-strain curves for different materials.
+
+
+
 Chaste
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 This example is for testing the Chaste integration in opendihu. It uses the hyperelasticity implementation of chaste if chaste has been installed.
 It solves the nonlinear finite elasticity problem with Mooney-Rivlin material, for either 2D or 3D.
 
 Because Chaste is not able to solve nonlinear elasticity in parallel, nor solve anything else than the quasi-static case,
-integration in opendihu is not complete. This class should be deleted.
+integration in opendihu is not complete. This example is left here only if in the future someone wants to work on the chaste integration. Apart from that there is no use for Chaste. 
+In the core code it is only the `QuasiStaticNonlinearElasticitySolverChaste` that needs to be deleted.
 
 Electrophysiology
 --------------------

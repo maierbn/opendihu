@@ -80,8 +80,9 @@ isFebioAvailable()
   // to see if febio2 is installed, run it with a non-existing command line argument "a"
   // this produces the output "FATAL ERROR: Invalid command line option" and exits with status 0
   int returnValue = system("febio3 a > /dev/null");
+  LOG(INFO) << "returnValue: " << returnValue;
 
-  return returnValue == EXIT_SUCCESS;
+  return returnValue == 0 || returnValue == 1 || returnValue == 256;
 }
 
 void NonlinearElasticitySolverFebio::

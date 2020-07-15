@@ -32,10 +32,6 @@ initialize(const Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nCompo
 
   if (!fieldVariableNamesInitialized_)
   {
-
-    LOG(INFO) << aa_ << ": SlotsConnection::initialize, " << (transferDirectionTerm1To2_? "1->2" : "2->1") << ", offsets: " << offsetSlotNoData1 << "," << offsetSlotNoData2
-      << ", initialized: " << fieldVariableNamesInitialized_;
-
     fieldVariableNamesInitialized_ = true;
 
     // clear all previous data
@@ -198,8 +194,6 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
   if (slotInformationInitialized_)
     return;
 
-  LOG(INFO) << aa_ << ": initializeSlotInformation";
-
   // save previous value of the variable transferDirectionTerm1To2_
   bool previousTransferDirectionTerm1To2 = transferDirectionTerm1To2_;
 
@@ -223,8 +217,6 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
     bool avoidCopyIfPossible = true;
     bool slotIsConnected = getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
-    LOG(INFO) << aa_ << ": (" << fromVectorNo << "," << fromVectorIndex << ") -> " << slotIsConnected;
-
     if (!slotIsConnected)
       continue;
 
@@ -247,8 +239,6 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
         int toVectorIndex2 = 0;
         bool avoidCopyIfPossible = true;
         bool slotIsConnected = getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo2, toVectorIndex2, avoidCopyIfPossible);
-
-        LOG(INFO) << aa_ << ": (" << fromVectorNo << "," << fromVectorIndex << ") -> " << slotIsConnected;
 
         if (!slotIsConnected)
           continue;
@@ -281,8 +271,6 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
       bool avoidCopyIfPossible = true;
       bool slotIsConnected = getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
-      LOG(INFO) << aa_ << ": (" << fromVectorNo << "," << fromVectorIndex << ") -> " << slotIsConnected;
-
       if (!slotIsConnected)
         continue;
 
@@ -313,8 +301,6 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
     bool avoidCopyIfPossible = true;
     bool slotIsConnected = getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
-    LOG(INFO) << aa_ << ": (" << fromVectorNo << "," << fromVectorIndex << ") -> " << slotIsConnected;
-
     if (!slotIsConnected)
       continue;
 
@@ -337,8 +323,6 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
         int toVectorIndex2 = 0;
         bool avoidCopyIfPossible = true;
         bool slotIsConnected = getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo2, toVectorIndex2, avoidCopyIfPossible);
-
-        LOG(INFO) << aa_ << ": (" << fromVectorNo << "," << fromVectorIndex << ") -> " << slotIsConnected;
 
         if (!slotIsConnected)
           continue;
@@ -371,8 +355,6 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
       bool avoidCopyIfPossible = true;
       bool slotIsConnected = getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
-      LOG(INFO) << aa_ << ": (" << fromVectorNo << "," << fromVectorIndex << ") -> " << slotIsConnected;
-
       if (!slotIsConnected)
         continue;
 
@@ -404,8 +386,6 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
     bool avoidCopyIfPossible = true;
     bool slotIsConnected = getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
-    LOG(INFO) << aa_ << ": (" << fromVectorNo << "," << fromVectorIndex << ") -> " << slotIsConnected;
-
     if (!slotIsConnected)
       continue;
 
@@ -428,8 +408,6 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
         int toVectorIndex2 = 0;
         bool avoidCopyIfPossible = true;
         bool slotIsConnected = getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo2, toVectorIndex2, avoidCopyIfPossible);
-
-        LOG(INFO) << aa_ << ": (" << fromVectorNo << "," << fromVectorIndex << ") -> " << slotIsConnected;
 
         if (!slotIsConnected)
           continue;
@@ -462,8 +440,6 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
       bool avoidCopyIfPossible = true;
       bool slotIsConnected = getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
-      LOG(INFO) << aa_ << ": (" << fromVectorNo << "," << fromVectorIndex << ") -> " << slotIsConnected;
-
       if (!slotIsConnected)
         continue;
 
@@ -495,8 +471,6 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
     bool avoidCopyIfPossible = true;
     bool slotIsConnected = getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
-    LOG(INFO) << aa_ << ": (" << fromVectorNo << "," << fromVectorIndex << ") -> " << slotIsConnected;
-
     if (!slotIsConnected)
       continue;
 
@@ -519,8 +493,6 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
         int toVectorIndex2 = 0;
         bool avoidCopyIfPossible = true;
         bool slotIsConnected = getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo2, toVectorIndex2, avoidCopyIfPossible);
-
-        LOG(INFO) << aa_ << ": (" << fromVectorNo << "," << fromVectorIndex << ") -> " << slotIsConnected;
 
         if (!slotIsConnected)
           continue;
@@ -553,8 +525,6 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
       bool avoidCopyIfPossible = true;
       bool slotIsConnected = getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
-      LOG(INFO) << aa_ << ": (" << fromVectorNo << "," << fromVectorIndex << ") -> " << slotIsConnected;
-
       if (!slotIsConnected)
         continue;
 
@@ -583,8 +553,6 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
         Result result;
         result.successful = getSlotInformation(fromVectorNo, fromVectorIndex, result.toVectorNo, result.toVectorIndex, result.avoidCopyIfPossible, true);
 
-        LOG(INFO) << aa_ << ": -> (" << fromVectorNo << "," << fromVectorIndex << ") -> " << result.successful;
-
         slotInformation_[transferDirectionTerm1To2][fromVectorNo].push_back(result);
 
         if (!result.successful)
@@ -595,7 +563,20 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
       }
     }
   }
-  LOG(DEBUG) << "lookup-table initialization done";
+
+#ifndef NDEBUG
+  LOG(DEBUG) << "lookup-table initialization done:";
+  for (int transferDirectionTerm1To2 = 0; transferDirectionTerm1To2 < 2; transferDirectionTerm1To2++)
+  {
+    for (int fromVectorNo = 0; fromVectorNo < 2; fromVectorNo++)
+    {
+      for (int i = 0; i < slotInformation_[transferDirectionTerm1To2][fromVectorNo].size(); i++)
+      {
+        LOG(DEBUG) << "  slotInformation_[" << transferDirectionTerm1To2 << "][" << fromVectorNo << "][" << i << "] = " << slotInformation_[transferDirectionTerm1To2][fromVectorNo][i].successful;
+      }
+    }
+  }
+#endif
 
   // restore previous value of the variable transferDirectionTerm1To2_
   transferDirectionTerm1To2_ = previousTransferDirectionTerm1To2;

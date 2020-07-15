@@ -103,8 +103,6 @@ private:
   int offsetSlotNoData1_;           //< an offset value for the slot no on term1 (this is for transferableSolutionData1 if 1->2 and for transferableSolutionData2 if 2->1), i.e. different than the argument `offsetSlotNoData1` to initialize
   int offsetSlotNoData2_;           //< an offset value for the slot no on term2 (this is for transferableSolutionData2 if 1->2 and for transferableSolutionData1 if 2->1), i.e. different than the argument `offsetSlotNoData2` to initialize
 
-  int aa_ = 0;
-
   struct Result
   {
     int toVectorNo;

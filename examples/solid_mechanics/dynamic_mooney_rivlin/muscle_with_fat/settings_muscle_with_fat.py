@@ -181,6 +181,7 @@ config = {
             "meshName":               "3Dmesh",      # reference to the multidomain mesh
             "numberTimeSteps":        1,             # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step
             "timeStepOutputInterval": 20,            # if the time step should be written to console, a value > 10 produces no output
+            "slotNames":              [],            # names of the slots, needed if the slots are connected by the global option "connectedSlots"
             
             # a list of field variables that will get values assigned in every timestep, by the provided callback function
             "fieldVariables1": [
@@ -201,6 +202,7 @@ config = {
       "MuscleContractionSolver": {
         "numberTimeSteps":              1,                         # only use 1 timestep per interval
         "timeStepOutputInterval":       100,                       # do not output time steps
+        "slotNames":                    [],                        # names of the slots, needed if the slots are connected by the global option "connectedSlots"
         "Pmax":                         variables.pmax,            # maximum PK2 active stress
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
@@ -234,6 +236,7 @@ config = {
           "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
           #"loadFactors":                [0.5, 1.0],                # load factors for every timestep
           "loadFactors":                [],                        # no load factors, solve problem directly
+          "loadFactorGiveUpThreshold":  0.1,                       # if the adaptive time stepping produces a load factor smaller than this value, the solution will be accepted for the current timestep, even if it did not converge fully to the tolerance
           "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
           
           # boundary and initial conditions

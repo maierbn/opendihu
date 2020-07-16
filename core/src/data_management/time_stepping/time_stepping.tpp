@@ -74,11 +74,16 @@ createPetscObjects()
     LOG(DEBUG) << "  add field variable " << name.str();
   }
 
+  LOG(DEBUG) << debuggingName_ << ": initial slot names: " << slotConnectorData_->slotNames;
+
   // parse slot names of the additional field variables
   this->context_.getPythonConfig().getOptionVector("additionalSlotNames", slotConnectorData_->slotNames);
 
   // make sure that there are as many slot names as slots
   slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
+
+
+  LOG(DEBUG) << debuggingName_ << ": final slot names: " << slotConnectorData_->slotNames;
 }
 
 template<typename FunctionSpaceType,int nComponents>

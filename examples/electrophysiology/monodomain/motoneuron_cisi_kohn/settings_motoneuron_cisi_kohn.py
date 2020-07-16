@@ -39,8 +39,8 @@ scenario_name = ""
 # After changing mappings, delete the src and lib directories in build such that the library will be created again.
 if "WSBM_1457_MN_Cisi_Kohn_2008" in motoneuron_cellml_file:
   motoneuron_mappings = {
-    ("parameter", 0):           "motor_neuron/drive",   # stimulation
-    ("connectorSlot", 0): "motor_neuron/V_s",     # voltage
+    ("parameter", 0):        "motor_neuron/drive",   # stimulation
+    ("connectorSlot", "mn"): "motor_neuron/V_s",     # voltage
   }
 
   # set values for parameters: [drive]
@@ -62,7 +62,7 @@ if rank_no == 0:
 if "hodgkin_huxley" in monodomain_cellml_file:
   mappings = {
     ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
-    ("connectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+    ("connectorSlot", "vm"): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
   }
   parameters_initial_values = [0.0]
     
@@ -105,10 +105,10 @@ def callback_motoneuron(input_values, output_values, current_time, slot_nos, buf
     if delayed_signal > 1e-5:
       print("motoneuron t: {}, last_activation: {}, computed delayed_signal: {}".format(current_time, buffer[0], delayed_signal))
       for i in range(n_output_values):
-        output_values[i] = delayed_signal
+        output_values[0][i] = delayed_signal
     else:
       for i in range(n_output_values):
-        output_values[i] = None     # do not set any values
+        output_values[0][i] = None     # do not set any values
     
   
 config = {
@@ -166,6 +166,7 @@ config = {
         "dirichletBoundaryConditions":  {},
         "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
         "nAdditionalFieldVariables":    0,
+        "additionalSlotNames":          [],
             
         "CellML" : {
           "modelFilename":                          motoneuron_cellml_file,                          # input C++ source file or cellml XML file
@@ -206,22 +207,23 @@ config = {
     "Term2": {
       "MapDofs": {
         "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
+        "additionalSlotNames":        "mn",
         "meshName":                   "motoneuronMesh",               # the mesh on which the additional field variables will be defined
         
         # mapping from motoneuronMesh which contains on every rank as many nodes as there are motoneurons to the 3D domain
         # map from motoneuronMesh (algebraics) to 3Dmesh (solution)
         "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
           {                                                 
-            "fromConnectorSlotNo":        2,
-            "toConnectorSlotNo":          0,
-            "fromOutputConnectorArrayIndex":    0,                    # which fiber/compartment
-            "toOutputConnectorArrayIndex":      0,
+            "fromConnectorSlot":                2,
+            "toConnectorSlots":                 0,
+            "fromSlotConnectorArrayIndex":      0,                    # which fiber/compartment
+            "toSlotConnectorArrayIndex":        0,
             "mode":                             "callback",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
             "fromDofNosNumbering":              "local",
             "toDofNosNumbering":                "global",
             "dofsMapping":                      {0: [n_elements/2-1, n_elements/2, n_elements/2+1]},    # map from motoneuron 0 to 3 center elements of fiber
             "inputDofs":                        0,
-            "outputDofs":                       [n_elements/2-1, n_elements/2, n_elements/2+1],
+            "outputDofs":                       [[n_elements/2-1, n_elements/2, n_elements/2+1]],
             "callback":                         callback_motoneuron,
             #"thresholdValue":                   20,                    # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
             #"valueToSet":                       20,                   # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
@@ -234,8 +236,8 @@ config = {
           "logTimeStepWidthAsKey":      "dt_splitting",
           "durationLogKey":             "duration_total",
           "timeStepOutputInterval":     1000,
-          "connectedSlotsTerm1To2":     {0:0, 1:1, 2:2},   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), slot 1 = stress for output writer in diffusion
-          "connectedSlotsTerm2To1":     {0:0, 1:1, 2:2},   # transfer the same back, in order to reuse field variables
+          "connectedSlotsTerm1To2":     None,
+          "connectedSlotsTerm2To1":     None,
           
           "Term1": {      # CellML
             "Heun" : {
@@ -247,6 +249,7 @@ config = {
               "inputMeshIsGlobal":            True,
               "dirichletBoundaryConditions":  {},
               "nAdditionalFieldVariables":    0,
+              "additionalSlotNames":          [],
               "checkForNanInf":               True,                                             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.                                
               
               "CellML" : {
@@ -314,12 +317,14 @@ config = {
               "solverName":                   "implicitSolver",
               "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
               "nAdditionalFieldVariables":    0,
+              "additionalSlotNames":          [],
               
               "FiniteElementMethod" : {
                 "meshName":               "MeshFiber",
                 "prefactor":              Conductivity/(Am*Cm),
                 "solverName":             "implicitSolver",
                 "inputMeshIsGlobal":      True,
+                "slotName":               "vm",
               },
               
               # output writer only for the diffusion variable (i.e. state "Vm")

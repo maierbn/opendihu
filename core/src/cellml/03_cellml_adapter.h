@@ -61,8 +61,7 @@ public:
   void setRankSubset(Partition::RankSubset rankSubset);
   
   //! set initial values and return true or don't do anything and return false
-  template<typename FunctionSpaceType2>
-  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates_>> initialValues);
+  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,nStates_>> initialValues);
   
   //! get a vector with the names of the states
   void getComponentNames(std::vector<std::string> &stateNames) override;

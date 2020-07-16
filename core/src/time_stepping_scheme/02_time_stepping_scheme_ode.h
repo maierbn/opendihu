@@ -11,7 +11,6 @@
 #include "cellml/03_cellml_adapter.h"
 #include "spatial_discretization/dirichlet_boundary_conditions/01_dirichlet_boundary_conditions.h"
 #include "time_stepping_scheme/01_time_stepping_scheme_ode_base.h"
-//#include "time_stepping_scheme/time_stepping_scheme_ode_transferable_solution_data.h"
 
 namespace TimeSteppingScheme
 {
@@ -24,9 +23,6 @@ class TimeSteppingSchemeOdeBaseDiscretizable:
 public:
   typedef DiscretizableInTimeType DiscretizableInTime;
   typedef typename DiscretizableInTimeType::FunctionSpace FunctionSpace;
-  //typedef typename DiscretizableInTimeType::SlotConnectorDataType SlotConnectorDataType;
-
-  //using TimeSteppingSchemeOdeSlotConnectorDataType<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents(), DiscretizableInTimeType>::SlotConnectorDataType;
 
   //! constructor
   TimeSteppingSchemeOdeBaseDiscretizable(DihuContext context, std::string name);
@@ -52,9 +48,6 @@ public:
   > dirichletBoundaryConditions();
 
 protected:
-
-  //! read initial values from settings and set field accordingly
-  void setInitialValues();
 
   //! prepare the discretizableInTime object for the following call to getSlotConnectorData()
   virtual void prepareForGetSlotConnectorData() override;

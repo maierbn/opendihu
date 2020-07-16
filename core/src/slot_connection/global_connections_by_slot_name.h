@@ -27,6 +27,7 @@ public:
 private:
 
   std::vector<std::pair<std::string,std::string>> connections_;   //< connection from a slot to another slot, identified by the slot names
+  std::vector<std::string> connectionsFromSameSlotNames_;         //< slot names of slots that were connected because the have the same names
 };
 
 #include "slot_connection/global_connections_by_slot_name.tpp"

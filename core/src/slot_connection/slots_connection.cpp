@@ -68,7 +68,7 @@ void SlotsConnection::addConnectionTerm1ToTerm2(int slotNoFrom, int slotNoTo)
   // set new connection
   connectorForVisualizerTerm1To2_[slotNoFrom].index = slotNoTo;
 
-  LOG(DEBUG) << "set new connection";
+  LOG(DEBUG) << "set new connection Term1->Term2 " << slotNoFrom << ":" << slotNoTo;
 
   // set the avoidCopyIfPossible value
   updateAvoidCopyIfPossible();
@@ -111,7 +111,7 @@ void SlotsConnection::addConnectionTerm2ToTerm1(int slotNoFrom, int slotNoTo)
   // set new connection
   connectorForVisualizerTerm2To1_[slotNoFrom].index = slotNoTo;
 
-  LOG(DEBUG) << "set new connection";
+  LOG(DEBUG) << "set new connection Term2->Term1 " << slotNoFrom << ":" << slotNoTo;
 
   // set the avoidCopyIfPossible value
   updateAvoidCopyIfPossible();

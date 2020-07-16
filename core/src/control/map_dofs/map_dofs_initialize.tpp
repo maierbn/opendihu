@@ -141,7 +141,7 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
       newDofsMapping.connectorSlotNoFrom = std::distance(slotNames_.begin(), iter);
     }
 
-    // parse toConnectorSlotNo, either as integer value (then it is the no.) or as string (then it is the slot name)
+    // parse toConnectorSlots, either as integer value (then it is the no.) or as string (then it is the slot name)
     PyObject *toConnectorSlotsPy = currentMappingSpecification.getOptionPyObject("toConnectorSlots");
     if (PyList_Check(toConnectorSlotsPy))
     {
@@ -267,7 +267,7 @@ parseMappingFromSettings(std::string settingsKey, std::vector<DofsMappingType> &
       int nConnectorSlotNos = newDofsMapping.connectorSlotNosTo.size();
       if (nOutputDofSlots != nConnectorSlotNos)
       {
-        LOG(FATAL) << currentMappingSpecification << "[\"toConnectorSlotNo\"] specifies " << nConnectorSlotNos << " connector slots, but "
+        LOG(FATAL) << currentMappingSpecification << "[\"toConnectorSlots\"] specifies " << nConnectorSlotNos << " connector slots, but "
          << currentMappingSpecification << "[\"outputDofs\"] contains " << nOutputDofSlots << " lists of dofs.";
       }
 

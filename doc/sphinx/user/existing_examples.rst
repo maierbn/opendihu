@@ -834,40 +834,359 @@ In the core code it is only the `QuasiStaticNonlinearElasticitySolverChaste` tha
 
 Electrophysiology
 --------------------
-Cellml
+CellML
 ^^^^^^^^^
-A single subcellular point, i.e. one instance of a CellML problem
+The directory `examples/electrophysiology/cellml` contains example that solve a single instance of a `CellML <https://www.cellml.org/>`_ model, i.e. the same thing that `OpenCOR <https://opencor.ws/>`_  does.
 
-* **svd_mor**
+A CellML model is a differential-algebraic system (DAE) stored in an XML-based description language. The :doc:`/settings/cellml_adapter` provides the following formulation:
 
-  Model order reduction examples, ask Nehzat.
-  
-* **load_balancing**
+.. math::
 
-  Electrophysiology of a small number of fibers where load balancing and time adaptivity is considered, this was a Bachelor thesis supervised by Benjamin.
-  
-* **quadrature**
+  \left(
+    \begin{array}{cc}
+      \texttt{rates} \\ \texttt{algebraics} 
+    \end{array}
+  \right) = \texttt{cellml}\left(\texttt{states}, \texttt{constants}\right).
 
-  Small test example to compare different quadrature schemes, this was from a seminar and is not used anymore.
-  
+In general, the equation is
+
+.. math::
+   \frac{\partial \textbf{u}}{\partial t} = f(t,\textbf{u},\textbf{y}) \\
+   \textbf{y}(t) = g(\textbf{u}(t))
+   
+
+Shorten
+~~~~~~~~~~~
+
+  Simulates a single instance of the Shorten 2007 problem for 10s. It is stimulated at time 0.0. Plots values of Vm and gamma in out.png.
+  Note, this uses a very fine timestep width of 1e-5 and explicit integration. This is only for debugging and demonstration, you
+  can replace the ExplicitEuler by, e.g., Heun integration
+
+  .. code-block:: bash
+
+    cd $OPENDIHU_HOME/examples/electrophysiology/cellml/shorten
+    mkorn && sr       # build
+    cd build_release
+    ./cellml ../settings_cellml.py
+    cd out; plot
+    
+  .. _cellml_2:
+  .. figure:: examples/cellml_2.png
+    :width: 60%
+    
+    This shows the depolarization of the membrane voltage over time in the top plot and all other states, scaled to [-1,1] in the bottom plot.
+    
+hodgkin-huxley_shorten_ocallaghan_davidson_soboleva_2007
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Solves this CellML model, can be used for electrophysiology with active stress generation.
+
+  .. code-block:: bash
+
+    cd $OPENDIHU_HOME/examples/electrophysiology/cellml/hodgkin-huxley_shorten_ocallaghan_davidson_soboleva_2007
+    mkorn && sr       # build
+    cd build_release
+    ./cellml ../settings_cellml.py
+    cd out; plot
+    
+  .. _cellml_1:
+  .. figure:: examples/cellml_1.png
+    :width: 60%
+    
+    This shows the depolarization of the membrane voltage over time in the top plot and all other states, scaled to [-1,1] in the bottom plot.
+    
 Monodomain
 ^^^^^^^^^^^
 
-  * **hodgkin_huxley**
-  
-    A single fiber using the Hodgkin-Huxley CellML-model, i.e. Monodomain
-    
-  * **cellml_on_gpu**
+The Monodomain equation describes action potential propagation on a muscle fiber. It can be derived from modeling the intra and extracellular space and the membrane as an electric circuit. It is given by 
 
-    Effort to bring Monodomain computation on GPU, ask Aaron.
-    
-  * **shorten**
+.. math::
+
+  \dfrac{\partial V_m}{\partial t} = \dfrac{1}{A_m\,C_m} \left( \sigma_\text{eff} \dfrac{\partial^2 V_m}{\partial x^2} - A_m\,I_\text{ion}(\textbf{y}, V_m, I_\text{stim})\right) \text{ for } x \in \Omega_f \subset \mathbb{R},\\
+  \textbf{y}(t) = g(\textbf{u}(t))
+
+* where :math:`\Omega_f` is the fiber domain,
+* :math:`V_m` is the trans-membrane voltage, i.e. the voltage between intracellular and extracellular space,
+* :math:`A_m` is the fibers surface to volume ratio,
+* :math:`C_m` is the capacitance of the fiber membrane,
+* :math:`\sigma_\text{eff}` is the scalar effective conductivity of the system that can be computed from the intra and extracellular conductivities, :math:`\sigma_\text{in}` and :math:`\sigma_\text{ex}` as :math:`\sigma_\text{eff} = \sigma_\text{in} \parallel \sigma_\text{ex} = (\sigma_\text{in} \cdot \sigma_\text{ex}) / (\sigma_\text{in} + \sigma_\text{ex})`
+* :math:`I_\text{stim}` is an external stimulation current that models the external stimulation from the neuromuscular junction.
+* :math:`\textbf{y}` is a vector of additional states that are solved by a system of ODEs. The states correspond to ion channels in the membrane. Different formulations are possible for this ODE system.
+
+
+hodgkin_huxley
+~~~~~~~~~~~~~~
   
-    Same as hodgkin_huxley, i.e. one fiber, but it uses the Shorten model instead of Hodgkin-Huxley.
+  This solves the Monodomain equation with the classical subcellular model of `Hodgkin and Huxley (1952) <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1392413/>`_.
+  
+  It is used to demonstrate several things about the Monodomain solver and nested solvers in general (because this is the easiest example, were a `:doc:`/settings/splitting` scheme is used).
+
+  Commands to compile and run this example:
+
+  .. code-block:: bash
+
+    cd $OPENDIHU_HOME/examples/electrophysiology/monodomain/hodgkin_huxley
+    mkorn && sr       # build
+    cd build_release
+    ./hodgkin_huxley_strang ../settings_hodgkin_huxley.py
+    
+  The solver structure (file ``solver_structure.txt``) is the following:
+  
+  .. code-block:: bash
+  
+    The following data slot connection were given by the setting "connectedSlots":
+           h ¤ <─> ¤ h_gate
+
+    The following data slots were connected because the names appeared in both terms of a coupling or splitting scheme:
+      m_gate ¤ <─> ¤ m_gate
+
+    Solver structure: 
+
+    ├── StrangSplitting                                                
+    │  data slots:                                                     
+    │  [a] solution.membrane/V                     ├─────────────── ¤0 x
+    │  [a] solution.sodium_channel_m_gate/m        :├────────m_gate ¤1 x
+    │  [a] solution.sodium_channel_h_gate/h        ::├───────h_gate ¤2 x
+    │  [a] solution.potassium_channel_n_gate/n     :::├──────────── ¤3 x
+    │  [a] additionalFieldVariable0                ::::├──────── aa ¤4 x
+    │  [a] additionalFieldVariable1                :::::├─────── bb ¤5 x
+    │  [a] leakage_current/i_L                     ::::::├───────── ¤6 x
+    │  [a] solution                                :::::::├───── vm ¤7 x
+    │  [a] additionalFieldVariable0                ::::::::├─m_gate ¤8 x
+    │  [a] additionalFieldVariable1                :::::::::├──── h ¤9 x
+    │                                              ::::::::::          
+    │  slot connections:                           ::::::::::          
+    │  0¤ <─> ¤0                                   ::::::::::          
+    │  1¤ <─> ¤1                                   ::::::::::          
+    │  2¤ <─> ¤2                                   ::::::::::          
+    │                                              ::::::::::          
+    │ ├── Heun                                     ::::::::::          
+    │ │  data slots:                               ::::::::::          
+    │ │  [a] solution.membrane/V                   ├÷÷÷÷÷÷÷÷÷────── ¤0<─────┐
+    │ │  [a] solution.sodium_channel_m_gate/m       ├÷÷÷÷÷÷÷÷m_gate ¤1<───┐ │
+    │ │  [a] solution.sodium_channel_h_gate/h        ├÷÷÷÷÷÷÷h_gate ¤2<─┐ │ │
+    │ │  [a] solution.potassium_channel_n_gate/n      ├÷÷÷÷÷÷────── ¤3 x│ │ │
+    │ │  [a] additionalFieldVariable0                  ├÷÷÷÷÷─── aa ¤4 x│ │ │
+    │ │  [a] additionalFieldVariable1                   ├÷÷÷÷─── bb ¤5 x│ │ │
+    │ │  [a] leakage_current/i_L                         ├÷÷÷────── ¤6 x│ │ │
+    │ │                                                   :::           │ │ │
+    │ │ └── CellmlAdapter                                 :::           │ │ │
+    │ └                                                   :::           │ │ │
+    │                                                     :::           │ │ │
+    │ ├── CrankNicolson                                   :::           │ │ │
+    │ │  data slots:                                      :::           │ │ │
+    │ │  [a] solution                                     ├÷÷─── vm ¤0<─┼─┼─┘
+    │ │  [a] additionalFieldVariable0                      ├÷m_gate ¤1<─┼─┘
+    │ │  [a] additionalFieldVariable1                       ├──── h ¤2<─┘
+    │ │                                                                
+    │ │ ├── FiniteElementMethod                                        
+    │ │ │  data slots:                                                 
+    │ │ │  [a] solution                                          vm ¤0 x
+    │ │ │                                                              
+    │ └                                                                
+    └                                                                  
+                                                                       
+    Connection Types:
+      +··+   Internal connection, no copy
+      ════   Reuse variable, no copy
+      ───>   Copy data in direction of arrow
+      ─m──   Mapping between different meshes
+
+    Referenced Meshes:
+      [a] "MeshFiber", 1D regular fixed, linear Lagrange basis
+
+  
+    
+  For plotting the result, `cd` into the ``out`` directory as usual. Now you can see that two types of Python files have been created: some starting with ``cellml_`` and other starting with ``vm_``. Only plot either of them, e.g. with ``plot cellml_00000*`` or ``plot vm*``.
+  
+  If you look into the settings, you'll see that the `cellml` files were written by the `CellmlAdapter` and therefore contain all state variables. The `vm` files were created by the Timestepping scheme of the diffusion solver and, thus, contain only the solution variable of the diffusion solver, i.e., the transmembrane-voltage.
+  Because the option ``"nAdditionalFieldVariables"`` is set to ``2``, also values of the two additional field variables will be written to the `vm` files. These field variables get values of the gating variables `m` and `h` of the membrane model. This is done by connecting their :doc:`/settings/output_connector_slots`, as can be seen in the solver structure visualization.
+  
+  A reason for maybe not wanting to output the variables directly in the CellmlAdapter is that those files contain a lot of data and this will be time consuming for more advanced examples. Then, only writing the files with the variable of the diffusion is a good option.
+  
+  Now the threre existing mechanisms to connect data slots are outlined.
+  
+  * The first mechanism to connect slots is by naming the slots the same, then they are automatically connected and the data is transferred. This is done with the `m` variable in this example. 
+  * The second mechanism is to specify the connections in the global setting "connectedSlots". This is done for the `h` gating variable, as follows:
+    
+    .. code-block:: python
+
+      config = {
+        ...
+        "connectedSlots": [
+          ("h", "h_gate"),      # connect the additional field variable in the output writer
+          ("h_gate", "h"),
+        ],
+        ...
+      
+    Here, the two slots ``h_gate`` and ``h`` are connected, ``h_gate`` is the name of the slot at the `CellmlAdapter` and ``h`` is the slot name at the additional field variable, directly at the output writer.
+    
+  * There is a third mechanism to connect two slots: by specifying the connection in the splitting scheme under the options ``"connectedSlotsTerm1To2"`` and ``"connectedSlotsTerm2To1"``. This is also done here for connecting the transmembrane voltage, :math:`V_m`, between the `CellmlAdapter` and the diffusion solver.
+    
+  When running
+  
+  .. code-block:: bash
+  
+    plot cellml_00000*
+    
+  in the ``out`` folder, you get the following animation:
+    
+  .. _hodgkin_huxley_1:
+  .. figure:: examples/hodgkin_huxley_1.png
+    :width: 60%
+    
+    This shows the propagation of an action potential (here a snapshot at a given point in time, run the `plot` script to see the animation).
+    
+hodgkin_huxley_fast
+~~~~~~~~~~~~~~~~~~~~~~~
+
+  This example solves the same problem as the last one, but using the :doc:`/settings/fast_monodomain_solver`.
+
+  .. code-block:: bash
+
+    cd $OPENDIHU_HOME/examples/electrophysiology/monodomain/hodgkin_huxley
+    mkorn && sr       # build
+    cd build_release
+    ./fast_fiber ../settings_fast_fiber.py       # (1)
+    ./not_fast_fiber ../settings_fast_fiber.py   # (2)
+    
+  Command (1) uses the :doc:`/settings/fast_monodomain_solver` and takes 4 seconds. Command (2) does not use the FastMonodomainSolver and takes 17 seconds.
+  
+  To check that both compute the same results there is a script ``cmp.py`` in the `build_release/out` directory. After compilation, run the following commands in the `build_release` directory:
+  
+  .. code-block:: bash
+
+    rm -rf out/fast out/not_fast
+    ./not_fast_fiber ../settings_fast_fiber.py   # this outputs to directory `fast`
+    mv out/fast out/not_fast                     # rename output to `not_fast`
+    ./fast_fiber ../settings_fast_fiber.py       # this again outputs to `fast`
+    
+    # now we have results from `fast_fibers` in directory `out/fast` 
+    # and results from `not_fast_fibers` in directory `out/not_fast`
+    
+    cd out
+    ./cmp.py
+    
+  This will output something like
+  
+  .. code-block:: text
+  
+    ...
+    file no. 0, error: 2.88667509952e-05
+    file no. 1, error: 1.94012102563e-05
+    ...
+    file no. 199, error: 0.124314654799
+    avg error: 0.0941600520639
+
+  As can be seen the final average error is quite big. From the individual errors of the files we can see that the error gets bigger over time. This is the result of the stimuli  occuring to slightly different times, which leads to higher error values.
+  
+  You can also plot the results in the `out/fast` and `out/not_fast` directories and see that they match qualitatively. Both results contain 10 stimuli.
+
+    
+motoneuron_hodgkin_huxley
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  This example uses a motoneuron model to schedule the stimuli, whereas in the previous examples, the stimulation times were given by the settings. Then, the Monodomain equation is computed with the Hodgkin-Huxley subcellular model. This example also demonstrates how to use the :doc:`/settings/map_dofs` class in an approach without python callbacks. 
+  
+  This requires a prepared motor neuron model with input and output variables. The model used by this example is a modified Hodgkin-Huxley CellML model (``motoneuron_hodgkin_huxley.cellml``). This means there are two Hodgkin-Huxley models, one for the motor neuron and one for the Monodomain equation.
+  
+  If an existing motor neuron CellML model should be used without modification, e.g. the normal Hodgkin-Huxley model, then a different approach with python callbacks would be needed.
+
+  How it works can be explained with an part from the ``solver_structure.txt`` file:
+
+  .. code-block:: bash
+               
+    │ ├── Heun                                     ::::::          
+    │ │  data slots:                               ::::::          
+    │ │  [a] firing_threshold/V_extern_out         ├÷÷÷÷÷ v_out ¤0<───┐
+    │ │  [a] (P)firing_threshold/V_extern_in        ├÷÷÷÷─ v_in ¤1<─┐ │
+    │ │                                              ::::           │ │
+    │ │ └── CellmlAdapter                            ::::           │ │
+    │ └                                              ::::           │ │
+    │                                                ::::           │ │
+    │ ├── MapDofs                                    ::::           │ │
+    │ │  data slots:                                 ::::           │ │
+    │ │  [b] solution.membrane/V              ┌»┌    ├÷÷÷─── vm ¤0 x│ │
+    │ │  [b] solution                         │ │    :├÷÷─── vm ¤1 x│ │
+    │ │  [a] additionalFieldVariable0         └ │    ::├÷ v_out ¤2<─┼─┘
+    │ │  [a] additionalFieldVariable1           └»   :: ├─ v_in ¤3<─┘
+    
+  Here, ``vm`` is the field variable for the transmembrane voltage, :math:`V_m`, that is used in the Monodomain equation. At a given time, the first `MapDofs` call copies the values of `vm` from the center point of the fiber to the `v_in` slot, which is an input to the motor neuron model. If the motor neuron does not fire, it sets the output value `v_out` equal to the input value `v_in`. The CellML motor neuron model is also advanced in time and eventually depolarizes and "fires". Then the `v_out` variable gets to value of 20. Then, the second `MapDofs` action copies the value of `v_out` back to `vm` at the 3 center nodes of the fiber. The new prescribed value leads to a stimulation at the center of the fiber.
+  
+  The modifications needed in the CellML model are the threshold condition, that sets the output value `v_out`. The additional code in the CellML model of the motoneuron is as follows:
+  
+  .. code-block:: c++
+
+    def comp firing_threshold as
+        var{membrane_V} V: millivolt {pub: in};
+        var V_extern_in: dimensionless {init: -75};
+
+        // input membrane voltage, from fibre sub-cellular model
+        var V_extern_out: dimensionless;
+
+        // output membrane voltage, to fibre sub-cellular model
+        var V_threshold: millivolt {init: 0};
+
+        // threshold of V, when it is considered active
+        var V_firing: dimensionless {init: 20};
+
+        // constant value to which V_extern_out will be set when motoneuron fires
+        V_extern_out = sel
+            case V > V_threshold:
+                V_firing;
+            otherwise:
+                V_extern_in;
+        endsel;
+    enddef;
+  
+  Use the following commands to compile and run the example.
+  
+  .. code-block:: bash
+
+    cd $OPENDIHU_HOME/examples/electrophysiology/monodomain/motoneuron_hodgkin_huxley
+    mkorn && sr       # build
+    cd build_release
+    ./motoneuron_hodgkin_huxley ../settings_motoneuron_hodgkin_huxley.py
+    
+  .. _motoneuron_hodgkin_huxley_1:
+  .. figure:: examples/motoneuron_hodgkin_huxley_1.png
+    :width: 60%
+    
+    This shows the evaluation of the motoneuron over time.
+
+Other subcellular models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following subcellular models are also implemented. The examples are very similar to the hodgkin-huxley example except for the different CellML model file.
+All of these examples run also in parallel and can be started by prepending, e.g., ``mpirun -n 4``.
+
+* **motoneuron_cisi_kohn**
+
+  This is again the normal  Monodomain with subcellular model of Hodgkin-Huxley, but it uses the motor neuron model of `Cisi and Kohn <https://pubmed.ncbi.nlm.nih.gov/18506610/>`_. This is an approach with a python callback function that does not need any modification of the CellML model in use. The callback function demonstrates how to delay a signal.
+  
+  .. _motoneuron_cisi_kohn_1:
+  .. figure:: examples/motoneuron_cisi_kohn_1.png
+    :width: 60%
+    
+    This shows the evaluation of the motoneuron over time.
+
+* **hodgkin_huxley-razumova**
+
+  This is a CellML model that computes activation and active stress values with only 9 states and 19 algebraics. The example also directly outputs png files, so no additional plot command is required.
+* **shorten_ocallaghan_davidson_soboleva_2007**
+
+  This is the Shorten model, see the description `here <https://models.physiomeproject.org/exposure/159ba2f081022ca651284404f39eeb40/shorten_ocallaghan_davidson_soboleva_2007_variant01.cellml/view>`_.
+* **new_slow_TK_2014_12_08**
+
+  This is the model that was used in OpenCMISS, it is a variant of the Shorten model.
+
+* **hodgkin-huxley_shorten_ocallaghan_davidson_soboleva_2007**
+
+  This is a combination of the membrane model of Hodgkin-Huxley and the rest from Shorten, to make it faster (not completely sure).
+
 
 Fibers
 ^^^^^^^^^^^
-
   * **multiple_fibers**
   
     Multiple instances of the Monodomain equation, i.e. multiple fibers with electrophysiology. The fibers are not subdivided into several subdomains. When using multiple processes, every process simulates whole fibers
@@ -881,11 +1200,42 @@ Fibers
   
     Whereas all previous examples use biceps brachii geometry, this example is simply a cuboid and does not need any geometry information at all. Only here, the number of nodes per fiber can be adjusted.
     
+  * **fibers_fat_emg**
+  
+    This example adds a fat layer to simulate EMG signals on top of the skin surface.
+    
+  * **load_balancing**
+  
+    Electrophysiology of a small number of fibers where computational load balancing and time adaptive stepping schemes are considered. It was developed as part of a Bachelor thesis.
+    
+  * **fibers_contraction**
+  
+    This example combines `fibers_emg` with muscle contraction.
+
 Multidomain
 ^^^^^^^^^^^
-- **multidomain3d**
-
-  The multidomain equations which are a 3D homogenized formulation of electrophysiology.
+The multidomain equations are a 3D homogenized formulation of electrophysiology.
   
+  * **static_bidomain**
+  
+    This example uses the :doc:`/settings/static_bidomain_solver` and connects it to :doc:`/settings/prescribed_values`. This allows to work with the Bidomain problem without any fibers or electrophysiology attached. Static Bidomain is listed under Multidomain because it is a specialization of the Multidomain Equations.
+    
+    Examples that use the :doc:`/settings/static_bidomain_solver` and electrophysiology using muscle fibers are `fibers_emg` and `fibers_fat_emg`.
+  
+  * **multidomain_no_fat**
+  
+    This is the basic Multidomain example that only considers the 3D muscle domain.
+  * **multidomain_with_fat**
+  
+    This is the full Multidomain model also including a fat domain.
+  * **multidomain_motoneuron**
+  
+    This is the Multidomain model with fat and using a motoneuron to get the stimulation.
+  * **multidomain_contraction**
+  
+    This is the Multidomain model with fat combined with muscle contraction.
+    
 Neuromuscular
 ^^^^^^^^^^^^^^^
+
+Several examples to simulate motoneurons and sensor organs exist, but this is still work in progress.

@@ -36,6 +36,8 @@ std::string GlobalConnectionsBySlotName::getDescriptionForDiagram()
           break;
         }
       }
+      if (connectionAlreadyDisplayed)
+        continue;
 
       std::string fromSlotName = (*iter).first;
       std::string toSlotName = (*iter).second;
@@ -53,12 +55,36 @@ std::string GlobalConnectionsBySlotName::getDescriptionForDiagram()
       {
         s << "  " << fromSlotName << " ¤ <─> ¤ " << toSlotName << "\n";
       }
-      else if (!connectionAlreadyDisplayed)
+      else
       {
         s << "  " << fromSlotName << " ¤ ──> ¤ " << toSlotName << "\n";
       }
     }
     s << "\n";
   }
+
+  if (!connectionsFromSameSlotNames_.empty())
+  {
+    s << "The following data slots were connected because the names appeared in both terms of a coupling or splitting scheme:\n";
+
+    for (std::string slotName : connectionsFromSameSlotNames_)
+    {
+      std::string fromSlotName = slotName;
+      std::string toSlotName = slotName;
+
+      if (fromSlotName.length() < 6)
+      {
+        fromSlotName = std::string(6-fromSlotName.length(), ' ') + fromSlotName;
+      }
+      if (toSlotName.length() < 6)
+      {
+        toSlotName += std::string(6-toSlotName.length(), ' ');
+      }
+
+      s << "  " << fromSlotName << " ¤ <─> ¤ " << toSlotName << "\n";
+    }
+    s << "\n";
+  }
+
   return s.str();
 }

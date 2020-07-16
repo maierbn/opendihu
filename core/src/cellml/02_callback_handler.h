@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "interfaces/runnable.h"
-#include "interfaces/discretizable_in_time.h"
 #include "control/dihu_context.h"
 #include "output_writer/manager.h"
 #include "function_space/function_space.h"
@@ -24,8 +23,7 @@
  */
 template <int nStates, int nAlgebraics_, typename FunctionSpaceType>
 class CallbackHandler :
-  public RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>,
-  public DiscretizableInTime
+  public RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>
 {
 public:
 

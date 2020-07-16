@@ -14,11 +14,11 @@ namespace SpatialDiscretization
 template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
 class FiniteElementMethodTimeStepping :
   public AssembleRightHandSide<FunctionSpaceType, QuadratureType, nComponents_, Term>,
-  public DiscretizableInTime,
+  public DiscretizableInTime<FunctionSpaceType,nComponents_>,
   public Splittable
 {
 public:
-  typedef Data::SlotConnectorData<FunctionSpaceType,1> SlotConnectorDataType;  // type of return value of getSlotConnectorData
+  typedef Data::SlotConnectorData<FunctionSpaceType,nComponents_> SlotConnectorDataType;  // type of return value of getSlotConnectorData
 
   //! constructor, if function space is not given, create new one according to settings
   //! if the function space is given as parameter, is has to be already initialize()d
@@ -42,7 +42,7 @@ public:
   void reset();
 
   //! hook to set initial values for a time stepping from this FiniteElement context, return true if it has set the values or don't do anything and return false
-  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> initialValues);
+  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents_>> initialValues);
 
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);
@@ -51,14 +51,14 @@ public:
   void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled);
 
   //! set the solution field variable in the data object, that actual data is stored in the timestepping scheme object
-  void setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> solution);
+  void setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents_>> solution);
 
   //! return the mesh that is stored in the data class
   std::shared_ptr<FunctionSpaceType> functionSpace();
 
   //! pass on the slot connector data object from the timestepping scheme object to be modified,
-  //! this is needed for other DiscretizableInTime objects, but not for finite element method
-  void setSlotConnectorData(std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType,nComponents_>> slotConnectorDataTimeStepping){}
+  //! this is needed for other DiscretizableInTime objects
+  void setSlotConnectorData(std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType,nComponents_>> slotConnectorDataTimeStepping);
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
   //! the transfer is done by the slot_connector_data_transfer class

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "control/dihu_context.h"
+#include "interfaces/discretizable_in_time.h"
 #include "output_writer/manager.h"
 #include "function_space/function_space.h"
 #include "data_management/cellml_adapter.h"
@@ -23,7 +24,8 @@
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
 template <int nStates_, int nAlgebraics_, typename FunctionSpaceType>
-class CellmlAdapterBase
+class CellmlAdapterBase :
+  public DiscretizableInTime<FunctionSpaceType,nStates_>
 {
 public:
 
@@ -60,8 +62,7 @@ public:
   void initializeFromNInstances(int nInstances);
   
   //! set initial values as given in python config
-  template<typename FunctionSpaceType2>
-  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates_>> initialValues);
+  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nStates_>> initialValues);
 
   //! initialize all information from python settings key "mappings", this sets parametersUsedAsAlgebraics/States and outputAlgebraic/StatesIndex
   void initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int> &parametersUsedAsConstant,
@@ -119,7 +120,7 @@ protected:
   std::shared_ptr<FunctionSpaceType> functionSpace_;       //< a mesh, there are as many instances of the same CellML problem as there are nodes in the mesh
   Data data_;                                              //< the data object that stores all variables, i.e. algebraics and states
   static std::array<double,nStates_> statesInitialValues_; //< the initial values for the states, see setInitialValues
-  static bool statesInitialValuesinitialized_;             //< if the statesInitialValues_ variables has been initialized
+  static bool statesInitialValuesInitialized_;             //< if the statesInitialValues_ variables has been initialized
 
   int nInstances_;                                         //< number of instances of the CellML problem. Usually it is the number of mesh nodes when a mesh is used. When running in parallel this is the local number of instances without ghosts.
   int internalTimeStepNo_ = 0;                             //< the counter how often the right hand side was called

@@ -24,45 +24,6 @@ TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::TimeSteppingSch
 }
 
 template<typename DiscretizableInTimeType>
-void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
-setInitialValues()
-{
-  // set initial values as given in settings, or set to zero if not given
-  std::vector<double> localValues;
-  
-  // determine if the initial values are given as global and local array
-  /** ... */
-  bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
-  if (inputMeshIsGlobal)
-  {
-    // if the settings specify a global list of values, extract the local values
-    assert(this->data_);
-    assert(this->data_->functionSpace());
-
-    // get number of global dofs, i.e. number of values in global list
-    const int nDofsGlobal = this->data_->functionSpace()->nDofsGlobal();
-    LOG(DEBUG) << "setInitialValues, nDofsGlobal = " << nDofsGlobal;
-
-    this->specificSettings_.getOptionVector("initialValues", nDofsGlobal, localValues);
-
-    // extract only the local dofs out of the list of global values
-    this->data_->functionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(localValues);
-  }
-  else 
-  {
-    // input is already only the local dofs, use all
-    const int nDofsLocal = this->data_->functionSpace()->nDofsLocalWithoutGhosts();
-    this->specificSettings_.getOptionVector("initialValues", nDofsLocal, localValues);
-  }
-  VLOG(1) << "set initial values to " << localValues;
-
-  // set the first component of the solution variable by the given values
-  this->data_->solution()->setValuesWithoutGhosts(0, localValues);
-
-  VLOG(1) << this->data_->solution();
-}
-
-template<typename DiscretizableInTimeType>
 DiscretizableInTimeType &TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 discretizableInTime()
 {

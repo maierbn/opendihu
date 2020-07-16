@@ -360,11 +360,10 @@ functionSpace()
 }
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
-template<typename FunctionSpaceType2>
 bool CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
-setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates_>> initialValues)
+setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,nStates_>> initialValues)
 {
-  return CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::template setInitialValues<FunctionSpaceType2>(initialValues);
+  return CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::setInitialValues(initialValues);
 }
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>

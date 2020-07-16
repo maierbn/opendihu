@@ -16,7 +16,7 @@ template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 std::array<double,nStates_> CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::statesInitialValues_;
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
-bool CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::statesInitialValuesinitialized_ = false;
+bool CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::statesInitialValuesInitialized_ = false;
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
@@ -69,24 +69,33 @@ void CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 setSlotConnectorData(std::shared_ptr<::Data::SlotConnectorData<FunctionSpaceType,nStates_>> slotConnectorDataTimeStepping)
 {
   // This method is called once in initialize() of the timestepping scheme.
-  // Add all state and algebraic values for transfer (option "algebraicsForTransfer"), which are stored in this->data_.getSlotConnectorData()
-  // at the end of slotConnectorDataTimeStepping
+  // Add all state and algebraic values for transfer (option "algebraicsForTransfer"), which are stored in this->data_.getSlotConnectorData().
+  // The states are store in variable1 of slotConnectorDataTimeStepping, the algebraics are stored in variable2 of slotConnectorDataTimeStepping,
+  // after the already present additional field variables of the timestepping scheme.
 
   // The first "states" entry of statesToTransfer is the solution variable, component 0 (which is default) of the timestepping scheme and therefore
   // the timestepping scheme has already added it to the slotConnectorDataTimeStepping object.
   // Now remove it because we set all connections of the CellmlAdapter here.
   slotConnectorDataTimeStepping->variable1.erase(slotConnectorDataTimeStepping->variable1.begin());
 
-  LOG(DEBUG) << "CellmlAdapterBase::setSlotConnectorData previous slot names: " << slotConnectorDataTimeStepping->slotNames;
-  // also remove first slot name, if there is any
-  if (!slotConnectorDataTimeStepping->slotNames.empty())
+  int slotNo = 0;
+  std::vector<std::string> &ownSlotNames = this->data_.getSlotConnectorData()->slotNames;
+  std::vector<std::string> additionalSlotNamesTimeSteppingScheme = slotConnectorDataTimeStepping->slotNames;
+  LOG(DEBUG) << "CellmlAdapterBase::setSlotConnectorData " << slotConnectorDataTimeStepping->slotNames.size()
+    << " timestepping slot names that will be cleared: " << slotConnectorDataTimeStepping->slotNames << ", " << ownSlotNames.size() << " own slot names: " << ownSlotNames;
+
+  // remove first slot name of timestepping scheme:
+  if (!additionalSlotNamesTimeSteppingScheme.empty())
   {
-    slotConnectorDataTimeStepping->slotNames.erase(slotConnectorDataTimeStepping->slotNames.begin());
+    additionalSlotNamesTimeSteppingScheme.erase(additionalSlotNamesTimeSteppingScheme.begin());
   }
+
+  // clear all slot names of the timestepping scheme, they will be set anew in this method
+  slotConnectorDataTimeStepping->slotNames.clear();
 
   // loop over states that should be transferred
   for (typename std::vector<::Data::ComponentOfFieldVariable<FunctionSpaceType,nStates_>>::iterator iter
-    = this->data_.getSlotConnectorData()->variable1.begin(); iter != this->data_.getSlotConnectorData()->variable1.end(); iter++)
+    = this->data_.getSlotConnectorData()->variable1.begin(); iter != this->data_.getSlotConnectorData()->variable1.end(); iter++, slotNo++)
   {
     int componentNo = iter->componentNo;
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nStates_>> values = iter->values;
@@ -99,11 +108,20 @@ setSlotConnectorData(std::shared_ptr<::Data::SlotConnectorData<FunctionSpaceType
 
     // add this component to slotConnector of data time stepping
     slotConnectorDataTimeStepping->addFieldVariable(values, componentNo);
+
+    // add the corresponding slot name
+    slotConnectorDataTimeStepping->slotNames.push_back(ownSlotNames[slotNo]);
   }
+
+  // after all slots of "variable1" there will be the slots of the additional field variables of the timestepping scheme and then the normal slots of "variable2"
+
+  // add slot names for the additional slots of the timestepping scheme
+  slotConnectorDataTimeStepping->slotNames.insert(slotConnectorDataTimeStepping->slotNames.end(),
+                                                  additionalSlotNamesTimeSteppingScheme.begin(), additionalSlotNamesTimeSteppingScheme.end());
 
   // loop over algebraics that should be transferred
   for (typename std::vector<::Data::ComponentOfFieldVariable<FunctionSpaceType,nAlgebraics_>>::iterator iter
-    = this->data_.getSlotConnectorData()->variable2.begin(); iter != this->data_.getSlotConnectorData()->variable2.end(); iter++)
+    = this->data_.getSlotConnectorData()->variable2.begin(); iter != this->data_.getSlotConnectorData()->variable2.end(); iter++, slotNo++)
   {
     int componentNo = iter->componentNo;
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nAlgebraics_>> values = iter->values;
@@ -127,13 +145,12 @@ setSlotConnectorData(std::shared_ptr<::Data::SlotConnectorData<FunctionSpaceType
 
     // add this component to slotConnector of data time stepping
     slotConnectorDataTimeStepping->addFieldVariable2(newFieldVariable);
+
+    // add the corresponding slot name
+    slotConnectorDataTimeStepping->slotNames.push_back(ownSlotNames[slotNo]);
   }
 
-  // set the slot names
-  std::vector<std::string> &ownSlotNames = this->data_.getSlotConnectorData()->slotNames;
-  std::vector<std::string> &timeSteppingSlotNames = slotConnectorDataTimeStepping->slotNames;
-  timeSteppingSlotNames.insert(timeSteppingSlotNames.end(), ownSlotNames.begin(), ownSlotNames.end());
-
+  // output the slot names
   LOG(DEBUG) << "CellmlAdapterBase::setSlotConnectorData new slot names: " << slotConnectorDataTimeStepping->slotNames;
 }
 
@@ -441,6 +458,10 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
     algebraicsForTransfer.clear();
     parametersForTransfer.clear();
 
+    std::vector<std::string> statesSlotNames;
+    std::vector<std::string> algebraicsSlotNames;
+    std::vector<std::string> parametersSlotNames;
+
     for (std::pair<KeyTupleType,ValueTupleType> &tupleEntry : tupleEntries)
     {
       // parse value
@@ -570,21 +591,22 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
         int slotNo = std::get<1>(keyTuple);    // the no. of the connector slot
         std::string slotName = std::get<2>(keyTuple);
 
-        slotNames.push_back(slotName);
-
         LOG(DEBUG) << "connector slot " << slotNo << " (\"" << slotName << "\") to \"" << valueTuple.first << "\", fieldNo " << fieldNo;
 
         if (valueTuple.first == "state")
         {
           statesForTransfer.push_back(fieldNo);
+          statesSlotNames.push_back(slotName);
         }
         else if (valueTuple.first == "algebraic" || valueTuple.first == "intermediate")
         {
           algebraicsForTransfer.push_back(fieldNo);
+          algebraicsSlotNames.push_back(slotName);
         }
         else if (valueTuple.first == "parameter")
         {
           parametersForTransfer.push_back(fieldNo);
+          parametersSlotNames.push_back(slotName);
         }
         else
         {
@@ -594,6 +616,8 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
           {
             int parameterNo = parametersUsedAsAlgebraic.size() + parameter - parametersUsedAsConstant.begin();
             parametersForTransfer.push_back(parameterNo);
+            parametersSlotNames.push_back(slotName);
+
             LOG(DEBUG) << "Constant " << valueTuple.second << " was set as connector slot " << slotNo << " (\"" << slotName << "\")"
               << " and is mapped to parameter " << parameterNo;
           }
@@ -605,6 +629,22 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
           }
         }
       }
+    }
+
+    // order of slots is: states, algebraics, parameters
+    for (std::string slotName : statesSlotNames)
+    {
+      slotNames.push_back(slotName);
+    }
+
+    for (std::string slotName : algebraicsSlotNames)
+    {
+      slotNames.push_back(slotName);
+    }
+
+    for (std::string slotName : parametersSlotNames)
+    {
+      slotNames.push_back(slotName);
     }
 
     // create a string of parameter and constant mappings
@@ -660,15 +700,13 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
 }
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
-template<typename FunctionSpaceType2>
 bool CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
-setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates_>> initialValues)
+setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nStates_>> initialValues)
 {
   LOG(TRACE) << "CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::setInitialValues";
 
-  if (!statesInitialValuesinitialized_)
+  if (!statesInitialValuesInitialized_)
   {
-
     // initialize states
     if (this->specificSettings_.hasKey("statesInitialValues") && !this->specificSettings_.isEmpty("statesInitialValues"))
     {
@@ -696,7 +734,7 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2
     {
       this->initializeToEquilibriumValues(statesInitialValues_);
     }
-    statesInitialValuesinitialized_ = true;
+    statesInitialValuesInitialized_ = true;
   }
 
   // Here we have the initial values for the states in the statesInitialValues vector, only for one instance.

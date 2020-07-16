@@ -156,3 +156,105 @@ Then you can define the option
 It is a list of tuples with ``("fromName", "toName")`` entries. 
 
 Note that the slot names must be 6 characters long or less. This restriction is because of the solver structure visualization. (Actually they can be any length but only the first 6 characters will be shown in the solver structure file.)
+
+Connection by choosing equal slot names
+---------------------------------------------
+
+Slots that have the same name are automatically connected. Thus, it is often enough to just name all slots properly.
+
+
+Example
+------------
+
+The ``examples/electrophysiology/monodomain/hodgkin_huxley`` example yields the following solver structure (file ``solver_structure.txt``):
+
+.. code-block:: bash
+
+  The following data slot connection were given by the setting "connectedSlots":
+         h ¤ <─> ¤ h_gate
+
+  The following data slots were connected because the names appeared in both terms of a coupling or splitting scheme:
+    m_gate ¤ <─> ¤ m_gate
+
+  Solver structure: 
+
+  ├── StrangSplitting                                                
+  │  data slots:                                                     
+  │  [a] solution.membrane/V                     ├─────────────── ¤0 x
+  │  [a] solution.sodium_channel_m_gate/m        :├────────m_gate ¤1 x
+  │  [a] solution.sodium_channel_h_gate/h        ::├───────h_gate ¤2 x
+  │  [a] solution.potassium_channel_n_gate/n     :::├──────────── ¤3 x
+  │  [a] additionalFieldVariable0                ::::├──────── aa ¤4 x
+  │  [a] additionalFieldVariable1                :::::├─────── bb ¤5 x
+  │  [a] leakage_current/i_L                     ::::::├───────── ¤6 x
+  │  [a] solution                                :::::::├───── vm ¤7 x
+  │  [a] additionalFieldVariable0                ::::::::├─m_gate ¤8 x
+  │  [a] additionalFieldVariable1                :::::::::├──── h ¤9 x
+  │                                              ::::::::::          
+  │  slot connections:                           ::::::::::          
+  │  0¤ <─> ¤0                                   ::::::::::          
+  │  1¤ <─> ¤1                                   ::::::::::          
+  │  2¤ <─> ¤2                                   ::::::::::          
+  │                                              ::::::::::          
+  │ ├── Heun                                     ::::::::::          
+  │ │  data slots:                               ::::::::::          
+  │ │  [a] solution.membrane/V                   ├÷÷÷÷÷÷÷÷÷────── ¤0<─────┐
+  │ │  [a] solution.sodium_channel_m_gate/m       ├÷÷÷÷÷÷÷÷m_gate ¤1<───┐ │
+  │ │  [a] solution.sodium_channel_h_gate/h        ├÷÷÷÷÷÷÷h_gate ¤2<─┐ │ │
+  │ │  [a] solution.potassium_channel_n_gate/n      ├÷÷÷÷÷÷────── ¤3 x│ │ │
+  │ │  [a] additionalFieldVariable0                  ├÷÷÷÷÷─── aa ¤4 x│ │ │
+  │ │  [a] additionalFieldVariable1                   ├÷÷÷÷─── bb ¤5 x│ │ │
+  │ │  [a] leakage_current/i_L                         ├÷÷÷────── ¤6 x│ │ │
+  │ │                                                   :::           │ │ │
+  │ │ └── CellmlAdapter                                 :::           │ │ │
+  │ └                                                   :::           │ │ │
+  │                                                     :::           │ │ │
+  │ ├── CrankNicolson                                   :::           │ │ │
+  │ │  data slots:                                      :::           │ │ │
+  │ │  [a] solution                                     ├÷÷─── vm ¤0<─┼─┼─┘
+  │ │  [a] additionalFieldVariable0                      ├÷m_gate ¤1<─┼─┘
+  │ │  [a] additionalFieldVariable1                       ├──── h ¤2<─┘
+  │ │                                                                
+  │ │ ├── FiniteElementMethod                                        
+  │ │ │  data slots:                                                 
+  │ │ │  [a] solution                                          vm ¤0 x
+  │ │ │                                                              
+  │ └                                                                
+  └                                                                  
+                                                                     
+  Connection Types:
+    +··+   Internal connection, no copy
+    ════   Reuse variable, no copy
+    ───>   Copy data in direction of arrow
+    ─m──   Mapping between different meshes
+
+  Referenced Meshes:
+    [a] "MeshFiber", 1D regular fixed, linear Lagrange basis
+
+With this example, the threre mechanisms to connect data slots can be seen:
+
+* For connecting the variable ``solution.membrane/V`` in the `Heun` scheme to the ``solution`` variable in the `CrankNicolson` scheme, the connection was specified in the StrangSplitting scheme under the options ``"connectedSlotsTerm1To2"`` and ``"connectedSlotsTerm2To1"``. 
+
+.. code-block:: python
+
+    "connectedSlotsTerm1To2":     {0:0},   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
+    "connectedSlotsTerm2To1":     {0:0},   # transfer the same back, in order to reuse field variables
+    
+Note that the slots do not have to have slot names defined.
+    
+* Connection of the `h` gating variable slots was done with the global setting "connectedSlots" as follows:
+
+.. code-block:: python
+
+  config = {
+    ...
+    "connectedSlots": [
+      ("h", "h_gate"),      # connect the additional field variable in the output writer
+      ("h_gate", "h"),
+    ],
+    ...
+  
+Here, the two slots ``h_gate`` and ``h`` are connected, ``h_gate`` is the name of the slot at the `CellmlAdapter` and ``h`` is the slot name at the additional field variable in the `CrankNicolson` scheme.
+
+* The mechanism to connect slots by naming the slots the same is in use for the `m_gate` variable.
+

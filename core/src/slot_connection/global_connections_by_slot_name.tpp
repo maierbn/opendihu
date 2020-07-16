@@ -23,7 +23,6 @@ addConnections(
     return;
   }
 
-
   std::vector<std::string> slotNamesTerm1;
   std::vector<std::string> slotNamesTerm2;
   SlotConnectorDataHelper<SlotConnectorDataType1>::getSlotNames(std::get<0>(*slotConnectorData), slotNamesTerm1);
@@ -38,7 +37,8 @@ addConnections(
     std::vector<std::string>::iterator iterFrom = std::find(slotNamesTerm1.begin(), slotNamesTerm1.end(), connectedSlotNames.first);
     std::vector<std::string>::iterator iterTo   = std::find(slotNamesTerm2.begin(), slotNamesTerm2.end(), connectedSlotNames.second);
 
-    LOG(DEBUG) << "connectedSlotNames " << connectedSlotNames;
+    LOG(DEBUG) << "connectedSlotNames " << connectedSlotNames << " slotNamesTerm1: " << slotNamesTerm1 << ", slotNamesTerm2: " << slotNamesTerm2;
+    LOG(DEBUG) << "  Term1->Term2, Term1 found: " << (iterFrom != slotNamesTerm1.end()) << ", Term2 found: " << (iterTo != slotNamesTerm2.end());
 
     // if the "from" and "to" slot names match to slot names in the current slotConnectorData
     if (iterFrom != slotNamesTerm1.end() && iterTo != slotNamesTerm2.end())
@@ -47,7 +47,7 @@ addConnections(
       int slotNoFrom = std::distance(slotNamesTerm1.begin(), iterFrom);
       int slotNoTo = std::distance(slotNamesTerm2.begin(), iterTo);
 
-      LOG(DEBUG) << "Term1->Term2, slots " << slotNoFrom << " -> " << slotNoTo;
+      LOG(DEBUG) << "Term1->Term2, add connectionn for slots " << slotNoFrom << " -> " << slotNoTo;
 
       // add output connection
       slotsConnection->addConnectionTerm1ToTerm2(slotNoFrom, slotNoTo);
@@ -59,6 +59,8 @@ addConnections(
     iterFrom = std::find(slotNamesTerm2.begin(), slotNamesTerm2.end(), connectedSlotNames.first);
     iterTo   = std::find(slotNamesTerm1.begin(), slotNamesTerm1.end(), connectedSlotNames.second);
 
+    LOG(DEBUG) << "  Term2->Term1, Term2 found: " << (iterFrom != slotNamesTerm2.end()) << ", Term1 found: " << (iterTo != slotNamesTerm1.end());
+
     // if the "from" and "to" slot names match to slot names in the current slotConnectorData
     if (iterFrom != slotNamesTerm2.end() && iterTo != slotNamesTerm1.end())
     {
@@ -66,10 +68,34 @@ addConnections(
       int slotNoFrom = std::distance(slotNamesTerm2.begin(), iterFrom);
       int slotNoTo = std::distance(slotNamesTerm1.begin(), iterTo);
 
-      LOG(DEBUG) << "Term2->Term1, slots " << slotNoFrom << " -> " << slotNoTo;
+      LOG(DEBUG) << "Term2->Term1, add connectionn for slots " << slotNoFrom << " -> " << slotNoTo;
 
       // add output connection
       slotsConnection->addConnectionTerm2ToTerm1(slotNoFrom, slotNoTo);
+    }
+  }
+
+  // check for slots that have the same slot name in both Term1 and Term2, these will also be connected
+  for (int slotNoTerm1 = 0; slotNoTerm1 < slotNamesTerm1.size(); slotNoTerm1++)
+  {
+    std::string slotNameTerm1 = slotNamesTerm1[slotNoTerm1];
+
+    if (slotNameTerm1 == "")
+      continue;
+
+    std::vector<std::string>::iterator iter = std::find(slotNamesTerm2.begin(), slotNamesTerm2.end(), slotNameTerm1);
+
+    if (iter != slotNamesTerm2.end())
+    {
+      int slotNoTerm2 = std::distance(slotNamesTerm2.begin(), iter);
+
+      LOG(DEBUG) << "add two-way connections because of matching slot name " << slotNameTerm1;
+
+      // add both connections
+      slotsConnection->addConnectionTerm1ToTerm2(slotNoTerm1, slotNoTerm2);
+      slotsConnection->addConnectionTerm2ToTerm1(slotNoTerm2, slotNoTerm1);
+
+      connectionsFromSameSlotNames_.push_back(slotNameTerm1);
     }
   }
 }

@@ -54,8 +54,8 @@ motor_units = [
 
 
 # for debugging use the following, non-physiological values. This produces a fast simulation
-end_time = 2 #???
-Am = 1.0
+end_time = 3 #???
+#Am = 1.0
 sampling_stride_z = 200 #74 200
 motor_units = motor_units[0:2]    # only 2 motor units motor_units = motor_units[0:2]
 solver_tolerance = 1e-10

@@ -58,9 +58,9 @@ motor_units = [
 # for debugging use the following, non-physiological values. This produces a fast simulation
 #if True:
 #end_time = 0.1
-end_time = 2
-ntime = 2672 #1337
-Am = 1.0
+end_time = 3
+ntime = 4000 #1337
+#Am = 1.0
 sampling_stride_z = 200 #muscle 74 200
 motor_units = motor_units[0:2]    # only 2 motor units [0:2] [0:1]
 solver_tolerance = 1e-10
@@ -336,7 +336,7 @@ config = {
                 "inputMeshIsGlobal":            True,
                 "dirichletBoundaryConditions":  {},
                 "nAdditionalFieldVariables":    0,
-                "checkForNanInf":               False,
+                "checkForNanInf":               True,
                     
                 "CellML" : {
                   "modelFilename":                          cellml_file,                            # input C++ source file or cellml XML file
@@ -386,7 +386,7 @@ config = {
       },
       "OutputWriter": [
         #{"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": False, "fixedFormat": False, "combineFiles": False, "fileNumbering": "timeStepIndex"},
-        #{"format": "PythonFile", "filename": "out/fiberp", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "timeStepIndex"},
+        #{"format": "PythonFile", "filename": "out/am", "outputInterval": 40, "binary":False, "onlyNodalValues":True, "fileNumbering": "timeStepIndex"},
 
       ]
     } for j in range (NumberOfMultiDomainSolvers)] 

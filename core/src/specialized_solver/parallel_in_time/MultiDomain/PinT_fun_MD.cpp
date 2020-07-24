@@ -93,7 +93,7 @@ my_Access_MD(braid_App          app,
 {
    // int        index, rank, level, done;
    int rank;
-   char       filename[255];
+   //char       filename[255];
    int        index, level, done;
    double     t, error;
 
@@ -110,6 +110,7 @@ my_Access_MD(braid_App          app,
       //save_solution(filename, u->values, u->size, app->xstart,
       //      app->xstop, app->ntime, app->tstart, app->tstop);
       std::shared_ptr<typename _braid_App_struct::NestedSolverMD> MultiDomainSolver = (*app->MultiDomainSolvers)[0];
+
       //if (rank == 0){
       MultiDomainSolver->setSolution(u->values);
       MultiDomainSolver->printSolution(index, t);

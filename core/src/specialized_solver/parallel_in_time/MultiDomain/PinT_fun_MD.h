@@ -38,8 +38,6 @@ typedef struct _braid_App_struct
   int       nspace;
   double *  sc_info;      /* Runtime information that tracks the space-time grids visited */
   int       print_level;  /* Level of output desired by user (see the -help message below) */
-  //VecScatter vecscatter;
-  //int testscatter;
   typedef Mesh::StructuredDeformableOfDimension<3> MeshType;
 
   typedef MultidomainWrapper<

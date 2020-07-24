@@ -54,7 +54,7 @@ motor_units = [
 
 
 # for debugging use the following, non-physiological values. This produces a fast simulation
-end_time = 3 #???
+end_time = 60 #???
 #Am = 1.0
 sampling_stride_z = 200 #74 200
 motor_units = motor_units[0:2]    # only 2 motor units motor_units = motor_units[0:2]
@@ -198,7 +198,7 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
 
     #print("states: {}".format(states))
     #print("n_nodes: ({},{},{})".format(n_nodes_x, n_nodes_y, n_nodes_z))
-    #print("n_nodes_global: {}, time_step_no: {}, current_time: {}, compartment_no: {}".format(n_nodes_global, time_step_no, current_time, compartment_no))
+    print("n_nodes_global: {}, time_step_no: {}, current_time: {}, compartment_no: {}".format(n_nodes_global, time_step_no, current_time, compartment_no))
     #wait = input("Press any key to continue...")
     
 # boundary conditions for potential flow
@@ -220,7 +220,7 @@ multidomain_solver = {
   "solverName":                       "activationSolver",                 # reference to the solver used for the global linear system of the multidomain eq.
   "initialGuessNonzero":              True,                               # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
   "inputIsGlobal":                    True,                               # if values and dofs correspond to the global numbering
-  "showLinearSolverOutput":           True,                              # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
+  "showLinearSolverOutput":           False,                              # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "compartmentRelativeFactors":       relative_factors.tolist(),          # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
   "PotentialFlow": {
     "FiniteElementMethod" : {  
@@ -363,7 +363,7 @@ config = {
                 #{"format": "Paraview", "outputInterval": 1, "filename": "out/output", "binary": False, "fixedFormat": False, "combineFiles": True},
                 #{"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
                 #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_multidomain*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-                {"format": "PythonFile", "filename": "out/cellml", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+                {"format": "PythonFile", "filename": "out/cellml20", "outputInterval": 100, "binary":False, "onlyNodalValues":True},
               ]
             }
           }
@@ -374,7 +374,7 @@ config = {
       "MultidomainSolver" : multidomain_solver,
       "OutputSurface": {        # version for fibers_emg_2d_output
         "OutputWriter": [
-          {"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
+          #{"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
         ],
         "face": "1-",
         "MultidomainSolver" : multidomain_solver,

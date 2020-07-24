@@ -34,7 +34,8 @@ int my_Step_MD(braid_App        app,
 
    PetscReal tstart;             /* current time */
    PetscReal tstop;              /* evolve to this time*/
-   PetscInt level, i, solver;
+   //PetscInt level, i, solver;
+   PetscInt level,i;
    PetscReal deltaX, deltaT;
    // PetscReal * help;
 
@@ -47,12 +48,12 @@ int my_Step_MD(braid_App        app,
    //std::cout << level << " " << tstart << " " << tstop << "\n";
 
    // determine, which solver is needed (depends on size)
-   solver=log2(u->size - 1);
-   solver=0;
-   assert(solver < (*app->MultiDomainSolvers).size());
+   // solver=log2(u->size - 1);
+   // solver=0;
+   // assert(solver < (*app->MultiDomainSolvers).size());
 
-   LOG(DEBUG) << "solver" << solver;
-   LOG(DEBUG) << "(*app->MultiDomainSolvers).size()" << (*app->MultiDomainSolvers).size();
+   // LOG(DEBUG) << "solver" << solver;
+   // LOG(DEBUG) << "(*app->MultiDomainSolvers).size()" << (*app->MultiDomainSolvers).size();
 
    /* XBraid forcing */
 
@@ -65,14 +66,15 @@ int my_Step_MD(braid_App        app,
    }
 
    // get alias variables
-   std::shared_ptr<typename _braid_App_struct::NestedSolverMD> MultiDomainSolver = (*app->MultiDomainSolvers)[solver];
+   // std::shared_ptr<typename _braid_App_struct::NestedSolverMD> MultiDomainSolver = (*app->MultiDomainSolvers)[solver];
+   std::shared_ptr<typename _braid_App_struct::NestedSolverMD> MultiDomainSolver = (*app->MultiDomainSolvers)[0];
    //std::shared_ptr<typename Data::PinTMD<typename _braid_App_struct::NestedSolverMD::FunctionSpace>::ScalarFieldVariableType> solution = MultiDomainSolver->data().solution();
    // Data data;
    // auto data = MultiDomainSolver->data();
    // assert(u->size == solution->nDofsGlobal());
 
-   LOG(DEBUG) << "u->size" << u->size;
-   LOG(DEBUG) << "MultiDomainSolver->nSolutionValuesLocal()" << MultiDomainSolver->nSolutionValuesLocal();
+   // LOG(DEBUG) << "u->size" << u->size;
+   // LOG(DEBUG) << "MultiDomainSolver->nSolutionValuesLocal()" << MultiDomainSolver->nSolutionValuesLocal();
    //int istart, iend, iterator;
    //VecGetOwnershipRange(solution->valuesGlobal(),&istart,&iend);
    assert(u->size == MultiDomainSolver->nSolutionValuesLocal());
@@ -91,8 +93,9 @@ int my_Step_MD(braid_App        app,
 
    // Debug Options
    LOG(DEBUG) << "--------------------------------------------------------------";
-   LOG(DEBUG) << "level: " << level << ", solver: " << solver << ", size: " << u->size << ", t: [" << tstart << "," << tstop << "], before implicit euler:" << u->values;
-   
+   // LOG(DEBUG) << "level: " << level << ", solver: " << solver << ", size: " << u->size << ", t: [" << tstart << "," << tstop << "], before implicit euler:" << u->values;
+   LOG(DEBUG) << "level: " << level <<  ", size: " << u->size << ", t: [" << tstart << "," << tstop << "], before implicit euler:" << u->values;
+
    // PetscRealView(u->size, u->values, 0);
    // VecView(MultiDomainSolver->data().solution()->valuesGlobal(), 	PETSC_VIEWER_STDOUT_SELF);
    // LOG(DEBUG) << "system matrix of solver: " << *MultiDomainSolver->dataImplicit().systemMatrix();
@@ -174,13 +177,12 @@ my_Init_MD(braid_App     app,
    //    LOG(DEBUG) << "Braid Init!";
    // LOG(DEBUG) << "---------------";
 
-   PetscInt solver;
-   solver=log2(nspace - 1);
-   solver=0;
-   assert(solver < (*app->MultiDomainSolvers).size());
+   //PetscInt solver;
+   //solver=log2(nspace - 1);
+   //solver=0;
+   //assert(solver < (*app->MultiDomainSolvers).size());
 
-   std::shared_ptr<typename _braid_App_struct::NestedSolverMD> MultiDomainSolver = (*app->MultiDomainSolvers)[solver];
-   //std::shared_ptr<typename Data::PinTMD<typename _braid_App_struct::NestedSolverMD::FunctionSpace>::ScalarFieldVariableType> solution = MultiDomainSolver->data()->transmembranePotential();
+   std::shared_ptr<typename _braid_App_struct::NestedSolverMD> MultiDomainSolver = (*app->MultiDomainSolvers)[0];   //std::shared_ptr<typename Data::PinTMD<typename _braid_App_struct::NestedSolverMD::FunctionSpace>::ScalarFieldVariableType> solution = MultiDomainSolver->data()->transmembranePotential();
    // //auto solution = MultiDomainSolver->data();
    // PetscErrorCode ierr;
    // ierr = VecGetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values); CHKERRQ(ierr);

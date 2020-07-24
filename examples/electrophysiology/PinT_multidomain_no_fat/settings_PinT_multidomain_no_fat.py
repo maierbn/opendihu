@@ -8,7 +8,6 @@ import sys,os
 import struct
 sys.path.insert(0, "..")
 
-NumberOfMultiDomainSolvers = 9
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
 Conductivity = 3.828    # sigma, conductivity [mS/cm]
@@ -58,8 +57,8 @@ motor_units = [
 # for debugging use the following, non-physiological values. This produces a fast simulation
 #if True:
 #end_time = 0.1
-end_time = 3
-ntime = 1024 #1337
+end_time = 0.3
+ntime = 100 #1337
 #Am = 1.0
 sampling_stride_z = 200 #muscle 74 200
 motor_units = motor_units[0:2]    # only 2 motor units [0:2] [0:1]
@@ -233,17 +232,17 @@ multidomain_solver = {
   "useSymmetricPreconditionerMatrix": True,
   "PotentialFlow": {
     "FiniteElementMethod" : {  
-      "meshName":                     "mesh_{}".format(k),
+      "meshName":                     "mesh",
       "solverName":                   "potentialFlowSolver",
       "prefactor":                    1.0,
       "dirichletBoundaryConditions":  potential_flow_bc,
       "neumannBoundaryConditions":    [],
       "inputMeshIsGlobal":            True,
-    } for k in range(NumberOfMultiDomainSolvers)
+    }
   },
   "Activation": {
     "FiniteElementMethod" : {  
-      "meshName":                     "mesh_{}".format(i),
+      "meshName":                     "mesh",
       "solverName":                   "activationSolver",
       "prefactor":                    1.0,
       "inputMeshIsGlobal":            True,
@@ -259,7 +258,7 @@ multidomain_solver = {
         0, 6.7, 0,
         0, 0, 6.7,
       ]],
-    } for i in range(NumberOfMultiDomainSolvers)
+    }
   },
   
   "OutputWriter" : [
@@ -274,13 +273,12 @@ config = {
   "solverStructureDiagramFile": "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile": "out/mappings_between_meshes.txt",
   "Meshes": {
-    "mesh_{}".format(l): {
+    "mesh": {
       "nElements":             n_linear_elements_per_coordinate_direction,
       "nodePositions":         mesh_node_positions,
       "inputMeshIsGlobal":     True,
       "setHermiteDerivatives": False
     }
-  for l in range(NumberOfMultiDomainSolvers)
   },
   "Solvers": {
     "potentialFlowSolver": {
@@ -308,11 +306,19 @@ config = {
     "ntime": ntime,                      # number of time steps
     "nspace":   1567,#8235, #3135,
     "Initial Guess": [2,2,4,5,2,2,2,0],
-    "option1": "blabla",              # another example option that is parsed in the data object
-    #"OutputWriter": [
-      #{"format": "Paraview", "outputInterval": 1, "filename": "out/pint_md", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
-    #],  
+    "PinT_tol": 1.0e-6,
+    "cfactor": 2,
+    #"cfactor_first": 2,
+    "fmg": 1,
+    "nrelax": 2,
+    #"nrelax_first": 0,
+    "max_levels": 3,
+    "option1": "blabla",              # another example option that is parsed in the data object  
     "nRanksInSpace": n_ranks_space,            # number of processes that compute the spatial domain in parallel
+    "OutputWriter": [
+      #{"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": False, "fixedFormat": False, "combineFiles": False, "fileNumbering": "timeStepIndex"},
+      #{"format": "PythonFile", "filename": "out/rw", "outputInterval": 10, "binary":False, "onlyNodalValues":True, "fileNumbering": "timeStepIndex"},
+    ],
     "TimeSteppingScheme": [
     {
       "StrangSplitting": {
@@ -370,7 +376,7 @@ config = {
                   "mappings":                               mappings,
                   "parametersInitialValues":                parameters_initial_values,              #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                   
-                  "meshName": "mesh_{}".format(j),
+                  "meshName": "mesh",
                   "stimulationLogFilename": "out/stimulation.log",
                 }
               }
@@ -391,9 +397,9 @@ config = {
       "OutputWriter": [
         #{"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": False, "fixedFormat": False, "combineFiles": False, "fileNumbering": "timeStepIndex"},
         #{"format": "PythonFile", "filename": "out/rw", "outputInterval": 10, "binary":False, "onlyNodalValues":True, "fileNumbering": "timeStepIndex"},
-      ]
-    } for j in range (NumberOfMultiDomainSolvers)] 
-  },
+      ],
+    }]
+  }
 }
 
 print("Linear solver type: {}".format(config["Solvers"]["activationSolver"]["solverType"]))

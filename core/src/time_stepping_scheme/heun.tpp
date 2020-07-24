@@ -34,9 +34,10 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
 
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
-
+  //std::cout << timeSpan;
+  //std::cout << this->startTime_ << " " << this->endTime_ << " Heun\n";
   LOG(DEBUG) << "Heun::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
-    << " n steps: " << this->numberTimeSteps_;
+    << " n steps: " << this->numberTimeSteps_ << "\n";
 
   // we need to cast the pointer type to the derived class. Otherwise the additional intermediateIncrement()-method of the class TimeSteppingHeun won't be there:
   std::shared_ptr<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>> dataHeun

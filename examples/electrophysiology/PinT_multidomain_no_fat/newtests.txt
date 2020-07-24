@@ -1,0 +1,10 @@
+--------------------------------------------------------------------------
+mpirun was unable to launch the specified application as it could not access
+or execute an executable:
+
+Executable: ./PinT_multidomain
+Node: helium
+
+while attempting to start process rank 0.
+--------------------------------------------------------------------------
+24 total processes failed to start

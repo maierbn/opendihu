@@ -102,7 +102,7 @@ advanceTimeSpan()
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
-
+    //std::cout << currentTime << " MD \n";
     // advance diffusion
     VLOG(1) << "---- diffusion term";
 

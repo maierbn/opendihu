@@ -211,10 +211,10 @@ run()
   // Define XBraid parameters
 
   // int       max_levels    = 3;
-  int       nrelax        = 1;
+  int       nrelax        = 0;
   int       skip          = 0;
   double    tol           = 1.0e-10;
-  int       cfactor       = 10;
+  int       cfactor       = 4;
   int       max_iter      = 100;
   int       min_coarse    = 3;
   int       fmg           = 0;
@@ -251,8 +251,10 @@ run()
      braid_SetMinCoarse( core_, min_coarse );
      braid_SetSkip(core_, skip);
      braid_SetNRelax(core_, -1, nrelax);
+     //braid_SetNRelax(core_, 0, 0);
      braid_SetAbsTol(core_, tol);
      braid_SetCFactor(core_, -1, cfactor);
+     //braid_SetCFactor(core_, 0, 8);
      braid_SetMaxIter(core_, max_iter);
      braid_SetSeqSoln(core_, use_sequential);
      if (fmg)

@@ -59,7 +59,7 @@ motor_units = [
 #if True:
 #end_time = 0.1
 end_time = 3
-ntime = 4000 #1337
+ntime = 1024 #1337
 #Am = 1.0
 sampling_stride_z = 200 #muscle 74 200
 motor_units = motor_units[0:2]    # only 2 motor units [0:2] [0:1]
@@ -131,8 +131,12 @@ def compartment_gets_stimulated(compartment_no, current_time):
 def PinT_stimulation(current_time):
   timestep_width = end_time/ntime
   #print("test {}".format(current_time % (3333 * timestep_width)))
-  return current_time % (3333 * timestep_width) == 0 
-  
+  #return current_time % (int(1./stimulation_frequency/dt_0D) * timestep_width) == 0 
+  #bool = current_time % 2.5 > 2.4995 or current_time == 0.0
+  bool =current_time % 2.5 > (2.5 - (0.8*timestep_width)) or current_time == 0.0
+  #bool = 1==1
+  return bool
+
 def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, compartment_no):
   
   # determine if fiber gets stimulated at the current time
@@ -217,7 +221,7 @@ multidomain_solver = {
   "nCompartments":                    n_compartments,                     # number of compartments
   "am":                               Am,                                 # Am parameter (ration of surface to volume of fibers)
   "cm":                               Cm,                                 # Cm parameter (capacitance of the cellular membrane)
-  "timeStepWidth":                    1, #dt_multidomain,                     # time step width of the diffusion, i.e. the global linear system in the multidomain solver
+  "timeStepWidth":                    100, #dt_multidomain,                     # time step width of the diffusion, i.e. the global linear system in the multidomain solver
   "endTime":                          end_time,                           # end time, this is not relevant because it will be overridden by the splitting scheme
   "timeStepOutputInterval":           100,                                # how often the output timestep should be printed
   "solverName":                       "activationSolver",                 # reference to the solver used for the global linear system of the multidomain eq.
@@ -305,15 +309,15 @@ config = {
     "nspace":   1567,#8235, #3135,
     "Initial Guess": [2,2,4,5,2,2,2,0],
     "option1": "blabla",              # another example option that is parsed in the data object
-    "OutputWriter": [
+    #"OutputWriter": [
       #{"format": "Paraview", "outputInterval": 1, "filename": "out/pint_md", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
-    ],  
+    #],  
     "nRanksInSpace": n_ranks_space,            # number of processes that compute the spatial domain in parallel
     "TimeSteppingScheme": [
     {
       "StrangSplitting": {
         #"timeStepWidth":          dt_splitting,  # 1e-1
-        "timeStepWidth": 1,
+        "timeStepWidth": 100,
         "logTimeStepWidthAsKey":  "dt_splitting",
         "durationLogKey":         "duration_total",
         "timeStepOutputInterval": 100,
@@ -386,8 +390,7 @@ config = {
       },
       "OutputWriter": [
         #{"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": False, "fixedFormat": False, "combineFiles": False, "fileNumbering": "timeStepIndex"},
-        #{"format": "PythonFile", "filename": "out/am", "outputInterval": 40, "binary":False, "onlyNodalValues":True, "fileNumbering": "timeStepIndex"},
-
+        #{"format": "PythonFile", "filename": "out/rw", "outputInterval": 10, "binary":False, "onlyNodalValues":True, "fileNumbering": "timeStepIndex"},
       ]
     } for j in range (NumberOfMultiDomainSolvers)] 
   },

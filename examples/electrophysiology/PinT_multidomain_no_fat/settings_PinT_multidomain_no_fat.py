@@ -57,8 +57,8 @@ motor_units = [
 # for debugging use the following, non-physiological values. This produces a fast simulation
 #if True:
 #end_time = 0.1
-end_time = 0.3
-ntime = 100 #1337
+end_time = 5
+ntime = 60 #1337
 #Am = 1.0
 sampling_stride_z = 200 #muscle 74 200
 motor_units = motor_units[0:2]    # only 2 motor units [0:2] [0:1]
@@ -69,7 +69,7 @@ n_compartments = len(motor_units)
 # own MPI rank no and number of MPI ranks
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
-n_ranks_space = 1
+n_ranks_space = 2
 
 # load MU distribution and firing times
 fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
@@ -307,17 +307,17 @@ config = {
     "nspace":   1567,#8235, #3135,
     "Initial Guess": [2,2,4,5,2,2,2,0],
     "PinT_tol": 1.0e-6,
-    "cfactor": 2,
-    #"cfactor_first": 2,
-    "fmg": 1,
-    "nrelax": 2,
+    "cfactor": 5,
+    "cfactor_first": 2,
+    "fmg": 0,
+    "nrelax": 0,
     #"nrelax_first": 0,
-    "max_levels": 3,
+    "max_levels": 2,
     "option1": "blabla",              # another example option that is parsed in the data object  
     "nRanksInSpace": n_ranks_space,            # number of processes that compute the spatial domain in parallel
     "OutputWriter": [
       #{"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": False, "fixedFormat": False, "combineFiles": False, "fileNumbering": "timeStepIndex"},
-      #{"format": "PythonFile", "filename": "out/rw", "outputInterval": 10, "binary":False, "onlyNodalValues":True, "fileNumbering": "timeStepIndex"},
+      #{"format": "PythonFile", "filename": "out/debug", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "timeStepIndex"},
     ],
     "TimeSteppingScheme": [
     {
@@ -396,7 +396,7 @@ config = {
       },
       "OutputWriter": [
         #{"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": False, "fixedFormat": False, "combineFiles": False, "fileNumbering": "timeStepIndex"},
-        #{"format": "PythonFile", "filename": "out/rw", "outputInterval": 10, "binary":False, "onlyNodalValues":True, "fileNumbering": "timeStepIndex"},
+        #{"format": "PythonFile", "filename": "out/debug2", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "timeStepIndex"},
       ],
     }]
   }

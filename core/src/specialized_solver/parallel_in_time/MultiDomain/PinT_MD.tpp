@@ -60,7 +60,7 @@ initialize()
   }
   */
   //pid_t pid = getpid();
-  //printf("pid: %d", pid);
+  //std::cout << "pid " << pid << "\n";
 
   //std::this_thread::sleep_for (std::chrono::seconds(10));
 
@@ -391,7 +391,7 @@ PinT_initialize()
 
   app_ = (my_App *) malloc(sizeof(my_App));
   //(app_->g)             = (double*) malloc( nspace*sizeof(double) );
-  (app_->comm)          = communicatorTotal_;
+  (app_->comm)          = communicatorT_;
   (app_->tstart)        = tstart_;
   (app_->tstop)         = tstop_;
   (app_->ntime)         = ntime_;

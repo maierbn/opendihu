@@ -28,7 +28,7 @@ void handleReturnValue(int returnValue, std::string descriptor, MPI_Status *stat
     //LOG(DEBUG) << "MPI status: count=" << status->_ucount << ", cancelled=" << status->_cancelled << ", MPI_SOURCE=" << status->MPI_SOURCE
     //  << ", MPI_TAG=" << status->MPI_TAG << ", MPI_ERROR=" << status->MPI_ERROR;
   }
-
+  //LOG(ERROR) << descriptor;
   if (returnValue == MPI_SUCCESS)
     return;
   

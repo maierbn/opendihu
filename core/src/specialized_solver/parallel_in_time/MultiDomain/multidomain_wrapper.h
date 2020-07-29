@@ -48,7 +48,7 @@ public:
 
   //! Define the type of data that will be transferred between solvers when there is a coupling scheme.
   //! Usually you define this type in the "Data" class and reuse it here.
-  typedef typename StrangSplittingMultidomain::OutputConnectorDataType OutputConnectorDataType;
+  typedef typename StrangSplittingMultidomain::SlotConnectorDataType SlotConnectorDataType;
 
   //! constructor, gets the DihuContext object which contains all python settings
   MultidomainWrapper(DihuContext context);
@@ -113,7 +113,7 @@ public:
 
   //! Get the data that will be transferred in the operator splitting or coupling to the other term of the splitting/coupling.
   //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
 protected:
 

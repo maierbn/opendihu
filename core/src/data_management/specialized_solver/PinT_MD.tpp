@@ -24,12 +24,12 @@ initialize()
   Data<FunctionSpaceType>::initialize();
 
   // create th output connector data object
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
 
   // add all needed field variables to be transferred
 
   // add component 0 of fieldvariableA_
-  outputConnectorData_->addFieldVariable(this->solution_, 0);
+  slotConnectorData_->addFieldVariable(this->solution_, 0);
 
   // There is addFieldVariable(...) and addFieldVariable2(...) for the two different field variable types,
   // Refer to "data_management/output_connector_data.h" for details.
@@ -76,11 +76,11 @@ setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceTy
 
 
 template<typename FunctionSpaceType>
-std::shared_ptr<typename PinTMD<FunctionSpaceType>::OutputConnectorDataType> PinTMD<FunctionSpaceType>::
-getOutputConnectorData()
+std::shared_ptr<typename PinTMD<FunctionSpaceType>::SlotConnectorDataType> PinTMD<FunctionSpaceType>::
+getSlotConnectorData()
 {
   // return the output connector data object
-  return this->outputConnectorData_;
+  return this->slotConnectorData_;
 }
 
 template<typename FunctionSpaceType>

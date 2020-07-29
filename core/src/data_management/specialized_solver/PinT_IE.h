@@ -28,9 +28,9 @@ public:
 
   //! define the type of output connection variables, i.e. the values that will be transferred if the solver is part of a splitting or coupling scheme
   //! Two different field variables can be used: they must have the same function space but can have a different number of components. For example, for the CellMLAdapter, there are the "states" and the "intermediates" field variables.
-  //! In this example, we use twice "1" as number of components, but you could, e.g. have OutputConnectorData<FunctionSpaceType,3,4>, etc.
+  //! In this example, we use twice "1" as number of components, but you could, e.g. have SlotConnectorData<FunctionSpaceType,3,4>, etc.
   //! For each field variable you can transfer an abritrary subset of their components.
-  typedef OutputConnectorData<FunctionSpaceType,1,1> OutputConnectorDataType;
+  typedef SlotConnectorData<FunctionSpaceType,1,1> SlotConnectorDataType;
 
   //! constructor
   PinTIE(DihuContext context);
@@ -54,7 +54,7 @@ public:
   void print();
 
   //! return the object that will be used to transfer values between solvers, in this case this includes only Vm
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -75,7 +75,7 @@ private:
   std::shared_ptr<ScalarFieldVariableType> solution_;         //< the solution of the laplace problem
   std::shared_ptr<ScalarFieldVariableType> fieldVariableB_;   //< .. add a description of field variable B here!
 
-  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;    ///< the object that stores all components of field variables that will be transferred to other solvers
+  std::shared_ptr<SlotConnectorDataType> slotConnectorData_;    ///< the object that stores all components of field variables that will be transferred to other solvers
 
   // define all needed field variables or other data
 };

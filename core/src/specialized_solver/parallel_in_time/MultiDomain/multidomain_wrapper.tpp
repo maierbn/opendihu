@@ -203,10 +203,10 @@ data()
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the output_connector_data_transfer class
 template<typename StrangSplittingMultidomain>
-std::shared_ptr<typename MultidomainWrapper<StrangSplittingMultidomain>::OutputConnectorDataType> MultidomainWrapper<StrangSplittingMultidomain>::
-getOutputConnectorData()
+std::shared_ptr<typename MultidomainWrapper<StrangSplittingMultidomain>::SlotConnectorDataType> MultidomainWrapper<StrangSplittingMultidomain>::
+getSlotConnectorData()
 {
-  return strangSplittingMultidomain_.getOutputConnectorData();
+  return strangSplittingMultidomain_.getSlotConnectorData();
 }
 
 

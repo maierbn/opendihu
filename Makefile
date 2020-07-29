@@ -1,6 +1,6 @@
 .PHONY: clean all
 
-all: debug release
+all: debug_without_tests release
 
 #ifneq ("$(wildcard ./dependencies/$(python)/install/bin/python3)","")
 #	python=./dependencies/$(python)/install/bin/python3
@@ -136,3 +136,6 @@ precice1:
 
 multidomain_neuromuscular:
 	cd examples/electrophysiology/multidomain_neuromuscular && $(python) ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+only_neurons:
+	cd examples/electrophysiology/neuromuscular/only_neurons_flat && $(python) ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

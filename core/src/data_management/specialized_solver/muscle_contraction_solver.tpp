@@ -30,20 +30,26 @@ initialize()
   // call initialize of base class
   Data<FunctionSpaceType>::initialize();
 
-  // create th output connector data object
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+  // create th slot connector data object
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
 
   // add all needed field variables to be transferred
 
-  // add λ, λdot and γ as output connectors
-  outputConnectorData_->addFieldVariable(this->lambda_);
-  outputConnectorData_->addFieldVariable(this->lambdaDot_);
-  outputConnectorData_->addFieldVariable(this->gamma_);
+  // add λ, λdot and γ as slot connectors
+  slotConnectorData_->addFieldVariable(this->lambda_);
+  slotConnectorData_->addFieldVariable(this->lambdaDot_);
+  slotConnectorData_->addFieldVariable(this->gamma_);
 
-  outputConnectorData_->addFieldVariable2(this->materialTraction_);
+  slotConnectorData_->addFieldVariable2(this->materialTraction_);
 
   // There is addFieldVariable(...) and addFieldVariable2(...) for the two different field variable types,
-  // Refer to "data_management/output_connector_data.h" for details.
+  // Refer to "slot_connection/slot_connector_data.h" for details.
+
+  // parse slot names of the field variables
+  this->context_.getPythonConfig().getOptionVector("slotNames", slotConnectorData_->slotNames);
+
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
 }
 
 template<typename FunctionSpaceType>
@@ -79,7 +85,7 @@ setFieldVariables(std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::Ve
 
   if (setGeometryFieldForTransfer)
   {
-    outputConnectorData_->addGeometryField(std::make_shared<typename FunctionSpaceType::GeometryFieldType>(this->displacements_->functionSpace()->geometryField()));
+    slotConnectorData_->addGeometryField(std::make_shared<typename FunctionSpaceType::GeometryFieldType>(this->displacements_->functionSpace()->geometryField()));
   }
 }
 
@@ -112,11 +118,11 @@ materialTraction()
 }
 
 template<typename FunctionSpaceType>
-std::shared_ptr<typename MuscleContractionSolver<FunctionSpaceType>::OutputConnectorDataType> MuscleContractionSolver<FunctionSpaceType>::
-getOutputConnectorData()
+std::shared_ptr<typename MuscleContractionSolver<FunctionSpaceType>::SlotConnectorDataType> MuscleContractionSolver<FunctionSpaceType>::
+getSlotConnectorData()
 {
-  // return the output connector data object
-  return this->outputConnectorData_;
+  // return the slot connector data object
+  return this->slotConnectorData_;
 }
 
 template<typename FunctionSpaceType>

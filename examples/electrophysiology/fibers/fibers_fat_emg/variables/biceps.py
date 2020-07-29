@@ -9,14 +9,17 @@ sigma_xf = 0                # [mS/cm] conductivity in cross-fiber direction (xf)
 sigma_e_f = 6.7             # [mS/cm] conductivity in extracellular space, fiber direction (f)
 sigma_e_xf = 3.35           # [mS/cm] conductivity in extracellular space, cross-fiber direction (xf) / transverse
 
-Conductivity = sigma_f              # sigma, conductivity [mS/cm]
-Am = 500.0                          # surface area to volume ratio [cm^-1]
-Cm = 0.58                           # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch)
+Conductivity = sigma_f      # [mS/cm] sigma, conductivity
+Am = 500.0                  # [cm^-1] surface area to volume ratio
+Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch)
 # diffusion prefactor = Conductivity/(Am*Cm)
 
 # timing and activation parameters
 # -----------------
+# motor units from paper Klotz2019 "Modelling the electrical activity of skeletal muscle tissue using a multi‐domain approach"
 import random
+random.seed(0)  # ensure that random numbers are the same on every rank
+# radius: [μm], stimulation frequency [Hz], jitter [-], activation_start_time [s]
 motor_units = [
   {"radius": 40.00, "activation_start_time": 0.0, "stimulation_frequency": 23.92, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # low number of fibers
   {"radius": 42.35, "activation_start_time": -0.2, "stimulation_frequency": 23.36, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
@@ -33,13 +36,21 @@ motor_units = [
 end_time = 4000.0                      # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
-dt_0D = 2e-3                        # [ms] timestep width of ODEs
-dt_1D = 4e-3                        # [ms] timestep width of diffusion
-dt_splitting = 4e-3                 # [ms] overall timestep width of strang splitting
-dt_3D = 0.1                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep = 10.0              # [ms] timestep for large output files, 5.0
-output_timestep_smaller_files = 0.1 # [ms] timestep for small output files, 0.5
-# simulation time:  4s
+dt_0D = 3e-3                        # [ms] timestep width of ODEs (2e-3)
+dt_1D = 1e-3                        # [ms] timestep width of diffusion (4e-3)
+dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting (4e-3)
+dt_3D = 2e-1                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
+output_timestep_fibers = 2e-1       # [ms] timestep for fiber output, 0.5
+output_timestep_3D_emg = 2e-1            # [ms] timestep for output big files of 3D EMG, 100
+output_timestep_surface = 2e-1              # [ms] timestep for output surface EMG, 0.5
+output_timestep_electrodes = 2e-1    # [ms] timestep for python callback, which is electrode measurement output, has to be >= dt_3D
+
+# input files
+fiber_file = "../../../input/left_biceps_brachii_7x7fibers.bin"
+fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
+fat_mesh_file = fiber_file + "_fat.bin"
+firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"
 
 # stride for sampling the 3D elements from the fiber data
 # here any number is possible
@@ -52,15 +63,12 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-#fiber_file = "../../../input/7x7fibers.bin"
-fiber_file = "../../../input/left_biceps_brachii_13x13fibers.bin"
-fat_mesh_file = fiber_file + "_fat.bin2"
-firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"
+disable_firing_output = False
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):
-  r = motor_units[mu_no]["radius"]*1e-2
+  # get radius in cm, 1 μm = 1e-6 m = 1e-4*1e-2 m = 1e-4 cm
+  r = motor_units[mu_no]["radius"]*1e-4
   # cylinder surface: A = 2*π*r*l, V = cylinder volume: π*r^2*l, Am = A/V = 2*π*r*l / (π*r^2*l) = 2/r
   return 2./r
 

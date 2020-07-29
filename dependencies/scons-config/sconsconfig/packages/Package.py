@@ -961,7 +961,14 @@ class Package(object):
       
       if os.path.isfile(str(ctx.lastTarget)+".out"):
         with open(str(ctx.lastTarget)+".out", "rb") as f:
-          ctx.Log("Program output: \""+f.read()+"\"\n")
+          try:
+            output = f.read()
+            if isinstance(output, str):
+              ctx.Log("Program output: \""+output+"\"\n")
+            else:
+              ctx.Log("Program output: \""+output.decode('utf-8')+"\"\n")
+          except:
+              ctx.Log("(Could not load output)\n")
  
       disable_checks = False
       if ctx.env.get('DISABLE_CHECKS', []):

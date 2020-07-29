@@ -324,8 +324,8 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
   }
 
   LOG(DEBUG) << "before mapping:";
-  LOG(DEBUG) << "source geometry: " << fieldVariableSource->functionSpace()->geometryField();
-  LOG(DEBUG) << "target geometry: " << fieldVariableTarget->functionSpace()->geometryField();
+  //LOG(DEBUG) << "source geometry: " << fieldVariableSource->functionSpace()->geometryField();
+  //LOG(DEBUG) << "target geometry: " << fieldVariableTarget->functionSpace()->geometryField();
 
   VLOG(1) << "map mesh " << fieldVariableSource->functionSpace()->meshName() << " -> " << fieldVariableTarget->functionSpace()->meshName();
 

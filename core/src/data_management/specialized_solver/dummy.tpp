@@ -17,8 +17,8 @@ initialize()
   // call initialize of base class, this calls createPetscObjects()
   Data<FunctionSpaceType>::initialize();
 
-  // create the output connector data object
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+  // create the slot connector data object
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
 
   // no field variables will be added
 }
@@ -31,11 +31,11 @@ createPetscObjects()
 }
 
 template<typename FunctionSpaceType>
-std::shared_ptr<typename Dummy<FunctionSpaceType>::OutputConnectorDataType> Dummy<FunctionSpaceType>::
-getOutputConnectorData()
+std::shared_ptr<typename Dummy<FunctionSpaceType>::SlotConnectorDataType> Dummy<FunctionSpaceType>::
+getSlotConnectorData()
 {
-  // return the output connector data object
-  return this->outputConnectorData_;
+  // return the slot connector data object
+  return this->slotConnectorData_;
 }
 
 } // namespace

@@ -36,7 +36,7 @@ if ".py" in sys.argv[0]:
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
   if rank_no == 0:
-    print("Warning: There is no variables file, e.g:\n ./multidomain_contraction ../settings_multidomain_contraction.py ramp.py\n")
+    print("Warning: There is no variables file, e.g:\n ./multidomain_contraction ../settings_multidomain_contraction.py coarse.py\n")
   exit(0)
   
 # -------------------------------------------------------- begin parameters ---------------------------------------------------------
@@ -328,8 +328,8 @@ config = {
             # map from motoneuronMesh (algebraics) to 3Dmesh (solution)
             "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
               {                                                 
-                "fromOutputConnectorSlotNo":        5,                    # source slot of the dofs mapping
-                "toOutputConnectorSlotNo":          0,                    # target slot of the dofs mapping
+                "fromConnectorSlotNo":        5,                    # source slot of the dofs mapping
+                "toConnectorSlotNo":          0,                    # target slot of the dofs mapping
                 "fromOutputConnectorArrayIndex":    0,                    # which compartment/motor unit
                 "toOutputConnectorArrayIndex":      mu_no,                # which compartment/motor unit
                 "mode":                             "localSetIfAboveThreshold",          # "copyLocal", "copyLocalIfPositive" or "communicate"
@@ -344,8 +344,8 @@ config = {
             "afterComputation": None,
             "unused": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
               {                                                 
-                "fromOutputConnectorSlotNo":        0,
-                "toOutputConnectorSlotNo":          2,
+                "fromConnectorSlotNo":        0,
+                "toConnectorSlotNo":          2,
                 "fromOutputConnectorArrayIndex":    0,                    # which fiber/compartment
                 "toOutputConnectorArrayIndex":      0,
                 "fromDofNosNumbering":              "global",

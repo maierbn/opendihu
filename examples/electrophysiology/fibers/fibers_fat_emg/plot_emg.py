@@ -23,7 +23,7 @@ else:
   # sort files by number in file name
   filenames = sorted(files_at_path)
 
-filenames = [f for f in filenames if ".csv" in f]
+filenames = [f for f in filenames if ".csv" in f and "emg" in f]
 
 x_coordinates = set()
 y_coordinates = set()

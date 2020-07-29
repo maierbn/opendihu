@@ -100,8 +100,8 @@ initialize()
   TimeSteppingScheme::TimeSteppingScheme::initialize();
 
   // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver("MyNewTimesteppingSolver", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
-  // if you have your own output connector data rather than the one of the subsolver, call "addSolver" with false as second argument
+  DihuContext::solverStructureVisualizer()->addSolver("MyNewTimesteppingSolver", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means slot connector data is shared with the first subsolver
+  // if you have your own slot connector data rather than the one of the subsolver, call "addSolver" with false as second argument
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();
@@ -125,8 +125,8 @@ initialize()
   // now call initialize, data will then create all variables (Petsc Vec's)
   data_.initialize();
 
-  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
   // here is the space to initialize anything else that is needed for your solver
 }
@@ -190,12 +190,12 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
+//! the transfer is done by the slot_connector_data_transfer class
 template<typename TimeStepping>
-std::shared_ptr<typename MyNewTimesteppingSolver<TimeStepping>::OutputConnectorDataType> MyNewTimesteppingSolver<TimeStepping>::
-getOutputConnectorData()
+std::shared_ptr<typename MyNewTimesteppingSolver<TimeStepping>::SlotConnectorDataType> MyNewTimesteppingSolver<TimeStepping>::
+getSlotConnectorData()
 {
   //! This is relevant only, if this solver is part of a splitting or coupling scheme. Then this method returns the values/variables that will be
   // transferred to the other solvers. We can just reuse the values of the timeSteppingScheme_.
-  return timeSteppingScheme_.getOutputConnectorData();
+  return timeSteppingScheme_.getSlotConnectorData();
 }

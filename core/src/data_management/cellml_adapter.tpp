@@ -20,49 +20,60 @@ initialize()
 
 template <int nStates, int nAlgebraics, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
-initializeOutputConnectorData()
+initializeSlotConnectorData()
 {
   LOG(DEBUG) << "got the following states for transfer: " << statesForTransfer_ << " (states: " << this->states()
     << "), algebraics: " << algebraicsForTransfer_ << ", parameters: " << parametersForTransfer_;
 
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
 
   // add states components
   for (std::vector<int>::iterator iter = statesForTransfer_.begin(); iter != statesForTransfer_.end(); iter++)
   {
-    outputConnectorData_->addFieldVariable(this->states(), *iter);
+    slotConnectorData_->addFieldVariable(this->states(), *iter);
   }
 
   // add algebraic components
   for (std::vector<int>::iterator iter = algebraicsForTransfer_.begin(); iter != algebraicsForTransfer_.end(); iter++)
   {
-    outputConnectorData_->addFieldVariable2(this->algebraics(), *iter);
+    slotConnectorData_->addFieldVariable2(this->algebraics(), *iter);
   }
 
   // add parameters components
   for (std::vector<int>::iterator iter = parametersForTransfer_.begin(); iter != parametersForTransfer_.end(); iter++)
   {
-    outputConnectorData_->addFieldVariable2(this->parameters(), *iter);
+    slotConnectorData_->addFieldVariable2(this->parameters(), *iter);
   }
-  LOG(DEBUG) << "outputConnectorData: " << *outputConnectorData_;
+
+  // add slot names if given
+  slotConnectorData_->slotNames.assign(slotNames_.begin(), slotNames_.end());
+
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
+
+  LOG(DEBUG) << "set slot names: " << slotNames_ << " -> " << slotConnectorData_->slotNames;
+
+  LOG(DEBUG) << "slotConnectorData: " << *slotConnectorData_;
 }
 
 template <int nStates, int nAlgebraics, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
 setStatesVariable(std::shared_ptr<CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::FieldVariableStates> states)
 {
+  // this will be called by the time stepping scheme after initialize()
   this->states_ = states;
 
-  // after states variable has been set, continue initialize of output connector data
-  initializeOutputConnectorData();
+  // after states variable has been set, continue initialize of slot connector data
+  initializeSlotConnectorData();
 }
 
 template <int nStates, int nAlgebraics, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
-setAlgebraicAndParameterNames(const std::vector<std::string> &algebraicNames, const std::vector<std::string> &parameterNames)
+setAlgebraicAndParameterNames(const std::vector<std::string> &algebraicNames, const std::vector<std::string> &parameterNames, const std::vector<std::string> &slotNames)
 {
   algebraicNames_ = algebraicNames;
   parameterNames_ = parameterNames;
+  slotNames_ = slotNames;
 }
 
 template <int nStates, int nAlgebraics, typename FunctionSpaceType>
@@ -71,7 +82,7 @@ createPetscObjects()
 {
   // The states field variable is allocated by the timestepping class because this is the solution vector that the timestepping scheme operates on.
   // It gets then passed to this class by the call to setStatesVariable.
-  // Therefore, here we only create the algebraics and the parameters field variables
+  // Therefore, here we only create the algebraics and the parameters field variables.
   this->algebraics_ = this->functionSpace_->template createFieldVariable<nAlgebraics>("algebraics", algebraicNames_);
   this->algebraics_->setRepresentationContiguous();
 
@@ -177,11 +188,11 @@ parametersForTransfer()
 }
 
 template <int nStates, int nAlgebraics, typename FunctionSpaceType>
-std::shared_ptr<typename CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::OutputConnectorDataType>
+std::shared_ptr<typename CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::SlotConnectorDataType>
 CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  return this->outputConnectorData_;
+  return this->slotConnectorData_;
 }
 
 template <int nStates, int nAlgebraics, typename FunctionSpaceType>

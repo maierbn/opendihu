@@ -27,7 +27,7 @@ public:
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nComponents2> FieldVariable2Type;
 
   //! define the type of output connection variables, i.e. the values that will be transferred if the solver is part of a splitting or coupling scheme
-  typedef OutputConnectorData<FunctionSpaceType,nComponents1,nComponents2> OutputConnectorDataType;
+  typedef SlotConnectorData<FunctionSpaceType,nComponents1,nComponents2> SlotConnectorDataType;
 
   //! constructor
   PrescribedValues(DihuContext context);
@@ -45,7 +45,7 @@ public:
   void print();
 
   //! return the object that will be used to transfer values between solvers, in this case this includes only Vm
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -66,7 +66,7 @@ private:
   std::vector<std::shared_ptr<FieldVariable1Type>> fieldVariables1_;   //< the first list of field variables, with nComponents1 components
   std::vector<std::shared_ptr<FieldVariable2Type>> fieldVariables2_;   //< the second list of field variables, with nComponents2 components
 
-  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;      //< the object that stores all components of field variables that will be transferred to other solvers
+  std::shared_ptr<SlotConnectorDataType> slotConnectorData_;      //< the object that stores all components of field variables that will be transferred to other solvers
 
   std::vector<std::string> fieldVariable1Names_;                      //< names of the field variables with `nComponents1` components
   std::vector<std::string> fieldVariable2Names_;                      //< names of the field variables with `nComponents1` components

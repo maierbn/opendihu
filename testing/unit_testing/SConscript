@@ -42,8 +42,8 @@ if not env['no_tests']:
                 'src/utility.cpp']
 
     #src_files = ['src/1_rank/solid_mechanics.cpp', 'src/1_rank/main.cpp', 'src/utility.cpp']
-    #print ""
-    #print "WARNING: only compiling tests ",src_files
+    #print("")
+    #print("WARNING: only compiling tests ",src_files)
 
     program = env.Program('1_rank_tests', source=src_files)
 
@@ -66,8 +66,8 @@ if not env['no_tests']:
                  'src/2_ranks/partitioned_petsc_vec.cpp',
                  'src/2_ranks/composite_mesh.cpp']
     #src_files = ['src/2_ranks/solid_mechanics.cpp', 'src/2_ranks/main.cpp', 'src/utility.cpp']
-    #print ""
-    #print "WARNING: only compiling tests ",src_files
+    #print("")
+    #print("WARNING: only compiling tests ",src_files)
 
     program = env.Program('2_ranks_tests', source=src_files)
 

@@ -59,7 +59,10 @@ def update_neumann_boundary_conditions(t):
   
   # Neumann boundary conditions
   k = 0
-  factor = np.sin(t/10. * 2*np.pi)*0.1
+  T = 50
+  amplitude = 0.3
+  
+  factor = np.sin(t/T * 2*np.pi)*amplitude
   neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": [factor,0,0], "face": "2-"} for j in range(ny) for i in range(nx)]
   #neumann_bc = []
 
@@ -69,7 +72,7 @@ def update_neumann_boundary_conditions(t):
     "neumannBoundaryConditions": neumann_bc
   }
   
-  print("update neumann bc for t={}: {}".format(t,config))
+  #print("update neumann bc for t={}: {}".format(t,config))
   return config
 
 # Function to postprocess the output
@@ -235,6 +238,7 @@ config = {
     
     #"loadFactors":                [0.5, 1.0],                   # load factors for every timestep
     "loadFactors":                [],                           # no load factors, solve problem directly
+    "loadFactorGiveUpThreshold": 0.1,                           # if the adaptive time stepping produces a load factor smaller than this value, the solution will be accepted for the current timestep, even if it did not converge fully to the tolerance
     "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
     
     # boundary and initial conditions

@@ -42,7 +42,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
       // gather data length of total vector to rank 0
       int globalValuesSize = 0;
       MPIUtility::handleReturnValue(MPI_Reduce(&localValuesSize, &globalValuesSize, 1, MPI_INT,
-                                                MPI_SUM, 0, this->rankSubset_->mpiCommunicator()));
+                                                MPI_SUM, 0, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
 
       globalValuesSize_[identifier] = globalValuesSize;  // value only set on rank 0, all other ranks have value 0
 
@@ -229,7 +229,7 @@ void Paraview::writeCombinedValuesVector(MPI_File fileHandle, int ownRankNo, con
     int nBytesLocal = writeBuffer.length();
     int nBytesGlobal = 0;
     MPIUtility::handleReturnValue(MPI_Reduce(&nBytesLocal, &nBytesGlobal, 1, MPI_INT,
-                                             MPI_SUM, this->rankSubset_->size()-1, this->rankSubset_->mpiCommunicator()));
+                                             MPI_SUM, this->rankSubset_->size()-1, this->rankSubset_->mpiCommunicator()), "MPI_Reduce");
 
     // add base64 padding with "=" characters such that global size is a factor of 4
     if (ownRankNo == this->rankSubset_->size()-1)

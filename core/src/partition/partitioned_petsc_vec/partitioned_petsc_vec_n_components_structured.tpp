@@ -315,7 +315,7 @@ setRepresentationLocal()
   else if (this->currentRepresentation_ == Partition::values_representation_t::representationInvalid)
   {
     LOG(FATAL) << "\"" << this->name_ << "\" setRepresentationLocal, previous representation: "
-    << this->getCurrentRepresentationString() << ". This is not directly possible, call restoreExtractedComponent instead.";
+      << this->getCurrentRepresentationString() << ". This is not directly possible, call restoreExtractedComponent instead.";
   }
   else if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
   {

@@ -345,8 +345,8 @@ config = {
             "beforeComputation": None,
             "afterComputation": [                                         # transfer/mapping of dofs that will be performed after the computation of the nested solver
               {                                                 
-                "fromOutputConnectorSlotNo":        0,
-                "toOutputConnectorSlotNo":          2,
+                "fromConnectorSlotNo":        0,
+                "toConnectorSlotNo":          2,
                 "fromOutputConnectorArrayIndex":    0,                    # which fiber/compartment
                 "toOutputConnectorArrayIndex":      0,
                 "mode":                             "callback",           # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
@@ -435,8 +435,8 @@ config = {
                 "beforeComputation": None,
                 "afterComputation": [                                        # transfer/mapping of dofs that will be performed after the computation of the nested solver
                   {                                                 
-                    "fromOutputConnectorSlotNo":        0,
-                    "toOutputConnectorSlotNo":          2,
+                    "fromConnectorSlotNo":        0,
+                    "toConnectorSlotNo":          2,
                     "fromOutputConnectorArrayIndex":    0,                   # which fiber/compartment
                     "toOutputConnectorArrayIndex":      0,
                     "mode":                             "callback",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
@@ -508,8 +508,8 @@ config = {
                 "beforeComputation": None,                                    # transfer/mapping of dofs that will be performed before the computation of the nested solver
                 "afterComputation": [                                         # transfer/mapping of dofs that will be performed after the computation of the nested solver
                   {                                                 
-                    "fromOutputConnectorSlotNo":        0,
-                    "toOutputConnectorSlotNo":          2,
+                    "fromConnectorSlotNo":        0,
+                    "toConnectorSlotNo":          2,
                     "fromOutputConnectorArrayIndex":    0,                    # which fiber/compartment
                     "toOutputConnectorArrayIndex":      0,
                     "mode":                             "callback",           # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
@@ -601,8 +601,8 @@ config = {
             "meshName":                   "muscleSpindleAndInterneuronMesh",               # the mesh on which the additional field variables will be defined
             "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
               {                                                 
-                "fromOutputConnectorSlotNo":        2,
-                "toOutputConnectorSlotNo":          1,
+                "fromConnectorSlotNo":        2,
+                "toConnectorSlotNo":          1,
                 "fromOutputConnectorArrayIndex":    0,
                 "toOutputConnectorArrayIndex":      0,
                 "mode":                             "callback",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
@@ -677,8 +677,8 @@ config = {
             "meshName":                   "muscleSpindleMesh",            # the mesh on which the additional field variables will be defined
             "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
               {                                                 
-                "fromOutputConnectorSlotNo":        2,
-                "toOutputConnectorSlotNo":          8,
+                "fromConnectorSlotNo":        2,
+                "toConnectorSlotNo":          8,
                 "fromOutputConnectorArrayIndex":    0,                    # which fiber/compartment, this does not matter here because all compartment meshes have the same displacements
                 "toOutputConnectorArrayIndex":      0,
                 "mode":                             "callback",           # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
@@ -702,8 +702,8 @@ config = {
               "beforeComputation":          None, 
               "afterComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
                 {                                                 
-                  "fromOutputConnectorSlotNo":        2,
-                  "toOutputConnectorSlotNo":          7,
+                  "fromConnectorSlotNo":        2,
+                  "toConnectorSlotNo":          7,
                   "fromOutputConnectorArrayIndex":    0,                   # which fiber/compartment, this does not matter here because all compartment meshes have the same displacements
                   "toOutputConnectorArrayIndex":      0,
                   "mode":                             "callback",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
@@ -726,8 +726,8 @@ config = {
                 "beforeComputation":          None, 
                 "afterComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
                   {
-                    "fromOutputConnectorSlotNo":        6,
-                    "toOutputConnectorSlotNo":          0,
+                    "fromConnectorSlotNo":        6,
+                    "toConnectorSlotNo":          0,
                     "fromOutputConnectorArrayIndex":    0,
                     "toOutputConnectorArrayIndex":      compartment_no,      # which motor unit
                     "mode":                             "localSetIfAboveThreshold",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
@@ -872,9 +872,6 @@ config = {
     }
   }
 }
-
-with open("config.py", "w") as f:
-  f.write(str(config))
 
 # stop timer and calculate how long parsing lasted
 if rank_no == 0:

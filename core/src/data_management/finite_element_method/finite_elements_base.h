@@ -12,7 +12,7 @@
 #include "function_space/mixed_function_space.h"
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
-#include "data_management/output_connector_data.h"
+#include "slot_connection/slot_connector_data.h"
 
 namespace Data
 {
@@ -27,7 +27,7 @@ class FiniteElementsBase :
 public:
 
   //! type of data that will be transferred to nested solvers
-  typedef OutputConnectorData<FunctionSpaceType,nComponents> OutputConnectorDataType;
+  typedef SlotConnectorData<FunctionSpaceType,nComponents> SlotConnectorDataType;
 
   //! constructor
   FiniteElementsBase(DihuContext context);
@@ -81,8 +81,8 @@ public:
   static void getPetscMemoryParameters(int &nNonZerosDiagonal, int &nNonZerosOffdiagonal);
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -109,7 +109,7 @@ private:
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> negativeRhsNeumannBoundaryConditions_;                 //< the rhs vector in weak formulation, only contribution from neumann boundary conditions
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> solution_;            //< the vector of the quantity of interest, e.g. displacement
 
-  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;       //< the object that holds all output connector components of field variables
+  std::shared_ptr<SlotConnectorDataType> slotConnectorData_;       //< the object that holds all slot connector components of field variables
 };
 
 }  // namespace

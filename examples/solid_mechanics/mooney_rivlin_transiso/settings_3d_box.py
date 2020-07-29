@@ -103,12 +103,14 @@ config = {
   "scenarioName": "3d_box",
   "logFormat":    "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "mappings_between_meshes.txt",   # log file for mappings between meshes
+  
   "Meshes": fiber_meshes,
   "HyperelasticitySolver": {
     "durationLogKey": "nonlinear",
     
-    "materialParameters": [2.0, 3, 4, 5],  # c1, c2, b1, d1
-    "displacementsScalingFactor": 1.0,   # scaling factor for displacements
+    "materialParameters": [2, 3, 4, 5],  # c1, c2, b1, d1
+    "displacementsScalingFactor": 10.0,   # scaling factor for displacements
     "constantBodyForce":          [0.0, 0.0, 0.0],   # body force in whole body region
     "residualNormLogFilename": "log_residual_norm.txt",
     "useAnalyticJacobian": True,
@@ -131,17 +133,19 @@ config = {
     "solverType": "preonly",            # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
     "preconditionerType": "lu",         # type of the preconditioner
     "maxIterations": 1e4,               # maximum number of iterations in the linear solver
-    "dumpFilename": "out/m",
-    "dumpFormat": "matlab",   # default, ascii, matlab
+    "dumpFilename": "",#"out/m",            # filename for output of solver matrix
+    "dumpFormat": "matlab",             # default, ascii, matlab
     "snesMaxFunctionEvaluations": 1e8,  # maximum number of function iterations
-    "snesMaxIterations": 5,            # maximum number of iterations in the nonlinear solver
-    "snesRelativeTolerance": 1e-5,     # relative tolerance of the nonlinear solver
-    "snesLineSearchType": "l2",        # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
-    "snesAbsoluteTolerance": 1e-5,     # absolute tolerance of the nonlinear solver
+    "snesMaxIterations": 15,             # maximum number of iterations in the nonlinear solver
+    "snesRebuildJacobianFrequency": 5,  # frequency with which the jacobian is newly computed
+    "snesRelativeTolerance": 1e-5,      # relative tolerance of the nonlinear solver
+    "snesLineSearchType": "l2",         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
+    "snesAbsoluteTolerance": 1e-5,      # absolute tolerance of the nonlinear solver
+    "loadFactorGiveUpThreshold": 0.1,   # if the adaptive time stepping produces a load factor smaller than this value, the solution will be accepted for the current timestep, even if it did not converge fully to the tolerance
     
-    "loadFactors":  [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
-    #"loadFactors": [],                 # no load factors, solve problem directly
-    "nNonlinearSolveCalls": 1,         # how often the nonlinear solve should be repeated
+    #"loadFactors":  [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
+    "loadFactors": [],                  # no load factors, solve problem directly
+    "nNonlinearSolveCalls": 1,          # how often the nonlinear solve should be repeated
     
     # boundary conditions
     "dirichletBoundaryConditions": dirichlet_bc,
@@ -152,19 +156,19 @@ config = {
     "updateDirichletBoundaryConditionsFunctionCallInterval": 1,
     
     "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-      {"format": "PythonFile", "filename": "out/u", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+      {"format": "PythonFile", "filename": "out/u", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "incremental"},
     ],
     "pressure": {   # output files for pressure function space (linear elements)
       "OutputWriter" : [
-        {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-        {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+        {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+        {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "incremental"},
       ]
     },
     # output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
     "LoadIncrements": {   
       "OutputWriter" : [
-        {"format": "Paraview", "outputInterval": 1, "filename": "out/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+        {"format": "Paraview", "outputInterval": 1, "filename": "out/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       ]
     },
   },

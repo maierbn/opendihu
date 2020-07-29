@@ -85,7 +85,7 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
     for (int i = 0; i < MeshType::dim(); i++)
     {
       MPIUtility::handleReturnValue(MPI_Allgather(&nElementsLocal_[i], 1, MPIU_INT,
-        localSizesOnRanks[i].data(), 1, MPIU_INT, rankSubset->mpiCommunicator()));
+        localSizesOnRanks[i].data(), 1, MPIU_INT, rankSubset->mpiCommunicator()), "MPI_Allgather");
     }
     LOG(DEBUG) << "determined localSizesOnRanks: " << localSizesOnRanks;
     LOG(DEBUG) << "MeshType::dim(): " << MeshType::dim() << ", nRanks: " << nRanks_;

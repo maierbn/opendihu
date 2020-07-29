@@ -218,6 +218,7 @@ config = {
     
     #"loadFactors":                [0.5, 1.0],                   # load factors for every timestep
     "loadFactors":                [],                           # no load factors, solve problem directly
+    "loadFactorGiveUpThreshold": 0.1,                           # if the adaptive time stepping produces a load factor smaller than this value, the solution will be accepted for the current timestep, even if it did not converge fully to the tolerance
     "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
     
     # boundary and initial conditions

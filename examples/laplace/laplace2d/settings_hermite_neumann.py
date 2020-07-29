@@ -1,12 +1,16 @@
 # Laplace 2D, Neumann BC
 
-nx = 3
+
+# number of nodes
+nx = 6
 ny = nx
 
+# set neumann boundary conditions
 neumann_bc = []
+import numpy as np
 
 # bottom, top
-if True:
+if False:
   for i in range(nx):
     neumann_bc += [
         {"element": i, "constantValue": -1.0, "face": "1-"},               # bottom
@@ -14,21 +18,23 @@ if True:
       ]
 
 # left, right
-if False:
+if True:
   for j in range(ny):
     neumann_bc += [
-        {"element": j*nx, "constantValue": -1, "face": "0-"},            # left
-        {"element": j*nx + (nx-1), "constantValue": 1, "face": "0+"},   # top
+        {"element": j*nx, "constantValue": -np.sin(j/ny*np.pi), "face": "0-"},            # left
+        {"element": j*nx + (nx-1), "constantValue": np.sin(j/ny*np.pi), "face": "0+"},   # top
       ]
       
 config = {
-  "logFormat":                      "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "logFormat":                      "csv",                      # "csv" or "json", format of the lines in the log file, csv gives smaller files
+  "scenarioName":                   "laplace",                  # scenario name to find the run in the log file
+  "mappingsBetweenMeshesLogFile":   "",                         # a log file about mappings between meshes, here we do not want that because there are no mappings
   "FiniteElementMethod" : {
     "nElements": [nx, ny],
     "inputMeshIsGlobal": True,
     "physicalExtent": [1.0, 1.0],
-    "nodePositions": [[float(i)/nx, float(j)/ny] for j in range(ny+1) for i in range(nx+1)],
+    "nodePositions": [[float(i)/nx, float(j)/ny, 0] for j in range(ny+1) for i in range(nx+1)],
     "setHermiteDerivatives": True,
     "elements": [[j*(nx+1)+i, j*(nx+1)+i+1, (j+1)*(nx+1)+i, (j+1)*(nx+1)+i+1] for j in range(ny) for i in range(nx)],
     
@@ -47,10 +53,11 @@ config = {
     "maxIterations": 10000,
     "dumpFilename": "out/",
     "dumpFormat": "matlab",  # default, ascii, or matlab
+    "slotName": "",
     
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":False},
-      {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":False, "fileNumbering": "incremental"},
+      {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "incremental"},
     ]
   }
 }

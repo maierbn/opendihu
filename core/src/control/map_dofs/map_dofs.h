@@ -27,7 +27,7 @@ public:
 
   //! define the type of the data object,
   typedef ::Data::MapDofs<FunctionSpaceType,NestedSolverType> Data;
-  typedef typename Data::OutputConnectorDataType OutputConnectorDataType;
+  typedef typename Data::SlotConnectorDataType SlotConnectorDataType;
 
   //! constructor, gets the DihuContext object which contains all python settings
   MapDofs(DihuContext context);
@@ -57,8 +57,8 @@ public:
   Data &data();
 
   //! Get the data that will be transferred in the operator splitting or coupling to the other term of the splitting/coupling.
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
 protected:
 
@@ -66,12 +66,12 @@ protected:
    */
   struct DofsMappingType
   {
-    int outputConnectorSlotNoFrom;  //< slot no, i.e. a field variable from which to get the dofs
-    std::vector<int> outputConnectorSlotNosTo;    //< slots nos, i.e. field variables to which to write the dofs to
+    int connectorSlotNoFrom;  //< slot no, i.e. a field variable from which to get the dofs
+    std::vector<int> connectorSlotNosTo;    //< slots nos, i.e. field variables to which to write the dofs to
     bool dofNoIsGlobalFrom;         //< if the keys in dofsMapping specify global nos
     bool dofNoIsGlobalTo;           //< if the values in dofsMapping specify global nos
-    int outputConnectorArrayIndexFrom;   //< array index if the output connector slot consists of a vector of multiple layers, e.g. Multidomain with multiple compartments or fibers with even two nested MultipleInstances
-    int outputConnectorArrayIndexTo;     //< array index if the output connector slot consists of a vector of multiple layers, e.g. Multidomain with multiple compartments or fibers with even two nested MultipleInstances
+    int slotConnectorArrayIndexFrom;   //< array index if the connector slot consists of a vector of multiple layers, e.g. Multidomain with multiple compartments or fibers with even two nested MultipleInstances
+    int slotConnectorArrayIndexTo;     //< array index if the connector slot consists of a vector of multiple layers, e.g. Multidomain with multiple compartments or fibers with even two nested MultipleInstances
 
     double thresholdValue;          //< if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
     double valueToSet;              //< if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
@@ -126,6 +126,7 @@ protected:
   NestedSolverType nestedSolver_;   //< the nested solver that will be called in advanceTimeSpan
 
   Data data_;                       //< the data object that stores the additional field variables
+  std::vector<std::string> slotNames_;                        //< names of all slots
 
   std::vector<DofsMappingType> mappingsBeforeComputation_;    //< settings for all mappings that should be done before the computation
   std::vector<DofsMappingType> mappingsAfterComputation_;     //< settings for all mappings that should be done after the computation

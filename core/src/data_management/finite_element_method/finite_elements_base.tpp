@@ -38,8 +38,15 @@ initialize()
   LOG(DEBUG) << "Data::FiniteElementsBase::initialize";
   Data<FunctionSpaceType>::initialize();
 
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
-  outputConnectorData_->addFieldVariable(this->solution());
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
+  slotConnectorData_->addFieldVariable(this->solution());
+
+  // parse slot names of the additional field variables
+  std::string slotName = this->context_.getPythonConfig().getOptionString("slotName", "");
+  slotConnectorData_->slotNames.push_back(slotName);
+
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
 }
 template<typename FunctionSpaceType, int nComponents>
 void FiniteElementsBase<FunctionSpaceType,nComponents>::
@@ -169,6 +176,7 @@ template<typename FunctionSpaceType, int nComponents>
 void FiniteElementsBase<FunctionSpaceType,nComponents>::
 setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> solution)
 {
+  // this will be called by the time stepping scheme after initialize()
   this->solution_ = solution;
 }
 
@@ -180,11 +188,11 @@ setNegativeRightHandSideNeumannBoundaryConditions(std::shared_ptr<FieldVariable:
 }
 
 template<typename FunctionSpaceType, int nComponents>
-std::shared_ptr<typename FiniteElementsBase<FunctionSpaceType,nComponents>::OutputConnectorDataType>
+std::shared_ptr<typename FiniteElementsBase<FunctionSpaceType,nComponents>::SlotConnectorDataType>
 FiniteElementsBase<FunctionSpaceType,nComponents>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  return this->outputConnectorData_;
+  return this->slotConnectorData_;
 }
 
 template<typename FunctionSpaceType, int nComponents>

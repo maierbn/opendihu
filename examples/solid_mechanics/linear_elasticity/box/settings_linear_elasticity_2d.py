@@ -21,6 +21,7 @@ neumann_bc = [{"element": j*nx+(nx-1), "constantVector": [0.1,+0.2], "face": "0+
 #neumann_bc = []
 
 config = {
+  "scenarioName":                   "linear_elasticity_2d",    # scenario name for the log file
   "logFormat":                      "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "mappings_between_meshes.txt",   # log file for mappings between meshes
@@ -36,6 +37,7 @@ config = {
     "dirichletBoundaryConditions":  dirichlet_bc,   # dirichlet boundary conditions
     "neumannBoundaryConditions":    neumann_bc,     # neumann boundary conditions
     "divideNeumannBoundaryConditionValuesByTotalArea": False,  # if the neumann boundary condition vectors should be divided by the total surface area where surface loads are applied, this allows to specify the total force that acts on the surface. If set to False (default), the given traction is a per-surface quantity.
+    "slotName":           "",                       # slot name of the solution variable
     
     # solver
     "relativeTolerance":  1e-15,                    # relative tolerance for the solver, this relates to the current residual norm divided by the norm of the rhs

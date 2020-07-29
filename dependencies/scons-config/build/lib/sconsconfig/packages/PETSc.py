@@ -1,6 +1,5 @@
 import sys, os
 import socket
-from distutils import sysconfig
 from .Package import Package
 
 petsc_text = r'''
@@ -16,32 +15,6 @@ int main(int argc, char* argv[]) {
    return EXIT_SUCCESS;
 }
 '''
-
-def parse_conf(ctx, conf_path, lib_dirs, libs):
-  vars = {}
-  sysconfig.parse_makefile(conf_path, vars)
-  flag_dict = ctx.env.ParseFlags(vars['PACKAGES_LIBS'])
-  lib_dirs.extend(flag_dict['LIBPATH'])
-  for ii in range(len(libs)):
-    libs[ii].extend(flag_dict['LIBS'])
-
-def find_conf(ctx, base, inc_dirs, lib_dirs, libs, extra_libs):
-  # PETSc 3.1
-  conf_path = os.path.join(base, 'conf', 'petscvariables')
-  if os.path.exists(conf_path):
-      parse_conf(ctx, conf_path, lib_dirs, libs)
-
-  # PETSC 2.3.3
-  conf_path = os.path.join(base, 'bmake', 'petscconf')
-  if os.path.exists(conf_path):
-    vars = {}
-    sysconfig.parse_makefile(conf_path, vars)
-    if 'PETSC_ARCH' in vars:
-        arch = vars['PETSC_ARCH']
-        inc_dirs.extend([os.path.join(base, 'bmake', arch)])
-        lib_dirs.extend([os.path.join(base, 'lib', arch)])
-        conf_path = os.path.join(base, 'bmake', arch, 'petscconf')
-        parse_conf(ctx, conf_path, lib_dirs, libs)
 
 class PETSc(Package):
 
@@ -78,6 +51,7 @@ class PETSc(Package):
     
     # --with-cc='+env["CC"]+'\
     # --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
+    # --with-cc='+env["mpicc"]+'\
     
     # debugging build handler 
     if self.have_option(env, "PETSC_DEBUG"):
@@ -86,7 +60,7 @@ class PETSc(Package):
       self.set_build_handler([
         'mkdir -p ${PREFIX}',
         './configure --prefix=${PREFIX} --with-debugging=yes --with-shared-libraries=1 \
-          ---with-cc='+env["mpicc"]+'\
+          --download-fblaslapack=1 \
           --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
          | tee out.txt',
         '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
@@ -103,7 +77,8 @@ class PETSc(Package):
           'mkdir -p ${PREFIX}',
           #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
           './configure --prefix=${PREFIX} --with-debugging=no --with-shared-libraries=1 \
-          ---with-cc='+env["mpicc"]+'\
+          --with-mpi-dir=${MPI_DIR} \
+          --download-fblaslapack=1 \
           --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
           COPTFLAGS=-O3\
           CXXOPTFLAGS=-O3\
@@ -119,7 +94,7 @@ class PETSc(Package):
           'mkdir -p ${PREFIX}',
           #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
           './configure --prefix=${PREFIX} --with-debugging=no --with-shared-libraries=1 \
-          ---with-cc='+env["mpicc"]+'\
+          --download-fblaslapack=1 \
           --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
           COPTFLAGS=-O3\
           CXXOPTFLAGS=-O3\
@@ -136,7 +111,7 @@ class PETSc(Package):
     ctx.Message('Checking for PETSc ...         ')
     self.check_options(env)
 
-    res = super(PETSc, self).check(ctx, loc_callback=find_conf)
+    res = super(PETSc, self).check(ctx)
     #self.check_required(res[0], ctx)
   
     # if installation of petsc fails, retry without mumps and extra packages like parmetis, hdf5 or hypre
@@ -153,7 +128,8 @@ class PETSc(Package):
         self.set_build_handler([
           'mkdir -p ${PREFIX}',
           './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
-            --with-mpi-dir=${MPI_DIR} --with-batch\
+            --with-batch\
+            --download-fblaslapack=1 \
             --with-cc='+env["mpicc"]+' | tee out.txt',
           '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
           '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
@@ -168,9 +144,9 @@ class PETSc(Package):
         self.set_build_handler([
           'mkdir -p ${PREFIX}',
           './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
-          --with-cc='+env["mpicc"]+'\
-          COPTFLAGS=-O3\
-          CXXOPTFLAGS=-O3\
+          --with-mpi-dir=${MPI_DIR} \
+          COPTFLAGS=-O3 \
+          CXXOPTFLAGS=-O3 \
           FOPTFLAGS=-O3 | tee out.txt',
         '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt || make',
         '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt) || make install',
@@ -179,7 +155,7 @@ class PETSc(Package):
       
       self.number_output_lines = 3990
       
-      res = super(PETSc, self).check(ctx, loc_callback=find_conf)
+      res = super(PETSc, self).check(ctx)
       self.check_required(res[0], ctx)
     
     self.check_required(res[0], ctx)

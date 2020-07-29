@@ -1,4 +1,4 @@
-# biceps for chaste solver
+# biceps
 #
 
 import numpy as np
@@ -27,15 +27,15 @@ sampling_stride_x = 7
 sampling_stride_y = 7
 sampling_stride_z = 500
 
-#sampling_stride_x = 1
-#sampling_stride_y = 1
-#sampling_stride_z = 100
+sampling_stride_x = 1
+sampling_stride_y = 1
+sampling_stride_z = 100
 
 # create the partitioning using the script in create_partitioned_meshes_for_settings.py
 result = create_partitioned_meshes_for_settings(
     n_subdomains_x, n_subdomains_y, n_subdomains_z, 
     fiber_file, load_fiber_data,
-    sampling_stride_x, sampling_stride_y, sampling_stride_z, True)
+    sampling_stride_x, sampling_stride_y, sampling_stride_z, generate_linear_3d_mesh=True, generate_quadratic_3d_mesh=True)
 
 #parse result
 [variables.meshes, variables.own_subdomain_coordinate_x, variables.own_subdomain_coordinate_y, variables.own_subdomain_coordinate_z, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber] = result
@@ -61,7 +61,7 @@ pmax = 7.3                  # [N/cm^2] maximum isometric active stress
 
 constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
 #constant_body_force = (0,0,0)
-bottom_traction = [0.0,-1e-2,-5e-2]        # [N]
+bottom_traction = [0.0,-1e-1,0]        # [N]
 #bottom_traction = [0.0,0.0,0.0]        # [N]
 
 
@@ -95,6 +95,8 @@ config = {
   "scenarioName": "3d_muscle",
   "logFormat":    "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "mappings_between_meshes.txt",   # log file for mappings between meshes
+  
   "Meshes": variables.meshes,
   "HyperelasticitySolver": {
     "durationLogKey": "nonlinear",
@@ -116,18 +118,20 @@ config = {
     "fiberMeshNames": fiber_mesh_names,   # fiber meshes that will be used to determine the fiber direction
     
     # nonlinear solver
-    "relativeTolerance": 1e-10,         # 1e-10 relative tolerance of the linear solver
-    "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual in the linear solver    
+    "relativeTolerance": 1e-5,         # 1e-10 relative tolerance of the linear solver
+    "absoluteTolerance": 1e-5,         # 1e-10 absolute tolerance of the residual of the linear solver    
     "solverType": "preonly",            # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
     "preconditionerType": "lu",         # type of the preconditioner
     "maxIterations": 1e4,               # maximum number of iterations in the linear solver
-    "dumpFilename": "out/m",
-    "dumpFormat": "matlab",   # default, ascii, matlab
+    "dumpFilename": "",#"out/m",            # filename for output of solver matrix
+    "dumpFormat": "matlab",             # default, ascii, matlab
     "snesMaxFunctionEvaluations": 1e8,  # maximum number of function iterations
-    "snesMaxIterations": 10,            # maximum number of iterations in the nonlinear solver
-    "snesRelativeTolerance": 1e-5,     # relative tolerance of the nonlinear solver
-    "snesLineSearchType": "l2",        # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
-    "snesAbsoluteTolerance": 1e-5,     # absolute tolerance of the nonlinear solver
+    "snesMaxIterations": 15,             # maximum number of iterations in the nonlinear solver
+    "snesRebuildJacobianFrequency": 5,  # frequency with which the jacobian is newly computed
+    "snesRelativeTolerance": 1e-5,      # relative tolerance of the nonlinear solver
+    "snesLineSearchType": "l2",         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
+    "snesAbsoluteTolerance": 1e-5,      # absolute tolerance of the nonlinear solver
+    "loadFactorGiveUpThreshold": 0.1,   # if the adaptive time stepping produces a load factor smaller than this value, the solution will be accepted for the current timestep, even if it did not converge fully to the tolerance
     
     #"loadFactors":  [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
     "loadFactors": [],                 # no load factors, solve problem directly
@@ -142,19 +146,19 @@ config = {
     "updateDirichletBoundaryConditionsFunctionCallInterval": 1,
     
     "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-      {"format": "PythonFile", "filename": "out/u", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+      {"format": "PythonFile", "filename": "out/u", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "incremental"},
     ],
     "pressure": {   # output files for pressure function space (linear elements)
       "OutputWriter" : [
-        {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-        {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+        {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+        {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "incremental"},
       ]
     },
     # output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
     "LoadIncrements": {   
       "OutputWriter" : [
-        {"format": "Paraview", "outputInterval": 1, "filename": "out/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+        {"format": "Paraview", "outputInterval": 1, "filename": "out/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       ]
     },
   },

@@ -174,16 +174,16 @@ void DihuContext::initializeLogging(int &argc, char *argv[])
   LOG(DEBUG) << "Log to \"" << logFilesPath << "\".";
 
 #if 0
-  // configure additional special logger
-  el::Loggers::getLogger("special");
+  // configure additional special logger, enable this and enable the CLOG(INFO, "mpi") line in mpi_utility.cpp to get a log of every mpi call
+  el::Loggers::getLogger("mpi");
 
   // configure control and numerics logger to use different log files
   el::Configurations configuration;
   configuration.setToDefault();
 
-  configuration.setGlobally(el::ConfigurationType::Filename, "special.log");
-  el::Loggers::reconfigureLogger("special", configuration);
+  configuration.setGlobally(el::ConfigurationType::Filename, "mpi.log");
+  el::Loggers::reconfigureLogger("mpi", configuration);
 
-  CLOG(INFO, "special") << "starting special log";
+  CLOG(INFO, "mpi") << "starting mpi log";
 #endif
 }

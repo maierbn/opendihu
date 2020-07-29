@@ -20,7 +20,7 @@ public:
   typedef ::Data::Dummy<FunctionSpace> Data;
 
   //! Define the type of data that will be transferred between solvers when there is a coupling scheme.
-  typedef typename Data::OutputConnectorDataType OutputConnectorDataType;
+  typedef typename Data::SlotConnectorDataType SlotConnectorDataType;
 
   //! constructor, gets the DihuContext object which contains all python settings
   Dummy(DihuContext context);
@@ -41,11 +41,11 @@ public:
   Data &data();
 
   //! Get the data that will be transferred in the operator splitting or coupling to the other term of the splitting/coupling.
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
 protected:
 
-  Data data_;   //< the data object that provides the getOutputConnectorData function
+  Data data_;   //< the data object that provides the getSlotConnectorData function
 };
 

@@ -199,8 +199,8 @@ config = {
                   "mappings": {
                     ("parameter", 0):           ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
                     ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
-                    ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
-                    ("outputConnectorSlot", 1): ("algebraic", "razumova/stress"),  # expose algebraic 12 = γ to the operator splitting
+                    ("connectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
+                    ("connectorSlot", 1): ("algebraic", "razumova/stress"),  # expose algebraic 12 = γ to the operator splitting
                   },
                   "parametersInitialValues":                [0.0,1.0],                                      #[0.0, 1.0],  # initial values for the parameters: I_Stim, l_hs
                   

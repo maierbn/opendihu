@@ -14,7 +14,6 @@ template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
 CallbackHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 CallbackHandler(DihuContext context, bool initializeOutputWriter) :
   RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>(context, initializeOutputWriter),
-  DiscretizableInTime(),
   fiberNoGlobal_(-1),
   pythonSetSpecificParametersFunction_(NULL), pythonSetSpecificStatesFunction_(NULL), pythonHandleResultFunction_(NULL),
   pySetFunctionAdditionalParameter_(NULL), pyHandleResultFunctionAdditionalParameter_(NULL), pyGlobalNaturalDofsList_(NULL)
@@ -25,7 +24,6 @@ template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
 CallbackHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 CallbackHandler(DihuContext context) :
   RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>(context),
-  DiscretizableInTime(),
   fiberNoGlobal_(-1),
   pythonSetSpecificParametersFunction_(NULL), pythonSetSpecificStatesFunction_(NULL), pythonHandleResultFunction_(NULL),
   pySetFunctionAdditionalParameter_(NULL), pyHandleResultFunctionAdditionalParameter_(NULL), pyGlobalNaturalDofsList_(NULL)

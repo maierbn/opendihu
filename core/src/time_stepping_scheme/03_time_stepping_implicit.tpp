@@ -119,7 +119,7 @@ initializeLinearSolver()
 //! output the given data for debugging
 template<typename DiscretizableInTimeType>
 std::string TimeSteppingImplicit<DiscretizableInTimeType>::
-getString(typename TimeSteppingSchemeOde<DiscretizableInTimeType>::OutputConnectorDataType &data)
+getString(typename TimeSteppingSchemeOde<DiscretizableInTimeType>::SlotConnectorDataType &data)
 {
   return dataImplicit_->getString(data);
 }*/

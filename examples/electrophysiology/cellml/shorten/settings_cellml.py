@@ -75,6 +75,7 @@ def handle_result(nInstances, timeStepNo, currentTime, states, algebraics, name_
     
 
 config = {
+  "scenarioName":                   "cellml",   
   "logFormat":                      "csv", # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "mappings_between_meshes.txt",   # log file for mappings between meshes
@@ -86,6 +87,7 @@ config = {
     "inputMeshIsGlobal":      True,   # for the mesh, not relevant here as we have no elements, only one node
     "checkForNanInf":         True,   # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
     "nAdditionalFieldVariables": 0,   # only revelant if there are multiple nested solvers and they transfer additional data
+    "additionalSlotNames": [],        # the slot names of the additional field variables
     "dirichletBoundaryConditions": {},    # we do not set dirichlet BC
     
     "OutputWriter" : [

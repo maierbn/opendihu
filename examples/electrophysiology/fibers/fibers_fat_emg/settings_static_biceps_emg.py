@@ -265,7 +265,7 @@ config = {
     "timeStepWidth":          variables.dt_3D,  # 1e-1
     "logTimeStepWidthAsKey":  "dt_3D",
     "durationLogKey":         "duration_total",
-    "timeStepOutputInterval": 1,
+    "timeStepOutputInterval": 10,
     "endTime":                variables.end_time,
     "connectedSlotsTerm1To2": [0],          # transfer Vm to StaticBidomainSolver
     "connectedSlotsTerm2To1": [None],       # transfer nothing back

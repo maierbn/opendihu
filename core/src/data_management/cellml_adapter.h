@@ -2,7 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 
-#include "data_management/output_connector_data.h"
+#include "slot_connection/slot_connector_data.h"
 #include "control/python_config/python_config.h"
 #include "data_management/data.h"
 
@@ -17,7 +17,7 @@ class CellmlAdapter : public Data<FunctionSpaceType>
 public:
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nAlgebraics> FieldVariableAlgebraics;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nStates> FieldVariableStates;
-  typedef OutputConnectorData<FunctionSpaceType,nStates,nAlgebraics> OutputConnectorDataType;
+  typedef SlotConnectorData<FunctionSpaceType,nStates,nAlgebraics> SlotConnectorDataType;
 
   //! constructor
   CellmlAdapter(DihuContext context);
@@ -42,7 +42,7 @@ public:
   void setStatesVariable(std::shared_ptr<FieldVariableStates> states);
 
   //! give the names of all algebraics, will be called before initialize()
-  void setAlgebraicAndParameterNames(const std::vector<std::string> &algebraicNames, const std::vector<std::string> &parameterNames);
+  void setAlgebraicAndParameterNames(const std::vector<std::string> &algebraicNames, const std::vector<std::string> &parameterNames, const std::vector<std::string> &slotNames);
 
   //! get the parameteValues_ pointer from the parameters field variable, then the field variable can no longer be used until restoreParameterValues() gets called
   void prepareParameterValues();
@@ -60,8 +60,8 @@ public:
   std::vector<int> &parametersForTransfer();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -79,8 +79,8 @@ private:
   //! initializes the vectors with size
   void createPetscObjects() override;
 
-  //! initialize the outputConnectorData_ object, this can only be done after the states variable has been set
-  void initializeOutputConnectorData();
+  //! initialize the slotConnectorData_ object, this can only be done after the states variable has been set
+  void initializeSlotConnectorData();
 
   std::shared_ptr<FieldVariableAlgebraics> algebraics_;   //< algebraics field variable
   std::shared_ptr<FieldVariableStates> states_;           //< states field variable, this is a shared pointer with the timestepping scheme, which own the actual variable (creates it)
@@ -88,14 +88,14 @@ private:
   double *parameterValues_;                               //< a pointer to the data of the parameters_ Petsc Vec of the field variable
   std::vector<std::string> algebraicNames_;               //< component names of the algebraics field variable
   std::vector<std::string> parameterNames_;               //< component names of the parameter field variable
+  std::vector<std::string> slotNames_;                    //< names of the data slots that are used for slot connectors
 
-  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;//< the object that holds all components of field variables that will be transferred to other solvers
+  std::shared_ptr<SlotConnectorDataType> slotConnectorData_;//< the object that holds all components of field variables that will be transferred to other solvers
   PythonConfig specificSettings_;                               //< the settings object
 
-  std::vector<int> statesForTransfer_;                    //< state no.s to transfer to other solvers within output connector data
-  std::vector<int> algebraicsForTransfer_;                //< algebraic no.s to transfer to other solvers within output connector data
-  std::vector<int> parametersForTransfer_;                //< parameter no.s to transfer to other solvers within output connector data
-
+  std::vector<int> statesForTransfer_;                    //< state no.s to transfer to other solvers within slot connector data
+  std::vector<int> algebraicsForTransfer_;                //< algebraic no.s to transfer to other solvers within slot connector data
+  std::vector<int> parametersForTransfer_;                //< parameter no.s to transfer to other solvers within slot connector data
 };
 
 } // namespace Data

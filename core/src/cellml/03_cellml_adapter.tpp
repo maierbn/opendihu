@@ -146,14 +146,17 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecGetSize(output, &nRates); CHKERRV(ierr);
   ierr = VecGetLocalSize(this->data_.algebraics()->getValuesContiguous(), &nAlgebraics); CHKERRV(ierr);
 
-  LOG(DEBUG) << "Cellml evaluateTimesteppingRightHandSideExplicit, " << this->sourceToCompileFilename_ << ", statesForTransfer: " << this->data_.statesForTransfer();
   nAlgebraics = nAlgebraics/this->nInstances_;
-  VLOG(1) << "algebraics array has " << nAlgebraics << " entries";
+
+  if (VLOG_IS_ON(1))
+  {
+    VLOG(1) << "Cellml evaluateTimesteppingRightHandSideExplicit, " << this->sourceToCompileFilename_ << ", statesForTransfer: " << this->data_.statesForTransfer();
+    VLOG(1) << "algebraics array has " << nAlgebraics << " entries";
+    VLOG(1) << "evaluateTimesteppingRightHandSideExplicit, input nStates_: " << nStatesInput << ", output nRates: " << nRates;
+    VLOG(1) << "timeStepNo: " << timeStepNo << ", currentTime: " << currentTime << ", internalTimeStepNo: " << this->internalTimeStepNo_;
+  }
 
   // check validity of sizes
-  VLOG(1) << "evaluateTimesteppingRightHandSideExplicit, input nStates_: " << nStatesInput << ", output nRates: " << nRates;
-  VLOG(1) << "timeStepNo: " << timeStepNo << ", currentTime: " << currentTime << ", internalTimeStepNo: " << this->internalTimeStepNo_;
-
   if (nStatesInput != nStates_*this->nInstances_)
   {
     LOG(ERROR) << "nStatesInput does not match nStates and nInstances! nStatesInput=" << nStatesInput << ", nStates_=" << nStates_ << ", nInstances=" << this->nInstances_;
@@ -211,7 +214,6 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
 
   this->data_.restoreParameterValues();
 
-  LOG(DEBUG) << "Cellml end of evaluateTimesteppingRightHandSideExplicit, " << this->sourceToCompileFilename_ << ", statesForTransfer: " << this->data_.statesForTransfer();
   // call output writer to write output files
   this->outputWriterManager_.writeOutput(this->data_, this->internalTimeStepNo_, currentTime);
 
@@ -325,11 +327,11 @@ checkCallbackAlgebraics(double currentTime, double *statesLocal, double *algebra
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
-prepareForGetOutputConnectorData()
+prepareForGetSlotConnectorData()
 {
-  // This method is called before getOutputConnectorData() of the timestepping scheme.
+  // This method is called before getSlotConnectorData() of the timestepping scheme.
 
-  // make representation of algebraics global, such that field variables in outputConnectorData that share the Petsc Vec's with
+  // make representation of algebraics global, such that field variables in slotConnectorData that share the Petsc Vec's with
   // algebraics have the correct data assigned
   LOG(DEBUG) << "Transform algebraics and parameters field variables to global representation in order to transfer them to other solver, such that extracted component-field variables in timestepping scheme have the correct values.";
 
@@ -358,11 +360,10 @@ functionSpace()
 }
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
-template<typename FunctionSpaceType2>
 bool CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
-setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates_>> initialValues)
+setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,nStates_>> initialValues)
 {
-  return CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::template setInitialValues<FunctionSpaceType2>(initialValues);
+  return CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::setInitialValues(initialValues);
 }
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>

@@ -1,5 +1,4 @@
 import sys, os
-from distutils import sysconfig
 from .Package import Package
 
 check_text = r'''

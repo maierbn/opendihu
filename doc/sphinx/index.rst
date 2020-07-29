@@ -17,7 +17,7 @@ If you are new, start with the :ref:`introduction <introduction>` or continue cl
    :caption: User documentation
    
    introduction
-   examples
+   user/existing_examples
    settings
 
 .. toctree::

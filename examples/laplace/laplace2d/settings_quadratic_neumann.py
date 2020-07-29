@@ -22,8 +22,10 @@ if False:
       ]
       
 config = {
-  "logFormat":                      "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "logFormat":                      "csv",                      # "csv" or "json", format of the lines in the log file, csv gives smaller files
+  "scenarioName":                   "laplace",                  # scenario name to find the run in the log file
+  "mappingsBetweenMeshesLogFile":   "",                         # a log file about mappings between meshes, here we do not want that because there are no mappings
   "FiniteElementMethod" : {
     "nElements": [nx, ny],
     "inputMeshIsGlobal": True,
@@ -46,10 +48,11 @@ config = {
     "maxIterations": 10000,
     "dumpFormat": "default",
     "dumpFilename": "",
+    "slotName": "",
     
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":False},
-      {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":False, "fileNumbering": "incremental"},
+      {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "incremental"},
     ]
   }
 }

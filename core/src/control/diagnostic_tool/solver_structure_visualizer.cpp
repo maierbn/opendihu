@@ -1,7 +1,7 @@
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
-#include "data_management/output_connector_data.h"
-#include "output_connector_data_transfer/output_connection.h"
+#include "slot_connection/slot_connector_data.h"
+#include "slot_connection/slots_connection.h"
 
 //! constructor
 SolverStructureVisualizer::SolverStructureVisualizer()
@@ -97,34 +97,34 @@ void SolverStructureVisualizer::endChild()
 }
 
 //! add the output connection information between two children to the current solver
-void SolverStructureVisualizer::addOutputConnection(std::shared_ptr<OutputConnection> outputConnection)
+void SolverStructureVisualizer::addSlotsConnection(std::shared_ptr<SlotsConnection> slotsConnection)
 {
   if (currentSolver_)
-    LOG(DEBUG) << "SolverStructureVisualizer::addOutputConnection() nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_ << ", currently at \"" << currentSolver_->name << "\".";
+    LOG(DEBUG) << "SolverStructureVisualizer::addSlotsConnection() nDisableCalls_: " << nDisableCalls_ << ", enabled: " << enabled_ << ", currently at \"" << currentSolver_->name << "\".";
 
   if (!enabled_)
     return;
 
-  currentSolver_->outputConnection = outputConnection;
+  currentSolver_->slotsConnection = slotsConnection;
 }
 
-void SolverStructureVisualizer::parseOutputConnection(std::shared_ptr<solver_t> currentSolver)
+void SolverStructureVisualizer::parseSlotsConnection(std::shared_ptr<solver_t> currentSolver)
 {
-  VLOG(1) << "parseOutputConnection";
+  VLOG(1) << "parseSlotsConnection";
 
-  if (!currentSolver->outputConnection)
+  if (!currentSolver->slotsConnection)
   {
     VLOG(1) << "output connection not set";
     return;
   }
 
-  LOG(DEBUG) << "currentSolver->outputConnection: " << currentSolver->outputConnection;
+  LOG(DEBUG) << "currentSolver->slotsConnection: " << currentSolver->slotsConnection;
 
-  currentSolver->outputConnections.clear();
+  currentSolver->slotsConnections.clear();
 
-  // get output connector data from outputConnection
-  const std::vector<OutputConnection::Connector> &connectorTerm1To2 = currentSolver->outputConnection->connectorForVisualizerTerm1To2();
-  const std::vector<OutputConnection::Connector> &connectorTerm2To1 = currentSolver->outputConnection->connectorForVisualizerTerm2To1();
+  // get slot connector data from slotsConnection
+  const std::vector<SlotsConnection::Connector> &connectorTerm1To2 = currentSolver->slotsConnection->connectorForVisualizerTerm1To2();
+  const std::vector<SlotsConnection::Connector> &connectorTerm2To1 = currentSolver->slotsConnection->connectorForVisualizerTerm2To1();
 
   // loop over connectors from term1 to term2
   for (int i = 0; i < connectorTerm1To2.size(); i++)
@@ -134,30 +134,30 @@ void SolverStructureVisualizer::parseOutputConnection(std::shared_ptr<solver_t> 
     // if connector is not open
     if (connectorTerm1To2[i].index != -1)
     {
-      solver_t::OutputConnectionRepresentation outputConnection;
-      outputConnection.type = solver_t::OutputConnectionRepresentation::ab;
-      outputConnection.fromSlot = i;
-      outputConnection.toSlot = connectorTerm1To2[i].index;
+      solver_t::SlotsConnectionRepresentation slotsConnection;
+      slotsConnection.type = solver_t::SlotsConnectionRepresentation::ab;
+      slotsConnection.fromSlot = i;
+      slotsConnection.toSlot = connectorTerm1To2[i].index;
 
       // if there exists a connection back between the same slots
-      if (connectorTerm2To1.size() > outputConnection.toSlot)
+      if (connectorTerm2To1.size() > slotsConnection.toSlot)
       {
-        if (connectorTerm2To1[outputConnection.toSlot].index == i)
+        if (connectorTerm2To1[slotsConnection.toSlot].index == i)
         {
           // if the connection type is to avoid copies in both directions
-          if (connectorTerm1To2[i].avoidCopyIfPossible && connectorTerm2To1[outputConnection.toSlot].avoidCopyIfPossible)
+          if (connectorTerm1To2[i].avoidCopyIfPossible && connectorTerm2To1[slotsConnection.toSlot].avoidCopyIfPossible)
           {
-            outputConnection.type = solver_t::OutputConnectionRepresentation::bidirectionalReuse;
+            slotsConnection.type = solver_t::SlotsConnectionRepresentation::bidirectionalReuse;
           }
           else
           {
-            outputConnection.type = solver_t::OutputConnectionRepresentation::bidirectionalCopy;
+            slotsConnection.type = solver_t::SlotsConnectionRepresentation::bidirectionalCopy;
           }
         }
       }
 
       // add parsed output connection
-      currentSolver->outputConnections.push_back(outputConnection);
+      currentSolver->slotsConnections.push_back(slotsConnection);
     }
   }
 
@@ -169,33 +169,33 @@ void SolverStructureVisualizer::parseOutputConnection(std::shared_ptr<solver_t> 
     // if connector is not open
     if (connectorTerm2To1[i].index != -1)
     {
-      solver_t::OutputConnectionRepresentation outputConnection;
-      outputConnection.type = solver_t::OutputConnectionRepresentation::ba;
-      outputConnection.fromSlot = i;
-      outputConnection.toSlot = connectorTerm2To1[i].index;
+      solver_t::SlotsConnectionRepresentation slotsConnection;
+      slotsConnection.type = solver_t::SlotsConnectionRepresentation::ba;
+      slotsConnection.fromSlot = i;
+      slotsConnection.toSlot = connectorTerm2To1[i].index;
 
       // if there exists a connection back between the same slots
-      if (connectorTerm1To2.size() > outputConnection.toSlot)
+      if (connectorTerm1To2.size() > slotsConnection.toSlot)
       {
-        if (connectorTerm1To2[outputConnection.toSlot].index == i)
+        if (connectorTerm1To2[slotsConnection.toSlot].index == i)
         {
           // if the connection type is to avoid copies in both directions
-          if (connectorTerm2To1[i].avoidCopyIfPossible && connectorTerm1To2[outputConnection.toSlot].avoidCopyIfPossible)
+          if (connectorTerm2To1[i].avoidCopyIfPossible && connectorTerm1To2[slotsConnection.toSlot].avoidCopyIfPossible)
           {
-            outputConnection.type = solver_t::OutputConnectionRepresentation::bidirectionalReuse;
+            slotsConnection.type = solver_t::SlotsConnectionRepresentation::bidirectionalReuse;
           }
           else
           {
-            outputConnection.type = solver_t::OutputConnectionRepresentation::bidirectionalCopy;
+            slotsConnection.type = solver_t::SlotsConnectionRepresentation::bidirectionalCopy;
           }
         }
       }
 
       // add parsed output connection
-      if (outputConnection.type != solver_t::OutputConnectionRepresentation::bidirectionalReuse
-          && outputConnection.type != solver_t::OutputConnectionRepresentation::bidirectionalCopy)
+      if (slotsConnection.type != solver_t::SlotsConnectionRepresentation::bidirectionalReuse
+          && slotsConnection.type != solver_t::SlotsConnectionRepresentation::bidirectionalCopy)
       {
-        currentSolver->outputConnections.push_back(outputConnection);
+        currentSolver->slotsConnections.push_back(slotsConnection);
       }
     }
   }
@@ -209,7 +209,7 @@ void SolverStructureVisualizer::addSlotMapping(int slotNoFrom, int slotNoTo)
 
   // check if this mapping does not yet exist
   bool mappingExists = false;
-  for (const solver_t::OutputConnectionRepresentation &mappingWithinSolver : currentSolver_->mappingsWithinSolver)
+  for (const solver_t::SlotsConnectionRepresentation &mappingWithinSolver : currentSolver_->mappingsWithinSolver)
   {
     if (mappingWithinSolver.fromSlot == slotNoFrom && mappingWithinSolver.toSlot == slotNoTo)
     {
@@ -221,7 +221,7 @@ void SolverStructureVisualizer::addSlotMapping(int slotNoFrom, int slotNoTo)
   if (mappingExists)
     return;
 
-  solver_t::OutputConnectionRepresentation mappingWithinSolver;
+  solver_t::SlotsConnectionRepresentation mappingWithinSolver;
   mappingWithinSolver.fromSlot = slotNoFrom;
   mappingWithinSolver.toSlot = slotNoTo;
   currentSolver_->mappingsWithinSolver.push_back(mappingWithinSolver);

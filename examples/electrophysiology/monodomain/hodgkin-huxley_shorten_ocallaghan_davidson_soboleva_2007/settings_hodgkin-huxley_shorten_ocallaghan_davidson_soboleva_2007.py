@@ -79,10 +79,10 @@ if "hodgkin-huxley_shorten_ocallaghan_davidson_soboleva_2007" in cellml_file:
   mappings = {
     ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
     ("parameter", 1):           "razumova/l_hs",            # parameter 1 is fiber stretch λ
-    ("outputConnectorSlot", 0): "membrane/V",               # expose Vm to the operator splitting
-    ("outputConnectorSlot", 1): "razumova/Ca_1",
-    ("outputConnectorSlot", 2): "razumova/activation",      # expose activation .
-    ("outputConnectorSlot", 3): "razumova/activestress",
+    ("connectorSlot", 0): "membrane/V",               # expose Vm to the operator splitting
+    ("connectorSlot", 1): "razumova/Ca_1",
+    ("connectorSlot", 2): "razumova/activation",      # expose activation .
+    ("connectorSlot", 3): "razumova/activestress",
    }
   parameters_initial_values = [0.0, 1.0]
   nodal_stimulation_current = 400.

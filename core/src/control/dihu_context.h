@@ -25,6 +25,7 @@ namespace MappingBetweenMeshes { class Manager; }
 namespace Solver { class Manager; }
 namespace Partition { class RankSubset; }
 class SolverStructureVisualizer;
+class GlobalConnectionsBySlotName;
 
 /** This class contains global variables (mesh manager and solver manager) and a python config dictionary
  *  which can be a sub-dict of the global config. Different objects of this class are used for the methods
@@ -77,6 +78,9 @@ public:
 
   //! return the object that collects information about all nested solvers and produces a diagram, also with data connections
   static std::shared_ptr<SolverStructureVisualizer> solverStructureVisualizer();
+
+  //! return the object that collects the connector slots connections given under setting "connectedSlots"
+  static std::shared_ptr<GlobalConnectionsBySlotName> globalConnectionsBySlotName();
 
   //! writes out the diagram file using the solverStructureVisualizer
   static void writeSolverStructureDiagram();
@@ -149,6 +153,7 @@ private:
   static std::shared_ptr<MappingBetweenMeshes::Manager>   mappingBetweenMeshesManager_;   //< object that store all mappings between meshes
   static std::shared_ptr<Solver::Manager>                 solverManager_;                 //< object that saves all solver configurations that are used
   static std::shared_ptr<Partition::Manager>              partitionManager_;              //< partition manager object that creates and manages partitionings
+  static std::shared_ptr<GlobalConnectionsBySlotName>     globalConnectionsBySlotName_;   //< object that collects the connector slots connections given under setting "connectedSlots"
 
   static int nRanksCommWorld_;                        //< number of ranks in MPI_COMM_WORLD
   static int ownRankNoCommWorld_;                     //< the own rank no in MPI_COMM_WORLD, using MPI_COMM_WORLD should be avoided in the program, instead use this global variable

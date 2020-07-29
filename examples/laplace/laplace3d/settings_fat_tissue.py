@@ -31,6 +31,8 @@ rank_no = (int)(sys.argv[-2])
 
 config = {
   "logFormat": "csv",
+  "mappingsBetweenMeshesLogFile": "",
+  "scenarioName": "",
   "Meshes": {
     "3DFatMesh": mesh
     
@@ -63,9 +65,12 @@ config = {
     "outputInterval": 1.0,
     "prefactor": 0.5,
     "dirichletBoundaryConditions": bc,
+    "neumannBoundaryConditions": [],
+    "inputMeshIsGlobal": True,
+    "slotName": "",
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/fat", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-      #{"format": "PythonFile", "filename": "out/laplace", "outputInterval": 1, "binary":False, "onlyNodalValues":True}
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/fat", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+      #{"format": "PythonFile", "filename": "out/laplace", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "incremental"}
     ]
   },
 }

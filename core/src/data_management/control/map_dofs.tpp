@@ -35,17 +35,20 @@ initialize(int nAdditionalFieldVariables, NestedSolverType &nestedSolver)
   // store the nested solver
   nestedSolver_ = std::make_shared<NestedSolverType>(nestedSolver);
 
-  // initialize output connector data
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+  // initialize slot connector data
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
 
-  std::get<0>(*outputConnectorData_) = nestedSolver_->getOutputConnectorData();
-  std::get<1>(*outputConnectorData_) = std::make_shared<OutputConnectorData<FunctionSpaceType,1>>();
+  std::get<0>(*slotConnectorData_) = nestedSolver_->getSlotConnectorData();
+  std::get<1>(*slotConnectorData_) = std::make_shared<SlotConnectorData<FunctionSpaceType,1>>();
 
   // add all additional field variables
   for (int additionalFieldVariableNo = 0; additionalFieldVariableNo < nAdditionalFieldVariables_; additionalFieldVariableNo++)
   {
-    std::get<1>(*outputConnectorData_)->addFieldVariable(additionalFieldVariables_[additionalFieldVariableNo]);
+    std::get<1>(*slotConnectorData_)->addFieldVariable(additionalFieldVariables_[additionalFieldVariableNo]);
   }
+
+  // parse slot names of the additional field variables
+  this->context_.getPythonConfig().getOptionVector("additionalSlotNames", std::get<1>(*slotConnectorData_)->slotNames);
 }
 
 template<typename FunctionSpaceType, typename NestedSolverType>
@@ -70,15 +73,15 @@ std::vector<std::shared_ptr<typename MapDofs<FunctionSpaceType, NestedSolverType
 }
 
 //! Get the data that will be transferred in the operator splitting or coupling to the other term of the splitting/coupling.
-//! the transfer is done by the output_connector_data_transfer class
+//! the transfer is done by the slot_connector_data_transfer class
 template<typename FunctionSpaceType, typename NestedSolverType>
-std::shared_ptr<typename MapDofs<FunctionSpaceType, NestedSolverType>::OutputConnectorDataType> MapDofs<FunctionSpaceType, NestedSolverType>::
-getOutputConnectorData()
+std::shared_ptr<typename MapDofs<FunctionSpaceType, NestedSolverType>::SlotConnectorDataType> MapDofs<FunctionSpaceType, NestedSolverType>::
+getSlotConnectorData()
 {
-  // call getOutputConnectorData of the nested solver such that it can prepare the output connector slots
-  nestedSolver_->getOutputConnectorData();
+  // call getSlotConnectorData of the nested solver such that it can prepare the connector slots
+  nestedSolver_->getSlotConnectorData();
 
-  return outputConnectorData_;
+  return slotConnectorData_;
 }
 
 

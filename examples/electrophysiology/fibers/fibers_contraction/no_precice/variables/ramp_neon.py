@@ -1,6 +1,6 @@
 
 # scenario name for log file
-scenario_name = "ramp"
+scenario_name = "ramp_neon"
 
 # Fixed units in cellMl models:
 # These define the unit system.
@@ -104,12 +104,12 @@ motor_units = [
 end_time = 4000.0                      # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
-dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
-dt_1D = 1e-3                        # [ms] timestep width of diffusion (1e-3)
-dt_splitting = 1e-3                 # [ms] overall timestep width of strang splitting (1e-3)
-dt_3D = 1e0                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep_fibers = 4e0       # [ms] timestep for fiber output, 0.5
-output_timestep_3D = 4e0              # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
+dt_0D = 1e-4                        # [ms] timestep width of ODEs (1e-3)
+dt_1D = 1e-4                        # [ms] timestep width of diffusion (1e-3)
+dt_splitting = 1e-4                 # [ms] overall timestep width of strang splitting (1e-3)
+dt_3D = 1                           # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
+output_timestep_fibers = 1          # [ms] timestep for fiber output, 0.5
+output_timestep_3D = 1              # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
 
 
 # input files
@@ -124,7 +124,7 @@ cellml_file             = "../../../../input/new_slow_TK_2014_12_08.c"
 # a higher number leads to less 3D elements
 sampling_stride_x = 2
 sampling_stride_y = 2
-sampling_stride_z = 74
+sampling_stride_z = 37      # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40
 
 # other options
 paraview_output = True
@@ -132,11 +132,13 @@ adios_output = False
 exfile_output = False
 python_output = False
 disable_firing_output = False
+fast_monodomain_solver_optimizations = True   # enable the optimizations in the fast multidomain solver
+use_analytic_jacobian = True        # If the analytic jacobian should be used for the mechanics problem.
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):
   # get radius in cm, 1 μm = 1e-6 m = 1e-4*1e-2 m = 1e-4 cm
-  r = motor_units[mu_no]["radius"]*1e-4
+  r = motor_units[mu_no % len(motor_units)]["radius"]*1e-4
   # cylinder surface: A = 2*π*r*l, V = cylinder volume: π*r^2*l, Am = A/V = 2*π*r*l / (π*r^2*l) = 2/r
   return 2./r
   #return Am
@@ -156,4 +158,5 @@ def get_specific_states_frequency_jitter(fiber_no, mu_no):
   return motor_units[mu_no % len(motor_units)]["jitter"]
 
 def get_specific_states_call_enable_begin(fiber_no, mu_no):
-  return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3
+  return 0
+  #return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3

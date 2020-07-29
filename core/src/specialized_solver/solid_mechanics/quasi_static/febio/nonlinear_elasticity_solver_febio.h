@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 
 #include "data_management/specialized_solver/quasi_static_nonlinear_elasticity_febio.h"
-#include "data_management/output_connector_data.h"
+#include "slot_connection/slot_connector_data.h"
 #include "output_writer/manager.h"
 
 namespace TimeSteppingScheme
@@ -24,7 +24,7 @@ public:
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> FunctionSpace;
   typedef ::Data::QuasiStaticNonlinearElasticityFebio Data;
   typedef FieldVariable::FieldVariable<FunctionSpace,1> FieldVariableType;
-  typedef Data::OutputConnectorDataType OutputConnectorDataType;
+  typedef Data::SlotConnectorDataType SlotConnectorDataType;
 
   //! constructor
   NonlinearElasticitySolverFebio(DihuContext context, std::string solverName="NonlinearElasticitySolverFebio");
@@ -48,11 +48,11 @@ public:
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! output the given data for debugging
-  std::string getString(std::shared_ptr<OutputConnectorDataType> data);
+  std::string getString(std::shared_ptr<SlotConnectorDataType> data);
 
   //! determine if febio2 was installed and is available on the command line
   bool isFebioAvailable();

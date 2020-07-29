@@ -22,7 +22,7 @@ public TimeSteppingScheme
 public:
   typedef FunctionSpaceType FunctionSpace;
   typedef typename Data::TimeStepping<FunctionSpaceType, nComponents> Data;   // type of Data object
-  typedef typename Data::OutputConnectorDataType OutputConnectorDataType;
+  typedef typename Data::SlotConnectorDataType SlotConnectorDataType;
 
   //! constructor
   TimeSteppingSchemeOdeBase(DihuContext context, std::string name);
@@ -37,12 +37,12 @@ public:
   Data &data();
 
   //! output the given data for debugging
-  //virtual std::string getString(std::shared_ptr<OutputConnectorDataType> data);
+  //virtual std::string getString(std::shared_ptr<SlotConnectorDataType> data);
 
   //! Get the data that will be transferred in the operator splitting to the other term of the splitting.
-  //! The transfer is done by the output_connector_data_transfer class.
+  //! The transfer is done by the slot_connector_data_transfer class.
   //! The data is passed on from the DiscretizableInTime object.
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! initialize discretizableInTime
   virtual void initialize();
@@ -61,8 +61,8 @@ protected:
   //! check if the current solution contains nan or inf values, if so, output an error
   void checkForNanInf(int timeStepNo, double currentTime);
 
-  //! prepare the discretizableInTime object for the following call to getOutputConnectorData()
-  virtual void prepareForGetOutputConnectorData() = 0;
+  //! prepare the discretizableInTime object for the following call to getSlotConnectorData()
+  virtual void prepareForGetSlotConnectorData() = 0;
 
   std::shared_ptr<Data> data_;     //< data object that holds all PETSc vectors and matrices
 

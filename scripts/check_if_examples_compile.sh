@@ -54,7 +54,7 @@ check_example(){
 }
 
 # number of parallel jobs to build examples
-N=$(expr `nproc` / 2)
+N=$(expr `nproc --all` / 2)
 i=0
 i_end=$(python -c "print($N-1)")    # i_end = N-1
 

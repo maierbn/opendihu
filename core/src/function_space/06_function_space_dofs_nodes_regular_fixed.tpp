@@ -77,7 +77,7 @@ computeMeshWidth()
         LOG(ERROR) << "You misspelled \"physicalExtent\" as \"physicalExtend\"!";
       }
       
-      physicalExtent_ = this->specificSettings_.template getOptionArray<double, D>("physicalExtent", 1.0, PythonUtility::Positive);
+      physicalExtent_ = this->specificSettings_.template getOptionArray<double, D>("physicalExtent", 1.0, PythonUtility::NonNegative);
     }
     else
     {

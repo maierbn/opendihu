@@ -137,7 +137,7 @@ public:
   //! get the global node coordinates (x,y,z) of the node given by its local node no. This also works for ghost nodes.
   std::array<global_no_t,MeshType::dim()> getCoordinatesGlobal(node_no_t nodeNoLocal) const;
 
-  //! get the local coordinates for a local node no, also for ghost nodes. With this method and functionSpace->getNodeNo(coordinatesLocal) it is possible to implement a global-to-local mapping.
+  //! get the local coordinates for a local node no, also for ghost nodes.
   std::array<int,MeshType::dim()> getCoordinatesLocal(node_no_t nodeNoLocal) const;
 
   //! from global natural coordinates compute the local coordinates, set isOnLocalDomain to true if the node with global coordinates is in the local domain
@@ -145,6 +145,9 @@ public:
 
   //! get the local coordinates for a local element no
   std::array<int,MeshType::dim()> getElementCoordinatesLocal(element_no_t elementNoLocal) const;
+
+  //! get the global coordinates from the node no in global natural ordering
+  std::array<global_no_t,MeshType::dim()> getCoordinatesGlobalOfNodeNoGlobalNatural(global_no_t nodeNoGlobalNatural) const;
 
   //! get the local element no. from coordinates
   element_no_t getElementNoLocal(std::array<int,MeshType::dim()> elementCoordinates) const;
@@ -157,6 +160,18 @@ public:
 
   //! get the local dof no for a global petsc dof no, does not work for ghost nodes
   dof_no_t getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const;
+
+  //! get the local node no for its global coordinates
+  node_no_t getNodeNoLocal(std::array<global_no_t,MeshType::dim()> coordinatesGlobal, bool &isOnLocalDomain) const;
+
+  //! get the local node no for its local coordinates, also works for ghost nodes
+  node_no_t getNodeNoLocal(std::array<int,MeshType::dim()> coordinatesLocal) const;
+
+  //! get the local dof no for the global coordinates of the node
+  dof_no_t getDofNoLocal(std::array<global_no_t,MeshType::dim()> coordinatesGlobal, int nodalDofIndex, bool &isOnLocalDomain) const;
+
+  //! transform the global natural numbering to the local numbering
+  node_no_t getNodeNoLocalFromGlobalNatural(global_no_t nodeNoGlobalNatural, bool &isOnLocalDomain) const;
 
   //! from a vector of values of global/natural node numbers remove all that are non-local, nComponents consecutive values for each dof are assumed
   template <typename T>
@@ -186,16 +201,18 @@ public:
 
   //! get the global dof nos of the ghost dofs in the local partition
   const std::vector<PetscInt> &ghostDofNosGlobalPetsc() const;
-  
-  //! Initialize the vector dofNosLocalNaturalOrdering_, this needs the functionSpace and has to be called before dofNosLocalNaturalOrdering() can be used.
-  //! If the vector is already initialized by a previous call to this method, it has no effect.
-  void initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>> functionSpace);
 
-  //! Get a vector of local dof nos in local natural ordering, initializeDofNosLocalNaturalOrdering has to be called beforehand.
+  //! Get a vector of local dof nos in local natural ordering
   const std::vector<dof_no_t> &dofNosLocalNaturalOrdering() const;
 
-  //! check if the given dof is owned by the own rank, then return true, if not, neighbourRankNo is set to the rank by which the dof is owned
+  //! check if the given node is owned by the own rank, then return true, if not, neighbourRankNo is set to the rank by which the node is owned
   bool isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const;
+
+  //! get the rank on which the global natural node is located
+  int getRankOfNodeNoGlobalNatural(global_no_t nodeNoGlobalNatural) const;
+
+  //! get the rank on which the global natural node is located
+  int getRankOfDofNoGlobalNatural(global_no_t dofNoGlobalNatural) const;
 
   //! get information about neighbouring rank and boundary elements for specified face,
   //! @param neighbourRankNo: the rank of the neighbouring process that shares the face, @param nElements: Size of one-layer mesh that contains boundary elements that touch the neighbouring process
@@ -220,6 +237,10 @@ protected:
 
   //! initialize for a mesh with 0 elements and 0 nodes and dofs, this occurs when the mpi communicator is MPI_COMM_NULL
   void initializeDegenerateMesh();
+
+  //! Initialize the vector dofNosLocalNaturalOrdering_.
+  //! If the vector is already initialized by a previous call to this method, it has no effect.
+  void initializeDofNosLocalNaturalOrdering();
 
   //! initialize the value of nDofsLocalWithoutGhosts
   void setNDofsLocalWithoutGhosts();

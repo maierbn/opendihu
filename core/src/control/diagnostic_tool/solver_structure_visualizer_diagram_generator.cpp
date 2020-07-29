@@ -1,11 +1,12 @@
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
-#include "data_management/output_connector_data.h"
-#include "output_connector_data_transfer/output_connection.h"
+#include "slot_connection/slot_connector_data.h"
+#include "slot_connection/slots_connection.h"
+#include "slot_connection/global_connections_by_slot_name.h"
 #include "output_writer/generic.h"
 #include "utility/string_utility.h"
 
-const int VARIABLES_LINE_LENGTH = 45;  // number of characters for the solver structure and variables, afterwards there will be connection lines 
+const int VARIABLES_LINE_LENGTH = 48;  // number of characters for the solver structure and variables, afterwards there will be connection lines
 
 //! iterate over all nested solvers
 void SolverStructureVisualizer::DiagramGenerator::
@@ -16,7 +17,7 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
     return;
 
   // prepare the output connections
-  SolverStructureVisualizer::parseOutputConnection(currentSolver_);
+  SolverStructureVisualizer::parseSlotsConnection(currentSolver_);
 
   slotLineNos.clear();
 
@@ -25,7 +26,7 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
     lineStart << "│ ";
 
   result << lineStart.str();
-  if (isLastChildSolver && currentSolver_->outputSlots.empty() && currentSolver_->outputConnections.empty())
+  if (isLastChildSolver && currentSolver_->outputSlots.empty() && currentSolver_->slotsConnections.empty())
     result << "└";
   else
     result << "├";
@@ -40,20 +41,38 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
   // print the output slots of the solver, store the line nos of each slot to slotLineNos
   if (!currentSolver_->outputSlots.empty())
   {
-    result << lineStart.str() << "│  output slots: \n";
+    result << lineStart.str() << "│  data slots: \n";
 
-    // loop over the output connector slots of the current solver
+    // loop over the connector slots of the current solver
     for (int i = 0; i < currentSolver_->outputSlots.size(); i++)
     {
       // print field variable and component name of the output slot
-      std::stringstream s;
       std::string fieldVariableName = currentSolver_->outputSlots[i].fieldVariableName;
       std::string componentName = currentSolver_->outputSlots[i].componentName;
+      std::string meshDescription = currentSolver_->outputSlots[i].meshDescription;
+      std::string slotName = currentSolver_->outputSlots[i].slotName;
+
+      std::stringstream s;
+      s << lineStart.str() << "│  ";
+
+      int meshReferenceNo = 0;
+
+      // if mesh has already been references and thus is present in referencedMeshNames_
+      if (std::find(referencedMeshNames_.begin(), referencedMeshNames_.end(), meshDescription) != referencedMeshNames_.end())
+      {
+        meshReferenceNo = std::find(referencedMeshNames_.begin(), referencedMeshNames_.end(), meshDescription) - referencedMeshNames_.begin();
+      }
+      else
+      {
+        referencedMeshNames_.push_back(meshDescription);
+        meshReferenceNo = referencedMeshNames_.size() - 1;
+      }
+      s << "[" << std::string(1,char('a'+meshReferenceNo)) << "] ";
 
       // only add component name if it is different from the variable name
       if (fieldVariableName != componentName)
       {
-        s << lineStart.str() << "│  " << fieldVariableName;
+        s << fieldVariableName;
 
         // only add component name if there are multiple components or, or the component is not not named "0" which is the standard
         if (currentSolver_->outputSlots[i].nComponents > 1 || componentName != "0")
@@ -61,19 +80,73 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
       }
       else
       {
-        s << lineStart.str() << "│  " << fieldVariableName;
+        s << fieldVariableName;
       }
 
       // add note about variableNo
-      if (currentSolver_->outputSlots[i].variableNo != 1)
-        s << " (in variable" << currentSolver_->outputSlots[i].variableNo << ")";
+      /*if (currentSolver_->outputSlots[i].variableNo != 1)
+        s << " (in variable" << currentSolver_->outputSlots[i].variableNo << ")";*/
 
       std::string outputSlotString = s.str();
 
-      int currentLineLength = StringUtility::stringLength(outputSlotString)+2;
-      const int requiredLineLength = VARIABLES_LINE_LENGTH;
+      std::string mappingString;
+      if (!currentSolver_->mappingsWithinSolver.empty())
+      {
+        for (const solver_t::SlotsConnectionRepresentation &mapping : currentSolver_->mappingsWithinSolver)
+        {
+          int fromSlotNo = mapping.fromSlot;
+          int toSlotNo = mapping.toSlot;
 
-      // shorten string if neccessary
+          // connection top to bottom
+          if (fromSlotNo < toSlotNo)
+          {
+            if (i == fromSlotNo)
+            {
+              mappingString += "┌ ";
+            }
+            else if (i == toSlotNo)
+            {
+              mappingString += "└»";
+            }
+            else if (fromSlotNo < i && i < toSlotNo)
+            {
+              mappingString += "│ ";
+            }
+            else
+            {
+              mappingString += "  ";
+            }
+          }
+          else
+          {
+            // connection bottom to top
+            if (i == toSlotNo)
+            {
+              mappingString += "┌»";
+            }
+            else if (i == fromSlotNo)
+            {
+              mappingString += "└ ";
+            }
+            else if (toSlotNo < i && i < fromSlotNo)
+            {
+              mappingString += "│ ";
+            }
+            else
+            {
+              mappingString += "  ";
+            }
+          }
+
+        }
+      }
+      int mappingStringLength = StringUtility::stringLength(mappingString);
+
+      // shorten
+      int currentLineLength = StringUtility::stringLength(outputSlotString)+2;
+      const int requiredLineLength = VARIABLES_LINE_LENGTH - mappingStringLength;
+
+      // shorten string if neccessary, add to stringstream s
       if (currentLineLength >= requiredLineLength)
       {
         outputSlotString = outputSlotString.substr(0, outputSlotString.length() - (currentLineLength - requiredLineLength));
@@ -82,8 +155,21 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
         s << outputSlotString;
       }
 
-      s << std::string(requiredLineLength - currentLineLength, ' ')
-        << "── ¤" << i << "\n";
+      // make the length of the slot name equal to 6 characters
+      int slotNameInitialLength = StringUtility::stringLength(slotName);
+      if (slotNameInitialLength > 6)
+      {
+        slotName = slotName.substr(0, 6);
+      }
+      else if (slotNameInitialLength < 6)
+      {
+        slotName = std::string(6-slotNameInitialLength, ' ') + slotName;
+      }
+
+      s << std::string(requiredLineLength - currentLineLength, ' ')     // fill with spaces
+        << mappingString      // add mapping string, if any
+        << "" << slotName
+        << " ¤" << i << "\n";
       result << s.str();
 
       // store line no
@@ -92,44 +178,43 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
 
       //LOG(DEBUG) << "current Result [" << currentResult << "] contains " << currentLineNo << " line breaks";
       slotLineNos.push_back(currentLineNo);
+      meshDescriptionsOfSlots_[currentLineNo] = meshDescription;
     }
 
     result << lineStart.str() << "│\n";
   }
 
-  // maybe todo for later: show also internal connections of all slots to the first subsolver
-
   // print the output slot connections of the solver
-  std::vector<solver_t::OutputConnectionRepresentation> &outputConnections = currentSolver_->outputConnections;
-  if (!outputConnections.empty())
+  std::vector<solver_t::SlotsConnectionRepresentation> &slotsConnections = currentSolver_->slotsConnections;
+  if (!slotsConnections.empty())
   {
     result << lineStart.str() << "│  slot connections: \n";
-    for (int i = 0; i < outputConnections.size(); i++)
+    for (int i = 0; i < slotsConnections.size(); i++)
     {
-      if (outputConnections[i].type == solver_t::OutputConnectionRepresentation::output_connection_t::ba)
+      if (slotsConnections[i].type == solver_t::SlotsConnectionRepresentation::slot_connection_t::ba)
       {
-        result << lineStart.str() << "│  " <<  outputConnections[i].toSlot << "¤ <─ ¤" << outputConnections[i].fromSlot << "\n";
+        result << lineStart.str() << "│  " <<  slotsConnections[i].toSlot << "¤ <─ ¤" << slotsConnections[i].fromSlot << "\n";
       }
       else
       {
-        result << lineStart.str() << "│  " <<  outputConnections[i].fromSlot << "¤";
+        result << lineStart.str() << "│  " <<  slotsConnections[i].fromSlot << "¤";
 
-        switch (outputConnections[i].type)
+        switch (slotsConnections[i].type)
         {
-        case solver_t::OutputConnectionRepresentation::output_connection_t::ba:
-        case solver_t::OutputConnectionRepresentation::output_connection_t::ab:
+        case solver_t::SlotsConnectionRepresentation::slot_connection_t::ba:
+        case solver_t::SlotsConnectionRepresentation::slot_connection_t::ab:
           result << " ─> ";
           break;
-        case solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalReuse:
+        case solver_t::SlotsConnectionRepresentation::slot_connection_t::bidirectionalReuse:
           result << " <═> ";  // or use ⇔ ?
           break;
-        case solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalCopy:
+        case solver_t::SlotsConnectionRepresentation::slot_connection_t::bidirectionalCopy:
           result << " <─> ";
           break;
 
         };
 
-        result << "¤" << outputConnections[i].toSlot << "\n";
+        result << "¤" << slotsConnections[i].toSlot << "\n";
       }
     }
     result << lineStart.str() << "│\n";
@@ -164,7 +249,8 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
       result << lineStart.str() << "│\n";
 
     // internal connection lines of the the 2nd and further solvers are finished, the one of the first are passed on to the parent solver
-    if (isFirstChildSolver && ownSolver->hasInternalConnectionToFirstNestedSolver)
+    if ((isFirstChildSolver && ownSolver->hasInternalConnectionToFirstNestedSolver)
+        || (children.size() == 2 && isLastChildSolver && ownSolver->hasInternalConnectionToSecondNestedSolver))
     {
       VLOG(1) << std::string(depth*2, ' ') << "(" << ownSolver->name << ") first child solver gives " << internalConnectionLinesCurrentSolverTerm[i] << " own are: " << internalConnectionLinesCurrentSolver;
       internalConnectionLinesCurrentSolver.insert(internalConnectionLinesCurrentSolver.end(), internalConnectionLinesCurrentSolverTerm[i].begin(), internalConnectionLinesCurrentSolverTerm[i].end());
@@ -178,7 +264,7 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
     }
   }
 
-  // loop over the output connector slots of the current solver
+  // loop over the connector slots of the current solver
   for (int i = 0; i < ownSolver->outputSlots.size(); i++)
   {
     // add slot to internal connection lines
@@ -194,48 +280,54 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
   VLOG(1) << std::string(depth*2, ' ') << "internalConnectionLinesAll_:" << internalConnectionLinesAll_;
 
   // add connections between slots of nested solvers to externalConnectionLines
-  for (int i = 0; i < outputConnections.size(); i++)
+  for (int i = 0; i < slotsConnections.size(); i++)
   {
     if (slotLineNosTerm.size() >= 2)
     {
-      if ((outputConnections[i].type == solver_t::OutputConnectionRepresentation::output_connection_t::ab
-        || outputConnections[i].type == solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalCopy
-        || outputConnections[i].type == solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalReuse)
-        && slotLineNosTerm[0].size() > outputConnections[i].fromSlot
-        && slotLineNosTerm[1].size() > outputConnections[i].toSlot
+      if ((slotsConnections[i].type == solver_t::SlotsConnectionRepresentation::slot_connection_t::ab
+        || slotsConnections[i].type == solver_t::SlotsConnectionRepresentation::slot_connection_t::bidirectionalCopy
+        || slotsConnections[i].type == solver_t::SlotsConnectionRepresentation::slot_connection_t::bidirectionalReuse)
+        && slotLineNosTerm[0].size() > slotsConnections[i].fromSlot
+        && slotLineNosTerm[1].size() > slotsConnections[i].toSlot
       )
       {
-        int lineNoFrom = slotLineNosTerm[0][outputConnections[i].fromSlot];
-        int lineNoTo = slotLineNosTerm[1][outputConnections[i].toSlot];
-        solver_t::OutputConnectionRepresentation::output_connection_t connectionType = outputConnections[i].type;
+        ExternalConnectionLine newExternalConnectionLine;
+        newExternalConnectionLine.lineNoFrom = slotLineNosTerm[0][slotsConnections[i].fromSlot];
+        newExternalConnectionLine.lineNoTo   = slotLineNosTerm[1][slotsConnections[i].toSlot];
+        newExternalConnectionLine.lineColumn = 0;
+        newExternalConnectionLine.lineType = slotsConnections[i].type;
 
-        externalConnectionLines_.push_back(std::make_tuple(
-          lineNoFrom, lineNoTo, 0, connectionType
-        ));
+        // if the meshes of the connected slots are different, it is a mapping
+        newExternalConnectionLine.involvesMapping = meshDescriptionsOfSlots_[newExternalConnectionLine.lineNoFrom] != meshDescriptionsOfSlots_[newExternalConnectionLine.lineNoTo];
+
+        externalConnectionLines_.push_back(newExternalConnectionLine);
       }
-      else if (outputConnections[i].type == solver_t::OutputConnectionRepresentation::output_connection_t::ba
-        && slotLineNosTerm[1].size() > outputConnections[i].fromSlot
-        && slotLineNosTerm[0].size() > outputConnections[i].toSlot
+      else if (slotsConnections[i].type == solver_t::SlotsConnectionRepresentation::slot_connection_t::ba
+        && slotLineNosTerm[1].size() > slotsConnections[i].fromSlot
+        && slotLineNosTerm[0].size() > slotsConnections[i].toSlot
       )
       {
-        int lineNoFrom = slotLineNosTerm[0][outputConnections[i].toSlot];
-        int lineNoTo = slotLineNosTerm[1][outputConnections[i].fromSlot];
-        solver_t::OutputConnectionRepresentation::output_connection_t connectionType = outputConnections[i].type;
+        ExternalConnectionLine newExternalConnectionLine;
+        newExternalConnectionLine.lineNoFrom = slotLineNosTerm[0][slotsConnections[i].toSlot];
+        newExternalConnectionLine.lineNoTo   = slotLineNosTerm[1][slotsConnections[i].fromSlot];
+        newExternalConnectionLine.lineColumn = 0;
+        newExternalConnectionLine.lineType = slotsConnections[i].type;
 
-        externalConnectionLines_.push_back(std::make_tuple(
-          lineNoFrom, lineNoTo, 0, connectionType
-        ));
+        // if the meshes of the connected slots are different, it is a mapping
+        newExternalConnectionLine.involvesMapping = meshDescriptionsOfSlots_[newExternalConnectionLine.lineNoFrom] != meshDescriptionsOfSlots_[newExternalConnectionLine.lineNoTo];
+
+        externalConnectionLines_.push_back(newExternalConnectionLine);
       }
       else
       {
-        VLOG(1) << "slotLineNosTerm is not good. fromSlot: " << outputConnections[i].fromSlot
-          << ", toSlot: " << outputConnections[i].toSlot << ", slot line nos term0: " << slotLineNosTerm[0]
+        VLOG(1) << "slotLineNosTerm is not good. fromSlot: " << slotsConnections[i].fromSlot
+          << ", toSlot: " << slotsConnections[i].toSlot << ", slot line nos term0: " << slotLineNosTerm[0]
           << ", term1: " << slotLineNosTerm[1];
       }
     }
     else
     {
-      VLOG(1) << "slotLineNosTerm is too short: " << slotLineNosTerm.size() << ", but there are " << outputConnections.size() << " outputConnections.";
+      VLOG(1) << "slotLineNosTerm is too short: " << slotLineNosTerm.size() << ", but there are " << slotsConnections.size() << " slotsConnections.";
     }
   }
 
@@ -288,17 +380,17 @@ generateFinalDiagram()
   // loop over externalConnectionLines
   for (int i = 0; i < externalConnectionLines_.size(); i++)
   {
-    int startLineNo = std::get<0>(externalConnectionLines_[i]);
-    int endLineNo = std::get<1>(externalConnectionLines_[i]);
-    int lineColumn = 0;
+    int startLineNo = externalConnectionLines_[i].lineNoFrom;
+    int endLineNo   = externalConnectionLines_[i].lineNoTo;
+    int lineColumn  = 0;
 
     // count number of starting lines inside this line
     for (int j = 0; j < externalConnectionLines_.size(); j++)
     {
       if (i == j)
         continue;
-      int startLineNo2 = std::get<0>(externalConnectionLines_[j]);
-      int endLineNo2 = std::get<1>(externalConnectionLines_[j]);
+      int startLineNo2 = externalConnectionLines_[j].lineNoFrom;
+      int endLineNo2   = externalConnectionLines_[j].lineNoTo;
 
       if (startLineNo < startLineNo2 && startLineNo2 < endLineNo)
         lineColumn++;
@@ -307,7 +399,7 @@ generateFinalDiagram()
       else if (startLineNo < startLineNo2 && endLineNo2 == endLineNo)
         lineColumn++;
     }
-    std::get<2>(externalConnectionLines_[i]) = lineColumn;
+    externalConnectionLines_[i].lineColumn = lineColumn;
   }
 
   // erase and remove internal connections that consist of one slot only
@@ -319,7 +411,7 @@ generateFinalDiagram()
     internalConnectionLinesAll_.end()
   );
 
-  LOG(DEBUG) << "externalConnectionLines_: " << externalConnectionLines_;
+  //LOG(DEBUG) << "externalConnectionLines: " << externalConnectionLines_;
   LOG(DEBUG) << "internalConnectionLines: " << internalConnectionLinesAll_;
 
   // determine number of columns that are needed for internal connections
@@ -385,6 +477,8 @@ generateFinalDiagram()
   LOG(DEBUG) << "nColumnsForInternalConnectionLines: " << nColumnsForInternalConnectionLines;
 
   std::size_t pos = 0;
+  diagram += DihuContext::globalConnectionsBySlotName()->getDescriptionForDiagram();
+
   diagram += "Solver structure: \n\n";
 
   // print actual diagram, into std::string diagram
@@ -415,7 +509,7 @@ generateFinalDiagram()
     int lineLength = StringUtility::stringLength(line);
 
     // if the line is too short, add space until is has the correct length
-    for (int i = 0; i < VARIABLES_LINE_LENGTH - lineLength; i++)
+    for (int i = 0; i < VARIABLES_LINE_LENGTH + 7 - lineLength; i++)
     {
       line += " ";
     }
@@ -426,6 +520,9 @@ generateFinalDiagram()
     std::string internalConnectionLinesColumns;
 
     // they are saved in internalConnectionLinesAll_
+
+    bool connectionLineConnectsToTheRightInCurrentRow = false;
+
     // determine number of vertical lines in current row
     for (int currentColumnNo = 0; currentColumnNo < nColumnsForInternalConnectionLines; currentColumnNo++)
     {
@@ -438,8 +535,10 @@ generateFinalDiagram()
         {
           VLOG(1) << "currentColumnNo " << currentColumnNo << ", connection line " << internalConnectionLineColumn.first << "/" << internalConnectionLinesAll_.size();
 
+          // vector of lines that are connected to the same connection line
           const std::vector<int> &connectionLine = internalConnectionLinesAll_[internalConnectionLineColumn.first];
           
+          // begin and end row of connection line
           int lineNoFirst = *std::min_element(connectionLine.begin(), connectionLine.end());
           int lineNoLast = *std::max_element(connectionLine.begin(), connectionLine.end());
           
@@ -450,11 +549,19 @@ generateFinalDiagram()
             // check if it is connected to the current row
             if (std::find(connectionLine.begin(), connectionLine.end(), currentLineNo) != connectionLine.end())
             {
-              internalConnectionLinesColumns += "+";
+              internalConnectionLinesColumns += "├";
+              connectionLineConnectsToTheRightInCurrentRow = true;
             }
             else
             {
-              internalConnectionLinesColumns += ":";
+              if (connectionLineConnectsToTheRightInCurrentRow)
+              {
+                internalConnectionLinesColumns += "÷";
+              }
+              else
+              {
+                internalConnectionLinesColumns += ":";
+              }
             }
 
             connectionLineFoundAtCurrentColumn = true;
@@ -464,11 +571,28 @@ generateFinalDiagram()
       }
 
       if (!connectionLineFoundAtCurrentColumn)
-        internalConnectionLinesColumns += " ";
-    }
+      {
+        if (connectionLineConnectsToTheRightInCurrentRow)
+        {
+          internalConnectionLinesColumns += "─";
+        }
+        else
+        {
+          internalConnectionLinesColumns += " ";
+        }
+      }
+    }   // loop over columns for internal connection lines
+
+    /*
+    if (connectionLineConnectsToTheRightInCurrentRow)
+      internalConnectionLinesColumns += "─";
+    else
+      internalConnectionLinesColumns += " ";
+    */
 
     std::string firstPart;
     int posFirstPart = 0;
+    // add character by character
     for(int i = 0; i < line.size(); i++)
     {
       firstPart += line[i];
@@ -478,25 +602,60 @@ generateFinalDiagram()
         break;
       }
     }
-    line = firstPart + std::string(" ") + internalConnectionLinesColumns + line.substr(posFirstPart+1);
+    std::string partWithSlotName = line.substr(posFirstPart+1);
+    //partWithSlotName = std::string(StringUtility::stringLength(partWithSlotName), 'x');
+
+    // if line connects to the right, replace spaces in slot name by lines
+    if (connectionLineConnectsToTheRightInCurrentRow)
+    {
+      // count number of consecutive spaces
+      std::size_t pos = partWithSlotName.find_first_not_of(" ");
+
+      int nSpaces = 0;
+      if (pos != std::string::npos)
+        nSpaces = pos;
+
+      if (nSpaces > 0)
+      {
+
+        std::string result = "";
+
+        for (int i = 0; i < nSpaces-1; i++)
+        {
+          result += "─";
+        }
+        partWithSlotName = result + partWithSlotName.substr(nSpaces-1);
+      }
+    }
+
+    line = firstPart + std::string(" ") + internalConnectionLinesColumns + partWithSlotName;
 
     //line += internalConnectionLinesColumns;
 #endif
 
     // prepare for external connection lines
     // find out vertial data slot connection lines that go through this output line
-    std::vector<std::tuple<int,bool,bool,solver_t::OutputConnectionRepresentation::output_connection_t>> verticalLinesInCurrentRow;    //! <lineColumn,thisLineStartsHere,thisLineEndsHere,type>, lineColumn is the column in rhe current row where the vertical lines passes through
+    struct VerticalLineInCurrentRow
+    {
+      int lineColumn;         // the column in rhe current row where the vertical lines passes through
+      bool lineStartsHere;    // if this row is the start of the line
+      bool lineEndsHere;      // if this row is the end of the line
+      bool hasMhere;          // if the current row contains the "m" that specifies a mapping
+      solver_t::SlotsConnectionRepresentation::slot_connection_t type;  // type of the line
+    };
+
+    std::vector<VerticalLineInCurrentRow> verticalLinesInCurrentRow;    //! <lineColumn,thisLineStartsHere,thisLineEndsHere,type>, lineColumn
     bool lineStartsHere = false;
     bool lineEndsHere = false;
     bool unconnectedSlotHere = false;
-    solver_t::OutputConnectionRepresentation::output_connection_t lineType = solver_t::OutputConnectionRepresentation::output_connection_t::ab;
+    solver_t::SlotsConnectionRepresentation::slot_connection_t lineType = solver_t::SlotsConnectionRepresentation::slot_connection_t::ab;
     int lineColumn = 0;
 #if 0
     // get maximum lineColumn
     int maximumLinePosition = 0;
     for (int i = 0; i < externalConnectionLines_.size(); i++)
     {
-      maximumLinePosition = std::max((int)(std::get<2>(externalConnectionLines_[i])), maximumLinePosition);
+      maximumLinePosition = std::max((int)(externalConnectionLines_[i].lineColumn), maximumLinePosition);
     }
 #endif
     // loop over all externalConnectionLines_ and see if they pass through the current line
@@ -504,52 +663,81 @@ generateFinalDiagram()
     for (int i = 0; i < externalConnectionLines_.size(); i++)
     {
       // start and end row of current connection line
-      int startLineNo = std::get<0>(externalConnectionLines_[i]);
-      int endLineNo = std::get<1>(externalConnectionLines_[i]);
+      int startLineNo = externalConnectionLines_[i].lineNoFrom;
+      int endLineNo   = externalConnectionLines_[i].lineNoTo;
 
       // if the connection line starts or ends in the current row, there will be a horizontal line
       if (currentLineNo == startLineNo)
       {
-        lineType = std::get<3>(externalConnectionLines_[i]);
+        lineType = externalConnectionLines_[i].lineType;
         lineStartsHere = true;
-        lineColumn = std::get<2>(externalConnectionLines_[i]);
-        verticalLinesInCurrentRow.push_back(std::make_tuple(lineColumn, true, false, lineType));
+        lineColumn = externalConnectionLines_[i].lineColumn;
+
+        // add settings for current line pass to vector
+        VerticalLineInCurrentRow verticalLineInCurrentRow;
+        verticalLineInCurrentRow.lineColumn = lineColumn;
+        verticalLineInCurrentRow.lineStartsHere = true;
+        verticalLineInCurrentRow.lineEndsHere = false;
+        verticalLineInCurrentRow.hasMhere = false;
+        verticalLineInCurrentRow.type = lineType;
+        verticalLinesInCurrentRow.push_back(verticalLineInCurrentRow);
       }
       else if (currentLineNo == endLineNo)
       {
-        lineType = std::get<3>(externalConnectionLines_[i]);
+        lineType = externalConnectionLines_[i].lineType;
         lineEndsHere = true;
-        lineColumn = std::get<2>(externalConnectionLines_[i]);
-        verticalLinesInCurrentRow.push_back(std::make_tuple(lineColumn, false, true, lineType));
+        lineColumn = externalConnectionLines_[i].lineColumn;
+
+        // add settings for current line pass to vector
+        VerticalLineInCurrentRow verticalLineInCurrentRow;
+        verticalLineInCurrentRow.lineColumn = lineColumn;
+        verticalLineInCurrentRow.lineStartsHere = false;
+        verticalLineInCurrentRow.lineEndsHere = true;
+        verticalLineInCurrentRow.hasMhere = false;
+        verticalLineInCurrentRow.type = lineType;
+        verticalLinesInCurrentRow.push_back(verticalLineInCurrentRow);
       }
       else if (startLineNo < currentLineNo && currentLineNo < endLineNo)
       {
         // vertical line passes through current row
-        solver_t::OutputConnectionRepresentation::output_connection_t lineType = std::get<3>(externalConnectionLines_[i]);
-        int lineColumn = std::get<2>(externalConnectionLines_[i]);
-        verticalLinesInCurrentRow.push_back(std::make_tuple(lineColumn, false, false, lineType));
+        solver_t::SlotsConnectionRepresentation::slot_connection_t lineType = externalConnectionLines_[i].lineType;
+        int lineColumn = externalConnectionLines_[i].lineColumn;
+
+        bool hasMhere = false;
+        // if it involes a mapping and has the "m" here
+        if (externalConnectionLines_[i].involvesMapping && (int)(0.5*(startLineNo+endLineNo)) == currentLineNo)
+          hasMhere = true;
+
+        // add settings for current line pass to vector
+        VerticalLineInCurrentRow verticalLineInCurrentRow;
+        verticalLineInCurrentRow.lineColumn = lineColumn;
+        verticalLineInCurrentRow.lineStartsHere = false;
+        verticalLineInCurrentRow.lineEndsHere = false;
+        verticalLineInCurrentRow.hasMhere = hasMhere;
+        verticalLineInCurrentRow.type = lineType;
+        verticalLinesInCurrentRow.push_back(verticalLineInCurrentRow);
       }
     }
 
     // sort all found lines according to their column
     std::sort(verticalLinesInCurrentRow.begin(), verticalLinesInCurrentRow.end(), [](
-      const std::tuple<int,bool,bool,solver_t::OutputConnectionRepresentation::output_connection_t> &a,
-      const std::tuple<int,bool,bool,solver_t::OutputConnectionRepresentation::output_connection_t> &b)
+      const VerticalLineInCurrentRow &a,
+      const VerticalLineInCurrentRow &b)
     {
-      return std::get<0>(a) < std::get<0>(b);
+      return a.lineColumn < b.lineColumn;
     });
 
-    VLOG(1) << "line " << currentLineNo << ", currentLineNo " << currentLineNo << ", line=[" << line << "] has vertical lines: " << verticalLinesInCurrentRow;
+    //VLOG(1) << "line " << currentLineNo << ", currentLineNo " << currentLineNo << ", line=[" << line << "] has vertical lines: " << verticalLinesInCurrentRow;
 
     // fill current line with spaces such that it has the correct length
-    const int requiredLineLength = VARIABLES_LINE_LENGTH + nColumnsForInternalConnectionLines + 5;  //< line length for structure and variables
+    const int requiredLineLength = VARIABLES_LINE_LENGTH + 4 + nColumnsForInternalConnectionLines + 5;  //< line length for structure and variables
     lineLength = StringUtility::stringLength(line);
 
     // determine fill character for horizontal line
     std::string fillCharacter = " ";
     if (lineStartsHere || lineEndsHere)
     {
-      if (lineType == solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalReuse)
+      if (lineType == solver_t::SlotsConnectionRepresentation::slot_connection_t::bidirectionalReuse)
       {
         fillCharacter = "═";
       }
@@ -564,18 +752,18 @@ generateFinalDiagram()
     }
 
     // if the line is yet too short, add fillCharacter until is has the correct length
-    if (requiredLineLength > lineLength)
+    if (lineLength < requiredLineLength)
     {
       for (int i = 0; i < requiredLineLength - lineLength; i++)
       {
         // starting tip of arrow if the line starts or ends in the current row and has the according type
-        if (i == 0 && lineStartsHere && (lineType == solver_t::OutputConnectionRepresentation::output_connection_t::ba
-          || lineType == solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalCopy))
+        if (i == 0 && lineStartsHere && (lineType == solver_t::SlotsConnectionRepresentation::slot_connection_t::ba
+          || lineType == solver_t::SlotsConnectionRepresentation::slot_connection_t::bidirectionalCopy))
         {
           line += "<";
         }
-        else if (i == 0 && lineEndsHere && (lineType == solver_t::OutputConnectionRepresentation::output_connection_t::ab
-          || lineType == solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalCopy))
+        else if (i == 0 && lineEndsHere && (lineType == solver_t::SlotsConnectionRepresentation::slot_connection_t::ab
+          || lineType == solver_t::SlotsConnectionRepresentation::slot_connection_t::bidirectionalCopy))
         {
           line += "<";
         }
@@ -593,7 +781,7 @@ generateFinalDiagram()
     if (!verticalLinesInCurrentRow.empty())
     {
       // loop over columns in the current row, current column is requiredLineLength + 2*i, i.e. it advances always by 2 characters
-      for (int i = 0; i <= std::get<0>(verticalLinesInCurrentRow.back()); i++)
+      for (int i = 0; i <= verticalLinesInCurrentRow.back().lineColumn; i++)
       {
 
         // determine events where line starts or ends
@@ -605,7 +793,7 @@ generateFinalDiagram()
         std::string space = " ";
         if (lineCrosses || ( (lineStartsHere || lineEndsHere) && i <= lineColumn))
         {
-          if (lineType == solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalReuse)
+          if (lineType == solver_t::SlotsConnectionRepresentation::slot_connection_t::bidirectionalReuse)
           {
             space = "═";
           }
@@ -620,14 +808,16 @@ generateFinalDiagram()
         }
 
         // if there is a vertical line passing at the current position
-        if (i == std::get<0>(verticalLinesInCurrentRow[linesIndex]))
+        if (i == verticalLinesInCurrentRow[linesIndex].lineColumn)
         {
           // depending on the type of the vertical line choose the right sign
-          switch (std::get<3>(verticalLinesInCurrentRow[linesIndex]))
+          switch (verticalLinesInCurrentRow[linesIndex].type)
           {
-          case solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalReuse:
+          case solver_t::SlotsConnectionRepresentation::slot_connection_t::bidirectionalReuse:
             line += space;
-            if (lineCrosses && !std::get<1>(verticalLinesInCurrentRow[linesIndex]) && !std::get<2>(verticalLinesInCurrentRow[linesIndex]))
+            if (lineCrosses
+                && !verticalLinesInCurrentRow[linesIndex].lineStartsHere
+                && !verticalLinesInCurrentRow[linesIndex].lineEndsHere)
             {
               line += "╬";
             }
@@ -639,24 +829,31 @@ generateFinalDiagram()
             {
               line += "╝";
             }
-            else if (std::get<1>(verticalLinesInCurrentRow[linesIndex]))
+            else if (verticalLinesInCurrentRow[linesIndex].lineStartsHere)
             {
               line += "╦";
             }
-            else if (std::get<2>(verticalLinesInCurrentRow[linesIndex]))
+            else if (verticalLinesInCurrentRow[linesIndex].lineEndsHere)
             {
               line += "╩";
+            }
+            else if (verticalLinesInCurrentRow[linesIndex].hasMhere)
+            {
+              // if the meshes of the connected slots are different, it is a mapping, add an "m" in the center of the line
+              line += "m";
             }
             else
             {
               line += "║";
             }
             break;
-          case solver_t::OutputConnectionRepresentation::output_connection_t::ab:
-          case solver_t::OutputConnectionRepresentation::output_connection_t::ba:
-          case solver_t::OutputConnectionRepresentation::output_connection_t::bidirectionalCopy:
+          case solver_t::SlotsConnectionRepresentation::slot_connection_t::ab:
+          case solver_t::SlotsConnectionRepresentation::slot_connection_t::ba:
+          case solver_t::SlotsConnectionRepresentation::slot_connection_t::bidirectionalCopy:
             line += space;
-            if (lineCrosses && !std::get<1>(verticalLinesInCurrentRow[linesIndex]) && !std::get<2>(verticalLinesInCurrentRow[linesIndex]))
+            if (lineCrosses
+                && !verticalLinesInCurrentRow[linesIndex].lineStartsHere
+                && !verticalLinesInCurrentRow[linesIndex].lineEndsHere)
             {
               line += "┼";
             }
@@ -668,13 +865,18 @@ generateFinalDiagram()
             {
               line += "┘";
             }
-            else if (std::get<1>(verticalLinesInCurrentRow[linesIndex]))
+            else if (verticalLinesInCurrentRow[linesIndex].lineStartsHere)
             {
               line += "┬";
             }
-            else if (std::get<2>(verticalLinesInCurrentRow[linesIndex]))
+            else if (verticalLinesInCurrentRow[linesIndex].lineEndsHere)
             {
               line += "┴";
+            }
+            else if (verticalLinesInCurrentRow[linesIndex].hasMhere)
+            {
+              // if the meshes of the connected slots are different, it is a mapping, add an "m" in the center of the line
+              line += "m";
             }
             else
             {
@@ -708,10 +910,20 @@ generateFinalDiagram()
     diagram += line;
   }
 
-  diagram += "connection types:\n";
-  diagram += "  +··+   internal connection, no copy\n";
-  diagram += "  ════   reuse variable, no copy\n";
-  diagram += "  ───>   copy data in direction of arrow\n";
+  diagram += "Connection Types:\n";
+  diagram += "  +··+   Internal connection, no copy\n";
+  diagram += "  ════   Reuse variable, no copy\n";
+  diagram += "  ───>   Copy data in direction of arrow\n";
+  diagram += "  ─m──   Mapping between different meshes\n";
+  diagram += "\n";
+  diagram += "Referenced Meshes:\n";
+
+  std::stringstream s;
+  for (int i = 0; i < referencedMeshNames_.size(); i++)
+  {
+    s << "  [" << std::string(1, char('a'+i)) << "] " << referencedMeshNames_[i] << "\n";
+  }
+  diagram += s.str();
 
   //LOG(DEBUG) << "solver structure without connections:\n" << diagramWithoutConnectionLines.str() << "\n";
   LOG(DEBUG) << "solver structure with connections:\n" << diagram << "\n";

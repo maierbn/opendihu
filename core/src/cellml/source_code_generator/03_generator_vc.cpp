@@ -28,13 +28,15 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
         // we look for occurences of functions and ternary operators, these can be detected in a tree node
         if (expression.type == code_expression_t::tree)
         {
-
-          std::stringstream a;
-          for (int i = 0; i < expression.treeChildren.size(); i++)
+          if (VLOG_IS_ON(1))
           {
-            a << "[" << expression.treeChildren[i].code << "] ";
+            std::stringstream a;
+            for (int i = 0; i < expression.treeChildren.size(); i++)
+            {
+              a << "[" << expression.treeChildren[i].code << "] ";
+            }
+            VLOG(1) << "check expression: tree with " << expression.treeChildren.size() << " children: " << a.str();
           }
-          VLOG(1) << "check expression: tree with " << expression.treeChildren.size() << " children: " << a.str();
 
           // loop over children of the tree node
           for (int i = 0; i < expression.treeChildren.size(); i++)
@@ -48,6 +50,7 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                   && innerExpression.code.find("pow") == innerExpression.code.length()-3)
               {
                 int exponent = 0;
+                bool isIntegerExponent = false;
 
                 VLOG(1) << "found pow at i=" << i << " of [" << innerExpression.code << "]";
 
@@ -73,10 +76,20 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
 
                   std::string codeExponent = code.substr(posComma+1);
                   StringUtility::trim(codeExponent);
+                  // exponent can also be "- 1.0000", so remove all whitespace in the inner
+                  codeExponent.erase(std::remove(codeExponent.begin(), codeExponent.end(), ' '), codeExponent.end());
+                  
+                  isIntegerExponent = codeExponent.find_first_not_of("0123456789+-.") == std::string::npos;
+                  //LOG(INFO) << "codeExponent: [" << codeExponent << "], isIntegerExponent=" << isIntegerExponent << " (" << codeExponent.find_first_not_of("0123456789+-") << ", " << std::string::npos << ")";
                   exponent = atoi(codeExponent.c_str());
-
-                  // remove ", exponent" from code
-                  expressionExponent.code = code.substr(0, posComma);
+                  if (exponent == 0)
+                    isIntegerExponent = false;
+                    
+                  if (isIntegerExponent)
+                  {
+                    // remove ", exponent" from code
+                    expressionExponent.code = code.substr(0, posComma);
+                  }
                 }
                 else if (expressionExponent.type == code_expression_t::tree)
                 {
@@ -87,29 +100,47 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
 
                   std::string codeExponent = code.substr(posComma+1);
                   StringUtility::trim(codeExponent);
+                  // exponent can also be "- 1.0000", so remove all whitespace in the inner
+                  codeExponent.erase(std::remove(codeExponent.begin(), codeExponent.end(), ' '), codeExponent.end());
+                  
+                  isIntegerExponent = codeExponent.find_first_not_of("0123456789+-.") == std::string::npos;
+                  //LOG(INFO) << "codeExponent: [" << codeExponent << "], isIntegerExponent=" << isIntegerExponent << " (" << codeExponent.find_first_not_of("0123456789+-") << ", " << std::string::npos << ")";
                   exponent = atoi(codeExponent.c_str());
+                  if (exponent == 0)
+                    isIntegerExponent = false;
 
-                  // remove ", exponent" from code
-                  expressionExponent.treeChildren.back().code = code.substr(0, posComma);
+                  if (isIntegerExponent)
+                  {
+                    // remove ", exponent" from code
+                    expressionExponent.treeChildren.back().code = code.substr(0, posComma);
+                  }
                 }
-
-                // compose name of helper function: pow<exponent>
-                std::stringstream s;
-                if (exponent > 0)
+                
+                // if the exponent of the pow function is just a single integer number
+                if (isIntegerExponent)
                 {
-                  s << "pow" << exponent;
-                }
-                else
-                {
-                  // a negative exponent, e.g. "pow(x,-2)" yields "powReciprocal2(x)"
-                  s << "powReciprocal" << -exponent;
-                }
-                std::string helperFunction = s.str();
-                helperFunctions.insert(helperFunction);
+                  // compose name of helper function: pow<exponent>
+                  std::stringstream s;
+                  if (exponent > 0)
+                  {
+                    s << "pow" << exponent;
+                  }
+                  else
+                  {
+                    // a negative exponent, e.g. "pow(x,-2)" yields "powReciprocal2(x)"
+                    s << "powReciprocal" << -exponent;
+                  }
+                  std::string helperFunction = s.str();
+                  helperFunctions.insert(helperFunction);
 
-                // replace "pow" by e.g. "pow3" for exponent 3
-                std::size_t posPow = innerExpression.code.find("pow");
-                innerExpression.code = innerExpression.code.substr(0, posPow) + helperFunction;
+                  // replace "pow" by e.g. "pow3" for exponent 3
+                  std::size_t posPow = innerExpression.code.find("pow");
+                  innerExpression.code = innerExpression.code.substr(0, posPow) + helperFunction;
+                }
+                else 
+                {
+                  helperFunctions.insert("pow");
+                }
               }
               else if (innerExpression.code == "?")
               {
@@ -142,24 +173,26 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
 
                 // replace 0.00000 and 1.00000 by double_v(Vc::One) and double_v(Vc::Zero)
 
-                // only do replace if
-                bool enableReplace = true;
+                // only do replace if not both `then` and `else` contain variables
+                bool enableReplace = false;
 
                 // for k in {4,6}
                 for (int k = 4; k <= 6; k +=2)
                 {
+                  // check if the code contains variables, then it should not be replaced because it is already vectorized
                   bool expressionHasVariables = false;
                   iifFunction.treeChildren[k].visitLeafs([&expressionHasVariables](code_expression_t &expression, bool isFirstVariable)
                   {
                     if (expression.type == code_expression_t::variableName)
                     {
-                      if (expression.code != "CONSTANTS")
+                      if (expression.code != "CONSTANTS")   // a constant does not count as a variable here
                         expressionHasVariables = true;
                     }
                   });
 
-                  if (iifFunction.treeChildren[k].type != code_expression_t::otherCode && !expressionHasVariables)
-                    enableReplace = false;
+                  if (iifFunction.treeChildren[k].type == code_expression_t::otherCode 
+                      || !expressionHasVariables)
+                    enableReplace = true;      // replacing is necessary because in the current slot there are no variables
                 }
 
                 if (enableReplace)
@@ -171,6 +204,8 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                     {
                       std::string code = iifFunction.treeChildren[k].code;
                       StringUtility::trim(code);
+                      // code can also be "- 1.0000", so remove all whitespace in the inner
+                      code.erase(std::remove(code.begin(), code.end(), ' '), code.end());
 
                       if (code == "0.00000")
                       {
@@ -180,16 +215,62 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                       {
                         iifFunction.treeChildren[k].code = " Vc::double_v(Vc::One)";
                       }
-                      else if (atof(code.c_str()) != 0.0)
+                      else if (atof(code.c_str()) != 0.0)   // if there is numeric code, not just '('s
                       {
-                        iifFunction.treeChildren[k].code = " Vc::double_v(Vc::One)*" + iifFunction.treeChildren[k].code;
+                        iifFunction.treeChildren[k].code = " (Vc::double_v(Vc::One)*(" + iifFunction.treeChildren[k].code + "))";
                       }
+                    }
+                    else if (iifFunction.treeChildren[k].type == code_expression_t::tree)
+                    {
+                      iifFunction.treeChildren[k].visitLeafs([](code_expression_t &expression, bool isFirstVariable)
+                      {
+                        if (expression.type == code_expression_t::variableName)
+                        {
+                          if (expression.code == "CONSTANTS")
+                          {
+                            // replace a single constant
+                            expression.type = code_expression_t::tree;
+                            expression.treeChildren.resize(3);
+
+                            expression.treeChildren[0].type = code_expression_t::otherCode;
+                            expression.treeChildren[0].code = "(Vc::double_v(Vc::One)*";
+
+                            expression.treeChildren[1].type = code_expression_t::variableName;
+                            expression.treeChildren[1].code = "CONSTANTS";
+                            expression.treeChildren[1].arrayIndex = expression.arrayIndex;
+                            
+                            expression.treeChildren[2].type = code_expression_t::otherCode;
+                            expression.treeChildren[2].code = ")";
+                          }
+                        }
+                      });
+                    }
+                    else if (iifFunction.treeChildren[k].type == code_expression_t::variableName
+                             && iifFunction.treeChildren[k].code == "CONSTANTS")
+                    {
+                      // replace a single constant
+                      iifFunction.treeChildren[k].type = code_expression_t::tree;
+                      iifFunction.treeChildren[k].treeChildren.resize(3);
+
+                      iifFunction.treeChildren[k].treeChildren[0].type = code_expression_t::otherCode;
+                      iifFunction.treeChildren[k].treeChildren[0].code = "(Vc::double_v(Vc::One)*";
+
+                      iifFunction.treeChildren[k].treeChildren[1].type = code_expression_t::variableName;
+                      iifFunction.treeChildren[k].treeChildren[1].code = "CONSTANTS";
+                      iifFunction.treeChildren[k].treeChildren[1].arrayIndex = iifFunction.treeChildren[k].arrayIndex;
+                      
+                      iifFunction.treeChildren[k].treeChildren[2].type = code_expression_t::otherCode;
+                      iifFunction.treeChildren[k].treeChildren[2].code = ")";
                     }
                   }
                 }
 
                 expression = iifFunction;
                 break;
+              }
+              else if (innerExpression.code == "fabs")
+              {
+                innerExpression.code = "Vc::abs";
               }
             }
           }
@@ -230,6 +311,11 @@ std::string CellmlSourceCodeGeneratorVc::defineHelperFunctions(std::set<std::str
       if (functionName.find("pow") != std::string::npos)
       {
         int exponent = atoi(functionName.substr(3).c_str());
+        if (exponent == 0)
+        {
+          helperFunctions.insert("exponential");
+          continue;
+        }
 
         if (functionName.find("powReciprocal") != std::string::npos)
           exponent = atoi(functionName.substr(std::string("powReciprocal").length()).c_str());
@@ -252,13 +338,21 @@ std::string CellmlSourceCodeGeneratorVc::defineHelperFunctions(std::set<std::str
   }
 
   VLOG(1) << "after adding all necessary helperFunctions: " << helperFunctions;
-
+  
   // generate declarations
   sourceCode << "\n// helper functions\n";
   for (std::set<std::string>::iterator iter = helperFunctions.begin(); iter != helperFunctions.end(); iter++)
   {
     std::string functionName = *iter;
-    sourceCode << "Vc::double_v " << functionName << "(Vc::double_v x);" << std::endl;
+    if (functionName == "pow")
+    {
+      sourceCode << "Vc::double_v pow(Vc::double_v basis, Vc::double_v exponent);" << std::endl;
+      sourceCode << "Vc::double_v pow(Vc::double_v basis, double exponent);" << std::endl;
+    }
+    else
+    {
+      sourceCode << "Vc::double_v " << functionName << "(Vc::double_v x);" << std::endl;
+    }
   }
 
   // define exp function if needed
@@ -301,6 +395,33 @@ Vc::double_v exponential(Vc::double_v x)
 )";
     }
   }
+  
+  // define pow function if needed
+  if (helperFunctions.find("pow") != helperFunctions.end())
+  {
+    sourceCode << R"(
+Vc::double_v pow(Vc::double_v basis, Vc::double_v exponent)
+{
+  Vc::double_v result;
+  for (int i = 0; i < Vc::double_v::size(); i++)
+  {
+    result[i] = std::pow(basis[i], exponent[i]);
+  }
+  return result;
+
+  //return basis.apply([exponent](double v){return std::pow(v, exponent);});
+  // Note, there is no pow function defined by Vc.
+  //return Vc::exp(Vc::log(basis)*exponent);
+}
+
+Vc::double_v pow(Vc::double_v basis, double exponent)
+{
+  return basis.apply([exponent](double v){return std::pow(v, exponent);});
+  //return Vc::exp(Vc::log(basis)*exponent);
+}
+
+)";
+  }
 
   // generate other helper functions
   for (std::set<std::string>::iterator iter = helperFunctions.begin(); iter != helperFunctions.end(); iter++)
@@ -311,56 +432,71 @@ Vc::double_v exponential(Vc::double_v x)
     if (functionName == "exponential")
       continue;
 
+    // generate pow functions with integer exponents
     if (functionName.find("pow") != std::string::npos)
     {
-      int exponent = atoi(functionName.substr(3).c_str());
+      int exponent = 0;
       if (functionName.find("powReciprocal") != std::string::npos)
       {
-        exponent = -atoi(functionName.substr(std::string("powReciprocal").length()).c_str());
+        exponent = atoi(functionName.substr(13).c_str());
       }
-      if (exponent == 2)
+      else 
       {
-      sourceCode << R"(
+        exponent = atoi(functionName.substr(3).c_str());
+      }
+      
+      if (exponent != 0)
+      {
+        // for negative exponent, negative exponent
+        if (functionName.find("powReciprocal") != std::string::npos)
+        {
+          exponent = -atoi(functionName.substr(std::string("powReciprocal").length()).c_str());
+        }
+        // special implementation for exponent 2 (square function)
+        if (exponent == 2)
+        {
+        sourceCode << R"(
 Vc::double_v pow2(Vc::double_v x)
 {
   return x*x;
 }
 )";
-      }
-      else
-      {
-        int exponent0 = int(fabs(exponent)/2);
-        int otherExponent = fabs(exponent) - exponent0;
-        sourceCode << "Vc::double_v pow" << (exponent < 0? "Reciprocal" : "")
-          << fabs(exponent) << "(Vc::double_v x)" << std::endl
-          << "{" << std::endl
-          << "  return ";
-        if (exponent < 0)
-          sourceCode << "1./(";
-
-        // if exponent == 1 => exponent0 == 0
-        if (exponent0 == 0)
-        {
-          sourceCode << "x";
         }
         else
         {
-          if (exponent0 == 1)
+          int exponent0 = int(fabs(exponent)/2);
+          int otherExponent = fabs(exponent) - exponent0;
+          sourceCode << "Vc::double_v pow" << (exponent < 0? "Reciprocal" : "")
+            << fabs(exponent) << "(Vc::double_v x)" << std::endl
+            << "{" << std::endl
+            << "  return ";
+          if (exponent < 0)
+            sourceCode << "1./(";
+
+          // if exponent == 1 => exponent0 == 0
+          if (exponent0 == 0)
           {
-            sourceCode << "x*(";
+            sourceCode << "x";
           }
           else
           {
-            sourceCode << "pow" << exponent0 << "(";
+            if (exponent0 == 1)
+            {
+              sourceCode << "x*(";
+            }
+            else
+            {
+              sourceCode << "pow" << exponent0 << "(";
+            }
+            sourceCode << "pow" << otherExponent << "(x))";
           }
-          sourceCode << "pow" << otherExponent << "(x))";
+
+          if (exponent < 0)
+            sourceCode << ")";
+          sourceCode << ";" << std::endl;
+
+          sourceCode << "}" << std::endl << std::endl;
         }
-
-        if (exponent < 0)
-          sourceCode << ")";
-        sourceCode << ";" << std::endl;
-
-        sourceCode << "}" << std::endl << std::endl;
       }
     }
   }
@@ -392,12 +528,43 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
 
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
-  sourceCode << std::endl << "/* This function was created by opendihu at " << StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
-    << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem.\n "
-    << " * The \"optimizationType\" is \"vc\". (Other options are \"simd\" and \"openmp\".) */" << std::endl
-    << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif\n" << std::endl
+  sourceCode << std::endl << "// This function was created by opendihu at " << StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
+    << ".\n// It is designed for " << this->nInstances_ << " instances of the CellML problem.\n"
+    << "// The \"optimizationType\" is \"vc\". (Other options are \"simd\" and \"openmp\".)" << std::endl;
+    
+  if (!parametersUsedAsAlgebraic_.empty())
+  {
+    sourceCode << "// " << parametersUsedAsAlgebraic_.size() << " algebraic" << (parametersUsedAsAlgebraic_.size()==1? " is": "s are") << " replaced by parameters: ";
+    bool first = true;
+    for (int parameterUsedAsAlgebraic : parametersUsedAsAlgebraic_)
+    {
+      if (!first)
+        sourceCode << ", ";
+      sourceCode << algebraicNames_[parameterUsedAsAlgebraic];
+      first = false;
+    }
+    sourceCode << std::endl;
+  }
+  if (!parametersUsedAsConstant_.empty())
+  {
+    sourceCode << "// " << parametersUsedAsConstant_.size() << " constant" << (parametersUsedAsConstant_.size()==1? " is": "s are") << " replaced by parameters: ";
+    bool first = true;
+    for (int parameterUsedAsConstant : parametersUsedAsConstant_)
+    {
+      if (!first)
+        sourceCode << ", ";
+      sourceCode << constantNames_[parameterUsedAsConstant];
+      first = false;
+    }
+    sourceCode << std::endl;
+  }
+  sourceCode  << std::endl;
+  std::vector<int> parametersUsedAsConstant_;  //< explicitely defined parameters that will be copied to constants, this vector contains the indices of the constants
+
+    
+  sourceCode << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif\n" << std::endl
     << "void computeCellMLRightHandSide("
-    << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl 
+    << "void *context, double t, double *states, double *rates, double *algebraics, double *parameters)" << std::endl 
     << "{" << std::endl
     << "  // assert that Vc::double_v::Size is the same as in opendihu, otherwise there will be problems\n"
     << "  if (Vc::double_v::Size != " << Vc::double_v::Size << ")\n"
@@ -421,17 +588,17 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
   // add declaration of algebraic variables
   sourceCode << std::endl;
   const int nVcVectors = (int)(ceil((double)this->nInstances_ / Vc::double_v::Size));
-  const int nParametersPerInstance = this->nIntermediates_;
+  const int nParametersPerInstance = this->nAlgebraics_;
 
   sourceCode << std::endl
     << "  const int nInstances = " << this->nInstances_ << ";\n"
     << "  const int nStates = " << this->nStates_ << ";\n"
-    << "  const int nIntermediates = " << this->nIntermediates_ << ";\n"
+    << "  const int nAlgebraics = " << this->nAlgebraics_ << ";\n"
     << "  const int nParametersPerInstance = " << nParametersPerInstance << ";\n"
     << "  const int nVcVectors = " << nVcVectors << ";  // ceil(" << this->nInstances_ << " instances / VcSize " << Vc::double_v::Size << ")" << std::endl
     << "  Vc::double_v statesVc[nStates*nVcVectors];  // " << this->nStates_ << " states * " << nVcVectors << " vectors" << std::endl
     << "  Vc::double_v ratesVc[nStates*nVcVectors];   // " << this->nStates_ << " rates  * " << nVcVectors << " vectors" << std::endl
-    << "  Vc::double_v intermediatesVc[nIntermediates*nVcVectors];  // " << this->nIntermediates_ << " intermediates  * " << nVcVectors << " vectors" << std::endl
+    << "  Vc::double_v algebraicsVc[nAlgebraics*nVcVectors];  // " << this->nAlgebraics_ << " algebraics  * " << nVcVectors << " vectors" << std::endl
     << "  Vc::double_v parametersVc[nParametersPerInstance*nVcVectors];  // " << nParametersPerInstance << " parameters  * " << nVcVectors << " vectors" << std::endl
     << "\n"
     << "  // fill input vectors of states and parameters\n"
@@ -468,7 +635,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
             }
             else
             {
-              // all other variables (states, rates, intermediates, parameters) exist for every instance
+              // all other variables (states, rates, algebraics, parameters) exist for every instance
               if (expression.code == "states")
               {
                 sourceCode << "statesVc[" << expression.arrayIndex * nVcVectors << "+i]";
@@ -477,9 +644,9 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
               {
                 sourceCode << "ratesVc[" << expression.arrayIndex * nVcVectors << "+i]";
               }
-              else if (expression.code == "intermediates")
+              else if (expression.code == "algebraics")
               {
-                sourceCode << "intermediatesVc[" << expression.arrayIndex * nVcVectors << "+i]";
+                sourceCode << "algebraicsVc[" << expression.arrayIndex * nVcVectors << "+i]";
               }
               else if (expression.code == "parameters")
               {
@@ -520,13 +687,13 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
     << "        rates[rateNo*nInstances + i*Vc::double_v::Size+k] = ratesVc[rateNo*nVcVectors + i][k];\n"
     << "      }\n"
     << "\n"
-    << "  for (int intermediateNo = 0; intermediateNo < nIntermediates; intermediateNo++)\n"
+    << "  for (int algebraicNo = 0; algebraicNo < nAlgebraics; algebraicNo++)\n"
     << "    for (int i = 0; i < nVcVectors; i++)  // Vc vector no\n"
     << "      for (int k = 0; k < Vc::double_v::Size; k++)  // entry no in Vc vector \n"
     << "      {\n"
-    << "        if (intermediateNo*nInstances + i*Vc::double_v::Size+k >= nIntermediates*nInstances)\n"
+    << "        if (algebraicNo*nInstances + i*Vc::double_v::Size+k >= nAlgebraics*nInstances)\n"
     << "          continue;\n"
-    << "        intermediates[intermediateNo*nInstances + i*Vc::double_v::Size+k] = intermediatesVc[intermediateNo*nVcVectors + i][k];\n"
+    << "        algebraics[algebraicNo*nInstances + i*Vc::double_v::Size+k] = algebraicsVc[algebraicNo*nVcVectors + i][k];\n"
     << "      }\n"
     << "\n";
 
@@ -605,7 +772,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
     << "// compute one Heun step\n"
     << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif\n" << std::endl
     << "void compute0DInstance(Vc::double_v states[], std::vector<Vc::double_v> &parameters, double currentTime, double timeStepWidth, bool stimulate,\n"
-    << "                       bool storeIntermediatesForTransfer, std::vector<Vc::double_v> &intermediatesForTransfer, const std::vector<int> &intermediatesForTransferIndices, double valueForStimulatedPoint) \n"
+    << "                       bool storeAlgebraicsForTransfer, std::vector<Vc::double_v> &algebraicsForTransfer, const std::vector<int> &algebraicsForTransferIndices, double valueForStimulatedPoint) \n"
     << "{\n"
     << "  // assert that Vc::double_v::Size is the same as in opendihu, otherwise there will be problems\n"
     << "  if (Vc::double_v::Size != " << Vc::double_v::Size << ")\n"
@@ -657,7 +824,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
             }
             else
             {
-              // all other variables (states, rates, intermediates, parameters) exist for every instance
+              // all other variables (states, rates, algebraics, parameters) exist for every instance
               if (expression.code == "states")
               {
                 sourceCodeLine << "states[" << expression.arrayIndex << "]";
@@ -666,7 +833,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
               {
                 sourceCodeLine << "rate" << expression.arrayIndex;
               }
-              else if (expression.code == "intermediates")
+              else if (expression.code == "algebraics")
               {
                 sourceCodeLine << "algebraic" << expression.arrayIndex;
               }
@@ -706,8 +873,8 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
     }
   }
   sourceCode << "\n"
-    << "  // intermediate step\n"
-    << "  // compute y* = y_n + dt*rhs(y_n), y_n = state, rhs(y_n) = rate, y* = intermediateState\n";
+    << "  // algebraic step\n"
+    << "  // compute y* = y_n + dt*rhs(y_n), y_n = state, rhs(y_n) = rate, y* = algebraicState\n";
 
   for (int stateNo = 0; stateNo < this->nStates_; stateNo++)
   {
@@ -715,7 +882,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
     if (stateNo != 0)
       sourceCode << "const ";
 
-    sourceCode << "double_v intermediateState" << stateNo << " = states[" << stateNo << "] + timeStepWidth*rate" << stateNo << ";\n";
+    sourceCode << "double_v algebraicState" << stateNo << " = states[" << stateNo << "] + timeStepWidth*rate" << stateNo << ";\n";
   }
   sourceCode << "\n\n"
     << R"(
@@ -724,7 +891,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
   {
     for (int i = 0; i < std::min(3,(int)Vc::double_v::Size); i++)
     {
-      intermediateState0[i] = valueForStimulatedPoint;
+      algebraicState0[i] = valueForStimulatedPoint;
     }
   }
 
@@ -752,18 +919,18 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
             }
             else
             {
-              // all other variables (states, rates, intermediates, parameters) exist for every instance
+              // all other variables (states, rates, algebraics, parameters) exist for every instance
               if (expression.code == "states")
               {
-                sourceCodeLine << "intermediateState" << expression.arrayIndex;
+                sourceCodeLine << "algebraicState" << expression.arrayIndex;
               }
               else if (expression.code == "rates")
               {
-                sourceCodeLine << "intermediateRate" << expression.arrayIndex;
+                sourceCodeLine << "algebraicRate" << expression.arrayIndex;
               }
-              else if (expression.code == "intermediates")
+              else if (expression.code == "algebraics")
               {
-                sourceCodeLine << "intermediateAlgebraic" << expression.arrayIndex;
+                sourceCodeLine << "algebraicAlgebraic" << expression.arrayIndex;
               }
               else if (expression.code == "parameters")
               {
@@ -809,7 +976,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
 
   for (int stateNo = 0; stateNo < this->nStates_; stateNo++)
   {
-    sourceCode << "  states[" << stateNo << "] += 0.5*timeStepWidth*(rate" << stateNo << " + intermediateRate" << stateNo << ");\n";
+    sourceCode << "  states[" << stateNo << "] += 0.5*timeStepWidth*(rate" << stateNo << " + algebraicRate" << stateNo << ");\n";
   }
 
   sourceCode << R"(
@@ -822,30 +989,30 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
     }
   }
 
-  // store intermediates for transfer
-  if (storeIntermediatesForTransfer)
+  // store algebraics for transfer
+  if (storeAlgebraicsForTransfer)
   {
-    for (int i = 0; i < intermediatesForTransferIndices.size(); i++)
+    for (int i = 0; i < algebraicsForTransferIndices.size(); i++)
     {
-      const int intermediate = intermediatesForTransferIndices[i];
+      const int algebraic = algebraicsForTransferIndices[i];
 
-      switch (intermediate)
+      switch (algebraic)
       {
 )";
 
-  // loop over intermediates and generate code to copy the updated algebraic values to the intermediates
-  for (int intermediateNo = 0; intermediateNo < this->nIntermediates_; intermediateNo++)
+  // loop over algebraics and generate code to copy the updated algebraic values to the algebraics
+  for (int algebraicNo = 0; algebraicNo < this->nAlgebraics_; algebraicNo++)
   {
-    // only of the intermediate was computed and not replaced by a parameter
-    if (std::find(this->parametersUsedAsIntermediate_.begin(), this->parametersUsedAsIntermediate_.end(), intermediateNo)
-       != this->parametersUsedAsIntermediate_.end())
+    // only of the algebraic was computed and not replaced by a parameter
+    if (std::find(this->parametersUsedAsAlgebraic_.begin(), this->parametersUsedAsAlgebraic_.end(), algebraicNo)
+       != this->parametersUsedAsAlgebraic_.end())
     {
-      sourceCode << "        // case " << intermediateNo << ": is a parameter\n";
+      sourceCode << "        // case " << algebraicNo << ": is a parameter\n";
     }
     else
     {
-      sourceCode << "        case " << intermediateNo << ":\n"
-        << "          intermediatesForTransfer[i] = intermediateAlgebraic" << intermediateNo << ";\n"
+      sourceCode << "        case " << algebraicNo << ":\n"
+        << "          algebraicsForTransfer[i] = algebraicAlgebraic" << algebraicNo << ";\n"
         << "          break;\n";
     }
   }

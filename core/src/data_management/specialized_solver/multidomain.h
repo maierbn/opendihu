@@ -22,7 +22,7 @@ public:
 
   typedef FieldVariable::FieldVariable<FunctionSpaceType,1> FieldVariableType;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,3> GradientFieldVariableType;
-  typedef std::vector<std::shared_ptr<OutputConnectorData<FunctionSpaceType,1>>> OutputConnectorDataType;   // contains V_mk^(i), V_mk^(i+1) for every compartment k
+  typedef std::vector<std::shared_ptr<SlotConnectorData<FunctionSpaceType,1>>> SlotConnectorDataType;   // contains V_mk^(i), V_mk^(i+1) for every compartment k, activeStress_k, activeStressTotal_
 
   //! constructor
   Multidomain(DihuContext context);
@@ -54,6 +54,12 @@ public:
   //! a field variable with constant value of zero, needed for the nested rhs vector
   std::shared_ptr<FieldVariableType> zero();
 
+  //! return the field variable of the active stress for the given compartment
+  std::shared_ptr<FieldVariableType> activeStress(int compartmentNo);
+
+  //! return the field variable of the total active stress
+  std::shared_ptr<FieldVariableType> activeStressTotal();
+
   //! initialize and set nCompartments_
   void initialize(int nCompartments);
 
@@ -61,7 +67,7 @@ public:
   void print();
 
   //! get the output connection da
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
 
   //! field variables that will be output by outputWriters
@@ -72,7 +78,8 @@ public:
     std::shared_ptr<FieldVariableType>,               // extra-cellular potential
     std::vector<std::shared_ptr<FieldVariableType>>,  // transmembranePotentials
     std::vector<std::shared_ptr<FieldVariableType>>,  // compartmentRelativeFactors
-    std::shared_ptr<FieldVariableType>                // relativeFactorTotal
+    std::shared_ptr<FieldVariableType>,               // relativeFactorTotal
+    std::shared_ptr<FieldVariableType>                // activeStressTotal
   > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
@@ -89,12 +96,14 @@ private:
   std::vector<std::shared_ptr<FieldVariableType>> transmembranePotentialSolution_;  //< the Vm^(i+1) for the next timestep, this holds the solution in the linear solver which must be different from the rhs vector
   std::vector<std::shared_ptr<FieldVariableType>> transmembranePotential_;          //< the Vm^(i) value (transmembrane potential)
   std::vector<std::shared_ptr<FieldVariableType>> compartmentRelativeFactor_;       //< the relative factor f_r of the given compartment, at each point
+  std::vector<std::shared_ptr<FieldVariableType>> activeStress_;                    //< input slot for the active stress
+  std::shared_ptr<FieldVariableType> activeStressTotal_;                            //< output slot for the active stress, computed as sum_k f_r^k active_stress_k
   std::shared_ptr<FieldVariableType> relativeFactorTotal_;                          //< relative factor for phi_e, (1 + sum_k f_r^k), at each point
   std::shared_ptr<FieldVariableType> extraCellularPotential_;                       //< the phi_e value which is the extra-cellular potential
   std::shared_ptr<FieldVariableType> zero_;                                         //< a field variable with constant value of zero, needed for the nested rhs vector
   //std::vector<Vec> subvectorsSolution_;                                           //< a vector of the Petsc vecs that are used during computation
 
-  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;                    //< the object that stores all components of field variables that will be transferred to other solvers
+  std::shared_ptr<SlotConnectorDataType> slotConnectorData_;                    //< the object that stores all components of field variables that will be transferred to other solvers
 
 };
 

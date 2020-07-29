@@ -57,10 +57,10 @@ createPetscObjects()
     this->increment_ = this->functionSpace_->template createFieldVariable<nComponents>("increment", componentNames_);
   }
 
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
-  outputConnectorData_->addFieldVariable(this->solution_);
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
+  slotConnectorData_->addFieldVariable(this->solution_);
 
-  // create additional field variables that appear as output connector slots and can be connected to discretizableInTime_ and enclosing solvers
+  // create additional field variables that appear as connector slots and can be connected to discretizableInTime_ and enclosing solvers
   int nAdditionalFieldVariables = this->context_.getPythonConfig().getOptionInt("nAdditionalFieldVariables", 0, PythonUtility::NonNegative);
   additionalFieldVariables_.resize(nAdditionalFieldVariables);
 
@@ -70,9 +70,20 @@ createPetscObjects()
     name << "additionalFieldVariable" << i;
     additionalFieldVariables_[i] = this->functionSpace_->template createFieldVariable<1>(name.str());
 
-    outputConnectorData_->addFieldVariable2(additionalFieldVariables_[i]);
+    slotConnectorData_->addFieldVariable2(additionalFieldVariables_[i]);
     LOG(DEBUG) << "  add field variable " << name.str();
   }
+
+  LOG(DEBUG) << debuggingName_ << ": initial slot names: " << slotConnectorData_->slotNames;
+
+  // parse slot names of the additional field variables
+  this->context_.getPythonConfig().getOptionVector("additionalSlotNames", slotConnectorData_->slotNames);
+
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
+
+
+  LOG(DEBUG) << debuggingName_ << ": final slot names: " << slotConnectorData_->slotNames;
 }
 
 template<typename FunctionSpaceType,int nComponents>
@@ -87,27 +98,6 @@ std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> Tim
 increment()
 {
   return this->increment_;
-}
-
-template<typename FunctionSpaceType,int nComponents>
-dof_no_t TimeStepping<FunctionSpaceType,nComponents>::
-nUnknownsLocalWithGhosts()
-{
-  return this->functionSpace_->nNodesLocalWithGhosts() * nComponents;
-}
-
-template<typename FunctionSpaceType,int nComponents>
-dof_no_t TimeStepping<FunctionSpaceType,nComponents>::
-nUnknownsLocalWithoutGhosts()
-{
-  return this->functionSpace_->nNodesLocalWithoutGhosts() * nComponents;
-}
-
-template<typename FunctionSpaceType,int nComponents>
-constexpr int TimeStepping<FunctionSpaceType,nComponents>::
-getNDofsPerNode()
-{
-  return nComponents;
 }
 
 template<typename FunctionSpaceType,int nComponents>
@@ -129,41 +119,27 @@ setComponentNames(std::vector<std::string> componentNames)
 {
   componentNames_ = componentNames;
 }
-/*
-template<typename FunctionSpaceType,int nComponents>
-void TimeStepping<FunctionSpaceType,nComponents>::
-setOutputComponentNo(int outputComponentNo)
-{
-  outputComponentNo_ = outputComponentNo;
-}
 
 template<typename FunctionSpaceType,int nComponents>
-void TimeStepping<FunctionSpaceType,nComponents>::
-setPrefactor(double prefactor)
-{
-  prefactor_ = prefactor;
-}*/
-
-template<typename FunctionSpaceType,int nComponents>
-std::shared_ptr<typename TimeStepping<FunctionSpaceType,nComponents>::OutputConnectorDataType>
+std::shared_ptr<typename TimeStepping<FunctionSpaceType,nComponents>::SlotConnectorDataType>
 TimeStepping<FunctionSpaceType,nComponents>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  return outputConnectorData_;
+  return slotConnectorData_;
 }
 
 template<typename FunctionSpaceType,int nComponents>
 typename TimeStepping<FunctionSpaceType,nComponents>::FieldVariablesForOutputWriter TimeStepping<FunctionSpaceType,nComponents>::
 getFieldVariablesForOutputWriter()
 {
-  // recover additional field variables from outputConnectorData_, they may have been changed by transfer
-  assert(outputConnectorData_->variable2.size() >= additionalFieldVariables_.size());
+  // recover additional field variables from slotConnectorData_, they may have been changed by transfer
+  assert(slotConnectorData_->variable2.size() >= additionalFieldVariables_.size());
   for (int i = 0; i < additionalFieldVariables_.size(); i++)
   {
     LOG(DEBUG) << " Data::TimeStepping::getFieldVariablesForOutputWriter(), "
-      << " get field variable " << outputConnectorData_->variable2[i].values << ", \"" << outputConnectorData_->variable2[i].values->name()
+      << " get field variable " << slotConnectorData_->variable2[i].values << ", \"" << slotConnectorData_->variable2[i].values->name()
       << "\" for additionalFieldVariables_[" << i << "]";
-    additionalFieldVariables_[i] = outputConnectorData_->variable2[i].values;
+    additionalFieldVariables_[i] = slotConnectorData_->variable2[i].values;
   }
 
   // these field variables will be written to output files
@@ -177,7 +153,7 @@ getFieldVariablesForOutputWriter()
 //! output the given data for debugging
 template<typename FunctionSpaceType,int nComponents>
 std::string TimeStepping<FunctionSpaceType,nComponents>::
-getString(std::shared_ptr<typename TimeStepping<FunctionSpaceType,nComponents>::OutputConnectorDataType> data)
+getString(std::shared_ptr<typename TimeStepping<FunctionSpaceType,nComponents>::SlotConnectorDataType> data)
 {
   std::stringstream s;
   s << "<" << debuggingName_ << ":" << data << ">";

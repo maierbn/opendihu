@@ -99,6 +99,7 @@ def compare_result(data):
 # config for opendihu
 config = {
   "scenarioName": "3d_box",
+  "logFormat":                      "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",  # output file for log of mappings 
   "HyperelasticitySolver": {
@@ -138,12 +139,13 @@ config = {
     
     #"loadFactors":  [0.1, 0.2, 0.35, 0.47, 0.5, 0.75, 1.0],   # load factors for every timestep
     "loadFactors": [],                 # no load factors, solve problem directly
+    "loadFactorGiveUpThreshold":    0.1,                # if the adaptive time stepping produces a load factor smaller than this value, the solution will be accepted for the current timestep, even if it did not converge fully to the tolerance
     "nNonlinearSolveCalls": 1,         # how often the nonlinear solve should be repeated
     
     # boundary conditions
     "dirichletBoundaryConditions": dirichlet_bc,
     "neumannBoundaryConditions": neumann_bc,
-    "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+    "divideNeumannBoundaryConditionValuesByTotalArea": False,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
     #"updateDirichletBoundaryConditionsFunction": update_dirichlet_boundary_conditions,
     "updateDirichletBoundaryConditionsFunction": None,
     "updateDirichletBoundaryConditionsFunctionCallInterval": 1,
@@ -188,8 +190,12 @@ nz = 5    # 5
 config2 = {
   "NonlinearElasticitySolverFebio": {
     "durationLogKey": "febio",
-    "force": force,                     # factor of force that is applied in axial direction of the muscle
-    "materialParameters": material_parameters,   # c0, c1, k for Ψ = c0 * (I1-3) + c1 * (I2-3) + 1/2*k*(log(J))^2
+    "force": force,                                     # factor of force that is applied in axial direction of the muscle
+    "materialParameters": material_parameters,          # c0, c1, k for Ψ = c0 * (I1-3) + c1 * (I2-3) + 1/2*k*(log(J))^2
+    "tractionElementNos": [(nz-1)*nx*ny + j*nx + i for j in range(ny) for i in range(nx)],    # elements on which traction is applied
+    "tractionVector": [0,0,force],                      # traction vector that is applied
+    "dirichletBoundaryConditionsMode": "fix_floating",  # "fix_all" or "fix_floating", how the bottom of the box will be fixed, fix_all fixes all nodes, fix_floating fixes all nodes only in z and the edges in x/y direction
+    "slotNames": [],
     
     # mesh
     "nElements": [nx, ny, nz],

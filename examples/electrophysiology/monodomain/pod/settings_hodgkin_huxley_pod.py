@@ -63,13 +63,13 @@ if rank_no == 0:
 
 # set values for cellml model
 if "shorten" in cellml_file:
-  parameters_used_as_intermediate = [32]
+  parameters_used_as_algebraic = [32]
   parameters_used_as_constant = [65]
   parameters_initial_values = [0.0, 1.0]
   nodal_stimulation_current = 400.
   
 elif "hodgkin_huxley" in cellml_file:
-  parameters_used_as_intermediate = []
+  parameters_used_as_algebraic = []
   parameters_used_as_constant = [2]
   parameters_initial_values = [0.0]
   nodal_stimulation_current = 40.
@@ -179,6 +179,7 @@ def callback(data, shape, nEntries, dim, timeStepNo, currentTime, null):
     
 config = {
   "scenarioName": scenario_name,
+  "logFormat": "csv",
   "Meshes": {
     "MeshFibre": {
       "nElements": n_elements,
@@ -242,7 +243,7 @@ config = {
             #"handleResultCallInterval": 2e3,
             
             "statesForTransfer": 0,     # state 0 = Vm
-            "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+            "parametersUsedAsAlgebraic": parameters_used_as_algebraic,  #[32],       # list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
             "meshName": "MeshFibre",
@@ -277,8 +278,8 @@ config = {
             #"handleResultCallInterval": 2e3,
             
             "statesForTransfer": 0,     # state 0 = Vm
-          "intermediatesForTransfer": [],
-            "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+          "algebraicsForTransfer": [],
+            "parametersUsedAsAlgebraic": parameters_used_as_algebraic,  #[32],       # list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
             "meshName": "MeshFibreReduced",
@@ -376,8 +377,8 @@ config = {
            #"handleResultCallInterval": 2e3,
           
           "statesForTransfer": 0,     # state 0 = Vm
-          "intermediatesForTransfer": [],
-          "parametersUsedAsIntermediate": parameters_used_as_intermediate,  #[32],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+          "algebraicsForTransfer": [],
+          "parametersUsedAsAlgebraic": parameters_used_as_algebraic,  #[32],       # list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
           "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
           "meshName": "MeshFibre",

@@ -24,7 +24,7 @@ template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, 
 FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
 FiniteElementMethodTimeStepping(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace)
   : AssembleRightHandSide<FunctionSpaceType, QuadratureType, nComponents_, Term>(context, functionSpace),
-  DiscretizableInTime(), Splittable(), linearSolver_(nullptr), ksp_(nullptr)
+  Splittable(), linearSolver_(nullptr), ksp_(nullptr)
 {
 }
 
@@ -88,7 +88,7 @@ reset()
 //! hook to set initial values for a time stepping from this FiniteElement context, return true if it has set the values or don't do anything and return false
 template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
 bool FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
-setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> initialValues)
+setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents_>> initialValues)
 {
   // Do not set initial values from within the "FiniteElements" section of the config. (therefore return false)
   // The initial values are set by the time stepping scheme under its section.
@@ -99,8 +99,9 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,
 //! set the solution field variable in the data object, that actual data is stored in the timestepping scheme object
 template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
 void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
-setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> solution)
+setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents_>> solution)
 {
+  // this will be called by the time stepping scheme after initialize()
   this->data_.setSolutionVariable(solution);
 }
 
@@ -145,13 +146,33 @@ nComponents()
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
-std::shared_ptr<typename FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::OutputConnectorDataType>
+void FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
+setSlotConnectorData(std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType,nComponents_>> slotConnectorDataTimeStepping)
+{
+  // This method is called once in initialize() of the timestepping scheme. It provides the slotConnectorData of the timestepping.
+
+  // Set the first slot name if given
+  std::vector<std::string> &slotNames = slotConnectorDataTimeStepping->slotNames;
+  std::string ownSolutionVariableSlotName = getSlotConnectorData()->slotNames.front();
+
+  // remove the first slot name which is always the one for the solution variable
+  slotNames.erase(slotNames.begin());
+
+  // add all own slot names
+  slotNames.insert(slotNames.begin(), ownSolutionVariableSlotName);
+
+  LOG(DEBUG) << "in setSlotConnectorData of FiniteElementMethod, insert slot name of own solution variable: \"" << ownSolutionVariableSlotName
+    << "\", now slotNames of timestepping scheme: " << slotNames;
+}
+
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>
+std::shared_ptr<typename FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::SlotConnectorDataType>
 FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_, Term>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
   // check for nans or infs
   //this->data_.solution()->checkNanInf();
-  return this->data_.getOutputConnectorData();
+  return this->data_.getSlotConnectorData();
 }
 
 template<typename FunctionSpaceType, typename QuadratureType, int nComponents_, typename Term>

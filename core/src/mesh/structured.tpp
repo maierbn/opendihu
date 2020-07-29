@@ -29,6 +29,13 @@ Structured<D>::Structured(PythonConfig specificSettings) :
       // for D>1 default values is 1, i.e. one element layer in the degenerate dimensions that were not specified
       this->nElementsPerCoordinateDirectionGlobal_ = specificSettings.getOptionArray<global_no_t, D>("nElements", 1, PythonUtility::NonNegative);
     }
+    for (int i = 0; i<D; i++)
+    {
+      if (this->nElementsPerCoordinateDirectionGlobal_[i] > global_no_t(-10))
+      {
+        LOG(FATAL) << "For mesh \"" << this->meshName_ << "\" the option \"nElements\" is set to " << this->nElementsPerCoordinateDirectionGlobal_ << " (probably negative).";
+      }
+    }
     LOG(DEBUG) << "set global number of elements from settings: " << this->nElementsPerCoordinateDirectionGlobal_;
   }
   else 

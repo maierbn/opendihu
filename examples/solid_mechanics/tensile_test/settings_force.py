@@ -14,6 +14,7 @@ material_parameters = [1.0, 1.0]
 physical_extent = [1.0, 1.0, 1.0]
 constant_body_force = None
 scenario_name = "tensile_test"
+dirichlet_bc_mode = "fix_floating"
  
 if len(sys.argv) > 3:
   scenario_name = sys.argv[0]
@@ -93,10 +94,11 @@ def handle_result_hyperelasticity(result):
     # field_variables[0]: geometry
     # field_variables[1]: u
     # field_variables[2]: v
-    # field_variables[3]: PK2-Stress (Voigt), components: S_11, S_22, S_33, S_12, S_13, S_23
+    # field_variables[3]: T (material traction)
+    # field_variables[4]: PK2-Stress (Voigt), components: S_11, S_22, S_33, S_12, S_13, S_23
     
     strain = max(field_variables[1]["components"][2]["values"])
-    stress = max(field_variables[3]["components"][2]["values"])
+    stress = max(field_variables[4]["components"][2]["values"])
     
     print("strain: {}, stress: {}".format(strain, stress))
     
@@ -146,12 +148,19 @@ def handle_result_linear_elasticity(result):
 
 config = {
   "scenarioName":                 scenario_name,                # scenario name to identify the simulation runs in the log file
+  "logFormat":                    "csv",                        # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":   "solver_structure.txt",       # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile": "mappings_between_meshes_log.txt",    # log file for mappings 
   "Meshes": {
     "3Dmesh_quadratic": { 
       "inputMeshIsGlobal":          True,                       # boundary conditions are specified in global numberings, whereas the mesh is given in local numberings
       "nElements":                  [nx, ny, nz],               # number of quadratic elements in x, y and z direction
+      "physicalExtent":             physical_extent,            # physical size of the box
+      "physicalOffset":             [0, 0, 0],                  # offset/translation where the whole mesh begins
+    },
+    "3Dmesh_febio": { 
+      "inputMeshIsGlobal":          True,                       # boundary conditions are specified in global numberings, whereas the mesh is given in local numberings
+      "nElements":                  [2*nx, 2*ny, 2*nz],               # number of quadratic elements in x, y and z direction
       "physicalExtent":             physical_extent,            # physical size of the box
       "physicalOffset":             [0, 0, 0],                  # offset/translation where the whole mesh begins
     }
@@ -206,6 +215,7 @@ config = {
     #"loadFactors":                [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
     #"loadFactors":                [0.5, 1.0],                   # load factors for every timestep
     "loadFactors":                [],                           # no load factors, solve problem directly
+    "loadFactorGiveUpThreshold":    0.1,                        # if the adaptive time stepping produces a load factor smaller than this value, the solution will be accepted for the current timestep, even if it did not converge fully to the tolerance
     "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
     
     # boundary and initial conditions
@@ -249,9 +259,10 @@ config = {
     "inputMeshIsGlobal":    True,                         # boundary conditions are specified in global numberings, whereas the mesh is given in local numbering 
     "solverName":           "linearElasticitySolver",                   # reference to the linear solver
     "prefactor":            1.0,                                        # prefactor of the lhs, has no effect here
+    "slotName":             "",
     "dirichletBoundaryConditions": elasticity_dirichlet_bc,             # the Dirichlet boundary conditions that define values for displacements u
     "neumannBoundaryConditions":   elasticity_neumann_bc,               # Neumann boundary conditions that define traction forces on surfaces of elements
-    "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+    "divideNeumannBoundaryConditionValuesByTotalArea": False,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
     
     # material parameters
     "bulkModulus":          50,     # bulk modulus K, how much incompressible, high -> incompressible, low -> very compressible
@@ -268,11 +279,16 @@ config = {
   },
   "NonlinearElasticitySolverFebio": {
     "durationLogKey": "febio",
-    "force": force,                                       # factor of force that is applied in axial direction of the muscle
+    "tractionVector": traction_vector,                    # traction vector that is applied
+    #"tractionElementNos": [(2*nz-1)*2*nx*2*ny + j*2*nx + i for j in range(2*ny) for i in range(2*nx)],    # elements on which traction is applied
+    "tractionElementNos": [(nz-1)*nx*ny + j*nx + i for j in range(ny) for i in range(nx)],    # elements on which traction is applied
+    "dirichletBoundaryConditionsMode": dirichlet_bc_mode, # "fix_all" or "fix_floating", how the bottom of the box will be fixed, fix_all fixes all nodes, fix_floating fixes all nodes only in z and the edges in x/y direction
     "materialParameters": material_parameters,            # c0, c1, k for Ψ = c0 * (I1-3) + c1 * (I2-3) + 1/2*k*(log(J))^2
     
     "meshName":             "3Dmesh_quadratic",           # mesh with quadratic Lagrange ansatz functions
     "inputMeshIsGlobal":    True,                         # boundary conditions are specified in global numberings, whereas the mesh is given in local numbering 
+    "slotNames":            [],
+    
     # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
     "OutputWriter" : [
       

@@ -73,6 +73,9 @@ public:
   //! number of nodes in total
   global_no_t nNodesGlobal() const;
   
+  //! return the number of nodes per coordinate direction, for the first submesh
+  global_no_t nNodesGlobal(int coordinateDirection) const;
+
   //! get the number of nodes in the global Petsc ordering that are in partitions prior to the own rank
   global_no_t beginNodeGlobalPetsc() const;
 
@@ -107,6 +110,9 @@ public:
   //! get the local dof no for a global petsc dof no, does not work for ghost nodes
   dof_no_t getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const;
 
+  //! transform the global natural numbering to the local numbering, nodeNoGlobalNatural is interpreted to be for the first sub mesh
+  node_no_t getNodeNoLocalFromGlobalNatural(global_no_t nodeNoGlobalNatural, bool &isOnLocalDomain) const;
+
   //! from a vector of values of global/natural node numbers remove all that are non-local, nComponents consecutive values for each dof are assumed
   template <typename T>
   void extractLocalNodesWithoutGhosts(std::vector<T> &vector, int nComponents=1) const;
@@ -130,8 +136,17 @@ public:
   //! get the global dof nos of the ghost dofs in the local partition
   const std::vector<PetscInt> &ghostDofNosGlobalPetsc() const;
   
+  //! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
+  void getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const;
+
   //! check if the given dof is owned by the own rank, then return true, if not, neighbourRankNo is set to the rank by which the dof is owned
   bool isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const;
+
+  //! get the rank on which the global natural node is located
+  int getRankOfNodeNoGlobalNatural(global_no_t nodeNoGlobalNatural) const;
+
+  //! get the rank on which the global natural node is located
+  int getRankOfDofNoGlobalNatural(global_no_t dofNoGlobalNatural) const;
 
   //! get information about neighbouring rank and boundary elements for specified face,
   //! @param neighbourRankNo: the rank of the neighbouring process that shares the face, @param nElements: Size of one-layer mesh that contains boundary elements that touch the neighbouring process

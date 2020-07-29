@@ -29,6 +29,15 @@ PythonConfig::PythonConfig(const PythonConfig &rhs, std::string key)
 //! constructor as sub scope of another python config which is a list
 PythonConfig::PythonConfig(const PythonConfig &rhs, int i)
 {
+  // store updated path
+  int pathSize = std::distance(rhs.pathBegin(), rhs.pathEnd());
+  path_.resize(pathSize+1);
+  std::copy(rhs.pathBegin(), rhs.pathEnd(), path_.begin());
+  std::stringstream s;
+  s << i;
+  path_[pathSize] = std::string(s.str());
+
+  // check if the current object is a list
   if (PyList_Check(rhs.pyObject()))
   {
     int nEntries = PyList_Size(rhs.pyObject());
@@ -48,6 +57,7 @@ PythonConfig::PythonConfig(const PythonConfig &rhs, int i)
     LOG(WARNING) << getStringPath() << " is not a list";
     pythonConfig_ = rhs.pyObject();
   }
+
 }
 
 //! constructor directly from PyObject*, path from rhs + key

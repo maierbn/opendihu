@@ -5,6 +5,10 @@
 namespace MathUtility
 {
 
+const double INVERSE_REGULARIZATION_TOLERANCE = 1e-10;
+const double INVERSE_REGULARIZATION_EPSILON = 1e-10;
+
+
 template<typename double_v_t>
 double_v_t length(const VecD<1,double_v_t> node)
 {
@@ -29,17 +33,18 @@ double_v_t norm(const VecD<D,double_v_t> node)
   return length(node);
 }
 
-template<int D>
-VecD<D> normalized(VecD<D> &vector)
+template<int D, typename double_v_t>
+VecD<D> normalized(VecD<D,double_v_t> &vector)
 {
-  double factor = 1./norm<D>(vector);
-  return vector * factor;
+  double_v_t inverseNorm = 1./norm<D,double_v_t>(vector);
+  return vector * inverseNorm;
 }
 
-template<int D>
-void normalize(VecD<D> &vector)
+template<int D, typename double_v_t>
+void normalize(VecD<D,double_v_t> &vector)
 {
-  vector *= 1./norm<D>(vector);
+  double_v_t inverseNorm = 1./norm<D,double_v_t>(vector);
+  vector = vector * inverseNorm;
 }
 
 template<typename T>
@@ -87,7 +92,6 @@ double distance(const VecD<D> node1, const VecD<D> node2)
 template<typename double_v_t>
 double_v_t computeIntegrationFactor(const std::array<VecD<3,double_v_t>,1> &jacobian)
 {
-  LOG(DEBUG) << "1D integration factor, jacobian[0]: " << jacobian;
   return length(jacobian[0]);
 }
 
@@ -164,18 +168,80 @@ double_v_t computeDeterminant(const Tensor2<2> &jacobian)
   return m11*m22 - m12*m21;
 }
 
+template<typename double_v_t>
+Tensor2<3,double_v_t> computeCofactorMatrix(const Tensor2<3,double_v_t> &matrix)
+{
+  // matrices are stored column-major
+
+  // rename input values
+  const double_v_t m11 = matrix[0][0];
+  const double_v_t m21 = matrix[0][1];
+  const double_v_t m31 = matrix[0][2];
+  const double_v_t m12 = matrix[1][0];
+  const double_v_t m22 = matrix[1][1];
+  const double_v_t m32 = matrix[1][2];
+  const double_v_t m13 = matrix[2][0];
+  const double_v_t m23 = matrix[2][1];
+  const double_v_t m33 = matrix[2][2];
+
+  Tensor2<3,double_v_t> result;
+
+  result[0][0] = m22*m33 - m23*m32;   // entry m11
+  result[1][0] = -m21*m33 + m23*m31;  // entry m12
+  result[2][0] = m21*m32 - m22*m31;   // entry m13
+  result[0][1] = -m12*m33 + m13*m32;  // entry m21
+  result[1][1] = m11*m33 - m13*m31;   // entry m22
+  result[2][1] = -m11*m32 + m12*m31;  // entry m23
+  result[0][2] = m12*m23 - m13*m22;   // entry m31
+  result[1][2] = -m11*m23 + m13*m21;  // entry m32
+  result[2][2] = m11*m22 - m12*m21;   // entry m33
+
+  return result;
+}
+
+template<typename double_v_t>
+Tensor2<2,double_v_t> computeCofactorMatrix(const Tensor2<2,double_v_t> &matrix)
+{
+  // matrices are stored column-major
+
+  // rename input values
+  const double_v_t m11 = matrix[0][0];
+  const double_v_t m21 = matrix[0][1];
+  const double_v_t m12 = matrix[1][0];
+  const double_v_t m22 = matrix[1][1];
+
+  Tensor2<2,double_v_t> result;
+
+  result[0][0] = m22;   // entry m11
+  result[1][0] = -m21;  // entry m12
+  result[0][1] = -m12;  // entry m21
+  result[1][1] = m11;   // entry m22
+
+  return result;
+}
+
 // 3D symmetric matrix inverse
 template<typename double_v_t>
 Tensor2<3,double_v_t> computeSymmetricInverse(const Tensor2<3,double_v_t> &matrix, double_v_t &determinant)
 {
   // rename input values
-  const double_v_t m11 = matrix[0][0];
+        double_v_t m11 = matrix[0][0];
   const double_v_t m21 = matrix[0][1];
   const double_v_t m31 = matrix[0][2];
   //const double_v_t m12 = matrix[1][0];
-  const double_v_t m22 = matrix[1][1];
+        double_v_t m22 = matrix[1][1];
   const double_v_t m32 = matrix[1][2];
-  const double_v_t m33 = matrix[2][2];
+        double_v_t m33 = matrix[2][2];
+
+  determinant = m11*m22*m33 - m11*sqr(m32) - sqr(m21)*m33 + 2*m21*m31*m32 - m22*sqr(m31);
+
+  // regularize matrix if near singular, by adding ε*I (small values on diagonal)
+  double_v_t regularizationEpsilon = 0;
+  // where operator is documented here: https://vcdevel.github.io/Vc-1.4.1/group__Utilities.html#gaa18ac68167ac7614731134de7364a1d5
+  Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE) | regularizationEpsilon = INVERSE_REGULARIZATION_EPSILON;
+  m11 += regularizationEpsilon;
+  m22 += regularizationEpsilon;
+  m33 += regularizationEpsilon;
 
   determinant = m11*m22*m33 - m11*sqr(m32) - sqr(m21)*m33 + 2*m21*m31*m32 - m22*sqr(m31);
   double_v_t invDet = 1./determinant;
@@ -200,10 +266,20 @@ template<typename double_v_t>
 Tensor2<2,double_v_t> computeSymmetricInverse(const Tensor2<2,double_v_t> &matrix, double_v_t &determinant)
 {
   // rename input values
-  const double_v_t m11 = matrix[0][0];
+        double_v_t m11 = matrix[0][0];
   const double_v_t m21 = matrix[0][1];
   //const double_v_t m12 = matrix[1][0];
-  const double_v_t m22 = matrix[1][1];
+        double_v_t m22 = matrix[1][1];
+
+  determinant = m11*m22 - sqr(m21);
+
+  // regularize matrix if near singular, by adding ε*I (small values on diagonal)
+  double_v_t regularizationEpsilon = 0;
+  // where operator is documented here: https://vcdevel.github.io/Vc-1.4.1/group__Utilities.html#gaa18ac68167ac7614731134de7364a1d5
+  Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE) | regularizationEpsilon = INVERSE_REGULARIZATION_EPSILON;
+
+  m11 += regularizationEpsilon;
+  m22 += regularizationEpsilon;
 
   determinant = m11*m22 - sqr(m21);
   double_v_t invDet = 1./determinant;
@@ -222,7 +298,12 @@ Tensor2<2,double_v_t> computeSymmetricInverse(const Tensor2<2,double_v_t> &matri
 template<typename double_v_t>
 Tensor2<1,double_v_t> computeInverse(const Tensor2<1,double_v_t> &matrix, double_v_t &determinant)
 {
-  determinant = matrix[0][0];
+  // regularize matrix if near singular, by adding ε*I (small values on diagonal)
+  double_v_t regularizationEpsilon = 0;
+  // where operator is documented here: https://vcdevel.github.io/Vc-1.4.1/group__Utilities.html#gaa18ac68167ac7614731134de7364a1d5
+  Vc::where(abs(matrix[0][0]) < INVERSE_REGULARIZATION_TOLERANCE) | regularizationEpsilon = INVERSE_REGULARIZATION_EPSILON;
+
+  determinant = matrix[0][0] + regularizationEpsilon;
 
   Tensor2<1,double_v_t> result;
   result[0][0] = 1./determinant;
@@ -236,10 +317,20 @@ Tensor2<2,double_v_t> computeInverse(const Tensor2<2,double_v_t> &matrix, double
   // matrices are stored column-major
 
   // rename input values
-  const double_v_t m11 = matrix[0][0];
+        double_v_t m11 = matrix[0][0];
   const double_v_t m21 = matrix[0][1];
   const double_v_t m12 = matrix[1][0];
-  const double_v_t m22 = matrix[1][1];
+        double_v_t m22 = matrix[1][1];
+
+  determinant =  m11*m22 - m12*m21;
+
+  // regularize matrix if near singular, by adding ε*I (small values on diagonal)
+  double_v_t regularizationEpsilon = 0;
+  // where operator is documented here: https://vcdevel.github.io/Vc-1.4.1/group__Utilities.html#gaa18ac68167ac7614731134de7364a1d5
+  Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE) | regularizationEpsilon = INVERSE_REGULARIZATION_EPSILON;
+
+  m11 += regularizationEpsilon;
+  m22 += regularizationEpsilon;
 
   determinant =  m11*m22 - m12*m21;
   double_v_t invDet = 1./determinant;
@@ -258,18 +349,29 @@ Tensor2<2,double_v_t> computeInverse(const Tensor2<2,double_v_t> &matrix, double
 template<typename double_v_t>
 Tensor2<3,double_v_t> computeInverse(const Tensor2<3,double_v_t> &matrix, double_v_t &determinant)
 {
-  // matrices are stored column-major
-
   // rename input values
-  const double_v_t m11 = matrix[0][0];
+  // matrices are stored column-major
+        double_v_t m11 = matrix[0][0];
   const double_v_t m21 = matrix[0][1];
   const double_v_t m31 = matrix[0][2];
   const double_v_t m12 = matrix[1][0];
-  const double_v_t m22 = matrix[1][1];
+        double_v_t m22 = matrix[1][1];
   const double_v_t m32 = matrix[1][2];
   const double_v_t m13 = matrix[2][0];
   const double_v_t m23 = matrix[2][1];
-  const double_v_t m33 = matrix[2][2];
+        double_v_t m33 = matrix[2][2];
+
+  determinant =  m11*m22*m33 - m11*m23*m32 - m12*m21*m33 + m12*m23*m31 + m13*m21*m32 - m13*m22*m31;
+
+  // regularize matrix if near singular, by adding ε*I (small values on diagonal)
+  double_v_t regularizationEpsilon = 0;
+
+  // where operator is documented here: https://vcdevel.github.io/Vc-1.4.1/group__Utilities.html#gaa18ac68167ac7614731134de7364a1d5
+  Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE) | regularizationEpsilon = INVERSE_REGULARIZATION_EPSILON;
+
+  m11 += regularizationEpsilon;
+  m22 += regularizationEpsilon;
+  m33 += regularizationEpsilon;
 
   determinant =  m11*m22*m33 - m11*m23*m32 - m12*m21*m33 + m12*m23*m31 + m13*m21*m32 - m13*m22*m31;
   double_v_t invDet = 1./determinant;
@@ -288,7 +390,6 @@ Tensor2<3,double_v_t> computeInverse(const Tensor2<3,double_v_t> &matrix, double
 
   return result;
 }
-
 
 template<typename double_v_t=double>
 std::array<double_v_t,9> computeTransformationMatrixAndDeterminant(const std::array<VecD<3,double_v_t>,3> &jacobian, double_v_t &determinant)
@@ -462,23 +563,81 @@ void rotateMatrix(Matrix<3,3,double_v_t> &matrix, VecD<3,double_v_t> directionVe
   const double_v_t b2 = directionVector[1];
   const double_v_t b3 = directionVector[2];
 
-  Matrix<3,3,double_v_t> basis(
-  {
-    // normalized(b)                       normalized(e_3 x b)                        normalized(b x e_3 x b)
-    b1/sqrt(sqr(b1) + sqr(b2) + sqr(b3)),  -b2/sqrt(sqr(b1) + sqr(b2)),               -b1*b3/sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2))),
-    b2/sqrt(sqr(b1) + sqr(b2) + sqr(b3)),   b1/sqrt(sqr(b1) + sqr(b2)),               -b2*b3/sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2))),
-    b3/sqrt(sqr(b1) + sqr(b2) + sqr(b3)),                            0,  (sqr(b1) + sqr(b2))/sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2)))
-  });
+  const double_v_t bNorm = sqrt(sqr(b1) + sqr(b2) + sqr(b3));     // |b|
+  const double_v_t e3bNorm = sqrt(sqr(b1) + sqr(b2));             // |e_3 x b|
+  const double_v_t be3bNorm = sqrt(sqr(b1)*sqr(b3) + sqr(b2)*sqr(b3) + sqr(sqr(b1) + sqr(b2)));   // |b x (e_3 x b)|
 
-  Matrix<3,3,double_v_t> basis_T(
+  if (Vc::any_of(MathUtility::abs(bNorm) < 1e-15))
   {
-    basis(0,0), basis(1,0), basis(2,0),
-    basis(0,1), basis(1,1), basis(2,1),
-    basis(0,2), basis(1,2), basis(2,2)
-  });
+    LOG(ERROR) << "Trying to transform a matrix to direction vector " << directionVector;
+    return;
+  }
 
-  matrix = basis * matrix * basis_T;
+  // if one of the new basis vectors is zero (this happens, if directionVector == [0,0,1]), use e2 instead of e3
+  if (Vc::any_of(MathUtility::abs(e3bNorm) < 1e-15) || Vc::any_of(MathUtility::abs(be3bNorm) < 1e-15))
+  {
+    const double_v_t e2bNorm = sqrt(sqr(b3) + sqr(b1));             // |e_2 x b|
+    const double_v_t be2bNorm = sqrt(sqr(b1)*sqr(b2) + sqr(sqr(b1)*sqr(b3)) + sqr(b2) + sqr(b3));   // |b x (e_3 x b)|
+
+    if (Vc::any_of(MathUtility::abs(e2bNorm) < 1e-15) || Vc::any_of(MathUtility::abs(be2bNorm) < 1e-15))
+    {
+      LOG(ERROR) << "Trying to transform a matrix to direction vector " << directionVector;
+      return;
+    }
+
+    // use e_2
+
+    Matrix<3,3,double_v_t> basis(
+    {
+      // normalized(b)    normalized(e_2 x b)   normalized(b x e_2 x b)
+      b1/bNorm,            b3/e2bNorm,                       -b1*b2/be2bNorm,
+      b2/bNorm,                     0,          (sqr(b1) + sqr(b3))/be2bNorm,
+      b3/bNorm,           -b1/e2bNorm,                       -b2*b3/be2bNorm
+    });
+
+    Matrix<3,3,double_v_t> basis_T(
+    {
+      basis(0,0), basis(1,0), basis(2,0),
+      basis(0,1), basis(1,1), basis(2,1),
+      basis(0,2), basis(1,2), basis(2,2)
+    });
+
+    matrix = basis * matrix * basis_T;
+  }
+  else
+  {
+    // use e_3
+
+    Matrix<3,3,double_v_t> basis(
+    {
+      // normalized(b)    normalized(e_3 x b)   normalized(b x e_3 x b)
+      b1/bNorm,           -b2/e3bNorm,                       -b1*b3/be3bNorm,
+      b2/bNorm,            b1/e3bNorm,                       -b2*b3/be3bNorm,
+      b3/bNorm,                     0,          (sqr(b1) + sqr(b2))/be3bNorm
+    });
+
+    Matrix<3,3,double_v_t> basis_T(
+    {
+      basis(0,0), basis(1,0), basis(2,0),
+      basis(0,1), basis(1,1), basis(2,1),
+      basis(0,2), basis(1,2), basis(2,2)
+    });
+
+    matrix = basis * matrix * basis_T;
+  }
 }
 
+template<typename T, std::size_t N>
+bool containsNanOrInf(std::array<T,N> value)
+{
+  for (std::size_t i = 0; i < N; i++)
+  {
+    if (containsNanOrInf(value.at(i)))
+    {
+      return true;
+    }
+  }
+  return false;
+}
 
 }  // namespace

@@ -5,7 +5,7 @@
 namespace PreciceAdapter
 {
 
-template<class NestedSolver>
+template<typename NestedSolver>
 PartitionedFibers<NestedSolver>::
 PartitionedFibers(DihuContext context) :
   Runnable(),
@@ -18,7 +18,7 @@ PartitionedFibers(DihuContext context) :
   timeStepOutputInterval_ = specificSettings_.getOptionInt("timeStepOutputInterval", 100, PythonUtility::Positive);
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void PartitionedFibers<NestedSolver>::
 initialize()
 {
@@ -30,8 +30,8 @@ initialize()
 
   // initialize() will be called before the simulation starts.
 
-  // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver("PreciceAdapter::PartitionedFibers", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
+  // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
+  DihuContext::solverStructureVisualizer()->addSolver("PreciceAdapter::PartitionedFibers", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means slot connector data is shared with the first subsolver
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();
@@ -42,33 +42,38 @@ initialize()
   // indicate in solverStructureVisualizer that the child solver initialization is done
   DihuContext::solverStructureVisualizer()->endChild();
 
-  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
   // get the splitting time step width which is the time step width to use here (not dt_3D which is the time window of precice)
   normalTimeStepWidth_ = nestedSolver_.nestedSolvers().instancesLocal()[0].timeStepWidth();
   currentTimeStepWidth_ = normalTimeStepWidth_;
 
-  // check that the output connector is correct
+  // check that the slot connector is correct
 
   const int nStates = NestedSolver::CellmlAdapterType::nStates();
 
   std::shared_ptr<std::vector<
-    std::shared_ptr<std::vector<
-      std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> >
+    std::shared_ptr<std::tuple<
+      std::shared_ptr<std::vector<
+        std::shared_ptr<::Data::SlotConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> >
+      >>,
+      std::shared_ptr<std::vector<
+        std::shared_ptr<::Data::SlotConnectorData<typename NestedSolver::FunctionSpace, 1, 1> >
+      >>
     >>
-  >> data = nestedSolver_.getOutputConnectorData();
+  >> data = nestedSolver_.getSlotConnectorData();
 
   // count number of fibers
   int nFibers = 0;
   // loop over fibers
   for (int i = 0; i < data->size(); i++)
   {
-    for (int j = 0; j < data->at(i)->size(); j++, nFibers++)
+    for (int j = 0; j < std::get<0>(*data->at(i))->size(); j++, nFibers++)
     {
       // get data of single fiber
-      std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> > fiberData
-        = data->at(i)->at(j);
+      std::shared_ptr<::Data::SlotConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> > fiberData
+        = std::get<0>(*data->at(i))->at(j);
 
       // get function space of this fiber
       assert(!fiberData->variable1.empty());
@@ -116,11 +121,11 @@ initialize()
   int fiberNo = 0;
   for (int i = 0; i < data->size(); i++)
   {
-    for (int j = 0; j < data->at(i)->size(); j++, fiberNo++)
+    for (int j = 0; j < std::get<0>(*data->at(i))->size(); j++, fiberNo++)
     {
       // get data of single fiber
-      std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> > fiberData
-        = data->at(i)->at(j);
+      std::shared_ptr<::Data::SlotConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> > fiberData
+        = std::get<0>(*data->at(i))->at(j);
 
       // get function space of this fiber
       assert(!fiberData->variable1.empty());
@@ -169,7 +174,7 @@ initialize()
 #endif
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void PartitionedFibers<NestedSolver>::
 run()
 {
@@ -245,7 +250,7 @@ run()
 
 #ifdef HAVE_PRECICE
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void PartitionedFibers<NestedSolver>::
 preciceReadData()
 {
@@ -263,20 +268,25 @@ preciceReadData()
   const int nStates = NestedSolver::CellmlAdapterType::nStates();
 
   std::shared_ptr<std::vector<
-    std::shared_ptr<std::vector<
-      std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> >
+    std::shared_ptr<std::tuple<
+      std::shared_ptr<std::vector<
+        std::shared_ptr<::Data::SlotConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> >
+      >>,
+      std::shared_ptr<std::vector<
+        std::shared_ptr<::Data::SlotConnectorData<typename NestedSolver::FunctionSpace, 1, 1> >
+      >>
     >>
-  >> data = nestedSolver_.getOutputConnectorData();
+  >> data = nestedSolver_.getSlotConnectorData();
 
   // loop over fibers
   int fiberNo = 0;
   for (int i = 0; i < data->size(); i++)
   {
-    for (int j = 0; j < data->at(i)->size(); j++, fiberNo++)
+    for (int j = 0; j < std::get<0>(*data->at(i))->size(); j++, fiberNo++)
     {
       // get data for a single fiber
-      std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> > fiberData
-        = data->at(i)->at(j);
+      std::shared_ptr<::Data::SlotConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> > fiberData
+        = std::get<0>(*data->at(i))->at(j);
 
       // get function space
       assert(!fiberData->variable1.empty());
@@ -317,7 +327,7 @@ preciceReadData()
   LOG(DEBUG) << "precice read geometry complete";
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void PartitionedFibers<NestedSolver>::
 preciceWriteData()
 {
@@ -333,20 +343,25 @@ preciceWriteData()
   const int nStates = NestedSolver::CellmlAdapterType::nStates();
 
   std::shared_ptr<std::vector<
-    std::shared_ptr<std::vector<
-      std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> >
+    std::shared_ptr<std::tuple<
+      std::shared_ptr<std::vector<
+        std::shared_ptr<::Data::SlotConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> >
+      >>,
+      std::shared_ptr<std::vector<
+        std::shared_ptr<::Data::SlotConnectorData<typename NestedSolver::FunctionSpace, 1, 1> >
+      >>
     >>
-  >> data = nestedSolver_.getOutputConnectorData();
+  >> data = nestedSolver_.getSlotConnectorData();
 
   // loop over fibers
   int fiberNo = 0;
   for (int i = 0; i < data->size(); i++)
   {
-    for (int j = 0; j < data->at(i)->size(); j++, fiberNo++)
+    for (int j = 0; j < std::get<0>(*data->at(i))->size(); j++, fiberNo++)
     {
       // get data for a single fiber
-      std::shared_ptr<::Data::OutputConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> > fiberData
-        = data->at(i)->at(j);
+      std::shared_ptr<::Data::SlotConnectorData<typename NestedSolver::FunctionSpace, nStates, 1> > fiberData
+        = std::get<0>(*data->at(i))->at(j);
 
         // get function space
       assert(!fiberData->variable1.empty());
@@ -373,7 +388,7 @@ preciceWriteData()
 
 #endif
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void PartitionedFibers<NestedSolver>::
 reset()
 {
@@ -383,7 +398,7 @@ reset()
   // "uninitialize" everything
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 typename PartitionedFibers<NestedSolver>::Data &PartitionedFibers<NestedSolver>::
 data()
 {
@@ -392,14 +407,14 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
-template<class NestedSolver>
-std::shared_ptr<typename PartitionedFibers<NestedSolver>::OutputConnectorDataType> PartitionedFibers<NestedSolver>::
-getOutputConnectorData()
+//! the transfer is done by the slot_connector_data_transfer class
+template<typename NestedSolver>
+std::shared_ptr<typename PartitionedFibers<NestedSolver>::SlotConnectorDataType> PartitionedFibers<NestedSolver>::
+getSlotConnectorData()
 {
   //! This is relevant only, if this solver is part of a splitting or coupling scheme. Then this method returns the values/variables that will be
   // transferred to the other solvers. We can just reuse the values of the nestedSolver_.
-  return nestedSolver_.getOutputConnectorData();
+  return nestedSolver_.getSlotConnectorData();
 }
 
 }  // namespace

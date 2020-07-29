@@ -227,21 +227,28 @@ output_interval = dt
 #neumann_bc = []
 
 config = {
-  "scenarioName": "3d_box",
+  "scenarioName": "dynamic_rod",
+  "logFormat":    "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "mappings_between_meshes.txt",   # log file for mappings between meshes
+  
   "Meshes": fiber_meshes,  
   "Solvers": {
     "nonlinearSolver": {
-      "relativeTolerance": 1e-10,         # 1e-10 relative tolerance of the linear solver
-      "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual of the linear solver         
+      # nonlinear solver
+      "relativeTolerance": 1e-5,         # 1e-10 relative tolerance of the linear solver
+      "absoluteTolerance": 1e-5,         # 1e-10 absolute tolerance of the residual of the linear solver    
       "solverType": "preonly",            # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
       "preconditionerType": "lu",         # type of the preconditioner
       "maxIterations": 1e4,               # maximum number of iterations in the linear solver
+      "dumpFilename": "",#"out/m",            # filename for output of solver matrix
+      "dumpFormat": "matlab",             # default, ascii, matlab
       "snesMaxFunctionEvaluations": 1e8,  # maximum number of function iterations
-      "snesMaxIterations": 50,            # maximum number of iterations in the nonlinear solver
-      "snesRelativeTolerance": 1e-5,     # relative tolerance of the nonlinear solver
-      "snesLineSearchType": "l2",        # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
-      "snesAbsoluteTolerance": 1e-5,     # absolute tolerance of the nonlinear solver
+      "snesMaxIterations": 50,             # maximum number of iterations in the nonlinear solver
+      "snesRebuildJacobianFrequency": 5,  # frequency with which the jacobian is newly computed
+      "snesRelativeTolerance": 1e-5,      # relative tolerance of the nonlinear solver
+      "snesLineSearchType": "l2",         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
+      "snesAbsoluteTolerance": 1e-5,      # absolute tolerance of the nonlinear solver
     }
   },
   "DynamicHyperelasticitySolver": {
@@ -280,6 +287,7 @@ config = {
     #"loadFactors":  [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
     "loadFactors": [],                 # no load factors, solve problem directly
     "nNonlinearSolveCalls": 1,         # how often the nonlinear solve should be repeated
+    "loadFactorGiveUpThreshold": 0.1,   # if the adaptive time stepping produces a load factor smaller than this value, the solution will be accepted for the current timestep, even if it did not converge fully to the tolerance
     
     # boundary and initial conditions
     "dirichletBoundaryConditions": dirichlet_bc,
@@ -296,24 +304,24 @@ config = {
     "constantBodyForce": constant_body_force,     # e.g. for gravity
     
     "OutputWriter" : [   # output files for displacements function space (quadratic elements), contains displacements, velocities and PK2 stresses
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-      {"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
+      {"format": "Paraview", "outputInterval": 5, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+      {"format": "PythonCallback", "outputInterval": 5, "callback": postprocess, "onlyNodalValues":True, "filename": "", "fileNumbering": "incremental"},
     ],
     "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
       "OutputWriter" : [
-        {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+        {"format": "Paraview", "outputInterval": 5, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       ]
     },
     "dynamic": {    # output of the dynamic solver, has additional virtual work values 
       "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-        #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-        #{"format": "Paraview", "outputInterval": 1, "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+        #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+        #{"format": "Paraview", "outputInterval": 1, "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       ],
     },
     # output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
     "LoadIncrements": {   
       "OutputWriter" : [
-        {"format": "Paraview", "outputInterval": 1, "filename": "out_static/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+        {"format": "Paraview", "outputInterval": 5, "filename": "out_static/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       ]
     },
   }

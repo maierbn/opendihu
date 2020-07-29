@@ -12,4 +12,5 @@ There are reference pages that explain frequently used classes.
    
    developer/conventions
    developer/reference
+   developer/new_physics
    

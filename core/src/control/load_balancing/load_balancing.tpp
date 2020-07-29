@@ -83,8 +83,8 @@ rebalance()
   CellMLAdapter &cellMLAdapter = timeSteppingHeun.discretizableInTime();
 
   // get cellML adapter information
-  int nInstances, nIntermediates, nParameters;
-  cellMLAdapter.getNumbers(nInstances, nIntermediates, nParameters);
+  int nInstances, nAlgebraics, nParameters;
+  cellMLAdapter.getNumbers(nInstances, nAlgebraics, nParameters);
 
   // log cellML adapter information
   LOG(DEBUG) << "cellMLAdapter has " << nInstances << " instances";

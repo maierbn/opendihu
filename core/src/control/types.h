@@ -7,6 +7,8 @@
 
 //#define USE_VECTORIZED_FE_MATRIX_ASSEMBLY     // if the vectorized implementation of integrating the stiffness and mass matrices should be used
 // This options reduces the runtime significantly, theoretically by a factor of 4 for matrix assembly. However, the compile time increases by a factor of circa 4 to 5.
+// example: examples/solid_mechanics/dynamic_mooney_rivlin/muscle_with_fat runtime: 5:08.61 min -> 3:07.93 min, compile time: 2m28,546s+1m34,024s -> 2m16,100s+9m10,411s
+// This option is set by the build system.
 
 // define types for element, node and dof numbering, for the local numberings
 typedef PetscInt node_no_t;               // type to hold value of node no or number of nodes

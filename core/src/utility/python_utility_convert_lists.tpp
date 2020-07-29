@@ -319,6 +319,46 @@ struct PythonUtility::convertFromPython<std::array<ValueType,nComponents>>
   }
 };
 
+//partial specialization for std::map
+template<typename KeyType, typename ValueType>
+struct PythonUtility::convertFromPython<std::map<KeyType,ValueType>>
+{
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
+  static std::map<KeyType,ValueType> get(PyObject *object)
+  {
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    std::map<KeyType,ValueType> result;
+    assert(object != nullptr);
+    if (PyDict_Check(object))
+    {
+      PyObject *itemList = PyDict_Items(object);
+
+      for (int itemListIndex = 0; itemListIndex < PyList_Size(itemList); itemListIndex++)
+      {
+        PyObject *tuple = PyList_GetItem(itemList, (Py_ssize_t)itemListIndex);
+        PyObject *pyKey = PyTuple_GetItem(tuple, (Py_ssize_t)0);
+        PyObject *pyValue = PyTuple_GetItem(tuple, (Py_ssize_t)1);
+
+        KeyType key = convertFromPython<KeyType>::get(pyKey);
+        ValueType value = convertFromPython<ValueType>::get(pyValue);
+        result[key] = value;
+      }
+      return result;
+    }
+    else
+    {
+      LOG(WARNING) << "Expected python dict";
+
+      return result;
+    }
+#ifndef __PGI
+    return result;
+#endif
+  }
+};
+
 //partial specialization for MathUtility::Matrix
 template<int nRows, int nColumns>
 struct PythonUtility::convertFromPython<MathUtility::Matrix<nRows,nColumns>>
@@ -734,7 +774,7 @@ template<typename ValueType>
 struct PythonUtility::convertToPython<std::vector<ValueType>>
 {
   //! convert a type to a python object
-  static PyObject *get(std::vector<ValueType> &value)
+  static PyObject *get(const std::vector<ValueType> &value)
   {
     PyObject *result = PyList_New(value.size());
     for (int i = 0; i < value.size(); i++)
@@ -750,7 +790,7 @@ template<typename ValueType, int nComponents>
 struct PythonUtility::convertToPython<std::array<ValueType,nComponents>>
 {
   //! convert a type to a python object
-  static PyObject *get(std::array<ValueType,nComponents> &value)
+  static PyObject *get(const std::array<ValueType,nComponents> &value)
   {
     PyObject *result = PyTuple_New(nComponents);
     for (int i = 0; i < nComponents; i++)
@@ -766,7 +806,7 @@ template<typename ValueType, global_no_t nComponents>
 struct PythonUtility::convertToPython<std::array<ValueType,nComponents>>
 {
   //! convert a type to a python object
-  static PyObject *get(std::array<ValueType,nComponents> &value)
+  static PyObject *get(const std::array<ValueType,nComponents> &value)
   {
     PyObject *result = PyTuple_New(nComponents);
     for (int i = 0; i < nComponents; i++)
@@ -782,13 +822,30 @@ template<typename ValueType, unsigned long nComponents>
 struct PythonUtility::convertToPython<std::array<ValueType,nComponents>>
 {
   //! convert a type to a python object
-  static PyObject *get(std::array<ValueType,nComponents> &value)
+  static PyObject *get(const std::array<ValueType,nComponents> &value)
   {
     PyObject *result = PyTuple_New(nComponents);
     for (int i = 0; i < nComponents; i++)
     {
       PyObject *item = PythonUtility::convertToPython<ValueType>::get(value[i]);
       PyTuple_SET_ITEM(result, (Py_ssize_t)i, item);
+    }
+    return result;
+  }
+};
+
+template<typename KeyType, typename ValueType>
+struct PythonUtility::convertToPython<std::map<KeyType,ValueType>>
+{
+  //! convert a map to a python dict
+  static PyObject *get(const std::map<KeyType,ValueType> &value)
+  {
+    PyObject *result = PyDict_New();
+    for (const std::pair<KeyType,ValueType> &entry : value)
+    {
+      PyObject *key = PythonUtility::convertToPython<KeyType>::get(entry.first);
+      PyObject *value = PythonUtility::convertToPython<ValueType>::get(entry.second);
+      PyDict_SetItem(result, key, value);
     }
     return result;
   }

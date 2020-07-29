@@ -59,7 +59,11 @@ public:
                                                                   Tensor2<MeshType::dim()> inverseJacobianParameterSpace, std::array<double,MeshType::dim()> xi) const;
 
   //! compute the normal in world space, normal to face at xi, use the given geometry values, that can by obtained by fieldVariable->getElementValues(elementNo, geometryValues) or mesh->getElementGeometry(elementNo, geometryValues)
-  Vec3 getNormal(Mesh::face_t face, std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> geometryValues, std::array<double,MeshType::dim()> xi);
+  template<typename double_v_t>
+  VecD<3,double_v_t> getNormal(Mesh::face_t face, std::array<VecD<3,double_v_t>,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> geometryValues, std::array<double,MeshType::dim()> xi);
+
+  //! compute the normal in world space, normal to face at xi
+  VecD<3,Vc::double_v> getNormal(Mesh::face_t face, Vc::int_v elementNoLocal, std::array<double,MeshType::dim()> xi);
 
   //! compute the normal in world space, normal to face at xi
   Vec3 getNormal(Mesh::face_t face, element_no_t elementNoLocal, std::array<double,MeshType::dim()> xi);

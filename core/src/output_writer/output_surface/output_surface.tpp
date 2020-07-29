@@ -54,8 +54,6 @@ initialize()
   if (!sampledPoints_.empty())
     filename_ = specificSettings.getOptionString("filename", "out/sampledPoints.csv");
 
-  initializeSampledPoints();
-
   LOG(DEBUG) << "OutputSurface: initialize output writers";
 
   // initialize output writer to use smaller rank subset that only contains the ranks that have parts of the surface
@@ -64,7 +62,10 @@ initialize()
   {
     rankSubset_ = data_.functionSpace()->meshPartition()->rankSubset();
     outputWriterManager_.initialize(context_, specificSettings, rankSubset_);
+
+    initializeSampledPoints();
   }
+
   initialized_ = true;
 }
 
@@ -100,8 +101,8 @@ initializeSampledPoints()
       double residual;
       bool searchedAllElements;
       //findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,D> &xi, bool startSearchInCurrentElement, double &residual, bool &searchedAllElements, double xiTolerance)
-      bool pointFound = functionSpaces_[functionSpaceNo]->findPosition(point, elementNoLocal, ghostMeshNo, xi, true, residual, searchedAllElements);
-
+      const double xiTolerance = 10.0;
+      bool pointFound = functionSpaces_[functionSpaceNo]->findPosition(point, elementNoLocal, ghostMeshNo, xi, true, residual, searchedAllElements, xiTolerance);
 
       if (pointFound)
       {
@@ -263,8 +264,8 @@ writeSampledPoints()
     }
     // resize global buffers
     indicesGlobal.resize(nPointsGlobal);
-    sampledValuesGlobal.resize(nPointsGlobal*nComponents);
-    sampledGeometryGlobal.resize(nPointsGlobal*3);
+    sampledValuesGlobal.resize(nPointsGlobal*nComponents, 0);
+    sampledGeometryGlobal.resize(nPointsGlobal*3, 0);
 
     LOG(DEBUG) << "n global points: " << nPointsGlobal << ", nPointsOnRanks: " << nPointsOnRanks;
 
@@ -293,8 +294,8 @@ writeSampledPoints()
     << sizesOnRanksValues << ", offsetsValues: " << offsetsValues << ", nPointsLocal*nComponents: " << nPointsLocal*nComponents;
 
   // communicate actual values
-  MPIUtility::handleReturnValue(MPI_Gatherv(indicesLocal.data(), nPointsLocal*nComponents, MPI_DOUBLE,
-                                            indicesGlobal.data(), sizesOnRanksValues.data(), offsetsValues.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD), "MPI_Gatherv");
+  MPIUtility::handleReturnValue(MPI_Gatherv(indicesLocal.data(), nPointsLocal*nComponents, MPI_INT,
+                                            indicesGlobal.data(), sizesOnRanksValues.data(), offsetsValues.data(), MPI_INT, 0, MPI_COMM_WORLD), "MPI_Gatherv");
   MPIUtility::handleReturnValue(MPI_Gatherv(sampledValuesLocal.data(), nPointsLocal*nComponents, MPI_DOUBLE,
                                             sampledValuesGlobal.data(), sizesOnRanksValues.data(), offsetsValues.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD), "MPI_Gatherv");
   MPIUtility::handleReturnValue(MPI_Gatherv(sampledGeometryLocal.data(), nPointsLocal*3, MPI_DOUBLE,
@@ -430,10 +431,10 @@ data()
 }
 
 template<typename Solver>
-std::shared_ptr<typename OutputSurface<Solver>::OutputConnectorDataType> OutputSurface<Solver>::
-getOutputConnectorData()
+std::shared_ptr<typename OutputSurface<Solver>::SlotConnectorDataType> OutputSurface<Solver>::
+getSlotConnectorData()
 {
-  return solver_.getOutputConnectorData();
+  return solver_.getSlotConnectorData();
 }
 
 }  // namespace OutputWriter

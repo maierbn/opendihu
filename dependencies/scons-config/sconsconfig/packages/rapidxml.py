@@ -1,5 +1,5 @@
 import sys, os
-from Package import Package
+from .Package import Package
 
 def make_dir(x):
     if not os.path.exists(x):

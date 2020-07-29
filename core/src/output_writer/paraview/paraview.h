@@ -91,8 +91,8 @@ protected:
     std::vector<std::string> meshNamesCombinedMeshesVector;   //< the same as meshNamesCombinedMeshes, but as vector that preserves the order, this is important for the output file
     PolyDataPropertiesForMesh properties;   //< the properties of the merged mesh
 
-    std::string firstScalarName;   //< name of the first scalar field variable of the mesh
-    std::string firstVectorName;   //< name of the first non-scalar field variable of the mesh
+    std::string firstScalarName;   //< name of the first scalar field variable of the mesh (this is for Paraview such that it selects this as the default scalar field)
+    std::string firstVectorName;   //< name of the first vector field variable with 3 components of the mesh (this is for Paraview such that it selects this as the default vector field)
 
     //! constructor, initialize nPoints and nCells to 0
     VTKPiece();

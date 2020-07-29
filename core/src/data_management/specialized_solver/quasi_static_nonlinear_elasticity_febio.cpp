@@ -21,8 +21,14 @@ initialize()
   // call initialize of base class
   Data<FunctionSpace>::initialize();
 
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
-  outputConnectorData_->addFieldVariable(activation());
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
+  slotConnectorData_->addFieldVariable(activation());
+
+  // parse slot names for all slot connector data slots, only one slot here
+  this->context_.getPythonConfig().getOptionVector("slotNames", slotConnectorData_->slotNames);
+
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
 }
 
 void QuasiStaticNonlinearElasticityFebio::
@@ -116,10 +122,10 @@ print()
 {
 }
 
-std::shared_ptr<typename QuasiStaticNonlinearElasticityFebio::OutputConnectorDataType> QuasiStaticNonlinearElasticityFebio::
-getOutputConnectorData()
+std::shared_ptr<typename QuasiStaticNonlinearElasticityFebio::SlotConnectorDataType> QuasiStaticNonlinearElasticityFebio::
+getSlotConnectorData()
 {
-  return outputConnectorData_;
+  return slotConnectorData_;
 }
 
 typename QuasiStaticNonlinearElasticityFebio::FieldVariablesForOutputWriter QuasiStaticNonlinearElasticityFebio::

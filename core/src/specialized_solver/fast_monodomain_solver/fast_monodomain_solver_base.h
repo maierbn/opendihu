@@ -42,10 +42,10 @@ public:
 };
 }
 
-/** The implementation of a monodomain solver as used in the fibers_emg example, number of states and intermediates is templated.
+/** The implementation of a monodomain solver as used in the fibers_emg example, number of states and algebraics is templated.
  *  This class contains all functionality except the reaction term. Deriving classes only need to implement compute0D.
   */
-template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 class FastMonodomainSolverBase : public Runnable
 {
 public:
@@ -56,7 +56,7 @@ public:
   > FiberFunctionSpace;
 
   typedef CellmlAdapter<
-    nStates, nIntermediates,  // nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley
+    nStates, nAlgebraics,  // nStates,nAlgebraics: 57,1 = Shorten, 4,9 = Hodgkin Huxley
     FiberFunctionSpace
   > CellmlAdapterType;
 
@@ -75,7 +75,7 @@ public:
 
   typedef typename NestedSolversType::FunctionSpace FunctionSpace;
   typedef typename NestedSolversType::Data Data;
-  typedef typename NestedSolversType::OutputConnectorDataType OutputConnectorDataType;
+  typedef typename NestedSolversType::SlotConnectorDataType SlotConnectorDataType;
 
   //! constructor
   FastMonodomainSolverBase(const DihuContext &context);
@@ -98,8 +98,8 @@ public:
   //! set a new time interval that will be simulated by next call to advanceTimeSpan.
   void setTimeSpan(double startTime, double endTime);
 
-  //! get the output connector data, to be used for an enclosing solver
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! get the slot connector data, to be used for an enclosing solver
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! get a reference to the nested solvers
   NestedSolversType &nestedSolvers();
@@ -116,12 +116,12 @@ protected:
   void updateFiberData();
 
   //! solve the 0D problem, starting from startTime. This is the part that is usually provided by the cellml file
-  void compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeIntermediatesForTransfer);
+  void compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlgebraicsForTransfer);
 
   //! compute one time step of the right hand side for a single simd vector of instances
   virtual void compute0DInstance(Vc::double_v states[], std::vector<Vc::double_v> &parameters, double currentTime, double timeStepWidth,
-                                 bool stimulate, bool storeIntermediatesForTransfer,
-                                 std::vector<Vc::double_v> &intermediatesForTransfer){};
+                                 bool stimulate, bool storeAlgebraicsForTransfer,
+                                 std::vector<Vc::double_v> &algebraicsForTransfer){};
 
   //! solve the 1D problem (diffusion), starting from startTime
   void compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefactor);
@@ -153,7 +153,7 @@ protected:
   {
     std::vector<double> elementLengths;   //< lengths of the 1D elements
     std::vector<double> vmValues;         //< values of Vm
-    std::vector<double> furtherStatesAndIntermediatesValues;    //< all data to be transferred back to the fibers, apart from vmValues, corresponding to statesForTransfer_ and intermediatesForTransfer_ (array of struct memory layout)
+    std::vector<double> furtherStatesAndAlgebraicsValues;    //< all data to be transferred back to the fibers, apart from vmValues, corresponding to statesForTransfer_ and algebraicsForTransfer_ (array of struct memory layout)
     int valuesLength;                     //< number of vmValues
     global_no_t valuesOffset;             //< number of vmValues in previous entries in fiberData_
 
@@ -201,13 +201,13 @@ protected:
   std::vector<state_t> fiberPointBuffersStatesAreCloseToEquilibrium_;       //< for every entry in fiberPointBuffers_, constant if the states didn't change too much in the last compute0D, neighbour_not_constant if the state of the neighbouring pointBuffer changes
   int nFiberPointBufferStatesCloseToEquilibrium_;                           //< number of "constant" entries in fiberPointBuffersStatesAreCloseToEquilibrium_
 
-  std::vector<int> statesForTransfer_;          //< state no.s to transfer to other solvers within output connector data
-  std::vector<int> intermediatesForTransfer_;   //< which intermediates should be transferred to other solvers as part of output connector data
+  std::vector<int> statesForTransfer_;          //< state no.s to transfer to other solvers within slot connector data
+  std::vector<int> algebraicsForTransfer_;   //< which algebraics should be transferred to other solvers as part of slot connector data
   std::vector<double> parameters_;              //< parameters vector
   double valueForStimulatedPoint_;              //< value to which the first state will be set if stimulated
 
   std::vector<std::vector<Vc::double_v>> fiberPointBuffersParameters_;        //< constant parameter values, changing parameters is not implemented
-  std::vector<std::vector<Vc::double_v>> fiberPointBuffersIntermediatesForTransfer_;   //<  [fiberPointNo][intermediateToTransferNo], intermediate values to use for output connector data
+  std::vector<std::vector<Vc::double_v>> fiberPointBuffersAlgebraicsForTransfer_;   //<  [fiberPointNo][algebraicToTransferNo], algebraic values to use for slot connector data
 
   void (*compute0DInstance_)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &, double);   //< runtime-created and loaded function to compute one Heun step of the 0D problem
   void (*initializeStates_)(Vc::double_v states[]);  //< runtime-created and loaded function to set all initial values for the states

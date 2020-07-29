@@ -135,13 +135,21 @@ $pyod $opendihu_directory/scripts/file_manipulation/reverse_x_order_bin_fibers.p
   ${current_directory}/processed_meshes/${basename}_06_7x7fibers_original_position.bin \
   ${current_directory}/processed_meshes/${basename}_07_7x7fibers_y_reversed.bin 
 
+$pyod $opendihu_directory/scripts/file_manipulation/swap_xy_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_07_7x7fibers_y_reversed.bin \
+  ${current_directory}/processed_meshes/${basename}_08_7x7fibers_xy_swapped.bin 
+
 $pyod $opendihu_directory/scripts/file_manipulation/reverse_y_order_bin_fibers.py \
   ${current_directory}/processed_meshes/${basename}_06_9x9fibers_original_position.bin \
   ${current_directory}/processed_meshes/${basename}_07_9x9fibers_y_reversed.bin 
 
+$pyod $opendihu_directory/scripts/file_manipulation/swap_xy_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_07_9x9fibers_y_reversed.bin \
+  ${current_directory}/processed_meshes/${basename}_08_9x9fibers_xy_swapped.bin 
+
 # rename the fibers to their final name
-cp ${current_directory}/processed_meshes/${basename}_07_7x7fibers_y_reversed.bin ${current_directory}/processed_meshes/${basename}_7x7fibers.bin
-cp ${current_directory}/processed_meshes/${basename}_07_9x9fibers_y_reversed.bin ${current_directory}/processed_meshes/${basename}_9x9fibers.bin
+cp ${current_directory}/processed_meshes/${basename}_08_7x7fibers_xy_swapped.bin ${current_directory}/processed_meshes/${basename}_7x7fibers.bin
+cp ${current_directory}/processed_meshes/${basename}_08_9x9fibers_xy_swapped.bin ${current_directory}/processed_meshes/${basename}_9x9fibers.bin
 
 cd $current_directory
 # refine the given, serially created file with 7x7 fibers

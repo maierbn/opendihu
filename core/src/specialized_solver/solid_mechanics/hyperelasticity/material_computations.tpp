@@ -11,7 +11,7 @@ namespace SpatialDiscretization
 
 
 template<typename Term,typename MeshType, int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+bool HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 materialComputeInternalVirtualWork(bool communicateGhosts)
 {
   // compute Wint in solverVariableResidual_
@@ -227,9 +227,19 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
 
       if (Vc::any_of(deformationGradientDeterminant < 1e-12))   // if any entry of the deformation gradient is negative
       {
-        LOG(FATAL) << "Deformation gradient " << deformationGradient << " has zero or negative determinant " << deformationGradientDeterminant
+        LOG(WARNING) << "Deformation gradient " << deformationGradient << " has zero or negative determinant " << deformationGradientDeterminant
           << std::endl << "Geometry values in element " << elementNoLocal << ": " << geometryReferenceValues << std::endl
           << "Displacements at xi " << xi << ": " << displacementsValues;
+
+        // assemble result vector
+        if (communicateGhosts)
+        {
+          combinedVecResidual_->finishGhostManipulation();
+        }
+        lastSolveSucceeded_ = false;
+
+        // return false means the computation was not successful
+        return false;
       }
 
       // loop over basis functions and evaluate integrand at xi for displacement part (δW_int - δW_ext)
@@ -373,10 +383,12 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
   //combinedVecResidual_->finishGhostManipulation();
 
   // now, solverVariableResidual_, which is the globalValues() of combinedVecResidual_, contains δW_int
+  // computation was successful
+  return true;
 }
 
 template<typename Term,typename MeshType, int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+bool HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 materialComputeResidual(double loadFactor)
 {
   // This computes the residual, i.e. the nonlinear function to be solved.
@@ -410,7 +422,14 @@ materialComputeResidual(double loadFactor)
   combinedVecResidual_->zeroEntries();
   combinedVecResidual_->startGhostManipulation();
 
-  materialComputeInternalVirtualWork(false);    // compute without communicating ghost values, because startGhostManipulation has been called
+  bool successful = materialComputeInternalVirtualWork(false);    // compute without communicating ghost values, because startGhostManipulation has been called
+
+  // if there was a negative jacobian, exit this computation
+  if (!successful)
+  {
+    combinedVecResidual_->finishGhostManipulation();     // communicate and add up values in ghost buffers
+    return false;
+  }
 
   // now, solverVariableResidual_, which is the globalValues() of combinedVecResidual_, contains δW_int
   // also the pressure equation residual has been set at the last component
@@ -435,7 +454,9 @@ materialComputeResidual(double loadFactor)
     // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize (materialComputeExternalVirtualWorkDead()), in variable externalVirtualWorkDead_
     // for static case, externalVirtualWorkDead_ = externalVirtualWorkDead_
     PetscErrorCode ierr;
-    ierr = VecAXPY(solverVariableResidual_, -loadFactor, externalVirtualWorkDead_); CHKERRV(ierr);
+    ierr = VecAXPY(solverVariableResidual_, -loadFactor, externalVirtualWorkDead_);
+    if (ierr)
+      return false;
 
     if(outputValues)
       LOG(DEBUG) << "static problem, total F = δW_int - δW_ext:" << getString(solverVariableResidual_);
@@ -456,7 +477,9 @@ materialComputeResidual(double loadFactor)
     // compute F = δW_int - δW_ext,dead + accelerationTerm
     // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize, in variable externalVirtualWorkDead_
     PetscErrorCode ierr;
-    ierr = VecAXPY(solverVariableResidual_, -loadFactor, externalVirtualWorkDead_); CHKERRV(ierr);
+    ierr = VecAXPY(solverVariableResidual_, -loadFactor, externalVirtualWorkDead_);
+    if (ierr)
+      return false;
 
     if (outputFiles)
     {
@@ -482,6 +505,9 @@ materialComputeResidual(double loadFactor)
   }
   assert(combinedVecResidual_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
   assert(combinedVecSolution_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
+
+  // computation succeeded
+  return true;
 }
 
 template<typename Term,typename MeshType, int nDisplacementComponents>
@@ -492,6 +518,7 @@ materialComputeExternalVirtualWorkDead()
 
   LOG(DEBUG) << "materialComputeExternalVirtualWorkDead";
 
+  combinedVecExternalVirtualWorkDead_->setRepresentationGlobal();
   combinedVecExternalVirtualWorkDead_->zeroEntries();               // clear entries to 0
   combinedVecExternalVirtualWorkDead_->startGhostManipulation();    // fill ghost buffers
 
@@ -825,7 +852,7 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
 }
 
 template<typename Term,typename MeshType, int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+bool HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 materialComputeJacobian()
 {
   // analytic jacobian combinedMatrixJacobian_
@@ -859,7 +886,7 @@ materialComputeJacobian()
   typedef std::array<double_v_t, nPressureDofsPerElement*nUnknowsPerElement> EvaluationsPressureType;
   std::array<EvaluationsPressureType, QuadratureDD::numberEvaluations()> evaluationsArrayPressure{};
 
-  typedef std::array<double, nDisplacementsDofsPerElement*nDisplacementsDofsPerElement> EvaluationsUVType;   // for vectorized types, phi_L*phi_M is the same for all elements, therefore double and not double_v_t
+  typedef std::array<double_v_t, nDisplacementsDofsPerElement*nDisplacementsDofsPerElement> EvaluationsUVType;
   std::array<EvaluationsUVType, QuadratureDD::numberEvaluations()> evaluationsArrayUV{};
 
   // setup arrays used for integration
@@ -981,7 +1008,7 @@ materialComputeJacobian()
 
     // set diagonal to zero, this would be correct but for some reason the solvers do not like systems with zero diagonal, therefore epsilon was set on the diagonal
     //PetscErrorCode ierr;
-    //ierr = MatDiagonalSet(combinedMatrixJacobian_->valuesGlobal(), zeros_, INSERT_VALUES); CHKERRV(ierr);
+    //ierr = MatDiagonalSet(combinedMatrixJacobian_->valuesGlobal(), zeros_, INSERT_VALUES); CHKERRQ(ierr);
 
   }  // if Term::isIncompressible
 
@@ -1109,9 +1136,15 @@ materialComputeJacobian()
 
       if (Vc::any_of(deformationGradientDeterminant < 1e-12))   // if any entry of the deformation gradient is negative
       {
-        LOG(FATAL) << "Deformation gradient " << deformationGradient << " has zero or negative determinant " << deformationGradientDeterminant
+        LOG(WARNING) << "Deformation gradient " << deformationGradient << " has zero or negative determinant " << deformationGradientDeterminant
           << std::endl << "Geometry values in element " << elementNoLocal << ": " << geometryReferenceValues << std::endl
           << "Displacements at xi " << xi << ": " << displacementsValues;
+
+        combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);
+
+        lastSolveSucceeded_ = false;
+        // return false means computation was not successful
+        return false;
       }
 
       // add contributions of submatrix uu (upper left)
@@ -1378,7 +1411,7 @@ materialComputeJacobian()
           const int index = lDof*nDisplacementsDofsPerElement + mDof;
 
           // get result of quadrature
-          const double integratedValue = integratedValuesUV[index];
+          const double_v_t integratedValue = integratedValuesUV[index];
 
           // integratedValue is only ∫_Ω ρ0 ϕ^L ϕ^M dV,
           // but we need 1/dt δ_ab ∫_Ω ρ0 ϕ^L ϕ^M dV
@@ -1390,7 +1423,7 @@ materialComputeJacobian()
               if (aComponent != bComponent)
                 continue;
 
-              double resultingValue = 1./this->timeStepWidth_ * integratedValue;
+              double_v_t resultingValue = 1./this->timeStepWidth_ * integratedValue;
 
               // set entrie
               // parameters: componentNoRow, dofNoLocalRow, componentNoColumn, dofNoLocalColumn, value
@@ -1404,6 +1437,9 @@ materialComputeJacobian()
   }  // local elements
 
   combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);
+
+  // computation was successful (no negative jacobian)
+  return true;
 }
 
 } // namespace

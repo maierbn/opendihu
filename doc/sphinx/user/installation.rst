@@ -4,13 +4,17 @@ Installation
 =================
 Opendihu uses existing open-source projects, like PETSc, Python, Easylogging++, etc. The installation of opendihu has to provide all these packages, too. 
 A `scons <https://scons.org/>`_ based build system is included that automatically downloads and builds all needed dependencies. 
-It was successfully tested on Ubuntu 16.04, 18.04 and Debian as well as on the supercomputer Hazel Hen. It should work on other Linux distributions as well. If something fails, usually minor adjustments in the configuration solve the problem.
+It was successfully tested on Ubuntu 16.04, 18.04 and 20.04 (also on the Windows subsystem for linux, WSL) and on Debian as well as on the supercomputers `Hazel Hen` and `Hawk`. 
+It should work on other Linux distributions as well. If something fails, usually minor adjustments in the configuration solve the problem.
 
-For users that only want to quickly check the functionality without a lengthy installation process, we provide a docker image of opendihu. This serves all the available functionality, except that parallel execution in docker containers is generally hardly possible. Because this is key to efficiently computing simulations, we recommend the native installation.
+For users that only want to quickly check the functionality without a lengthy installation process, we provide a docker image of opendihu.
+This serves all the available functionality, except that parallel execution in docker containers is generally hardly possible. 
+Because this is key to efficiently computing simulations, we recommend the native installation.
 
 Using docker
 ----------------
-Using the docker image you can use the framework directly without having to build and install any dependencies. The disadvantage is that you only have a shell and can't plot anything.
+Using the docker image you can use the framework directly without having to build and install any dependencies. 
+The disadvantage is that you only have a shell and can't plot anything. The docker image may also be slightly out-of-date.
 
 First install `docker <https://docs.docker.com/install/linux/docker-ce/ubuntu/>`_, following the instructions on the website. Then, start a shell inside the container with the following command:
 
@@ -18,7 +22,7 @@ First install `docker <https://docs.docker.com/install/linux/docker-ce/ubuntu/>`
 
   docker run -it maierbn/opendihu:latest bash
 
-Inside the container, run `cd opendihu`, `git pull` and `make` to get and compile the latest code.
+Inside the container, run ``cd opendihu``, ``git pull`` and ``make`` to get and compile the latest code.
 
 Native installation
 ----------------------
@@ -28,30 +32,41 @@ In order to use the code for development or for more efficient runs, it is neces
 
   git clone https://github.com/maierbn/opendihu
 
-There are several branches. The `develop` branch contains a recent version and is more-or-less stable. The `stable` branch is always stable but does not contain the latest developments. There are also multiple feature branches.
+There are several branches. The `develop` branch contains a recent version and is more-or-less stable. This is the recommended branch to start with.
+The `stable` branch aims to be always stable but does not contain the latest developments. There are also multiple feature branches.
+Which branches are being developed can be checked on the overview page of the continuous integration tool, `CircleCI <https://app.circleci.com/pipelines/github/maierbn/opendihu>`_.
 
-There is one `release <https://github.com/maierbn/opendihu/releases>`_ so far: version 1.0 from 15.04.2019. 
+From time to time there are `releases <https://github.com/maierbn/opendihu/releases>`_, e.g. there is version 1.0 from 15.04.2019 and newer ones.
 
 Prerequisites
 ^^^^^^^^^^^^^^
 
-As a prerequisite, on a blank machine with ubuntu (tested on 16.04 and 18.04) you need to install the following packages.
+On a blank machine with Ubuntu (tested on 16.04 and 18.04) you need to install the following packages.
 
 .. code-block:: bash
 
   # Install prerequisites
   sudo apt-get update && \
-  sudo apt-get install -y libopenmpi-dev libx11-* python2.7 git apt-utils make software-properties-common zlib1g-dev cmake libssl-dev bison flex
+  sudo apt-get install -y libopenmpi-dev libx11-* git apt-utils make software-properties-common zlib1g-dev cmake libssl-dev bison flex
 
-Because we use C++14, GCC version 5 or higher is required including the gfortran compiler. Ubuntu 16.04 has GCC 4 as default compiler chain, so you need to update to GCC 5 as follows. For Ubuntu 18.04 and later, this step is not necessary.
+Because we use C++14, the GCC compiler **version 7 or higher** is required. This includes the Fortran compiler, ``gfortran``.
+The default GCC version on Ubuntu 16.04 was GCC 4, so it was needed to update. From Ubuntu 18.04 on, the default version is at least version 7, so no step are required there.
+Please check your current version by running
 
 .. code-block:: bash
 
-  # Install GCC5 toolchain
+  gcc --version
+  gfortran --version
+
+If the version is GCC 6 or lower, you need to update your GCC. This can be done as follows.
+
+.. code-block:: bash
+
+  # Install GCC9 toolchain
   sudo add-apt-repository ppa:ubuntu-toolchain-r/test && \
   sudo apt-get update && \
-  sudo apt-get install -y gcc-5 g++-5 gfortran-5 && \
-  sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 60 --slave /usr/bin/g++ g++ /usr/bin/g++-5 --slave /usr/bin/gfortran gfortran /usr/bin/gfortran-5
+  sudo apt-get install -y gcc-9 g++-9 gfortran-9 && \
+  sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 60 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gfortran gfortran /usr/bin/gfortran-9
 
 Make sure that the `gfortran` compiler is installed as well:
 
@@ -59,66 +74,126 @@ Make sure that the `gfortran` compiler is installed as well:
 
   sudo apt-get install gfortran
 
-The `scons` build system needs python2.7. Make sure that the command `python2.7` starts a python 2.7 shell. If not, you probably have to create the following symbolic link:
-
-.. code-block:: bash
-
-  # link python executable
-  ln -s python2.7 /usr/bin/python
-
-All other needed dependencies will be handled by the `scons` build system. For each dependency you can either specify the path of its installation, if the dependency package is already installed on your system. Or you can not specify anything and let the build system download, build and install the dependencies on its own.
-Note that `python3` with `numpy`, ``scipy`` and `matplotlib` is such a dependency. Opendihu will download and install `python3` including these packages.
+All other needed dependencies will be handled by the `scons` build system. 
+For each dependency you can either specify the path of its installation, if the dependency package is already installed on your system.
+Or, you if you don't do anything special, the build system downloads, builds and installs the dependencies on its own. This is the recommended way.
+Note that `python3` with `numpy`, `scipy` and `matplotlib` is such a dependency. Opendihu will download and install `python3` including these packages.
 
 Build 
 ^^^^^^^^^^^
-
-The installation procedure can be started by the command `scons BUILD_TYPE=debug` for debug build or simply `scons` for release build. For convenience, there is also a `Makefile` that builds debug followed by release mode. The recommended way for the first installation is to simply execute
+The recommended way for the first installation is to change into the opendihu directory and simply execute
 
 .. code-block:: bash
 
   make
 
-There is also `make debug` and `make release` that just call `scons` with the respective build type and thus building the framework `debug` or `release` mode.
+and let it install and build everything for long time.
 
-Instead of using the `Makefile` you can call `scons` yourself.
+You can also execute `make release` to only build the release target. This is enough if you don't aim at developing the C++ code.
+
+Three different targets are defined: `release`, `debug` and `releasewithdebuginfo`. In `release` target, the code will be optimized to run as fast as possible.
+In `debug` target, compilation and execution will take more time. A lot of debugging information will be printed by the program to the console. This is the standard target to use during development.
+The third target, `releasewithdebuginfo` enables optimizations, like the `release` target, but additionally includes the debugging output.
+
+Analogous to ``make release``, there is also ``make debug`` to build the debug target and ``make release_without_tests`` or `make debug_without_tests` to exclude build unit tests (which are not required but take a lot of time).
+To learn about more available make targets, read the `Makefile`.
+
+Internally, ``make`` calls the build system, `scons`.
+The installation procedure can also be started by the command `scons` for release build or `scons BUILD_TYPE=debug` for debug build. 
+The ``make`` targets ``make release`` and ``make debug`` just call ``scons`` with the respective build type and thus building the framework `debug` or `release` mode.
+Instead of using the `Makefile` you can also call ``scons`` yourself.
 
 .. _installation_aliases:
+
+Define environment variables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In order for some commands to work (e.g. the ``plot`` utility), you need to set the PATH variable to point to some directories of opendihu. 
+This can be done by adding the following lines to your `~/.bashrc` script or `~/.bash_aliases` on Ubuntu.
+
+.. code-block:: bash
+
+  # set environment variables and PATH
+  export OPENDIHU_HOME=/store/software/opendihu         # replace this by the location for your installation
+  export PATH=$PATH:$OPENDIHU_HOME/scripts
+  export PATH=$PATH:$OPENDIHU_HOME/scripts/geometry_manipulation
+  export PATH=$PATH:$OPENDIHU_HOME/scripts/file_manipulation
+
+(Replace the first line with your path).
+Setting these variables is recommended but not required.
+This `~/.bashrc` or `~/.bash_aliases` file will be executed whenever you start a new `bash` instance. 
+In order for the variable assignments to take effect either close and reopen the console window or source the file yourself, by executing ``. ~/.bashrc``.
 
 Building with scons
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-In order to build examples you need to use `scons`. The opendihu library can either be build using `scons` or using the `Makefile`, which again simply calls scons.
+Opendihu consists of a `core` library that contains the main functionality and multiple examples, that each use the core library.
+As mentioned, to build the opendihu core library either `make` can be used, or it is possible to use the build system `scons`.
+In order to build examples there is no choice, you need to use `scons`.
 
-So you can either install scons on your system or use the `scons` program, that is packaged with opendihu. This is located under `dependencies/scons/scons.py`. 
-It needs to be run with python 2.7 (not python3). 
-
-It is advisable to define a bash alias for this scons command.
-If you like, you can copy the following aliases to your `~/.bashrc` or `~/.bash_aliases` file:
+To be able to use `scons`, you can either install the `scons` package on your system (``sudo apt install scons`` on Ubuntu)
+or use the `scons` program, that is packaged with opendihu. 
+This is located under `dependencies/scons/scons.py`, so simply run the following command:
 
 .. code-block:: bash
 
-  alias scons='<your path>/opendihu/dependencies/scons/scons.py'
+  dependencies/scons/scons.py BUILD_TYPE=release
+
+Because this is a long command, it is advisable to define a bash alias for this scons command. 
+There are some predefined helper scripts that handle various frequently used compilation commands.
+If you like, you can copy the following aliases to your `~/.bashrc` or `~/.bash_aliases` file, if you also have set the `OPENDIHU_HOME` environment variable as shown earlier.
+
+.. code-block:: bash
+
+  # define convenience commands for compilation
+  alias scons='$OPENDIHU_HOME/dependencies/scons/scons.py'  
   alias s='scons'
-  alias sd='scons BUILD_TYPE=d -j4'
-  alias sdd='cd .. && scons BUILD_TYPE=d -j4; cd -'
-  alias sddn='cd .. && scons BUILD_TYPE=d no_tests=yes no_examples=yes -j4; cd -'
-  alias sdn='scons BUILD_TYPE=d no_tests=yes no_examples=yes -j4'
-  alias srn='scons BUILD_TYPE=r no_tests=yes no_examples=yes -j4'
-  alias sr='scons BUILD_TYPE=r -j4'
-  alias srr='cd .. && scons BUILD_TYPE=r -j4; cd -'
-  alias sdr='scons BUILD_TYPE=rd -j4'
-  alias srd='scons BUILD_TYPE=rd -j4'
-  alias srdd='cd .. && scons BUILD_TYPE=rd -j4; cd -'
+  alias sd='$OPENDIHU_HOME/scripts/shortcuts/sd.sh'
+  alias sdd='$OPENDIHU_HOME/scripts/shortcuts/sdd.sh'
+  alias sddn='cd .. && scons BUILD_TYPE=d no_tests=yes no_examples=yes; cd -'
+  alias sdn='scons BUILD_TYPE=d no_tests=yes no_examples=yes'
+  alias srn='scons BUILD_TYPE=r no_tests=yes no_examples=yes'
+  alias sr='$OPENDIHU_HOME/scripts/shortcuts/sr.sh'
+  alias srd='$OPENDIHU_HOME/scripts/shortcuts/srd.sh'
+  alias srr='$OPENDIHU_HOME/scripts/shortcuts/srr.sh'
+  alias mkor='$OPENDIHU_HOME/scripts/shortcuts/mkor.sh'
+  alias mkorn='$OPENDIHU_HOME/scripts/shortcuts/mkorn.sh'
+  alias mkod='$OPENDIHU_HOME/scripts/shortcuts/mkod.sh'
+  alias mkodn='$OPENDIHU_HOME/scripts/shortcuts/mkodn.sh'
+  alias mkordn='$OPENDIHU_HOME/scripts/shortcuts/mkordn.sh'
 
-Then simply execute ``sd`` to build in debug or ``s`` to build in release mode. Other options are ``sdd`` to build an example in debug mode from within the `build_debug` directory or analogously ``srr`` for release mode.
+Then, the following commands can be used for the build:
 
-If you have called `make` and the framework compiled after some hours (green text), you were successful. Go on and build some examples (See next page, :doc:`getting_started`).
+  * ``scons BUILD_TYPE=release`` or ``scons BUILD_TYPE=r`` or ``scons`` or ``s``:
+    Build the file in the current directory in `release` mode, either to be used in the opendihu main directory to build the core library or in any example directory.
+  
+  * ``scons BUILD_TYPE=debug`` or ``scons BUILD_TYPE=d`` or ``sd``: Build `debug` target in current directory.
+  * ``sdd``: To be used from within a `build_debug` directory. Go one directory up, build the example in `debug` target and go back to the original directory. This alias is equivalent to ``cd ..; scons BUILD_TYPE=debug; cd -``.
+  * ``srr``: To be used from within a `build_release` directory. Go one directory up, build the example in `release` target and go back to the original directory. This alias is equivalent to ``cd ..; scons BUILD_TYPE=release; cd -``.
+  * ``mkor``: "Make opendihu release". Use this command in any directory. It changes into the `opendihu` directory, executes `scons` there, to build the core library and changes back to the original directory.
+  * ``mkorn``: "Make opendihu release, no tests". Same as `mkor`, except it does not build the unit tests. This is the most frequently used command to build the opendihu core.
+  * ``mkod``: "Make opendihu debug". Use this command in any directory. It changes into the `opendihu` directory, executes `scons BUILD_TYPE=debug` there, to build the core library and changes back to the original directory.
+  * ``mkodn``: "Make opendihu debug, no tests". Same as `mkor`, except it does not build the unit tests. This is the most frequently used command to build the opendihu core in debug target.
+  * ``scons BUILD_TYPE=releasewithdebuginfo`` or ``scons BUILD_TYPE=rd`` or ``srd``: Build `releasewithdebuginfo` target in current directory.
+  
+As an example, if you work on a particular example and are in its `build_release` subdirectory, use ``mkorn && srr`` to build the core and the example and end up in the same directory afterwards.
+
+If you have called `make` and everything has completed after some hours (green text), you were successful. Go on and build some examples (See next page, :doc:`getting_started`).
 If not, read on, to find out what you need to configure in your case.
 
 Configuring the build
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Configuration settings have to be provided in the python script `user-variables.scons.py`.
+Configuration settings have to be provided in the python script `user-variables.scons.py`. These include settings for the dependency packages as well as further options concerning the build.
+
+The option ``USE_VECTORIZED_FE_MATRIX_ASSEMBLY`` specifies if the Finite Element matrices should be assembled with SIMD instruction using the Vc library.
+This leads to 4 elements always being a assembled at once using vector instructions (on systems with AVX-2).
+
+If set to ``True``, this significantly speeds up the computation for problems that assemble a lot of matrices, e.g. solid mechanics problems.
+However, it takes a long time to compile the code, up to 3x. If you intend to develop the core code, set it to ``False`` to have faster compilation. 
+If you mainly want to run simulations including mechanics, set it to ``True``. 
+(Also set it to ``False``, if compilation fails for ``True`` maybe because there is a bug somewhere that has not yet been found because the developers have this option always set to ``False``.)
+
 For every dependency package there are variables like
 
 .. code-block:: bash
@@ -126,7 +201,9 @@ For every dependency package there are variables like
   #PETSC_DOWNLOAD=True
   #PETSC_DIR="~/petsc/install"
 
-(Note, `#` means commented out here, because you shouldn't specify both lines at once). The first line would instruct the build system to download and build the package, in this case PETSc. The second line would provide the path to an already existing installation on the system, which would then be used. Thus, specify either of those. 
+(Note, `#` means commented out here, because you shouldn't specify both lines at once). 
+The first line would instruct the build system to download and build the package, in this case PETSc. 
+The second line would provide the path to an already existing installation on the system, which would then be used. Thus, specify either of those. 
 
 There are similar options for all packages. You can read about more possibilities in the header of the `user-variables.scons.py` file. 
 
@@ -139,8 +216,10 @@ There are required dependencies, which need to be present in order for opendihu 
                                                                           | processes. This should be your system MPI. If you let 
                                                                           | opendihu install it for you, `OpenMPI <https://www.open-mpi.org/>`_ 
                                                                           | will be chosen.
-`LAPACK`, `BLAS`                                                  yes     | Parallel linear algebra functions, this is a prerequisite 
-                                                                          | to *PETSc*. Opendihu will install `OpenBLAS <https://github.com/xianyi/OpenBLAS/wiki>`_
+`LAPACK`, `BLAS`                                                   no     | Parallel linear algebra functions, this is used by 
+                                                                          | *PETSc* and by some model order reduction functionality. 
+                                                                          | Opendihu will install `OpenBLAS <https://github.com/xianyi/OpenBLAS/wiki>`_.
+                                                                          | Currently this is not included because probably no longer needed.
 `PETSc <https://www.mcs.anl.gov/petsc/>`_                         yes     | Low-level data structures and solvers, see their `website <https://www.mcs.anl.gov/petsc/>`_
                                                                           | for more details.
 `Python3`                                                         yes     | The `python interpreter <https://www.python.org/>`_, 
@@ -175,40 +254,77 @@ There are required dependencies, which need to be present in order for opendihu 
                                                                           | interface with opendihu, you would need a version that 
                                                                           | is not yet released. Therefore it is fine, if this is
                                                                           | not installed.
+`Vc <https://vcdevel.github.io/Vc-1.4.1/index.html>`_            yes      | A vectorization library that produces `simd` code 
+                                                                          | depending on the hardware capabilities.
+                                                                          |
+`xbraid <https://github.com/XBraid/xbraid>`_                      no      | A framework for the parallel-in-time algorithm multigrid-
+                                                                          | reduction-in-time (MGRIT)
+`OpenCOR <https://opencor.ws/>`_                                  no      | `OpenCOR` is a modelling tool for CellML models and can 
+                                                                          | convert `*.cellml` files to C code files, `*.c`. If
+                                                                          | installed, the conversion of cellml input files is 
+                                                                          | done automatically. If not, you can only input 
+                                                                          | C files of the cellml models.
 ============================================================  ========  =================================================================================== 
 
-It is recommended to not let the build system download and build `MPI`, instead you should use your local MPI installation. 
+It is recommended to not let the build system download and build `MPI`, 
+instead you should use your local MPI installation. 
 
-On Ubuntu systems, the system MPI directory should already be set correctly by the default value in `user-variables.scons.py`. Now run `make` to see, if MPI will be found.
+On Ubuntu systems, the system MPI directory should already be set correctly by the default value in `user-variables.scons.py`. 
+If you run `make`, you can check if MPI will be found.
 
-If the MPI location is not detected automatically, you have to specifiy the path. Find out in which path on your system MPI is installed. The required directory contains a `lib` and an `include` subdirectory. It may be located at `/usr/lib/openmpi`, `/usr/lib/mpich`, `/usr/lib/x86_64-linux-gnu/openmpi` or similar. Set this path in `user-variables.scons.py` as value of the variable `MPI_DIR`.
+If the MPI location is not detected automatically, you have to specify the path yourself. 
+Find out in which path on your system MPI is installed. 
+The required directory contains a `lib` and an `include` subdirectory. 
+It may be located at `/usr/lib/openmpi`, `/usr/lib/mpich`, `/usr/lib/x86_64-linux-gnu/openmpi` or similar.
+Set this path in `user-variables.scons.py` as the value of the variable `MPI_DIR`.
 
-When running `make`, `make debug` or `make release`, the dependencies will be downloaded and installed, and consequently, debug or release target will be build. The installation of dependencies can take several hours. The compilation afterwards completes in several minutes.
+When running ``make``, ``make debug`` or ``make release``, the dependencies will be downloaded and installed, 
+and consequently, debug or release target will be build. 
+The installation of dependencies can take several hours. 
+The compilation of the `core` afterwards completes in several minutes.
 
 Troubleshooting
 ^^^^^^^^^^^^^^^^^^
 
-If something fails during the installation, read the `config.log` file, which will be created. It contains information about the build process.
+If something fails during the installation, read the `config.log` file that will be created. 
+It contains information about the commands used in the build process.
 
-The dependencies that were installed successfully will be detected the next time and not installed again. You can force to rebuild selected packages by the `..._REBUILD` option, e.g.
+To restart the build process, it is sometimes required to clean the `scons` cache. This is done by deleting files ``.sconf_temp .sconsign.dblite`` which is executed by the command
+
+.. code-block:: bash
+
+  make clean
+
+The dependencies that were already installed successfully will be detected the next time and not installed again. 
+However, sometimes it is required to try to build a packages again.
+You can force to rebuild selected packages by the `..._REBUILD` option, e.g.
 
 .. code-block:: bash
 
   scons PETSC_REBUILD=True
 
-to rebuild petsc, even if it was already detected. The same options that can be specified in the `user-variables.scons.py` file can also be given like this on the command line.
+to rebuild petsc, even if it was already detected. 
 
-To also download the package and then install it again, use the `..._REDOWNLOAD` option, like
+In general, the same options that can be specified in the `user-variables.scons.py` file 
+can also be given like this on the command line as options to the `scons` command. (Also to the `sd` etc. shortcuts described earlier).
+
+To restart with downloading the package and then installing it again, use the `..._REDOWNLOAD` option, like this:
 
 .. code-block:: bash
 
   scons PETSC_REDOWNLOAD=True
 
-Sometimes it also helps to delete the folder of a package in the `dependencies` subdirectory and retry the installation. 
+Sometimes it also helps to delete the whole folder of a package in the `dependencies` subdirectory 
+and retry the installation. 
 
-If a dependency fails to install, you can try to install it manually on your own. The commands that are used by the `scons` build system are logged in the `config.log` file.
+If a dependency fails to install, you can try to install it manually on your own. 
+The commands that are used by the `scons` build system are printed to the console and additionally logged in the `config.log` file.
 
-If you want to change the build system to update the commands that are executed for installing a specific dependency, have a look at the directory `opendihu/dependencies/scons-config/sconsconfig/packages`. It contains the source for the build system. The main implementation is in `Package.py`, all other classes inherit from this class. Usually you find the file that is named like the dependency, e.g., `LAPACK.py` for Lapack or `PETSc.py` for PETSc.
+For advanced users, if you want to change the build system and update the commands that are executed
+for installing a specific dependency, have a look at the directory `opendihu/dependencies/scons-config/sconsconfig/packages`.
+It contains the source code for the build system. 
+The main implementation is in `Package.py`, all other classes inherit from this class. 
+Usually you find the file that is named like the dependency, e.g., `LAPACK.py` for Lapack or `PETSc.py` for PETSc.
 
 If you change something here, you need to rebuild the python `egg` file of `scons-config`:
 
@@ -219,4 +335,6 @@ If you change something here, you need to rebuild the python `egg` file of `scon
   . install_manually.sh
 
 Then, rerun the installation from the `opendihu` directory with `scons`.
+
+If you don't succeed, ask for help and send us the `config.log` file.
 

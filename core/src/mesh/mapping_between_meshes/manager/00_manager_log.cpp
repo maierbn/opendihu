@@ -72,45 +72,47 @@ std::string ManagerLog::produceLogContents()
     switch (logEntry.logEvent)
     {
     case mappingLogEntry_t::logEvent_t::eventParseSettings:
-      log << "parse settings for mapping between meshes \"" << logEntry.meshNameFrom << "\" " 
-        << "-> \"" << logEntry.meshNameTo << "\"";
+      log << "* Parse settings for mapping between meshes \"" << logEntry.meshNameFrom << "\" "
+        << "-> \"" << logEntry.meshNameTo << "\".";
       break;
     
     case mappingLogEntry_t::logEvent_t::eventCreateMapping:
-      log << "create mapping between meshes \"" << logEntry.meshNameFrom << "\" (" << logEntry.dimensionalityFrom << "D) " 
-        << "-> \"" << logEntry.meshNameTo << "\" (" << logEntry.dimensionalityTo << "D)";
+      log << "* Create mapping between meshes \"" << logEntry.meshNameFrom << "\" (" << logEntry.dimensionalityFrom << "D) "
+        << "-> \"" << logEntry.meshNameTo << "\" (" << logEntry.dimensionalityTo << "D).";
       break;
 
     case mappingLogEntry_t::logEvent_t::eventMapForward:
     case mappingLogEntry_t::logEvent_t::eventMapReverse:
-      log << "map from field variable \"" << logEntry.fieldVariableNameFrom << "\"";
+      log << "* Map from field variable \"" << logEntry.fieldVariableNameFrom << "\"";
       if (logEntry.componentNoFrom == -1)
         log << ", all components";
       else 
         log << " component " << logEntry.componentNoFrom;
       
-      log << " mesh \"" << logEntry.meshNameFrom << "\" (" << logEntry.dimensionalityFrom << "D) ";
+      log << ", mesh \"" << logEntry.meshNameFrom << "\" (" << logEntry.dimensionalityFrom << "D) ";
       
       if (logEntry.nMappedSourceMeshes > 1)
-        log << " [and other field variables/meshes, in total " << logEntry.nMappedSourceMeshes << " ]";
+        log << " [and other field variables/meshes, in total " << logEntry.nMappedSourceMeshes << "]";
         
-      log << " to field variable \"" << logEntry.fieldVariableNameTo << "\"";
+      log << "\n        to field variable \"" << logEntry.fieldVariableNameTo << "\"";
       if (logEntry.componentNoTo == -1)
         log << ", all components";
       else 
         log << " component " << logEntry.componentNoTo;
 
-      log << " mesh \"" << logEntry.meshNameTo << "\" (" << logEntry.dimensionalityTo << "D)";
+      log << ", mesh \"" << logEntry.meshNameTo << "\" (" << logEntry.dimensionalityTo << "D)";
       
       if (logEntry.logEvent == mappingLogEntry_t::logEvent_t::eventMapForward)
       {
-        log << " using forward mapping \"" << logEntry.meshNameFrom << "\" (" << logEntry.dimensionalityFrom << "D) -> "
-          "\"" << logEntry.meshNameTo << "\" (" << logEntry.dimensionalityTo << "D)";
+        log << "\n  using forward mapping \"" << logEntry.meshNameFrom << "\" (" << logEntry.dimensionalityFrom << "D) -> "
+          "\"" << logEntry.meshNameTo << "\" (" << logEntry.dimensionalityTo << "D)."
+          "\n  Description: Collection and normalization of the contributions from points in mesh \"" << logEntry.meshNameFrom
+          << "\" that are located in adjacent elements to the target dof in the target mesh \"" << logEntry.meshNameTo << "\".";
       }
       else 
       {
-        log << " using reverse direction of mapping \"" << logEntry.meshNameTo << "\" (" << logEntry.dimensionalityTo << "D) -> "
-          "\"" << logEntry.meshNameFrom << "\" (" << logEntry.dimensionalityFrom << "D)";
+        log << "\n  using reverse direction of mapping \"" << logEntry.meshNameTo << "\" (" << logEntry.dimensionalityTo << "D) -> "
+          "\"" << logEntry.meshNameFrom << "\" (" << logEntry.dimensionalityFrom << "D).\n  Description: Simply interpolate in the mesh \"" << logEntry.meshNameFrom << "\".";
       }
       break;
 

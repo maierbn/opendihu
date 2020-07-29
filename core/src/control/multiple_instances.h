@@ -6,27 +6,23 @@
 #include <vector>
 
 #include "interfaces/runnable.h"
+#include "interfaces/multipliable.h"
 #include "control/dihu_context.h"
-#include "data_management/multiple_instances.h"
+#include "data_management/control/multiple_instances.h"
 #include "output_writer/manager.h"
 #include "partition/mesh_partition/02_mesh_partition.h"
 
 namespace Control
 {
 
-/** This class holds multiple instances of the template type, e.g. for having multiple fibers, which are each as in example electrophysiology.
- *
- *  Whenever a new partitioning of a mesh is computed, the PartitionManager::nextRankSubset() is used, if it was set.
- *  If it was not set, a new RankSubset will be created based on MPI_COMM_WORLD (in partitionManager). The MultipleInstances structure uses this mechanism
- *  to create rank subsets for the instances that involve different ranks. Therefore MultipleInstances sets potentially different values
- *  of nextRankSubset for each instance. After the last instance was initialized, the nextRankSubset that was set initially will be restored.
- */
-template<class TimeSteppingScheme>
-class MultipleInstances: public Runnable
+/** This class holds multiple instances of the template type, e.g. for having multiple fibers, which are each as in example electrophysiology
+  */
+template<typename TimeSteppingScheme>
+class MultipleInstances: public Runnable, public Multipliable
 {
 public:
 
-  typedef std::vector<std::shared_ptr<typename TimeSteppingScheme::OutputConnectorDataType>> OutputConnectorDataType;
+  typedef std::vector<std::shared_ptr<typename TimeSteppingScheme::SlotConnectorDataType>> SlotConnectorDataType;
   typedef typename TimeSteppingScheme::FunctionSpace FunctionSpace;
   typedef typename ::Data::MultipleInstances<typename TimeSteppingScheme::FunctionSpace, TimeSteppingScheme> Data;
   typedef TimeSteppingScheme TimeSteppingSchemeType;
@@ -47,8 +43,8 @@ public:
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! run solution process
   void run();
@@ -57,11 +53,17 @@ public:
   void reset();
 
   //! output the given data for debugging
-  std::string getString(std::shared_ptr<OutputConnectorDataType> data);
+  std::string getString(std::shared_ptr<SlotConnectorDataType> data);
 
   //! the FastMonodomainSolver accesses the internals of MultipleInstances
   std::vector<TimeSteppingScheme> &instancesLocal();
  
+  //! time of simulation
+  double endTime();
+
+  //! number of time steps in simulation time
+  int numberTimeSteps();
+
   /** write data to file using the output writer manager
    * @param callCountIncrement increment to the counter to reduce the output frequency in settings, this is only needed for FastMonodomainSolver
    */
@@ -69,25 +71,27 @@ public:
 
 protected:
 
-  DihuContext context_; //< the context object that holds the config for this class
-  PythonConfig specificSettings_;    //< config for this object
-  OutputWriter::Manager outputWriterManager_; //< manager object holding all output writer
+  DihuContext context_;                         //< the context object that holds the config for this class
+  PythonConfig specificSettings_;               //< config for this object
+  OutputWriter::Manager outputWriterManager_;   //< manager object holding all output write
+  Data data_;                                   //< the data object
 
-  int nInstances_; //< number of instances that are given by config
-  int nInstancesComputedGlobally_; //< number of instances that any process will compute
+  std::shared_ptr<SlotConnectorDataType> slotConnectorData_;       //< the slotConnectorData as vector of references o f teh slotConnectorData's of the instances
+
+  int nInstances_;                              //< number of instances that are given by config
+  int nInstancesComputedGlobally_;              //< number of instances that any process will compute
+  int nInstancesLocal_;                         //< the number of local instances, i.e. the size of the instancesLocal_ vector
+
   std::vector<TimeSteppingScheme> instancesLocal_;   //< the instances of the problem that are computed on the local rank
-  int nInstancesLocal_;   //< the number of local instances, i.e. the size of the instancesLocal_ vector
+  std::vector<std::shared_ptr<Partition::RankSubset>> rankSubsetsLocal_;  //< the rankSubset corresponding to the instances in instancesLocal_
 
   std::shared_ptr<Partition::RankSubset> rankSubsetAllComputedInstances_;   //< the rank nos of all computed instances of this MultipleInstances object
-  std::string logKey_;   //< the key under which the duration of all instances together is saved in the log
+  std::string logKey_;                          //< the key under which the duration of all instances together is saved in the log
 
-  Data data_;  //< the data object
-  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;       //< the outputConnectorData as vector of references o f teh outputConnectorData's of the instances
-
-  bool outputInitializeThisInstance_;   //< if this instance displays progress of initialization
+  bool outputInitializeThisInstance_;           //< if this instance displays progress of initialization
 };
 
-extern bool outputInitialize_;   //< if the message about initialization was already printed
+extern bool outputInitialize_;                  //< if the message about initialization was already printed
 
 }  // namespace
 

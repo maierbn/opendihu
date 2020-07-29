@@ -30,9 +30,18 @@ initialize()
   // call initialize of base class
   Data<FunctionSpaceType>::initialize();
 
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
-  outputConnectorData_->addFieldVariable(this->activation_);
-  outputConnectorData_->addGeometryField(std::make_shared<VectorFieldVariableType>(this->functionSpace_->geometryField()));
+  // initialize the connector slots
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
+
+  // there is only one slot: the activation field variable
+  slotConnectorData_->addFieldVariable(this->activation_);
+  slotConnectorData_->addGeometryField(std::make_shared<VectorFieldVariableType>(this->functionSpace_->geometryField()));
+
+  // parse slot names for all slot connector data slots
+  this->context_.getPythonConfig().getOptionVector("slotNames", slotConnectorData_->slotNames);
+
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
 }
 
 template<typename DataLinearElasticityType>
@@ -43,9 +52,12 @@ createPetscObjects()
 
   assert(this->functionSpace_);
 
+  std::vector<std::string> componentNames({"xx", "xy", "xz", "yx", "yy", "yz", "zx", "zy", "zz"});
+
+  // create all field variables that are needed
   this->activation_ = this->functionSpace_->template createFieldVariable<1>("activation");
-  this->activeStress_ = this->functionSpace_->template createFieldVariable<9>("activeStress");
-  this->strain_ = this->functionSpace_->template createFieldVariable<9>("strain");
+  this->activeStress_ = this->functionSpace_->template createFieldVariable<9>("activeStress", componentNames);
+  this->strain_ = this->functionSpace_->template createFieldVariable<9>("strain", componentNames);
   this->flowPotential_ = this->functionSpace_->template createFieldVariable<1>("flowPotential");
   this->rightHandSideActive_ = this->functionSpace_->template createFieldVariable<3>("rightHandSideActive");
   this->fiberDirection_ = this->functionSpace_->template createFieldVariable<3>("fiberDirection");
@@ -56,6 +68,8 @@ std::shared_ptr<typename QuasiStaticLinearElasticity<DataLinearElasticityType>::
 QuasiStaticLinearElasticity<DataLinearElasticityType>::
 activation()
 {
+  // get the most recent pointer to the field variable from the connector slot, it may have changed because of sharing of the field variable
+  this->activation_ = this->slotConnectorData_->variable1[0].values;
   return this->activation_;
 }
 
@@ -120,6 +134,7 @@ template<typename DataLinearElasticityType>
 void QuasiStaticLinearElasticity<DataLinearElasticityType>::
 debug()
 {
+  return;
   std::shared_ptr<VectorFieldVariableType> solution = this->dataLinearElasticity_->solution();
 
   int nValues = solution->nDofsLocalWithoutGhosts();
@@ -147,11 +162,11 @@ debug()
 
 
 template<typename DataLinearElasticityType>
-std::shared_ptr<typename QuasiStaticLinearElasticity<DataLinearElasticityType>::OutputConnectorDataType>
+std::shared_ptr<typename QuasiStaticLinearElasticity<DataLinearElasticityType>::SlotConnectorDataType>
 QuasiStaticLinearElasticity<DataLinearElasticityType>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  return outputConnectorData_;
+  return slotConnectorData_;
 }
 
 template<typename DataLinearElasticityType>

@@ -88,7 +88,7 @@ fig = plt.figure(1)
 #plt.ion()
 
 # callback function that is called after integration of rhs, generates plots
-def handleResult(n_instances, time_step_no, current_time, states, intermediates, null):
+def handleResult(n_instances, time_step_no, current_time, states, algebraics, name_information, null):
   
   # collect data for every instance
   xdata = []
@@ -97,7 +97,7 @@ def handleResult(n_instances, time_step_no, current_time, states, intermediates,
   for i in range(nInstances):
     xdata.append(i)
     vm_data.append(states[i])
-    gamma_data.append(intermediates[i])
+    gamma_data.append(algebraics[i])
   
   # generate plot of Vm and gamma
   # prepare figure
@@ -132,6 +132,7 @@ def callback(data, shape, nEntries, dim, timeStepNo, currentTime, null):
   pass
     
 config = {
+  "logFormat": "csv",
   "Meshes": {
     "MeshFibre": {
       "nElements": n_elements,
@@ -169,7 +170,7 @@ config = {
             #"handleResultCallInterval": 2e3,
           
             "statesForTransfer": 0,     # state 0 = Vm
-            "parametersUsedAsIntermediate": [],       # list of intermediate value indices, that will be set by parameters. Explicitely defined parameters that will be copied to intermediates, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+            "parametersUsedAsAlgebraic": [],       # list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersUsedAsConstant": [2],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
             "parametersInitialValues": [0.0],      # initial values for the parameters: I_Stim
             "meshName": "MeshFibre",

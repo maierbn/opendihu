@@ -12,31 +12,32 @@ Generic::Generic(DihuContext context, PythonConfig specificSettings, std::shared
   // get the rank subset of all processes that collectively call the write methods
   if (!rankSubset_)
   {
+    LOG(DEBUG) << "Creating new OutputWriter and rankSubset is nullptr, now using rankSubsetForCollectiveOperations.";
     rankSubset_ = this->context_.partitionManager()->rankSubsetForCollectiveOperations();
   }
   VLOG(1) << "OutputWriter::Generic constructor, rankSubset: " << *rankSubset_;
 
   outputInterval_ = specificSettings_.getOptionInt("outputInterval", 1, PythonUtility::Positive);
-  formatString_ = specificSettings_.getOptionString("format", "Callback");
+  formatString_ = specificSettings_.getOptionString("format", "none");
   std::string fileNumbering = specificSettings_.getOptionString("fileNumbering", "incremental");
 
   // determine filename base
-  if (formatString_ != "Callback")
+  if (formatString_ != "PythonCallback")
   {
     filenameBase_ = specificSettings_.getOptionString("filename", "out");
   }
 
-  if (fileNumbering == "incremental") 
+  if (fileNumbering == "incremental")
   {
-    fileNumbering_ = file_numbering_incremental;
-  } 
-  else if (fileNumbering == "timeStepIndex") 
-  {
-    fileNumbering_ = file_numbering_by_time_step_index;
+    fileNumbering_ = fileNumberingIncremental;
   }
-  else 
+  else if (fileNumbering == "timeStepIndex")
   {
-    fileNumbering_ = file_numbering_incremental;
+    fileNumbering_ = fileNumberingByTimeStepIndex;
+  }
+  else
+  {
+    fileNumbering_ = fileNumberingIncremental;
     LOG(ERROR) << "Unknown option for \"fileNumbering\": \"" <<fileNumbering<< "\". Use one of \"incremental\" or \"timeStepIndex\". Falling back to \"incremental\".";
   }
 }

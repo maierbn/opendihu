@@ -14,7 +14,7 @@ namespace PreciceAdapter
 
 /** Precice adapter for partitioned fibers.
   */
-template<class NestedSolver>
+template<typename NestedSolver>
 class MuscleContraction :
   public Runnable
 {
@@ -27,7 +27,7 @@ public:
 
   //! Define the type of data that will be transferred between solvers when there is a coupling scheme.
   //! Usually you define this type in the "Data" class and reuse it here.
-  typedef typename NestedSolver::OutputConnectorDataType OutputConnectorDataType;
+  typedef typename NestedSolver::SlotConnectorDataType SlotConnectorDataType;
 
   //! constructor, gets the DihuContext object which contains all python settings
   MuscleContraction(DihuContext context);
@@ -45,8 +45,8 @@ public:
   Data &data();
 
   //! Get the data that will be transferred in the operator splitting or coupling to the other term of the splitting/coupling.
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
 protected:
 
@@ -68,7 +68,7 @@ protected:
   double maximumPreciceTimestepSize_;         //< maximum timestep size that precice will allow for the current time step
   double timeStepWidth_;                      //< timestep width of the solver
 
-  int outputConnectorSlotIdGamma_;            //< the number of the output connector slot that is used for gamma
+  int connectorSlotIdGamma_;            //< the number of the connector slot that is used for gamma
 
   std::vector<int> preciceVertexIds_;         //< the vertex ids in precice of the geometry values
   int preciceMeshId_;                         //< mesh ID of precice of the mesh that contains all fiber nodes

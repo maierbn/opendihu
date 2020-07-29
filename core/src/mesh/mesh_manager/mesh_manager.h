@@ -5,11 +5,17 @@
 
 #include "control/dihu_context.h"
 //#include "function_space/function_space.h"
-#include "mesh/mapping_between_meshes/manager/02_manager.h"
+//#include "mesh/mapping_between_meshes/manager/04_manager.h"
 #include "function_space/function_space_generic.h"
 
+// forward declarations
 namespace Partition{
 class Manager;
+}
+namespace FieldVariable
+{
+  template<typename FunctionSpace,int nComponents>
+  class FieldVariable;
 }
 namespace Mesh
 {
@@ -41,7 +47,7 @@ public:
   
   //! check if a function space with the given name and type is stored
   template<typename FunctionSpaceType>
-  bool hasFunctionSpaceOfType(std::string meshName);
+  bool hasFunctionSpaceOfType(std::string meshName, bool outputWarning=false);
 
   //! check if a function space with the specified name is stored, the type is not checked
   bool hasFunctionSpace(std::string meshName);
@@ -72,6 +78,9 @@ public:
   //! \param nRanks on how many ranks the field variable will be distributed, the nEntries is the local size
   //! \param name is the name of the Petsc Vec, used for debugging output.
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic,1>> createGenericFieldVariable(int nEntries, std::string name);
+
+  //! remove a function space if it exists
+  void deleteFunctionSpace(std::string meshName);
 
   friend class NodePositionsTester;    //< a class used for testing
 

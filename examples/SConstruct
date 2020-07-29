@@ -21,6 +21,6 @@ examples = []
 
 # loop over examples and call SConstruct file
 for example in examples:
-  print ""
-  print "example",example
+  print("")
+  print("example {}".format(example))
   SConscript(example+'/SConstruct')

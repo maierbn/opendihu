@@ -31,9 +31,10 @@ public:
   //! Note, it is not possible to make rhs const, because VecCopy needs globalValues() and this may change rhs
   FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents_> &rhs, std::string name, bool reuseData=false);
 
-  //! contructor as data copy (reuseData=false) or reusing the Petsc Vec's (reuseData=true), with a different name and different components
+  //! contructor as data copy (reuseData=false) or reusing the Petsc Vec's (reuseData=true), with a different name and different components,
+  //! @param rhsComponentNoBegin the first component of the rhs to reuse for this field variable
   template <int nComponents2>
-  FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents2> &rhs, std::string name, std::vector<std::string> componentNames, bool reuseData=false);
+  FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents2> &rhs, std::string name, std::vector<std::string> componentNames, bool reuseData=false, int rhsComponentNoBegin=0);
 
   //! constructor with functionSpace, name and components and if it is a geometry field. This constructs a complete field variable
   FieldVariableDataStructured(std::shared_ptr<FunctionSpaceType> functionSpace, std::string name, std::vector<std::string> componentNames, bool isGeometryField=false);

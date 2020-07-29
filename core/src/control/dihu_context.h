@@ -25,6 +25,7 @@ namespace MappingBetweenMeshes { class Manager; }
 namespace Solver { class Manager; }
 namespace Partition { class RankSubset; }
 class SolverStructureVisualizer;
+class GlobalConnectionsBySlotName;
 
 /** This class contains global variables (mesh manager and solver manager) and a python config dictionary
  *  which can be a sub-dict of the global config. Different objects of this class are used for the methods
@@ -78,6 +79,9 @@ public:
   //! return the object that collects information about all nested solvers and produces a diagram, also with data connections
   static std::shared_ptr<SolverStructureVisualizer> solverStructureVisualizer();
 
+  //! return the object that collects the connector slots connections given under setting "connectedSlots"
+  static std::shared_ptr<GlobalConnectionsBySlotName> globalConnectionsBySlotName();
+
   //! writes out the diagram file using the solverStructureVisualizer
   static void writeSolverStructureDiagram();
 
@@ -92,6 +96,15 @@ public:
 
   //! get the rank subset of this context, this may not be the same as MPI_COMM_WORLD
   std::shared_ptr<Partition::RankSubset> rankSubset() const;
+
+  /** data type to store which format the lines of the log file will have */
+  enum logFormat_t {logFormatCsv, logFormatJson};
+
+  //! get the current log format
+  static logFormat_t logFormat();
+
+  //! set the format of the lines in the log file
+  static void setLogFormat(logFormat_t format);
 
 #ifdef HAVE_ADIOS
   //! return the adios object
@@ -134,13 +147,14 @@ private:
 
   PythonConfig pythonConfig_;                         //< the top level python config dictionary of the current context (i.e. may be a sub-dict of the global config)
   std::shared_ptr<Partition::RankSubset> rankSubset_; //< the ranks that collectively run the code where this context is valid
-  
+
   // global singletons
   static std::shared_ptr<Mesh::Manager>                   meshManager_;                   //< object that saves all meshes that are used
   static std::shared_ptr<MappingBetweenMeshes::Manager>   mappingBetweenMeshesManager_;   //< object that store all mappings between meshes
   static std::shared_ptr<Solver::Manager>                 solverManager_;                 //< object that saves all solver configurations that are used
   static std::shared_ptr<Partition::Manager>              partitionManager_;              //< partition manager object that creates and manages partitionings
-  
+  static std::shared_ptr<GlobalConnectionsBySlotName>     globalConnectionsBySlotName_;   //< object that collects the connector slots connections given under setting "connectedSlots"
+
   static int nRanksCommWorld_;                        //< number of ranks in MPI_COMM_WORLD
   static int ownRankNoCommWorld_;                     //< the own rank no in MPI_COMM_WORLD, using MPI_COMM_WORLD should be avoided in the program, instead use this global variable
   static bool initialized_;                           //< if MPI, Petsc and easyloggingPP is already initialized. This needs to be done only once in the program.
@@ -151,6 +165,7 @@ private:
   static std::vector<std::string> megamolArguments_;  //< the string data of the megamol arguments
   static std::shared_ptr<SolverStructureVisualizer>       solverStructureVisualizer_;    //< object that collects information about all nested solvers and produces a diagram, also with data connections
   static std::string solverStructureDiagramFile_;     //< filename of a file produced by solverStructureVisualizer_
+  static logFormat_t logFormat_;                        //< format in which lines in log file will be written, either csv or json
   bool doNotFinalizeMpi_;                             //< when the last object gets destroyed, either MPI_Finalize() is called (should be used) or MPI_Barrier (only needed in testcases where MPI context needs to be used for the next test cases)
 
 #ifdef HAVE_ADIOS

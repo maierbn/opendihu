@@ -5,7 +5,7 @@ utbot_tests = []
 
 def multiget(dicts, key, default=None):
     for d in dicts:
-        if d.has_key(key):
+        if key in d:
             return d[key]
     else:
         return default
@@ -69,7 +69,7 @@ def generate(env):
     env.SetDefault(UTBOT_SYNC_TARGET='utbot-sync')
     env.SetDefault(UTBOT_PURGE_TARGET='utbot-purge')
     if not exists(env):
-        print 'Error: Unable to locate UTBot command %s.'%repr(env['UTBOT'])
+        print('Error: Unable to locate UTBot command %s.'%repr(env['UTBOT']))
         env.Exit(1)
     env.Append(BUILDERS={'UTBotHarness': UTBotHarness})
     env.Alias(env['UTBOT_CHECK_TARGET'], None, env.Action('@utbot run'))

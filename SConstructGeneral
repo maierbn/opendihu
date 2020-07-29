@@ -6,12 +6,12 @@
 ##
 ## # get the directory where opendihu is installed (the top level directory of opendihu)
 ## opendihu_home = os.environ.get('OPENDIHU_HOME')
-##
+## 
 ## # set path where the "SConscript" file is located (set to current path)
 ## path_where_to_call_sconscript = Dir('.').srcnode().abspath
-##
+## 
 ## # call general SConstruct that will configure everything and then call SConscript at the given path
-## SConscript(os.path.join(opendihu_home,'SConstructGeneral'),
+## SConscript(os.path.join(opendihu_home,'SConstructGeneral'), 
 ##            exports={"path": path_where_to_call_sconscript})
 ##
 ##--------------------------------------------------------------------------------------------------------
@@ -22,7 +22,7 @@ import random
 import socket
 import platform
 
-sys.path.append("dependencies/scons-config/dist/scons_config-0.1-py2.7.egg")     # load scons_config
+sys.path.append("dependencies/scons-config/dist/scons_config-0.1-py3.6.egg")     # load scons_config
 
 import sconsconfig
 from sconsconfig import packages, tools
@@ -39,7 +39,7 @@ opendihu_home = Dir('.').srcnode().abspath  # opendihu home directory is where t
 #
 sconsconfig.select(
     packages.MPI(required=True),       # This searches for the MPI implementation
-    packages.LAPACK(required=False),   # This downloads and compiles OpenBLAS which implements the interfaces of both LAPACK and BLAS. It is only needed for the svg utility for MOR, which is currently not really required
+    #packages.LAPACK(required=False),   # This downloads and compiles OpenBLAS which implements the interfaces of both LAPACK and BLAS. It is only needed for the svg utility for MOR, which is currently not really required
     #packages.bison(required=False),   # parser generater needed by PTScotch which is needed by MUMPS which is needed by Petsc
     #packages.flex(required=False),    # "Fast Lexical Analyzer" needed by PTScotch which is needed by MUMPS which is needed by Petsc
     packages.PETSc(required=True),     # Petsc depends on LAPACK/BLAS and bison
@@ -60,10 +60,10 @@ sconsconfig.select(
     #packages.boost(required=False),   # boost C++ library, needed for chaste
     #packages.Chaste(required=False),  # The Chaste framework, only the nonlinear mechanics solver is used
     packages.Vc(required=True),        # The Vc types for explicit vectorization
-    packages.xbraid(required=False),   # framework for multigrid in time methods
+    packages.xbraid(required=False),   # framework for multigrid in time methods 
     packages.OpenCOR(required=False),  # binary that converts CellML files from xml to c
-    #packages.libxml2(required=False),  # parser for xml files, needed for precice
-    #packages.precice(required=False),  # numerical coupling library
+    packages.libxml2(required=False),  # parser for xml files, needed for precice
+    packages.precice(required=False),  # numerical coupling library
     packages.EasyLoggingPP(required=True),   # This is the logging library, it has to be the last package to be included because it contains a source (.c) file that needs to be compiled and linked to opendihu and somehow otherwise scons-config does not work.
 )
 
@@ -90,12 +90,13 @@ vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
 vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
 vars.Add(BoolVariable('VERBOSE', 'Output raw shell commands for compilation.', False))
 vars.Add(BoolVariable('ph', 'Build precompiled headers.', False))
+vars.Add(BoolVariable('USE_VECTORIZED_FE_MATRIX_ASSEMBLY', 'Enable code that matrix assembly for FEM matrices uses the Vc library.', False))
 vars.Add('mpicc', help='The mpicc compiler wrapper', default='mpicc')
 vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
 vars.Add('cc', help='The c compiler', default='gcc')
 vars.Add('CC', help='The c++ compiler', default='g++')
 vars.Add('cmake', help='The cmake executable', default='cmake')
-
+    
 # Add options from any packages we want to use.
 sconsconfig.add_options(vars)
 
@@ -107,8 +108,8 @@ vars.Save('out.py',env)
 # check for unknown variables and output warning
 unknown = vars.UnknownVariables()
 if unknown:
-  print "WARNING: Unknown variables from command line arguments or config file 'user-variables.scons.py':", unknown.keys()
-
+  print("WARNING: Unknown variables from command line arguments or config file 'user-variables.scons.py':", unknown.keys())
+    
 # generate help text for the page `scons -h`
 Help(vars.GenerateHelpText(env))
 
@@ -126,7 +127,7 @@ if ARGUMENTS.get('VERBOSE') != '1' and tty_available:
   env['ARCOMSTR'] = "\x1b[36mBuilding archive $TARGET\x1b[0m"
   env['RANLIBCOMSTR'] = "\x1b[36mCreating archive index\x1b[0m"
   env['GCHSTR'] = "\x1b[32mCompiling header $SOURCE\x1b[0m"
-
+           
 # set compiler, "CC" is C++, "cc" is C
 env['CXX'] = env['CC']
 env['CC'] = env['cc']
@@ -164,7 +165,7 @@ def progress_function(node):
   if env["node_count_max"]>0 and tty_available:
     sys.stdout.write('\r[%3d%%] ' % (env["node_count"]*100/env["node_count_max"]))
     sys.stdout.flush()
-  # write out
+  # write out 
   try:
     with open(env["node_count_fname"], 'w') as f: f.write('%d\n' % env["node_count"])
   except: pass
@@ -182,30 +183,33 @@ if os.environ.get("PE_ENV") == None:
   if "notifyset" not in env:
     env["notifyset"] = True
     target='notify-send'+str(random.random())
-    notify = env.Command(target=target, source = None, action = 'notify-send "Compilation of core completed." || true')
+    if env['no_tests']:
+      notify = env.Command(target=target, source = None, action = 'notify-send "Compilation of opendihu core completed." -a opendihu || true')
+    else:
+      notify = env.Command(target=target, source = None, action = 'notify-send "Compilation of opendihu core completed." "You can now abort compilation of unit tests, if not needed." -a opendihu || true')
     #AlwaysBuild('notify-send')
     if env["BUILD_TYPE"] == "debug":
       Depends(notify, 'core/build_debug/libopendihud.a')
     else:
       Depends(notify, 'core/build_release/libopendihu.a')
-
+    
 # ensure that PYTHONPATH points to scripts directory which contains python scripts
 current_python_path = os.environ.get("PYTHONPATH")
 if current_python_path is None:
   os.environ["PYTHONPATH"] = os.path.join(opendihu_home, "scripts")+":"+os.path.join(opendihu_home, "scripts/geometry_manipulation")
 elif "scripts" not in current_python_path:
   os.environ["PYTHONPATH"] = current_python_path+":"+os.path.join(opendihu_home, "scripts")+":"+os.path.join(opendihu_home, "scripts/geometry_manipulation")
-
+    
 # -----------------------------------------------
 # Depending on the variable BUILD_TYPE either build with debug, releasewithdebuginfo or release settings and link corresponding version of core
-# All the flags may only work with the GCC compiler, tested with GCC 5.4.0 and GCC 7.3.0.
+# All the flags may only work with the GCC compiler, tested with GCC 7.3.0 and newer. 
 # When using a different compiler that supports C++14, add some 'if's to the next section.
 
 if env["BUILD_TYPE"] == "debug":
   # debug build
   variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # output folder for build
   if env['CC'] != "pgcc":  # not pgi compiler
-    env.MergeFlags('-ftemplate-backtrace-limit=0 -fstack-check')
+    env.MergeFlags('-ftemplate-backtrace-limit=0')
     env.MergeFlags('-Wall -Wpedantic -Wno-sign-compare -Wno-error=sign-compare')
     env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
     env.MergeFlags('-I/store/software/opendihu/dependencies/chaste/install/include/chaste/continuum_mechanics/problem')
@@ -283,6 +287,10 @@ if env["no_vectorization"]:
   print("Warning: Compile without vectorization (option no_vectorization)!")
   env.MergeFlags('-mno-sse2 -mno-sse3 -mno-ssse3 -mno-sse4 -mno-sse4a -mno-fma4 -mno-avx')
 
+if env["USE_VECTORIZED_FE_MATRIX_ASSEMBLY"]:
+  print("Vectorized FE matrix assembly is enabled.")
+  env.MergeFlags(' -DUSE_VECTORIZED_FE_MATRIX_ASSEMBLY')
+
 # add basic linker flags for linux
 env.MergeFlags("-lpthread -ldl -lutil -lm")
 
@@ -310,3 +318,4 @@ SConscript(dirs=path_where_to_call_sconscript,
            variant_dir=variant_dir,
            duplicate=False,
            exports="env")
+

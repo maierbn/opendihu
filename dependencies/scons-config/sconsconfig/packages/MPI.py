@@ -1,6 +1,6 @@
 
 import sys, os
-from Package import Package
+from .Package import Package
 import subprocess
 import socket
 
@@ -99,14 +99,26 @@ int main(int argc, char* argv[])
       try:
         # try to get compiler and linker flags from mpicc, this directly has the needed includes paths
         #ctx.Message("Checking MPI "+str(ctx.env["mpiCC"])+" --showme") 
-        cflags = subprocess.check_output("{} --showme:compile".format(ctx.env["mpiCC"]), shell=True)
-        ldflags = subprocess.check_output("{} --showme:link".format(ctx.env["mpiCC"]), shell=True)
+        cflags_command = "echo '{}' > .a && {} .a --showme:compile; rm .a".format(self.check_text, ctx.env["mpiCC"])
+        ldflags_command = "echo '{}' > .a && {} .a --showme:link; rm .a".format(self.check_text, ctx.env["mpiCC"])
+        cflags = subprocess.check_output(cflags_command, shell=True).decode("utf-8")
+        ldflags = subprocess.check_output(ldflags_command, shell=True).decode("utf-8")
 
-        # remove trailing newline
-        if cflags[-1] == '\n':
-          cflags = cflags[:-1]
-        if ldflags[-1] == '\n':
-          ldflags = ldflags[:-1]
+        ctx.Log("cflags: {}\n".format(cflags))
+        ctx.Log("ldflags: {}\n".format(ldflags))
+
+        # remove trailing newline and leading .a
+        try:
+          if cflags[-1] == '\n':
+            cflags = cflags[:-1]
+          if cflags[:2] == ".a":
+            cflags = cflags[2:]
+          if ldflags[-1] == '\n':
+            ldflags = ldflags[:-1]
+          if ldflags[:2] == ".a":
+            ldflags = ldflags[2:]
+        except:
+          ctx.Log("A string error occured")
 
         ctx.Log("extracted cflags  from {}: \n{}\n\n".format(ctx.env["mpiCC"], cflags))
         ctx.Log("extracted ldflags from {}: \n{}\n\n".format(ctx.env["mpiCC"], ldflags))
@@ -124,7 +136,7 @@ int main(int argc, char* argv[])
         use_mpi_dir = False
         
       except Exception as e: 
-        ctx.Message("MPI "+str(ctx.env["mpiCC"])+" --showme failed: \n"+str(e)+"\nNow considering MPI_DIR\n")
+        ctx.Message("MPI "+str(ctx.env["mpiCC"])+" --showme is not available: \n"+str(e)+"\nNow considering MPI_DIR\n")
         use_mpi_dir = True
     
     if use_mpi_dir:

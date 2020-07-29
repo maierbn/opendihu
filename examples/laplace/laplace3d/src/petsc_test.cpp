@@ -372,8 +372,10 @@ int testPartitioned(int argc, char *argv[])
 
   if (ownRankNo == 0)
     nElementsLocal[2] = 2;
+  std::vector<int> rankNos;
+  PythonConfig specificSettings;
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition = settings.partitionManager()->createPartitioningStructuredLocal<FunctionSpaceType>(
-    nElementsGlobal, nElementsLocal, nRanksPerCoordinateDirection);
+    specificSettings, nElementsGlobal, nElementsLocal, nRanksPerCoordinateDirection, rankNos);
 
   int nDofsGlobal = meshPartition->nDofsGlobal();
   int nDofsLocalWithoutGhosts = meshPartition->nDofsLocalWithoutGhosts();
@@ -630,8 +632,10 @@ int testFieldVariables(int argc, char *argv[])
 
   if (ownRankNo == 0)
     nElementsLocal[2] = 2;
+  std::vector<int> rankNos;
+  PythonConfig specificSettings;
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition = settings.partitionManager()->createPartitioningStructuredLocal<FunctionSpaceType>(
-    nElementsGlobal, nElementsLocal, nRanksPerCoordinateDirection);
+    specificSettings, nElementsGlobal, nElementsLocal, nRanksPerCoordinateDirection, rankNos);
 
   // create function space
   std::vector<Vec3> nodePositions = {

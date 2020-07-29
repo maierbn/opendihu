@@ -28,7 +28,7 @@ public:
   using FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::FunctionSpaceFieldVariable;
 
   //! check if the point lies outside the element with given geometryValues, if yes, return true, if it returns false this does not mean the point has to lie inside
-  bool pointIsOutsideBoundingBox(Vec3 point, const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryValues) const;
+  bool pointIsOutsideBoundingBox(Vec3 point, const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryValues, double xiTolerance) const;
   
   //! check if the point is one of the node positions given in geometryValues, if so, return true and set xi accordingly
   bool pointIsNodePosition(Vec3 point, const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryValues, std::array<double,MeshType::dim()> &xi) const;

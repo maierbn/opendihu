@@ -4,8 +4,8 @@
 #include "control/diagnostic_tool/stimulation_logging.h"
 
 //! get element lengths and vmValues from the other ranks
-template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
-void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 fetchFiberData()
 {
   VLOG(1) << "fetchFiberData";
@@ -14,9 +14,9 @@ fetchFiberData()
   CellmlAdapterType &cellmlAdapter = instances[0].timeStepping1().instancesLocal()[0].discretizableInTime();
 
   int nInstancesLocalCellml;
-  int nIntermediatesLocalCellml;
+  int nAlgebraicsLocalCellml;
   int nParametersPerInstance;
-  cellmlAdapter.getNumbers(nInstancesLocalCellml, nIntermediatesLocalCellml, nParametersPerInstance);
+  cellmlAdapter.getNumbers(nInstancesLocalCellml, nAlgebraicsLocalCellml, nParametersPerInstance);
 
   // loop over fibers and communicate element lengths and initial values to the ranks that participate in computing
   int fiberNo = 0;
@@ -64,8 +64,8 @@ fetchFiberData()
         fiberData_[fiberDataNo].vmValues.resize(fiberFunctionSpace->nDofsGlobal());
 
         // resize buffer of further data that will be transferred back in updateFiberData()
-        int nStatesAndIntermediatesValues = statesForTransfer_.size() + intermediatesForTransfer_.size() - 1;
-        fiberData_[fiberDataNo].furtherStatesAndIntermediatesValues.resize(fiberFunctionSpace->nDofsGlobal() * nStatesAndIntermediatesValues);
+        int nStatesAndAlgebraicsValues = statesForTransfer_.size() + algebraicsForTransfer_.size() - 1;
+        fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues.resize(fiberFunctionSpace->nDofsGlobal() * nStatesAndAlgebraicsValues);
         
         elementLengthsReceiveBuffer = fiberData_[fiberDataNo].elementLengths.data();
         vmValuesReceiveBuffer = fiberData_[fiberDataNo].vmValues.data();
@@ -108,8 +108,8 @@ fetchFiberData()
       innerInstances[j].discretizableInTime().data().prepareParameterValues();
 
       double *parameterValuesLocal = innerInstances[j].discretizableInTime().data().parameterValues();  
-      // size of this array is fiberFunctionSpace->nDofsLocalWithoutGhosts() * nIntermediates
-      // parameterValuesLocal has struct of array memory layout with space for a total of nIntermediates_ parameters [i0p0, i1p0, i2p0, ... i0p1, i1p1, i2p1, ...]
+      // size of this array is fiberFunctionSpace->nDofsLocalWithoutGhosts() * nAlgebraics
+      // parameterValuesLocal has struct of array memory layout with space for a total of nAlgebraics_ parameters [i0p0, i1p0, i2p0, ... i0p1, i1p1, i2p1, ...]
 
       // only the actual parameter values should be sent, not the rest of the parameters buffer
       // therefore allocate a send buffer with the according size
@@ -160,9 +160,12 @@ fetchFiberData()
             fiberPointBuffersParameters_[pointBuffersNo][parameterNo][entryNo] = parametersReceiveBuffer[instanceNo*nParametersPerInstance + parameterNo];
           }
 
-          if (entryNo == Vc::double_v::Size-1)
+          if (VLOG_IS_ON(1))
           {
-            LOG(DEBUG) << "stored " << nParametersPerInstance << " parameters in buffer no " << pointBuffersNo << ": " << fiberPointBuffersParameters_[pointBuffersNo];
+            if (entryNo == Vc::double_v::Size-1)
+            {
+              VLOG(1) << "stored " << nParametersPerInstance << " parameters in buffer no " << pointBuffersNo << ": " << fiberPointBuffersParameters_[pointBuffersNo];
+            }
           }
         }
       }
@@ -194,11 +197,11 @@ fetchFiberData()
 }
 
 //! send vmValues data from fiberData_ back to the fibers where it belongs to and set in the respective field variable
-template<int nStates, int nIntermediates, typename DiffusionTimeSteppingScheme>
-void FastMonodomainSolverBase<nStates,nIntermediates,DiffusionTimeSteppingScheme>::
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 updateFiberData()
 {
-  // copy Vm and other states/intermediates from compute buffers to fiberData_
+  // copy Vm and other states/algebraics from compute buffers to fiberData_
   for (int fiberDataNo = 0; fiberDataNo < fiberData_.size(); fiberDataNo++)
   {
     int nValues = fiberData_[fiberDataNo].vmValues.size();
@@ -220,19 +223,19 @@ updateFiberData()
       {
         const int stateToTransfer = statesForTransfer_[i];
 
-        fiberData_[fiberDataNo].furtherStatesAndIntermediatesValues[furtherDataIndex*nValues + valueNo]
+        fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues[furtherDataIndex*nValues + valueNo]
           = fiberPointBuffers_[pointBuffersNo].states[stateToTransfer][entryNo];
       }
 
-      // loop over intermediates to transfer
-      for (int i = 0; i < intermediatesForTransfer_.size(); i++, furtherDataIndex++)
+      // loop over algebraics to transfer
+      for (int i = 0; i < algebraicsForTransfer_.size(); i++, furtherDataIndex++)
       {
-        fiberData_[fiberDataNo].furtherStatesAndIntermediatesValues[furtherDataIndex*nValues + valueNo]
-          = fiberPointBuffersIntermediatesForTransfer_[pointBuffersNo][i][entryNo];
+        fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues[furtherDataIndex*nValues + valueNo]
+          = fiberPointBuffersAlgebraicsForTransfer_[pointBuffersNo][i][entryNo];
       }
     }
-    LOG(DEBUG) << "states and intermediates for transfer at fiberDataNo=" << fiberDataNo << ": " << fiberData_[fiberDataNo].furtherStatesAndIntermediatesValues;
-    LOG(DEBUG) << "size: " << fiberData_[fiberDataNo].furtherStatesAndIntermediatesValues.size() << ", nValues: " << nValues;
+    LOG(DEBUG) << "states and algebraics for transfer at fiberDataNo=" << fiberDataNo << ": " << fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues;
+    LOG(DEBUG) << "size: " << fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues.size() << ", nValues: " << nValues;
   }
 
   LOG(TRACE) << "updateFiberData";
@@ -288,32 +291,32 @@ updateFiberData()
       instances[i].timeStepping2().instancesLocal()[j].data().solution()->setValuesWithoutGhosts(0, vmValuesLocal);
 
       // ----------------------
-      // communicate further states and intermediates that are selected by the options "statesForTransfer" and "intermediatesForTransfer"
+      // communicate further states and algebraics that are selected by the options "statesForTransfer" and "algebraicsForTransfer"
 
       std::vector<int> nValuesOnRanks(rankSubset->size());
-      int nStatesAndIntermediatesValues = statesForTransfer_.size() + intermediatesForTransfer_.size() - 1;
+      int nStatesAndAlgebraicsValues = statesForTransfer_.size() + algebraicsForTransfer_.size() - 1;
 
       for (int rankNo = 0; rankNo < rankSubset->size(); rankNo++)
       {
-        offsetsOnRanks[rankNo] = fiberFunctionSpace->meshPartition()->beginNodeGlobalNatural(0, rankNo) * nStatesAndIntermediatesValues;
-        nValuesOnRanks[rankNo] = fiberFunctionSpace->meshPartition()->nNodesLocalWithoutGhosts(0, rankNo) * nStatesAndIntermediatesValues;
+        offsetsOnRanks[rankNo] = fiberFunctionSpace->meshPartition()->beginNodeGlobalNatural(0, rankNo) * nStatesAndAlgebraicsValues;
+        nValuesOnRanks[rankNo] = fiberFunctionSpace->meshPartition()->nNodesLocalWithoutGhosts(0, rankNo) * nStatesAndAlgebraicsValues;
       }
 
       double *sendBuffer = nullptr;
       if (computingRank == rankSubset->ownRankNo())
       {
-        sendBuffer = fiberData_[fiberDataNo].furtherStatesAndIntermediatesValues.data();
+        sendBuffer = fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues.data();
       }
 
-      std::vector<double> valuesLocal(fiberFunctionSpace->nDofsLocalWithoutGhosts() * nStatesAndIntermediatesValues);
+      std::vector<double> valuesLocal(fiberFunctionSpace->nDofsLocalWithoutGhosts() * nStatesAndAlgebraicsValues);
       MPI_Scatterv(sendBuffer, nValuesOnRanks.data(), offsetsOnRanks.data(), MPI_DOUBLE,
-                   valuesLocal.data(), fiberFunctionSpace->nDofsLocalWithoutGhosts() * nStatesAndIntermediatesValues, MPI_DOUBLE,
+                   valuesLocal.data(), fiberFunctionSpace->nDofsLocalWithoutGhosts() * nStatesAndAlgebraicsValues, MPI_DOUBLE,
                    computingRank, mpiCommunicator);
 
-      VLOG(1) << "Scatterv furtherStatesAndIntermediatesValues from rank " << computingRank << ", sizes: " << nValuesOnRanks << ", offsets: " << offsetsOnRanks
+      VLOG(1) << "Scatterv furtherStatesAndAlgebraicsValues from rank " << computingRank << ", sizes: " << nValuesOnRanks << ", offsets: " << offsetsOnRanks
         << ", sendBuffer: " << sendBuffer << ", received local values: " << valuesLocal;
 
-      // store received states and intermediates values in diffusion outputConnectorData
+      // store received states and algebraics values in diffusion slotConnectorData
       // loop over further states to transfer
       int furtherDataIndex = 0;
       for (int stateIndex = 1; stateIndex < statesForTransfer_.size(); stateIndex++, furtherDataIndex++)
@@ -322,7 +325,7 @@ updateFiberData()
 
         // get field variable
         std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable1
-          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable1;
+          = instances[i].timeStepping2().instancesLocal()[j].getSlotConnectorData()->variable1;
 
         if (stateIndex >= variable1.size())
         {
@@ -339,7 +342,7 @@ updateFiberData()
 
         // store in cellmlAdapter
         std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,nStates>> fieldVariableStatesCellML
-          = instances[i].timeStepping1().instancesLocal()[j].getOutputConnectorData()->variable1[stateIndex].values;
+          = instances[i].timeStepping1().instancesLocal()[j].getSlotConnectorData()->variable1[stateIndex].values;
 
         const int componentNo = statesForTransfer_[stateIndex];
 
@@ -349,40 +352,40 @@ updateFiberData()
         VLOG(1) << "store " << nValues << " values for additional state " << statesForTransfer_[stateIndex];
       }
 
-      // loop over intermediates to transfer
-      for (int intermediateIndex = 0; intermediateIndex < intermediatesForTransfer_.size(); intermediateIndex++, furtherDataIndex++)
+      // loop over algebraics to transfer
+      for (int algebraicIndex = 0; algebraicIndex < algebraicsForTransfer_.size(); algebraicIndex++, furtherDataIndex++)
       {
         // store in diffusion
 
         // get field variable
         std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable2
-          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable2;
+          = instances[i].timeStepping2().instancesLocal()[j].getSlotConnectorData()->variable2;
 
-        if (intermediateIndex >= variable2.size())
+        if (algebraicIndex >= variable2.size())
         {
           continue;
         }
 
-        std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableIntermediates
-          = variable2[intermediateIndex].values;
+        std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableAlgebraics
+          = variable2[algebraicIndex].values;
 
         int nValues = fiberFunctionSpace->nDofsLocalWithoutGhosts();
         double *values = valuesLocal.data() + furtherDataIndex * nValues;
 
         // int componentNo, int nValues, const dof_no_t *dofNosLocal, const double *values
-        fieldVariableIntermediates->setValues(0, nValues, fiberFunctionSpace->meshPartition()->dofNosLocal().data(), values);
+        fieldVariableAlgebraics->setValues(0, nValues, fiberFunctionSpace->meshPartition()->dofNosLocal().data(), values);
 
         // store in CellmlAdapter
-        std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableIntermediatesCellML
-          = instances[i].timeStepping1().instancesLocal()[j].getOutputConnectorData()->variable2[intermediateIndex].values;
+        std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableAlgebraicsCellML
+          = instances[i].timeStepping1().instancesLocal()[j].getSlotConnectorData()->variable2[algebraicIndex].values;
 
-        //const int componentNo = intermediatesForTransfer_[intermediateIndex];
+        //const int componentNo = algebraicsForTransfer_[algebraicIndex];
 
         // int componentNo, int nValues, const dof_no_t *dofNosLocal, const double *values
-        fieldVariableIntermediatesCellML->setValues(0, nValues, fiberFunctionSpace->meshPartition()->dofNosLocal().data(), values);
+        fieldVariableAlgebraicsCellML->setValues(0, nValues, fiberFunctionSpace->meshPartition()->dofNosLocal().data(), values);
 
-        LOG(DEBUG) << "store " << nValues << " values for intermediate " << intermediatesForTransfer_[intermediateIndex];
-        LOG(DEBUG) << *fieldVariableIntermediates;
+        LOG(DEBUG) << "store " << nValues << " values for algebraic " << algebraicsForTransfer_[algebraicIndex];
+        LOG(DEBUG) << *fieldVariableAlgebraics;
       }
 
       // increase index for fiberData_ struct

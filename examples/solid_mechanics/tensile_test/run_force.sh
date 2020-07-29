@@ -1,6 +1,6 @@
 # run tensile tests with different force, to be called inside build_release, i.e.
 # cd build_release
-# ../run.sh
+# ../run_force.sh
 
 
 #rm result.csv

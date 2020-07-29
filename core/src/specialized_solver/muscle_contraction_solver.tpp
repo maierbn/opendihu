@@ -174,7 +174,8 @@ initialize()
                             dynamicHyperelasticitySolver_->data().velocities(),
                             hyperelasticitySolver.data().activePK2Stress(),
                             hyperelasticitySolver.data().pK2Stress(),
-                            hyperelasticitySolver.data().fiberDirection(), 
+                            hyperelasticitySolver.data().fiberDirection(),
+                            hyperelasticitySolver.data().materialTraction(),
                             setGeometryFieldForTransfer);
   }
   else
@@ -185,11 +186,12 @@ initialize()
                             staticHyperelasticitySolver_->data().activePK2Stress(),
                             staticHyperelasticitySolver_->data().pK2Stress(),
                             staticHyperelasticitySolver_->data().fiberDirection(),
+                            staticHyperelasticitySolver_->data().materialTraction(),
                             setGeometryFieldForTransfer);
   }
 
-  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
   initialized_ = true;
 }
@@ -398,6 +400,11 @@ mapGeometryToGivenMeshes()
     // get source field variable
     std::shared_ptr<SourceFieldVariableType> geometryFieldSource = std::make_shared<SourceFieldVariableType>(data_.functionSpace()->geometryField());
 
+    std::vector<Vec3> geometryValuesSource;
+    geometryFieldSource->getValuesWithoutGhosts(geometryValuesSource);
+
+    LOG(DEBUG) << "geometryValuesSource: " << geometryValuesSource;
+
     // loop over all given mesh names to which we should transfer the geometry
     for (std::string meshName : meshNamesOfGeometryToMapTo_)
     {
@@ -453,6 +460,15 @@ mapGeometryToGivenMeshes()
     Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_map_geometry"));
 }
 
+
+//! get a reference to the DynamicHyperelasticitySolverType
+template<typename MeshType>
+std::shared_ptr<typename MuscleContractionSolver<MeshType>::DynamicHyperelasticitySolverType> MuscleContractionSolver<MeshType>::
+dynamicHyperelasticitySolver()
+{
+  return dynamicHyperelasticitySolver_;
+}
+
 template<typename MeshType>
 typename MuscleContractionSolver<MeshType>::Data &MuscleContractionSolver<MeshType>::
 data()
@@ -461,10 +477,10 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
+//! the transfer is done by the slot_connector_data_transfer class
 template<typename MeshType>
-std::shared_ptr<typename MuscleContractionSolver<MeshType>::OutputConnectorDataType> MuscleContractionSolver<MeshType>::
-getOutputConnectorData()
+std::shared_ptr<typename MuscleContractionSolver<MeshType>::SlotConnectorDataType> MuscleContractionSolver<MeshType>::
+getSlotConnectorData()
 {
-  return data_.getOutputConnectorData();
+  return data_.getSlotConnectorData();
 }

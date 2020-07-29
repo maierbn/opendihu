@@ -34,12 +34,20 @@ nonlinearSolve()
   LOG(INFO);
 
   // loop over load loadFactors, i.e. load increments
-  for (double loadFactor: loadFactors_)
+  std::vector<double> loadFactors(loadFactors_);
+  for (int loadFactorIndex = 0; loadFactorIndex < loadFactors.size(); loadFactorIndex++)
   {
+    double loadFactor = loadFactors[loadFactorIndex];
+
     currentLoadFactor_ = loadFactor;
-    if (loadFactors_.size() > 1)
+    if (loadFactors.size() > 1)
     {
-      LOG(INFO) << "Nonlinear Solver: load factor " << loadFactor << " of list " << loadFactors_;
+      LOG(INFO) << "Nonlinear Solver: load factor " << loadFactor << " of list " << loadFactors;
+    }
+    if (currentLoadFactor_ < loadFactorGiveUpThreshold_)
+    {
+      LOG(ERROR) << "Nonlinear solve failed at load factor no. " << loadFactorIndex << ". Load factor is below threshold of " << loadFactorGiveUpThreshold_ << ", giving up.";
+      break;
     }
 
 
@@ -48,8 +56,16 @@ nonlinearSolve()
     {
       LOG(DEBUG) << "------------------  start solve " << i << "/" << nNonlinearSolveCalls_ << " ------------------";
 
-      // solve the system nonlinearFunction(displacements) = 0
+      // save initial solution value
       PetscErrorCode ierr;
+      if (lastSolveSucceeded_)
+      {
+        ierr = VecCopy(solverVariableSolution_, lastSolution_); CHKERRV(ierr);
+      }
+
+      // reset indicator whether the last solve did not encounter a negative jacobian
+      lastSolveSucceeded_ = true;
+      // solve the system nonlinearFunction(displacements) = 0
       ierr = SNESSolve(*snes, NULL, solverVariableSolution_); CHKERRV(ierr);
 
       // get information about the solution process
@@ -63,13 +79,42 @@ nonlinearSolve()
       ierr = SNESGetConvergedReason(*snes, &convergedReason); CHKERRV(ierr);
       ierr = KSPGetConvergedReason(*ksp, &kspConvergedReason); CHKERRV(ierr);
 
-      LOG(INFO) << "Solution done in " << numberOfIterations << " iterations, residual norm " << residualNorm
-        << ": " << PetscUtility::getStringNonlinearConvergedReason(convergedReason) << ", "
-        << PetscUtility::getStringLinearConvergedReason(kspConvergedReason);
+      // if the last solution failed, either diverged or got a negative jacobian
+      if (!lastSolveSucceeded_ || convergedReason < 0)
+      {
+        // add an intermediate load factor
+        double lastSuccessfulLoadFactor = 0;
+        if (loadFactorIndex > 0)
+          lastSuccessfulLoadFactor = loadFactors[loadFactorIndex-1];
+
+        // compute the new load factor to give half the increment size
+        double intermediateLoadFactor = 0.5*(currentLoadFactor_ + lastSuccessfulLoadFactor);
+
+        // add new load factor
+        loadFactors.insert(loadFactors.begin()+loadFactorIndex, intermediateLoadFactor);
+        loadFactorIndex--;
+
+        LOG(INFO) << "Solution failed after " << numberOfIterations << " iterations, residual norm " << residualNorm
+          << ", retry with load factor " << intermediateLoadFactor << ": " << PetscUtility::getStringNonlinearConvergedReason(convergedReason) << ", "
+          << PetscUtility::getStringLinearConvergedReason(kspConvergedReason);
+
+        lastSolveSucceeded_ = false;
+
+        // restore last solution
+        ierr = VecCopy(lastSolution_, solverVariableSolution_); CHKERRV(ierr);
+      }
+      else
+      {
+        LOG(INFO) << "Solution done in " << numberOfIterations << " iterations, residual norm " << residualNorm
+          << ": " << PetscUtility::getStringNonlinearConvergedReason(convergedReason) << ", "
+          << PetscUtility::getStringLinearConvergedReason(kspConvergedReason);
+      }
 
       // if the nonlinear scheme converged, finish loop
       if (convergedReason >= 0)
+      {
         break;
+      }
     }
 
     // reset value of last residual norm that is needed for computational of experimental order of convergence
@@ -413,7 +458,7 @@ initializePetscCallbackFunctions()
 }
 
 template<typename Term,typename MeshType, int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+bool HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 evaluateNonlinearFunction(Vec x, Vec f)
 {
   //VLOG(1) << "evaluateNonlinearFunction at " << getString(x);
@@ -449,7 +494,7 @@ evaluateNonlinearFunction(Vec x, Vec f)
   setUVP(solverVariableSolution_);
 
   // compute the actual output of the nonlinear function
-  materialComputeResidual(currentLoadFactor_);
+  bool successful = materialComputeResidual(currentLoadFactor_);
 
   //VLOG(1) << "solverVariableResidual_: " << combinedVecResidual_->getString();
 
@@ -465,17 +510,19 @@ evaluateNonlinearFunction(Vec x, Vec f)
     //VecSwap(f, solverVariableResidual_);
   }
   //VLOG(1) << "f: " << getString(f);
+
+  return successful;
 }
 
 template<typename Term,typename MeshType, int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+bool HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 evaluateAnalyticJacobian(Vec x, Mat jac)
 {
   // copy the values of x to the internal data vectors in this->data_
   setUVP(x);
 
   // compute the jacobian
-  materialComputeJacobian();
+  return materialComputeJacobian();
 
   //MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY);
   //MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY);

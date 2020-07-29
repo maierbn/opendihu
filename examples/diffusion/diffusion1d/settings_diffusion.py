@@ -1,9 +1,12 @@
 # Diffusion 1D
 
-n = 256   # number of elements
+n = 5   # number of elements  
 
 config = {
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "logFormat":                      "csv",                      # "csv" or "json", format of the lines in the log file, csv gives smaller files
+  "scenarioName":                   "diffusion",                # scenario name to find the run in the log file
+  "mappingsBetweenMeshesLogFile":   "",                         # a log file about mappings between meshes, here we do not want that because there are no mappings
   "Solvers": {
     "linearSolver": {
       "solverType": "gmres",          # the solver type, refer to PETSc documentation about implemented solvers and preconditioners (https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPType.html)
@@ -16,29 +19,30 @@ config = {
     }
   },
   "ImplicitEuler" : {
-     "numberTimeSteps": 256,
-     "startTime": 0.0,
-     "endTime": 10,
-     "initialValues": [2,2,4,5,2,2,2,0, 2,2,4,5,2,2,2,0,2,2,4,5,2,2,2,0,2,2,4,5,2,2,2,0],    # the initial values
+     "numberTimeSteps": 5,
+     "endTime": 0.1,
+     "initialValues": [2,2,4,5,2,2],    # the initial values
      "dirichletBoundaryConditions": {}, # Dirichlet boundary conditions as dict
      "inputMeshIsGlobal": True,         # initial values and BC's are given for all dofs, even if executed in parallel
-     "timeStepOutputInterval": 100000,       # how often to print the current timestep to console
+     "timeStepOutputInterval": 1,       # how often to print the current timestep to console 
      "nAdditionalFieldVariables": 0,    # for more complex nested solvers, the number of additional field variables that will be transferred without being touched
+     "additionalSlotNames": [],         # the slot names for the additional field variables, this is a list of strings with maximum 6 characters each
      "solverName": "linearSolver",      # the solver to use, referes to what was defined under "Solvers"
-
+     "checkForNanInf": True,            # if the solution should be checked for nan or inf values which indicate an instability, this may be an expensive check
+        
      "FiniteElementMethod" : {
         # mesh
         "nElements": n,                 # number of elements
         "physicalExtent": 4.0,          # the physical size of the domain
-
+        
         "solverName": "linearSolver",   # the solver to use, referes to what was defined under "Solvers"
         "prefactor": 5.0,               # the prefactor 'c' of 'du/dt = c du^2/dx^2'
         "inputMeshIsGlobal": True,      # boundary conditions are given as global indices
-        "nAdditionalFieldVariables": 0, # for more complex nested solvers, the number of additional field variables that will be transferred without being touched
+        "slotName": "",
      },
      "OutputWriter" : [
-       #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False, "onlyNodalValues": True},
-       {"format": "PythonFile", "filename": "out/diffusion1d_implicit", "outputInterval": 1000000, "binary":False, "onlyNodalValues": True}
+       #{"format": "Paraview", "outputInterval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False, "onlyNodalValues": True, "fileNumbering": "incremental"},
+       {"format": "PythonFile", "filename": "out/diffusion1d_implicit", "outputInterval": 1, "binary":False, "onlyNodalValues": True, "fileNumbering": "incremental"}
      ]
   }
 }

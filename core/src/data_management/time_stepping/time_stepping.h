@@ -11,7 +11,7 @@
 #include "field_variable/field_variable.h"
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"
 #include "partition/partitioned_petsc_mat/partitioned_petsc_mat.h"
-#include "data_management/output_connector_data.h"
+#include "slot_connection/slot_connector_data.h"
 
 namespace Data
 {
@@ -29,7 +29,7 @@ public:
 
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nComponents> FieldVariableType;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,1> ScalarFieldVariableType;
-  typedef OutputConnectorData<FunctionSpaceType,nComponents> OutputConnectorDataType;
+  typedef SlotConnectorData<FunctionSpaceType,nComponents> SlotConnectorDataType;
 
   //! constructor
   TimeStepping(DihuContext context);
@@ -46,27 +46,12 @@ public:
   //! set the names of the components for the solution field variable
   void setComponentNames(std::vector<std::string> componentNames);
   
-  //! set the value of outputComponentNo, i.e. the component no. of the component of the field variable that will be transferred to the other part of the operator when an operator splitting is used
-  //void setOutputComponentNo(int outputComponentNo);
-
-  //! set the value of outputComponentNo, i.e. the component no. of the component of the field variable that will be transferred to the other part of the operator when an operator splitting is used
-  //void setPrefactor(double prefactor);
-
   //! print all stored data to stdout
   virtual void print();
 
-  //! return the number of degrees of freedom per mesh node
-  static constexpr int getNDofsPerNode();
-
-  //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
-  virtual dof_no_t nUnknownsLocalWithGhosts();
-  
-  //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
-  virtual dof_no_t nUnknownsLocalWithoutGhosts();
-
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -79,7 +64,7 @@ public:
   FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
   //! output the given data for debugging
-  std::string getString(std::shared_ptr<OutputConnectorDataType> data);
+  std::string getString(std::shared_ptr<SlotConnectorDataType> data);
 
 protected:
 
@@ -93,7 +78,7 @@ protected:
   
   std::string debuggingName_;                       //< a name identifier only used for debugging
 
-  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;  //< the object that holds output connector data that will be transferred between solvers
+  std::shared_ptr<SlotConnectorDataType> slotConnectorData_;  //< the object that holds slot connector data that will be transferred between solvers
 
 private:
   //! get maximum number of expected non-zeros in the system matrix

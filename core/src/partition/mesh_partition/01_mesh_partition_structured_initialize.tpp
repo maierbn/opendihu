@@ -25,11 +25,10 @@ initializeHasFullNumberOfNodes()
 
 template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>> functionSpace)
+initializeDofNosLocalNaturalOrdering()
 {
   if (dofNosLocalNaturalOrdering_.empty())
   {
-
     // resize the vector to hold number of localWithGhosts dofs
     dofNosLocalNaturalOrdering_.resize(nDofsLocalWithGhosts());
 
@@ -45,7 +44,7 @@ initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpac
         // loop over dofs of node
         for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
         {
-          dof_no_t dofNoLocal = functionSpace->getNodeNo(coordinates)*nDofsPerNode + dofOnNodeIndex;
+          dof_no_t dofNoLocal = getNodeNoLocal(coordinates)*nDofsPerNode + dofOnNodeIndex;
           dofNosLocalNaturalOrdering_[index++] = dofNoLocal;
         }
       }
@@ -64,7 +63,7 @@ initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpac
           // loop over dofs of node
           for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
           {
-            dof_no_t dofNoLocal = functionSpace->getNodeNo(coordinates)*nDofsPerNode + dofOnNodeIndex;
+            dof_no_t dofNoLocal = getNodeNoLocal(coordinates)*nDofsPerNode + dofOnNodeIndex;
             dofNosLocalNaturalOrdering_[index++] = dofNoLocal;
           }
         }
@@ -87,7 +86,7 @@ initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpac
             // loop over dofs of node
             for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
             {
-              dof_no_t dofNoLocal = functionSpace->getNodeNo(coordinates)*nDofsPerNode + dofOnNodeIndex;
+              dof_no_t dofNoLocal = getNodeNoLocal(coordinates)*nDofsPerNode + dofOnNodeIndex;
               dofNosLocalNaturalOrdering_[index++] = dofNoLocal;
             }
           }
@@ -277,7 +276,7 @@ createDmElements()
       MPI_Comm cartesianCommunicator;
       MPIUtility::handleReturnValue(
         MPI_Cart_create(mpiCommunicator(), 2, nRanks_.data(), meshIsPeriodicInDimension.data(), true, &cartesianCommunicator),
-      "MPI_Cart_create");
+        "MPI_Cart_create");
     }
     else if (MeshType::dim() == 3)
     {

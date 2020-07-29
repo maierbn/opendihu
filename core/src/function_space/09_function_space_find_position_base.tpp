@@ -92,7 +92,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
           << "bounding box x: [" << xMin << "," << xMax << "], y: [" << yMin << "," << yMax << "], z: [" << zMin << "," << zMax << "]";
       }
       
-      // check if point is really inside the element by a tigher tolerance
+      // check if point is really inside the element by a tighter tolerance
       double excessivityScore = 0;      // lower means more inside the element, <= 0 equals really totally inside the element, then (0 < xi < 1)
       for (int i = 0; i < MeshType::dim(); i++)
       {
@@ -128,7 +128,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
     VLOG(1) << "point is not in current element " << elementNoLocal << ", now check neighbouring elements";
 
     // set the neighbouring element nos, also considering ghost meshes
-    if (this->checkNeighbouringElements(point, elementNoLocal, ghostMeshNo, xi, residual))
+    if (this->checkNeighbouringElements(point, elementNoLocal, ghostMeshNo, xi, residual, xiTolerance))
     {
       elementFound = true;
 

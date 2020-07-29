@@ -17,7 +17,7 @@ template<typename MeshType,typename BasisFunctionType,int nComponents>
 template<int nComponents2>
 PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nComponents>::
 PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,nComponents2> &rhs,
-                                         std::string name, bool reuseData) :
+                                         std::string name, bool reuseData, int rhsComponentNoBegin) :
   PartitionedPetscVecBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(rhs.meshPartition(), name)
 {
   if (reuseData && nComponents > nComponents2)
@@ -39,8 +39,12 @@ PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::Func
     // loop over the components of this field variable
     for (int componentNo = 0; componentNo < std::min(nComponents,nComponents2); componentNo++)
     {
-      vectorGlobal_[componentNo] = rhs.vectorGlobal_[componentNo];
-      vectorLocal_[componentNo] = rhs.vectorLocal_[componentNo];
+      if (rhsComponentNoBegin + componentNo >= rhs.vectorGlobal_.size())
+      {
+        LOG(FATAL) << "Trying to create a partitioned petsc vec with " << nComponents << " from another one with " << nComponents2 << ", starting at component " << rhsComponentNoBegin;
+      }
+      vectorGlobal_[componentNo] = rhs.vectorGlobal_[rhsComponentNoBegin + componentNo];
+      vectorLocal_[componentNo] = rhs.vectorLocal_[rhsComponentNoBegin + componentNo];
     }
 
     valuesContiguous_ = rhs.valuesContiguous_;
@@ -71,7 +75,6 @@ PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::Func
   }
 }
   
-
 //! create a distributed Petsc vector, according to partition
 template<typename MeshType,typename BasisFunctionType,int nComponents>
 void PartitionedPetscVecNComponentsStructured<MeshType,BasisFunctionType,nComponents>::
@@ -312,7 +315,7 @@ setRepresentationLocal()
   else if (this->currentRepresentation_ == Partition::values_representation_t::representationInvalid)
   {
     LOG(FATAL) << "\"" << this->name_ << "\" setRepresentationLocal, previous representation: "
-    << this->getCurrentRepresentationString() << ". This is not directly possible, call restoreExtractedComponent instead.";
+      << this->getCurrentRepresentationString() << ". This is not directly possible, call restoreExtractedComponent instead.";
   }
   else if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
   {
@@ -428,7 +431,8 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[])
     {
       // shift indices
       std::vector<PetscInt> &indices = temporaryIndicesVector_;
-      indices.resize(ni);
+      if (indices.size() < ni)
+        indices.resize(ni);
       for (int i = 0; i < ni; i++)
       {
         indices[i] = ix[i] + componentNo*this->meshPartition_->nDofsLocalWithoutGhosts();
@@ -570,11 +574,12 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
 
     for (int i = 0; i < ni; i++)
     {
-      if (ix[i] < 0 || ix[i] >= this->meshPartition_->nDofsLocalWithGhosts())
+      // local indices can be -1, which means masked out (VecSetOption(x, VEC_IGNORE_NEGATIVE_INDICES,PETSC_TRUE) is set)
+      if (ix[i] < -1 || ix[i] >= this->meshPartition_->nDofsLocalWithGhosts())
       {
         LOG(ERROR) << "\"" << this->name_ << "\" setValues ix[" << i << "]=" << ix[i] << ", nDofsLocalWithGhosts: " << this->meshPartition_->nDofsLocalWithGhosts();
       }
-      assert(ix[i] >= 0 && ix[i] < this->meshPartition_->nDofsLocalWithGhosts());
+      assert(ix[i] >= -1 && ix[i] < this->meshPartition_->nDofsLocalWithGhosts());
     }
 #endif
 
@@ -1277,8 +1282,8 @@ output(std::ostream &stream)
         }
       }
       stream << "], ";
-      if (vector == valuesContiguous_)
-        stream << std::endl;
+      //if (vector == valuesContiguous_)
+      //  stream << std::endl;
     }
     else
     {
@@ -1307,7 +1312,7 @@ output(std::ostream &stream)
 
       if (vector == valuesContiguous_)
       {
-        stream << "]" << std::endl;
+        stream << "]";
       }
       else
       {

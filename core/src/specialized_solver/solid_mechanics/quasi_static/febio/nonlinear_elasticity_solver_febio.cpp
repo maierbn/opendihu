@@ -26,11 +26,10 @@ NonlinearElasticitySolverFebio(DihuContext context, std::string solverName) :
   }
 
   // load settings
-  this->force_ = this->specificSettings_.getOptionDouble("force", 100, PythonUtility::NonNegative);
   this->activationFactor_ = 0;
 
   // parse material parameters
-  if (solverName_ == "NonlinearElasticitySolverFebio")
+  if (solverName_ == "NonlinearElasticitySolverFebio")    // if the base class solver is referenced in settings
   {
     specificSettings_.getOptionVector("materialParameters", materialParameters_);
 
@@ -39,6 +38,10 @@ NonlinearElasticitySolverFebio(DihuContext context, std::string solverName) :
       LOG(FATAL) << specificSettings_ << "[\"materialParameters\"]: 3 material parameters, [c0, c1, k], are required, but only " << materialParameters_.size() << " are given.";
     }
   }
+
+  // load traction elements
+  specificSettings_.getOptionVector("tractionElementNos", tractionElementNos_);
+  tractionVector_ = specificSettings_.getOptionArray<double,3>("tractionVector", 0);
 
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
@@ -76,9 +79,10 @@ isFebioAvailable()
 {
   // to see if febio2 is installed, run it with a non-existing command line argument "a"
   // this produces the output "FATAL ERROR: Invalid command line option" and exits with status 0
-  int returnValue = system("febio2 a > /dev/null");
+  int returnValue = system("febio3 a > /dev/null");
+  LOG(INFO) << "returnValue: " << returnValue;
 
-  return returnValue == EXIT_SUCCESS;
+  return returnValue == 0 || returnValue == 1 || returnValue == 256;
 }
 
 void NonlinearElasticitySolverFebio::
@@ -91,7 +95,7 @@ runFebio()
   {
 
     // run febio simulation
-    int returnValue = system("rm -f febio_input.log febio_stress_output.txt febio_geometry_output.txt; febio2 -i febio_input.feb > /dev/null");
+    int returnValue = system("rm -f febio3_input.log febio3_stress_output.txt febio3_geometry_output.txt; febio3 -i febio3_input.feb > /dev/null");
 
     if (returnValue != EXIT_SUCCESS)
     {
@@ -100,12 +104,12 @@ runFebio()
 
 #ifndef NDEBUG
     // copy contents of log file from the febio execution to the opendihu.log file
-    std::ifstream logFile("febio_input.log");
+    std::ifstream logFile("febio3_input.log");
 
     if (logFile.is_open())
     {
       std::string logContents((std::istreambuf_iterator<char>(logFile)), std::istreambuf_iterator<char>());
-      LOG(DEBUG) << "Content of febio log: " << "\n" << logContents;
+      LOG(DEBUG) << "Content of febio3 log: \n" << logContents;
     }
 #endif
   }
@@ -135,41 +139,41 @@ createFebioInputFile()
   {
     std::stringstream fileContents;
 
-    fileContents << "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>" << "\n"
-      << "<!--" << "\n"
-      << "Problem Description:" << "\n"
-      << "\t" << problemDescription_ << " at time " << endTime_ << ", created by opendihu" << "\n"
-      << "-->" << "\n"
-      << "<febio_spec version=\"1.2\">" << "\n"
-      << "\t<Control>" << "\n"
-      << "\t\t<title>" << problemTitle_ << "</title>" << "\n"
-  //    << "\t\t<restart file=\"dump.out\">1</restart>" << "\n"
-      << "\t\t<time_steps>10</time_steps>" << "\n"
-      << "\t\t<step_size>0.1</step_size>" << "\n"
-      << "\t\t<max_refs>100</max_refs> <!-- (15) Max number of stiffness reformations -->" << "\n"
-      << "\t\t<max_ups>10</max_ups>   <!-- (10) Max number of BFGS/Broyden stiffness updates --> " << "\n"
-      << "\t\t<dtol>1e-10</dtol>      <!-- (0.001) Convergence tolerance on displacement -->" << "\n"
-      << "\t\t<etol>1e-10</etol>       <!-- (0.01) Convergence tolerance on energy -->" << "\n"
-      << "\t\t<rtol>0</rtol>          <!-- Convergence tolerance on residual, 0=disabled-->" << "\n"
-      << "\t\t<lstol>1e-10</lstol>      <!-- (0.9) Convergence tolerance on line search -->" << "\n"
-      << "\t\t<analysis type=\"static\"></analysis>" << "\n"
-      << "\t\t<time_stepper>" << "\n"
-      << "\t\t\t<dtmin>0.01</dtmin>" << "\n"
-      << "\t\t\t<dtmax>0.1</dtmax>" << "\n"
-      << "\t\t\t<max_retries>5</max_retries>" << "\n"
-      << "\t\t\t<opt_iter>10</opt_iter>" << "\n"
-      << "\t\t</time_stepper>" << "\n"
-      << "\t</Control>" << "\n"
-      << "\t<Material>" << "\n"
-      << "\t\t<material id=\"1\" name=\"Material\" type=\"Mooney-Rivlin\">" << "\n"
-      << "\t\t\t<c1>" << materialParameters_[0] << "</c1>" << "\n"
-      << "\t\t\t<c2>" << materialParameters_[1] << "</c2>" << "\n"
-      << "\t\t\t<k>" << materialParameters_[2] << "</k>" << "\n"
-      << "\t\t</material>" << "\n"
-      << "\t</Material>" << "\n"
-      << "\t<Geometry>" << "\n"
-      << "\t\t<Nodes>" << "\n";
-
+    fileContents << "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n"
+      << "<!--\n"
+      << "Problem Description:\n"
+      << "\t" << problemDescription_ << " at time " << endTime_ << ", created by opendihu\n"
+      << "-->\n"
+      << "<febio_spec version=\"2.5\">\n"
+      << "\t<Module type=\"solid\"/>\n"
+      << "\t<Control>\n"
+      << "\t\t<title>" << problemTitle_ << "</title>\n"
+  //    << "\t\t<restart file=\"dump.out\">1</restart>\n"
+      << "\t\t<time_steps>10</time_steps>\n"
+      << "\t\t<step_size>0.1</step_size>\n"
+      << "\t\t<max_refs>100</max_refs> <!-- (15) Max number of stiffness reformations -->\n"
+      << "\t\t<max_ups>10</max_ups>   <!-- (10) Max number of BFGS/Broyden stiffness updates --> \n"
+      << "\t\t<dtol>1e-10</dtol>      <!-- (0.001) Convergence tolerance on displacement -->\n"
+      << "\t\t<etol>1e-10</etol>       <!-- (0.01) Convergence tolerance on energy -->\n"
+      << "\t\t<rtol>0</rtol>          <!-- Convergence tolerance on residual, 0=disabled-->\n"
+      << "\t\t<lstol>1e-10</lstol>      <!-- (0.9) Convergence tolerance on line search -->\n"
+      << "\t\t<analysis type=\"static\"></analysis>\n"
+      << "\t\t<time_stepper>\n"
+      << "\t\t\t<dtmin>0.01</dtmin>\n"
+      << "\t\t\t<dtmax>0.1</dtmax>\n"
+      << "\t\t\t<max_retries>5</max_retries>\n"
+      << "\t\t\t<opt_iter>10</opt_iter>\n"
+      << "\t\t</time_stepper>\n"
+      << "\t</Control>\n"
+      << "\t<Material>\n"
+      << "\t\t<material id=\"1\" name=\"Material\" type=\"Mooney-Rivlin\">\n"
+      << "\t\t\t<c1>" << materialParameters_[0] << "</c1>\n"
+      << "\t\t\t<c2>" << materialParameters_[1] << "</c2>\n"
+      << "\t\t\t<k>" << materialParameters_[2] << "</k>\n"
+      << "\t\t</material>\n"
+      << "\t</Material>\n"
+      << "\t<Geometry>\n"
+      << "\t\t<Nodes name=\"febio3_input\">\n";
     // loop over nodes
     for (global_no_t nodeNoGlobalPetsc = 0; nodeNoGlobalPetsc < data_.functionSpace()->nNodesGlobal(); nodeNoGlobalPetsc++)
     {
@@ -178,11 +182,11 @@ createFebioInputFile()
       double nodePositionZ = nodePositionValuesGlobal[3*nodeNoGlobalPetsc + 2];
 
       fileContents << "\t\t\t<node id=\"" << nodeNoGlobalPetsc+1 << "\">"
-        << nodePositionX << "," << nodePositionY << "," << nodePositionZ << "</node>" << "\n";
+        << nodePositionX << "," << nodePositionY << "," << nodePositionZ << "</node>\n";
     }
 
-    fileContents << "\t\t</Nodes>" << "\n"
-      << "\t\t<Elements>" << "\n";
+    fileContents << "\t\t</Nodes>\n"
+      << "\t\t<Elements type=\"hex8\" mat=\"1\" name=\"Part1\">\n";
 
     // loop over global elements and insert node nos of elements
     for (global_no_t elementNoGlobalPetsc = 0; elementNoGlobalPetsc < data_.functionSpace()->nElementsGlobal(); elementNoGlobalPetsc++)
@@ -190,135 +194,183 @@ createFebioInputFile()
       nodeNosGlobal[elementNoGlobalPetsc*8 + 0];
 
       // elements types: https://help.febio.org/FEBio/FEBio_um_2_8/FEBio_um_2-8-3.8.2.1.html
-      fileContents << "\t\t\t<hex8 id=\"" << elementNoGlobalPetsc+1 << "\" mat=\"1\"> ";
+      fileContents << "\t\t\t<elem id=\"" << elementNoGlobalPetsc+1 << "\"> ";
       fileContents << nodeNosGlobal[elementNoGlobalPetsc*8 + 0] << ", " << nodeNosGlobal[elementNoGlobalPetsc*8 + 1]
         << ", " << nodeNosGlobal[elementNoGlobalPetsc*8 + 2] << ", " << nodeNosGlobal[elementNoGlobalPetsc*8 + 3]
         << ", " << nodeNosGlobal[elementNoGlobalPetsc*8 + 4] << ", " << nodeNosGlobal[elementNoGlobalPetsc*8 + 5]
         << ", " << nodeNosGlobal[elementNoGlobalPetsc*8 + 6] << ", " << nodeNosGlobal[elementNoGlobalPetsc*8 + 7];
-      fileContents << "</hex8>" << "\n";
+      fileContents << "</elem>\n";
     }
 
-    fileContents << "\t\t</Elements>" << "\n"
-      << "\t</Geometry>" << "\n"
-      << "\t<Boundary>" << "\n"
-      << "\t\t<fix>" << "\n";
+    fileContents << "\t\t</Elements>\n"
+      << "\t\t<NodeSet name=\"FixedDisplacementX\">\n";
 
     // fix bottom dofs
     int nNodesX = this->data_.functionSpace()->nNodesGlobal(0);
     int nNodesY = this->data_.functionSpace()->nNodesGlobal(1);
-    int nNodesZ = this->data_.functionSpace()->nNodesGlobal(2);
+    //int nNodesZ = this->data_.functionSpace()->nNodesGlobal(2);
+    //int nElementsXY = (nNodesX-1)*(nNodesY-1);
 
-    int nElementsXY = (nNodesX-1)*(nNodesY-1);
+    enum {fixAll, fixFloating} dirichletBoundaryConditionsMode = fixFloating;
+    std::string dirichletBoundaryConditionsModeString = this->specificSettings_.getOptionString("dirichletBoundaryConditionsMode", "fix_all");
 
-    // fix x direction for left row
-    for (int j = 0; j < nNodesY; j++)
+    if (dirichletBoundaryConditionsModeString == "fix_all")
+      dirichletBoundaryConditionsMode = fixAll;
+
+    if (dirichletBoundaryConditionsMode == fixAll)
     {
-      dof_no_t dofNoLocal = j*nNodesX;
-      fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" bc=\"x\"></node>" << "\n";
-    }
-
-    fileContents << "\t\t</fix>" << "\n"
-      << "\t\t<fix> " << "\n";
-
-    // fix y direction for front row
-    for (int i = 0; i < nNodesX; i++)
-    {
-      dof_no_t dofNoLocal = i;
-      fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" bc=\"y\"></node>" << "\n";
-    }
-
-
-    fileContents << "\t\t</fix>" << "\n"
-      << "\t\t<fix> " << "\n";
-
-    // fix z direction for all
-    for (int j = 0; j < nNodesY; j++)
-    {
-      for (int i = 0; i < nNodesX; i++)
+      // fix x direction for all
+      for (int j = 0; j < nNodesY; j++)
       {
-        dof_no_t dofNoLocal = j*nNodesX + i;
-        fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" bc=\"z\"></node>" << "\n";
+        for (int i = 0; i < nNodesX; i++)
+        {
+          dof_no_t dofNoLocal = j*nNodesX + i;
+          fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" />\n";
+        }
+      }
+    }
+    else
+    {
+      // fix x direction for left row
+      for (int j = 0; j < nNodesY; j++)
+      {
+        dof_no_t dofNoLocal = j*nNodesX;
+        fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" />\n";
       }
     }
 
-    fileContents << "\t\t</fix>" << "\n"
-      << "\t</Boundary>" << "\n";
+    fileContents << "\t\t</NodeSet>\n"
+      << "\t\t<NodeSet name=\"FixedDisplacementY\">\n";
 
-    // force that stretches the muscle
-    fileContents << "\t<Loads>" << "\n"
-      << "\t\t<force>" << "\n";
-
-    // add force for top nodes
-    for (int j = 0; j < nNodesY; j++)
+    if (dirichletBoundaryConditionsMode == fixAll)
     {
+      // fix x direction for all
+      for (int j = 0; j < nNodesY; j++)
+      {
+        for (int i = 0; i < nNodesX; i++)
+        {
+          dof_no_t dofNoLocal = j*nNodesX + i;
+          fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" />\n";
+        }
+      }
+    }
+    else
+    {
+      // fix y direction for front row
       for (int i = 0; i < nNodesX; i++)
       {
-        dof_no_t dofNoLocal = (nNodesZ-1)*nNodesY*nNodesX + j*nNodesX + i;
-
-        std::string value = "1.0";
-        if (i == 0 || i == nNodesX-1)
-        {
-          if (j == 0 || j == nNodesY-1)
-          {
-            value = "0.25";
-          }
-          else
-          {
-            value = "0.5";
-          }
-        }
-        else if (j == 0 || j == nNodesY-1)
-        {
-          value = "0.5";
-        }
-
-        fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" bc=\"z\" lc=\"2\">"
-          << value << "</node>" << "\n";
+        dof_no_t dofNoLocal = i;
+        fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" />\n";
       }
     }
 
+    fileContents << "\t\t</NodeSet>\n"
+      << "\t\t<NodeSet name=\"FixedDisplacementZ\">\n";
 
-    fileContents << "\t\t</force>" << "\n"
-      << "\t</Loads>" << "\n";
+    if (dirichletBoundaryConditionsMode == fixAll)
+    {
+      // fix x direction for all
+      for (int j = 0; j < nNodesY; j++)
+      {
+        for (int i = 0; i < nNodesX; i++)
+        {
+          dof_no_t dofNoLocal = j*nNodesX + i;
+          fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" />\n";
+        }
+      }
+    }
+    else
+    {
+      // fix z direction for all
+      for (int j = 0; j < nNodesY; j++)
+      {
+        for (int i = 0; i < nNodesX; i++)
+        {
+          dof_no_t dofNoLocal = j*nNodesX + i;
+          fileContents << "\t\t\t<node id=\"" << dofNoLocal+1 << "\" />\n";
+        }
+      }
+    }
 
-    LOG(DEBUG) << "force: " << force_ << "/" << nElementsXY << " = " << force_/nElementsXY << " nElementsXY: " << nElementsXY;
+    fileContents << "\t\t</NodeSet>\n"
+      << "\t\t<Surface name=\"SurfaceTraction1\">\n";
 
-    fileContents << "\t<LoadData>" << "\n"
-      << "\t\t<loadcurve id=\"1\"> <!-- for activation -->" << "\n"
-      << "\t\t\t<loadpoint>0,0</loadpoint>" << "\n"
-      << "\t\t\t<loadpoint>1," << activationFactor_ << "</loadpoint>" << "\n"
-      << "\t\t</loadcurve>" << "\n"
-      << "\t\t<loadcurve id=\"2\"> <!-- for external load that stretches the muscle -->" << "\n"
-      << "\t\t\t<loadpoint>0,0</loadpoint>" << "\n"
-      << "\t\t\t<loadpoint>1," << force_/nElementsXY << "</loadpoint>" << "\n"
-      << "\t\t</loadcurve>" << "\n"
-      << "\t</LoadData>" << "\n"
-      << "\t<Output>" << "\n"
-      << "\t\t<plotfile type=\"febio\">" << "\n"
-      << "\t\t\t<var type=\"fiber vector\"/>" << "\n"
-      << "\t\t\t<var type=\"displacement\"/>" << "\n"
-      << "\t\t\t<var type=\"fiber stretch\"/>" << "\n"
-      << "\t\t\t<var type=\"Lagrange strain\"/>" << "\n"
-      << "\t\t\t<var type=\"parameter\"/>" << "\n"
-      << "\t\t\t<var type=\"relative volume\"/>" << "\n"
-      << "\t\t\t<var type=\"stress\"/>" << "\n"
-      << "\t\t\t<var type=\"strain energy density\"/>" << "\n"
-      << "\t\t</plotfile>" << "\n"
-      << "\t\t<logfile>" << "\n"
+    // iterate over surface traction elements
+    for (element_no_t elementNoLocal : tractionElementNos_)
+    {
+      fileContents << "\t\t\t<quad4 id=\"1\">";
+
+      // loop over 4 top nodes of element
+      // febio  opendihu
+      //  3 2     6 7
+      //  0 1     4 5
+      std::array<int,4> dofIndices = {4,5,7,6};
+
+
+      for (int dofIndex : dofIndices)
+      {
+        // get global dof nos of the current element
+        dof_no_t dofNoLocal = this->data_.functionSpace()->getDofNo(elementNoLocal, dofIndex);
+        global_no_t dofNoGlobalPetsc = this->data_.functionSpace()->meshPartition()->getDofNoGlobalPetsc(dofNoLocal);
+
+        if (dofIndex > 4)
+          fileContents << ", ";
+        fileContents << (dofNoGlobalPetsc+1);
+      }
+      fileContents << "</quad4>\n";
+    }
+
+
+    fileContents << "\t\t</Surface>\n"
+      << "\t</Geometry>\n"
+      << "\t<Boundary>\n"
+      << "\t\t<fix bc=\"x\" node_set=\"FixedDisplacementX\"/>\n"
+      << "\t\t<fix bc=\"y\" node_set=\"FixedDisplacementY\"/>\n"
+      << "\t\t<fix bc=\"z\" node_set=\"FixedDisplacementZ\"/>\n"
+      << "\t</Boundary>\n"
+      << "\t<Loads>\n";
+    fileContents
+      << "\t\t<surface_load type=\"traction\" surface=\"SurfaceTraction1\">\n"
+      << "\t\t\t<scale lc=\"2\">1</scale>\n"
+      << "\t\t\t<traction>" << tractionVector_[0] << "," << tractionVector_[1] << "," << tractionVector_[2] << "</traction>\n"
+      << "\t\t</surface_load>\n"
+      << "\t</Loads>\n";
+
+    fileContents << "\t<LoadData>\n"
+      << "\t\t<loadcurve id=\"1\"> <!-- for activation -->\n"
+      << "\t\t\t<loadpoint>0,0</loadpoint>\n"
+      << "\t\t\t<loadpoint>1," << activationFactor_ << "</loadpoint>\n"
+      << "\t\t</loadcurve>\n"
+      << "\t\t<loadcurve id=\"2\"> <!-- for external load (surface traction) that stretches the muscle -->\n"
+      << "\t\t\t<loadpoint>0,0</loadpoint>\n"
+      << "\t\t\t<loadpoint>1,1</loadpoint>\n"
+      << "\t\t</loadcurve>\n"
+      << "\t</LoadData>\n"
+      << "\t<Output>\n"
+      << "\t\t<plotfile type=\"febio\">\n"
+      << "\t\t\t<var type=\"fiber vector\"/>\n"
+      << "\t\t\t<var type=\"displacement\"/>\n"
+      << "\t\t\t<var type=\"fiber stretch\"/>\n"
+      << "\t\t\t<var type=\"Lagrange strain\"/>\n"
+      << "\t\t\t<var type=\"parameter\"/>\n"
+      << "\t\t\t<var type=\"relative volume\"/>\n"
+      << "\t\t\t<var type=\"stress\"/>\n"
+      << "\t\t\t<var type=\"strain energy density\"/>\n"
+      << "\t\t</plotfile>\n"
+      << "\t\t<logfile>\n"
 
       // available variables: https://help.febio.org/FEBio/FEBio_um_2_9/index.html Sec. 3.17.1.2 and 3.17.1.3
-      << "\t\t\t<node_data file=\"febio_geometry_output.txt\" format=\"%i,%g,%g,%g,%g,%g,%g,%g,%g,%g\" data=\"x;y;z;ux;uy;uz;Rx;Ry;Rz\"/>" << "\n"
-      << "\t\t\t<element_data file=\"febio_stress_output.txt\" format=\"%i,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\" data=\"sx;sy;sz;sxy;syz;sxz;Ex;Ey;Ez;Exy;Eyz;Exz;J;Fxx;Fxy;Fxz;Fyx;Fyy;Fyz;Fzx;Fzy;Fzz\"/>" << "\n"
-      << "\t\t</logfile>" << "\n"
-      << "\t</Output>" << "\n"
-      << "</febio_spec>" << "\n";
+      << "\t\t\t<node_data file=\"febio3_geometry_output.txt\" format=\"%i,%g,%g,%g,%g,%g,%g,%g,%g,%g\" data=\"x;y;z;ux;uy;uz;Rx;Ry;Rz\"/>\n"
+      << "\t\t\t<element_data file=\"febio3_stress_output.txt\" format=\"%i,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g\" data=\"sx;sy;sz;sxy;syz;sxz;Ex;Ey;Ez;Exy;Eyz;Exz;J;Fxx;Fxy;Fxz;Fyx;Fyy;Fyz;Fzx;Fzy;Fzz\"/>\n"
+      << "\t\t</logfile>\n"
+      << "\t</Output>\n"
+      << "</febio_spec>\n";
 
-
-    std::ofstream file("febio_input.feb");
+    std::ofstream file("febio3_input.feb");
 
     if (!file.is_open())
     {
-      LOG(ERROR) << "Could not write to file \"febio_input.feb\".";
+      LOG(ERROR) << "Could not write to file \"febio3_input.feb\".";
     }
 
     file << fileContents.str();
@@ -332,11 +384,11 @@ loadFebioOutputFile()
   LOG(TRACE) << "loadFebioOutputFile";
 
   std::ifstream fileGeometry;
-  fileGeometry.open("febio_geometry_output.txt", std::ios::in | std::ios::binary);
+  fileGeometry.open("febio3_geometry_output.txt", std::ios::in | std::ios::binary);
 
   if (!fileGeometry.is_open())
   {
-    LOG(WARNING) << "Could not read output file \"febio_geometry_output.txt\" that should have been created by FEBio.";
+    LOG(WARNING) << "Could not read output file \"febio3_geometry_output.txt\" that should have been created by FEBio.";
     return;
   }
 
@@ -421,11 +473,11 @@ loadFebioOutputFile()
   fileGeometry.close();
 
   std::ifstream fileStress;
-  fileStress.open("febio_stress_output.txt", std::ios::in | std::ios::binary);
+  fileStress.open("febio3_stress_output.txt", std::ios::in | std::ios::binary);
 
   if (!fileStress.is_open())
   {
-    LOG(WARNING) << "Could not read output file \"febio_stress_output.txt\" that should have been created by FEBio.";
+    LOG(WARNING) << "Could not read output file \"febio3_stress_output.txt\" that should have been created by FEBio.";
     return;
   }
 
@@ -508,7 +560,7 @@ loadFebioOutputFile()
       double determinant = 0;
       Tensor2<3> inverseDeformationGradient = MathUtility::computeInverse(deformationGradient, determinant);
 
-      Tensor2<3> deformationGradientCofactor = MathUtility::computeCofactorMatrix<3>(deformationGradient);  // cof(M) = det(M) * M^{-T}
+      Tensor2<3> deformationGradientCofactor = MathUtility::computeCofactorMatrix<double>(deformationGradient);  // cof(M) = det(M) * M^{-T}
       Tensor2<3> pk2Stress = inverseDeformationGradient * cauchyStress * deformationGradientCofactor;
 
       LOG(DEBUG) << "local element " << elementNoLocal << " of " << this->data_.functionSpace()->nElementsLocal() << ", " << FunctionSpace::nNodesPerElement() << " elementNodeNos: " << elementNodeNos;
@@ -542,7 +594,7 @@ loadFebioOutputFile()
     {
       if (nElementsLoaded != data_.functionSpace()->nElementsLocal())
       {
-        LOG(ERROR) << "Loaded " << nElementsLoaded << " local elements from \"febio_stress_output.txt\", but " << this->data_.functionSpace()->nElementsLocal() << " were expected.";
+        LOG(ERROR) << "Loaded " << nElementsLoaded << " local elements from \"febio3_stress_output.txt\", but " << this->data_.functionSpace()->nElementsLocal() << " were expected.";
       }
       break;
     }
@@ -794,8 +846,8 @@ initialize()
   // add this solver to the solvers diagram
   DihuContext::solverStructureVisualizer()->addSolver(solverName_);
 
-  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
@@ -815,19 +867,19 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
+//! the transfer is done by the slot_connector_data_transfer class
 
-std::shared_ptr<typename NonlinearElasticitySolverFebio::OutputConnectorDataType>
+std::shared_ptr<typename NonlinearElasticitySolverFebio::SlotConnectorDataType>
 NonlinearElasticitySolverFebio::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  return this->data_.getOutputConnectorData();
+  return this->data_.getSlotConnectorData();
 }
 
 //! output the given data for debugging
 
 std::string NonlinearElasticitySolverFebio::
-getString(std::shared_ptr<typename NonlinearElasticitySolverFebio::OutputConnectorDataType> data)
+getString(std::shared_ptr<typename NonlinearElasticitySolverFebio::SlotConnectorDataType> data)
 {
   std::stringstream s;
   //s << "<NonlinearElasticitySolverFebio:" << *data.activation() << ">";

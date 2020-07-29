@@ -142,6 +142,12 @@ $pyod ${opendihu_directory}/scripts/file_manipulation/reverse_y_order_bin_fibers
   ${current_directory}/processed_meshes/${basename}_07_tendon1_9x9_original_position.bin \
   ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_y_reversed.bin
 
+echo ""
+echo "--- Swap x and y coordinates in numbering"
+$pyod ${opendihu_directory}/scripts/file_manipulation/swap_xy_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_y_reversed.bin \
+  ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_xy_swapped.bin
+
 if false; then   # disable because fiber tracing is not used up to now
 echo ""
 echo "--- adjust top layer of nodes of tendon to match muscle file"
@@ -149,7 +155,7 @@ muscle_fibers_file=${opendihu_directory}/examples/electrophysiology/input/left_b
 
 # set_nodes_to_match_other_mesh.py <input_filename mesh where to change nodes> <input_filename mesh to which to adapt> <output filename> <is_bottom if change bottom layer of mesh else top layer>
 $pyod ${current_directory}/utility/set_nodes_to_match_other_mesh.py \
-  ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_y_reversed.bin \
+  ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_xy_swapped.bin \
   ${muscle_fibers_file} \
   ${current_directory}/processed_meshes/${basename}_09_tendon1_9x9.bin\
   0
@@ -160,7 +166,7 @@ fi
 echo ""
 echo "--- for debugging, create vts file which can be viewed by ParaView"
 $pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
-  ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_y_reversed.bin
+  ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_xy_swapped.bin
 $pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
   ${current_directory}/processed_meshes/${basename}_09_tendon1_9x9.bin
   
@@ -331,12 +337,22 @@ echo "--- Reverse the numbering in y direction"
 $pyod ${opendihu_directory}/scripts/file_manipulation/reverse_y_order_bin_fibers.py \
   ${current_directory}/processed_meshes/${basename}_09_tendon2a_9x9_original_position.bin \
   ${current_directory}/processed_meshes/${basename}_10_tendon2a_y_reversed.bin
-cp ${current_directory}/processed_meshes/${basename}_10_tendon2a_y_reversed.bin ${current_directory}/processed_meshes/${basename}_tendon2a.bin
+  
+$pyod ${opendihu_directory}/scripts/file_manipulation/swap_xy_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_10_tendon2a_y_reversed.bin \
+  ${current_directory}/processed_meshes/${basename}_10_tendon2a_xy_swapped.bin
+  
+cp ${current_directory}/processed_meshes/${basename}_10_tendon2a_xy_swapped.bin ${current_directory}/processed_meshes/${basename}_tendon2a.bin
 
 $pyod ${opendihu_directory}/scripts/file_manipulation/reverse_y_order_bin_fibers.py \
   ${current_directory}/processed_meshes/${basename}_09_tendon2b_9x9_original_position.bin \
   ${current_directory}/processed_meshes/${basename}_10_tendon2b_y_reversed.bin
-cp ${current_directory}/processed_meshes/${basename}_10_tendon2b_y_reversed.bin ${current_directory}/processed_meshes/${basename}_tendon2b.bin
+  
+$pyod ${opendihu_directory}/scripts/file_manipulation/swap_xy_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_10_tendon2b_y_reversed.bin \
+  ${current_directory}/processed_meshes/${basename}_10_tendon2b_xy_swapped.bin
+  
+cp ${current_directory}/processed_meshes/${basename}_10_tendon2b_xy_swapped.bin ${current_directory}/processed_meshes/${basename}_tendon2b.bin
 
 cd $current_directory
 

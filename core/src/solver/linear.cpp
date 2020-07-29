@@ -62,7 +62,20 @@ void Linear::initialize()
 void Linear::setupKsp(KSP ksp)
 {
   // parse the solver and preconditioner types from settings
-  parseSolverTypes();
+  solverType_ = this->specificSettings_.getOptionString("solverType", "gmres");
+  preconditionerType_ = this->specificSettings_.getOptionString("preconditionerType", "none");
+  parseSolverTypes(solverType_, preconditionerType_, kspType_, pcType_);
+  
+  // add types in log
+  std::stringstream optionKey;
+  optionKey << this->name_ << "_solverType";
+  Control::PerformanceMeasurement::setParameter(optionKey.str(), solverType_);
+
+  optionKey.str("");
+  optionKey << this->name_ << "_preconditionerType";
+  Control::PerformanceMeasurement::setParameter(optionKey.str(), preconditionerType_);
+
+  LOG(DEBUG) << "linear solver type: " << solverType_ << " (" << kspType_ << "), preconditionerType_: " << preconditionerType_ << " (" << pcType_ << ")";
 
   // set solver type
   PetscErrorCode ierr;
@@ -138,126 +151,114 @@ void Linear::setupKsp(KSP ksp)
 
 }
 
-void Linear::parseSolverTypes()
+void Linear::parseSolverTypes(std::string solverType, std::string preconditionerType, KSPType &kspType, PCType &pcType)
 {
-  // parse solver type
-  solverType_ = this->specificSettings_.getOptionString("solverType", "gmres");
-
-  // parse preconditioner type
-  preconditionerType_ = this->specificSettings_.getOptionString("preconditionerType", "none");
-  
 
   // all pc types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCType.html
-  pcType_ = PCNONE;
-  if (preconditionerType_ == "jacobi")
+  pcType = PCNONE;
+  if (preconditionerType == "jacobi")
   {
-    pcType_ = PCJACOBI;
+    pcType = PCJACOBI;
   }
-  else if (preconditionerType_ == "sor")
+  else if (preconditionerType == "sor")
   {
-    pcType_ = PCSOR;
+    pcType = PCSOR;
   }
-  else if (preconditionerType_ == "lu")
+  else if (preconditionerType == "lu")
   {
-    pcType_ = PCLU;
+    pcType = PCLU;
   }
-  else if (preconditionerType_ == "ilu")
+  else if (preconditionerType == "ilu")
   {
-    pcType_ = PCILU;
+    pcType = PCILU;
   }
-  else if (preconditionerType_ == "gamg")
+  else if (preconditionerType == "gamg")
   {
-    pcType_ = PCGAMG;
+    pcType = PCGAMG;
   }
-  else if (preconditionerType_ == "pcmg")
+  else if (preconditionerType == "pcmg")
   {
-    pcType_ = PCMG;
+    pcType = PCMG;
+  }
+  else if (preconditionerType == "bjacobi")
+  {
+    pcType = PCBJACOBI;
   }
   // the hypre boomeramg as the only solver does not provide the correct solution 
-  else if (preconditionerType_ == "pchypre")
+  else if (preconditionerType == "pchypre")
   {
-    pcType_ = PCHYPRE;
+    pcType = PCHYPRE;
   }
-  // if one of the hypre preconditioners is in preconditionerType_, set pcType_ to HYPRE and set the chosen preconditioner as -pc_hypre_type
-  else if (preconditionerType_ == "euclid" || preconditionerType_ == "pilut" || preconditionerType_ == "parasails" 
-    || preconditionerType_ == "boomeramg" || preconditionerType_ == "ams" || preconditionerType_ == "ads")
+  // if one of the hypre preconditioners is in preconditionerType, set pcType to HYPRE and set the chosen preconditioner as -pc_hypre_type
+  else if (preconditionerType == "euclid" || preconditionerType == "pilut" || preconditionerType == "parasails" 
+    || preconditionerType == "boomeramg" || preconditionerType == "ams" || preconditionerType == "ads")
   {
-    pcType_ = PCHYPRE;
+    pcType = PCHYPRE;
   }
-  else if (preconditionerType_ == "none")
+  else if (preconditionerType == "none")
   {
-    pcType_ = PCNONE;
+    pcType = PCNONE;
   }
-  else if (preconditionerType_ != "none" && preconditionerType_ != "")
+  else if (preconditionerType != "none" && preconditionerType != "")
   {
-    pcType_ = preconditionerType_.c_str();
+    pcType = preconditionerType.c_str();
   }
   
   // all ksp types: https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPType.html#KSPType
-  kspType_ = KSPGMRES;
-  if (solverType_ == "richardson")
+  kspType = KSPGMRES;
+  if (solverType == "richardson")
   {
-    kspType_ = KSPRICHARDSON ;
+    kspType = KSPRICHARDSON;
   }
-  else if (solverType_ == "chebyshev")
+  else if (solverType == "chebyshev")
   {
-    kspType_ = KSPCHEBYSHEV;
+    kspType = KSPCHEBYSHEV;
   }
-  else if (solverType_ == "cg")
+  else if (solverType == "cg")
   {
-    kspType_ = KSPCG;
+    kspType = KSPCG;
   }
-  else if (solverType_ == "bcgs")
+  else if (solverType == "bcgs")
   {
-    kspType_ = KSPBCGS;
+    kspType = KSPBCGS;
   }
-  else if (solverType_ == "preonly")
+  else if (solverType == "preonly")
   {
-    kspType_ = KSPPREONLY;
+    kspType = KSPPREONLY;
   }
-  else if (solverType_ == "lu")
+  else if (solverType == "lu")
   {
-    kspType_ = KSPPREONLY;
-    pcType_ = PCLU;
+    kspType = KSPPREONLY;
+    pcType = PCLU;
   }
-  else if (solverType_ == "cholesky")
+  else if (solverType == "cholesky")
   {
-    kspType_ = KSPPREONLY;
-    pcType_ = PCCHOLESKY;
+    kspType = KSPPREONLY;
+    pcType = PCCHOLESKY;
   }
-  else if (solverType_ == "gamg")
+  else if (solverType == "gamg")
   {
-    kspType_ = KSPPREONLY;
-    pcType_ = PCGAMG;
+    kspType = KSPPREONLY;
+    pcType = PCGAMG;
   }
-  else if (solverType_ == "jacobi")
+  else if (solverType == "jacobi")
   {
-    kspType_ = KSPPREONLY;
-    pcType_ = PCJACOBI;
+    kspType = KSPPREONLY;
+    pcType = PCJACOBI;
   }
-  else if (solverType_ == "sor")
+  else if (solverType == "sor")
   {
-    kspType_ = KSPPREONLY;
-    pcType_ = PCSOR;
+    kspType = KSPPREONLY;
+    pcType = PCSOR;
   }
-  else if (solverType_ == "gmres")
+  else if (solverType == "gmres")
   {
-    kspType_ = KSPGMRES;
+    kspType = KSPGMRES;
   }
-  else if (solverType_ != "")
+  else if (solverType != "")
   {
-    kspType_ = solverType_.c_str();
+    kspType = solverType.c_str();
   }
-
-  std::stringstream optionKey;
-  optionKey << this->name_ << "_solverType";
-  Control::PerformanceMeasurement::setParameter(optionKey.str(), solverType_);
-
-  optionKey.str("");
-  optionKey << this->name_ << "_preconditionerType";
-  Control::PerformanceMeasurement::setParameter(optionKey.str(), preconditionerType_);
-
-  LOG(DEBUG) << "linear solver type: " << solverType_ << " (" << kspType_ << "), preconditionerType_: " << preconditionerType_ << " (" << pcType_ << ")";
 }
 
 std::shared_ptr<KSP> Linear::ksp()
@@ -293,13 +294,13 @@ bool Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   Control::PerformanceMeasurement::start(this->durationLogKey_);
 
   // reset memory count in MemoryLeakFinder
-  Control::MemoryLeakFinder::nBytesIncreaseSinceLastCheck();
+  //Control::MemoryLeakFinder::nBytesIncreaseSinceLastCheck();
 
   // solve the system
   ierr = KSPSolve(*ksp_, rightHandSide, solution); CHKERRQ(ierr);
 
-  // output a warning if the memory increased by over 1 MB
-  Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("In Linear::solve, after KSPSolve");
+  // output a warning if the memory increased by over 1 MB, this takes a lot of time, do not do this
+  //Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("In Linear::solve, after KSPSolve");
     
   Control::PerformanceMeasurement::stop(this->durationLogKey_);
 

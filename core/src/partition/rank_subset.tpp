@@ -50,9 +50,6 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubse
   VLOG(1) << "RankSubset constructor from rank list " << rankNo_ << ", ownRankParentCommunicator=" << ownRankParentCommunicator
     << ", color=" << color << ", orderKey: " << orderKey;
 
-LOG(DEBUG) << "RankSubset constructor from rank list " << rankNo_ << ", ownRankParentCommunicator=" << ownRankParentCommunicator
-    << ", color=" << color << ", orderKey: " << orderKey;
-
   // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
   MPIUtility::handleReturnValue(MPI_Comm_split(parentCommunicator, color, orderKey, &mpiCommunicator_), "MPI_Comm_split");
 
@@ -60,9 +57,7 @@ LOG(DEBUG) << "RankSubset constructor from rank list " << rankNo_ << ", ownRankP
   if (color == 1)
   {
     int nRanksInCommunicator;
-    MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanksInCommunicator));
-    LOG(DEBUG) << "nRanksInCommunicator" << nRanksInCommunicator;
-    LOG(DEBUG) << "rankNo_.size()" << rankNo_.size();
+    MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanksInCommunicator), "MPI_Comm_size");
     if (nRanksInCommunicator != rankNo_.size())
     {
       if (nRanksInCommunicator < rankNo_.size())
@@ -107,11 +102,7 @@ LOG(DEBUG) << "RankSubset constructor from rank list " << rankNo_ << ", ownRankP
     int oldCommunicatorNameLength = 0;
     MPIUtility::handleReturnValue(MPI_Comm_get_name(parentCommunicator, oldCommunicatorNameStr.data(), &oldCommunicatorNameLength), "MPI_Comm_get_name");
 
-    std::string oldCommunicatorName;
-    if (oldCommunicatorNameLength > 0)
-    {
-      oldCommunicatorName = std::string(oldCommunicatorNameStr.begin(), oldCommunicatorNameStr.begin()+oldCommunicatorNameLength);
-    }
+    std::string oldCommunicatorName(oldCommunicatorNameStr.begin(), oldCommunicatorNameStr.begin()+oldCommunicatorNameLength);
     VLOG(1) << "oldCommunicatorName: " << oldCommunicatorName;
 
     // define new name

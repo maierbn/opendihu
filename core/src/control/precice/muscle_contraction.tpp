@@ -5,7 +5,7 @@
 namespace PreciceAdapter
 {
 
-template<class NestedSolver>
+template<typename NestedSolver>
 MuscleContraction<NestedSolver>::
 MuscleContraction(DihuContext context) :
   Runnable(),
@@ -15,7 +15,7 @@ MuscleContraction(DihuContext context) :
   this->specificSettings_ = this->context_.getPythonConfig();
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MuscleContraction<NestedSolver>::
 initialize()
 {
@@ -27,8 +27,8 @@ initialize()
 
   // initialize() will be called before the simulation starts.
 
-  // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver("PreciceAdapter::MuscleContraction", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
+  // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
+  DihuContext::solverStructureVisualizer()->addSolver("PreciceAdapter::MuscleContraction", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means slot connector data is shared with the first subsolver
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();
@@ -39,10 +39,10 @@ initialize()
   // indicate in solverStructureVisualizer that the child solver initialization is done
   DihuContext::solverStructureVisualizer()->endChild();
 
-  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
-  outputConnectorSlotIdGamma_ = this->specificSettings_.getOptionInt("outputConnectorSlotIdGamma", 2, PythonUtility::Positive);
+  connectorSlotIdGamma_ = this->specificSettings_.getOptionInt("connectorSlotIdGamma", 2, PythonUtility::Positive);
 
   // initialize precice
   const std::string solverName = "MuscleContraction";
@@ -103,7 +103,7 @@ initialize()
 #endif
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MuscleContraction<NestedSolver>::
 run()
 {
@@ -130,8 +130,8 @@ run()
     LOG(DEBUG) << "isActionRequired(actionWriteInitialData) is false";
   }
 
-  //std::shared_ptr<::Data::OutputConnectorData<::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, ::BasisFunction::LagrangeOfOrder<2> >, 1, 1> > connectorData
-  //  = getOutputConnectorData();
+  //std::shared_ptr<::Data::SlotConnectorData<::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, ::BasisFunction::LagrangeOfOrder<2> >, 1, 1> > connectorData
+  //  = getSlotConnectorData();
 
   // perform the computation of this solver
 
@@ -170,7 +170,7 @@ run()
 
 #ifdef HAVE_PRECICE
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MuscleContraction<NestedSolver>::
 preciceReadData()
 {
@@ -189,12 +189,12 @@ preciceReadData()
   preciceSolverInterface_->readBlockScalarData(preciceDataIdGamma_, nDofsLocalWithoutGhosts, preciceVertexIds_.data(), gammaValues.data());
 
   // set gamma values
-  getOutputConnectorData()->variable1[outputConnectorSlotIdGamma_].setValuesWithoutGhosts(gammaValues);
+  getSlotConnectorData()->variable1[connectorSlotIdGamma_].setValuesWithoutGhosts(gammaValues);
 
   LOG(DEBUG) << "read data from precice complete, gamma values: " << gammaValues;
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MuscleContraction<NestedSolver>::
 preciceWriteData()
 {
@@ -238,7 +238,7 @@ preciceWriteData()
 
 #endif
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MuscleContraction<NestedSolver>::
 reset()
 {
@@ -248,7 +248,7 @@ reset()
   // "uninitialize" everything
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 typename MuscleContraction<NestedSolver>::Data &MuscleContraction<NestedSolver>::
 data()
 {
@@ -257,14 +257,14 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
-template<class NestedSolver>
-std::shared_ptr<typename MuscleContraction<NestedSolver>::OutputConnectorDataType> MuscleContraction<NestedSolver>::
-getOutputConnectorData()
+//! the transfer is done by the slot_connector_data_transfer class
+template<typename NestedSolver>
+std::shared_ptr<typename MuscleContraction<NestedSolver>::SlotConnectorDataType> MuscleContraction<NestedSolver>::
+getSlotConnectorData()
 {
   //! This is relevant only, if this solver is part of a splitting or coupling scheme. Then this method returns the values/variables that will be
   // transferred to the other solvers. We can just reuse the values of the nestedSolver_.
-  return nestedSolver_.getOutputConnectorData();
+  return nestedSolver_.getSlotConnectorData();
 }
 
 }  // namespace

@@ -35,6 +35,20 @@ std::array<double_v_t,nComponents> operator*(std::array<double_v_t,nComponents> 
   return result;
 }
 
+//! vector/scalar division
+template<typename double_v_t, std::size_t nComponents>
+std::array<double_v_t,nComponents> operator/(std::array<double_v_t,nComponents> vector, Vc::double_v lambda)
+{
+  std::array<double_v_t,nComponents> result;
+
+  //#pragma omp simd
+  for (int i = 0; i < nComponents; i++)
+  {
+    result[i] = lambda / vector[i];
+  }
+  return result;
+}
+
 //! scalar*vector multiplication
 template<typename double_v_t, std::size_t nComponents>
 std::array<double_v_t,nComponents> operator*(Vc::double_v lambda, std::array<double_v_t,nComponents> vector)
@@ -92,8 +106,8 @@ std::array<std::array<double,nComponents1>,nComponents2> operator*(const std::ar
 }
 
 //! matrix-vector multiplication
-template<std::size_t M, std::size_t N, typename double_v_t>
-std::array<double_v_t,M> operator*(const std::array<std::array<double_v_t,M>,N> &matrix, const std::array<double,N> vector)
+template<std::size_t M, std::size_t N, typename double_v_t, typename double_v_t2>
+std::array<double_v_t,M> operator*(const std::array<std::array<double_v_t,M>,N> &matrix, const std::array<double_v_t2,N> vector)
 {
   std::array<double_v_t,M> result({0.0});
 

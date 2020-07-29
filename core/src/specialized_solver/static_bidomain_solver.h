@@ -20,7 +20,7 @@ public:
   typedef typename FiniteElementMethodDiffusion::FunctionSpace FunctionSpace;
   typedef typename Data::StaticBidomain<typename FiniteElementMethodDiffusion::FunctionSpace>::FieldVariableType FieldVariableType;
   typedef typename Data::StaticBidomain<typename FiniteElementMethodDiffusion::FunctionSpace> Data;
-  typedef typename Data::OutputConnectorDataType OutputConnectorDataType;
+  typedef typename Data::SlotConnectorDataType SlotConnectorDataType;
 
   //! constructor
   StaticBidomainSolver(DihuContext context);
@@ -44,11 +44,11 @@ public:
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the output_connector_data class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! output the given data for debugging
-  std::string getString(std::shared_ptr<OutputConnectorDataType> data);
+  std::string getString(std::shared_ptr<SlotConnectorDataType> data);
 
 protected:
 

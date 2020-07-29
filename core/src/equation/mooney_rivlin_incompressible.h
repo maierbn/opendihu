@@ -170,9 +170,9 @@ struct HyperelasticTendon : HyperelasticityBase
   static constexpr auto E23 = INT(1)/INT(2) * ln(C23);
   static constexpr auto E33 = INT(1)/INT(2) * ln(C33);
   static constexpr auto Q = ca*E11*E11
-                                  + ct*E22*E22 + ct*E33*E33
-                                  + cat*E11*E22*INT(2) + cat*E11*E33*INT(2)
-                                  + ctt*E22*E33*INT(2);             //< exponent, Q = E:A:E with A (2nd order tensor) given by ca,ct,cat,ctt
+                            + ct*E22*E22 + ct*E33*E33
+                            + cat*E11*E22*INT(2) + cat*E11*E33*INT(2)
+                            + ctt*E22*E33*INT(2);                  //< exponent, Q = E:A:E with A (2nd order tensor) given by ca,ct,cat,ctt
   static constexpr auto psi_Fung = c/INT(2) * (exp(Q) - INT(1));   //< coupled orthotropic model of Fung at al. (1979)
 
   static constexpr auto psi_f = k1 * pow(Ibar4 - INT(1), INT(2)) + k2 * pow(Ibar4 - INT(1), INT(3));    //< fiber strain energy

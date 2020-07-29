@@ -24,7 +24,7 @@ generateSourceFileOpenMP(std::string outputFilename, int maximumNumberOfThreads)
     << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem.\n "
     << " * The \"optimizationType\" is \"openmp\". (Other options are \"vc\" and \"simd\".) */" << std::endl
     << "void computeCellMLRightHandSide("
-    << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl << "{" << std::endl;
+    << "void *context, double t, double *states, double *rates, double *algebraics, double *parameters)" << std::endl << "{" << std::endl;
 
   if (maximumNumberOfThreads > 0)
   {
@@ -67,7 +67,7 @@ generateSourceFileOpenMP(std::string outputFilename, int maximumNumberOfThreads)
           }
           else
           {
-            // all other variables (states, rates, intermediates, parameters) exist for every instance
+            // all other variables (states, rates, algebraics, parameters) exist for every instance
             sourceCode << expression.code << "[" << expression.arrayIndex * this->nInstances_ << "+i]";
           }
           break;

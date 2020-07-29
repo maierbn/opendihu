@@ -36,6 +36,7 @@ config.py
 **/*.csv
 **/input/*
 **/scaled_mesh*
+**/__pycache__/*
 prepare_arm.sh
 *.zip
 *.avi

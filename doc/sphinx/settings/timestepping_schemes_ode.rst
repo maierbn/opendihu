@@ -19,15 +19,17 @@ The following example is a configuration of the ExplicitEuler scheme:
 .. code-block:: python
 
   "ExplicitEuler" : {
-    "endTime": 0.1,
-    "numberTimeSteps": 5,
-    "timeStepWidth": 1e-5,
-    "logTimeStepWidthAsKey": "dt_1D",
-    "durationLogKey": "duration_1D",
-    "timeStepOutputInterval": 1e4,
-    "initialValues": [],
+    "endTime":                     0.1,
+    "numberTimeSteps":             5,
+    "timeStepWidth":               1e-5,
+    "logTimeStepWidthAsKey":       "dt_1D",
+    "durationLogKey":              "duration_1D",
+    "timeStepOutputInterval":      1e4,
+    "initialValues":               [],
     "dirichletBoundaryConditions": {0: -75.0036, -1: -75.0036},
-    "inputMeshIsGlobal": True
+    "inputMeshIsGlobal":           True,
+    "nAdditionalFieldVariables":   1,
+    "additionalSlotNames":         ["a"],  
     "OutputWriter": ...
   }
 
@@ -104,6 +106,16 @@ The degrees of freedom are interpreted in global numbering, if ``inputMeshIsGlob
 OutputWriter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The output writers for this time stepping scheme, see :doc:`output_writer`.
+
+nAdditionalFieldVariables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(integer) A number of additional field variables that will be created. The purpose is to allow to write additional values with the output writers of this timestepping scheme.
+The additional field variables can be set by connecting them via their connector slot. Their values will also be written by the output writers.
+
+additionalSlotNames
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+A list of strings, names for of connector slots for the additional field variables. Each name should be smaller or equal than 6 characters. 
+In general, named slots are used to connect the slots from a global setting "connectedSlots". See :doc:`output_connector_slots` for details.
 
 ExplicitEuler
 ----------------

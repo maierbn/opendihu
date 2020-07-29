@@ -26,7 +26,7 @@ def env_backup(env, names):
 # @param[in] env An SCons environment.
 # @returns A dictionary of backed up names and values.
 def env_setup(env, **kw):
-  bkp = env_backup(env, kw.keys())
+  bkp = env_backup(env, list(kw.keys()))
   env.Replace(**kw)
   return bkp
 
@@ -37,7 +37,7 @@ def env_setup(env, **kw):
 def env_restore(env, bkp):
   '''
   '''
-  for n, v in bkp.iteritems():
+  for n, v in bkp.items():
     if v is None:
       del env[n]
     else:
@@ -102,14 +102,14 @@ class Package(object):
         subprocess.check_call(cmd, stdout=stdout_log, stderr=subprocess.STDOUT, shell=True)
         
         # get output
-        with file('stdout.log') as f:
+        with open('stdout.log') as f:
           output = f.read()
         ctx.Log("$"+cmd+"\n")
         ctx.Log(output+"\n")
       except:
         self.command_running = False
         stdout_log.close()
-        with file('stdout.log') as f:
+        with open('stdout.log') as f:
           output = f.read()
         ctx.Log("Command failed: \n"+output)
         
@@ -122,21 +122,33 @@ class Package(object):
           subprocess.check_call(cmd, stdout=stdout_log, stderr=subprocess.STDOUT, shell=True)
           
           # get output
-          with file('stdout.log') as f:
+          with open('stdout.log') as f:
             output = f.read()
           ctx.Log("$"+cmd+"\n")
           ctx.Log(output+"\n")
         except:
           self.command_running = False
           stdout_log.close()
-          with file('stdout.log') as f:
+          with open('stdout.log') as f:
             output = f.read()
           ctx.Log("Command failed: \n"+output)
           
           sys.stdout.write('\nError: Compiler \"{}\" not found. Set the cc and CC variables appropriately.'.format(compiler))
           ctx.Log('Compiler \"{}\" not found.\n'.format(compiler))
           return False
-
+      
+      if output[0:3] == "gcc":
+        major_no = None
+        try:
+          gcc_version = output[0:output.find("\n")]
+          gcc_version = gcc_version[gcc_version.rfind(" ")+1:]
+          major_no = (int)(gcc_version[0:gcc_version.find(".")])
+          ctx.Log("GCC major version no: {}\n".format(major_no))
+        except:
+          pass
+        if major_no and major_no < 7:
+          print(("\n\nError! You are using GCC version {}, but at least version 7 is required.\nInstall a newer version of GCC or adjust the cc and CC variables in user-variables.scons.py to specify a newer compiler.\n".format(gcc_version)));
+          quit()
     Package.compilers_checked = True
     return True
     
@@ -224,7 +236,7 @@ class Package(object):
       inc_dirs = self.get_option(env, upp + '_INC_DIR').split(';')
       lib_dirs = self.get_option(env, upp + '_LIB_DIR').split(';')
       if self.have_option(env, upp + '_LIBS'):
-        cur_libs = [map(env.File, self.get_option(env, upp + '_LIBS').split(';'))]
+        cur_libs = [list(map(env.File, self.get_option(env, upp + '_LIBS').split(';')))]
         cur_extra_libs = []
       else:
         cur_libs = libs
@@ -350,19 +362,19 @@ class Package(object):
     # Failed specified location?
     if not result and hasattr(self, '_msg') and self.required:
       ctx.Log(self._msg)
-      print(self._msg)
+      print((self._msg))
       sys.exit(1)
 
     # General failure?
     if not result and self.required:
       print('\n')
-      print('Unable to locate required package %s. You can do the following:'%name)
-      print('  - Define %s_DIR with a directory containing "include" and "lib" or "lib64" subdirectories.'%upp)
-      print('  - Define %s_INC_DIR, %s_LIB_DIR and %s_LIBS'%(upp, upp, upp))
-      print('  - Set %s_DOWNLOAD to True to automatically download and install the package.'%upp)
-      print('    If you additionally set %s_REDOWNLOAD to True it forces a fresh download '%upp)
+      print(('Unable to locate required package %s. You can do the following:'%name))
+      print(('  - Define %s_DIR with a directory containing "include" and "lib" or "lib64" subdirectories.'%upp))
+      print(('  - Define %s_INC_DIR, %s_LIB_DIR and %s_LIBS'%(upp, upp, upp)))
+      print(('  - Set %s_DOWNLOAD to True to automatically download and install the package.'%upp))
+      print(('    If you additionally set %s_REDOWNLOAD to True it forces a fresh download '%upp))
       print('    if it was already done earlier.')
-      print('If you already did that, the build system might have a bug. Inspect "config.log" to see what went wrong.')
+      print('If you already did that, something went wrong. Inspect "config.log" to see what went wrong.\n\nSometimes it helps to delete the cache and try again:\nrm -rf .scon*')
       sys.exit(1)
 
     # If the package is not required but was found anyway, add a preprocessor
@@ -530,15 +542,28 @@ class Package(object):
 
     ctx.Log("Downloading file from " + self.download_url + "\n")
     try:
-      import urllib
+      # normal download with python3
+      import urllib.request, urllib.parse, urllib.error
+      
     except Exception as e:
-      ctx.Log("Failed to download file: Could not import urllib\n")
-      print(e)
-      return False
+      # try with python2
+      ctx.Log("Failed to download file: Could not import urllib.request\n")
+      ctx.Log('Warning! You are running scons with python2.7, but python3 is required.\nPlease use the scons installation under\ndependencies/scons/scons.py\n\nNow trying to use libraries for python2.7 ... ')
+      try:
+        import urllib
+        urllib.urlretrieve(self.download_url, filename)
+        sys.stdout.write('done.\n')
+        return True
+      
+      except Exception as e:
+        ctx.Log("Failed to download file with python2.7.\nPlease use the scons installation under\ndependencies/scons/scons.py\n")
+        return False
+        
     try:
-      urllib.urlretrieve(self.download_url, filename)
+      urllib.request.urlretrieve(self.download_url, filename)
       sys.stdout.write('done.\n')
       return True
+      
     except Exception as e:
       sys.stdout.write('failed.\n')
       print(e)
@@ -546,7 +571,7 @@ class Package(object):
       time.sleep(5)
       
       try:
-        urllib.urlretrieve(self.download_url, filename)
+        urllib.request.urlretrieve(self.download_url, filename)
         sys.stdout.write('done.\n')
         return True
       except Exception as e:
@@ -592,7 +617,7 @@ class Package(object):
         
         # get name of extracted directory
         entries = os.listdir(unpack_dir)
-        print("top-level files: {}".format(entries))
+        print(("top-level files: {}".format(entries)))
         #os.rename(filename_base, unpack_dir)
       except:
         shutil.rmtree(unpack_dir, True)
@@ -614,10 +639,10 @@ class Package(object):
           ctx.Log(stdout_log)
           try:
             os.rename(filename_base, unpack_dir)
-          except Exception, e:
+          except Exception as e:
             ctx.Log("tar succeeded but failed to rename {} to {}: {}".format(filename_base, unpack_dir, str(e)))
           
-        except Exception, e:
+        except Exception as e:
           shutil.rmtree(unpack_dir, True)          
           sys.stdout.write('failed. '+str(e)+'\n')
           ctx.Log("Failed to extract file\n")
@@ -645,7 +670,7 @@ class Package(object):
       time.sleep(1)
   
       if os.path.isfile('stdout.log'):
-        with file('stdout.log') as f:
+        with open('stdout.log') as f:
           output = f.read()
         n = output.count('\n')
       else:
@@ -659,6 +684,7 @@ class Package(object):
 
   def auto_build(self, ctx, install_dir, source_dir, dependencies_dir):
     sys.stdout.write('  Building package {}, this could take a while ... \n'.format(self.name))
+      
     sys.stdout.flush()
     ctx.Log("Building package in " + install_dir + "\n")
 
@@ -759,7 +785,7 @@ class Package(object):
           
           # get output
           if os.path.exists('stdout.log'):
-            with file('stdout.log') as f:
+            with open('stdout.log') as f:
               output = f.read()    
             stdout_log.close()
             os.remove('stdout.log')
@@ -769,7 +795,7 @@ class Package(object):
           self.command_running = False
           stdout_log.close()
           if os.path.exists('stdout.log'):
-            with file('stdout.log') as f:
+            with open('stdout.log') as f:
               output = f.read()
             stdout_log.close()
             os.remove('stdout.log')
@@ -892,7 +918,30 @@ class Package(object):
         
           # compile and run test program normally
           res = ctx.TryRun(text, self.ext)
-      
+          
+          # if this failed, prepend 'mpirun -n 1' and if that fails, 'srun -n 1'
+          if not res[0]:
+            ctx.Log("Running the test program failed, now try with prefix 'mpirun -n 1'\n")
+            
+            ok = ctx.TryLink(text, self.ext) 
+            if(ok): 
+              prog = ctx.lastTarget 
+              pname = prog.get_internal_path() 
+              output = ctx.sconf.confdir.File(os.path.basename(pname)+'.out') 
+              node = ctx.env.Command(output, prog, [ [ 'mpirun', '-n', '1', pname, ">", "${TARGET}"] ]) 
+              ok = ctx.sconf.BuildNodes(node) 
+              if ok: 
+                outputStr = output.get_contents()
+                res = (1, outputStr)
+                print("(If you are seeing MPI errors, this is because programs can only be run with `mpirun`. This is not a problem.)")
+              else:
+                ctx.Log("Running the test program with mpirun failed, now try with prefix 'srun -n 1'\n")
+                node = ctx.env.Command(output, prog, [ [ 'srun', '-n', '1', pname, ">", "${TARGET}"] ]) 
+                ok = ctx.sconf.BuildNodes(node) 
+                if ok: 
+                  outputStr = output.get_contents()
+                  res = (1, outputStr)
+                
     else:
       res = (ctx.TryLink(text, self.ext), '')
         
@@ -912,7 +961,14 @@ class Package(object):
       
       if os.path.isfile(str(ctx.lastTarget)+".out"):
         with open(str(ctx.lastTarget)+".out", "rb") as f:
-          ctx.Log("Program output: \""+f.read()+"\"\n")
+          try:
+            output = f.read()
+            if isinstance(output, str):
+              ctx.Log("Program output: \""+output+"\"\n")
+            else:
+              ctx.Log("Program output: \""+output.decode('utf-8')+"\"\n")
+          except:
+              ctx.Log("(Could not load output)\n")
  
       disable_checks = False
       if ctx.env.get('DISABLE_CHECKS', []):
@@ -928,8 +984,11 @@ class Package(object):
       else:
         env_restore(ctx.env, bkp)
     else:
-      ctx.Log("Compile/Run succeeded.\n");
-      ctx.Log("Program output: \""+res[1]+"\"\n")
+      ctx.Log("Compile/Run succeeded.\n")
+      if isinstance(res[1], str):
+        ctx.Log("Program output: \""+res[1]+"\"\n")
+      else:
+        ctx.Log("Program output: \""+res[1].decode('utf-8')+"\"\n")
         
     return res
 
@@ -944,12 +1003,12 @@ class Package(object):
       ctx.Log("also always try to include one of the following extra libs: "+str(extra_libs)+"\n")
     
     for l in libs:
-      l = conv.to_iter(l)
+      l = [l]
       ctx.Log("try library "+str(l)+"\n")
       
       l_bkp = self.env_setup_libs(ctx, l)
       for e in extra_libs:
-        e = conv.to_iter(e)
+        e = [e]
         # add extra lib
         linkflags = None
         if 'LINKFLAGS' in ctx.env:
@@ -978,6 +1037,9 @@ class Package(object):
   def try_headers(self, ctx, inc_dirs, **kwargs):
     ctx.Log('Trying to find headers in %s\n'%repr(inc_dirs))
     new_inc_dirs = []
+    # if there are no headers to be found it is successful
+    if not self.headers:
+      return True
     
     # if the entries in headers is only a single list, make it a list of listst
     if self.headers:
@@ -1075,8 +1137,14 @@ class Package(object):
       ctx.Log("Try the following combinations of (include, lib) directories: "+str(sub_dirs)+"\n")
       res = (False, None)
       for inc_sub_dirs, lib_sub_dirs in sub_dirs:
-        inc_sub_dirs = list(conv.to_iter(inc_sub_dirs))
-        lib_sub_dirs = list(conv.to_iter(lib_sub_dirs))
+        inc_sub_dirs = [inc_sub_dirs]
+        lib_sub_dirs = [lib_sub_dirs]
+        #ctx.Log(inc_sub_dirs)
+        #ctx.Log("\n")
+        #ctx.Log(lib_sub_dirs)
+        #ctx.Log("\n")
+        #inc_sub_dirs = list(inc_sub_dirs)
+        #lib_sub_dirs = list(lib_sub_dirs)
 
         for i in range(len(inc_sub_dirs)):
           if not os.path.isabs(inc_sub_dirs[i]):
@@ -1101,10 +1169,11 @@ class Package(object):
 
         system_inc_dirs = []
         for inc_dir in inc_sub_dirs:
-          if "pgcc" in ctx.env["cc"] or "pgcc" in ctx.env["CC"]:
+          if "pgcc" in ctx.env["cc"] or "pgcc" in ctx.env["CC"] or "/usr/include" in inc_dir:     
             system_inc_dirs.append(('-I', inc_dir))
           else:
-            system_inc_dirs.append(('-isystem', inc_dir))     # -isystem is the same is -I for gcc, except it suppresses warning (useful for dependencies)            
+            system_inc_dirs.append(('-isystem', inc_dir))     # -isystem is the same is -I for gcc, except it suppresses warning (useful for dependencies)
+            # also, -isystem /usr/include does not work properly
 
         if self.set_rpath:
           bkp = env_setup(ctx.env,
@@ -1166,8 +1235,8 @@ class Package(object):
     # Either base or include/library paths.
     if self.have_option(env, name + '_DIR') and self.have_any_options(env, name + '_INC_DIR', name + '_LIB_DIR'):
       print('\n')
-      print('Please specify either %s_DIR or either of %s_INC_DIR or'%(name, name))
-      print('%s_LIB_DIR.\n'%name)
+      print(('Please specify either %s_DIR or either of %s_INC_DIR or'%(name, name)))
+      print(('%s_LIB_DIR.\n'%name))
       env.Exit(1)
 
     # Either download or location. (both is allowed, download overrides given directory)
@@ -1179,7 +1248,7 @@ class Package(object):
   def need_cmake(self, env):
     if not self.have_cmake():
       print('\n')
-      print('%s requires CMake to be installed to autobuild.'%self.name)
+      print(('%s requires CMake to be installed to autobuild.'%self.name))
       print("")
       env.Exit(1)
 

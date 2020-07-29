@@ -206,6 +206,7 @@ MPI_Comm RankSubset::mpiCommunicator() const
     LOG(ERROR) << "Accessing NULL communicator. Return MPI_COMM_SELF.";
     return MPI_COMM_SELF;
   }
+  //return MPI_COMM_WORLD;
   return mpiCommunicator_;
 }
 
@@ -237,7 +238,14 @@ std::ostream &operator<<(std::ostream &stream, RankSubset rankSubset)
         stream << "*";
       stream << *iterRank;
     }
-    stream << "), ownRankNo: " << rankSubset.ownRankNo() << "/" << rankSubset.size();
+    int realOwnRankNo;
+    int realRankSize;
+
+    MPIUtility::handleReturnValue(MPI_Comm_rank(rankSubset.mpiCommunicator(), &realOwnRankNo), "MPI_Comm_rank");
+    MPIUtility::handleReturnValue(MPI_Comm_size(rankSubset.mpiCommunicator(), &realRankSize), "MPI_Comm_size");
+    stream << "), ownRankNo: " << rankSubset.ownRankNo() << "/" << rankSubset.size()
+      << " = " << realOwnRankNo << "/" << realRankSize;
+
   }
   return stream;
 }

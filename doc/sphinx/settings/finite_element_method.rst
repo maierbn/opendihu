@@ -150,23 +150,27 @@ The following keywords in the python dictionary are recognized:
     # <solver>
     # <output writer>
     
-    "prefactor":          # double
-    "rightHandSide":      # list of double
-    "inputMeshIsGlobal":  # bool
-    "diffusionTensor":    # list of double
+    "prefactor":          # type: double
+    "rightHandSide":      # type: list of double
+    "inputMeshIsGlobal":  # type: bool
+    "diffusionTensor":    # type: list of double
     
-    "nElements":          # integer 
-    "physicalExtent":     # double
-    "dirichletBoundaryConditions": # {} 
-    "updatePrescribedValuesFromSolution": # bool
-    "nodePositions":      # [[x,y,z], [x,y,z], ...]
-    "elements":           # [[i1,i2,...], [i1,i2,...] ],
-    "relativeTolerance":  # double
-    "inputMeshIsGlobal":  # bool
-    "OutputWriter":       # [{}, {}, ...]
+    "nElements":          # type: integer 
+    "physicalExtent":     # type: double
+    "dirichletBoundaryConditions": # type: dict, {} 
+    "neumannBoundaryConditions": # type: list, []
+    "updatePrescribedValuesFromSolution": # type: bool
+    "nodePositions":      # type: [[x,y,z], [x,y,z], ...]
+    "elements":           # type: [[i1,i2,...], [i1,i2,...] ],
+    "relativeTolerance":  # type: double
+    "inputMeshIsGlobal":  # type: bool
+    "slotName":           # type: string
+    "OutputWriter":       # type: [{}, {}, ...]
   },
 
 The items ``# <mesh>``, ``# <solver>`` and ``# <output writer>`` are placeholders for :doc:`/settings/mesh`, :doc:`/settings/solver` and :doc:`/settings/output_writer`.
+
+.. _femesh:
 
 <mesh>
 ^^^^^^^^^^^^^
@@ -228,13 +232,13 @@ The first option is useful to reuse meshes that only need to be defined once.
 ^^^^^^^^^^^^^
 The solver is the solver of the linear system 
 
-.. math:
+.. math::
   K u = f,
 
 with stiffness matrix :math:`K`, vector of unknowns, :math:`u` and right hand side :math:`f`. This is needed when the Laplace or Poisson problem is solved (by calling ``run()`` of the object). Furthermore, in an explicit Euler timestepping of the diffusion equation we compute
 
-.. math:
-  u^{t+1} = u^{t} + dt M^{-1} K u_{t}
+.. math::
+  u^{(t+1)} = u^{(t)} + dt M^{-1} K u_{t}
 
 For this also the linear solver is used.
 
@@ -273,6 +277,11 @@ The specification of the solver can be given directly in-place or by specifying 
   
 The first option is useful when the same solver should be used for multiple classes.
 
+slotName
+^^^^^^^^^^^^^^^^^
+
+The `FiniteElementMethod` class exposes one slot that contains the solution variable. The option `slot name` specifies the name of the slot. Slot names are needed for coupling schemes to connect field variables between solvers. For details, see :doc:`output_connector_slots`.
+
 <output writer>
 ^^^^^^^^^^^^^^^^^
 
@@ -301,62 +310,11 @@ The given values correspond to global degrees of freedom, if ``"inputMeshIsGloba
 
 dirichletBoundaryConditions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+See :doc:`boundary_conditions`.
 
-The Dirichlet type boundary conditions. These are dofs that will have a prescribed value. It is a Dict of ``{<dof no>: <value>}`` entries. 
-Negative dof nos are interpreted as counted from the end, i.e. -1 is the last dof, -2 is the second-last etc.
-
-Dirichlet boundary conditions are specified for dof numbers, not nodes, such that for Hermite it is possible to prescribe derivatives. For Lagrange ansatz functions, dof numbers are equivalent to node numbers.
-
-If `inputMeshIsGlobal` is set to ``True``, the numbering of the dofs is in *global natural* order. This means that the dofs are numbered fastest in `x`-direction then in `y`-direction, then in `z`-direction (Note for developers: this is different from the internal *global petsc* ordering of the actual memory layout in the local Petsc Vecs).
-
-If `inputMeshIsGlobal` is set to ``False``, the specified dofs are interpreted as local numbers in the subdomain. Then you have to specify values **also for the ghost dofs**. This means that you have to specify prescribed nodal values for a node on every process whose subdomain is adjacent to that node.
-
-The ghost dof numbers are after the non-ghost numbers. For example, consider the following mesh oft two linear elements, ``e1`` and ``e2`` on two ranks, ``r1`` and ``r2``:
-
-.. code-block:: python
-
-  dof numberings:
-  local           global natural
-  (e1)  (e2)      (e1)   (e2)
-  1-3   2-3       4-5    6-7
-  0-2   0-1       0-1    2-3
-  r0     r1
-
-Note how the left element has two ghost nodes, with local numbers 2 and 3 and how the local numbering is different from the right element which has no ghost nodes.
-
-For **unstructured meshes**, the ordering of the dofs cannot be known at the time when the settings are parsed, because they depend on the mesh which could be read from ``*.ex`` files after the settings get parsed.
-Therefore the ordering is special.
-For every node there are as many values as dofs, in contiguous order.
-
-Consider the following example for 2D Hermite, unstructured grid, 2x2 elements:
-
-.. code-block:: python
-
-  node numbering:
-   6_7_8
-  3|_4_|5
-  0|_1_|2
-
-  dof numbering:
-   6_7_8
-  2|_3_|5
-  0|_1_|4
-
-To specify du/dn = 0 at the left boundary in this example you would set:
-
-.. code-block:: python
-  
-  bc[0*2+1] = 0, bc[3*2+1] = 0, bc[6*2+1] = 0
-
-To specifiy u=0 on the bottom, you would set:
-
-.. code-block:: python
-  
-  bc[0] = 0, bc[2] = 0, bc[4] = 0
-
-For **composite meshes** the numbering proceeds through all sub mesh after each other. This means, numbers 0 to ``nDofsMesh0-1``, where ``nDofsMesh0`` is the number of dofs in the first submesh directly map to the dofs of the first submesh. Then the numbers ``nDofsMesh0`` to ``nDofsMesh0+nDofsMesh1-1`` map to the second sub mesh and so on. Note, that negative values therefore count from the end of the last submesh, i.e. ``-1`` specifies the last dof of the last submesh.
-
-When the value to set is a vector, e.g. for solid mechanics problems where displacements can be prescribed, specify a list of the components for each prescribed dof, e.g. ``[1.0, 2.0, 3.0]`` to set a Dirichlet boundary condition of :math:`\bar{u} = (1,2,3)^\top`. When not all components should be prescribed, replace the entry by ``None``, e.g. ``[None, 2.0, None]`` to only prescribe the y component.
+neumannBoundaryConditions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+See :doc:`boundary_conditions`.
 
 updatePrescribedValuesFromSolution
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

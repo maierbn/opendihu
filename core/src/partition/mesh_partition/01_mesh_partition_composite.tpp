@@ -84,6 +84,14 @@ nNodesGlobal() const
   return nNodesGlobal_;
 }
 
+template<int D, typename BasisFunctionType>
+global_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+nNodesGlobal(int coordinateDirection) const
+{
+  assert (nSubMeshes_ > 0);
+  return subFunctionSpaces_[0]->nNodesGlobal(coordinateDirection);
+}
+
 //! get the number of nodes in the global Petsc ordering that are in partitions prior to the own rank
 template<int D, typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
@@ -248,6 +256,71 @@ getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const
   global_no_t nodeNoGlobalPetsc = dofNoGlobalPetsc / nDofsPerNode;
   int nodalDofIndex = dofNoGlobalPetsc % nDofsPerNode;
   return getNodeNoLocal(nodeNoGlobalPetsc, isLocal) * nDofsPerNode + nodalDofIndex;
+}
+
+template<int D, typename BasisFunctionType>
+node_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+getNodeNoLocalFromGlobalNatural(global_no_t nodeNoGlobalNatural, bool &isOnLocalDomain) const
+{
+  if (nSubMeshes_ == 0)
+  {
+    isOnLocalDomain = false;
+    return 0;
+  }
+
+  // call method of first sub mesh
+  return subFunctionSpaces_[0]->meshPartition()->getNodeNoLocalFromGlobalNatural(nodeNoGlobalNatural, isOnLocalDomain);
+}
+
+template<int D, typename BasisFunctionType>
+int MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+getRankOfNodeNoGlobalNatural(global_no_t nodeNoGlobalNatural) const
+{
+  // call method of first sub mesh
+  return subFunctionSpaces_[0]->meshPartition()->getRankOfNodeNoGlobalNatural(nodeNoGlobalNatural);
+}
+
+template<int D, typename BasisFunctionType>
+int MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+getRankOfDofNoGlobalNatural(global_no_t dofNoGlobalNatural) const
+{
+  global_no_t nodeNoGlobalNatural = dofNoGlobalNatural / FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>::nDofsPerNode();
+  return getRankOfNodeNoGlobalNatural(nodeNoGlobalNatural);
+}
+
+//! get a vector of global natural dof nos of the locally stored non-ghost dofs, needed for setParameters callback function in cellml adapter
+template<int D, typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const
+{
+  dofNosGlobalNatural.resize(this->nDofsLocalWithoutGhosts());
+  int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
+
+  // loop over submeshes
+  for (int subMeshNo = 0; subMeshNo < nSubMeshes_; subMeshNo++)
+  {
+    std::vector<global_no_t> dofNosGlobalNaturalSubMesh;
+    subFunctionSpaces_[subMeshNo]->meshPartition()->getDofNosGlobalNatural(dofNosGlobalNaturalSubMesh);
+
+    // add global natural dofs of submesh to vector
+    // loop over local dofs of submesh
+
+    // loop over local nodes of the submeshes, also including removed nodes
+    for (node_no_t nodeNoLocal = 0; nodeNoLocal < subFunctionSpaces_[subMeshNo]->nNodesLocalWithoutGhosts(); nodeNoLocal++)
+    {
+      // if currently considered node is not removed
+      if (meshAndNodeNoLocalToNodeNoNonDuplicateGlobal_[subMeshNo][nodeNoLocal] != -1)
+      {
+        node_no_t nodeNoNonDuplicateLocal = meshAndNodeNoLocalToNodeNoNonDuplicateLocal_[subMeshNo][nodeNoLocal];
+
+        for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++)
+        {
+          dof_no_t dofNoNonDuplicateLocal = nodeNoNonDuplicateLocal*nDofsPerNode + nodalDofIndex;
+          dofNosGlobalNatural[dofNoNonDuplicateLocal] = dofNosGlobalNaturalSubMesh[nodeNoLocal*nDofsPerNode + nodalDofIndex];
+        }
+      }
+    }
+  }
 }
 
 //! from a vector of values of global/natural node numbers remove all that are non-local, nComponents consecutive values for each dof are assumed

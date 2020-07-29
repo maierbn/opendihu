@@ -297,7 +297,7 @@ postprocessStreamlines(std::vector<std::vector<Vec3>> &streamlines)
               double alpha = targetElementLength_/length;
               Vec3 point = (1. - alpha) * previousStreamlinePoint + alpha * currentPoint;
              
-              VLOG(1) << "  length is too big, alpha=" << alpha << ", take intermediate point " << point
+              VLOG(1) << "  length is too big, alpha=" << alpha << ", take algebraic point " << point
                 << ", distance to previous point " << previousStreamlinePoint << ": " << MathUtility::length(point - previousStreamlinePoint);
               
               newStreamline.push_back(point);

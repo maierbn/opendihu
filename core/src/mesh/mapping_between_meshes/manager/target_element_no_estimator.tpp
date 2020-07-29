@@ -5,17 +5,17 @@
 namespace MappingBetweenMeshes
 {
 
-template<typename BasisFunctionType>
-TargetElementNoEstimator<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType>>::
-TargetElementNoEstimator(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType>> sourceFunctionSpace,
-                         std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType>> targetFunctionSpace) :
+template<typename BasisFunctionType1, typename BasisFunctionType2>
+TargetElementNoEstimator<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType1>, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType2>>::
+TargetElementNoEstimator(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType1>> sourceFunctionSpace,
+                         std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType2>> targetFunctionSpace) :
   sourceFunctionSpace_(sourceFunctionSpace), targetFunctionSpace_(targetFunctionSpace), targetElementForYChange_(0), targetElementForZChange_(0)
 {
 }
 
 //! try to improve the estimation for targetElementNo, in which sourceDofNoLocal should be
-template<typename BasisFunctionType>
-void TargetElementNoEstimator<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType>>::
+template<typename BasisFunctionType1, typename BasisFunctionType2>
+void TargetElementNoEstimator<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType1>, FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType2>>::
 estimateElementNo(node_no_t sourceDofNoLocal, element_no_t &targetElementNo)
 {
   // get local coordintes for sourceDofNoLocal
@@ -45,18 +45,18 @@ estimateElementNo(node_no_t sourceDofNoLocal, element_no_t &targetElementNo)
   }
 }
 
-template<typename BasisFunctionType>
-TargetElementNoEstimator<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>, BasisFunctionType>>::
-TargetElementNoEstimator(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType>> sourceFunctionSpace,
-                         std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>, BasisFunctionType>> targetFunctionSpace) :
+template<typename BasisFunctionType1, typename BasisFunctionType2>
+TargetElementNoEstimator<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType1>, FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>, BasisFunctionType2>>::
+TargetElementNoEstimator(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType1>> sourceFunctionSpace,
+                         std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>, BasisFunctionType2>> targetFunctionSpace) :
   sourceFunctionSpace_(sourceFunctionSpace), targetFunctionSpace_(targetFunctionSpace), targetElementForYChange_(0), targetElementForZChange_(0)
 {
 }
 
 
 //! try to improve the estimation for targetElementNo, in which sourceDofNoLocal should be
-template<typename BasisFunctionType>
-void TargetElementNoEstimator<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType>, FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>, BasisFunctionType>>::
+template<typename BasisFunctionType1, typename BasisFunctionType2>
+void TargetElementNoEstimator<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType1>, FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>, BasisFunctionType2>>::
 estimateElementNo(node_no_t sourceDofNoLocal, element_no_t &targetElementNo)
 {
   /*
@@ -76,6 +76,8 @@ estimateElementNo(node_no_t sourceDofNoLocal, element_no_t &targetElementNo)
 
   // sourceFunctionSpace_->meshPartition->nNodesLocalWithoutGhosts()-1
 
+  element_no_t lastElementNo = targetElementNo;
+
   // if source dof begins new x row
   if (coordinatesSource[0] == 0)
   {
@@ -95,6 +97,13 @@ estimateElementNo(node_no_t sourceDofNoLocal, element_no_t &targetElementNo)
   {
     targetElementForZChange_ = targetElementNo;
   }
+
+  // debugging output
+  VLOG(1) << lastElementNo << "; " << coordinatesSource << "/("
+    << sourceFunctionSpace_->meshPartition()->nNodesLocalWithoutGhosts(0) << ","
+    << sourceFunctionSpace_->meshPartition()->nNodesLocalWithoutGhosts(1) << ","
+    << sourceFunctionSpace_->meshPartition()->nNodesLocalWithoutGhosts(2) << ") "
+    << "[y:" << targetElementForYChange_ << ",z:" << targetElementForZChange_ << "] -> " << targetElementNo;
 }
 
 }  // namespace

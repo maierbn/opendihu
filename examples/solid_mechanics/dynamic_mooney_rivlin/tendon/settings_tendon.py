@@ -1,5 +1,10 @@
 # Transversely-isotropic Mooney Rivlin on a tendon geometry
 # Note, this is not possible to be run in parallel because the fibers cannot be initialized without MultipleInstances class.
+
+# usage: ./tendon ../settings_tendon.py tendon_bottom
+#        ./tendon ../settings_tendon.py tendon_top_a
+#        ./tendon ../settings_tendon.py tendon_top_b
+
 import sys, os
 import numpy as np
 import pickle
@@ -40,17 +45,34 @@ pmax = 7.3                  # [N/cm^2=kPa] maximum isometric active stress
 variables.constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
 variables.force = 1.0       # [N]
 
-variables.dt_elasticity = 1   # [ms] time step width for elasticity
+variables.dt_elasticity = 0.1   # [ms] time step width for elasticity
 variables.end_time      = 10     # [ms] simulation time
 variables.scenario_name = "tendon_top_b"
-variables.is_bottom_tendon = False        # whether the tendon is at the bottom (negative z-direction), this is important for the boundary conditions
+variables.is_bottom_tendon = True        # whether the tendon is at the bottom (negative z-direction), this is important for the boundary conditions
 
 # input mesh file
-#fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_tendon1.bin"        # bottom tendon
+fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_tendon1.bin"        # bottom tendon
 #fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_tendon2a.bin"
-fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_tendon2b.bin"
+#fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_tendon2b.bin"
 #fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_7x7fibers.bin"
 #fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_7x7fibers.bin"
+
+# depending on command argument choose tendon
+if len(sys.argv) > 2:
+  variables.scenario_name = sys.argv[0]
+  
+  if variables.scenario_name == "tendon_bottom":
+    fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_tendon1.bin"        # bottom tendom
+    variables.is_bottom_tendon = True
+  elif variables.scenario_name == "tendon_top_a":
+    fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_tendon2a.bin"       # top tendon
+    variables.is_bottom_tendon = False
+  elif variables.scenario_name == "tendon_top_b":
+    fiber_file = "../../../../electrophysiology/input/left_biceps_brachii_tendon2b.bin"       # top tendon
+    variables.is_bottom_tendon = False
+  else:
+    print("got scenario name \"{}\", but expected one of \"tendon_bottom\", \"tendon_top_a\", \"tendon_top_b\"".format(variables.scenario_name))
+    quit()
 
 load_fiber_data = False             # If the fiber geometry data should be loaded completely in the python script. If True, this reads the binary file and assigns the node positions in the config. If False, the C++ code will read the binary file and only extract the local node positions. This is more performant for highly parallel runs.
 
@@ -149,6 +171,7 @@ print("nRanks: ",variables.meshes["3Dmesh_quadratic"]["nRanks"])
 
 config = {
   "scenarioName":                 variables.scenario_name,      # scenario name to identify the simulation runs in the log file
+  "logFormat":                    "csv",                        # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":   "solver_structure.txt",       # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile": "mappings_between_meshes_log.txt",    # log file for mappings 
   "Meshes":                       variables.meshes,
@@ -182,11 +205,11 @@ config = {
     "preconditionerType":         "lu",                         # type of the preconditioner
     "maxIterations":              1e4,                          # maximum number of iterations in the linear solver
     "snesMaxFunctionEvaluations": 1e8,                          # maximum number of function iterations
-    "snesMaxIterations":          10,                           # maximum number of iterations in the nonlinear solver
+    "snesMaxIterations":          15,                           # maximum number of iterations in the nonlinear solver
     "snesRelativeTolerance":      1e-5,                         # relative tolerance of the nonlinear solver
     "snesLineSearchType":         "l2",                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
     "snesAbsoluteTolerance":      1e-5,                         # absolute tolerance of the nonlinear solver
-    "snesRebuildJacobianFrequency": 5,                          # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+    "snesRebuildJacobianFrequency": 4,                          # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
     
     #"dumpFilename": "out/r{}/m".format(sys.argv[-1]),          # dump system matrix and right hand side after every solve
     "dumpFilename":               "",                           # dump disabled
@@ -195,6 +218,7 @@ config = {
     #"loadFactors":                [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
     #"loadFactors":                [0.5, 1.0],                   # load factors for every timestep
     "loadFactors":                [],                           # no load factors, solve problem directly
+    "loadFactorGiveUpThreshold":  0.5,                          # if the adaptive time stepping produces a load factor smaller than this value, the solution will be accepted for the current timestep, even if it did not converge fully to the tolerance
     "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
     
     # boundary and initial conditions

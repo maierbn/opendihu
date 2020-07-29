@@ -14,7 +14,7 @@ namespace PreciceAdapter
 
 /** Precice adapter for partitioned fibers.
   */
-template<class NestedSolver>
+template<typename NestedSolver>
 class PartitionedFibers :
   public Runnable
 {
@@ -27,7 +27,7 @@ public:
 
   //! Define the type of data that will be transferred between solvers when there is a coupling scheme.
   //! Usually you define this type in the "Data" class and reuse it here.
-  typedef typename NestedSolver::OutputConnectorDataType OutputConnectorDataType;
+  typedef typename NestedSolver::SlotConnectorDataType SlotConnectorDataType;
 
   //! constructor, gets the DihuContext object which contains all python settings
   PartitionedFibers(DihuContext context);
@@ -45,8 +45,8 @@ public:
   Data &data();
 
   //! Get the data that will be transferred in the operator splitting or coupling to the other term of the splitting/coupling.
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
 protected:
 

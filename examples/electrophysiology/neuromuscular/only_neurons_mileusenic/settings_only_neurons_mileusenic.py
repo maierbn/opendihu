@@ -48,7 +48,9 @@ parser.add_argument('--scenario_name',                       help='The name to i
 parser.add_argument('--end_time', '--tend', '-t',            help='The end simulation time.',                    type=float, default=variables.end_time)
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+if len(other_args) != 0 and rank_no == 0:
+    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
 
 # output information of run
 if rank_no == 0:

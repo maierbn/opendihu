@@ -68,6 +68,9 @@ class Variables:
 
 variables = Variables()
 
+rank_no = (int)(sys.argv[-2])
+n_ranks = (int)(sys.argv[-1])
+
 parser = argparse.ArgumentParser(description='fibers_emg')
 parser.add_argument('--scenario_name',                       help='The name to identify this run in the log.',   default=variables.scenario_name)
 parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',    type=int)
@@ -90,15 +93,15 @@ parser.add_argument('--initial_value_file',                  help='Initial value
 parser.add_argument('--disable_firing',                      help='Disable stimulus after certain time. Useful in combination with --initial_values', type=float, default=variables.disable_firing)
 parser.add_argument('--outfile_0D',                          help='Output file name for 0D time steps. Use {i} for fiber index. Set to empty to disable output', default=variables.outfile_0D)
 parser.add_argument('--outfile_1D',                          help='Output file name for 1D time steps. Use {i} for fiber index. Set to empty to disable output', default=variables.outfile_1D)
-args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+if len(other_args) != 0 and rank_no == 0:
+    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
+
 if variables.n_subdomains is not None:
     variables.n_subdomains_x = variables.n_subdomains[0]
     variables.n_subdomains_y = variables.n_subdomains[1]
     variables.n_subdomains_z = variables.n_subdomains[2]
 n_processes_per_fiber = variables.n_subdomains_z
-
-rank_no = (int)(sys.argv[-2])
-n_ranks = (int)(sys.argv[-1])
 
 if rank_no == 0:
   print("n_processes_per_fiber: {}".format(n_processes_per_fiber))

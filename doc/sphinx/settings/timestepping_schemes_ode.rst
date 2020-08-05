@@ -50,7 +50,7 @@ Then the wrapping class sets the values for startTime and endTime and ``advanceT
 In this case, it is not necessary to specify ``endTime`` in the python settings.
 
 The scheme solves the equations in potentially multiple timesteps, with a time step width. The timestep width is constant within the time span, i.e. all time steps have the same width. It is determined either by ``numberTimeSteps`` or by ``timeStepWidth``. 
-Only one of the two options needs to be specified. If both are given, ``numberTimeSteps`` has precedence. 
+Only one of the two options needs to be specified. If both are given, ``numberTimeSteps`` has precedence if it is nonzero.
 
 In the case of ``numberTimeSteps``, the time step width is computed as the time span divided by the number of time steps. 
 If ``timeStepWidth`` is specified directly, this determines the time step width. 

@@ -104,7 +104,7 @@ void TimeSteppingScheme::initialize()
       }
       else
       {
-        LOG(WARNING) << "Time step width (" << timeStepWidth_ << ") will NOT be overridden by number of time steps (" << numberTimeSteps_ << ")";
+        LOG(WARNING) << "Time step width (" << timeStepWidth_ << ") will NOT be overridden by number of time steps (" << numberTimeSteps << ")";
         isTimeStepWidthSignificant_ = true;
       }
     }

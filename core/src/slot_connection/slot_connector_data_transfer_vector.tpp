@@ -82,6 +82,7 @@ void SlotConnectorDataTransfer<
 
   VLOG(1) << "Solution vector mapping (slot_connector_data_transfer_vector.tpp)";
 
+  if (!transferableSolutionData1)LOG(FATAL) << 1;
   if (transferableSolutionData1->empty())
   {
     LOG(ERROR) << "Trying to transfer data from an empty entry to a single vector. Types: " << std::endl
@@ -112,6 +113,8 @@ void SlotConnectorDataTransfer<
 
   assert(transferableSolutionData1->size() > 0);
 
+  if (transferableSolutionData1->size() == 0)LOG(FATAL) << 2;
+
   std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1Front
     = (*transferableSolutionData1)[0];
 
@@ -120,7 +123,7 @@ void SlotConnectorDataTransfer<
 
   // for the first vector of variables (the "states" in case of CellMLAdapter)
   for (int i = 0; i < transferableSolutionData1Front->variable1.size(); i++)
-  {
+  {LOG(INFO) << "i=" << i << "/" << transferableSolutionData1Front->variable1;
     int fromVectorNo = 0;
     int fromVectorIndex = i;
     int toVectorNo = 0;
@@ -136,7 +139,7 @@ void SlotConnectorDataTransfer<
     std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1Front->variable1[fromVectorIndex].values;
     int componentNo1                               = transferableSolutionData1Front->variable1[fromVectorIndex].componentNo;
 
-    LOG(DEBUG) << "map slot from variable1, index " << fromVectorIndex << " (" << fieldVariable1->name() << "[" << componentNo1 << "])"
+    LOG(INFO) << "map slot from variable1, index " << fromVectorIndex << " (" << fieldVariable1->name() << "[" << componentNo1 << "])"
       << " to variable" << toVectorNo+1 << ", index " << toVectorIndex;
 
     if (componentNo1 < 0)
@@ -151,7 +154,7 @@ void SlotConnectorDataTransfer<
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2->variable1[toVectorIndex].values;
       int componentNo2                                = transferableSolutionData2->variable1[toVectorIndex].componentNo;
 
-      LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
+      LOG(INFO) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
         << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "] (" << fieldVariable2 << "), avoidCopyIfPossible: " << avoidCopyIfPossible << "(5)";
 
       // initialize the mapping
@@ -179,7 +182,7 @@ void SlotConnectorDataTransfer<
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2->variable2[toVectorIndex].values;
       int componentNo2                                = transferableSolutionData2->variable2[toVectorIndex].componentNo;
 
-      LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
+      LOG(INFO) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
         << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(6)";
 
       // initialize the mapping
@@ -203,9 +206,11 @@ void SlotConnectorDataTransfer<
     }
   }
 
+LOG(INFO) << "2nd vector";
+
   // for the second vector of variables (the "algebraics" in case of CellMLAdapter)
   for (int i = 0; i < transferableSolutionData1Front->variable2.size(); i++)
-  {
+  {LOG(INFO) << "i=" << i;
     int fromVectorNo = 1;
     int fromVectorIndex = i;
     int toVectorNo = 0;
@@ -236,7 +241,7 @@ void SlotConnectorDataTransfer<
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2->variable1[toVectorIndex].values;
       int componentNo2                                = transferableSolutionData2->variable1[toVectorIndex].componentNo;
 
-      LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
+      LOG(INFO) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
         << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(7)";
 
       // initialize the mapping
@@ -264,7 +269,7 @@ void SlotConnectorDataTransfer<
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2->variable2[toVectorIndex].values;
       int componentNo2                                = transferableSolutionData2->variable2[toVectorIndex].componentNo;
 
-      LOG(DEBUG) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
+      LOG(INFO) << "  " << fieldVariable1->name() << "." << fieldVariable1->componentName(componentNo1) << " [" << componentNo1 << "] -> "
         << fieldVariable2->name() << "." << fieldVariable2->componentName(componentNo2) << " [" << componentNo2 << "], avoidCopyIfPossible: " << avoidCopyIfPossible << "(8)";
 
       // initialize the mapping
@@ -287,7 +292,7 @@ void SlotConnectorDataTransfer<
       DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<FieldVariable1,FieldVariable2>(fieldVariable1, fieldVariable2, componentNo1, componentNo2, avoidCopyIfPossible);
     }
   }
-
+LOG(INFO) << "done.";
   // there is no geometry transfer from fibers to anything else
 }
 

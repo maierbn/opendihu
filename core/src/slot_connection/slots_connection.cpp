@@ -407,7 +407,7 @@ bool SlotsConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
 #ifdef NDEBUG
   if (slotInformationInitialized_)
   {
-    if (fromVectorIndex > slotInformation_[transferDirectionTerm1To2_][fromVectorNo].size())
+    if (fromVectorIndex >= slotInformation_[transferDirectionTerm1To2_][fromVectorNo].size())
     {
       return false;
     }

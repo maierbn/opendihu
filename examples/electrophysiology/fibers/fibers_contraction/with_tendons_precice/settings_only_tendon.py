@@ -37,11 +37,11 @@ k2 = 411.360e2              # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber st
 variables.material_parameters = [c, ca, ct, cat, ctt, mu, k1, k2]
 
 variables.constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
-variables.force = 1.0       # [N]
+variables.force = 1000.0       # [N]
 
 print("Expected stress: {} N/cm^2 = {} MPa".format(variables.force, variables.force * 1e-2))
 
-variables.dt_elasticity = 0.5      # [ms] time step width for elasticity
+variables.dt_elasticity = 1.0      # [ms] time step width for elasticity
 variables.end_time      = 10     # [ms] simulation time
 variables.scenario_name = "tendon_bottom"
 variables.is_bottom_tendon = True        # whether the tendon is at the bottom (negative z-direction), this is important for the boundary conditions
@@ -174,7 +174,7 @@ config = {
       }
     ],
     
-    "DynamicHyperelasticitySolver": {
+    "HyperelasticitySolver": {
       "timeStepWidth":              variables.dt_elasticity,      # time step width 
       "endTime":                    variables.end_time,           # end time of the simulation time span    
       "durationLogKey":             "duration_mechanics",         # key to find duration of this solver in the log file
@@ -205,19 +205,19 @@ config = {
       "maxIterations":              1e4,                          # maximum number of iterations in the linear solver
       "snesMaxFunctionEvaluations": 1e8,                          # maximum number of function iterations
       "snesMaxIterations":          24,                           # maximum number of iterations in the nonlinear solver
-      "snesRelativeTolerance":      1e-1,                         # relative tolerance of the nonlinear solver
+      "snesRelativeTolerance":      1e-5,                         # relative tolerance of the nonlinear solver
       "snesLineSearchType":         "l2",                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
-      "snesAbsoluteTolerance":      1e-2,                         # absolute tolerance of the nonlinear solver
+      "snesAbsoluteTolerance":      1e-5,                         # absolute tolerance of the nonlinear solver
       "snesRebuildJacobianFrequency": 5,                          # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
       
       #"dumpFilename": "out/r{}/m".format(sys.argv[-1]),          # dump system matrix and right hand side after every solve
       "dumpFilename":               "",                           # dump disabled
       "dumpFormat":                 "matlab",                     # default, ascii, matlab
       
-      #"loadFactors":                [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
+      #"loadFactors":                list(np.logspace(-2,0,10)),   # load factors for every timestep
       #"loadFactors":                [0.5, 1.0],                   # load factors for every timestep
       "loadFactors":                [],                           # no load factors, solve problem directly
-      "loadFactorGiveUpThreshold":  1e-1,                         # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
+      "loadFactorGiveUpThreshold":  1e-3,                         # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
       "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
       
       # boundary and initial conditions

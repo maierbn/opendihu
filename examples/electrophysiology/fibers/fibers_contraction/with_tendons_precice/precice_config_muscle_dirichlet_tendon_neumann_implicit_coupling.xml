@@ -158,7 +158,7 @@ Result:
     <coupling-scheme:serial-implicit>
       <participants first="TendonSolver" second="MuscleSolver"/>
       <max-time value="1000.0"/>           <!-- end time of the whole simulation -->
-      <time-window-size value="0.1"/>   <!-- timestep width for coupling -->
+      <time-window-size value="0.01"/>   <!-- timestep width for coupling -->
       
       <!--<absolute-convergence-measure limit="0.1" data="Displacement" mesh="TendonMeshTop" />-->
       <relative-convergence-measure limit="0.1" data="Displacement" mesh="TendonMeshTop" />

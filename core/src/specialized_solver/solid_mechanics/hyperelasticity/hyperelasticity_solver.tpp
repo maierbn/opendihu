@@ -397,7 +397,7 @@ initializePetscVariables()
   LOG(DEBUG) << "number of non-BC dofs total: " << nMatrixRowsLocal;
 
   // create matrix with same dof mapping as vectors
-  std::shared_ptr<FunctionSpace::Generic> genericFunctionSpace = context_.meshManager()->createGenericFunctionSpace(nMatrixRowsLocal, displacementsFunctionSpace_->meshPartition(), "genericMesh");
+  //std::shared_ptr<::FunctionSpace::Generic> genericFunctionSpace = context_.meshManager()->createGenericFunctionSpace(nMatrixRowsLocal, displacementsFunctionSpace_->meshPartition(), "genericMesh");
 
   combinedMatrixJacobian_ = createPartitionedPetscMat("combinedJacobian");
 
@@ -521,6 +521,15 @@ updateNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<typena
   materialComputeExternalVirtualWorkDead();
 }
 
+//! set new dirichlet boundary condition values for existing dofs
+template<typename Term,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+updateDirichletBoundaryConditions(std::vector<std::pair<global_no_t,std::array<double,3>>> newDirichletBCValues)
+{
+  bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
+  combinedVecSolution_->updateDirichletBoundaryConditions(newDirichletBCValues, inputMeshIsGlobal);
+}
+
 template<typename Term,typename MeshType,int nDisplacementComponents>
 void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 addDirichletBoundaryConditions(std::vector<typename DirichletBoundaryConditions<DisplacementsFunctionSpace,nDisplacementComponents>::ElementWithNodes> &boundaryConditionElements, bool overwriteBcOnSameDof)
@@ -605,6 +614,13 @@ addDirichletBoundaryConditions(std::vector<typename DirichletBoundaryConditions<
   PetscErrorCode ierr;
   ierr = VecAssemblyBegin(solverVariableSolution_); CHKERRV(ierr);
   ierr = VecAssemblyEnd(solverVariableSolution_); CHKERRV(ierr);
+}
+
+template<typename Term,typename MeshType,int nDisplacementComponents>
+Vec HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+currentState()
+{
+  return solverVariableSolution_;
 }
 
 

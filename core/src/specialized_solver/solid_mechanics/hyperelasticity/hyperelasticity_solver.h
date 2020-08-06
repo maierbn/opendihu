@@ -58,6 +58,7 @@ public:
   typedef FunctionSpace::FunctionSpace<MeshType, BasisFunction::LagrangeOfOrder<2>> DisplacementsFunctionSpace;
   typedef FunctionSpace::FunctionSpace<MeshType, BasisFunction::LagrangeOfOrder<1>> PressureFunctionSpace;
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> FiberFunctionSpace;
+  typedef DisplacementsFunctionSpace FunctionSpace;
 
   typedef Data::QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace,Term,Term> Data;
   typedef ::Data::QuasiStaticHyperelasticityPressureOutput<PressureFunctionSpace> PressureDataCopy;
@@ -176,11 +177,16 @@ public:
   //! set new neumann bc's = traction for the next solve
   void updateNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> newNeumannBoundaryConditions);
 
+  //! set new dirichlet boundary condition values for existing dofs
+  void updateDirichletBoundaryConditions(std::vector<std::pair<global_no_t,std::array<double,3>>> newDirichletBCValues);
+
   //! add new dirichlet bc's, it is also possible to set new dofs that were not prescribed beforehand
   //! this calles addBoundaryConditions() of the dirichletBoundaryConditions_ object
   //! @param overwriteBcOnSameDof if existing bc dofs that are also in the ones to set newly should be overwritten, else they are not touched
   void addDirichletBoundaryConditions(std::vector<typename DirichletBoundaryConditions<DisplacementsFunctionSpace,nDisplacementComponents>::ElementWithNodes> &boundaryConditionElements, bool overwriteBcOnSameDof);
 
+  //! get the Petsc Vec of the current state (uvp vector), this is needed to save and restore checkpoints from the PreciceAdapter
+  Vec currentState();
 protected:
 
   //! initialize all Petsc Vec's and Mat's that will be used in the computation

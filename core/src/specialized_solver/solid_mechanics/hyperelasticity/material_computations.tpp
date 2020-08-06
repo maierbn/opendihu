@@ -241,16 +241,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
         LOG(WARNING) << "Deformation gradient " << deformationGradient << " has zero or negative determinant " << deformationGradientDeterminant
           << std::endl << "Geometry values in element " << elementNoLocal << ": " << geometryReferenceValues << std::endl
           << "Displacements at xi " << xi << ": " << displacementsValues;
-
-        // assemble result vector
-        if (communicateGhosts)
-        {
-          combinedVecResidual_->finishGhostManipulation();
-        }
         lastSolveSucceeded_ = false;
-
-        // return false means the computation was not successful
-        return false;
       }
 
       // loop over basis functions and evaluate integrand at xi for displacement part (δW_int - δW_ext)
@@ -392,6 +383,13 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
   //combinedVecResidual_->startGhostManipulation();
   //combinedVecResidual_->zeroGhostBuffer();
   //combinedVecResidual_->finishGhostManipulation();
+
+
+  if (!lastSolveSucceeded_)
+  {
+    // return false means the computation was not successful
+    return false;
+  }
 
   // now, solverVariableResidual_, which is the globalValues() of combinedVecResidual_, contains δW_int
   // computation was successful
@@ -1168,11 +1166,7 @@ materialComputeJacobian()
           << std::endl << "Geometry values in element " << elementNoLocal << ": " << geometryReferenceValues << std::endl
           << "Displacements at xi " << xi << ": " << displacementsValues;
 
-        combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);
-
         lastSolveSucceeded_ = false;
-        // return false means computation was not successful
-        return false;
       }
 
       // add contributions of submatrix uu (upper left)
@@ -1465,6 +1459,12 @@ materialComputeJacobian()
   }  // local elements
 
   combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);
+
+  if (!lastSolveSucceeded_)
+  {
+    // return false means computation was not successful
+    return false;
+  }
 
   // computation was successful (no negative jacobian)
   return true;

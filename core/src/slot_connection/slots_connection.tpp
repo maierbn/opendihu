@@ -564,7 +564,7 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
     }
   }
 
-//#ifndef NDEBUG
+#ifndef NDEBUG
   LOG(DEBUG) << "lookup-table initialization done:";
   for (int transferDirectionTerm1To2 = 0; transferDirectionTerm1To2 < 2; transferDirectionTerm1To2++)
   {
@@ -572,14 +572,11 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
     {
       for (int i = 0; i < slotInformation_[transferDirectionTerm1To2][fromVectorNo].size(); i++)
       {
-        LOG(DEBUG) << "  slotInformation_[" << transferDirectionTerm1To2 << "][" << fromVectorNo << "][" << i << "] = " 
-          << slotInformation_[transferDirectionTerm1To2][fromVectorNo][i].successful
-          << ", " << slotInformation_[transferDirectionTerm1To2][fromVectorNo][i].toVectorNo << ","
-          << slotInformation_[transferDirectionTerm1To2][fromVectorNo][i].toVectorIndex;
+        LOG(DEBUG) << "  slotInformation_[" << transferDirectionTerm1To2 << "][" << fromVectorNo << "][" << i << "] = " << slotInformation_[transferDirectionTerm1To2][fromVectorNo][i].successful;
       }
     }
   }
-//#endif
+#endif
 
   // restore previous value of the variable transferDirectionTerm1To2_
   transferDirectionTerm1To2_ = previousTransferDirectionTerm1To2;

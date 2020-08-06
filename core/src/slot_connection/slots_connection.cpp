@@ -407,14 +407,6 @@ bool SlotsConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
 #ifdef NDEBUG
   if (slotInformationInitialized_)
   {
-LOG(INFO) << "fromVectorNo: " << fromVectorNo << ", " << slotInformation_[transferDirectionTerm1To2_].size() << ">" << fromVectorNo << ", size: " << slotInformation_[transferDirectionTerm1To2_][fromVectorNo].size();
-for (int i = 0; i < slotInformation_[transferDirectionTerm1To2_][fromVectorNo].size(); i++)
-{
-  LOG(INFO) << "   [" << i << "] " 
-    << "VectorNo " << slotInformation_[transferDirectionTerm1To2_][fromVectorNo][i].toVectorNo 
-    << ", VectorIndex " << slotInformation_[transferDirectionTerm1To2_][fromVectorNo][i].toVectorIndex 
-<< ", successful: " << slotInformation_[transferDirectionTerm1To2_][fromVectorNo][i].successful;
-}
     if (fromVectorIndex > slotInformation_[transferDirectionTerm1To2_][fromVectorNo].size())
     {
       return false;

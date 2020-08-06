@@ -23,6 +23,7 @@ public:
 
   typedef SpatialDiscretization::HyperelasticitySolver<Term,MeshType,6> HyperelasticitySolverType;    // the hyperelasticity solver that solves the nonlinear problem, 6 non-pressure components (u and v)
   typedef typename HyperelasticitySolverType::DisplacementsFunctionSpace DisplacementsFunctionSpace;
+  typedef DisplacementsFunctionSpace FunctionSpace;
   typedef typename HyperelasticitySolverType::PressureFunctionSpace PressureFunctionSpace;
 
   typedef PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpace,PressureFunctionSpace,Term,6> VecHyperelasticity;
@@ -55,6 +56,9 @@ public:
   //! this calls addBoundaryConditions() of the dirichletBoundaryConditions_ object
   //! @param overwriteBcOnSameDof if existing bc dofs that are also in the ones to set newly should be overwritten, else they are not touched
   void addDirichletBoundaryConditions(std::vector<typename SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpace,6>::ElementWithNodes> &boundaryConditionElements, bool overwriteBcOnSameDof);
+
+  //! get the Petsc Vec of the current state (uvp vector), this is needed to save and restore checkpoints from the PreciceAdapter
+  Vec currentState();
 
 private:
 

@@ -834,10 +834,63 @@ In the core code it is only the `QuasiStaticNonlinearElasticitySolverChaste` tha
 
 Electrophysiology
 --------------------
+
+The following examples use some of the models given by the schematic in :numref:`model_schematic`.
+
+.. _model_schematic:
+.. figure:: examples/model_schematic.svg
+  :width: 100%
+  
+  Complete schematic with all models.
+  
+All model equations are listed in the following.
+
+* Monodomain equation, for one fiber:
+
+  .. math::
+    \dfrac{\partial V_m}{\partial t} = \color{red}{\dfrac{\sigma_\text{eff}}{A_m\,C_m} \dfrac{\partial^2 V_m}{\partial s^2}} \color{orange}{- \dfrac{1}{C_m}\,I_\text{ion}(V_m, \textbf{y})}\\
+    \color{orange}{\textbf{y}(t) = g(V_m, \textbf{y}(t))}
+    
+* First and second Multidomain equation for compartments :math:`k = 1, \dots, N_\text{MU}` as alternative to fibers:
+
+  .. math::
+    \color{red}{\textrm{div}\big(\sigma_e \,\textrm{grad}( \phi_e)\big) + \sum\limits_{k=1}^{N_\text{MU}} f_r^k\,\textrm{div}\big(\sigma_i^k\,\textrm{grad}(\phi_i^k)\big)  = 0}\\
+    \color{red}{\textrm{div}\big(\sigma_i^k\,\textrm{grad}(\phi_i^k)\big)} = \color{orange}{ A_m^k\,\big(C_m^k \dfrac{\partial V_m^k}{\partial t} + I_\text{ion}(V_m^k, l_\text{HS}, \dot{l}_\text{HS}, \textbf{y}^k)\big),} \quad \forall k \in \{1, \dots, N_\text{MU}\}\\
+    \color{orange}{\textbf{y}^k(t) = g(V_m^k, \textbf{y}^k(t))} \quad \forall k \in \{1, \dots, N_\text{MU}\}
+  
+  Reference: `Paper <https://link.springer.com/article/10.1007%2Fs10237-019-01214-5>`_
+    
+* Static Bidomain equation for EMG signals, solved in muscle domain and fat domain:
+
+  .. math::
+    \color{blue}{\textrm{div}\big((\sigma_i + \sigma_e)\,\textrm{grad}\,\phi_e\big) = -\textrm{div}(\sigma_i \textrm{grad}\,V_m)}
+  
+* Dynamic, incompressible solid mechanics:
+
+  .. math::
+    \color{green}{\delta W_\text{int}(\textbf{u},p) - \delta W_\text{ext}(\dot{\textbf{v}}) \qquad \forall \delta \textbf{u} }\\
+    \color{green}{\dot{\textbf{u}} = \textbf{v}}\\
+    \color{green}{\int\limits_\Omega \big(J(\textbf{u}) - 1\big) \,\delta p \,\mathrm{d} V = 0 \qquad \forall \delta p \quad \text{(incompressibility)}}
+    
+  Computation of the 2nd Piola-Kirchhoff stress, :math:`\textbf{S}`, with passive and active contributions:
+  
+  .. math::
+    \color{green}{\textbf{S} = \textbf{S}_\text{isochor} + \textbf{S}_\text{volumetric} + \textbf{S}_\text{active},}\\
+    \color{green}{\textbf{S}_\text{active} = \dfrac{1}{\lambda_f} \cdot P_\text{max} \cdot f(\lambda_f / \lambda_\text{opt}) \cdot \gamma \cdot \textbf{a}_0 \otimes \textbf{a}_0}\\
+    
+  References: `Muscle Material <https://www.hindawi.com/journals/cmmm/2013/517287/>`_,
+  `Tendon Material <https://www.sciencedirect.com/science/article/abs/pii/S0021929017300726>`_
+    
+    
+
 CellML
 ^^^^^^^^^
 The directory `examples/electrophysiology/cellml` contains example that solve a single instance of a `CellML <https://www.cellml.org/>`_ model, i.e. the same thing that `OpenCOR <https://opencor.ws/>`_  does.
 
+.. _model_schematic_cellml:
+.. figure:: examples/model_schematic_cellml.svg
+  :width: 100%
+  
 A CellML model is a differential-algebraic system (DAE) stored in an XML-based description language. The :doc:`/settings/cellml_adapter` provides the following formulation:
 
 .. math::
@@ -898,12 +951,18 @@ hodgkin-huxley_shorten_ocallaghan_davidson_soboleva_2007
 Monodomain
 ^^^^^^^^^^^
 
+.. _model_schematic_monodomain:
+.. figure:: examples/model_schematic_monodomain.svg
+  :width: 100%
+  
+  Models for the examples with Monodomain equation.
+  
 The Monodomain equation describes action potential propagation on a muscle fiber. It can be derived from modeling the intra and extracellular space and the membrane as an electric circuit. It is given by 
 
 .. math::
 
   \dfrac{\partial V_m}{\partial t} = \dfrac{1}{A_m\,C_m} \left( \sigma_\text{eff} \dfrac{\partial^2 V_m}{\partial x^2} - A_m\,I_\text{ion}(\textbf{y}, V_m, I_\text{stim})\right) \text{ for } x \in \Omega_f \subset \mathbb{R},\\
-  \textbf{y}(t) = g(\textbf{u}(t))
+  \textbf{y}(t) = g(\textbf{y}(t))
 
 * where :math:`\Omega_f` is the fiber domain,
 * :math:`V_m` is the trans-membrane voltage, i.e. the voltage between intracellular and extracellular space,
@@ -1087,7 +1146,11 @@ motoneuron_hodgkin_huxley
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   This example uses a motoneuron model to schedule the stimuli, whereas in the previous examples, the stimulation times were given by the settings. Then, the Monodomain equation is computed with the Hodgkin-Huxley subcellular model. This example also demonstrates how to use the :doc:`/settings/map_dofs` class in an approach without python callbacks. 
-  
+    
+  .. _model_schematic_motoneuron_hodgkin_huxley:
+  .. figure:: examples/model_schematic_motoneuron_hodgkin_huxley.svg
+    :width: 100%
+    
   This requires a prepared motor neuron model with input and output variables. The model used by this example is a modified Hodgkin-Huxley CellML model (``motoneuron_hodgkin_huxley.cellml``). This means there are two Hodgkin-Huxley models, one for the motor neuron and one for the Monodomain equation.
   
   If an existing motor neuron CellML model should be used without modification, e.g. the normal Hodgkin-Huxley model, then a different approach with python callbacks would be needed.
@@ -1190,28 +1253,149 @@ Fibers
   * **multiple_fibers**
   
     Multiple instances of the Monodomain equation, i.e. multiple fibers with electrophysiology. The fibers are not subdivided into several subdomains. When using multiple processes, every process simulates whole fibers
+    
+    .. _model_schematic_multiple_fibers:
+    .. figure:: examples/model_schematic_multiple_fibers.svg
+      :width: 100%
+      
+      Models that are used in the `multiple_fibers` example.
+      
   * **multiple_fibers_cubes_partitioning**
   
-    Again multiple fibers but this time they can be subdivided such that every process can compute a "cubic" subdomain that contains parts of several fibers.
+    Again multiple fibers but this time they can be subdivided such that every process can compute a "cubic" subdomain that contains parts of several fibers. (Same as :numref:`model_schematic_multiple_fibers`)
   * **fibers_emg**
   
-    This is the *main* example for multiple fibers. Again multiple fibers can be subdivided, furthermore everything is coupled to a static bidomain equation. This example was used for large-scale tests on Hazel Hen (supercomputer in Stuttgart until 2019) and was successfully executed for 270.000 fibers on 27.000 cores.
+    This is the *main* example for multiple fibers. Again multiple fibers can be subdivided, furthermore everything is coupled to a static bidomain equation. This example was used for large-scale tests on Hazel Hen (supercomputer in Stuttgart until 2019) and was successfully executed for 270.000 fibers on 27.000 cores.  (Same as :numref:`model_schematic_multiple_fibers`)
   * **cuboid**
   
-    Whereas all previous examples use biceps brachii geometry, this example is simply a cuboid and does not need any geometry information at all. Only here, the number of nodes per fiber can be adjusted.
+    Whereas all previous examples use biceps brachii geometry, this example is simply a cuboid and does not need any geometry information at all. Only here, the number of nodes per fiber can be adjusted.  (Same as :numref:`model_schematic_multiple_fibers`)
     
   * **fibers_fat_emg**
   
     This example adds a fat layer to simulate EMG signals on top of the skin surface.
     
+    .. _model_schematic_fibers_emg:
+    .. figure:: examples/model_schematic_fibers_emg.svg
+      :width: 100%
+      
+      Models that are used in the `fibers_fat_emg` example.
+      
   * **load_balancing**
   
-    Electrophysiology of a small number of fibers where computational load balancing and time adaptive stepping schemes are considered. It was developed as part of a Bachelor thesis.
+    Electrophysiology of a small number of fibers where computational load balancing and time adaptive stepping schemes are considered. It was developed as part of a Bachelor thesis.  (Same as :numref:`model_schematic_multiple_fibers`)
     
   * **fibers_contraction**
   
     This example combines `fibers_emg` with muscle contraction.
 
+    .. _model_schematic_fibers_contraction1:
+    .. figure:: examples/model_schematic_fibers_contraction1.svg
+      :width: 100%
+      
+      Models that are used in one variant of the `fibers_contraction` example.
+      
+    .. _model_schematic_fibers_contraction3:
+    .. figure:: examples/model_schematic_fibers_contraction3.svg
+      :width: 100%
+      
+      Models that are used in another variant of the `fibers_contraction` example.
+      
+  * **fibers_contraction/no_precice**
+  
+    Simulate multiple fibers coupled with dynamic contraction.
+  
+    .. _model_schematic_fibers_contraction2:
+    .. figure:: examples/model_schematic_fibers_contraction2.svg
+      :width: 100%
+      
+      
+    .. code-block:: bash
+      
+      cd $OPENDIHU_HOME/examples/electrophysiology/fibers/fibers_contraction/no_precice
+      mkorn && sr       # build
+      cd build_release
+    
+      mpirun -n 4 ./biceps_contraction ../settings_biceps_contraction.py ramp.py --n_subdomains 1 1 4
+  
+  * **fibers_contraction/with_tendons_precice**
+  
+    .. _model_schematic_fibers_contraction_with_tendons_precice:
+    .. figure:: examples/model_schematic_fibers_contraction_with_tendons_precice.svg
+      :width: 100%
+      
+    This example uses precice to couple the muscle and tendon solvers. The muscle material is incompressible hyperelastic, the tendon material is compressible hyperelastic.
+    There are different scenarios with different coupling schemes.
+    
+    Precice needs to be enabled in the `user-variables.scons.py` file.
+    
+    .. code-block:: bash
+      
+      cd $OPENDIHU_HOME/examples/electrophysiology/fibers/fibers_contraction/with_tendons_precice
+      mkorn && sr       # build
+      cd build_release
+    
+    * **Only Tendon**
+      
+      This settings file is to test and debug the tendon material. A box that is fixed on the right and pulled to the left is simulated. The data from `this paper <https://www.sciencedirect.com/science/article/abs/pii/S0021929017300726?via%3Dihub>`_ can be reproduced, but adjusting the material parameters for all variants.
+      The geometry can be created by the script create_cuboid_meshes.sh (you have to read this file and make adjustments to the mesh sizes etc.). The precice adapter is disabled.
+      Run as follows, adjust the geometry file as needed.
+
+      .. code-block:: bash
+        
+        ./tendon ../settings_only_tendon.py --fiber_file=../tendon_box.bin
+
+      .. _fibers_contraction_only_tendon:
+      .. figure:: examples/fibers_contraction_only_tendon.png
+        :width: 100%
+        
+        Result of the tendon test.
+      
+    * **Explicit Neumann-Dirichlet**
+      
+      Scenario with explicit Neumann-Dirichlet coupling. Only one tendon (the bottom tendon) plus the muscle volume is considered here. 
+      The muscle solver sends displacements and velocities at the coupling surface to the tendon solver, where these values are set as Dirichlet boundary conditions.
+      
+      The tendon solver sends traction vectors at the coupling surface to the muscle solver where they act as Neumann boundary conditions.
+      
+      Run the muscle and tendon solvers in two separate terminals. They will communicate over precice.
+      
+      .. code-block:: bash
+        
+        ./muscle ../settings_muscle_neumann_dirichlet.py ramp.py  # (terminal 1)
+        ./tendon ../settings_tendon_neumann_dirichlet.py          # (terminal 2)
+
+      The precice settings file is `precice_config_muscle_neumann_tendon_dirichlet.xml`.
+
+      This does not converge, after some timesteps it will fail.
+      
+    * **Explicit Dirichlet-Neumann**
+      
+      Scenario with explicit Neumann-Dirichlet coupling, the other way round.
+      The muscle solver sends traction vectors at the coupling surface to the tendon solver where they act as Neumann boundary conditions.
+      The tendon solver sends displacements and velocities at the coupling surface to the muscle solver, where these values are set as Dirichlet boundary conditions.
+      
+      Run the muscle and tendon solvers in two separate terminals. They will communicate over precice.
+      
+      .. code-block:: bash
+        
+        ./muscle ../settings_muscle_dirichlet_neumann.py ramp.py  # (terminal 1)
+        ./tendon ../settings_tendon_dirichlet_neumann.py          # (terminal 2)
+
+      The precice settings file is `precice_config_muscle_dirichlet_tendon_neumann.xml`.
+      
+      This does not converge, after some timesteps it will fail. But it works better than the Neumann-Dirichlet scenario.
+      
+    * **Implicit Dirichlet-Neumann**
+      
+      Same as explicit Dirichlet-Neumann scenario but this time with implicit Neumann-Dirichlet coupling.
+      
+      .. code-block:: bash
+        
+        ./muscle ../settings_muscle_implicit_dirichlet_neumann.py ramp.py  # (terminal 1)
+        ./tendon ../settings_tendon_implicit_dirichlet_neumann.py          # (terminal 2)
+
+      The precice settings file is `precice_config_muscle_dirichlet_tendon_neumann.xml`.
+      
 Multidomain
 ^^^^^^^^^^^
 The multidomain equations are a 3D homogenized formulation of electrophysiology.
@@ -1221,20 +1405,64 @@ The multidomain equations are a 3D homogenized formulation of electrophysiology.
     This example uses the :doc:`/settings/static_bidomain_solver` and connects it to :doc:`/settings/prescribed_values`. This allows to work with the Bidomain problem without any fibers or electrophysiology attached. Static Bidomain is listed under Multidomain because it is a specialization of the Multidomain Equations.
     
     Examples that use the :doc:`/settings/static_bidomain_solver` and electrophysiology using muscle fibers are `fibers_emg` and `fibers_fat_emg`.
+    
+    .. _model_schematic_static_bidomain:
+    .. figure:: examples/model_schematic_static_bidomain.svg
+      :width: 100%
+      
+      Models that are used in the `static_bidomain` example.
   
   * **multidomain_no_fat**
   
     This is the basic Multidomain example that only considers the 3D muscle domain.
+    
+    .. _model_schematic_multidomain_no_fat:
+    .. figure:: examples/model_schematic_multidomain_no_fat.svg
+      :width: 100%
+      
+      Models that are used in the `multidomain_no_fat` example.
+      
   * **multidomain_with_fat**
   
     This is the full Multidomain model also including a fat domain.
+    
+    .. _model_schematic_multidomain_with_fat:
+    .. figure:: examples/model_schematic_multidomain_with_fat.svg
+      :width: 100%
+      
+      Models that are used in the `multidomain_with_fat` example.
+      
+    .. code-block:: bash
+      
+      cd $OPENDIHU_HOME/examples/electrophysiology/multidomain/multidomain_with_fat
+      mkorn && sr       # build
+      cd build_release
+      
+      mpirun -n 12 ./multidomain_with_fat ../settings_multidomain_with_fat.py neon.py       # short runtime
+      mpirun -n 12 ./multidomain_with_fat ../settings_multidomain_with_fat.py ramp_emg.py   # longer
+      
+    Instead of 12 processes, any other number can be used.
+      
   * **multidomain_motoneuron**
   
     This is the Multidomain model with fat and using a motoneuron to get the stimulation.
+    
+    .. _model_schematic_multidomain_motoneuron:
+    .. figure:: examples/model_schematic_multidomain_motoneuron.svg
+      :width: 100%
+      
+      Models that are used in the `multidomain_motoneuron` example.
+      
   * **multidomain_contraction**
   
     This is the Multidomain model with fat combined with muscle contraction.
     
+    .. _model_schematic_multidomain_contraction:
+    .. figure:: examples/model_schematic_multidomain_contraction.svg
+      :width: 100%
+      
+      Models that are used in the `multidomain_contraction` example.
+      
 Neuromuscular
 ^^^^^^^^^^^^^^^
 

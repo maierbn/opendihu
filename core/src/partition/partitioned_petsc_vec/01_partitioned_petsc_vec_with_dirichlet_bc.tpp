@@ -385,6 +385,10 @@ getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) co
 {
   VLOG(1) << "\"" << this->name_ << "\" getValues, representation: " << this->getCurrentRepresentationString();
 
+  if (componentNo >= nComponents)
+    LOG(FATAL) << "\"" << this->name_ << "\" getValues, representation: " << this->getCurrentRepresentationString()
+      << ", componentNo is invalid, componentNo " << componentNo << ", nComponents: " << nComponents;
+
   assert(componentNo >= 0 && componentNo < nComponents);
 
   if (this->currentRepresentation_ == Partition::values_representation_t::representationCombinedGlobal)

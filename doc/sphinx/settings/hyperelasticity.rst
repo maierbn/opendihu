@@ -196,32 +196,32 @@ Then, we use the modified or reduced invariants
 The general form in which the strain energy function can be specified consists of the following 4 summands.
 
 .. math::
-  Ψ = Ψ_{iso}(\bar{I}_1, \bar{I}_2, \bar{I}_4, \bar{I}_5) + Ψ_{vol}(J) + Ψ(I_1,I_2,I_3) + Ψ(C)
+  Ψ = Ψ_{iso}(\bar{I}_1, \bar{I}_2, \bar{I}_4, \bar{I}_5) + Ψ_{vol}(J) + Ψ(I_1,I_2,I_3) + Ψ(C,a_0,I4)
   
 Every summand can be set to constant 0 if not needed (``INT(0)`` in the C++ code).
 
 In order to use a decoupled formulation, specify :math:`Ψ_{iso}(\bar{I}_1, \bar{I}_2, \bar{I}_4, \bar{I}_5)` and :math:`Ψ_{vol}(J)` for compressible materials or only :math:`Ψ_{iso}(\bar{I}_1, \bar{I}_2, \bar{I}_4, \bar{I}_5)` for incompressible materials.
 
-To use a coupled formulation, use :math:`Ψ(I_1,I_2,I_3)`. Though the strain energy function can always be formulated in terms of the invariants, some literature only provides a formulation in terms of the right Cauchy-Green tensor, :math:`C`. In this case, the function :math:`Ψ(C)` can be specified.
+To use a coupled formulation, use :math:`Ψ(I_1,I_2,I_3)`. Though the strain energy function can always be formulated in terms of the invariants, some literature only provides a formulation in terms of the right Cauchy-Green tensor, :math:`C` and the fiber direction, :math:`a_0`. In this case, the function :math:`Ψ(C,a_0,I4)` can be specified. For the last function, note that :math:`I_4` is an abbreviation for :math:`a_0 \cdot C a_0`.
 
 The available summands of :math:`Ψ` also depends on the options that were set in the first part of the material structure. For incompressible material, i.e. if ``isIncompressible == true``, we have the following form:
 
 .. math::
-  Ψ = Ψ_{iso}(\bar{I}_1, \bar{I}_2, \bar{I}_4, \bar{I}_5) + Ψ(I_1,I_2,I_3) + Ψ(C)
+  Ψ = Ψ_{iso}(\bar{I}_1, \bar{I}_2, \bar{I}_4, \bar{I}_5) + Ψ(I_1,I_2,I_3) + Ψ(C,a_0)
   
 If ``usesFiberDirection == false`` there are no 4th and 5th invariants:
 
 .. math::
-  Ψ = Ψ_{iso}(\bar{I}_1, \bar{I}_2) + Ψ_{vol}(J)  + Ψ(I_1,I_2,I_3) + Ψ(C)
+  Ψ = Ψ_{iso}(\bar{I}_1, \bar{I}_2) + Ψ_{vol}(J)  + Ψ(I_1,I_2,I_3) + Ψ(C,a_0)
   
-The 4 functions :math:`Ψ_{iso}(\bar{I}_1, \bar{I}_2, \bar{I}_4, \bar{I}_5)` :math:`Ψ_{vol}(J)`, :math:`Ψ(I_1,I_2,I_3)` and :math:`Ψ(C)` are given by the following 4 symbols that need to be defined in the material struct:
+The 4 functions :math:`Ψ_{iso}(\bar{I}_1, \bar{I}_2, \bar{I}_4, \bar{I}_5)` :math:`Ψ_{vol}(J)`, :math:`Ψ(I_1,I_2,I_3)` and :math:`Ψ(C,a_0)` are given by the following 4 symbols that need to be defined in the material struct:
 
 .. code-block:: c
 
     static const auto constexpr strainEnergyDensityFunctionIsochoric = INT(0);      // parameters: Ibar1,Ibar2,Ibar4,Ibar5
     static const auto constexpr strainEnergyDensityFunctionVolumetric = INT(0);     // parameters: J
     static const auto constexpr strainEnergyDensityFunctionCoupled = INT(0);        // parameters: I1,I2,I3
-    static const auto constexpr strainEnergyDensityFunctionCoupledDependentOnC = INT(0);  // parameters: C11, C12, C13, C22, C23, C33
+    static const auto constexpr strainEnergyDensityFunctionCoupledDependentOnC = INT(0);  // parameters: C11, C12, C13, C22, C23, C33, a1, a2, a3, I4
   
 The equations need to be specified according to the syntax of the `SEMT library <https://github.com/st-gille/semt>`_. 
 Normal operators such as `+`, `*`, `sqrt`, `ln` and `pow` can be used to combine the parameters given under :ref:`the base class<baseclass>`. 

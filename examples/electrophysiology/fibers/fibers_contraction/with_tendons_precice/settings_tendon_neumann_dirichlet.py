@@ -38,9 +38,10 @@ variables.material_parameters = [c, ca, ct, cat, ctt, mu, k1, k2]
 pmax = 7.3                  # [N/cm^2=kPa] maximum isometric active stress
 
 variables.constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
+variables.constant_body_force = (0,0,0)
 variables.force = 1.0       # [N]
 
-variables.dt_elasticity = 0.1      # [ms] time step width for elasticity
+variables.dt_elasticity = 0.01      # [ms] time step width for elasticity
 variables.end_time      = 10     # [ms] simulation time
 variables.scenario_name = "tendon_bottom"
 variables.is_bottom_tendon = True        # whether the tendon is at the bottom (negative z-direction), this is important for the boundary conditions
@@ -59,11 +60,12 @@ rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
 
 # define command line arguments
-parser = argparse.ArgumentParser(description='fibers_emg')
+parser = argparse.ArgumentParser(description='tendon')
 parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',    type=int)
 parser.add_argument('--n_subdomains_x', '-x',                help='Number of subdomains in x direction.',        type=int, default=variables.n_subdomains_x)
 parser.add_argument('--n_subdomains_y', '-y',                help='Number of subdomains in y direction.',        type=int, default=variables.n_subdomains_y)
 parser.add_argument('--n_subdomains_z', '-z',                help='Number of subdomains in z direction.',        type=int, default=variables.n_subdomains_z)
+parser.add_argument('--fiber_file',                          help='The filename of the file that contains the fiber data.', default=variables.fiber_file)
 parser.add_argument('-vmodule', help='ignore')
 
 # parse command line arguments and assign values to variables module
@@ -87,7 +89,7 @@ if rank_no == 0:
 # here any number is possible
 sampling_stride_x = 1
 sampling_stride_y = 1
-sampling_stride_z = 1
+sampling_stride_z = 2
 
 # create the partitioning using the script in create_partitioned_meshes_for_settings.py
 result = create_partitioned_meshes_for_settings(
@@ -131,17 +133,17 @@ for j in range(my):
 # fix front edge 
 for i in range(mx):
   variables.elasticity_dirichlet_bc[k*mx*my + 0*mx + i][1] = 0.0
+variables.elasticity_dirichlet_bc = {}
        
-# set Neumann BC, set traction at the end of the tendon that is attached to the muscle
+# set Neumann BC, set traction at the end of the tendon that is not attached to the muscle
 if variables.is_bottom_tendon:
-  k = nz-1
-  traction_vector = [0, 0, variables.force]     # the traction force in specified in the reference configuration
-  face = "2+"
-  
-else:
   k = 0
   traction_vector = [0, 0, -variables.force]     # the traction force in specified in the reference configuration
   face = "2-"     
+else:
+  k = nz-1
+  traction_vector = [0, 0, variables.force]     # the traction force in specified in the reference configuration
+  face = "2+"
 
 variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": traction_vector, "face": face} for j in range(ny) for i in range(nx)]
 
@@ -153,11 +155,31 @@ config = {
   "solverStructureDiagramFile":     "solver_structure.txt",       # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "mappings_between_meshes_log.txt",    # log file for mappings 
   "Meshes":                         variables.meshes,
-  "PreciceContractionNeumannBoundaryConditions": {                # precice adapter for tendon
-    "preciceConfigFilename":        "../precice-config.xml",      # the preCICE configuration file
-    "timeStepOutputInterval":       100,                          # interval in which to display current timestep and time in console
-    "isCouplingSurfaceBottom":      False,                        # if the coupling surface is at z- (True) or at z+ (False)
-    "timestepWidth":                1.0,                            # coupling time step width, must match the value in the precice config
+  
+  "PreciceAdapter": {        # precice adapter for bottom tendon
+    "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
+    "timestepWidth":            1,                          # coupling time step width, must match the value in the precice config
+    "preciceConfigFilename":    "../precice_config_muscle_neumann_tendon_dirichlet.xml",    # the preCICE configuration file
+    "preciceParticipantName":   "TendonSolver",             # name of the own precice participant, has to match the name given in the precice xml config file
+    "preciceMeshes": [                                      # the precice meshes get created as the top or bottom surface of the main geometry mesh of the nested solver
+      {
+        "preciceMeshName":      "TendonMeshTop",            # precice name of the 2D coupling mesh
+        "face":                 "2+",                       # face of the 3D mesh where the 2D mesh is located, "2-" = bottom, "2+" = top
+      }
+    ],
+    "preciceData": [
+      {
+        "mode":                 "read-displacements-velocities",   # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
+        "preciceMeshName":      "TendonMeshTop",                    # name of the precice coupling surface mesh, as given in the precice xml settings file
+        "displacementsName":    "Displacement",                     # name of the displacements "data", i.e. field variable, as given in the precice xml settings file
+        "velocitiesName":       "Velocity",                         # name of the velocity "data", i.e. field variable, as given in the precice xml settings file
+      },
+      {
+        "mode":                 "write-traction",                    # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
+        "preciceMeshName":      "TendonMeshTop",                    # name of the precice coupling surface mesh, as given in the precice xml settings 
+        "tractionName":         "Traction",                         # name of the traction "data", i.e. field variable, as given in the precice xml settings file
+      }
+    ],
     
     "DynamicHyperelasticitySolver": {
       "timeStepWidth":              variables.dt_elasticity,      # time step width 
@@ -202,7 +224,7 @@ config = {
       #"loadFactors":                [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
       #"loadFactors":                [0.5, 1.0],                   # load factors for every timestep
       "loadFactors":                [],                           # no load factors, solve problem directly
-      "loadFactorGiveUpThreshold":  1e-5,                         # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
+      "loadFactorGiveUpThreshold":  1e-1,                         # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
       "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
       
       # boundary and initial conditions

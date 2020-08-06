@@ -154,6 +154,7 @@ multidomain_solver = {
       "dirichletBoundaryConditions":  variables.potential_flow_dirichlet_bc,
       "neumannBoundaryConditions":    [],
       "inputMeshIsGlobal":            True,
+      "slotName":                     "",
     },
   },
   "Activation": {
@@ -164,6 +165,7 @@ multidomain_solver = {
       "inputMeshIsGlobal":            True,
       "dirichletBoundaryConditions":  {},
       "neumannBoundaryConditions":    [],
+      "slotName":                     "",
       "diffusionTensor": [[      # sigma_i           # fiber direction is (1,0,0)
         8.93, 0, 0,
         0, 0.0, 0,
@@ -184,6 +186,7 @@ multidomain_solver = {
       "inputMeshIsGlobal":            True,
       "dirichletBoundaryConditions":  {},
       "neumannBoundaryConditions":    [],
+      "slotName":                     "",
     },
   },
   
@@ -299,6 +302,7 @@ config = {
                 "dirichletBoundaryConditions":  {},
                 "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
                 "nAdditionalFieldVariables":    0,
+                "additionalSlotNames":          [],
                     
                 "CellML" : {
                   "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
@@ -366,6 +370,7 @@ config = {
         "numberTimeSteps":              1,                         # only use 1 timestep per interval
         "timeStepOutputInterval":       100,                       # do not output time steps
         "Pmax":                         variables.pmax,            # maximum PK2 active stress
+        "slotNames":                    ["lambda", "ldot", "gamma", "T"],  # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
         ],

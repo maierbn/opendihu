@@ -19,6 +19,8 @@ import pickle
 import sys
 import argparse
 
+import py_reader
+
 # global parameters
 PMax = 7.3              # maximum stress [N/cm^2]
 Conductivity = 3.828    # sigma, conductivity [mS/cm]
@@ -54,12 +56,25 @@ class Variables:
 
     end_time = 20.0
     output_timestep = 4e-1            # timestep for output files
+    output_interval_0D = 0            # output iterval vor 0D model (0 = 'use output timestep')
+    output_interval_1D = 0            # output iterval vor 1D model (0 = 'use output timestep')
     dt_1D = 1e-3                      # timestep width of diffusion
     dt_0D = 3e-3                      # timestep width of ODEs
     dt_splitting = 3e-3               # overall timestep width of splitting
+    nt_1D = 0                         # number of timesteps per 0D splitting substep (0 = 'use time step width')
+    nt_0D = 0                         # number of timesteps per 1D splitting substep (0 = 'use time step width')
+    nt_splitting = 0                  # number of splitting timesteps (0 = 'use time step width')
 
-    disable_firing_output = False
+    initial_value_file = None         # python file which contians the initial values. VTK only stores 32bit floats.
+    disable_firing = np.infty         # time after which we disable the firing
+
+    outfile_0D = "out/fibre_{i}_0D"
+    outfile_1D = "out/fibre_{i}_1D"
+
 variables = Variables()
+
+rank_no = (int)(sys.argv[-2])
+n_ranks = (int)(sys.argv[-1])
 
 parser = argparse.ArgumentParser(description='fibers_emg')
 parser.add_argument('--scenario_name',                       help='The name to identify this run in the log.',   default=variables.scenario_name)
@@ -76,18 +91,27 @@ parser.add_argument('--firing_times_file',                   help='The filename 
 parser.add_argument('--stimulation_frequency',               help='Stimulations per ms. Each stimulation corresponds to one line in the firing_times_file.', default=variables.stimulation_frequency)
 parser.add_argument('--end_time', '--tend', '-t',            help='The end simulation time.',                    type=float, default=variables.end_time)
 parser.add_argument('--output_timestep',                     help='The timestep for writing outputs.',           type=float, default=variables.output_timestep)
+parser.add_argument('--output_interval_0D',                  help='The interval for writing 0D outputs. Overrides `--output_timestep` for 0D model.', type=int, default=variables.output_interval_0D)
+parser.add_argument('--output_interval_1D',                  help='The interval for writing 1D outputs. Overrides `--output_timestep` for 1D model.', type=int, default=variables.output_interval_1D)
 parser.add_argument('--dt_0D',                               help='The timestep for the 0D model.',              type=float, default=variables.dt_0D)
 parser.add_argument('--dt_1D',                               help='The timestep for the 1D model.',              type=float, default=variables.dt_1D)
 parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',             type=float, default=variables.dt_splitting)
-args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+parser.add_argument('--nt_0D',                               help='The number of timesteps for the 0D model. Overrides `--dt_0D`.', type=int, default=variables.nt_0D)
+parser.add_argument('--nt_1D',                               help='The number of timesteps for the 1D model. Overrides `--dt_1D`.', type=int, default=variables.nt_1D)
+parser.add_argument('--nt_splitting',                        help='The number of splitting timesteps to reach `--tend`. Overrides `--dt_splitting`.', type=int, default=variables.nt_splitting)
+parser.add_argument('--initial_value_file',                  help='Initial value for V,m,h,n. Only python files are pupported.', default=variables.initial_value_file)
+parser.add_argument('--disable_firing',                      help='Disable stimulus after certain time. Useful in combination with --initial_values', type=float, default=variables.disable_firing)
+parser.add_argument('--outfile_0D',                          help='Output file name for 0D time steps. Use {i} for fiber index. Set to empty to disable output', default=variables.outfile_0D)
+parser.add_argument('--outfile_1D',                          help='Output file name for 1D time steps. Use {i} for fiber index. Set to empty to disable output', default=variables.outfile_1D)
+args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+if len(other_args) != 0 and rank_no == 0:
+    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
+
 if variables.n_subdomains is not None:
     variables.n_subdomains_x = variables.n_subdomains[0]
     variables.n_subdomains_y = variables.n_subdomains[1]
     variables.n_subdomains_z = variables.n_subdomains[2]
 n_processes_per_fiber = variables.n_subdomains_z
-
-rank_no = (int)(sys.argv[-2])
-n_ranks = (int)(sys.argv[-1])
 
 if rank_no == 0:
   print("n_processes_per_fiber: {}".format(n_processes_per_fiber))
@@ -187,20 +211,44 @@ def set_specific_parameters(n_nodes_global, time_step_no, current_time, paramete
   for node_no_global in nodes_to_stimulate_global:
     parameters[(node_no_global,0)] = stimulation_current   # key: ((x,y,z),nodal_dof_index)
 
+def load_states_from(n_nodes, file, states):
+    def extract4(file):
+        if file.endswith('.py'):
+            data = py_reader.load_data([file])
+            data = data[0]['data']
+            solution  = next(filter(lambda d: d['name'] == 'solution', data))
+            componentX = lambda x: next(filter(lambda d: d['name'] == str(x), solution['components']))
+            channel_names = ['membrane/V', 'sodium_channel_m_gate/m', 'sodium_channel_h_gate/h', 'potassium_channel_n_gate/n']
+            return np.vstack([componentX(i)['values'] for i in channel_names]).T
+        raise "FileType not understood: "+file
+
+    data = extract4(file)
+    print("Nodes: {}, Nodes loaded: {}".format(n_nodes, data.shape[0]))
+    for xi in range(data.shape[0]):
+        # VTK data contains np.float32 -> cast to double
+        states[(xi,0,0)] = np.float64(data[xi,0]);
+        states[(xi,0,1)] = np.float64(data[xi,1]);
+        states[(xi,0,2)] = np.float64(data[xi,2]);
+        states[(xi,0,3)] = np.float64(data[xi,3]);
+
 # callback function that can set states, i.e. prescribed values for stimulation
 def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibre_no):
+  if time_step_no == 0 and variables.initial_value_file:
+      load_states_from(n_nodes_global, variables.initial_value_file, states)
+      print("loaded initial state from "+variables.initial_value_file+" for V,m,h,n")
   
-  # determine if fibre gets stimulated at the current time
-  is_fiber_gets_stimulated = fiber_gets_stimulated(fibre_no, variables.stimulation_frequency, current_time)
+  if current_time < variables.disable_firing:
+      # determine if fibre gets stimulated at the current time
+      is_fiber_gets_stimulated = fiber_gets_stimulated(fibre_no, variables.stimulation_frequency, current_time)
 
-  if is_fiber_gets_stimulated:  
-    # determine nodes to stimulate (center node, left and right neighbour)
-    innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
-    innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
-    nodes_to_stimulate_global = [innervation_node_global]
+      if is_fiber_gets_stimulated:
+        # determine nodes to stimulate (center node, left and right neighbour)
+        innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
+        innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
+        nodes_to_stimulate_global = [innervation_node_global]
 
-    for node_no_global in nodes_to_stimulate_global:
-      states[(node_no_global,0,0)] = 20.0   # key: ((x,y,z),nodal_dof_index,state_no)
+        for node_no_global in nodes_to_stimulate_global:
+          states[(node_no_global,0,0)] = 20.0   # key: ((x,y,z),nodal_dof_index,state_no)
 
 def callback(data, shape, nEntries, dim, timeStepNo, currentTime):
   pass
@@ -212,12 +260,20 @@ def get_instance_config(i):
   for j in range(n_processes_per_fiber):
     ranks.append(n_processes_per_fiber*i + j)
 
+  if variables.output_interval_0D == 0:
+    output_interval_0D = int(1./variables.dt_0D*variables.output_timestep)
+  else:
+    output_interval_0D = variables.output_interval_0D
+  if variables.output_interval_1D == 0:
+    output_interval_1D = int(1./variables.dt_1D*variables.output_timestep)
+  else:
+    output_interval_1D = variables.output_interval_1D
   bc = {0: -75, -1: -75}
   instance_config = {
     "ranks": ranks,
     "StrangSplitting": {
-      #"numberTimeSteps": 1,
       "timeStepWidth": variables.dt_splitting,  # 1e-1
+      "numberTimeSteps": variables.nt_splitting,
       "logTimeStepWidthAsKey": "dt_splitting",
       "durationLogKey": "duration_total",
       "timeStepOutputInterval" : 1000,
@@ -228,6 +284,7 @@ def get_instance_config(i):
       "Term1": {      # CellML
         "Heun" : {
           "timeStepWidth": variables.dt_0D,  # 5e-5
+          "numberTimeSteps": variables.nt_0D,
           "logTimeStepWidthAsKey": "dt_0D",
           "durationLogKey": "duration_0D",
           "initialValues": [],
@@ -266,13 +323,18 @@ def get_instance_config(i):
             "stimulationLogFilename": "out/stimulation.log",
             
           },
+          "OutputWriter" : [
+            {"format": "Paraview",   "outputInterval": output_interval_0D, "filename": variables.outfile_0D.format(i=i), "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering":"incremental"},
+            {"format": "PythonFile", "outputInterval": output_interval_0D, "filename": variables.outfile_0D.format(i=i), "binary": True, "onlyNodalValues":False, "fileNumbering":"incremental"}, # also derivatives for hermite
+            # {"format":"PythonCallback", "outputInterval": output_interval_0D, "callback": lambda x: print("writing fiber {ix:5}: 0D for time step {timeStepNo:5} at time {currentTime}".format(ix=i, **x[i]))},
+          ] if variables.outfile_0D != '' else []
         },
       },
       "Term2": {     # Diffusion
         "ImplicitEuler" : {
           "initialValues": [],
-          #"numberTimeSteps": 1,
           "timeStepWidth": variables.dt_1D,  # 1e-5
+          "numberTimeSteps": variables.nt_1D,
           "logTimeStepWidthAsKey": "dt_1D",
           "durationLogKey": "duration_1D",
           "timeStepOutputInterval": 1e4,
@@ -291,14 +353,15 @@ def get_instance_config(i):
             "solverName": "implicitSolver",
           },
           "OutputWriter" : [
-            # {"format": "Paraview",   "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fibre_"+str(i), "binary": True, "fixedFormat": False, "combineFiles": True},
-            {"format": "PythonFile", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fibre_"+str(i), "binary": True, "onlyNodalValues":False, "fileNumbering": "incremental"}, # also derivatives for hermite
-            #{"format": "MegaMol",  "outputInterval": int(1./dt_1D*megamol_output_timestep), "filename": "out/fibers", "timeStepCloseInterval": 7000},
-            #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fibre_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
-            #{"format": "ExFile", "filename": "out/fibre_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "sphereSize": "0.02*0.02*0.02"},
-            #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "binary":True, "onlyNodalValues":True},
-            #{"format": "PythonFile", "filename": "out/fibre_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":False, "onlyNodalValues":True},
-          ]
+            {"format": "Paraview",   "outputInterval": output_interval_1D, "filename": variables.outfile_1D.format(i=i), "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering":"incremental"},
+            {"format": "PythonFile", "outputInterval": output_interval_1D, "filename": variables.outfile_1D.format(i=i), "binary": True, "onlyNodalValues":False, "fileNumbering":"incremental"}, # also derivatives for hermite
+            # {"format": "MegaMol",    "outputInterval": int(1./dt_1D*megamol_output_timestep), "filename": "out/fibers", "timeStepCloseInterval": 7000},
+            # {"format": "Paraview",   "outputInterval": output_interval_1D, "filename": variables.outfile_1D.format(i=i)+"_txt", "binary": False, "fixedFormat": False},
+            # {"format": "ExFile",     "outputInterval": output_interval_1D, "filename": variables.outfile_1D.format(i=i), "sphereSize": "0.02*0.02*0.02"},
+            # {"format": "PythonFile", "outputInterval": output_interval_1D, "filename": variables.outfile_1D.format(i=i), "binary":True, "onlyNodalValues":True},
+            # {"format": "PythonFile", "outputInterval": output_interval_1D, "filename": variables.outfile_1D.format(i=i), "binary":False, "onlyNodalValues":True},
+            # {"format":"PythonCallback", "outputInterval": output_interval_1D, "callback": lambda x: print("writing fiber {ix:5}: 1D for time step {timeStepNo:5} at time {currentTime}".format(ix=i, **x[i]))},
+          ] if variables.outfile_1D != '' else []
         },
       },
     }

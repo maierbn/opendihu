@@ -147,10 +147,10 @@ run()
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-callOutputWriter(int timeStepNo, double currentTime)
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
 {
   // write current output values
-  this->outputWriterManager_.writeOutput(this->dataMultidomain_, timeStepNo, currentTime);
+  this->outputWriterManager_.writeOutput(this->dataMultidomain_, timeStepNo, currentTime, callCountIncrement);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -164,7 +164,7 @@ initialize()
   initializeMatricesAndVectors();   // this is not called by MultidomainWithFatSolver
 
   // write initial meshes
-  callOutputWriter(0, 0.0);
+  callOutputWriter(0, 0.0, 0);
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;

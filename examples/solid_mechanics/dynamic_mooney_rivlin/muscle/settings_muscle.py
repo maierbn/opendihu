@@ -29,7 +29,9 @@ parser.add_argument('--n_subdomains_z', '-z',                help='Number of sub
 parser.add_argument('-vmodule', help='ignore')
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+if len(other_args) != 0 and rank_no == 0:
+    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
 
 # partitioning
 # ------------

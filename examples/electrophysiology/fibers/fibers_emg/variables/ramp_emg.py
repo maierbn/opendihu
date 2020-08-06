@@ -85,6 +85,7 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
+enable_surface_emg = True
 #fiber_file="../../../input/13x13fibers.bin"
 #fiber_file="../../../input/37x37fibers.bin"
 #fiber_file="../../../input/left_biceps_brachii_37x37fibers.bin"

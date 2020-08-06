@@ -270,6 +270,13 @@ void DihuContext::loadPythonScript(std::string text)
     PyErr_Print();
     LOG(FATAL) << "An error occured in the python config.\n" << errorBuffer;
   }
+  else if (!errorBuffer.empty())
+  {
+    LOG(WARNING) << "The python config wrote to stderr.\n";
+    LOG(INFO) << std::string(37, '-') << " begin python error output " << std::string(37, '-');
+    LOG(INFO) << errorBuffer;
+    LOG(INFO) << std::string(37, '-') << "- end python error output -" << std::string(37, '-');
+  }
 
   // load main module and extract config
   PyObject *mainModule = PyImport_AddModule("__main__");

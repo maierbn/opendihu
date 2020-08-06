@@ -71,8 +71,6 @@ variables.use_analytic_jacobian = True  # force analytic jacobian, otherwise it 
 # parse command line arguments and assign values to variables module
 args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
 
-print(variables.use_analytic_jacobian)
-
 # initialize some dependend variables
 if variables.n_subdomains is not None:
   variables.n_subdomains_x = variables.n_subdomains[0]
@@ -148,8 +146,6 @@ if False:
           print("({},{}) n instances: {}".format(fiber_in_subdomain_coordinate_x,fiber_in_subdomain_coordinate_y,
               n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y)))
 
-print("vm_stim: {}".format(variables.vm_value_stimulated))
-
 # define the config dict
 config = {
   "scenarioName":          variables.scenario_name,
@@ -218,8 +214,8 @@ config = {
             "durationLogKey":         "duration_monodomain",
             "timeStepOutputInterval": 100,
             "endTime":                variables.dt_splitting,
-            "connectedSlotsTerm1To2": [0,1,2],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
-            "connectedSlotsTerm2To1": [0,None,2],   # transfer the same back, this avoids data copy
+            "connectedSlotsTerm1To2": None, #[0,1,2],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
+            "connectedSlotsTerm2To1": None, #[0,None,2],   # transfer the same back, this avoids data copy
 
             "Term1": {      # CellML, i.e. reaction term of Monodomain equation
               "MultipleInstances": {
@@ -238,6 +234,7 @@ config = {
                     "inputMeshIsGlobal":            True,                                    # the boundary conditions and initial values would be given as global numbers
                     "checkForNanInf":               True,                                    # abort execution if the solution contains nan or inf values
                     "nAdditionalFieldVariables":    0,                                       # number of additional field variables
+										"additionalSlotNames":          [],                                      # names for the additional slots
                       
                     "CellML" : {
                       "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
@@ -300,7 +297,8 @@ config = {
                     "dirichletBoundaryConditions": {},                                      # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
                     "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
                     "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
-                    "nAdditionalFieldVariables":   2,                                       # number of additional field variables that will be written to the output file, here for stress
+                    "nAdditionalFieldVariables":   1,                                       # number of additional field variables that will be written to the output file, here for stress
+										"additionalSlotNames":         "stress",                                # names for the additional slots, maximum length is 6 characters per slot name
                     "checkForNanInf":              True,                                    # abort execution if the solution contains nan or inf values
                     
                     "FiniteElementMethod" : {
@@ -308,6 +306,7 @@ config = {
                       "meshName":                  "MeshFiber_{}".format(fiber_no),
                       "solverName":                "diffusionTermSolver",
                       "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
+                      "slotName":                  "vm",
                     },
                     "OutputWriter" : [
                       #{"format": "Paraview", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles": True},
@@ -390,6 +389,7 @@ config = {
         "numberTimeSteps":              1,                         # only use 1 timestep per interval
         "timeStepOutputInterval":       100,                       # do not output time steps
         "Pmax":                         variables.pmax,            # maximum PK2 active stress
+        "slotNames":                    ["lambda", "ldot", "gamma", "T"],   # names of the data slots (lamdba, lambdaDot, gamma, traction), maximum 6 characters per slot name
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
         ],
@@ -472,8 +472,8 @@ config = {
   }
 }
 
-print("analytic jacobian: ",config["Coupling"]["Term2"]["MuscleContractionSolver"]["DynamicHyperelasticitySolver"]["useAnalyticJacobian"])
-print("numeric jacobian: ",config["Coupling"]["Term2"]["MuscleContractionSolver"]["DynamicHyperelasticitySolver"]["useNumericJacobian"])
+#print("analytic jacobian: ",config["Coupling"]["Term2"]["MuscleContractionSolver"]["DynamicHyperelasticitySolver"]["useAnalyticJacobian"])
+#print("numeric jacobian: ",config["Coupling"]["Term2"]["MuscleContractionSolver"]["DynamicHyperelasticitySolver"]["useNumericJacobian"])
 
 # stop timer and calculate how long parsing lasted
 if rank_no == 0:

@@ -46,6 +46,8 @@ setSlotConnectorData(std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType,n
   }
 
   // if the geometry is set, also add it to the list
+  // do not do this, it is confusing
+#if 0
   if (slotConnectorData->geometryField && !isFromTuple)
   {
     solver_t::OutputSlot newOutputSlot;
@@ -58,6 +60,7 @@ setSlotConnectorData(std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType,n
     currentSolver_->outputSlots.push_back(newOutputSlot);
     LOG(DEBUG) << "  slot (geometry), now " << currentSolver_->outputSlots.size();
   }
+#endif
 
   // loop over ComponentOfFieldVariable entries as variable2 in slotConnectorData
   for (int i = 0; i < slotConnectorData->variable2.size(); i++)

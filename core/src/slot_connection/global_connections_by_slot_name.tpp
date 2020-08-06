@@ -91,11 +91,15 @@ addConnections(
 
       LOG(DEBUG) << "add two-way connections because of matching slot name " << slotNameTerm1;
 
-      // add both connections
-      slotsConnection->addConnectionTerm1ToTerm2(slotNoTerm1, slotNoTerm2);
-      slotsConnection->addConnectionTerm2ToTerm1(slotNoTerm2, slotNoTerm1);
+      // if connection does not yet exist
+      if (std::find(connectionsFromSameSlotNames_.begin(), connectionsFromSameSlotNames_.end(), slotNameTerm1) == connectionsFromSameSlotNames_.end())
+      {
+        // add both connections
+        slotsConnection->addConnectionTerm1ToTerm2(slotNoTerm1, slotNoTerm2);
+        slotsConnection->addConnectionTerm2ToTerm1(slotNoTerm2, slotNoTerm1);
 
-      connectionsFromSameSlotNames_.push_back(slotNameTerm1);
+        connectionsFromSameSlotNames_.push_back(slotNameTerm1);
+      }
     }
   }
 }

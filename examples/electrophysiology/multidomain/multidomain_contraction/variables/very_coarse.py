@@ -124,9 +124,9 @@ multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the mul
 # elasticity
 elasticity_solver_type = "gmres"
 elasticity_preconditioner_type = "none"
-snes_max_iterations = 10                  # maximum number of iterations in the nonlinear solver
-snes_rebuild_jacobian_frequency = 2       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
-snes_relative_tolerance = 1e-5      # relative tolerance of the nonlinear solver
+snes_max_iterations = 34                  # maximum number of iterations in the nonlinear solver
+snes_rebuild_jacobian_frequency = 5       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+snes_relative_tolerance = 1e-4      # relative tolerance of the nonlinear solver
 snes_absolute_tolerance = 1e-5      # absolute tolerance of the nonlinear solver
 relative_tolerance = 1e-5           # relative tolerance of the residual of the linear solver
 absolute_tolerance = 1e-10          # absolute tolerance of the residual of the linear solver

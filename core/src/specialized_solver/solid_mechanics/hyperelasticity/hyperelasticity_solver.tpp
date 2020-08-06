@@ -86,9 +86,9 @@ advanceTimeSpan()
 
   LOG(TRACE) << "advanceTimeSpan, endTime: " << endTime_;
 
-  // write reference output values
-  this->outputWriterManager_.writeOutput(this->data_, 0, 0.0);
-  this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, 0.0);
+  // write reference output values but don't increment counter
+  this->outputWriterManager_.writeOutput(this->data_, 0, 0.0, 0);
+  this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, 0.0, 0);
 
   nonlinearSolve();
   postprocessSolution();

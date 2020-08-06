@@ -61,7 +61,7 @@ protected:
   virtual void updateSystemMatrix();
 
   //! call the output writer on the data object
-  virtual void callOutputWriter(int timeStepNo, double currentTime);
+  virtual void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
   //! initialize everything except the matrices and vectors, this will also be called by the inherited class
   void initializeObjects();

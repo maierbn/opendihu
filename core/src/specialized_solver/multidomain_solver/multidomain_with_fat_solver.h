@@ -37,7 +37,7 @@ protected:
   virtual void updateSystemMatrix() override;
 
   //! call the output writer on the data object
-  virtual void callOutputWriter(int timeStepNo, double currentTime);
+  virtual void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
   //! assemble the system matrix which is a block matrix containing stiffness matrices of the diffusion sub problems
   void setSystemMatrixSubmatrices(double timeStepWidth);

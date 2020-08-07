@@ -66,4 +66,7 @@ protected:
 
 } // namespace
 
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents>
+std::ostream &operator<<(std::ostream &stream, const typename SpatialDiscretization::NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces &rhs);
+
 #include "spatial_discretization/neumann_boundary_conditions/00_neumann_boundary_conditions_base.tpp"

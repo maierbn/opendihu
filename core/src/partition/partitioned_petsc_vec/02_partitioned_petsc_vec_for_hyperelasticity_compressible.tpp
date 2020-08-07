@@ -51,7 +51,7 @@ template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpace
 std::string PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term,nComponents,std::enable_if_t<!Term::isIncompressible,Term>>::
 getString(bool horizontal, std::string vectorName) const
 {
-  /*composite*/
+  /*does not compile for composite meshes*/
 #if 0
   // do not assemble a horizontal string for console in release mode, because this is only needed for debugging output
 #ifdef NDEBUG
@@ -136,67 +136,6 @@ getString(bool horizontal, std::string vectorName) const
 
     VLOG(1) << "values: " << values;
 
-    // handle pressure values
-    std::vector<std::vector<global_no_t>> dofNosGlobalNaturalPressure(this->meshPartition_->nRanks());
-    std::vector<std::vector<double>> valuesPressure(this->meshPartition_->nRanks());
-
-    // handle own rank
-    // get global natural dof nos for pressure
-    nDofsLocalWithoutGhosts = this->meshPartitionPressure_->nDofsLocalWithoutGhosts();
-    nPressureDofsOnRank[0] = nDofsLocalWithoutGhosts;
-
-    VLOG(1) << "nRanks: " << this->meshPartition_->nRanks() << ", nDofsLocalWithoutGhosts: " << nDofsLocalWithoutGhosts;
-
-    std::vector<global_no_t> dofNosGlobalNaturalPressureOwn;
-    this->meshPartitionPressure_->getDofNosGlobalNatural(dofNosGlobalNaturalPressureOwn);
-
-    dofNosGlobalNaturalPressure[0].resize(nDofsLocalWithoutGhosts);
-    std::copy(dofNosGlobalNaturalPressureOwn.begin(), dofNosGlobalNaturalPressureOwn.end(), dofNosGlobalNaturalPressure[0].begin());
-
-    // get pressure values
-    valuesPressure[0].resize(nDofsLocalWithoutGhosts);
-    this->getValues(componentNoPressure_, nDofsLocalWithoutGhosts, this->meshPartitionPressure_->dofNosLocal().data(), valuesPressure[0].data());
-
-    // loop over other ranks
-    for (int rankNoK = 0; rankNoK < this->meshPartitionPressure_->nRanks(2); rankNoK++)
-    {
-      for (int rankNoJ = 0; rankNoJ < this->meshPartitionPressure_->nRanks(1); rankNoJ++)
-      {
-        for (int rankNoI = 0; rankNoI < this->meshPartitionPressure_->nRanks(0); rankNoI++)
-        {
-          int rankNo = rankNoK*this->meshPartitionPressure_->nRanks(1)*this->meshPartitionPressure_->nRanks(0)
-            + rankNoJ*this->meshPartitionPressure_->nRanks(0) + rankNoI;
-
-          // determine number of dofs on rank
-          nPressureDofsOnRank[rankNo] = this->meshPartitionPressure_->nNodesLocalWithoutGhosts(2, rankNoK)
-          * this->meshPartitionPressure_->nNodesLocalWithoutGhosts(1, rankNoJ)
-          * this->meshPartitionPressure_->nNodesLocalWithoutGhosts(0, rankNoI)
-          * DisplacementsFunctionSpaceType::nDofsPerNode();
-
-          VLOG(1) << "pressure rank " << rankNo << " n dofs: " << nPressureDofsOnRank[rankNo];
-
-          if (rankNo == 0)
-            continue;
-
-          VLOG(1) << "recv from " << rankNo << " " << nPressureDofsOnRank[rankNo] << " dofs and pressure values";
-
-          // receive dof nos
-          dofNosGlobalNaturalPressure[rankNo].resize(nPressureDofsOnRank[rankNo]);
-          MPIUtility::handleReturnValue(MPI_Recv(dofNosGlobalNaturalPressure[rankNo].data(), nPressureDofsOnRank[rankNo], MPI_UNSIGNED_LONG_LONG,
-                                                rankNo, 0, this->meshPartitionPressure_->rankSubset()->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
-
-          VLOG(1) << "received pressureDofs: " << dofNosGlobalNaturalPressure[rankNo];
-
-          // receive values
-          valuesPressure[rankNo].resize(nPressureDofsOnRank[rankNo]);
-          MPIUtility::handleReturnValue(MPI_Recv(valuesPressure[rankNo].data(), nPressureDofsOnRank[rankNo], MPI_DOUBLE,
-                                                rankNo, 0, this->meshPartitionPressure_->rankSubset()->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
-
-          VLOG(1) << "received pressure values: " << valuesPressure[rankNo];
-        }
-      }
-    }
-
     // sort displacement values according to global natural dof no
     std::vector<std::pair<global_no_t,std::array<double,nComponents>>> displacementEntries;
     displacementEntries.reserve(this->nEntriesGlobal_);
@@ -227,39 +166,12 @@ getString(bool horizontal, std::string vectorName) const
       return a.first < b.first;
     });
 
-    // sort pressure values according to global natural dof no
-    std::vector<std::pair<global_no_t,double>> pressureEntries;
-    pressureEntries.reserve(this->nEntriesGlobal_);
-
-    for (int rankNo = 0; rankNo < this->meshPartitionPressure_->nRanks(); rankNo++)
-    {
-      int nDofsOnRank = dofNosGlobalNaturalPressure[rankNo].size();
-      for (int i = 0; i < nDofsOnRank; i++)
-      {
-        pressureEntries.push_back(std::pair<global_no_t,double>(
-          dofNosGlobalNaturalPressure[rankNo][i],
-          valuesPressure[rankNo][i]
-        ));
-      }
-    }
-
-    // sort list according to dof no.s
-    std::sort(pressureEntries.begin(), pressureEntries.end(),
-              [&](std::pair<global_no_t,double> a, std::pair<global_no_t,double> b)
-    {
-      return a.first < b.first;
-    });
-
-
     if (VLOG_IS_ON(1))
     {
       VLOG(1) << "dofNosGlobalNatural: " << dofNosGlobalNatural;
       VLOG(1) << "values: " << values;
       VLOG(1) << "nDofsOnRank: " << nDofsOnRank;
-      VLOG(1) << "nPressureDofsOnRank: " << nPressureDofsOnRank;
-      VLOG(1) << "valuesPressure: " << valuesPressure;
       VLOG(1) << "displacementEntries: " << displacementEntries;
-      VLOG(1) << "pressureEntries: " << pressureEntries;
     }
 
 
@@ -313,33 +225,8 @@ getString(bool horizontal, std::string vectorName) const
       }
       else
       {
-        result << ", ...\n ";
+        result << "]; " << std::endl;
       }
-    }
-
-    if (horizontal)
-    {
-      result << " p = [" << newline;
-    }
-    else
-    {
-      result << ", ...\n ";
-    }
-
-    for (int i = 0; i < pressureEntries.size(); i++)
-    {
-      if (i != 0)
-        result << separator;
-      result << pressureEntries[i].second;
-    }
-
-    if (horizontal)
-    {
-      result << newline << "];" << std::endl;
-    }
-    else
-    {
-      result << "]; " << std::endl;
     }
   }
   else
@@ -371,31 +258,6 @@ getString(bool horizontal, std::string vectorName) const
                                            0, 0, this->meshPartition_->rankSubset()->mpiCommunicator()), "MPI_Send");
 
     VLOG(1) << "sent displacements values: " << values;
-
-    // send global natural dof nos for pressure
-    nDofsLocalWithoutGhosts = this->meshPartitionPressure_->nDofsLocalWithoutGhosts();
-
-    VLOG(1) << "send to 0 " << nDofsLocalWithoutGhosts << " pressure dofs and values";
-
-    std::vector<global_no_t> dofNosGlobalNaturalPressure;
-    this->meshPartitionPressure_->getDofNosGlobalNatural(dofNosGlobalNaturalPressure);
-
-    assert(dofNosGlobalNaturalPressure.size() == nDofsLocalWithoutGhosts);
-
-    MPIUtility::handleReturnValue(MPI_Send(dofNosGlobalNaturalPressure.data(), nDofsLocalWithoutGhosts, MPI_UNSIGNED_LONG_LONG,
-                                           0, 0, this->meshPartitionPressure_->rankSubset()->mpiCommunicator()), "MPI_Send");
-
-    VLOG(1) << "sent pressure dofs: " << dofNosGlobalNaturalPressure;
-
-    // send pressure values
-    std::vector<double> valuesPressure(nDofsLocalWithoutGhosts);
-
-    this->getValues(componentNoPressure_, nDofsLocalWithoutGhosts, this->meshPartitionPressure_->dofNosLocal().data(), valuesPressure.data());
-
-    MPIUtility::handleReturnValue(MPI_Send(valuesPressure.data(), nDofsLocalWithoutGhosts, MPI_DOUBLE,
-                                           0, 0, this->meshPartitionPressure_->rankSubset()->mpiCommunicator()), "MPI_Send");
-
-    VLOG(1) << "sent pressure values: " << valuesPressure;
   }
   return result.str();
 #else

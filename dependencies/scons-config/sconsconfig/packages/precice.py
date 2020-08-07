@@ -6,7 +6,7 @@ class precice(Package):
 
   def __init__(self, **kwargs):
     defaults = {
-        'download_url': 'https://github.com/precice/precice/archive/v2.0.0.zip',
+        'download_url': 'https://github.com/precice/precice/archive/v2.1.0.zip',
     }
     defaults.update(kwargs)
     super(precice, self).__init__(**defaults)
@@ -83,17 +83,19 @@ class precice(Package):
     ctx.Message('Checking for preCICE ...       ')
     self.check_options(env)
 
+    # only build boost if it was not yet build
     self.set_build_handler([
       'mkdir -p ${PREFIX}/include',
       'cd ${SOURCE_DIR} && wget http://bitbucket.org/eigen/eigen/get/3.3.7.tar.bz2 && tar xf 3.3.7.tar.bz2 && ln -s ${SOURCE_DIR}/eigen-eigen-323c052e1731/Eigen ${PREFIX}/include/Eigen',   # eigen
-#      'cd ${SOURCE_DIR} && wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz && tar xf boost_1_65_1.tar.gz && \
-#      cd boost_1_65_1 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test --prefix=${PREFIX} && \
-#      ./b2 install',
+      '[ ! -d ${PREFIX}/include/boost ] && (cd ${SOURCE_DIR} && [ ! -f ${SOURCE_DIR}/boost_1_65_1.tar.gz ] && ( wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz && tar xf boost_1_65_1.tar.gz ); \
+      cd boost_1_65_1 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test --prefix=${PREFIX} && \
+      ./b2 install )',
       'cd ${SOURCE_DIR} && mkdir -p build && cd build && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} \
       -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=${DEPENDENCIES_DIR}/python/install/bin/python3 \
       -DPETSC_DIR=${PETSC_DIR} -DPETSC_EXECUTABLE_RUNS=TRUE \
-      -DLIBXML2_INCLUDE_DIR=${LIBXML2_DIR}/include -DLIBXML2_LIBRARY=${LIBXML2_DIR}/lib/libxml2.so -DPRECICE_ENABLE_FORTRAN=OFF -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' .. && \
-      cd ${SOURCE_DIR}/build && make all install'
+      -DLIBXML2_INCLUDE_DIR=${LIBXML2_DIR}/include -DLIBXML2_LIBRARY=${LIBXML2_DIR}/lib/libxml2.so -DPRECICE_ENABLE_FORTRAN=OFF \
+      -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR .. && \
+      cd ${SOURCE_DIR}/build && make precice install -j 4'
     ])
     
     res = super(precice, self).check(ctx)

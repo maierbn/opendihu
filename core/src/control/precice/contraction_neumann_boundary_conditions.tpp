@@ -337,7 +337,7 @@ preciceReadData()
   neumannBoundaryConditions->initialize(functionSpace_, neumannBoundaryConditionElements);
 
   // set Neumann BCs in the static hyperelasticity of the TimeSteppingScheme::DynamicHyperelasticitySolver solver
-  nestedSolver_.hyperelasticitySolver().updateNeumannBoundaryConditions(neumannBoundaryConditions);
+  this->updateNeumannBoundaryConditions(neumannBoundaryConditions);
 
   //getSlotConnectorData()->variable1[connectorSlotIdGamma_].setValuesWithoutGhosts(gammaValues);
 

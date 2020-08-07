@@ -14,13 +14,12 @@
  * This solver encapsulates the DynamicHyperelasticitySolver or HyperelasticitySolver (static). Which one to use can be chosen at runtime in the config.
  * This class adds functionality to compute and transfer active stresses, fiber stretches and contraction velocity and so on.
  */
-template<typename MeshType=Mesh::StructuredDeformableOfDimension<3>>
+template<typename MeshType=Mesh::StructuredDeformableOfDimension<3>, typename Term=Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D>
 class MuscleContractionSolver :
   public Runnable,
   public TimeSteppingScheme::TimeSteppingScheme
 {
 public:
-  typedef Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D Term;
   typedef ::TimeSteppingScheme::DynamicHyperelasticitySolver<Term,MeshType> DynamicHyperelasticitySolverType;
   typedef ::SpatialDiscretization::HyperelasticitySolver<Term,MeshType> StaticHyperelasticitySolverType;
 

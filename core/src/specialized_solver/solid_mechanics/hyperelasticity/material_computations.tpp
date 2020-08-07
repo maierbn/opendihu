@@ -32,6 +32,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
     assert(combinedVecResidual_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
     assert(combinedVecSolution_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
   }
+  VLOG(1) << "materialComputeInternalVirtualWork";
 
   // get pointer to function space
   std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = this->data_.displacementsFunctionSpace();
@@ -108,7 +109,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
     if (VLOG_IS_ON(1))
     {
       global_no_t elementNoGlobal = displacementsFunctionSpace->meshPartition()->getElementNoGlobalNatural(elementNoLocal);
-      VLOG(1) << "elementNoGlobal " << elementNoGlobal << ", displacementsValues: " << displacementsValues;
+      VLOG(1) << "elementNoLocal " << elementNoLocal << ", displacementsValues: " << displacementsValues;
       VLOG(1) << "elementNoGlobal " << elementNoGlobal << ", geometryReferenceValues: " << geometryReferenceValues;
     }
 
@@ -153,6 +154,11 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       // fiber direction
       Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
 
+#ifndef NDEBUG
+      if (fabs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3)
+        LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized, elementalDirectionValues:" << elementalDirectionValues;
+#endif
+
       // invariants
       std::array<double_v_t,5> invariants = this->computeInvariants(rightCauchyGreen, rightCauchyGreenDeterminant, fiberDirection);  // I_1, I_2, I_3, I_4, I_5
       std::array<double_v_t,5> reducedInvariants = this->computeReducedInvariants(invariants, deformationGradientDeterminant); // Ibar_1, Ibar_2, Ibar_4, Ibar_5
@@ -193,24 +199,29 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       // (column-major storage) gradPhi[L][a] = dphi_L / dxi_a
       // gradPhi[column][row] = gradPhi[dofIndex][i] = dphi_dofIndex/dxi_i, columnIdx = dofIndex, rowIdx = which direction
 
-      VLOG(2) << "";
-      VLOG(2) << "element " << elementNoLocal << " xi: " << xi;
-      VLOG(2) << "  geometryReferenceValues: " << geometryReferenceValues;
-      VLOG(2) << "  displacementsValues: " << displacementsValues;
-      VLOG(2) << "  Jacobian: J_phi=" << jacobianMaterial;
-      VLOG(2) << "  jacobianDeterminant: J=" << jacobianDeterminant;
-      VLOG(2) << "  inverseJacobianMaterial: J_phi^-1=" << inverseJacobianMaterial;
-      VLOG(2) << "  deformationGradient: F=" << deformationGradient;
-      VLOG(2) << "  deformationGradientDeterminant: det F=" << deformationGradientDeterminant;
-      VLOG(2) << "  rightCauchyGreen: C=" << rightCauchyGreen;
-      VLOG(2) << "  rightCauchyGreenDeterminant: det C=" << rightCauchyGreenDeterminant;
-      VLOG(2) << "  inverseRightCauchyGreen: C^-1=" << inverseRightCauchyGreen;
-      VLOG(2) << "  invariants: I1,I2,I3: " << invariants;
-      VLOG(2) << "  reducedInvariants: Ibar1, Ibar2: " << reducedInvariants;
-      VLOG(2) << "  pressure/artificialPressure: " << pressure;
-      //VLOG(2) << "  artificialPressure: p=" << artificialPressure << ", artificialPressureTilde: pTilde=" << artificialPressureTilde;
-      VLOG(2) << "  PK2Stress: S=" << pK2Stress;
-      VLOG(2) << "  gradPhi: " << gradPhi;
+      if (VLOG_IS_ON(2))
+      {
+        global_no_t elementNoGlobal = displacementsFunctionSpace->meshPartition()->getElementNoGlobalNatural(elementNoLocal);
+
+        VLOG(2) << "";
+        VLOG(2) << "element local " << elementNoLocal << " global " << elementNoGlobal << " xi: " << xi;
+        VLOG(2) << "  geometryReferenceValues: " << geometryReferenceValues;
+        VLOG(2) << "  displacementsValues: " << displacementsValues;
+        VLOG(2) << "  Jacobian: J_phi=" << jacobianMaterial;
+        VLOG(2) << "  jacobianDeterminant: J=" << jacobianDeterminant;
+        VLOG(2) << "  inverseJacobianMaterial: J_phi^-1=" << inverseJacobianMaterial;
+        VLOG(2) << "  deformationGradient: F=" << deformationGradient;
+        VLOG(2) << "  deformationGradientDeterminant: det F=" << deformationGradientDeterminant;
+        VLOG(2) << "  rightCauchyGreen: C=" << rightCauchyGreen;
+        VLOG(2) << "  rightCauchyGreenDeterminant: det C=" << rightCauchyGreenDeterminant;
+        VLOG(2) << "  inverseRightCauchyGreen: C^-1=" << inverseRightCauchyGreen;
+        VLOG(2) << "  invariants: I1,I2,I3: " << invariants;
+        VLOG(2) << "  reducedInvariants: Ibar1, Ibar2: " << reducedInvariants;
+        VLOG(2) << "  pressure/artificialPressure: " << pressure;
+        //VLOG(2) << "  artificialPressure: p=" << artificialPressure << ", artificialPressureTilde: pTilde=" << artificialPressureTilde;
+        VLOG(2) << "  PK2Stress: S=" << pK2Stress;
+        VLOG(2) << "  gradPhi: " << gradPhi;
+      }
 
       VLOG(1) << "  sampling point " << samplingPointIndex << "/" << samplingPoints.size() << ", xi: " << xi << ", J: " << deformationGradientDeterminant << ", p: " << pressure << ", S11: " << pK2Stress[0][0];
 
@@ -230,16 +241,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
         LOG(WARNING) << "Deformation gradient " << deformationGradient << " has zero or negative determinant " << deformationGradientDeterminant
           << std::endl << "Geometry values in element " << elementNoLocal << ": " << geometryReferenceValues << std::endl
           << "Displacements at xi " << xi << ": " << displacementsValues;
-
-        // assemble result vector
-        if (communicateGhosts)
-        {
-          combinedVecResidual_->finishGhostManipulation();
-        }
         lastSolveSucceeded_ = false;
-
-        // return false means the computation was not successful
-        return false;
       }
 
       // loop over basis functions and evaluate integrand at xi for displacement part (δW_int - δW_ext)
@@ -382,6 +384,13 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
   //combinedVecResidual_->zeroGhostBuffer();
   //combinedVecResidual_->finishGhostManipulation();
 
+
+  if (!lastSolveSucceeded_)
+  {
+    // return false means the computation was not successful
+    return false;
+  }
+
   // now, solverVariableResidual_, which is the globalValues() of combinedVecResidual_, contains δW_int
   // computation was successful
   return true;
@@ -397,7 +406,7 @@ materialComputeResidual(double loadFactor)
   //  input is solverVariableSolution_, a normal Vec, the same values have already been assigned to this->data_.displacements() and this->data_.pressure() (!)
   // before this method, values of u, v and p get stored to the data object by setUVP(solverVariableSolution_);
 
-  LOG(DEBUG) << "materialComputeResidual";
+  LOG(DEBUG) << "materialComputeResidual(loadFactor=" << loadFactor << ")";
 
   const bool outputValues = false;
   const bool outputFiles = false;
@@ -491,6 +500,18 @@ materialComputeResidual(double loadFactor)
 
       combinedVecResidual_->dumpGlobalNatural(filename.str());
     }
+  }
+
+  if (outputValues)
+  {
+    LOG(DEBUG) << "residual: " << getString(solverVariableResidual_);
+    PetscErrorCode ierr;
+    PetscReal norm;
+    ierr = VecNorm(solverVariableResidual_, NORM_2, &norm);
+    LOG(DEBUG) << "residual norm: " << norm;
+
+    if (ierr)
+      return false;
   }
 
   // dump output vector to file
@@ -1082,6 +1103,11 @@ materialComputeJacobian()
       // fiber direction
       Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
 
+#ifndef NDEBUG
+      if (fabs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3)
+        LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized, elementalDirectionValues:" << elementalDirectionValues;
+#endif
+
       // invariants
       std::array<double_v_t,5> invariants = this->computeInvariants(rightCauchyGreen, rightCauchyGreenDeterminant, fiberDirection);  // I_1, I_2, I_3
       std::array<double_v_t,5> reducedInvariants = this->computeReducedInvariants(invariants, deformationGradientDeterminant); // Ibar_1, ..., Ibar_5
@@ -1140,11 +1166,7 @@ materialComputeJacobian()
           << std::endl << "Geometry values in element " << elementNoLocal << ": " << geometryReferenceValues << std::endl
           << "Displacements at xi " << xi << ": " << displacementsValues;
 
-        combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);
-
         lastSolveSucceeded_ = false;
-        // return false means computation was not successful
-        return false;
       }
 
       // add contributions of submatrix uu (upper left)
@@ -1437,6 +1459,12 @@ materialComputeJacobian()
   }  // local elements
 
   combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);
+
+  if (!lastSolveSucceeded_)
+  {
+    // return false means computation was not successful
+    return false;
+  }
 
   // computation was successful (no negative jacobian)
   return true;

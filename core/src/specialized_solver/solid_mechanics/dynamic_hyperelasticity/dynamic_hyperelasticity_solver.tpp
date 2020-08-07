@@ -352,6 +352,13 @@ data()
 }
 
 template<typename Term,typename MeshType>
+Vec DynamicHyperelasticitySolver<Term,MeshType>::
+currentState()
+{
+  return uvp_->valuesGlobal();
+}
+
+template<typename Term,typename MeshType>
 typename DynamicHyperelasticitySolver<Term,MeshType>::HyperelasticitySolverType &DynamicHyperelasticitySolver<Term,MeshType>::
 hyperelasticitySolver()
 {

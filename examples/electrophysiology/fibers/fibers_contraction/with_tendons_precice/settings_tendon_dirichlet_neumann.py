@@ -59,11 +59,12 @@ rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
 
 # define command line arguments
-parser = argparse.ArgumentParser(description='fibers_emg')
+parser = argparse.ArgumentParser(description='tendon')
 parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',    type=int)
 parser.add_argument('--n_subdomains_x', '-x',                help='Number of subdomains in x direction.',        type=int, default=variables.n_subdomains_x)
 parser.add_argument('--n_subdomains_y', '-y',                help='Number of subdomains in y direction.',        type=int, default=variables.n_subdomains_y)
 parser.add_argument('--n_subdomains_z', '-z',                help='Number of subdomains in z direction.',        type=int, default=variables.n_subdomains_z)
+parser.add_argument('--fiber_file',                          help='The filename of the file that contains the fiber data.', default=variables.fiber_file)
 parser.add_argument('-vmodule', help='ignore')
 
 # parse command line arguments and assign values to variables module
@@ -89,7 +90,7 @@ if rank_no == 0:
 # here any number is possible
 sampling_stride_x = 1
 sampling_stride_y = 1
-sampling_stride_z = 1
+sampling_stride_z = 2
 
 # create the partitioning using the script in create_partitioned_meshes_for_settings.py
 result = create_partitioned_meshes_for_settings(
@@ -155,11 +156,31 @@ config = {
   "solverStructureDiagramFile":     "solver_structure.txt",       # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "mappings_between_meshes_log.txt",    # log file for mappings 
   "Meshes":                         variables.meshes,
-  "PreciceContractionNeumannBoundaryConditions": {                # precice adapter for tendon
-    "preciceConfigFilename":        "../precice-config.xml",      # the preCICE configuration file
-    "timeStepOutputInterval":       100,                          # interval in which to display current timestep and time in console
-    "isCouplingSurfaceBottom":      False,                        # if the coupling surface is at z- (True) or at z+ (False)
-    "timestepWidth":                1.0,                            # coupling time step width, must match the value in the precice config
+  
+  "PreciceAdapter": {        # precice adapter for bottom tendon
+    "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
+    "timestepWidth":            1,                          # coupling time step width, must match the value in the precice config
+    "preciceConfigFilename":    "../precice_config_muscle_dirichlet_tendon_neumann.xml",    # the preCICE configuration file
+    "preciceParticipantName":   "TendonSolver",             # name of the own precice participant, has to match the name given in the precice xml config file
+    "preciceMeshes": [                                      # the precice meshes get created as the top or bottom surface of the main geometry mesh of the nested solver
+      {
+        "preciceMeshName":      "TendonMeshTop",            # precice name of the 2D coupling mesh
+        "face":                 "2+",                       # face of the 3D mesh where the 2D mesh is located, "2-" = bottom, "2+" = top
+      }
+    ],
+    "preciceData": [
+      {
+        "mode":                 "write-displacements-velocities",   # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
+        "preciceMeshName":      "TendonMeshTop",                    # name of the precice coupling surface mesh, as given in the precice xml settings file
+        "displacementsName":    "Displacement",                     # name of the displacements "data", i.e. field variable, as given in the precice xml settings file
+        "velocitiesName":       "Velocity",                         # name of the velocity "data", i.e. field variable, as given in the precice xml settings file
+      },
+      {
+        "mode":                 "read-traction",                    # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
+        "preciceMeshName":      "TendonMeshTop",                    # name of the precice coupling surface mesh, as given in the precice xml settings 
+        "tractionName":         "Traction",                         # name of the traction "data", i.e. field variable, as given in the precice xml settings file
+      }
+    ],
     
     "DynamicHyperelasticitySolver": {
       "timeStepWidth":              variables.dt_elasticity,      # time step width 

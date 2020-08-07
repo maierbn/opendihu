@@ -6,8 +6,8 @@
 #include "utility/math_utility.h"
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 
-template<typename MeshType>
-MuscleContractionSolver<MeshType>::
+template<typename MeshType,typename Term>
+MuscleContractionSolver<MeshType,Term>::
 MuscleContractionSolver(DihuContext context) :
   Runnable(),
   ::TimeSteppingScheme::TimeSteppingScheme(context["MuscleContractionSolver"]),
@@ -39,8 +39,8 @@ MuscleContractionSolver(DihuContext context) :
   this->specificSettings_.template getOptionVector<std::string>("mapGeometryToMeshes", meshNamesOfGeometryToMapTo_);
 }
 
-template<typename MeshType>
-void MuscleContractionSolver<MeshType>::
+template<typename MeshType,typename Term>
+void MuscleContractionSolver<MeshType,Term>::
 advanceTimeSpan()
 {
   // This method computes some time steps of the simulation by running a for loop over the time steps.
@@ -56,7 +56,7 @@ advanceTimeSpan()
   LOG_N_TIMES(3,INFO) << "durationComputeMappingBetweenMeshes: " << Control::PerformanceMeasurement::getDuration("durationComputeMappingBetweenMeshes");
 
   // output for debugging
-  LOG(DEBUG) << "MuscleContractionSolver<MeshType>::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
+  LOG(DEBUG) << "MuscleContractionSolver<MeshType,Term>::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_;
 
   // loop over time steps
@@ -114,8 +114,8 @@ advanceTimeSpan()
   mapGeometryToGivenMeshes();
 }
 
-template<typename MeshType>
-void MuscleContractionSolver<MeshType>::
+template<typename MeshType,typename Term>
+void MuscleContractionSolver<MeshType,Term>::
 initialize()
 {
   // only initialize once
@@ -196,8 +196,8 @@ initialize()
   initialized_ = true;
 }
 
-template<typename MeshType>
-void MuscleContractionSolver<MeshType>::
+template<typename MeshType,typename Term>
+void MuscleContractionSolver<MeshType,Term>::
 run()
 {
   initialize();
@@ -205,8 +205,8 @@ run()
   advanceTimeSpan();
 }
 
-template<typename MeshType>
-void MuscleContractionSolver<MeshType>::
+template<typename MeshType,typename Term>
+void MuscleContractionSolver<MeshType,Term>::
 reset()
 {
   if (isDynamic_)
@@ -217,8 +217,8 @@ reset()
   // "uninitialize" everything
 }
 
-template<typename MeshType>
-void MuscleContractionSolver<MeshType>::
+template<typename MeshType,typename Term>
+void MuscleContractionSolver<MeshType,Term>::
 computeLambda()
 {
   typedef typename DynamicHyperelasticitySolverType::HyperelasticitySolverType::DisplacementsFieldVariableType DisplacementsFieldVariableType;
@@ -296,8 +296,8 @@ computeLambda()
   lambdaDotVariable->startGhostManipulation();
 }
 
-template<typename MeshType>
-void MuscleContractionSolver<MeshType>::
+template<typename MeshType,typename Term>
+void MuscleContractionSolver<MeshType,Term>::
 computeActiveStress()
 {
   LOG(DEBUG) << "computeActiveStress";
@@ -382,8 +382,8 @@ computeActiveStress()
   activePK2StressVariable->startGhostManipulation();
 }
 
-template<typename MeshType>
-void MuscleContractionSolver<MeshType>::
+template<typename MeshType,typename Term>
+void MuscleContractionSolver<MeshType,Term>::
 mapGeometryToGivenMeshes()
 {
   if (this->durationLogKey_ != "")
@@ -462,15 +462,15 @@ mapGeometryToGivenMeshes()
 
 
 //! get a reference to the DynamicHyperelasticitySolverType
-template<typename MeshType>
-std::shared_ptr<typename MuscleContractionSolver<MeshType>::DynamicHyperelasticitySolverType> MuscleContractionSolver<MeshType>::
+template<typename MeshType,typename Term>
+std::shared_ptr<typename MuscleContractionSolver<MeshType,Term>::DynamicHyperelasticitySolverType> MuscleContractionSolver<MeshType,Term>::
 dynamicHyperelasticitySolver()
 {
   return dynamicHyperelasticitySolver_;
 }
 
-template<typename MeshType>
-typename MuscleContractionSolver<MeshType>::Data &MuscleContractionSolver<MeshType>::
+template<typename MeshType,typename Term>
+typename MuscleContractionSolver<MeshType,Term>::Data &MuscleContractionSolver<MeshType,Term>::
 data()
 {
   return data_;
@@ -478,8 +478,8 @@ data()
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
 //! the transfer is done by the slot_connector_data_transfer class
-template<typename MeshType>
-std::shared_ptr<typename MuscleContractionSolver<MeshType>::SlotConnectorDataType> MuscleContractionSolver<MeshType>::
+template<typename MeshType,typename Term>
+std::shared_ptr<typename MuscleContractionSolver<MeshType,Term>::SlotConnectorDataType> MuscleContractionSolver<MeshType,Term>::
 getSlotConnectorData()
 {
   return data_.getSlotConnectorData();

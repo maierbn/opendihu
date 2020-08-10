@@ -30,6 +30,9 @@ void CrankNicolson<DiscretizableInTimeType>::advanceTimeSpan()
   LOG(DEBUG) << "CrankNicolson::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_;
 
+  // recompute the system matrix and rhs if the step width changed
+  this->initializeWithTimeStepWidth(this->timeStepWidth());
+
   Vec solution = this->data_->solution()->valuesGlobal();
   Vec systemRightHandSide = this->dataImplicit_->systemRightHandSide()->valuesGlobal();
 
@@ -91,10 +94,18 @@ initialize()
     return;
   
   TimeSteppingImplicit<DiscretizableInTimeType>::initialize();
-  LOG(TRACE) << "setIntegrationMatrixRightHandSide()";
-  this->setIntegrationMatrixRightHandSide();
   
   this->initialized_ = true;
+}
+
+template<typename DiscretizableInTimeType>
+void CrankNicolson<DiscretizableInTimeType>::
+initializeWithTimeStepWidth_impl(double timeStepWidth)
+{
+  TimeSteppingImplicit<DiscretizableInTimeType>::initializeWithTimeStepWidth_impl(timeStepWidth); // calls setSystemMatrix
+
+  LOG(TRACE) << "setIntegrationMatrixRightHandSide()";
+  this->setIntegrationMatrixRightHandSide(); // depends on system matrix
 }
 
 template<typename DiscretizableInTimeType>

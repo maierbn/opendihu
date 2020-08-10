@@ -30,6 +30,9 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
   LOG(DEBUG) << "ImplicitEuler::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_ << ", time span: [" << this->startTime_ << "," << this->endTime_ << "]";
 
+  // recompute the system matrix and rhs if the step width changed
+  this->initializeWithTimeStepWidth(this->timeStepWidth());
+
   Vec solution = this->data_->solution()->valuesGlobal();
 
   // loop over time steps

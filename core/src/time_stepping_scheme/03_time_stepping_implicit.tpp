@@ -54,7 +54,7 @@ initializeWithTimeStepWidth(double timeStepWidth)
     const double eps = 1e-10;
 
     const double rel_diff = (this->initializedTimeStepWidth_ - timeStepWidth) / this->initializedTimeStepWidth_;
-    if (-eps <= rel_diff && rel_diff <= rel_diff)
+    if (-eps <= rel_diff && rel_diff <= eps)
     {
       LOG(DEBUG) << "don't re-initializeWithTimeStepWidth as relative difference of time steps is small: " << rel_diff << ". Old: " << this->initializedTimeStepWidth_ << ", new: " << timeStepWidth;
       return;

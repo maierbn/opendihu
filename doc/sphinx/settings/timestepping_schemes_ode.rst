@@ -67,14 +67,15 @@ Examples:
 - endTime = 1.09, timeStepWidth = 1.0 -> increase dt to 1.09, one timestep
 - endTime = 1.11, timeStepWidth = 1.0 -> decrease dt to 0.555, two timesteps
 
-logTimeStepWidthAsKey and durationLogKey
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+logTimeStepWidthAsKey, logNumberTimeStepsAsKey and durationLogKey
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 These options are optional.
 If they are set, information will be stored and written to the log file  ``logs/log.csv`` at the end of the execution, under the specified key.
 This log file contains one line per run of the program, i.e. at the end of execution, one line will be added. The file is in ``csv`` format, all data fields are separated by semicolons (``;``).
 There will be a header that specifies the names of the logged variables (so called keys).
 
 If ``logTimeStepWidthAsKey`` is set, the time step width of this scheme will be stored under the name, that is given by ``logTimeStepWidthAsKey``. 
+If ``logNumberTimeStepsAsKey`` is set, the number of time steps of this scheme will be stored under the name, that is given by ``logNumberTimeStepsAsKey``.
 This is useful to distinguish multiple runs with different time step widths.
 
 If ``durationLogKey`` is set, there will be a duration measurement of the walltime for the timestepping scheme. The duration is measured by the ``MPI_Wtime`` call, 

@@ -65,7 +65,9 @@ parser.add_argument('--use_symmetric_preconditioner_matrix', help='If the precon
 parser.add_argument('--initial_guess_nonzero',               help='If the initial guess to the linear solver should be the last solution.',  default=variables.initial_guess_nonzero, action='store_true')
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+if len(other_args) != 0 and rank_no == 0:
+    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:
@@ -128,6 +130,7 @@ multidomain_solver = {
   "endTime":                          variables.end_time,                   # end time, this is not relevant because it will be overridden by the splitting scheme
   "timeStepOutputInterval":           1,                                  # how often the output timestep should be printed
   "durationLogKey":                   "duration_multidomain",               # key for duration in log.csv file
+  "slotNames":                        ["vm_old", "vm_new", "g_mu", "g_tot"],  # names of the data connector slots, maximum length per name is 6 characters. g_mu is gamma (active stress) of the compartment, g_tot is the total gamma
   
   # material parameters for the compartments
   "nCompartments":                    variables.n_compartments,             # number of compartments
@@ -154,6 +157,7 @@ multidomain_solver = {
       "dirichletBoundaryConditions":  variables.potential_flow_dirichlet_bc,
       "neumannBoundaryConditions":    [],
       "inputMeshIsGlobal":            True,
+      "slotName":                     "",
     },
   },
   "Activation": {
@@ -164,6 +168,7 @@ multidomain_solver = {
       "inputMeshIsGlobal":            True,
       "dirichletBoundaryConditions":  {},
       "neumannBoundaryConditions":    [],
+      "slotName":                     "",
       "diffusionTensor": [[      # sigma_i           # fiber direction is (1,0,0)
         8.93, 0, 0,
         0, 0.0, 0,
@@ -184,6 +189,7 @@ multidomain_solver = {
       "inputMeshIsGlobal":            True,
       "dirichletBoundaryConditions":  {},
       "neumannBoundaryConditions":    [],
+      "slotName":                     "",
     },
   },
   
@@ -299,6 +305,7 @@ config = {
                 "dirichletBoundaryConditions":  {},
                 "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
                 "nAdditionalFieldVariables":    0,
+                "additionalSlotNames":          [],
                     
                 "CellML" : {
                   "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
@@ -366,6 +373,7 @@ config = {
         "numberTimeSteps":              1,                         # only use 1 timestep per interval
         "timeStepOutputInterval":       100,                       # do not output time steps
         "Pmax":                         variables.pmax,            # maximum PK2 active stress
+        "slotNames":                    ["lambda", "ldot", "gamma", "T"],  # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
         ],
@@ -398,6 +406,7 @@ config = {
           "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
           #"loadFactors":                [0.5, 1.0],                # load factors for every timestep
           "loadFactors":                [],                        # no load factors, solve problem directly
+          "loadFactorGiveUpThreshold":  1e-1,                      # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
           "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
           
           # boundary and initial conditions

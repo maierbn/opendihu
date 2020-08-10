@@ -61,6 +61,7 @@ paraview_output = False             # If the paraview output writer should be en
 adios_output = False                # If the MegaMol/ADIOS output writer should be enabled
 python_output = False               # If the Python output writer should be enabled
 exfile_output = False               # If the Exfile output writer should be enabled
+enable_surface_emg = False          # Enables the surface emg output writer
 
 
 # motor unit stimulation times
@@ -146,3 +147,4 @@ fiber_start_node_no = None
 generate_linear_3d_mesh = True
 generate_quadratic_3d_mesh = False
 mappings = None
+enable_weak_scaling = False

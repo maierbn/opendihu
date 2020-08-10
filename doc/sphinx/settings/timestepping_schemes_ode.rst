@@ -50,7 +50,7 @@ Then the wrapping class sets the values for startTime and endTime and ``advanceT
 In this case, it is not necessary to specify ``endTime`` in the python settings.
 
 The scheme solves the equations in potentially multiple timesteps, with a time step width. The timestep width is constant within the time span, i.e. all time steps have the same width. It is determined either by ``numberTimeSteps`` or by ``timeStepWidth``. 
-Only one of the two options needs to be specified. If both are given, ``numberTimeSteps`` has precedence. 
+Only one of the two options needs to be specified. If both are given, ``numberTimeSteps`` has precedence if it is nonzero.
 
 In the case of ``numberTimeSteps``, the time step width is computed as the time span divided by the number of time steps. 
 If ``timeStepWidth`` is specified directly, this determines the time step width. 
@@ -67,14 +67,15 @@ Examples:
 - endTime = 1.09, timeStepWidth = 1.0 -> increase dt to 1.09, one timestep
 - endTime = 1.11, timeStepWidth = 1.0 -> decrease dt to 0.555, two timesteps
 
-logTimeStepWidthAsKey and durationLogKey
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+logTimeStepWidthAsKey, logNumberTimeStepsAsKey and durationLogKey
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 These options are optional.
 If they are set, information will be stored and written to the log file  ``logs/log.csv`` at the end of the execution, under the specified key.
 This log file contains one line per run of the program, i.e. at the end of execution, one line will be added. The file is in ``csv`` format, all data fields are separated by semicolons (``;``).
 There will be a header that specifies the names of the logged variables (so called keys).
 
 If ``logTimeStepWidthAsKey`` is set, the time step width of this scheme will be stored under the name, that is given by ``logTimeStepWidthAsKey``. 
+If ``logNumberTimeStepsAsKey`` is set, the number of time steps of this scheme will be stored under the name, that is given by ``logNumberTimeStepsAsKey``.
 This is useful to distinguish multiple runs with different time step widths.
 
 If ``durationLogKey`` is set, there will be a duration measurement of the walltime for the timestepping scheme. The duration is measured by the ``MPI_Wtime`` call, 

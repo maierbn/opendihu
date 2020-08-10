@@ -40,14 +40,14 @@ dt_0D = 3e-3                        # [ms] timestep width of ODEs (2e-3)
 dt_1D = 1e-3                        # [ms] timestep width of diffusion (4e-3)
 dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting (4e-3)
 dt_3D = 2e-1                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep_fibers = 2e-1       # [ms] timestep for fiber output, 0.5
-output_timestep_3D_emg = 2e-1            # [ms] timestep for output big files of 3D EMG, 100
-output_timestep_surface = 2e-1              # [ms] timestep for output surface EMG, 0.5
-output_timestep_electrodes = 2e-1    # [ms] timestep for python callback, which is electrode measurement output, has to be >= dt_3D
+output_timestep_fibers = 2       # [ms] timestep for fiber output, 0.5
+output_timestep_3D_emg = 2            # [ms] timestep for output big files of 3D EMG, 100
+output_timestep_surface = 1              # [ms] timestep for output surface EMG, 0.5
+output_timestep_electrodes = 2e8    # [ms] timestep for python callback, which is electrode measurement output, has to be >= dt_3D
 
 # input files
 fiber_file = "../../../input/left_biceps_brachii_7x7fibers.bin"
-fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
+#fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"
@@ -57,6 +57,17 @@ fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"
 sampling_stride_x = 2
 sampling_stride_y = 2
 sampling_stride_z = 50
+
+# HD-EMG electrode parameters
+fiber_file_for_hdemg_surface = fat_mesh_file    # use the fat mesh for placing electrodes, this option is the file of the 2D mesh on which electrode positions are set
+hdemg_electrode_faces = ["1+"]                  # which faces of this 2D mesh should be considered for placing the HD-EMG electrodes (list of faces, a face is one of "0-" (left), "0+" (right), "1-" (front), "1+" (back))
+
+# xy-direction = across muscle, z-direction = along muscle
+hdemg_electrode_offset_xy = 2.0           # [cm] offset from border of 2D mesh where the electrode array begins
+hdemg_inter_electrode_distance_z = 0.4    # [cm] distance between electrodes ("IED") in z direction (direction along muscle)
+hdemg_inter_electrode_distance_xy = 0.4   # [cm] distance between electrodes ("IED") in transverse direction
+hdemg_n_electrodes_z = 32           # number of electrodes in z direction (direction along muscle)
+hdemg_n_electrodes_xy = 12          # number of electrode across muscle
 
 # other options
 paraview_output = True

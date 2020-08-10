@@ -84,8 +84,8 @@ initialize()
     }
   }
 
-  // write initial mesh
-  this->outputWriterManager_.writeOutput(this->data_, 0, 0.0);
+  // write initial mesh but don't increment counter
+  this->outputWriterManager_.writeOutput(this->data_, 0, 0.0, 0);
 
   // check if initial values satisfy the static equation (for debugging)
   //hyperelasticitySolver_.debug();
@@ -349,6 +349,13 @@ typename DynamicHyperelasticitySolver<Term,MeshType>::Data &DynamicHyperelastici
 data()
 {
   return data_;
+}
+
+template<typename Term,typename MeshType>
+Vec DynamicHyperelasticitySolver<Term,MeshType>::
+currentState()
+{
+  return uvp_->valuesGlobal();
 }
 
 template<typename Term,typename MeshType>

@@ -70,7 +70,9 @@ if variables.scenario_name:
   parser.add_argument('--scenario_name',                       help='Name of the scenario in the log file.',                    type=str, default=variables.scenario_name)
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+if len(other_args) != 0 and rank_no == 0:
+    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:
@@ -280,7 +282,7 @@ config = {
             "dirichletBoundaryConditions":  {},
             "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
             "nAdditionalFieldVariables":    0,
-            "additionalSlotNames":          [],
+            "additionalSlotNames":          [],               # slot names of the additional slots, maximum 6 characters per name
                 
             "CellML" : {
               "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
@@ -322,7 +324,12 @@ config = {
         "OutputWriter": [
           {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep_multidomain), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
         ],
-        "face": "1-",
+        #"face":                    ["1+","0+"],         # which faces of the 3D mesh should be written into the 2D mesh
+        "face":                     ["1+"],              # which faces of the 3D mesh should be written into the 2D mesh
+        "samplingPoints":           variables.hdemg_electrode_positions,    # the electrode positions, they are created in the helper.py script
+        "updatePointPositions":     False,               # the electrode points should be initialize in every timestep (set to False for the static case). This makes a difference if the muscle contracts, then True=fixed electrodes, False=electrodes moving with muscle.
+        "filename":                 "out/{}/electrodes.csv".format(variables.scenario_name),
+        "xiTolerance":              0.3,                 # tolerance for element-local coordinates xi, for finding electrode positions inside the elements. Increase or decrease this numbers if not all electrode points are found.
         "MultidomainSolver" : multidomain_solver,
       }
     }

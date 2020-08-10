@@ -840,8 +840,8 @@ initialize()
   data_.setFunctionSpace(functionSpace);
   data_.initialize();
 
-  // write initial geometry
-  this->outputWriterManager_.writeOutput(this->data_, 0, 0);
+  // write initial geometry but don't increment counter
+  this->outputWriterManager_.writeOutput(this->data_, 0, 0.0, 0);
 
   // add this solver to the solvers diagram
   DihuContext::solverStructureVisualizer()->addSolver(solverName_);

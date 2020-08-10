@@ -118,7 +118,8 @@ int main(int argc, char* argv[])
           if ldflags[:2] == ".a":
             ldflags = ldflags[2:]
         except:
-          ctx.Log("A string error occured")
+          ctx.Log("A string error occured.\n")
+          raise
 
         ctx.Log("extracted cflags  from {}: \n{}\n\n".format(ctx.env["mpiCC"], cflags))
         ctx.Log("extracted ldflags from {}: \n{}\n\n".format(ctx.env["mpiCC"], ldflags))

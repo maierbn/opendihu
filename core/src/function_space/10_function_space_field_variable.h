@@ -46,12 +46,12 @@ public:
   //! interpolate the nComponents values within an element at the given xi position using the basis functions
   template <int nComponents, typename double_v_t>
   std::array<double_v_t,nComponents> interpolateValueInElement(std::array<std::array<double_v_t,nComponents>,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
-                                                           std::array<double,MeshType::dim()> xi) const;
+                                                               std::array<double,MeshType::dim()> xi) const;
 
   //! interpolate the value within an element at the given xi position using the basis functions
   template <typename double_v_t>
   double_v_t interpolateValueInElement(std::array<double_v_t,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
-                                   std::array<double,MeshType::dim()> xi) const;
+                                       std::array<double,MeshType::dim()> xi) const;
 
   //! interpolate the gradient of a scalar field within an element at the given xi position using the basis functions
   //! the inverseJacobianParameterSpace can be computed by getInverseJacobian

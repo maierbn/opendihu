@@ -48,7 +48,14 @@ initialize(int nCompartments)
 
     slotConnectorData_->at(compartmentNo)->addFieldVariable(activeStress_[compartmentNo]);  // activeStress_k
     slotConnectorData_->at(compartmentNo)->addFieldVariable(activeStressTotal_);  // activeStressTotal_k
+
+    // parse slot names of the field variables
+    this->context_.getPythonConfig().getOptionVector("slotNames", slotConnectorData_->at(compartmentNo)->slotNames);
+
+    // make sure that there are as many slot names as slots
+    slotConnectorData_->at(compartmentNo)->slotNames.resize(slotConnectorData_->at(compartmentNo)->nSlots());
   }
+
 }
 
 template<typename FunctionSpaceType>

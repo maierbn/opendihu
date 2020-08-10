@@ -118,6 +118,20 @@ materialTraction()
 }
 
 template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> MuscleContractionSolver<FunctionSpaceType>::
+displacements()
+{
+  return this->displacements_;
+}
+
+template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> MuscleContractionSolver<FunctionSpaceType>::
+velocities()
+{
+  return this->velocities_;
+}
+
+template<typename FunctionSpaceType>
 std::shared_ptr<typename MuscleContractionSolver<FunctionSpaceType>::SlotConnectorDataType> MuscleContractionSolver<FunctionSpaceType>::
 getSlotConnectorData()
 {

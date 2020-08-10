@@ -53,6 +53,9 @@ public:
   //! time step for simulation
   double timeStepWidth();
   
+  //! time step for simulations as given in the settings file or 0.0 if the step size is controled by numberTimeSteps
+  double timeStepTargetWidth();
+
   //! python object containing the value of the python config dict with corresponding key
   PythonConfig specificSettings();
 
@@ -78,6 +81,7 @@ protected:
 
   bool isTimeStepWidthSignificant_; //< if time step width will be used to determine number of steps
   double timeStepWidth_;            //< a timeStepWidth value that is used to compute the number of time steps
+  double timeStepTargetWidth_;      //< original timeStepWidth as given in the settings file
   std::string durationLogKey_;      //< the key under which the duration of the time stepping is saved in the log
 
   PythonConfig specificSettings_;   //< python object containing the value of the python config dict with corresponding key

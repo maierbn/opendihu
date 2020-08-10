@@ -137,7 +137,7 @@ initialize()
                        this->subvectorsSolution_.data(), &this->nestedSolution_); CHKERRV(ierr);
 
   // write initial meshes
-  callOutputWriter(0, 0.0);
+  callOutputWriter(0, 0.0, 0);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
@@ -687,10 +687,10 @@ solveLinearSystem()
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
-callOutputWriter(int timeStepNo, double currentTime)
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
 {
   // write current output values
-  this->outputWriterManager_.writeOutput(this->dataFat_, timeStepNo, currentTime);
+  this->outputWriterManager_.writeOutput(this->dataFat_, timeStepNo, currentTime, callCountIncrement);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>

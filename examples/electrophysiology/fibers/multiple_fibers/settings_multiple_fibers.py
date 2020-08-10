@@ -340,6 +340,7 @@ def get_instance_config(i):
           "numberTimeSteps": variables.nt_1D,
           "timeStepWidthRelativeTolerance": variables.time_step_width_rel_tol_1D,
           "timeStepWidthRelativeToleranceAsKey": "timeStepRelTol_1D",
+          "durationInitTimeStepLogKey": "duration_init_1D",
           "logTimeStepWidthAsKey": "dt_1D",
           "durationLogKey": "duration_1D",
           "timeStepOutputInterval": 1e4,

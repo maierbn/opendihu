@@ -1272,13 +1272,88 @@ Fibers
     
   * **fibers_fat_emg**
   
-    This example adds a fat layer to simulate EMG signals on top of the skin surface.
+    This example adds a fat and skin layer to simulate EMG signals on the skin surface. It is also configured to sample signals at a simulated high-density EMG electrode array on the skin surface.
+    The data is written to a VTK and a csv file.
     
     .. _model_schematic_fibers_emg:
     .. figure:: examples/model_schematic_fibers_emg.svg
       :width: 100%
       
       Models that are used in the `fibers_fat_emg` example.
+      
+    The example can be compiled and run by the following commands. Instead of 2 processes, more are possible and often beneficial, depending on the used computer. This examples has very good parallel scaling.
+      
+    .. code-block:: bash
+      
+      cd $OPENDIHU_HOME/examples/electrophysiology/fibers/fibers_fat_emg
+      mkorn && sr       # build
+      cd build_release
+      
+      mpirun -n 2 ./static_biceps_emg ../settings_static_biceps_emg.py biceps.py 
+      
+    The settings for this example consists of two files that are the two parameters to the command: the main file is ``settings_static_biceps_emg.py`` where all settings for the solvers are specified. 
+    Some of the values there have variables that are set in the second file. The second settings file in this example is ``biceps.py``. The file is stored in the ``variables`` subdirectory.
+    It is more compact and contains only the values that need to be specified for a particular scenario.
+    
+    If a simulation with a different set of parameters is needed, the best way is to create a copy of the scenario file in the variables directory and set adjust it. Then call the simulation with this filename as the second argument.
+    
+    Additionally, there is a number of parameters that can be overwritten on the command line, for details see
+    
+    .. code-block:: bash
+      
+      ./static_biceps_emg ../settings_static_biceps_emg.py biceps.py --help
+      
+    An example is to set the end time to 5:
+    
+    .. code-block:: bash
+     
+      mpirun -n 2 ./static_biceps_emg ../settings_static_biceps_emg.py biceps.py --end_time=5
+      
+    The results are written to several files in the ``out/<scenario>`` directory, e.g. ``out/biceps``.
+    There are different files containing fibers, the muscle and fat volume, only the surface and the electrodes. The intervals in which these files are written can be adjusted in the scenario file.
+    The fibers and volume files have a large size, whereas the surface and electrode files have small sizes. When running simulations with long time spans or high resolution, output storage can be a problem.
+    Then, it makes sense to only output surface and electrode data, as this is usually the interesting data.
+    
+    .. _fibers_fat_emg1:
+    .. figure:: examples/fibers_fat_emg1.png
+      :width: 40%
+      
+      Top: Fibers and surface, bottom: volume of muscle and fat.
+      
+    .. _fibers_fat_emg2:
+    .. figure:: examples/fibers_fat_emg2.png
+      :width: 40%
+      
+      Electrodes with EMG values. The values are the same as in the surface.
+    
+    .. _fibers_fat_emg3:
+    .. figure:: examples/fibers_fat_emg3.png
+      :width: 40%
+      
+      Surface electrodes with the process number for the example of two processes. It can be seen how the domain is split to rank 0 and 1. The EMG values are only computed on their respective rank.
+      For the surface output files, each rank writes their own data, i.e. there is no communication of data between the ranks for the output (which is efficient). For the electrode values, all values are send to rank 0 which writes the data to a file.
+      This is still acceptible because the number of electrodes is usually small compared to the resolution of the 2D and 3D meshes.
+      
+    Initially, each process tries to find as many of the electrode points as possible on its own subdomain. Which points are found by which rank can be seen by the ``electrodes_found*`` and ``electrodes_not_found`` files.
+    Some points will be found by multiple processes. Then only the values on the rank that actually own the subdomains are used.
+    
+    The electrode data is always written in two formats. First, for ParaView (\*.vtp), second as CSV file. 
+    The csv files are for easier processing with other tools or python scripts. The csv file is called `electrodes.csv`.
+    
+    There is one script that visualizes all EMG measurements over time. It is located in the top level directory of the exercise.
+    
+    .. code-block:: bash
+     
+      cd $OPENDIHU_HOME/examples/electrophysiology/fibers/fibers_fat_emg
+      ./plot_emg.py                                           # use the default file
+      ./plot_emg.py build_release/out/biceps/electrodes.csv   # specify the file manually
+      
+    .. _fibers_fat_emg4:
+    .. figure:: examples/fibers_fat_emg4.png
+      :width: 60%
+      
+    
+    
       
   * **load_balancing**
   
@@ -1442,6 +1517,24 @@ The multidomain equations are a 3D homogenized formulation of electrophysiology.
       mpirun -n 12 ./multidomain_with_fat ../settings_multidomain_with_fat.py ramp_emg.py   # longer
       
     Instead of 12 processes, any other number can be used.
+      
+    .. _multidomain_with_fat_1:
+    .. figure:: examples/multidomain_with_fat_1.png
+      :width: 20%
+      
+    EMG on the surface, at t = 1.406 s. Also the fine resolution can be seen
+      
+    .. _multidomain_with_fat_2:
+    .. figure:: examples/multidomain_with_fat_2.png
+      :width: 100%
+      
+    View of :math:`V_m` in all 10 compartments (small images at the right), the resulting potential in the body domain, :math:`\phi_b` (top center), and the surface EMG (left, big)
+      
+    .. _multidomain_with_fat_3:
+    .. figure:: examples/multidomain_with_fat_3.png
+      :width: 20%
+      
+    Partitioning with 12 processes.
       
   * **multidomain_motoneuron**
   

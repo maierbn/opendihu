@@ -112,7 +112,7 @@ public:
 
 /** Partial specialization for 2D deformable meshes and linear shape functions
  */
-/*
+
 template<typename MeshType>
 class FunctionSpacePointInElement<MeshType, BasisFunction::LagrangeOfOrder<1>, Mesh::isDeformableWithDim<2,MeshType>> :
   public FunctionSpaceFieldVariable<MeshType,BasisFunction::LagrangeOfOrder<1>>
@@ -123,8 +123,8 @@ public:
   using FunctionSpaceFieldVariable<MeshType,BasisFunction::LagrangeOfOrder<1>>::FunctionSpaceFieldVariable;
 
   //! check if the point lies inside the element, if yes, return true and set xi to the value of the point
-  bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi, double xiTolerance = 1e-4);
-};*/
+  bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi, double &residual, double xiTolerance = 1e-4);
+};
 
 // --------------------------------------------------
 

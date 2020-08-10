@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import csv
 
-path = "build_release/out"
+path = "build_release/out/biceps"
 
-# parse files
+# parse file
 if len(sys.argv) > 1:
   filenames = sys.argv[1:]
 else:
@@ -23,31 +23,31 @@ else:
   # sort files by number in file name
   filenames = sorted(files_at_path)
 
-filenames = [f for f in filenames if ".csv" in f and "emg" in f]
+  filenames = [os.path.join(path,f) for f in filenames if ".csv" in f and "found" not in f]
+filename = filenames[0]
 
-x_coordinates = set()
-y_coordinates = set()
+print("file: {}".format(filename))
 
-# determine grid of electrodes
-for filename in filenames:
-  pos3 = filename.rfind(".csv")
-  pos2 = filename.rfind("_")
-  pos1 = filename.rfind("_",0,pos2)
-  base = filename[0:pos1]
+# parse csv file
+data = np.genfromtxt(filename, delimiter=';')
+t_list = data[:,1]
   
-  y_coordinate = (int)(filename[pos1+1:pos2])
-  x_coordinate = (int)(filename[pos2+1:pos3])
+n_points = (int)(data[0][2])
+print("n_points:",n_points)
 
-  x_coordinates.add(x_coordinate)
-  y_coordinates.add(y_coordinate)
-  
-n_plots_x = len(x_coordinates)
-n_plots_y = len(y_coordinates)
+# determine number of electrodes in x direction
+z_positions = np.array([data[0][3+3*i+2] for i in range(n_points)])
+differences = z_positions[1:] - z_positions[0:-1]
+jumps = np.where(differences > np.mean(differences)*3)[0]
+n_points_z = jumps[0] + 1
+n_points_xy = (int)(n_points / n_points_z)
 
-print("x:",x_coordinates, n_plots_x)
-print("y:",y_coordinates, n_plots_y)
+n_plots_x = n_points_xy
+n_plots_y = n_points_z
 
-fig = plt.figure()
+print("{} x {} points detected".format(n_points_xy, n_points_z))
+
+fig = plt.figure(figsize=(5,10))
 
 # labels for entire plot
 ax = fig.add_subplot(111)
@@ -56,19 +56,30 @@ plt.grid(False)
 plt.xlabel("fiber direction")
 plt.ylabel("cross-fiber direction")    
 
+# determine minimum and maximum overall values
+all_values = data[:,3+n_points*3:]
+minimum_value = np.min(all_values)
+maximum_value = np.max(all_values)
+print("emg value range: [{},{}]".format(minimum_value, maximum_value))
+print("time range: [{},{}]".format(t_list[0], t_list[-1]))
+
 # loop over sub plots
-for j,y in enumerate(y_coordinates):
-  for i,x in enumerate(x_coordinates):
-    n = j*n_plots_x + i + 1
+for j in range(n_plots_y):
+  for i in range(n_plots_x):
+    index = j*n_plots_x + i
     
-    # get data from file
-    filename = "{}/{}_{:02}_{:02}.csv".format(path, base,y,x)
-    print("load filename: {}".format(filename))
-    t,phi = np.loadtxt(filename, delimiter=';', skiprows=1, usecols=(0,1), unpack=True)
+    emg_list = data[:,3+n_points*3+index]
     
-    ax = fig.add_subplot(n_plots_y,n_plots_x,n)
-    ax.plot(t, phi)
+    ax = fig.add_subplot(n_plots_x,n_plots_y,index+1)   # nrows, ncolrs, index, plots start top left and increase to the right
+    ax.plot(t_list, emg_list)
+    ax.set_ylim(minimum_value,maximum_value)
+    #ax.axis('off')
+    ax.set_xticks([])
+    ax.set_yticks([])
 
-
+plt.axis('off')
+plt.subplots_adjust(hspace=0, wspace=0)
+plt.savefig("emg_plot.pdf")
+print("Created file \"emg_plot.pdf\".")
 plt.show()
 

@@ -64,6 +64,7 @@ protected:
   std::shared_ptr<KSP> ksp_;     //< the ksp object of the linear solver
 
   double initializedTimeStepWidth_ = -1.0; //< the time step width that was used for the initialization, or negative if the step width has not been initialized
+  double timeStepWidthRelativeTolerance_; //< tolerance for the time step width to rebuild the system matrix and integrationMatrixRHS
 };
 
 }  // namespace

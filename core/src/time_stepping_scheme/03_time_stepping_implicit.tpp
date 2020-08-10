@@ -32,6 +32,13 @@ initialize()
   TimeSteppingSchemeOde<DiscretizableInTimeType>::initialize();
   LOG(TRACE) << "TimeSteppingImplicit::initialize";
 
+  timeStepWidthRelativeTolerance_ = this->specificSettings().getOptionDouble("timeStepWidthRelativeTolerance", 1e-10, PythonUtility::NonNegative);
+  if (this->specificSettings().hasKey("timeStepWidthRelativeToleranceAsKey"))
+  {
+      std::string relTolKey = this->specificSettings().getOptionString("timeStepWidthRelativeToleranceAsKey", "timeStepWidthRelativeTolerance");
+      Control::PerformanceMeasurement::setParameter(relTolKey, timeStepWidthRelativeTolerance_);
+  }
+
   this->initialized_ = true;
 }
 
@@ -51,7 +58,7 @@ initializeWithTimeStepWidth(double timeStepWidth)
   else
   {
     // check if the time step size changed
-    const double eps = 1e-10;
+    const double eps = this->timeStepWidthRelativeTolerance_;
 
     const double rel_diff = (this->initializedTimeStepWidth_ - timeStepWidth) / this->initializedTimeStepWidth_;
     if (-eps <= rel_diff && rel_diff <= eps)

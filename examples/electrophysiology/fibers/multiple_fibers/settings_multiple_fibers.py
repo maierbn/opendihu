@@ -65,6 +65,8 @@ class Variables:
     nt_0D = 0                         # number of timesteps per 1D splitting substep (0 = 'use time step width')
     nt_splitting = 0                  # number of splitting timesteps (0 = 'use time step width')
 
+    time_step_width_rel_tol_1D = 1e-10
+
     initial_value_file = None         # python file which contians the initial values. VTK only stores 32bit floats.
     disable_firing = np.infty         # time after which we disable the firing
 
@@ -99,6 +101,7 @@ parser.add_argument('--dt_splitting',                        help='The timestep 
 parser.add_argument('--nt_0D',                               help='The number of timesteps for the 0D model. Overrides `--dt_0D`.', type=int, default=variables.nt_0D)
 parser.add_argument('--nt_1D',                               help='The number of timesteps for the 1D model. Overrides `--dt_1D`.', type=int, default=variables.nt_1D)
 parser.add_argument('--nt_splitting',                        help='The number of splitting timesteps to reach `--tend`. Overrides `--dt_splitting`.', type=int, default=variables.nt_splitting)
+parser.add_argument('--time_step_width_rel_tol_1D',          help='The relative tolerance for the time step size used to recompute the system matrix.', type=float, default=variables.time_step_width_rel_tol_1D)
 parser.add_argument('--initial_value_file',                  help='Initial value for V,m,h,n. Only python files are pupported.', default=variables.initial_value_file)
 parser.add_argument('--disable_firing',                      help='Disable stimulus after certain time. Useful in combination with --initial_values', type=float, default=variables.disable_firing)
 parser.add_argument('--outfile_0D',                          help='Output file name for 0D time steps. Use {i} for fiber index. Set to empty to disable output', default=variables.outfile_0D)
@@ -335,6 +338,8 @@ def get_instance_config(i):
           "initialValues": [],
           "timeStepWidth": variables.dt_1D,  # 1e-5
           "numberTimeSteps": variables.nt_1D,
+          "timeStepWidthRelativeTolerance": variables.time_step_width_rel_tol_1D,
+          "timeStepWidthRelativeToleranceAsKey": "timeStepRelTol_1D",
           "logTimeStepWidthAsKey": "dt_1D",
           "durationLogKey": "duration_1D",
           "timeStepOutputInterval": 1e4,

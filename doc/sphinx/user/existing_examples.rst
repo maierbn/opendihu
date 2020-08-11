@@ -1390,8 +1390,26 @@ Fibers
       mkorn && sr       # build
       cd build_release
     
-      mpirun -n 4 ./biceps_contraction ../settings_biceps_contraction.py ramp.py --n_subdomains 1 1 4
+      mpirun -n 4 ./biceps_contraction ../settings_biceps_contraction.py ramp.py --n_subdomains 1 1 4   # (1)
+      mpirun -n 48 ./biceps_contraction ../settings_biceps_contraction.py 15mus.py                      # (2)
   
+    Scenario (1) uses the hodgkin-huxley_razumova subcellular model, which is just Hodgkin-Huxley for action potentials and Razumove for the active stress computation. This allows a fast computation.
+    
+    Scenario (2) uses the Shorten model.
+  
+    .. _fibers_contraction_1:
+    .. figure:: examples/fibers_contraction_1.png
+      :width: 60%
+      
+      Visualization of scenario (1), top left: Vm, top right: homogenized gamma, bottom left: active stress, bottom right: partitioning.
+        
+    This is a video of the simulation of scenario (1), with end time of 4 seconds.
+    
+    .. raw:: html
+
+      <iframe width="600" height="380" src="https://www.youtube.com/embed/-7C56qLGGBw" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            
+        
   * **fibers_contraction/with_tendons_precice**
   
     .. _model_schematic_fibers_contraction_with_tendons_precice:
@@ -1515,6 +1533,7 @@ The multidomain equations are a 3D homogenized formulation of electrophysiology.
       
       mpirun -n 12 ./multidomain_with_fat ../settings_multidomain_with_fat.py neon.py       # short runtime
       mpirun -n 12 ./multidomain_with_fat ../settings_multidomain_with_fat.py ramp_emg.py   # longer
+      mpirun -n 128 ./multidomain_with_fat ../settings_multidomain_with_fat.py ramp_emg.py --n_subdomains 4 1 32
       
     Instead of 12 processes, any other number can be used.
       

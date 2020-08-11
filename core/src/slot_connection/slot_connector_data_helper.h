@@ -73,7 +73,8 @@ struct SlotConnectorDataHelper<std::vector<std::shared_ptr<SlotConnectorDataType
     int slotNo, int arrayIndex
   );
 
-  //! collect all slot names
+  //! collect all slot names, slots in the vector only get included once
+  //! a, b, [(c,d),(c,d),(c,d)], e -> [a, b, c, d, e] and not [a, b, c, d, c, d, c, d, e]
   static void getSlotNames(
     std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>> slotConnectorData,
     std::vector<std::string> &slotNames
@@ -113,7 +114,8 @@ struct SlotConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::shar
     int slotNo, int arrayIndex
   );
 
-  //! collect all slot names
+  //! collect all slot names, slots in the vector only get included once
+  //! a, b, [(c,d),(c,d),(c,d)], e -> [a, b, c, d, e] and not [a, b, c, d, c, d, c, d, e]
   static void getSlotNames(
     std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>> slotConnectorData,
     std::vector<std::string> &slotNames

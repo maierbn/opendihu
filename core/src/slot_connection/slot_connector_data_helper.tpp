@@ -181,6 +181,7 @@ getString(std::shared_ptr<SlotConnectorDataType> slotConnectorData)
   return s.str();
 }
 
+// ----------------------------------
 // vector
 
 template<typename SlotConnectorDataType>
@@ -372,11 +373,9 @@ getSlotNames(
 
   if (!slotConnectorData->empty())
   {
-    for (int i = 0; i < slotConnectorData->size(); i++)
-    {
-      SlotConnectorDataHelper<SlotConnectorDataType>::
-        getSlotNames((*slotConnectorData)[i], slotNames);
-    }
+    // only collect the slot names from the first item of the vector, as they should be all the same
+    SlotConnectorDataHelper<SlotConnectorDataType>::
+      getSlotNames((*slotConnectorData)[0], slotNames);
   }
 }
 
@@ -405,6 +404,7 @@ getString(std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>> s
   return std::string("[]");
 }
 
+// ----------------------------------
 // vector of vector
 
 template<typename SlotConnectorDataType>
@@ -634,14 +634,9 @@ getSlotNames(
 
   if (!(*slotConnectorData)[0]->empty())
   {
-    for (int j = 0; j < slotConnectorData->size(); j++)
-    {
-      for (int i = 0; i < (*slotConnectorData)[0]->size(); i++)
-      {
-        SlotConnectorDataHelper<SlotConnectorDataType>::
-          getSlotNames((*(*slotConnectorData)[0])[0], slotNames);
-      }
-    }
+    // only collect the slot names from the first vector item, because all items should have the same slots
+    SlotConnectorDataHelper<SlotConnectorDataType>::
+      getSlotNames((*(*slotConnectorData)[0])[0], slotNames);
   }
 }
 
@@ -678,6 +673,7 @@ getString(std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_pt
   return std::string("[[]]");
 }
 
+// ----------------------------------
 // tuple
 
 template<typename SlotConnectorDataType1, typename SlotConnectorDataType2>

@@ -9,9 +9,8 @@
 #include "data_management/data.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "cellml/03_cellml_adapter.h"
-#include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
+#include "spatial_discretization/dirichlet_boundary_conditions/01_dirichlet_boundary_conditions.h"
 #include "time_stepping_scheme/01_time_stepping_scheme_ode_base.h"
-//#include "time_stepping_scheme/time_stepping_scheme_ode_transferable_solution_data.h"
 
 namespace TimeSteppingScheme
 {
@@ -22,11 +21,8 @@ class TimeSteppingSchemeOdeBaseDiscretizable:
   public TimeSteppingSchemeOdeBase<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents()>
 {
 public:
-  typedef DiscretizableInTimeType DiscretizableInTime_Type;
+  typedef DiscretizableInTimeType DiscretizableInTime;
   typedef typename DiscretizableInTimeType::FunctionSpace FunctionSpace;
-  //typedef typename DiscretizableInTimeType::OutputConnectorDataType OutputConnectorDataType;
-
-  //using TimeSteppingSchemeOdeOutputConnectorDataType<typename DiscretizableInTimeType::FunctionSpace, DiscretizableInTimeType::nComponents(), DiscretizableInTimeType>::OutputConnectorDataType;
 
   //! constructor
   TimeSteppingSchemeOdeBaseDiscretizable(DihuContext context, std::string name);
@@ -53,19 +49,16 @@ public:
 
 protected:
 
-  //! read initial values from settings and set field accordingly
-  void setInitialValues();
+  //! prepare the discretizableInTime object for the following call to getSlotConnectorData()
+  virtual void prepareForGetSlotConnectorData() override;
 
-  //! prepare the discretizableInTime object for the following call to getOutputConnectorData()
-  virtual void prepareForGetOutputConnectorData() override;
-
-  //int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
-  DiscretizableInTimeType discretizableInTime_;    ///< the object to be discretized
-  bool initialized_;     ///< if initialize() was already called
+  //int timeStepOutputInterval_;    //< time step number and time is output every timeStepOutputInterval_ time steps
+  DiscretizableInTimeType discretizableInTime_;    //< the object to be discretized
+  bool initialized_;     //< if initialize() was already called
 
   std::shared_ptr<
     SpatialDiscretization::DirichletBoundaryConditions<FunctionSpace,DiscretizableInTimeType::nComponents()>
-  > dirichletBoundaryConditions_;  ///< object that stores Dirichlet boundary condition values
+  > dirichletBoundaryConditions_;  //< object that stores Dirichlet boundary condition values
 };
 
 template<typename DiscretizableInTimeType>

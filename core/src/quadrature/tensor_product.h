@@ -48,7 +48,7 @@ public:
   static ValueType computeIntegral(const std::array<ValueType, TensorProductBase<2,Quadrature>::numberEvaluations()> &evaluations);
 
   //! get the sampling points, i.e. points where the function needs to be evaluated
-  static std::array<std::array<double,2>, TensorProductBase<2,Quadrature>::numberEvaluations()> samplingPoints();
+  static std::array<Vec2, TensorProductBase<2,Quadrature>::numberEvaluations()> samplingPoints();
 };
 
 // partial specialization for 3D
@@ -61,7 +61,7 @@ public:
   static ValueType computeIntegral(const std::array<ValueType, TensorProductBase<3,Quadrature>::numberEvaluations()> &evaluations);
 
   //! get the sampling points, i.e. points where the function needs to be evaluated
-  static std::array<std::array<double,3>, TensorProductBase<3,Quadrature>::numberEvaluations()> samplingPoints();
+  static std::array<Vec3, TensorProductBase<3,Quadrature>::numberEvaluations()> samplingPoints();
 };
 
 } // namespace

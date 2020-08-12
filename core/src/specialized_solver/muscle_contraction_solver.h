@@ -10,26 +10,28 @@
 #include "data_management/specialized_solver/muscle_contraction_solver.h"
 
 /** Solve the incompressible, transversely isotropic Mooney-Rivlin material with active stress contribution.
+ *
+ * This solver encapsulates the DynamicHyperelasticitySolver or HyperelasticitySolver (static). Which one to use can be chosen at runtime in the config.
+ * This class adds functionality to compute and transfer active stresses, fiber stretches and contraction velocity and so on.
  */
+template<typename MeshType=Mesh::StructuredDeformableOfDimension<3>, typename Term=Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D>
 class MuscleContractionSolver :
   public Runnable,
   public TimeSteppingScheme::TimeSteppingScheme
 {
 public:
-  typedef Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D Term;
-  typedef ::TimeSteppingScheme::DynamicHyperelasticitySolver<Term> DynamicHyperelasticitySolverType;
-  typedef ::SpatialDiscretization::HyperelasticitySolver<Term> StaticHyperelasticitySolverType;
+  typedef ::TimeSteppingScheme::DynamicHyperelasticitySolver<Term,MeshType> DynamicHyperelasticitySolverType;
+  typedef ::SpatialDiscretization::HyperelasticitySolver<Term,MeshType> StaticHyperelasticitySolverType;
 
   //! make the DisplacementsFunctionSpace of the DynamicHyperelasticitySolver class available
   typedef typename DynamicHyperelasticitySolverType::DisplacementsFunctionSpace FunctionSpace;
-
 
   //! define the type of the data object,
   typedef typename Data::MuscleContractionSolver<FunctionSpace> Data;
 
   //! Define the type of data that will be transferred between solvers when there is a coupling scheme.
   //! Usually you define this type in the "Data" class and reuse it here.
-  typedef typename Data::OutputConnectorDataType OutputConnectorDataType;
+  typedef typename Data::SlotConnectorDataType SlotConnectorDataType;
 
   //! constructor, gets the DihuContext object which contains all python settings
   MuscleContractionSolver(DihuContext context);
@@ -49,9 +51,12 @@ public:
   //! return the data object of the timestepping scheme, with the call to this method the output writers get the data to create their output files
   Data &data();
 
+  //! get a reference to the DynamicHyperelasticitySolverType
+  std::shared_ptr<DynamicHyperelasticitySolverType> dynamicHyperelasticitySolver();
+
   //! Get the data that will be transferred in the operator splitting or coupling to the other term of the splitting/coupling.
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
 protected:
 
@@ -61,6 +66,9 @@ protected:
   //! compute λ and λ_dot for data transfer
   void computeLambda();
 
+  //! update the geometry at the given meshes, map the own geometry field to the meshes
+  void mapGeometryToGivenMeshes();
+
   std::shared_ptr<DynamicHyperelasticitySolverType> dynamicHyperelasticitySolver_;   //< the dynamic hyperelasticity solver that solves for the dynamic contraction
   std::shared_ptr<StaticHyperelasticitySolverType> staticHyperelasticitySolver_;     //< the static hyperelasticity solver that can be used for quasi-static solution
 
@@ -69,6 +77,9 @@ protected:
 
   double pmax_;   //< settings of "Pmax" maximum active stress of the muscle
   bool isDynamic_;  //< if the dynamic formulation or the quasi-static formulation is used
+  std::vector<std::string> meshNamesOfGeometryToMapTo_;   //< a list of mesh names which will get updated with the geometry
 
   bool initialized_;   //< if initialize was already called
 };
+
+#include "specialized_solver/muscle_contraction_solver.tpp"

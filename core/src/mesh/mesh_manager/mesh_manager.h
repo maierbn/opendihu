@@ -5,11 +5,17 @@
 
 #include "control/dihu_context.h"
 //#include "function_space/function_space.h"
-#include "mesh/mapping_between_meshes/mapping_between_meshes_manager.h"
+//#include "mesh/mapping_between_meshes/manager/04_manager.h"
 #include "function_space/function_space_generic.h"
 
+// forward declarations
 namespace Partition{
 class Manager;
+}
+namespace FieldVariable
+{
+  template<typename FunctionSpace,int nComponents>
+  class FieldVariable;
 }
 namespace Mesh
 {
@@ -22,7 +28,7 @@ class NodePositionsTester;
  * request their mesh by a call to mesh(name).
  * If a mesh was not defined earlier, it is created on the fly when it is requested.
  */
-class Manager : public MappingBetweenMeshesManager
+class Manager
 {
 public:
   //! constructor
@@ -41,7 +47,7 @@ public:
   
   //! check if a function space with the given name and type is stored
   template<typename FunctionSpaceType>
-  bool hasFunctionSpaceOfType(std::string meshName);
+  bool hasFunctionSpaceOfType(std::string meshName, bool outputWarning=false);
 
   //! check if a function space with the specified name is stored, the type is not checked
   bool hasFunctionSpace(std::string meshName);
@@ -73,7 +79,10 @@ public:
   //! \param name is the name of the Petsc Vec, used for debugging output.
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace::Generic,1>> createGenericFieldVariable(int nEntries, std::string name);
 
-  friend class NodePositionsTester;    ///< a class used for testing
+  //! remove a function space if it exists
+  void deleteFunctionSpace(std::string meshName);
+
+  friend class NodePositionsTester;    //< a class used for testing
 
 private:
 
@@ -83,9 +92,9 @@ private:
 
   struct NodePositionsFromFile
   {
-    std::string filename;            ///< filename of the file to read
-    std::vector<std::pair<MPI_Offset,int>> chunks;   ///< pairs of (offset, number of values), where each value corresponds to 3 double values (position x,y,z) in data
-    std::vector<double> data;      ///< the values of the node positions
+    std::string filename;                            //< filename of the file to read
+    std::vector<std::pair<MPI_Offset,int>> chunks;   //< pairs of (offset, number of values), where each value corresponds to 3 double values (position x,y,z) in data
+    std::vector<double> data;                        //< the values of the node positions
   };
 
   //! store settings for all meshes that are specified in specificSettings_
@@ -94,13 +103,14 @@ private:
   //! resolves the requested geometry data in nodePositionsFromFile_
   void loadGeometryFromFile();
 
-  std::shared_ptr<Partition::Manager> partitionManager_;  ///< the partition manager object
+  std::shared_ptr<Partition::Manager> partitionManager_;                //< the partition manager object
+  PythonConfig specificSettings_;                                       //< the top level python settings
   
-  int numberAnonymousMeshes_;     ///< how many meshes without a given name in the python config are contained in meshes_. These have a key "anonymous<no>"
+  int numberAnonymousMeshes_;                                           //< how many meshes without a given name in the python config are contained in meshes_. These have a key "anonymous<no>"
 
-  std::map<std::string, PythonConfig> meshConfiguration_;         ///< the python dicts for the meshes that were defined under "Meshes"
-  std::map<std::string, std::shared_ptr<Mesh>> functionSpaces_;    ///< the managed function spaces with their string key
-  std::map<std::string, NodePositionsFromFile> nodePositionsFromFile_;   ///< filename, offset, length, data of nodePosition data specified in a binary file
+  std::map<std::string, PythonConfig> meshConfiguration_;               //< the python dicts for the meshes that were defined under "Meshes"
+  std::map<std::string, std::shared_ptr<Mesh>> functionSpaces_;         //< the managed function spaces with their string key
+  std::map<std::string, NodePositionsFromFile> nodePositionsFromFile_;  //< filename, offset, length, data of nodePosition data specified in a binary file
 };
 
 /** Helper class to create the composite meshes
@@ -131,3 +141,4 @@ public:
 }  // namespace
 
 #include "mesh/mesh_manager/mesh_manager.tpp"
+

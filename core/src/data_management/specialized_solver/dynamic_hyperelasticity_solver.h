@@ -22,6 +22,11 @@ public:
 
   typedef FieldVariable::FieldVariable<FunctionSpaceType,3> DisplacementsFieldVariableType;
 
+  //! define the type of output connection variables, i.e. the values that will be transferred if the solver is part of a splitting or coupling scheme
+  //! Two different field variables can be used: they must have the same function space but can have a different number of components. For example, for the CellMLAdapter, there are the "states" and the "algebraics" field variables.
+  //! For each field variable you can transfer an abritrary subset of their components.
+  typedef SlotConnectorData<FunctionSpaceType,1,3> SlotConnectorDataType;
+
   //! constructor
   DynamicHyperelasticitySolver(DihuContext context);
 

@@ -1,5 +1,5 @@
 import sys, os, multiprocessing, subprocess
-from Package import Package
+from .Package import Package
 
 class MegaMol(Package):
 

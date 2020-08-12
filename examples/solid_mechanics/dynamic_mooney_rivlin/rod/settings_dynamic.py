@@ -22,22 +22,22 @@ zpos = 0.0
 # fix bottom plane in z direction, displacements are quadratic
 for j in range(0,my):
   for i in range(0,mx):
-    dirichlet_bc[j*(mx) + i] = [None,None,zpos,None,None,None]   # displacements and velocity
+    dirichlet_bc[j*mx + i] = [None,None,zpos,None,None,None]   # displacements and velocity
 
 if False:
   # left plane
   for k in range(0,mz):
     for j in range(0,my):
-      dirichlet_bc[k*(mx)*(my) + j*(mx)] = [xpos,None,None]
+      dirichlet_bc[k*mx*my + j*mx] = [xpos,None,None]
 
   # front plane
   for k in range(0,mz):
     for i in range(0,mx):
-      dirichlet_bc[k*(mx)*(my) + i] = [None,ypos,None]
+      dirichlet_bc[k*mx*my + i] = [None,ypos,None]
 
   # vertical edge
   for k in range(0,mz):
-    dirichlet_bc[k*(mx)*(my)] = [xpos,ypos,None]
+    dirichlet_bc[k*mx*my] = [xpos,ypos,None]
 
 if True:
   # fix points on bottom horizontal edge in y and z direction
@@ -47,7 +47,7 @@ if True:
 if True:
   # horizontal edge
   for j in range(0,my):
-    dirichlet_bc[j*(mx)] = [xpos,None,zpos,None,None,None]
+    dirichlet_bc[j*mx] = [xpos,None,zpos,None,None,None]
 
 # fix corner completely
 dirichlet_bc[0] = [xpos,ypos,zpos,None,0,None]
@@ -98,6 +98,10 @@ def postprocess(result):
   s22_values = stress_components[1]["values"]
   s33_values = stress_components[2]["values"]
 
+  mx = 2*result["nElementsLocal"][0] + (1 if result["hasFullNumberOfNodes"][0] else 0)
+  my = 2*result["nElementsLocal"][1] + (1 if result["hasFullNumberOfNodes"][1] else 0)
+  mz = 2*result["nElementsLocal"][2] + (1 if result["hasFullNumberOfNodes"][2] else 0)
+
   # integrate total forces
 
   # integration stencils for ∫∫ ϕ_i dxdy with ϕ quadratic Lagrange function
@@ -111,46 +115,46 @@ def postprocess(result):
   # edge primary node: 2*1/36 = 1/18, edge secondary node: 1/9
   # corner primary node: 1/36
 
-  factors = [1./9. for _ in range((mx) * (my))]
+  factors = [1./9. for _ in range(mx * my)]
   
   # set factors for secondary nodes
   for j in range(my):
     for i in range(mx):
       if (i+j) % 2 == 1:
-        factors[j * (mx) + i] = 2./9.
+        factors[j * mx + i] = 2./9.
       
   # set factors for tertiary nodes
   for j in range(1,my,2):
     for i in range(1,mx,2):
-      factors[j * (mx) + i] = 4./9.
+      factors[j * mx + i] = 4./9.
 
   # edges, primary nodes
   for i in range(0,mx,2):
-    factors[(2*ny) * (mx) + i] = 1./18.
+    factors[(my-1) * mx + i] = 1./18.
     factors[i] = 1./18.
   for j in range(0,my,2):
-    factors[j * (mx) + 0] = 1./18.
-    factors[j * (mx) + (2*nx)] = 1./18.
+    factors[j * mx + 0] = 1./18.
+    factors[j * mx + (mx-1)] = 1./18.
     
   # edges, secondary nodes
   for i in range(1,mx,2):
-    factors[(2*ny) * (mx) + i] = 1./9.
+    factors[(my-1) * mx + i] = 1./9.
     factors[i] = 1./9.
   for j in range(1,my,2):
-    factors[j * (mx) + 0] = 1./9.
-    factors[j * (mx) + (2*nx)] = 1./9.
+    factors[j * mx + 0] = 1./9.
+    factors[j * mx + (mx-1)] = 1./9.
     
   # corners
   factors[0] = 1./36
   factors[2*nx] = 1./36
-  factors[(2*ny) * (mx) + 0] = 1./36
-  factors[(2*ny) * (mx) + (2*nx)] = 1./36
+  factors[(my-1) * mx + 0] = 1./36
+  factors[(my-1) * mx + (mx-1)] = 1./36
 
   if False:
     print("factors = 1/36 * ")
     for j in range(0,my):
       for i in range(0,mx):
-        print("{}".format(36*factors[j * (mx) + i]),end =" ")
+        print("{}".format(36*factors[j * mx + i]),end =" ")
       print("")
 
   # compute force values
@@ -162,10 +166,9 @@ def postprocess(result):
   for j in range(0,my):
     for i in range(0,mx):
       k = mz-1
-      factor = factors[j * (mx) + i]
+      factor = factors[j * mx + i]
       
-      index = k*(mx)*(my) + j*(mx) + i
-      
+      index = k*mx*my + j*mx + i
       total_force_x += factor * s11_values[index]
       total_force_y += factor * s22_values[index]
       total_force_z += factor * s33_values[index]
@@ -224,20 +227,28 @@ output_interval = dt
 #neumann_bc = []
 
 config = {
-  "scenarioName": "3d_box",
+  "scenarioName": "dynamic_rod",
+  "logFormat":    "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "mappings_between_meshes.txt",   # log file for mappings between meshes
+  
   "Meshes": fiber_meshes,  
   "Solvers": {
     "nonlinearSolver": {
-      "relativeTolerance": 1e-10,         # 1e-10 relative tolerance of the linear solver
+      # nonlinear solver
+      "relativeTolerance": 1e-5,         # 1e-10 relative tolerance of the linear solver
+      "absoluteTolerance": 1e-5,         # 1e-10 absolute tolerance of the residual of the linear solver    
       "solverType": "preonly",            # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
       "preconditionerType": "lu",         # type of the preconditioner
       "maxIterations": 1e4,               # maximum number of iterations in the linear solver
+      "dumpFilename": "",#"out/m",            # filename for output of solver matrix
+      "dumpFormat": "matlab",             # default, ascii, matlab
       "snesMaxFunctionEvaluations": 1e8,  # maximum number of function iterations
-      "snesMaxIterations": 50,            # maximum number of iterations in the nonlinear solver
-      "snesRelativeTolerance": 1e-5,     # relative tolerance of the nonlinear solver
-      "snesLineSearchType": "l2",        # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
-      "snesAbsoluteTolerance": 1e-5,     # absolute tolerance of the nonlinear solver
+      "snesMaxIterations": 50,             # maximum number of iterations in the nonlinear solver
+      "snesRebuildJacobianFrequency": 5,  # frequency with which the jacobian is newly computed
+      "snesRelativeTolerance": 1e-5,      # relative tolerance of the nonlinear solver
+      "snesLineSearchType": "l2",         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
+      "snesAbsoluteTolerance": 1e-5,      # absolute tolerance of the nonlinear solver
     }
   },
   "DynamicHyperelasticitySolver": {
@@ -276,6 +287,7 @@ config = {
     #"loadFactors":  [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
     "loadFactors": [],                 # no load factors, solve problem directly
     "nNonlinearSolveCalls": 1,         # how often the nonlinear solve should be repeated
+    "loadFactorGiveUpThreshold": 0.1,   # if the adaptive time stepping produces a load factor smaller than this value, the solution will be accepted for the current timestep, even if it did not converge fully to the tolerance
     
     # boundary and initial conditions
     "dirichletBoundaryConditions": dirichlet_bc,
@@ -286,30 +298,32 @@ config = {
     "updateDirichletBoundaryConditionsFunctionCallInterval": 1,
     
     "initialValuesDisplacements": [[0.0,0.0,0.0] for i in range(mx*my*mz)],
-    #"initialValuesDisplacements": [[0.0,0.0,0.0] for i in range((mx)*(my)*(mz-1))] + [[1.0,0.0,0.0] for i in range((mx)*(my))],
-    "initialValuesVelocities": [[0.1*z,0.0,0.0] for i in range(mx*my) for z in range(mz)],
+    #"initialValuesDisplacements": [[0.0,0.0,0.0] for i in range(mx*my*(mz-1))] + [[1.0,0.0,0.0] for i in range(mx*my)],
+    "initialValuesVelocities": [[0.1*z,0.0,0.0] for z in range(mz) for i in range(mx*my)],
     "extrapolateInitialGuess":    True,                     # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
     "constantBodyForce": constant_body_force,     # e.g. for gravity
     
+    "dirichletOutputFilename":     "out/dirichlet_boundary_conditions",                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+    
     "OutputWriter" : [   # output files for displacements function space (quadratic elements), contains displacements, velocities and PK2 stresses
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-      {"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
+      {"format": "Paraview", "outputInterval": 5, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+      {"format": "PythonCallback", "outputInterval": 5, "callback": postprocess, "onlyNodalValues":True, "filename": "", "fileNumbering": "incremental"},
     ],
     "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
       "OutputWriter" : [
-        {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+        {"format": "Paraview", "outputInterval": 5, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       ]
     },
     "dynamic": {    # output of the dynamic solver, has additional virtual work values 
       "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-        #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-        #{"format": "Paraview", "outputInterval": 1, "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+        #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+        #{"format": "Paraview", "outputInterval": 1, "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       ],
     },
     # output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
     "LoadIncrements": {   
       "OutputWriter" : [
-        {"format": "Paraview", "outputInterval": 1, "filename": "out_static/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+        {"format": "Paraview", "outputInterval": 5, "filename": "out_static/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       ]
     },
   }

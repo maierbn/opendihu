@@ -24,44 +24,6 @@ TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::TimeSteppingSch
 }
 
 template<typename DiscretizableInTimeType>
-void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
-setInitialValues()
-{
-  // set initial values as given in settings, or set to zero if not given
-  std::vector<double> localValues;
-  
-  // determine if the initial values are given as global and local array
-  bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
-  if (inputMeshIsGlobal)
-  {
-    // if the settings specify a global list of values, extract the local values
-    assert(this->data_);
-    assert(this->data_->functionSpace());
-
-    // get number of global dofs, i.e. number of values in global list
-    const int nDofsGlobal = this->data_->functionSpace()->nDofsGlobal();
-    LOG(DEBUG) << "setInitialValues, nDofsGlobal = " << nDofsGlobal;
-
-    this->specificSettings_.getOptionVector("initialValues", nDofsGlobal, localValues);
-
-    // extract only the local dofs out of the list of global values
-    this->data_->functionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(localValues);
-  }
-  else 
-  {
-    // input is already only the local dofs, use all
-    const int nDofsLocal = this->data_->functionSpace()->nDofsLocalWithoutGhosts();
-    this->specificSettings_.getOptionVector("initialValues", nDofsLocal, localValues);
-  }
-  VLOG(1) << "set initial values to " << localValues;
-
-  // set the first component of the solution variable by the given values
-  this->data_->solution()->setValuesWithoutGhosts(0, localValues);
-
-  VLOG(1) << this->data_->solution();
-}
-
-template<typename DiscretizableInTimeType>
 DiscretizableInTimeType &TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
 discretizableInTime()
 {
@@ -105,6 +67,12 @@ initialize()
   // add this solver to the solvers diagram
   DihuContext::solverStructureVisualizer()->addSolver(this->name_);
 
+  // parse description for solverStructureVisualizer, if there was any
+  std::string description;
+  if (this->specificSettings_.hasKey("description"))
+    description = this->specificSettings_.getOptionString("description", "");
+  DihuContext::solverStructureVisualizer()->setSolverDescription(description);
+
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();
 
@@ -133,8 +101,8 @@ initialize()
   // pass the solution field variable on to the discretizableInTime object, by this e.g. CellMLAdapter gets the solution field variable
   discretizableInTime_.setSolutionVariable(this->data_->solution());
 
-  // pass the full output connector data to the discretizableInTime object, by this e.g. CellMLAdapter can set additional intermediate variables that will be used further
-  discretizableInTime_.setOutputConnectorData(this->data_->getOutputConnectorData());
+  // pass the full slot connector data to the discretizableInTime object, by this e.g. CellMLAdapter can set additional algebraic variables that will be used further
+  discretizableInTime_.setSlotConnectorData(this->data_->getSlotConnectorData());
 
   // parse boundary conditions, needs functionSpace set
   // initialize dirichlet boundary conditions object which parses dirichlet boundary condition dofs and values from config
@@ -153,26 +121,27 @@ initialize()
   }
   else
   {
+    // the "CellML" section already specified initial values. Keep them.
     LOG(DEBUG) << "initial values were set by DiscretizableInTime";
   }
   VLOG(1) << "initial solution vector: " << *this->data_->solution();
   
-  //output initial values
-  this->outputWriterManager_.writeOutput(*this->data_, 0, 0);
+  // output initial values but don't increment counter
+  this->outputWriterManager_.writeOutput(*this->data_, 0, 0.0, 0);
   
   this->data_->print();
 
-  // set the output connector data to the solverStructureVisualizer which can then include it in the structured solvers diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(this->getOutputConnectorData());
+  // set the slot connector data to the solverStructureVisualizer which can then include it in the structured solvers diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(this->getSlotConnectorData());
   
   initialized_ = true;
 }
 
 template<typename DiscretizableInTimeType>
 void TimeSteppingSchemeOdeBaseDiscretizable<DiscretizableInTimeType>::
-prepareForGetOutputConnectorData()
+prepareForGetSlotConnectorData()
 {
-  discretizableInTime_.prepareForGetOutputConnectorData();
+  discretizableInTime_.prepareForGetSlotConnectorData();
 }
 
 

@@ -21,6 +21,7 @@ MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shar
   }
   else if (!rankSubset->ownRankIsContained())
   {
+    // initialize degenerate mesh where own rank does not hold any nodes (only other ranks may)
     isDegenerate_ = true;
     initializeDegenerateMesh();
   }
@@ -34,6 +35,9 @@ MeshPartition(std::array<global_no_t,MeshType::dim()> nElementsGlobal, std::shar
 
     // initialize dof vectors
     this->createLocalDofOrderings();
+
+    // initialize local natural ordering if has not yet been done
+    initializeDofNosLocalNaturalOrdering();
   }
   
   LOG(DEBUG) << "nElementsLocal_: " << nElementsLocal_ << ", nElementsGlobal_: " << nElementsGlobal_
@@ -72,7 +76,7 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
     initializeHasFullNumberOfNodes();
 
     // determine localSizesOnRanks
-    std::array<std::vector<element_no_t>,MeshType::dim()> localSizesOnRanks;
+    std::array<std::vector<element_no_t>,MeshType::dim()> localSizesOnRanks;    // [dimensionIndex][rankNo]
     for (int i = 0; i < MeshType::dim(); i++)
     {
       localSizesOnRanks[i].resize(rankSubset->size());
@@ -81,12 +85,12 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
     for (int i = 0; i < MeshType::dim(); i++)
     {
       MPIUtility::handleReturnValue(MPI_Allgather(&nElementsLocal_[i], 1, MPIU_INT,
-        localSizesOnRanks[i].data(), 1, MPIU_INT, rankSubset->mpiCommunicator()));
+        localSizesOnRanks[i].data(), 1, MPIU_INT, rankSubset->mpiCommunicator()), "MPI_Allgather");
     }
     LOG(DEBUG) << "determined localSizesOnRanks: " << localSizesOnRanks;
     LOG(DEBUG) << "MeshType::dim(): " << MeshType::dim() << ", nRanks: " << nRanks_;
     
-    // create localSizesOnPartitions_ from localSizesOnRanks, they are not used, but to check if the program crashes here
+    // create localSizesOnPartitions_ from localSizesOnRanks
     for (int dimensionIndex = 0; dimensionIndex < MeshType::dim(); dimensionIndex++)
     {
       VLOG(1) << "dimensionIndex: " << dimensionIndex << ", resize to " << nRanks_[dimensionIndex];
@@ -128,7 +132,11 @@ MeshPartition(std::array<node_no_t,MeshType::dim()> nElementsLocal, std::array<g
     // initialize the cached value of nDofsLocalWithoutGhosts
     this->setNDofsLocalWithoutGhosts();
 
+    // initialize dof vectors
     this->createLocalDofOrderings();
+
+    // initialize local natural ordering if has not yet been done
+    initializeDofNosLocalNaturalOrdering();
   }
 
   LOG(DEBUG) << *this;
@@ -274,6 +282,15 @@ extractLocalDofsWithoutGhosts(std::vector<T> &vector) const
   }
   else if (MeshType::dim() == 3)
   {
+    if (vector.size() < ((beginNodeGlobalNatural(2) + nNodesLocalWithoutGhosts(2)-1)*nNodesGlobal(1)*nNodesGlobal(0)
+      + (beginNodeGlobalNatural(1) + nNodesLocalWithoutGhosts(1)-1)*nNodesGlobal(0) + beginNodeGlobalNatural(0) + nNodesLocalWithoutGhosts(0))*nDofsPerNode)
+    {
+      LOG(FATAL) << "In extractLocalDofsWithoutGhosts, vector.size(): " << vector.size() << ", expected: " << ((beginNodeGlobalNatural(2) + nNodesLocalWithoutGhosts(2)-1)*nNodesGlobal(1)*nNodesGlobal(0)
+        + (beginNodeGlobalNatural(1) + nNodesLocalWithoutGhosts(1)-1)*nNodesGlobal(0) + beginNodeGlobalNatural(0) + nNodesLocalWithoutGhosts(0))*nDofsPerNode
+        << ", nNodesLocalWithoutGhosts: " << nNodesLocalWithoutGhosts(0) << "," << nNodesLocalWithoutGhosts(1) << "," << nNodesLocalWithoutGhosts(2)
+        << ", nNodesGlobal: " << nNodesGlobal(0) << "," << nNodesGlobal(1) << "," << nNodesGlobal(2) << ", nDofsLocalWithoutGhosts: " << nDofsLocalWithoutGhosts();        
+    }
+
     assert(vector.size() >= ((beginNodeGlobalNatural(2) + nNodesLocalWithoutGhosts(2)-1)*nNodesGlobal(1)*nNodesGlobal(0)
       + (beginNodeGlobalNatural(1) + nNodesLocalWithoutGhosts(1)-1)*nNodesGlobal(0) + beginNodeGlobalNatural(0) + nNodesLocalWithoutGhosts(0))*nDofsPerNode);
     for (global_no_t k = beginNodeGlobalNatural(2); k < beginNodeGlobalNatural(2) + nNodesLocalWithoutGhosts(2); k++)
@@ -291,6 +308,8 @@ extractLocalDofsWithoutGhosts(std::vector<T> &vector) const
     }
   }
   
+  assert(resultIndex == nDofsLocalWithoutGhosts());
+
   // store values
   vector.assign(result.begin(), result.end());
 }
@@ -302,11 +321,11 @@ refine(std::array<int,MeshType::dim()> refinementFactor)
   LOG(DEBUG) << "refine mesh partition by refinementFactors " << refinementFactor;
   for (int i = 0; i < MeshType::dim(); i++)
   {
-    beginElementGlobal_[i] *= refinementFactor[i];   ///< global element no.s of the lower left front corner of the domain
-    nElementsLocal_[i] *= refinementFactor[i];     ///< local size, i.e. number of nodes in the coordinate directions of the local portion
-    nElementsGlobal_[i] *= refinementFactor[i];    ///< global number of elements in the coodinate directions
+    beginElementGlobal_[i] *= refinementFactor[i];   //< global element no.s of the lower left front corner of the domain
+    nElementsLocal_[i] *= refinementFactor[i];     //< local size, i.e. number of nodes in the coordinate directions of the local portion
+    nElementsGlobal_[i] *= refinementFactor[i];    //< global number of elements in the coodinate directions
 
-    ///< the sizes of different partitions in each coordinate direction, i.e. localSizesOnPartitions_[0] is (width partition #0, width partition #1, ...)
+    //< the sizes of different partitions in each coordinate direction, i.e. localSizesOnPartitions_[0] is (width partition #0, width partition #1, ...)
     for (int partitionIndex = 0; partitionIndex < localSizesOnPartitions_[i].size(); partitionIndex++)
     {
       localSizesOnPartitions_[i][partitionIndex] *= refinementFactor[i];

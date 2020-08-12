@@ -81,6 +81,9 @@ for k in range(int(nz)):
 
 config = {
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "logFormat":                      "csv",                      # "csv" or "json", format of the lines in the log file, csv gives smaller files
+  "scenarioName":                   "laplace",                  # scenario name to find the run in the log file
+  "mappingsBetweenMeshesLogFile":   "",                         # a log file about mappings between meshes, here we do not want that because there are no mappings
   "FiniteElementMethod" : {
     "nElements": n_elements,
     "nRanks": [1,1,n_ranks],
@@ -91,19 +94,21 @@ config = {
     "outputInterval": 1.0,
     
     "dirichletBoundaryConditions": {0:0} if rank_no == 0 else {},
+    "dirichletOutputFilename":     None,                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     "neumannBoundaryConditions": bc,
     "prefactor": 1,
     
     "solverType": "gmres",
     "preconditionerType": "none",
     "relativeTolerance": 1e-15,
+    "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual        
     "maxIterations": 10000,
     "dumpFormat": "default",
     "dumpFilename": "",
     
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/laplace", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},      
-      {"format": "PythonFile", "filename": "out/laplace", "outputInterval": 1, "binary":False, "onlyNodalValues":True}
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/laplace", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},      
+      {"format": "PythonFile", "filename": "out/laplace", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "incremental"}
     ]
   },
 }

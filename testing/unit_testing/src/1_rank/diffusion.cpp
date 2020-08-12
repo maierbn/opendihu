@@ -15,12 +15,6 @@ TEST(DiffusionTest, ExplicitEuler1D)
 {
   std::string pythonConfig = R"(
 
-import pip
-installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
-print("installed packages: ",installed_packages_list)
-
-
 # Diffusion 1D
 n = 5
 config = {
@@ -75,12 +69,6 @@ TEST(DiffusionTest, Heun1D)
 {
   std::string pythonConfig = R"(
 
-import pip
-installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
-print("installed packages: ",installed_packages_list)
-
-
 # Diffusion 1D
 n = 5
 config = {
@@ -124,12 +112,6 @@ TEST(DiffusionTest, ImplicitEuler1D)
 {
   std::string pythonConfig = R"(
 
-import pip
-installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
-print("installed packages: ",installed_packages_list)
-
-
 # Diffusion 1D
 n = 5
 config = {
@@ -169,6 +151,8 @@ config = {
 
 }
 
+/*
+ * this test is disabled, because it required LAPACK which is not default
 TEST(DiffusionTest, ImplicitEuler1DPOD)
 {
   
@@ -285,16 +269,11 @@ config = {
   // compare to full output of POD problem
   assertFileMatchesContent("diffusion1d_pod_full_0000004.py", referenceOutput);
 }
+*/
 
 TEST(DiffusionTest, CrankNicolson1D)
 {
   std::string pythonConfig = R"(
-    
-import pip
-installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
-print("installed packages: ",installed_packages_list)
-    
     
 # Diffusion 1D
 n = 5
@@ -339,12 +318,6 @@ TEST(DiffusionTest, ExplicitEuler1DStructuredDeformable)
 {
   std::string pythonConfig = R"(
 
-import pip
-installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
-print("installed packages: ",installed_packages_list)
-
-
 # Diffusion 1D
 n = 5
 config = {
@@ -387,12 +360,6 @@ config = {
 TEST(DiffusionTest, Heun1DStructuredDeformable)
 {
   std::string pythonConfig = R"(
-
-import pip
-installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
-print("installed packages: ",installed_packages_list)
-
 
 # Diffusion 1D
 n = 5
@@ -437,12 +404,6 @@ TEST(DiffusionTest, ImplicitEuler1DStructuredDeformable)
 {
   std::string pythonConfig = R"(
 
-import pip
-installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
-print("installed packages: ",installed_packages_list)
-
-
 # Diffusion 1D
 n = 5
 config = {
@@ -485,12 +446,6 @@ config = {
 TEST(DiffusionTest, CrankNicolson1DStructuredDeformable)
 {
   std::string pythonConfig = R"(
-    
-import pip
-installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
-print("installed packages: ",installed_packages_list)
-    
     
 # Diffusion 1D
 n = 5

@@ -38,14 +38,14 @@ loopCheckIfNewExnodeHeaderNecessary(const FieldVariablesForOutputWriterType &fie
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-checkIfNewExnodeHeaderNecessary(VectorType currentFieldVariableVector, std::string meshName, 
+checkIfNewExnodeHeaderNecessary(VectorType currentFieldVariableGradient, std::string meshName, 
                                 element_no_t currentNodeGlobalNo, bool &newHeaderNecessary);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-checkIfNewExnodeHeaderNecessary(VectorType currentFieldVariableVector, std::string meshName, 
+checkIfNewExnodeHeaderNecessary(VectorType currentFieldVariableGradient, std::string meshName, 
                                 element_no_t currentNodeGlobalNo, bool &newHeaderNecessary);
 
  /**  Loop body for a pointer tuple element

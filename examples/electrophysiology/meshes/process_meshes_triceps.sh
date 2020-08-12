@@ -4,7 +4,7 @@
 # Input is one stl file of the geometry that was extracted from cmgui.
 # Multiple files with different number of fibers are created as *.bin files that can directly be used by opendihu.
 # In order to visualize a bin file, run `examine_bin_fibers.py <filename.bin>`
- 
+
 input_file=original_meshes/left_triceps_brachii.stl
 # if you change the input file, you probably also have to experiment with the bottom_z and top_z clipping parameters for the muscle 
 
@@ -21,9 +21,10 @@ basename=${filename%.stl}     # left_triceps_brachii
 
 # define directories
 current_directory=$(pwd)
-parallel_fiber_estimation_directory=$(pwd)/../../parallel_fiber_estimation
 opendihu_directory=$(pwd)/../../..
-pyod=$opendihu_directory/dependencies/python/install/bin/python3
+parallel_fiber_estimation_directory=${opendihu_directory}/examples/fiber_tracing/parallel_fiber_estimation
+stl_utility_directory=${opendihu_directory}/scripts/stl_utility
+pyod=${opendihu_directory}/dependencies/python/install/bin/python3
 
 mkdir -p processed_meshes
 
@@ -36,7 +37,7 @@ echo ""
 echo "--- Scale mesh from mm to cm."
 if [[ ! -f "original_meshes/cm_${basename}.stl" ]]; then
   echo "create file \"original_meshes/cm_${basename}.stl\""
-  $pyod ./stl_utility/scale_stl.py ${input_file} original_meshes/cm_${basename}.stl 0.1 0.1 0.1
+  $pyod ${stl_utility_directory}/scale_stl.py ${input_file} original_meshes/cm_${basename}.stl 0.1 0.1 0.1
 else
   echo "File \"original_meshes/cm_${basename}.stl\" already exists, do not create again."
 fi
@@ -46,24 +47,24 @@ echo ""
 echo "--- Remove inside triangles, this will take long"
 if [[ ! -f "processed_meshes/${basename}_01_no_inside_triangles.stl" ]]; then
   echo "create file \"processed_meshes/${basename}_01_no_inside_triangles.stl\""
-  $pyod ./stl_utility/remove_inside_triangles.py original_meshes/cm_${basename}.stl processed_meshes/${basename}_01_no_inside_triangles.stl
+  $pyod ${stl_utility_directory}/remove_inside_triangles.py original_meshes/cm_${basename}.stl processed_meshes/${basename}_01_no_inside_triangles.stl
 else
   echo "File \"processed_meshes/${basename}_01_no_inside_triangles.stl\" already exists, do not create again."
 fi
-$pyod ./stl_utility/stl_to_binary.py \
+$pyod ${stl_utility_directory}/stl_to_binary.py \
   processed_meshes/${basename}_01_no_inside_triangles.stl \
   processed_meshes/${basename}_02_no_inside_triangles_binary.stl
 
 # move mesh such that bottom is at 0
 echo ""
 echo "--- Move geometry such that bottom is at z=0."
-bottom_bounding_box_value=`./stl_utility/get_bottom_bounding_box_value.py processed_meshes/${basename}_02_no_inside_triangles_binary.stl`
+bottom_bounding_box_value=`${stl_utility_directory}/get_bottom_bounding_box_value.py processed_meshes/${basename}_02_no_inside_triangles_binary.stl`
 echo "Bottom bounding box value is ${bottom_bounding_box_value}"
 
 translate_value=`python -c "print(-${bottom_bounding_box_value})"`
 echo "Negative bottom bounding box value is ${translate_value}"  # 63.5
 
-$pyod ./stl_utility/translate_stl.py \
+$pyod ${stl_utility_directory}/translate_stl.py \
   processed_meshes/${basename}_02_no_inside_triangles_binary.stl \
   processed_meshes/${basename}_03_bottom_at_zero.stl \
   0 0 ${translate_value}
@@ -76,11 +77,15 @@ echo "--- Create a spline surface of the geometry"
 
 # create spline surface
 cd $opendihu_directory/scripts/geometry_manipulation
-$pyod ./create_spline_surface.py \
-  ${current_directory}/processed_meshes/${basename}_03_bottom_at_zero.stl \
-  ${current_directory}/processed_meshes/${basename}_04_spline_surface.stl \
-  ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
-  $bottom_z_clip $top_z_clip
+if [[ ! -f "${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle" ]]; then
+  $pyod ./create_spline_surface.py \
+    ${current_directory}/processed_meshes/${basename}_03_bottom_at_zero.stl \
+    ${current_directory}/processed_meshes/${basename}_04_spline_surface.stl \
+    ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
+    $bottom_z_clip $top_z_clip
+else
+  echo "file processed_meshes/${basename}_04_spline_surface.pickle already exists"
+fi
 
 echo ""
 echo "--- Compile opendihu"
@@ -123,9 +128,28 @@ $pyod $opendihu_directory/scripts/file_manipulation/translate_bin_fibers.py \
   ${current_directory}/processed_meshes/${basename}_05_9x9fibers.bin \
   ${current_directory}/processed_meshes/${basename}_06_9x9fibers_original_position.bin \
   0 0 ${bottom_bounding_box_value}
-  
-cp ${current_directory}/processed_meshes/${basename}_06_7x7fibers_original_position.bin ${current_directory}/processed_meshes/${basename}_7x7fibers.bin
-cp ${current_directory}/processed_meshes/${basename}_06_9x9fibers_original_position.bin ${current_directory}/processed_meshes/${basename}_9x9fibers.bin
+
+echo ""
+echo "--- Reverse the numbering in y direction"
+$pyod $opendihu_directory/scripts/file_manipulation/reverse_x_order_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_06_7x7fibers_original_position.bin \
+  ${current_directory}/processed_meshes/${basename}_07_7x7fibers_y_reversed.bin 
+
+$pyod $opendihu_directory/scripts/file_manipulation/swap_xy_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_07_7x7fibers_y_reversed.bin \
+  ${current_directory}/processed_meshes/${basename}_08_7x7fibers_xy_swapped.bin 
+
+$pyod $opendihu_directory/scripts/file_manipulation/reverse_y_order_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_06_9x9fibers_original_position.bin \
+  ${current_directory}/processed_meshes/${basename}_07_9x9fibers_y_reversed.bin 
+
+$pyod $opendihu_directory/scripts/file_manipulation/swap_xy_bin_fibers.py \
+  ${current_directory}/processed_meshes/${basename}_07_9x9fibers_y_reversed.bin \
+  ${current_directory}/processed_meshes/${basename}_08_9x9fibers_xy_swapped.bin 
+
+# rename the fibers to their final name
+cp ${current_directory}/processed_meshes/${basename}_08_7x7fibers_xy_swapped.bin ${current_directory}/processed_meshes/${basename}_7x7fibers.bin
+cp ${current_directory}/processed_meshes/${basename}_08_9x9fibers_xy_swapped.bin ${current_directory}/processed_meshes/${basename}_9x9fibers.bin
 
 cd $current_directory
 # refine the given, serially created file with 7x7 fibers

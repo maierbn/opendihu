@@ -19,7 +19,10 @@ std::ostream &operator<<(std::ostream &stream, PolyDataPropertiesForMesh rhs)
      << ", pointDataArrays:";
   for (auto pointDataArray : rhs.pointDataArrays)
   {
-    stream << " [" << pointDataArray.first << "," << pointDataArray.second << "]";
+    stream << " [" << pointDataArray.name << "," << pointDataArray.nComponents << ": ";
+    for (int componentNo = 0; componentNo < pointDataArray.componentNames.size(); componentNo++)
+      stream << "\"" << pointDataArray.componentNames[componentNo] << "\" ";
+    stream << "]";
   }
   stream << ", " << rhs.unstructuredMeshConnectivityValues.size()
     << ", unstructuredMeshConnectivityValues: ";

@@ -59,7 +59,7 @@ updateSubFieldVariables()
   // get subFunctionSpaces
   std::vector<std::shared_ptr<SubFunctionSpaceType>> subFunctionSpaces = this->functionSpace_->subFunctionSpaces();
 
-  subFieldVariables_.resize(subFunctionSpaces.size());
+  subFieldVariables_.resize(subFunctionSpaces.size(), nullptr);
 
   // get own values
   std::vector<VecD<nComponents>> ownValues;
@@ -124,6 +124,108 @@ updateSubFieldVariables()
 
     subMeshNo++;
   }
+}
+
+
+template<int D,typename BasisFunctionType,int nComponents>
+void FieldVariableComposite<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>::
+updateMainFieldVariableFromSubFieldVariables()
+{
+  LOG(DEBUG) << "updateMainFieldVariableFromSubFieldVariables";
+
+  // get subFunctionSpaces
+  std::vector<std::shared_ptr<SubFunctionSpaceType>> subFunctionSpaces = this->functionSpace_->subFunctionSpaces();
+
+  if (subFieldVariables_.size() != subFunctionSpaces.size())
+  {
+    LOG(ERROR) << "Composite mesh has " << subFieldVariables_.size() << " subFieldVariables but " << subFunctionSpaces.size() << " subFunctionSpaces";
+  }
+
+  // set own values
+  std::vector<VecD<nComponents>> ownValues(this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
+
+  VLOG(1) << "getSubFieldVariables for \"" << this->name_ << "\", " << subFunctionSpaces.size() << " sub meshes";
+  VLOG(2) << ownValues.size() << " ownValues: " << ownValues;
+
+  // loop over sub function spaces
+  int subMeshNo = 0;
+  for (std::shared_ptr<SubFunctionSpaceType> &subFunctionSpace : subFunctionSpaces)
+  {
+    LOG(DEBUG) << "subMeshNo " << subMeshNo;
+
+    // create sub field variable if it does not yet exist
+    if (!subFieldVariables_[subMeshNo])
+    {
+      LOG(ERROR) << "sub field variable is not set";
+      return;
+    }
+
+    // determine values for the sub field variable
+    subFieldVariableValues_.clear();
+    subFieldVariables_[subMeshNo]->getValuesWithoutGhosts(subFieldVariableValues_);
+
+    LOG(DEBUG) << "values: " << subFieldVariableValues_;
+    LOG(DEBUG) << "n nodes: " << subFunctionSpace->nNodesLocalWithoutGhosts();
+
+    // loop over dofs
+    for (node_no_t nodeNoLocal = 0; nodeNoLocal < subFunctionSpace->nNodesLocalWithoutGhosts(); nodeNoLocal++)
+    {
+      bool nodeIsShared = false;
+      node_no_t compositeNodeNo = this->functionSpace_->meshPartition()->getNodeNoLocalFromSubmesh(subMeshNo, nodeNoLocal, nodeIsShared);
+
+      const int nDofsPerNode = subFunctionSpace->nDofsPerNode();
+      for (int nodalDofNo = 0; nodalDofNo < nDofsPerNode; nodalDofNo++)
+      {
+        dof_no_t compositeDofNo = compositeNodeNo*nDofsPerNode + nodalDofNo;
+        dof_no_t subFunctionSpaceDofNo = nodeNoLocal*nDofsPerNode + nodalDofNo;
+
+        assert (subFunctionSpaceDofNo < subFunctionSpace->nDofsLocalWithoutGhosts());
+        assert (compositeDofNo < this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
+
+        ownValues[compositeDofNo] = subFieldVariableValues_[subFunctionSpaceDofNo];
+      }
+    }
+    LOG(DEBUG) << "ownValues: " << ownValues;
+
+    subMeshNo++;
+  }
+
+  // set values in the main field variable
+  this->setValuesWithoutGhosts(ownValues);
+  this->values_->finishGhostManipulation();
+  this->values_->startGhostManipulation();
+  this->values_->zeroGhostBuffer();
+  this->values_->finishGhostManipulation();
+}
+
+//! compute the gradient field
+template<int D,typename BasisFunctionType,int nComponents>
+void FieldVariableComposite<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>::
+computeGradientField(std::shared_ptr<FieldVariable<::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,FunctionSpaceType::dim()>> gradientField,
+                     std::shared_ptr<FieldVariable<::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,1>> jacobianConditionNumberField)
+{
+  LOG(DEBUG) << "computeGradientField (composite), functionSpaceType: " << StringUtility::demangle(typeid(FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>).name());
+
+  assert(gradientField);
+  updateSubFieldVariables();
+  gradientField->updateSubFieldVariables();
+
+  // loop over sub field variables
+  int subFieldVariableNo = 0;
+  for (std::shared_ptr<FieldVariable<SubFunctionSpaceType,nComponents>> subFieldVariable : subFieldVariables_)
+  {
+    if (jacobianConditionNumberField)
+      subFieldVariable->computeGradientField(gradientField->subFieldVariableWithoutUpdate(subFieldVariableNo), jacobianConditionNumberField->subFieldVariable(subFieldVariableNo));
+    else
+      subFieldVariable->computeGradientField(gradientField->subFieldVariableWithoutUpdate(subFieldVariableNo));
+
+    subFieldVariableNo++;
+  }
+  gradientField->updateMainFieldVariableFromSubFieldVariables();
+
+  LOG(DEBUG) << "gradientField: " << *gradientField;
+  LOG(DEBUG) << "gradientField[0]: " << *gradientField->subFieldVariableWithoutUpdate(0);
+  LOG(DEBUG) << "gradientField[1]: " << *gradientField->subFieldVariableWithoutUpdate(1);
 }
 
 } // namespace

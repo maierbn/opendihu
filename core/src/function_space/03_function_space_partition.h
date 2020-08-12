@@ -101,6 +101,10 @@ public:
   FunctionSpacePartition(std::shared_ptr<Partition::Manager> partitionManager,
                          std::vector<std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> subFunctionSpaces);
 
+  //! constructor dummy with node positions vector
+  FunctionSpacePartition(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &nodePositions,
+                         std::vector<std::shared_ptr<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> subFunctionSpaces);
+
   //! initiate the partitoning and then call the downwards initialize
   void initialize();
 

@@ -21,8 +21,14 @@ initialize()
   // call initialize of base class
   Data<FunctionSpace>::initialize();
 
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
-  outputConnectorData_->addFieldVariable(activation());
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
+  slotConnectorData_->addFieldVariable(activation());
+
+  // parse slot names for all slot connector data slots, only one slot here
+  this->context_.getPythonConfig().getOptionVector("slotNames", slotConnectorData_->slotNames);
+
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
 }
 
 void QuasiStaticNonlinearElasticityFebio::
@@ -35,8 +41,9 @@ createPetscObjects()
   activation_          = this->functionSpace_->template createFieldVariable<1>("activation");
   displacements_       = this->functionSpace_->template createFieldVariable<3>("u");
   reactionForce_       = this->functionSpace_->template createFieldVariable<3>("reactionForce");
-  cauchyStress_        = this->functionSpace_->template createFieldVariable<6>("sigma");
-  greenLagrangeStrain_ = this->functionSpace_->template createFieldVariable<6>("E");
+  cauchyStress_        = this->functionSpace_->template createFieldVariable<6>("sigma (Cauchy stress)");
+  pk2Stress_           = this->functionSpace_->template createFieldVariable<6>("S (Pk2 stress)");
+  greenLagrangeStrain_ = this->functionSpace_->template createFieldVariable<6>("E (Green-Lagrange strain)");
   relativeVolume_      = this->functionSpace_->template createFieldVariable<1>("J");
 
 
@@ -89,6 +96,14 @@ cauchyStress()
 //! return the field variable
 std::shared_ptr<typename QuasiStaticNonlinearElasticityFebio::FieldVariableTypeTensor>
 QuasiStaticNonlinearElasticityFebio::
+pk2Stress()
+{
+  return this->pk2Stress_;
+}
+
+//! return the field variable
+std::shared_ptr<typename QuasiStaticNonlinearElasticityFebio::FieldVariableTypeTensor>
+QuasiStaticNonlinearElasticityFebio::
 greenLagrangeStrain()
 {
   return this->greenLagrangeStrain_;
@@ -107,10 +122,10 @@ print()
 {
 }
 
-std::shared_ptr<typename QuasiStaticNonlinearElasticityFebio::OutputConnectorDataType> QuasiStaticNonlinearElasticityFebio::
-getOutputConnectorData()
+std::shared_ptr<typename QuasiStaticNonlinearElasticityFebio::SlotConnectorDataType> QuasiStaticNonlinearElasticityFebio::
+getSlotConnectorData()
 {
-  return outputConnectorData_;
+  return slotConnectorData_;
 }
 
 typename QuasiStaticNonlinearElasticityFebio::FieldVariablesForOutputWriter QuasiStaticNonlinearElasticityFebio::
@@ -126,6 +141,7 @@ getFieldVariablesForOutputWriter()
     std::tuple<std::shared_ptr<FieldVariableTypeVector>>(this->displacements_),
     std::tuple<std::shared_ptr<FieldVariableTypeVector>>(this->reactionForce_),
     std::tuple<std::shared_ptr<FieldVariableTypeTensor>>(this->cauchyStress_),
+    std::tuple<std::shared_ptr<FieldVariableTypeTensor>>(this->pk2Stress_),
     std::tuple<std::shared_ptr<FieldVariableTypeTensor>>(this->greenLagrangeStrain_),
     std::tuple<std::shared_ptr<FieldVariableType>>(this->relativeVolume_)
   );

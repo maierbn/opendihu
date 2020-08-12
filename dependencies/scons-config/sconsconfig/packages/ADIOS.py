@@ -1,5 +1,5 @@
 import sys, os, multiprocessing
-from Package import Package
+from .Package import Package
 import subprocess
 
 class ADIOS(Package):

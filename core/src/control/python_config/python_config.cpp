@@ -29,6 +29,15 @@ PythonConfig::PythonConfig(const PythonConfig &rhs, std::string key)
 //! constructor as sub scope of another python config which is a list
 PythonConfig::PythonConfig(const PythonConfig &rhs, int i)
 {
+  // store updated path
+  int pathSize = std::distance(rhs.pathBegin(), rhs.pathEnd());
+  path_.resize(pathSize+1);
+  std::copy(rhs.pathBegin(), rhs.pathEnd(), path_.begin());
+  std::stringstream s;
+  s << i;
+  path_[pathSize] = std::string(s.str());
+
+  // check if the current object is a list
   if (PyList_Check(rhs.pyObject()))
   {
     int nEntries = PyList_Size(rhs.pyObject());
@@ -48,6 +57,7 @@ PythonConfig::PythonConfig(const PythonConfig &rhs, int i)
     LOG(WARNING) << getStringPath() << " is not a list";
     pythonConfig_ = rhs.pyObject();
   }
+
 }
 
 //! constructor directly from PyObject*, path from rhs + key
@@ -139,6 +149,18 @@ std::string PythonConfig::getStringPath() const
 bool PythonConfig::hasKey(std::string key) const
 {
   return PythonUtility::hasKey(this->pythonConfig_, key);
+}
+
+//! checks if the settings contain the given key, no warning is printed
+bool PythonConfig::isEmpty(std::string key) const
+{
+  return PythonUtility::isEmpty(this->pythonConfig_, key);
+}
+
+//! checks if the settings is a Python list, no warning is printed
+bool PythonConfig::isTypeList(std::string key) const
+{
+  return PythonUtility::isTypeList(getOptionPyObject(key));
 }
 
 //! return all keys of the current dict as vector of strings

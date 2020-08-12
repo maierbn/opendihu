@@ -17,7 +17,7 @@ class RepeatedCallStatic :
 {
 public:
 
-  typedef typename Solver::OutputConnectorDataType OutputConnectorDataType;
+  typedef typename Solver::SlotConnectorDataType SlotConnectorDataType;
   typedef typename Solver::Data Data;
   typedef typename Solver::FunctionSpace FunctionSpace;
 
@@ -37,8 +37,8 @@ public:
   Data &data();
 
   //! Get the data that will be transferred in the operator splitting or coupling to the other term of the splitting/coupling.
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
 private:
 

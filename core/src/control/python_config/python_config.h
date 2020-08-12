@@ -48,6 +48,12 @@ public:
   //! checks if this settings contain the given key, no warning is printed (hasOption)
   bool hasKey(std::string key) const;
 
+  //! checks if this settings is the empty list or None
+  bool isEmpty(std::string key) const;
+
+  //! checks if this settings is a Python list
+  bool isTypeList(std::string key) const;
+
   //! return all keys of the current dict as vector of strings
   void getKeys(std::vector<std::string> &keys);
 
@@ -70,12 +76,12 @@ public:
   PyObject *getOptionFunction(std::string key) const;
 
   //! return the option value as array given by key in the python dictionary settings. If not found, return the defaultValue, also check if validityCriterion is met
-  template<class ValueType, int D>
+  template<typename ValueType, int D>
   std::array<ValueType, D> getOptionArray(std::string keyString, std::array<ValueType, D> defaultValue,
                                           PythonUtility::ValidityCriterion validityCriterion = PythonUtility::ValidityCriterion::None) const;
 
   //! return the option value as array given by key in the python dictionary settings. If not found, return the defaultValue, also check if validityCriterion is met
-  template<class ValueType, int D>
+  template<typename ValueType, int D>
   std::array<ValueType, D> getOptionArray(std::string keyString, ValueType defaultValue,
                                           PythonUtility::ValidityCriterion validityCriterion = PythonUtility::ValidityCriterion::None) const;
 
@@ -120,8 +126,8 @@ public:
 
 protected:
 
-  PyObject *pythonConfig_;    ///< the python config dictionary of the current context (i.e. may be a sub-dict of the global config)
-  std::vector<std::string> path_;   ///< the key words of the python config down to the current scope
+  PyObject *pythonConfig_;    //< the python config dictionary of the current context (i.e. may be a sub-dict of the global config)
+  std::vector<std::string> path_;   //< the key words of the python config down to the current scope
 };
 
 //! output operator

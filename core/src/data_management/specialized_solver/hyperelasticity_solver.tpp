@@ -1,5 +1,7 @@
 #include "data_management/specialized_solver/hyperelasticity_solver.h"
 
+#include "specialized_solver/solid_mechanics/hyperelasticity/pressure_function_space_creator.h"
+
 namespace Data
 {
 
@@ -34,12 +36,21 @@ createPetscObjects()
   velocities_                    = this->displacementsFunctionSpace_->template createFieldVariable<3>("v", displacementsComponentNames);
   velocitiesPreviousTimestep_    = this->displacementsFunctionSpace_->template createFieldVariable<3>("v_previous", displacementsComponentNames);
   fiberDirection_                = this->displacementsFunctionSpace_->template createFieldVariable<3>("fiberDirection", displacementsComponentNames);
+  materialTraction_              = this->displacementsFunctionSpace_->template createFieldVariable<3>("T (material traction)", displacementsComponentNames);
   displacementsLinearMesh_       = this->pressureFunctionSpace_->template createFieldVariable<3>("uLin", displacementsComponentNames);     //< u, the displacements
   velocitiesLinearMesh_          = this->pressureFunctionSpace_->template createFieldVariable<3>("vLin", displacementsComponentNames);     //< v, the velocities
   pressure_                      = this->pressureFunctionSpace_->template createFieldVariable<1>("p");     //<  p, the pressure variable
-  pressurePreviousTimestep_      = this->pressureFunctionSpace_->template createFieldVariable<1>("p_previous");     //<  p, the pressure variable
 
-  std::vector<std::string> componentNamesS{"S_11", "S_22", "S_33", "S_12", "S_13", "S_23"};
+  if (Term::isIncompressible)
+  {
+    pressurePreviousTimestep_    = this->pressureFunctionSpace_->template createFieldVariable<1>("p_previous");     //<  p, the pressure variable
+  }
+  else
+  {
+    pressurePreviousTimestep_    = nullptr;
+  }
+
+  std::vector<std::string> componentNamesS{"S_11", "S_22", "S_33", "S_12", "S_23", "S_13"};       // component names in Voigt notation
   pK2Stress_               = this->displacementsFunctionSpace_->template createFieldVariable<6>("PK2-Stress (Voigt)", componentNamesS);     //<  the symmetric PK2 stress tensor in Voigt notation
   activePK2Stress_         = this->displacementsFunctionSpace_->template createFieldVariable<6>("active PK2-Stress (Voigt)", componentNamesS);     //<  the symmetric active PK2 stress tensor in Voigt notation
 
@@ -89,10 +100,18 @@ velocitiesPreviousTimestep()
 
 //! field variable of fiber direction
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
-std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DisplacementsFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DisplacementsFieldVariableType> &QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 fiberDirection()
 {
   return this->fiberDirection_;
+}
+
+//! field variable of material traction
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::DisplacementsFieldVariableType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
+materialTraction()
+{
+  return this->materialTraction_;
 }
 
 //! field variable displacements u but on the linear mesh
@@ -160,65 +179,23 @@ template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, ty
 void QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 updateGeometry(double scalingFactor, bool updateLinearVariables)
 {
-  LOG(DEBUG) << "updateGeometry, scalingFactor=" << scalingFactor << ", updateLinearVariables: " << updateLinearVariables;
+  VLOG(1) << "updateGeometry, scalingFactor=" << scalingFactor << ", updateLinearVariables: " << updateLinearVariables;
   PetscErrorCode ierr;
 
   this->displacementsFunctionSpace_->geometryField().finishGhostManipulation();
-
-  LOG(DEBUG) << "a";
-
-  Vec vector = this->displacements_->valuesGlobal();
-  int nValues = 0;
-  LOG(DEBUG) << "vector: " << vector;
-  ierr = VecGetSize(vector, &nValues); CHKERRV(ierr);
-  LOG(DEBUG) << "size=" << nValues;
-  std::vector<double> solutionValues(nValues);
-
-  LOG(DEBUG) << "c";
-  std::vector<PetscInt> dofNosLocal(nValues);
-  std::iota(dofNosLocal.begin(), dofNosLocal.end(), 0);
-  LOG(DEBUG) << "d";
-  LOG(DEBUG) << "dofNosLocal: " << dofNosLocal;
-
-  // get the values
-  ierr = VecGetValues(vector, nValues, dofNosLocal.data(), solutionValues.data()); CHKERRV(ierr);
-
-  LOG(DEBUG) << "e";
-
-  LOG(DEBUG) << solutionValues.size() << " solutionValues " << solutionValues;
-  // ---------------------
-
-  vector = this->geometryReference_->valuesGlobal();
-  ierr = VecGetSize(vector, &nValues); CHKERRV(ierr);
-  std::vector<double> referenceValues(nValues);
-
-  dofNosLocal.resize(nValues);
-  std::iota(dofNosLocal.begin(), dofNosLocal.end(), 0);
-
-  // get the values
-  ierr = VecGetValues(vector, nValues, dofNosLocal.data(), referenceValues.data()); CHKERRV(ierr);
-  LOG(DEBUG) << referenceValues.size() << " referenceValues: " << referenceValues;
-
-  // TODO zero out Dirichlet BC values in this->displacements_->valuesGlobal()
 
   // update quadratic function space geometry
   // w = alpha * x + y, VecWAXPY(w, alpha, x, y)
   ierr = VecWAXPY(this->displacementsFunctionSpace_->geometryField().valuesGlobal(),
                   scalingFactor, this->displacements_->valuesGlobal(), this->geometryReference_->valuesGlobal()); CHKERRV(ierr);
-// ---------------------
-
-  vector = this->displacementsFunctionSpace_->geometryField().valuesGlobal();
-  ierr = VecGetSize(vector, &nValues); CHKERRV(ierr);
-  std::vector<double> newGeometryValues(nValues);
-
-  dofNosLocal.resize(nValues);
-  std::iota(dofNosLocal.begin(), dofNosLocal.end(), 0);
-
-  // get the values
-  ierr = VecGetValues(vector, nValues, dofNosLocal.data(), newGeometryValues.data()); CHKERRV(ierr);
-  LOG(DEBUG) << newGeometryValues.size() << " newGeometryValues: " << newGeometryValues;
 
   this->displacementsFunctionSpace_->geometryField().startGhostManipulation();
+
+  VLOG(1) << "update done.";
+  VLOG(1) << "displacements representation: " << this->displacements_->partitionedPetscVec()->getCurrentRepresentationString();
+  VLOG(1) << "geometryReference_ representation: " << this->geometryReference_->partitionedPetscVec()->getCurrentRepresentationString();
+  VLOG(1) << "displacementsFunctionSpace_ representation: " << this->displacementsFunctionSpace_->geometryField().partitionedPetscVec()->getCurrentRepresentationString();
+
 
   // if the linear variables (geometry, displacements, velocities) should be updated in order to output with the pressure output writer
   if (updateLinearVariables)
@@ -230,30 +207,14 @@ updateGeometry(double scalingFactor, bool updateLinearVariables)
     std::vector<Vec3> velocityValues;
     this->velocities_->getValuesWithGhosts(velocityValues);
 
-    node_no_t nNodesLocal[3] = {
-      this->displacementsFunctionSpace_->meshPartition()->nNodesLocalWithGhosts(0),
-      this->displacementsFunctionSpace_->meshPartition()->nNodesLocalWithGhosts(1),
-      this->displacementsFunctionSpace_->meshPartition()->nNodesLocalWithGhosts(2)
-    };
+    std::vector<Vec3> linearMeshDisplacementValues;
+    std::vector<Vec3> linearMeshVelocityValues;
 
-    std::vector<Vec3> linearMeshDisplacementValues(this->pressureFunctionSpace_->meshPartition()->nNodesLocalWithGhosts());
-    std::vector<Vec3> linearMeshVelocityValues(this->pressureFunctionSpace_->meshPartition()->nNodesLocalWithGhosts());
-    int linearMeshIndex = 0;
-
-    // loop over linear nodes in the quadratic mesh
-    for (int k = 0; k < nNodesLocal[2]; k+=2)
-    {
-      for (int j = 0; j < nNodesLocal[1]; j+=2)
-      {
-        for (int i = 0; i < nNodesLocal[0]; i+=2, linearMeshIndex++)
-        {
-          int index = k*nNodesLocal[0]*nNodesLocal[1] + j*nNodesLocal[0] + i;
-
-          linearMeshDisplacementValues[linearMeshIndex] = displacementValues[index];
-          linearMeshVelocityValues[linearMeshIndex] = velocityValues[index];
-        }
-      }
-    }
+    ::SpatialDiscretization::PressureFunctionSpaceCreator<typename PressureFunctionSpace::Mesh>::extractPressureFunctionSpaceValues(
+      this->displacementsFunctionSpace_, this->pressureFunctionSpace_, displacementValues, linearMeshDisplacementValues);
+    
+    ::SpatialDiscretization::PressureFunctionSpaceCreator<typename PressureFunctionSpace::Mesh>::extractPressureFunctionSpaceValues(
+      this->displacementsFunctionSpace_, this->pressureFunctionSpace_, velocityValues, linearMeshVelocityValues);
 
     displacementsLinearMesh_->setValuesWithGhosts(linearMeshDisplacementValues, INSERT_VALUES);
     velocitiesLinearMesh_->setValuesWithGhosts(linearMeshVelocityValues, INSERT_VALUES);
@@ -303,6 +264,8 @@ template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, ty
 std::shared_ptr<DisplacementsFunctionSpace> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 displacementsFunctionSpace()
 {
+  if (!displacementsFunctionSpace_)
+    LOG(FATAL) << "displacementsFunctionSpace is not set!";
   return displacementsFunctionSpace_;
 }
 
@@ -311,6 +274,8 @@ template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, ty
 std::shared_ptr<PressureFunctionSpace> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term>::
 pressureFunctionSpace()
 {
+  if (!pressureFunctionSpace_)
+    LOG(FATAL) << "pressureFunctionSpace is not set!";
   return pressureFunctionSpace_;
 }
 
@@ -331,8 +296,9 @@ getFieldVariablesForOutputWriter()
     std::shared_ptr<DisplacementsFieldVariableType>(this->displacements_),              // displacements_
     std::shared_ptr<DisplacementsFieldVariableType>(this->velocities_),              // velocities_
     std::shared_ptr<StressFieldVariableType>(this->pK2Stress_),         // pK2Stress_
-    std::shared_ptr<StressFieldVariableType>(this->activePK2Stress_),         // actievPK2Stress_
-    std::shared_ptr<DisplacementsFieldVariableType>(this->fiberDirection_)
+    std::shared_ptr<StressFieldVariableType>(this->activePK2Stress_),         // activePK2Stress_
+    std::shared_ptr<DisplacementsFieldVariableType>(this->fiberDirection_),
+    std::shared_ptr<DisplacementsFieldVariableType>(this->materialTraction_)
   );
 }
 
@@ -347,6 +313,7 @@ getFieldVariablesForOutputWriter()
     std::shared_ptr<DisplacementsFieldVariableType>(std::make_shared<typename DisplacementsFunctionSpace::GeometryFieldType>(this->displacementsFunctionSpace_->geometryField())), // geometry
     std::shared_ptr<DisplacementsFieldVariableType>(this->displacements_),              // displacements_
     std::shared_ptr<DisplacementsFieldVariableType>(this->velocities_),              // velocities_
+    std::shared_ptr<DisplacementsFieldVariableType>(this->materialTraction_),              // materialTraction_
     std::shared_ptr<StressFieldVariableType>(this->pK2Stress_)         // pK2Stress_
   );
 

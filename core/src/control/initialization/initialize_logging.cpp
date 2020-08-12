@@ -64,19 +64,6 @@ void DihuContext::initializeLogging(int &argc, char *argv[])
     s << ownRankNoCommWorld_ << "/" << nRanksCommWorld_ << " ";
     prefix = s.str();
   }
-  
-#ifdef NDEBUG      // if release
-  if (nRanksCommWorld_ > 1)
-  {
-    conf.setGlobally(el::ConfigurationType::Format, prefix+": %msg");
-  }
-  else
-  {
-    conf.setGlobally(el::ConfigurationType::Format, "%msg");
-  }
-#else
-  conf.setGlobally(el::ConfigurationType::Format, prefix+"INFO : %msg");
-#endif
 
   // set location of log files
   std::string logFilesPath = "/tmp/logs/";   // must end with '/'
@@ -101,7 +88,31 @@ void DihuContext::initializeLogging(int &argc, char *argv[])
         argv[i] = argv[i+1];
       }
     }
+    else if (argument.substr(0,15) == "--log-no-prefix")
+    {
+      prefix = "";
+
+      // remove this argument
+      argc--;
+      for (int i = 2; i < argc; i++)
+      {
+        argv[i] = argv[i+1];
+      }
+    }
   }
+  
+#ifdef NDEBUG      // if release
+  if (nRanksCommWorld_ > 1)
+  {
+    conf.setGlobally(el::ConfigurationType::Format, prefix+": %msg");
+  }
+  else
+  {
+    conf.setGlobally(el::ConfigurationType::Format, "%msg");
+  }
+#else
+  conf.setGlobally(el::ConfigurationType::Format, prefix+"INFO : %msg");
+#endif
 
   if (nRanksCommWorld_ > 1)
   {
@@ -161,4 +172,18 @@ void DihuContext::initializeLogging(int &argc, char *argv[])
   el::Loggers::reconfigureAllLoggers(conf);
   el::Loggers::removeFlag(el::LoggingFlag::AllowVerboseIfModuleNotSpecified);
   LOG(DEBUG) << "Log to \"" << logFilesPath << "\".";
+
+#if 0
+  // configure additional special logger, enable this and enable the CLOG(INFO, "mpi") line in mpi_utility.cpp to get a log of every mpi call
+  el::Loggers::getLogger("mpi");
+
+  // configure control and numerics logger to use different log files
+  el::Configurations configuration;
+  configuration.setToDefault();
+
+  configuration.setGlobally(el::ConfigurationType::Filename, "mpi.log");
+  el::Loggers::reconfigureLogger("mpi", configuration);
+
+  CLOG(INFO, "mpi") << "starting mpi log";
+#endif
 }

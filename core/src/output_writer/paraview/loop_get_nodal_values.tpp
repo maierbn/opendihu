@@ -48,9 +48,6 @@ getNodalValues(CurrentFieldVariableType currentFieldVariable, const FieldVariabl
     const int nComponents = CurrentFieldVariableType::element_type::nComponents();
     std::array<std::vector<double>, nComponents> componentValues;
 
-    // initialize the dofNosLocalNaturalOrdering vector of the meshPartition to be able to get the values in the natural ordering
-    currentFieldVariable->functionSpace()->meshPartition()->initializeDofNosLocalNaturalOrdering(currentFieldVariable->functionSpace());
-
     // ensure that ghost values are in place
     currentFieldVariable->zeroGhostBuffer();
     currentFieldVariable->setRepresentationGlobal();
@@ -100,10 +97,10 @@ getNodalValues(CurrentFieldVariableType currentFieldVariable, const FieldVariabl
 // element i is of vector type
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-getNodalValues(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
+getNodalValues(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
                std::map<std::string,std::vector<double>> &values)
 {
-  for (auto& currentFieldVariable : currentFieldVariableVector)
+  for (auto& currentFieldVariable : currentFieldVariableGradient)
   {
     // call function on all vector entries
     if (getNodalValues<typename VectorType::value_type,FieldVariablesForOutputWriterType>(currentFieldVariable, fieldVariables, meshNames, values))

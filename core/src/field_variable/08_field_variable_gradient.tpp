@@ -1,4 +1,4 @@
-#include "field_variable/08_field_variable_vector.h"
+#include "field_variable/08_field_variable_gradient.h"
 
 #include "control/dihu_context.h"
 
@@ -10,12 +10,15 @@ namespace FieldVariable
 
 const int CONDITION_TOLERANCE = 25;    // condition number value, if the condition number is higher, the dof will get the approximated gradient
 
+// structured mesh
 //! compute the gradient field
 template<typename FunctionSpaceType>
-void FieldVariableVector<FunctionSpaceType,1>::
+void FieldVariableGradient<FunctionSpaceType,1,::Mesh::isStructured<typename FunctionSpaceType::Mesh>>::
 computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSpaceType::dim()>> gradientField,
                      std::shared_ptr<FieldVariable<FunctionSpaceType,1>> jacobianConditionNumberField)
 {
+  LOG(DEBUG) << "computeGradientField (structured), functionSpaceType: " << StringUtility::demangle(typeid(FunctionSpaceType).name());
+
   this->values_->setRepresentationGlobal();
   this->values_->startGhostManipulation();
 
@@ -47,7 +50,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
   const int D = FunctionSpaceType::dim();
 
   const dof_no_t nDofsWithGhosts = this->functionSpace_->nDofsLocalWithGhosts();
-  std::vector<int> nAdjacentElements(nDofsWithGhosts, 0);   ///< the number of elements that are adjacent to the node
+  std::vector<int> nAdjacentElements(nDofsWithGhosts, 0);   //< the number of elements that are adjacent to the node
 
   // count number evaluations for every dof
   // loop over elements
@@ -86,6 +89,8 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
     const int nDofsPerNode = this->functionSpace_->nDofsPerNode();
     std::array<double,D> xi;
 
+    LOG(DEBUG) << "mesh " << this->functionSpace_->meshName() << " element " << elementNoLocal << ", values: " << solutionValues;
+
     // loop over dofs in element, where to compute the gradient
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
     {
@@ -109,12 +114,13 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       // compute the 3xD jacobian of the parameter space to world space mapping
       Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(FunctionSpaceType::computeJacobian(geometryValues, xi));
       double jacobianDeterminant;
-      Tensor2<D> inverseJacobianParameterSpace = MathUtility::computeInverse<D>(jacobianParameterSpace, jacobianDeterminant);
+      Tensor2<D> inverseJacobianParameterSpace = MathUtility::template computeInverse<double>(jacobianParameterSpace, jacobianDeterminant);
 
       // estimate condition value of jacobian
-      double conditionNumber = MathUtility::estimateConditionNumber(jacobianParameterSpace, inverseJacobianParameterSpace);
       if (jacobianConditionNumberField != nullptr)
       {
+        double conditionNumber = MathUtility::estimateConditionNumber(jacobianParameterSpace, inverseJacobianParameterSpace);
+
         conditionNumber /= nAdjacentElements[dofNo];
         jacobianConditionNumberField->setValue(dofNo, conditionNumber, ADD_VALUES);
       }
@@ -122,6 +128,8 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
 
       // get gradient at dof
       std::array<double,D> gradPhiWorldSpace = this->functionSpace_->interpolateGradientInElement(solutionValues, inverseJacobianParameterSpace, xi);
+
+      LOG(DEBUG) << "   dof " << dofIndex << ", dofNo " << dofNo << ", nAdjacentElements: " << nAdjacentElements[dofNo] << ", gradPhiWorldSpace: " << gradPhiWorldSpace << ", inverseJacobianParameterSpace: " << inverseJacobianParameterSpace;
 
       // scale value
       gradPhiWorldSpace /= nAdjacentElements[dofNo];
@@ -131,7 +139,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       {
         int rankNo = DihuContext::ownRankNoCommWorld();
 
-          if ((rankNo == 0 && dofNo == 150) || (rankNo == 1 && dofNo == 0))
+        if ((rankNo == 0 && dofNo == 150) || (rankNo == 1 && dofNo == 0))
         {
           LOG(DEBUG) << "dofNo " << dofNo << " gradPhiWorldSpace: " << gradPhiWorldSpace << ", nAdjacentElements[dofNo]: " << nAdjacentElements[dofNo]
             << ",geometryValues: " << geometryValues << ", for this dof: " << geometryValues[dofIndex];
@@ -186,6 +194,9 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
 
   gradientField->finishGhostManipulation();
   approximatedGradientField->finishGhostManipulation();
+
+  LOG(DEBUG) << "gradientField: " << *gradientField;
+  LOG(DEBUG) << "approximatedGradientField: " << *approximatedGradientField;
 
   if (jacobianConditionNumberField)
   {
@@ -243,6 +254,128 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       }
     }
   }
+}
+
+// unstructured mesh
+//! compute the gradient field
+template<typename FunctionSpaceType>
+void FieldVariableGradient<FunctionSpaceType,1,::Mesh::UnstructuredDeformableOfDimension<FunctionSpaceType::dim()>>::
+computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSpaceType::dim()>> gradientField,
+                     std::shared_ptr<FieldVariable<FunctionSpaceType,1>> jacobianConditionNumberField)
+{
+  LOG(DEBUG) << "computeGradientField (unstructured), functionSpaceType: " << StringUtility::demangle(typeid(FunctionSpaceType).name());
+
+  this->values_->setRepresentationGlobal();
+  this->values_->startGhostManipulation();
+
+  // initialize gradient field variable to 0
+  gradientField->zeroEntries();
+
+  gradientField->setRepresentationGlobal();
+  gradientField->startGhostManipulation();
+  gradientField->zeroGhostBuffer();
+
+  // define constants
+  const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
+  const int D = FunctionSpaceType::dim();
+
+  const dof_no_t nDofsWithGhosts = this->functionSpace_->nDofsLocalWithGhosts();
+  std::vector<int> nAdjacentElements(nDofsWithGhosts, 0);   //< the number of elements that are adjacent to the node
+
+  // count number evaluations for every dof
+  // loop over elements
+  for (element_no_t elementNoLocal = 0; elementNoLocal < this->functionSpace_->nElementsLocal(); elementNoLocal++)
+  {
+    // get local dof nos of this element
+    std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNoLocal);
+
+    // loop over dofs in element, where to compute the gradient
+    for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
+    {
+      dof_no_t dofNo = elementDofs[dofIndex];
+
+      assert(dofNo < nDofsWithGhosts);
+
+      // increase counter of number of summands for that dof
+      nAdjacentElements[dofNo]++;
+    }
+  }
+
+  // compute gradient value divided by number of evaluations
+  // loop over elements
+  for (element_no_t elementNoLocal = 0; elementNoLocal < this->functionSpace_->nElementsLocal(); elementNoLocal++)
+  {
+    // get local dof nos of this element
+    std::array<dof_no_t,nDofsPerElement> elementDofs = this->functionSpace_->getElementDofNosLocal(elementNoLocal);
+
+    // compute gradient at every dof, as continuous to current element (gradients have discontinuities between elements at dofs)
+    std::array<double,nDofsPerElement> solutionValues;
+    this->getElementValues(elementNoLocal, solutionValues);
+
+    // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
+    std::array<Vec3,nDofsPerElement> geometryValues;
+    this->functionSpace_->getElementGeometry(elementNoLocal, geometryValues);
+
+    std::array<double,D> xi;
+
+    // loop over dofs in element, where to compute the gradient
+    for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
+    {
+
+      dof_no_t dofNo = elementDofs[dofIndex];
+
+      // compute correct gradient from ansatz functions
+      // set xi to dofIndex
+      for (int i = 0; i < D; i++)
+      {
+        if (i == 0)
+          xi[i] = double(dofIndex % 2);
+        else if (i == 1)
+          xi[i] = double((dofIndex % 4) / 2);
+        else if (i == 2)
+          xi[i] = double(dofIndex / 4);
+      }
+
+      //VLOG(2) << "element " << elementNoLocal << " dofIndex " << dofIndex << ", xi " << xi << " g:" << geometryValues;
+
+      // compute the 3xD jacobian of the parameter space to world space mapping
+      Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(FunctionSpaceType::computeJacobian(geometryValues, xi));
+      double jacobianDeterminant;
+      Tensor2<D> inverseJacobianParameterSpace = MathUtility::template computeInverse<double>(jacobianParameterSpace, jacobianDeterminant);
+
+      // estimate condition value of jacobian
+      double conditionNumber = MathUtility::estimateConditionNumber(jacobianParameterSpace, inverseJacobianParameterSpace);
+      if (jacobianConditionNumberField != nullptr)
+      {
+        conditionNumber /= nAdjacentElements[dofNo];
+        jacobianConditionNumberField->setValue(dofNo, conditionNumber, ADD_VALUES);
+      }
+      //VLOG(1) << "conditionNumber: " << conditionNumber;
+
+      // get gradient at dof
+      std::array<double,D> gradPhiWorldSpace = this->functionSpace_->interpolateGradientInElement(solutionValues, inverseJacobianParameterSpace, xi);
+
+      // scale value
+      gradPhiWorldSpace /= nAdjacentElements[dofNo];
+
+      // add value to gradient field variable
+      if (VLOG_IS_ON(2))
+      {
+        int rankNo = DihuContext::ownRankNoCommWorld();
+
+          if ((rankNo == 0 && dofNo == 150) || (rankNo == 1 && dofNo == 0))
+        {
+          LOG(DEBUG) << "dofNo " << dofNo << " gradPhiWorldSpace: " << gradPhiWorldSpace << ", nAdjacentElements[dofNo]: " << nAdjacentElements[dofNo]
+            << ",geometryValues: " << geometryValues << ", for this dof: " << geometryValues[dofIndex];
+          LOG(DEBUG) << "solutionValues: " << solutionValues[dofIndex] << ", all: " << solutionValues;
+        }
+      }
+
+      gradientField->setValue(dofNo, gradPhiWorldSpace, ADD_VALUES);
+    }  // dofIndex
+  }  // elementNoLocal
+
+  gradientField->finishGhostManipulation();
 }
 
 } // namespace

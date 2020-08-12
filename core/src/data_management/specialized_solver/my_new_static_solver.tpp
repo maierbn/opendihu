@@ -23,20 +23,26 @@ initialize()
   // call initialize of base class
   Data<FunctionSpaceType>::initialize();
 
-  // create th output connector data object
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+  // create th slot connector data object
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
 
   // add all needed field variables to be transferred
 
   // add component 0 of fieldvariableA_
-  outputConnectorData_->addFieldVariable(this->solution_, 0);
+  slotConnectorData_->addFieldVariable(this->solution_, 0);
 
   // There is addFieldVariable(...) and addFieldVariable2(...) for the two different field variable types,
-  // Refer to "data_management/output_connector_data.h" for details.
+  // Refer to "slot_connection/slot_connector_data.h" for details.
 
   // you can also access settings from the python config here:
   std::string option1 = this->context_.getPythonConfig().getOptionString("option1", "default string");
   LOG(DEBUG) << "In data object, parsed option1: [" << option1 << "].";
+
+  // parse slot names for all slot connector data slots. here we only expect one value because we have set one slot (fieldVariable solution)
+  this->context_.getPythonConfig().getOptionVector("slotNames", slotConnectorData_->slotNames);
+
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
 }
 
 template<typename FunctionSpaceType>
@@ -76,11 +82,11 @@ setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceTy
 
 
 template<typename FunctionSpaceType>
-std::shared_ptr<typename MyNewStaticSolver<FunctionSpaceType>::OutputConnectorDataType> MyNewStaticSolver<FunctionSpaceType>::
-getOutputConnectorData()
+std::shared_ptr<typename MyNewStaticSolver<FunctionSpaceType>::SlotConnectorDataType> MyNewStaticSolver<FunctionSpaceType>::
+getSlotConnectorData()
 {
-  // return the output connector data object
-  return this->outputConnectorData_;
+  // return the slot connector data object
+  return this->slotConnectorData_;
 }
 
 template<typename FunctionSpaceType>

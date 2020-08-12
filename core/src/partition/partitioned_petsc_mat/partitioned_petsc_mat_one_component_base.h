@@ -59,9 +59,9 @@ public:
   
 protected:
  
-  std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartitionRows_;  ///< the mesh partition object which stores how the mesh is decomposed and what is the local portion, for the rows of the matrix
-  std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> meshPartitionColumns_;  ///< the mesh partition object which stores how the mesh is decomposed and what is the local portion, for the columns of the matrix
-  std::string name_;   ///< a specifier for the matrix, only used for debugging
+  std::shared_ptr<Partition::MeshPartition<RowsFunctionSpaceType>> meshPartitionRows_;  //< the mesh partition object which stores how the mesh is decomposed and what is the local portion, for the rows of the matrix
+  std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> meshPartitionColumns_;  //< the mesh partition object which stores how the mesh is decomposed and what is the local portion, for the columns of the matrix
+  std::string name_;   //< a specifier for the matrix, only used for debugging
 };
 
 

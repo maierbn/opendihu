@@ -17,6 +17,7 @@ dirichletBC = {
 material_parameters = [5.0, 3.0, 100.0]  # c0, c1, kappa
 
 config = {
+  "logFormat": "csv",
   "FiniteElementMethod" : {
     "nElements": [nx,ny,nz],
     "physicalExtent": [10.0,10.0,10.0],

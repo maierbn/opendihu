@@ -31,7 +31,7 @@ def CUDANVCCSharedObjectEmitter(target, source, env):
 bad_flags_set = set(['-malign-double'])
 def strip_flags(target, source, env, for_signature):
 	flags = env['CCFLAGS']
-	if isinstance(flags, basestring):
+	if isinstance(flags, str):
 		flags = [flags]
 	return [f for f in flags if f not in bad_flags_set]
 		
@@ -93,7 +93,7 @@ def generate(env):
 			   homedrive + '/CUDA']
 		for path in paths:
 			if os.path.isdir(path):
-				print 'scons: CUDA Toolkit found in ' + path
+				print('scons: CUDA Toolkit found in ' + path)
 				cudaToolkitPath = path
 				break
 		if cudaToolkitPath == None:
@@ -123,7 +123,7 @@ def generate(env):
 			   homedrive + '/CUDA/SDK']
 		for path in paths:
 			if os.path.isdir(path):
-				print 'scons: CUDA SDK found in ' + path
+				print('scons: CUDA SDK found in ' + path)
 				cudaSDKPath = path
 				break
 		if cudaSDKPath == None:

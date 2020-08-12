@@ -93,10 +93,10 @@ void Paraview::VTKPiece::setVTKValues()
   // set values for firstScalarName and firstVectorName from the values in pointDataArrays
   for (auto pointDataArray : properties.pointDataArrays)
   {
-    if (firstScalarName == "" && pointDataArray.second == 1)
-      firstScalarName = pointDataArray.first;
-    if (firstVectorName == "" && pointDataArray.second != 1)
-      firstVectorName = pointDataArray.first;
+    if (firstScalarName == "" && pointDataArray.nComponents != 3)
+      firstScalarName = pointDataArray.name;
+    if (firstVectorName == "" && pointDataArray.nComponents == 3)
+      firstVectorName = pointDataArray.name;
   }
 }
 

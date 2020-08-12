@@ -46,6 +46,7 @@ with open(input_filename, "rb") as infile:
   
   header_length_raw = infile.read(4)
   header_length = struct.unpack('i', header_length_raw)[0]
+  print("header_length: {}".format(header_length))
   #header_length = 32+8
   parameters = []
   for i in range(int(header_length/4) - 1):
@@ -90,6 +91,7 @@ with open(input_filename, "rb") as infile:
   for streamline_no in range(n_fibers_total):
     streamline = []
     streamline_valid = True
+    n_zero_points = 0
     
     # loop over points of fiber
     for point_no in range(n_points_whole_fiber):
@@ -117,11 +119,14 @@ with open(input_filename, "rb") as infile:
         
       # check if point is valid
       if point[0] == 0.0 and point[1] == 0.0 and point[2] == 0.0:
+        n_zero_points += 1
+        
+      if point[0] == 0.0 and point[1] == 0.0 and point[2] == 0.0 and n_zero_points >= 2:
         if streamline_valid:
           coordinate_x = streamline_no % n_fibers_x
           coordinate_y = (int)(streamline_no / n_fibers_x)
-          print("Error: streamline {}, ({},{})/({},{}) is invalid ({}. point)".format(streamline_no, coordinate_x, coordinate_y, n_fibers_x, n_fibers_y, point_no))
-          print("streamline so far: ",streamline[0:10])
+          print("Warning: streamline {}, ({},{})/({},{}) contains point [0,0,0] (at {}. point) and thus may be invalid.".format(streamline_no, coordinate_x, coordinate_y, n_fibers_x, n_fibers_y, point_no))
+          print("streamline so far (first ten points): ",streamline[0:10])
         streamline_valid = False
       streamline.append(point)
       

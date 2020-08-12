@@ -204,10 +204,10 @@ int main(int argc, char *argv[])
   //ierr = MatSetSizes(globalMatrix, nComponents*nNodesLocal, nComponents*nNodesLocal, nComponents*nNodesGlobal, nComponents*nNodesGlobal); CHKERRQ(ierr);
   ierr = MatSetSizes(globalMatrix, PETSC_DECIDE, PETSC_DECIDE, nComponents*nNodesGlobal, nComponents*nNodesGlobal); CHKERRQ(ierr);
 
-  int diagonalNonZeros = nNodesGlobal;
-  int offdiagonalNonZeros = nNodesGlobal;
-  ierr = MatMPIAIJSetPreallocation(globalMatrix, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRQ(ierr);
-  ierr = MatSeqAIJSetPreallocation(globalMatrix, diagonalNonZeros, NULL); CHKERRQ(ierr);
+  int nNonZerosDiagonal = nNodesGlobal;
+  int nNonZerosOffdiagonal = nNodesGlobal;
+  ierr = MatMPIAIJSetPreallocation(globalMatrix, nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL); CHKERRQ(ierr);
+  ierr = MatSeqAIJSetPreallocation(globalMatrix, nNonZerosDiagonal, NULL); CHKERRQ(ierr);
     
   
   int nRows, nColumns, nRowsLocal, nColumnsLocal;

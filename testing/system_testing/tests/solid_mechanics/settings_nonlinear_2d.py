@@ -26,6 +26,7 @@ for y in range(ny):
 
 
 config = {
+  "logFormat": "csv",
   "FiniteElementMethod" : {
     "nElements": [nx,ny],
     "physicalExtent": [10.0,10.0,10.0],

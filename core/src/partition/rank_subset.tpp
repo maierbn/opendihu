@@ -57,7 +57,7 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubse
   if (color == 1)
   {
     int nRanksInCommunicator;
-    MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanksInCommunicator));
+    MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanksInCommunicator), "MPI_Comm_size");
     if (nRanksInCommunicator != rankNo_.size())
     {
       if (nRanksInCommunicator < rankNo_.size())

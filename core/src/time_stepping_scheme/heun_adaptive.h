@@ -67,7 +67,7 @@ private:
   // temporary vectors for calculation
   Vec temp_solution_normal;
   Vec temp_solution_tilde;
-  Vec temp_solution_tilde_intermediate;
+  Vec temp_solution_tilde_algebraic;
   Vec temp_increment_1;
   Vec temp_increment_2;
 

@@ -71,10 +71,10 @@ getValuesAtNode(TupleType currentFieldVariableTuple, std::string meshName,
 // element i is of vector type
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-getValuesAtNode(VectorType currentFieldVariableVector, std::string meshName, 
+getValuesAtNode(VectorType currentFieldVariableGradient, std::string meshName, 
                 element_no_t currentNodeGlobalNo, std::vector<double> &valuesAtNode)
 {
-  for (auto& currentFieldVariable : currentFieldVariableVector)
+  for (auto& currentFieldVariable : currentFieldVariableGradient)
   {
     // call function on all vector entries
     if (getValuesAtNode<typename VectorType::value_type>(

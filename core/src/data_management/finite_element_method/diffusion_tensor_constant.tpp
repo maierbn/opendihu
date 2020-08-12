@@ -37,8 +37,9 @@ initialize(std::shared_ptr<FunctionSpaceType> functionSpace)
 }
 
 template<typename FunctionSpaceType>
-const MathUtility::Matrix<FunctionSpaceType::dim(),FunctionSpaceType::dim()> &DiffusionTensorConstant<FunctionSpaceType>::
-diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpaceType::dim()> xi) const
+template<typename double_v_t, typename element_no_v_t>
+const MathUtility::Matrix<FunctionSpaceType::dim(),FunctionSpaceType::dim(),double_v_t> DiffusionTensorConstant<FunctionSpaceType>::
+diffusionTensor(element_no_v_t elementNoLocal, const std::array<double,FunctionSpaceType::dim()> xi) const
 {
   return this->diffusionTensor_.value(elementNoLocal);
 }

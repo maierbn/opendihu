@@ -21,7 +21,7 @@ public:
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunction::LagrangeOfOrder<2>> FunctionSpaceType;
   typedef Data::QuasiStaticNonlinearElasticityChaste<FunctionSpaceType> Data;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,1> FieldVariableType;
-  typedef ::Data::OutputConnectorData<FunctionSpaceType,1> OutputConnectorDataType;
+  typedef ::Data::SlotConnectorData<FunctionSpaceType,1> SlotConnectorDataType;
 
   //! constructor
   QuasiStaticNonlinearElasticitySolverChaste(DihuContext context);
@@ -45,27 +45,27 @@ public:
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! output the given data for debugging
-  std::string getString(std::shared_ptr<OutputConnectorDataType> data);
+  std::string getString(std::shared_ptr<SlotConnectorDataType> data);
 
 protected:
 
-  DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
+  DihuContext context_;    //< object that contains the python config for the current context and the global singletons meshManager and solverManager
 
-  OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
-  Data data_;                 ///< data object
+  OutputWriter::Manager outputWriterManager_; //< manager object holding all output writer
+  Data data_;                 //< data object
 
-  std::string durationLogKey_;   ///< key with with the duration of the computation is written to the performance measurement log
-  std::shared_ptr<FunctionSpaceType> functionSpace_;  ///< the function space with quadratic Lagrange basis functions, as created in the opendihu code. This will be passed on to chaste.
+  std::string durationLogKey_;   //< key with with the duration of the computation is written to the performance measurement log
+  std::shared_ptr<FunctionSpaceType> functionSpace_;  //< the function space with quadratic Lagrange basis functions, as created in the opendihu code. This will be passed on to chaste.
 
-  bool initialized_;   ///< if this object was already initialized
-  PythonConfig specificSettings_;    ///< python object containing the value of the python config dict with corresponding key
-  double endTime_;     ///< end time of current time step
-  double maximumActiveStress_;    ///< parameter value of the maximum active stress, this is the scaling factor of the activation value to get the active stress tensor
-  double strainScalingCurveWidth_;   ///< width of a parabola that scales the stress dependend on the relative sarcomere length
+  bool initialized_;   //< if this object was already initialized
+  PythonConfig specificSettings_;    //< python object containing the value of the python config dict with corresponding key
+  double endTime_;     //< end time of current time step
+  double maximumActiveStress_;    //< parameter value of the maximum active stress, this is the scaling factor of the activation value to get the active stress tensor
+  double strainScalingCurveWidth_;   //< width of a parabola that scales the stress dependend on the relative sarcomere length
 };
 
 }  // namespace

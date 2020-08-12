@@ -79,7 +79,7 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(std::string meshName)
 {
   LOG(DEBUG) << "querying Mesh::Manager::functionSpace, type " << StringUtility::demangle(typeid(FunctionSpaceType).name());
 
-  if (hasFunctionSpaceOfType<FunctionSpaceType>(meshName))
+  if (hasFunctionSpaceOfType<FunctionSpaceType>(meshName, true))
   {
     LOG(DEBUG) << "Mesh with meshName \"" << meshName << "\" requested, found and type matches, type is "
       << StringUtility::demangle(typeid(functionSpaces_[meshName]).name())
@@ -97,10 +97,14 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(std::string meshName)
 
     if (hasFunctionSpace(meshName))
     {
+      LOG(WARNING) << "There are two meshes of different types with the name \"" << meshName
+        << "\". This is probably not intended. Creating the second mesh with name \"" << meshName << "_2\".\n"
+        << "Type of this mesh: " << StringUtility::demangle(typeid(FunctionSpaceType).name())
+        << "\nCheck if the CellMLAdapter specifies the correct FunctionSpace type (Use CellMLAdapter<nStates,nAlgebraics,FunctionSpaceType>).";
+
       std::stringstream newMeshName;
       newMeshName << meshName << "_2";
       meshName = newMeshName.str();
-      LOG(INFO) << "Create a mesh with name \"" << meshName << "\".";
     }
 
     // create new mesh and initialize
@@ -132,7 +136,7 @@ std::shared_ptr<FunctionSpaceType> Manager::functionSpace(std::string meshName)
 template<typename FunctionSpaceType, typename ...Args>
 std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpace(std::string name, Args && ...args)
 {
-  if (hasFunctionSpaceOfType<FunctionSpaceType>(name))
+  if (hasFunctionSpaceOfType<FunctionSpaceType>(name, true))
   {
     LOG(ERROR) << "FunctionSpace with name \"" <<name << "\" already exists. Overwrite mesh.";
   }
@@ -186,7 +190,7 @@ std::shared_ptr<FunctionSpaceType> Manager::createCompositeMesh(PythonConfig set
   }
 
   // check if this mesh has already been created
-  if (hasFunctionSpaceOfType<FunctionSpaceType>(compositeName.str()))
+  if (hasFunctionSpaceOfType<FunctionSpaceType>(compositeName.str(), true))
   {
     LOG(DEBUG) << "Composite mesh with meshName \"" << compositeName.str() << "\" requested, found and type matches, type is "
       << StringUtility::demangle(typeid(functionSpaces_[compositeName.str()]).name())
@@ -248,7 +252,7 @@ template<typename FunctionSpaceType, typename ...Args>
 std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpaceWithGivenMeshPartition(
   std::string name, std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition, Args && ...args)
 {
-  if (hasFunctionSpaceOfType<FunctionSpaceType>(name))
+  if (hasFunctionSpaceOfType<FunctionSpaceType>(name, true))
   {
     LOG(ERROR) << "FunctionSpace with name \"" <<name << "\" already exists. Overwrite mesh.";
   }
@@ -273,7 +277,7 @@ std::shared_ptr<FunctionSpaceType> Manager::createFunctionSpaceWithGivenMeshPart
 }
 
 template<typename FunctionSpaceType>
-bool Manager::hasFunctionSpaceOfType(std::string meshName)
+bool Manager::hasFunctionSpaceOfType(std::string meshName, bool outputWarning)
 {
   VLOG(1) << "hasMesh(" << meshName << "): " << (functionSpaces_.find(meshName) != functionSpaces_.end());
   VLOG(1) << "meshes size: " << functionSpaces_.size();
@@ -284,10 +288,11 @@ bool Manager::hasFunctionSpaceOfType(std::string meshName)
     {
       return true;
     }
-    else
+    else if (outputWarning)
     {
       LOG(WARNING) << "Mesh \"" << meshName << "\" is stored but under a type that is different from "
         << StringUtility::demangle(typeid(FunctionSpaceType).name()) << ". A new mesh will be created instead.";
+
       // This warning could be if in an operator splitting setup for Cellml adapter the functionType is set differently from the one in the FEM.
     }
   }
@@ -312,8 +317,9 @@ createGenericFunctionSpace(int nEntries, std::shared_ptr<Partition::MeshPartitio
     nElements[0] = nEntries;
   }
 
-  LOG(DEBUG) << "createGenericFunctionSpace, nEntries: " << nEntries << ", hasFullNumberOfNodes: "
-    << "["  << meshPartition->hasFullNumberOfNodes(0) << ", "  << meshPartition->hasFullNumberOfNodes(1) << ", "  << meshPartition->hasFullNumberOfNodes(2) << "], nElements: " << nElements;
+  LOG(DEBUG) << "createGenericFunctionSpace, nEntries: " << nEntries;
+  // << ", hasFullNumberOfNodes: "
+  //  << "["  << meshPartition->hasFullNumberOfNodes(0) << ", "  << meshPartition->hasFullNumberOfNodes(1) << ", "  << meshPartition->hasFullNumberOfNodes(2) << "], nElements: " << nElements;
 
   std::array<double, 1> physicalExtent({0.0});
   std::array<int, 1> nRanksPerCoordinateDirection({meshPartition->nRanks()});

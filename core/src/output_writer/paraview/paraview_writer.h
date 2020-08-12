@@ -56,7 +56,7 @@ public:
   static void outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables,
                          std::string meshName, 
                          std::shared_ptr<FunctionSpace::FunctionSpace<::Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>> mesh,
-                         int nFieldVariablesOfMesh, PythonConfig specificSettings);
+                         int nFieldVariablesOfMesh, PythonConfig specificSettings, double currentTime);
 };
 
 /** Partial specialization for structured mesh.
@@ -70,7 +70,7 @@ public:
   static void outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables,
                          std::string meshName, 
                          std::shared_ptr<FunctionSpace::FunctionSpace<::Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>> mesh,
-                         int nFieldVariablesOfMesh, PythonConfig specificSettings);
+                         int nFieldVariablesOfMesh, PythonConfig specificSettings, double currentTime);
 };
 
 /** Partial specialization for unstructured mesh.
@@ -84,7 +84,7 @@ public:
   static void outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables,
                          std::string meshName, 
                          std::shared_ptr<FunctionSpace::FunctionSpace<::Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> mesh,
-                         int nFieldVariablesOfMesh, PythonConfig specificSettings);
+                         int nFieldVariablesOfMesh, PythonConfig specificSettings, double currentTime);
 };
 
 } // namespace

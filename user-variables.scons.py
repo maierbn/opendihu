@@ -47,7 +47,7 @@ SEMT_DOWNLOAD = True
 EASYLOGGINGPP_DOWNLOAD = True
 
 # ADIOS2, adaptable I/O library, needed for interfacing MegaMol
-ADIOS_DOWNLOAD = True
+ADIOS_DOWNLOAD = False
 
 # MegaMol, visualization framework of VISUS, optional, needs ADIOS2
 MEGAMOL_DOWNLOAD = False    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
@@ -62,12 +62,17 @@ XBRAID_DOWNLOAD = True
 OPENCOR_DOWNLOAD = True
 
 # preCICE coupling library
-#LIBXML2_DOWNLOAD = True
-#PRECICE_DOWNLOAD = True
+LIBXML2_DOWNLOAD = False
+PRECICE_DOWNLOAD = False
 
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
-MPI_DIR = "/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
+#MPI_DIR = "/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
+MPI_DIR = "/usr/lib/x86_64-linux-gnu/openmpi"    # standard path for openmpi on ubuntu >18.04
+
+# Vectorized code for matrix assembly
+# Set to True for fastest code, set to False for faster compilation
+USE_VECTORIZED_FE_MATRIX_ASSEMBLY = False
 
 # chaste and dependencies
 have_chaste = False
@@ -79,13 +84,13 @@ XSD_DOWNLOAD = have_chaste
 BOOST_DOWNLOAD = False
 CHASTE_DOWNLOAD = have_chaste
 
-# automatically set MPI_DIR for other systems, like ubuntu 18.04 and Debian
+# automatically set MPI_DIR for other systems, like ubuntu 16.04 and Debian
 try:
   import lsb_release
   lsb_info = lsb_release.get_lsb_information()   # get information about ubuntu version, if available
   if "RELEASE" in lsb_info:
-    if lsb_info["RELEASE"] == "18.04":
-      MPI_DIR="/usr/lib/x86_64-linux-gnu/openmpi"   # this is the standard path on ubuntu 18.04
+    if lsb_info["RELEASE"] == "16.04":
+      MPI_DIR="/usr/lib/openmpi"   # this is the standard path on ubuntu 16.04
 except:
   pass
 
@@ -104,7 +109,7 @@ try:
     
   # for Travis CI, build MPI ourselves
   if os.environ.get("TRAVIS") is not None:
-    print "Travis CI detected, del MPI_DIR"
+    print("Travis CI detected, del MPI_DIR")
     del MPI_DIR
     MPI_DOWNLOAD=True
   
@@ -121,20 +126,24 @@ try:
     MPI_DIR = os.environ["MPI_HOME"]
   
   elif "hawk" in os.environ["SITE_PLATFORM_NAME"]:
-    print("on hawk")
+    print("on hawk load the following modules: \"module load adios2/2.5.0 cmake python mkl petsc/3.12.2-int32-shared\"")
+
     MPI_DIR = os.environ["MPT_ROOT"]
-    MPI_IGNORE_MPICC
-    LAPACK_DIR = os.environ["SCALAPACK_ROOT"]
     LAPACK_DOWNLOAD = False
     PETSC_DOWNLOAD = False
     PETSC_DIR = os.environ["PETSC_ROOT"]
     PYTHONPACKAGES_DOWNLOAD = False
-    GOOGLETEST_DOWNLOAD = False  
-    XBRAID_DOWNLOAD = False
+    GOOGLETEST_DOWNLOAD = True 
+    XBRAID_DOWNLOAD = True
     ADIOS_DOWNLOAD = False
     ADIOS_DIR = os.environ["ADIOS2_ROOT"]
-    cc = "mpicc -cc=gcc"
+    cc = "mpicc -cc="+os.environ["CC"]
     CC = "mpicxx -cxx=g++ -ftemplate-backtrace-limit=0"   
+    CC = "mpicxx -cxx="+os.environ["CXX"]+" -ftemplate-backtrace-limit=0"   
+#    cc = "icc"
+#    CC = "icpc "  
+#    cc = "clang"
+#    CC = "clang++"
 except:
   pass
 
@@ -144,7 +153,7 @@ if False:
   MPI_DOWNLOAD = True
   MPI_IGNORE_MPICC = True    # this downloads and builds openmpi
 
-PETSC_DEBUG = True            # this enables debugging flags such that valgrind memcheck can track MPI errors
+#PETSC_DEBUG = True            # this enables debugging flags such that valgrind memcheck can track MPI errors
 
 # specialized settings for supercomputer (HazelHen)
 import os

@@ -96,17 +96,29 @@ public:
   //! get the local dof no for a global petsc dof no, does not work for ghost nodes
   dof_no_t getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const;
 
+  //! get the local node no for its global coordinates
+  node_no_t getNodeNoLocal(std::array<global_no_t,D> coordinatesGlobal, bool &isOnLocalDomain) const;
+
+  //! get the local dof no for the global coordinates of the node
+  dof_no_t getDofNoLocal(std::array<global_no_t,D> coordinatesGlobal, int nodalDofIndex, bool &isOnLocalDomain) const;
+
+  //! transform the global natural numbering to the local numbering
+  node_no_t getNodeNoLocalFromGlobalNatural(global_no_t nodeNoGlobalNatural, bool &isOnLocalDomain) const;
+
   //! get the local element no from the global element no, isOnLocalDomain is true
   element_no_t getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const;
-
-  //! this does nothing for unstructured meshes, only for structured meshes
-  void initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> functionSpace){};
 
   //! output to stream for debugging
   void output(std::ostream &stream);
 
   //! check if the given dof is owned by the own rank, then return true, if not, neighbourRankNo is set to the rank by which the dof is owned
   bool isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const;
+
+  //! get the rank on which the global natural node is located
+  int getRankOfNodeNoGlobalNatural(global_no_t nodeNoGlobalNatural) const;
+
+  //! get the rank on which the global natural node is located
+  int getRankOfDofNoGlobalNatural(global_no_t dofNoGlobalNatural) const;
 
   //! get the node no in global petsc ordering from a local node no
   global_no_t getNodeNoGlobalPetsc(element_no_t nodeNoLocal) const;
@@ -119,9 +131,9 @@ public:
 
 protected:
  
-  global_no_t nElements_;   ///< the global size, i.e. number of elements of the whole problem
-  global_no_t nNodes_;   ///< the global size, i.e. the number of nodes of the whole problem
-  global_no_t nDofs_;    ///< the number of dofs
+  global_no_t nElements_;   //< the global size, i.e. number of elements of the whole problem
+  global_no_t nNodes_;   //< the global size, i.e. the number of nodes of the whole problem
+  global_no_t nDofs_;    //< the number of dofs
 };
 
 }  // namespace

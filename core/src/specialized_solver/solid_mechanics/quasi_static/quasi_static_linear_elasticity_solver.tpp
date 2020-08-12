@@ -68,7 +68,7 @@ advanceTimeSpan()
 
   finiteElementMethodLinearElasticity_.data().computeStrain(data_.strain());
 
-  data_.debug();
+  //data_.debug();
 
   LOG(DEBUG) << "update geometry";
 
@@ -94,6 +94,9 @@ computeActiveStress()
   LOG(TRACE) << "";
   LOG(DEBUG) << "activation: " << *this->data_.activation();
 
+  this->data_.activeStress()->setRepresentationGlobal();
+  this->data_.activeStress()->startGhostManipulation();
+
   // loop over elements
   for (element_no_t elementNoLocal = 0; elementNoLocal < this->data_.functionSpace()->nElementsLocal(); elementNoLocal++)
   {
@@ -108,10 +111,14 @@ computeActiveStress()
     // loop over dofs of element
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
     {
-      double directionalStress = maximumActiveStress_ * activationValues[dofIndex];
-
+      // get list of local dofNos of the current element
       dof_no_t dofNo = this->data_.functionSpace()->getDofNo(elementNoLocal, dofIndex);
 
+      // compute the active stress
+      double directionalStress = maximumActiveStress_ * activationValues[dofIndex];
+
+      // scale stress by strain to obtain a characteristic force-length relationship
+#if 0
       // get the strain in fiber direction
       int componentNo = D*D - 1;   // get the epsilon_zz entry which is the last
       double strainZ = data_.strain()->getValue(componentNo, dofNo);
@@ -121,25 +128,35 @@ computeActiveStress()
       double scalingFactor = 1 - MathUtility::sqr(relativeSarcomereLength / strainScalingCurveWidth_);   // scaling function 1 - (z/w)^2, w is the width of the parabola
       scalingFactor = 1.0;  // currently disabled for debugging
       directionalStress *= scalingFactor;
+#endif
 
-      MathUtility::Matrix<D,D> stressTensor = std::array<double,D*D>{
+      MathUtility::Matrix<D,D> stressTensor = directionalStress * anisotropyTensor_.value(elementNoLocal);
+
+      /*
+      std::array<double,D*D>{
         directionalStress, 0, 0,
         0, 0, 0,
         0, 0, 0
-      };
+      };*/
 
-      // rotate stress tensor in fiber direction
+      VLOG(1) << "initial stressTensor: " << stressTensor;
+
+      // rotate stress tensor in fiber direction by change of basis
       MathUtility::rotateMatrix(stressTensor, fiberDirectionValues[dofIndex]);
 
-      LOG(DEBUG) << " dof " << dofNo << ", strainZ: " << strainZ << ", relativeSarcomereLength: " << relativeSarcomereLength
+#if 0
+      VLOG(1) << " dof " << dofNo << ", strainZ: " << strainZ << ", relativeSarcomereLength: " << relativeSarcomereLength
         << ", activationValues: " << activationValues << ", directionalStress: " << directionalStress
         << ", fiber direction: " << fiberDirectionValues[dofIndex] << ", rotated stress: " << stressTensor;
+#endif
 
+      // assign the computed active stress to the field variable
       std::array<double,D*D> stressTensorValues = std::array<double,D*D>(stressTensor);
-      this->data_.activeStress()->setValue(dofNo, stressTensorValues);
+      this->data_.activeStress()->setValue(dofNo, stressTensorValues, INSERT_VALUES);
     }
   }
 
+  this->data_.activeStress()->finishGhostManipulation();
 }
 
 template<typename FiniteElementMethod>
@@ -190,31 +207,52 @@ initialize()
 
   // indicate in solverStructureVisualizer that the child solver initialization is done
   DihuContext::solverStructureVisualizer()->endChild();
-  DihuContext::solverStructureVisualizer()->beginChild("PotentialFlow");
 
-  // initialize the potential flow finite element method
-  finiteElementMethodPotentialFlow_.initialize();
+  // if fiberDirection was given in settings, use this vector directly
+  if (specificSettings_.hasKey("fiberDirection"))
+  {
+    fiberDirection_ = specificSettings_.getOptionArray<double,3>("fiberDirection", Vec3{0,0,1});
 
-  // indicate in solverStructureVisualizer that the child solver initialization is done
-  DihuContext::solverStructureVisualizer()->endChild();
+    // set fiber direction in field variable data_.fiberDirection()
+    std::vector<Vec3> fiberDirectionValues(data_.functionSpace()->nDofsLocalWithoutGhosts(), fiberDirection_);
+    data_.fiberDirection()->setValuesWithoutGhosts(fiberDirectionValues);
 
-  LOG(INFO) << "Run potential flow simulation for fiber directions.";
+    usePotentialFlowForFiberDirection_ = false;
+  }
+  else
+  {
+    // fiberDirection is not given in settings, use a potential flow simulation (Laplace equation) and get the fiber direction from the streamlines
+    usePotentialFlowForFiberDirection_ = true;
+    DihuContext::solverStructureVisualizer()->beginChild("PotentialFlow");
 
-  // avoid that solver structure file is created, this should only be done after the whole simulation has finished
-  DihuContext::solverStructureVisualizer()->disable();
+    // initialize the potential flow finite element method
+    finiteElementMethodPotentialFlow_.initialize();
 
-  // solve potential flow Laplace problem
-  finiteElementMethodPotentialFlow_.run();
+    // indicate in solverStructureVisualizer that the child solver initialization is done
+    DihuContext::solverStructureVisualizer()->endChild();
 
-  // enable again
-  DihuContext::solverStructureVisualizer()->enable();
+    LOG(INFO) << "Run potential flow simulation for fiber directions.";
 
-  // compute a gradient field from the solution of the potential flow
-  data_.flowPotential()->setValues(*finiteElementMethodPotentialFlow_.data().solution());
-  data_.flowPotential()->computeGradientField(data_.fiberDirection());
+    // avoid that solver structure file is created, this should only be done after the whole simulation has finished
+    DihuContext::solverStructureVisualizer()->disable();
 
-  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+    // solve potential flow Laplace problem
+    finiteElementMethodPotentialFlow_.run();
+
+    // enable again
+    DihuContext::solverStructureVisualizer()->enable();
+
+    // compute a gradient field from the solution of the potential flow
+    data_.flowPotential()->setValues(*finiteElementMethodPotentialFlow_.data().solution());
+    data_.flowPotential()->computeGradientField(data_.fiberDirection());
+  }
+
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
+
+  // parse anisotropy tensor
+  MathUtility::Matrix<3,3,double> defaultValue(std::array<double,9>{1, 0, 0,    0, 0, 0,    0, 0, 0});
+  this->anisotropyTensor_.initialize(this->specificSettings_, "anisotropyTensor", defaultValue, this->data_.functionSpace());
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
@@ -234,19 +272,19 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
+//! the transfer is done by the slot_connector_data_transfer class
 template<typename FiniteElementMethod>
-std::shared_ptr<typename QuasiStaticLinearElasticitySolver<FiniteElementMethod>::OutputConnectorDataType>
+std::shared_ptr<typename QuasiStaticLinearElasticitySolver<FiniteElementMethod>::SlotConnectorDataType>
 QuasiStaticLinearElasticitySolver<FiniteElementMethod>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  return this->data_.getOutputConnectorData();
+  return this->data_.getSlotConnectorData();
 }
 
 //! output the given data for debugging
 template<typename FiniteElementMethod>
 std::string QuasiStaticLinearElasticitySolver<FiniteElementMethod>::
-getString(std::shared_ptr<typename QuasiStaticLinearElasticitySolver<FiniteElementMethod>::OutputConnectorDataType> data)
+getString(std::shared_ptr<typename QuasiStaticLinearElasticitySolver<FiniteElementMethod>::SlotConnectorDataType> data)
 {
   std::stringstream s;
   s << "<QuasiStaticLinearElasticitySolver:" << *data << ">";

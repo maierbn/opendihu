@@ -15,21 +15,21 @@
  *  The states values are not stored inside the class but in the time stepping scheme that is used to integrate the cellml problems.
  * 
  *  Naming:
- *   Intermediate (opendihu) = KNOWN (OpenCMISS) = Algebraic (OpenCOR)
+ *   Algebraic (opendihu) = KNOWN (OpenCMISS) = Algebraic (OpenCOR)
  *   Parameter (opendihu, OpenCMISS) = KNOWN (OpenCMISS), in OpenCOR also algebraic
  *   Constant - these are constants that are only present in the source files
  *   State: state variable
  *   Rate: the time derivative of the state variable, i.e. the increment value in an explicit Euler stepping
  */
-template <int nStates_, int nIntermediates_=9, typename FunctionSpaceType=FunctionSpace::Generic>
+template <int nStates_, int nAlgebraics_=9, typename FunctionSpaceType=FunctionSpace::Generic>
 class CellmlAdapter :
-  public CallbackHandler<nStates_,nIntermediates_,FunctionSpaceType>,
+  public CallbackHandler<nStates_,nAlgebraics_,FunctionSpaceType>,
   public Splittable
 {
 public:
 
   //! this class needs to define a function space in which its solution variables live. This does not matter at all for a CellML problem, therefore Generic is sufficient. But when using in an operator splitting with FEM as second operator part, it has to be compatible to that and thus needs to be set correctly.
-  typedef FunctionSpaceType FunctionSpace;   ///< FunctionSpace type
+  typedef FunctionSpaceType FunctionSpace;   //< FunctionSpace type
 
   //! constructor from context object
   CellmlAdapter(DihuContext context);
@@ -61,8 +61,7 @@ public:
   void setRankSubset(Partition::RankSubset rankSubset);
   
   //! set initial values and return true or don't do anything and return false
-  template<typename FunctionSpaceType2>
-  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates_>> initialValues);
+  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,nStates_>> initialValues);
   
   //! get a vector with the names of the states
   void getComponentNames(std::vector<std::string> &stateNames) override;
@@ -70,13 +69,23 @@ public:
   //! if the class should handle Dirichlet boundary conditions, this does not apply here
   void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled){};
 
-  //! after this call, getOutputConnectorData() will be called, transfer intermediate field variable to global representation
-  void prepareForGetOutputConnectorData();
+  //! after this call, getSlotConnectorData() will be called, transfer algebraic field variable to global representation
+  void prepareForGetSlotConnectorData();
 
   //! the FastMonodomainSolver accesses the internals of CellmlAdapter
-  template<int a, int b> friend class FastMonodomainSolverBase;
+  template<int a, int b, typename c> friend class FastMonodomainSolverBase;
 
 protected:
+
+  //! check if the callback function "setSpecificParameters" needs to be called and if so, execute the call
+  void checkCallbackParameters(double currentTime);
+
+  //! check if the callback function "setSpecificStates" needs to be called and if so, execute the call
+  void checkCallbackStates(double currentTime, double *statesLocal);
+
+  //! check if the callback function "handleResult" needs to be called and if so, execute the call
+  void checkCallbackAlgebraics(double currentTime, double *statesLocal, double *algebraicsLocal);
+
   //! compute equilibrium of states for option "initializeStatesToEquilibrium"
   void initializeToEquilibriumValues(std::array<double,nStates_> &statesInitialValues);
 };

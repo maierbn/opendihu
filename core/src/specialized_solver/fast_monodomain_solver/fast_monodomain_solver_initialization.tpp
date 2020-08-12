@@ -2,9 +2,10 @@
 
 #include "partition/rank_subset.h"
 #include "control/diagnostic_tool/stimulation_logging.h"
+#include <Vc/Vc>
 
-template<int nStates, int nIntermediates>
-FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 FastMonodomainSolverBase(const DihuContext &context) :
   specificSettings_(context.getPythonConfig()), nestedSolvers_(context),
   initialized_(false)
@@ -13,16 +14,26 @@ FastMonodomainSolverBase(const DihuContext &context) :
   this->outputWriterManager_.initialize(context, specificSettings_);
 }
 
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 initialize()
 {
   // only initialize once
   if (initialized_)
     return;
 
-  // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver("FastMonodomainSolver");
+  if (!std::is_same<DiffusionTimeSteppingScheme,
+        TimeSteppingScheme::ImplicitEuler<typename DiffusionTimeSteppingScheme::DiscretizableInTime>
+      >::value
+     && !std::is_same<DiffusionTimeSteppingScheme,
+        TimeSteppingScheme::CrankNicolson<typename DiffusionTimeSteppingScheme::DiscretizableInTime>
+      >::value)
+  {
+    LOG(FATAL) << "Timestepping scheme of diffusion in FastMonodomainSolver must be either ImplicitEuler or CrankNicolson!";
+  }
+
+  // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
+  DihuContext::solverStructureVisualizer()->addSolver("FastMonodomainSolver", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means slot connector data is shared with the first subsolver
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();
@@ -38,6 +49,7 @@ initialize()
   firingTimesFilename_ = specificSettings_.getOptionString("firingTimesFile", "");
   onlyComputeIfHasBeenStimulated_ = specificSettings_.getOptionBool("onlyComputeIfHasBeenStimulated", true);
   disableComputationWhenStatesAreCloseToEquilibrium_ = specificSettings_.getOptionBool("disableComputationWhenStatesAreCloseToEquilibrium", true);
+  valueForStimulatedPoint_ = specificSettings_.getOptionDouble("valueForStimulatedPoint", 20.0);
 
   // output warning if there are output writers
   if (this->outputWriterManager_.hasOutputWriters())
@@ -146,6 +158,8 @@ initialize()
   LOG(DEBUG) << "nFibers: " << nFibers << ", nFibersToCompute_: " << nFibersToCompute_;
 
   // determine total number of CellML instances to compute on this rank
+  double firstStimulationTime = -1;
+  int firstStimulationMotorUnitNo = 0;
   nInstancesToCompute_ = 0;
   int fiberDataNo = 0;
   fiberNo = 0;
@@ -178,6 +192,8 @@ initialize()
         assert(fiberFunctionSpace);
         assert(motorUnitNo_.size() > 0);
         
+        LOG(DEBUG) << "Fiber " << fiberNoGlobal << " (i,j)=(" << i << "," << j << ") is MU " << motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
+
         fiberData_.at(fiberDataNo).valuesLength = fiberFunctionSpace->nDofsGlobal();
         fiberData_.at(fiberDataNo).fiberNoGlobal = fiberNoGlobal;
         fiberData_.at(fiberDataNo).motorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
@@ -199,43 +215,79 @@ initialize()
           fiberData_.at(fiberDataNo).valuesOffset = fiberData_.at(fiberDataNo-1).valuesOffset + fiberData_.at(fiberDataNo-1).valuesLength;
         }
 
+        // find out first stimulation time of any fiber
+        int firingEventsIndex = round(fiberData_.at(fiberDataNo).setSpecificStatesCallEnableBegin * fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency);
+        if (firingEventsIndex < 0)
+          firingEventsIndex = 0;
+
+        // only if there is a chance that the current fiber will stimulate before the currently firstStimulationTime, because of setSpecificStatesCallEnableBegin
+        if (firstStimulationTime == -1 || firstStimulationTime > fiberData_.at(fiberDataNo).setSpecificStatesCallEnableBegin)
+        {
+          // start at index in firingEvents_, that comes as setSpecificStatesCallEnableBegin, then step over next timesteps until the next stimulation is found
+          int nFiringEvents = firingEvents_.size();
+          for (int i = firingEventsIndex % nFiringEvents; i < nFiringEvents; i++)
+          {
+            // if there is a stimulation at the current timestep
+            int motorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
+            if (firingEvents_[i][motorUnitNo % firingEvents_[i].size()])
+            {
+              // compute current time
+              int firstFiringEventIndex = int(firingEventsIndex / nFiringEvents)*nFiringEvents + i;
+              double firstStimulationTimeMotorUnit = firstFiringEventIndex / fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency;
+
+              LOG(DEBUG) << "  Motor unit " << motorUnitNo << " fires at " << firstStimulationTimeMotorUnit;  // this output does not get called for all motor units!
+
+              // if this time is smaller than currently saved firstStimulationTime, or firstStimulationTime has not yet been initialized
+              if (firstStimulationTime == -1 || firstStimulationTimeMotorUnit < firstStimulationTime)
+              {
+                // store new firstStimulationTime and save motor unit no.
+                firstStimulationMotorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
+                firstStimulationTime = firstStimulationTimeMotorUnit;
+              }
+              break;
+            }
+          }
+        }
+
         // increase index for fiberData_ struct
         fiberDataNo++;
       }
     }
   }
 
-  // get the states and intermediates no.s to be transferred as output connector data
+  LOG(INFO) << "Time of first stimulation: " << firstStimulationTime << ", motor unit " << firstStimulationMotorUnitNo;
+
+  // get the states and algebraics no.s to be transferred as slot connector data
   CellmlAdapterType &cellmlAdapter = instances[0].timeStepping1().instancesLocal()[0].discretizableInTime();
   statesForTransfer_ = cellmlAdapter.statesForTransfer();
-  intermediatesForTransfer_ = cellmlAdapter.intermediatesForTransfer();
+  algebraicsForTransfer_ = cellmlAdapter.algebraicsForTransfer();
 
 
   int nInstancesLocalCellml;
-  int nIntermediatesLocalCellml;
+  int nAlgebraicsLocalCellml;
   int nParametersPerInstance;
-  cellmlAdapter.getNumbers(nInstancesLocalCellml, nIntermediatesLocalCellml, nParametersPerInstance);
+  cellmlAdapter.getNumbers(nInstancesLocalCellml, nAlgebraicsLocalCellml, nParametersPerInstance);
 
   // make parameterValues() of cellmlAdapter.data() available
   cellmlAdapter.data().prepareParameterValues();
-  double *parameterValues = cellmlAdapter.data().parameterValues();   //< contains nIntermediates parameters for all instances, in struct of array ordering (p0inst0, p0inst1, p0inst2,...)
+  double *parameterValues = cellmlAdapter.data().parameterValues();   //< contains nAlgebraics parameters for all instances, in struct of array ordering (p0inst0, p0inst1, p0inst2,...)
 
   int nVcVectors = (nInstancesToCompute_ + Vc::double_v::Size - 1) / Vc::double_v::Size;
 
   fiberPointBuffers_.resize(nVcVectors);
-  fiberPointBuffersIntermediatesForTransfer_.resize(nVcVectors);
+  fiberPointBuffersAlgebraicsForTransfer_.resize(nVcVectors);
   fiberPointBuffersParameters_.resize(nVcVectors);
   fiberPointBuffersStatesAreCloseToEquilibrium_.resize(nVcVectors, not_constant);
   nFiberPointBufferStatesCloseToEquilibrium_ = 0;
 
   for (int i = 0; i < nVcVectors; i++)
   {
-    fiberPointBuffersIntermediatesForTransfer_[i].resize(intermediatesForTransfer_.size());
+    fiberPointBuffersAlgebraicsForTransfer_[i].resize(algebraicsForTransfer_.size());
     fiberPointBuffersParameters_[i].resize(nParametersPerInstance);
 
     for (int j=0; j<nParametersPerInstance; j++)
     {
-      fiberPointBuffersParameters_[i][j] = parameterValues[j*nIntermediatesLocalCellml];    // note, the stride in parameterValues is "nIntermediatesLocalCellml", not "nParametersPerInstance"
+      fiberPointBuffersParameters_[i][j] = parameterValues[j*nAlgebraicsLocalCellml];    // note, the stride in parameterValues is "nAlgebraicsLocalCellml", not "nParametersPerInstance"
 
       VLOG(1) << "fiberPointBuffersParameters_ buffer no " << i << ", parameter no " << j << ", value: " <<  fiberPointBuffersParameters_[i][j];
     }
@@ -247,7 +299,7 @@ initialize()
   LOG(DEBUG) << nInstancesToCompute_ << " instances to compute, " << nVcVectors
     << " Vc vectors, size of double_v: " << Vc::double_v::Size << ", "
     << statesForTransfer_.size()-1 << " additional states for transfer, "
-    << intermediatesForTransfer_.size() << " intermediates for transfer";
+    << algebraicsForTransfer_.size() << " algebraics for transfer";
 
   // initialize state values
   for (int i = 0; i < fiberPointBuffers_.size(); i++)
@@ -281,14 +333,15 @@ initialize()
 
         // get field variable
         std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable1
-          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable1;
+          = instances[i].timeStepping2().instancesLocal()[j].getSlotConnectorData()->variable1;
 
         if (stateIndex >= variable1.size())
         {
           LOG(WARNING) << "There are " << statesForTransfer_.size() << " statesForTransfer specified in StrangSplitting, "
             << " but the diffusion solver has only " << variable1.size() << " slots to get these states. "
             << "This means that state no. " << statesForTransfer_[stateIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
-            << "Maybe you need to increase \"nAdditionalFieldVariables\" in \"ImplicitEuler\" or reduce the number of entries in \"statesForTransfer\".";
+            << "Maybe you need to increase \"nAdditionalFieldVariables\" in the diffusion solver (\"ImplicitEuler\" or \"CrankNicolson\") "
+            << "or reduce the number of entries in \"statesForTransfer\".";
         }
         else
         {
@@ -299,34 +352,35 @@ initialize()
         }
       }
 
-      // loop over intermediates to transfer
-      for (int intermediateIndex = 0; intermediateIndex < intermediatesForTransfer_.size(); intermediateIndex++, furtherDataIndex++)
+      // loop over algebraics to transfer
+      for (int algebraicIndex = 0; algebraicIndex < algebraicsForTransfer_.size(); algebraicIndex++, furtherDataIndex++)
       {
-        std::string name = cellmlAdapter.data().intermediates()->componentName(intermediatesForTransfer_[intermediateIndex]);
+        std::string name = cellmlAdapter.data().algebraics()->componentName(algebraicsForTransfer_[algebraicIndex]);
 
-        LOG(DEBUG) << "intermediateIndex " << intermediateIndex << ", intermediate " << intermediatesForTransfer_[intermediateIndex] << ", name: \"" << name << "\".";
+        LOG(DEBUG) << "algebraicIndex " << algebraicIndex << ", algebraic " << algebraicsForTransfer_[algebraicIndex] << ", name: \"" << name << "\".";
 
         assert (i < instances.size());
         assert (j < instances[i].timeStepping2().instancesLocal().size());
 
         // get field variable
         std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable2
-          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable2;
+          = instances[i].timeStepping2().instancesLocal()[j].getSlotConnectorData()->variable2;
 
-        if (intermediateIndex >= variable2.size())
+        if (algebraicIndex >= variable2.size())
         {
-          LOG(WARNING) << "There are " << intermediatesForTransfer_.size() << " intermediatesForTransfer specified in StrangSplitting, "
-            << " but the diffusion solver has only " << variable2.size() << " slots to get these intermediates. "
-            << "This means that intermediate no. " << intermediatesForTransfer_[intermediateIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
-            << "Maybe you need to increase \"nAdditionalFieldVariables\" in \"ImplicitEuler\" or reduce the number of entries in \"intermediatesForTransfer\".";
+          LOG(WARNING) << "There are " << algebraicsForTransfer_.size() << " algebraicsForTransfer specified in StrangSplitting, "
+            << " but the diffusion solver has only " << variable2.size() << " slots to get these algebraics. "
+            << "This means that algebraic no. " << algebraicsForTransfer_[algebraicIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
+            << "Maybe you need to increase \"nAdditionalFieldVariables\" in  the diffusion solver (\"ImplicitEuler\" or \"CrankNicolson\") "
+            << "or reduce the number of entries in \"algebraicsForTransfer\".";
 
         }
         else
         {
-          std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableIntermediates
-            = variable2[intermediateIndex].values;
+          std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableAlgebraics
+            = variable2[algebraicIndex].values;
 
-          fieldVariableIntermediates->setName(name);
+          fieldVariableAlgebraics->setName(name);
         }
       }
     }
@@ -335,8 +389,8 @@ initialize()
   initialized_ = true;
 }
 
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 initializeCellMLSourceFile()
 {
   // parse options
@@ -442,13 +496,16 @@ initializeCellMLSourceFile()
     }
   }
 
-  // barrier to wait until the one rank that compiles the library has finished
-  MPIUtility::handleReturnValue(MPI_Barrier(MPI_COMM_WORLD), "MPI_Barrier");
+  // barrier disabled because in interferes with the barrier in 00_source_code_generator_base.cpp
+  //LOG(ERROR) << "MPI barrier in fast_monodomain_solver on MPI_COMM_WORLD";
+
+  // wait on all ranks until conversion is finished
+  MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");
 
   // load the rhs library
   void *handle = CellmlAdapterType::loadRhsLibraryGetHandle(libraryFilename);
 
-  compute0DInstance_ = (void (*)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &)) dlsym(handle, "compute0DInstance");
+  compute0DInstance_ = (void (*)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &, double)) dlsym(handle, "compute0DInstance");
   initializeStates_ = (void (*)(Vc::double_v states[])) dlsym(handle, "initializeStates");
 
   LOG(DEBUG) << "compute0DInstance_: " << (compute0DInstance_==nullptr? "no" : "yes") << ", initializeStates_: " << (initializeStates_==nullptr? "no" : "yes");

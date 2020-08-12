@@ -49,6 +49,7 @@ def analytic_solution(x,t):
   
 
 config = {
+  "logFormat": "csv",
   "ExplicitEuler" : {
     "initialValues": initial_values,
     "numberTimeSteps": 1000,

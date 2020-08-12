@@ -3,8 +3,8 @@
 #include <memory>
 
 #include "spatial_discretization/finite_element_method/01_matrix.h"
-#include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
-#include "spatial_discretization/boundary_conditions/neumann_boundary_conditions.h"
+#include "spatial_discretization/dirichlet_boundary_conditions/01_dirichlet_boundary_conditions.h"
+#include "spatial_discretization/neumann_boundary_conditions/01_neumann_boundary_conditions.h"
 
 namespace SpatialDiscretization
 {
@@ -48,11 +48,11 @@ protected:
   //! apply the neumann type boundary conditions
   void applyNeumannBoundaryConditions();
 
-  bool boundaryConditionHandlingEnabled_ = true;   ///< if the boundary conditions should be handled in this class, if false, nothing is done here. This is the case if the FiniteElementMethod is used within a timestepping scheme. Then the time stepping scheme constructs its system matrix out of this class' stiffness matrix and applied Dirichlet boundary condition handle there.
-  std::shared_ptr<DirichletBoundaryConditions<FunctionSpaceType,nComponents>> dirichletBoundaryConditions_ = nullptr;  ///< object that parses Dirichlet boundary conditions and applies them to system matrix and rhs
-  std::shared_ptr<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,nComponents>> neumannBoundaryConditions_ = nullptr;  ///< object that parses Neumann boundary conditions and applies them to the rhs
-  bool systemMatrixAlreadySet_ = false;  ///< if the system matrix has been changed to account for dirichlet DCs, which means that rows/columns of BC dofs were set to zero and diagonal to 1
-  bool neumannBoundaryConditionsApplied_ = false;   ///< if the neumann BC were already applied
+  bool boundaryConditionHandlingEnabled_ = true;    //< if the boundary conditions should be handled in this class, if false, nothing is done here. This is the case if the FiniteElementMethod is used within a timestepping scheme. Then the time stepping scheme constructs its system matrix out of this class' stiffness matrix and applied Dirichlet boundary condition handle there.
+  std::shared_ptr<DirichletBoundaryConditions<FunctionSpaceType,nComponents>> dirichletBoundaryConditions_ = nullptr;             //< object that parses Dirichlet boundary conditions and applies them to system matrix and rhs
+  std::shared_ptr<NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,nComponents>> neumannBoundaryConditions_ = nullptr;  //< object that parses Neumann boundary conditions and applies them to the rhs
+  bool systemMatrixAlreadySet_ = false;             //< if the system matrix has been changed to account for dirichlet DCs, which means that rows/columns of BC dofs were set to zero and diagonal to 1
+  bool neumannBoundaryConditionsApplied_ = false;   //< if the neumann BC were already applied
 };
 
 /**

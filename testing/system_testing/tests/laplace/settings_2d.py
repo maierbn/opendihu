@@ -108,6 +108,7 @@ elif "quadratic" in name:
       elements.append([i0, i1, i2, i3, i4, i5, i6, i7, i8])
       
 config = {
+  "logFormat": "csv",
   "FiniteElementMethod" : {
     "nElements": [nx, ny],
     "nodePositions": node_positions,

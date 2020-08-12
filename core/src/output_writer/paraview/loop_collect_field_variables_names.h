@@ -41,14 +41,14 @@ loopCollectFieldVariablesNames(const FieldVariablesForOutputWriterType &fieldVar
  */
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-collectFieldVariablesNames(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
+collectFieldVariablesNames(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
                            std::vector<std::string> &scalars, std::vector<std::string> &vectors);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-collectFieldVariablesNames(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
+collectFieldVariablesNames(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
                            std::vector<std::string> &scalars, std::vector<std::string> &vectors);
 
  /**  Loop body for a pointer element

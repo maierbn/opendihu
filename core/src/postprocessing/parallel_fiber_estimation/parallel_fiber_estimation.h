@@ -9,7 +9,8 @@
 #include "interfaces/runnable.h"
 #include "data_management/parallel_fiber_estimation.h"
 #include "quadrature/gauss.h"
-#include "spatial_discretization/boundary_conditions/neumann_boundary_conditions.h"
+#include "spatial_discretization/neumann_boundary_conditions/01_neumann_boundary_conditions.h"
+#include "spatial_discretization/dirichlet_boundary_conditions/01_dirichlet_boundary_conditions.h"
 
 namespace Postprocessing
 {
@@ -169,58 +170,55 @@ protected:
   // compute the current level_ = log2(nRanksPerCoordinateDirection_)
   void determineLevel();
 
-  const DihuContext context_;    ///< object that contains the python config for the current context and the global singletons meshManager and solverManager
-  std::shared_ptr<FiniteElementMethodType> problem_;   ///< the DiscretizableInTime object that is managed by this class
+  const DihuContext context_;       //< object that contains the python config for the current context and the global singletons meshManager and solverManager
+  std::shared_ptr<FiniteElementMethodType> problem_;   //< the DiscretizableInTime object that is managed by this class
 
-  Data::ParallelFiberEstimation<FunctionSpaceType> data_;    ///< the data object that holds the gradient field variable
+  Data::ParallelFiberEstimation<FunctionSpaceType> data_;    //< the data object that holds the gradient field variable
 
-  //std::shared_ptr<FunctionSpaceType> functionSpace_;   ///< current function space / mesh
+  //std::shared_ptr<FunctionSpaceType> functionSpace_;   //< current function space / mesh
 
-  PythonConfig specificSettings_;   ///< the specific python config for this module
-  std::vector<Vec3> seedPositions_;  ///< the seed points from where the streamlines start
+  PythonConfig specificSettings_;   //< the specific python config for this module
+  std::vector<Vec3> seedPositions_; //< the seed points from where the streamlines start
 
-  std::string inputMeshFilename_;   ///< the filename of the input mesh file
-  std::string resultFilename_;  ///< the filename of the output result file
-  double bottomZClip_;   ///< bottom z-value of the volume to consider
-  double topZClip_;   ///< top z-value of the volume to consider
-  double finalBottomZClip_;   ///< bottom z-value of the final fibers
-  double finalTopZClip_;   ///< top z-value of the final fibers
-  int nBorderPointsX_;    ///< number of subdivisions of the line
-  int nBorderPointsZ_;    ///< number of subdivisions in z direction
-  int maxLevel_;   ///< the maximum level up to which the domain will be subdivided, number of final domains is 8^maxLevel_ (octree structure)
-  int nBorderPointsXNew_;  ///< the value of nBorderPointsX_ in the next subdomain
-  int nBorderPointsZNew_;  ///< the value of nBorderPointsZ_ in the next subdomain
-  int nFineGridFibers_;   ///< the number of additional fibers between "key" fibers in one coordinate direction
-  int nNodesPerFiber_;    ///< the number of nodes of the final fiber, this is assured at the end, then the fibers get resampled to the required number of nodes per fiber
-  bool improveMesh_;      ///< if the improveMesh_ flag should be set to the algorithm that creates the 3D mesh. This make the mesh smoother but it takes more time
-  int level_;             ///< current level of the recursion, 0=1 process, 1=8 processes, 2=64 processes
-  bool useNeumannBoundaryConditions_;   ///< if neumann instead of dirichlet boundary conditions should be used
+  std::string inputMeshFilename_;   //< the filename of the input mesh file
+  std::string resultFilename_;      //< the filename of the output result file
+  double bottomZClip_;              //< bottom z-value of the volume to consider
+  double topZClip_;                 //< top z-value of the volume to consider
+  double finalBottomZClip_;         //< bottom z-value of the final fibers
+  double finalTopZClip_;            //< top z-value of the final fibers
+  int nBorderPointsX_;              //< number of subdivisions of the line
+  int nBorderPointsZ_;              //< number of subdivisions in z direction
+  int maxLevel_;                    //< the maximum level up to which the domain will be subdivided, number of final domains is 8^maxLevel_ (octree structure)
+  int nBorderPointsXNew_;           //< the value of nBorderPointsX_ in the next subdomain
+  int nBorderPointsZNew_;           //< the value of nBorderPointsZ_ in the next subdomain
+  int nFineGridFibers_;             //< the number of additional fibers between "key" fibers in one coordinate direction
+  int nNodesPerFiber_;              //< the number of nodes of the final fiber, this is assured at the end, then the fibers get resampled to the required number of nodes per fiber
+  bool improveMesh_;                //< if the improveMesh_ flag should be set to the algorithm that creates the 3D mesh. This make the mesh smoother but it takes more time
+  int level_;                       //< current level of the recursion, 0=1 process, 1=8 processes, 2=64 processes
+  bool useNeumannBoundaryConditions_;     //< if neumann instead of dirichlet boundary conditions should be used
 
-  std::array<int,3> refinementFactors_;   ///< factors by which the mesh should be refined prior to solving the Laplace problem and tracing the streamlines
+  std::array<int,3> refinementFactors_;   //< factors by which the mesh should be refined prior to solving the Laplace problem and tracing the streamlines
 
-  PyObject *moduleStlCreateMesh_;   ///< python module, file "stl_create_mesh.py"
-  PyObject *moduleStlCreateRings_;   ///< python module, file "stl_create_rings.py"
-  PyObject *moduleStlDebugOutput_;   ///< python module, file "stl_debug_output.py"
-  PyObject *functionCreateRingSection_;  ///< python function create_ring_section
-  PyObject *functionCreateRingSectionMesh_;  ///< python function create_ring_section_mesh
-  PyObject *functionGetStlMesh_;  ///< python function get_stl_mesh
-  //PyObject *functionCreateRings_;               ///< create_rings
-  //PyObject *functionRingsToBorderPoints_;       ///< rings_to_border_points
-  PyObject *functionCreateBorderPoints_;  ///< function that creates the initial border points of the mesh as loops
-  //PyObject *functionBorderPointLoopsToList_;    ///< border_point_loops_to_list
-  PyObject *functionOutputPoints_;              ///< output_points
-  PyObject *functionOutputBorderPoints_;        ///< output_border_points
-  PyObject *functionOutputGhostElements_;        ///< output_ghots_elements
-  PyObject *functionCreate3dMeshFromBorderPointsFaces_;       ///< create_3d_mesh_from_border_points_faces
-  PyObject *functionOutputStreamline_;   ///< function to output connected points as streamline
-  PyObject *functionOutputStreamlines_;   ///< function to output border points as connected streamlines
-  PyObject *functionOutputRings_;   ///< function to output border point rings as connected and closed lines
+  PyObject *moduleStlCreateMesh_;   //< python module, file "stl_create_mesh.py"
+  PyObject *moduleStlCreateRings_;  //< python module, file "stl_create_rings.py"
+  PyObject *moduleStlDebugOutput_;  //< python module, file "stl_debug_output.py"
+  PyObject *functionCreateRingSection_;   //< python function create_ring_section
+  PyObject *functionCreateRingSectionMesh_;   //< python function create_ring_section_mesh
+  PyObject *functionGetStlMesh_;              //< python function get_stl_mesh
+  PyObject *functionCreateBorderPoints_;      //< function that creates the initial border points of the mesh as loops
+  PyObject *functionOutputPoints_;            //< output_points
+  PyObject *functionOutputBorderPoints_;      //< output_border_points
+  PyObject *functionOutputGhostElements_;     //< output_ghots_elements
+  PyObject *functionCreate3dMeshFromBorderPointsFaces_;       //< create_3d_mesh_from_border_points_faces
+  PyObject *functionOutputStreamline_;    //< function to output connected points as streamline
+  PyObject *functionOutputStreamlines_;   //< function to output border points as connected streamlines
+  PyObject *functionOutputRings_;         //< function to output border point rings as connected and closed lines
 
-  std::shared_ptr<Partition::RankSubset> currentRankSubset_;  ///< the rank subset of the ranks that are used at the current stage of the algorithm
-  std::array<int,3> nRanksPerCoordinateDirection_;   ///< the numbers of ranks in each coordinate direction at the current stage of the algorithm
+  std::shared_ptr<Partition::RankSubset> currentRankSubset_;  //< the rank subset of the ranks that are used at the current stage of the algorithm
+  std::array<int,3> nRanksPerCoordinateDirection_;   //< the numbers of ranks in each coordinate direction at the current stage of the algorithm
   std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>, BasisFunctionType>>> meshPartition_; //< the mesh partition of this subdomain which contains information about the neighbouring ranks and the own index in the ranks grid
 
-  OutputWriter::Manager outputWriterManager_; ///< manager object holding all output writer
+  OutputWriter::Manager outputWriterManager_; //< manager object holding all output writer
 };
 
 } // namespace

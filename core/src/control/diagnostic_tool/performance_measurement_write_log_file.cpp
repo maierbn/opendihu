@@ -30,103 +30,162 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   // determine file name
   std::stringstream filename;
   filename << logFileName;
-  if (!useMPIOutput)
+  if (!useMPIOutput) {
     filename << "." << std::setw(7) << std::setfill('0') << ownRankNo;
-  filename << ".csv";
-  logFileName = filename.str();
-
-  // compose header
-  std::stringstream header;
-  header << "# timestamp;hostname;version;nRanks;rankNo;";
-
-  std::set<std::string> measurementNames;
-  for (std::pair<std::string, Measurement> measurement : measurements_)
-  {
-		measurementNames.insert(measurement.first);
-	}
-
-	// Add additional measurement names that could be only on some ranks and not on all.
-	// The goal is to have the same header on every rank such that the log file gets consistent.
-	measurementNames.insert(std::string("durationParaview1D"));
-	measurementNames.insert(std::string("durationParaview1DInit"));
-	measurementNames.insert(std::string("durationParaview2D"));
-	measurementNames.insert(std::string("durationParaview3D"));
-	measurementNames.insert(std::string("durationParaview3DInit"));
-	measurementNames.insert(std::string("durationParaview3DReduction"));
-	measurementNames.insert(std::string("durationParaview3DWrite"));
-	measurementNames.insert(std::string("durationParaviewOutput"));
-	measurementNames.insert(std::string("durationWriteOutputParaview"));
-
-  // write measurement names
-  for (std::string measurementName : measurementNames)
-  {
-    header << measurementName << ";n;";
   }
-  
-  // write parameter names
-  for (std::pair<std::string,std::string> parameter : parameters_)
-  {
-    if (parameter.first == "nRanks" || parameter.first == "rankNo")
-      continue;
-    header << parameter.first << ";";
-  }
-  
-  // write sum names
-  for (std::pair<std::string,int> sum : sums_)
-  {
-    header << sum.first << ";";
-  }
-
-  header << ownRankNo << ";" << std::endl;
-
-  // compose data
-  std::stringstream data;
 
   // time stamp
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
-  data << StringUtility::timeToString(&tm) << ";";
-
   // host name
   char hostname[MAXHOSTNAMELEN+1];
   gethostname(hostname, MAXHOSTNAMELEN+1);
-  data << std::string(hostname) << ";";
-  data << DihuContext::versionText() << ";";
-  data << parameters_["nRanks"] << ";" << parameters_["rankNo"] << ";";
 
-  // write measurement values
-  for (std::string measurementName : measurementNames)
+  std::stringstream header;
+  std::stringstream data;
+
+  auto logFormat = DihuContext::logFormat();
+
+  if (logFormat == DihuContext::logFormatCsv)
   {
-    if (measurements_.find(measurementName) != measurements_.end())
+    filename << ".csv";
+    logFileName = filename.str();
+
+    // compose header
+    header << "# timestamp;hostname;version;nRanks;rankNo;";
+
+    std::set<std::string> measurementNames;
+    for (std::pair<std::string, Measurement> measurement : measurements_)
     {
-      data << measurements_[measurementName].totalDuration << ";"
-        << measurements_[measurementName].nTimeSpans << ";";
+      measurementNames.insert(measurement.first);
     }
-    else
+
+    // Add additional measurement names that could be only on some ranks and not on all.
+    // The goal is to have the same header on every rank such that the log file gets consistent.
+    measurementNames.insert(std::string("durationParaview1D"));
+    measurementNames.insert(std::string("durationParaview1DInit"));
+    measurementNames.insert(std::string("durationParaview2D"));
+    measurementNames.insert(std::string("durationParaview3D"));
+    measurementNames.insert(std::string("durationParaview3DInit"));
+    measurementNames.insert(std::string("durationParaview3DReduction"));
+    measurementNames.insert(std::string("durationParaview3DWrite"));
+    measurementNames.insert(std::string("durationParaviewOutput"));
+    measurementNames.insert(std::string("durationWriteOutputParaview"));
+
+    // write measurement names
+    for (std::string measurementName : measurementNames)
     {
-      data << "0.0;0;";
+      header << measurementName << ";n;";
     }
+
+    // write parameter names
+    for (std::pair<std::string,std::string> parameter : parameters_)
+    {
+      if (parameter.first == "nRanks" || parameter.first == "rankNo")
+        continue;
+      header << parameter.first << ";";
+    }
+
+    // write sum names
+    for (std::pair<std::string,int> sum : sums_)
+    {
+      header << sum.first << ";";
+    }
+
+    // compose header
+    header << std::endl;
+
+    // compose data
+    data << StringUtility::timeToString(&tm) << ";";
+    data << std::string(hostname) << ";";
+    data << DihuContext::versionText() << ";";
+    data << parameters_["nRanks"] << ";" << parameters_["rankNo"] << ";";
+
+    // write measurement values
+    for (std::string measurementName : measurementNames)
+    {
+      if (measurements_.find(measurementName) != measurements_.end())
+      {
+        data << measurements_[measurementName].totalDuration << ";"
+          << measurements_[measurementName].nTimeSpans << ";";
+      }
+      else
+      {
+        data << "0.0;0;";
+      }
+    }
+
+    // write parameters
+    for (std::pair<std::string,std::string> parameter : parameters_)
+    {
+      if (parameter.first == "nRanks" || parameter.first == "rankNo")
+        continue;
+
+      // remove newlines
+      StringUtility::replace(parameter.second, "\n", "");
+      StringUtility::replace(parameter.second, "\r", "");
+      data << parameter.second << ";";
+    }
+
+    // write sums
+    for (std::pair<std::string,int> sum : sums_)
+    {
+      data << sum.second << ";";
+    }
+
+    data << std::endl;
+
+
   }
-  
-  // write parameters
-  for (std::pair<std::string,std::string> parameter : parameters_)
+  else if (logFormat == DihuContext::logFormatJson)
   {
-    if (parameter.first == "nRanks" || parameter.first == "rankNo")
+    filename << ".json";
+    logFileName = filename.str();
+
+    // compose header
+    header << "#";
+    header << std::endl;
+
+    // compose data
+    data << "{\"timestamp\":\"" << StringUtility::timeToString(&tm) << "\",";
+    data << "\"hostname\":\"" << std::string(hostname) << "\",";
+    data << "\"version\":\"" << DihuContext::versionText() << "\",";
+    data << "\"nRanks\":" << parameters_["nRanks"] << ",\"rankNo\":" << parameters_["rankNo"];
+
+    // write measurement values
+    for (std::pair<std::string, Measurement> measurement : measurements_)
+    {
+      data << ",\"" << measurement.first << "\":" << measurement.second.totalDuration << ","
+      << "\"" << measurement.first << " n\":" << measurement.second.nTimeSpans;
+    }
+
+    // write parameters
+    for (std::pair<std::string,std::string> parameter : parameters_)
+    {
+      if (parameter.first == "nRanks" || parameter.first == "rankNo")
       continue;
-    
-    // remove newlines
-    StringUtility::replace(parameter.second, "\n", "");
-    StringUtility::replace(parameter.second, "\r", "");
-    data << parameter.second << ";";
+
+      // remove newlines
+      StringUtility::replace(parameter.second, "\n", "");
+      StringUtility::replace(parameter.second, "\r", "");
+      data << ",\"" << parameter.first << "\":\"" << parameter.second << '\"';
+    }
+
+    // write sums
+    for (std::pair<std::string,int> sum : sums_)
+    {
+      // std::cout << "sum:  " << sum << " " << sum.first << " " << sum.second << std::endl;
+      data << ",\"" << sum.first << "\":" << sum.second;
+    }
+
+    data << "}" << std::endl;
   }
-  
-  // write sums
-  for (std::pair<std::string,int> sum : sums_)
+  else
   {
-    data << sum.second << ";";
+    LOG(ERROR) << "BUG: Unknown log fromat '" << DihuContext::logFormat() << "'. This should not happen. NO log file is written!";
+    return;
   }
-  
-  data << std::endl;
+
 
   // check if header has to be added to file
   bool outputHeader = true;
@@ -211,4 +270,3 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
 }
 
 }
-

@@ -16,7 +16,7 @@ namespace Control
 /** This class implements the time stepping, after each time step rebalance() is called, which can do load balancing.
  *  The actual implementation of the rebalancing has to be done in a derived class.
   */
-template<class TimeStepping>
+template<typename TimeStepping>
 class LoadBalancingBase:
   public Runnable,
   public TimeSteppingScheme::TimeSteppingScheme
@@ -25,7 +25,7 @@ public:
 
   typedef typename TimeStepping::FunctionSpace FunctionSpace;
   typedef typename TimeStepping::Data Data;
-  typedef typename TimeStepping::OutputConnectorDataType OutputConnectorDataType;
+  typedef typename TimeStepping::SlotConnectorDataType SlotConnectorDataType;
 
   //! constructor
   LoadBalancingBase(DihuContext context);
@@ -46,15 +46,15 @@ public:
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
 protected:
 
   //! check if the degrees of freedom should be redistributed among the ranks
   virtual void rebalance() = 0;
 
-  TimeStepping timeSteppingScheme_;   ///< the underlying timestepping method that is controlled by this class, e.g. Heun
+  TimeStepping timeSteppingScheme_;   //< the underlying timestepping method that is controlled by this class, e.g. Heun
 };
 
 }  // namespace

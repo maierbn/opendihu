@@ -3,16 +3,16 @@
 #include "partition/rank_subset.h"
 #include "control/diagnostic_tool/stimulation_logging.h"
 
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 run()
 {
   initialize();
   advanceTimeSpan();
 }
 
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 advanceTimeSpan()
 {
   LOG(TRACE) << "FastMonodomainSolver::advanceTimeSpan";
@@ -22,7 +22,7 @@ advanceTimeSpan()
 
   //Control::PerformanceMeasurement::startFlops();
 
-  // do computation of own fibers, HH is hardcoded, stimulation from parsed MU and firing_times files
+  // do computation of own fibers, stimulation from parsed MU and firing_times files
   computeMonodomain();
 
   //Control::PerformanceMeasurement::endFlops();
@@ -45,8 +45,8 @@ advanceTimeSpan()
   //this->outputWriterManager_.writeOutput(*this->data_, 0, currentTime_);
 }
 
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 computeMonodomain()
 {
   LOG(TRACE) << "computeMonodomain";
@@ -60,7 +60,7 @@ computeMonodomain()
   TimeSteppingScheme::Heun<CellmlAdapterType> &heun = instances[0].timeStepping1().instancesLocal()[0];
   durationLogKey0D_ = heun.durationLogKey();
 
-  ImplicitEuler &implicitEuler = instances[0].timeStepping2().instancesLocal()[0];
+  DiffusionTimeSteppingScheme &implicitEuler = instances[0].timeStepping2().instancesLocal()[0];
   durationLogKey1D_ = implicitEuler.durationLogKey();
   double prefactor = implicitEuler.discretizableInTime().data().context().getPythonConfig().getOptionDouble("prefactor", 1.0);
 
@@ -101,20 +101,20 @@ computeMonodomain()
 
     // compute midTime once per step to reuse it. [currentTime, midTime=currentTime+0.5*timeStepWidth, currentTime+timeStepWidth]
     double midTime = currentTime + 0.5 * timeStepWidthSplitting;
-    bool storeIntermediatesForTransfer = timeStepNo == nTimeStepsSplitting_-1;   // after the last timestep, store the intermediates for transfer
+    bool storeAlgebraicsForTransfer = timeStepNo == nTimeStepsSplitting_-1;   // after the last timestep, store the algebraics for transfer
 
     // perform splitting
     compute0D(currentTime, dt0D, nTimeSteps0D, false);
     compute1D(currentTime, dt1D, nTimeSteps1D, prefactor);
-    compute0D(midTime,     dt0D, nTimeSteps0D, storeIntermediatesForTransfer);
+    compute0D(midTime,     dt0D, nTimeSteps0D, storeAlgebraicsForTransfer);
   }
 
   currentTime_ = instances[0].endTime();
 }
 
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
-compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeIntermediatesForTransfer)
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
+compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlgebraicsForTransfer)
 {
   Control::PerformanceMeasurement::start(durationLogKey0D_);
   LOG(DEBUG) << "compute0D(" << startTime << "), " << nTimeSteps << " time step" << (nTimeSteps == 1? "" : "s");
@@ -126,10 +126,11 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeInte
   // y_n+1 = y_n + 0.5*[rhs(y_n) + rhs(y*)]
 
   // loop over point buffers, i.e., sets of 4 neighouring points of the fiber
-  int nPointBuffers = fiberPointBuffers_.size();
+  const int nPointBuffers = fiberPointBuffers_.size();
+  const double factorForForDataNo = (double)Vc::double_v::Size / fiberData_[0].valuesLength;
   for (global_no_t pointBuffersNo = 0; pointBuffersNo < nPointBuffers; pointBuffersNo++)
   {
-    int fiberDataNo = pointBuffersNo * Vc::double_v::Size / fiberData_[0].valuesLength;
+    int fiberDataNo = pointBuffersNo * factorForForDataNo;
     int indexInFiber = pointBuffersNo * Vc::double_v::Size - fiberData_[fiberDataNo].valuesOffset;
 
     // determine if current point is at center of fiber
@@ -158,13 +159,7 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeInte
 
       // check if current point will be stimulated
       const bool stimulateCurrentPoint = isCurrentPointStimulated(fiberDataNo, currentTime, currentPointIsInCenter);
-      const bool argumentStoreIntermediates = storeIntermediatesForTransfer && timeStepNo == nTimeSteps-1;
-
-      if (stimulateCurrentPoint)
-      {
-        LOG(INFO) << "t: " << currentTime << ", stimulate fiber " << fiberData_[fiberDataNo].fiberNoGlobal
-          << ", MU " << fiberData_[fiberDataNo].motorUnitNo;
-      }
+      const bool argumentStoreAlgebraics = storeAlgebraicsForTransfer && timeStepNo == nTimeSteps-1;
 
       // if the current point does not need to get computed because the value won't change
       if (isEquilibriumAccelerationCurrentPointDisabled(stimulateCurrentPoint, pointBuffersNo))
@@ -182,9 +177,8 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeInte
       assert (compute0DInstance_ != nullptr);
       compute0DInstance_(fiberPointBuffers_[pointBuffersNo].states, fiberPointBuffersParameters_[pointBuffersNo],
                          currentTime, timeStepWidth, stimulateCurrentPoint,
-                         argumentStoreIntermediates, fiberPointBuffersIntermediatesForTransfer_[pointBuffersNo],
-                         intermediatesForTransfer_);
-
+                         argumentStoreAlgebraics, fiberPointBuffersAlgebraicsForTransfer_[pointBuffersNo],
+                         algebraicsForTransfer_, valueForStimulatedPoint_);
     }  // loop over timesteps
 
     equilibriumAccelerationUpdate(statesPreviousValues, pointBuffersNo);
@@ -194,7 +188,7 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeInte
 
   // visualize equilibrium states for debugging
 #if 0
-  if (storeIntermediatesForTransfer)
+  if (storeAlgebraicsForTransfer)
   {
     std::stringstream s;
     int fiberDataNoPrevious = -1;
@@ -228,8 +222,8 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeInte
   Control::PerformanceMeasurement::stop(durationLogKey0D_);
 }
 
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefactor)
 {
   // if all entries are at equilibrium, nothing will be computed, skip also 1D computation
@@ -243,11 +237,18 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
 
   LOG(DEBUG) << "compute1D(" << startTime << ")";
 
-  // perform implicit euler step
+  // depending on DiffusionTimeSteppingScheme either do Implicit Euler or Crank-Nicolson
+  // Implicit Euler step:
   // (K - 1/dt*M) u^{n+1} = -1/dt*M u^{n})
+  // Crank-Nicolson step:
+  // (1/2*K - 1/dt*M) u^{n+1} = (-1/2*K -1/dt*M) u^{n})
 
   // stencil K: 1/h*[_-1_  1  ]*prefactor
   // stencil M:   h*[_1/3_ 1/6]
+
+  bool useImplicitEuler = std::is_same<DiffusionTimeSteppingScheme,
+                            TimeSteppingScheme::ImplicitEuler<typename DiffusionTimeSteppingScheme::DiscretizableInTime>
+                          >::value;
 
   const double dt = timeStepWidth;
 
@@ -296,13 +297,14 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
     // x_i = d'_i - c'_i * x_{i+1}
 
     // helper buffers c', d'
-    static std::vector<double> cIntermediate(nValues-1);
-    static std::vector<double> dIntermediate(nValues);
+    static std::vector<double> cAlgebraic(nValues-1);
+    static std::vector<double> dAlgebraic(nValues);
 
     // perform forward substitution
     // loop over entries / rows of matrices
     for (int valueNo = 0; valueNo < nValues; valueNo++)
     {
+     // new with CN
       double a = 0;
       double b = 0;
       double c = 0;
@@ -331,13 +333,29 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
         double h_left = fiberData_[fiberDataNo].elementLengths[valueNo-1];
         double k_left = 1./h_left*(1) * prefactor;
         double m_left = h_left*1./6;
-        a = (k_left - 1/dt*m_left);
+
+        if (useImplicitEuler)
+        {
+          a = (k_left - 1/dt*m_left);
+        }
+        else  // Crank-Nicolson
+        {
+          a = (k_left/2. - 1/dt*m_left);
+        }
 
         double k_right = 1./h_left*(-1) * prefactor;
         double m_right = h_left*1./3;
-        b += (k_right - 1/dt*m_right);
 
-        d += (-1/dt*m_left) * u_previous + (-1/dt*m_right) * u_center;
+        if (useImplicitEuler)
+        {
+          b += (k_right - 1/dt*m_right);
+          d += (-1/dt*m_left) * u_previous + (-1/dt*m_right) * u_center;
+        }
+        else  // Crank-Nicolson
+        {
+          b += (k_right/2. - 1/dt*m_right);
+          d += (-k_left/2. - 1/dt*m_left) * u_previous + (-k_right/2. - 1/dt*m_right) * u_center;
+        }
       }
 
       // contribution from right element
@@ -354,58 +372,73 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
         double h_right = fiberData_[fiberDataNo].elementLengths[valueNo];
         double k_right = 1./h_right*(1) * prefactor;
         double m_right = h_right*1./6;
-        c = (k_right - 1/dt*m_right);
+
+        if (useImplicitEuler)
+        {
+          c = (k_right - 1/dt*m_right);
+        }
+        else  // Crank-Nicolson
+        {
+          c = (k_right/2. - 1/dt*m_right);
+        }
 
         double k_left = 1./h_right*(-1) * prefactor;
         double m_left = h_right*1./3;
-        b += (k_left - 1/dt*m_left);
 
-        d += (-1/dt*m_left) * u_center + (-1/dt*m_right) * u_next;
+        if (useImplicitEuler)
+        {
+          b += (k_left - 1/dt*m_left);
+          d += (-1/dt*m_left) * u_center + (-1/dt*m_right) * u_next;
+        }
+        else  // Crank-Nicolson
+        {
+          b += (k_left/2. - 1/dt*m_left);
+          d += (-k_left/2. - 1/dt*m_left) * u_center + (-k_right/2. - 1/dt*m_right) * u_next;
+        }
       }
 
       if (valueNo == 0)
       {
         // c'_0 = c_0 / b_0
-        cIntermediate[valueNo] = c / b;
+        cAlgebraic[valueNo] = c / b;
 
         // d'_0 = d_0 / b_0
-        dIntermediate[valueNo] = d / b;
+        dAlgebraic[valueNo] = d / b;
       }
       else
       {
         if (valueNo != nValues-1)
         {
           // c'_i = c_i / (b_i - c'_{i-1}*a_i)
-          cIntermediate[valueNo] = c / (b - cIntermediate[valueNo-1]*a);
+          cAlgebraic[valueNo] = c / (b - cAlgebraic[valueNo-1]*a);
         }
 
         // d'_i = (d_i - d'_{i-1}*a_i) / (b_i - c'_{i-1}*a_i)
-        dIntermediate[valueNo] = (d - dIntermediate[valueNo-1]*a) / (b - cIntermediate[valueNo-1]*a);
+        dAlgebraic[valueNo] = (d - dAlgebraic[valueNo-1]*a) / (b - cAlgebraic[valueNo-1]*a);
       }
 
 #ifndef NDEBUG
       if (valueNo < 5 || valueNo >= nValues-6)
       {
         VLOG(2) << "valueNo: " << valueNo << ", a: " << a << ", b: " << b << ", c: " << c << ", d: " << d
-          << ", u: " << u_center << ", c': " << (valueNo < nValues-1? cIntermediate[valueNo] : 0) << ", d': " << dIntermediate[valueNo]
-          << " = (" << d << "-" << dIntermediate[valueNo-1]*a << ")/(" << b << "-" << cIntermediate[valueNo-1]*a << ") = " << (d - dIntermediate[valueNo-1]*a) << "/" << (b - cIntermediate[valueNo-1]*a);
+          << ", u: " << u_center << ", c': " << (valueNo < nValues-1? cAlgebraic[valueNo] : 0) << ", d': " << dAlgebraic[valueNo]
+          << " = (" << d << "-" << dAlgebraic[valueNo-1]*a << ")/(" << b << "-" << cAlgebraic[valueNo-1]*a << ") = " << (d - dAlgebraic[valueNo-1]*a) << "/" << (b - cAlgebraic[valueNo-1]*a);
       }
 #endif
-
     }
 
-    //LOG(DEBUG) << "cIntermediate: " << cIntermediate;
-    //LOG(DEBUG) << "dIntermediate: " << dIntermediate;
+    //LOG(DEBUG) << "cAlgebraic: " << cAlgebraic;
+    //LOG(DEBUG) << "dAlgebraic: " << dAlgebraic;
 
     // perform backward substitution
     // x_n = d'_n
     global_no_t valuesIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + nValues-1;
     global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::Size;
     int entryNo = valuesIndexAllFibers % Vc::double_v::Size;
-    fiberPointBuffers_[pointBuffersNo].states[0][entryNo] = dIntermediate[nValues-1];
-    //LOG(DEBUG) << "set entry (" << pointBuffersNo << "," << entryNo << ") to " << dIntermediate[nValues-1];
+    fiberPointBuffers_[pointBuffersNo].states[0][entryNo] = dAlgebraic[nValues-1];
+    //LOG(DEBUG) << "set entry (" << pointBuffersNo << "," << entryNo << ") to " << dAlgebraic[nValues-1];
 
-    double previousValue = dIntermediate[nValues-1];
+    double previousValue = dAlgebraic[nValues-1];
 
     // loop over entries / rows of matrices
     for (int valueNo = nValues-2; valueNo >= 0; valueNo--)
@@ -415,11 +448,14 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
       global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::Size;
       int entryNo = valuesIndexAllFibers % Vc::double_v::Size;
 
-      double resultValue = dIntermediate[valueNo] - cIntermediate[valueNo] * previousValue;
+      double resultValue = dAlgebraic[valueNo] - cAlgebraic[valueNo] * previousValue;
       fiberPointBuffers_[pointBuffersNo].states[0][entryNo] = resultValue;
 
       previousValue = resultValue;
     }
+
+    int nPointBuffers = fiberPointBuffers_.size();
+    pointBuffersNo = int(nPointBuffers/2);
 
 #ifndef NDEBUG
     s.str("");
@@ -439,11 +475,13 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
   Control::PerformanceMeasurement::stop(durationLogKey1D_);
 }
 
-template<int nStates, int nIntermediates>
-bool FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+bool FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointIsInCenter)
 {
   FiberData &fiberDataCurrentPoint = fiberData_[fiberDataNo];
+
+  // there is a parallel piece of code to this one in CellmlAdapter<>::checkCallbackStates, cellml/03_cellml_adapter.tpp
 
   // get time from with testing for stimulation is enabled
   const double lastStimulationCheckTime                 = fiberDataCurrentPoint.lastStimulationCheckTime;
@@ -460,20 +498,27 @@ isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointI
   // check if time has come to call setSpecificStates
   bool checkStimulation = false;
 
-  VLOG(1) << "currentTime: " << currentTime << ", lastStimulationCheckTime: " << lastStimulationCheckTime << ", next time point: " << lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter);
-  VLOG(1) << "setSpecificStatesCallFrequency: " << setSpecificStatesCallFrequency << ", currentJitter: " << currentJitter << ", setSpecificStatesCallEnableBegin: " << setSpecificStatesCallEnableBegin;
+  if (VLOG_IS_ON(1))
+  {
+    VLOG(1) << "currentTime: " << currentTime << ", lastStimulationCheckTime: " << lastStimulationCheckTime << ", next time point: " << lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter);
+    VLOG(1) << "setSpecificStatesCallFrequency: " << setSpecificStatesCallFrequency << ", currentJitter: " << currentJitter << ", setSpecificStatesCallEnableBegin: " << setSpecificStatesCallEnableBegin;
+  }
 
   if (currentTime >= lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter)
       && currentTime >= setSpecificStatesCallEnableBegin-1e-13)
   {
-    VLOG(1) << "-> checkStimulation";
     checkStimulation = true;
 
-    VLOG(1) << "check if stimulation is over: duration already: " << currentTime - (lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter))
-      << ", setSpecificStatesRepeatAfterFirstCall: " << setSpecificStatesRepeatAfterFirstCall;
+    if (VLOG_IS_ON(1))
+    {
+      VLOG(1) << "-> checkStimulation";
+      VLOG(1) << "check if stimulation is over: duration already: " << currentTime - (lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter))
+        << ", setSpecificStatesRepeatAfterFirstCall: " << setSpecificStatesRepeatAfterFirstCall;
+    }
 
     // if current stimulation is over
-    if (currentTime - (lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter)) > setSpecificStatesRepeatAfterFirstCall)
+    if (setSpecificStatesRepeatAfterFirstCall != 0
+        && currentTime - (lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter)) > setSpecificStatesRepeatAfterFirstCall)
     {
       // advance time of last call to specificStates
       LOG(DEBUG) << " old lastStimulationCheckTime: " << fiberDataCurrentPoint.lastStimulationCheckTime << ", currentJitter: " << currentJitter << ", add " << 1./(setSpecificStatesCallFrequency+currentJitter);
@@ -500,7 +545,7 @@ isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointI
     checkStimulation
     && firingEvents_[firingEventsIndex % firingEvents_.size()][motorUnitNo % firingEvents_[firingEventsIndex % firingEvents_.size()].size()];
 
-  if (checkStimulation)
+  if (checkStimulation && VLOG_IS_ON(1))
   {
     VLOG(1) << "setSpecificStatesCallFrequency: " << setSpecificStatesCallFrequency << ", firingEventsIndex: " << firingEventsIndex << ", fires: "
       << firingEvents_[firingEventsIndex % firingEvents_.size()][motorUnitNo % firingEvents_[firingEventsIndex % firingEvents_.size()].size()];
@@ -540,8 +585,8 @@ isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointI
 }
 
 // methods to improve speed by only computing states that are not in equilibrium
-template<int nStates, int nIntermediates>
-void FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 equilibriumAccelerationUpdate(const Vc::double_v statesPreviousValues[], int pointBuffersNo)
 {
   // check if states for the current point are at their equilibrium
@@ -668,8 +713,8 @@ equilibriumAccelerationUpdate(const Vc::double_v statesPreviousValues[], int poi
   }
 }
 
-template<int nStates, int nIntermediates>
-bool FastMonodomainSolverBase<nStates,nIntermediates>::
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+bool FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 isEquilibriumAccelerationCurrentPointDisabled(bool stimulateCurrentPoint, int pointBuffersNo)
 {
   if (disableComputationWhenStatesAreCloseToEquilibrium_)

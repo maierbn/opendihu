@@ -36,11 +36,11 @@ public:
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSideActive();
 
 protected:
-  double bulkModulus_;   ///< material parameter bulk modulus, symbol K
-  double shearModulus_;  ///< material parameter shear modulus, symbol μ
+  double bulkModulus_;   //< material parameter bulk modulus, symbol K
+  double shearModulus_;  //< material parameter shear modulus, symbol μ
 
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents*nComponents>> activeStress_;  ///< active stress field variable, this is a DxD tensor, stored row-major
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSideActive_;  ///< debugging field variable that contains the rhs contribution from the active stress, the actual object is created in quasi_static_linear_elasticity and passed to this variable by setRightHandSideActive
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents*nComponents>> activeStress_;  //< active stress field variable, this is a DxD tensor, stored row-major
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSideActive_;  //< debugging field variable that contains the rhs contribution from the active stress, the actual object is created in quasi_static_linear_elasticity and passed to this variable by setRightHandSideActive
 };
 
 }  // namespace

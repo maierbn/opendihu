@@ -29,7 +29,8 @@ public:
                   bool useAdditionalDiffusionTensor);
 
   //! return diffusion tensor
-  MathUtility::Matrix<FunctionSpaceType::dim(),FunctionSpaceType::dim()> diffusionTensor(element_no_t elementNoLocal, const std::array<double,FunctionSpaceType::dim()> xi) const;
+  template<typename double_v_t, typename element_no_v_t>
+  MathUtility::Matrix<FunctionSpaceType::dim(),FunctionSpaceType::dim(),double_v_t> diffusionTensor(element_no_v_t elementNoLocal, const std::array<double,FunctionSpaceType::dim()> xi) const;
 
 private:
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction_;                                  //< direction of the diffusion tensor

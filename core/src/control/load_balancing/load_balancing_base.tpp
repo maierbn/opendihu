@@ -6,7 +6,7 @@
 namespace Control
 {
 
-template<class TimeStepping>
+template<typename TimeStepping>
 LoadBalancingBase<TimeStepping>::
 LoadBalancingBase(DihuContext context) :
   Runnable(), ::TimeSteppingScheme::TimeSteppingScheme(context["LoadBalancing"]),
@@ -14,7 +14,7 @@ LoadBalancingBase(DihuContext context) :
 {
 }
 
-template<class TimeStepping>
+template<typename TimeStepping>
 void LoadBalancingBase<TimeStepping>::
 advanceTimeSpan()
 {
@@ -34,7 +34,7 @@ advanceTimeSpan()
   {
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
 
-    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
     {
       LOG(INFO) << "LoadBalancingBase, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
@@ -54,7 +54,7 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
 
-template<class TimeStepping>
+template<typename TimeStepping>
 void LoadBalancingBase<TimeStepping>::
 initialize()
 {
@@ -64,7 +64,7 @@ initialize()
   timeSteppingScheme_.initialize();
 }
 
-template<class TimeStepping>
+template<typename TimeStepping>
 void LoadBalancingBase<TimeStepping>::
 run()
 {
@@ -73,14 +73,14 @@ run()
   advanceTimeSpan();
 }
 
-template<class TimeStepping>
+template<typename TimeStepping>
 void LoadBalancingBase<TimeStepping>::
 reset()
 {
   timeSteppingScheme_.reset();
 }
 
-template<class TimeStepping>
+template<typename TimeStepping>
 typename LoadBalancingBase<TimeStepping>::Data &LoadBalancingBase<TimeStepping>::
 data()
 {
@@ -88,12 +88,12 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
-template<class TimeStepping>
-std::shared_ptr<typename LoadBalancingBase<TimeStepping>::OutputConnectorDataType> LoadBalancingBase<TimeStepping>::
-getOutputConnectorData()
+//! the transfer is done by the slot_connector_data_transfer class
+template<typename TimeStepping>
+std::shared_ptr<typename LoadBalancingBase<TimeStepping>::SlotConnectorDataType> LoadBalancingBase<TimeStepping>::
+getSlotConnectorData()
 {
-  return timeSteppingScheme_.getOutputConnectorData();
+  return timeSteppingScheme_.getSlotConnectorData();
 }
 
 } // namespace

@@ -127,14 +127,23 @@ ImplicitEuler
 ----------------
 The implicit Euler or *backward integration* is a 1st order consistent implicit scheme for integration of ordinary differential equations.
 The keyword for the settings is ``"ImplicitEuler"``.
-In addition to the common properties, is has one more option:
+In addition to the common properties, is has the options:
 
 .. code-block:: python
   
-  "solverName" : "solver"
+  "solverName" : "solver",
+  "timeStepWidthRelativeTolerance" : 1e-10,
+  "timeStepWidthRelativeToleranceAsKey" : "some_key",
+  "durationInitTimeStepLogKey": "duration_init_1D",
 
 ``solverName`` is the name of the :doc:`solver` to use for the linear system of equations that results from the implicit scheme. 
-Alternatively, the solver options can be specified directly under "ImplicitEuler", for details see the :doc:`solver` page. 
+Alternatively, the solver options can be specified directly under "ImplicitEuler", for details see the :doc:`solver` page.
+
+The ``timeStepWidthRelativeTolerance`` is the tolerance for the time step width which controls when the system matrix has to be recomputed. 
+This value will also stored in the log file if ``timeStepWidthRelativeToleranceAsKey`` is given.
+
+If ``durationInitTimeStepLogKey`` is set, there will be a duration measurement of the walltime for the time step initialization. 
+This includes both, the initial setup and potential re-initializations if the time step size changed. 
 
 Heun
 ----------------
@@ -197,12 +206,20 @@ CrankNicolson
 -------------------t
 The Crank Nicolson scheme is implicit and 2nd order consistent. 
 The keyword for the settings is ``"CrankNicolson"``.
-In addition to the common properties, is has one more option:
+In addition to the common properties, it has the options:
 
 .. code-block:: python
   
   "solverName" : "solver"
+  "timeStepWidthRelativeTolerance" : 1e-10,
+  "timeStepWidthRelativeToleranceAsKey" : "some_key",
+  "durationInitTimeStepLogKey": "duration_init_1D",
 
 ``solverName`` is the name of the :doc:`solver` to use for the linear system of equations that results from the implicit scheme. 
 Alternatively, the solver options can be specified directly under "CrankNicolson", for details see the :doc:`solver` page. 
 
+The ``timeStepWidthRelativeTolerance`` is the tolerance for the time step width which controls when the system matrix has to be recomputed. 
+This value will also stored in the log file if ``timeStepWidthRelativeToleranceAsKey`` is given.
+
+If ``durationInitTimeStepLogKey`` is set, there will be a duration measurement of the walltime for the time step initialization. 
+This includes both, the initial setup and potential re-initializations if the time step size changed. 

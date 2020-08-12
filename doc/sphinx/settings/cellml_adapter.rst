@@ -156,12 +156,14 @@ This will be used instead of the model given in *modelFilename*. Usually this is
 
 statesInitialValues
 ---------------------
-Optional, if given it should contain a list of initial values for all states. 
-If there are multiple instances (multiple nodes of a mesh where the model is computed), the list can either contain separate values for all states for all instances. Then it takes the form `[instance0state0, instance0state1, ..., instance0stateN, instance1state0, instance1state1, ..., instance1stateN, ...]`
+Optional. Default: `"CellML"`
 
-Or you only specify each state once, then all instances will be initialized by the same values.
+If *statesInitialValues* is a list, it should contain an initial value for each state of the CellML model. 
+If there are multiple instances all instances will be initialized by the same values.
 
-If *statesInitialValues* is not specified, the initial values will be taken from the CellML model file (either XML or C). Usually this is what you want.
+If *statesInitialValues* is set to *CellML*, the initial values will be taken from the CellML model file (either XML or C). Usually this is what you want.
+
+If *statesInitialValues* is set to *undefined*, no initial values will be set and the outer time stepping scheme can set initial values by giving `"initialValues"`.
 
 initializeStatesToEquilibrium and initializeStatesToEquilibriumTimestepWidth
 --------------------------------------------------------------------------------
@@ -175,9 +177,9 @@ Given the CellML model as
 the equation is solved by a 4th order Runge-Kutta timestepping scheme, until
 
 .. math::
-   \Vert\frac{\partial \textbf{u}}{\partial t}\vert < \eps
+   \Vert\frac{\partial \textbf{u}}{\partial t}\Vert < \epsilon
    
-is reached, with :math:`\eps = 1e-5`. The timestep width of the Runge-Kutta scheme can be given by `initializeStatesToEquilibriumTimestepWidth`. If an instability with this timestep width is detected (any value gets `inf` or `nan`), the timestep width will be decreased automatically and the computation will be restarted.
+is reached, with :math:`\epsilon = 1e-5`. The timestep width of the Runge-Kutta scheme can be given by `initializeStatesToEquilibriumTimestepWidth`. If an instability with this timestep width is detected (any value gets `inf` or `nan`), the timestep width will be decreased automatically and the computation will be restarted.
 
 The resulting equilibrium values and the residuals are written to a file `<modelfilename>_equilibrium_values.txt`, where `<modelfilename>` is the file name of the model. An example for such a file is given below:
 
@@ -267,6 +269,9 @@ This function can change some states and has the following signature:
     # nodal_dof_index is the dof number of the node, usually 0. Only for Hermite ansatz functions it can be higher.
     # state_no is the state number to set 
     # value is the new state value
+
+If ``setSpecificStatesFunction`` will be called, this happens during the time step update just before each evaluation of the right hand side / the CellML model.
+I.e. for Heun's method it will be called up to twice per time step (depending on the other `setSpecificStates*` settings).
     
 *setSpecificStatesCallEnableBegin*, *setSpecificStatesCallFrequency* and *setSpecificStatesFrequencyJitter*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

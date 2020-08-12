@@ -65,6 +65,8 @@ class Variables:
     nt_0D = 0                         # number of timesteps per 1D splitting substep (0 = 'use time step width')
     nt_splitting = 0                  # number of splitting timesteps (0 = 'use time step width')
 
+    time_step_width_rel_tol_1D = 1e-10
+
     initial_value_file = None         # python file which contians the initial values. VTK only stores 32bit floats.
     disable_firing = np.infty         # time after which we disable the firing
 
@@ -99,6 +101,7 @@ parser.add_argument('--dt_splitting',                        help='The timestep 
 parser.add_argument('--nt_0D',                               help='The number of timesteps for the 0D model. Overrides `--dt_0D`.', type=int, default=variables.nt_0D)
 parser.add_argument('--nt_1D',                               help='The number of timesteps for the 1D model. Overrides `--dt_1D`.', type=int, default=variables.nt_1D)
 parser.add_argument('--nt_splitting',                        help='The number of splitting timesteps to reach `--tend`. Overrides `--dt_splitting`.', type=int, default=variables.nt_splitting)
+parser.add_argument('--time_step_width_rel_tol_1D',          help='The relative tolerance for the time step size used to recompute the system matrix.', type=float, default=variables.time_step_width_rel_tol_1D)
 parser.add_argument('--initial_value_file',                  help='Initial value for V,m,h,n. Only python files are pupported.', default=variables.initial_value_file)
 parser.add_argument('--disable_firing',                      help='Disable stimulus after certain time. Useful in combination with --initial_values', type=float, default=variables.disable_firing)
 parser.add_argument('--outfile_0D',                          help='Output file name for 0D time steps. Use {i} for fiber index. Set to empty to disable output', default=variables.outfile_0D)
@@ -211,7 +214,8 @@ def set_specific_parameters(n_nodes_global, time_step_no, current_time, paramete
   for node_no_global in nodes_to_stimulate_global:
     parameters[(node_no_global,0)] = stimulation_current   # key: ((x,y,z),nodal_dof_index)
 
-def load_states_from(n_nodes, file, states):
+
+if variables.initial_value_file is not None:
     def extract4(file):
         if file.endswith('.py'):
             data = py_reader.load_data([file])
@@ -220,23 +224,18 @@ def load_states_from(n_nodes, file, states):
             componentX = lambda x: next(filter(lambda d: d['name'] == str(x), solution['components']))
             channel_names = ['membrane/V', 'sodium_channel_m_gate/m', 'sodium_channel_h_gate/h', 'potassium_channel_n_gate/n']
             return np.vstack([componentX(i)['values'] for i in channel_names]).T
-        raise "FileType not understood: "+file
-
-    data = extract4(file)
-    print("Nodes: {}, Nodes loaded: {}".format(n_nodes, data.shape[0]))
-    for xi in range(data.shape[0]):
-        # VTK data contains np.float32 -> cast to double
-        states[(xi,0,0)] = np.float64(data[xi,0]);
-        states[(xi,0,1)] = np.float64(data[xi,1]);
-        states[(xi,0,2)] = np.float64(data[xi,2]);
-        states[(xi,0,3)] = np.float64(data[xi,3]);
+            raise "FileType not understood: "+file
+    print("load initial state from "+variables.initial_value_file+" for V,m,h,n")
+    data = extract4(variables.initial_value_file)
+    initial_values = [list(states) for states in data]; # [(V m h n)...]
+    initial_values_cellml = "undefined"
+else:
+    # use the initial values defined in the CellML model
+    initial_values = []
+    initial_values_cellml = "CellML"
 
 # callback function that can set states, i.e. prescribed values for stimulation
 def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibre_no):
-  if time_step_no == 0 and variables.initial_value_file:
-      load_states_from(n_nodes_global, variables.initial_value_file, states)
-      print("loaded initial state from "+variables.initial_value_file+" for V,m,h,n")
-  
   if current_time < variables.disable_firing:
       # determine if fibre gets stimulated at the current time
       is_fiber_gets_stimulated = fiber_gets_stimulated(fibre_no, variables.stimulation_frequency, current_time)
@@ -287,7 +286,7 @@ def get_instance_config(i):
           "numberTimeSteps":             variables.nt_0D,
           "logTimeStepWidthAsKey":       "dt_0D",
           "durationLogKey":              "duration_0D",
-          "initialValues":               [],
+          "initialValues":               initial_values,
           "timeStepOutputInterval":      1e4,
           "inputMeshIsGlobal":           True,
           "dirichletBoundaryConditions": {},
@@ -296,6 +295,7 @@ def get_instance_config(i):
           "checkForNanInf":              False,
             
           "CellML" : {
+            "statesInitialValues":                    initial_values_cellml,
             "modelFilename": variables.cellml_file,   # input C++ source file, can be either generated by OpenCMISS or OpenCOR from cellml model
             "compilerFlags":                          "-fPIC -O3 -march=native -shared ",
             "optimizationType":                       "vc",     # "vc", "simd", "openmp" type of generated optimizated source file
@@ -336,6 +336,9 @@ def get_instance_config(i):
           "initialValues":               [],
           "timeStepWidth":               variables.dt_1D,  # 1e-5
           "numberTimeSteps":             variables.nt_1D,
+          "timeStepWidthRelativeTolerance": variables.time_step_width_rel_tol_1D,
+          "timeStepWidthRelativeToleranceAsKey": "timeStepRelTol_1D",
+          "durationInitTimeStepLogKey":  "duration_init_1D",
           "logTimeStepWidthAsKey":       "dt_1D",
           "durationLogKey":              "duration_1D",
           "timeStepOutputInterval":      1e4,

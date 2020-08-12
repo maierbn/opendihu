@@ -177,9 +177,9 @@ Given the CellML model as
 the equation is solved by a 4th order Runge-Kutta timestepping scheme, until
 
 .. math::
-   \Vert\frac{\partial \textbf{u}}{\partial t}\vert < \eps
+   \Vert\frac{\partial \textbf{u}}{\partial t}\Vert < \epsilon
    
-is reached, with :math:`\eps = 1e-5`. The timestep width of the Runge-Kutta scheme can be given by `initializeStatesToEquilibriumTimestepWidth`. If an instability with this timestep width is detected (any value gets `inf` or `nan`), the timestep width will be decreased automatically and the computation will be restarted.
+is reached, with :math:`\epsilon = 1e-5`. The timestep width of the Runge-Kutta scheme can be given by `initializeStatesToEquilibriumTimestepWidth`. If an instability with this timestep width is detected (any value gets `inf` or `nan`), the timestep width will be decreased automatically and the computation will be restarted.
 
 The resulting equilibrium values and the residuals are written to a file `<modelfilename>_equilibrium_values.txt`, where `<modelfilename>` is the file name of the model. An example for such a file is given below:
 

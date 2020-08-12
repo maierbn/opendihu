@@ -269,6 +269,9 @@ This function can change some states and has the following signature:
     # nodal_dof_index is the dof number of the node, usually 0. Only for Hermite ansatz functions it can be higher.
     # state_no is the state number to set 
     # value is the new state value
+
+If ``setSpecificStatesFunction`` will be called, this happens during the time step update just before each evaluation of the right hand side / the CellML model.
+I.e. for Heun's method it will be called up to twice per time step (depending on the other `setSpecificStates*` settings).
     
 *setSpecificStatesCallEnableBegin*, *setSpecificStatesCallFrequency* and *setSpecificStatesFrequencyJitter*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

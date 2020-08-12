@@ -156,12 +156,14 @@ This will be used instead of the model given in *modelFilename*. Usually this is
 
 statesInitialValues
 ---------------------
-Optional, if given it should contain a list of initial values for all states. 
-If there are multiple instances (multiple nodes of a mesh where the model is computed), the list can either contain separate values for all states for all instances. Then it takes the form `[instance0state0, instance0state1, ..., instance0stateN, instance1state0, instance1state1, ..., instance1stateN, ...]`
+Optional. Default: `"CellML"`
 
-Or you only specify each state once, then all instances will be initialized by the same values.
+If *statesInitialValues* is a list, it should contain an initial value for each state of the CellML model. 
+If there are multiple instances all instances will be initialized by the same values.
 
-If *statesInitialValues* is not specified, the initial values will be taken from the CellML model file (either XML or C). Usually this is what you want.
+If *statesInitialValues* is set to *CellML*, the initial values will be taken from the CellML model file (either XML or C). Usually this is what you want.
+
+If *statesInitialValues* is set to *undefined*, no initial values will be set and the outer time stepping scheme can set initial values by giving `"initialValues"`.
 
 initializeStatesToEquilibrium and initializeStatesToEquilibriumTimestepWidth
 --------------------------------------------------------------------------------

@@ -546,7 +546,7 @@ class Package(object):
     return (1, '')
 
   def download_package(self, ctx, filename):
-    sys.stdout.write('  Downloading ... ')
+    sys.stdout.write('\n  Downloading ... ')
     sys.stdout.flush()
 
     if os.path.exists(filename):
@@ -629,8 +629,7 @@ class Package(object):
         
         # get name of extracted directory
         entries = os.listdir(unpack_dir)
-        print(("top-level files: {}".format(entries)))
-        #os.rename(filename_base, unpack_dir)
+        ctx.Log("top-level files: {}".format(entries))
       except:
         shutil.rmtree(unpack_dir, True)
         try:

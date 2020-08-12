@@ -212,23 +212,20 @@ class Package(object):
       # Perform the auto-management of this package.
       res = self.download_and_build_package(ctx)
 
-      # For now we assume a package location is set entirely with <NAME>_DIR.
+      # Here, the package location is in <NAME>_DIR, either by option or by download and build
       if res[0]:
         value = self.get_option(env, upp + '_DIR')
         res = self.try_location(ctx, value, **kwargs)
         
         if res[0]:
           # If it all seemed to work, write a dummy file to indicate this package has been built.
-          ctx.Log("Command was successful, touch file \"scons_build_success\".\n")
+          ctx.Log("Build was successful, touch file \"scons_build_success\".\n")
           
-          success_file = open('scons_build_success', 'w')
+          success_file = open(os.path.join(env['current_source_dir'],'scons_build_success'), 'w')
           success_file.write('  ')
-          success_file.close()
-          
-          # Set the directory location.
-          ctx.env[upp + '_DIR'] = env["current_install_dir"]
+          success_file.close()  
         
-        else res[0]:
+        else:
           self._msg = '\n\nUnable to validate a %s installation at:\n %s\nInspect "config.log" to see what went wrong.\n'%(name, value)
           # ctx.Log(msg)
           # print(msg)
@@ -489,7 +486,10 @@ class Package(object):
       filename = self.download_url[self.download_url.rfind('/') + 1:]
     unpack_dir = "src"
     install_dir = os.path.abspath(os.path.join(base_dir, "install"))
-    ctx.env["current_install_dir"] = install_dir
+    
+    # Set the directory location.
+    ctx.env[self.name.upper() + '_DIR'] = install_dir
+    
     ctx.Log("Building into " + install_dir + "\n")
 
     # Change to the source directory.
@@ -526,24 +526,27 @@ class Package(object):
       if (os.path.isdir(entries[0])):
         os.chdir(entries[0])
     source_dir = os.getcwd()
-    ctx.Log("  source_dir:  ["+source_dir+"] (where the unpacked sources are)\n")
+    ctx.Log("  source_dir:  ["+source_dir+"] (where the unpacked sources are)\n\n")
+    ctx.env['current_source_dir'] = source_dir
 
-    ctx.Log(" force_redownload: "+str(force_redownload)+", force_rebuild: "+str(force_rebuild)+", not success: "+str(not os.path.exists('scons_build_success'))+"\n (\"success\" == file \"scons_build_success\" exists in \""+source_dir+"\")\n")
+    ctx.Log(" Only build package if at least on of the following three conditions is True:\n")
+    ctx.Log(" force_redownload: "+str(force_redownload)+", force_rebuild: "+str(force_rebuild)+", not success: "+str(not os.path.exists('scons_build_success'))+"\n")
+    ctx.Log(" (\"success\" means that the file \"scons_build_success\" exists in \""+source_dir+"\")\n")
     
-
     # Build the package.
     if (not os.path.exists('scons_build_success')) or force_redownload or force_rebuild:
-      ctx.Log(" => Build package\n")
+      ctx.Log(" => Build package\n\n")
       if not self.build_package(ctx, install_dir, source_dir, dependencies_dir):
         os.chdir(old_dir)
         return (0, '')
 
-    ctx.Log('  Configuring with downloaded package ... \n')
+    ctx.Log(' Configuring with downloaded package ... \n')
     os.chdir(old_dir)
+
     return (1, '')
 
   def download_package(self, ctx, filename):
-    sys.stdout.write('  Downloading ... ')
+    sys.stdout.write('\n  Downloading ... ')
     sys.stdout.flush()
 
     if os.path.exists(filename):
@@ -626,8 +629,7 @@ class Package(object):
         
         # get name of extracted directory
         entries = os.listdir(unpack_dir)
-        print(("top-level files: {}".format(entries)))
-        #os.rename(filename_base, unpack_dir)
+        ctx.Log("top-level files: {}".format(entries))
       except:
         shutil.rmtree(unpack_dir, True)
         try:
@@ -765,8 +767,8 @@ class Package(object):
         cmd = cmd.replace('${PATH}', path_environment_variable)
         
         
-        ctx.Log("MPI_DIR in env: {}\n".format("MPI_DIR" in ctx.env))
-        ctx.Log("env[MPI_DIR]={}, replace in cmd\n".format(ctx.env["MPI_DIR"]))
+        #ctx.Log("MPI_DIR in env: {}\n".format("MPI_DIR" in ctx.env))
+        #ctx.Log("env[MPI_DIR]={}, replace in cmd\n".format(ctx.env["MPI_DIR"]))
         if "MPI_DIR" in ctx.env:
           cmd = cmd.replace('${MPI_DIR}', ctx.env["MPI_DIR"])
         

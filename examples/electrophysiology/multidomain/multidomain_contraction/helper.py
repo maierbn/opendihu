@@ -690,8 +690,8 @@ elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain"
   variables.mappings = {
     ("parameter", 0):           ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
     ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
-    ("connectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
-    ("connectorSlot", 1): ("algebraic", "razumova/stress"),  # expose algebraic 12 = γ to the operator splitting
+    ("connectorSlot","vm"):     "wal_environment/vS",                 # expose state 0 = Vm to the operator splitting
+    ("connectorSlot", "stress"):"razumova/stress",                    # expose algebraic 12 = γ to the operator splitting
   }
   variables.parameters_initial_values = [0.0, 1.0]                    # wal_environment/I_HH = I_stim, razumova/L_S = λ
   variables.nodal_stimulation_current = 40.                           # not used
@@ -729,9 +729,9 @@ elif "hodgkin_huxley-razumova" in variables.cellml_file:   # this is (4, "Titin"
   variables.mappings = {
     ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
     ("parameter", 1):           "Razumova/l_hs",            # parameter 1 is fiber stretch λ
-    ("connectorSlot", 0): "membrane/V",               # expose Vm to the operator splitting
-    ("connectorSlot", 2): "Razumova/activation",      # expose activation .
-    ("connectorSlot", 1): "Razumova/activestress",
+    ("connectorSlot", "vm"):    "membrane/V",               # expose Vm to the operator splitting
+    ("connectorSlot", "stress"):"Razumova/activestress",
+    ("connectorSlot", "alpha"): "Razumova/activation",      # expose activation .
   }
   variables.parameters_initial_values = [0, 1]
   variables.nodal_stimulation_current = 40.                           # not used

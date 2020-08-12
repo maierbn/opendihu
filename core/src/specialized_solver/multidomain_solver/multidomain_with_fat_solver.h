@@ -21,6 +21,7 @@ public:
     typename FiniteElementMethodDiffusionFat::FunctionSpace
   > DataFat;
   typedef typename FiniteElementMethodDiffusionMuscle::FunctionSpace FunctionSpace;
+  typedef DataFat Data;
 
   //! constructor
   MultidomainWithFatSolver(DihuContext context);

@@ -7,8 +7,9 @@
 #include "control/multiple_instances.h"
 #include "control/load_balancing/load_balancing.h"
 #include "control/map_dofs/map_dofs.h"
-#include "control/precice/partitioned_fibers.h"
-#include "control/precice/muscle_contraction.h"
+#include "control/precice/volume_coupling/partitioned_fibers.h"
+#include "control/precice/volume_coupling/muscle_contraction.h"
+#include "control/precice/surface_coupling/precice_adapter.h"
 #include "control/precice/contraction_dirichlet_boundary_conditions.h"
 #include "control/precice/contraction_neumann_boundary_conditions.h"
 

@@ -41,6 +41,17 @@ C++ instantiation
     Mesh::StructuredDeformableOfDimension<3>
   >
 
+Alternatively, the `Term`, i.e. material can be specified as second template argument:
+
+.. code-block:: c
+
+  // either with composite mesh:
+  MuscleContractionSolver<
+    Mesh::CompositeOfDimension<3>,
+    Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D
+  >
+  
+The given value of `Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D` is the default but can be replaced. The material has to set ``usesActiveStress=true`` in order for the active stress to work.
 
 Python settings
 -----------------

@@ -15,12 +15,12 @@ int main(int argc, char *argv[])
   DihuContext settings(argc, argv);
   
   // define problem
-  PreciceAdapter::ContractionNeumannBoundaryConditions<
-    TimeSteppingScheme::DynamicHyperelasticitySolver<
+  Control::PreciceAdapter<
+    SpatialDiscretization::HyperelasticitySolver<
       Equation::SolidMechanics::HyperelasticTendon
       //Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressible3D
     > 
-  >problem(settings);
+  > problem(settings);
   
   // run problem
   problem.run();

@@ -40,7 +40,15 @@ createPetscObjects()
   displacementsLinearMesh_       = this->pressureFunctionSpace_->template createFieldVariable<3>("uLin", displacementsComponentNames);     //< u, the displacements
   velocitiesLinearMesh_          = this->pressureFunctionSpace_->template createFieldVariable<3>("vLin", displacementsComponentNames);     //< v, the velocities
   pressure_                      = this->pressureFunctionSpace_->template createFieldVariable<1>("p");     //<  p, the pressure variable
-  pressurePreviousTimestep_      = this->pressureFunctionSpace_->template createFieldVariable<1>("p_previous");     //<  p, the pressure variable
+
+  if (Term::isIncompressible)
+  {
+    pressurePreviousTimestep_    = this->pressureFunctionSpace_->template createFieldVariable<1>("p_previous");     //<  p, the pressure variable
+  }
+  else
+  {
+    pressurePreviousTimestep_    = nullptr;
+  }
 
   std::vector<std::string> componentNamesS{"S_11", "S_22", "S_33", "S_12", "S_23", "S_13"};       // component names in Voigt notation
   pK2Stress_               = this->displacementsFunctionSpace_->template createFieldVariable<6>("PK2-Stress (Voigt)", componentNamesS);     //<  the symmetric PK2 stress tensor in Voigt notation

@@ -36,7 +36,7 @@ else:
 # -------------- end user parameters ----------------
 
 # define command line arguments
-parser = argparse.ArgumentParser(description='static_biceps_emg')
+parser = argparse.ArgumentParser(description='muscle')
 parser.add_argument('--scenario_name',                       help='The name to identify this run in the log.',   default=variables.scenario_name)
 parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',    type=int)
 parser.add_argument('--n_subdomains_x', '-x',                help='Number of subdomains in x direction.',        type=int, default=variables.n_subdomains_x)
@@ -64,9 +64,7 @@ parser.add_argument('-vmodule',                              help='Enable verbos
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
 
 # parse command line arguments and assign values to variables module
-args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
-if len(other_args) != 0 and rank_no == 0:
-    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
+args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:
@@ -186,12 +184,29 @@ config = {
       "dumpFormat":          "matlab",      # default, ascii, matlab
     }
   },
-  "PreciceContractionDirichletBoundaryConditions": {        # precice adapter for muscle
-    "preciceConfigFilename":    "../precice-config.xml",    # the preCICE configuration file
+  "PreciceAdapter": {        # precice adapter for muscle
     "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
     "timestepWidth":            1,                          # coupling time step width, must match the value in the precice config
-    "couplingParticipants": [
-      {"isCouplingSurfaceBottom": True},
+    "preciceConfigFilename":    "../precice_config_muscle_neumann_tendon_dirichlet.xml",    # the preCICE configuration file
+    "preciceParticipantName":   "MuscleSolver",             # name of the own precice participant, has to match the name given in the precice xml config file
+    "preciceMeshes": [                                      # the precice meshes get created as the top or bottom surface of the main geometry mesh of the nested solver
+      {
+        "preciceMeshName":      "MuscleMeshBottom",         # precice name of the 2D coupling mesh
+        "face":                 "2-",                       # face of the 3D mesh where the 2D mesh is located, "2-" = bottom, "2+" = top
+      }
+    ],
+    "preciceData": [
+      {
+        "mode":                 "write-displacements-velocities",    # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
+        "preciceMeshName":      "MuscleMeshBottom",                 # name of the precice coupling surface mesh, as given in the precice xml settings file
+        "displacementsName":    "Displacement",                     # name of the displacements "data", i.e. field variable, as given in the precice xml settings file
+        "velocitiesName":       "Velocity",                         # name of the velocity "data", i.e. field variable, as given in the precice xml settings file
+      },
+      {
+        "mode":                 "read-traction",                   # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
+        "preciceMeshName":      "MuscleMeshBottom",                 # name of the precice coupling surface mesh, as given in the precice xml settings 
+        "tractionName":         "Traction",                         # name of the traction "data", i.e. field variable, as given in the precice xml settings file
+      }
     ],
     
     "Coupling": {
@@ -346,6 +361,7 @@ config = {
                       "meshName":               "MeshFiber_{}".format(fiber_no),               # reference to the fiber mesh
                       "numberTimeSteps":        1,             # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step
                       "timeStepOutputInterval": 20,            # if the time step should be written to console, a value > 10 produces no output
+                      "slotNames":              [],            # names of the data connector slots
                       
                       # a list of field variables that will get values assigned in every timestep, by the provided callback function
                       "fieldVariables1": [
@@ -390,6 +406,7 @@ config = {
           "numberTimeSteps":              1,                         # only use 1 timestep per interval
           "timeStepOutputInterval":       100,                       # do not output time steps
           "Pmax":                         variables.pmax,            # maximum PK2 active stress
+          "slotNames":                    [],                        # names of the data connector slots
           "OutputWriter" : [
             {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
           ],

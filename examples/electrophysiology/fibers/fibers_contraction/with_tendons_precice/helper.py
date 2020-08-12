@@ -417,7 +417,7 @@ variables.fiber_mesh_names = [mesh_name for mesh_name in variables.meshes.keys()
 variables.elasticity_dirichlet_bc = {}
 for j in range(my):
   for i in range(mx):
-    variables.elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [0.0,0.0,None,None,None,None]
+    variables.elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [0.0,0.0,0.0,0.0,0.0,0.0]
   
 # fix muscle at bottom
 if False:
@@ -429,7 +429,7 @@ if False:
 # Neumann BC at top nodes, traction upwards
 k = nz-1
 variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": [0.0,0.0,10.0], "face": "2+"} for j in range(ny) for i in range(nx)]
-#variables.elasticity_neumann_bc = []
+variables.elasticity_neumann_bc = []
 
 #with open("mesh","w") as f:
 #  f.write(str(variables.meshes["3Dmesh_quadratic"]))

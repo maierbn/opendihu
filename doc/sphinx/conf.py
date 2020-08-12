@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'opendihu'
-copyright = u'2019, Benjamin Maier'
+copyright = u'2020, Benjamin Maier. MIT licence, see LICENSE for details.'
 author = u'Benjamin Maier'
 
 # The short X.Y version

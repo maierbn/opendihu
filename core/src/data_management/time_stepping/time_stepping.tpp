@@ -78,6 +78,7 @@ createPetscObjects()
 
   // parse slot names of the additional field variables
   this->context_.getPythonConfig().getOptionVector("additionalSlotNames", slotConnectorData_->slotNames);
+  slotConnectorData_->slotNames.insert(slotConnectorData_->slotNames.begin(), std::string(""));    // add a dummy slot name, it will be replaced by the nested solver in their setSlotConnectorData method 
 
   // make sure that there are as many slot names as slots
   slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());

@@ -130,6 +130,7 @@ multidomain_solver = {
   "endTime":                          variables.end_time,                   # end time, this is not relevant because it will be overridden by the splitting scheme
   "timeStepOutputInterval":           1,                                  # how often the output timestep should be printed
   "durationLogKey":                   "duration_multidomain",               # key for duration in log.csv file
+  "slotNames":                        ["vm_old", "vm_new", 'g_mu', 'g_tot'],  # names of the data connector slots, maximum length per name is 6 characters. g_mu is gamma (active stress) of the compartment, g_tot is the total gamma
   
   # material parameters for the compartments
   "nCompartments":                    variables.n_compartments,             # number of compartments
@@ -156,6 +157,7 @@ multidomain_solver = {
       "dirichletBoundaryConditions":  variables.potential_flow_dirichlet_bc,
       "neumannBoundaryConditions":    [],
       "inputMeshIsGlobal":            True,
+      "slotName":                     "",
     },
   },
   "Activation": {
@@ -166,6 +168,7 @@ multidomain_solver = {
       "inputMeshIsGlobal":            True,
       "dirichletBoundaryConditions":  {},
       "neumannBoundaryConditions":    [],
+      "slotName":                     "",
       "diffusionTensor": [[      # sigma_i           # fiber direction is (1,0,0)
         8.93, 0, 0,
         0, 0.0, 0,
@@ -186,6 +189,7 @@ multidomain_solver = {
       "inputMeshIsGlobal":            True,
       "dirichletBoundaryConditions":  {},
       "neumannBoundaryConditions":    [],
+      "slotName":                     "",
     },
   },
   
@@ -204,6 +208,10 @@ config = {
   "meta": {                                                               # additional fields that will appear in the log
     "partitioning":         [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
+  "connectedSlots": [
+    ("stress", 'g_mu'),
+    ('g_tot', 'g_in')
+  ],
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": {
   
@@ -273,8 +281,8 @@ config = {
     "durationLogKey":         "duration_total",
     "timeStepOutputInterval": 1,
     "endTime":                variables.end_time,
-    "connectedSlotsTerm1To2": {1:2},          # transfer gamma to MuscleContractionSolver, the receiving slots are λ, λdot, γ
-    "connectedSlotsTerm2To1":  None,       # transfer nothing back
+    "connectedSlotsTerm1To2": None,       # data transfer is configured using global option "connectedSlots"
+    "connectedSlotsTerm2To1": None,       # transfer nothing back
     "Term1": {        # multidomain
       "StrangSplitting": {
         "timeStepWidth":          variables.dt_splitting,
@@ -301,6 +309,7 @@ config = {
                 "dirichletBoundaryConditions":  {},
                 "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
                 "nAdditionalFieldVariables":    0,
+                "additionalSlotNames":          [],
                     
                 "CellML" : {
                   "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
@@ -368,6 +377,7 @@ config = {
         "numberTimeSteps":              1,                         # only use 1 timestep per interval
         "timeStepOutputInterval":       100,                       # do not output time steps
         "Pmax":                         variables.pmax,            # maximum PK2 active stress
+        "slotNames":                    ["lambda", "ldot", 'g_in', "T"],  # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
         ],
@@ -400,6 +410,7 @@ config = {
           "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
           #"loadFactors":                [0.5, 1.0],                # load factors for every timestep
           "loadFactors":                [],                        # no load factors, solve problem directly
+          "loadFactorGiveUpThreshold":  0.5,                      # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
           "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
           
           # boundary and initial conditions

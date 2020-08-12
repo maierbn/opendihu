@@ -5,8 +5,8 @@
 namespace MathUtility
 {
 
-const double INVERSE_REGULARIZATION_TOLERANCE = 1e-10;
-const double INVERSE_REGULARIZATION_EPSILON = 1e-10;
+const double INVERSE_REGULARIZATION_TOLERANCE = 1e-2;    // 1e-10, threshold for the absolute value of the determinant of the almost-singular matrix, when to add regularization
+const double INVERSE_REGULARIZATION_EPSILON = 1e-1;      // 1e-10, regularization value to be added to diagonal of almost-singular matrix
 
 
 template<typename double_v_t>

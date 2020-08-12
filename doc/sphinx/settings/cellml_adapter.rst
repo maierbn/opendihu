@@ -48,8 +48,25 @@ The two template arguments of `CellmlAdapter` are the *number of states* and the
 This has to match the actual numbers of the CellML model that is to be computed. Consequently, when a specific model should be computed, the CellmlAdapter has be adjusted.
 
 If the numbers are not correct a corresponding error will be shown from which the correct numbers can be determined.
-
+  
 Note that only explicit timestepping schemes are possible, which is current ``TimeSteppingScheme::ExplicitEuler`` or ``TimeSteppingScheme::Heun``.
+
+There is an optional third template argument which specifies the function space, on which the CellML instances will be solved. 
+
+.. code-block:: c
+
+  TimeSteppingScheme::ExplicitEuler<
+    CellmlAdapter<57,1,FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunction::LagrangeOfOrder<1>>>  // nStates,nAlgebraics: 57,71 = Shorten, 4,9 = Hodgkin Huxley
+  >
+
+This template argument is required if the mesh should be reused. 
+E.g., for Monodomain eq. there is a splitting scheme with CellML and Diffusion and both parts use the same mesh. Then you have to assert that the mesh is the same type in the diffusion and here, e.g. by setting the mesh to structured deformable, as shown above.
+
+The default FunctionSpace is `FunctionSpace::Generic` which is the following typedef:
+
+.. code-block:: c
+
+  typedef FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>,BasisFunction::LagrangeOfOrder<1>> Generic;
 
 .. code-block:: python
 

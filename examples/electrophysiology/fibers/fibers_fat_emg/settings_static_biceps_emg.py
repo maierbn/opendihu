@@ -305,6 +305,7 @@ config = {
                     "inputMeshIsGlobal":            True,
                     "dirichletBoundaryConditions":  {},
                     "nAdditionalFieldVariables":    0,
+                    "additionalSlotNames":          [],                                       # slot names of the additional slots, maximum 6 characters per name
                     "checkForNanInf":               True,
                       
                     "CellML" : {
@@ -365,6 +366,7 @@ config = {
                     "inputMeshIsGlobal":           True,
                     "solverName":                  "diffusionTermSolver",
                     "nAdditionalFieldVariables":   0,
+                    "additionalSlotNames":         [],
                     "checkForNanInf":              False,
                     
                     "FiniteElementMethod" : {
@@ -375,6 +377,7 @@ config = {
                       "meshName":                  "MeshFiber_{}".format(fiber_no),
                       "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
                       "solverName":                "diffusionTermSolver",
+                      "slotName":                  "vm",
                     },
                     "OutputWriter" : [
                       #{"format": "Paraview", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles": True},
@@ -406,16 +409,19 @@ config = {
         "OutputWriter": [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
         ],
-        #"face":                     ["1+","0+"],         # which faces of the 3D mesh should be written into the 2D mesh
-        "face":                      ["1+"],         # which faces of the 3D mesh should be written into the 2D mesh
-        "samplingPoints":           [[10.3, 17.2, -47.8], [9.3, 15.2, -47.8], [10.6, 15.3, -48.3], [6, 19, -50], [4, 18, -50]],
-        "filename":                 "out/electrodes.csv",
+        #"face":                    ["1+","0+"],         # which faces of the 3D mesh should be written into the 2D mesh
+        "face":                     ["1+"],              # which faces of the 3D mesh should be written into the 2D mesh
+        "samplingPoints":           variables.hdemg_electrode_positions,    # the electrode positions, they are created in the helper.py script
+        "updatePointPositions":     False,               # the electrode points should be initialize in every timestep (set to False for the static case). This makes a difference if the muscle contracts, then True=fixed electrodes, False=electrodes moving with muscle.
+        "filename":                 "out/{}/electrodes.csv".format(variables.scenario_name),
+        "xiTolerance":              0.3,                 # tolerance for element-local coordinates xi, for finding electrode positions inside the elements. Increase or decrease this numbers if not all electrode points are found.
         "StaticBidomainSolver": {             # solves Bidomain equation: K(sigma_i) Vm + K(sigma_i+sigma_e) phi_e = 0   => K(sigma_i+sigma_e) phi_e = -K(sigma_i) Vm
           "numberTimeSteps":        1,
           "timeStepOutputInterval": 50,
           "durationLogKey":         "duration_bidomain",
           "solverName":             "muscularEMGSolver",
           "initialGuessNonzero":    variables.emg_initial_guess_nonzero,
+          "slotNames":              [],
           "PotentialFlow": {
             "FiniteElementMethod" : {  
               "meshName":           ["3Dmesh","3DFatMesh"],
@@ -424,6 +430,7 @@ config = {
               "dirichletBoundaryConditions": variables.potential_flow_dirichlet_bc,
               "neumannBoundaryConditions":   [],
               "inputMeshIsGlobal":  True,
+              "slotName":           "",
             },
           },
           "Activation": {
@@ -434,6 +441,7 @@ config = {
               "inputMeshIsGlobal":  True,
               "dirichletBoundaryConditions": {},
               "neumannBoundaryConditions":   [],
+              "slotName":           "",
               
               # ∇•(sigma_i+sigma_e)∇phi_e = -∇•(sigma_i)∇Vm
               "diffusionTensor": [

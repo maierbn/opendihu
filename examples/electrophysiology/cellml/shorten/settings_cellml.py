@@ -89,6 +89,7 @@ config = {
     "nAdditionalFieldVariables": 0,   # only revelant if there are multiple nested solvers and they transfer additional data
     "additionalSlotNames": [],        # the slot names of the additional field variables
     "dirichletBoundaryConditions": {},    # we do not set dirichlet BC
+    "dirichletOutputFilename":     None,  # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     
     "OutputWriter" : [
        #{"format": "Callback", "outputInterval": 1e4, "callback": callback},

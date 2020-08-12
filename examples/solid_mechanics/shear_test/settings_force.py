@@ -247,6 +247,8 @@ config = {
     "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
     "constantBodyForce":           constant_body_force,                 # a constant force that acts on the whole body, e.g. for gravity
     
+    "dirichletOutputFilename":     "out/dirichlet_boundary_conditions",                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+    
     # define which file formats should be written
     # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
     "OutputWriter" : [
@@ -278,6 +280,7 @@ config = {
     "prefactor":            1.0,                                        # prefactor of the lhs, has no effect here
     "slotName":             "",
     "dirichletBoundaryConditions": elasticity_dirichlet_bc,             # the Dirichlet boundary conditions that define values for displacements u
+    "dirichletOutputFilename":     None,                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     "neumannBoundaryConditions":   elasticity_neumann_bc,               # Neumann boundary conditions that define traction forces on surfaces of elements
     "divideNeumannBoundaryConditionValuesByTotalArea": False,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
     

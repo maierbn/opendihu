@@ -41,5 +41,6 @@ prepare_arm.sh
 *.zip
 *.avi
 *.srct*
+*.json
 dependencies/*
 dependencies

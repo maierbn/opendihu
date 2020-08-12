@@ -258,6 +258,8 @@ config = {
     "extrapolateInitialGuess":      True,               # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
     "constantBodyForce":            constant_body_force,     # e.g. for gravity
     
+    "dirichletOutputFilename":     "out/dirichlet_boundary_conditions",                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+    
     "OutputWriter" : [   # output files for displacements function space (quadratic elements), contains displacements, velocities and PK2 stresses
       {"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True},

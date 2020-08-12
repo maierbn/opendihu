@@ -216,6 +216,7 @@ def get_instance_config(i):
           "timeStepOutputInterval":       1e4,
           "inputMeshIsGlobal":            True,
           "dirichletBoundaryConditions":  {},
+          "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
           "nAdditionalFieldVariables":    0,   
           "checkForNanInf":               True,
           
@@ -257,6 +258,7 @@ def get_instance_config(i):
           "durationLogKey":               "duration_1D",
           "timeStepOutputInterval":       1e4,
           "dirichletBoundaryConditions":  bc,
+          "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
           "inputMeshIsGlobal":            True,
           "solverName":                   "implicitSolver",
           "nAdditionalFieldVariables":    0,

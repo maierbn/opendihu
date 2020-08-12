@@ -23,6 +23,7 @@ config = {
     "physicalExtent": [2*nx, 2*ny, 2*nz],
     
     "dirichletBoundaryConditions": bc,
+    "dirichletOutputFilename":     None,                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     "neumannBoundaryConditions": [],
     "prefactor": 1,
     

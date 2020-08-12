@@ -37,6 +37,9 @@ initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> fun
 
   // fill auxiliary ghost element data structures, this is only needed for Dirichlet boundary conditions on scalar fields
   this->initializeGhostElements();
+
+  // write the constraint dofs and the prescribed values as points in a vtk file
+  writeOutput();
 }
 
 template<typename FunctionSpaceType,int nComponents>
@@ -521,6 +524,30 @@ addBoundaryConditions(std::vector<ElementWithNodes> &boundaryConditionElements, 
   {
     LOG(DEBUG) << "  component " << componentNo << ", dofs " << boundaryConditionsByComponent_[componentNo].dofNosLocal
       << ", values " << boundaryConditionsByComponent_[componentNo].values;
+  }
+}
+
+//! write the constraint dofs and the prescribed values as points in a vtk file
+template<typename FunctionSpaceType,int nComponents>
+void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
+writeOutput()
+{
+  // get the filename
+  filenameOutput_ = specificSettings_.getOptionString("dirichletOutputFilename", "");
+
+  // if filename option was None or empty string
+  if (filenameOutput_ != "")
+  {
+    // get geometry of boundary condition dofs
+    std::vector<Vec3> geometryValues;
+    this->functionSpace_->geometryField().getValues(boundaryConditionNonGhostDofLocalNos_, geometryValues);
+
+    // output the dofs and their values
+    //outputPointsVtp(std::string filename, double currentTime, const std::vector<Vec3> &geometry,
+    //           const std::vector<VecD<nComponents>> &vectorValues, std::string fieldVariableName,
+    //           std::shared_ptr<Partition::RankSubset> rankSubset)
+    outputPoints_.outputPointsVtp<nComponents>(filenameOutput_, 0, geometryValues, boundaryConditionValues_,
+                                               "dirichletBoundaryConditions", functionSpace_->meshPartition()->rankSubset());
   }
 }
 

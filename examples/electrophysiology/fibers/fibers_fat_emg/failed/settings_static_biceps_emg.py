@@ -188,6 +188,7 @@ config = {
                     "timeStepOutputInterval":       1e4,
                     "inputMeshIsGlobal":            True,
                     "dirichletBoundaryConditions":  {},
+                    "dirichletOutputFilename":      None,             # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                     "nAdditionalFieldVariables":    0,
                       
                     "CellML" : {
@@ -240,7 +241,8 @@ config = {
                     "logTimeStepWidthAsKey":       "dt_1D",
                     "durationLogKey":              "duration_1D",
                     "timeStepOutputInterval":      1e4,
-                    "dirichletBoundaryConditions": {},                                       # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
+                    "dirichletBoundaryConditions": {},            # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
+                    "dirichletOutputFilename":     None,          # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                     "inputMeshIsGlobal":           True,
                     "solverName":                  "diffusionTermSolver",
                     "nAdditionalFieldVariables":   0,
@@ -302,6 +304,7 @@ config = {
                   "solverName":         "potentialFlowSolver",
                   "prefactor":          1.0,
                   "dirichletBoundaryConditions": variables.potential_flow_dirichlet_bc,
+                  "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "neumannBoundaryConditions":   [],
                   "inputMeshIsGlobal":  True,
                 },
@@ -313,6 +316,7 @@ config = {
                   "prefactor":          1.0,
                   "inputMeshIsGlobal":  True,
                   "dirichletBoundaryConditions": {},
+                  "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "neumannBoundaryConditions":   [],
                   "diffusionTensor": [      # sigma_i           # fiber direction is (1,0,0)
                     8.93, 0, 0,
@@ -346,6 +350,7 @@ config = {
                   "solverName":           "fatEMGSolver",
                   "prefactor":            0.4,
                   "dirichletBoundaryConditions": variables.fat_dirichlet_bc,
+                  "dirichletOutputFilename":     None,            # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "updatePrescribedValuesFromSolution": True,     # update the prescribed Dirichlet boundary condition values at the beginning of each timestep by the values that got transferred from the intra-muscular domain by the coupling.
                   "neumannBoundaryConditions": [],
                   "inputMeshIsGlobal":  False,

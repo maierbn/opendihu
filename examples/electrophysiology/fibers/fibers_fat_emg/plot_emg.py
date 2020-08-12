@@ -53,8 +53,9 @@ fig = plt.figure(figsize=(5,10))
 ax = fig.add_subplot(111)
 plt.tick_params(labelcolor='none', top='off', bottom='off', left='off', right='off')
 plt.grid(False)
-plt.xlabel("fiber direction")
-plt.ylabel("cross-fiber direction")    
+plt.xlabel("cross-fiber direction")
+plt.ylabel("fiber direction")  
+plt.title("sEMG for {} x {} electrodes, t: [{}, {}]".format(n_points_xy, n_points_z, t_list[0], t_list[-1]))
 
 # determine minimum and maximum overall values
 all_values = data[:,3+n_points*3:]

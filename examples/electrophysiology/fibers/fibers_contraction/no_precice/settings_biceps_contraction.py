@@ -233,6 +233,8 @@ config = {
                     "timeStepOutputInterval":       1e4,                                     # how often to print the current timestep
                     "initialValues":                [],                                      # no initial values are specified
                     "dirichletBoundaryConditions":  {},                                      # no Dirichlet boundary conditions are specified
+                    "dirichletOutputFilename":      None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+                    
                     "inputMeshIsGlobal":            True,                                    # the boundary conditions and initial values would be given as global numbers
                     "checkForNanInf":               True,                                    # abort execution if the solution contains nan or inf values
                     "nAdditionalFieldVariables":    0,                                       # number of additional field variables
@@ -297,6 +299,7 @@ config = {
                     "durationLogKey":              "duration_1D",                           # log key of duration for this solver
                     "timeStepOutputInterval":      1e4,                                     # how often to print the current timestep
                     "dirichletBoundaryConditions": {},                                      # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
+                    "dirichletOutputFilename":     None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                     "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
                     "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
                     "nAdditionalFieldVariables":   1,                                       # number of additional field variables that will be written to the output file, here for stress
@@ -438,6 +441,8 @@ config = {
           "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
           "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
           "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
+          
+          "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions",                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
           
           # define which file formats should be written
           # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.

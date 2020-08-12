@@ -155,6 +155,7 @@ multidomain_solver = {
       "solverName":                   "potentialFlowSolver",
       "prefactor":                    1.0,
       "dirichletBoundaryConditions":  variables.potential_flow_dirichlet_bc,
+      "dirichletOutputFilename":      "out/dirichlet_potential_flow",               # output filename for the dirichlet boundary conditions, set to "" to have no output
       "neumannBoundaryConditions":    [],
       "inputMeshIsGlobal":            True,
       "slotName":                     "",
@@ -167,6 +168,7 @@ multidomain_solver = {
       "prefactor":                    1.0,
       "inputMeshIsGlobal":            True,
       "dirichletBoundaryConditions":  {},
+      "dirichletOutputFilename":      None,               # output filename for the dirichlet boundary conditions, set to "" to have no output
       "neumannBoundaryConditions":    [],
       "slotName":                     "",
       "diffusionTensor": [[      # sigma_i           # fiber direction is (1,0,0)
@@ -188,6 +190,7 @@ multidomain_solver = {
       "prefactor":                    0.4,
       "inputMeshIsGlobal":            True,
       "dirichletBoundaryConditions":  {},
+      "dirichletOutputFilename":      None,               # output filename for the dirichlet boundary conditions, set to "" to have no output
       "neumannBoundaryConditions":    [],
       "slotName":                     "",
     },
@@ -307,6 +310,7 @@ config = {
                 "timeStepOutputInterval":       1e4,
                 "inputMeshIsGlobal":            True,
                 "dirichletBoundaryConditions":  {},
+                "dirichletOutputFilename":      None,             # output filename for the dirichlet boundary conditions, set to "" to have no output
                 "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
                 "nAdditionalFieldVariables":    0,
                 "additionalSlotNames":          [],
@@ -401,7 +405,7 @@ config = {
           # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
           
           # mesh
-          "inputMeshIsGlobal":          True,                     # the mesh is given locally
+          "inputMeshIsGlobal":          True,                     # boundary conditions and initial values are given as global numbers (every process has all information)
           "meshName":                   ["3Dmesh_elasticity_quadratic", "3DFatMesh_elasticity_quadratic"],       # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
           "fiberMeshNames":             [],                       # fiber meshes that will be used to determine the fiber direction, there are no fibers in multidomain, so this is empty
           "fiberDirection":             [0,0,1],                  # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
@@ -424,6 +428,8 @@ config = {
           "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
           "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
           "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
+          
+          "dirichletOutputFilename":    "out/"+variables.scenario_name+"/dirichlet_boundary_conditions",     # output filename for the dirichlet boundary conditions, set to "" to have no output
           
           # define which file formats should be written
           # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.

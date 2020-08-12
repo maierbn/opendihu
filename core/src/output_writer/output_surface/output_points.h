@@ -8,6 +8,12 @@
 namespace OutputWriter
 {
 
+/** This class can write *.vtp or *.csv files with points, a single field variable and partitioning information.
+ *  There are static functions that write the files serially, or the parallel function that first gathers the values from all ranks
+ *  and then writes the file on rank 0.
+ *
+ *  This class is used by the OutputSurface writer that outputs values for EMG electrodes and by the DirichletBoundaryConditions that outputs Dirichlet BC values.
+ */
 class OutputPoints
 {
 public:

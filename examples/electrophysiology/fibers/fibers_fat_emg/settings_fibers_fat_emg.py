@@ -30,7 +30,7 @@ if ".py" in sys.argv[0]:
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
   if rank_no == 0:
-    print("Warning: There is no variables file, e.g:\n ./static_biceps_emg ../settings_static_biceps_emg.py ramp.py\n")
+    print("Warning: There is no variables file, e.g:\n ./fibers_fat_emg ../settings_fibers_fat_emg.py ramp.py\n")
   exit(0)
 
 # -------------- begin user parameters ----------------
@@ -38,7 +38,7 @@ else:
 # -------------- end user parameters ----------------
 
 # define command line arguments
-parser = argparse.ArgumentParser(description='static_biceps_emg')
+parser = argparse.ArgumentParser(description='fibers_fat_emg')
 parser.add_argument('--scenario_name',                       help='The name to identify this run in the log.',   default=variables.scenario_name)
 parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',    type=int)
 parser.add_argument('--n_subdomains_x', '-x',                help='Number of subdomains in x direction.',        type=int, default=variables.n_subdomains_x)
@@ -304,6 +304,7 @@ config = {
                     "timeStepOutputInterval":       1e4,
                     "inputMeshIsGlobal":            True,
                     "dirichletBoundaryConditions":  {},
+                    "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                     "nAdditionalFieldVariables":    0,
                     "additionalSlotNames":          [],                                       # slot names of the additional slots, maximum 6 characters per name
                     "checkForNanInf":               True,
@@ -363,6 +364,7 @@ config = {
                     "durationLogKey":              "duration_1D",
                     "timeStepOutputInterval":      1e4,
                     "dirichletBoundaryConditions": {},                                       # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
+                    "dirichletOutputFilename":     None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                     "inputMeshIsGlobal":           True,
                     "solverName":                  "diffusionTermSolver",
                     "nAdditionalFieldVariables":   0,
@@ -428,6 +430,7 @@ config = {
               "solverName":         "potentialFlowSolver",
               "prefactor":          1.0,
               "dirichletBoundaryConditions": variables.potential_flow_dirichlet_bc,
+              "dirichletOutputFilename":     None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
               "neumannBoundaryConditions":   [],
               "inputMeshIsGlobal":  True,
               "slotName":           "",
@@ -440,6 +443,7 @@ config = {
               "prefactor":          1.0,
               "inputMeshIsGlobal":  True,
               "dirichletBoundaryConditions": {},
+              "dirichletOutputFilename":     None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
               "neumannBoundaryConditions":   [],
               "slotName":           "",
               

@@ -19,6 +19,7 @@ config = {
     "inputMeshIsGlobal": True,
     
     "neumannBoundaryConditions": bc,
+    "dirichletOutputFilename":     None,                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     "dirichletBoundaryConditions": {1:0},
     "prefactor": 1.0,
     

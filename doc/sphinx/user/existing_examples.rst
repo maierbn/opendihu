@@ -1289,9 +1289,9 @@ Fibers
       mkorn && sr       # build
       cd build_release
       
-      mpirun -n 2 ./static_biceps_emg ../settings_static_biceps_emg.py biceps.py 
+      mpirun -n 2 ./fibers_fat_emg ../settings_fibers_fat_emg.py biceps.py 
       
-    The settings for this example consists of two files that are the two parameters to the command: the main file is ``settings_static_biceps_emg.py`` where all settings for the solvers are specified. 
+    The settings for this example consists of two files that are the two parameters to the command: the main file is ``settings_fibers_fat_emg.py`` where all settings for the solvers are specified. 
     Some of the values there have variables that are set in the second file. The second settings file in this example is ``biceps.py``. The file is stored in the ``variables`` subdirectory.
     It is more compact and contains only the values that need to be specified for a particular scenario.
     
@@ -1301,13 +1301,13 @@ Fibers
     
     .. code-block:: bash
       
-      ./static_biceps_emg ../settings_static_biceps_emg.py biceps.py --help
+      ./fibers_fat_emg ../settings_fibers_fat_emg.py biceps.py --help
       
     An example is to set the end time to 5:
     
     .. code-block:: bash
      
-      mpirun -n 2 ./static_biceps_emg ../settings_static_biceps_emg.py biceps.py --end_time=5
+      mpirun -n 2 ./fibers_fat_emg ../settings_fibers_fat_emg.py biceps.py --end_time=5
       
     The results are written to several files in the ``out/<scenario>`` directory, e.g. ``out/biceps``.
     There are different files containing fibers, the muscle and fat volume, only the surface and the electrodes. The intervals in which these files are written can be adjusted in the scenario file.
@@ -1547,13 +1547,19 @@ The multidomain equations are a 3D homogenized formulation of electrophysiology.
     .. figure:: examples/multidomain_with_fat_2.png
       :width: 100%
       
-    View of :math:`V_m` in all 10 compartments (small images at the right), the resulting potential in the body domain, :math:`\phi_b` (top center), and the surface EMG (left, big)
+      View of :math:`V_m` in all 10 compartments (small images at the right), the resulting potential in the body domain, :math:`\phi_b` (top center), and the surface EMG (left, big)
       
     .. _multidomain_with_fat_3:
     .. figure:: examples/multidomain_with_fat_3.png
       :width: 20%
       
-    Partitioning with 12 processes.
+      Partitioning with 12 processes.
+      
+    .. _multidomain_with_fat_4:
+    .. figure:: examples/multidomain_with_fat_4.png
+      :width: 60%
+      
+      This is the scenario with 128 processes, top: partitioning, each color corresponds to one rank. Bottom: EMG signal, it can be seen that this is very smooth, because of the high spatial resolution.
       
   * **multidomain_motoneuron**
   

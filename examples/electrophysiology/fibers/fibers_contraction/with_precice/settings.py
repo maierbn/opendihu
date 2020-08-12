@@ -235,6 +235,7 @@ config = {
                   "timeStepOutputInterval":       1e4,
                   "inputMeshIsGlobal":            True,
                   "dirichletBoundaryConditions":  {},
+                  "dirichletOutputFilename":      None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "nAdditionalFieldVariables":    0,
                   "checkForNanInf":               False,
                     
@@ -294,7 +295,8 @@ config = {
                   "logTimeStepWidthAsKey":       "dt_1D",
                   "durationLogKey":              "duration_1D",
                   "timeStepOutputInterval":      1e4,
-                  "dirichletBoundaryConditions": {},                                       # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
+                  "dirichletBoundaryConditions": {},                                      # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
+                  "dirichletOutputFilename":     None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "inputMeshIsGlobal":           True,
                   "solverName":                  "diffusionTermSolver",
                   "nAdditionalFieldVariables":   1,
@@ -378,6 +380,8 @@ config = {
         "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
         "constantBodyForce":           variables.constant_body_force,                 # a constant force that acts on the whole body, e.g. for gravity
         
+        "dirichletOutputFilename":     None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+        
         # define which file formats should be written
         # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
         "OutputWriter" : [
@@ -433,6 +437,8 @@ config = {
         
         "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
         "constantBodyForce":           variables.constant_body_force,                 # a constant force that acts on the whole body, e.g. for gravity
+        
+        "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
         
         # define which file formats should be written
         # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.

@@ -121,6 +121,7 @@ initialize()
   }
   else
   {
+    // the "CellML" section already specified initial values. Keep them.
     LOG(DEBUG) << "initial values were set by DiscretizableInTime";
   }
   VLOG(1) << "initial solution vector: " << *this->data_->solution();

@@ -31,6 +31,7 @@ config = {
     "nAdditionalFieldVariables": 0,
     "additionalSlotNames": [],
     "dirichletBoundaryConditions": {},
+    "dirichletOutputFilename": None,   # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     
     "FiniteElementMethod" : {
       "nElements": [nx, ny],

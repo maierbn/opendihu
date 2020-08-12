@@ -213,6 +213,8 @@ config = {
     #"initialValuesVelocities": [[0.01*z,0.0,0.0] for i in range((2*nx+1)*(2*ny+1)) for z in range((2*nz+1))],
     "constantBodyForce": constant_body_force,     # e.g. for gravity
     
+    "dirichletOutputFilename":     "out/dirichlet_boundary_conditions",                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+    
     "OutputWriter" : [   # output files for displacements function space (quadratic elements), contains displacements, velocities and PK2 stresses
       {"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "fileNumbering": "incremental"},

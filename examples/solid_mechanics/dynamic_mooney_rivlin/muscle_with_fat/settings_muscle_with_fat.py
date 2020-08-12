@@ -253,6 +253,8 @@ config = {
           "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
           "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
           
+          "dirichletOutputFilename":     "out/dirichlet_boundary_conditions",                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+          
           # define which file formats should be written
           # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
           "OutputWriter" : [

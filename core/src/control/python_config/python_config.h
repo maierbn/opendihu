@@ -51,6 +51,9 @@ public:
   //! checks if this settings is the empty list or None
   bool isEmpty(std::string key) const;
 
+  //! checks if this settings is a Python list
+  bool isTypeList(std::string key) const;
+
   //! return all keys of the current dict as vector of strings
   void getKeys(std::vector<std::string> &keys);
 

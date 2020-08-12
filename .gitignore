@@ -42,5 +42,6 @@ prepare_arm.sh
 *.avi
 *.srct*
 solver_structure.txt
+*.json
 dependencies/*
 dependencies

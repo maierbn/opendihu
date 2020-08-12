@@ -65,6 +65,7 @@ config = {
       "meshName": "potentialFlow",
       "solverName": "linearSolver",
       "dirichletBoundaryConditions": bc,
+      "dirichletOutputFilename":  None,    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
       "prefactor": 1.0,
     },
     "OutputWriter" : [

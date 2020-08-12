@@ -166,7 +166,8 @@ config = {
                 "timeStepOutputInterval":       1e4,
                 "inputMeshIsGlobal":            True,
                 "dirichletBoundaryConditions":  {},
-                "nAdditionalFieldVariables":   0,
+                "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+                "nAdditionalFieldVariables":    0,
                   
                 "CellML" : {
                   "modelFilename":                          variables.cellml_file,                                    # input C++ source file or cellml XML file
@@ -230,6 +231,7 @@ config = {
                 "durationLogKey":              "duration_1D",
                 "timeStepOutputInterval":      1e4,
                 "dirichletBoundaryConditions": {},                                       # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
+                "dirichletOutputFilename":     None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                 "inputMeshIsGlobal":           True,
                 "solverName":                  "implicitSolver",
                 "nAdditionalFieldVariables":   1,     # for stress that will be transferred from CellML and then written with output writer

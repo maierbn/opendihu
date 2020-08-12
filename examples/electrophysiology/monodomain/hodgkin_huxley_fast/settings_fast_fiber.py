@@ -132,6 +132,7 @@ config = {
                   "inputMeshIsGlobal":            True,
                   "checkForNanInf":               False,
                   "dirichletBoundaryConditions":  {},
+                  "dirichletOutputFilename":      None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "nAdditionalFieldVariables":    0,
                   "additionalSlotNames":          [],
                     
@@ -180,6 +181,7 @@ config = {
                   "durationLogKey":              "duration_1D",
                   "timeStepOutputInterval":      1e4,
                   "dirichletBoundaryConditions": {}, #{0: -75.0036, -1: -75.0036},
+                  "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "inputMeshIsGlobal":           True,
                   "checkForNanInf":              False,
                   "solverName":                  "implicitSolver",

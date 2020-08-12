@@ -707,20 +707,12 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,
 
   if (!statesInitialValuesInitialized_)
   {
-    // initialize states
-    if (this->specificSettings_.hasKey("statesInitialValues") && !this->specificSettings_.isEmpty("statesInitialValues"))
+    if (!this->specificSettings_.hasKey("statesInitialValues")
+      || this->specificSettings_.isEmpty("statesInitialValues")
+      || this->specificSettings_.getOptionString("statesInitialValues", "") == "CellML")
     {
-      LOG(DEBUG) << "set initial values from config";
-
-      // statesInitialValues gives the initial state values for one instance of the problem. it is used for all instances.
-      std::array<double,nStates_> statesInitialValuesFromConfig = this->specificSettings_.template getOptionArray<double,nStates_>("statesInitialValues", 0);
-
-      // store initial values to statesInitialValues_
-      std::copy(statesInitialValuesFromConfig.begin(), statesInitialValuesFromConfig.end(), statesInitialValues_.begin());
-    }
-    else
-    {
-      LOG(DEBUG) << "set initial values from source file";
+      // Default if unspecified
+      LOG(DEBUG) << "set initial values from CellML source file";
 
       // parsing the source file was already done
       // get initial values from source code generator
@@ -728,6 +720,25 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,
       assert(statesInitialValuesGenerator.size() == nStates_);
 
       std::copy(statesInitialValuesGenerator.begin(), statesInitialValuesGenerator.end(), statesInitialValues_.begin());
+    }
+    else if (this->specificSettings_.isTypeList("statesInitialValues"))
+    {
+      LOG(DEBUG) << "set initial values from Python config";
+
+      // statesInitialValues gives the initial state values for one instance of the problem. it is used for all instances.
+      std::array<double,nStates_> statesInitialValuesFromConfig = this->specificSettings_.template getOptionArray<double,nStates_>("statesInitialValues", 0);
+
+      // store initial values to statesInitialValues_
+      std::copy(statesInitialValuesFromConfig.begin(), statesInitialValuesFromConfig.end(), statesInitialValues_.begin());
+    }
+    else if (this->specificSettings_.getOptionString("statesInitialValues", "") == "undefined")
+    {
+      LOG(DEBUG) << "don't set initial values";
+      return false;
+    }
+    else
+    {
+      LOG(FATAL) << "Unknown value for `statesInitialValues`. Choose 'CellML', 'undefined' or specify the values.";
     }
 
     if (initializeStatesToEquilibrium_)

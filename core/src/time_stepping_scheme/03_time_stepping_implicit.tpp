@@ -32,6 +32,18 @@ initialize()
   TimeSteppingSchemeOde<DiscretizableInTimeType>::initialize();
   LOG(TRACE) << "TimeSteppingImplicit::initialize";
 
+  timeStepWidthRelativeTolerance_ = this->specificSettings().getOptionDouble("timeStepWidthRelativeTolerance", 1e-10, PythonUtility::NonNegative);
+  if (this->specificSettings().hasKey("timeStepWidthRelativeToleranceAsKey"))
+  {
+      std::string relTolKey = this->specificSettings().getOptionString("timeStepWidthRelativeToleranceAsKey", "timeStepWidthRelativeTolerance");
+      Control::PerformanceMeasurement::setParameter(relTolKey, timeStepWidthRelativeTolerance_);
+  }
+
+  if (this->specificSettings().hasKey("durationInitTimeStepLogKey"))
+  {
+    this->durationInitTimeStepLogKey_ = this->specificSettings().getOptionString("durationInitTimeStepLogKey", "");
+  }
+
   this->initialized_ = true;
 }
 
@@ -51,19 +63,25 @@ initializeWithTimeStepWidth(double timeStepWidth)
   else
   {
     // check if the time step size changed
-    const double eps = 1e-10;
+    const double eps = this->timeStepWidthRelativeTolerance_;
 
     const double rel_diff = (this->initializedTimeStepWidth_ - timeStepWidth) / this->initializedTimeStepWidth_;
-    if (-eps <= rel_diff && rel_diff <= rel_diff)
+    if (-eps <= rel_diff && rel_diff <= eps)
     {
-      LOG(DEBUG) << "don't re-initializeWithTimeStepWidth as relative difference of time steps is small: " << rel_diff << ". Old: " << this->initializedTimeStepWidth_ << ", new: " << timeStepWidth;
+      LOG(DEBUG) << "don't re-initializeWithTimeStepWidth as relative difference of time steps is small (tolerance: " << eps << "): " << rel_diff << ". Old: " << this->initializedTimeStepWidth_ << ", new: " << timeStepWidth;
       return;
     }
     LOG(DEBUG) << "re-initializeWithTimeStepWidth as relative difference of time steps is too large (tolerance: " << eps << "): " << rel_diff << ". Old: " << this->initializedTimeStepWidth_ << ", new: " << timeStepWidth;
   }
 
+  if (this->durationInitTimeStepLogKey_ != "")
+    Control::PerformanceMeasurement::start(this->durationInitTimeStepLogKey_);
+
   // perform actual (re-)initialization
   this->initializeWithTimeStepWidth_impl(timeStepWidth);
+
+  if (this->durationInitTimeStepLogKey_ != "")
+    Control::PerformanceMeasurement::stop(this->durationInitTimeStepLogKey_);
 
   this->initializedTimeStepWidth_ = timeStepWidth;
 }

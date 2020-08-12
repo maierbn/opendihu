@@ -31,6 +31,7 @@ config = {
     "outputInterval": 1.0,
     
     "dirichletBoundaryConditions": {0:0, 2:2},
+    "dirichletOutputFilename":     None,                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     "neumannBoundaryConditions": [],
     "prefactor": [1,2],
     

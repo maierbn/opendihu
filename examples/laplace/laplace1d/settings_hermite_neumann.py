@@ -23,6 +23,7 @@ config = {
     # problem parameters
     "neumannBoundaryConditions": bc,
     "dirichletBoundaryConditions": {0:0, 1:1./5},   # additional fix left dof and derivative
+    "dirichletOutputFilename":     None,                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     "prefactor": 1.0,
     
     # solver parameters

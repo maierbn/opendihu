@@ -145,6 +145,8 @@ config = {
     "updateDirichletBoundaryConditionsFunction": None,
     "updateDirichletBoundaryConditionsFunctionCallInterval": 1,
     
+    "dirichletOutputFilename":     "out/dirichlet_boundary_conditions",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+      
     "OutputWriter" : [   # output files for displacements function space (quadratic elements)
       {"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       {"format": "PythonFile", "filename": "out/u", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "incremental"},

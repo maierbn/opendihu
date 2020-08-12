@@ -154,6 +154,7 @@ multidomain_solver = {
       "solverName":                   "potentialFlowSolver",
       "prefactor":                    1.0,
       "dirichletBoundaryConditions":  variables.potential_flow_dirichlet_bc,
+      "dirichletOutputFilename":      None,   # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
       "neumannBoundaryConditions":    [],
       "inputMeshIsGlobal":            True,
     },
@@ -165,6 +166,7 @@ multidomain_solver = {
       "prefactor":                    1.0,
       "inputMeshIsGlobal":            True,
       "dirichletBoundaryConditions":  {},
+      "dirichletOutputFilename":      None,   # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
       "neumannBoundaryConditions":    [],
       "diffusionTensor": [[      # sigma_i           # fiber direction is (1,0,0)
         8.93, 0, 0,
@@ -185,6 +187,7 @@ multidomain_solver = {
       "prefactor":                    0.4,
       "inputMeshIsGlobal":            True,
       "dirichletBoundaryConditions":  {},
+      "dirichletOutputFilename":      None,   # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
       "neumannBoundaryConditions":    [],
     },
   },
@@ -282,6 +285,7 @@ config = {
             "timeStepOutputInterval":       1e4,
             "inputMeshIsGlobal":            True,
             "dirichletBoundaryConditions":  {},
+            "dirichletOutputFilename":      None,   # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
             "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
             "nAdditionalFieldVariables":    0,
                 
@@ -379,6 +383,7 @@ config = {
                       "timeStepOutputInterval":       1e4,
                       "inputMeshIsGlobal":            True,
                       "dirichletBoundaryConditions":  {},
+                      "dirichletOutputFilename":      None,   # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                       "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
                       "nAdditionalFieldVariables":    0,
                           
@@ -490,6 +495,8 @@ config = {
           "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
           "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
           "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
+          
+          "dirichletOutputFilename":     "filename": "out/" + variables.scenario_name + "/dirichlet_bc",   # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
           
           # define which file formats should be written
           # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.

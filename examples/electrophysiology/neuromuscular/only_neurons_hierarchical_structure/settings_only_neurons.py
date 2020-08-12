@@ -161,7 +161,7 @@ if False:
     "initialGuessNonzero":              variables.initial_guess_nonzero,      # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
     "enableFatComputation":             True,                                 # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
     "showLinearSolverOutput":           variables.show_linear_solver_output,  # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
-    "updateSystemMatrixEveryTimestep":  False,                                 # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
+    "updateSystemMatrixEveryTimestep":  False,                                # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
     
     "PotentialFlow": {
       "FiniteElementMethod" : {  
@@ -169,6 +169,7 @@ if False:
         "solverName":                   "potentialFlowSolver",
         "prefactor":                    1.0,
         "dirichletBoundaryConditions":  variables.potential_flow_dirichlet_bc,
+        "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
         "neumannBoundaryConditions":    [],
         "inputMeshIsGlobal":            True,
       },
@@ -180,6 +181,7 @@ if False:
         "prefactor":                    1.0,
         "inputMeshIsGlobal":            True,
         "dirichletBoundaryConditions":  {},
+        "dirichletOutputFilename":      None,                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
         "neumannBoundaryConditions":    [],
         "diffusionTensor": [[      # sigma_i           # fiber direction is (1,0,0)
           8.93, 0, 0,
@@ -200,6 +202,7 @@ if False:
         "prefactor":                    0.4,
         "inputMeshIsGlobal":            True,
         "dirichletBoundaryConditions":  {},
+        "dirichletOutputFilename":      None,                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
         "neumannBoundaryConditions":    [],
       },
     },
@@ -382,6 +385,7 @@ config = {
               "timeStepOutputInterval":       1e4,
               "inputMeshIsGlobal":            True,
               "dirichletBoundaryConditions":  {},
+              "dirichletOutputFilename":      None,             # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
               "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
               "nAdditionalFieldVariables":    0,
               "additionalSlotNames":          [],
@@ -473,6 +477,7 @@ config = {
                   "timeStepOutputInterval":       1e4,
                   "inputMeshIsGlobal":            True,
                   "dirichletBoundaryConditions":  {},
+                  "dirichletOutputFilename":      None,             # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
                   "nAdditionalFieldVariables":    0,
                   "additionalSlotNames":          [],
@@ -549,6 +554,7 @@ config = {
                   "timeStepOutputInterval":       1e4,
                   "inputMeshIsGlobal":            True,
                   "dirichletBoundaryConditions":  {},
+                  "dirichletOutputFilename":      None,             # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
                   "nAdditionalFieldVariables":    0,
                   "additionalSlotNames":          [],
@@ -645,6 +651,7 @@ config = {
               "timeStepOutputInterval":       1e4,
               "inputMeshIsGlobal":            True,
               "dirichletBoundaryConditions":  {},
+              "dirichletOutputFilename":      None,             # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
               "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
               "nAdditionalFieldVariables":    0,
               "additionalSlotNames":          [],

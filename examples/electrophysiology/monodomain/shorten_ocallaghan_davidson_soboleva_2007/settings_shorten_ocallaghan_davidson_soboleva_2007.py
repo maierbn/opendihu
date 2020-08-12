@@ -208,6 +208,7 @@ config = {
         "durationLogKey":               "duration_0D",
         "inputMeshIsGlobal":            True,
         "dirichletBoundaryConditions":  {},
+        "dirichletOutputFilename":      None,                                             # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
         "nAdditionalFieldVariables":    0,
         "checkForNanInf":               True,                                             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.                                
         
@@ -273,6 +274,7 @@ config = {
         "durationLogKey":               "duration_1D",
         "inputMeshIsGlobal":            True,
         "dirichletBoundaryConditions":  {},
+        "dirichletOutputFilename":      None,             # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
         "solverName":                   "implicitSolver",
         "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
         "nAdditionalFieldVariables":    1,

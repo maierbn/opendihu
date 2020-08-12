@@ -2,6 +2,8 @@
 
 #include <algorithm>
 
+#include "output_writer/output_surface/output_points.h"
+
 namespace OutputWriter
 {
 
@@ -150,15 +152,15 @@ writeSampledPointValues()
 
   // communicate actual values
   MPIUtility::handleReturnValue(MPI_Gatherv(pointNosLocal.data(), nPointsLocal*nComponents, MPI_INT,
-                                            pointNosGlobal.data(), sizesOnRanksValues.data(), offsetsValues.data(), MPI_INT, 0, MPI_COMM_WORLD), "MPI_Gatherv");
+                                            pointNosGlobal.data(), sizesOnRanksValues.data(), offsetsValues.data(), MPI_INT, 0, rankSubset_->mpiCommunicator()), "MPI_Gatherv");
   MPIUtility::handleReturnValue(MPI_Gatherv(sampledValuesLocal.data(), nPointsLocal*nComponents, MPI_DOUBLE,
-                                            sampledValuesGlobal.data(), sizesOnRanksValues.data(), offsetsValues.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD), "MPI_Gatherv");
+                                            sampledValuesGlobal.data(), sizesOnRanksValues.data(), offsetsValues.data(), MPI_DOUBLE, 0, rankSubset_->mpiCommunicator()), "MPI_Gatherv");
   MPIUtility::handleReturnValue(MPI_Gatherv(sampledGeometryLocal.data(), nPointsLocal*3, MPI_DOUBLE,
-                                            sampledGeometryGlobal.data(), sizesOnRanksGeometry.data(), offsetsGeometry.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD), "MPI_Gatherv");
+                                            sampledGeometryGlobal.data(), sizesOnRanksGeometry.data(), offsetsGeometry.data(), MPI_DOUBLE, 0, rankSubset_->mpiCommunicator()), "MPI_Gatherv");
   MPIUtility::handleReturnValue(MPI_Gatherv(scoresLocal.data(), nPointsLocal, MPI_DOUBLE,
-                                            scoresGlobal.data(), sizesOnRanksValues.data(), offsetsValues.data(), MPI_DOUBLE, 0, MPI_COMM_WORLD), "MPI_Gatherv");
+                                            scoresGlobal.data(), sizesOnRanksValues.data(), offsetsValues.data(), MPI_DOUBLE, 0, rankSubset_->mpiCommunicator()), "MPI_Gatherv");
   MPIUtility::handleReturnValue(MPI_Gatherv(partitioningLocal.data(), nPointsLocal, MPI_INT,
-                                            partitioningGlobal.data(), sizesOnRanksValues.data(), offsetsValues.data(), MPI_INT, 0, MPI_COMM_WORLD), "MPI_Gatherv");
+                                            partitioningGlobal.data(), sizesOnRanksValues.data(), offsetsValues.data(), MPI_INT, 0, rankSubset_->mpiCommunicator()), "MPI_Gatherv");
 
   // on rank 0, write values to file
   if (ownRankNo == 0)
@@ -208,7 +210,7 @@ writeSampledPointValues()
     sampledPointsPositionGlobal_.clear();
     valuesGlobal_.clear();
     partitioningGlobal_.clear();
-    sampledPointsPositionGlobal_.reserve(nPointsGlobal);
+    sampledPointsPositionGlobal_.reserve(nPointsGlobal*3);
     valuesGlobal_.reserve(nPointsGlobal);
     partitioningGlobal_.reserve(nPointsGlobal);
 
@@ -223,7 +225,9 @@ writeSampledPointValues()
           continue;
         }
 
-      sampledPointsPositionGlobal_.push_back(entries[i].geometry);
+      sampledPointsPositionGlobal_.push_back(entries[i].geometry[0]);
+      sampledPointsPositionGlobal_.push_back(entries[i].geometry[1]);
+      sampledPointsPositionGlobal_.push_back(entries[i].geometry[2]);
       valuesGlobal_.push_back(entries[i].value);
       partitioningGlobal_.push_back(entries[i].partition);
       lastI = i;
@@ -243,8 +247,8 @@ writeSampledPointValues()
     writeCallCount_++;
 
     // write result to files
-    writeCsvFile(filename_, currentTime_, sampledPointsPositionGlobal_, valuesGlobal_);
-    writeVtpFile(vtpFile.str(), currentTime_, sampledPointsPositionGlobal_, valuesGlobal_, partitioningGlobal_);
+    OutputPoints::writeCsvFile(filename_, currentTime_, sampledPointsPositionGlobal_, valuesGlobal_);
+    OutputPoints::writeVtpFile(vtpFile.str(), currentTime_, sampledPointsPositionGlobal_, valuesGlobal_, 1, partitioningGlobal_, "EMG");
 
     seriesWriter_.registerNewFile(vtpFile.str(), currentTime_);
   }
@@ -271,21 +275,23 @@ writeFoundAndNotFoundPointGeometry()
   filenameFoundPointsCsv << filenameBase << "_found." << rankSubset_->ownRankNo() << ".csv";
   filenameFoundPointsVtp << filenameBase << "_found." << rankSubset_->ownRankNo() << ".vtp";
 
-  std::vector<Vec3> foundPointsGeometry;
+  std::vector<double> foundPointsGeometry;
   std::vector<double> empty;
 
   // loop over the found points
   for (const std::pair<int,FoundSampledPoint> &pair : foundSampledPoints_)
   {
     Vec3 point = pair.second.requestedPosition;
-    foundPointsGeometry.push_back(point);
+    foundPointsGeometry.push_back(point[0]);
+    foundPointsGeometry.push_back(point[1]);
+    foundPointsGeometry.push_back(point[2]);
   }
 
   int ownRankNo = DihuContext::ownRankNoCommWorld();
   std::vector<int> partitioning(foundPointsGeometry.size(), ownRankNo);
 
-  writeCsvFile(filenameFoundPointsCsv.str(), currentTime_, foundPointsGeometry, empty);
-  writeVtpFile(filenameFoundPointsVtp.str(), currentTime_, foundPointsGeometry, empty, partitioning);
+  OutputPoints::writeCsvFile(filenameFoundPointsCsv.str(), currentTime_, foundPointsGeometry, empty);
+  OutputPoints::writeVtpFile(filenameFoundPointsVtp.str(), currentTime_, foundPointsGeometry, empty, 1, partitioning, "EMG");
 
   // write not found points of current rank
   std::stringstream filenameNotFoundPointsCsv;
@@ -293,162 +299,25 @@ writeFoundAndNotFoundPointGeometry()
   filenameNotFoundPointsCsv << filenameBase << "_not_found." << rankSubset_->ownRankNo() << ".csv";
   filenameNotFoundPointsVtp << filenameBase << "_not_found." << rankSubset_->ownRankNo() << ".vtp";
 
-  std::vector<Vec3> notFoundPointsGeometry;
+  std::vector<double> notFoundPointsGeometry;
 
   for (int samplingPointNo = 0; samplingPointNo < sampledPointsRequestedPositions_.size(); samplingPointNo++)
   {
     if (foundSampledPoints_.find(samplingPointNo) == foundSampledPoints_.end())
     {
       Vec3 point = sampledPointsRequestedPositions_[samplingPointNo];
-      notFoundPointsGeometry.push_back(point);
+      notFoundPointsGeometry.push_back(point[0]);
+      notFoundPointsGeometry.push_back(point[1]);
+      notFoundPointsGeometry.push_back(point[2]);
     }
   }
 
   partitioning.resize(notFoundPointsGeometry.size(), ownRankNo);
-  writeCsvFile(filenameNotFoundPointsCsv.str(), currentTime_, notFoundPointsGeometry, empty);
-  writeVtpFile(filenameNotFoundPointsVtp.str(), currentTime_, notFoundPointsGeometry, empty, partitioning);
+  OutputPoints::writeCsvFile(filenameNotFoundPointsCsv.str(), currentTime_, notFoundPointsGeometry, empty);
+  OutputPoints::writeVtpFile(filenameNotFoundPointsVtp.str(), currentTime_, notFoundPointsGeometry, empty, 1, partitioning, "EMG");
 
   seriesWriterFoundPoints_.registerNewFile(filenameFoundPointsVtp.str(), currentTime_);
   seriesWriterNotFoundPoints_.registerNewFile(filenameNotFoundPointsVtp.str(), currentTime_);
-}
-
-template<typename Solver>
-void OutputSurface<Solver>::
-writeCsvFile(std::string filename, double currentTime, const std::vector<Vec3> &geometry, const std::vector<double> &values)
-{
-  std::ofstream file;
-  Generic::openFile(file, filename, true);  // append to file
-
-  int nPointsGlobal = geometry.size();
-
-  // in first timestep, write header
-  if (currentTime <= 1e-5)
-  {
-    file << "#timestamp;t;n_points";
-    for (int pointNo = 0; pointNo < nPointsGlobal; pointNo++)
-    {
-      file << ";p" << pointNo << "_x;p" << pointNo << "_y;p" << pointNo << "_z";
-    }
-
-    if (!values.empty())
-    {
-      for (int pointNo = 0; pointNo < nPointsGlobal; pointNo++)
-      {
-        file << ";p" << pointNo << "_value";
-      }
-    }
-    file << std::endl;
-  }
-
-  // write timestamp and time
-  // time stamp
-  auto t = std::time(nullptr);
-  auto tm = *std::localtime(&t);
-  file << StringUtility::timeToString(&tm) << ";"
-    << currentTime_ << ";" << nPointsGlobal;
-
-  // write geometry
-  for (int i = 0; i < nPointsGlobal; i++)
-  {
-    file << ";" << geometry[i][0]
-      << ";" << geometry[i][1]
-      << ";" << geometry[i][2];
-  }
-
-  // write values
-  if (!values.empty())
-  {
-    for (int i = 0; i < nPointsGlobal; i++)
-    {
-      file << ";" << values[i];
-    }
-  }
-  file << std::endl;
-  file.close();
-}
-
-template<typename Solver>
-void OutputSurface<Solver>::
-writeVtpFile(std::string filename, double currentTime, const std::vector<Vec3> &geometry, const std::vector<double> &values,
-             const std::vector<int> &partitioning)
-{
-  int nPointsGlobal = geometry.size();
-
-  // transform values vector to vector with contiguous entries
-  static std::vector<double> geometryValues;
-  geometryValues.resize(nPointsGlobal*3);
-  for (int pointNo = 0; pointNo < nPointsGlobal; pointNo++)
-  {
-    geometryValues[3*pointNo + 0] = geometry[pointNo][0];
-    geometryValues[3*pointNo + 1] = geometry[pointNo][1];
-    geometryValues[3*pointNo + 2] = geometry[pointNo][2];
-  }
-
-  std::ofstream file;
-  Generic::openFile(file, filename, false);  // do not append to existing file
-
-  // transform current time to string
-  std::vector<double> time(1, this->currentTime_);
-  std::string stringTime = Paraview::encodeBase64Float(time.begin(), time.end());
-
-  file << "<?xml version=\"1.0\"?>" << std::endl
-    << "<!-- " << DihuContext::versionText() << " " << DihuContext::metaText()
-    << ", currentTime: " << this->currentTime_ << " -->" << std::endl
-    << "<VTKFile type=\"PolyData\" version=\"1.0\" byte_order=\"LittleEndian\">" << std::endl    // intel cpus are LittleEndian
-    << std::string(1, '\t') << "<PolyData>" << std::endl
-    << std::string(2, '\t') << "<FieldData>" << std::endl
-    << std::string(3, '\t') << "<DataArray type=\"Float32\" Name=\"Time\" NumberOfTuples=\"1\" format=\"binary\" >" << std::endl
-    << std::string(4, '\t') << stringTime << std::endl
-    << std::string(3, '\t') << "</DataArray>" << std::endl
-    << std::string(2, '\t') << "</FieldData>" << std::endl;
-
-  file << std::string(2, '\t') << "<Piece NumberOfPoints=\"" << nPointsGlobal << "\" NumberOfVerts=\"0\" "
-    << "NumberOfLines=\"0\" NumberOfStrips=\"0\" NumberOfPolys=\"0\">" << std::endl
-    << std::string(3, '\t') << "<PointData>" << std::endl;
-
-
-  // write emg values
-  if (!values.empty())
-  {
-    file << std::string(4, '\t') << "<DataArray "
-        << "Name=\"EMG\" "
-        << "type=\"Float32\" "
-        << "NumberOfComponents=\"1\" "
-        << "format=\"binary\" >" << std::endl << std::string(5, '\t')
-        << Paraview::encodeBase64Float(values.begin(), values.end())
-        << std::endl << std::string(4, '\t') << "</DataArray>" << std::endl;
-  }
-
-  // write partitioning values
-  file << std::string(4, '\t') << "<DataArray "
-      << "Name=\"partitioning\" "
-      << "type=\"Int32\" "
-      << "NumberOfComponents=\"1\" "
-      << "format=\"binary\" >" << std::endl << std::string(5, '\t')
-      << Paraview::encodeBase64Int32(partitioning.begin(), partitioning.end())
-      << std::endl << std::string(4, '\t') << "</DataArray>" << std::endl;
-
-  file << std::string(3, '\t') << "</PointData>" << std::endl
-    << std::string(3, '\t') << "<CellData>" << std::endl
-    << std::string(3, '\t') << "</CellData>" << std::endl
-    << std::string(3, '\t') << "<Points>" << std::endl
-    << std::string(4, '\t') << "<DataArray type=\"Float32\" NumberOfComponents=\"3\" format=\"binary"
-    << "\" >" << std::endl << std::string(5, '\t');
-
-  // write geometry values
-  file << Paraview::encodeBase64Float(geometryValues.begin(), geometryValues.end());
-
-  file << std::endl << std::string(4, '\t') << "</DataArray>" << std::endl
-    << std::string(3, '\t') << "</Points>" << std::endl
-    << std::string(3, '\t') << "<Verts></Verts>" << std::endl
-    << std::string(3, '\t') << "<Lines></Lines>" << std::endl
-    << std::string(3, '\t') << "<Strips></Strips>" << std::endl
-    << std::string(3, '\t') << "<Polys></Polys>" << std::endl
-    << std::string(2, '\t') << "</Piece>" << std::endl
-    << std::string(1, '\t') << "</PolyData>" << std::endl
-    << "</VTKFile>" << std::endl;
-
-  file.close();
 }
 
 }  // namespace OutputWriter

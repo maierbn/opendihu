@@ -150,6 +150,8 @@ config = {
     "updateDirichletBoundaryConditionsFunction": None,
     "updateDirichletBoundaryConditionsFunctionCallInterval": 1,
     
+    "dirichletOutputFilename":     "out/dirichlet_boundary_conditions_tendon",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+      
     "OutputWriter" : [   # output files for displacements function space (quadratic elements)
       {"format": "Paraview", "outputInterval": 1, "filename": "out/opendihu", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       {"format": "PythonFile", "filename": "out/opendihu", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "incremental"},

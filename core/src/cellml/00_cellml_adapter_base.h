@@ -58,9 +58,6 @@ public:
   //! load model, use settings given in context
   void initialize();
 
-  //! create generic function space with given number of instances
-  void initializeFromNInstances(int nInstances);
-  
   //! set initial values as given in python config
   bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nStates_>> initialValues);
 

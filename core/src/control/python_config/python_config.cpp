@@ -157,6 +157,12 @@ bool PythonConfig::isEmpty(std::string key) const
   return PythonUtility::isEmpty(this->pythonConfig_, key);
 }
 
+//! checks if the settings is a Python list, no warning is printed
+bool PythonConfig::isTypeList(std::string key) const
+{
+  return PythonUtility::isTypeList(getOptionPyObject(key));
+}
+
 //! return all keys of the current dict as vector of strings
 void PythonConfig::getKeys(std::vector<std::string> &keys)
 {

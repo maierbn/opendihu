@@ -132,6 +132,7 @@ config_static_bidomain_solver = {             # solves Bidomain equation: K(sigm
       "solverName":         "potentialFlowSolver",
       "prefactor":          1.0,
       "dirichletBoundaryConditions": variables.potential_flow_dirichlet_bc,
+      "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
       "neumannBoundaryConditions":   [],
       "inputMeshIsGlobal":  True,
     },
@@ -143,6 +144,7 @@ config_static_bidomain_solver = {             # solves Bidomain equation: K(sigm
       "prefactor":          1.0,
       "inputMeshIsGlobal":  True,
       "dirichletBoundaryConditions": {},
+      "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
       "neumannBoundaryConditions":   [],
       
       # ∇•(sigma_i+sigma_e)∇phi_e = -∇•(sigma_i)∇Vm

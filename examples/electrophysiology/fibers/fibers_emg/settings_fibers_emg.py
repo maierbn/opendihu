@@ -255,6 +255,7 @@ config = {
                     "inputMeshIsGlobal":            True,
                     "checkForNanInf":               False,
                     "dirichletBoundaryConditions":  {},
+                    "dirichletOutputFilename":      None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                     "nAdditionalFieldVariables":    0,
                       
                     "CellML" : {
@@ -313,7 +314,8 @@ config = {
                     "logTimeStepWidthAsKey":       "dt_1D",
                     "durationLogKey":              "duration_1D",
                     "timeStepOutputInterval":      1e4,
-                    "dirichletBoundaryConditions": {},                                       # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
+                    "dirichletBoundaryConditions": {},            # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
+                    "dirichletOutputFilename":     None,          # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                     "inputMeshIsGlobal":           True,
                     "solverName":                  "implicitSolver",
                     "checkForNanInf":              False,
@@ -365,6 +367,7 @@ config = {
             "solverName":         "potentialFlowSolver",
             "prefactor":          1.0,
             "dirichletBoundaryConditions": variables.potential_flow_dirichlet_bc,
+            "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
             "neumannBoundaryConditions":   [],
             "inputMeshIsGlobal":  True,
           },
@@ -376,6 +379,7 @@ config = {
             "prefactor":          1.0,
             "inputMeshIsGlobal":  True,
             "dirichletBoundaryConditions": {},
+            "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
             "neumannBoundaryConditions":   [],
             "diffusionTensor": [[      # sigma_i,  fiber direction is (1,0,0), one list item = same tensor for all elements, multiple list items = a different tensor for each element
               8.93, 0, 0,
@@ -408,6 +412,7 @@ config = {
               "solverName":         "potentialFlowSolver",
               "prefactor":          1.0,
               "dirichletBoundaryConditions": variables.potential_flow_dirichlet_bc,
+              "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
               "neumannBoundaryConditions":   [],
               "inputMeshIsGlobal":  True,
             },
@@ -419,6 +424,7 @@ config = {
               "prefactor":          1.0,
               "inputMeshIsGlobal":  True,
               "dirichletBoundaryConditions": {},
+              "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
               "neumannBoundaryConditions":   [],
               "diffusionTensor": [[      # sigma_i, fiber direction is (1,0,0), one list item = same tensor for all elements, multiple list items = a different tensor for each element
                 8.93, 0, 0,
@@ -442,6 +448,7 @@ config = {
             "solverName":         "potentialFlowSolver",
             "prefactor":          1.0,
             "dirichletBoundaryConditions": variables.potential_flow_dirichlet_bc,
+            "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
             "neumannBoundaryConditions":   [],
             "inputMeshIsGlobal":  True,
           },
@@ -452,6 +459,7 @@ config = {
           "prefactor":            1.0,
           "inputMeshIsGlobal":    True,
           "dirichletBoundaryConditions": variables.use_elasticity_dirichlet_bc,
+          "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
           "neumannBoundaryConditions":   variables.use_elasticity_neumann_bc,
           "bulkModulus":          40e3, #40e3 # https://www.researchgate.net/publication/230248067_Bulk_Modulus
           "shearModulus":         39e3, #39e3 # https://onlinelibrary.wiley.com/doi/full/10.1002/mus.24104

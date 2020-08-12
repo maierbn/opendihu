@@ -113,6 +113,8 @@ Depending on the value of ``dynamic``, either an instance of ``DynamicHyperelast
       "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
       "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
       
+      "dirichletOutputFilename":    "out/"+variables.scenario_name+"/dirichlet_boundary_conditions",     # output filename for the dirichlet boundary conditions, set to "" to have no output
+          
       # define which file formats should be written
       # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
       "OutputWriter" : [

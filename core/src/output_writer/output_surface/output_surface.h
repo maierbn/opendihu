@@ -56,12 +56,6 @@ protected:
   //! write positions of found sampling points
   void writeFoundAndNotFoundPointGeometry();
 
-  //! write a VTK file with geometry and optionally values
-  void writeVtpFile(std::string filename, double currentTime, const std::vector<Vec3> &geometry, const std::vector<double> &values, const std::vector<int> &partitioning);
-
-  //! write a csv file with geometry and optionally values
-  void writeCsvFile(std::string filename, double currentTime, const std::vector<Vec3> &geometry, const std::vector<double> &values);
-
   DihuContext context_;               //< object that contains the python config for the current context and the global singletons meshManager and solverManager
   Solver solver_;                     //< the contained solver object
 
@@ -90,7 +84,7 @@ protected:
   std::map<int,FoundSampledPoint> foundSampledPoints_;    //< all sampled points that have been found locally, key is the samplingPointNo
 
   std::vector<Vec3> sampledPointsRequestedPositions_;   //< the requested sampling points, as given by the "samplingPoints" option
-  std::vector<Vec3> sampledPointsPositionGlobal_;  //< on rank 0, buffer for all geometry of all sampled points
+  std::vector<double> sampledPointsPositionGlobal_;  //< on rank 0, buffer for all geometry of all sampled points
   std::vector<double> valuesGlobal_;  //< on rank 0, buffer for all values
   std::vector<int> partitioningGlobal_; //< on rank 0, buffer for the partitioning values
 

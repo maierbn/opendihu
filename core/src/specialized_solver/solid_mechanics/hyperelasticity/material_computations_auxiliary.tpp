@@ -377,7 +377,7 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
   double_v_t factorJ23 = MathUtility::pow(J, factor23);
 
   // If the jacobian is negative, this is a non-physical state. A warning has already been printed. Now to continue computation, set J^-2/3 to 1 (would be nan otherwise).
-  if (J < 0)
+  if (Vc::any_of(J < 0))
     factorJ23 = 1;
 
   Tensor2<3,double_v_t> pK2Stress;

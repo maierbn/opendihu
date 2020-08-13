@@ -295,6 +295,7 @@ config = {
                       "initialValues":               [],                                      # no initial values are given
                       #"numberTimeSteps":            1,
                       "timeStepWidth":               variables.dt_1D,                         # timestep width for the diffusion problem
+                      "timeStepWidthRelativeTolerance": 1e-10,
                       "logTimeStepWidthAsKey":       "dt_1D",                                 # key under which the time step width will be written to the log file
                       "durationLogKey":              "duration_1D",                           # log key of duration for this solver
                       "timeStepOutputInterval":      1e4,                                     # how often to print the current timestep

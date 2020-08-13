@@ -48,7 +48,7 @@ output_timestep_electrodes = 1      # [ms] timestep for python callback, which i
 # input files
 fiber_file = "../../../input/left_biceps_brachii_7x7fibers.bin"
 fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
-fiber_file = "../../input/left_biceps_brachii_37x37fibers.bin"
+fiber_file = "../../../input/left_biceps_brachii_37x37fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"

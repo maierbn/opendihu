@@ -301,6 +301,7 @@ config = {
       "ImplicitEuler" : {
         "initialValues": [],
         "timeStepWidth": dt_1D,
+        "timeStepWidthRelativeTolerance": 1e-10,
         "timeStepOutputInterval": 1,
         "logTimeStepWidthAsKey": "dt_1D",
         "durationLogKey": "duration_1D",
@@ -395,6 +396,7 @@ config = {
         "initialValues": [],
         #"numberTimeSteps": 1,
         "timeStepWidth": dt_1D,
+        "timeStepWidthRelativeTolerance": 1e-10,
         "timeStepOutputInterval": 1e4,
         "logTimeStepWidthAsKey": "dt_1D",
         "durationLogKey": "duration_1D",

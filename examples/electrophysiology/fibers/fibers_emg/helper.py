@@ -170,6 +170,7 @@ elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "
   variables.nodal_stimulation_current = 40.                           # not used
   variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
 
+
 # callback functions
 # --------------------------
 def get_motor_unit_no(fiber_no):

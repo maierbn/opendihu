@@ -17,9 +17,9 @@ Cm = 0.58               # membrane capacitance [uF/cm^2]
 # timing parameters
 end_time = 4000.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
-dt_0D = 3e-3                        # [ms] timestep width of ODEs (1e-3)
-dt_multidomain = 3e-3               # [ms] timestep width of multidomain solver
-dt_splitting = 3e-3                 # [ms] timestep width of splitting
+dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
+dt_multidomain = 1e-3               # [ms] timestep width of multidomain solver
+dt_splitting = 1e-3                 # [ms] timestep width of splitting
 output_timestep = 1e-1              # [ms] timestep for output files
 
 solver_tolerance = 1e-10
@@ -37,7 +37,7 @@ fiber_file = "../../../input/scaled_mesh_normal"
 fiber_file = "../../../input/left_biceps_brachii_7x7fibers.bin"
 
 # stride which points to select for the 3D mesh, along the muscle (z-direction)
-sampling_stride_z = 20
+sampling_stride_z = 10
 
 
 cellml_file = "../../../input/hodgkin_huxley_1952.c"
@@ -222,6 +222,7 @@ multidomain_solver = {
   "endTime":                          end_time,                           # end time, this is not relevant because it will be overridden by the splitting scheme
   "timeStepOutputInterval":           100,                                # how often the output timestep should be printed
   "solverName":                       "activationSolver",                 # reference to the solver used for the global linear system of the multidomain eq.
+  "slotNames":                        [],
   "initialGuessNonzero":              True,                               # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
   "inputIsGlobal":                    True,                               # if values and dofs correspond to the global numbering
   "showLinearSolverOutput":           False,                              # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
@@ -234,7 +235,9 @@ multidomain_solver = {
       "meshName":                     "mesh",
       "solverName":                   "potentialFlowSolver",
       "prefactor":                    1.0,
+      "slotName":                     "",
       "dirichletBoundaryConditions":  potential_flow_bc,
+      "dirichletOutputFilename":      None,               # output filename for the dirichlet boundary conditions, set to "" to have no output
       "neumannBoundaryConditions":    [],
       "inputMeshIsGlobal":            True,
     },
@@ -244,8 +247,10 @@ multidomain_solver = {
       "meshName":                     "mesh",
       "solverName":                   "activationSolver",
       "prefactor":                    1.0,
+      "slotName":                     "",
       "inputMeshIsGlobal":            True,
       "dirichletBoundaryConditions":  {},
+      "dirichletOutputFilename":      None,               # output filename for the dirichlet boundary conditions, set to "" to have no output
       "neumannBoundaryConditions":    [],
       "diffusionTensor": [[      # sigma_i           # fiber direction is (1,0,0)
         8.93, 0, 0,
@@ -324,7 +329,9 @@ config = {
             "timeStepOutputInterval":       1e4,
             "inputMeshIsGlobal":            True,
             "dirichletBoundaryConditions":  {},
+            "dirichletOutputFilename":      None,               # output filename for the dirichlet boundary conditions, set to "" to have no output
             "nAdditionalFieldVariables":    0,
+            "additionalSlotNames":          [],
             "checkForNanInf":               True,
                 
             "CellML" : {

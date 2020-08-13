@@ -78,7 +78,7 @@ python_output = False
 fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
 firing_times_file="../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file="../../../input/MU_fibre_distribution_10MUs.txt"
-cellml_file = "../../../input/new_slow_TK_2014_12_08.c"
+cellml_file = "../../../input/hodgkin_huxley_1952.cellml"
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):

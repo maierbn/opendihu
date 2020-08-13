@@ -91,8 +91,37 @@ if variables.n_subdomains is not None:
   variables.n_subdomains_x = variables.n_subdomains[0]
   variables.n_subdomains_y = variables.n_subdomains[1]
   variables.n_subdomains_z = variables.n_subdomains[2]
- 
- 
+  
+variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
+
+# automatically initialize partitioning if it has not been set
+if n_ranks != variables.n_subdomains:
+  
+  # create all possible partitionings to the given number of ranks
+  optimal_value = n_ranks**(1/3)
+  possible_partitionings = []
+  for i in range(1,n_ranks+1):
+    for j in range(1,n_ranks+1):
+      if i*j <= n_ranks and n_ranks % (i*j) == 0:
+        k = (int)(n_ranks / (i*j))
+        performance = (k-optimal_value)**2 + (j-optimal_value)**2 + 1.1*(i-optimal_value)**2
+        possible_partitionings.append([i,j,k,performance])
+        
+  # if no possible partitioning was found
+  if len(possible_partitionings) == 0:
+    if rank_no == 0:
+      print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {} and no automatic partitioning could be done.\n\n\033[0m".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
+    quit()
+    
+  # select the partitioning with the lowest value of performance which is the best
+  lowest_performance = possible_partitionings[0][3]+1
+  for i in range(len(possible_partitionings)):
+    if possible_partitionings[i][3] < lowest_performance:
+      lowest_performance = possible_partitionings[i][3]
+      variables.n_subdomains_x = possible_partitionings[i][0]
+      variables.n_subdomains_y = possible_partitionings[i][1]
+      variables.n_subdomains_z = possible_partitionings[i][2]
+
 # output information of run
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))
@@ -119,9 +148,13 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
 # define the config dict
 config = {
-  "scenarioName": variables.scenario_name,
-  "logFormat": "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
+  "scenarioName":                   variables.scenario_name,    # scenario name which will appear in the log file
+  "logFormat":                      "csv",                      # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",     # output file that contains a log about creation of mappings between meshes
+  "meta": {                 # additional fields that will appear in the log
+    "partitioning": [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
+  },
   "Meshes": variables.meshes,
   "Solvers": {
     "implicitSolver": {     # solver for the implicit timestepping scheme of the diffusion time step
@@ -165,9 +198,11 @@ config = {
                 "initialValues":                [],
                 "timeStepOutputInterval":       1e4,
                 "inputMeshIsGlobal":            True,
+                "checkForNanInf":               False,
                 "dirichletBoundaryConditions":  {},
                 "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                 "nAdditionalFieldVariables":    0,
+                "additionalSlotNames":          [],
                   
                 "CellML" : {
                   "modelFilename":                          variables.cellml_file,                                    # input C++ source file or cellml XML file
@@ -199,13 +234,8 @@ config = {
                   #"handleResultCallInterval": 2e3,
                   
                   # parameters to the cellml model
-                  "mappings": {
-                    ("parameter", 0):           ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
-                    ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
-                    ("connectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
-                    ("connectorSlot", 1): ("algebraic", "razumova/stress"),  # expose algebraic 12 = γ to the operator splitting
-                  },
-                  "parametersInitialValues":                [0.0,1.0],                                      #[0.0, 1.0],  # initial values for the parameters: I_Stim, l_hs
+                  "mappings":                               variables.mappings,
+                  "parametersInitialValues":                variables.parameters_initial_values,
                   
                   "meshName":                               "MeshFiber_{}".format(fiber_no),
                   "stimulationLogFilename":                 "out/stimulation.log",
@@ -230,11 +260,14 @@ config = {
                 "logTimeStepWidthAsKey":       "dt_1D",
                 "durationLogKey":              "duration_1D",
                 "timeStepOutputInterval":      1e4,
+                "timeStepWidthRelativeTolerance": 1e-10,
                 "dirichletBoundaryConditions": {},                                       # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
                 "dirichletOutputFilename":     None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                 "inputMeshIsGlobal":           True,
                 "solverName":                  "implicitSolver",
                 "nAdditionalFieldVariables":   1,     # for stress that will be transferred from CellML and then written with output writer
+                "additionalSlotNames":         [],
+                "checkForNanInf":              False,
                     
                 "FiniteElementMethod" : {
                   "maxIterations":             1e4,
@@ -244,6 +277,7 @@ config = {
                   "meshName":                  "MeshFiber_{}".format(fiber_no),
                   "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
                   "solverName":                "implicitSolver",
+                  "slotName":                  "",
                 },
                 "OutputWriter" : [
                   #{"format": "Paraview", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles": True},

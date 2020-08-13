@@ -17,14 +17,14 @@ int main(int argc, char *argv[])
   // define problem
   Control::MultipleInstances<
     OperatorSplitting::Strang<
-      TimeSteppingScheme::Heun<
+      TimeSteppingScheme::HeunAdaptive<
         CellmlAdapter<
           4,9,  // nStates,nAlgebraics: 57,1 = Shorten, 4,9 = Hodgkin Huxley
           FunctionSpace::FunctionSpace<
             Mesh::StructuredDeformableOfDimension<1>,
             BasisFunction::LagrangeOfOrder<1>
           >
-        >  
+        >
       >,
       TimeSteppingScheme::ImplicitEuler<
         SpatialDiscretization::FiniteElementMethod<

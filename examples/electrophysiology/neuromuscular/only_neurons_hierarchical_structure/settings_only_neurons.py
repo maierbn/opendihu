@@ -124,8 +124,8 @@ if rank_no == 0:
   t_start_script = timeit.default_timer()
     
 # initialize all helper variables
-#from helper import *
-variables.meshes = {}
+from helper import *
+#variables.meshes = {}
 
 # callback function that receives the whole result values and produces plots while the simulation is running
 def handle_result(n_instances, time_step_no, current_time, states, algebraics, name_information, additional_argument):
@@ -774,6 +774,7 @@ config = {
                 "PrescribedValues": {
                   "meshName":               "3Dmesh",      # reference to the multidomain mesh
                   "numberTimeSteps":        1,             # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step
+                  "slotNames":              [],
                   "timeStepOutputInterval": 20,            # if the time step should be written to console, a value > 10 produces no output
                   
                   # a list of field variables that will get values assigned in every timestep, by the provided callback function

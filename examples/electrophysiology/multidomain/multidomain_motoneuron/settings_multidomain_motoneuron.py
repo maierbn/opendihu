@@ -36,7 +36,7 @@ if ".py" in sys.argv[0]:
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
   if rank_no == 0:
-    print("Warning: There is no variables file, e.g:\n ./multidomain_contraction ../settings_multidomain_contraction.py coarse.py\n")
+    print("Warning: There is no variables file, e.g:\n ./multidomain_motoneuron ../settings_multidomain_motoneuron.py coarse.py\n")
   exit(0)
   
 # -------------------------------------------------------- begin parameters ---------------------------------------------------------
@@ -130,6 +130,7 @@ multidomain_solver = {
   "endTime":                          variables.end_time,                   # end time, this is not relevant because it will be overridden by the splitting scheme
   "timeStepOutputInterval":           1,                                  # how often the output timestep should be printed
   "durationLogKey":                   "duration_multidomain",               # key for duration in log.csv file
+  "slotNames":                        ["vm_old", "vm_new", 'g_mu', 'g_tot'],  # names of the data connector slots, maximum length per name is 6 characters. g_mu is gamma (active stress) of the compartment, g_tot is the total gamma
   
   # material parameters for the compartments
   "nCompartments":                    variables.n_compartments,             # number of compartments
@@ -154,9 +155,10 @@ multidomain_solver = {
       "solverName":                   "potentialFlowSolver",
       "prefactor":                    1.0,
       "dirichletBoundaryConditions":  variables.potential_flow_dirichlet_bc,
-      "dirichletOutputFilename":      None,   # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+      "dirichletOutputFilename":      "out/dirichlet_potential_flow",               # output filename for the dirichlet boundary conditions, set to "" to have no output
       "neumannBoundaryConditions":    [],
       "inputMeshIsGlobal":            True,
+      "slotName":                     "",
     },
   },
   "Activation": {
@@ -166,8 +168,9 @@ multidomain_solver = {
       "prefactor":                    1.0,
       "inputMeshIsGlobal":            True,
       "dirichletBoundaryConditions":  {},
-      "dirichletOutputFilename":      None,   # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+      "dirichletOutputFilename":      None,               # output filename for the dirichlet boundary conditions, set to "" to have no output
       "neumannBoundaryConditions":    [],
+      "slotName":                     "",
       "diffusionTensor": [[      # sigma_i           # fiber direction is (1,0,0)
         8.93, 0, 0,
         0, 0.0, 0,
@@ -187,8 +190,9 @@ multidomain_solver = {
       "prefactor":                    0.4,
       "inputMeshIsGlobal":            True,
       "dirichletBoundaryConditions":  {},
-      "dirichletOutputFilename":      None,   # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+      "dirichletOutputFilename":      None,               # output filename for the dirichlet boundary conditions, set to "" to have no output
       "neumannBoundaryConditions":    [],
+      "slotName":                     "",
     },
   },
   
@@ -207,6 +211,10 @@ config = {
   "meta": {                                                               # additional fields that will appear in the log
     "partitioning":         [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
+  "connectedSlots": [
+    ("stress", 'g_mu'),
+    ('g_tot', 'g_in')
+  ],
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": {
 
@@ -262,8 +270,8 @@ config = {
     "durationLogKey":         "duration_total",
     "timeStepOutputInterval": 1,
     "endTime":                variables.end_time,
-    "connectedSlotsTerm1To2": {2:2},          # transfer gamma to MuscleContractionSolver, the receiving slots are λ, λdot, γ
-    "connectedSlotsTerm2To1":  None,       # transfer nothing back
+    "connectedSlotsTerm1To2": None,       # data transfer is configured using global option "connectedSlots"
+    "connectedSlotsTerm2To1": None,       # transfer nothing back
     
     # Multidomain with motoneuron
     "Term1": {
@@ -272,12 +280,13 @@ config = {
         "logTimeStepWidthAsKey":  "dt_stimulation_check",
         "durationLogKey":         "duration_multidomain",
         "timeStepOutputInterval": 1,
-        "connectedSlotsTerm1To2": {0:5},  # {1:3}
-        "connectedSlotsTerm2To1": {5:0},
+        "connectedSlotsTerm1To2": None, #{0:5},  # {1:3}
+        "connectedSlotsTerm2To1": None, #{5:0},
         
-        # motoneuron
+        # Motoneuron
         "Term1": {    
           "Heun" : {
+            "description":                  "Motoneuron",                  # description that will be shown in solver structure visualization
             "timeStepWidth":                variables.dt_motoneuron,
             "logTimeStepWidthAsKey":        "dt_motoneuron",
             "durationLogKey":               "duration_motoneuron",
@@ -288,6 +297,7 @@ config = {
             "dirichletOutputFilename":      None,   # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
             "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
             "nAdditionalFieldVariables":    0,
+            "additionalSlotNames":          [],               # slot names of the additional slots, maximum 6 characters per name
                 
             "CellML" : {
               "modelFilename":                          variables.motoneuron_cellml_file,                          # input C++ source file or cellml XML file
@@ -327,18 +337,20 @@ config = {
         # Multidomain
         "Term2": {
           "MapDofs": {
+            "description":                "Multidomain",                  # description that will be shown in solver structure visualization
             "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
+            "additionalSlotNames":        "vm_mn",                        # names of the additional slots
             "meshName":                   "motoneuronMesh",               # the mesh on which the additional field variables will be defined
             
             # mapping from motoneuronMesh which contains on every rank as many nodes as there are motoneurons to the 3D domain
             # map from motoneuronMesh (algebraics) to 3Dmesh (solution)
             "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
               {                                                 
-                "fromConnectorSlotNo":        5,                    # source slot of the dofs mapping
-                "toConnectorSlotNo":          0,                    # target slot of the dofs mapping
-                "fromOutputConnectorArrayIndex":    0,                    # which compartment/motor unit
-                "toOutputConnectorArrayIndex":      mu_no,                # which compartment/motor unit
-                "mode":                             "localSetIfAboveThreshold",          # "copyLocal", "copyLocalIfPositive" or "communicate"
+                "fromConnectorSlot":                "vm_mn",              # source slot of the dofs mapping
+                "toConnectorSlots":                 "vm",                 # target slot of the dofs mapping
+                "fromSlotConnectorArrayIndex":      0,                    # which compartment/motor unit
+                "toSlotConnectorArrayIndex":        mu_no,                # which compartment/motor unit
+                "mode":                             "localSetIfAboveThreshold",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
                 "fromDofNosNumbering":              "local",					    # "local" or "global", if the 'from' dofs are given as local or global numbers
                 "toDofNosNumbering":                "global",             # "global" or "local", if the 'from' dofs are given as local or global numbers
                 "dofsMapping":                      {mu_no: junction_nodes_global_nos},
@@ -348,18 +360,6 @@ config = {
             
             # map from 3Dmesh to motoneuronMesh
             "afterComputation": None,
-            "unused": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
-              {                                                 
-                "fromConnectorSlotNo":        0,
-                "toConnectorSlotNo":          2,
-                "fromOutputConnectorArrayIndex":    0,                    # which fiber/compartment
-                "toOutputConnectorArrayIndex":      0,
-                "fromDofNosNumbering":              "global",
-                "toDofNosNumbering":                "global",
-                "dofsMapping":                      {g_node: list(range(n_motor_units*n_ranks)) for g_node in golgi_tendon_organ_nodes_global_nos},
-                "mode":                             "communicate",          # "copyLocal", "copyLocalIfPositive" or "communicate"
-              }
-            ],
               
             "StrangSplitting": {
               "timeStepWidth":          variables.dt_splitting,
@@ -372,7 +372,7 @@ config = {
               "Term1": {      # CellML
                 "MultipleInstances": {
                   "nInstances": variables.n_compartments,  
-                  "instances": [        # settings for each motor unit, `i` is the index of the motor unit
+                  "instances": [        # settings for each motor unit, `compartment_no` is the index of the motor unit
                   {
                     "ranks": list(range(n_ranks)),
                     "Heun" : {
@@ -386,6 +386,7 @@ config = {
                       "dirichletOutputFilename":      None,   # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                       "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
                       "nAdditionalFieldVariables":    0,
+                      "additionalSlotNames":          [],               # slot names of the additional slots, maximum 6 characters per name
                           
                       "CellML" : {
                         "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
@@ -450,6 +451,7 @@ config = {
         "numberTimeSteps":              1,                         # only use 1 timestep per interval
         "timeStepOutputInterval":       100,                       # do not output time steps
         "Pmax":                         variables.pmax,            # maximum PK2 active stress
+        "slotNames":                    ["lambda", "ldot", 'g_in', "T"],  # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
         ],
@@ -473,7 +475,7 @@ config = {
           # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
           
           # mesh
-          "inputMeshIsGlobal":          True,                     # the mesh is given locally
+          "inputMeshIsGlobal":          True,                     # boundary conditions and initial values are given as global numbers (every process has all information)
           "meshName":                   ["3Dmesh_elasticity_quadratic", "3DFatMesh_elasticity_quadratic"],       # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
           "fiberMeshNames":             [],                       # fiber meshes that will be used to determine the fiber direction, there are no fibers in multidomain, so this is empty
           "fiberDirection":             [0,0,1],                  # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
@@ -482,6 +484,7 @@ config = {
           "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
           #"loadFactors":                [0.5, 1.0],                # load factors for every timestep
           "loadFactors":                [],                        # no load factors, solve problem directly
+          "loadFactorGiveUpThreshold":  0.5,                      # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
           "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
           
           # boundary and initial conditions
@@ -496,7 +499,7 @@ config = {
           "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
           "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
           
-          "dirichletOutputFilename":     "filename": "out/" + variables.scenario_name + "/dirichlet_bc",   # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+          "dirichletOutputFilename":    "out/"+variables.scenario_name+"/dirichlet_boundary_conditions",     # output filename for the dirichlet boundary conditions, set to "" to have no output
           
           # define which file formats should be written
           # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.

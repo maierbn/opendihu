@@ -292,6 +292,7 @@ def get_instance_config(i):
           "dirichletBoundaryConditions": {},
           "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
           "nAdditionalFieldVariables":   0,
+          "additionalSlotNames":         [],
           "checkForNanInf":              False,
             
           "CellML" : {
@@ -348,6 +349,7 @@ def get_instance_config(i):
           "checkForNanInf":              False,
           "solverName":                  "implicitSolver",
           "nAdditionalFieldVariables":   0,
+          "additionalSlotNames":         [],
           
           "FiniteElementMethod" : {
             "maxIterations":            1e4,
@@ -357,6 +359,7 @@ def get_instance_config(i):
             "meshName":                 "MeshFiber"+str(i),
             "prefactor":                Conductivity/(Am*Cm),
             "solverName":               "implicitSolver",
+            "slotName":                 "vm",
           },
           "OutputWriter" : [
             {"format": "Paraview",   "outputInterval": output_interval_1D, "filename": variables.outfile_1D.format(i=i), "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering":"incremental"},

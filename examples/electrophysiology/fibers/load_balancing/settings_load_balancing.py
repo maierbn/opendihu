@@ -1,14 +1,13 @@
 # 2 fibers, biceps, example for load_balancing
 #
 
-end_time = 30.0     # end time for the simulation
+end_time = 20.0     # end time for the simulation
 
 import numpy as np
 import pickle
 import sys
 
 # global parameters
-PMax = 7.3              # maximum stress [N/cm^2]
 Conductivity = 3.828    # sigma, conductivity [mS/cm]
 Am = 500.0              # surface area to volume ratio [cm^-1]
 Cm = 0.58               # membrane capacitance [uF/cm^2]
@@ -24,14 +23,42 @@ dt_3D = 1e-3                      # overall timestep width of splitting
 output_timestep = 1               # timestep for output files
 
 # input files
-fiber_file = "../../input/laplace3d_structured_linear"
-fiber_distribution_file = "../../input/MU_fibre_distribution_3780.txt"
-firing_times_file = "../../input/MU_firing_times_load_balancing.txt"
-cellml_file = "../../input/hodgkin_huxley_1952.c"
+fiber_file = "../../../input/laplace3d_structured_linear"
+fiber_distribution_file = "../../../input/MU_fibre_distribution_3780.txt"
+firing_times_file = "../input/MU_firing_times_load_balancing.txt"
+cellml_file = "../../../input/hodgkin_huxley_1952.c"
 
 # get own rank no and number of ranks
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
+
+timestep_adapt_option = "regular"
+if len(sys.argv) == 2:
+  if rank_no == 0:
+    print("usage: mpirun -n 4 ./load_balancing ../settings_load_balancing.py <regular or modified>")
+else:
+  timestep_adapt_option = sys.argv[0]
+
+if timestep_adapt_option != "regular" and timestep_adapt_option != "modified":
+  if rank_no == 0:
+    print("timestep_adapt_option has to be either regular or modified!")
+  timestep_adapt_option = "regular"
+
+if rank_no == 0:
+  print("using timestep_adapt_option={}".format(timestep_adapt_option))
+  print("end_time: {}".format(end_time))
+
+# set variable mappings for cellml model
+if "hodgkin_huxley" in cellml_file:
+  # parameters: I_stim
+  mappings = {
+    ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
+    ("connectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+  }
+  parameters_initial_values = [0.0]                         # initial value for stimulation current
+  nodal_stimulation_current = 40.                           # not used
+  vm_value_stimulated = 20.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
+
 
 def get_motor_unit_no(fiber_no):
   """
@@ -57,44 +84,6 @@ def fiber_gets_stimulated(fiber_no, frequency, current_time):
   
   return firing_times[index % n_firing_times, mu_no] == 1
   
-def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fiber_no):
-  """
-  This function sets the stimulation current when the fiber will fire.
-  :param n_nodes_global: number of global nodes of the fiber
-  :param time_step_no:  the index of the time step in the simulation, integer value
-  :param current_time:  the current simulation time as double
-  :param parameters:    a list of parameter values for the nodes, changes made to the list will be used by the simulation
-  :param dof_nos_global: for every local degree of freedom no. the global dof no., i.e. this is a local to global mapping
-  :param fiber_no:      the no. of the fiber (here 0 or 1). It is the value that was set by "setParametersFunctionAdditionalParameter"
-  """ 
-  
-  # determine if fiber gets stimulated at the current time
-  is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, stimulation_frequency, current_time)
-  
-  # determine nodes to stimulate (center node, left and right neighbour)
-  innervation_zone_width_n_nodes = innervation_zone_width*100  # 100 nodes per cm
-  innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
-  nodes_to_stimulate_global = [innervation_node_global]
-  if innervation_node_global > 0:
-    nodes_to_stimulate_global.insert(0, innervation_node_global-1)
-  if innervation_node_global < n_nodes_global-1:
-    nodes_to_stimulate_global.append(innervation_node_global+1)
-  
-  # stimulation value
-  if is_fiber_gets_stimulated:
-    stimulation_current = 400.
-  else:
-    stimulation_current = 0.
-  
-  first_dof_global = dof_nos_global[0]
-  last_dof_global = dof_nos_global[-1]
-    
-  for node_no_global in nodes_to_stimulate_global:
-    if first_dof_global <= node_no_global <= last_dof_global:
-      # get local no for global no (1D)
-      dof_no_local = node_no_global - first_dof_global
-      parameters[dof_no_local] = stimulation_current
-   
 # callback function that can set states, i.e. prescribed values for stimulation
 def set_specific_states(n_nodes_global, time_step_no, current_time, states, fiber_no):
   
@@ -113,7 +102,7 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibe
     # print("rank {}, t: {}, stimulate fiber {} at nodes {}".format(rank_no, current_time, fiber_no, nodes_to_stimulate_global))
 
     for node_no_global in nodes_to_stimulate_global:
-      states[(node_no_global,0,0)] = 20.0   # key: ((x,y,z),nodal_dof_index,state_no)
+      states[(node_no_global,0,0)] = vm_value_stimulated  # key: ((x,y,z),nodal_dof_index,state_no)
 
 # load fiber meshes, called streamlines
 with open(fiber_file, "rb") as f:
@@ -153,6 +142,8 @@ ranks = [
 
 config = {
   "scenarioName": "load_balancing",
+  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile": None,
   "logFormat": "csv",
   # the 1D meshes for each fiber
   "Meshes": {
@@ -176,8 +167,11 @@ config = {
     "implicitSolver": {
       "maxIterations": 1e4,
       "relativeTolerance": 1e-10,
+      "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    
       "solverType": solver_type,
       "preconditionerType": "none",
+      "dumpFormat": "default",
+      "dumpFilename": "",
     }
   },
   # control class that configures multiple instances of the fiber model
@@ -194,46 +188,59 @@ config = {
         "durationLogKey": "duration_total",
         "timeStepOutputInterval" : 1000,
         "endTime": end_time,
+        "connectedSlotsTerm1To2": [0],
+        "connectedSlotsTerm2To1": [0],
 
         "Term1": {      # CellML
-          "LoadBalancing": {
-            "HeunAdaptive": {
-              "timeStepWidth": dt_0D,  # 5e-5
-              "tolerance": 1e-4,
-              "minTimeStepWidth": 1e-5,
-              "timeStepAdaptOption": "regular",
-              "lowestMultiplier": 1000,
-              "logTimeStepWidthAsKey": "dt_0D",
-              "durationLogKey": "duration_0D",
-              "initialValues": [],
-              "timeStepOutputInterval": 1e4,
-              "inputMeshIsGlobal": True,
-              "dirichletBoundaryConditions": {},
-              "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-                
-              "CellML" : {
-                "modelFilename": cellml_file,                     # input C++ source file, can be either generated by OpenCMISS or OpenCOR from cellml model
-                "compilerFlags": "-fPIC -O3 -ftree-vectorize -shared",
-                #"setParametersFunction": set_parameters,           # callback function that sets parameters like stimulation current
-                #"setParametersCallInterval": int(1./stimulation_frequency/dt_0D),     # interval in which the set_parameters function will be called
-                #"setParametersFunctionAdditionalParameter": i,
-                
-                "setSpecificStatesFunction": set_specific_states,    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-                "setSpecificStatesCallInterval": 1,     # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
-                "additionalArgument": i,
-                
-                "outputStateIndex": 0,                             # state 0 = Vm, rate 28 = gamma
-                "parametersUsedAsAlgebraic": [],                # list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
-                "parametersUsedAsConstant": [2],                   # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
-                "parametersInitialValues": [0.0],                  # initial values for the parameters
-                "meshName": "MeshFiber"+str(i),                    # name of the fiber mesh, i.e. either MeshFiber0 or MeshFiber1
-                "prefactor": 1.0,
-              },
+          "HeunAdaptive": {
+            "timeStepWidth": dt_0D,  # 5e-5
+            "tolerance": 1e-4,
+            "minTimeStepWidth": 1e-5,
+            "timeStepAdaptOption": timestep_adapt_option,
+            "lowestMultiplier": 1000,
+            "logTimeStepWidthAsKey": "dt_0D",
+            "durationLogKey": "duration_0D",
+            "initialValues": [],
+            "timeStepOutputInterval": 1e4,
+            "inputMeshIsGlobal": True,
+            "checkForNanInf": True,
+            "dirichletBoundaryConditions": {},
+            "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+            "nAdditionalFieldVariables": 0,
+            "additionalSlotNames": [],
+            "timeStepWidthsLogFilename": "out/log_dt.{}.csv".format(rank_no),      # filename for timestep widths, set to None to not capture timestep widths
+              
+            "CellML" : {
+              "modelFilename":                          cellml_file,                                    # input C++ source file or cellml XML file
+              "initializeStatesToEquilibrium":          False,                                          # if the equilibrium values of the states should be computed before the simulation starts
+              "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
+              
+              # optimization parameters
+              "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
+              "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+              "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
+              "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+              
+              # stimulation callbacks
+              "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+              #"setSpecificStatesCallInterval":         2*int(1./stimulation_frequency/dt_0D),          # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+              "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
+              "setSpecificStatesCallFrequency":         stimulation_frequency,                                           # set_specific_states should be called variables.stimulation_frequency times per ms
+              "setSpecificStatesFrequencyJitter":       None,                                                            # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
+              "setSpecificStatesRepeatAfterFirstCall":  0.01,                                                            # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
+              "setSpecificStatesCallEnableBegin":       0,                                                               # [ms] first time when to call setSpecificStates
+              "additionalArgument":                     i,
+              
+              "mappings":                               mappings,
+              "parametersInitialValues":                parameters_initial_values,
+              
+              "meshName":                               "MeshFiber"+str(i),
+              "stimulationLogFilename":                 "out/stimulation.log",
             },
           },
         },
         
-        "Term2": {     # Diffusion
+        "Term2": {    # Diffusion
           "ImplicitEuler" : {
             "initialValues": [],
             #"numberTimeSteps": 1,
@@ -243,22 +250,29 @@ config = {
             "timeStepOutputInterval": 1e4,
             "dirichletBoundaryConditions": {0: -75, -1: -75},      # set first and last value of fiber to -75
             "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+            "timeStepWidthRelativeTolerance": 1e-10,
             "inputMeshIsGlobal": True,
             "solverName": "implicitSolver",
+            "checkForNanInf": True,
+            "nAdditionalFieldVariables": 0,
+            "additionalSlotNames": [],      
+
             "FiniteElementMethod" : {
               "maxIterations": 1e4,
               "relativeTolerance": 1e-10,
               "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    
               "inputMeshIsGlobal": True,
+              "timeStepWidthRelativeTolerance": 1e-10,
               "meshName": "MeshFiber"+str(i),
               "prefactor": Conductivity/(Am*Cm),
               "solverName": "implicitSolver",
+              "slotName": "vm",
             },
             "OutputWriter" : [
-              {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fiber_"+str(i), "binary": True, "fixedFormat": False, "combineFiles": False},
-              #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fiber_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
-              #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-              {"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
+              {"format": "Paraview", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/fiber_"+str(i), "binary": True, "fixedFormat": False, "combineFiles": False, "fileNumbering": "incremental"},
+              #{"format": "Paraview", "outputInterval": 1./dt_1D*output_timestep, "filename": "out/fiber_"+str(i)+"_txt", "binary": False, "fixedFormat": False, "fileNumbering": "incremental"},
+              #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02", "fileNumbering": "incremental"},
+              {"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True, "fileNumbering": "incremental"},
             ]
           },
         },

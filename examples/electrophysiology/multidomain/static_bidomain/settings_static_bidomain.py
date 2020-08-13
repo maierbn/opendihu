@@ -126,11 +126,14 @@ config_static_bidomain_solver = {             # solves Bidomain equation: K(sigm
   "durationLogKey":         "duration_bidomain",
   "solverName":             "muscularEMGSolver",
   "initialGuessNonzero":    variables.emg_initial_guess_nonzero,
+  "slotNames":              ["vm"],
+  
   "PotentialFlow": {
     "FiniteElementMethod" : {  
       "meshName":           ["3Dmesh","3DFatMesh"],
       "solverName":         "potentialFlowSolver",
       "prefactor":          1.0,
+      "slotName":           "",
       "dirichletBoundaryConditions": variables.potential_flow_dirichlet_bc,
       "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
       "neumannBoundaryConditions":   [],
@@ -146,6 +149,7 @@ config_static_bidomain_solver = {             # solves Bidomain equation: K(sigm
       "dirichletBoundaryConditions": {},
       "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
       "neumannBoundaryConditions":   [],
+      "slotName":           "",
       
       # ∇•(sigma_i+sigma_e)∇phi_e = -∇•(sigma_i)∇Vm
       "diffusionTensor": [
@@ -219,6 +223,7 @@ config = {
       "PrescribedValues": {
         "meshName":                               "3Dmesh",                                       # use the linear mesh, it was partitioned by the helper.py script which called opendihu/scripts/create_partitioned_meshes_for_settings.py
         "additionalArgument":                     None,
+        "slotNames":                              [],
         "numberTimeSteps":                        1,
         "timeStepOutputInterval":                 1,
         "fieldVariables1": [

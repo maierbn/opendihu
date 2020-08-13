@@ -1470,4 +1470,35 @@ materialComputeJacobian()
   return true;
 }
 
+template<typename Term,typename MeshType, int nDisplacementComponents>
+unsigned int HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+materialDetermineNumberNonzerosInJacobian()
+{
+  unsigned int nNonZeros = 0;
+
+  // get pointer to function space
+  std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = this->data_.displacementsFunctionSpace();
+  std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace = this->data_.pressureFunctionSpace();
+
+  const int D = 3;  // dimension
+  const int nDisplacementsDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
+  const int nPressureDofsPerElement = PressureFunctionSpace::nDofsPerElement();
+  const int nElementsLocal = displacementsFunctionSpace->nElementsLocal();
+
+  nNonZeros = nElementsLocal * MathUtility::sqr(nDisplacementsDofsPerElement * D);
+
+  if (nDisplacementComponents == 6)
+  {
+    nNonZeros += nElementsLocal * MathUtility::sqr(nDisplacementsDofsPerElement * D) * 3;
+  }
+
+  if (Term::isIncompressible)
+  {
+    nNonZeros += nElementsLocal * nPressureDofsPerElement * nDisplacementsDofsPerElement * D * 2;
+    nNonZeros += nElementsLocal * nPressureDofsPerElement;
+  }
+
+  return nNonZeros;
+}
+
 } // namespace

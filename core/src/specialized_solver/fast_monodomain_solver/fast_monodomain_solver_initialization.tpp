@@ -132,6 +132,9 @@ initialize()
   int nFibers = 0;
   int fiberNo = 0;
   nFibersToCompute_ = 0;
+
+  LOG(DEBUG) << "initialize " << instances.size() << " outer instances";
+
   for (int i = 0; i < instances.size(); i++)
   {
     std::vector<TimeSteppingScheme::Heun<CellmlAdapterType>> &innerInstances
@@ -143,6 +146,9 @@ initialize()
       std::shared_ptr<FiberFunctionSpace> fiberFunctionSpace = innerInstances[j].data().functionSpace();
       std::shared_ptr<Partition::RankSubset> rankSubset = fiberFunctionSpace->meshPartition()->rankSubset();
       int computingRank = fiberNo % rankSubset->size();
+
+      LOG(DEBUG) << "instance (inner,outer)=(i,j)=(" << i << "," << j << ")/(" << instances.size() << "," << innerInstances.size() << ")"
+        << ", fiberNo " << fiberNo << ", rankSubset: " << *rankSubset << ", mesh" << fiberFunctionSpace->meshName() << ", computingRank " << computingRank << ", own rank: " << rankSubset->ownRankNo() << "/" << rankSubset->size();
 
       if (computingRank == rankSubset->ownRankNo())
       {

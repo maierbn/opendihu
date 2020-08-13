@@ -91,6 +91,14 @@ computeMonodomain()
   //        |
   //        2
 
+  if (fiberData_.empty())
+  {
+    LOG(DEBUG) << "In computeMonodomain(" << startTime << "," << timeStepWidthSplitting
+      << ") fiberData_ is empty";
+    LOG(DEBUG) << "This means there is no fiber to compute on this rank, they were all send to another rank for the computation. Skip computation.";
+    return;
+  }
+
   // loop over splitting time steps
   for (int timeStepNo = 0; timeStepNo < nTimeStepsSplitting_; timeStepNo++)
   {
@@ -127,6 +135,14 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlge
 
   // loop over point buffers, i.e., sets of 4 neighouring points of the fiber
   const int nPointBuffers = fiberPointBuffers_.size();
+  if (fiberData_.empty())
+  {
+    LOG(DEBUG) << "In compute0D(" << startTime << "," << timeStepWidth << "," << nTimeSteps << "," << storeAlgebraicsForTransfer
+      << "): fiberData_ is empty, nPointBuffers: " << nPointBuffers;
+    LOG(DEBUG) << "This means there is no fiber to compute on this rank, they were all send to another rank for the computation. Skip compute0D.";
+    return;
+  }
+
   const double factorForForDataNo = (double)Vc::double_v::Size / fiberData_[0].valuesLength;
   for (global_no_t pointBuffersNo = 0; pointBuffersNo < nPointBuffers; pointBuffersNo++)
   {

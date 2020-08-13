@@ -12,8 +12,8 @@
 
 template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
 CallbackHandler<nStates,nAlgebraics_,FunctionSpaceType>::
-CallbackHandler(DihuContext context, bool initializeOutputWriter) :
-  RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>(context, initializeOutputWriter),
+CallbackHandler(DihuContext context) :
+  RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>(context),
   fiberNoGlobal_(-1),
   pythonSetSpecificParametersFunction_(NULL), pythonSetSpecificStatesFunction_(NULL), pythonHandleResultFunction_(NULL),
   pySetFunctionAdditionalParameter_(NULL), pyHandleResultFunctionAdditionalParameter_(NULL), pyGlobalNaturalDofsList_(NULL)
@@ -22,8 +22,8 @@ CallbackHandler(DihuContext context, bool initializeOutputWriter) :
 
 template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
 CallbackHandler<nStates,nAlgebraics_,FunctionSpaceType>::
-CallbackHandler(DihuContext context) :
-  RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>(context),
+CallbackHandler(DihuContext context, const typename CellmlAdapterBase<nStates,nAlgebraics_,FunctionSpaceType>::Data &rhsData) :
+  RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>(context, rhsData),
   fiberNoGlobal_(-1),
   pythonSetSpecificParametersFunction_(NULL), pythonSetSpecificStatesFunction_(NULL), pythonHandleResultFunction_(NULL),
   pySetFunctionAdditionalParameter_(NULL), pyHandleResultFunctionAdditionalParameter_(NULL), pyGlobalNaturalDofsList_(NULL)
@@ -267,7 +267,7 @@ callPythonHandleResultFunction(int nInstances, int timeStepNo, double currentTim
     return;
 
   // compose callback function
-  LOG(DEBUG) << "callPythonHandleResultFunction: nInstances: " << this->nInstances_<< ", nStates: " << nStates
+  LOG(DEBUG) << "callPythonHandleResultFunction: nInstances: " << this->nInstances_ << ", nStates: " << nStates
     << ", nAlgebraics: " << this->nAlgebraics();
   PyObject *statesList = PythonUtility::convertToPythonList(nStates*this->nInstances_, localStates);
   PyObject *algebraicsList = PythonUtility::convertToPythonList(nAlgebraics_*this->nInstances_, algebraics);

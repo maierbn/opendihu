@@ -21,6 +21,12 @@ public:
   //! constructor
   HeunAdaptive(DihuContext context);
 
+  //! destructor to write log file
+  virtual ~HeunAdaptive();
+
+  //! initialize the data object
+  virtual void initialize();
+
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
   void advanceTimeSpan();
 
@@ -83,7 +89,12 @@ private:
   // current time of the simulation
   double currentTimeHeun_;
 
+  std::string timeStepWidthsLogFilename_;   //< filename of log file that will contain timestep widths
+
+  std::vector<double> times_;               //< time points that are visited
+  std::vector<double> timeStepWidths_;      //< a vector of all used timestep widths, to be written to a log at the end
 };
+
 }  // namespace
 
 #include "time_stepping_scheme/heun_adaptive.tpp"

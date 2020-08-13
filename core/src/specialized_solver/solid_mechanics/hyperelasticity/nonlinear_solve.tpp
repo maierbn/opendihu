@@ -46,13 +46,12 @@ nonlinearSolve()
     }
     if (currentLoadFactor_ < loadFactorGiveUpThreshold_)
     {
-      LOG(WARNING) << "Nonlinear solve failed at load factor " << currentLoadFactor_ << ", (no. " << loadFactorIndex << "). "
-        << "Load factor is below threshold of " << loadFactorGiveUpThreshold_ << ", giving up.";
+      LOG(WARNING) << "Nonlinear solver reached load factor " << currentLoadFactor_ << ", (no. " << loadFactorIndex << ") which "
+        << " is below give-up threshold of " << loadFactorGiveUpThreshold_ << ", now abort.";
       break;
     }
 
-
-    // try two times to solve the nonlinear problem
+    // try as many times to solve the nonlinear problem as given in the option nNonlinearSolveCalls
     for (int i = 0; i < nNonlinearSolveCalls_; i++)
     {
       LOG(DEBUG) << "------------------  start solve " << i << "/" << nNonlinearSolveCalls_ << " ------------------";

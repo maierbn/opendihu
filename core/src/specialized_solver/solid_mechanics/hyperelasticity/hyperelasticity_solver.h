@@ -233,6 +233,9 @@ protected:
   //! @return true if computation was successful (i.e. no negative jacobian)
   bool materialComputeJacobian();
 
+  //! determine the number of local non-zero entries in the jacobian
+  unsigned int materialDetermineNumberNonzerosInJacobian();
+
   //! compute the deformation gradient, F inside the current element at position xi, the value of F is still with respect to the reference configuration,
   //! the formula is F_ij = x_i,j = δ_ij + u_i,j
   template<typename double_v_t>
@@ -345,6 +348,7 @@ protected:
   int nNonlinearSolveCalls_;                                //< how often the nonlinear solve should be called in sequence
   bool lastSolveSucceeded_;                                 //< if the last computation of the residual or jacobian succeeded, if this is false, it indicates that there was a negative jacobian
   double loadFactorGiveUpThreshold_;                        //< a threshold for the load factor, if it is below, the solve is aborted
+  unsigned int nNonZerosJacobian_;                          //< number of nonzero entries in the material jacobian on the local domain, used for preallocation of the matrix
 
   std::vector<double> loadFactors_;                         //< vector of load factors, 1.0 means normal computation, any lower value reduces the right hand side (scales body and traction forces)
 

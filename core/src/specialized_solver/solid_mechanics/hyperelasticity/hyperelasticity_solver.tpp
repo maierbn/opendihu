@@ -17,7 +17,7 @@ template<typename Term,typename MeshType,int nDisplacementComponents>
 HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 HyperelasticitySolver(DihuContext context, std::string settingsKey) :
   context_(context[settingsKey]), data_(context_), pressureDataCopy_(context_), initialized_(false),
-  endTime_(0), lastNorm_(0), secondLastNorm_(0), currentLoadFactor_(1.0), lastSolveSucceeded_(true)
+  endTime_(0), lastNorm_(0), secondLastNorm_(0), currentLoadFactor_(1.0), lastSolveSucceeded_(true), nNonZerosJacobian_(0)
 {
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
@@ -336,11 +336,21 @@ HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 createPartitionedPetscMat(std::string name)
 {
   // determine number of non zero entries in matrix
-  int nNonZerosDiagonal, nNonZerosOffdiagonal;
-  ::Data::FiniteElementsBase<DisplacementsFunctionSpace,1>::getPetscMemoryParameters(nNonZerosDiagonal, nNonZerosOffdiagonal);
+  if (nNonZerosJacobian_ == 0)
+    nNonZerosJacobian_ = materialDetermineNumberNonzerosInJacobian();
+
+  int nNonZerosOffdiagonal = (int)nNonZerosJacobian_;
+  int nNonZerosDiagonal = (int) nNonZerosJacobian_;
+
+  //::Data::FiniteElementsBase<DisplacementsFunctionSpace,1>::getPetscMemoryParameters(nNonZerosDiagonal, nNonZerosOffdiagonal);
+
+  //nNonZerosDiagonal = 100*MathUtility::sqr(nNonZerosDiagonal);
+  //nNonZerosOffdiagonal = 5*MathUtility::sqr(nNonZerosOffdiagonal);
+
+  LOG(INFO) << "Preallocation for matrix \"" << name << "\": diagonal nz: " << nNonZerosDiagonal << ", offdiagonal nz: " << nNonZerosOffdiagonal;
 
   return std::make_shared<MatHyperelasticity>(
-    combinedVecSolution_, 4*nNonZerosDiagonal, 4*nNonZerosOffdiagonal, name);
+    combinedVecSolution_, nNonZerosDiagonal, nNonZerosOffdiagonal, name);
 }
 
 
@@ -455,10 +465,14 @@ initializePetscVariables()
 
   if (useAnalyticJacobian_)
   {
-    MatSetOption(solverMatrixJacobian_, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
+    // jacobian matrix is already preallocated, but there might be even more entries required
+    ierr = MatSetOption(solverMatrixJacobian_, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE); CHKERRV(ierr);
 
     // assemble matrix and nonzeros structure
     evaluateAnalyticJacobian(solverVariableSolution_, solverMatrixJacobian_);
+
+    // print info about preallocation, this can also be done by -mat_view ::ascii_info_detail
+    //ierr = MatView(solverMatrixJacobian_, PETSC_VIEWER_ASCII_INFO_DETAIL); CHKERRV(ierr);
 
     // output the jacobian matrix for debugging
     LOG(DEBUG) << "initial analytic jacobian matrix: ";

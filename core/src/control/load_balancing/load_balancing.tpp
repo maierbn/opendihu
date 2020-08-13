@@ -237,7 +237,7 @@ rebalance()
   if (rankSubsetFiber->ownRankNo() == 0)
   {
     LOG(DEBUG) << "Position of peaks on this fiber are " << peak_positions_fibre;
-    LOG(INFO) << "At time " << timeSteppingHeun.currentHeunTime() << ", the position of peaks on this fiber are " << peak_positions_fibre;
+    LOG(DEBUG) << "At time " << timeSteppingHeun.currentHeunTime() << ", the position of peaks on this fiber are " << peak_positions_fibre;
   }
 
   // adjust vector length to maximum number of peaks globally. Missing entries are filled with -1
@@ -722,8 +722,9 @@ rebalance()
       geometryFieldValuesNew_TEST.pop_back();
 
       // remove cellml values
-      for (int i = 0; i < nCellMLComponents; i++){
-          cellmlValuesNew_TEST[i].pop_back();
+      for (int i = 0; i < nCellMLComponents; i++)
+      {
+        cellmlValuesNew_TEST[i].pop_back();
       }
     }
 
@@ -753,7 +754,6 @@ rebalance()
     LOG(DEBUG) << "Diffusion values to be send " << diffusionValueToSendRight;
     LOG(DEBUG) << "Nodes to be send " << nodeValueToSendRight;
     LOG(DEBUG) << "Cellml values to be send " << cellmlValueToSendRight;
-
   }
 
   // receive, when start node of process moved to the left
@@ -846,13 +846,12 @@ rebalance()
   int nNodesLocalWithoutGhostsNew = meshPartition->nNodesLocalWithoutGhosts();
 
   // vector of node positions
-  std::vector<Vec3> nodePositionsWithoutGhosts;
-  nodePositionsWithoutGhosts = geometryFieldValuesNew_TEST;
+  std::vector<Vec3> &nodePositionsWithoutGhosts = geometryFieldValuesNew_TEST;
   nodePositionsWithoutGhosts.resize(nNodesLocalWithoutGhostsNew);
 
   // set new values
-  std::vector<double> diffusionValuesNew = diffusionValuesNew_TEST;
-  std::array<std::vector<double>,nCellMLComponents> cellmlValuesNew = cellmlValuesNew_TEST;
+  std::vector<double> &diffusionValuesNew = diffusionValuesNew_TEST;
+  std::array<std::vector<double>,nCellMLComponents> &cellmlValuesNew = cellmlValuesNew_TEST;
 
   // log info
   LOG(DEBUG) << "create meshPartition, nElementsPerDimensionGlobal: " << nElementsPerDimensionGlobal;
@@ -864,7 +863,7 @@ rebalance()
   }
 
   // log rebalancing with new values
-  LOG(DEBUG) << "rebalancing number of elements: " << nElementsLocal << " -> " << nElementsLocalNew
+  LOG(INFO) << "rebalancing number of elements: " << nElementsLocal << " -> " << nElementsLocalNew
     << ", number of nodes: " << nNodesLocalWithoutGhosts << " -> " << nNodesLocalWithoutGhostsNew;
 
   // create function space with updated mesh partition
@@ -889,29 +888,36 @@ rebalance()
   double lastCallSpecificStatesTime = cellMLAdapter.lastCallSpecificStatesTime();
   LOG(DEBUG) << "store lastCallSpecificStatesTime: " << lastCallSpecificStatesTime;
 
-  // create new CellMLAdapter with new function space
-  cellMLAdapter = std::move(CellMLAdapter(cellMLAdapter, functionSpaceNew));
-
   // recreate data structures for cellML
   timeSteppingHeun.reset();
-  timeSteppingHeun.initialize();    // retrieves function space from cellMLAdapter
+
+  // create new CellMLAdapter with new function space
+  cellMLAdapter = std::move(CellMLAdapter(cellMLAdapter, functionSpaceNew));
+  // cellMLAdapter is now initialize
+
+  LOG(DEBUG) << "timeSteppingHeun.initialize()";
+  timeSteppingHeun.initialize();    // retrieves function space from cellMLAdapter, does not initialize CellMLAdapter again
 
   // set lastCallSpecificStatesTime to previous value
   cellMLAdapter.setLastCallSpecificStatesTime(lastCallSpecificStatesTime);
 
   // set all local data
+  LOG(DEBUG) << "set " << cellmlValuesNew[0].size() << " values for " << timeSteppingHeun.data().solution()->functionSpace()->nDofsLocalWithoutGhosts() << " dofs";
   timeSteppingHeun.data().solution()->setValuesWithoutGhosts(cellmlValuesNew);
 
   // recreate data structures for diffusion part
+  LOG(DEBUG) << "timeSteppingDiffusion.reset()";
   timeSteppingDiffusion.reset();
 
   // initialize timeStepping
+  LOG(DEBUG) << "timeSteppingDiffusion.initialize()";
   timeSteppingDiffusion.initialize();   // retrieves function space from finiteElementMethod
 
   // set all local data
+  LOG(DEBUG) << "set " << diffusionValuesNew.size() << " values for " << timeSteppingDiffusion.data().solution()->functionSpace()->nDofsLocalWithoutGhosts() << " dofs";
   timeSteppingDiffusion.data().solution()->setValuesWithoutGhosts(diffusionValuesNew);
 
-  LOG(INFO) << "Reached End of Rebalancing";
+  LOG(DEBUG) << "Reached End of Rebalancing";
 }
 
 } // namespace

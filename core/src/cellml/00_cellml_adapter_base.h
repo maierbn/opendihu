@@ -41,10 +41,10 @@ public:
   typedef ::Data::SlotConnectorData<FunctionSpaceType,nStates_,nAlgebraics_> SlotConnectorDataType;
 
   //! constructor from context
-  CellmlAdapterBase(DihuContext context, bool initializeOutputWriter);
-
-  //! constructor from context
   CellmlAdapterBase(DihuContext context);
+
+  //! constructor with given data
+  CellmlAdapterBase(DihuContext context, const CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::Data &rhsData);
 
   //! destructor
   ~CellmlAdapterBase();
@@ -126,6 +126,7 @@ protected:
   double initializeStatesToEquilibriumTimestepWidth_;      //< timestep width for computation of equilibrium states
 
   CellmlSourceCodeGenerator cellmlSourceCodeGenerator_;    //< object that holds all source code related to the model
+  bool initialized_;                                       //< if initialize has been called
 };
 
 #include "cellml/00_cellml_adapter_base.tpp"

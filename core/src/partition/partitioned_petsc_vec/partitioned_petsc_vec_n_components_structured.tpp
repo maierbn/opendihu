@@ -67,7 +67,8 @@ PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::Func
     // create new Petsc Vec's
     createVector();
 
-    LOG(DEBUG) << "\"" << this->name_ << "\" contruct empty vector from rhs \"" << rhs.name() << "\", representation: "
+    LOG(DEBUG) << "\"" << this->name_ << "\" contruct empty vector (local size: " << this->meshPartition_->nNodesLocalWithoutGhosts()
+      << ") from rhs \"" << rhs.name() << "\", representation: "
       << Partition::valuesRepresentationString[rhs.currentRepresentation()];
 
     // copy the values of rhs

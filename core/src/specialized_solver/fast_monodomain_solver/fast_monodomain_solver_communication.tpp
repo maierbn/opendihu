@@ -29,7 +29,10 @@ fetchFiberData()
     for (int j = 0; j < innerInstances.size(); j++, fiberNo++)
     {
       std::shared_ptr<FiberFunctionSpace> fiberFunctionSpace = innerInstances[j].data().functionSpace();
-      LOG(DEBUG) << "(" << i << "," << j << ") functionSpace " << fiberFunctionSpace->meshName();
+      LOG(DEBUG) << "instance (inner,outer)=(" << i << "," << j << "), fiberNo: " << fiberNo
+        << ", functionSpace " << fiberFunctionSpace->meshName()
+        << "," << fiberFunctionSpace->meshPartition()->rankSubset()->size() << " ranks (" << *fiberFunctionSpace->meshPartition()->rankSubset() << ")"
+        << ", " << innerInstances.size() << " inner instances";
 
       // communicate element lengths
       std::vector<double> localLengths(fiberFunctionSpace->nElementsLocal());

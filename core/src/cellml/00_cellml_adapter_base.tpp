@@ -22,7 +22,7 @@ template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 CellmlAdapterBase(DihuContext context) :
   context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML")),
-  data_(context_), cellmlSourceCodeGenerator_()
+  data_(context_), cellmlSourceCodeGenerator_(), initialized_(false)
 {
   outputWriterManager_.initialize(this->context_, specificSettings_);
   LOG(TRACE) << "CellmlAdapterBase constructor";
@@ -30,9 +30,9 @@ CellmlAdapterBase(DihuContext context) :
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
-CellmlAdapterBase(DihuContext context, bool initializeOutputWriter) :
+CellmlAdapterBase(DihuContext context, const CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::Data &rhsData) :
   context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML")),
-  data_(context_), cellmlSourceCodeGenerator_()
+  data_(rhsData), cellmlSourceCodeGenerator_(), initialized_(false)
 {
 }
 
@@ -158,6 +158,7 @@ template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 initialize()
 {
+
   LOG(TRACE) << "CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::initialize";
 
   if (VLOG_IS_ON(1))

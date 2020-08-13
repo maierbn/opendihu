@@ -118,6 +118,7 @@ config = {
   "ImplicitEuler" : {
     "initialValues": [2,2,4,5,2,2],
     "numberTimeSteps": 5,
+    "timeStepWidthRelativeTolerance": 1e-10,
     "endTime": 0.1,
     "FiniteElementMethod" : {
       "nElements": n,
@@ -281,6 +282,7 @@ config = {
   "CrankNicolson" : {
     "initialValues": [2,2,4,5,2,2],
     "numberTimeSteps": 5,
+    "timeStepWidthRelativeTolerance": 1e-10,
     "endTime": 0.1,
     "FiniteElementMethod" : {
     "nElements": n,
@@ -410,6 +412,7 @@ config = {
   "ImplicitEuler" : {
     "initialValues": [2,2,4,5,2,2],
     "numberTimeSteps": 5,
+    "timeStepWidthRelativeTolerance": 1e-10,
     "endTime": 0.1,
     "FiniteElementMethod" : {
       "nElements": n,
@@ -453,6 +456,7 @@ config = {
   "CrankNicolson" : {
     "initialValues": [2,2,4,5,2,2],
     "numberTimeSteps": 5,
+    "timeStepWidthRelativeTolerance": 1e-10,
     "endTime": 0.1,
     "FiniteElementMethod" : {
     "nElements": n,

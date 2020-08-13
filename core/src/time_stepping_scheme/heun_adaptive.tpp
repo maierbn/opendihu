@@ -229,10 +229,12 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
           if (fabs(this->timeStepWidth_) < 1e-12)
           {
             estimator_ = 1e-10;
+            LOG(DEBUG) << "estimator would be nan, set to 1e-10.";
           }
           else
           {
             estimator_ = (double)vecnorm / ((1.0 - pow(0.5, 2))*this->timeStepWidth_);
+            LOG(DEBUG) << "compute estimator = " << vecnorm << "/" << ((1.0 - pow(0.5, 2))*this->timeStepWidth_) << " = " << estimator_;
           }
         }
         else
@@ -474,11 +476,13 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
       // prevent that the estimator gets nan, if the divisor is 0
       if (fabs(this->timeStepWidth_) < 1e-12)
       {
+        LOG(DEBUG) << "estimator would be nan, set to 1e-10.";
         estimator_ = 1e-10;
       }
       else
       {
         estimator_ = (double)vecnorm / ((1.0 - pow(0.5, 2))*this->timeStepWidth_);
+        LOG(DEBUG) << "compute estimator = " << vecnorm << "/" << ((1.0 - pow(0.5, 2))*this->timeStepWidth_) << " = " << estimator_;
       }
     }
     else

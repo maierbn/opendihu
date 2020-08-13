@@ -86,31 +86,47 @@ Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 
 import numpy as np
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
-# radius: [μm], stimulation frequency [Hz], jitter [-]
+import numpy as np
+
+n_motor_units = 15   # number of motor units
 
 motor_units = []
-n_motorunits = 15
-for mu_no in range(n_motorunits):
+for mu_no in range(n_motor_units):
+
+  # capacitance of the membrane
+  if mu_no <= 7:
+    cm = 0.58    # slow twitch (type I)
+  else:
+    cm = 1.0     # fast twitch (type II)
+
+  # fiber radius between 40 and 55 [μm]
+  min_value = 40
+  max_value = 55
   
-  # compute a scaling factor that runs exponentially from min_factor to max_factor
-  min_factor = 1.0
-  max_factor = 2.0
+  # ansatz value(i) = c1 + c2*exp(i),
+  # value(0) = min = c1 + c2  =>  c1 = min - c2
+  # value(n-1) = max = min - c2 + c2*exp(n-1)  =>  max = min + c2*(exp(n-1) - 1)  =>  c2 = (max - min) / (exp(n-1) - 1)
+  c2 = (max_value - min_value) / (np.exp(n_motor_units-1) - 1)
+  c1 = min_value - c2
+  radius = c1 + c2*np.exp(mu_no)
+
+  # stimulation frequency [Hz] between 24 and 7
+  min_value = 7 
+  max_value = 24
   
-  # ansatz scaling_factor(i) = c1 + c2*exp(i),
-  # scaling_factor(0) = min = c1 + c2  =>  c1 = min - c2
-  # scaling_factor(n-1) = max = min - c2 + c2*exp(n-1)  =>  max = min + c2*(exp(n-1) - 1)  =>  c2 = (max - min) / (exp(n-1) - 1)
-  c2 = (max_factor - min_factor) / (np.exp(n_motorunits-1) - 1)
-  c1 = min_factor - c2
-  scaling_factor = c1 + c2*np.exp(mu_no)
-  
-  motor_units.append({
-    "radius": 40.00*scaling_factor,
-    "activation_start_time": 2.5*mu_no/14., 
-    "stimulation_frequency": 24.00 - (scaling_factor-1)*16, 
-    "jitter": [0.1*random.uniform(-1,1) for i in range(100)]
-  })
-  
-  
+  c2 = (max_value - min_value) / (np.exp(n_motor_units-1) - 1)
+  c1 = min_value - c2
+  stimulation_frequency = c1 + c2*np.exp(n_motor_units-1-mu_no)
+
+  # exponential distribution: low number of fibers per MU, slow twitch (type I), activated first --> high number of fibers per MU, fast twitch (type II), activated last
+  motor_units.append(
+  {
+    "radius":                radius,                 # [μm] parameter for motor unit: radius of the fiber, used to compute Am
+    "cm":                    cm,                     # [uF/cm^2] parameter Cm
+    "activation_start_time": 0.1*mu_no,              # [s] when to start activating this motor unit, here it is a ramp
+    "stimulation_frequency": stimulation_frequency,  # [Hz] stimulation frequency for activation
+    "jitter": [0.1*random.uniform(-1,1) for i in range(100)]     # [-] random jitter values that will be added to the intervals to simulate jitter
+  })  
 
 # timing parameters
 # -----------------
@@ -120,9 +136,9 @@ stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, ad
 dt_0D = 1e-4                        # [ms] timestep width of ODEs (1e-3)
 dt_1D = 1e-4                        # [ms] timestep width of diffusion (1e-3)
 dt_splitting = 1e-4                 # [ms] overall timestep width of strang splitting (1e-3)
-dt_3D = 1e0                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep_fibers = 0.5       # [ms] timestep for fiber output, 0.5
-output_timestep_3D = 1              # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
+dt_3D = 1                           # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
+output_timestep_fibers = 4e0       # [ms] timestep for fiber output, 0.5
+output_timestep_3D = 4e0              # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
 
 
 # input files
@@ -135,9 +151,9 @@ cellml_file             = "../../../../input/new_slow_TK_2014_12_08.c"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
-sampling_stride_x = 3
-sampling_stride_y = 3
-sampling_stride_z = 74      # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40
+sampling_stride_x = 2
+sampling_stride_y = 2
+sampling_stride_z = 40      # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40
 
 # other options
 paraview_output = True
@@ -145,20 +161,20 @@ adios_output = False
 exfile_output = False
 python_output = False
 disable_firing_output = False
-fast_monodomain_solver_optimizations = False # enable the optimizations in the fast multidomain solver
-use_analytic_jacobian = False        # If the analytic jacobian should be used for the mechanics problem.
-use_vc = False                       # If the vc optimization type should be used for CellmlAdapter
+fast_monodomain_solver_optimizations = True # enable the optimizations in the fast multidomain solver
+use_analytic_jacobian = True        # If the analytic jacobian should be used for the mechanics problem.
+use_vc = True                       # If the vc optimization type should be used for CellmlAdapter
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):
   # get radius in cm, 1 μm = 1e-6 m = 1e-4*1e-2 m = 1e-4 cm
-  r = motor_units[mu_no]["radius"]*1e-4
+  r = motor_units[mu_no % len(motor_units)]["radius"]*1e-4
   # cylinder surface: A = 2*π*r*l, V = cylinder volume: π*r^2*l, Am = A/V = 2*π*r*l / (π*r^2*l) = 2/r
   return 2./r
   #return Am
 
 def get_cm(fiber_no, mu_no):
-  return Cm
+  return motor_units[mu_no % len(motor_units)]["cm"]
   
 def get_conductivity(fiber_no, mu_no):
   return Conductivity

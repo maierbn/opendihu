@@ -73,7 +73,7 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
 # create mappings between meshes
 #variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(variables.n_fibers_total)}
-variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : {"name": "3Dmesh", "xiTolerance": 1e-3} for i in range(variables.n_fibers_total)}
+variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : {"name": "3Dmesh", "xiTolerance": 3e-1} for i in range(variables.n_fibers_total)}
 
 # a higher tolerance includes more fiber dofs that may be almost out of the 3D mesh
 variables.mappings_between_meshes = {

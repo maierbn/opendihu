@@ -137,6 +137,9 @@ adios_output = False
 exfile_output = False
 python_output = False
 disable_firing_output = False
+fast_monodomain_solver_optimizations = True # enable the optimizations in the fast multidomain solver
+use_analytic_jacobian = True        # If the analytic jacobian should be used for the mechanics problem.
+use_vc = True                       # If the vc optimization type should be used for CellmlAdapter
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):

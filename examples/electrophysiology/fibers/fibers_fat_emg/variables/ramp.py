@@ -40,14 +40,15 @@ dt_0D = 3e-3                        # [ms] timestep width of ODEs (2e-3)
 dt_1D = 1e-3                        # [ms] timestep width of diffusion (4e-3)
 dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting (4e-3)
 dt_3D = 2e-1                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep_fibers = 2e-1       # [ms] timestep for fiber output, 0.5
-output_timestep_3D_emg = 2e-1            # [ms] timestep for output big files of 3D EMG, 100
-output_timestep_surface = 2e-1              # [ms] timestep for output surface EMG, 0.5
-output_timestep_electrodes = 2e-1    # [ms] timestep for python callback, which is electrode measurement output, has to be >= dt_3D
+output_timestep_fibers = 50         # [ms] timestep for fiber output, 0.5
+output_timestep_3D_emg = 50         # [ms] timestep for output big files of 3D EMG, 100
+output_timestep_surface = 10        # [ms] timestep for output surface EMG, 0.5
+output_timestep_electrodes = 1      # [ms] timestep for python callback, which is electrode measurement output, has to be >= dt_3D
 
 # input files
 fiber_file = "../../../input/left_biceps_brachii_7x7fibers.bin"
 fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
+fiber_file = "../../input/left_biceps_brachii_37x37fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"

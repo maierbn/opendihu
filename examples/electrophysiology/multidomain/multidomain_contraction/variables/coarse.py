@@ -121,7 +121,7 @@ multidomain_absolute_tolerance = 1e-15 # absolute residual tolerance for the mul
 multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
 
 # elasticity
-elasticity_solver_type = "gmres"
+elasticity_solver_type = "lu"
 elasticity_preconditioner_type = "none"
 snes_max_iterations = 34                  # maximum number of iterations in the nonlinear solver
 snes_rebuild_jacobian_frequency = 5       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
@@ -146,8 +146,8 @@ dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
 dt_elasticity = 1e-1                # [ms] time step width of elasticity solver
-output_timestep_multidomain = 1e-1  # [ms] timestep for fiber output, 0.5
-output_timestep_elasticity = dt_elasticity      # [ms] timestep for elasticity output files
+output_timestep_multidomain = 5e-1  # [ms] timestep for fiber output, 0.5
+output_timestep_elasticity = 5*dt_elasticity      # [ms] timestep for elasticity output files
 
 # input files
 #cellml_file = "../../../input/new_slow_TK_2014_12_08.c"
@@ -179,7 +179,7 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-states_output = True    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
+states_output = False    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
 show_linear_solver_output = False    # if every solve of multidomain diffusion should be printed
 disable_firing_output = False   # if information about firing of MUs should be printed
 

@@ -352,7 +352,8 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
   const double_v_t dPsi_dI2 = ExpressionHelper<double_v_t>::apply(dPsi_dI2Expression, parameterVector);
   const double_v_t dPsi_dI3 = ExpressionHelper<double_v_t>::apply(dPsi_dI3Expression, parameterVector);
 
-  VLOG(2) << "coupled term: " << Term::strainEnergyDensityFunctionCoupled;
+  // the following line gives linker errors in debug target
+  //VLOG(2) << "coupled term: " << Term::strainEnergyDensityFunctionCoupled;
   VLOG(2) << "invariants: I1: " << Term::I1 << " = " << I1 << ", I2: " << Term::I2 << ", I3: " << Term::I3 << " = " << I3;
   VLOG(2) << "∂ψ/∂I1: " << dPsi_dI1Expression << " = " << dPsi_dI1;
   VLOG(2) << "∂ψ/∂I2: " << dPsi_dI2Expression << " = " << dPsi_dI2;

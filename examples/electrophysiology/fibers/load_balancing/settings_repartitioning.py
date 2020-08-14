@@ -193,7 +193,7 @@ config = {
               "timeStepWidth": dt_0D,  # 5e-5
               "tolerance": 1e7,
               "lowestMultiplier": 1000,
-              "minTimeStepWidth": 1e-5,
+              "minTimeStepWidth": 1e-8,
               "timeStepAdaptOption": "regular",
               "logTimeStepWidthAsKey": "dt_0D",
               "durationLogKey": "duration_0D",
@@ -246,7 +246,8 @@ config = {
               "logTimeStepWidthAsKey": "dt_1D",
               "durationLogKey": "duration_1D",
               "timeStepOutputInterval": 1e4,
-              "dirichletBoundaryConditions": {0: -75, -1: -75},      # set first and last value of fiber to -75
+              #"dirichletBoundaryConditions": {0: -75, -1: -75},      # set first and last value of fiber to -75
+              "dirichletBoundaryConditions": {},      # set first and last value of fiber to -75
               "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
               "inputMeshIsGlobal": True,
               "timeStepWidthRelativeTolerance": 1e-10,

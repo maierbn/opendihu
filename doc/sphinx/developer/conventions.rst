@@ -2,6 +2,13 @@
 Conventions and Tips
 ========================
 
+Style guide
+-------------
+
+- Write code in style similar to what is already there: camelCase, all in english, enough comments, comment all member variables and methods.
+- Use less abbreviations, instead long names for variables and methods. (Except maybe in comments)
+- The rest is common sense.
+
 Commonly used terms
 -----------------------
 

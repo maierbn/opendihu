@@ -36,26 +36,42 @@ initialize(int nCompartments)
   Data<FunctionSpaceType>::initialize();
 
   // initialize slot connector data
-  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
-  slotConnectorData_->resize(nCompartments_);
+  std::get<0>(*slotConnectorData_) = std::make_shared<std::vector<std::shared_ptr<SlotConnectorData<FunctionSpaceType,1>>>>();
+  std::get<0>(*slotConnectorData_)->resize(nCompartments_);
+
+  std::string activeStressTotalSlotName;
 
   // set the two slots V_mk^(i) and V_mk^(i+1) for all compartments
   for (int compartmentNo = 0; compartmentNo < nCompartments_; compartmentNo++)
   {
-    slotConnectorData_->at(compartmentNo) = std::make_shared<SlotConnectorData<FunctionSpaceType,1>>();
-    slotConnectorData_->at(compartmentNo)->addFieldVariable(transmembranePotential_[compartmentNo]);          // V_mk^(i)
-    slotConnectorData_->at(compartmentNo)->addFieldVariable(transmembranePotentialSolution_[compartmentNo]);  // V_mk^(i+1)
+    std::get<0>(*slotConnectorData_)->at(compartmentNo) = std::make_shared<SlotConnectorData<FunctionSpaceType,1>>();
+    std::get<0>(*slotConnectorData_)->at(compartmentNo)->addFieldVariable(transmembranePotential_[compartmentNo]);          // V_mk^(i)
+    std::get<0>(*slotConnectorData_)->at(compartmentNo)->addFieldVariable(transmembranePotentialSolution_[compartmentNo]);  // V_mk^(i+1)
 
-    slotConnectorData_->at(compartmentNo)->addFieldVariable(activeStress_[compartmentNo]);  // activeStress_k
-    slotConnectorData_->at(compartmentNo)->addFieldVariable(activeStressTotal_);  // activeStressTotal_k
+    std::get<0>(*slotConnectorData_)->at(compartmentNo)->addFieldVariable(activeStress_[compartmentNo]);  // activeStress_k
 
     // parse slot names of the field variables
-    this->context_.getPythonConfig().getOptionVector("slotNames", slotConnectorData_->at(compartmentNo)->slotNames);
+    this->context_.getPythonConfig().getOptionVector("slotNames", std::get<0>(*slotConnectorData_)->at(compartmentNo)->slotNames);
+
+    int nSlots = std::get<0>(*slotConnectorData_)->at(compartmentNo)->nSlots();
+    if (std::get<0>(*slotConnectorData_)->at(compartmentNo)->slotNames.size() >= nSlots+1)
+    {
+      activeStressTotalSlotName = std::get<0>(*slotConnectorData_)->at(compartmentNo)->slotNames[nSlots];
+    }
 
     // make sure that there are as many slot names as slots
-    slotConnectorData_->at(compartmentNo)->slotNames.resize(slotConnectorData_->at(compartmentNo)->nSlots());
+    std::get<0>(*slotConnectorData_)->at(compartmentNo)->slotNames.resize(nSlots);
   }
 
+  // active stress total
+  std::get<1>(*slotConnectorData_) = std::make_shared<SlotConnectorData<FunctionSpaceType,1>>();
+  std::get<1>(*slotConnectorData_)->addFieldVariable(activeStressTotal_);  // activeStressTotal
+
+  // parse slot names of the field variables
+  this->context_.getPythonConfig().getOptionVector("slotNames", std::get<1>(*slotConnectorData_)->slotNames);
+
+  LOG(DEBUG) << "add slot for activeStressTotal with slotName \"" << activeStressTotalSlotName << "\"";
+  std::get<1>(*slotConnectorData_)->slotNames.push_back(activeStressTotalSlotName);
 }
 
 template<typename FunctionSpaceType>

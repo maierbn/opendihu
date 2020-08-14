@@ -40,34 +40,39 @@ CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionS
 
   // copy everything from rhs
   this->specificSettings_ = rhs.specificSettings_;
-  this->outputWriterManager_ = rhs.outputWriterManager_;
+
+  this->initialized_ = false;
+
+  this->data_.reset();
+
+  initialize();
 
   // initialize data
-  this->data_.setFunctionSpace(this->functionSpace_);
-  this->data_.reset();
-  this->data_.initialize();     // create new field variables with given functionSpace
+  //this->data_.setFunctionSpace(this->functionSpace_);
+  //this->data_.reset();
+  //this->data_.initialize();     // create new field variables with given functionSpace
   //this->data_.setStatesVariable();
-  this->nInstances_ = this->functionSpace_->nNodesLocalWithoutGhosts();
+  //this->nInstances_ = this->functionSpace_->nNodesLocalWithoutGhosts();
   LOG(DEBUG) << "nInstances: " << this->nInstances_;
 
   this->internalTimeStepNo_ = rhs.internalTimeStepNo_;
 
-  this->cellmlSourceCodeGenerator_ = rhs.cellmlSourceCodeGenerator_; // is not initialized, because not needed    //< object that holds all source code related to the model
+  //this->cellmlSourceCodeGenerator_ = rhs.cellmlSourceCodeGenerator_; // is not initialized, because not needed    //< object that holds all source code related to the model
 
   // members in 01_rhs_routine_handler.h
-  this->sourceToCompileFilename_ = rhs.sourceToCompileFilename_;   //< filename of the processed source file that will be used to compile the library
-  this->optimizationType_ = rhs.optimizationType_;          //< type of generated file, e.g. "simd", "gpu", "openmp"
-  this->approximateExponentialFunction_ = rhs.approximateExponentialFunction_;   //< when using "vc" as optimizationType_, the exp() function should be approximated, this is faster
-  this->maximumNumberOfThreads_ = rhs.maximumNumberOfThreads_;            //< when using "openmp" as optimizationType_, the maximum number of threads to use, 0 means no restriction
+  //this->sourceToCompileFilename_ = rhs.sourceToCompileFilename_;   //< filename of the processed source file that will be used to compile the library
+  //this->optimizationType_ = rhs.optimizationType_;          //< type of generated file, e.g. "simd", "gpu", "openmp"
+  //this->approximateExponentialFunction_ = rhs.approximateExponentialFunction_;   //< when using "vc" as optimizationType_, the exp() function should be approximated, this is faster
+  //this->maximumNumberOfThreads_ = rhs.maximumNumberOfThreads_;            //< when using "openmp" as optimizationType_, the maximum number of threads to use, 0 means no restriction
 
-  this->rhsRoutine_ = rhs.rhsRoutine_;
+  //this->rhsRoutine_ = rhs.rhsRoutine_;
 
   //! helper rhs routines
-  this->rhsRoutineGPU_ = rhs.rhsRoutineGPU_;
-  this->rhsRoutineSingleInstance_ = rhs.rhsRoutineSingleInstance_;
-  this->initConstsOpenCOR_ = rhs.initConstsOpenCOR_;
-  this->computeRatesOpenCOR_ = rhs.computeRatesOpenCOR_;
-  this->computeVariablesOpenCOR_ = rhs.computeVariablesOpenCOR_;
+  //this->rhsRoutineGPU_ = rhs.rhsRoutineGPU_;
+  //this->rhsRoutineSingleInstance_ = rhs.rhsRoutineSingleInstance_;
+  //this->initConstsOpenCOR_ = rhs.initConstsOpenCOR_;
+  //this->computeRatesOpenCOR_ = rhs.computeRatesOpenCOR_;
+  //this->computeVariablesOpenCOR_ = rhs.computeVariablesOpenCOR_;
 
   // members in 02_callback_handler.h
   this->setSpecificParametersCallInterval_ = rhs.setSpecificParametersCallInterval_;         //< setSpecificParameters_ will be called every callInterval_ time steps
@@ -84,17 +89,21 @@ CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionS
   this->setSpecificStatesRepeatAfterFirstCall_ = rhs.setSpecificStatesRepeatAfterFirstCall_;  //< duration of continuation of calling the setSpecificStates callback after it was triggered
   this->setSpecificStatesCallEnableBegin_ = rhs.setSpecificStatesCallEnableBegin_;       //< first time when setSpecificStates should be called
 
-  this->pythonSetSpecificParametersFunction_ = rhs.pythonSetSpecificParametersFunction_; //< Python function handle that is called to set parameters to the CellML problem from the python config
-  this->pythonSetSpecificStatesFunction_ = rhs.pythonSetSpecificStatesFunction_;     //< Python function handle that is called to set states to the CellML problem from the python config
-  this->pythonHandleResultFunction_ = rhs.pythonHandleResultFunction_;          //< Python function handle that is called to process results from CellML problem from the python config
+  //this->pythonSetSpecificParametersFunction_ = rhs.pythonSetSpecificParametersFunction_; //< Python function handle that is called to set parameters to the CellML problem from the python config
+  //this->pythonSetSpecificStatesFunction_ = rhs.pythonSetSpecificStatesFunction_;     //< Python function handle that is called to set states to the CellML problem from the python config
+  //this->pythonHandleResultFunction_ = rhs.pythonHandleResultFunction_;          //< Python function handle that is called to process results from CellML problem from the python config
 
-  this->pySetFunctionAdditionalParameter_ = rhs.pySetFunctionAdditionalParameter_;    //< an additional python object that will be passed as last argument to the setParameters, setSpecificParameters and setSpecificStates callback function
-  this->pyHandleResultFunctionAdditionalParameter_ = rhs.pyHandleResultFunctionAdditionalParameter_;   //< an additional python object that will be passed as last argument to the handleResult callback function
+  //this->pySetFunctionAdditionalParameter_ = rhs.pySetFunctionAdditionalParameter_;    //< an additional python object that will be passed as last argument to the setParameters, setSpecificParameters and setSpecificStates callback function
+  //this->pyHandleResultFunctionAdditionalParameter_ = rhs.pyHandleResultFunctionAdditionalParameter_;   //< an additional python object that will be passed as last argument to the handleResult callback function
 
-  this->pyGlobalNaturalDofsList_ = rhs.pyGlobalNaturalDofsList_;             //< python list of global dof nos
+  //this->pyGlobalNaturalDofsList_ = rhs.pyGlobalNaturalDofsList_;             //< python list of global dof nos
+
+
+  // initialize everything again
+  //CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::initialize();
 
   // load rhs routine
-  this->initializeRhsRoutine();
+  //this->initializeRhsRoutine();
 
   this->initialized_ = true;
 }

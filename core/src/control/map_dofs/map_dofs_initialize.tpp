@@ -51,6 +51,7 @@ initialize()
   data_.initialize(nAdditionalFieldVariables, nestedSolver_);
 
   // get all available slot names
+  slotNames_.clear();
   SlotConnectorDataHelper<SlotConnectorDataType>::getSlotNames(getSlotConnectorData(), slotNames_);
 
   parseMappingFromSettings("beforeComputation", mappingsBeforeComputation_);

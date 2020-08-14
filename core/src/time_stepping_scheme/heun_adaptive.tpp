@@ -164,14 +164,14 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
       while(true)
       {
         // reset vecNorm
-        vecnorm = 0.0;
+        vecnorm_ = 0.0;
 
         // copy current solution in temporal vectors
         VecCopy(solution, temp_solution_normal);
         VecCopy(solution, temp_solution_tilde);
         VecCopy(solution, temp_solution_tilde_algebraic);
 
-        VLOG(1) << "starting from solution: " << *this->data_->solution();
+        LOG(DEBUG) << "starting from solution: " << *this->data_->solution();
 
         // calculate solution with current timeStepWidth. Use modified calculation already used in Heun
         this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
@@ -183,7 +183,6 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
         temp_solution_normal, temp_increment_2, timeStepNo + 1, (currentTime + this->timeStepWidth_));
 
         VecAXPY(temp_increment_2, -1.0, temp_increment_1);
-
         VecAXPY(temp_solution_normal, 0.5 * this->timeStepWidth_, temp_increment_2);
 
         // now calculate reference solution consisting of 2 steps with timeStepWidth/2
@@ -197,7 +196,6 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
         temp_solution_tilde_algebraic, temp_increment_2, timeStepNo + 1, (currentTime + 0.5*this->timeStepWidth_));
 
         VecAXPY(temp_increment_2, 1.0, temp_increment_1);
-
         VecAXPY(temp_solution_tilde, 0.25*this->timeStepWidth_, temp_increment_2);
 
         // second step
@@ -216,14 +214,20 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
         VecAXPY(temp_solution_tilde, 0.25*this->timeStepWidth_, temp_increment_2);
 
         // check, if solutions are equal
-        PetscBool flag;
-        VecEqual(temp_solution_tilde,temp_solution_normal, &flag);
+        PetscBool flag = PETSC_FALSE;
+        //VecEqual(temp_solution_tilde,temp_solution_normal, &flag);
 
         // calculate estimator
         if (!flag)
         {
           VecAXPY(temp_solution_tilde, -1.0, temp_solution_normal);
-          VecNorm(temp_solution_tilde, NORM_2, &vecnorm);
+          VecNorm(temp_solution_tilde, NORM_2, &vecnorm_);
+
+          PetscReal vecnorm_Combined = 0;
+          MPI_Allreduce(&vecnorm_, &vecnorm_Combined, 1, MPIU_REAL, MPIU_MAX, this->data_->solution()->functionSpace()->meshPartition()->rankSubset()->mpiCommunicator());
+
+          LOG(DEBUG) << "own vecnorm: " << vecnorm_;
+          LOG(DEBUG) << ", sum of vecnorms: " << vecnorm_Combined;
 
           // prevent that the estimator gets nan, if the divisor is 0
           if (fabs(this->timeStepWidth_) < 1e-12)
@@ -231,10 +235,15 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
             estimator_ = 1e-10;
             LOG(DEBUG) << "estimator would be nan, set to 1e-10.";
           }
+          else if (fabs(vecnorm_Combined) > 1e+75 || !std::isfinite(vecnorm_Combined))
+          {
+            LOG(DEBUG) << "vecnorm_Combined (" << vecnorm_Combined << ") is inf, set estimator to 1.2*tolerance_=" << tolerance_*1.2;
+            estimator_ = tolerance_ * 1.2;
+          }
           else
           {
-            estimator_ = (double)vecnorm / ((1.0 - pow(0.5, 2))*this->timeStepWidth_);
-            LOG(DEBUG) << "compute estimator = " << vecnorm << "/" << ((1.0 - pow(0.5, 2))*this->timeStepWidth_) << " = " << estimator_;
+            estimator_ = (double)vecnorm_Combined / ((1.0 - pow(0.5, 2))*this->timeStepWidth_);
+            LOG(DEBUG) << "compute estimator = " << vecnorm_Combined << "/" << ((1.0 - pow(0.5, 2))*this->timeStepWidth_) << " = " << estimator_;
           }
         }
         else
@@ -412,7 +421,7 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
     multiplicator_ = floor(timeSpan/this->timeStepWidth_);
 
     // reset vecNorm
-    vecnorm = 0.0;
+    vecnorm_ = 0.0;
 
     // copy current solution in temporal vectors
     VecCopy(solution, temp_solution_normal);
@@ -464,25 +473,36 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
     VecAXPY(temp_solution_tilde, 0.25*this->timeStepWidth_, temp_increment_2);
 
     // check, if solutions are equal
-    PetscBool flag;
-    VecEqual(temp_solution_tilde,temp_solution_normal, &flag);
+    PetscBool flag = PETSC_FALSE;
+    //VecEqual(temp_solution_tilde,temp_solution_normal, &flag);
 
     // calculate estimator based on current values
     if (!flag)
     {
       VecAXPY(temp_solution_tilde, -1.0, temp_solution_normal);
-      VecNorm(temp_solution_tilde, NORM_2, &vecnorm);
+      VecNorm(temp_solution_tilde, NORM_2, &vecnorm_);
+
+      PetscReal vecnorm_Combined = 0;
+      MPI_Allreduce(&vecnorm_, &vecnorm_Combined, 1, MPIU_REAL, MPIU_MAX, this->data_->solution()->functionSpace()->meshPartition()->rankSubset()->mpiCommunicator());
+
+      LOG(DEBUG) << "own vecnorm: " << vecnorm_;
+      LOG(DEBUG) << ", sum of vecnorms: " << vecnorm_Combined;
 
       // prevent that the estimator gets nan, if the divisor is 0
       if (fabs(this->timeStepWidth_) < 1e-12)
       {
-        LOG(DEBUG) << "estimator would be nan, set to 1e-10.";
         estimator_ = 1e-10;
+        LOG(DEBUG) << "estimator would be nan, set to 1e-10.";
+      }
+      else if (fabs(vecnorm_Combined) > 1e+75 || !std::isfinite(vecnorm_Combined))
+      {
+        LOG(DEBUG) << "vecnorm_Combined (" << vecnorm_Combined << ") is inf, set estimator to 1.2*tolerance_=" << tolerance_*1.2;
+        estimator_ = tolerance_ * 1.2;
       }
       else
       {
-        estimator_ = (double)vecnorm / ((1.0 - pow(0.5, 2))*this->timeStepWidth_);
-        LOG(DEBUG) << "compute estimator = " << vecnorm << "/" << ((1.0 - pow(0.5, 2))*this->timeStepWidth_) << " = " << estimator_;
+        estimator_ = (double)vecnorm_ / ((1.0 - pow(0.5, 2))*this->timeStepWidth_);
+        LOG(DEBUG) << "compute estimator = " << vecnorm_ << "/" << ((1.0 - pow(0.5, 2))*this->timeStepWidth_) << " = " << estimator_;
       }
     }
     else

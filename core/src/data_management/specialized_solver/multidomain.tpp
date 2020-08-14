@@ -35,6 +35,8 @@ initialize(int nCompartments)
   // call initialize of base class
   Data<FunctionSpaceType>::initialize();
 
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
+
   // initialize slot connector data
   std::get<0>(*slotConnectorData_) = std::make_shared<std::vector<std::shared_ptr<SlotConnectorData<FunctionSpaceType,1>>>>();
   std::get<0>(*slotConnectorData_)->resize(nCompartments_);

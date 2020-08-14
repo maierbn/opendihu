@@ -70,8 +70,6 @@ initialize(int nCompartments)
   std::get<1>(*slotConnectorData_)->addFieldVariable(activeStressTotal_);  // activeStressTotal
 
   // parse slot names of the field variables
-  this->context_.getPythonConfig().getOptionVector("slotNames", std::get<1>(*slotConnectorData_)->slotNames);
-
   LOG(DEBUG) << "add slot for activeStressTotal with slotName \"" << activeStressTotalSlotName << "\"";
   std::get<1>(*slotConnectorData_)->slotNames.push_back(activeStressTotalSlotName);
 }

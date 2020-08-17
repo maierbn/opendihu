@@ -558,7 +558,8 @@ loadFebioOutputFile()
       Tensor2<3> cauchyStress{Vec3{sx,sxy,sxz}, Vec3{sxy, sy, syz}, Vec3{sxz, syz, sz}};
       Tensor2<3> deformationGradient{Vec3{Fxx, Fyx, Fzx}, Vec3{Fxy, Fyy, Fzy}, Vec3{Fxz, Fyz, Fzz}};
       double determinant = 0;
-      Tensor2<3> inverseDeformationGradient = MathUtility::computeInverse(deformationGradient, determinant);
+      double approximateMeshWidth = 0;
+      Tensor2<3> inverseDeformationGradient = MathUtility::computeInverse(deformationGradient, approximateMeshWidth, determinant);
 
       Tensor2<3> deformationGradientCofactor = MathUtility::computeCofactorMatrix<double>(deformationGradient);  // cof(M) = det(M) * M^{-T}
       Tensor2<3> pk2Stress = inverseDeformationGradient * cauchyStress * deformationGradientCofactor;

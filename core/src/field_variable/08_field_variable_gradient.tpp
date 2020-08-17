@@ -85,6 +85,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
     // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
     std::array<Vec3,nDofsPerElement> geometryValues;
     this->functionSpace_->getElementGeometry(elementNoLocal, geometryValues);
+    double_v_t approximateMeshWidth = MathUtility::computeApproximateMeshWidth<double_v_t,nDofsPerElement>(geometryValues);
 
     const int nDofsPerNode = this->functionSpace_->nDofsPerNode();
     std::array<double,D> xi;
@@ -114,7 +115,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       // compute the 3xD jacobian of the parameter space to world space mapping
       Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(FunctionSpaceType::computeJacobian(geometryValues, xi));
       double jacobianDeterminant;
-      Tensor2<D> inverseJacobianParameterSpace = MathUtility::template computeInverse<double>(jacobianParameterSpace, jacobianDeterminant);
+      Tensor2<D> inverseJacobianParameterSpace = MathUtility::template computeInverse<double>(jacobianParameterSpace, approximateMeshWidth, jacobianDeterminant);
 
       // estimate condition value of jacobian
       if (jacobianConditionNumberField != nullptr)
@@ -315,6 +316,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
     // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
     std::array<Vec3,nDofsPerElement> geometryValues;
     this->functionSpace_->getElementGeometry(elementNoLocal, geometryValues);
+    double_v_t approximateMeshWidth = MathUtility::computeApproximateMeshWidth<double_v_t,nDofsPerElement>(geometryValues);
 
     std::array<double,D> xi;
 
@@ -341,7 +343,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       // compute the 3xD jacobian of the parameter space to world space mapping
       Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(FunctionSpaceType::computeJacobian(geometryValues, xi));
       double jacobianDeterminant;
-      Tensor2<D> inverseJacobianParameterSpace = MathUtility::template computeInverse<double>(jacobianParameterSpace, jacobianDeterminant);
+      Tensor2<D> inverseJacobianParameterSpace = MathUtility::template computeInverse<double>(jacobianParameterSpace, approximateMeshWidth, jacobianDeterminant);
 
       // estimate condition value of jacobian
       double conditionNumber = MathUtility::estimateConditionNumber(jacobianParameterSpace, inverseJacobianParameterSpace);

@@ -687,6 +687,7 @@ computePK2StressField()
     // get geometry field of reference configuration
     std::array<Vec3_v_t,nDisplacementsDofsPerElement> geometryReferenceValues;
     this->data_.geometryReference()->getElementValues(elementNoLocalv, geometryReferenceValues);
+    double_v_t approximateMeshWidth = MathUtility::computeApproximateMeshWidth<double_v_t,nDisplacementsDofsPerElement>(geometryReferenceValues);
 
     // get displacements field values for element
     std::array<Vec3_v_t,nDisplacementsDofsPerElement> displacementsValues;
@@ -765,7 +766,7 @@ computePK2StressField()
       {
         // compute the 3x3 jacobian of the parameter space to world space mapping
         jacobianMaterial = DisplacementsFunctionSpace::computeJacobian(geometryReferenceValues, xi);
-        inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, jacobianDeterminant);
+        inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, approximateMeshWidth, jacobianDeterminant);
 
         // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
         // inverseJacobianMaterial[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
@@ -823,7 +824,7 @@ computePK2StressField()
       Tensor2_v_t<D> rightCauchyGreen = this->computeRightCauchyGreenTensor(deformationGradient);  // C = F^T*F
 
       double_v_t rightCauchyGreenDeterminant;   // J^2
-      Tensor2_v_t<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse(rightCauchyGreen, rightCauchyGreenDeterminant);  // C^-1
+      Tensor2_v_t<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse(rightCauchyGreen, approximateMeshWidth, rightCauchyGreenDeterminant);  // C^-1
 
       // fiber direction
       Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
@@ -1504,7 +1505,8 @@ computePSbar(const Tensor2<3,double_v_t> &fictitiousPK2Stress, const Tensor2<3,d
 {
   // only needed for debugging in materialTesting
   double_v_t determinant;
-  Tensor2<3,double_v_t> inverseRightCauchyGreen = MathUtility::computeInverse<3>(rightCauchyGreen, determinant);
+  double_v_t approximateMeshWidth{0};
+  Tensor2<3,double_v_t> inverseRightCauchyGreen = MathUtility::computeInverse<3>(rightCauchyGreen, approximateMeshWidth, determinant);
 
   //ab cd
   //  P : Sbar

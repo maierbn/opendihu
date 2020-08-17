@@ -49,6 +49,9 @@ public:
 
 protected:
 
+  //! load the checkpoint data before the algorithm starts
+  void loadInitialCheckpoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::array<bool,4> &subdomainIsAtBorder);
+
   //! perform the algorithm to recursively, collectively refine the mesh and trace fibers for the boundaries of the subdomains
   void generateParallelMesh();
 

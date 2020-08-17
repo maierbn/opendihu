@@ -183,191 +183,7 @@ generateParallelMesh()
   std::array<std::vector<std::vector<Vec3>>,4> borderPoints;  // borderPoints[face_t][z-level][pointIndex]
   std::array<bool,4> subdomainIsAtBorder;
 
-  bool useCheckpointsBorderPoints = false;
-
-#ifdef USE_CHECKPOINT_BORDER_POINTS     // normal execution
-
-  // start at higher level
-  level_ = 0;
-  std::vector<int> ranks((level_+1)*(level_+1)*(level_+1));
-  std::iota(ranks.begin(), ranks.end(), 0);
-  currentRankSubset_ = std::make_shared<Partition::RankSubset>(ranks.begin(), ranks.end());
-  nRanksPerCoordinateDirection_.fill(level_+1);
-  determineLevel();
-
-  // parse file
-  int subdomainIndex = currentRankSubset_->ownRankNo();
-  std::stringstream filename;
-  filename << "checkpoints/checkpoint_borderPoints_l" << level_ << "_subdomain_" << subdomainIndex << ".csv";
-  std::ifstream file(filename.str().c_str(), std::ios::in);
-  if (!file.is_open())
-  {
-    LOG(ERROR) << "Could not open file \"" << filename.str() << "\" for reading'";
-  }
-  else
-  {
-    useCheckpointsBorderPoints = true;
-    assert(file.is_open());
-
-    char c;
-    int size1, size2;
-    file >> size1 >> c >> size2 >> c;
-    for (int i = 0; i < 4; i++)
-    {
-      int value;
-      file >> value >> c;
-      subdomainIsAtBorder[i] = (value == 1);
-    }
-    std::string line;
-    std::getline(file, line);
-
-
-    LOG(DEBUG) << "parse values from file \"" << filename.str() << "\".";
-    LOG(DEBUG) << "size1: " << size1 << ", size2: " << size2;
-
-
-    for (int faceNo = (int)Mesh::face_t::face0Minus; faceNo <= (int)Mesh::face_t::face1Plus; faceNo++)
-    {
-      borderPoints[faceNo].resize(size1);
-      for (int zLevelIndex = 0; zLevelIndex < borderPoints[faceNo].size(); zLevelIndex++)
-      {
-        borderPoints[faceNo][zLevelIndex].resize(size2);
-        std::string line;
-        std::getline(file, line);
-
-        for (int pointIndex = 0; pointIndex < borderPoints[faceNo][zLevelIndex].size(); pointIndex++)
-        {
-          for (int i = 0; i < 3; i++)
-          {
-            borderPoints[faceNo][zLevelIndex][pointIndex][i] = atof(line.substr(0, line.find(";")).c_str());
-            line = line.substr(line.find(";")+1);
-          }
-        }
-      }
-    }
-
-    file.close();
-
-    LOG(DEBUG) << "subdomainIndex: " << subdomainIndex;
-    LOG(DEBUG) << "subdomainIsAtBorder: " << subdomainIsAtBorder;
-    // LOG(DEBUG) << "borderPoints: " << borderPoints;
-
-
-
-    MPI_Barrier(MPI_COMM_WORLD);
-  }
-#endif
-
-  // if checkpoint file could not be opened, continue with normal execution
-  if (!useCheckpointsBorderPoints)
-  {
-    // only rank 0 creates the first border points
-    if (DihuContext::ownRankNoCommWorld() == 0)
-    {
-      // run python script to generate loops for the whole volume
-
-      PyObject *borderPointsPy = PyObject_CallFunction(functionCreateBorderPoints_, "s f f i i",
-        inputMeshFilename_.c_str(), bottomZClip_, topZClip_, nBorderPointsZ_, 4*(nBorderPointsX_-1));
-      PythonUtility::checkForError();
-      assert(borderPointsPy);
-
-      /*
-      // old implementation
-      // run stl_create_rings.create_rings
-      // "Create n_loops rings/loops (slices) on a closed surface, in equidistant z-values between bottom_clip and top_clip"
-
-      PyObject* loopsPy = PyObject_CallFunction(functionCreateRings_, "s f f i O", inputMeshFilename_.c_str(), bottomZClip_, topZClip_, nBorderPointsZ_, Py_False);
-      PythonUtility::checkForError();
-      assert(loopsPy);
-
-      // run stl_create_mesh.rings_to_border_points
-      // "Standardize every ring to be in counter-clockwise direction and starting with the point with lowest x coordinate, then sample border points"
-
-      PyObject* returnValue = PyObject_CallFunction(functionRingsToBorderPoints_, "O i", loopsPy, 4*(nBorderPointsX_-1));
-      PythonUtility::checkForError();
-      if (returnValue == NULL)
-      {
-        LOG(FATAL) << "rings_to_border_points did not return a valid value";
-      }
-
-      // unpack the return value which is a tuple (borderPoints, lengths)
-      PyObject *borderPointsPy = NULL;
-      PyObject *lengthsPy = NULL;
-      if (PyTuple_Check(returnValue))
-      {
-        borderPointsPy = PyTuple_GetItem(returnValue, (Py_ssize_t)0);
-        lengthsPy = PyTuple_GetItem(returnValue, (Py_ssize_t)1);
-      }
-      else
-      {
-        assert(false);
-      }
-
-
-      // run stl_create_mesh.border_point_loops_to_list
-      // "transform the points from numpy array to list, such that they can be extracted from the opendihu C++ code"
-      PyObject* borderPointLoops = PyObject_CallFunction(functionBorderPointLoopsToList_, "O", borderPointsPy);
-      PythonUtility::checkForError();
-      */
-
-      std::vector<std::vector<Vec3>> loops = PythonUtility::convertFromPython<std::vector<std::vector<Vec3>>>::get(borderPointsPy);
-      //std::vector<double> lengths = PythonUtility::convertFromPython<std::vector<double>>::get(lengthsPy);
-      //LOG(DEBUG) << "loops: " << loops << " (size: " << loops.size() << ")" << ", lengths: " << lengths;
-
-  #ifndef NDEBUG
-  #ifdef STL_OUTPUT
-      // output the loops
-      PyObject_CallFunction(functionOutputRings_, "s i i O f", "00_loops", currentRankSubset_->ownRankNo(), level_,
-                            PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(loops), 0.1);
-      PythonUtility::checkForError();
-  #endif
-  #endif
-
-      // rearrange the border points from the loops to the portions of the faces
-      //std::array<std::vector<std::vector<Vec3>>,4> borderPoints;  // borderPoints[face_t][z-level][pointIndex]
-
-      // loop over faces: face0Minus = 0, face0Plus, face1Minus, face1Plus
-
-      //   ^ --(1+)-> ^
-      // ^ 0-         0+
-      // | | --(1-)-> |
-      // +-->
-
-      for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
-      {
-        borderPoints[face].resize(nBorderPointsZ_);
-        for (int zIndex = 0; zIndex < nBorderPointsZ_; zIndex++)
-        {
-          borderPoints[face][zIndex].resize(nBorderPointsX_);
-
-          VLOG(1) << "face " << face << ", zIndex " << zIndex << " nloops: " << loops[zIndex].size();
-
-          if (face == Mesh::face_t::face1Minus)
-          {
-            std::copy(loops[zIndex].begin(), loops[zIndex].begin() + (nBorderPointsX_-1)+1, borderPoints[face][zIndex].begin());
-          }
-          else if (face == Mesh::face_t::face0Plus)
-          {
-            std::copy(loops[zIndex].begin() + (nBorderPointsX_-1), loops[zIndex].begin() + 2*(nBorderPointsX_-1)+1, borderPoints[face][zIndex].begin());
-          }
-          else if (face == Mesh::face_t::face1Plus)
-          {
-            std::reverse_copy(loops[zIndex].begin() + 2*(nBorderPointsX_-1), loops[zIndex].begin() + 3*(nBorderPointsX_-1)+1, borderPoints[face][zIndex].begin());
-          }
-          else if (face == Mesh::face_t::face0Minus)
-          {
-            std::reverse_copy(loops[zIndex].begin() + 3*(nBorderPointsX_-1), loops[zIndex].begin() + 4*(nBorderPointsX_-1), borderPoints[face][zIndex].begin()+1);
-            borderPoints[face][zIndex][0] = loops[zIndex].front();
-          }
-        }
-      }
-
-      subdomainIsAtBorder[Mesh::face_t::face0Minus] = true;
-      subdomainIsAtBorder[Mesh::face_t::face0Plus] = true;
-      subdomainIsAtBorder[Mesh::face_t::face1Minus] = true;
-      subdomainIsAtBorder[Mesh::face_t::face1Plus] = true;
-    }
-  } // if not using checkpoint data
+  loadInitialCheckpoints(borderPoints, subdomainIsAtBorder);
 
   generateParallelMeshRecursion(borderPoints, subdomainIsAtBorder);
 }
@@ -376,6 +192,24 @@ template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &borderPointsOld, std::array<bool,4> subdomainIsAtBorder)
 {
+  // ----------------------------
+  // algorithm:
+  // create mesh in own domain, using python, harmonic maps
+
+  // solve laplace problem globally
+
+  // communicate ghost elements to neighbouring subdomains
+
+  // trace fibers to determine new subdomain boundaries, also on the outside (shared between domains)
+
+  // create subdomains
+    // create new communicator
+    // communicate all old elements to the processes of the new communcator
+    // on the new processes create new meshes using the coarse data
+
+  // call method recursively
+
+
   LOG(DEBUG) << "generateParallelMeshRecursion, n border points: "
     << borderPointsOld[0].size() << "," << borderPointsOld[1].size() << "," << borderPointsOld[2].size() << "," << borderPointsOld[3].size();
 
@@ -762,26 +596,161 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
   // call method recursively
   generateParallelMeshRecursion(borderPointsNew, subdomainIsAtBorderNew);
 
-
-  // ----------------------------
-  // algorithm:
-  // create mesh in own domain, using python, harmonic maps
-
-  // solve laplace problem globally
-
-  // communicate ghost elements to neighbouring subdomains
-
-  // trace fibers to determine new subdomain boundaries, also on the outside (shared between domains)
-
-  // create subdomains
-    // create new communicator
-    // communicate all old elements to the processes of the new communcator
-    // on the new processes create new meshes using the coarse data
-
-  // call method recursively
-
 /*
   LOG(FATAL) << "SUCCESS";*/
+}
+
+template<typename BasisFunctionType>
+void ParallelFiberEstimation<BasisFunctionType>::
+loadInitialCheckpoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::array<bool,4> &subdomainIsAtBorder)
+{
+  bool useCheckpointsBorderPoints = false;
+
+#ifdef USE_CHECKPOINT_BORDER_POINTS     // normal execution
+
+  // start at higher level
+  level_ = 0;
+  std::vector<int> ranks((level_+1)*(level_+1)*(level_+1));
+  std::iota(ranks.begin(), ranks.end(), 0);
+  currentRankSubset_ = std::make_shared<Partition::RankSubset>(ranks.begin(), ranks.end());
+  nRanksPerCoordinateDirection_.fill(level_+1);
+  determineLevel();
+
+  // parse file
+  int subdomainIndex = currentRankSubset_->ownRankNo();
+  std::stringstream filename;
+  filename << "checkpoints/checkpoint_borderPoints_l" << level_ << "_subdomain_" << subdomainIndex << ".csv";
+  std::ifstream file(filename.str().c_str(), std::ios::in);
+  if (!file.is_open())
+  {
+    LOG(ERROR) << "Could not open file \"" << filename.str() << "\" for reading'";
+  }
+  else
+  {
+    useCheckpointsBorderPoints = true;
+    assert(file.is_open());
+
+    char c;
+    int size1, size2;
+    file >> size1 >> c >> size2 >> c;
+    for (int i = 0; i < 4; i++)
+    {
+      int value;
+      file >> value >> c;
+      subdomainIsAtBorder[i] = (value == 1);
+    }
+    std::string line;
+    std::getline(file, line);
+
+
+    LOG(DEBUG) << "parse values from file \"" << filename.str() << "\".";
+    LOG(DEBUG) << "size1: " << size1 << ", size2: " << size2;
+
+
+    for (int faceNo = (int)Mesh::face_t::face0Minus; faceNo <= (int)Mesh::face_t::face1Plus; faceNo++)
+    {
+      borderPoints[faceNo].resize(size1);
+      for (int zLevelIndex = 0; zLevelIndex < borderPoints[faceNo].size(); zLevelIndex++)
+      {
+        borderPoints[faceNo][zLevelIndex].resize(size2);
+        std::string line;
+        std::getline(file, line);
+
+        for (int pointIndex = 0; pointIndex < borderPoints[faceNo][zLevelIndex].size(); pointIndex++)
+        {
+          for (int i = 0; i < 3; i++)
+          {
+            borderPoints[faceNo][zLevelIndex][pointIndex][i] = atof(line.substr(0, line.find(";")).c_str());
+            line = line.substr(line.find(";")+1);
+          }
+        }
+      }
+    }
+
+    file.close();
+
+    LOG(DEBUG) << "subdomainIndex: " << subdomainIndex;
+    LOG(DEBUG) << "subdomainIsAtBorder: " << subdomainIsAtBorder;
+    // LOG(DEBUG) << "borderPoints: " << borderPoints;
+
+
+
+    MPI_Barrier(MPI_COMM_WORLD);
+  }
+#endif
+
+  // if checkpoint file could not be opened, continue with normal execution
+  if (!useCheckpointsBorderPoints)
+  {
+    // only rank 0 creates the first border points
+    if (DihuContext::ownRankNoCommWorld() == 0)
+    {
+      // run python script to generate loops for the whole volume
+
+      PyObject *borderPointsPy = PyObject_CallFunction(functionCreateBorderPoints_, "s f f i i",
+        inputMeshFilename_.c_str(), bottomZClip_, topZClip_, nBorderPointsZ_, 4*(nBorderPointsX_-1));
+      PythonUtility::checkForError();
+      assert(borderPointsPy);
+
+      std::vector<std::vector<Vec3>> loops = PythonUtility::convertFromPython<std::vector<std::vector<Vec3>>>::get(borderPointsPy);
+      //std::vector<double> lengths = PythonUtility::convertFromPython<std::vector<double>>::get(lengthsPy);
+      //LOG(DEBUG) << "loops: " << loops << " (size: " << loops.size() << ")" << ", lengths: " << lengths;
+
+  #ifndef NDEBUG
+  #ifdef STL_OUTPUT
+      // output the loops
+      PyObject_CallFunction(functionOutputRings_, "s i i O f", "00_loops", currentRankSubset_->ownRankNo(), level_,
+                            PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(loops), 0.1);
+      PythonUtility::checkForError();
+  #endif
+  #endif
+
+      // rearrange the border points from the loops to the portions of the faces
+      //std::array<std::vector<std::vector<Vec3>>,4> borderPoints;  // borderPoints[face_t][z-level][pointIndex]
+
+      // loop over faces: face0Minus = 0, face0Plus, face1Minus, face1Plus
+
+      //   ^ --(1+)-> ^
+      // ^ 0-         0+
+      // | | --(1-)-> |
+      // +-->
+
+      for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
+      {
+        borderPoints[face].resize(nBorderPointsZ_);
+        for (int zIndex = 0; zIndex < nBorderPointsZ_; zIndex++)
+        {
+          borderPoints[face][zIndex].resize(nBorderPointsX_);
+
+          VLOG(1) << "face " << face << ", zIndex " << zIndex << " nloops: " << loops[zIndex].size();
+
+          if (face == Mesh::face_t::face1Minus)
+          {
+            std::copy(loops[zIndex].begin(), loops[zIndex].begin() + (nBorderPointsX_-1)+1, borderPoints[face][zIndex].begin());
+          }
+          else if (face == Mesh::face_t::face0Plus)
+          {
+            std::copy(loops[zIndex].begin() + (nBorderPointsX_-1), loops[zIndex].begin() + 2*(nBorderPointsX_-1)+1, borderPoints[face][zIndex].begin());
+          }
+          else if (face == Mesh::face_t::face1Plus)
+          {
+            std::reverse_copy(loops[zIndex].begin() + 2*(nBorderPointsX_-1), loops[zIndex].begin() + 3*(nBorderPointsX_-1)+1, borderPoints[face][zIndex].begin());
+          }
+          else if (face == Mesh::face_t::face0Minus)
+          {
+            std::reverse_copy(loops[zIndex].begin() + 3*(nBorderPointsX_-1), loops[zIndex].begin() + 4*(nBorderPointsX_-1), borderPoints[face][zIndex].begin()+1);
+            borderPoints[face][zIndex][0] = loops[zIndex].front();
+          }
+        }
+      }
+
+      subdomainIsAtBorder[Mesh::face_t::face0Minus] = true;
+      subdomainIsAtBorder[Mesh::face_t::face0Plus] = true;
+      subdomainIsAtBorder[Mesh::face_t::face1Minus] = true;
+      subdomainIsAtBorder[Mesh::face_t::face1Plus] = true;
+    }
+  } // if not using checkpoint data
+
 }
 
 } // namespace

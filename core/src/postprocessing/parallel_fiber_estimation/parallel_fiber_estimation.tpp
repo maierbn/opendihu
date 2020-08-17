@@ -204,7 +204,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
 
   // create subdomains
     // create new communicator
-    // communicate all old elements to the processes of the new communcator
+    // communicate all old elements to the processes of the new communicator
     // on the new processes create new meshes using the coarse data
 
   // call method recursively

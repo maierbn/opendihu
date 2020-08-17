@@ -95,7 +95,7 @@ def output_streamline(filename, rankNo, level, points, size):
         vtk_line = vtk.vtkLine()
         vtk_line.GetPointIds().SetId(0, 2*line_no + 0)
         vtk_line.GetPointIds().SetId(1, 2*line_no + 1)
-        vtk_lines.InsertNextCell(2)
+        vtk_lines.InsertNextCell(vtk_line)
         line_no += 1
       except:
         print("Error in creating vtk dataset in output_streamline({})".format(filename))
@@ -169,7 +169,7 @@ def output_streamlines(filename, rankNo, level, streamlines, size):
           vtk_line = vtk.vtkLine()
           vtk_line.GetPointIds().SetId(0, 2*line_no + 0)
           vtk_line.GetPointIds().SetId(1, 2*line_no + 1)
-          vtk_lines.InsertNextCell(2)
+          vtk_lines.InsertNextCell(vtk_line)
         except:
           print("Error in creating vtk dataset in output_streamlines({})".format(filename))
           

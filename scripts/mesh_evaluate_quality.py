@@ -3,7 +3,7 @@
 #
 # This scripts reads a fibers.bin file and evaluates the quality of the mesh, how the spacing between the fibers is.
 #
-# usage: ./read_mpi_fibers.py [<filename>]
+# usage: ./mesh_evaluate_quality.py [<filename>]
 
 import sys, os
 import numpy as np

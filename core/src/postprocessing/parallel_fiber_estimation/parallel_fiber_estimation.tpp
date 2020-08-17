@@ -406,6 +406,8 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
       data_.dirichletValues()->setValues(dirichletDofs, dirichletValues);
     }
 
+    problem_->reset();
+
     // set boundary conditions to the problem
     if (useNeumannBoundaryConditions_)
     {
@@ -415,7 +417,6 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     {
       problem_->setDirichletBoundaryConditions(dirichletBoundaryConditions);
     }
-    problem_->reset();
     problem_->initialize();
 
     // solve the laplace problem, globally on all subdomains on all ranks of the current rank subset

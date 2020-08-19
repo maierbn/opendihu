@@ -62,11 +62,13 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
     // if no position was found, the streamline exits the domain
     if (!positionFound)
     {
-      VLOG(2) << "streamline ends at iteration " << iterationNo << " because " << currentPoint << " is outside of domain";
+      LOG(DEBUG) << "streamline ends at iteration " << iterationNo << " because " << currentPoint << " is outside of domain."
+        << " startSearchInCurrentElement: " << startSearchInCurrentElement << ", residual: " << residual << ", searchedAllElements: " << searchedAllElements;
       break;
     }
 
-    VLOG(1) << " findPosition returned ghostMeshNo " << ghostMeshNo << ", elementNo " << elementNo << ", xi " << xi;
+    LOG(DEBUG) << " findPosition for " << currentPoint << " returned ghostMeshNo " << ghostMeshNo << ", elementNo " << elementNo << ", xi " << xi
+      << ", residual: " << residual << ", startSearchInCurrentElement: " << startSearchInCurrentElement << ", searchedAllElements: " << searchedAllElements;
 
     // get values for element that are later needed to compute the gradient
 
@@ -141,18 +143,19 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
     }
 
     // integrate streamline
-    VLOG(2) << "  integrate from " << currentPoint << ", gradient: " << gradient << ", gradient normalized: " << MathUtility::normalized<3>(gradient)
+    LOG(DEBUG) << "  integrate from " << currentPoint << ", gradient: " << gradient << ", gradient normalized: " << MathUtility::normalized<3>(gradient)
       << ", lineStepWidth: " << lineStepWidth_;
     currentPoint = currentPoint + MathUtility::normalized<3>(gradient)*lineStepWidth_*direction;
 
-    VLOG(2) << "              to " << currentPoint;
+    LOG(DEBUG) << "              to " << currentPoint;
 
     points.push_back(currentPoint);
   }
 
   if (points.empty())
   {
-    LOG(DEBUG) << "traced streamline is completely empty";
+    LOG(DEBUG) << "traced streamline is completely empty, startingPoint: " << startingPoint;
+    points.push_back(startingPoint);
   }
   else if (points.size() == 1)
   {

@@ -134,7 +134,7 @@ multidomain_solver = {
   
   # material parameters for the compartments
   "nCompartments":                    variables.n_compartments,             # number of compartments
-  "compartmentRelativeFactors":       variables.relative_factors.tolist(),  # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
+  "compartmentRelativeFactors":       variables.relative_factors.tolist(),  # list of lists of (the factors for all dofs), because "inputIsGlobal": True, this contains the global dofs
   "inputIsGlobal":                    True,                                 # if values and dofs correspond to the global numbering
   "am":                               [variables.get_am(mu_no) for mu_no in range(variables.n_compartments)],   # Am parameter for every motor unit (ration of surface to volume of fibers)
   "cm":                               [variables.get_cm(mu_no) for mu_no in range(variables.n_compartments)],   # Cm parameter for every motor unit (capacitance of the cellular membrane)
@@ -279,7 +279,7 @@ config = {
     }
   },
   "Coupling": {
-    "timeStepWidth":          variables.dt_elasticity,  # 1e-1
+    "timeStepWidth":          variables.dt_elasticity,
     "logTimeStepWidthAsKey":  "dt_elasticity",
     "durationLogKey":         "duration_total",
     "timeStepOutputInterval": 1,

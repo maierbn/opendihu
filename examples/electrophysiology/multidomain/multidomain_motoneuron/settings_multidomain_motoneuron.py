@@ -130,7 +130,7 @@ multidomain_solver = {
   "endTime":                          variables.end_time,                   # end time, this is not relevant because it will be overridden by the splitting scheme
   "timeStepOutputInterval":           1,                                  # how often the output timestep should be printed
   "durationLogKey":                   "duration_multidomain",               # key for duration in log.csv file
-  "slotNames":                        ["vm_old", "vm_new", 'g_mu', 'g_tot'],  # names of the data connector slots, maximum length per name is 6 characters. g_mu is gamma (active stress) of the compartment, g_tot is the total gamma
+  "slotNames":                        ["vm_old", "vm_new", "g_mu", "g_tot"],  # names of the data connector slots, maximum length per name is 6 characters. g_mu is gamma (active stress) of the compartment, g_tot is the total gamma
   
   # material parameters for the compartments
   "nCompartments":                    variables.n_compartments,             # number of compartments
@@ -212,8 +212,8 @@ config = {
     "partitioning":         [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
   "connectedSlots": [
-    ("stress", 'g_mu'),
-    ('g_tot', 'g_in')
+    ("stress", "g_mu"),
+    ("g_tot", "g_in")
   ],
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": {
@@ -400,13 +400,12 @@ config = {
                         "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
                         
                         # stimulation callbacks
-                        "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-                        #"setSpecificStatesCallInterval":         2*int(1./variables.stimulation_frequency/variables.dt_0D),       # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
-                        "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
-                        "setSpecificStatesCallFrequency":         variables.get_specific_states_call_frequency(compartment_no),   # set_specific_states should be called variables.stimulation_frequency times per ms
-                        "setSpecificStatesFrequencyJitter":       variables.get_specific_states_frequency_jitter(compartment_no), # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
-                        "setSpecificStatesRepeatAfterFirstCall":  0.01,                                                            # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
-                        "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(compartment_no),# [ms] first time when to call setSpecificStates
+                        "setSpecificStatesFunction":              None,                                           # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+                        "setSpecificStatesCallInterval":          0,                                              # 0 means disabled
+                        "setSpecificStatesCallFrequency":         0,                                              # set_specific_states should be called variables.stimulation_frequency times per ms
+                        "setSpecificStatesFrequencyJitter":       None,                                           # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
+                        "setSpecificStatesRepeatAfterFirstCall":  0.01,                                           # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
+                        "setSpecificStatesCallEnableBegin":       0,                                              # [ms] first time when to call setSpecificStates
                         "additionalArgument":                     compartment_no,
                         
                         "mappings":                               variables.mappings,                             # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
@@ -451,7 +450,7 @@ config = {
         "numberTimeSteps":              1,                         # only use 1 timestep per interval
         "timeStepOutputInterval":       100,                       # do not output time steps
         "Pmax":                         variables.pmax,            # maximum PK2 active stress
-        "slotNames":                    ["lambda", "ldot", 'g_in', "T"],  # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
+        "slotNames":                    ["lambda", "ldot", "g_in", "T"],  # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
         ],
@@ -520,7 +519,7 @@ config = {
           # 3. additional output writer that writes virtual work terms
           "dynamic": {    # output of the dynamic solver, has additional virtual work values 
             "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-              #{"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/mechanics_dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+              {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/mechanics_virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
               #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ],
           },

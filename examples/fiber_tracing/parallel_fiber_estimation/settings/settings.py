@@ -67,7 +67,7 @@ config = {
     "finalTopZClip":              220.0,        # 250 (220), top z value of the final fibers, fibers will be cropped and resampled to nNodesPerFiber between finalBottomZClip and finalTopZClip
     "useNeumannBoundaryConditions": use_neumann_bc,      # which type of boundary conditions at top and bottom should be used, Neumann or Dirichlet type  
     "nElementsXPerSubdomain":     4,            # 4 number of elements in x and y-direction per subdomain
-    "nElementsZPerSubdomain":     20,  # 50         # number of elements in z-direction per subdomain
+    "nElementsZPerSubdomain":     50,           # number of elements in z-direction per subdomain
     "nFineGridFibers":            0,            # number of additional fine fibers that are interpolated between the main "key" fibers, the key fibers are traced
     "useGradientField":           use_gradient_field,    # set to False
     "maxLevel":                   2,            # maximum level (0=1 process, 1=8 processes, 2=64 processes)

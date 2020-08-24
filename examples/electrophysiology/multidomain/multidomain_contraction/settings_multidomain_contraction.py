@@ -134,7 +134,7 @@ multidomain_solver = {
   
   # material parameters for the compartments
   "nCompartments":                    variables.n_compartments,             # number of compartments
-  "compartmentRelativeFactors":       variables.relative_factors.tolist(),  # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
+  "compartmentRelativeFactors":       variables.relative_factors.tolist(),  # list of lists of (the factors for all dofs), because "inputIsGlobal": True, this contains the global dofs
   "inputIsGlobal":                    True,                                 # if values and dofs correspond to the global numbering
   "am":                               [variables.get_am(mu_no) for mu_no in range(variables.n_compartments)],   # Am parameter for every motor unit (ration of surface to volume of fibers)
   "cm":                               [variables.get_cm(mu_no) for mu_no in range(variables.n_compartments)],   # Cm parameter for every motor unit (capacitance of the cellular membrane)
@@ -233,12 +233,12 @@ config = {
     
     
     "3Dmesh": [
-       {"name": "3Dmesh_elasticity_quadratic",                                 "xiTolerance": 1.5, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},
-       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic",  "xiTolerance": 1.5, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
+       {"name": "3Dmesh_elasticity_quadratic",                                 "xiTolerance": 0.5, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},
+       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic",  "xiTolerance": 0.5, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
     ],
     "3DFatMesh":  [
-       {"name": "3DFatMesh_elasticity_quadratic",                              "xiTolerance": 1.5, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},
-       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic",  "xiTolerance": 1.5, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
+       {"name": "3DFatMesh_elasticity_quadratic",                              "xiTolerance": 0.5, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},
+       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic",  "xiTolerance": 0.5, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
     ]
   },
   "Solvers": {
@@ -279,7 +279,7 @@ config = {
     }
   },
   "Coupling": {
-    "timeStepWidth":          variables.dt_elasticity,  # 1e-1
+    "timeStepWidth":          variables.dt_elasticity,
     "logTimeStepWidthAsKey":  "dt_elasticity",
     "durationLogKey":         "duration_total",
     "timeStepOutputInterval": 1,
@@ -436,7 +436,7 @@ config = {
           "OutputWriter" : [
             
             # Paraview files
-            {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+            #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             
             # Python callback function "postprocess"
             #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
@@ -450,7 +450,7 @@ config = {
           # 3. additional output writer that writes virtual work terms
           "dynamic": {    # output of the dynamic solver, has additional virtual work values 
             "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+              #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
               #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ],
           },

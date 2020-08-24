@@ -1,4 +1,4 @@
-#!/usr/bin/env ../../../dependencies/python/install/bin/python3
+#!/usr/bin/env ../../../../dependencies/python/install/bin/python3 
 # -*- coding: utf-8 -*-
 #
 # This scripts reads a fibers.bin file and evaluates the quality of the mesh, how the spacing between the fibers is.

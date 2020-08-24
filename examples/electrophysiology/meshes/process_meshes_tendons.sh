@@ -10,7 +10,7 @@ input_file=original_meshes/left_biceps_brachii.stl
 
 # tendon 1 (bottom)
 # number of points in x and z direction of the extracted mesh
-tendon_1_n_points_z=21
+tendon_1_n_points_z=21    # 11
 tendon_1_n_points_x=4
 
 # tendon 2a (top)
@@ -33,6 +33,7 @@ opendihu_directory=$(pwd)/../../..
 parallel_fiber_estimation_directory=${opendihu_directory}/examples/fiber_tracing/parallel_fiber_estimation
 stl_utility_directory=${opendihu_directory}/scripts/stl_utility
 pyod=${opendihu_directory}/dependencies/python/install/bin/python3
+scons=${opendihu_directory}/dependencies/scons/scons.py
 
 mkdir -p processed_meshes
 
@@ -88,7 +89,7 @@ xmin=-inf
 xmax=inf
 ymin=-inf
 ymax=inf
-zmin=1.0
+zmin=1.0    # 4.0
 zmax=7.2
 
 # extract part for first tendon (bottom part of muscle-tendon mesh)
@@ -185,11 +186,11 @@ echo "--- Trace streamlines"
 
 # compile program
 cd ${opendihu_directory}
-scons no_tests=TRUE
+$scons no_tests=TRUE
 
 # change to basedir and compile example
 cd ${opendihu_directory}/examples/fiber_tracing/streamline_tracer
-scons
+$scons
 cd build_release
 
 # prefix for intermediate files

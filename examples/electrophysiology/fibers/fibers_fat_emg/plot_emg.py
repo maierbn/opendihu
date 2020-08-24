@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Script to visualize EMG output files
-# arguments: <path>
+# arguments: <filename>
 #
 
 import sys, os
@@ -17,6 +17,8 @@ path = "build_release/out/biceps"
 if len(sys.argv) > 1:
   filenames = sys.argv[1:]
 else:
+  print("usage: {} <filename>\n if no filename is given, search in subdirectory {}\n\n".format(sys.argv[0],path))
+  
   # get all input data in current directory
   files_at_path = os.listdir(path)
 
@@ -110,8 +112,8 @@ plt.title("sEMG for {} x {} electrodes, t: [{}, {}]".format(n_points_xy, n_point
 all_values = data[:,3+n_points*3:]
 minimum_value = np.min(all_values)
 maximum_value = np.max(all_values)
-print("emg value range: [{},{}]".format(minimum_value, maximum_value))
-print("time range: [{},{}]".format(t_list[0], t_list[-1]))
+print("emg value range [mV]: [{},{}]".format(minimum_value, maximum_value))
+print("time range [ms]: [{},{}]".format(t_list[0], t_list[-1]))
 
 # loop over sub plots
 for j in range(n_plots_y):

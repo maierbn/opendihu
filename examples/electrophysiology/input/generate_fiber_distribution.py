@@ -4,6 +4,7 @@
 
 import sys
 import random
+import time
 import numpy as np
 import scipy
 import scipy.integrate
@@ -108,6 +109,8 @@ elif mode == 1:
   print("The number of fibers in x and y direction has to be known:")
   n_fibers_x = input("Please enter n_fibers_x and press Enter: ")
   n_fibers_y = n_fibers_x
+
+  t_start = time.time()
 
   # generate random positions of the MUs
   mu_positions = []
@@ -247,10 +250,13 @@ elif mode == 1:
   # find equalization_factors that fulfill the required exponential distribution of MU sizes
   print("\nOptimize factors to obtain exponential distribution of MU sizes")
   bounds = [(0,None) for i in range(n_motor_units)]
-  result = scipy.optimize.minimize(objective, equalization_factors, bounds=bounds, options={"disp": True})
+  result = scipy.optimize.minimize(objective, equalization_factors, bounds=bounds, options={"disp": True, "maxiter": 1e5})
   print("success: {}, status: {}, message: {}, n objective evaluations: {}, n iterations: {}".format(result.success, result.status, result.message, result.nfev, result.nit))
   equalization_factors = result.x
     
+  t_end = time.time()
+  print("total duration: {}s".format(t_end-t_start))
+  
   # print the result
   print("determined equalization_factors:")
   print(equalization_factors)

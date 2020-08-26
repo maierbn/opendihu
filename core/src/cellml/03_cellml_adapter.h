@@ -35,8 +35,8 @@ public:
   CellmlAdapter(DihuContext context);
   
   //! constructor from other CellmlAdapter with new functionSpace (and therefore different number of instances),
-  //! preserves everything else
-  //! initialize does not need to be called afterwards
+  //! preserves everything else, initialize does not need to be called afterwards
+  //! this is needed by the LoadBalancing class
   CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionSpace);
 
   //! return nStates_
@@ -61,8 +61,7 @@ public:
   void setRankSubset(Partition::RankSubset rankSubset);
   
   //! set initial values and return true or don't do anything and return false
-  template<typename FunctionSpaceType2>
-  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates_>> initialValues);
+  bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,nStates_>> initialValues);
   
   //! get a vector with the names of the states
   void getComponentNames(std::vector<std::string> &stateNames) override;
@@ -70,8 +69,8 @@ public:
   //! if the class should handle Dirichlet boundary conditions, this does not apply here
   void setBoundaryConditionHandlingEnabled(bool boundaryConditionHandlingEnabled){};
 
-  //! after this call, getOutputConnectorData() will be called, transfer algebraic field variable to global representation
-  void prepareForGetOutputConnectorData();
+  //! after this call, getSlotConnectorData() will be called, transfer algebraic field variable to global representation
+  void prepareForGetSlotConnectorData();
 
   //! the FastMonodomainSolver accesses the internals of CellmlAdapter
   template<int a, int b, typename c> friend class FastMonodomainSolverBase;

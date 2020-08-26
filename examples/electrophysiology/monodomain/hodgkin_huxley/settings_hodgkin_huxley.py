@@ -24,7 +24,7 @@ innervation_zone_width = 0.  # [cm]
 solver_type = "gmres"
 
 # timing parameters
-stimulation_frequency = 1000*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
+stimulation_frequency = 300*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 
 dt_0D = 2e-3                     # timestep width of ODEs
 dt_1D = 4e-3                     # timestep width of diffusion
@@ -70,12 +70,12 @@ if rank_no == 0:
 # set values for cellml model
 if "hodgkin_huxley" in cellml_file:
   mappings = {
-    ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
-    ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
-    ("outputConnectorSlot", 1): ("state", "sodium_channel_m_gate/m"),     # expose state 1 = m
-    ("outputConnectorSlot", 2): ("state", "sodium_channel_h_gate/h"),     # expose state 2 = h
-    ("outputConnectorSlot", 3): ("state", "potassium_channel_n_gate/n"),  # expose state 3 = n
-    ("outputConnectorSlot", 4): ("algebraic", "leakage_current/i_L"),  # expose algebraic 8 = leakage current
+    ("parameter", 0):           ("constant", "membrane/i_Stim"),          # parameter 0 is constant 2 = I_stim
+    ("connectorSlot", 0): ("state", "membrane/V"),                        # expose state 0 = Vm to the operator splitting
+    ("connectorSlot", 1, "m_gate"): ("state", "sodium_channel_m_gate/m"), # expose state 1 = m
+    ("connectorSlot", 2, "h_gate"): ("state", "sodium_channel_h_gate/h"), # expose state 2 = h
+    ("connectorSlot", 3): ("state", "potassium_channel_n_gate/n"),        # expose state 3 = n
+    ("connectorSlot", 4): ("algebraic", "leakage_current/i_L"),           # expose algebraic 8 = leakage current
   }
   parameters_initial_values = [0.0]
   nodal_stimulation_current = 40.
@@ -170,6 +170,11 @@ config = {
   "solverStructureDiagramFile":   "solver_structure.txt",     # filename of file that will contain a visualization of the solver structure and data mapping
   "mappingsBetweenMeshesLogFile": "mappings_between_meshes_log.txt",    # log file for mappings 
   
+  "connectedSlots": [
+    ("h", "h_gate"),      # connect the additional field variable in the output writer
+    ("h_gate", "h"),
+  ],
+  
   "Meshes": {
     "MeshFiber": {
       "nElements":          n_elements,
@@ -197,8 +202,8 @@ config = {
     "logTimeStepWidthAsKey":      "dt_splitting",
     "durationLogKey":             "duration_total",
     "timeStepOutputInterval":     1000,
-    "connectedSlotsTerm1To2":     {0:0, 1:1, 2:2},   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), slot 1 = stress for output writer in diffusion
-    "connectedSlotsTerm2To1":     {0:0, 1:1, 2:2},   # transfer the same back, in order to reuse field variables
+    "connectedSlotsTerm1To2":     {0:0},   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
+    "connectedSlotsTerm2To1":     {0:0},   # transfer the same back, in order to reuse field variables
     
     "Term1": {      # CellML
       "Heun" : {
@@ -209,7 +214,9 @@ config = {
         "durationLogKey":               "duration_0D",
         "inputMeshIsGlobal":            True,
         "dirichletBoundaryConditions":  {},
-        "nAdditionalFieldVariables":    0,
+        "dirichletOutputFilename":      None,                                             # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+        "nAdditionalFieldVariables":    2,
+        "additionalSlotNames":          ["aa","bb"],
         "checkForNanInf":               True,                                             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.                                
         
         "CellML" : {
@@ -265,23 +272,27 @@ config = {
     },
     "Term2": {     # Diffusion
       "CrankNicolson" : {
-        "initialValues": [],
+        #"initialValues": [],
         #"numberTimeSteps": 1,
         "timeStepWidth":                dt_1D,
+        "timeStepWidthRelativeTolerance": 1e-10,
         "timeStepOutputInterval":       1e4,
         "logTimeStepWidthAsKey":        "dt_1D",
         "durationLogKey":               "duration_1D",
         "inputMeshIsGlobal":            True,
         "dirichletBoundaryConditions":  {},
+        "dirichletOutputFilename":      None,             # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
         "solverName":                   "implicitSolver",
         "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
-        "nAdditionalFieldVariables":    1,
+        "nAdditionalFieldVariables":    2,
+        "additionalSlotNames":          ["m_gate", "h"],  # name of the slot of the additional field variable
         
         "FiniteElementMethod" : {
           "meshName":               "MeshFiber",
           "prefactor":              Conductivity/(Am*Cm),
           "solverName":             "implicitSolver",
           "inputMeshIsGlobal":      True,
+          "slotName":               "vm",
         },
         
         # output writer only for the diffusion variable (i.e. state "Vm")

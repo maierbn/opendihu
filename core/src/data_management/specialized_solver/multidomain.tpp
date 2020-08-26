@@ -35,17 +35,43 @@ initialize(int nCompartments)
   // call initialize of base class
   Data<FunctionSpaceType>::initialize();
 
-  // initialize output connector data
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
-  outputConnectorData_->resize(nCompartments_);
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
+
+  // initialize slot connector data
+  std::get<0>(*slotConnectorData_) = std::make_shared<std::vector<std::shared_ptr<SlotConnectorData<FunctionSpaceType,1>>>>();
+  std::get<0>(*slotConnectorData_)->resize(nCompartments_);
+
+  std::string activeStressTotalSlotName;
 
   // set the two slots V_mk^(i) and V_mk^(i+1) for all compartments
   for (int compartmentNo = 0; compartmentNo < nCompartments_; compartmentNo++)
   {
-    outputConnectorData_->at(compartmentNo) = std::make_shared<OutputConnectorData<FunctionSpaceType,1>>();
-    outputConnectorData_->at(compartmentNo)->addFieldVariable(transmembranePotential_[compartmentNo]);          // V_mk^(i)
-    outputConnectorData_->at(compartmentNo)->addFieldVariable(transmembranePotentialSolution_[compartmentNo]);  // V_mk^(i+1)
+    std::get<0>(*slotConnectorData_)->at(compartmentNo) = std::make_shared<SlotConnectorData<FunctionSpaceType,1>>();
+    std::get<0>(*slotConnectorData_)->at(compartmentNo)->addFieldVariable(transmembranePotential_[compartmentNo]);          // V_mk^(i)
+    std::get<0>(*slotConnectorData_)->at(compartmentNo)->addFieldVariable(transmembranePotentialSolution_[compartmentNo]);  // V_mk^(i+1)
+
+    std::get<0>(*slotConnectorData_)->at(compartmentNo)->addFieldVariable(activeStress_[compartmentNo]);  // activeStress_k
+
+    // parse slot names of the field variables
+    this->context_.getPythonConfig().getOptionVector("slotNames", std::get<0>(*slotConnectorData_)->at(compartmentNo)->slotNames);
+
+    int nSlots = std::get<0>(*slotConnectorData_)->at(compartmentNo)->nSlots();
+    if (std::get<0>(*slotConnectorData_)->at(compartmentNo)->slotNames.size() >= nSlots+1)
+    {
+      activeStressTotalSlotName = std::get<0>(*slotConnectorData_)->at(compartmentNo)->slotNames[nSlots];
+    }
+
+    // make sure that there are as many slot names as slots
+    std::get<0>(*slotConnectorData_)->at(compartmentNo)->slotNames.resize(nSlots);
   }
+
+  // active stress total
+  std::get<1>(*slotConnectorData_) = std::make_shared<SlotConnectorData<FunctionSpaceType,1>>();
+  std::get<1>(*slotConnectorData_)->addFieldVariable(activeStressTotal_);  // activeStressTotal
+
+  // parse slot names of the field variables
+  LOG(DEBUG) << "add slot for activeStressTotal with slotName \"" << activeStressTotalSlotName << "\"";
+  std::get<1>(*slotConnectorData_)->slotNames.push_back(activeStressTotalSlotName);
 }
 
 template<typename FunctionSpaceType>
@@ -58,6 +84,7 @@ createPetscObjects()
   transmembranePotentialSolution_.reserve(nCompartments_);
   transmembranePotential_.reserve(nCompartments_);
   compartmentRelativeFactor_.reserve(nCompartments_);
+  activeStress_.reserve(nCompartments_);
 
   assert(this->functionSpace_);
 
@@ -74,6 +101,10 @@ createPetscObjects()
     std::stringstream compartmentRelativeFactorName;
     compartmentRelativeFactorName << "f_r_" << k;
     this->compartmentRelativeFactor_.push_back(this->functionSpace_->template createFieldVariable<1>(compartmentRelativeFactorName.str()));
+
+    std::stringstream activeStressName;
+    activeStressName << "active_stress_" << k;
+    this->activeStress_.push_back(this->functionSpace_->template createFieldVariable<1>(activeStressName.str()));
   }
 
   this->flowPotential_ = this->functionSpace_->template createFieldVariable<1>("flowPotential");
@@ -81,6 +112,7 @@ createPetscObjects()
   this->extraCellularPotential_ = this->functionSpace_->template createFieldVariable<1>("phi_e");
   this->zero_ = this->functionSpace_->template createFieldVariable<1>("zero");
   this->relativeFactorTotal_ = this->functionSpace_->template createFieldVariable<1>("Σf_r");
+  this->activeStressTotal_ = this->functionSpace_->template createFieldVariable<1>("activeStressTotal");
 }
 
 template<typename FunctionSpaceType>
@@ -137,9 +169,24 @@ compartmentRelativeFactor(int compartmentNo)
 
 template<typename FunctionSpaceType>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> Multidomain<FunctionSpaceType>::
+activeStress(int compartmentNo)
+{
+  assert(compartmentNo >= 0 && compartmentNo < nCompartments_);
+  return this->activeStress_[compartmentNo];
+}
+
+template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> Multidomain<FunctionSpaceType>::
 relativeFactorTotal()
 {
   return this->relativeFactorTotal_;
+}
+
+template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> Multidomain<FunctionSpaceType>::
+activeStressTotal()
+{
+  return this->activeStressTotal_;
 }
 
 template<typename FunctionSpaceType>
@@ -150,10 +197,10 @@ zero()
 }
 
 template<typename FunctionSpaceType>
-std::shared_ptr<typename Multidomain<FunctionSpaceType>::OutputConnectorDataType> Multidomain<FunctionSpaceType>::
-getOutputConnectorData()
+std::shared_ptr<typename Multidomain<FunctionSpaceType>::SlotConnectorDataType> Multidomain<FunctionSpaceType>::
+getSlotConnectorData()
 {
-  return outputConnectorData_;
+  return slotConnectorData_;
 }
 
 template<typename FunctionSpaceType>
@@ -189,7 +236,7 @@ getFieldVariablesForOutputWriter()
   }
 
   return std::make_tuple(geometryField, this->fiberDirection_, this->flowPotential_, extraCellularPotential_,
-                         transmembranePotentials, compartmentRelativeFactors, relativeFactorTotal_);
+                         transmembranePotentials, compartmentRelativeFactors, relativeFactorTotal_, activeStressTotal_);
 }
 
 } // namespace

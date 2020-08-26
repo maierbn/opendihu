@@ -151,7 +151,6 @@ template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) const
 {
-
   int nValues = dofLocalNo.size();
   values.resize(nValues*nComponents);
 
@@ -161,6 +160,36 @@ getValues(const std::vector<dof_no_t> &dofLocalNo, std::vector<double> &values) 
     std::vector<double> componentValues;
     this->component_[componentIndex].getValues(dofLocalNo, componentValues);
     std::copy(componentValues.begin(), componentValues.end(), values.begin()+componentIndex*nValues);
+  }
+}
+
+//! get values from their local dof no.s for all components
+template<typename FunctionSpaceType, int nComponents>
+void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
+getValues(std::vector<dof_no_t> dofLocalNo, std::vector<std::array<double,nComponents>> &values) const
+{
+  assert(this->values_);
+  const int nValues = dofLocalNo.size();
+  std::vector<double> result(nValues*nComponents);   // temporary result buffer
+
+  int initialSize = values.size();
+  values.resize(initialSize + nValues);
+
+  // prepare lookup indices for PETSc vector values_
+  for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+  {
+    std::vector<double> componentValues;
+    this->component_[componentIndex].getValues(dofLocalNo, componentValues);
+    std::copy(componentValues.begin(), componentValues.end(), result.begin()+componentIndex*nValues);
+  }
+
+  // copy result to output values
+  for (int dofIndex = 0; dofIndex < nValues; dofIndex++)
+  {
+    for (int componentIndex = 0; componentIndex < nComponents; componentIndex++)
+    {
+      values[initialSize+dofIndex][componentIndex] = result[componentIndex*nValues + dofIndex];
+    }
   }
 }
 

@@ -29,13 +29,83 @@ CellmlAdapter(DihuContext context) :
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionSpace) :
-  CallbackHandler<nStates_,nAlgebraics_,FunctionSpaceType>(rhs.context_, true),
+  CallbackHandler<nStates_,nAlgebraics_,FunctionSpaceType>(rhs.context_, rhs.data_),
   Splittable()
 {
   LOG(TRACE) << "CellmlAdapter constructor from rhs";
 
+  // members in 00_cellml_adapter_base.h
   this->functionSpace_ = functionSpace;
   this->outputWriterManager_ = rhs.outputWriterManager_;
+
+  // copy everything from rhs
+  this->specificSettings_ = rhs.specificSettings_;
+
+  this->initialized_ = false;
+
+  this->data_.reset();
+
+  initialize();
+
+  // initialize data
+  //this->data_.setFunctionSpace(this->functionSpace_);
+  //this->data_.reset();
+  //this->data_.initialize();     // create new field variables with given functionSpace
+  //this->data_.setStatesVariable();
+  //this->nInstances_ = this->functionSpace_->nNodesLocalWithoutGhosts();
+  LOG(DEBUG) << "nInstances: " << this->nInstances_;
+
+  this->internalTimeStepNo_ = rhs.internalTimeStepNo_;
+
+  //this->cellmlSourceCodeGenerator_ = rhs.cellmlSourceCodeGenerator_; // is not initialized, because not needed    //< object that holds all source code related to the model
+
+  // members in 01_rhs_routine_handler.h
+  //this->sourceToCompileFilename_ = rhs.sourceToCompileFilename_;   //< filename of the processed source file that will be used to compile the library
+  //this->optimizationType_ = rhs.optimizationType_;          //< type of generated file, e.g. "simd", "gpu", "openmp"
+  //this->approximateExponentialFunction_ = rhs.approximateExponentialFunction_;   //< when using "vc" as optimizationType_, the exp() function should be approximated, this is faster
+  //this->maximumNumberOfThreads_ = rhs.maximumNumberOfThreads_;            //< when using "openmp" as optimizationType_, the maximum number of threads to use, 0 means no restriction
+
+  //this->rhsRoutine_ = rhs.rhsRoutine_;
+
+  //! helper rhs routines
+  //this->rhsRoutineGPU_ = rhs.rhsRoutineGPU_;
+  //this->rhsRoutineSingleInstance_ = rhs.rhsRoutineSingleInstance_;
+  //this->initConstsOpenCOR_ = rhs.initConstsOpenCOR_;
+  //this->computeRatesOpenCOR_ = rhs.computeRatesOpenCOR_;
+  //this->computeVariablesOpenCOR_ = rhs.computeVariablesOpenCOR_;
+
+  // members in 02_callback_handler.h
+  this->setSpecificParametersCallInterval_ = rhs.setSpecificParametersCallInterval_;         //< setSpecificParameters_ will be called every callInterval_ time steps
+  this->setSpecificStatesCallInterval_ = rhs.setSpecificStatesCallInterval_;             //< setSpecificStates_ will be called every callInterval_ time steps
+  this->handleResultCallInterval_ = rhs.handleResultCallInterval_;                  //< handleResult will be called every callInterval_ time steps
+
+  this->setSpecificStatesCallFrequency_ = rhs.setSpecificStatesCallFrequency_;         //< frequency, after which the setSpecificStates callback function will be called, either this condition or the condition with setSpecificStatesCallInterval_ is used
+  this->setSpecificStatesFrequencyJitter_ = rhs.setSpecificStatesFrequencyJitter_;   //< relative jitter values: factors of setSpecificStatesCallFrequency_, random jitter to add or substract from frequency
+  this->currentJitter_ = rhs.currentJitter_;                          //< the absolute value of the current jitter
+  this->jitterIndex_ = rhs.jitterIndex_;                               //< which of the stored jitter values in setSpecificStatesFrequencyJitter_ to use
+  this->fiberNoGlobal_ = rhs.fiberNoGlobal_;                             //< the additionalArgument converted to an integer, interpreted as the global fiber no and used in the stimulation log
+
+  this->lastCallSpecificStatesTime_ = rhs.lastCallSpecificStatesTime_;             //< last time the setSpecificStates_ method was called
+  this->setSpecificStatesRepeatAfterFirstCall_ = rhs.setSpecificStatesRepeatAfterFirstCall_;  //< duration of continuation of calling the setSpecificStates callback after it was triggered
+  this->setSpecificStatesCallEnableBegin_ = rhs.setSpecificStatesCallEnableBegin_;       //< first time when setSpecificStates should be called
+
+  //this->pythonSetSpecificParametersFunction_ = rhs.pythonSetSpecificParametersFunction_; //< Python function handle that is called to set parameters to the CellML problem from the python config
+  //this->pythonSetSpecificStatesFunction_ = rhs.pythonSetSpecificStatesFunction_;     //< Python function handle that is called to set states to the CellML problem from the python config
+  //this->pythonHandleResultFunction_ = rhs.pythonHandleResultFunction_;          //< Python function handle that is called to process results from CellML problem from the python config
+
+  //this->pySetFunctionAdditionalParameter_ = rhs.pySetFunctionAdditionalParameter_;    //< an additional python object that will be passed as last argument to the setParameters, setSpecificParameters and setSpecificStates callback function
+  //this->pyHandleResultFunctionAdditionalParameter_ = rhs.pyHandleResultFunctionAdditionalParameter_;   //< an additional python object that will be passed as last argument to the handleResult callback function
+
+  //this->pyGlobalNaturalDofsList_ = rhs.pyGlobalNaturalDofsList_;             //< python list of global dof nos
+
+
+  // initialize everything again
+  //CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::initialize();
+
+  // load rhs routine
+  //this->initializeRhsRoutine();
+
+  this->initialized_ = true;
 }
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
@@ -50,12 +120,19 @@ void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 reset()
 {
   this->internalTimeStepNo_ = 0;
+  this->initialized_ = false;
 }
   
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
 initialize()
 {
+  if (this->initialized_)
+  {
+    LOG(DEBUG) << "CellmlAdapter is already initialized, skipping initialize().";
+    return;
+  }
+
   LOG(TRACE) << "CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::initialize";
 
   Control::PerformanceMeasurement::start("durationInitCellml");
@@ -79,7 +156,7 @@ initialize()
   }
   if (this->outputWriterManager_.hasOutputWriters())
   {
-    LOG(INFO) << "CellML has output writers. This will be slow if it outputs lots of data and should only be used for debugging.";
+    LOG(DEBUG) << "CellML has output writers. This will be slow if it outputs lots of data and should only be used for debugging.";
   }
 
   this->internalTimeStepNo_ = 0;
@@ -111,6 +188,7 @@ initialize()
   this->lastCallSpecificStatesTime_ = this->setSpecificStatesCallEnableBegin_ - 1e-13 - 1./(this->setSpecificStatesCallFrequency_+this->currentJitter_);
 
   LOG(DEBUG) << "Cellml end of initialize, " << this->sourceToCompileFilename_ << ", statesForTransfer: " << this->data_.statesForTransfer();
+  this->initialized_ = true;
 }
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
@@ -146,14 +224,15 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   ierr = VecGetSize(output, &nRates); CHKERRV(ierr);
   ierr = VecGetLocalSize(this->data_.algebraics()->getValuesContiguous(), &nAlgebraics); CHKERRV(ierr);
 
-  LOG(DEBUG) << "Cellml evaluateTimesteppingRightHandSideExplicit, " << this->sourceToCompileFilename_ << ", statesForTransfer: " << this->data_.statesForTransfer();
-  nAlgebraics = nAlgebraics/this->nInstances_;
-  VLOG(1) << "algebraics array has " << nAlgebraics << " entries";
+  if (VLOG_IS_ON(1))
+  {
+    VLOG(1) << "Cellml evaluateTimesteppingRightHandSideExplicit, " << this->sourceToCompileFilename_ << ", statesForTransfer: " << this->data_.statesForTransfer();
+    VLOG(1) << "algebraics array has " << nAlgebraics << " entries";
+    VLOG(1) << "evaluateTimesteppingRightHandSideExplicit, input nStates_: " << nStatesInput << ", output nRates: " << nRates;
+    VLOG(1) << "timeStepNo: " << timeStepNo << ", currentTime: " << currentTime << ", internalTimeStepNo: " << this->internalTimeStepNo_;
+  }
 
   // check validity of sizes
-  VLOG(1) << "evaluateTimesteppingRightHandSideExplicit, input nStates_: " << nStatesInput << ", output nRates: " << nRates;
-  VLOG(1) << "timeStepNo: " << timeStepNo << ", currentTime: " << currentTime << ", internalTimeStepNo: " << this->internalTimeStepNo_;
-
   if (nStatesInput != nStates_*this->nInstances_)
   {
     LOG(ERROR) << "nStatesInput does not match nStates and nInstances! nStatesInput=" << nStatesInput << ", nStates_=" << nStates_ << ", nInstances=" << this->nInstances_;
@@ -161,11 +240,11 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   assert (nStatesInput == nStates_*this->nInstances_);
   assert (nRates == nStates_*this->nInstances_);
 
-  if (nAlgebraics != nAlgebraics_)
+  if (nAlgebraics/this->nInstances_ != nAlgebraics_)
   {
-    LOG(FATAL) << "nInstances: " << this->nInstances_ << ", nAlgebraics (size of vector / nInstances): " << nAlgebraics << ", nAlgebraics_: " << nAlgebraics_;
+    LOG(FATAL) << "nInstances: " << this->nInstances_ << ", nAlgebraics (size of vector / nInstances): " << nAlgebraics << " / " << this->nInstances_ << "=" << nAlgebraics/this->nInstances_ << ", nAlgebraics_: " << nAlgebraics_;
   }
-  assert (nAlgebraics == nAlgebraics_);
+  assert (nAlgebraics/this->nInstances_ == nAlgebraics_);
 
   // make the parameterValues_ vector available
   this->data_.prepareParameterValues();
@@ -175,6 +254,20 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
   // handle callback functions "setSpecificParameters" and "setSpecificStates"
   checkCallbackParameters(currentTime);
   checkCallbackStates(currentTime, statesLocal);
+
+#if 0
+  if (this->sourceToCompileFilename_.substr(0, 11) == "src/spindle")
+  {
+    CLOG(INFO, "special") << "CellML \"" << this->sourceToCompileFilename_ << "\" parameters:";
+    for (int instanceNo = 0; instanceNo < this->nInstances_; instanceNo++)
+    {
+      for (int parameterNo = 0; parameterNo < this->cellmlSourceCodeGenerator_.nParameters(); parameterNo++)
+      {
+        CLOG(INFO, "special") << "  instance " << instanceNo << " parameter " << parameterNo << ": " << this->data_.parameterValues()[parameterNo*this->nInstances_ + instanceNo];
+      }
+    }
+  }
+#endif
 
   // call actual rhs method
   if (this->rhsRoutine_)
@@ -197,7 +290,6 @@ evaluateTimesteppingRightHandSideExplicit(Vec& input, Vec& output, int timeStepN
 
   this->data_.restoreParameterValues();
 
-  LOG(DEBUG) << "Cellml end of evaluateTimesteppingRightHandSideExplicit, " << this->sourceToCompileFilename_ << ", statesForTransfer: " << this->data_.statesForTransfer();
   // call output writer to write output files
   this->outputWriterManager_.writeOutput(this->data_, this->internalTimeStepNo_, currentTime);
 
@@ -311,9 +403,11 @@ checkCallbackAlgebraics(double currentTime, double *statesLocal, double *algebra
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 void CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
-prepareForGetOutputConnectorData()
+prepareForGetSlotConnectorData()
 {
-  // make representation of algebraics global, such that field variables in outputConnectorData that share the Petsc Vec's with
+  // This method is called before getSlotConnectorData() of the timestepping scheme.
+
+  // make representation of algebraics global, such that field variables in slotConnectorData that share the Petsc Vec's with
   // algebraics have the correct data assigned
   LOG(DEBUG) << "Transform algebraics and parameters field variables to global representation in order to transfer them to other solver, such that extracted component-field variables in timestepping scheme have the correct values.";
 
@@ -342,11 +436,10 @@ functionSpace()
 }
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
-template<typename FunctionSpaceType2>
 bool CellmlAdapter<nStates_,nAlgebraics_,FunctionSpaceType>::
-setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType2,nStates_>> initialValues)
+setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,nStates_>> initialValues)
 {
-  return CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::template setInitialValues<FunctionSpaceType2>(initialValues);
+  return CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::setInitialValues(initialValues);
 }
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>

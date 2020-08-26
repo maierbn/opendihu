@@ -27,6 +27,23 @@ MappingBetweenMeshesConstruct(std::shared_ptr<FunctionSpaceSourceType> functionS
   }
   else 
   {
+    if (!functionSpaceSource || !functionSpaceTarget)
+    {
+      LOG(FATAL) << "Cannot create mapping, function spaces are not set.";
+    }
+    if (functionSpaceSource->nElementsLocal() == 0)
+    {
+      LOG(ERROR) << "Cannot create mapping from mesh \"" << functionSpaceSource->meshName() << "\" of 0 elements (degenerate mesh with one node) to mesh \"" << functionSpaceTarget->meshName() << "\". \n"
+        << "Such meshes are fine in general, but you cannot map between them.\nLook in the solver structure file, maybe some slot connections are wrong?";
+      return;
+    }
+    if (functionSpaceTarget->nElementsLocal() == 0)
+    {
+      LOG(ERROR) << "Cannot create mapping from mesh \"" << functionSpaceSource->meshName() << "\" to mesh \"" << functionSpaceTarget->meshName() << "\" of 0 elements (degenerate mesh with one node). \n"
+        << "Such meshes are fine in general, but you cannot map between them.\nLook in the solver structure file, maybe some slot connections are wrong?";
+      return;
+    }
+
     // create the mapping
     Control::PerformanceMeasurement::start("durationComputeMappingBetweenMeshes");
 
@@ -64,7 +81,7 @@ MappingBetweenMeshesConstruct(std::shared_ptr<FunctionSpaceSourceType> functionS
     // i.e. if the point is outside of the actual mesh, then it is assumed (for the mapping) that it is inside the nearest element.
     // if xi tolerance was not set, set to default value
     if (xiTolerance <= 0)
-      xiTolerance = 1e-2;
+      xiTolerance = 1e-1;
       
     bool startSearchInCurrentElement = true;    // start in element 0, maybe this is already the first element (it is if both meshes are completely aligned)
     int nSourceDofsOutsideTargetMesh = 0;
@@ -191,12 +208,13 @@ MappingBetweenMeshesConstruct(std::shared_ptr<FunctionSpaceSourceType> functionS
 
       // print error for mismatch
       if (fabs(computedSourcePosition[0] - position[0]) > 1e-1 || fabs(computedSourcePosition[1] - position[1]) > 1e-1 || fabs(computedSourcePosition[2] - position[2]) > 1e-1)
-        LOG(ERROR) << "mismatch " << computedSourcePosition << " != " << position << ", " << ", xi: " << xi;
+        LOG(ERROR) << "Bad interpolation because of badly conditioned elements.\n "
+          << "Mesh \"" << functionSpaceSource->meshName() << "\" dof " << sourceDofNoLocal << " value = " << position << " = " << targetPositions << " * " << targetMappingInfo.targetElements[0].scalingFactors
+          << ", \nmismatch in position, " << computedSourcePosition << " != " << position << ", at xi: " << xi;
 
       LOG(DEBUG) << functionSpaceSource->meshName() << " dof " << sourceDofNoLocal << " value = " << position << " = " << targetPositions << " * " << targetMappingInfo.targetElements[0].scalingFactors
         << ", interpolation in element " << targetMappingInfo.targetElements[0].elementNoLocal << " of " << functionSpaceTarget->meshName();
 #endif
-
 
       targetMappingInfo_[sourceDofNoLocal] = targetMappingInfo;
 
@@ -227,8 +245,8 @@ MappingBetweenMeshesConstruct(std::shared_ptr<FunctionSpaceSourceType> functionS
     {
       LOG(INFO) << "Successfully initialized mapping between meshes \"" << functionSpaceSource->meshName() << "\" and \""
         << functionSpaceTarget->meshName() << "\", " << nSourceDofsOutsideTargetMesh << "/" << nDofsLocalSource << " source dofs are outside the target mesh. "
-        << (!enableWarnings ? "\"enableWarnings: False\"" : "\"enableWarnings: True\"")
-        << " \"xiTolerance\": " << xiTolerance << ", total duration of all mappings: " << Control::PerformanceMeasurement::getDuration("durationComputeMappingBetweenMeshes") << " s";
+        << (!enableWarnings ? "\"enableWarnings\": False, " : "\"enableWarnings\": True, ")
+        << "\"xiTolerance\": " << xiTolerance << ", total duration of all mappings: " << Control::PerformanceMeasurement::getDuration("durationComputeMappingBetweenMeshes") << " s";
     }
 
     // add statistics to log
@@ -335,6 +353,8 @@ fixUnmappedDofs(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
 {
   const dof_no_t nDofsLocalTarget = functionSpaceTarget->nDofsLocalWithoutGhosts();
   const int nDofsPerTargetElement = FunctionSpaceTargetType::nDofsPerElement();
+  const dof_no_t nDofsLocalSource = functionSpaceSource->nDofsLocalWithoutGhosts();
+
 
   // count number of target dofs that have no source dof mapped
   nTargetDofsNotMapped = 0;
@@ -449,7 +469,11 @@ fixUnmappedDofs(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
 
               try
               {
-                targetMappingInfo_[sourceDofNoLocal].targetElements.push_back(targetElement);
+                // only if the source dof no is local
+                if (sourceDofNoLocal < nDofsLocalSource)
+                {
+                  targetMappingInfo_[sourceDofNoLocal].targetElements.push_back(targetElement);
+                }
               }
               catch (...)
               {

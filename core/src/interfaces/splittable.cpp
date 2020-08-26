@@ -3,9 +3,3 @@
 Splittable::Splittable()
 {
 }
-/*
-std::shared_ptr<SolutionVectorMapping> Splittable::solutionVectorMapping()
-{
-  return solutionVectorMapping_;
-}
-*/

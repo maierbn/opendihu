@@ -1,6 +1,5 @@
 import sys, os
 import socket
-from distutils import sysconfig
 from .Package import Package
 
 petsc_text = r'''
@@ -16,32 +15,6 @@ int main(int argc, char* argv[]) {
    return EXIT_SUCCESS;
 }
 '''
-
-def parse_conf(ctx, conf_path, lib_dirs, libs):
-  vars = {}
-  sysconfig.parse_makefile(conf_path, vars)
-  flag_dict = ctx.env.ParseFlags(vars['PACKAGES_LIBS'])
-  lib_dirs.extend(flag_dict['LIBPATH'])
-  for ii in range(len(libs)):
-    libs[ii].extend(flag_dict['LIBS'])
-
-def find_conf(ctx, base, inc_dirs, lib_dirs, libs, extra_libs):
-  # PETSc 3.1
-  conf_path = os.path.join(base, 'conf', 'petscvariables')
-  if os.path.exists(conf_path):
-      parse_conf(ctx, conf_path, lib_dirs, libs)
-
-  # PETSC 2.3.3
-  conf_path = os.path.join(base, 'bmake', 'petscconf')
-  if os.path.exists(conf_path):
-    vars = {}
-    sysconfig.parse_makefile(conf_path, vars)
-    if 'PETSC_ARCH' in vars:
-        arch = vars['PETSC_ARCH']
-        inc_dirs.extend([os.path.join(base, 'bmake', arch)])
-        lib_dirs.extend([os.path.join(base, 'lib', arch)])
-        conf_path = os.path.join(base, 'bmake', arch, 'petscconf')
-        parse_conf(ctx, conf_path, lib_dirs, libs)
 
 class PETSc(Package):
 
@@ -66,7 +39,7 @@ class PETSc(Package):
       # on hazel hen login node do not run MPI test program because this is not possible (only compile)
       self.run = False
       
-    self.number_output_lines = 4121
+    self.number_output_lines = 4360
       
   def check(self, ctx):
     if os.environ.get("PE_ENV") is not None:  # if on hazelhen
@@ -75,116 +48,230 @@ class PETSc(Package):
       return True
   
     env = ctx.env
+    ctx.Message('Checking for PETSc ...         ')
     
     # --with-cc='+env["CC"]+'\
-    
-    # debugging build handler 
+    # --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
+    # --with-cc='+env["mpicc"]+'\
+
+    # special case for host cmcs05
+    # nur für development der gpu-isierung benötigt (üblicherweise auf Rechner cmcs05): 
+    if socket.gethostname() == "cmcs05":
+      self.set_build_handler([
+        'mkdir -p ${PREFIX}',
+        '$rm -rf $(ls | grep "linux")',
+        #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
+        './configure --prefix=${PREFIX} --with-debugging=no --with-shared-libraries=1 \
+          --download-fblaslapack=1 \
+          --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
+          COPTFLAGS=-O3\
+          CXXOPTFLAGS=-O3\
+          --with-mpi-dir=${MPI_DIR} --with-batch\
+          FOPTFLAGS=-O3 | tee out.txt',
+        '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',     # do it twice, the first time fails with PGI
+        '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
+        '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
+        '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
+      ])
+      res = super(PETSc, self).check(ctx)
+      self.check_required(res[0], ctx)
+      ctx.Result(res[0])
+      return res[0]
+
     if self.have_option(env, "PETSC_DEBUG"):
-      # debug build with MUMPS
+      # standard debug build, without any mpi related option
       print("PETSc debugging build is on!")
       self.set_build_handler([
         'mkdir -p ${PREFIX}',
+        '$rm -rf $(ls | grep "linux")',
         './configure --prefix=${PREFIX} --with-debugging=yes --with-shared-libraries=1 \
-        --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-          ---with-cc='+env["mpicc"]+'\
-        --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
+          --download-fblaslapack=1 \
+          --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
          | tee out.txt',
         '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
         '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
         'ln -fs ${PREFIX}/lib/libparmetis.so ${PREFIX}/lib/parmetis.so'    # create parmetis.so link for chaste
       ]) #  --with-batch benötig
     else:
-      # standard release build with MUMPS
+      # standard release build with MUMPS, without any mpi related option
       # This needs bison installed
       
       # for metis to work, we need --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch
-      if not socket.gethostname() == "cmcs05":
-        self.set_build_handler([
-          'mkdir -p ${PREFIX}',
-          #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
-          './configure --prefix=${PREFIX} --with-debugging=no --with-shared-libraries=1 \
-          --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-          ---with-cc='+env["mpicc"]+'\
+      self.set_build_handler([
+        'mkdir -p ${PREFIX}',
+        '$rm -rf $(ls | grep "linux")',
+        './configure --prefix=${PREFIX} --with-debugging=no --with-shared-libraries=1 \
+          --download-fblaslapack=1 \
           --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
           COPTFLAGS=-O3\
           CXXOPTFLAGS=-O3\
-          FOPTFLAGS=-O3 | tee out.txt',
-         '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',     # do it twice, the first time fails with PGI
-         '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
-         '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
-         '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
-         'ln -fs ${PREFIX}/lib/libparmetis.so ${PREFIX}/lib/parmetis.so'    # create parmetis.so link for chaste
-        ])
-      else: # nur für development der gpu-isierung benötigt (üblicherweise auf Rechner cmcs05):
-        self.set_build_handler([
-          'mkdir -p ${PREFIX}',
-          #'PATH=${PATH}:${DEPENDENCIES_DIR}/bison/install/bin \
-          './configure --prefix=${PREFIX} --with-debugging=no --with-shared-libraries=1 \
-          --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-          ---with-cc='+env["mpicc"]+'\
-          --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
-          COPTFLAGS=-O3\
-          CXXOPTFLAGS=-O3\
-          --with-mpi-dir=${MPI_DIR} --with-batch\
-          FOPTFLAGS=-O3 | tee out.txt',
-         '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',     # do it twice, the first time fails with PGI
-         '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
-         '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
-         '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
-         'ln -fs ${PREFIX}/lib/libparmetis.so ${PREFIX}/lib/parmetis.so'    # create parmetis.so link for chaste
-        ])
+          FOPTFLAGS="-O3 -fallow-argument-mismatch" | tee out.txt',
+        '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',     # do it twice, the first time fails with PGI
+        '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
+        '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
+        '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
+        'ln -fs ${PREFIX}/lib/libparmetis.so ${PREFIX}/lib/parmetis.so'    # create parmetis.so link for chaste
+      ])
     
-    #ctx.Message('----------------------------------------------------\nNote that PETSc has been updated to version 3.12.3. \nTo update, run \'scons PETSC_REDOWNLOAD=True\'.\n(This message is independent of the currently installed version.)\n----------------------------------------------------\n')
-    ctx.Message('Checking for PETSc ...         ')
     self.check_options(env)
 
-    res = super(PETSc, self).check(ctx, loc_callback=find_conf)
+    res = super(PETSc, self).check(ctx)
     #self.check_required(res[0], ctx)
   
-    # if installation of petsc fails, retry without mumps and extra packages like parmetis, hdf5 or hypre
-    if not res[0] and socket.gethostname()!= 'cmcs09':
-      ctx.Log('Retry without MUMPS\n')
-      ctx.Message('Retry to install a fall-back PETSc without MUMPS, Hypre, SUNDIALS and ParMETIS ...')
+    # if installation of petsc failed with the current command, retry with different options 
+    if not res[0]:
+      ctx.Log('Retry (1) without option --with-mpi-dir but with --with-cc=\n')
+      ctx.Message('Retry (1) using --with-cc ...')
       if "PETSC_REDOWNLOAD" in Package.one_shot_options:
         Package.one_shot_options.remove('PETSC_REDOWNLOAD')
       if "PETSC_REBUILD" in Package.one_shot_options:
         Package.one_shot_options.remove('PETSC_REBUILD')
       
       if self.have_option(env, "PETSC_DEBUG"):
-        # debug build, without MUMPS
+        # debug build, without --with-mpi-dir, but with --with-cc
         self.set_build_handler([
           'mkdir -p ${PREFIX}',
+          '$rm -rf $(ls | grep "linux")',
           './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
-            --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-            --with-mpi-dir=${MPI_DIR} --with-batch\
-            --with-cc='+env["mpicc"]+' | tee out.txt',
+            --with-cc='+env["mpicc"]+' --with-cxx='+env["mpiCC"]+' --with-batch \
+            --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
+            --download-fblaslapack=1 | tee out.txt',
           '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
           '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
         ])
-        # FC, CC und CXX nicht angeben, er nimmt sie sowieso, sagt nur er wuerde es ignorieren, hat das aber schon über nen anderen Kanal.... 
-        #    'make all',     # do not add -j option, because it is not supported by Makefile of PETSc
-        #    'echo "sleep 3 s" && sleep 3',
-        #    'make install',
-        #    'make test',        
       else:
-        # release build without MUMPS
+        # release build, without --with-mpi-dir, but with --with-cc
         self.set_build_handler([
           'mkdir -p ${PREFIX}',
+          '$rm -rf $(ls | grep "linux")',
           './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
-          --with-blas-lapack-lib=${LAPACK_DIR}/lib/libopenblas.so\
-          --with-cc='+env["mpicc"]+'\
-          COPTFLAGS=-O3\
-          CXXOPTFLAGS=-O3\
-          FOPTFLAGS=-O3 | tee out.txt',
-        '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt || make',
-        '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt) || make install',
-        ])
-      self.libs = ['petsc']
+            --with-cc='+env["mpicc"]+' --with-cxx='+env["mpiCC"]+' \
+            --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
+            COPTFLAGS=-O3 \
+            CXXOPTFLAGS=-O3 \
+            FOPTFLAGS="-O3 -fallow-argument-mismatch" | tee out.txt',
+          '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt || make',
+          '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt) || make install',
+        ])  
+
+      # check again, if this works
+      self.check_options(env)
+      res = super(PETSc, self).check(ctx)
+
+      # if it also did not work
+      if not res[0]:
+        ctx.Log('Retry (2) with option --with-mpi-dir, without --with-cc=\n')
+        ctx.Message('Retry (2) with option --with-mpi-dir ...')
+        if self.have_option(env, "PETSC_DEBUG"):
+          # debug build, with --with-mpi-dir, without --with-cc
+          self.set_build_handler([
+            'mkdir -p ${PREFIX}',
+            '$rm -rf $(ls | grep "linux")',
+            './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
+              --with-mpi-dir=${MPI_DIR} --with-batch \
+              --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
+              --download-fblaslapack=1 | tee out.txt',
+            '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
+            '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
+          ])
+        else:
+          # release build, with --with-mpi-dir, without --with-cc
+          self.set_build_handler([
+            'mkdir -p ${PREFIX}',
+            '$rm -rf $(ls | grep "linux")',
+            './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
+              --with-mpi-dir=${MPI_DIR} \
+              --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
+              COPTFLAGS=-O3 \
+              CXXOPTFLAGS=-O3 \
+              FOPTFLAGS="-O3 -fallow-argument-mismatch" | tee out.txt',
+            '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt || make',
+            '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt) || make install',
+          ])  
+
+        # try again
+        self.check_options(env)
+        res = super(PETSc, self).check(ctx)
+
+        # if it also did not work
+        if not res[0]: 
+
+          # if installation of petsc failed again, retry without mumps and extra packages like parmetis, hdf5 or hypre
+          ctx.Log('Retry (3) without MUMPS\n')
+          ctx.Message('Retry (3) without MUMPS, Hypre, SUNDIALS and ParMETIS ...')
+          if "PETSC_REDOWNLOAD" in Package.one_shot_options:
+            Package.one_shot_options.remove('PETSC_REDOWNLOAD')
+          if "PETSC_REBUILD" in Package.one_shot_options:
+            Package.one_shot_options.remove('PETSC_REBUILD')
+            
+          if self.have_option(env, "PETSC_DEBUG"):
+            # debug build, without MUMPS
+            self.set_build_handler([
+              'mkdir -p ${PREFIX}',
+              '$rm -rf $(ls | grep "linux")',
+              './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
+                --with-batch \
+                --download-fblaslapack=1 | tee out.txt',
+              '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
+              '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
+            ])
+          else:
+            # release build without MUMPS
+            self.set_build_handler([
+              'mkdir -p ${PREFIX}',
+              '$rm -rf $(ls | grep "linux")',
+              './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
+                COPTFLAGS=-O3 \
+                CXXOPTFLAGS=-O3 \
+                FOPTFLAGS=-O3 | tee out.txt',
+              '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt || make',
+              '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt) || make install',
+            ])
+          self.libs = ['petsc']
+          self.number_output_lines = 3990
+        
+          # try again
+          self.check_options(env)
+          res = super(PETSc, self).check(ctx)
+
+          # if it also did not work
+          if not res[0]:
+
+            ctx.Log('Retry (4) without MUMPS, Hypre, SUNDIALS and ParMETIS, without --with_mpi-dir\n')
+            ctx.Message('Retry (4) without MUMPS, with --with_mpi-dir ...')
+            if "PETSC_REDOWNLOAD" in Package.one_shot_options:
+              Package.one_shot_options.remove('PETSC_REDOWNLOAD')
+            if "PETSC_REBUILD" in Package.one_shot_options:
+              Package.one_shot_options.remove('PETSC_REBUILD')
+
+            if self.have_option(env, "PETSC_DEBUG"):
+              # debug build, without MUMPS
+              self.set_build_handler([
+                'mkdir -p ${PREFIX}',
+                '$rm -rf $(ls | grep "linux")',
+                './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=yes \
+                  --with-mpi-dir=${MPI_DIR} --with-batch \
+                  --download-fblaslapack=1 | tee out.txt',
+                '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
+                '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
+              ])
+            else:
+              # release build without MUMPS
+              self.set_build_handler([
+                'mkdir -p ${PREFIX}',
+                '$rm -rf $(ls | grep "linux")',
+                './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
+                  --with-mpi-dir=${MPI_DIR} \
+                  COPTFLAGS=-O3 \
+                  CXXOPTFLAGS=-O3 \
+                  FOPTFLAGS=-O3 | tee out.txt',
+                '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt || make',
+                '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt) || make install',
+              ])
       
-      self.number_output_lines = 3990
-      
-      res = super(PETSc, self).check(ctx, loc_callback=find_conf)
-      self.check_required(res[0], ctx)
+
+            self.check_options(env)
+            res = super(PETSc, self).check(ctx)
     
     self.check_required(res[0], ctx)
     ctx.Result(res[0])

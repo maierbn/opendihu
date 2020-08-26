@@ -80,8 +80,9 @@ isFebioAvailable()
   // to see if febio2 is installed, run it with a non-existing command line argument "a"
   // this produces the output "FATAL ERROR: Invalid command line option" and exits with status 0
   int returnValue = system("febio3 a > /dev/null");
+  LOG(INFO) << "returnValue: " << returnValue;
 
-  return returnValue == EXIT_SUCCESS;
+  return returnValue == 0 || returnValue == 1 || returnValue == 256;
 }
 
 void NonlinearElasticitySolverFebio::
@@ -557,7 +558,8 @@ loadFebioOutputFile()
       Tensor2<3> cauchyStress{Vec3{sx,sxy,sxz}, Vec3{sxy, sy, syz}, Vec3{sxz, syz, sz}};
       Tensor2<3> deformationGradient{Vec3{Fxx, Fyx, Fzx}, Vec3{Fxy, Fyy, Fzy}, Vec3{Fxz, Fyz, Fzz}};
       double determinant = 0;
-      Tensor2<3> inverseDeformationGradient = MathUtility::computeInverse(deformationGradient, determinant);
+      double approximateMeshWidth = 0;
+      Tensor2<3> inverseDeformationGradient = MathUtility::computeInverse(deformationGradient, approximateMeshWidth, determinant);
 
       Tensor2<3> deformationGradientCofactor = MathUtility::computeCofactorMatrix<double>(deformationGradient);  // cof(M) = det(M) * M^{-T}
       Tensor2<3> pk2Stress = inverseDeformationGradient * cauchyStress * deformationGradientCofactor;
@@ -839,14 +841,14 @@ initialize()
   data_.setFunctionSpace(functionSpace);
   data_.initialize();
 
-  // write initial geometry
-  this->outputWriterManager_.writeOutput(this->data_, 0, 0);
+  // write initial geometry but don't increment counter
+  this->outputWriterManager_.writeOutput(this->data_, 0, 0.0, 0);
 
   // add this solver to the solvers diagram
   DihuContext::solverStructureVisualizer()->addSolver(solverName_);
 
-  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
@@ -866,19 +868,19 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
+//! the transfer is done by the slot_connector_data_transfer class
 
-std::shared_ptr<typename NonlinearElasticitySolverFebio::OutputConnectorDataType>
+std::shared_ptr<typename NonlinearElasticitySolverFebio::SlotConnectorDataType>
 NonlinearElasticitySolverFebio::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  return this->data_.getOutputConnectorData();
+  return this->data_.getSlotConnectorData();
 }
 
 //! output the given data for debugging
 
 std::string NonlinearElasticitySolverFebio::
-getString(std::shared_ptr<typename NonlinearElasticitySolverFebio::OutputConnectorDataType> data)
+getString(std::shared_ptr<typename NonlinearElasticitySolverFebio::SlotConnectorDataType> data)
 {
   std::stringstream s;
   //s << "<NonlinearElasticitySolverFebio:" << *data.activation() << ">";

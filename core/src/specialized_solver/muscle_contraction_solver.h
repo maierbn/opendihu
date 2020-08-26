@@ -14,13 +14,12 @@
  * This solver encapsulates the DynamicHyperelasticitySolver or HyperelasticitySolver (static). Which one to use can be chosen at runtime in the config.
  * This class adds functionality to compute and transfer active stresses, fiber stretches and contraction velocity and so on.
  */
-template<typename MeshType=Mesh::StructuredDeformableOfDimension<3>>
+template<typename MeshType=Mesh::StructuredDeformableOfDimension<3>, typename Term=Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D>
 class MuscleContractionSolver :
   public Runnable,
   public TimeSteppingScheme::TimeSteppingScheme
 {
 public:
-  typedef Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D Term;
   typedef ::TimeSteppingScheme::DynamicHyperelasticitySolver<Term,MeshType> DynamicHyperelasticitySolverType;
   typedef ::SpatialDiscretization::HyperelasticitySolver<Term,MeshType> StaticHyperelasticitySolverType;
 
@@ -32,7 +31,7 @@ public:
 
   //! Define the type of data that will be transferred between solvers when there is a coupling scheme.
   //! Usually you define this type in the "Data" class and reuse it here.
-  typedef typename Data::OutputConnectorDataType OutputConnectorDataType;
+  typedef typename Data::SlotConnectorDataType SlotConnectorDataType;
 
   //! constructor, gets the DihuContext object which contains all python settings
   MuscleContractionSolver(DihuContext context);
@@ -56,8 +55,8 @@ public:
   std::shared_ptr<DynamicHyperelasticitySolverType> dynamicHyperelasticitySolver();
 
   //! Get the data that will be transferred in the operator splitting or coupling to the other term of the splitting/coupling.
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
 protected:
 

@@ -66,8 +66,9 @@ protected:
 
   double maximumPreciceTimestepSize_;         //< maximum timestep size that precice will allow for the current time step
   double timeStepWidth_;                      //< timestep width of the solver
+  int timeStepOutputInterval_;                //< interval in which to output current time
 
-  int outputConnectorSlotIdGamma_;            //< the number of the output connector slot that is used for gamma
+  int connectorSlotIdGamma_;            //< the number of the connector slot that is used for gamma
 
   std::vector<int> preciceVertexIds_;         //< the vertex ids in precice of the geometry values
   int preciceMeshId_;                         //< mesh ID of precice of the mesh that contains all fiber nodes

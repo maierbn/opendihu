@@ -496,7 +496,7 @@ setValues(int componentNo, const std::vector<dof_no_t> &dofNosLocal, const std::
   assert(this->values_);
   if (values.size() < dofNosLocal.size())
   {
-    LOG(FATAL) << "FieldVariable::setValues: trying to set " << dofNosLocal.size() << " values but only " << values.size() << " given.";
+    LOG(FATAL) << "FieldVariable::setValues: trying to set " << dofNosLocal.size() << " dofs but only " << values.size() << " values are given.";
   }
   assert(values.size() >= dofNosLocal.size());
 
@@ -748,7 +748,8 @@ setValuesWithoutGhosts(const std::array<std::vector<double>,nComponents> &values
     assert(values[componentIndex].size() == this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts());
 
     // set the values, this is the same call as setValuesWithGhosts, but the number of values is smaller and therefore the last dofs which are the ghosts are not touched
-    this->setValues(componentIndex, this->functionSpace_->meshPartition()->dofNosLocal(), values[componentIndex], petscInsertMode);
+    this->values_->setValues(componentIndex, this->functionSpace_->meshPartition()->nDofsLocalWithoutGhosts(),
+                             this->functionSpace_->meshPartition()->dofNosLocal().data(), values[componentIndex].data(), petscInsertMode);
   }
 }
 

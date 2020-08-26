@@ -25,7 +25,7 @@ def n_fibers_in_subdomain_x(subdomain_coordinate_x):
     return variables.n_fibers_per_subdomain_x                             # low number of fibers
   else:
     #print("case c: {} + {}-1={}".format(variables.n_fibers_per_subdomain_x,variables.granularity,variables.n_fibers_per_subdomain_x + variables.granularity - 1))
-    return variables.n_fibers_per_subdomain_x + variables.granularity - 1 # last subdomain has low number of fibers + 1
+    return variables.n_fibers_per_subdomain_x + variables.granularity - 1 # last subdomain has low number of fibers + 1 (only for granularity==2)
   
 # number of fibers that are handled inside the subdomain y
 def n_fibers_in_subdomain_y(subdomain_coordinate_y):
@@ -36,7 +36,7 @@ def n_fibers_in_subdomain_y(subdomain_coordinate_y):
   elif subdomain_coordinate_y < variables.n_subdomains_y-1:
     return variables.n_fibers_per_subdomain_y                             # low number of fibers
   else:
-    return variables.n_fibers_per_subdomain_y + variables.granularity - 1 # last subdomain has low number of fibers + 1
+    return variables.n_fibers_per_subdomain_y + variables.granularity - 1 # last subdomain has low number of fibers + 1 (only for granularity==2)
 
 def n_fibers_in_previous_subdomains_x(subdomain_coordinate_x):
   # number of fibers handled in previous subdomains in x direction
@@ -439,6 +439,10 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
   if own_subdomain_coordinate_z == variables.n_subdomains_z-1:
     variables.n_elements_3D_mesh_linear[2] -= 1
 
+  variables.n_points_3D_mesh_global_x = sum([n_sampled_points_in_subdomain_x(subdomain_coordinate_x) for subdomain_coordinate_x in range(variables.n_subdomains_x)])
+  variables.n_points_3D_mesh_global_y = sum([n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(variables.n_subdomains_y)])
+  variables.n_points_3D_mesh_global_z = sum([n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(variables.n_subdomains_z)])
+  
   # set the entry for the config
   meshes = {}
   if generate_linear_3d_mesh:
@@ -448,7 +452,11 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
       "nodePositions": node_positions_3d_mesh,
       "inputMeshIsGlobal": False,
       "setHermiteDerivatives": False,
-      "logKey": "3Dmesh"
+      "logKey": "3Dmesh",
+      
+      # set information on how many nodes there are in the quadratic 3D mesh, this is not needed for the opendihu core but might be useful in some settings script
+      "nPointsLocal": [n_sampled_points_in_own_subdomain_x, n_sampled_points_in_own_subdomain_y, n_sampled_points_in_own_subdomain_z],
+      "nPointsGlobal": [variables.n_points_3D_mesh_global_x, variables.n_points_3D_mesh_global_y, variables.n_points_3D_mesh_global_z],
     }
     
     # add all global node positions of all ranks
@@ -491,10 +499,6 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
                   point = variables.fibers[fiber_index][z_point_index]
             
                   meshes["3Dmesh"]["globalNodePositions"].append(point)
-  
-  variables.n_points_3D_mesh_global_x = sum([n_sampled_points_in_subdomain_x(subdomain_coordinate_x) for subdomain_coordinate_x in range(variables.n_subdomains_x)])
-  variables.n_points_3D_mesh_global_y = sum([n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(variables.n_subdomains_y)])
-  variables.n_points_3D_mesh_global_z = sum([n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(variables.n_subdomains_z)])
   
   # create quadratic 3D mesh
   if generate_quadratic_3d_mesh:

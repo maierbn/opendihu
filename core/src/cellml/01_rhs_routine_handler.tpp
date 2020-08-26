@@ -70,15 +70,34 @@ initializeRhsRoutine()
     }
 
     // compile source file to a library
+    std::stringstream baseFilename;
+    baseFilename << StringUtility::extractBasename(this->cellmlSourceCodeGenerator_.sourceFilename())
+      << "_" << this->cellmlSourceCodeGenerator_.nParameters() << "_";
+
+    const std::vector<int> &statesForTransfer = this->data_.statesForTransfer();
+    for (int i = 0; i < statesForTransfer.size(); i++)
+      baseFilename << statesForTransfer[i];
+    baseFilename << "_";
+
+    const std::vector<int> &algebraicsForTransfer = this->data_.algebraicsForTransfer();
+    for (int i = 0; i < algebraicsForTransfer.size(); i++)
+      baseFilename << algebraicsForTransfer[i];
+    baseFilename << "_";
+
+    const std::vector<int> &parametersForTransfer = this->data_.parametersForTransfer();
+    for (int i = 0; i < parametersForTransfer.size(); i++)
+      baseFilename << parametersForTransfer[i];
+
+    baseFilename << "_" << optimizationType_
+      << "_" << this->nInstances_;
+
     std::stringstream s;
-    s << "lib/"+StringUtility::extractBasename(this->cellmlSourceCodeGenerator_.sourceFilename()) << "_" << optimizationType_
-      << "_" << this->nInstances_ << ".so";
+    s << "lib/" << baseFilename.str() << ".so";
     libraryFilename = s.str();
 
     int rankNoWorldCommunicator = DihuContext::ownRankNoCommWorld();
     s.str("");
-    s << "src/"+StringUtility::extractBasename(this->cellmlSourceCodeGenerator_.sourceFilename()) << "_" << optimizationType_
-      << "_" << this->nInstances_ << "." << rankNoWorldCommunicator << this->cellmlSourceCodeGenerator_.sourceFileSuffix();
+    s << "src/" << baseFilename.str() << "." << rankNoWorldCommunicator << this->cellmlSourceCodeGenerator_.sourceFileSuffix();
     sourceToCompileFilename_ = s.str();
 
     // create path of library filename if it does not exist

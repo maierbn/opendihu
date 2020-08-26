@@ -276,7 +276,7 @@ createDmElements()
       MPI_Comm cartesianCommunicator;
       MPIUtility::handleReturnValue(
         MPI_Cart_create(mpiCommunicator(), 2, nRanks_.data(), meshIsPeriodicInDimension.data(), true, &cartesianCommunicator),
-      "MPI_Cart_create");
+        "MPI_Cart_create");
     }
     else if (MeshType::dim() == 3)
     {

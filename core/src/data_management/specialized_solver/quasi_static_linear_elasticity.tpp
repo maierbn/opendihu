@@ -30,12 +30,18 @@ initialize()
   // call initialize of base class
   Data<FunctionSpaceType>::initialize();
 
-  // initialize the output connector slots
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+  // initialize the connector slots
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
 
   // there is only one slot: the activation field variable
-  outputConnectorData_->addFieldVariable(this->activation_);
-  outputConnectorData_->addGeometryField(std::make_shared<VectorFieldVariableType>(this->functionSpace_->geometryField()));
+  slotConnectorData_->addFieldVariable(this->activation_);
+  slotConnectorData_->addGeometryField(std::make_shared<VectorFieldVariableType>(this->functionSpace_->geometryField()));
+
+  // parse slot names for all slot connector data slots
+  this->context_.getPythonConfig().getOptionVector("slotNames", slotConnectorData_->slotNames);
+
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
 }
 
 template<typename DataLinearElasticityType>
@@ -62,8 +68,8 @@ std::shared_ptr<typename QuasiStaticLinearElasticity<DataLinearElasticityType>::
 QuasiStaticLinearElasticity<DataLinearElasticityType>::
 activation()
 {
-  // get the most recent pointer to the field variable from the output connector slot, it may have changed because of sharing of the field variable
-  this->activation_ = this->outputConnectorData_->variable1[0].values;
+  // get the most recent pointer to the field variable from the connector slot, it may have changed because of sharing of the field variable
+  this->activation_ = this->slotConnectorData_->variable1[0].values;
   return this->activation_;
 }
 
@@ -156,11 +162,11 @@ debug()
 
 
 template<typename DataLinearElasticityType>
-std::shared_ptr<typename QuasiStaticLinearElasticity<DataLinearElasticityType>::OutputConnectorDataType>
+std::shared_ptr<typename QuasiStaticLinearElasticity<DataLinearElasticityType>::SlotConnectorDataType>
 QuasiStaticLinearElasticity<DataLinearElasticityType>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  return outputConnectorData_;
+  return slotConnectorData_;
 }
 
 template<typename DataLinearElasticityType>

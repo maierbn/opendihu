@@ -3,6 +3,8 @@
 #include <omp.h>
 #include <sstream>
 
+#include "control/diagnostic_tool/solver_structure_visualizer.h"
+
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
 PrescribedValues<FunctionSpaceType,nComponents1,nComponents2>::
 PrescribedValues(DihuContext context) :
@@ -81,8 +83,8 @@ initialize()
   TimeSteppingScheme::TimeSteppingScheme::initialize();
 
   // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver("PrescribedValues", false);   // hasInternalConnectionToFirstNestedSolver=false (the last argument) means output connector data is not shared with the first subsolver
-  // if you have your own output connector data rather than the one of the subsolver, call "addSolver" with false as second argument
+  DihuContext::solverStructureVisualizer()->addSolver("PrescribedValues", false);   // hasInternalConnectionToFirstNestedSolver=false (the last argument) means slot connector data is not shared with the first subsolver
+  // if you have your own slot connector data rather than the one of the subsolver, call "addSolver" with false as second argument
 
 
   // retrieve the function space
@@ -161,8 +163,8 @@ initialize()
   // now call initialize, data will then create all variables (Petsc Vec's)
   data_.initialize(fieldVariable1Names, fieldVariable2Names);
 
-  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 }
 
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
@@ -310,10 +312,10 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
+//! the transfer is done by the slot_connector_data_transfer class
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
-std::shared_ptr<typename PrescribedValues<FunctionSpaceType,nComponents1,nComponents2>::OutputConnectorDataType> PrescribedValues<FunctionSpaceType,nComponents1,nComponents2>::
-getOutputConnectorData()
+std::shared_ptr<typename PrescribedValues<FunctionSpaceType,nComponents1,nComponents2>::SlotConnectorDataType> PrescribedValues<FunctionSpaceType,nComponents1,nComponents2>::
+getSlotConnectorData()
 {
-  return data_.getOutputConnectorData();
+  return data_.getSlotConnectorData();
 }

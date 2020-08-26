@@ -74,9 +74,9 @@ if "hodgkin_huxley-razumova" in cellml_file:
   mappings = {
     ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
     ("parameter", 1):           "Razumova/l_hs",            # parameter 1 is fiber stretch λ
-    ("outputConnectorSlot", 0): "membrane/V",               # expose Vm to the operator splitting
-    ("outputConnectorSlot", 1): "Razumova/activation",      # expose activation .
-    ("outputConnectorSlot", 2): "Razumova/activestress",
+    ("connectorSlot", 0): "membrane/V",               # expose Vm to the operator splitting
+    ("connectorSlot", 1): "Razumova/activation",      # expose activation .
+    ("connectorSlot", 2): "Razumova/activestress",
    }
   parameters_initial_values = [0.0, 1.0]
   nodal_stimulation_current = 400.
@@ -271,6 +271,7 @@ config = {
         "durationLogKey":               "duration_0D",
         "inputMeshIsGlobal":            True,
         "dirichletBoundaryConditions":  {},
+        "dirichletOutputFilename":      None,                                             # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
         "nAdditionalFieldVariables":    0,
         "checkForNanInf":               True,                                             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.                                
         
@@ -331,11 +332,13 @@ config = {
         "initialValues": [],
         #"numberTimeSteps": 1,
         "timeStepWidth":                dt_1D,
+        "timeStepWidthRelativeTolerance": 1e-10,
         "timeStepOutputInterval":       1e4,
         "logTimeStepWidthAsKey":        "dt_1D",
         "durationLogKey":               "duration_1D",
         "inputMeshIsGlobal":            True,
         "dirichletBoundaryConditions":  {},
+        "dirichletOutputFilename":      None,             # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
         "solverName":                   "implicitSolver",
         "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
         "nAdditionalFieldVariables":    3,

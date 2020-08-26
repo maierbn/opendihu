@@ -141,6 +141,7 @@ if False:
   pp.pprint(meshes)
     
 config = {
+  "scenarioName":                   "linear_elasticity",             # scenario name for the log file
   "logFormat":                      "csv",            # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",          # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "mappings_between_meshes.txt",   # log file for mappings between meshes
@@ -182,6 +183,7 @@ config = {
             "meshName":               "MeshFiber_{}".format(fiber_index),    # the mesh to use for the field variables
             "numberTimeSteps":        1,              # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set this term only once per time step
             "timeStepOutputInterval": 20,             # if the time step should be written to console, a value > 10 produces no output
+            "slotNames":              [],             # names of the connector slots, if the global option "connectedSlots" is used
             
             # a list of field variables that will get values assigned in every timestep, by the provided callback function
             "fieldVariables1": [
@@ -210,6 +212,7 @@ config = {
         "strainScalingCurveWidth":  1.0,            # parameter for strain-stress curve of active stress, has no effect, because strain-stress curve is commented out in the code
         "scalingFactor":            1.0,            # scaling factor for displacements, to overrate them, if != 0 it is only for visualization purposes and not physical
         "inputMeshIsGlobal":        True,           # if boundary conditions are specified in global numbering
+        "slotNames":                [],             # names of the connector slots, if the global option "connectedSlots" is used
           
         # Anisotropy for active stress.
         # The tensor is given in a local basis where the fiber direction is (1,0,0), one list item = same tensor for all elements, multiple list items = a different tensor for each element.
@@ -227,8 +230,11 @@ config = {
           "prefactor":            1.0,                    # prefactor c of the equation c*Δu = f
           "inputMeshIsGlobal":    True,                   # if boundary conditions are specified in global numbering
           "dirichletBoundaryConditions":  dirichlet_bc,   # dirichlet boundary conditions
+          "dirichletOutputFilename":      None,           # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+      
           "neumannBoundaryConditions":    neumann_bc,     # neumann boundary conditions
           "divideNeumannBoundaryConditionValuesByTotalArea": False,  # if the neumann boundary condition vectors should be divided by the total surface area where surface loads are applied, this allows to specify the total force that acts on the surface. If set to False (default), the given traction is a per-surface quantity.
+          "slotName":             "",                     # name of the connector slot of the solution field variable, needed if the global option "connectedSlots" is used
                 
           # material parameters
           "bulkModulus":        150,                      # bulk modulus, K, material parameter for compressibility

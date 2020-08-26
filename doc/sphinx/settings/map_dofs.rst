@@ -5,13 +5,15 @@ This is a class that copies and transforms values from one mesh to another in a 
 With parallel computation this also involves communicating the values between the processes.
 
 It is a wrapper to another solver. It adds a number of field variables which can be defined on an own function space. The slots of `MapDofs` consists of the slots of the nested solver, as well as the additional field variables.
-The value transfer can be done between any two of these slots, the `from` or `source` slot and the `to` or `target` slot.
+The value transfer can be done between any two of these slots, the `from` or `source` slot and the `to` or `target` slot. With advanced callbacks it is also possible to map to multiple output slots at once.
+
 There are several modes, what exactly is done in this transfer:
 
   * There is a simple local transfer, where values are copied from one slot to another (mode `"copyLocal"`).
   * There is a conditional transfer, where only positive values are copied (mode `"copyLocalIfPositive"`).
   * Instead of copying from the first slot, one can define the value to be set in the second slot if the value of the first slot is above a defined threshold (mode `"localSetIfAboveThreshold"`).
-  * A Python callback function can handle the transfer and involve any computation. This allows to e.g. delaying a signal or to map from :math:`M` inputs to :math:`N` outputs (mode `"callback"`).
+  * The previous modes are simple actions that may occur frequently and thus have been implemented in the C++ core. However, other use cases can be programmed in python.
+    A Python callback function can handle the transfer and involve any computation. This allows to e.g. delaying a signal or to map from :math:`M` inputs to :math:`N` outputs (mode `"callback"`).
   * Whereas the previous modes all work entirely on the local domain, there is the option to communicate between processes. Local or global degree of freedom (dof) numbers can be defined for specifying the input and output values.
 
 C++ code
@@ -48,28 +50,37 @@ The follows shows all python settings.
 
   "MapDofs": {
     "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
+    "additionalSlotNames":        ["mn"],                         # list of names of the slots for the additional field variables
     "meshName":                   "motoneuronMesh",               # the mesh on which the additional field variables will be defined
     
     # mapping from motoneuronMesh which contains on every rank as many nodes as there are motoneurons to the 3D domain
     # map from motoneuronMesh (algebraics) to 3Dmesh (solution)
-    "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
+    "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver, can be None if not needed
       {                                                 
-        "fromOutputConnectorSlotNo":        2,
-        "toOutputConnectorSlotNo":          0,
-        "fromOutputConnectorArrayIndex":    0,                    # which fiber/compartment
-        "toOutputConnectorArrayIndex":      0,
-        "mode":                             "callback",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold", "callback" or "communicate"
-        "fromDofNosNumbering":              "local",
-        "toDofNosNumbering":                "global",
-        "dofsMapping":                      {0: [n_elements/2-1, n_elements/2, n_elements/2+1]},    # map from motoneuron 0 to 3 center elements of fiber
-        "inputDofs":                        0,
-        "outputDofs":                       [n_elements/2-1, n_elements/2, n_elements/2+1],
-        "callback":                         callback_motoneuron,
-        #"thresholdValue":                   20,                    # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
-        #"valueToSet":                       20,                   # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
+        # alternative forms:
+        "fromConnectorSlot":                2,                    # The slot no or slot name from which the data will be taken.
+        "fromConnectorSlot":                "slotA",              # The slot no or slot name from which the data will be taken.
+        
+        # alternative forms:
+        "toConnectorSlots":                 0,                    # The slots to which the data will be written. This can be a list if multiple slots are needed. Either as slot no.s or names.
+        "toConnectorSlots":                 [0,1],                # The slots to which the data will be written. This can be a list if multiple slots are needed. Either as slot no.s or names.
+        "toConnectorSlots":                 "slotB",              # The slots to which the data will be written. This can be a list if multiple slots are needed. Either as slot no.s or names.
+        "toConnectorSlots":                 ["slotB","slotC"],    # The slots to which the data will be written. This can be a list if multiple slots are needed. Either as slot no.s or names.
+        
+        "fromOutputConnectorArrayIndex":    0,                    # which fiber/compartment for the input slot, if there are multiple
+        "toOutputConnectorArrayIndex":      0,                    # which fiber/compartment for the output slot, if there are multiple      
+        "mode":                             "callback",           # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold", "callback" or "communicate"
+        "fromDofNosNumbering":              "local",              # if the input dofs are interpreted as local or global numbers, refers to "dofsMapping" and "inputDofs" 
+        "toDofNosNumbering":                "global",             # if the output dofs are interpreted as local or global numbers, refers to "dofsMapping" and "outputDofs"
+        "dofsMapping":                      {0: [n_elements/2-1, n_elements/2, n_elements/2+1]},    # a mapping from input to output dofs, for all modes except "callback"
+        "inputDofs":                        0,                    # the input dofs for the mode "callback"
+        "outputDofs":                       [n_elements/2-1, n_elements/2, n_elements/2+1],       # the output dofs for the mode "callback", if multiple output dofs are used, this can be a list of lists of the dofs
+        "callback":                         callback_motoneuron,  # the callback function if the mode is "callback"
+        #"thresholdValue":                   20,                  # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
+        #"valueToSet":                       20,                  # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
       }
     ],
-    "afterComputation":             None,
+    "afterComputation":             None,                         # transfer/mapping of dofs that will be performed after the computation of the nested solver, can be None if not needed
     
     # Nested solver, e.g.
     "StrangSplitting": {
@@ -81,6 +92,10 @@ The follows shows all python settings.
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Number of field variables that will be defined on the additional function space that was given as first template argument in the c++ code. These can be useful to map from the nested solvers' slots to some other mesh.
 
+`additionalSlotNames`
+^^^^^^^^^^^^^^^^^^^^^^^
+A list of strings with as many entries as `nAdditionalFieldVariables`. The list should contains the names for the slots that will be created for the additional field variables. Each name has to consist of 6 or less characters.
+
 `meshName`
 ^^^^^^^^^^^^^^^^^
 Specification or reference of the mesh (see :doc:`mesh` for details how to specify meshes inline and under the `"Meshes"` key) to be used for the additional field variables. The type of the mesh is as given by the first template argument in the c++ code.
@@ -91,14 +106,18 @@ Specification or reference of the mesh (see :doc:`mesh` for details how to speci
 Under these keys, a list of mapping actions can be defined that will be performed directly before and after the solution step of the nested solver.
 If no actions for one of them is needed, `None` can be used. Each action is given as a dict containing more specific options to the action.
 
-`fromOutputConnectorSlotNo` and `toOutputConnectorSlotNo`
+`fromConnectorSlot` and `toConnectorSlots`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-These two values specify the two slots for the value transfer. Consult the `solver_structure.txt` representation to learn the slot numbers.
+These two values specify the slots for the value transfer. The slots can either be identified by the slot number or by the slot name.
+* If the slots should be used to identify the slots, consult the `solver_structure.txt` representation to find out the slot numbers. Then, option `fromConnectorSlot` is simply a single integer. The option `toConnectorSlots` is either a single number or a list of multiple numbers for multiple output slots. Multiple output slots are only supported for the mode "callback".
+* If the slots should be identified by slot names, the same holds, but instead of numbers, simply provide the slot names as strings.
 
 `fromOutputConnectorArrayIndex` and `toOutputConnectorArrayIndex`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 If the slots contain multiple instances of the actual slot, these two options specify which of the instance to use for the mapping. 
 This occurs, if a nested solver contains `MultipleInstances` somewhere. For example for multiple fibers or multiple compartments for multidomain.
+
+Note that `toOutputConnectorArrayIndex` is always a single number, even if multiple output slots are used for `toConnectorSlotNo`.
 
 `mode`
 ^^^^^^^^
@@ -109,6 +128,8 @@ One of "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold", "callback
 * `localSetIfAboveThreshold`: Similar to `copyLocalIfPositive`, but the threshold value can be customized by the option `"thresholdValue"`. Instead of copying the source dof, a fixed value given by `"valueToSet"` is used.
 * `communicate`: Perform the mapping specified in `"dofsMapping"` and also consider dofs on remote processes. The source dofs can be given as either local or global numbers. The target dofs have to be given as global numbers, i.e. `"toDofNosNumbering"` has to be `"global"`.
 * `callback`: Do not use the `"dofsMapping"`, instead specify what to map by a custom callback function. The function is provided in `"callback"`, see below for the signature. The input dofs and output dofs are given by `"inputDofs"` and `"outputDofs"` and can both be specified in local or global numbering. Again, only the locally present dofs are considered. If you need the callback plus global communication, use two actions, one with mode "communicate" and one with "callback".
+
+  The `callback` option is the only one to allow to map to multiple output slots. If this is needed, the option `"toConnectorSlotNo"` is a list (of lists) with entries for the different slots.
 
 Depending on the mode, other options have to be given.
 All modes need the options `"fromDofNosNumbering"` and `"toDofNosNumbering"`. These specify if dof numbers for the source and target slots are specified in *local numbering* or *global numbering*.
@@ -133,10 +154,22 @@ the value at dof 2 to the other slot at three values at once (5,6,8) and dof 3 t
 The dof numbers are interpreted either as local or global numbers, depending on the valeu of `"fromDofNosNumbering"` and `"toDofNosNumbering"`. 
 Global numbers that are not present on the own process are ignored, for both the source and the target dofs.
 
+`inputDofs`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If `"mode"` is `"callback"`, this is a list of dofs for which the values are taken from the field variable at the input slot.
+
+`outputDofs`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If `"mode"` is `"callback"`, this is a list of lists of dofs for which the values are taken from the field variable for each output slot.
+If only one output slot is needed, it has to be of the form ```[[0,1,2,...]]```, i.e. also as list of lists.
+
 `callback`
 ^^^^^^^^^^^^^
 
-A python function that performs the mapping between a potentially different number of input and output dofs. The function has the following form. An example is given that delays the input signal number 0, and writes a gaussian stimulus with maximum value of 20 to all output dofs.
+A python function that performs the mapping between a potentially different number of input and output dofs, used for mode "callback".
+ The function has the following form. An example is given that delays the input signal number 0, and writes a gaussian stimulus with maximum value of 20 to all output dofs.
 
 .. code-block:: python
 
@@ -145,7 +178,9 @@ A python function that performs the mapping between a potentially different numb
     Callback function that transform a number of input_values to a number of output_values.
     This function gets called by a MapDofs object.
     :param input_values: (list of float values) The input values from the slot as defined in the MapDofs settings.
-    :param output_values: (list of float values) Initially, this is a list of the form [None, None, ..., None] with the size matching 
+    :param output_values: (list of list of float values) output_values[slotIndex][valueIndex]
+                          The output values buffer, potentially for multiple slots.
+                          Initially, this is a list of the form [[None, None, ..., None]] with the size matching 
                           the number of required output values. The function should set some of the entries to a computed value.
                           The entries that are not None will be set in the output slot at the dofs defined by MapDofs.
     :param current_time:  Current simulation time.
@@ -155,8 +190,8 @@ A python function that performs the mapping between a potentially different numb
     """
       
     # get number of input and output values
-    n_input_values = len(input_values)      # =1 here (1 motoneuron)
-    n_output_values = len(output_values)    # =3 here (3 points in neuromuscular junction)
+    n_input_values = len(input_values)      
+    n_output_values = len(output_values[0])     # number of output values for the first output slot
     
     # initialize buffer the first time
     if 0 not in buffer:
@@ -179,10 +214,10 @@ A python function that performs the mapping between a potentially different numb
       if delayed_signal > 1e-5:
         print("motoneuron t: {}, last_activation: {}, computed delayed_signal: {}".format(current_time, buffer[0], delayed_signal))
         for i in range(n_output_values):
-          output_values[i] = delayed_signal
+          output_values[0][i] = delayed_signal
       else:
         for i in range(n_output_values):
-          output_values[i] = None     # do not set any values
+          output_values[0][i] = None     # do not set any values
       
 Exemplary solver structure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

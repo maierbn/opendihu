@@ -18,11 +18,13 @@ public:
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
   void advanceTimeSpan();
   
-  //! initialize matrices
   void initialize();
-  
+
 protected:
   
+  //! initialize matrices and right hand side
+  virtual void initializeWithTimeStepWidth_impl(double timeStepWidth);
+
   //! precomputes the system matrix A=(I - dt/2 * M^(-1)K) for the implicit euler scheme
   void setSystemMatrix(double timeStepWidth);
 

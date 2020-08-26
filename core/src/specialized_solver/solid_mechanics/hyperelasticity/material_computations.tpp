@@ -11,7 +11,7 @@ namespace SpatialDiscretization
 
 
 template<typename Term,typename MeshType, int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+bool HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 materialComputeInternalVirtualWork(bool communicateGhosts)
 {
   // compute Wint in solverVariableResidual_
@@ -32,6 +32,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
     assert(combinedVecResidual_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
     assert(combinedVecSolution_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
   }
+  VLOG(1) << "materialComputeInternalVirtualWork";
 
   // get pointer to function space
   std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = this->data_.displacementsFunctionSpace();
@@ -100,6 +101,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
     // get geometry field of reference configuration
     std::array<Vec3_v_t,nDisplacementsDofsPerElement> geometryReferenceValues;
     this->data_.geometryReference()->getElementValues(elementNoLocalv, geometryReferenceValues);
+    double_v_t approximateMeshWidth = MathUtility::computeApproximateMeshWidth<double_v_t,nDisplacementsDofsPerElement>(geometryReferenceValues);
 
     // get displacements field values for element
     std::array<Vec3_v_t,nDisplacementsDofsPerElement> displacementsValues;
@@ -108,7 +110,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
     if (VLOG_IS_ON(1))
     {
       global_no_t elementNoGlobal = displacementsFunctionSpace->meshPartition()->getElementNoGlobalNatural(elementNoLocal);
-      VLOG(1) << "elementNoGlobal " << elementNoGlobal << ", displacementsValues: " << displacementsValues;
+      VLOG(1) << "elementNoLocal " << elementNoLocal << ", displacementsValues: " << displacementsValues;
       VLOG(1) << "elementNoGlobal " << elementNoGlobal << ", geometryReferenceValues: " << geometryReferenceValues;
     }
 
@@ -133,7 +135,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       // compute the 3x3 jacobian of the parameter space to world space mapping
       Tensor2_v_t<D> jacobianMaterial = DisplacementsFunctionSpace::computeJacobian(geometryReferenceValues, xi);
       double_v_t jacobianDeterminant;
-      Tensor2_v_t<D> inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, jacobianDeterminant);
+      Tensor2_v_t<D> inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, approximateMeshWidth, jacobianDeterminant);
 
       // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
       // inverseJacobianMaterial[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
@@ -148,10 +150,15 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       Tensor2_v_t<D> rightCauchyGreen = this->computeRightCauchyGreenTensor(deformationGradient);  // C = F^T*F
 
       double_v_t rightCauchyGreenDeterminant;   // J^2
-      Tensor2_v_t<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse(rightCauchyGreen, rightCauchyGreenDeterminant);  // C^-1
+      Tensor2_v_t<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse(rightCauchyGreen, approximateMeshWidth, rightCauchyGreenDeterminant);  // C^-1
 
       // fiber direction
       Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
+
+#ifndef NDEBUG
+      if (fabs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3)
+        LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized, elementalDirectionValues:" << elementalDirectionValues;
+#endif
 
       // invariants
       std::array<double_v_t,5> invariants = this->computeInvariants(rightCauchyGreen, rightCauchyGreenDeterminant, fiberDirection);  // I_1, I_2, I_3, I_4, I_5
@@ -193,24 +200,29 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       // (column-major storage) gradPhi[L][a] = dphi_L / dxi_a
       // gradPhi[column][row] = gradPhi[dofIndex][i] = dphi_dofIndex/dxi_i, columnIdx = dofIndex, rowIdx = which direction
 
-      VLOG(2) << "";
-      VLOG(2) << "element " << elementNoLocal << " xi: " << xi;
-      VLOG(2) << "  geometryReferenceValues: " << geometryReferenceValues;
-      VLOG(2) << "  displacementsValues: " << displacementsValues;
-      VLOG(2) << "  Jacobian: J_phi=" << jacobianMaterial;
-      VLOG(2) << "  jacobianDeterminant: J=" << jacobianDeterminant;
-      VLOG(2) << "  inverseJacobianMaterial: J_phi^-1=" << inverseJacobianMaterial;
-      VLOG(2) << "  deformationGradient: F=" << deformationGradient;
-      VLOG(2) << "  deformationGradientDeterminant: det F=" << deformationGradientDeterminant;
-      VLOG(2) << "  rightCauchyGreen: C=" << rightCauchyGreen;
-      VLOG(2) << "  rightCauchyGreenDeterminant: det C=" << rightCauchyGreenDeterminant;
-      VLOG(2) << "  inverseRightCauchyGreen: C^-1=" << inverseRightCauchyGreen;
-      VLOG(2) << "  invariants: I1,I2,I3: " << invariants;
-      VLOG(2) << "  reducedInvariants: Ibar1, Ibar2: " << reducedInvariants;
-      VLOG(2) << "  pressure/artificialPressure: " << pressure;
-      //VLOG(2) << "  artificialPressure: p=" << artificialPressure << ", artificialPressureTilde: pTilde=" << artificialPressureTilde;
-      VLOG(2) << "  PK2Stress: S=" << pK2Stress;
-      VLOG(2) << "  gradPhi: " << gradPhi;
+      if (VLOG_IS_ON(2))
+      {
+        global_no_t elementNoGlobal = displacementsFunctionSpace->meshPartition()->getElementNoGlobalNatural(elementNoLocal);
+
+        VLOG(2) << "";
+        VLOG(2) << "element local " << elementNoLocal << " global " << elementNoGlobal << " xi: " << xi;
+        VLOG(2) << "  geometryReferenceValues: " << geometryReferenceValues;
+        VLOG(2) << "  displacementsValues: " << displacementsValues;
+        VLOG(2) << "  Jacobian: J_phi=" << jacobianMaterial;
+        VLOG(2) << "  jacobianDeterminant: J=" << jacobianDeterminant;
+        VLOG(2) << "  inverseJacobianMaterial: J_phi^-1=" << inverseJacobianMaterial;
+        VLOG(2) << "  deformationGradient: F=" << deformationGradient;
+        VLOG(2) << "  deformationGradientDeterminant: det F=" << deformationGradientDeterminant;
+        VLOG(2) << "  rightCauchyGreen: C=" << rightCauchyGreen;
+        VLOG(2) << "  rightCauchyGreenDeterminant: det C=" << rightCauchyGreenDeterminant;
+        VLOG(2) << "  inverseRightCauchyGreen: C^-1=" << inverseRightCauchyGreen;
+        VLOG(2) << "  invariants: I1,I2,I3: " << invariants;
+        VLOG(2) << "  reducedInvariants: Ibar1, Ibar2: " << reducedInvariants;
+        VLOG(2) << "  pressure/artificialPressure: " << pressure;
+        //VLOG(2) << "  artificialPressure: p=" << artificialPressure << ", artificialPressureTilde: pTilde=" << artificialPressureTilde;
+        VLOG(2) << "  PK2Stress: S=" << pK2Stress;
+        VLOG(2) << "  gradPhi: " << gradPhi;
+      }
 
       VLOG(1) << "  sampling point " << samplingPointIndex << "/" << samplingPoints.size() << ", xi: " << xi << ", J: " << deformationGradientDeterminant << ", p: " << pressure << ", S11: " << pK2Stress[0][0];
 
@@ -227,9 +239,10 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
 
       if (Vc::any_of(deformationGradientDeterminant < 1e-12))   // if any entry of the deformation gradient is negative
       {
-        LOG(FATAL) << "Deformation gradient " << deformationGradient << " has zero or negative determinant " << deformationGradientDeterminant
+        LOG(WARNING) << "Deformation gradient " << deformationGradient << " has zero or negative determinant " << deformationGradientDeterminant
           << std::endl << "Geometry values in element " << elementNoLocal << ": " << geometryReferenceValues << std::endl
           << "Displacements at xi " << xi << ": " << displacementsValues;
+        lastSolveSucceeded_ = false;
       }
 
       // loop over basis functions and evaluate integrand at xi for displacement part (δW_int - δW_ext)
@@ -372,11 +385,20 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
   //combinedVecResidual_->zeroGhostBuffer();
   //combinedVecResidual_->finishGhostManipulation();
 
+
+  if (!lastSolveSucceeded_)
+  {
+    // return false means the computation was not successful
+    return false;
+  }
+
   // now, solverVariableResidual_, which is the globalValues() of combinedVecResidual_, contains δW_int
+  // computation was successful
+  return true;
 }
 
 template<typename Term,typename MeshType, int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+bool HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 materialComputeResidual(double loadFactor)
 {
   // This computes the residual, i.e. the nonlinear function to be solved.
@@ -385,7 +407,7 @@ materialComputeResidual(double loadFactor)
   //  input is solverVariableSolution_, a normal Vec, the same values have already been assigned to this->data_.displacements() and this->data_.pressure() (!)
   // before this method, values of u, v and p get stored to the data object by setUVP(solverVariableSolution_);
 
-  LOG(DEBUG) << "materialComputeResidual";
+  LOG(DEBUG) << "materialComputeResidual(loadFactor=" << loadFactor << ")";
 
   const bool outputValues = false;
   const bool outputFiles = false;
@@ -410,7 +432,14 @@ materialComputeResidual(double loadFactor)
   combinedVecResidual_->zeroEntries();
   combinedVecResidual_->startGhostManipulation();
 
-  materialComputeInternalVirtualWork(false);    // compute without communicating ghost values, because startGhostManipulation has been called
+  bool successful = materialComputeInternalVirtualWork(false);    // compute without communicating ghost values, because startGhostManipulation has been called
+
+  // if there was a negative jacobian, exit this computation
+  if (!successful)
+  {
+    combinedVecResidual_->finishGhostManipulation();     // communicate and add up values in ghost buffers
+    return false;
+  }
 
   // now, solverVariableResidual_, which is the globalValues() of combinedVecResidual_, contains δW_int
   // also the pressure equation residual has been set at the last component
@@ -435,7 +464,9 @@ materialComputeResidual(double loadFactor)
     // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize (materialComputeExternalVirtualWorkDead()), in variable externalVirtualWorkDead_
     // for static case, externalVirtualWorkDead_ = externalVirtualWorkDead_
     PetscErrorCode ierr;
-    ierr = VecAXPY(solverVariableResidual_, -loadFactor, externalVirtualWorkDead_); CHKERRV(ierr);
+    ierr = VecAXPY(solverVariableResidual_, -loadFactor, externalVirtualWorkDead_);
+    if (ierr)
+      return false;
 
     if(outputValues)
       LOG(DEBUG) << "static problem, total F = δW_int - δW_ext:" << getString(solverVariableResidual_);
@@ -456,7 +487,9 @@ materialComputeResidual(double loadFactor)
     // compute F = δW_int - δW_ext,dead + accelerationTerm
     // δW_ext = int_∂Ω T_a phi_L dS was precomputed in initialize, in variable externalVirtualWorkDead_
     PetscErrorCode ierr;
-    ierr = VecAXPY(solverVariableResidual_, -loadFactor, externalVirtualWorkDead_); CHKERRV(ierr);
+    ierr = VecAXPY(solverVariableResidual_, -loadFactor, externalVirtualWorkDead_);
+    if (ierr)
+      return false;
 
     if (outputFiles)
     {
@@ -468,6 +501,18 @@ materialComputeResidual(double loadFactor)
 
       combinedVecResidual_->dumpGlobalNatural(filename.str());
     }
+  }
+
+  if (outputValues)
+  {
+    LOG(DEBUG) << "residual: " << getString(solverVariableResidual_);
+    PetscErrorCode ierr;
+    PetscReal norm;
+    ierr = VecNorm(solverVariableResidual_, NORM_2, &norm);
+    LOG(DEBUG) << "residual norm: " << norm;
+
+    if (ierr)
+      return false;
   }
 
   // dump output vector to file
@@ -482,6 +527,9 @@ materialComputeResidual(double loadFactor)
   }
   assert(combinedVecResidual_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
   assert(combinedVecSolution_->currentRepresentation() == Partition::values_representation_t::representationCombinedGlobal);
+
+  // computation succeeded
+  return true;
 }
 
 template<typename Term,typename MeshType, int nDisplacementComponents>
@@ -826,7 +874,7 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
 }
 
 template<typename Term,typename MeshType, int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+bool HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 materialComputeJacobian()
 {
   // analytic jacobian combinedMatrixJacobian_
@@ -982,7 +1030,7 @@ materialComputeJacobian()
 
     // set diagonal to zero, this would be correct but for some reason the solvers do not like systems with zero diagonal, therefore epsilon was set on the diagonal
     //PetscErrorCode ierr;
-    //ierr = MatDiagonalSet(combinedMatrixJacobian_->valuesGlobal(), zeros_, INSERT_VALUES); CHKERRV(ierr);
+    //ierr = MatDiagonalSet(combinedMatrixJacobian_->valuesGlobal(), zeros_, INSERT_VALUES); CHKERRQ(ierr);
 
   }  // if Term::isIncompressible
 
@@ -1013,6 +1061,7 @@ materialComputeJacobian()
     // get geometry field of reference configuration
     std::array<Vec3_v_t,nDisplacementsDofsPerElement> geometryReferenceValues;
     this->data_.geometryReference()->getElementValues(elementNoLocalv, geometryReferenceValues);
+    double_v_t approximateMeshWidth = MathUtility::computeApproximateMeshWidth<double_v_t,nDisplacementsDofsPerElement>(geometryReferenceValues);
 
     // get displacements field values for element
     std::array<Vec3_v_t,nDisplacementsDofsPerElement> displacementsValues;
@@ -1036,7 +1085,7 @@ materialComputeJacobian()
       // compute the 3x3 jacobian of the parameter space to world space mapping
       Tensor2_v_t<D> jacobianMaterial = DisplacementsFunctionSpace::computeJacobian(geometryReferenceValues, xi);
       double_v_t jacobianDeterminant;
-      Tensor2_v_t<D> inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, jacobianDeterminant);
+      Tensor2_v_t<D> inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, approximateMeshWidth, jacobianDeterminant);
 
       // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
       // inverseJacobianMaterial[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
@@ -1046,15 +1095,20 @@ materialComputeJacobian()
 
       Tensor2_v_t<D> deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);    // F
       double_v_t deformationGradientDeterminant;    // J
-      Tensor2_v_t<D> inverseDeformationGradient = MathUtility::computeInverse(deformationGradient, deformationGradientDeterminant);  // F^-1
+      Tensor2_v_t<D> inverseDeformationGradient = MathUtility::computeInverse(deformationGradient, approximateMeshWidth, deformationGradientDeterminant);  // F^-1
 
       Tensor2_v_t<D> rightCauchyGreen = this->computeRightCauchyGreenTensor(deformationGradient);  // C = F^T*F
 
       double_v_t rightCauchyGreenDeterminant;   // J^2
-      Tensor2_v_t<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse(rightCauchyGreen, rightCauchyGreenDeterminant);  // C^-1
+      Tensor2_v_t<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse(rightCauchyGreen, approximateMeshWidth, rightCauchyGreenDeterminant);  // C^-1
 
       // fiber direction
       Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
+
+#ifndef NDEBUG
+      if (fabs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3)
+        LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized, elementalDirectionValues:" << elementalDirectionValues;
+#endif
 
       // invariants
       std::array<double_v_t,5> invariants = this->computeInvariants(rightCauchyGreen, rightCauchyGreenDeterminant, fiberDirection);  // I_1, I_2, I_3
@@ -1110,9 +1164,11 @@ materialComputeJacobian()
 
       if (Vc::any_of(deformationGradientDeterminant < 1e-12))   // if any entry of the deformation gradient is negative
       {
-        LOG(FATAL) << "Deformation gradient " << deformationGradient << " has zero or negative determinant " << deformationGradientDeterminant
+        LOG(WARNING) << "Deformation gradient " << deformationGradient << " has zero or negative determinant " << deformationGradientDeterminant
           << std::endl << "Geometry values in element " << elementNoLocal << ": " << geometryReferenceValues << std::endl
           << "Displacements at xi " << xi << ": " << displacementsValues;
+
+        lastSolveSucceeded_ = false;
       }
 
       // add contributions of submatrix uu (upper left)
@@ -1405,6 +1461,46 @@ materialComputeJacobian()
   }  // local elements
 
   combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);
+
+  if (!lastSolveSucceeded_)
+  {
+    // return false means computation was not successful
+    return false;
+  }
+
+  // computation was successful (no negative jacobian)
+  return true;
+}
+
+template<typename Term,typename MeshType, int nDisplacementComponents>
+unsigned int HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+materialDetermineNumberNonzerosInJacobian()
+{
+  unsigned int nNonZeros = 0;
+
+  // get pointer to function space
+  std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = this->data_.displacementsFunctionSpace();
+  std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace = this->data_.pressureFunctionSpace();
+
+  const int D = 3;  // dimension
+  const int nDisplacementsDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
+  const int nPressureDofsPerElement = PressureFunctionSpace::nDofsPerElement();
+  const int nElementsLocal = displacementsFunctionSpace->nElementsLocal();
+
+  nNonZeros = nElementsLocal * MathUtility::sqr(nDisplacementsDofsPerElement * D);
+
+  if (nDisplacementComponents == 6)
+  {
+    nNonZeros += nElementsLocal * MathUtility::sqr(nDisplacementsDofsPerElement * D) * 3;
+  }
+
+  if (Term::isIncompressible)
+  {
+    nNonZeros += nElementsLocal * nPressureDofsPerElement * nDisplacementsDofsPerElement * D * 2;
+    nNonZeros += nElementsLocal * nPressureDofsPerElement;
+  }
+
+  return nNonZeros;
 }
 
 } // namespace

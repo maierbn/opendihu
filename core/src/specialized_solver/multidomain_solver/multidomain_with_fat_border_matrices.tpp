@@ -196,8 +196,8 @@ findSharedNodesBetweenMuscleAndFat()
     sharedNodesFatOnRanks[rankNo].resize(nEntries);
 
     // broadcast node nos to all ranks
-    MPI_Bcast(sharedDofsGlobalOnRanks[rankNo].data(), 2*nEntries, MPIU_INT, rankNo, mpiCommunicator);
-    MPI_Bcast(sharedNodesFatOnRanks[rankNo].data(), nEntries, MPI_LONG_LONG_INT, rankNo, mpiCommunicator);
+    MPIUtility::handleReturnValue(MPI_Bcast(sharedDofsGlobalOnRanks[rankNo].data(), 2*nEntries, MPIU_INT, rankNo, mpiCommunicator), "MPI_Bcast (8)");
+    MPIUtility::handleReturnValue(MPI_Bcast(sharedNodesFatOnRanks[rankNo].data(), nEntries, MPI_LONG_LONG_INT, rankNo, mpiCommunicator), "MPI_Bcast (9)");
   }
 
   // add all received global nos to a single set

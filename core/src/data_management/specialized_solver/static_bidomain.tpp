@@ -30,8 +30,14 @@ initialize()
   // call initialize of base class
   Data<FunctionSpaceType>::initialize();
 
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
-  outputConnectorData_->addFieldVariable(this->transmembranePotential_);
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
+  slotConnectorData_->addFieldVariable(this->transmembranePotential_);
+
+  // parse slot names for all slot connector data slots, only one slot here
+  this->context_.getPythonConfig().getOptionVector("slotNames", slotConnectorData_->slotNames);
+
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
 }
 
 template<typename FunctionSpaceType>
@@ -112,10 +118,10 @@ print() // use override in stead of extending the parents' print output.This way
 }
 
 template<typename FunctionSpaceType>
-std::shared_ptr<typename StaticBidomain<FunctionSpaceType>::OutputConnectorDataType> StaticBidomain<FunctionSpaceType>::
-getOutputConnectorData()
+std::shared_ptr<typename StaticBidomain<FunctionSpaceType>::SlotConnectorDataType> StaticBidomain<FunctionSpaceType>::
+getSlotConnectorData()
 {
-  return this->outputConnectorData_;
+  return this->slotConnectorData_;
 }
 
 template<typename FunctionSpaceType>

@@ -540,17 +540,18 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
     debugging_points = []
     result = spline_surface.create_ring_section(surface, start_point, end_point, z_value, n_points, debugging_points)
     
-    level = 0
-    rank_no = z_value
-    filename = "00_{}_pass".format(start_point)
-    if len(debugging_points) != 0:
-      stl_debug_output.output_points(filename, rank_no, level, debugging_points, 0.02)
+    if False:
+      level = 0
+      rank_no = z_value
+      filename = "00_{}_pass".format(start_point)
+      if len(debugging_points) != 0:
+        stl_debug_output.output_points(filename, rank_no, level, debugging_points, 0.02)
 
-    filename = "00_{}_start_end".format(start_point)
-    stl_debug_output.output_points(filename, rank_no, level, [start_point, end_point], 0.1)
+      filename = "00_{}_start_end".format(start_point)
+      stl_debug_output.output_points(filename, rank_no, level, [start_point, end_point], 0.1)
 
-    filename = "00_{}_points".format(start_point)
-    stl_debug_output.output_points(filename, rank_no, level, result, 0.05)
+      filename = "00_{}_points".format(start_point)
+      stl_debug_output.output_points(filename, rank_no, level, result, 0.05)
 
     return result
     

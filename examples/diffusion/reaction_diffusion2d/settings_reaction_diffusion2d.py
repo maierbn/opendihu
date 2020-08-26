@@ -39,8 +39,9 @@ def set_reaction_term_values(n_dofs_global, n_nodes_global_per_coordinate_direct
     values[local_dof_no] += scipy.stats.norm.pdf(x, scale=0.1*mx)*0.001
 
 config = {
-  "logFormat":                      "csv",
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "logFormat":                      "csv",                      # "csv" or "json", format of the lines in the log file, csv gives smaller files
+  "scenarioName":                   "diffusion",                # scenario name to find the run in the log file
   "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",  # log file for mappings between meshes
   "Meshes": {
     "mesh": {
@@ -80,13 +81,16 @@ config = {
         "checkForNanInf":     False,          # if the solution should be checked for nan and inf values, after each iteration.
         "timeStepOutputInterval": 1,          # how often to print information about iteration to the console
         "dirichletBoundaryConditions": {},    # dirichlet boundary conditions
+        "dirichletOutputFilename": None,      # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
         "nAdditionalFieldVariables":  0,      # how many additional field variables there should be that can be connected to output slots and that will be written to the output file
+        "additionalSlotNames":  [],           # slot names for the additional field variables
         
         "FiniteElementMethod" : {
           "meshName":          "mesh",        # reference to the mesh, defined under "Meshes"
           "solverName":        "solver",      # reference to the linear system solver
           "prefactor":         0.1,           # prefactor c
           "inputMeshIsGlobal": True,          # if the boundary conditions are given as global numbers
+          "slotName":          "",            # slot name, needed if slots are connected by the global option "connectedSlots" and thereby identified via slot name
         },
         "OutputWriter" : [
           #{"format": "Paraview", "interval": 1, "filename": "out", "binaryOutput": "false", "fixedFormat": False, "onlyNodalValues":True, "fileNumbering": "incremental"},
@@ -99,6 +103,7 @@ config = {
         "meshName":            "mesh",        # the mesh to use for the field variables
         "numberTimeSteps":     1,             # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step
         "timeStepOutputInterval": 10,         # if the time step should be written to console, a value > 1 produces no output
+        "slotNames":           [],            # slot names for the connector slots of the set field variables, optional
         
         # a list of field variables that will get values assigned in every timestep, by the provided callback function
         "fieldVariables1": [

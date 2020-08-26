@@ -33,9 +33,9 @@ nestedSolvers()
 }
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
-std::shared_ptr<typename FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::OutputConnectorDataType>
+std::shared_ptr<typename FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::SlotConnectorDataType>
 FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  return nestedSolvers_.getOutputConnectorData();
+  return nestedSolvers_.getSlotConnectorData();
 }

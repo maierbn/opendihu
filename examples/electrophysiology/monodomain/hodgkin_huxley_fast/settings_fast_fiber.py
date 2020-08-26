@@ -17,7 +17,7 @@ dt_1D = 2e-3
 dt_splitting = 2e-3
 dt_3D = 0.5
 output_timestep = 0.5
-end_time = 30.0
+end_time = 100.0
 n_elements = 100
 
 stimulation_frequency = 100*1e-3   # [Hz]*1e-3 = [ms^-1]
@@ -75,13 +75,15 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibe
 
 # define the config dict
 config = {
-  "scenarioName": "not",
-  "logFormat": "csv",
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "logFormat":                      "csv",                      # "csv" or "json", format of the lines in the log file, csv gives smaller files
+  "scenarioName":                   "fast_fiber",               # scenario name to find the run in the log file
+  "mappingsBetweenMeshesLogFile":   "",                         # a log file about mappings between meshes, here we do not want that because there are no mappings
   "Meshes": {
     "MeshFiber_0": {
       "nElements": [n_elements],
       "physicalExtent": [n_elements/100.],
+      "physicalOffset": [0],
       "inputMeshIsGlobal": True,
     }
   },
@@ -89,6 +91,7 @@ config = {
     "implicitSolver": {     # solver for the implicit timestepping scheme of the diffusion time step
       "maxIterations":      1e4,
       "relativeTolerance":  1e-10,
+      "absoluteTolerance":  0,
       "dumpFormat": "",
       "dumpFilename": "",
       "solverType": "gmres",
@@ -127,8 +130,11 @@ config = {
                   "initialValues":                [],
                   "timeStepOutputInterval":       1e4,
                   "inputMeshIsGlobal":            True,
+                  "checkForNanInf":               False,
                   "dirichletBoundaryConditions":  {},
-                  "nAdditionalFieldVariables":   0,
+                  "dirichletOutputFilename":      None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+                  "nAdditionalFieldVariables":    0,
+                  "additionalSlotNames":          [],
                     
                   "CellML" : {
                     "modelFilename":                         "../../../input/hodgkin_huxley_1952.c",                          # input C++ source file or cellml XML file
@@ -136,6 +142,7 @@ config = {
                     "optimizationType":                       "vc",                       # "vc", "simd", "openmp" type of generated optimizated source file
                     "approximateExponentialFunction":         True,                      # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
                     "maximumNumberOfThreads":                 0,                          # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.      
+                    "initializeStatesToEquilibrium":          False,
                     
                     "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
                     "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
@@ -146,9 +153,12 @@ config = {
                     "additionalArgument":                     0,
                     "stimulationLogFilename":                 "out/stimulation_log.txt",
                     
+                    # This uses the old specification of states, algebraics and parameters which needs numbers of the variables. 
+                    # The new approach would be to use the option "mappings" which uses the names.
                     "statesForTransfer":                      0,      # which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
-                    "algebraicsForTransfer":               [],      # which algebraic values to use in further computation
-                    "parametersUsedAsAlgebraic":           [],     #[32],       # list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+                    "algebraicsForTransfer":                  [],      # which algebraic values to use in further computation
+                    "parametersForTransfer":                  [],
+                    "parametersUsedAsAlgebraic":              [],     #[32],       # list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
                     "parametersUsedAsConstant":               [2],    #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
                     "parametersInitialValues":                [0.0],  #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                     "meshName":                               "MeshFiber_0",
@@ -167,13 +177,18 @@ config = {
                   "initialValues":               [],
                   #"numberTimeSteps":            1,
                   "timeStepWidth":               dt_1D,  # 1e-5
+                  "timeStepWidthRelativeTolerance": 1e-10,
                   "logTimeStepWidthAsKey":       "dt_1D",
                   "durationLogKey":              "duration_1D",
                   "timeStepOutputInterval":      1e4,
                   "dirichletBoundaryConditions": {}, #{0: -75.0036, -1: -75.0036},
+                  "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "inputMeshIsGlobal":           True,
+                  "checkForNanInf":              False,
                   "solverName":                  "implicitSolver",
                   "nAdditionalFieldVariables":   0,
+                  "additionalSlotNames":         [],
+                  
                   "FiniteElementMethod" : {
                     "maxIterations":             1e4,
                     "relativeTolerance":         1e-10,
@@ -182,6 +197,7 @@ config = {
                     "meshName":                  "MeshFiber_0",
                     "prefactor":                 0.03,  # resolves to Conductivity / (Am * Cm)
                     "solverName":                "implicitSolver",
+                    "slotName":                  "",
                   },
                   "OutputWriter" : [
                     #{"format": "Paraview", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles": True},
@@ -192,7 +208,7 @@ config = {
                 },
               }],
               "OutputWriter" : [
-                {"format": "PythonFile", "outputInterval": int(1./dt_splitting*output_timestep), "filename": "out/fast/fibers", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True}
+                {"format": "PythonFile", "outputInterval": int(1./dt_splitting*output_timestep), "filename": "out/fast/fibers", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"}
               ]
             },
           },
@@ -201,5 +217,8 @@ config = {
     },
     "fiberDistributionFile":    fiber_distribution_file,   # for FastMonodomainSolver, e.g. MU_fibre_distribution_3780.txt
     "firingTimesFile":          firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
+    "onlyComputeIfHasBeenStimulated": False,                          # only compute fibers after they have been stimulated for the first time
+    "disableComputationWhenStatesAreCloseToEquilibrium": False,       # optimization where states that are close to their equilibrium will not be computed again
+    "valueForStimulatedPoint":  20,                                   # to which value of Vm the stimulated node should be set
   }
 }

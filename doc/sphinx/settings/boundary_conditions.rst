@@ -6,7 +6,7 @@ Two types of boundary conditions are supported: Dirichlet and Neumann-type bound
 * :doc:`FiniteElementMethod <finite_element_method>`
 * :doc:`HyperelasticitySolver <hyperelasticity>`
 * :doc:`DynamicHyperelasticitySolver <dynamic_hyperelasticity>`
-* MuscleContractionSolver
+* :doc:`MuscleContractionSolver <muscle_contraction_solver>`
 
 Furthermore, in the :doc:`DynamicHyperelasticitySolver <dynamic_hyperelasticity>`, they can be changed over time.
 
@@ -21,15 +21,26 @@ In all of the above mentioned solvers, the syntax for specifying Dirichlet and N
     ...
     "dirichletBoundaryConditions": dirichlet_bc,
     "neumannBoundaryConditions":   neumann_bc,
+    "dirichletOutputFilename":     "out/dirichlet_bc",
     ...
   }
+  
+The option ``"dirichletOutputFilename"`` allows to specifiy a file name where the Dirichlet boundary conditions will be written to.
+The file name will have the ending ".vtp", which indicates a VTK file with points that can be visualized in ParaView. The file contains the following information:
+
+* Spatial location of the nodes where Dirichlet boundary conditions are specified. This enables them to be visualized as Spheres.
+* Prescribed value. Note, that the value will be `inf` where ``None`` is specified (see below).
+* Partition, i.e. rank no. of the process that own the boundary condition.
+
+If this option is set to the empty string, ``""``, or to ``None``, no such file will be created.
   
 In order to not specify any boundary conditions, use an empty dict for Dirichlet boundary conditions and an empty list for Neumann boundary conditions:
 
 .. code-block:: python
 
   "dirichletBoundaryConditions": {},
-  "neumannBoundaryConditions": [],
+  "neumannBoundaryConditions":   [],
+  "dirichletOutputFilename":     None,
     
 Dirichlet Boundary Conditions
 ----------------------------------

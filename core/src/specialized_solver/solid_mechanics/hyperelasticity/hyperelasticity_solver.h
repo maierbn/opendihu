@@ -58,6 +58,7 @@ public:
   typedef FunctionSpace::FunctionSpace<MeshType, BasisFunction::LagrangeOfOrder<2>> DisplacementsFunctionSpace;
   typedef FunctionSpace::FunctionSpace<MeshType, BasisFunction::LagrangeOfOrder<1>> PressureFunctionSpace;
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> FiberFunctionSpace;
+  typedef DisplacementsFunctionSpace FunctionSpace;
 
   typedef Data::QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace,Term,Term> Data;
   typedef ::Data::QuasiStaticHyperelasticityPressureOutput<PressureFunctionSpace> PressureDataCopy;
@@ -91,10 +92,12 @@ public:
   Data &data();
 
   //! this evaluates the actual nonlinear function f(x) that should be solved f(x) = 0
-  void evaluateNonlinearFunction(Vec x, Vec f);
+  //! @return if computation was successful
+  bool evaluateNonlinearFunction(Vec x, Vec f);
 
   //! this evaluates the analytic jacobian for the Newton scheme, or the material stiffness
-  void evaluateAnalyticJacobian(Vec x, Mat jac);
+  //! @return if computation was successful
+  bool evaluateAnalyticJacobian(Vec x, Mat jac);
 
   //! copy entries of combined vector x to u and p, if both u and p are nullptr, use this->data_.displacements() and this->data_.pressure(), if only p is nullptr, only copy to u
   void setDisplacementsAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsFieldVariableType> u = nullptr, std::shared_ptr<PressureFieldVariableType> p = nullptr);
@@ -151,7 +154,7 @@ public:
   Vec externalVirtualWork();
 
   //! compute δWint from given displacements, this is a wrapper to materialComputeInternalVirtualWork
-  void materialComputeInternalVirtualWork(
+  bool materialComputeInternalVirtualWork(
     std::shared_ptr<VecHyperelasticity> displacements,
     std::shared_ptr<VecHyperelasticity> internalVirtualWork
   );
@@ -174,6 +177,16 @@ public:
   //! set new neumann bc's = traction for the next solve
   void updateNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> newNeumannBoundaryConditions);
 
+  //! set new dirichlet boundary condition values for existing dofs
+  void updateDirichletBoundaryConditions(std::vector<std::pair<global_no_t,std::array<double,3>>> newDirichletBCValues);
+
+  //! add new dirichlet bc's, it is also possible to set new dofs that were not prescribed beforehand
+  //! this calles addBoundaryConditions() of the dirichletBoundaryConditions_ object
+  //! @param overwriteBcOnSameDof if existing bc dofs that are also in the ones to set newly should be overwritten, else they are not touched
+  void addDirichletBoundaryConditions(std::vector<typename DirichletBoundaryConditions<DisplacementsFunctionSpace,nDisplacementComponents>::ElementWithNodes> &boundaryConditionElements, bool overwriteBcOnSameDof);
+
+  //! get the Petsc Vec of the current state (uvp vector), this is needed to save and restore checkpoints from the PreciceAdapter
+  Vec currentState();
 protected:
 
   //! initialize all Petsc Vec's and Mat's that will be used in the computation
@@ -200,12 +213,14 @@ protected:
 
   //! compute δW_int, input is in this->data_.displacements() and this->data_.pressure(), output is in solverVariableResidual_
   //! @param communicateGhosts if startGhostManipulation() and finishGhostManipulation() will be called on combinedVecResidual_ inside this method, if set to false, you have to do it manually before and after this method
-  void materialComputeInternalVirtualWork(bool communicateGhosts=true);
+  //! @return true if computation was successful (i.e. no negative jacobian)
+  bool materialComputeInternalVirtualWork(bool communicateGhosts=true);
 
   //! compute the nonlinear function F(x), x=solverVariableSolution_, F=solverVariableResidual_
   //! solverVariableResidual_[0-2] contains δW_int - δW_ext, solverVariableResidual_[3] contains int_Ω (J-1)*Ψ dV
   //! @param loadFactor: a factor with which the rhs is scaled. This is equivalent to set the body force and traction (neumann bc) to this fraction
-  void materialComputeResidual(double loadFactor = 1.0);
+  //! @return true if computation was successful (i.e. no negative jacobian)
+  bool materialComputeResidual(double loadFactor = 1.0);
 
   //! compute δW_ext,dead = int_Ω B^L * phi^L * phi^M * δu^M dx + int_∂Ω T^L * phi^L * phi^M * δu^M dS
   void materialComputeExternalVirtualWorkDead();
@@ -215,7 +230,11 @@ protected:
   void materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts=true);
 
   //! compute the jacobian of the Newton scheme
-  void materialComputeJacobian();
+  //! @return true if computation was successful (i.e. no negative jacobian)
+  bool materialComputeJacobian();
+
+  //! determine the number of local non-zero entries in the jacobian
+  unsigned int materialDetermineNumberNonzerosInJacobian();
 
   //! compute the deformation gradient, F inside the current element at position xi, the value of F is still with respect to the reference configuration,
   //! the formula is F_ij = x_i,j = δ_ij + u_i,j
@@ -295,7 +314,8 @@ protected:
   Mat solverMatrixAdditionalNumericJacobian_;               //< only used when both analytic and numeric jacobians are computed, then this holds the numeric jacobian
   Vec solverVariableResidual_;                              //< PETSc Vec to store the residual, equal to combinedVecResidual_->valuesGlobal()
   Vec solverVariableSolution_;                              //< PETSc Vec to store the solution, equal to combinedVecSolution_->valuesGlobal()
-  Vec zeros_;                                               // a solver that contains all zeros, needed to zero the diagonal of the jacobian matrix
+  Vec zeros_;                                               //< a solver that contains all zeros, needed to zero the diagonal of the jacobian matrix
+  Vec lastSolution_;                                        //< a temporary variable to hold the previous solution in the nonlinear solver, to be used to reset the nonlinear scheme if it diverged
 
   std::shared_ptr<VecHyperelasticity> combinedVecResidual_; //< the Vec for the residual and result of the nonlinear function
   std::shared_ptr<VecHyperelasticity> combinedVecSolution_; //< the Vec for the solution, combined means that ux,uy,uz and p components are combined in one vector
@@ -326,6 +346,9 @@ protected:
   double secondLastNorm_;                                   //< residual norm of the second last iteration in the nonlinear solver
   double currentLoadFactor_;                                //< current value of the load factor, this value is passed to materialComputeResidual(), 1.0 means normal computation, any lower value reduces the right hand side (scales body and traction forces)
   int nNonlinearSolveCalls_;                                //< how often the nonlinear solve should be called in sequence
+  bool lastSolveSucceeded_;                                 //< if the last computation of the residual or jacobian succeeded, if this is false, it indicates that there was a negative jacobian
+  double loadFactorGiveUpThreshold_;                        //< a threshold for the load factor, if it is below, the solve is aborted
+  unsigned int nNonZerosJacobian_;                          //< number of nonzero entries in the material jacobian on the local domain, used for preallocation of the matrix
 
   std::vector<double> loadFactors_;                         //< vector of load factors, 1.0 means normal computation, any lower value reduces the right hand side (scales body and traction forces)
 

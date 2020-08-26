@@ -34,31 +34,45 @@ void TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
 setInitialValues()
 {
   // set initial values as given in settings, or set to zero if not given
-  std::vector<double> localValues;
+  std::vector<VecD<nComponents>> localValues;
 
-  bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
-  if (inputMeshIsGlobal)
+  if (this->specificSettings_.hasKey("initialValues") && !this->specificSettings_.isEmpty("initialValues"))
   {
-    assert(this->data_);
-    assert(this->data_->functionSpace());
-    const int nDofsGlobal = this->data_->functionSpace()->nDofsGlobal();
-    LOG(DEBUG) << "setInitialValues, nDofsGlobal = " << nDofsGlobal;
 
-    this->specificSettings_.getOptionVector("initialValues", nDofsGlobal, localValues);
+    // determine if the initial values are given as global or local array
+    bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
+    if (inputMeshIsGlobal)
+    {
+      // if the settings specify a global list of values, extract the local values
+      assert(this->data_);
+      assert(this->data_->functionSpace());
 
-    this->data_->functionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(localValues);
+      // get number of global dofs, i.e. number of values in global list
+      const int nDofsGlobal = this->data_->functionSpace()->nDofsGlobal();
+      LOG(DEBUG) << "setInitialValues, nDofsGlobal = " << nDofsGlobal;
+
+      this->specificSettings_.getOptionVector("initialValues", nDofsGlobal, localValues);
+
+      // extract only the local dofs out of the list of global values
+      this->data_->functionSpace()->meshPartition()->extractLocalDofsWithoutGhosts(localValues);
+    }
+    else
+    {
+      // input is already only the local dofs, use all
+      const int nDofsLocal = this->data_->functionSpace()->nDofsLocalWithoutGhosts();
+      this->specificSettings_.getOptionVector("initialValues", nDofsLocal, localValues);
+    }
+    VLOG(1) << "set initial values to " << localValues;
+
+    // set the first component of the solution variable by the given values
+    this->data_->solution()->setValuesWithoutGhosts(localValues);
+
+    VLOG(1) << this->data_->solution();
   }
   else
   {
-    const int nDofsLocal = this->data_->functionSpace()->nDofsLocalWithoutGhosts();
-    this->specificSettings_.getOptionVector("initialValues", nDofsLocal, localValues);
+    this->data_->solution()->zeroEntries();
   }
-  VLOG(1) << "set initial values to " << localValues;
-
-  // set the first component of the solution variable by the given values
-  data_->solution()->setValuesWithoutGhosts(0, localValues);
-
-  VLOG(1) << data_->solution();
 }
 
 template<typename FunctionSpaceType, int nComponents>
@@ -108,25 +122,30 @@ checkForNanInf(int timeStepNo, double currentTime)
 {
   if (checkForNanInf_)
   {
-    if (this->data_->solution()->containsNanOrInf())
+    // only check every 10th time step
+    static int counter = 0;
+    if (counter % 10 == 0)
     {
-      LOG(ERROR) << "In " << name_ << ", timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime << ": Solution contains Nan or Inf. "
-        << "This probably means that the timestep width, " << this->timeStepWidth_ << ", is too high.";
-      LOG(ERROR) << *this->data_->solution();
-      LOG(FATAL) << "Abort because of nan or inf in solution. Set option \"checkForNanInf\": False to avoid this.";
+      if (this->data_->solution()->containsNanOrInf())
+      {
+        LOG(ERROR) << "In " << name_ << ", timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime << ": Solution contains Nan or Inf. "
+          << "This probably means that the timestep width, " << this->timeStepWidth_ << ", is too high.";
+        LOG(ERROR) << *this->data_->solution();
+        LOG(FATAL) << "Abort because of nan or inf in solution. Set option \"checkForNanInf\": False to avoid this.";
+      }
     }
+    counter++;
   }
 }
 
 template<typename FunctionSpaceType, int nComponents>
-std::shared_ptr<typename TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::OutputConnectorDataType>
+std::shared_ptr<typename TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::SlotConnectorDataType>
 TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  //LOG(TRACE) << "\ncall prepareForGetOutputConnectorData";
-  prepareForGetOutputConnectorData();
+  prepareForGetSlotConnectorData();
 
-  return this->data_->getOutputConnectorData();
+  return this->data_->getSlotConnectorData();
 }
 
 

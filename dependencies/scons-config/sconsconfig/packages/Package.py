@@ -210,13 +210,22 @@ class Package(object):
     if self.have_any_options(env, upp + '_DOWNLOAD', 'DOWNLOAD_ALL', upp + '_REBUILD'):
 
       # Perform the auto-management of this package.
-      res = self.auto(ctx)
+      res = self.download_and_build_package(ctx)
 
-      # For now we assume a package location is set entirely with <NAME>_DIR.
+      # Here, the package location is in <NAME>_DIR, either by option or by download and build
       if res[0]:
         value = self.get_option(env, upp + '_DIR')
         res = self.try_location(ctx, value, **kwargs)
-        if not res[0]:
+        
+        if res[0]:
+          # If it all seemed to work, write a dummy file to indicate this package has been built.
+          ctx.Log("Build was successful, touch file \"scons_build_success\".\n")
+          
+          success_file = open(os.path.join(env['current_source_dir'],'scons_build_success'), 'w')
+          success_file.write('  ')
+          success_file.close()  
+        
+        else:
           self._msg = '\n\nUnable to validate a %s installation at:\n %s\nInspect "config.log" to see what went wrong.\n'%(name, value)
           # ctx.Log(msg)
           # print(msg)
@@ -351,7 +360,6 @@ class Package(object):
           return res
     return res
 
-    
   def check_required(self, result, ctx=None):
     name = self.name
     upp = name.upper()
@@ -374,7 +382,7 @@ class Package(object):
       print(('  - Set %s_DOWNLOAD to True to automatically download and install the package.'%upp))
       print(('    If you additionally set %s_REDOWNLOAD to True it forces a fresh download '%upp))
       print('    if it was already done earlier.')
-      print('If you already did that, the build system might have a bug. Inspect "config.log" to see what went wrong.')
+      print('If you already did that, something went wrong. Inspect "config.log" to see what went wrong.\n\nSometimes it helps to delete the cache and try again:\nrm -rf .scon*')
       sys.exit(1)
 
     # If the package is not required but was found anyway, add a preprocessor
@@ -427,7 +435,7 @@ class Package(object):
       return self.build_handlers[arch]
     return self.build_handlers.get(None, None)
 
-  def auto(self, ctx):
+  def download_and_build_package(self, ctx):
     #sys.stdout.write('\n')
     
     # Are we forcing this?
@@ -478,6 +486,10 @@ class Package(object):
       filename = self.download_url[self.download_url.rfind('/') + 1:]
     unpack_dir = "src"
     install_dir = os.path.abspath(os.path.join(base_dir, "install"))
+    
+    # Set the directory location.
+    ctx.env[self.name.upper() + '_DIR'] = install_dir
+    
     ctx.Log("Building into " + install_dir + "\n")
 
     # Change to the source directory.
@@ -492,14 +504,14 @@ class Package(object):
     # Download if the file is not already available.
     if filename != "":
       if not os.path.exists(filename) or force_redownload:
-        if not self.auto_download(ctx, filename):
+        if not self.download_package(ctx, filename):
           os.chdir(old_dir)
           return (0, '')
 
     # Unpack if there is not already a build directory by the same name.
     if filename != "":
       if not os.path.exists(unpack_dir) or force_redownload:
-        if not self.auto_unpack(ctx, filename, unpack_dir):
+        if not self.unpack_package(ctx, filename, unpack_dir):
           os.chdir(old_dir)
           return (0, '')
 
@@ -514,27 +526,27 @@ class Package(object):
       if (os.path.isdir(entries[0])):
         os.chdir(entries[0])
     source_dir = os.getcwd()
-    ctx.Log("  source_dir:  ["+source_dir+"] (where the unpacked sources are)\n")
+    ctx.Log("  source_dir:  ["+source_dir+"] (where the unpacked sources are)\n\n")
+    ctx.env['current_source_dir'] = source_dir
 
+    ctx.Log(" Only build package if at least on of the following three conditions is True:\n")
     ctx.Log(" force_redownload: "+str(force_redownload)+", force_rebuild: "+str(force_rebuild)+", not success: "+str(not os.path.exists('scons_build_success'))+"\n")
+    ctx.Log(" (\"success\" means that the file \"scons_build_success\" exists in \""+source_dir+"\")\n")
     
-
     # Build the package.
     if (not os.path.exists('scons_build_success')) or force_redownload or force_rebuild:
-      ctx.Log("build package\n")
-      if not self.auto_build(ctx, install_dir, source_dir, dependencies_dir):
+      ctx.Log(" => Build package\n\n")
+      if not self.build_package(ctx, install_dir, source_dir, dependencies_dir):
         os.chdir(old_dir)
         return (0, '')
 
-    # Set the directory location.
-    ctx.env[self.name.upper() + '_DIR'] = install_dir
-
-    ctx.Log('  Configuring with downloaded package ... \n')
+    ctx.Log(' Configuring with downloaded package ... \n')
     os.chdir(old_dir)
+
     return (1, '')
 
-  def auto_download(self, ctx, filename):
-    sys.stdout.write('  Downloading ... ')
+  def download_package(self, ctx, filename):
+    sys.stdout.write('\n  Downloading ... ')
     sys.stdout.flush()
 
     if os.path.exists(filename):
@@ -542,15 +554,28 @@ class Package(object):
 
     ctx.Log("Downloading file from " + self.download_url + "\n")
     try:
+      # normal download with python3
       import urllib.request, urllib.parse, urllib.error
+      
     except Exception as e:
-      ctx.Log("Failed to download file: Could not import urllib\n")
-      print(e)
-      return False
+      # try with python2
+      ctx.Log("Failed to download file: Could not import urllib.request\n")
+      ctx.Log('Warning! You are running scons with python2.7, but python3 is required.\nPlease use the scons installation under\ndependencies/scons/scons.py\n\nNow trying to use libraries for python2.7 ... ')
+      try:
+        import urllib
+        urllib.urlretrieve(self.download_url, filename)
+        sys.stdout.write('done.\n')
+        return True
+      
+      except Exception as e:
+        ctx.Log("Failed to download file with python2.7.\nPlease use the scons installation under\ndependencies/scons/scons.py\n")
+        return False
+        
     try:
       urllib.request.urlretrieve(self.download_url, filename)
       sys.stdout.write('done.\n')
       return True
+      
     except Exception as e:
       sys.stdout.write('failed.\n')
       print(e)
@@ -569,7 +594,7 @@ class Package(object):
       
       return False
 
-  def auto_unpack(self, ctx, filename, unpack_dir):
+  def unpack_package(self, ctx, filename, unpack_dir):
     sys.stdout.write('  Extracting ... ')
     sys.stdout.flush()
 
@@ -604,8 +629,7 @@ class Package(object):
         
         # get name of extracted directory
         entries = os.listdir(unpack_dir)
-        print(("top-level files: {}".format(entries)))
-        #os.rename(filename_base, unpack_dir)
+        ctx.Log("top-level files: {}".format(entries))
       except:
         shutil.rmtree(unpack_dir, True)
         try:
@@ -669,10 +693,8 @@ class Package(object):
       sys.stdout.write(str(p)+"%"+"\b"*(len(str(p))+1))
       sys.stdout.flush()
 
-  def auto_build(self, ctx, install_dir, source_dir, dependencies_dir):
+  def build_package(self, ctx, install_dir, source_dir, dependencies_dir):
     sys.stdout.write('  Building package {}, this could take a while ... \n'.format(self.name))
-    if self.name  == "Python":
-      sys.stdout.write('  Note, building package {}, takes REALLY long so be patient! \n'.format(self.name))
       
     sys.stdout.flush()
     ctx.Log("Building package in " + install_dir + "\n")
@@ -745,8 +767,8 @@ class Package(object):
         cmd = cmd.replace('${PATH}', path_environment_variable)
         
         
-        ctx.Log("MPI_DIR in env: {}\n".format("MPI_DIR" in ctx.env))
-        ctx.Log("env[MPI_DIR]={}, replace in cmd\n".format(ctx.env["MPI_DIR"]))
+        #ctx.Log("MPI_DIR in env: {}\n".format("MPI_DIR" in ctx.env))
+        #ctx.Log("env[MPI_DIR]={}, replace in cmd\n".format(ctx.env["MPI_DIR"]))
         if "MPI_DIR" in ctx.env:
           cmd = cmd.replace('${MPI_DIR}', ctx.env["MPI_DIR"])
         
@@ -771,7 +793,6 @@ class Package(object):
           sys.stdout.write("     \n")
           sys.stdout.flush()
     
-          
           # get output
           if os.path.exists('stdout.log'):
             with open('stdout.log') as f:
@@ -780,6 +801,7 @@ class Package(object):
             os.remove('stdout.log')
           self.last_build_log = output
           ctx.Log(output+"\n")
+          
         except:
           self.command_running = False
           stdout_log.close()
@@ -788,6 +810,7 @@ class Package(object):
               output = f.read()
             stdout_log.close()
             os.remove('stdout.log')
+          
           if not allow_errors:
             sys.stdout.write('failed.\n')
             ctx.Log("Command failed: \n"+output)
@@ -796,11 +819,6 @@ class Package(object):
           else:
             ctx.Log("Command failed (but allowed): \n"+output)
             self.last_build_log = output
-
-    # If it all seemed to work, write a dummy file to indicate this package has been built.
-    success = open('scons_build_success', 'w')
-    success.write('  ')
-    success.close()
 
     sys.stdout.write('  done.\n')
     return True
@@ -950,7 +968,14 @@ class Package(object):
       
       if os.path.isfile(str(ctx.lastTarget)+".out"):
         with open(str(ctx.lastTarget)+".out", "rb") as f:
-          ctx.Log("Program output: \""+f.read()+"\"\n")
+          try:
+            output = f.read()
+            if isinstance(output, str):
+              ctx.Log("Program output: \""+output+"\"\n")
+            else:
+              ctx.Log("Program output: \""+output.decode('utf-8')+"\"\n")
+          except:
+              ctx.Log("(Could not load output)\n")
  
       disable_checks = False
       if ctx.env.get('DISABLE_CHECKS', []):

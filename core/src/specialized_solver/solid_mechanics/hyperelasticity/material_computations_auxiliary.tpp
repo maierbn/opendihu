@@ -300,13 +300,14 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
   // if the alternative coupled form of the strain energy function, ψ(C), strainEnergyDensityFunctionCoupledDependentOnC, is considered
   const bool usesFormulationWithC = typeid(decltype(Term::strainEnergyDensityFunctionCoupledDependentOnC)) != typeid(decltype(INT(0)));
 
-  // Ibar1, Ibar2, Ibar4, Ibar5, J, I1, I2, I3, C11, C12, C13, C22, C23, C33
+  // Ibar1, Ibar2, Ibar4, Ibar5, J, I1, I2, I3, C11, C12, C13, C22, C23, C33, a1, a2, a3
   std::vector<double_v_t> parameterVector = {
     reducedInvariants[0], reducedInvariants[1], reducedInvariants[3], reducedInvariants[4],  // Ibar1, Ibar2, Ibar4, Ibar5
     deformationGradientDeterminant,                                                          // J
     invariants[0], invariants[1], invariants[2],                                             // I1, I2, I3
     rightCauchyGreen[0][0], rightCauchyGreen[1][0], rightCauchyGreen[2][0],                  // C11, C12, C13
-    rightCauchyGreen[1][1], rightCauchyGreen[2][1], rightCauchyGreen[2][2]                   // C22, C23, C33
+    rightCauchyGreen[1][1], rightCauchyGreen[2][1], rightCauchyGreen[2][2],                  // C22, C23, C33
+    fiberDirection[0], fiberDirection[1], fiberDirection[2]                                  // a1, a2, a3
   };
 
   // reduced invariants, arguments of `strainEnergyDensityFunctionIsochoric`
@@ -351,7 +352,8 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
   const double_v_t dPsi_dI2 = ExpressionHelper<double_v_t>::apply(dPsi_dI2Expression, parameterVector);
   const double_v_t dPsi_dI3 = ExpressionHelper<double_v_t>::apply(dPsi_dI3Expression, parameterVector);
 
-  VLOG(2) << "coupled term: " << Term::strainEnergyDensityFunctionCoupled;
+  // the following line gives linker errors in debug target
+  //VLOG(2) << "coupled term: " << Term::strainEnergyDensityFunctionCoupled;
   VLOG(2) << "invariants: I1: " << Term::I1 << " = " << I1 << ", I2: " << Term::I2 << ", I3: " << Term::I3 << " = " << I3;
   VLOG(2) << "∂ψ/∂I1: " << dPsi_dI1Expression << " = " << dPsi_dI1;
   VLOG(2) << "∂ψ/∂I2: " << dPsi_dI2Expression << " = " << dPsi_dI2;
@@ -374,6 +376,10 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
 
   double factor23 = -2./3;
   double_v_t factorJ23 = MathUtility::pow(J, factor23);
+
+  // If the jacobian is negative, this is a non-physical state. A warning has already been printed. Now to continue computation, set J^-2/3 to 1 (would be nan otherwise).
+  if (Vc::any_of(J < 0))
+    factorJ23 = 1;
 
   Tensor2<3,double_v_t> pK2Stress;
 
@@ -440,6 +446,12 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
     }
   }
 
+#ifndef NDEBUG
+  VLOG(1) << "fictitiousPK2Stress: " << fictitiousPK2Stress << ", inverseRightCauchyGreen: " << inverseRightCauchyGreen << ", J: " << J << ", p: " << pressure;
+  VLOG(1) << "decoupledFormFactors: " << decoupledFormFactor1 << ", " << decoupledFormFactor2 << ", " << decoupledFormFactor4 << ", " << decoupledFormFactor5;
+  VLOG(1) << "fiberDirection: " << fiberDirection << ", C: " << rightCauchyGreen;
+#endif
+
   // decoupled form of strain energy function
   // Holzapfel p.234
   // S = S_vol + S_iso
@@ -486,7 +498,7 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
       pk2StressIsochoric[j][i] = sIso;
 
       //VLOG(2) << "    PSbar_" << i << j << ": " << pSbar << ", J^-2/3: " << factorJ23 << ", Siso_" << i << j << ": " << sIso;
-      VLOG(2) << "   sVol: " << sVol << ", sIso: " << sIso;
+      //VLOG(2) << "   sVol: " << sVol << ", sIso: " << sIso;
 
       // total stress is sum of volumetric and isochoric part, sVol = J*p*C^{-1}_AB, sIso = j^{-2/3}*(Ii-1/3*Cc)*Sbar
       pK2Stress[j][i] = sVol + sIso;
@@ -495,6 +507,7 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
       //pK2Stress[j][i] = sIso;
 
       //VLOG(2) << "set pk2Stress_" << i << j << " = " << pK2Stress[j][i];
+      LOG(DEBUG) << "set pk2Stress_" << i << j << " = " << pK2Stress[j][i] << " = " << sVol << " + " << sIso;
 
       //if (i == j)
       //  LOG(DEBUG) << "  ccs: " << ccs << " C:Sbar: " << cSbar << ", factorJ23: " << factorJ23 << ", Svol_" << i << j << " = " << sVol << ", Siso_" << i << j << " = " << sIso << ", S = " << pK2Stress[j][i];
@@ -514,7 +527,8 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
       pK2Stress[j][i] += coupledFormFactor1 * delta_ij + coupledFormFactor2 * rightCauchyGreen[j][i] + coupledFormFactor3 * inverseRightCauchyGreen[j][i];
     }
   }
-  VLOG(2) << "   δ1: " << coupledFormFactor1 << ", δ2: " << coupledFormFactor2 << ", δ3: " << coupledFormFactor3 << ", after adding coupled form terms: " << pK2Stress;
+  //VLOG(2) << "   δ1: " << coupledFormFactor1 << ", δ2: " << coupledFormFactor2 << ", δ3: " << coupledFormFactor3 << ", after adding coupled form terms: " << pK2Stress;
+  LOG(DEBUG) << "   δ1: " << coupledFormFactor1 << ", δ2: " << coupledFormFactor2 << ", δ3: " << coupledFormFactor3 << ", after adding coupled form terms: " << pK2Stress;
 
   // if the formulation includes a Ψ(C) term, we need to add S = 2 * ∂Ψ(C)/∂C
   if (usesFormulationWithC)
@@ -534,19 +548,24 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
     const double_v_t dPsi_dC23 = ExpressionHelper<double_v_t>::apply(dPsi_dC23Expression, parameterVector);
     const double_v_t dPsi_dC33 = ExpressionHelper<double_v_t>::apply(dPsi_dC33Expression, parameterVector);
 
-    VLOG(2) << "formulation with C, add S=(" << dPsi_dC11 << "," << 2*dPsi_dC12 << "," << 2*dPsi_dC13 << "," << 2*dPsi_dC22 << "," << 2*dPsi_dC23 << "," << 2*dPsi_dC33 << ")";
+    //VLOG(2) << "formulation with C, add S=(" << dPsi_dC11 << "," << 2*dPsi_dC12 << "," << 2*dPsi_dC13 << "," << 2*dPsi_dC22 << "," << 2*dPsi_dC23 << "," << 2*dPsi_dC33 << ")";
+    LOG(DEBUG) << "formulation with C, add S=(" << dPsi_dC11 << "," << 2*dPsi_dC12 << "," << 2*dPsi_dC13 << "," << 2*dPsi_dC22 << "," << 2*dPsi_dC23 << "," << 2*dPsi_dC33 << "), parameterVector: " << parameterVector;
+    LOG(DEBUG) << "expressions: (" << dPsi_dC11Expression << "\n2: " << dPsi_dC12Expression << "\n3: " << dPsi_dC13Expression << "\n4: " << dPsi_dC22Expression << "\n5: " << dPsi_dC23Expression << "\n6: " << dPsi_dC33Expression << ")";
 
     // add contribution to S = 2 * ∂Ψ(C)/∂C
-    pK2Stress[0][0] += 2*dPsi_dC11;   // S11
-    pK2Stress[1][0] += 2*dPsi_dC12;   // S12
-    pK2Stress[2][0] += 2*dPsi_dC13;   // S13
-    pK2Stress[0][1] += 2*dPsi_dC12;   // S21 = S12
-    pK2Stress[1][1] += 2*dPsi_dC22;   // S22
-    pK2Stress[2][1] += 2*dPsi_dC23;   // S23
-    pK2Stress[2][0] += 2*dPsi_dC13;   // S31 = S13
-    pK2Stress[2][1] += 2*dPsi_dC23;   // S32 = S23
-    pK2Stress[2][2] += 2*dPsi_dC33;   // S33
+    pK2Stress[0][0] += 2*dPsi_dC11;   // S11          // S11
+    pK2Stress[1][0] += 2*dPsi_dC12;   // S12          // S12
+    pK2Stress[2][0] += 2*dPsi_dC13;   // S13          // S13
+    pK2Stress[0][1] += 2*dPsi_dC12;   // S21 = S12    // S21
+    pK2Stress[1][1] += 2*dPsi_dC22;   // S22          // S22
+    pK2Stress[2][1] += 2*dPsi_dC23;   // S23          // S23
+    pK2Stress[0][2] += 2*dPsi_dC13;   // S31 = S13    // S31
+    pK2Stress[1][2] += 2*dPsi_dC23;   // S32 = S23    // S32
+    pK2Stress[2][2] += 2*dPsi_dC33;   // S33          // S33
   }
+  static int cntr = -1;
+  cntr++;
+  LOG(DEBUG) << "pK2Stress: " << pK2Stress << " counter: " << cntr;
 
   //for debugging, check symmetry of PK2 stress and if it is correct according to Mooney-Rivlin formula
   if (VLOG_IS_ON(2))
@@ -607,6 +626,10 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
 #ifndef NDEBUG
   if (MathUtility::containsNanOrInf(pK2Stress))
   {
+    if (MathUtility::containsNanOrInf(fictitiousPK2Stress))
+    {
+      LOG(ERROR) << "fictitiousPK2Stress contains nan: " << fictitiousPK2Stress << ", J=" << J;
+    }
     LOG(FATAL) << "PK2stress contains nan: " << pK2Stress;
   }
 #endif
@@ -664,6 +687,7 @@ computePK2StressField()
     // get geometry field of reference configuration
     std::array<Vec3_v_t,nDisplacementsDofsPerElement> geometryReferenceValues;
     this->data_.geometryReference()->getElementValues(elementNoLocalv, geometryReferenceValues);
+    double_v_t approximateMeshWidth = MathUtility::computeApproximateMeshWidth<double_v_t,nDisplacementsDofsPerElement>(geometryReferenceValues);
 
     // get displacements field values for element
     std::array<Vec3_v_t,nDisplacementsDofsPerElement> displacementsValues;
@@ -732,18 +756,51 @@ computePK2StressField()
         break;
       };
 
-      // compute the 3x3 jacobian of the parameter space to world space mapping
-      Tensor2_v_t<D> jacobianMaterial = DisplacementsFunctionSpace::computeJacobian(geometryReferenceValues, xi);
+      Tensor2_v_t<D> jacobianMaterial;
       double_v_t jacobianDeterminant;
-      Tensor2_v_t<D> inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, jacobianDeterminant);
+      Tensor2_v_t<D> inverseJacobianMaterial;
+      Tensor2_v_t<D> deformationGradient;
+      double_v_t deformationGradientDeterminant;
 
-      // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
-      // inverseJacobianMaterial[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
+      for (int nTries = 0; nTries < 3; nTries++)
+      {
+        // compute the 3x3 jacobian of the parameter space to world space mapping
+        jacobianMaterial = DisplacementsFunctionSpace::computeJacobian(geometryReferenceValues, xi);
+        inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, approximateMeshWidth, jacobianDeterminant);
 
-      // F
-      Tensor2_v_t<D> deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);
+        // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
+        // inverseJacobianMaterial[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
 
-      double_v_t deformationGradientDeterminant = MathUtility::computeDeterminant(deformationGradient);  // J
+        // F
+        deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);
+        deformationGradientDeterminant = MathUtility::computeDeterminant(deformationGradient);  // J
+
+        if (Vc::all_of(deformationGradientDeterminant > 0.2))
+          break;
+
+        // if J=det(F) is negative, move the point in the element, xi, a bit more to the center
+        for (int i = 0; i < 3; i++)
+        {
+          xi[i] = 0.5 + (xi[0]-0.5)*0.9;
+        }
+
+#ifndef NDEBUG
+        LOG(DEBUG) << "element " << elementNoLocal << ", J=" << deformationGradientDeterminant << "," << jacobianDeterminant
+          << ", displacementsValues: " << displacementsValues[0] << "," << displacementsValues[1]
+          << ", deformationGradient: " << deformationGradient << ", inverseJacobianMaterial: " << inverseJacobianMaterial
+          << ", geometryReferenceValues: " << geometryReferenceValues[0] << "," << geometryReferenceValues[1]
+          << ", " << nTries << " retry with xi=" << xi;
+#endif
+      }
+
+      if (Vc::any_of(deformationGradientDeterminant < 0))
+      {
+        LOG(ERROR) << "J = det(F) = " << deformationGradientDeterminant << " is negative, in computation of PK2 stresses.\n"
+          << "Element no. " << elementNoLocal << ", xi=" << xi << ", det(material jacobian): " << jacobianDeterminant
+          << ", displacementsValues: " << displacementsValues[0] << "," << displacementsValues[1]
+          << ", deformationGradient: " << deformationGradient << ", inverseJacobianMaterial: " << inverseJacobianMaterial
+          << ", geometryReferenceValues: " << geometryReferenceValues[0] << "," << geometryReferenceValues[1];
+      }
 
       // compute Fdot values
       Tensor2_v_t<D> Fdot = computeDeformationGradientTimeDerivative(velocitiesValues, inverseJacobianMaterial, xi);
@@ -767,10 +824,15 @@ computePK2StressField()
       Tensor2_v_t<D> rightCauchyGreen = this->computeRightCauchyGreenTensor(deformationGradient);  // C = F^T*F
 
       double_v_t rightCauchyGreenDeterminant;   // J^2
-      Tensor2_v_t<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse(rightCauchyGreen, rightCauchyGreenDeterminant);  // C^-1
+      Tensor2_v_t<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse(rightCauchyGreen, approximateMeshWidth, rightCauchyGreenDeterminant);  // C^-1
 
       // fiber direction
       Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
+
+#ifndef NDEBUG
+      if (fabs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3)
+        LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized, elementalDirectionValues:" << elementalDirectionValues;
+#endif
 
       // invariants
       std::array<double_v_t,5> invariants = this->computeInvariants(rightCauchyGreen, rightCauchyGreenDeterminant, fiberDirection);  // I_1, I_2, I_3, I_4, I_5
@@ -829,6 +891,8 @@ computePK2StressField()
         // compute traction by Cauchy theorem T = S n
         Vec3_v_t traction = pK2Stress * normal;
 
+        //LOG(INFO) << elementNoLocal << "." << elementalNodeNo << ": traction: " << traction;
+
         // set value in material traction
         this->data_.materialTraction()->setValue(dofNoLocal, traction, INSERT_VALUES);
 
@@ -841,6 +905,7 @@ computePK2StressField()
         // compute traction by Cauchy theorem T = S n
         Vec3_v_t traction = pK2Stress * normal;
 
+        //LOG(INFO) << elementNoLocal << "." << elementalNodeNo << ": traction: " << traction;
         // set value in material traction
         this->data_.materialTraction()->setValue(dofNoLocal, traction, INSERT_VALUES);
       }
@@ -885,16 +950,17 @@ computeElasticityTensor(const Tensor2<3,double_v_t> &rightCauchyGreen,         /
   // for explanation see pdf document
   const int D = 3;
 
-  // if the alternative coupled form of the strain energy function, ψ(C), strainEnergyDensityFunctionCoupledDependentOnC, is considered
+  // if the alternative coupled form of the strain energy function, ψ(C,a), strainEnergyDensityFunctionCoupledDependentOnC, is considered
   const bool usesFormulationWithC = typeid(decltype(Term::strainEnergyDensityFunctionCoupledDependentOnC)) != typeid(decltype(INT(0)));
 
-  // Ibar1, Ibar2, Ibar4, Ibar5, J, I1, I2, I3, C11, C12, C13, C22, C23, C33
+  // Ibar1, Ibar2, Ibar4, Ibar5, J, I1, I2, I3, C11, C12, C13, C22, C23, C33, a1, a2, a3
   std::vector<double_v_t> parameterVector = {
     reducedInvariants[0], reducedInvariants[1], reducedInvariants[3], reducedInvariants[4],  // Ibar1, Ibar2, Ibar4, Ibar5
     deformationGradientDeterminant,                                                          // J
     invariants[0], invariants[1], invariants[2],                                             // I1, I2, I3
     rightCauchyGreen[0][0], rightCauchyGreen[1][0], rightCauchyGreen[2][0],                  // C11, C12, C13
-    rightCauchyGreen[1][1], rightCauchyGreen[2][1], rightCauchyGreen[2][2]                   // C22, C23, C33
+    rightCauchyGreen[1][1], rightCauchyGreen[2][1], rightCauchyGreen[2][2],                  // C22, C23, C33
+    fiberDirection[0], fiberDirection[1], fiberDirection[2]                                  // a1, a2, a3
   };
 
   // compute preliminary variables that are independent of the indices a,b,c,d
@@ -1119,8 +1185,11 @@ computeElasticityTensor(const Tensor2<3,double_v_t> &rightCauchyGreen,         /
 
     const double_v_t d2Psi_dC33dC33 = ExpressionHelper<double_v_t>::apply(d2Psi_dC33dC33Expression, parameterVector);
 
-    // distinct entries of C: {0,0,0,0},{0,1,0,0},{0,2,0,0},{1,1,0,0},{1,2,0,0},{2,2,0,0},{0,1,0,1},{0,2,0,1},{1,1,0,1},{1,2,0,1},
-    // {2,2,0,1},{0,2,0,2},{1,1,0,2},{1,2,0,2},{2,2,0,2},{1,1,1,1},{1,2,1,1},{2,2,1,1},{1,2,1,2},{2,2,1,2},
+    // distinct entries of C: {0,0,0,0},{0,1,0,0},{0,2,0,0},{1,1,0,0},{1,2,0,0},{2,2,0,0},
+    // {0,1,0,1},{0,2,0,1},{1,1,0,1},{1,2,0,1}, {2,2,0,1},
+    // {0,2,0,2},{1,1,0,2},{1,2,0,2},{2,2,0,2},
+    // {1,1,1,1},{1,2,1,1},{2,2,1,1},
+    // {1,2,1,2},{2,2,1,2},
     // {2,2,2,2}
 
     entriesFromC =
@@ -1130,9 +1199,10 @@ computeElasticityTensor(const Tensor2<3,double_v_t> &rightCauchyGreen,         /
       d2Psi_dC13dC13, d2Psi_dC22dC13, d2Psi_dC23dC13, d2Psi_dC33dC13,
       d2Psi_dC22dC22, d2Psi_dC23dC22, d2Psi_dC33dC22,
       d2Psi_dC23dC23, d2Psi_dC33dC23,
-      d2Psi_dC33dC33,
+      d2Psi_dC33dC33
     };
   }
+
 
   // output for debugging
   if (false)
@@ -1240,7 +1310,7 @@ computeElasticityTensor(const Tensor2<3,double_v_t> &rightCauchyGreen,         /
 
             double_v_t sum = summand1 + summand2 + summand3 + summand4;
 
-            // addd terms for the 4th and 5th invariants
+            // add terms for the 4th and 5th invariants
             if (Term::usesFiberDirection)
             {
               // terms for 4th and 5th invariant
@@ -1435,7 +1505,8 @@ computePSbar(const Tensor2<3,double_v_t> &fictitiousPK2Stress, const Tensor2<3,d
 {
   // only needed for debugging in materialTesting
   double_v_t determinant;
-  Tensor2<3,double_v_t> inverseRightCauchyGreen = MathUtility::computeInverse<3>(rightCauchyGreen, determinant);
+  double_v_t approximateMeshWidth{0};
+  Tensor2<3,double_v_t> inverseRightCauchyGreen = MathUtility::computeInverse<3>(rightCauchyGreen, approximateMeshWidth, determinant);
 
   //ab cd
   //  P : Sbar

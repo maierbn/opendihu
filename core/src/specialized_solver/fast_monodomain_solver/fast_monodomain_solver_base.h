@@ -75,7 +75,7 @@ public:
 
   typedef typename NestedSolversType::FunctionSpace FunctionSpace;
   typedef typename NestedSolversType::Data Data;
-  typedef typename NestedSolversType::OutputConnectorDataType OutputConnectorDataType;
+  typedef typename NestedSolversType::SlotConnectorDataType SlotConnectorDataType;
 
   //! constructor
   FastMonodomainSolverBase(const DihuContext &context);
@@ -98,8 +98,8 @@ public:
   //! set a new time interval that will be simulated by next call to advanceTimeSpan.
   void setTimeSpan(double startTime, double endTime);
 
-  //! get the output connector data, to be used for an enclosing solver
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! get the slot connector data, to be used for an enclosing solver
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! get a reference to the nested solvers
   NestedSolversType &nestedSolvers();
@@ -201,13 +201,13 @@ protected:
   std::vector<state_t> fiberPointBuffersStatesAreCloseToEquilibrium_;       //< for every entry in fiberPointBuffers_, constant if the states didn't change too much in the last compute0D, neighbour_not_constant if the state of the neighbouring pointBuffer changes
   int nFiberPointBufferStatesCloseToEquilibrium_;                           //< number of "constant" entries in fiberPointBuffersStatesAreCloseToEquilibrium_
 
-  std::vector<int> statesForTransfer_;          //< state no.s to transfer to other solvers within output connector data
-  std::vector<int> algebraicsForTransfer_;   //< which algebraics should be transferred to other solvers as part of output connector data
+  std::vector<int> statesForTransfer_;          //< state no.s to transfer to other solvers within slot connector data
+  std::vector<int> algebraicsForTransfer_;   //< which algebraics should be transferred to other solvers as part of slot connector data
   std::vector<double> parameters_;              //< parameters vector
   double valueForStimulatedPoint_;              //< value to which the first state will be set if stimulated
 
   std::vector<std::vector<Vc::double_v>> fiberPointBuffersParameters_;        //< constant parameter values, changing parameters is not implemented
-  std::vector<std::vector<Vc::double_v>> fiberPointBuffersAlgebraicsForTransfer_;   //<  [fiberPointNo][algebraicToTransferNo], algebraic values to use for output connector data
+  std::vector<std::vector<Vc::double_v>> fiberPointBuffersAlgebraicsForTransfer_;   //<  [fiberPointNo][algebraicToTransferNo], algebraic values to use for slot connector data
 
   void (*compute0DInstance_)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &, double);   //< runtime-created and loaded function to compute one Heun step of the 0D problem
   void (*initializeStates_)(Vc::double_v states[]);  //< runtime-created and loaded function to set all initial values for the states

@@ -22,8 +22,10 @@ if False:
       ]
       
 config = {
-  "logFormat":                      "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "logFormat":                      "csv",                      # "csv" or "json", format of the lines in the log file, csv gives smaller files
+  "scenarioName":                   "laplace",                  # scenario name to find the run in the log file
+  "mappingsBetweenMeshesLogFile":   "",                         # a log file about mappings between meshes, here we do not want that because there are no mappings
   "FiniteElementMethod" : {
     "nElements": [nx, ny],
     "inputMeshIsGlobal": True,
@@ -36,6 +38,7 @@ config = {
     #  30:0, 31:0.2, 32:0.4, 33:0.6, 34:0.8, 35:1
     #},
     "dirichletBoundaryConditions": {0:0},
+    "dirichletOutputFilename":     None,                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     "neumannBoundaryConditions": neumann_bc,
     "prefactor": 1,
     
@@ -46,10 +49,11 @@ config = {
     "maxIterations": 10000,
     "dumpFormat": "default",
     "dumpFilename": "",
+    "slotName": "",
     
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":False},
-      {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":False, "fileNumbering": "incremental"},
+      {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "incremental"},
     ]
   }
 }

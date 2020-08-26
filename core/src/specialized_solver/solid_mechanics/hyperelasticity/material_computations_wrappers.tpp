@@ -6,7 +6,7 @@ namespace SpatialDiscretization
 {
 
 template<typename Term,typename MeshType, int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+bool HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 materialComputeInternalVirtualWork(
   std::shared_ptr<VecHyperelasticity> displacements,
   std::shared_ptr<VecHyperelasticity> internalVirtualWork
@@ -23,13 +23,19 @@ materialComputeInternalVirtualWork(
   // place the result vector to be used by materialComputeInternalVirtualWork
   Vec result = internalVirtualWork->valuesGlobal();
   PetscErrorCode ierr;
-  ierr = VecSwap(result, solverVariableResidual_); CHKERRV(ierr);
+
+  ierr = VecSwap(result, solverVariableResidual_);
+  if(ierr)
+    return false;
 
   // compute the actual output of the nonlinear function
-  materialComputeInternalVirtualWork();
+  bool successful = materialComputeInternalVirtualWork();
 
   // reset the result vector
-  VecSwap(result, solverVariableResidual_); CHKERRV(ierr);
+  ierr = VecSwap(result, solverVariableResidual_);
+  if(ierr)
+    return false;
+  return successful;
 }
 
 template<typename Term,typename MeshType, int nDisplacementComponents>
@@ -77,8 +83,9 @@ solveDynamicProblem(
   // write reference output values
   if (isFirstTimeStep)
   {
-    this->outputWriterManager_.writeOutput(this->data_, 0, 0.0);
-    this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, 0.0);
+    // write initial values but don't increment counter
+    this->outputWriterManager_.writeOutput(this->data_, 0, 0.0, 0);
+    this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, 0.0, 0);
   }
 
   if (extrapolateInitialGuess_)
@@ -171,6 +178,9 @@ solveDynamicProblem(
   postprocessSolution();
 
   LOG(DEBUG) << "nonlinearSolve finished";
+
+  std::vector<Vec3> displacementValues;
+  this->data_.displacements()->getValuesWithoutGhosts(displacementValues);
 
   // output with output writers of hyperelasticity_solver
   this->outputWriterManager_.writeOutput(this->data_, 0, endTime_);

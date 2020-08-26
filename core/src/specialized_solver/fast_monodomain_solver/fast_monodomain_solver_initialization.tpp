@@ -33,7 +33,7 @@ initialize()
   }
 
   // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver("FastMonodomainSolver", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means output connector data is shared with the first subsolver
+  DihuContext::solverStructureVisualizer()->addSolver("FastMonodomainSolver", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means slot connector data is shared with the first subsolver
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();
@@ -132,6 +132,9 @@ initialize()
   int nFibers = 0;
   int fiberNo = 0;
   nFibersToCompute_ = 0;
+
+  LOG(DEBUG) << "initialize " << instances.size() << " outer instances";
+
   for (int i = 0; i < instances.size(); i++)
   {
     std::vector<TimeSteppingScheme::Heun<CellmlAdapterType>> &innerInstances
@@ -143,6 +146,9 @@ initialize()
       std::shared_ptr<FiberFunctionSpace> fiberFunctionSpace = innerInstances[j].data().functionSpace();
       std::shared_ptr<Partition::RankSubset> rankSubset = fiberFunctionSpace->meshPartition()->rankSubset();
       int computingRank = fiberNo % rankSubset->size();
+
+      LOG(DEBUG) << "instance (inner,outer)=(i,j)=(" << i << "," << j << ")/(" << instances.size() << "," << innerInstances.size() << ")"
+        << ", fiberNo " << fiberNo << ", rankSubset: " << *rankSubset << ", mesh" << fiberFunctionSpace->meshName() << ", computingRank " << computingRank << ", own rank: " << rankSubset->ownRankNo() << "/" << rankSubset->size();
 
       if (computingRank == rankSubset->ownRankNo())
       {
@@ -158,6 +164,8 @@ initialize()
   LOG(DEBUG) << "nFibers: " << nFibers << ", nFibersToCompute_: " << nFibersToCompute_;
 
   // determine total number of CellML instances to compute on this rank
+  double firstStimulationTime = -1;
+  int firstStimulationMotorUnitNo = 0;
   nInstancesToCompute_ = 0;
   int fiberDataNo = 0;
   fiberNo = 0;
@@ -190,6 +198,8 @@ initialize()
         assert(fiberFunctionSpace);
         assert(motorUnitNo_.size() > 0);
         
+        LOG(DEBUG) << "Fiber " << fiberNoGlobal << " (i,j)=(" << i << "," << j << ") is MU " << motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
+
         fiberData_.at(fiberDataNo).valuesLength = fiberFunctionSpace->nDofsGlobal();
         fiberData_.at(fiberDataNo).fiberNoGlobal = fiberNoGlobal;
         fiberData_.at(fiberDataNo).motorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
@@ -211,13 +221,49 @@ initialize()
           fiberData_.at(fiberDataNo).valuesOffset = fiberData_.at(fiberDataNo-1).valuesOffset + fiberData_.at(fiberDataNo-1).valuesLength;
         }
 
+        // find out first stimulation time of any fiber
+        int firingEventsIndex = round(fiberData_.at(fiberDataNo).setSpecificStatesCallEnableBegin * fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency);
+        if (firingEventsIndex < 0)
+          firingEventsIndex = 0;
+
+        // only if there is a chance that the current fiber will stimulate before the currently firstStimulationTime, because of setSpecificStatesCallEnableBegin
+        if (firstStimulationTime == -1 || firstStimulationTime > fiberData_.at(fiberDataNo).setSpecificStatesCallEnableBegin)
+        {
+          // start at index in firingEvents_, that comes as setSpecificStatesCallEnableBegin, then step over next timesteps until the next stimulation is found
+          int nFiringEvents = firingEvents_.size();
+          for (int i = firingEventsIndex % nFiringEvents; i < nFiringEvents; i++)
+          {
+            // if there is a stimulation at the current timestep
+            int motorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
+            if (firingEvents_[i][motorUnitNo % firingEvents_[i].size()])
+            {
+              // compute current time
+              int firstFiringEventIndex = int(firingEventsIndex / nFiringEvents)*nFiringEvents + i;
+              double firstStimulationTimeMotorUnit = firstFiringEventIndex / fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency;
+
+              LOG(DEBUG) << "  Motor unit " << motorUnitNo << " fires at " << firstStimulationTimeMotorUnit;  // this output does not get called for all motor units!
+
+              // if this time is smaller than currently saved firstStimulationTime, or firstStimulationTime has not yet been initialized
+              if (firstStimulationTime == -1 || firstStimulationTimeMotorUnit < firstStimulationTime)
+              {
+                // store new firstStimulationTime and save motor unit no.
+                firstStimulationMotorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
+                firstStimulationTime = firstStimulationTimeMotorUnit;
+              }
+              break;
+            }
+          }
+        }
+
         // increase index for fiberData_ struct
         fiberDataNo++;
       }
     }
   }
 
-  // get the states and algebraics no.s to be transferred as output connector data
+  LOG(INFO) << "Time of first stimulation: " << firstStimulationTime << ", motor unit " << firstStimulationMotorUnitNo;
+
+  // get the states and algebraics no.s to be transferred as slot connector data
   CellmlAdapterType &cellmlAdapter = instances[0].timeStepping1().instancesLocal()[0].discretizableInTime();
   statesForTransfer_ = cellmlAdapter.statesForTransfer();
   algebraicsForTransfer_ = cellmlAdapter.algebraicsForTransfer();
@@ -293,7 +339,7 @@ initialize()
 
         // get field variable
         std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable1
-          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable1;
+          = instances[i].timeStepping2().instancesLocal()[j].getSlotConnectorData()->variable1;
 
         if (stateIndex >= variable1.size())
         {
@@ -324,7 +370,7 @@ initialize()
 
         // get field variable
         std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable2
-          = instances[i].timeStepping2().instancesLocal()[j].getOutputConnectorData()->variable2;
+          = instances[i].timeStepping2().instancesLocal()[j].getSlotConnectorData()->variable2;
 
         if (algebraicIndex >= variable2.size())
         {
@@ -456,8 +502,11 @@ initializeCellMLSourceFile()
     }
   }
 
-  // barrier to wait until the one rank that compiles the library has finished
-  MPIUtility::handleReturnValue(MPI_Barrier(MPI_COMM_WORLD), "MPI_Barrier");
+  // barrier disabled because in interferes with the barrier in 00_source_code_generator_base.cpp
+  //LOG(ERROR) << "MPI barrier in fast_monodomain_solver on MPI_COMM_WORLD";
+
+  // wait on all ranks until conversion is finished
+  MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");
 
   // load the rhs library
   void *handle = CellmlAdapterType::loadRhsLibraryGetHandle(libraryFilename);

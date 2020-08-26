@@ -35,9 +35,6 @@ def remove_duplicates(seq):
   return [x for x in seq if not (x in seen or seen_add(x))]
 
 def determine_column_names(line):
-  if "~nDofs" in line:
-    pos = line.find("~nDofs")
-    line = line[0:pos]
   column_names = list(line.split(";"))
 
   # rename "n" columns 
@@ -160,12 +157,14 @@ def load_df(input_filename):
         try:
           df_block = pd.read_csv(".pd", sep=';', error_bad_lines=False, warn_bad_lines=True, comment="#", header=None, names=column_names, usecols=range(n_columns), mangle_dupe_cols=True)
           
-          if df_block.shape[0] == 0:
-            print("skip empty block")
-          elif "scenarioName" in df_block:
-            print("load block of {} rows for scenario {}".format(df_block.shape[0], df_block.iloc[0]["scenarioName"]))
-          else:
-            print("load block of {} rows".format(df_block.shape[0]))
+          # disable console output about loading blocks
+          if False:
+            if df_block.shape[0] == 0:
+              print("skip empty block")
+            elif "scenarioName" in df_block:
+              print("load block of {} rows for scenario {}".format(df_block.shape[0], df_block.iloc[0]["scenarioName"]))
+            else:
+              print("load block of {} rows".format(df_block.shape[0]))
           
           df_blocks.append(df_block)
         except:
@@ -424,16 +423,32 @@ if __name__ == "__main__":
   
   input_filename = "logs/log.csv"
   if len(sys.argv) == 1:
-    print("usage: ./pandas_utility.py <input_filename log.csv> [-l]")
+    print("usage: ./pandas_utility.py <input_filename log.csv> [-l] [-p] [-h] [<field names to display>]\n  -l: list field names\n  -p: create weak scaling plot\n  -h: show help\n")
     quit()
   else:
     input_filename = sys.argv[1]
     
   list_columns = False
+  create_plot = False
+  custom_columns_to_print = []
+  
   if len(sys.argv) >= 3:
-    arg = sys.argv[2]
-    if "-l" in arg:
-      list_columns = True
+    for arg in sys.argv[2:]:
+      if arg == "-h" or arg == "--help":
+        print("usage: ./pandas_utility.py <input_filename log.csv> [-l] [-p] [-h] [<field names to display>]\n  -l: list field names\n  -p: create weak scaling plot\n  -h: show help\n")
+        quit()
+      if arg == "-l":
+        list_columns = True
+        continue
+      elif arg == "-p":
+        create_plot = True
+        continue
+      custom_columns_to_print.append(arg)
+  
+  if not custom_columns_to_print:
+    print("Note: You can specify which columns to display by:\n  ./pandas_utility.py <input_filename log.csv> [-l] [-p] [-h]  [<field names to display>]")
+    print('Use the "-l" option to learn all possible columns.\n')
+  
   
   # ------------------------------------------------
   # define shortnames for the table, each line is
@@ -476,6 +491,9 @@ if __name__ == "__main__":
     "n"
   ]
   
+  if custom_columns_to_print:
+    columns_to_print = custom_columns_to_print
+  
   columns_to_plot = [
     "totalUsertime", "duration_total", "duration_bidomain", "duration_multidomain", "duration_mechanics", 
     "duration_0D", "duration_1D"
@@ -489,7 +507,7 @@ if __name__ == "__main__":
     for column in df.columns:
       print("  "+column)
   
-  title = "Weak scaling"
+  title = ""
   columns_to_plot = ["totalUsertime", "duration_total", "duration_bidomain", "duration_0D", "duration_1D", "duration_transfer_01D"]
   plot_labels = ["user time", "total computation", "3D model", "0D model", "1D model", "communication 0D,1D"]
 
@@ -497,6 +515,8 @@ if __name__ == "__main__":
   print_table(df, title, columns_to_print, column_shortnames)
 
   # plot weak scaling
-  plot_weak_scaling(df, title, columns_to_plot, ['nRanks'], plot_labels)
+  if create_plot:
+    title = "Weak scaling"
+    plot_weak_scaling(df, title, columns_to_plot, ['nRanks'], plot_labels)
   
-  plt.show()
+    plt.show()

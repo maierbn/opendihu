@@ -21,7 +21,7 @@ public:
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunction::LagrangeOfOrder<2>> FunctionSpaceType;
   typedef Data::QuasiStaticNonlinearElasticityChaste<FunctionSpaceType> Data;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,1> FieldVariableType;
-  typedef ::Data::OutputConnectorData<FunctionSpaceType,1> OutputConnectorDataType;
+  typedef ::Data::SlotConnectorData<FunctionSpaceType,1> SlotConnectorDataType;
 
   //! constructor
   QuasiStaticNonlinearElasticitySolverChaste(DihuContext context);
@@ -45,11 +45,11 @@ public:
   Data &data();
 
   //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! output the given data for debugging
-  std::string getString(std::shared_ptr<OutputConnectorDataType> data);
+  std::string getString(std::shared_ptr<SlotConnectorDataType> data);
 
 protected:
 

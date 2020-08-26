@@ -84,8 +84,8 @@ initialize()
     }
   }
 
-  // write initial mesh
-  this->outputWriterManager_.writeOutput(this->data_, 0, 0.0);
+  // write initial mesh but don't increment counter
+  this->outputWriterManager_.writeOutput(this->data_, 0, 0.0, 0);
 
   // check if initial values satisfy the static equation (for debugging)
   //hyperelasticitySolver_.debug();
@@ -134,6 +134,26 @@ updateDirichletBoundaryConditions(std::vector<std::pair<global_no_t,std::array<d
   // set the new DirichletBC values
   hyperelasticitySolver_.combinedVecSolution()->updateDirichletBoundaryConditions(newDirichletBCValues, inputMeshIsGlobal_);
   uvp_->updateDirichletBoundaryConditions(newDirichletBCValues, inputMeshIsGlobal_);
+}
+
+template<typename Term,typename MeshType>
+void DynamicHyperelasticitySolver<Term,MeshType>::
+addDirichletBoundaryConditions(std::vector<typename SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpace,6>::ElementWithNodes> &boundaryConditionElements, bool overwriteBcOnSameDof)
+{
+  hyperelasticitySolver_.addDirichletBoundaryConditions(boundaryConditionElements, overwriteBcOnSameDof);
+
+  // recreate all vectors
+  uvp_ = hyperelasticitySolver_.createPartitionedPetscVec("uvp");
+
+  //uvp_->startGhostManipulation();
+  uvp_->zeroGhostBuffer();
+  uvp_->finishGhostManipulation();
+
+  PetscErrorCode ierr;
+  ierr = VecDuplicate(uvp_->valuesGlobal(), &internalVirtualWork_); CHKERRV(ierr);
+  ierr = VecDuplicate(uvp_->valuesGlobal(), &accelerationTerm_); CHKERRV(ierr);
+  ierr = VecDuplicate(uvp_->valuesGlobal(), &externalVirtualWorkDead_); CHKERRV(ierr);
+
 }
 
 template<typename Term,typename MeshType>
@@ -329,6 +349,13 @@ typename DynamicHyperelasticitySolver<Term,MeshType>::Data &DynamicHyperelastici
 data()
 {
   return data_;
+}
+
+template<typename Term,typename MeshType>
+Vec DynamicHyperelasticitySolver<Term,MeshType>::
+currentState()
+{
+  return uvp_->valuesGlobal();
 }
 
 template<typename Term,typename MeshType>

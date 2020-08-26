@@ -12,16 +12,17 @@ Generic::Generic(DihuContext context, PythonConfig specificSettings, std::shared
   // get the rank subset of all processes that collectively call the write methods
   if (!rankSubset_)
   {
+    LOG(DEBUG) << "Creating new OutputWriter and rankSubset is nullptr, now using rankSubsetForCollectiveOperations.";
     rankSubset_ = this->context_.partitionManager()->rankSubsetForCollectiveOperations();
   }
   VLOG(1) << "OutputWriter::Generic constructor, rankSubset: " << *rankSubset_;
 
   outputInterval_ = specificSettings_.getOptionInt("outputInterval", 1, PythonUtility::Positive);
-  formatString_ = specificSettings_.getOptionString("format", "Callback");
+  formatString_ = specificSettings_.getOptionString("format", "none");
   std::string fileNumbering = specificSettings_.getOptionString("fileNumbering", "incremental");
 
   // determine filename base
-  if (formatString_ != "Callback")
+  if (formatString_ != "PythonCallback")
   {
     filenameBase_ = specificSettings_.getOptionString("filename", "out");
   }

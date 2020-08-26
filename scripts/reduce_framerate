@@ -1,0 +1,18 @@
+#!/bin/bash
+
+if [ "$#" -lt "1" ]; then
+  echo "usage: reduce_framerate <input_avi_file>"
+  exit
+fi
+
+# input file
+input_file=$1
+
+# output file
+output_file=${input_file%.*}_out.avi
+
+# transform video to 30 frames per second
+ffmpeg -i $input_file -filter:v fps=fps=30 $output_file
+
+echo input file: $input_file
+echo created output file:  $output_file

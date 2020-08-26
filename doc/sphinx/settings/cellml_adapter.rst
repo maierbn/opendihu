@@ -48,8 +48,25 @@ The two template arguments of `CellmlAdapter` are the *number of states* and the
 This has to match the actual numbers of the CellML model that is to be computed. Consequently, when a specific model should be computed, the CellmlAdapter has be adjusted.
 
 If the numbers are not correct a corresponding error will be shown from which the correct numbers can be determined.
-
+  
 Note that only explicit timestepping schemes are possible, which is current ``TimeSteppingScheme::ExplicitEuler`` or ``TimeSteppingScheme::Heun``.
+
+There is an optional third template argument which specifies the function space, on which the CellML instances will be solved. 
+
+.. code-block:: c
+
+  TimeSteppingScheme::ExplicitEuler<
+    CellmlAdapter<57,1,FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunction::LagrangeOfOrder<1>>>  // nStates,nAlgebraics: 57,71 = Shorten, 4,9 = Hodgkin Huxley
+  >
+
+This template argument is required if the mesh should be reused. 
+E.g., for Monodomain eq. there is a splitting scheme with CellML and Diffusion and both parts use the same mesh. Then you have to assert that the mesh is the same type in the diffusion and here, e.g. by setting the mesh to structured deformable, as shown above.
+
+The default FunctionSpace is `FunctionSpace::Generic` which is the following typedef:
+
+.. code-block:: c
+
+  typedef FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>,BasisFunction::LagrangeOfOrder<1>> Generic;
 
 .. code-block:: python
 
@@ -77,7 +94,7 @@ Note that only explicit timestepping schemes are possible, which is current ``Ti
     "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),# [ms] first time when to call setSpecificStates
     "additionalArgument":                     fiber_no,
     
-    "mappings":                               mappings,                             # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
+    "mappings":                               mappings,                             # mappings between parameters and algebraics/constants and between connectorSlots and states, algebraics or parameters, they are defined in helper.py
     "parametersInitialValues":                parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
     
     "meshName":                               "MeshFiber_{}".format(fiber_no),
@@ -109,9 +126,9 @@ Note that only explicit timestepping schemes are possible, which is current ``Ti
     "additionalArgument":                     fiber_no,                               # any additional value that will be given to the callback functions
     
     
-    "mappings": {                                                                     # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters
+    "mappings": {                                                                     # mappings between parameters and algebraics/constants and between connectorSlots and states, algebraics or parameters
       ("parameter", 0):           ("constant", "membrane/i_Stim"),                    # parameter 0 is mapped to constant with name "membrane/i_Stim"
-      ("outputConnectorSlot", 0): ("state", "membrane/V"),                            # as output connector slot 0 expose state with name "membrane/V"
+      ("connectorSlot", 0): ("state", "membrane/V"),                            # as output connector slot 0 expose state with name "membrane/V"
     },
     
     #"algebraicsForTransfer":              [],                                    # alternative way of specifying "mappings": which algebraic values to use in further computation
@@ -139,12 +156,14 @@ This will be used instead of the model given in *modelFilename*. Usually this is
 
 statesInitialValues
 ---------------------
-Optional, if given it should contain a list of initial values for all states. 
-If there are multiple instances (multiple nodes of a mesh where the model is computed), the list can either contain separate values for all states for all instances. Then it takes the form `[instance0state0, instance0state1, ..., instance0stateN, instance1state0, instance1state1, ..., instance1stateN, ...]`
+Optional. Default: `"CellML"`
 
-Or you only specify each state once, then all instances will be initialized by the same values.
+If *statesInitialValues* is a list, it should contain an initial value for each state of the CellML model. 
+If there are multiple instances all instances will be initialized by the same values.
 
-If *statesInitialValues* is not specified, the initial values will be taken from the CellML model file (either XML or C). Usually this is what you want.
+If *statesInitialValues* is set to *CellML*, the initial values will be taken from the CellML model file (either XML or C). Usually this is what you want.
+
+If *statesInitialValues* is set to *undefined*, no initial values will be set and the outer time stepping scheme can set initial values by giving `"initialValues"`.
 
 initializeStatesToEquilibrium and initializeStatesToEquilibriumTimestepWidth
 --------------------------------------------------------------------------------
@@ -158,9 +177,9 @@ Given the CellML model as
 the equation is solved by a 4th order Runge-Kutta timestepping scheme, until
 
 .. math::
-   \Vert\frac{\partial \textbf{u}}{\partial t}\vert < \eps
+   \Vert\frac{\partial \textbf{u}}{\partial t}\Vert < \epsilon
    
-is reached, with :math:`\eps = 1e-5`. The timestep width of the Runge-Kutta scheme can be given by `initializeStatesToEquilibriumTimestepWidth`. If an instability with this timestep width is detected (any value gets `inf` or `nan`), the timestep width will be decreased automatically and the computation will be restarted.
+is reached, with :math:`\epsilon = 1e-5`. The timestep width of the Runge-Kutta scheme can be given by `initializeStatesToEquilibriumTimestepWidth`. If an instability with this timestep width is detected (any value gets `inf` or `nan`), the timestep width will be decreased automatically and the computation will be restarted.
 
 The resulting equilibrium values and the residuals are written to a file `<modelfilename>_equilibrium_values.txt`, where `<modelfilename>` is the file name of the model. An example for such a file is given below:
 
@@ -250,6 +269,9 @@ This function can change some states and has the following signature:
     # nodal_dof_index is the dof number of the node, usually 0. Only for Hermite ansatz functions it can be higher.
     # state_no is the state number to set 
     # value is the new state value
+
+If ``setSpecificStatesFunction`` will be called, this happens during the time step update just before each evaluation of the right hand side / the CellML model.
+I.e. for Heun's method it will be called up to twice per time step (depending on the other `setSpecificStates*` settings).
     
 *setSpecificStatesCallEnableBegin*, *setSpecificStatesCallFrequency* and *setSpecificStatesFrequencyJitter*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -358,7 +380,7 @@ mappings
 -------------
 (dict)
 Under ``mapping`` it is possible to specify the connection of `parameters` to `algebraics` and `constants`, 
-as well as the connection of `outputConnectorSlots` to `states`, `algebraics` and `parameters`. An example is given below (the actual names are only dummies and make no sense):
+as well as the connection of `connectorSlots` to `states`, `algebraics` and `parameters`. An example is given below (the actual names are only dummies and make no sense):
   
 .. code-block:: python
 
@@ -366,32 +388,39 @@ as well as the connection of `outputConnectorSlots` to `states`, `algebraics` an
       ("parameter", 0):           ("algebraic", "wal_environment/I_HH"),
       ("parameter", 1):           ("constant", "razumova/L_x"),
       
-      ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),
-      ("outputConnectorSlot", 1): ("state", 5),  
-      ("outputConnectorSlot", 2): ("state", "potassium_channel_n_gate/n"),
-      ("outputConnectorSlot", 2): "potassium_channel_n_gate/n",             # alternative
-      ("outputConnectorSlot", 3): ("algebraic", "leakage_current/i_L"),
-      ("outputConnectorSlot", 3): "leakage_current/i_L",                    # alternative
-      ("outputConnectorSlot", 4): ("parameter", 0),
+      ("connectorSlot", 0):       ("state", "wal_environment/vS"),
+      ("connectorSlot", 1):       ("state", 5),  
+      ("connectorSlot", 2):       ("state", "potassium_channel_n_gate/n"),
+      ("connectorSlot", 2):       "potassium_channel_n_gate/n",             # alternative
+      ("connectorSlot", 3, "A"):  ("algebraic", "leakage_current/i_L"),
+      ("connectorSlot", 3, "A"):  "leakage_current/i_L",                    # alternative
+      ("connectorSlot", "slotB"): ("parameter", 0),
     }
     
-The value of `mappings` is a Python Dict. Each key (left hand side) is either ``("parameter", 0)`` or ``("outputConnectorSlot", 0)``, where ``0`` can be any integer number.
-The value that corresponds to the key (right hand side) is a two-element tuple or string of the form 
+The value of `mappings` is a Python Dict. 
+Each key (left hand side) has one of the following formats:
 
-``("name", "cellml name")`` or ``("name", 0)`` or ``"cellml name"``
+* ``("parameter", 0)`` to specify a parameter with given number. The number is needed to identify the initial values for the parameters.
+* ``("connectorSlot", 0)`` where ``0`` can be any integer number, to specify a connector slot, the number is arbitrary and is only used to order multiple slots in relation to each other.
+* ``("connectorSlot", "slotA")`` here with a slot name, the name has to be maximum 6 characters long.
+* ``("connectorSlot", 0, "slotA")`` This is a combination of the two formats above, it specifies a slot name and also a number for ordering the slots.
 
-where ``"name"`` has to be either ``"constant"``, ``"state"``, ``"algebraic"`` or ``"parameter"``, the ``"cellml name"`` is the name of the variable in the CellML model in the form ``"componentName/variableName"`` and ``0`` can be any valid index. This means, it is possible to identify, e.g. a state by its name as well as by its index in the C code file.
+The value that corresponds to the key (right hand side) of one `mappings` item is a two-element tuple or string of the form 
+
+* ``("name", "cellml name")``
+* or ``("name", 0)``
+* or ``"cellml name"``,
+
+where ``"name"`` has to be either ``"constant"``, ``"state"``, ``"algebraic"`` or ``"parameter"``. The ``"cellml name"`` is the name of the variable in the CellML model in the form ``"componentName/variableName"`` and ``0`` can be any valid index. This means, it is possible to identify, e.g. a state by its name as well as by its index in the C code file.
 If there is no tuple but only the "cellml name", it will be determine automatically if it is a `state`, `algebraic` or `constant` by searching among all available cellml names.
 
 For the parameters, the index must start with `0` and increase by one for all further parameters. As already mentioned, the mapped variable for a parameter can be an `"algebraic"` or a `"constant"`. The beginning of the parameters list must all map to algebraics and the rest must map to constants. I.e., every constant must be mapped to a parameter with lower index than all the parameters that are mapped to algebraics. The specified mappings will internally be transferred to the ``parametersUsedAsAlgebraic`` and ``parametersUsedAsConstant`` lists that can otherwise also be set directly by these options.
 
-Also for the `"outputConnectorSlots"` there is a required order. At first, all mapped `"states"` have to be given, then all `"algebraics"` and then all `"parameters"`. 
+Also for the `"connectorSlots"` there is a required order. At first, all mapped `"states"` have to be given, then all `"algebraics"` and then all `"parameters"`. 
 
 Note that the values of parameters will not be changed by the CellML model. If you need to reuse values computed within the CellML model, use states or algebraics. The purpose of connecting parameters to output slots is to allow the initial parameter value to be set by a different solver.
 
-(It is also possible to reverse the left and the right side of each mapping, i.e. like ``("constant",0"):("parameter",0)``.)
-
-Typical mappings and initial values of parameters by commonly used cellml models (in variable ``cellml_file``) are given below:
+Typical mappings and initial values of parameters by commonly used cellml models (in variable ``cellml_file``) are given below. Note that these do not set slot names. But for more complex examples it would be good to add slot names.
 
 .. code-block:: python
 
@@ -399,50 +428,50 @@ Typical mappings and initial values of parameters by commonly used cellml models
   if "hodgkin_huxley" in cellml_file:
     # parameters: I_stim
     mappings = {
-      ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
-      ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+      ("parameter", 0):     ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
+      ("connectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
     }
     parameters_initial_values = [0.0]                         # initial value for stimulation current
     
   elif "shorten" in cellml_file:
     # parameters: stimulation current I_stim, fiber stretch λ
     mappings = {
-      ("parameter", 0):           ("algebraic", "wal_environment/I_HH"), # parameter is algebraic 32
-      ("parameter", 1):           ("constant", "razumova/L_x"),             # parameter is constant 65, fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension
-      ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),          # expose state 0 = Vm to the operator splitting
+      ("parameter", 0):     ("algebraic", "wal_environment/I_HH"), # parameter is algebraic 32
+      ("parameter", 1):     ("constant", "razumova/L_x"),             # parameter is constant 65, fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension
+      ("connectorSlot", 0): ("state", "wal_environment/vS"),          # expose state 0 = Vm to the operator splitting
     }
     parameters_initial_values = [0.0, 1.0]                        # stimulation current I_stim, fiber stretch λ
     
   elif "slow_TK_2014" in cellml_file:   # this is (3a, "MultiPhysStrain", old tomo mechanics) in OpenCMISS
     # parameters: I_stim, fiber stretch λ
     mappings = {
-      ("parameter", 0):           ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
-      ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
-      ("outputConnectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
-      ("outputConnectorSlot", 1): ("algebraic", "razumova/stress"),  # expose algebraic 12 = γ to the operator splitting
+      ("parameter", 0):     ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
+      ("parameter", 1):     ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
+      ("connectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
+      ("connectorSlot", 1): ("algebraic", "razumova/stress"),  # expose algebraic 12 = γ to the operator splitting
     }
     parameters_initial_values = [0.0, 1.0]                    # wal_environment/I_HH = I_stim, razumova/L_S = λ
     
   elif "Aliev_Panfilov_Razumova_2016_08_22" in cellml_file :   # this is (3, "MultiPhysStrain", numerically more stable) in OpenCMISS, this only computes A1,A2,x1,x2 not the stress
     # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
     mappings = {
-      ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
-      ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 8 = fiber stretch λ
-      ("parameter", 2):           ("constant", "Razumova/velo"),        # parameter 2 is constant 9 = fiber contraction velocity \dot{λ}
-      ("outputConnectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
-      ("outputConnectorSlot", 1): ("algebraic", "Razumova/sigma"),   # expose algebraic 0 = γ to the operator splitting
+      ("parameter", 0):     ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
+      ("parameter", 1):     ("constant", "Razumova/l_hs"),        # parameter 1 is constant 8 = fiber stretch λ
+      ("parameter", 2):     ("constant", "Razumova/velo"),        # parameter 2 is constant 9 = fiber contraction velocity \dot{λ}
+      ("connectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
+      ("connectorSlot", 1): ("algebraic", "Razumova/sigma"),   # expose algebraic 0 = γ to the operator splitting
     }
     parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
     
   elif "Aliev_Panfilov_Razumova_Titin" in cellml_file:   # this is (4, "Titin") in OpenCMISS
     # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
     mappings = {
-      ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
-      ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 11 = fiber stretch λ
-      ("parameter", 2):           ("constant", "Razumova/rel_velo"),    # parameter 2 is constant 12 = fiber contraction velocity \dot{λ}
-      ("outputConnectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
-      ("outputConnectorSlot", 1): ("algebraic", "Razumova/ActiveStress"),   # expose algebraic 4 = γ to the operator splitting
-      ("outputConnectorSlot", 2): ("algebraic", "Razumova/Activation"),     # expose algebraic 5 = α to the operator splitting
+      ("parameter", 0):     ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
+      ("parameter", 1):     ("constant", "Razumova/l_hs"),        # parameter 1 is constant 11 = fiber stretch λ
+      ("parameter", 2):     ("constant", "Razumova/rel_velo"),    # parameter 2 is constant 12 = fiber contraction velocity \dot{λ}
+      ("connectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
+      ("connectorSlot", 1): ("algebraic", "Razumova/ActiveStress"),   # expose algebraic 4 = γ to the operator splitting
+      ("connectorSlot", 2): ("algebraic", "Razumova/Activation"),     # expose algebraic 5 = α to the operator splitting
     }
     parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
     

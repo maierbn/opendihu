@@ -198,3 +198,10 @@ rhs()
 }
 
 }  // namespace
+
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents>
+std::ostream &operator<<(std::ostream &stream, const typename SpatialDiscretization::NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces &rhs)
+{
+  stream << "{el. " << rhs.elementNoLocal << ", " << Mesh::getString(rhs.face) << ", dofVectors: " << rhs.dofVectors << ", surfaceDofs: " << rhs.surfaceDofs << "}";
+  return stream;
+}

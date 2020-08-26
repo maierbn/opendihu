@@ -218,6 +218,7 @@ config = {
     
     #"loadFactors":                [0.5, 1.0],                   # load factors for every timestep
     "loadFactors":                [],                           # no load factors, solve problem directly
+    "loadFactorGiveUpThreshold": 0.1,                           # if the adaptive time stepping produces a load factor smaller than this value, the solution will be accepted for the current timestep, even if it did not converge fully to the tolerance
     "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
     
     # boundary and initial conditions
@@ -234,6 +235,8 @@ config = {
     "initialValuesVelocities":    [[0.0,0.0,0.0] for _ in range((2*nx+1) * (2*ny+1) * (2*nz+1))],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
     "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
     "constantBodyForce": (0,0,-1e-1),                 # a constant force that acts on the whole body, e.g. for gravity
+    
+    "dirichletOutputFilename":     "out/dirichlet_boundary_conditions",                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     
     # define which file formats should be written
     # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.

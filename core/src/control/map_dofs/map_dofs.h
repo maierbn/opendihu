@@ -27,7 +27,7 @@ public:
 
   //! define the type of the data object,
   typedef ::Data::MapDofs<FunctionSpaceType,NestedSolverType> Data;
-  typedef typename Data::OutputConnectorDataType OutputConnectorDataType;
+  typedef typename Data::SlotConnectorDataType SlotConnectorDataType;
 
   //! constructor, gets the DihuContext object which contains all python settings
   MapDofs(DihuContext context);
@@ -47,12 +47,18 @@ public:
   //! set the time span of the nested solver
   void setTimeSpan(double startTime, double endTime);
 
+  //! start time of time interval to be simulated
+  double startTime();
+
+  //! end time of simulation
+  double endTime();
+
   //! return the data object of the timestepping scheme
   Data &data();
 
   //! Get the data that will be transferred in the operator splitting or coupling to the other term of the splitting/coupling.
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
 protected:
 
@@ -60,12 +66,12 @@ protected:
    */
   struct DofsMappingType
   {
-    int outputConnectorSlotNoFrom;  //< field variable no from which to get the dofs
-    int outputConnectorSlotNoTo;    //< field variable no to which to write the dofs to
+    int connectorSlotNoFrom;  //< slot no, i.e. a field variable from which to get the dofs
+    std::vector<int> connectorSlotNosTo;    //< slots nos, i.e. field variables to which to write the dofs to
     bool dofNoIsGlobalFrom;         //< if the keys in dofsMapping specify global nos
     bool dofNoIsGlobalTo;           //< if the values in dofsMapping specify global nos
-    int outputConnectorArrayIndexFrom;   //< array index if the output connector slot consists of a vector of multiple layers, e.g. Multidomain with multiple compartments or fibers with even two nested MultipleInstances
-    int outputConnectorArrayIndexTo;     //< array index if the output connector slot consists of a vector of multiple layers, e.g. Multidomain with multiple compartments or fibers with even two nested MultipleInstances
+    int slotConnectorArrayIndexFrom;   //< array index if the connector slot consists of a vector of multiple layers, e.g. Multidomain with multiple compartments or fibers with even two nested MultipleInstances
+    int slotConnectorArrayIndexTo;     //< array index if the connector slot consists of a vector of multiple layers, e.g. Multidomain with multiple compartments or fibers with even two nested MultipleInstances
 
     double thresholdValue;          //< if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
     double valueToSet;              //< if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
@@ -86,7 +92,7 @@ protected:
     std::vector<dof_no_t> dofNosToSetLocal;         //< For all modes except modeCallback. Temporary variable, the local dofs where to set the values that were retrieved from the dofs.
 
     std::vector<dof_no_t> inputDofs;                //< Only for modeCallback. The input dofs for the callback.
-    std::vector<dof_no_t> outputDofs;               //< Only for modeCallback. The input dofs for the callback.
+    std::vector<std::vector<dof_no_t>> outputDofs;  //< Only for modeCallback. outputDofs[slotIndex], the output dofs for the callback.
 
     PyObject *callback;                             //< python callback to manipulate the input data
     PyObject *slotNosPy;                            //< list [fromSlotNo, toSlotNo, fromArrayIndex, toArrayIndex]
@@ -112,11 +118,15 @@ protected:
   //! get the values at given dofs at the field variable given by slotNo
   void slotGetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values);
 
+  //! call slotSetRepresentationGlobal on the field variable of the indicated slot
+  void slotSetRepresentationGlobal(int slotNo, int arrayIndex);
+
   DihuContext context_;             //< context object that gives access to global singleton and has python settings
   PythonConfig specificSettings_;   //< the python settings for this object
   NestedSolverType nestedSolver_;   //< the nested solver that will be called in advanceTimeSpan
 
   Data data_;                       //< the data object that stores the additional field variables
+  std::vector<std::string> slotNames_;                        //< names of all slots
 
   std::vector<DofsMappingType> mappingsBeforeComputation_;    //< settings for all mappings that should be done before the computation
   std::vector<DofsMappingType> mappingsAfterComputation_;     //< settings for all mappings that should be done after the computation

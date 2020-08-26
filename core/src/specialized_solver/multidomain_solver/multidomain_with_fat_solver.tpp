@@ -137,7 +137,7 @@ initialize()
                        this->subvectorsSolution_.data(), &this->nestedSolution_); CHKERRV(ierr);
 
   // write initial meshes
-  callOutputWriter(0, 0.0);
+  callOutputWriter(0, 0.0, 0);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
@@ -303,11 +303,10 @@ setInformationToPreconditioner()
   
   // set block information for block jacobi preconditioner
   // check, if block jacobi preconditioner is selected
-  PetscBool useBlockJacobiPreconditioner, useBlockGSPreconditioner;
+  PetscBool useBlockJacobiPreconditioner;
   PetscObjectTypeCompare((PetscObject)pc, PCBJACOBI, &useBlockJacobiPreconditioner);
-  PetscObjectTypeCompare((PetscObject)pc, PCSOR, &useBlockGSPreconditioner);
 
-  if (useBlockJacobiPreconditioner || useBlockGSPreconditioner)
+  if (useBlockJacobiPreconditioner)
   {
     // smaller blocks
 #if 1
@@ -455,7 +454,7 @@ setInformationToPreconditioner()
     ierr = PCSetCoordinates(pc, 3, nNodesLocalBlock, nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
   }
 
-  if (useBlockJacobiPreconditioner || useBlockGSPreconditioner)
+  if (useBlockJacobiPreconditioner)
   {
     // for block jacobi set sub solvers
     // parse solver type of sub solver
@@ -688,10 +687,10 @@ solveLinearSystem()
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
-callOutputWriter(int timeStepNo, double currentTime)
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
 {
   // write current output values
-  this->outputWriterManager_.writeOutput(this->dataFat_, timeStepNo, currentTime);
+  this->outputWriterManager_.writeOutput(this->dataFat_, timeStepNo, currentTime, callCountIncrement);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>

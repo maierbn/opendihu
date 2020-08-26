@@ -365,7 +365,7 @@ template<int D,typename BasisFunctionType>
 void FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 setGeometryFieldValues()
 {
-  LOG(DEBUG) << " Mesh StructuredDeformable, setGeometryField, size of nodePositions vector: " << localNodePositions_.size();
+  LOG(DEBUG) << " Mesh StructuredDeformable, setGeometryField, size of nodePositions vector: " << localNodePositions_.size() << " (=" << localNodePositions_.size()/3 << " node positions)";
 
   // compute number of (local) dofs
   dof_no_t nDofsLocal = this->nDofsLocalWithoutGhosts();

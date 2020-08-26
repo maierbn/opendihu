@@ -57,7 +57,9 @@ getFieldVariablesForOutputWriter()
 
   LOG(DEBUG) << "getFieldVariablesForOutputWriter: this->extraCellularPotentialFat_: " << *this->extraCellularPotentialFat_;
 
-  return std::tuple_cat(dataMultidomain_->getFieldVariablesForOutputWriter(), std::make_tuple(geometryFieldFat, this->extraCellularPotentialFat_));
+  return std::tuple_cat(
+    dataMultidomain_->getFieldVariablesForOutputWriter(),
+    std::make_tuple(geometryFieldFat, this->extraCellularPotentialFat_));
 }
 
 } // namespace

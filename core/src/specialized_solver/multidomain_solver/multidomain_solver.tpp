@@ -126,6 +126,9 @@ advanceTimeSpan()
       Control::PerformanceMeasurement::start(this->durationLogKey_);
   }
   
+  // update total active stress
+  computeTotalActiveStress();
+
   // stop duration measurement
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
@@ -144,10 +147,10 @@ run()
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-callOutputWriter(int timeStepNo, double currentTime)
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
 {
   // write current output values
-  this->outputWriterManager_.writeOutput(this->dataMultidomain_, timeStepNo, currentTime);
+  this->outputWriterManager_.writeOutput(this->dataMultidomain_, timeStepNo, currentTime, callCountIncrement);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -161,7 +164,7 @@ initialize()
   initializeMatricesAndVectors();   // this is not called by MultidomainWithFatSolver
 
   // write initial meshes
-  callOutputWriter(0, 0.0);
+  callOutputWriter(0, 0.0, 0);
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
@@ -194,7 +197,7 @@ initializeObjects()
   dataMultidomain_.setFunctionSpace(finiteElementMethodPotentialFlow_.functionSpace());
   dataMultidomain_.initialize(nCompartments_);
 
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
   LOG(INFO) << "Run potential flow simulation for fiber directions.";
 
@@ -778,6 +781,28 @@ solveLinearSystem()
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+computeTotalActiveStress()
+{
+  std::shared_ptr<typename Data::FieldVariableType> activeStressTotal = dataMultidomain_.activeStressTotal();
+  activeStressTotal->zeroEntries();
+
+  PetscErrorCode ierr;
+
+  for (int k = 0; k < nCompartments_; k++)
+  {
+    std::shared_ptr<typename Data::FieldVariableType> activeStressCompartment = dataMultidomain_.activeStress(k);
+    std::shared_ptr<typename Data::FieldVariableType> compartmentRelativeFactor = dataMultidomain_.compartmentRelativeFactor(k);
+
+    // Computes the componentwise multiplication w = x*y, any subset of the x, y, and w may be the same vector.
+    // VecPointwiseMult(Vec w, Vec x,Vec y)
+    ierr = VecPointwiseMult(activeStressCompartment->valuesGlobal(), activeStressCompartment->valuesGlobal(), compartmentRelativeFactor->valuesGlobal()); CHKERRV(ierr);
+
+    ierr = VecAXPY(activeStressTotal->valuesGlobal(), 1.0, activeStressCompartment->valuesGlobal());
+  }
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 typename MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::Data &MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 data()
 {
@@ -785,15 +810,15 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
+//! the transfer is done by the slot_connector_data_transfer class
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
-std::shared_ptr<typename MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::OutputConnectorDataType>
+std::shared_ptr<typename MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::SlotConnectorDataType>
 MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  LOG(DEBUG) << "getOutputConnectorData, size of Vm vector: " << this->dataMultidomain_.transmembranePotential().size();
+  LOG(DEBUG) << "getSlotConnectorData, size of Vm vector: " << this->dataMultidomain_.transmembranePotential().size();
 
-  return dataMultidomain_.getOutputConnectorData();
+  return dataMultidomain_.getSlotConnectorData();
 }
 
 } // namespace TimeSteppingScheme

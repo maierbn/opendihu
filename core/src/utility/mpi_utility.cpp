@@ -13,21 +13,24 @@ namespace MPIUtility
   
 void handleReturnValue(int returnValue, std::string descriptor, MPI_Status *status)
 {
+  // if MPI call failed, output result
   if (status != MPI_STATUS_IGNORE && status != nullptr)
   {
     /*
      * typedef struct _MPI_Status {
-  int count;
-  int cancelled;
-  int MPI_SOURCE;
-  int MPI_TAG;
-  int MPI_ERROR;
-} MPI_Status, *PMPI_Status;
-*/
-
+        int count;
+        int cancelled;
+        int MPI_SOURCE;
+        int MPI_TAG;
+        int MPI_ERROR;
+      } MPI_Status, *PMPI_Status;
+    */
     //LOG(DEBUG) << "MPI status: count=" << status->_ucount << ", cancelled=" << status->_cancelled << ", MPI_SOURCE=" << status->MPI_SOURCE
     //  << ", MPI_TAG=" << status->MPI_TAG << ", MPI_ERROR=" << status->MPI_ERROR;
   }
+
+  // in order for the following line to work, enable initialization of this logger in control/initialization/initialize_logging.cpp
+  //CLOG(INFO, "mpi") << descriptor << " -> " << returnValue;
 
   if (returnValue == MPI_SUCCESS)
     return;
@@ -52,8 +55,8 @@ void gdbParallelDebuggingBarrier()
   volatile int gdbResume = 0;
   
   int nRanks, rankNo;
-  handleReturnValue (MPI_Comm_size(MPI_COMM_WORLD, &nRanks));
-  handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
+  handleReturnValue(MPI_Comm_size(MPI_COMM_WORLD, &nRanks), "MPI_Comm_size");
+  handleReturnValue(MPI_Comm_rank(MPI_COMM_WORLD, &rankNo), "MPI_Comm_rank");
   
   if (nRanks > 0) 
   {
@@ -88,8 +91,8 @@ void gdbParallelDebuggingBarrier()
 std::string loadFile(std::string filename, MPI_Comm mpiCommunicator)
 {
   int nRanks, rankNo;
-  handleReturnValue (MPI_Comm_size(mpiCommunicator, &nRanks));
-  handleReturnValue (MPI_Comm_rank(mpiCommunicator, &rankNo));
+  handleReturnValue(MPI_Comm_size(mpiCommunicator, &nRanks), "MPI_Comm_size");
+  handleReturnValue(MPI_Comm_rank(mpiCommunicator, &rankNo), "MPI_Comm_rank");
 
   unsigned long long fileLength = 0;
 
@@ -105,7 +108,7 @@ std::string loadFile(std::string filename, MPI_Comm mpiCommunicator)
     in.close();
   }
 
-  handleReturnValue(MPI_Bcast(&fileLength, 1, MPI_UNSIGNED_LONG_LONG, 0, mpiCommunicator), "MPI_Bcast");
+  handleReturnValue(MPI_Bcast(&fileLength, 1, MPI_UNSIGNED_LONG_LONG, 0, mpiCommunicator), "MPI_Bcast (10)");
 
   // collectively open the file for reading
   MPI_File fileHandle;

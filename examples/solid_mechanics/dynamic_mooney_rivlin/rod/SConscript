@@ -12,4 +12,4 @@ if not env['no_examples']:
     
   # create the main executable
   env.Program(target = 'dynamic_isotropic', source = "src/dynamic_isotropic.cpp")
-  #env.Program(target = 'dynamic_transversely_isotropic', source = "src/dynamic_transversely_isotropic.cpp")
+  env.Program(target = 'dynamic_transversely_isotropic', source = "src/dynamic_transversely_isotropic.cpp")

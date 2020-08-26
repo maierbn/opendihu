@@ -3,7 +3,7 @@ from SCons.Script import *
 
 def multiget(dicts, key, default=None):
     for d in dicts:
-        if d.has_key(key):
+        if key in d:
             return d[key]
     else:
         return default
@@ -24,7 +24,7 @@ def mex_action(env, target, source, **kw):
 def generate(env):
     env.SetDefault(MEXCC='mex')
     if not exists(env):
-        print 'Error: Could not find Matlab\'s %s.'%repr(env['MEXCC'])
+        print('Error: Could not find Matlab\'s %s.'%repr(env['MEXCC']))
         env.Exit(1)
         return
 

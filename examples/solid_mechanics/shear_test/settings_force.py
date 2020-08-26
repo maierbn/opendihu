@@ -165,6 +165,7 @@ def handle_result_linear_elasticity(result):
 
 config = {
   "scenarioName":                 scenario_name,                # scenario name to identify the simulation runs in the log file
+  "logFormat":                    "csv",                        # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":   "solver_structure.txt",       # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile": "mappings_between_meshes_log.txt",    # log file for mappings 
   "Meshes": {
@@ -231,6 +232,7 @@ config = {
     #"loadFactors":                [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
     #"loadFactors":                [0.5, 1.0],                   # load factors for every timestep
     "loadFactors":                [],                           # no load factors, solve problem directly
+    "loadFactorGiveUpThreshold":    0.1,                        # if the adaptive time stepping produces a load factor smaller than this value, the solution will be accepted for the current timestep, even if it did not converge fully to the tolerance
     "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
     
     # boundary and initial conditions
@@ -244,6 +246,8 @@ config = {
     "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
     "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
     "constantBodyForce":           constant_body_force,                 # a constant force that acts on the whole body, e.g. for gravity
+    
+    "dirichletOutputFilename":     "out/dirichlet_boundary_conditions",                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     
     # define which file formats should be written
     # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
@@ -274,9 +278,11 @@ config = {
     "inputMeshIsGlobal":    True,                         # boundary conditions are specified in global numberings, whereas the mesh is given in local numbering 
     "solverName":           "linearElasticitySolver",                   # reference to the linear solver
     "prefactor":            1.0,                                        # prefactor of the lhs, has no effect here
+    "slotName":             "",
     "dirichletBoundaryConditions": elasticity_dirichlet_bc,             # the Dirichlet boundary conditions that define values for displacements u
+    "dirichletOutputFilename":     None,                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     "neumannBoundaryConditions":   elasticity_neumann_bc,               # Neumann boundary conditions that define traction forces on surfaces of elements
-    "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+    "divideNeumannBoundaryConditionValuesByTotalArea": False,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
     
     # material parameters
     "bulkModulus":          50,     # bulk modulus K, how much incompressible, high -> incompressible, low -> very compressible
@@ -298,8 +304,10 @@ config = {
     "dirichletBoundaryConditionsMode": dirichlet_bc_mode, # "fix_all" or "fix_floating", how the bottom of the box will be fixed, fix_all fixes all nodes, fix_floating fixes all nodes only in z and the edges in x/y direction
     "materialParameters": material_parameters,            # c0, c1, k for Ψ = c0 * (I1-3) + c1 * (I2-3) + 1/2*k*(log(J))^2
     
-    "meshName":             "3Dmesh_febio",           # mesh with quadratic Lagrange ansatz functions
+    "meshName":             "3Dmesh_febio",               # mesh with quadratic Lagrange ansatz functions
     "inputMeshIsGlobal":    True,                         # boundary conditions are specified in global numberings, whereas the mesh is given in local numbering 
+    "slotNames":            [],
+    
     # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
     "OutputWriter" : [
       

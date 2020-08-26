@@ -109,9 +109,9 @@ createNeumannBoundaryConditions(std::shared_ptr<SpatialDiscretization::NeumannBo
   double surfaceBottomGlobal = 0;
 
   MPIUtility::handleReturnValue(MPI_Allreduce(&surfaceBottomLocal, &surfaceBottomGlobal, 1, MPI_DOUBLE,
-                                              MPI_SUM, this->currentRankSubset_->mpiCommunicator()));
+                                              MPI_SUM, this->currentRankSubset_->mpiCommunicator()), "MPI_Allreduce (1)");
   MPIUtility::handleReturnValue(MPI_Allreduce(&surfaceTopLocal, &surfaceTopGlobal, 1, MPI_DOUBLE,
-                                              MPI_SUM, this->currentRankSubset_->mpiCommunicator()));
+                                              MPI_SUM, this->currentRankSubset_->mpiCommunicator()), "MPI_Allreduce (2)");
 
   // compute flux values that will be set as Neumann BC values
   double fluxTop = 1./surfaceTopGlobal;

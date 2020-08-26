@@ -189,6 +189,9 @@ config = {
     "durationLogKey": "febio",
     "force": force,                # factor of force that is applied in axial direction of the muscle
     "materialParameters": material_parameters,   # c0, c1, k for Ψ = c0 * (I1-3) + c1 * (I2-3) + 1/2*k*(log(J))^2
+    "tractionElementNos": [(nz-1)*nx*ny + j*nx + i for j in range(ny) for i in range(nx)],    # elements on which traction is applied
+    "tractionVector": [0,0,force],                      # traction vector that is applied
+    "dirichletBoundaryConditionsMode": "fix_floating",  # "fix_all" or "fix_floating", how the bottom of the box will be fixed, fix_all fixes all nodes, fix_floating fixes all nodes only in z and the edges in x/y direction
     
     # mesh
     "nElements": [nx, ny, nz],
@@ -368,7 +371,7 @@ config = {
     # boundary conditions
     "dirichletBoundaryConditions": dirichlet_bc,
     "neumannBoundaryConditions": neumann_bc,
-    "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+    "divideNeumannBoundaryConditionValuesByTotalArea": False,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
     #"updateDirichletBoundaryConditionsFunction": update_dirichlet_boundary_conditions,
     "updateDirichletBoundaryConditionsFunction": None,
     "updateDirichletBoundaryConditionsFunctionCallInterval": 1,
@@ -443,6 +446,9 @@ config = {
     "durationLogKey": "febio",
     "force": force,                # factor of force that is applied in axial direction of the muscle
     "materialParameters": material_parameters,   # c0, c1, k for Ψ = c0 * (I1-3) + c1 * (I2-3) + 1/2*k*(log(J))^2
+    "tractionElementNos": [(nz-1)*nx*ny + j*nx + i for j in range(ny) for i in range(nx)],    # elements on which traction is applied
+    "tractionVector": [0,0,force],                      # traction vector that is applied
+    "dirichletBoundaryConditionsMode": "fix_floating",  # "fix_all" or "fix_floating", how the bottom of the box will be fixed, fix_all fixes all nodes, fix_floating fixes all nodes only in z and the edges in x/y direction
     
     # mesh
     "nElements": [nx, ny, nz],
@@ -621,7 +627,7 @@ config = {
     # boundary conditions
     "dirichletBoundaryConditions": dirichlet_bc,
     "neumannBoundaryConditions": neumann_bc,
-    "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+    "divideNeumannBoundaryConditionValuesByTotalArea": False,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
     #"updateDirichletBoundaryConditionsFunction": update_dirichlet_boundary_conditions,
     "updateDirichletBoundaryConditionsFunction": None,
     "updateDirichletBoundaryConditionsFunctionCallInterval": 1,

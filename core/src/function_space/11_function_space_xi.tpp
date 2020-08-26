@@ -201,13 +201,13 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
 
     // optimisation settings
     optimset_t optimset;
-    optimset.tolx = 1e-5;     // tolerance on the simplex solutions coordinates
-    optimset.tolf = 1e-5;     // tolerance on the function value
+    optimset.tolx = 1e-10;     // tolerance on the simplex solutions coordinates
+    optimset.tolf = 1e-10;     // tolerance on the function value
     optimset.max_iter = 1000; // maximum number of allowed iterations
     optimset.max_eval = 1000; // maximum number of allowed function evaluations
     optimset.verbose = 0;     // toggle verbose output during minimization
 
-    LOG(DEBUG) << "Nelder-Mead, startingPoint: " << xi;
+    VLOG(1) << "Nelder-Mead, startingPoint: " << xi;
 
     // call Nelder Mead algorithm to optimize
     MathUtility::NelderMead::optimize(D, &startingPoint, &solution,
@@ -221,7 +221,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
 
     residual = solution.fx;
 
-    LOG(DEBUG) << "Nelder-Mead, result: " << xi << ", residual: " << residual;
+    VLOG(1) << "Nelder-Mead, result: " << xi << ", residual: " << residual;
 
     // check if point is inside the element by looking at the value of xi
     pointIsInElement = true;
@@ -359,11 +359,11 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,1> &xi, d
   
   return -xiTolerance <= xi1 && xi1 <= 1.0+xiTolerance;
 }
-/*
+
 // 2D deformable meshes and linear shape function
 template<typename MeshType>
 bool FunctionSpacePointInElement<MeshType, BasisFunction::LagrangeOfOrder<1>, Mesh::isDeformableWithDim<2,MeshType>>::
-pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi, double xiTolerance)
+pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi, double &residual, double xiTolerance)
 {
   //const int nDofsPerElement = FunctionSpaceBaseDim<2,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement();  //=4
   const int nDofsPerElement = 4;
@@ -380,7 +380,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,2> &xi, d
   const double xi2 = xi[1];
 
   return (-xiTolerance <= xi1 && xi1 <= 1.0+xiTolerance) && (-xiTolerance <= xi2 && xi2 <= 1.0+xiTolerance);
-}*/
+}
 
 // 3D deformable meshes and linear shape function
 

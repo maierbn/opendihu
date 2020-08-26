@@ -118,6 +118,7 @@ config = {
   "ImplicitEuler" : {
     "initialValues": [2,2,4,5,2,2],
     "numberTimeSteps": 5,
+    "timeStepWidthRelativeTolerance": 1e-10,
     "endTime": 0.1,
     "FiniteElementMethod" : {
       "nElements": n,
@@ -151,6 +152,8 @@ config = {
 
 }
 
+/*
+ * this test is disabled, because it required LAPACK which is not default
 TEST(DiffusionTest, ImplicitEuler1DPOD)
 {
   
@@ -267,6 +270,7 @@ config = {
   // compare to full output of POD problem
   assertFileMatchesContent("diffusion1d_pod_full_0000004.py", referenceOutput);
 }
+*/
 
 TEST(DiffusionTest, CrankNicolson1D)
 {
@@ -278,6 +282,7 @@ config = {
   "CrankNicolson" : {
     "initialValues": [2,2,4,5,2,2],
     "numberTimeSteps": 5,
+    "timeStepWidthRelativeTolerance": 1e-10,
     "endTime": 0.1,
     "FiniteElementMethod" : {
     "nElements": n,
@@ -407,6 +412,7 @@ config = {
   "ImplicitEuler" : {
     "initialValues": [2,2,4,5,2,2],
     "numberTimeSteps": 5,
+    "timeStepWidthRelativeTolerance": 1e-10,
     "endTime": 0.1,
     "FiniteElementMethod" : {
       "nElements": n,
@@ -450,6 +456,7 @@ config = {
   "CrankNicolson" : {
     "initialValues": [2,2,4,5,2,2],
     "numberTimeSteps": 5,
+    "timeStepWidthRelativeTolerance": 1e-10,
     "endTime": 0.1,
     "FiniteElementMethod" : {
     "nElements": n,

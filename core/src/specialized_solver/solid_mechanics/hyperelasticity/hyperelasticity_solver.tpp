@@ -17,7 +17,7 @@ template<typename Term,typename MeshType,int nDisplacementComponents>
 HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 HyperelasticitySolver(DihuContext context, std::string settingsKey) :
   context_(context[settingsKey]), data_(context_), pressureDataCopy_(context_), initialized_(false),
-  endTime_(0), lastNorm_(0), secondLastNorm_(0), currentLoadFactor_(1.0)
+  endTime_(0), lastNorm_(0), secondLastNorm_(0), currentLoadFactor_(1.0), lastSolveSucceeded_(true), nNonZerosJacobian_(0)
 {
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
@@ -32,6 +32,7 @@ HyperelasticitySolver(DihuContext context, std::string settingsKey) :
   useAnalyticJacobian_  = this->specificSettings_.getOptionBool("useAnalyticJacobian", true);
   useNumericJacobian_   = this->specificSettings_.getOptionBool("useNumericJacobian", true);
   nNonlinearSolveCalls_ = this->specificSettings_.getOptionInt("nNonlinearSolveCalls", 1, PythonUtility::Positive);
+  loadFactorGiveUpThreshold_ = this->specificSettings_.getOptionDouble("loadFactorGiveUpThreshold", 1e-5, PythonUtility::Positive);
 
   // parse constant body force, a value of "None" yields the default value, (0,0,0)
   constantBodyForce_ = this->specificSettings_.template getOptionArray<double,3>("constantBodyForce", Vec3{0.0,0.0,0.0});
@@ -85,9 +86,9 @@ advanceTimeSpan()
 
   LOG(TRACE) << "advanceTimeSpan, endTime: " << endTime_;
 
-  // write reference output values
-  this->outputWriterManager_.writeOutput(this->data_, 0, 0.0);
-  this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, 0.0);
+  // write reference output values but don't increment counter
+  this->outputWriterManager_.writeOutput(this->data_, 0, 0.0, 0);
+  this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, 0.0, 0);
 
   nonlinearSolve();
   postprocessSolution();
@@ -287,6 +288,8 @@ initializeFiberDirections()
 
   LOG(DEBUG) << "normalize fiber direction";
 
+  auto tStart = std::chrono::steady_clock::now();
+
   // normalize entries
   std::vector<Vec3> valuesLocalWithoutGhosts;
   this->data_.fiberDirection()->getValuesWithoutGhosts(valuesLocalWithoutGhosts);
@@ -306,9 +309,15 @@ initializeFiberDirections()
   }
 
   this->data_.fiberDirection()->setValuesWithoutGhosts(valuesLocalWithoutGhosts);
-
   this->data_.fiberDirection()->zeroGhostBuffer();
+
   this->data_.fiberDirection()->finishGhostManipulation();
+  this->data_.fiberDirection()->startGhostManipulation();
+  //this->data_.fiberDirection()->zeroGhostBuffer();
+  //this->data_.fiberDirection()->finishGhostManipulation();
+
+  auto tEnd = std::chrono::steady_clock::now();
+  LOG_N_TIMES(1,INFO) << "done (" << std::chrono::duration_cast<std::chrono::milliseconds>(tEnd-tStart).count() << " ms)";
 }
 
 template<typename Term,typename MeshType,int nDisplacementComponents>
@@ -327,11 +336,21 @@ HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
 createPartitionedPetscMat(std::string name)
 {
   // determine number of non zero entries in matrix
-  int nNonZerosDiagonal, nNonZerosOffdiagonal;
-  ::Data::FiniteElementsBase<DisplacementsFunctionSpace,1>::getPetscMemoryParameters(nNonZerosDiagonal, nNonZerosOffdiagonal);
+  if (nNonZerosJacobian_ == 0)
+    nNonZerosJacobian_ = materialDetermineNumberNonzerosInJacobian();
+
+  int nNonZerosOffdiagonal = (int)nNonZerosJacobian_;
+  int nNonZerosDiagonal = (int) nNonZerosJacobian_;
+
+  //::Data::FiniteElementsBase<DisplacementsFunctionSpace,1>::getPetscMemoryParameters(nNonZerosDiagonal, nNonZerosOffdiagonal);
+
+  //nNonZerosDiagonal = 100*MathUtility::sqr(nNonZerosDiagonal);
+  //nNonZerosOffdiagonal = 5*MathUtility::sqr(nNonZerosOffdiagonal);
+
+  LOG(INFO) << "Preallocation for matrix \"" << name << "\": diagonal nz: " << nNonZerosDiagonal << ", offdiagonal nz: " << nNonZerosOffdiagonal;
 
   return std::make_shared<MatHyperelasticity>(
-    combinedVecSolution_, 4*nNonZerosDiagonal, 4*nNonZerosOffdiagonal, name);
+    combinedVecSolution_, nNonZerosDiagonal, nNonZerosOffdiagonal, name);
 }
 
 
@@ -388,7 +407,7 @@ initializePetscVariables()
   LOG(DEBUG) << "number of non-BC dofs total: " << nMatrixRowsLocal;
 
   // create matrix with same dof mapping as vectors
-  std::shared_ptr<FunctionSpace::Generic> genericFunctionSpace = context_.meshManager()->createGenericFunctionSpace(nMatrixRowsLocal, displacementsFunctionSpace_->meshPartition(), "genericMesh");
+  //std::shared_ptr<::FunctionSpace::Generic> genericFunctionSpace = context_.meshManager()->createGenericFunctionSpace(nMatrixRowsLocal, displacementsFunctionSpace_->meshPartition(), "genericMesh");
 
   combinedMatrixJacobian_ = createPartitionedPetscMat("combinedJacobian");
 
@@ -413,6 +432,7 @@ initializePetscVariables()
   PetscErrorCode ierr;
   ierr = VecDuplicate(solverVariableResidual_, &zeros_); CHKERRV(ierr);
   ierr = VecZeroEntries(zeros_); CHKERRV(ierr);
+  ierr = VecDuplicate(solverVariableResidual_, &lastSolution_); CHKERRV(ierr);
 
   LOG(DEBUG) << "for debugging: " << combinedVecSolution_->getString();
 
@@ -445,10 +465,14 @@ initializePetscVariables()
 
   if (useAnalyticJacobian_)
   {
-    MatSetOption(solverMatrixJacobian_, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
+    // jacobian matrix is already preallocated, but there might be even more entries required
+    ierr = MatSetOption(solverMatrixJacobian_, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE); CHKERRV(ierr);
 
     // assemble matrix and nonzeros structure
     evaluateAnalyticJacobian(solverVariableSolution_, solverMatrixJacobian_);
+
+    // print info about preallocation, this can also be done by -mat_view ::ascii_info_detail
+    //ierr = MatView(solverMatrixJacobian_, PETSC_VIEWER_ASCII_INFO_DETAIL); CHKERRV(ierr);
 
     // output the jacobian matrix for debugging
     LOG(DEBUG) << "initial analytic jacobian matrix: ";
@@ -510,5 +534,108 @@ updateNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<typena
   // compute new value for the rhs, δW_ext,dead = int_Ω B^L * phi^L * phi^M * δu^M dx + int_∂Ω T^L * phi^L * phi^M * δu^M dS
   materialComputeExternalVirtualWorkDead();
 }
+
+//! set new dirichlet boundary condition values for existing dofs
+template<typename Term,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+updateDirichletBoundaryConditions(std::vector<std::pair<global_no_t,std::array<double,3>>> newDirichletBCValues)
+{
+  bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
+  combinedVecSolution_->updateDirichletBoundaryConditions(newDirichletBCValues, inputMeshIsGlobal);
+}
+
+template<typename Term,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+addDirichletBoundaryConditions(std::vector<typename DirichletBoundaryConditions<DisplacementsFunctionSpace,nDisplacementComponents>::ElementWithNodes> &boundaryConditionElements, bool overwriteBcOnSameDof)
+{
+  LOG(DEBUG) << "addDirichletBoundaryConditions, Term: " << StringUtility::demangle(typeid(Term).name());
+  if (!Term::isIncompressible)
+  {
+    LOG(DEBUG) << "addDirichletBoundaryConditions on compressible material";
+  }
+
+  dirichletBoundaryConditions_->addBoundaryConditions(boundaryConditionElements, overwriteBcOnSameDof);
+
+  // an incompressible material has 3+1 (static problem) or 6+1 (dynamic problem) components (displacements+velocities+pressure)
+  // a compressible material has only 3 (static problem) or 6 (dynamic problem) components (no pressure)
+
+  const int nComponents = nDisplacementComponents + (Term::isIncompressible? 1 : 0);
+
+  // save previous values
+  std::array<std::vector<double>, nComponents> combinedSolutionValues;
+  std::array<std::vector<double>, nComponents> combinedResidualValues;
+  std::array<std::vector<double>, nComponents> combinedVecExternalVirtualWorkDeadValues;
+
+  int nDisplacementsVelocityValues = this->displacementsFunctionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
+  int nPressureValues = this->pressureFunctionSpace_->meshPartition()->nDofsLocalWithoutGhosts();
+  std::vector<int> indices(nDisplacementsVelocityValues);
+  std::iota(indices.begin(), indices.end(), 0);
+
+  // loop over displacement components (and velocity components, if dynamic) and one pressure component
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    int nValues = nDisplacementsVelocityValues;
+    if (componentNo == nDisplacementComponents)
+      nValues = nPressureValues;
+
+    // solution vector
+    combinedSolutionValues[componentNo].resize(nValues);
+    combinedVecSolution_->getValues(componentNo, nValues, indices.data(), combinedSolutionValues[componentNo].data());
+
+    // residual vector
+    //combinedResidualValues[componentNo].resize(nValues);
+    //combinedVecResidual_->getValues(componentNo, nValues, indices.data(), combinedResidualValues[componentNo].data());
+
+    // vector for the external virtual work contribution that does not depend on u, δW_ext,dead (this is the same as δW_ext for static case)
+    combinedVecExternalVirtualWorkDeadValues[componentNo].resize(nValues);
+    combinedVecExternalVirtualWorkDead_->getValues(componentNo, nValues, indices.data(), combinedVecExternalVirtualWorkDeadValues[componentNo].data());
+  }
+
+  // remove generic meshes "genericMesh" and "genericMeshForMatrixcombinedJacobian"
+  DihuContext::meshManager()->deleteFunctionSpace("genericMesh");
+  DihuContext::meshManager()->deleteFunctionSpace("genericMeshForMatrixcombinedJacobian");
+
+  // create new vectors and matrices with the updated boundary conditions
+  initializePetscVariables();
+
+  // restore previous values, except for the new Dirichlet values
+  // loop over displacement components and one pressure component
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    int nValues = nDisplacementsVelocityValues;
+    if (componentNo == nDisplacementComponents)
+      nValues = nPressureValues;
+
+    // solution vector
+    combinedVecSolution_->setValues(componentNo, nValues, indices.data(), combinedSolutionValues[componentNo].data());
+
+    // residual vector
+    //combinedVecResidual_->setValues(componentNo, nValues, indices.data(), combinedResidualValues[componentNo].data());
+
+    // vector for the external virtual work contribution that does not depend on u, δW_ext,dead (this is the same as δW_ext for static case)
+    combinedVecExternalVirtualWorkDead_->setValues(componentNo, nValues, indices.data(), combinedVecExternalVirtualWorkDeadValues[componentNo].data());
+  }
+
+  combinedVecSolution_->startGhostManipulation();
+  combinedVecSolution_->finishGhostManipulation();
+
+  //combinedVecResidual_->startGhostManipulation();
+  //combinedVecResidual_->finishGhostManipulation();
+
+  //combinedVecExternalVirtualWorkDead_->startGhostManipulation();
+  //combinedVecExternalVirtualWorkDead_->finishGhostManipulation();
+
+  PetscErrorCode ierr;
+  ierr = VecAssemblyBegin(solverVariableSolution_); CHKERRV(ierr);
+  ierr = VecAssemblyEnd(solverVariableSolution_); CHKERRV(ierr);
+}
+
+template<typename Term,typename MeshType,int nDisplacementComponents>
+Vec HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+currentState()
+{
+  return solverVariableSolution_;
+}
+
 
 } // namespace SpatialDiscretization

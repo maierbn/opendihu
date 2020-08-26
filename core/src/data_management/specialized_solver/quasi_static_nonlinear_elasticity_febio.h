@@ -9,7 +9,7 @@
 #include "data_management/data.h"
 #include "field_variable/field_variable.h"
 #include "function_space/function_space.h"
-#include "data_management/output_connector_data.h"
+#include "slot_connection/slot_connector_data.h"
 
 namespace Data
 {
@@ -26,7 +26,7 @@ public:
   typedef FieldVariable::FieldVariable<FunctionSpace,3> FieldVariableTypeVector;
   typedef FieldVariable::FieldVariable<FunctionSpace,6> FieldVariableTypeTensor;
 
-  typedef OutputConnectorData<FunctionSpace,1> OutputConnectorDataType;
+  typedef SlotConnectorData<FunctionSpace,1> SlotConnectorDataType;
 
   //! constructor
   QuasiStaticNonlinearElasticityFebio(DihuContext context);
@@ -62,7 +62,7 @@ public:
   void print();
 
   //! get the output connection da
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -94,7 +94,7 @@ private:
   std::shared_ptr<FieldVariableTypeTensor> greenLagrangeStrain_;  //< field variable of the Green-Lagrange strain, E
   std::shared_ptr<FieldVariableType> relativeVolume_;             //< field variable of the relative volume (determinant of deformation gradient)
 
-  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;  //< the object that stores all components of field variables that will be transferred to other solvers
+  std::shared_ptr<SlotConnectorDataType> slotConnectorData_;  //< the object that stores all components of field variables that will be transferred to other solvers
 };
 
 } // namespace Data

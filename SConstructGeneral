@@ -22,8 +22,7 @@ import random
 import socket
 import platform
 
-sys.path.append("dependencies/scons-config/dist/scons_config-0.1-py2.7.egg")     # load scons_config
-#sys.path.append("dependencies/scons-config/dist/scons_config-0.1-py3.5.egg")     # load scons_config
+sys.path.append("dependencies/scons-config/dist/scons_config-0.1-py3.6.egg")     # load scons_config
 
 import sconsconfig
 from sconsconfig import packages, tools
@@ -40,7 +39,7 @@ opendihu_home = Dir('.').srcnode().abspath  # opendihu home directory is where t
 #
 sconsconfig.select(
     packages.MPI(required=True),       # This searches for the MPI implementation
-    packages.LAPACK(required=False),   # This downloads and compiles OpenBLAS which implements the interfaces of both LAPACK and BLAS. It is only needed for the svg utility for MOR, which is currently not really required
+    #packages.LAPACK(required=False),   # This downloads and compiles OpenBLAS which implements the interfaces of both LAPACK and BLAS. It is only needed for the svg utility for MOR, which is currently not really required
     #packages.bison(required=False),   # parser generater needed by PTScotch which is needed by MUMPS which is needed by Petsc
     #packages.flex(required=False),    # "Fast Lexical Analyzer" needed by PTScotch which is needed by MUMPS which is needed by Petsc
     packages.PETSc(required=True),     # Petsc depends on LAPACK/BLAS and bison
@@ -63,8 +62,8 @@ sconsconfig.select(
     packages.Vc(required=True),        # The Vc types for explicit vectorization
     packages.xbraid(required=False),   # framework for multigrid in time methods 
     packages.OpenCOR(required=False),  # binary that converts CellML files from xml to c
-    #packages.libxml2(required=False),  # parser for xml files, needed for precice
-    #packages.precice(required=False),  # numerical coupling library
+    packages.libxml2(required=False),  # parser for xml files, needed for precice
+    packages.precice(required=False),  # numerical coupling library
     packages.EasyLoggingPP(required=True),   # This is the logging library, it has to be the last package to be included because it contains a source (.c) file that needs to be compiled and linked to opendihu and somehow otherwise scons-config does not work.
 )
 
@@ -91,6 +90,7 @@ vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
 vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
 vars.Add(BoolVariable('VERBOSE', 'Output raw shell commands for compilation.', False))
 vars.Add(BoolVariable('ph', 'Build precompiled headers.', False))
+vars.Add(BoolVariable('USE_VECTORIZED_FE_MATRIX_ASSEMBLY', 'Enable code that matrix assembly for FEM matrices uses the Vc library.', False))
 vars.Add('mpicc', help='The mpicc compiler wrapper', default='mpicc')
 vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
 vars.Add('cc', help='The c compiler', default='gcc')
@@ -183,7 +183,10 @@ if os.environ.get("PE_ENV") == None:
   if "notifyset" not in env:
     env["notifyset"] = True
     target='notify-send'+str(random.random())
-    notify = env.Command(target=target, source = None, action = 'notify-send "Compilation of core completed." || true')
+    if env['no_tests']:
+      notify = env.Command(target=target, source = None, action = 'notify-send "Compilation of opendihu core completed." -a opendihu || true')
+    else:
+      notify = env.Command(target=target, source = None, action = 'notify-send "Compilation of opendihu core completed." "You can now abort compilation of unit tests, if not needed." -a opendihu || true')
     #AlwaysBuild('notify-send')
     if env["BUILD_TYPE"] == "debug":
       Depends(notify, 'core/build_debug/libopendihud.a')
@@ -199,7 +202,7 @@ elif "scripts" not in current_python_path:
     
 # -----------------------------------------------
 # Depending on the variable BUILD_TYPE either build with debug, releasewithdebuginfo or release settings and link corresponding version of core
-# All the flags may only work with the GCC compiler, tested with GCC 5.4.0 and GCC 7.3.0. 
+# All the flags may only work with the GCC compiler, tested with GCC 7.3.0 and newer. 
 # When using a different compiler that supports C++14, add some 'if's to the next section.
 
 if env["BUILD_TYPE"] == "debug":
@@ -283,6 +286,10 @@ if os.environ.get("PE_ENV") == "CRAY" and env["USE_HPL"]:
 if env["no_vectorization"]:
   print("Warning: Compile without vectorization (option no_vectorization)!")
   env.MergeFlags('-mno-sse2 -mno-sse3 -mno-ssse3 -mno-sse4 -mno-sse4a -mno-fma4 -mno-avx')
+
+if env["USE_VECTORIZED_FE_MATRIX_ASSEMBLY"]:
+  print("Vectorized FE matrix assembly is enabled.")
+  env.MergeFlags(' -DUSE_VECTORIZED_FE_MATRIX_ASSEMBLY')
 
 # add basic linker flags for linux
 env.MergeFlags("-lpthread -ldl -lutil -lm")

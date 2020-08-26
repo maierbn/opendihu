@@ -164,6 +164,7 @@ The following keywords in the python dictionary are recognized:
     "elements":           # type: [[i1,i2,...], [i1,i2,...] ],
     "relativeTolerance":  # type: double
     "inputMeshIsGlobal":  # type: bool
+    "slotName":           # type: string
     "OutputWriter":       # type: [{}, {}, ...]
   },
 
@@ -275,6 +276,11 @@ The specification of the solver can be given directly in-place or by specifying 
     }
   
 The first option is useful when the same solver should be used for multiple classes.
+
+slotName
+^^^^^^^^^^^^^^^^^
+
+The `FiniteElementMethod` class exposes one slot that contains the solution variable. The option `slot name` specifies the name of the slot. Slot names are needed for coupling schemes to connect field variables between solvers. For details, see :doc:`output_connector_slots`.
 
 <output writer>
 ^^^^^^^^^^^^^^^^^

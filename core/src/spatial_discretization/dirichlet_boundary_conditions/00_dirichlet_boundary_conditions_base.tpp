@@ -37,6 +37,9 @@ initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> fun
 
   // fill auxiliary ghost element data structures, this is only needed for Dirichlet boundary conditions on scalar fields
   this->initializeGhostElements();
+
+  // write the constraint dofs and the prescribed values as points in a vtk file
+  writeOutput();
 }
 
 template<typename FunctionSpaceType,int nComponents>
@@ -127,7 +130,7 @@ parseBoundaryConditions(PythonConfig settings, std::shared_ptr<FunctionSpaceType
     {
       node_no_t nodeNoLocal = boundaryCondition.first / nDofsPerNode;
       node_no_t nNodesLocal = functionSpace->nNodesLocalWithoutGhosts();
-      LOG(ERROR) << "Boundary condition specified for index " << boundaryCondition.first << " (node " << nodeNoLocal << "), "
+      LOG(ERROR) << "Dirichlet boundary condition specified for index " << boundaryCondition.first << " (node " << nodeNoLocal << "), "
         << "but there are only " << functionSpace->nDofsLocalWithoutGhosts() << " local dofs (" << nNodesLocal << " nodes).\nFunctionSpaceType: "
         << StringUtility::demangle(typeid(FunctionSpaceType).name());
     }
@@ -380,6 +383,25 @@ void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
 addBoundaryConditions(std::vector<ElementWithNodes> &boundaryConditionElements, bool overwriteBcOnSameDof)
 {
   // merge boundaryConditionElements into boundaryConditionElements_
+#ifndef NDEBUG
+  LOG(DEBUG) << "addBoundaryConditions, overwriteBcOnSameDof=" << overwriteBcOnSameDof << ", " << boundaryConditionElements.size() << " elements";
+  for (ElementWithNodes elementWithNodes : boundaryConditionElements)
+  {
+    std::stringstream s;
+    for (std::pair<int,ValueType> dofIndex : elementWithNodes.elementalDofIndex)
+    {
+      s << ", " << dofIndex.first << ": (";
+      for (int i = 0; i < dofIndex.second.size(); i++)
+      {
+        if (i != 0)
+          s << ",";
+        s << dofIndex.second[i];
+      }
+      s << ")";
+    }
+    LOG(DEBUG) << "elementWithNodes: elementNoLocal " << elementWithNodes.elementNoLocal << ", dofVectors: " << s.str();
+  }
+#endif
 
   // loop over given boundaryConditionElements_
   for (const ElementWithNodes &elementWithNodes : boundaryConditionElements)
@@ -391,6 +413,8 @@ addBoundaryConditions(std::vector<ElementWithNodes> &boundaryConditionElements, 
       // if the element was found
       if (existingElementWithNodes.elementNoLocal == elementWithNodes.elementNoLocal)
       {
+        LOG(DEBUG) << "element " << elementWithNodes.elementNoLocal << " already exists with elementalDofIndex: " << elementWithNodes.elementalDofIndex;
+
         // loop over elemental dof indices and add all entries
         // std::vector<std::pair<int,ValueType>> elementalDofIndex;
         for (const std::pair<int,ValueType> &elementalDofIndex : elementWithNodes.elementalDofIndex)
@@ -404,6 +428,7 @@ addBoundaryConditions(std::vector<ElementWithNodes> &boundaryConditionElements, 
               // if the bc values should be overwritten
               if (overwriteBcOnSameDof)
               {
+                LOG(DEBUG) << "  dof " << existingElementalDofIndex.first << ", overwrite previous bc value " << existingElementalDofIndex.second << " with new value " << elementalDofIndex.second;
                 existingElementalDofIndex.second = elementalDofIndex.second;
               }
 
@@ -414,6 +439,8 @@ addBoundaryConditions(std::vector<ElementWithNodes> &boundaryConditionElements, 
 
           if (!elementalDofIndexFound)
           {
+            LOG(DEBUG) << "  add dof " << elementalDofIndex;
+
             existingElementWithNodes.elementalDofIndex.push_back(elementalDofIndex);
           }
         }
@@ -426,6 +453,8 @@ addBoundaryConditions(std::vector<ElementWithNodes> &boundaryConditionElements, 
     // if element was not existent yet, add it
     if (!elementFound)
     {
+      LOG(DEBUG) << "add element " << elementWithNodes.elementNoLocal;
+
       // add element
       boundaryConditionElements_.push_back(elementWithNodes);
     }
@@ -487,6 +516,39 @@ addBoundaryConditions(std::vector<ElementWithNodes> &boundaryConditionElements, 
 
   // fill auxiliary ghost element data structures, this is only needed for Dirichlet boundary conditions on scalar fields
   this->initializeGhostElements();
+
+  LOG(DEBUG) << "boundaryConditionsNonGhost: " << boundaryConditionsNonGhost
+    << ", boundaryConditionNonGhostDofLocalNos: " << boundaryConditionNonGhostDofLocalNos_
+    << ", boundaryConditionValues: " << boundaryConditionValues_ << ", boundaryConditionsByComponent_: ";
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    LOG(DEBUG) << "  component " << componentNo << ", dofs " << boundaryConditionsByComponent_[componentNo].dofNosLocal
+      << ", values " << boundaryConditionsByComponent_[componentNo].values;
+  }
+}
+
+//! write the constraint dofs and the prescribed values as points in a vtk file
+template<typename FunctionSpaceType,int nComponents>
+void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
+writeOutput()
+{
+  // get the filename
+  filenameOutput_ = specificSettings_.getOptionString("dirichletOutputFilename", "");
+
+  // if filename option was None or empty string
+  if (filenameOutput_ != "")
+  {
+    // get geometry of boundary condition dofs
+    std::vector<Vec3> geometryValues;
+    this->functionSpace_->geometryField().getValues(boundaryConditionNonGhostDofLocalNos_, geometryValues);
+
+    // output the dofs and their values
+    //outputPointsVtp(std::string filename, double currentTime, const std::vector<Vec3> &geometry,
+    //           const std::vector<VecD<nComponents>> &vectorValues, std::string fieldVariableName,
+    //           std::shared_ptr<Partition::RankSubset> rankSubset)
+    outputPoints_.outputPointsVtp<nComponents>(filenameOutput_, 0, geometryValues, boundaryConditionValues_,
+                                               "dirichletBoundaryConditions", functionSpace_->meshPartition()->rankSubset());
+  }
 }
 
 //! get a reference to the vector of bc local dofs

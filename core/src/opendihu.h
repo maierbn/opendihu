@@ -1,13 +1,15 @@
 // This file includes all header files that may be needed from an example
 #include "utility/python_utility.h"
 
-#include "control/coupling.h"
+#include "control/coupling/coupling.h"
+#include "control/coupling/multiple_coupling.h"
 #include "control/dihu_context.h"
 #include "control/multiple_instances.h"
 #include "control/load_balancing/load_balancing.h"
 #include "control/map_dofs/map_dofs.h"
-#include "control/precice/partitioned_fibers.h"
-#include "control/precice/muscle_contraction.h"
+#include "control/precice/volume_coupling/partitioned_fibers.h"
+#include "control/precice/volume_coupling/muscle_contraction.h"
+#include "control/precice/surface_coupling/precice_adapter.h"
 #include "control/precice/contraction_dirichlet_boundary_conditions.h"
 #include "control/precice/contraction_neumann_boundary_conditions.h"
 
@@ -47,6 +49,7 @@
 #include "specialized_solver/prescribed_values.h"
 #include "specialized_solver/my_new_solver/my_new_static_solver.h"
 #include "specialized_solver/my_new_solver/my_new_timestepping_solver.h"
+#include "specialized_solver/dummy.h"
 #include "specialized_solver/muscle_contraction_solver.h"
 #include "time_stepping_scheme/heun_adaptive.h"
 

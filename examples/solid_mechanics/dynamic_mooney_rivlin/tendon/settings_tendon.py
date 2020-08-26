@@ -19,16 +19,6 @@ from create_partitioned_meshes_for_settings import *   # file create_partitioned
 # quantities in mechanics unit system
 variables.rho = 10          # [1e-4 kg/cm^3] density of the muscle (density of water)
 
-# Mooney-Rivlin parameters [c1,c2,b,d] of c1*(Ibar1 - 3) + c2*(Ibar2 - 3) + b/d (λ - 1) - b*ln(λ)
-# Heidlauf13: [6.352e-10 kPa, 3.627 kPa, 2.756e-5 kPa, 43.373] = [6.352e-11 N/cm^2, 3.627e-1 N/cm^2, 2.756e-6 N/cm^2, 43.373], pmax = 73 kPa = 7.3 N/cm^2
-# Heidlauf16: [3.176e-10 N/cm^2, 1.813 N/cm^2, 1.075e-2 N/cm^2, 9.1733], pmax = 7.3 N/cm^2
-
-c1 = 3.176e-10              # [N/cm^2]
-c2 = 1.813                  # [N/cm^2]
-b  = 1.075e-2               # [N/cm^2] anisotropy parameter
-d  = 9.1733                 # [-] anisotropy parameter
-variables.material_parameters = [c1, c2, b, d]   # material parameters for Mooney-Rivlin
-
 # material parameters for tendon material
 c = 9.98                    # [N/cm^2=kPa]
 ca = 14.92                  # [-]
@@ -211,7 +201,7 @@ config = {
     "snesRelativeTolerance":      1e-5,                         # relative tolerance of the nonlinear solver
     "snesLineSearchType":         "l2",                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
     "snesAbsoluteTolerance":      1e-5,                         # absolute tolerance of the nonlinear solver
-    "snesRebuildJacobianFrequency": 4,                          # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+    "snesRebuildJacobianFrequency": 1,                          # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
     
     #"dumpFilename": "out/r{}/m".format(sys.argv[-1]),          # dump system matrix and right hand side after every solve
     "dumpFilename":               "",                           # dump disabled
@@ -220,7 +210,7 @@ config = {
     #"loadFactors":                [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
     #"loadFactors":                [0.5, 1.0],                   # load factors for every timestep
     "loadFactors":                [],                           # no load factors, solve problem directly
-    "loadFactorGiveUpThreshold":  0.5,                          # if the adaptive time stepping produces a load factor smaller than this value, the solution will be accepted for the current timestep, even if it did not converge fully to the tolerance
+    "loadFactorGiveUpThreshold":  0.8,                          # if the adaptive time stepping produces a load factor smaller than this value, the solution will be accepted for the current timestep, even if it did not converge fully to the tolerance
     "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
     
     # boundary and initial conditions

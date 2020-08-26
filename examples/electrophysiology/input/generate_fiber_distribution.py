@@ -8,9 +8,14 @@ import numpy as np
 import scipy
 import scipy.integrate
 import scipy.signal
+import matplotlib
+matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib.lines import Line2D
+
+
 
 if len(sys.argv) < 3:
   print("usage: ./generate_fiber_distribution <output filename> <number of MUs> [<mode> [<n fibers>]] ")
@@ -136,23 +141,29 @@ elif mode == 1:
       x_start + y*(x_end - x_start)
     ])
     mu_positions.append(mu_position)
-  
-  # plot MU centers in 2D plot
-  colors = cm.rainbow(np.linspace(0, 1, n_motor_units))
+
+  print("determined MU positions")  
 
   # plot actual center points of MUs
-  plt.figure(0)
-  print("motor unit positions: ")
-  for mu_no in range(n_motor_units):
-    mu_position = mu_positions[mu_no]
-    print(mu_position)
-    x = mu_position[0]
-    y = mu_position[1]
+  if True:
+    # plot MU centers in 2D plot
+    colors = cm.rainbow(np.linspace(0, 1, n_motor_units))
+
+    plt.figure(0)
+    print("motor unit positions: ")
+    for mu_no in range(n_motor_units):
+      mu_position = mu_positions[mu_no]
+      print(mu_position)
+      x = mu_position[0]
+      y = mu_position[1]
     
-    color = colors[mu_no,:]
-    plt.plot(x,y, '+', markersize=24,color=color)
+      color = colors[mu_no,:]
+      plt.plot(x,y, '+', markersize=24,color=color)
   #plt.show()
   
+  sigma = 0.1*n_fibers_x
+  a_factor = 1/(sigma**2)
+
   def pdf_distance_unscaled(equalization_factors,i,j,x):
     """ unscaled version of the probability distribution of the motor unit of fiber (i,j), does not sum to 1 """
     
@@ -165,13 +176,20 @@ elif mode == 1:
       mu_no = n_motor_units
     mu_position = mu_positions[mu_no-1]
       
-    # determine distance of fiber to center of MU
-    distance = np.linalg.norm(mu_position - current_position)
+    # accurate
+    if False:
+      # determine distance of fiber to center of MU
+      distance = np.linalg.norm(mu_position - current_position)
       
-    # probability is gaussian radial basis function
-    sigma = 0.1*n_fibers_x    # set standard deviation to 10% of the whole domain
-    probability = scipy.stats.norm.pdf(distance,scale=sigma)
-    
+      # probability is gaussian radial basis function
+      sigma = 0.1*n_fibers_x    # set standard deviation to 10% of the whole domain
+      probability = scipy.stats.norm.pdf(distance,scale=sigma)
+  
+    else:   # fast
+      d = mu_position - current_position
+      distance = np.inner(d,d)
+      probability = min(0,1 - a_factor*distance)    # hat function with width 1/sqrt(a)
+
     return probability * equalization_factors[mu_no-1]
     
   def pdf_distance(equalization_factors,i,j,x):
@@ -242,7 +260,7 @@ elif mode == 1:
   n_fibers_total = n_fibers_x * n_fibers_y
   for mu_no in range(1,n_motor_units+1):
     expected_value_mu = sum([pdf_distance(equalization_factors,i,j,mu_no) for j in range(n_fibers_y) for i in range(n_fibers_x)])
-    print("mu {}, initial number of fibers (expected value): {}".format(mu_no, expected_value_mu))
+    print("MU {}, initial number of fibers (expected value): {}".format(mu_no, expected_value_mu))
     
   # find equalization_factors that fulfill the required exponential distribution of MU sizes
   print("\nOptimize factors to obtain exponential distribution of MU sizes")

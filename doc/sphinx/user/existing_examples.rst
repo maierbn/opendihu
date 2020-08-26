@@ -699,6 +699,28 @@ Scenario (3): A piece of gelatine moves from a varying force, this time in the l
   
 Scenarios (6), (7) and (8) use the tendon material from `Carniel, T. A., & Fancello, E. A. (2017). A transversely isotropic coupled hyperelastic model for the mechanical behavior of tendons. Journal of biomechanics, 54, 49-57. <https://www.sciencedirect.com/science/article/abs/pii/S0021929017300726>`_
 
+Custom Material
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This is a template example that shows how a custom material, given by its strain energy function, can be used.
+The material can be defined in the C++ source file.
+
+.. code-block:: bash
+
+  cd $OPENDIHU_HOME/examples/solid_mechanics/custom_material/
+  mkorn && sr       # build
+  cd build_release
+
+Possible scenarios:
+
+.. code-block:: bash
+
+  ./material_a_static ../settings_static.py     # (1)
+  ./material_a_dynamic ../settings_dynamic.py   # (2)
+
+The first scenario is static the second is dynamic. It can also be run in parallel by prepending e.g. `mpirun -n 2`.
+How to specify the material is described in :ref:`strain_energy_function`.
+
 
 Mooney-Rivlin with FEBio
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -818,7 +840,6 @@ The `run_force.sh` script executes all simulations that are required for the she
   :width: 100%
   
   Result of the shear test, stress-strain curves for different materials.
-
 
 
 Chaste

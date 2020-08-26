@@ -128,7 +128,14 @@ Every new material has to inherit from ``Equation::SolidMechanics::Hyperelastici
   static constexpr auto C23;    //< entry C23 = C32 of the right Cauchy Green tensor, C
   static constexpr auto C33;    //< entry C33 of the right Cauchy Green tensor, C
 
-These symbols are to be used as the parameters to the strain energy function and are, thus, available in the material description class.
+  static constexpr auto a1;     //< entry a0_1 of the fiber direction, a0
+  static constexpr auto a2;     //< entry a0_2 of the fiber direction, a0
+  static constexpr auto a3;     //< entry a0_3 of the fiber direction, a0
+
+  static constexpr auto I4;     //< non-reduced 4th strain invariant, I4 = a0•C a0
+  
+These symbols are to be used as the parameters to the strain energy functions and are, thus, available in the material description class.
+Only some particular symbols can be used in some terms of the strain energy function.
 
 In the following, the three parts of a custom material are explained.
 
@@ -159,6 +166,8 @@ Any number of parameters can be specified and the names are custom. (The specifi
 The parameters are assigned the macro ``PARAM(i)`` where ``i`` is a consecutively increasing number from 0.
 The number of parameters in ``nMaterialParameters`` has to be correct. This is the number of values that are expected in the python settings ``materialParameters``.
 The order of the values in the python settings is given by the ``PARAM`` macros.
+
+.. _strain_energy_function:
 
 Specification of the strain energy function
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -202,7 +211,7 @@ Every summand can be set to constant 0 if not needed (``INT(0)`` in the C++ code
 
 In order to use a decoupled formulation, specify :math:`Ψ_{iso}(\bar{I}_1, \bar{I}_2, \bar{I}_4, \bar{I}_5)` and :math:`Ψ_{vol}(J)` for compressible materials or only :math:`Ψ_{iso}(\bar{I}_1, \bar{I}_2, \bar{I}_4, \bar{I}_5)` for incompressible materials.
 
-To use a coupled formulation, use :math:`Ψ(I_1,I_2,I_3)`. Though the strain energy function can always be formulated in terms of the invariants, some literature only provides a formulation in terms of the right Cauchy-Green tensor, :math:`C` and the fiber direction, :math:`a_0`. In this case, the function :math:`Ψ(C,a_0,I4)` can be specified. For the last function, note that :math:`I_4` is an abbreviation for :math:`a_0 \cdot C a_0`.
+To use a coupled formulation, use :math:`Ψ(I_1,I_2,I_3)`. Though the strain energy function can always be formulated in terms of the invariants, some literature only provides a formulation in terms of the right Cauchy-Green tensor, :math:`C` and the fiber direction, :math:`a_0`. In this case, the function :math:`Ψ(C,a_0,I4)` can be specified. For the last function, note that :math:`I_4` is available as an abbreviation for :math:`a_0 \cdot C a_0`.
 
 The available summands of :math:`Ψ` also depends on the options that were set in the first part of the material structure. For incompressible material, i.e. if ``isIncompressible == true``, we have the following form:
 
@@ -212,21 +221,22 @@ The available summands of :math:`Ψ` also depends on the options that were set i
 If ``usesFiberDirection == false`` there are no 4th and 5th invariants:
 
 .. math::
-  Ψ = Ψ_{iso}(\bar{I}_1, \bar{I}_2) + Ψ_{vol}(J)  + Ψ(I_1,I_2,I_3) + Ψ(C,a_0)
+  Ψ = Ψ_{iso}(\bar{I}_1, \bar{I}_2) + Ψ_{vol}(J)  + Ψ(I_1,I_2,I_3) + Ψ(C,a_0,I4)
   
 The 4 functions :math:`Ψ_{iso}(\bar{I}_1, \bar{I}_2, \bar{I}_4, \bar{I}_5)` :math:`Ψ_{vol}(J)`, :math:`Ψ(I_1,I_2,I_3)` and :math:`Ψ(C,a_0)` are given by the following 4 symbols that need to be defined in the material struct:
 
 .. code-block:: c
 
-    static const auto constexpr strainEnergyDensityFunctionIsochoric = INT(0);      // parameters: Ibar1,Ibar2,Ibar4,Ibar5
+    static const auto constexpr strainEnergyDensityFunctionIsochoric = INT(0);      // parameters: Ibar1,Ibar2,Ibar4,Ibar5,lambda (=sqrt(Ibar4))
     static const auto constexpr strainEnergyDensityFunctionVolumetric = INT(0);     // parameters: J
     static const auto constexpr strainEnergyDensityFunctionCoupled = INT(0);        // parameters: I1,I2,I3
     static const auto constexpr strainEnergyDensityFunctionCoupledDependentOnC = INT(0);  // parameters: C11, C12, C13, C22, C23, C33, a1, a2, a3, I4
   
 The equations need to be specified according to the syntax of the `SEMT library <https://github.com/st-gille/semt>`_. 
-Normal operators such as `+`, `*`, `sqrt`, `ln` and `pow` can be used to combine the parameters given under :ref:`the base class<baseclass>`. 
-Whenever an integer constant needs to be used, wrap it in `INT()`, e.g. `INT(5)`. Other factors that are no whole numbers cannot be used directly. 
-They have to be defined as material parameter and their value is then set in the python settings.
+Normal operators such as ``+``, ``*``, ``sqrt``, ``ln`` and ``pow`` can be used to combine the parameters given under :ref:`the base class<baseclass>`. 
+Whenever an integer constant needs to be used, wrap it in ``INT()``, e.g. ``INT(5)``. Other factors that are no whole numbers cannot be used directly. They have to be defined as material parameter and their value is then set in the python settings.
+
+It is also possible to define helper functions that are reused later. This can be done with the type ``static constexpr auto``.
 
 An example for the incompressible Mooney-Rivlin material is given below:
 
@@ -234,6 +244,16 @@ An example for the incompressible Mooney-Rivlin material is given below:
   
   static const auto constexpr strainEnergyDensityFunctionIsochoric
     = c1*(Ibar1 - INT(3)) + c2*(Ibar2 - INT(3));
+  
+An example for an incompressible material that uses a helper function is given here:
+
+.. code-block:: c
+  
+  static constexpr auto d = INT(2)*(c1 + INT(2)*c2);
+  
+  static const auto constexpr strainEnergyDensityFunctionCoupled 
+    = c*pow(sqrt(I3) - INT(1), INT(2)) - d*ln(sqrt(I3)) + c1*(I1 - INT(3)) + c2*(I2 - INT(3));
+
   
 Python settings
 -----------------

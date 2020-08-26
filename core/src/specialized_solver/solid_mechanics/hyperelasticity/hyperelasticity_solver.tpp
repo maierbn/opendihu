@@ -433,6 +433,7 @@ initializePetscVariables()
   ierr = VecDuplicate(solverVariableResidual_, &zeros_); CHKERRV(ierr);
   ierr = VecZeroEntries(zeros_); CHKERRV(ierr);
   ierr = VecDuplicate(solverVariableResidual_, &lastSolution_); CHKERRV(ierr);
+  ierr = VecDuplicate(solverVariableResidual_, &bestSolution_); CHKERRV(ierr);
 
   LOG(DEBUG) << "for debugging: " << combinedVecSolution_->getString();
 

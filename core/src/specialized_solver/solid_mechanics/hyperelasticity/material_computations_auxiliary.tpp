@@ -369,7 +369,7 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
   {
     auto dPsi_dJExpression = SEMT::deriv_t(Term::strainEnergyDensityFunctionVolumetric, Term::J);
     const double_v_t dPsi_dJ = ExpressionHelper<double_v_t>::apply(dPsi_dJExpression, parameterVector);
-    VLOG(1) << "J = " << Term::J << " = " << J << ", Psi_vol: " << Term::strainEnergyDensityFunctionVolumetric << ", dΨ/dJ: " << dPsi_dJExpression << " = " << dPsi_dJ;
+    //VLOG(1) << "J = " << Term::J << " = " << J << ", Psi_vol: " << Term::strainEnergyDensityFunctionVolumetric << ", dΨ/dJ: " << dPsi_dJExpression << " = " << dPsi_dJ;
     pressure = dPsi_dJ;
   }
 
@@ -505,8 +505,8 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
       // debugging
       //pK2Stress[j][i] = sIso;
 
-      //VLOG(2) << "set pk2Stress_" << i << j << " = " << pK2Stress[j][i];
-      LOG(DEBUG) << "set pk2Stress_" << i << j << " = " << pK2Stress[j][i] << " = " << sVol << " + " << sIso;
+      VLOG(2) << "set pk2Stress_" << i << j << " = " << pK2Stress[j][i];
+      //LOG(DEBUG) << "set pk2Stress_" << i << j << " = " << pK2Stress[j][i] << " = " << sVol << " + " << sIso;
 
       //if (i == j)
       //  LOG(DEBUG) << "  ccs: " << ccs << " C:Sbar: " << cSbar << ", factorJ23: " << factorJ23 << ", Svol_" << i << j << " = " << sVol << ", Siso_" << i << j << " = " << sIso << ", S = " << pK2Stress[j][i];
@@ -526,8 +526,8 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
       pK2Stress[j][i] += coupledFormFactor1 * delta_ij + coupledFormFactor2 * rightCauchyGreen[j][i] + coupledFormFactor3 * inverseRightCauchyGreen[j][i];
     }
   }
-  //VLOG(2) << "   δ1: " << coupledFormFactor1 << ", δ2: " << coupledFormFactor2 << ", δ3: " << coupledFormFactor3 << ", after adding coupled form terms: " << pK2Stress;
-  LOG(DEBUG) << "   δ1: " << coupledFormFactor1 << ", δ2: " << coupledFormFactor2 << ", δ3: " << coupledFormFactor3 << ", after adding coupled form terms: " << pK2Stress;
+  VLOG(2) << "   δ1: " << coupledFormFactor1 << ", δ2: " << coupledFormFactor2 << ", δ3: " << coupledFormFactor3 << ", after adding coupled form terms: " << pK2Stress;
+  //LOG(DEBUG) << "   δ1: " << coupledFormFactor1 << ", δ2: " << coupledFormFactor2 << ", δ3: " << coupledFormFactor3 << ", after adding coupled form terms: " << pK2Stress;
 
   // if the formulation includes a Ψ(C) term, we need to add S = 2 * ∂Ψ(C)/∂C
   if (usesFormulationWithC)
@@ -562,9 +562,10 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
     pK2Stress[1][2] += 2*dPsi_dC23;   // S32 = S23    // S32
     pK2Stress[2][2] += 2*dPsi_dC33;   // S33          // S33
   }
-  static int cntr = -1;
+  /*static int cntr = -1;
   cntr++;
   LOG(DEBUG) << "pK2Stress: " << pK2Stress << " counter: " << cntr;
+  */
 
   //for debugging, check symmetry of PK2 stress and if it is correct according to Mooney-Rivlin formula
   if (VLOG_IS_ON(2))
@@ -828,8 +829,11 @@ computePK2StressField()
       Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
 
 #ifndef NDEBUG
-      if (fabs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3)
-        LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized, elementalDirectionValues:" << elementalDirectionValues;
+      if (Term::usesFiberDirection)
+      {
+        if (fabs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3)
+          LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized, elementalDirectionValues:" << elementalDirectionValues;
+      }
 #endif
 
       // invariants

@@ -12,9 +12,10 @@ Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 
 # timing and activation parameters
 # -----------------
 # motor units from paper Klotz2019 "Modelling the electrical activity of skeletal muscle tissue using a multi‐domain approach"
-import numpy as np
+
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
+import numpy as np
 
 n_motor_units = 25   # number of motor units
 
@@ -39,9 +40,8 @@ for mu_no in range(n_motor_units):
   radius = c1 + c2*1.02**(mu_no)
 
   # stimulation frequency [Hz] between 24 and 7
-  min_value = 7 
+  min_value = 7
   max_value = 24
-  
   c2 = (max_value - min_value) / (1.02**(n_motor_units-1) - 1)
   c1 = min_value - c2
   stimulation_frequency = c1 + c2*1.02**(n_motor_units-1-mu_no)

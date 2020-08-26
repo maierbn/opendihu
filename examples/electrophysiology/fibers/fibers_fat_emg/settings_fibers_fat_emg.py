@@ -30,7 +30,7 @@ if ".py" in sys.argv[0]:
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
   if rank_no == 0:
-    print("Warning: There is no variables file, e.g:\n ./fibers_fat_emg ../settings_fibers_fat_emg.py ramp.py\n")
+    print("Error: There is no variables file, e.g:\n ./fibers_fat_emg ../settings_fibers_fat_emg.py ramp.py\n")
   exit(0)
 
 # -------------- begin user parameters ----------------
@@ -64,6 +64,8 @@ parser.add_argument('--dt_1D',                               help='The timestep 
 parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',             type=float, default=variables.dt_splitting)
 parser.add_argument('--dt_3D',                               help='The timestep for the 3D model, either bidomain or mechanics.', type=float, default=variables.dt_3D)
 parser.add_argument('--disable_firing_output',               help='Disables the initial list of fiber firings.', default=variables.disable_firing_output, action='store_true')
+parser.add_argument('--fast_monodomain_solver_optimizations',help='Enable the optimizations for fibers.',        default=variables.fast_monodomain_solver_optimizations, action='store_true')
+parser.add_argument('--use_vc',                              help='If the Vc optimization type should be used for cellml adapter.',  default=variables.use_vc, action='store_true')
 parser.add_argument('--v',                                   help='Enable full verbosity in c++ code')
 parser.add_argument('-v',                                    help='Enable verbosity level in c++ code', action="store_true")
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
@@ -89,7 +91,7 @@ if n_ranks != variables.n_subdomains:
   optimal_value = n_ranks**(1/3)
   possible_partitionings = []
   for i in range(1,n_ranks+1):
-    for j in [1]:
+    for j in range(1,n_ranks+1):
       if i*j <= n_ranks and n_ranks % (i*j) == 0:
         k = (int)(n_ranks / (i*j))
         performance = (k-optimal_value)**2 + (j-optimal_value)**2 + 1.1*(i-optimal_value)**2
@@ -118,6 +120,7 @@ if rank_no == 0:
   print("dt_splitting:    {:0.0e}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(variables.dt_splitting, variables.emg_solver_type, variables.emg_initial_guess_nonzero))
   print("dt_3D:           {:0.0e}, paraview_output: {}".format(variables.dt_3D, variables.paraview_output))
   print("output_timestep: {:0.0e}  stimulation_frequency: {} 1/ms = {} Hz".format(variables.output_timestep, variables.stimulation_frequency, variables.stimulation_frequency*1e3))
+  print("fast_monodomain_solver_optimizations: {}, use_vc: {}".format(variables.fast_monodomain_solver_optimizations, variables.use_vc))
   print("fiber_file:              {}".format(variables.fiber_file))
   print("fat_mesh_file:           {}".format(variables.fat_mesh_file))
   print("cellml_file:             {}".format(variables.cellml_file))
@@ -225,10 +228,10 @@ def postprocess(result):
 
 # define the config dict
 config = {
-  "scenarioName":          variables.scenario_name,
+  "scenarioName":                  variables.scenario_name,
   "mappingsBetweenMeshesLogFile":  "out/mappings_between_meshes.txt",
-  "logFormat":             "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
-  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "logFormat":                     "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
+  "solverStructureDiagramFile":    "out/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "meta": {                 # additional fields that will appear in the log
     "partitioning": [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
@@ -297,17 +300,18 @@ config = {
                 [{
                   "ranks":                          list(range(variables.n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
                   "Heun" : {
-                    "timeStepWidth":                variables.dt_0D,  # 5e-5
-                    "logTimeStepWidthAsKey":        "dt_0D",
-                    "durationLogKey":               "duration_0D",
-                    "initialValues":                [],
-                    "timeStepOutputInterval":       1e4,
-                    "inputMeshIsGlobal":            True,
-                    "dirichletBoundaryConditions":  {},
-                    "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-                    "nAdditionalFieldVariables":    0,
-                    "additionalSlotNames":          [],                                       # slot names of the additional slots, maximum 6 characters per name
-                    "checkForNanInf":               True,
+                    "timeStepWidth":                variables.dt_0D,                         # timestep width of 0D problem
+                    "logTimeStepWidthAsKey":        "dt_0D",                                 # key under which the time step width will be written to the log file
+                    "durationLogKey":               "duration_0D",                           # log key of duration for this solver
+                    "timeStepOutputInterval":       1e4,                                     # how often to print the current timestep
+                    "initialValues":                [],                                      # no initial values are specified
+                    "dirichletBoundaryConditions":  {},                                      # no Dirichlet boundary conditions are specified
+                    "dirichletOutputFilename":      None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+                    
+                    "inputMeshIsGlobal":            True,                                    # the boundary conditions and initial values would be given as global numbers
+                    "checkForNanInf":               True,                                    # abort execution if the solution contains nan or inf values
+                    "nAdditionalFieldVariables":    0,                                       # number of additional field variables
+                    "additionalSlotNames":          [],                                      # names for the additional slots
                       
                     "CellML" : {
                       "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
@@ -316,12 +320,13 @@ config = {
                       "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
                       
                       # optimization parameters
-                      "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
-                      "approximateExponentialFunction":         True,                                          # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+                      "optimizationType":                       "vc" if variables.use_vc else "simd",           # "vc", "simd", "openmp" type of generated optimizated source file
+                      "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
                       "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
                       "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
                       
                       # stimulation callbacks
+                      #"libraryFilename":                       "cellml_simd_lib.so",                           # compiled library
                       #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current
                       #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_specific_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
                       "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
@@ -331,13 +336,14 @@ config = {
                       "setSpecificStatesFrequencyJitter":       variables.get_specific_states_frequency_jitter(fiber_no, motor_unit_no), # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
                       "setSpecificStatesRepeatAfterFirstCall":  0.01,                                                            # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
                       "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),# [ms] first time when to call setSpecificStates
-                      "additionalArgument":                     fiber_no,
+                      "additionalArgument":                     fiber_no,                                       # last argument that will be passed to the callback functions set_specific_states, set_specific_parameters, etc.
                       
+                      # parameters to the cellml model
                       "mappings":                               variables.mappings,                             # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
                       "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                       
-                      "meshName":                               "MeshFiber_{}".format(fiber_no),
-                      "stimulationLogFilename":                 "out/stimulation.log",
+                      "meshName":                               "MeshFiber_{}".format(fiber_no),                # reference to the fiber mesh
+                      "stimulationLogFilename":                 "out/stimulation.log",                          # a file that will contain the times of stimulations
                     },      
                     "OutputWriter" : [
                       {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/0D_states({},{})".format(fiber_in_subdomain_coordinate_x,fiber_in_subdomain_coordinate_y), "binary": True, "fixedFormat": False, "combineFiles": True}
@@ -355,31 +361,28 @@ config = {
                 "nInstances": n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y),
                 "instances": 
                 [{
-                  "ranks":                         list(range(variables.n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
+                  "ranks":                         list(range(variables.n_subdomains_z)),   # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
                   "ImplicitEuler" : {
-                    "initialValues":               [],
+                    "initialValues":               [],                                      # no initial values are given
                     #"numberTimeSteps":            1,
-                    "timeStepWidth":               variables.dt_1D,  # 1e-5
+                    "timeStepWidth":               variables.dt_1D,                         # timestep width for the diffusion problem
                     "timeStepWidthRelativeTolerance": 1e-10,
-                    "logTimeStepWidthAsKey":       "dt_1D",
-                    "durationLogKey":              "duration_1D",
-                    "timeStepOutputInterval":      1e4,
-                    "dirichletBoundaryConditions": {},                                       # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
-                    "dirichletOutputFilename":     None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-                    "inputMeshIsGlobal":           True,
-                    "solverName":                  "diffusionTermSolver",
+                    "logTimeStepWidthAsKey":       "dt_1D",                                 # key under which the time step width will be written to the log file
+                    "durationLogKey":              "duration_1D",                           # log key of duration for this solver
+                    "timeStepOutputInterval":      1e4,                                     # how often to print the current timestep
+                    "dirichletBoundaryConditions": {},                                      # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
+                    "dirichletOutputFilename":     None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+                    "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
+                    "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
                     "nAdditionalFieldVariables":   0,
                     "additionalSlotNames":         [],
                     "checkForNanInf":              False,
                     
                     "FiniteElementMethod" : {
-                      "maxIterations":             1e4,
-                      "relativeTolerance":         1e-10,
-                      "absoluteTolerance":         1e-10,         # 1e-10 absolute tolerance of the residual    
                       "inputMeshIsGlobal":         True,
                       "meshName":                  "MeshFiber_{}".format(fiber_no),
-                      "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
                       "solverName":                "diffusionTermSolver",
+                      "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
                       "slotName":                  "vm",
                     },
                     "OutputWriter" : [
@@ -403,9 +406,9 @@ config = {
       },
       "fiberDistributionFile":    variables.fiber_distribution_file,   # for FastMonodomainSolver, e.g. MU_fibre_distribution_3780.txt
       "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
-      "onlyComputeIfHasBeenStimulated": True,                          # only compute fibers after they have been stimulated for the first time
-      "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again
-      "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set
+      "onlyComputeIfHasBeenStimulated": variables.fast_monodomain_solver_optimizations,                          # only compute fibers after they have been stimulated for the first time
+      "disableComputationWhenStatesAreCloseToEquilibrium": variables.fast_monodomain_solver_optimizations,       # optimization where states that are close to their equilibrium will not be computed again      
+      "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set      
     },
     "Term2": {        # Bidomain, EMG
       "OutputSurface": {

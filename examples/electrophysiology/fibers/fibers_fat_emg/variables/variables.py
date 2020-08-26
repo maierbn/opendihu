@@ -149,3 +149,6 @@ fat_mesh_n_points = None
 fat_mesh_n_points_global = None
 local_range_i = None
 local_range_k = None
+fast_monodomain_solver_optimizations = True # enable the optimizations in the fast multidomain solver
+use_vc = True                       # If the vc optimization type should be used for CellmlAdapter
+

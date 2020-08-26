@@ -127,7 +127,7 @@ for mu_no in range(n_motor_units):
   c1 = min_value - c2
   mn_istim = c1 + c2*1.02**(n_motor_units-1-mu_no)
 
-  # exponential distribution: low number of fibers per MU, slow twitch (type I), activated first --> high number of fibers per MU, fast twitch (type II), acti
+  # exponential distribution: low number of fibers per MU, slow twitch (type I), activated first --> high number of fibers per MU, fast twitch (type II), activated last
   motor_units.append(
   {
     "fiber_no":              random.randint(0,n_fibers_in_fiber_file),  # [-] fiber from input files that is the center of the motor unit domain
@@ -216,7 +216,7 @@ fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1
 sampling_stride_y = 1
-sampling_stride_z = 22
+sampling_stride_z = 22      # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40
 sampling_stride_fat = 1
 
 # how much of the multidomain mesh is used for elasticity
@@ -237,7 +237,7 @@ disable_firing_output = False   # if information about firing of MUs should be p
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(mu_no):
   # get radius in cm, 1 μm = 1e-6 m = 1e-4*1e-2 m = 1e-4 cm
-  r = motor_units[mu_no]["radius"]*1e-4
+  r = motor_units[mu_no % len(motor_units)]["radius"]*1e-4
   # cylinder surface: A = 2*π*r*l, V = cylinder volume: π*r^2*l, Am = A/V = 2*π*r*l / (π*r^2*l) = 2/r
   return 2./r
   #return Am
@@ -246,7 +246,7 @@ def get_cm(mu_no):
   return motor_units[mu_no % len(motor_units)]["cm"]
   #return Cm
   
-# output config in a readable format
+# output motor_unit config in a readable format
 if True:
   import sys
   # only on rank 0

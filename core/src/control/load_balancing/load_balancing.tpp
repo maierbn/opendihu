@@ -850,8 +850,8 @@ rebalance()
   nodePositionsWithoutGhosts.resize(nNodesLocalWithoutGhostsNew);
 
   // set new values
-  std::vector<double> &diffusionValuesNew = diffusionValuesNew_TEST;
-  std::array<std::vector<double>,nCellMLComponents> &cellmlValuesNew = cellmlValuesNew_TEST;
+  std::vector<double> diffusionValuesNew = diffusionValuesNew_TEST;
+  std::array<std::vector<double>,nCellMLComponents> cellmlValuesNew = cellmlValuesNew_TEST;
 
   // log info
   LOG(DEBUG) << "create meshPartition, nElementsPerDimensionGlobal: " << nElementsPerDimensionGlobal;
@@ -893,7 +893,7 @@ rebalance()
 
   // create new CellMLAdapter with new function space
   cellMLAdapter = std::move(CellMLAdapter(cellMLAdapter, functionSpaceNew));
-  // cellMLAdapter is now initialize
+  // cellMLAdapter is now initialized
 
   LOG(DEBUG) << "timeSteppingHeun.initialize()";
   timeSteppingHeun.initialize();    // retrieves function space from cellMLAdapter, does not initialize CellMLAdapter again

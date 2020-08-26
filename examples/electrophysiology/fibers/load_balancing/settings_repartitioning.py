@@ -1,7 +1,7 @@
 # 2 fibers, biceps, example for load_balancing
 #
 
-end_time = 2.0     # end time for the simulation
+end_time = 20.0     # end time for the simulation
 
 import numpy as np
 import pickle
@@ -27,7 +27,7 @@ fiber_file = "../../../input/laplace3d_structured_linear"
 fiber_distribution_file = "../../../input/MU_fibre_distribution_3780.txt"
 firing_times_file = "../input/MU_firing_times_load_balancing.txt"
 cellml_file = "../../../input/hodgkin_huxley_1952.c"
-#cellml_file = "../../../input/shorten.cpp"        # <-- die Zeile einkommentieren, um Shorten zu verwenden
+#cellml_file = "../../../input/shorten_ocallaghan_davidson_soboleva_2007.cellml"        # <-- die Zeile einkommentieren, um Shorten zu verwenden
 
 # get own rank no and number of ranks
 rank_no = (int)(sys.argv[-2])
@@ -246,7 +246,8 @@ config = {
               "logTimeStepWidthAsKey": "dt_1D",
               "durationLogKey": "duration_1D",
               "timeStepOutputInterval": 1e4,
-              "dirichletBoundaryConditions": {0: -75, -1: -75},      # set first and last value of fiber to -75
+              #"dirichletBoundaryConditions": {0: -75, -1: -75},      # set first and last value of fiber to -75
+              "dirichletBoundaryConditions": {},      # set first and last value of fiber to -75
               "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
               "inputMeshIsGlobal": True,
               "timeStepWidthRelativeTolerance": 1e-10,

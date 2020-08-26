@@ -4,19 +4,19 @@
 
 /** Transfer between a tuple and another field variables with given component number
  */
-template<typename SlotConnectorDataType1, typename SlotConnectorDataType2, typename FunctionSpaceType3, int nComponents3a, int nComponents3b>
+template<typename SlotConnectorDataType1, typename SlotConnectorDataType2, typename SlotConnectorDataType3>
 void SlotConnectorDataTransfer<
   std::tuple<
     std::shared_ptr<SlotConnectorDataType1>,
     std::shared_ptr<SlotConnectorDataType2>
   >,
-  Data::SlotConnectorData<FunctionSpaceType3,nComponents3a,nComponents3b>
+  SlotConnectorDataType3
 >
 ::transfer(const std::shared_ptr<std::tuple<
              std::shared_ptr<SlotConnectorDataType1>,
              std::shared_ptr<SlotConnectorDataType2>
            >> transferableSolutionData1,
-           std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType3,nComponents3a,nComponents3b>> transferableSolutionData3,
+           std::shared_ptr<SlotConnectorDataType3> transferableSolutionData3,
            SlotsConnection &slotsConnection, int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer tuple (1a), offsetSlotNoData1: " << offsetSlotNoData1 << ", offsetSlotNoData2: " << offsetSlotNoData2;
@@ -27,7 +27,7 @@ void SlotConnectorDataTransfer<
              std::shared_ptr<SlotConnectorDataType2>
         >>::getString(transferableSolutionData1);
   LOG(DEBUG) << "transferableSolutionData2: "
-    << SlotConnectorDataHelper<Data::SlotConnectorData<FunctionSpaceType3,nComponents3a,nComponents3b>>::getString(transferableSolutionData3);
+    << SlotConnectorDataHelper<SlotConnectorDataType3>::getString(transferableSolutionData3);
 #endif
 
   // copy slotsConnection for second tuple
@@ -39,7 +39,7 @@ void SlotConnectorDataTransfer<
   // do transfer with slots in first tuple part
   SlotConnectorDataTransfer<
     SlotConnectorDataType1,
-    Data::SlotConnectorData<FunctionSpaceType3,nComponents3a,nComponents3b>
+    SlotConnectorDataType3
   >::transfer(std::get<0>(*transferableSolutionData1), transferableSolutionData3, *slotsConnection.subSlotsConnection1(),
               offsetSlotNoData1, offsetSlotNoData2);
 
@@ -51,7 +51,7 @@ void SlotConnectorDataTransfer<
              std::shared_ptr<SlotConnectorDataType2>
         >>::getString(transferableSolutionData1);
   LOG(DEBUG) << "transferableSolutionData2: "
-    << SlotConnectorDataHelper<Data::SlotConnectorData<FunctionSpaceType3,nComponents3a,nComponents3b>>::getString(transferableSolutionData3);
+    << SlotConnectorDataHelper<SlotConnectorDataType3>::getString(transferableSolutionData3);
 #endif
 
   // copy slotsConnection for second tuple
@@ -69,22 +69,22 @@ void SlotConnectorDataTransfer<
   // do transfer with slots in second tuple part
   SlotConnectorDataTransfer<
     SlotConnectorDataType2,
-    Data::SlotConnectorData<FunctionSpaceType3,nComponents3a,nComponents3b>
+    SlotConnectorDataType3
   >::transfer(std::get<1>(*transferableSolutionData1), transferableSolutionData3, *slotsConnection.subSlotsConnection2(),
               offsetSlotNoData1, offsetSlotNoData2);
 }
 
 /** Transfer between a tuple and another field variables with given component number
  */
-template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename SlotConnectorDataType2, typename SlotConnectorDataType3>
+template<typename SlotConnectorDataType1, typename SlotConnectorDataType2, typename SlotConnectorDataType3>
 void SlotConnectorDataTransfer<
-  Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,
+  SlotConnectorDataType1,
   std::tuple<
     std::shared_ptr<SlotConnectorDataType2>,
     std::shared_ptr<SlotConnectorDataType3>
   >
 >
-::transfer(const std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1,
+::transfer(const std::shared_ptr<SlotConnectorDataType1> transferableSolutionData1,
            std::shared_ptr<std::tuple<
              std::shared_ptr<SlotConnectorDataType2>,
              std::shared_ptr<SlotConnectorDataType3>
@@ -94,7 +94,7 @@ void SlotConnectorDataTransfer<
   LOG(DEBUG) << "transfer tuple (2a)";
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
   LOG(DEBUG) << "transferableSolutionData1: "
-    << SlotConnectorDataHelper<Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>>::getString(transferableSolutionData1);
+    << SlotConnectorDataHelper<SlotConnectorDataType1>::getString(transferableSolutionData1);
   LOG(DEBUG) << "transferableSolutionData2: "
     << SlotConnectorDataHelper<std::tuple<
           std::shared_ptr<SlotConnectorDataType2>,
@@ -110,7 +110,7 @@ void SlotConnectorDataTransfer<
 
   // do transfer with slots in first tuple part
   SlotConnectorDataTransfer<
-    Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,
+    SlotConnectorDataType1,
     SlotConnectorDataType2
   >::transfer(transferableSolutionData1, std::get<0>(*transferableSolutionData2), *slotsConnection.subSlotsConnection1(),
               offsetSlotNoData1, offsetSlotNoData2);
@@ -118,7 +118,7 @@ void SlotConnectorDataTransfer<
   LOG(DEBUG) << "transfer tuple (2b)";
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
   LOG(DEBUG) << "transferableSolutionData1: "
-    << SlotConnectorDataHelper<Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>>::getString(transferableSolutionData1);
+    << SlotConnectorDataHelper<SlotConnectorDataType1>::getString(transferableSolutionData1);
   LOG(DEBUG) << "transferableSolutionData2: "
     << SlotConnectorDataHelper<std::tuple<
           std::shared_ptr<SlotConnectorDataType2>,
@@ -140,7 +140,7 @@ void SlotConnectorDataTransfer<
 
   // do transfer with slots in second tuple part
   SlotConnectorDataTransfer<
-    Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>,
+    SlotConnectorDataType1,
     SlotConnectorDataType3
   >::transfer(transferableSolutionData1, std::get<1>(*transferableSolutionData2), *slotsConnection.subSlotsConnection2(),
               offsetSlotNoData1, offsetSlotNoData2);

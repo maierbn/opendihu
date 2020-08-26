@@ -55,23 +55,25 @@ initializeWithTimeStepWidth(double timeStepWidth)
   LOG(TRACE) << "TimeSteppingImplicit::initializeWithTimeStepWidth(" << timeStepWidth << ")";
 
   // check if the time step changed and a new initialization is neccessary
-  if (this->initializedTimeStepWidth_ < 0.0)
+  if (this->initializedTimeStepWidth_ < 0.0 || !this->dataImplicit_->systemMatrix())
   {
-    // first initializatin
-    LOG(DEBUG) << "initializeWithTimeStepWidth( " << timeStepWidth << ")";
+    // first initialization
+    LOG(DEBUG) << "initializeWithTimeStepWidth(" << timeStepWidth << ")";
   }
   else
   {
     // check if the time step size changed
     const double eps = this->timeStepWidthRelativeTolerance_;
 
-    const double rel_diff = (this->initializedTimeStepWidth_ - timeStepWidth) / this->initializedTimeStepWidth_;
-    if (-eps <= rel_diff && rel_diff <= eps)
+    const double relDiff = (this->initializedTimeStepWidth_ - timeStepWidth) / this->initializedTimeStepWidth_;
+    if (-eps <= relDiff && relDiff <= eps)
     {
-      LOG(DEBUG) << "don't re-initializeWithTimeStepWidth as relative difference of time steps is small (tolerance: " << eps << "): " << rel_diff << ". Old: " << this->initializedTimeStepWidth_ << ", new: " << timeStepWidth;
+      LOG(DEBUG) << "do not re-initializeWithTimeStepWidth as relative difference of time steps is small (tolerance: " << eps << "): "
+        << relDiff << ". Old: " << this->initializedTimeStepWidth_ << ", new: " << timeStepWidth;
       return;
     }
-    LOG(DEBUG) << "re-initializeWithTimeStepWidth as relative difference of time steps is too large (tolerance: " << eps << "): " << rel_diff << ". Old: " << this->initializedTimeStepWidth_ << ", new: " << timeStepWidth;
+    LOG(DEBUG) << "re-initializeWithTimeStepWidth as relative difference of time steps is too large (tolerance: " << eps << "): "
+      << relDiff << ". Old: " << this->initializedTimeStepWidth_ << ", new: " << timeStepWidth;
   }
 
   if (this->durationInitTimeStepLogKey_ != "")
@@ -136,6 +138,12 @@ template<typename DiscretizableInTimeType>
 void TimeSteppingImplicit<DiscretizableInTimeType>::
 solveLinearSystem(Vec &input, Vec &output)
 {
+  if (!dataImplicit_)
+    LOG(FATAL) << this->name_ << ", solveLinearSystem, implicit data is not initialized, initialized_=" << this->initialized_;
+
+  if (!this->dataImplicit_->systemMatrix())
+    LOG(FATAL) << this->name_ << ", solveLinearSystem, system matrix is not set, initialized_=" << this->initialized_;
+
   // solve systemMatrix*output = input for output
   Mat &systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
   

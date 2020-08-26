@@ -68,7 +68,7 @@ private:
   int multiplicator_;
 
   // vector norm between two solutions
-  PetscReal vecnorm;
+  PetscReal vecnorm_;
 
   // temporary vectors for calculation
   Vec temp_solution_normal;

@@ -173,7 +173,6 @@ FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_,
 getSlotConnectorData()
 {
   // check for nans or infs
-  //this->data_.solution()->checkNanInf();
   return this->data_.getSlotConnectorData();
 }
 

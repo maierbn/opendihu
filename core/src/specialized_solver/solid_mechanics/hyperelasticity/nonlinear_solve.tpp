@@ -29,6 +29,7 @@ nonlinearSolve()
   assert(nonlinearSolver_);
   std::shared_ptr<SNES> snes = nonlinearSolver_->snes();
   std::shared_ptr<KSP> ksp = nonlinearSolver_->ksp();
+  bestResidualNorm_ = std::numeric_limits<double>::max();
 
   // newline
   LOG(INFO);
@@ -47,7 +48,12 @@ nonlinearSolve()
     if (currentLoadFactor_ < loadFactorGiveUpThreshold_)
     {
       LOG(WARNING) << "Nonlinear solver reached load factor " << currentLoadFactor_ << ", (no. " << loadFactorIndex << ") which "
-        << " is below give-up threshold of " << loadFactorGiveUpThreshold_ << ", now abort.";
+        << "is below give-up threshold of " << loadFactorGiveUpThreshold_ << ". "
+        << "Now abort, use best found solution with residual norm " << bestResidualNorm_;
+
+      // restore best found solution so far
+      PetscErrorCode ierr;
+      ierr = VecCopy(bestSolution_, solverVariableSolution_); CHKERRV(ierr);
       break;
     }
 
@@ -183,6 +189,14 @@ monitorSolvingIteration(SNES snes, PetscInt its, PetscReal currentNorm)
   message << "  Nonlinear solver: iteration " << std::setw(2) << its << ", residual norm " << std::setw(11) << currentNorm
           << ", e_new=e_old^c with c=" <<  std::setw(3) << experimentalOrderOfConvergence << std::setprecision(6);
   LOG(INFO) << message.str();
+
+  // if we got a better solution and this is load factor 1, store the solution
+  if (currentLoadFactor_ == 1 && currentNorm < bestResidualNorm_)
+  {
+    bestResidualNorm_ = currentNorm;
+    PetscErrorCode ierr;
+    ierr = VecCopy(solverVariableSolution_, bestSolution_); CHKERRV(ierr);
+  }
 
   static int evaluationNo = 0;  // counter how often this function was called
 

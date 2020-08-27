@@ -67,14 +67,14 @@ protected:
   //! transform global dof no from a shared dof in the muscle mesh to the corresponding shared dof in the fat mesh
   PetscInt getDofNoGlobalFatFromDofNoGlobalMuscle(PetscInt dofNoGlobal);
 
+  //! set in the Petsc preconditioner object the information about matrix blocks for block jacobi and the node positions (PCSetCoordinates)
+  virtual void setInformationToPreconditioner() override;
+
   // ! copy the incoming data in the phiB field variable from the dataFat_ object to the nested Vec solution which only contains not-shared dofs
   void copyPhiBToSolution();
 
   // ! copy the results from the linear solve in solution, which contains non-shared dofs, to the phi_b field variable in dataFat_, the missing values for the shared dofs are taken from phi_e
   void copySolutionToPhiB();
-
-  //! set in the Petsc preconditioner object the information about matrix blocks for block jacobi and the node positions (PCSetCoordinates)
-  void setInformationToPreconditioner();
 
   DataFat dataFat_;  //< the data object of the multidomain solver with fat, which stores all field variables and matrices
   FiniteElementMethodDiffusionFat finiteElementMethodFat_;   //< the finite element object that is used for the Laplace problem of the potential flow, needed for the fiber directions

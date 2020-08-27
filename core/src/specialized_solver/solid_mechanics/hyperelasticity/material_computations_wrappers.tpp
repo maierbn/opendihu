@@ -186,9 +186,6 @@ solveDynamicProblem(
   this->outputWriterManager_.writeOutput(this->data_, 0, endTime_);
   this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, endTime_);
 
-  // restore value of ∂W_ext and solution
-  ierr = VecSwap(result, solverVariableSolution_); CHKERRV(ierr);
-
   // determine output values for δW
   externalVirtualWorkDead = externalVirtualWorkDead_;
 
@@ -202,6 +199,8 @@ solveDynamicProblem(
   materialAddAccelerationTermAndVelocityEquation();
   ierr = VecCopy(solverVariableResidual_, accelerationTerm); CHKERRV(ierr);
 
+  // restore value of ∂W_ext and solution
+  ierr = VecSwap(result, solverVariableSolution_); CHKERRV(ierr);
 }
 
 }  // namespace SpatialDiscretization

@@ -156,8 +156,11 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
 
 #ifndef NDEBUG
-      if (fabs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3)
-        LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized, elementalDirectionValues:" << elementalDirectionValues;
+      if (Term::usesFiberDirection)
+      {
+        if (fabs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3)
+          LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized, elementalDirectionValues:" << elementalDirectionValues;
+      }
 #endif
 
       // invariants
@@ -384,7 +387,6 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
   //combinedVecResidual_->startGhostManipulation();
   //combinedVecResidual_->zeroGhostBuffer();
   //combinedVecResidual_->finishGhostManipulation();
-
 
   if (!lastSolveSucceeded_)
   {
@@ -1106,8 +1108,11 @@ materialComputeJacobian()
       Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
 
 #ifndef NDEBUG
-      if (fabs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3)
-        LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized, elementalDirectionValues:" << elementalDirectionValues;
+      if (Term::usesFiberDirection)
+      {
+        if (fabs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3)
+          LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized, elementalDirectionValues:" << elementalDirectionValues;
+      }
 #endif
 
       // invariants

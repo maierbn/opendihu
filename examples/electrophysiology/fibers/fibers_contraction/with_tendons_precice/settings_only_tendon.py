@@ -34,14 +34,26 @@ k2 = 411.360e2              # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber st
 #k2 = 357.23e2               # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, Equine Digital Flexor (Thorpe 2012)
 #k1 = 92.779e2               # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, Equine Digital Flexor (Vergari 2011)
 #k2 = 305.87e2               # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, Equine Digital Flexor (Vergari 2011)
+
+
+# material parameters for tendon material
+c = 9.98                    # [N/cm^2=kPa]
+ca = 14.92                  # [-]
+ct = 14.7                   # [-]
+cat = 9.64                  # [-]
+ctt = 11.24                 # [-]
+mu = 3.76                   # [N/cm^2=kPa]
+k1 = 42.217e3               # [N/cm^2=kPa]
+k2 = 411.360e3              # [N/cm^2=kPa]
+
 variables.material_parameters = [c, ca, ct, cat, ctt, mu, k1, k2]
 
 variables.constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
-variables.force = 1000.0       # [N]
+variables.force = 100.0       # [N]
 
 print("Expected stress: {} N/cm^2 = {} MPa".format(variables.force, variables.force * 1e-2))
 
-variables.dt_elasticity = 1.0      # [ms] time step width for elasticity
+variables.dt_elasticity = 0.01      # [ms] time step width for elasticity
 variables.end_time      = 10     # [ms] simulation time
 variables.scenario_name = "tendon_bottom"
 variables.is_bottom_tendon = True        # whether the tendon is at the bottom (negative z-direction), this is important for the boundary conditions
@@ -117,6 +129,7 @@ node_positions = variables.meshes["3Dmesh_quadratic"]["nodePositions"]
 # set Dirichlet BC, fix one end
 variables.elasticity_dirichlet_bc = {}
 k = mz-1
+k = 0
 
 # fix z value on the whole x-y-plane
 for j in range(my):
@@ -132,8 +145,8 @@ for i in range(mx):
   variables.elasticity_dirichlet_bc[k*mx*my + 0*mx + i][1] = 0.0
        
 # set Neumann BC, set traction at the end of the tendon that is attached to the muscle
-k = 0
-traction_vector = [0, 0, -variables.force]     # the traction force in specified in the reference configuration
+k = nz-1
+traction_vector = [0, 0, variables.force]     # the traction force in specified in the reference configuration
 #traction_vector = [0, 0.1*variables.force, -0.2*variables.force]     # the traction force in specified in the reference configuration
 face = "2-"
 variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": traction_vector, "face": face} for j in range(ny) for i in range(nx)]
@@ -174,7 +187,7 @@ config = {
       }
     ],
     
-    "HyperelasticitySolver": {
+    "DynamicHyperelasticitySolver": {
       "timeStepWidth":              variables.dt_elasticity,      # time step width 
       "endTime":                    variables.end_time,           # end time of the simulation time span    
       "durationLogKey":             "duration_mechanics",         # key to find duration of this solver in the log file
@@ -208,7 +221,7 @@ config = {
       "snesRelativeTolerance":      1e-5,                         # relative tolerance of the nonlinear solver
       "snesLineSearchType":         "l2",                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
       "snesAbsoluteTolerance":      1e-5,                         # absolute tolerance of the nonlinear solver
-      "snesRebuildJacobianFrequency": 5,                          # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+      "snesRebuildJacobianFrequency": 1,                          # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
       
       #"dumpFilename": "out/r{}/m".format(sys.argv[-1]),          # dump system matrix and right hand side after every solve
       "dumpFilename":               "",                           # dump disabled
@@ -217,7 +230,7 @@ config = {
       #"loadFactors":                list(np.logspace(-2,0,10)),   # load factors for every timestep
       #"loadFactors":                [0.5, 1.0],                   # load factors for every timestep
       "loadFactors":                [],                           # no load factors, solve problem directly
-      "loadFactorGiveUpThreshold":  1e-3,                         # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
+      "loadFactorGiveUpThreshold":  1,                         # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
       "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
       
       # boundary and initial conditions

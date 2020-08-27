@@ -334,6 +334,7 @@ elif mode == 1:
   # find equalization_factors that fulfill the required exponential distribution of MU sizes
   print("\nNow run optimizer. Optimize factors to obtain exponential distribution of MU sizes. Maximum number of iterations: {}".format(n_max_iterations))
   bounds = [(0,None) for i in range(n_motor_units)]
+
   result = scipy.optimize.minimize(objective, equalization_factors, bounds=bounds, options={"disp": True, "maxiter": n_max_iterations})
   print("Result of optimizer: success: {}, status: {}, message: {}, n objective evaluations: {}, n iterations: {}".format(result.success, result.status, result.message, result.nfev, result.nit))
   equalization_factors = result.x

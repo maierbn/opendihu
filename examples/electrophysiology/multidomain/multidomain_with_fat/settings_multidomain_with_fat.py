@@ -155,8 +155,15 @@ multidomain_solver = {
   # solver options
   "solverName":                       "multidomainLinearSolver",            # reference to the solver used for the global linear system of the multidomain eq.
   "alternativeSolverName":            "multidomainAlternativeLinearSolver", # reference to the alternative solver, which is used when the normal solver diverges
-  "subSolverType":                    "cg",                                 # sub solver when block jacobi preconditioner is used
-  "subPreconditionerType":            "boomeramg",                          # sub preconditioner when block jacobi preconditioner is used
+  "subSolverType":                    "gamg",                               # sub solver when block jacobi preconditioner is used
+  "subPreconditionerType":            "none",                               # sub preconditioner when block jacobi preconditioner is used
+  #"subPreconditionerType":            "boomeramg",                          # sub preconditioner when block jacobi preconditioner is used, boomeramg is the AMG preconditioner of HYPRE
+
+  # gamg specific options:
+  "gamgType":                         "classical",                          # one of agg, geo, or classical 
+  "cycleType":                        "cycleV",                             # either cycleV or cycleW
+  "nLevels":                          25,
+  
   "hypreOptions":                     "-pc_hypre_boomeramg_strong_threshold 0.7",       # additional options if a hypre preconditioner is selected
   "theta":                            variables.theta,                      # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
   "useLumpedMassMatrix":              variables.use_lumped_mass_matrix,     # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations

@@ -7,6 +7,7 @@
 #include "utility/petsc_utility.h"
 #include "data_management/specialized_solver/multidomain.h"
 #include "specialized_solver/multidomain_solver/nested_mat_vec_utility.h"
+#include "control/diagnostic_tool/memory_leak_finder.h"
 
 //#define MONODOMAIN
 
@@ -79,6 +80,8 @@ advanceTimeSpan()
         << " (linear solver iterations: " << lastNumberOfIterations_ << ")";
     }
 
+    //LOG(INFO) << "a +" << Control::MemoryLeakFinder::nBytesIncreaseSinceLastCheck() / 1024 << "kB";
+
     LOG(DEBUG) << " Vm: ";
     //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
     LOG(DEBUG) << *dataMultidomain_.transmembranePotential(0);
@@ -120,7 +123,7 @@ advanceTimeSpan()
 
     // write current output values
     callOutputWriter(timeStepNo, currentTime);
-
+    
     // start duration measurement
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::start(this->durationLogKey_);

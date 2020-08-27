@@ -123,7 +123,7 @@ protected:
   double timeStepWidthOfSystemMatrix_;        //< the timestep width that was used to setup the system matrix
   bool useSymmetricPreconditionerMatrix_;     //< if the symmetric preconditioner matrix should be set up
   bool updateSystemMatrixEveryTimestep_;      //< if the system matrix will be rebuild every first time step, this is needed if the geometry changes
-  int recreateLinerSolverInterval_;           //< interval when linearSolver_ object gets deleted and recreated, to remedy memory leaks of the PETSc implementation of some solvers
+  int recreateLinearSolverInterval_;           //< interval when linearSolver_ object gets deleted and recreated, to remedy memory leaks of the PETSc implementation of some solvers
 };
 
 }  // namespace

@@ -33,7 +33,7 @@ MultidomainSolver(DihuContext context) :
   initialGuessNonzero_ = this->specificSettings_.getOptionBool("initialGuessNonzero", true);
   showLinearSolverOutput_ = this->specificSettings_.getOptionBool("showLinearSolverOutput", true);
   updateSystemMatrixEveryTimestep_ = this->specificSettings_.getOptionBool("updateSystemMatrixEveryTimestep", false);
-  recreateLinerSolverInterval_ = this->specificSettings_.getOptionInt("recreateLinerSolverInterval", 0, PythonUtility::NonNegative);
+  recreateLinearSolverInterval_ = this->specificSettings_.getOptionInt("recreateLinearSolverInterval", 0, PythonUtility::NonNegative);
 
   if (this->specificSettings_.hasKey("constructPreconditionerMatrix"))
   {
@@ -81,7 +81,7 @@ advanceTimeSpan()
         << " (linear solver iterations: " << lastNumberOfIterations_ << ")";
     }
 
-    if (timeStepNo % this->recreateLinerSolverInterval_ == 0 && this->recreateLinerSolverInterval_ > 0 && timeStepNo > 0)
+    if (timeStepNo % this->recreateLinearSolverInterval_ == 0 && this->recreateLinearSolverInterval_ > 0 && timeStepNo > 0)
     {
       long long int memorySize0 = Control::MemoryLeakFinder::nBytesIncreaseSinceLastCheck();
 

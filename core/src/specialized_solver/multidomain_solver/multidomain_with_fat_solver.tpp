@@ -73,7 +73,7 @@ initialize()
   this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
   setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
 
-  // initialize matices B,C,D,E in submatrices for system matrix,
+  // initialize matrices B,C,D,E in submatrices for system matrix,
   // also set the last zero entry of the rhs and the entry for phi_b^(i+1) in the solution vector
   initializeBorderVariables();
 

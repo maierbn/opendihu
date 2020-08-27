@@ -34,6 +34,7 @@ MultidomainSolver(DihuContext context) :
   showLinearSolverOutput_ = this->specificSettings_.getOptionBool("showLinearSolverOutput", true);
   updateSystemMatrixEveryTimestep_ = this->specificSettings_.getOptionBool("updateSystemMatrixEveryTimestep", false);
   recreateLinearSolverInterval_ = this->specificSettings_.getOptionInt("recreateLinearSolverInterval", 0, PythonUtility::NonNegative);
+  setDirichletBoundaryCondition_ = this->specificSettings_.getOptionBool("setDirichletBoundaryCondition", false);
 
   if (this->specificSettings_.hasKey("constructPreconditionerMatrix"))
   {
@@ -689,6 +690,17 @@ createSystemMatrixFromSubmatrices()
   // create a single Mat object from the nested Mat
   NestedMatVecUtility::createMatFromNestedMat(nestedSystemMatrix_, singleSystemMatrix_, data().functionSpace()->meshPartition()->rankSubset());
 
+  if (setDirichletBoundaryCondition_)
+  {
+    // get global size of single system matrix
+    PetscInt nRowsGlobal = 0;
+    PetscInt nColumnsGlobal = 0;
+    ierr = MatGetSize(singleSystemMatrix_, &nRowsGlobal, &nColumnsGlobal); CHKERRV(ierr);
+
+    PetscInt lastRowNoGlobal = nRowsGlobal - 1;
+    ierr = MatZeroRowsColumns(singleSystemMatrix_, 1, &lastRowNoGlobal, 1.0, NULL, NULL); CHKERRV(ierr);
+  }
+
   if (useSymmetricPreconditionerMatrix_)
   {
     this->submatricesPreconditionerMatrix_ = submatricesSystemMatrix_;
@@ -710,34 +722,33 @@ createSystemMatrixFromSubmatrices()
       }
     }
 #ifndef NDEBUG
-  LOG(DEBUG) << "preconditioner: nested matrix with " << nColumnSubmatricesSystemMatrix_ << "x" << nColumnSubmatricesSystemMatrix_ << " submatrices, nCompartments_=" << nCompartments_;
+    LOG(DEBUG) << "preconditioner: nested matrix with " << nColumnSubmatricesSystemMatrix_ << "x" << nColumnSubmatricesSystemMatrix_ << " submatrices, nCompartments_=" << nCompartments_;
 
-  // output dimensions of submatrices for debugging
-  for (int rowNo = 0; rowNo < nColumnSubmatricesSystemMatrix_; rowNo++)
-  {
-    for (int columnNo = 0; columnNo < nColumnSubmatricesSystemMatrix_; columnNo++)
+    // output dimensions of submatrices for debugging
+    for (int rowNo = 0; rowNo < nColumnSubmatricesSystemMatrix_; rowNo++)
     {
-      Mat subMatrix = submatricesPreconditionerMatrix_[rowNo*nColumnSubmatricesSystemMatrix_ + columnNo];
-      
-      if (!subMatrix)
+      for (int columnNo = 0; columnNo < nColumnSubmatricesSystemMatrix_; columnNo++)
       {
-        LOG(DEBUG) << "preconditioner submatrix (" << rowNo << "," << columnNo << ") is empty (NULL)";
-      }
-      else
-      {
-        PetscInt nRows, nColumns;
-        ierr = MatGetSize(subMatrix, &nRows, &nColumns); CHKERRV(ierr);
-        std::string name;
-        char *cName;
-        ierr = PetscObjectGetName((PetscObject)subMatrix, (const char **)&cName); CHKERRV(ierr);
-        name = cName;
-        
-        LOG(DEBUG) << "preconditioner submatrix (" << rowNo << "," << columnNo << ") is \"" << name << "\" (" << nRows << "x" << nColumns << ")";
+        Mat subMatrix = submatricesPreconditionerMatrix_[rowNo*nColumnSubmatricesSystemMatrix_ + columnNo];
+
+        if (!subMatrix)
+        {
+          LOG(DEBUG) << "preconditioner submatrix (" << rowNo << "," << columnNo << ") is empty (NULL)";
+        }
+        else
+        {
+          PetscInt nRows, nColumns;
+          ierr = MatGetSize(subMatrix, &nRows, &nColumns); CHKERRV(ierr);
+          std::string name;
+          char *cName;
+          ierr = PetscObjectGetName((PetscObject)subMatrix, (const char **)&cName); CHKERRV(ierr);
+          name = cName;
+
+          LOG(DEBUG) << "preconditioner submatrix (" << rowNo << "," << columnNo << ") is \"" << name << "\" (" << nRows << "x" << nColumns << ")";
+        }
       }
     }
-  }
 #endif
-
 
     Mat nestedPreconditionerMatrix;
 
@@ -747,6 +758,17 @@ createSystemMatrixFromSubmatrices()
 
     // create a single Mat object from the nested Mat
     NestedMatVecUtility::createMatFromNestedMat(nestedPreconditionerMatrix, singlePreconditionerMatrix_, data().functionSpace()->meshPartition()->rankSubset());
+
+    if (setDirichletBoundaryCondition_)
+    {
+      // get global size of single system matrix
+      PetscInt nRowsGlobal = 0;
+      PetscInt nColumnsGlobal = 0;
+      ierr = MatGetSize(singlePreconditionerMatrix_, &nRowsGlobal, &nColumnsGlobal); CHKERRV(ierr);
+
+      PetscInt lastRowNoGlobal = nRowsGlobal - 1;
+      ierr = MatZeroRowsColumns(singlePreconditionerMatrix_, 1, &lastRowNoGlobal, 1.0, NULL, NULL); CHKERRV(ierr);
+    }
   }
   else 
   {

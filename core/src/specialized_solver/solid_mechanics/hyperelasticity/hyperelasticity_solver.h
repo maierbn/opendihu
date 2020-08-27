@@ -316,6 +316,7 @@ protected:
   Vec solverVariableSolution_;                              //< PETSc Vec to store the solution, equal to combinedVecSolution_->valuesGlobal()
   Vec zeros_;                                               //< a solver that contains all zeros, needed to zero the diagonal of the jacobian matrix
   Vec lastSolution_;                                        //< a temporary variable to hold the previous solution in the nonlinear solver, to be used to reset the nonlinear scheme if it diverged
+  Vec bestSolution_;                                        //< a temporary variable to hold the best solution so, the one with the lowest residual norm
 
   std::shared_ptr<VecHyperelasticity> combinedVecResidual_; //< the Vec for the residual and result of the nonlinear function
   std::shared_ptr<VecHyperelasticity> combinedVecSolution_; //< the Vec for the solution, combined means that ux,uy,uz and p components are combined in one vector
@@ -344,6 +345,7 @@ protected:
   double density_;                                          //< density, only needed for the dynamic problem
   double lastNorm_;                                         //< residual norm of the last iteration in the nonlinear solver
   double secondLastNorm_;                                   //< residual norm of the second last iteration in the nonlinear solver
+  double bestResidualNorm_;                                 //< best residual norm for load factor 1.0 achieved so far
   double currentLoadFactor_;                                //< current value of the load factor, this value is passed to materialComputeResidual(), 1.0 means normal computation, any lower value reduces the right hand side (scales body and traction forces)
   int nNonlinearSolveCalls_;                                //< how often the nonlinear solve should be called in sequence
   bool lastSolveSucceeded_;                                 //< if the last computation of the residual or jacobian succeeded, if this is false, it indicates that there was a negative jacobian

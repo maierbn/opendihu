@@ -84,6 +84,12 @@ protected:
   //! from the compartments active stress values compute the total active stress
   void computeTotalActiveStress();
 
+  //! set in the Petsc preconditioner object the information about matrix blocks for block jacobi and the node positions (PCSetCoordinates)
+  virtual void setInformationToPreconditioner();
+
+  //! initialize all information for the linearSolver_ object, also set information to preconditioner
+  virtual void initializeLinearSolver();
+
   Data dataMultidomain_;  //< the data object of the multidomain solver which stores all field variables and matrices
 
   FiniteElementMethodPotentialFlow finiteElementMethodPotentialFlow_;   //< the finite element object that is used for the Laplace problem of the potential flow, needed for the fiber directions
@@ -117,6 +123,7 @@ protected:
   double timeStepWidthOfSystemMatrix_;        //< the timestep width that was used to setup the system matrix
   bool useSymmetricPreconditionerMatrix_;     //< if the symmetric preconditioner matrix should be set up
   bool updateSystemMatrixEveryTimestep_;      //< if the system matrix will be rebuild every first time step, this is needed if the geometry changes
+  int recreateLinearSolverInterval_;           //< interval when linearSolver_ object gets deleted and recreated, to remedy memory leaks of the PETSc implementation of some solvers
 };
 
 }  // namespace

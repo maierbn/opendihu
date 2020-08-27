@@ -91,7 +91,7 @@ if n_ranks != variables.n_subdomains:
   optimal_value = n_ranks**(1/3)
   possible_partitionings = []
   for i in range(1,n_ranks+1):
-    for j in range(1,n_ranks+1):
+    for j in [1]:     # partitioning in y direction is always set to 1 because the composite mesh of muscle volume and surface needs to have all processes use all submeshes and the fat layer mesh would not have subdomains for all processes if both the partitioning in x and y direction would be !=1
       if i*j <= n_ranks and n_ranks % (i*j) == 0:
         k = (int)(n_ranks / (i*j))
         performance = (k-optimal_value)**2 + (j-optimal_value)**2 + 1.1*(i-optimal_value)**2

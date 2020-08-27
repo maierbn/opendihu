@@ -247,8 +247,11 @@ writeSampledPointValues()
     writeCallCount_++;
 
     // write result to files
-    OutputPoints::writeCsvFile(filename_, currentTime_, sampledPointsPositionGlobal_, valuesGlobal_);
-    OutputPoints::writeVtpFile(vtpFile.str(), currentTime_, sampledPointsPositionGlobal_, valuesGlobal_, 1, partitioningGlobal_, "EMG");
+    if (enableCsvFile_)
+      OutputPoints::writeCsvFile(filename_, currentTime_, sampledPointsPositionGlobal_, valuesGlobal_);
+
+    if (enableVtpFile_)
+      OutputPoints::writeVtpFile(vtpFile.str(), currentTime_, sampledPointsPositionGlobal_, valuesGlobal_, 1, partitioningGlobal_, "EMG");
 
     seriesWriter_.registerNewFile(vtpFile.str(), currentTime_);
   }

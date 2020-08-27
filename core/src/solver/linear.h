@@ -19,6 +19,9 @@ public:
   //! construct solver from python settings
   Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::string name);
 
+  //! destructor
+  virtual ~Linear();
+
   //! initialize the KSP (Krylov space solver in Petsc) and PC (preconditioner in Petsc) objects, has to be called before solve
   void initialize();
 

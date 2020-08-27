@@ -24,6 +24,13 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
   parseOptions();
 }
 
+Linear::~Linear()
+{
+  LOG(INFO) << "Destructor ~Linear() called.";
+  PetscErrorCode ierr;
+  ierr = KSPDestroy(ksp_.get()); CHKERRV(ierr);
+}
+
 void Linear::parseOptions()
 {
   // parse options

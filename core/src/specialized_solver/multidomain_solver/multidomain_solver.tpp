@@ -138,7 +138,7 @@ advanceTimeSpan()
 
     // write current output values
     callOutputWriter(timeStepNo, currentTime);
-
+    
     // start duration measurement
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::start(this->durationLogKey_);

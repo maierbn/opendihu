@@ -26,7 +26,6 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
 
 Linear::~Linear()
 {
-  LOG(INFO) << "Destructor ~Linear() called.";
   PetscErrorCode ierr;
   ierr = KSPDestroy(ksp_.get()); CHKERRV(ierr);
 }
@@ -301,14 +300,14 @@ bool Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   Control::PerformanceMeasurement::start(this->durationLogKey_);
 
   // reset memory count in MemoryLeakFinder
-  Control::MemoryLeakFinder::nKiloBytesIncreaseSinceLastCheck();
+  //Control::MemoryLeakFinder::nKiloBytesIncreaseSinceLastCheck();
 
   // solve the system
   ierr = KSPSolve(*ksp_, rightHandSide, solution); CHKERRQ(ierr);
 
   // output a warning if the memory increased by over 1 MB, this takes a lot of time, do not do this
   //Control::MemoryLeakFinder::warnIfMemoryConsumptionIncreases("In Linear::solve, after KSPSolve");
-  LOG(INFO) << "+" << Control::MemoryLeakFinder::nKiloBytesIncreaseSinceLastCheck() / 1024 << "kB";
+  //LOG(INFO) << "+" << Control::MemoryLeakFinder::nKiloBytesIncreaseSinceLastCheck() << "kB";
     
   Control::PerformanceMeasurement::stop(this->durationLogKey_);
 

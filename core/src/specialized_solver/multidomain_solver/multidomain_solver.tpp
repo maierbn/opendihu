@@ -72,6 +72,8 @@ advanceTimeSpan()
   // loop over time steps
   double currentTime = this->startTime_;
 
+  static int globalTimeStepCounter = 0;
+
   // loop over time steps
   for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
@@ -81,7 +83,9 @@ advanceTimeSpan()
         << " (linear solver iterations: " << lastNumberOfIterations_ << ")";
     }
 
-    if (timeStepNo % this->recreateLinearSolverInterval_ == 0 && this->recreateLinearSolverInterval_ > 0 && timeStepNo > 0)
+    globalTimeStepCounter++;
+
+    if (globalTimeStepCounter % this->recreateLinearSolverInterval_ == 0 && this->recreateLinearSolverInterval_ > 0 && globalTimeStepCounter > 0)
     {
       long long int memorySize0 = Control::MemoryLeakFinder::nBytesIncreaseSinceLastCheck();
 

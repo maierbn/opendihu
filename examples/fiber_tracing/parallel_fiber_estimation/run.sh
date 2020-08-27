@@ -11,6 +11,7 @@ for refinement in 1 2 3; do
   for file in `ls -rt *.bin* | head -n 2`; do
     mesh_evaluate_quality.py $file
   done
+  mv out out_${method}_${refinement}_${improve_mesh}_false_${use_neumann_bc}
 done
 done
 done

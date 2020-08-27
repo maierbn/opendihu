@@ -6,7 +6,9 @@ import numpy as np
 import sys
 import pickle
 
-name = ""
+# parse arguments
+rank_no = (int)(sys.argv[-2])
+n_ranks = (int)(sys.argv[-1])
 
 if len(sys.argv) >= 5:
   splines_or_stl = sys.argv[0]
@@ -22,17 +24,19 @@ if len(sys.argv) >= 5:
   else:
     input_mesh_filename = "../../../electrophysiology/input/biceps_splines.stl"
 
-  print("parameters:")
-  print("splines_or_stl:      {}".format(splines_or_stl))
-  print("refinement:          {}".format(refinement))
-  print("improve_mesh:        {}".format(improve_mesh))
-  print("use_gradient_field:  {}".format(use_gradient_field))
-  print("use_neumann_bc:      {}".format(use_neumann_bc))
-  print("input_mesh_filename: {}".format(input_mesh_filename))
-  print("result_filename:     {}".format(result_filename))
+  if rank_no == 0:
+    print("parameters:")
+    print("splines_or_stl:      {}".format(splines_or_stl))
+    print("refinement:          {}".format(refinement))
+    print("improve_mesh:        {}".format(improve_mesh))
+    print("use_gradient_field:  {}".format(use_gradient_field))
+    print("use_neumann_bc:      {}".format(use_neumann_bc))
+    print("input_mesh_filename: {}".format(input_mesh_filename))
+    print("result_filename:     {}".format(result_filename))
 
 else:
-  print("error, usage: splines_or_stl refinement improve_mesh use_gradient_field use_neumann_bc")
+  if rank_no == 0:
+    print("error, usage: splines_or_stl refinement improve_mesh use_gradient_field use_neumann_bc")
   sys.exit(0)
   
 bc = {}
@@ -87,6 +91,7 @@ config = {
       "maxIterations": 1e5,
       "inputMeshIsGlobal": True,
       "neumannBoundaryConditions": [],
+      "slotName": "",
     },
     "OutputWriter": [
       {"format": "Paraview", "outputInterval": 1, "filename": "out/biceps", "binary": True, "fixedFormat": False, "combineFiles": False, "fileNumbering": "incremental"},

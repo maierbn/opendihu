@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 # generate an exponentially distributed fiber distribution
 # usage: ./generate_fiber_distribution <output filename> <number of MUs> [<n fibers>]
 
@@ -16,18 +16,23 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib.lines import Line2D
 
-
-
 if len(sys.argv) < 3:
-  print("usage: ./generate_fiber_distribution <output filename> <number of MUs> [<mode> [<n fibers>]] ")
+  print("usage: ./generate_fiber_distribution <output filename> <number of MUs> [<mode> [...]] ")
   print("  mode: 0 = random assignment of fibers to MUs (default)")
-  print("        1 = MUs are centered at different locations") 
+  print("        1 = MUs are centered at different locations")
+  print("")
+  print("  for mode 0:")
+  print("       ./generate_fiber_distribution <output filename> <number of MUs> 0 [<n_fibers>] ")
+  print("  for mode 1:")
+  print("       ./generate_fiber_distribution <output filename> <number of MUs> 1 [<n_fibers_x> [<n_max_iterations>]] ")
+  
   sys.exit(0)
 
 # parse command line arguments  
 output_filename = sys.argv[1]
 n_motor_units = (int)(sys.argv[2])
 
+# parse mode
 mode = 0
 if len(sys.argv) > 3:
   mode = (int)(sys.argv[3])
@@ -35,16 +40,6 @@ if len(sys.argv) > 3:
     print("mode was {}, set to 0".format(mode))
     mode = 0
     
-n_fibers = 10000
-if len(sys.argv) > 4:
-  n_fibers = (int)(sys.argv[4])
-  
-  if mode == 1:
-    print("Note, n_fibers was given, but mode=1, therefore no n_fibers is needed.")
-  
-  
-print("output_filename: {}, n_motor_units: {}, mode: {}, n_fibers: {}".format(output_filename, n_motor_units, mode, n_fibers))
-
 factor = 1.20
 
 def pdf_unscaled(x):
@@ -78,6 +73,13 @@ def draw_sample():
 # mode 0: random placement of fibers
 if mode == 0:
 
+  # parse n_fibers, total number of fibers
+  n_fibers = 10000
+  if len(sys.argv) > 4:
+    n_fibers = (int)(sys.argv[4])
+    
+  print("output_filename: {}\nn_motor_units: {}\nmode: 0 (random placement of fibers)\nn_fibers: {}".format(output_filename, n_motor_units, n_fibers))
+
   # output start and end values of cdf, which should be 0 and 1
   x_list = np.linspace(1,n_motor_units,100)
   print("cdf(1): {}, cdf(max): {}".format(cdf(1), cdf(n_motor_units)))
@@ -108,11 +110,29 @@ if mode == 0:
 # mode 1: centralized placement of fibers around center of MU
 elif mode == 1:
   
+  n_fibers_x = -1
+  if len(sys.argv) > 4:
+    n_fibers_x = (int)(sys.argv[4])
+  else:
+    print("The number of fibers in x and y direction has to be known:")
+    n_fibers_x = (int)(input("Please enter n_fibers_x and press Enter: "))
+  
+  n_max_iterations = 100
+  if len(sys.argv) > 5:
+    n_max_iterations = (int)(sys.argv[5])
+  
+  print("Parameters:\n"
+    "  output_filename: \"{}\"\n"
+    "  n_motor_units:    {}\n"
+    "  mode:             1 (centralized placement of fibers around center of MU)\n"
+    "  n_fibers_x:       {} (number of fibers in one coordinate direction) \n"
+    "  n_max_iterations: {} (maximum number of iterations of the nonlinear solver, decrease this value if the script takes too long)".
+  format(output_filename, n_motor_units, n_fibers_x, n_max_iterations))
+
   tolerance = 1e-7
   enable_plots = True
+  use_accurate_radial_basis_function = False      # True: use Gaussian, this leads to better results, False: use inverse quadratic rbf, this is faster
   
-  print("The number of fibers in x and y direction has to be known:")
-  n_fibers_x = input("Please enter n_fibers_x and press Enter: ")
   n_fibers_y = n_fibers_x
 
   t_start = time.time()
@@ -145,27 +165,28 @@ elif mode == 1:
     ])
     mu_positions.append(mu_position)
 
-  print("determined MU positions")  
+  print("\Randomly chosen MU positions:")  
 
   # plot actual center points of MUs
-  if True:
+  if enable_plots:
     # plot MU centers in 2D plot
     colors = cm.rainbow(np.linspace(0, 1, n_motor_units))
 
     plt.figure(0)
-    print("motor unit positions: ")
     for mu_no in range(n_motor_units):
       mu_position = mu_positions[mu_no]
-      print(mu_position)
+      print("  MU {}, center position: {}".format(mu_no,mu_position))
       x = mu_position[0]
       y = mu_position[1]
     
       color = colors[mu_no,:]
       plt.plot(x,y, '+', markersize=24,color=color)
-  #plt.show()
+    filename = "plots/"+output_filename+"_mu_positions.pdf"
+    plt.savefig(filename)
+    print("  Saved MU positions to file \"{}\".".format(filename))
   
   sigma = 0.1*n_fibers_x
-  a_factor = 1/(sigma**2)
+  a_factor = 2/(sigma**2)   # use a higher factor for a smaller width of the RBF, which leads to sharper motor unit territories
 
   def pdf_distance_unscaled(equalization_factors,i,j,x):
     """ unscaled version of the probability distribution of the motor unit of fiber (i,j), does not sum to 1 """
@@ -179,8 +200,8 @@ elif mode == 1:
       mu_no = n_motor_units
     mu_position = mu_positions[mu_no-1]
       
-    # accurate
-    if False:
+    # accurate, use Gaussian RBF
+    if use_accurate_radial_basis_function:
       # determine distance of fiber to center of MU
       distance = np.linalg.norm(mu_position - current_position)
       
@@ -188,32 +209,37 @@ elif mode == 1:
       sigma = 0.1*n_fibers_x    # set standard deviation to 10% of the whole domain
       probability = scipy.stats.norm.pdf(distance,scale=sigma)
   
-    else:   # fast
+    else:   # fast, use quadratic function
       d = mu_position - current_position
       distance = np.inner(d,d)
-      probability = min(0,1 - a_factor*distance)    # hat function with width 1/sqrt(a)
+      probability = 1/(1 + a_factor*distance)    # quadratic function with width 1/sqrt(a)
 
     return probability * equalization_factors[mu_no-1]
     
-  def pdf_distance(equalization_factors,i,j,x):
+  def pdf_distance(equalization_factors,scaling_factor,i,j,x):
     """ the probability distribution of the motor unit of fiber (i,j) """
     
-    scaling_factor = sum([pdf_distance_unscaled(equalization_factors,i,j,t) for t in range(1, n_motor_units+1)])
+    # scaling factor would be computed as follows, however, the value is computed beforehand and cached, this is a lot faster
+    #scaling_factor = sum([pdf_distance_unscaled(equalization_factors,i,j,t) for t in range(1, n_motor_units+1)])
+    
     return pdf_distance_unscaled(equalization_factors,i,j,x) / scaling_factor
     
   def cdf_distance(equalization_factors,i,j,x):
     """ the cdf of pdf_distance """
     
+    # compute temporary variable
+    scaling_factor = sum([pdf_distance_unscaled(equalization_factors,i,j,t) for t in range(1, n_motor_units+1)])
+    
     # discrete case
     x = (int)(np.round(x))
     value = 0
     for t in range(1,x+1):
-      value += pdf_distance(equalization_factors,i,j,t)
+      value += pdf_distance(equalization_factors,scaling_factor,i,j,t)
     return value
     
     # continuous case, not in use here
-    scaling_factor = scipy.integrate.quad(lambda x: pdf_distance(i,j,x), 1, n_motor_units, epsabs=tolerance, epsrel=tolerance)[0]
-    return scipy.integrate.quad(lambda x: pdf_distance(i,j,x), 1, x, epsabs=tolerance, epsrel=tolerance)[0] / scaling_factor
+    #scaling_factor = scipy.integrate.quad(lambda x: pdf_distance(i,j,x), 1, n_motor_units, epsabs=tolerance, epsrel=tolerance)[0]
+    #return scipy.integrate.quad(lambda x: pdf_distance(i,j,x), 1, x, epsabs=tolerance, epsrel=tolerance)[0] / scaling_factor
     
   def inverse_cdf_distance(equalization_factors,i,j,y):
     """ the inverse of the cdf_distance(x) function """
@@ -238,12 +264,18 @@ elif mode == 1:
   def objective(equalization_factors):
     """ objective function for the optimization of the equalization_factors, how well the total fiber distribution follows the exponential pdf() distribution """
     
+    # compute scaling factors for given equalization_factors, these scaling factors are only computed once here, instead of every time in pdf_distance
+    scaling_factors = np.zeros((n_fibers_y,n_fibers_x))
+    for j in range(n_fibers_y):
+      for i in range(n_fibers_x):
+        scaling_factors[j,i] = sum([pdf_distance_unscaled(equalization_factors,i,j,t) for t in range(1, n_motor_units+1)])
+    
     result = 0
     for mu_no in range(1,n_motor_units+1):
       required_propability_per_fiber = pdf(mu_no)
       #required_propability_per_fiber = 1./n_motor_units
       
-      expected_value_mu = sum([pdf_distance(equalization_factors,i,j,mu_no) for j in range(n_fibers_y) for i in range(n_fibers_x)])      propability_per_fiber = expected_value_mu / n_fibers_total
+      expected_value_mu = sum([pdf_distance(equalization_factors,scaling_factors[j,i],i,j,mu_no) for j in range(n_fibers_y) for i in range(n_fibers_x)])      propability_per_fiber = expected_value_mu / n_fibers_total
     
       result += (required_propability_per_fiber - propability_per_fiber)**2
     
@@ -258,33 +290,67 @@ elif mode == 1:
   # initialize factors to account for different 
   equalization_factors = [1 for i in range(n_motor_units)]
   unity_equalization_factors = [1 for i in range(n_motor_units)]
+
+  # compute scaling factors for given equalization_factors
+  scaling_factors = np.zeros((n_fibers_y,n_fibers_x))
+  for j in range(n_fibers_y):
+    for i in range(n_fibers_x):
+      scaling_factors[j,i] = sum([pdf_distance_unscaled(equalization_factors,i,j,t) for t in range(1, n_motor_units+1)])
   
   # print expected values of number of fiber per MU, before applying the equalization_factors
+  print("\nInitial number of fibers for the MUs, this value is not yet exponentially distributed.\n(If you set n_max_iterations very low (which is fast), you'll get MU sizes like this.)")
   n_fibers_total = n_fibers_x * n_fibers_y
   for mu_no in range(1,n_motor_units+1):
-    expected_value_mu = sum([pdf_distance(equalization_factors,i,j,mu_no) for j in range(n_fibers_y) for i in range(n_fibers_x)])
-    print("MU {}, initial number of fibers (expected value): {}".format(mu_no, expected_value_mu))
+    expected_value_mu = sum([pdf_distance(equalization_factors,scaling_factors[j,i],i,j,mu_no) for j in range(n_fibers_y) for i in range(n_fibers_x)])
+    print("  MU {}, determined initial number of fibers (expected value): {:.3f}".format(mu_no, expected_value_mu))
+    
+  # plot radial basis function
+  if enable_plots:
+    plt.figure(1)
+    
+    # plot radial basis function
+    x_list = np.linspace(mu_positions[0]-n_fibers_x//2, mu_positions[0]+n_fibers_x//2)
+    
+    previous = use_accurate_radial_basis_function
+    
+    # plot accurate rbf
+    use_accurate_radial_basis_function = True
+    y_list = [pdf_distance(unity_equalization_factors,sum([pdf_distance_unscaled(unity_equalization_factors,i,mu_positions[0][1],t) for t in range(1, n_motor_units+1)]),i,mu_positions[0][1],1) for i in x_list]
+    plt.plot(x_list, y_list, "b-", label="PDF (Gaussian)")
+    y_list = [pdf_distance_unscaled(unity_equalization_factors,i,mu_positions[0][1],1) for i in x_list]
+    plt.plot(x_list, y_list, "g-", label="RBF (Gaussian)")
+    
+    # plot approximated rbf
+    use_accurate_radial_basis_function = False
+    y_list = [pdf_distance(unity_equalization_factors,sum([pdf_distance_unscaled(unity_equalization_factors,i,mu_positions[0][1],t) for t in range(1, n_motor_units+1)]),i,mu_positions[0][1],1) for i in x_list]
+    plt.plot(x_list, y_list, "b--", label="PDF (inverse quadratic)")
+    y_list = [pdf_distance_unscaled(unity_equalization_factors,i,mu_positions[0][1],1) for i in x_list]
+    plt.plot(x_list, y_list, "g--", label="RBF (inverse quadratic)")
+    use_accurate_radial_basis_function = previous
+    
+    plt.title("Comparison of Gaussian and inverse quadratic RBFs")
+    plt.legend(loc="best")
     
   # find equalization_factors that fulfill the required exponential distribution of MU sizes
-  print("\nOptimize factors to obtain exponential distribution of MU sizes")
+  print("\nNow run optimizer. Optimize factors to obtain exponential distribution of MU sizes. Maximum number of iterations: {}".format(n_max_iterations))
   bounds = [(0,None) for i in range(n_motor_units)]
-  result = scipy.optimize.minimize(objective, equalization_factors, bounds=bounds, options={"disp": True, "maxiter": 1e5})
-  print("success: {}, status: {}, message: {}, n objective evaluations: {}, n iterations: {}".format(result.success, result.status, result.message, result.nfev, result.nit))
+
+  result = scipy.optimize.minimize(objective, equalization_factors, bounds=bounds, options={"disp": True, "maxiter": n_max_iterations})
+  print("Result of optimizer: success: {}, status: {}, message: {}, n objective evaluations: {}, n iterations: {}".format(result.success, result.status, result.message, result.nfev, result.nit))
   equalization_factors = result.x
     
+  # compute scaling factors for given equalization_factors
+  scaling_factors = np.zeros((n_fibers_y,n_fibers_x))
+  for j in range(n_fibers_y):
+    for i in range(n_fibers_x):
+      scaling_factors[j,i] = sum([pdf_distance_unscaled(equalization_factors,i,j,t) for t in range(1, n_motor_units+1)])
+  
   t_end = time.time()
-  print("total duration: {}s".format(t_end-t_start))
+  print("\nTotal duration: {:.2f} s\n\n".format(t_end-t_start))
   
   # print the result
-  print("determined equalization_factors:")
-  print(equalization_factors)
-    
-  # print the final expected number of fibers per MU, the real values will be plotted later
-  print("\nfinal expected MU sizes:")
-  for mu_no in range(1,n_motor_units+1):
-    
-    expected_value_mu = sum([pdf_distance(equalization_factors,i,j,mu_no) for j in range(n_fibers_y) for i in range(n_fibers_x)])
-    print("mu {}, number of fibers (expected value): {}".format(mu_no, expected_value_mu))
+  #print("determined equalization_factors:")
+  #print(equalization_factors)
     
   # initialize i,j to the center fiber in the muscle
   i = (int)(n_fibers_x/2)
@@ -294,14 +360,21 @@ elif mode == 1:
   
   # output start and end values of cdf, which should be 0 and 1
   x_list = np.linspace(1,n_motor_units,n_points_to_plot)
-  print("at center, (i,j) = ({},{}): cdf_distance(0): {} (should be 0), cdf_distance(max): {} (should be 1)".
-    format(i,j,cdf_distance(equalization_factors,i,j,0), cdf_distance(equalization_factors,i,j,n_motor_units)))
+  #print("at center, (i,j) = ({},{}): cdf_distance(0): {} (should be 0), cdf_distance(max): {} (should be 1)".
+  #  format(i,j,cdf_distance(equalization_factors,i,j,0), cdf_distance(equalization_factors,i,j,n_motor_units)))
 
   if enable_plots:
     
     # plot pdf
+    plt.figure(2)
+    # compute scaling factors for unity equalization_factors
+    unity_scaling_factors = np.zeros((n_fibers_y,n_fibers_x))
+    for j in range(n_fibers_y):
+      for i in range(n_fibers_x):
+        unity_scaling_factors[j,i] = sum([pdf_distance_unscaled(unity_equalization_factors,i,j,t) for t in range(1, n_motor_units+1)])
+    
     #print("test if inverse is correct: 0=",max([inverse_cdf_distance(i,j,cdf_distance(i,j,x))-x for x in x_list]))
-    plt.plot(x_list, [pdf_distance(unity_equalization_factors,i,j,x) for x in x_list], '-', label="pdf")
+    plt.plot(x_list, [pdf_distance(unity_equalization_factors,unity_scaling_factors[j,i],i,j,x) for x in x_list], '-', label="pdf")
     plt.gca().set_ylim(0,1)
     plt.xticks(range(n_motor_units+1))
     plt.ylabel("probability for a fiber to be in this MU\n (only according to distance)")
@@ -310,9 +383,9 @@ elif mode == 1:
     plt.savefig("plots/"+output_filename+"_pdf_distance.pdf")
 
     # plot pdf total
-    plt.figure(2)
+    plt.figure(3)
     #print("test if inverse is correct: 0=",max([inverse_cdf_distance(i,j,cdf_distance(i,j,x))-x for x in x_list]))
-    plt.plot(x_list, [pdf_distance(equalization_factors,i,j,x) for x in x_list], '-', label="pdf")
+    plt.plot(x_list, [pdf_distance(equalization_factors,scaling_factors[j,i],i,j,x) for x in x_list], '-', label="pdf")
     plt.gca().set_ylim(0,1)
     plt.xticks(range(n_motor_units+1))
     plt.ylabel("probability for a fiber to be in this MU")
@@ -321,7 +394,7 @@ elif mode == 1:
     plt.savefig("plots/"+output_filename+"_pdf_total.pdf")
 
     # plot cdf and inverse
-    plt.figure(3)
+    plt.figure(4)
     plt.plot(x_list, [cdf_distance(equalization_factors,i,j,x) for x in x_list], '-', label="cdf")
     y_list = np.linspace(0,1,n_points_to_plot)
     plt.plot(y_list, [inverse_cdf_distance(equalization_factors,i,j,y) for y in y_list], '-', label="inverse cdf")
@@ -344,7 +417,7 @@ elif mode == 1:
         mu_no = n_motor_units
       
       values.append(mu_no)
-    print("({},{}): {}".format(i,j,mu_no))
+    #print("({},{}): {}".format(i,j,mu_no))
       
   # write all motor units to output file
   with open(output_filename,"w") as f:
@@ -353,7 +426,7 @@ elif mode == 1:
     f.write(" ".join(str_values))
   
   # plot fibers in 2D plot
-  print("n_motor_units: {}, min: {}".format(n_motor_units, (int)(min(values))))
+  #print("n_motor_units: {}, min: {}".format(n_motor_units, (int)(min(values))))
 
   colors = cm.rainbow(np.linspace(0, 1, n_motor_units))
 
@@ -368,14 +441,14 @@ elif mode == 1:
       index += 1
 
   # plot actual center points of MUs
-  plt.figure(4)
+  plt.figure(5,figsize=(8,8))
   for mu_no in range(n_motor_units):
     mu_position = mu_positions[mu_no]
     x = mu_position[0]
     y = mu_position[1]
     
     color = colors[mu_no,:]
-    print(mu_position,x,y,color)
+    #print(mu_position,x,y,color)
     plt.plot(x,y, 'x', markersize=24,markeredgewidth=2,color=color)
 
   X,Y = np.meshgrid(range(n_fibers_x),range(n_fibers_y))
@@ -398,11 +471,17 @@ elif mode == 1:
   # plot total distribution of MUs
   factor = 1.20
 
-  plt.figure(5)
+  plt.figure(6)
   xlist = np.linspace(1,n_motor_units,5*n_motor_units)
   bins = [x-0.5 for x in range(1,n_motor_units+2)]
   numbers,edges = np.histogram(values,bins)
-  print("actual MU sizes: {}".format(numbers))
+  
+  # print the expected and actual number of fibers per MU
+  print("\nMU sizes, expected values from probability and actual realized sizes:")
+  for mu_no in range(1,n_motor_units+1):
+    expected_value_mu = sum([pdf_distance(equalization_factors,scaling_factors[j,i],i,j,mu_no) for j in range(n_fibers_y) for i in range(n_fibers_x)])
+    print("  MU {}, number of fibers expected: {:.3f}, actual: {}".format(mu_no, expected_value_mu, numbers[mu_no-1]))
+  
   plt.hist(values,bins=bins, align='mid', rwidth=0.8)
   a = numbers[-1] / (factor**n_motor_units)
   plt.plot(xlist, [factor**x * a for x in xlist], label='${}^x$'.format(factor))
@@ -411,6 +490,7 @@ elif mode == 1:
   plt.ylabel("count")
   plt.legend()
   plt.savefig("plots/"+output_filename+"_fiber_distribution.pdf")
-
-  plt.show()
+  
+  print("\nResult plots were written in plot subdirectory as \"plots/"+output_filename+"_*.pdf\".")
+  #plt.show()
 

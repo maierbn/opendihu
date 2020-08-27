@@ -6,9 +6,9 @@
 namespace Control
 {
 
-long long int MemoryLeakFinder::currentMemoryConsumption_ = 0;   //< the current number of bytes allocated in residual set memory
+long long int MemoryLeakFinder::currentMemoryConsumption_ = 0;   //< the current number of kilobytes allocated in residual set memory
 
-long long int MemoryLeakFinder::nBytesIncreaseSinceLastCheck()
+long long int MemoryLeakFinder::currentMemoryConsumptionKiloBytes()
 {
   // get current memory consumption
   int pageSize;
@@ -18,6 +18,13 @@ long long int MemoryLeakFinder::nBytesIncreaseSinceLastCheck()
   double totalUserTime;
   PerformanceMeasurement::getMemoryConsumption(pageSize, virtualMemorySize, residentSetSize, dataSize, totalUserTime);
 
+  return residentSetSize / 1024;
+}
+
+long long int MemoryLeakFinder::nKiloBytesIncreaseSinceLastCheck()
+{
+  // get current memory consumption
+  long long residentSetSize = currentMemoryConsumptionKiloBytes();
   long long increment = residentSetSize - currentMemoryConsumption_;
   currentMemoryConsumption_ = residentSetSize;
 
@@ -27,12 +34,12 @@ long long int MemoryLeakFinder::nBytesIncreaseSinceLastCheck()
 void MemoryLeakFinder::warnIfMemoryConsumptionIncreases(std::string message)
 {
   bool firstCall = currentMemoryConsumption_ == 0;
-  long long increase = nBytesIncreaseSinceLastCheck();
+  long long increase = nKiloBytesIncreaseSinceLastCheck();
 
-  if (increase >= 1024*1024 && !firstCall)
+  if (increase >= 1024 && !firstCall)
   {
-    LOG(WARNING) << message << ": Memory consumption increased by " << increase/(1024*1024) << " MB to "
-      << currentMemoryConsumption_/(1024*1024) << " MB.";
+    LOG(WARNING) << message << ": Memory consumption increased by " << increase/(1024) << " MB to "
+      << currentMemoryConsumption_/(1024) << " MB.";
   }
 }
 

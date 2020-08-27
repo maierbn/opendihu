@@ -34,6 +34,9 @@ public:
   //! delete the solver identified by solverName, for all communcatiors
   void deleteSolver(std::string solverName);
 
+  template<typename SolverType>
+  void deleteSolver(PythonConfig settings, MPI_Comm mpiCommunicator, std::string solverNameKey = "solverName");
+
 private:
   //! store settings for all solvers that are specified in specificSettings_
   void storePreconfiguredSolvers();

@@ -87,18 +87,27 @@ advanceTimeSpan()
 
     if (globalTimeStepCounter % this->recreateLinearSolverInterval_ == 0 && this->recreateLinearSolverInterval_ > 0 && globalTimeStepCounter > 0)
     {
-      long long int memorySize0 = Control::MemoryLeakFinder::nBytesIncreaseSinceLastCheck();
+      long long int memorySize0 = Control::MemoryLeakFinder::currentMemoryConsumptionKiloBytes();
 
       // delete existing linear solver object
       this->linearSolver_ = nullptr;
+      this->context_.solverManager()->template deleteSolver<Solver::Linear>(this->specificSettings_, this->rankSubset_->mpiCommunicator());
 
-      long long int memorySize1 = Control::MemoryLeakFinder::nBytesIncreaseSinceLastCheck();
+      // delete the alternative linear solver that is used when thet linearSolver_ diverges
+      if (this->specificSettings_.hasKey("alternativeSolverName"))
+      {
+        this->alternativeLinearSolver_ = nullptr;
+        this->context_.solverManager()->template deleteSolver<Solver::Linear>(
+          this->specificSettings_, this->rankSubset_->mpiCommunicator(), "alternativeSolverName");
+      }
+
+      long long int memorySize1 = Control::MemoryLeakFinder::currentMemoryConsumptionKiloBytes();
 
       // create new linear solver object
       this->initializeLinearSolver();
 
-      long long int memorySize2 = Control::MemoryLeakFinder::nBytesIncreaseSinceLastCheck();
-      LOG(INFO) << "Recreated linear solver, memory: " << memorySize0 / 1024 << " kB -> " << memorySize1 / 1024 << " kB -> " << memorySize2 << " kB";
+      long long int memorySize2 = Control::MemoryLeakFinder::currentMemoryConsumptionKiloBytes();
+      LOG(INFO) << "Recreated linear solver, memory: " << memorySize0 << " kB -> " << memorySize1 << " kB -> " << memorySize2 << " kB";
     }
 
     LOG(DEBUG) << " Vm: ";

@@ -373,9 +373,6 @@ config = {
                     "checkForNanInf":              False,
                     
                     "FiniteElementMethod" : {
-                      "maxIterations":             1e4,
-                      "relativeTolerance":         1e-10,
-                      "absoluteTolerance":         1e-10,         # 1e-10 absolute tolerance of the residual    
                       "inputMeshIsGlobal":         True,
                       "meshName":                  "MeshFiber_{}".format(fiber_no),
                       "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)

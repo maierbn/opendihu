@@ -193,7 +193,6 @@ config = {
           "timeStepWidth": dt_1D,
           "timeStepOutputInterval": 1e4,
           "FiniteElementMethod" : {
-            #"nElements": 0,
             "physicalExtend": 1.0,
             "relativeTolerance": 1e-15,
             "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    

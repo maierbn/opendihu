@@ -259,9 +259,6 @@ config = {
             "additionalSlotNames": [],      
 
             "FiniteElementMethod" : {
-              "maxIterations": 1e4,
-              "relativeTolerance": 1e-10,
-              "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    
               "inputMeshIsGlobal": True,
               "timeStepWidthRelativeTolerance": 1e-10,
               "meshName": "MeshFiber"+str(i),

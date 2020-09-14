@@ -127,8 +127,12 @@ try:
   
   elif "hawk" in os.environ["SITE_PLATFORM_NAME"]:
     print("on hawk load the following modules: \"module load adios2/2.5.0 cmake python mkl petsc/3.12.2-int32-shared\"")
-
-    MPI_DIR = os.environ["MPT_ROOT"]
+    if "MPT_ROOT" in os.environ:
+      MPI_DIR = os.environ["MPT_ROOT"]
+    else:
+      MPI_DIR = os.environ["MPI_ROOT"]
+    
+    MPI_IGNORE_MPICC = True
     LAPACK_DOWNLOAD = False
     PETSC_DOWNLOAD = False
     PETSC_DIR = os.environ["PETSC_ROOT"]
@@ -137,9 +141,9 @@ try:
     XBRAID_DOWNLOAD = True
     ADIOS_DOWNLOAD = False
     ADIOS_DIR = os.environ["ADIOS2_ROOT"]
-    cc = "mpicc -cc="+os.environ["CC"]
-    CC = "mpicxx -cxx=g++ -ftemplate-backtrace-limit=0"   
-    CC = "mpicxx -cxx="+os.environ["CXX"]+" -ftemplate-backtrace-limit=0"   
+#    cc = "mpicc -cc="+os.environ["CC"]
+#    CC = "mpicxx -cxx=g++ -ftemplate-backtrace-limit=0"   
+#    CC = "mpicxx -cxx="+os.environ["CXX"]+" -ftemplate-backtrace-limit=0"   
 #    cc = "icc"
 #    CC = "icpc "  
 #    cc = "clang"

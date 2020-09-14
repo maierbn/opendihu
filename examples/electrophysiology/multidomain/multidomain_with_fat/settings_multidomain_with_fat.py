@@ -159,11 +159,6 @@ multidomain_solver = {
   "subPreconditionerType":            "none",                               # sub preconditioner when block jacobi preconditioner is used
   #"subPreconditionerType":            "boomeramg",                          # sub preconditioner when block jacobi preconditioner is used, boomeramg is the AMG preconditioner of HYPRE
 
-  # gamg specific options:
-  "gamgType":                         "classical",                          # one of agg, geo, or classical 
-  "cycleType":                        "cycleV",                             # either cycleV or cycleW
-  "nLevels":                          25,
-  
   "hypreOptions":                     "-pc_hypre_boomeramg_strong_threshold 0.7",       # additional options if a hypre preconditioner is selected
   "theta":                            variables.theta,                      # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
   "useLumpedMassMatrix":              variables.use_lumped_mass_matrix,     # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
@@ -172,6 +167,8 @@ multidomain_solver = {
   "enableFatComputation":             True,                                 # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
   "showLinearSolverOutput":           variables.show_linear_solver_output,  # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "updateSystemMatrixEveryTimestep":  False,                                # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
+  "recreateLinearSolverInterval":     0,                                    # how often the Petsc KSP object (linear solver) should be deleted and recreated. This is to remedy memory leaks in Petsc's implementation of some solvers. 0 means disabled.
+  "setDirichletBoundaryCondition":    True,                                 # if the last dof of the fat layer (MultidomainWithFatSolver) or the extracellular space (MultidomainSolver) should have a 0 Dirichlet boundary condition
   
   "PotentialFlow": {
     "FiniteElementMethod" : {  
@@ -256,6 +253,11 @@ config = {
       "hypreOptions":       "-pc_hypre_boomeramg_strong_threshold 0.7",       # additional options if a hypre preconditioner is selected
       "dumpFormat":         "matlab",
       "dumpFilename":       "",
+          
+      # gamg specific options:
+      "gamgType":                         "agg",                          # one of agg, geo, or classical 
+      "cycleType":                        "cycleW",                             # either cycleV or cycleW
+      "nLevels":                          25,      
     },
     "multidomainAlternativeLinearSolver": {                                   # the alternative solver is used when the normal solver diverges
       "relativeTolerance":  variables.multidomain_relative_tolerance,

@@ -72,13 +72,16 @@ for mu_no in range(n_motor_units):
 # solvers
 # -------
 # multidomain
-multidomain_solver_type = "gmres"          # solver for the multidomain problem
+#multidomain_solver_type = "gmres"          # solver for the multidomain problem
+multidomain_solver_type = "lu"          # solver for the multidomain problem
 #multidomain_preconditioner_type = "bjacobi"   # preconditioner
 #multidomain_preconditioner_type = "boomeramg"   # preconditioner
-multidomain_preconditioner_type = "euclid"   # preconditioner
+#multidomain_preconditioner_type = "euclid"   # euclid ilu preconditioner, has a memory leak
+multidomain_preconditioner_type = "none"   # sor
+#multidomain_preconditioner_type = "sor"   # sor
 
 multidomain_alternative_solver_type = "gmres"            # alternative solver, used when normal solver diverges
-multidomain_alternative_preconditioner_type = "none"    # preconditioner of the alternative solver
+multidomain_alternative_preconditioner_type = "euclid"    # preconditioner of the alternative solver
 
 # set initial guess to zero for direct solver
 initial_guess_nonzero = "lu" not in multidomain_solver_type 
@@ -114,8 +117,8 @@ firing_times_file = "../../../input/MU_firing_times_always.txt"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
-sampling_stride_x = 1
-sampling_stride_y = 1
+sampling_stride_x = 3
+sampling_stride_y = 3
 sampling_stride_z = 20      # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40
 sampling_stride_fat = 1
   

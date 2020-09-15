@@ -494,7 +494,6 @@ initializeCellMLSourceFile()
     if (ret != 0)
     {
       LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
-      libraryFilename = "";
     }
     else
     {

@@ -257,6 +257,7 @@ config = {
                     "dirichletBoundaryConditions":  {},
                     "dirichletOutputFilename":      None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                     "nAdditionalFieldVariables":    0,
+                    "additionalSlotNames":          [],
                       
                     "CellML" : {
                       "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
@@ -321,11 +322,13 @@ config = {
                     "solverName":                  "implicitSolver",
                     "checkForNanInf":              False,
                     "nAdditionalFieldVariables":   1 if variables.use_elasticity else 0,
+                    "additionalSlotNames":         [],
                     "FiniteElementMethod" : {
                       "inputMeshIsGlobal":         True,
                       "meshName":                  "MeshFiber_{}".format(fiber_no),
                       "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
                       "solverName":                "implicitSolver",
+                      "slotName":                  "",
                     },
                     "OutputWriter" : [
                       #{"format": "Paraview", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles": True},
@@ -359,6 +362,8 @@ config = {
         "durationLogKey":         "duration_bidomain",
         "solverName":             "activationSolver",
         "initialGuessNonzero":    variables.emg_initial_guess_nonzero,
+        "slotNames":              [],
+        
         "PotentialFlow": {
           "FiniteElementMethod" : {
             "meshName":           "3Dmesh",
@@ -368,6 +373,7 @@ config = {
             "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
             "neumannBoundaryConditions":   [],
             "inputMeshIsGlobal":  True,
+            "slotName":           "",
           },
         },
         "Activation": {
@@ -379,6 +385,7 @@ config = {
             "dirichletBoundaryConditions": {},
             "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
             "neumannBoundaryConditions":   [],
+            "slotName":           "",
             "diffusionTensor": [[      # sigma_i,  fiber direction is (1,0,0), one list item = same tensor for all elements, multiple list items = a different tensor for each element
               8.93, 0, 0,
               0, 0.893, 0,
@@ -404,6 +411,8 @@ config = {
           "durationLogKey":         "duration_bidomain",
           "solverName":             "activationSolver",
           "initialGuessNonzero":    variables.emg_initial_guess_nonzero,
+          "slotNames":             [],
+
           "PotentialFlow": {
             "FiniteElementMethod" : {
               "meshName":           "3Dmesh",
@@ -413,6 +422,7 @@ config = {
               "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
               "neumannBoundaryConditions":   [],
               "inputMeshIsGlobal":  True,
+              "slotName":           "",
             },
           },
           "Activation": {
@@ -424,6 +434,7 @@ config = {
               "dirichletBoundaryConditions": {},
               "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
               "neumannBoundaryConditions":   [],
+              "slotName":           "",
               "diffusionTensor": [[      # sigma_i, fiber direction is (1,0,0), one list item = same tensor for all elements, multiple list items = a different tensor for each element
                 8.93, 0, 0,
                 0, 0.893, 0,
@@ -449,6 +460,7 @@ config = {
             "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
             "neumannBoundaryConditions":   [],
             "inputMeshIsGlobal":  True,
+            "slotName":           "",
           },
         },
         "FiniteElementMethod" : {   # linear elasticity finite element method
@@ -461,6 +473,7 @@ config = {
           "neumannBoundaryConditions":   variables.use_elasticity_neumann_bc,
           "bulkModulus":          40e3, #40e3 # https://www.researchgate.net/publication/230248067_Bulk_Modulus
           "shearModulus":         39e3, #39e3 # https://onlinelibrary.wiley.com/doi/full/10.1002/mus.24104
+          "slotName":             "",
         },
         "maximumActiveStress":      1.0,
         "strainScalingCurveWidth":  1.0,

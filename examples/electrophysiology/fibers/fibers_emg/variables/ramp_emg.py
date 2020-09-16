@@ -82,8 +82,8 @@ output_timestep_big = 25            # [ms] timestep for output big files of 3D E
 # 40 frames/s => output every 4s / (40s * 40fr/s) = 4000ms/1600 = 2.5
 
 input_directory = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
-print("  input directory:   \"{}\"".format(input_directory))
-print("  current directory: \"{}\"".format(os.getcwd()))
+#print("  input directory:   \"{}\"".format(input_directory))  # too much output when run with numerous ranks
+#print("  current directory: \"{}\"".format(os.getcwd()))
 
 # other options
 paraview_output = True

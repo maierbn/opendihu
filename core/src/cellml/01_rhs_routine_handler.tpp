@@ -318,7 +318,6 @@ createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nIns
     if (ret != 0)
     {
       LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
-      libraryFilename = "";
     }
     else
     {

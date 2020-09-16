@@ -190,9 +190,6 @@ config = {
                   "additionalSlotNames":         [],
                   
                   "FiniteElementMethod" : {
-                    "maxIterations":             1e4,
-                    "relativeTolerance":         1e-10,
-                    "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual                        
                     "inputMeshIsGlobal":         True,
                     "meshName":                  "MeshFiber_0",
                     "prefactor":                 0.03,  # resolves to Conductivity / (Am * Cm)

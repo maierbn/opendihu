@@ -86,6 +86,7 @@ vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
 vars.Add(BoolVariable('gprof', 'Include flags for gprof profiling.', False))
 vars.Add(BoolVariable('no_vectorization', 'Turn off SEE and AVX commands.', False))
 vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
+vars.Add(BoolVariable('USE_EXTRAE', 'Compile with extrae support. Not needed if you don\'t want to use `#include "extrae.h"` in the code.', False))
 vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
 vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
 vars.Add(BoolVariable('VERBOSE', 'Output raw shell commands for compilation.', False))
@@ -266,6 +267,13 @@ else:
     env.Append(CPPDEFINES = "-DHAVE_PAT")
     if os.environ.get("PE_ENV") != "CRAY":
       env.MergeFlags('-finstrument-functions')   # instrument functions for pat_run,  works with GNU and Intel
+  if env["USE_EXTRAE"]:
+    if 'EXTRAE_HOME' not in os.environ:
+      print("ERROR: $EXTRAE_HOME is not set. Did you forget to `module load extrae`?")
+    else:
+      print("USE_EXTRAE=True: Compiling with -DHAVE_EXTRAE\n")
+      env.Append(CPPDEFINES = "-DHAVE_EXTRAE")
+      env.MergeFlags('-I{EXTRAE_HOME}/include -L{EXTRAE_HOME}/lib -lmpitrace'.format(EXTRAE_HOME=os.environ['EXTRAE_HOME']))
 
 # flags to always include, except with cray compiler
 if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:

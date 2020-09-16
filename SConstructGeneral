@@ -87,6 +87,7 @@ vars.Add(BoolVariable('gprof', 'Include flags for gprof profiling.', False))
 vars.Add(BoolVariable('no_vectorization', 'Turn off SEE and AVX commands.', False))
 vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
 vars.Add(BoolVariable('USE_EXTRAE', 'Compile with extrae support. Not needed if you don\'t want to use `#include "extrae.h"` in the code.', False))
+vars.Add(BoolVariable('USE_SCOREP', 'Compile with scorep compiler wrapper.', False))
 vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
 vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
 vars.Add(BoolVariable('VERBOSE', 'Output raw shell commands for compilation.', False))
@@ -274,6 +275,12 @@ else:
       print("USE_EXTRAE=True: Compiling with -DHAVE_EXTRAE\n")
       env.Append(CPPDEFINES = "-DHAVE_EXTRAE")
       env.MergeFlags('-I{EXTRAE_HOME}/include -L{EXTRAE_HOME}/lib -lmpitrace'.format(EXTRAE_HOME=os.environ['EXTRAE_HOME']))
+  if env["USE_SCOREP"]:
+    print("Using scorep compiler wrapper, this only works on hawk.")
+    #for compiler in ["CC", "CXX", "mpicc", "mpiCC", "cc"]:
+    #  env[compiler] = "scorep --user --keep-files --instrument-filter=compile-time-filter.filt " + env[compiler]
+    env["CXX"] = "/lustre/cray/ws9/2/ws/icbbnmai-opendihu1/opendihu-hawk-gnu/scripts/fake-scorep.sh"
+    
 
 # flags to always include, except with cray compiler
 if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:

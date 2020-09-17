@@ -7,7 +7,7 @@
 experiment_name = nil
 
 -- Name of the binary file to analyze
-binary         = "/zhome/academic/HLRS/cbm/icbbnmai/workshop_2020/opendihu/examples/electrophysiology/fibers/fibers_contraction/no_precice/build_release/biceps_contraction"
+binary         = "/lustre/cray/ws9/2/ws/icbbnmai-opendihu1/opendihu-hawk-gnu-openmpi/examples/electrophysiology/fibers/fibers_contraction/no_precice/build_release/biceps_contraction"
 
 -- List of external libraries to analyze
 external_libraries = {
@@ -50,7 +50,7 @@ dataset_handler= "link"
 --   example: "<binary> -n4"
 -- Use an empty string or remove the declaration if no 
 -- specific command is required to run the application
-run_command    = "<binary> /zhome/academic/HLRS/cbm/icbbnmai/workshop_2020/opendihu/examples/electrophysiology/fibers/fibers_contraction/no_precice/settings_biceps_contraction.py ramp.py --end_time=20"
+run_command    = "<binary> /lustre/cray/ws9/2/ws/icbbnmai-opendihu1/opendihu-hawk-gnu-openmpi/examples/electrophysiology/fibers/fibers_contraction/no_precice/settings_biceps_contraction.py ramp.py --end_time=2"
 
 -- Script to use with job scheduler. 
 -- If your application must be run on a cluster using a job scheduler (ex. SLURM), fill

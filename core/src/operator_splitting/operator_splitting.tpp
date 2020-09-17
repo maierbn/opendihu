@@ -4,6 +4,10 @@
 #include <pat_api.h>    // perftools, only available on hazel hen
 #endif
 
+#ifdef HAVE_EXTRAE
+#include <extrae.h>
+#endif
+
 #include "utility/python_utility.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "control/diagnostic_tool/performance_measurement.h"
@@ -161,8 +165,18 @@ run()
   LOG(INFO) << "PAT_region_begin(" << label << ")";
 #endif
 
+#ifdef HAVE_EXTRAE
+Extrae_restart();
+// Extrae_event(1337, 42);
+#endif
+
   // run simulation
   advanceTimeSpan();
+
+#ifdef HAVE_EXTRAE
+Extrae_restart();
+// Extrae_event(1337, 42);
+#endif
 
 #ifdef HAVE_PAT
   PAT_region_end(2);    // end region "computation", id 

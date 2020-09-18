@@ -90,6 +90,9 @@ protected:
 
   std::string filename_;              //< filename of the file to write the sampled points to
   bool updatePointPositions_;         //< if the positions of the sampled points should be updated in every call, this leads to approximately the same global point positions even if the geometry changes
+  bool enableCsvFile_;                //< if the csv file should be written
+  bool enableVtpFile_;                //< if the vtp file should be written
+
   SeriesWriter seriesWriter_;         //< the series writer object that collects all VTK filenames and creates a collection file that can be loaded by ParaView, for the files that have the EMG values
   SeriesWriter seriesWriterFoundPoints_;      //< the series writer object that collects all VTK filenames and creates a collection file that can be loaded by ParaView, for the files that have the found electrode points
   SeriesWriter seriesWriterNotFoundPoints_;   //< the series writer object that collects all VTK filenames and creates a collection file that can be loaded by ParaView, for the files that have the not found electrode points

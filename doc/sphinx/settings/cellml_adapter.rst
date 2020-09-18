@@ -285,6 +285,14 @@ The callback is then called according to the frequency in *setSpecificStatesCall
 The frequency is modulated by applying a relative jitter, given in a list by *setSpecificStatesFrequencyJitter*. The jitter values are taken from the list and repeated. A value of 0 indicates no jitter, i.e. the frequency is met exactly. E.g., a value of 1.1 means a 10% longer time between subsequent calls to the function.
 
 After the callback was called it will be repeated in the next timesteps *setSpecificStatesRepeatAfterFirstCall* times. Using this setting, a "square" signal can be modelled.
+
+A visualization of the options is shown in :numref:`stimulation_times_2`.
+
+.. _stimulation_times_2:
+.. figure:: /settings/images/stimulation_times.svg
+  :width: 80%
+  
+  Options that influence the stimulation. A time line is shown from left to right. The red blocks are time spans when `setSpecificStates` will be called. Because setSpecificStates usually checks a `firing times file` whether or not to activate the fiber, it can make sense to use the file `"MU_firing_times_always.txt"`. This file always indicates stimulation. Thus, the spike trains are completely determined by the options `setSpecificStatesCallEnableBegin`, `setSpecificStatesCallFrequency` and `setSpecificStatesFrequencyJitter`.
     
 *handleResultFunction* and *handleResultCallInterval*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

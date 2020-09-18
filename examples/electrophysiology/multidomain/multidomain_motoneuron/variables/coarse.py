@@ -65,7 +65,7 @@ pmax = 7.3                  # [N/cm^2] maximum isometric active stress
 
 # load
 constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
-bottom_traction = [0.0,0.0,-10.0]        # [N]
+bottom_traction = [0.0,0.0,-1.0]        # [N]
 
 # Monodomain parameters
 # --------------------
@@ -82,38 +82,72 @@ Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 
 
 # timing and activation parameters
 # -----------------
-# motor units from paper Klotz2019 "Modelling the electrical activity of skeletal muscle tissue using a multi‐domain approach"
+# motor unit parameters similar to paper Klotz2019 "Modelling the electrical activity of skeletal muscle tissue using a multi‐domain approach"
+# however, values from paper fail for mu >= 6, then stimulus gets reflected at the ends of the muscle, therefore fiber radius is set to <= 55
+
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
-#   fiber_no: center MU around this fiber
-#   standard_deviation [-]: relative to muscle diameter, 
-#   maximum [-]: create f_r as gaussian with standard_deviation and maximum around the fiber given in fiber_no
-#   radius: [μm], activation_start_time: [s], stimulation frequency [Hz], jitter [-]
-# exponential distribution: low number of fibers per MU, slow twitch (type I), activated first --> high number of fibers per MU, fast twitch (type II), activated last -->
-motor_units = [
-  {"fiber_no": 10, "standard_deviation": 0.2, "maximum": 0.2, "radius": 40.00, "cm": 0.58, "activation_start_time": 0.0, "stimulation_frequency": 23.92, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # low number of fibers
-  {"fiber_no": 20, "standard_deviation": 0.2, "maximum": 0.2, "radius": 42.35, "cm": 0.58, "activation_start_time": 0.2, "stimulation_frequency": 23.36, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"fiber_no": 30, "standard_deviation": 0.2, "maximum": 0.2, "radius": 45.00, "cm": 0.58, "activation_start_time": 0.4, "stimulation_frequency": 23.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"fiber_no": 40, "standard_deviation": 0.2, "maximum": 0.2, "radius": 48.00, "cm": 0.58, "activation_start_time": 0.6, "stimulation_frequency": 22.46, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"fiber_no": 55, "standard_deviation": 0.2, "maximum": 0.2, "radius": 51.42, "cm": 0.58, "activation_start_time": 0.8, "stimulation_frequency": 20.28, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"fiber_no": 60, "standard_deviation": 0.2, "maximum": 0.2, "radius": 55.38, "cm": 0.58, "activation_start_time": 1.0, "stimulation_frequency": 16.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"fiber_no": 70, "standard_deviation": 0.2, "maximum": 0.2, "radius": 60.00, "cm": 0.58, "activation_start_time": 1.2, "stimulation_frequency": 12.05, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"fiber_no": 80, "standard_deviation": 0.2, "maximum": 0.2, "radius": 65.45, "cm": 1.00, "activation_start_time": 1.4, "stimulation_frequency": 10.03, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"fiber_no": 50, "standard_deviation": 0.2, "maximum": 0.2, "radius": 72.00, "cm": 1.00, "activation_start_time": 1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"fiber_no": 25, "standard_deviation": 0.2, "maximum": 0.2, "radius": 80.00, "cm": 1.00, "activation_start_time": 1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # high number of fibers
-]
-motor_units = motor_units[0:3]  # only use 3 motor units
+import numpy as np
+
+n_fibers_in_fiber_file = 169
+n_motor_units = 100   # number of motor units
+
+motor_units = []
+for mu_no in range(n_motor_units):
+
+  # capacitance of the membrane
+  if mu_no <= 0.7*n_motor_units:
+    cm = 0.58    # slow twitch (type I)
+  else:
+    cm = 1.0     # fast twitch (type II)
+
+  # fiber radius between 40 and 55 [μm]
+  min_value = 40
+  max_value = 55
+
+  # ansatz value(i) = c1 + c2*exp(i),
+  # value(0) = min = c1 + c2  =>  c1 = min - c2
+  # value(n-1) = max = min - c2 + c2*exp(n-1)  =>  max = min + c2*(exp(n-1) - 1)  =>  c2 = (max - min) / (exp(n-1) - 1)
+  c2 = (max_value - min_value) / (1.02**(n_motor_units-1) - 1)
+  c1 = min_value - c2
+  radius = c1 + c2*1.02**(mu_no)
+
+  # standard_deviation
+  min_value = 0.1
+  max_value = 0.6
+  c2 = (max_value - min_value) / (1.02**(n_motor_units-1) - 1)
+  c1 = min_value - c2
+  standard_deviation = c1 + c2*1.02**mu_no
+  maximum = 10.0/n_motor_units*standard_deviation
+
+  # stimulation current for motoneuron (reverse exponential distribution)
+  min_value = 2
+  max_value = 10
+  c2 = (max_value - min_value) / (1.02**(n_motor_units-1) - 1)
+  c1 = min_value - c2
+  mn_istim = c1 + c2*1.02**(n_motor_units-1-mu_no)
+
+  # exponential distribution: low number of fibers per MU, slow twitch (type I), activated first --> high number of fibers per MU, fast twitch (type II), activated last
+  motor_units.append(
+  {
+    "fiber_no":              random.randint(0,n_fibers_in_fiber_file),  # [-] fiber from input files that is the center of the motor unit domain
+    "maximum":               maximum,                # [-] maximum value of f_r, create f_r as gaussian with standard_deviation and maximum around the fiber g
+    "standard_deviation":    standard_deviation,     # [-] standard deviation of f_r
+    "radius":                radius,                 # [μm] parameter for motor unit: radius of the fiber, used to compute Am
+    "cm":                    cm,                     # [uF/cm^2] parameter Cm
+    "mn_istim":              mn_istim,               # [uA] constant stimulation current for the motoneuron
+  })
+
+
+#motor_units = motor_units[0:3]  # only use 3 motor units
 motoneuron_mappings = {
   ("parameter", 0):           "membrane/i_Stim",  
   ("connectorSlot", "vm_mn"): "membrane/V",
 }
 
-
-motoneuron_stimulation_current = 5    # [mV] constant stimulation current of the motoneuron
-
 # set values for parameters: [i_Stim, V_threshold, V_firing], 
 # i_Stim = stimulation current of motoneuron, V_threshold = threshold if trans-membrane voltage is above, motoneuron fires, V_firing = value of Vm to set if motoneuron fires
-motoneuron_parameters_initial_values = [motoneuron_stimulation_current]
+motoneuron_parameters_initial_values = [motor_units[mu_no]["mn_istim"] for mu_no in range(n_motor_units)]
 
 # solvers
 # -------
@@ -151,6 +185,7 @@ use_lumped_mass_matrix = False            # which formulation to use, the formul
 # timing parameters
 # -----------------
 end_time = 3e-2                   # [ms] end time of the simulation
+end_time = 4000                       # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
 dt_motoneuron = 1e-3                # [ms] timestep width for motoneurons 
@@ -159,9 +194,9 @@ dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
 dt_elasticity = 1e-2                # [ms] time step width of elasticity solver
-output_timestep_multidomain = 1e-2 #2e0  # [ms] timestep for fiber output, 0.5
+output_timestep_multidomain = 2 #2e0  # [ms] timestep for fiber output, 0.5
 output_timestep_motoneuron = 1e0   # [ms] timestep for output of motoneuron
-output_timestep_elasticity = dt_elasticity      # [ms] timestep for elasticity output files
+output_timestep_elasticity = 2     # [ms] timestep for elasticity output files
 
 # input files
 #motoneuron_cellml_file = "../../../input/motoneuron_hodgkin_huxley.cellml"
@@ -173,7 +208,7 @@ cellml_file = "../../../input/hodgkin_huxley-razumova.cellml"
 fiber_file = "../../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-firing_times_file = "../../../input/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+#firing_times_file = "../../../input/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"
 
 # stride for sampling the 3D elements from the fiber data
@@ -181,7 +216,7 @@ fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1
 sampling_stride_y = 1
-sampling_stride_z = 22
+sampling_stride_z = 22      # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40
 sampling_stride_fat = 1
 
 # how much of the multidomain mesh is used for elasticity
@@ -195,14 +230,14 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-states_output = True    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
+states_output = False    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
 show_linear_solver_output = False    # if every solve of multidomain diffusion should be printed
 disable_firing_output = False   # if information about firing of MUs should be printed
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(mu_no):
   # get radius in cm, 1 μm = 1e-6 m = 1e-4*1e-2 m = 1e-4 cm
-  r = motor_units[mu_no]["radius"]*1e-4
+  r = motor_units[mu_no % len(motor_units)]["radius"]*1e-4
   # cylinder surface: A = 2*π*r*l, V = cylinder volume: π*r^2*l, Am = A/V = 2*π*r*l / (π*r^2*l) = 2/r
   return 2./r
   #return Am
@@ -211,14 +246,11 @@ def get_cm(mu_no):
   return motor_units[mu_no % len(motor_units)]["cm"]
   #return Cm
   
-def get_specific_states_call_frequency(mu_no):
-  stimulation_frequency = motor_units[mu_no % len(motor_units)]["stimulation_frequency"]
-  return stimulation_frequency*1e-3
-
-def get_specific_states_frequency_jitter(mu_no):
-  #return 0
-  return motor_units[mu_no % len(motor_units)]["jitter"]
-
-def get_specific_states_call_enable_begin(mu_no):
-  return 0  # start directly
-  #return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3
+# output motor_unit config in a readable format
+if True:
+  import sys
+  # only on rank 0
+  if (int)(sys.argv[-2]) == 0:
+    import pprint 
+    pp = pprint.PrettyPrinter()
+    pp.pprint(motor_units)

@@ -80,7 +80,6 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
     }
   }
 
-
   // create new solver, store as anonymous object
   std::stringstream anonymousName;
   anonymousName << "anonymous" << numberAnonymousSolvers_++;
@@ -97,5 +96,43 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
 
   return solver;
 }
+
+template<typename SolverType>
+void Manager::deleteSolver(PythonConfig settings, MPI_Comm mpiCommunicator, std::string solverNameKey)
+{
+  // if there is no entry for the mpi communicator, there is no such solver
+  if (solvers_.find(mpiCommunicator) == solvers_.end())
+  {
+    return;
+  }
+
+  // if solver has been created earlier
+  if (settings.hasKey(solverNameKey))
+  {
+    std::string solverName = settings.getOptionString(solverNameKey, "");
+
+    if (hasSolver(solverName, mpiCommunicator))
+    {
+      solvers_[mpiCommunicator].erase(solverName);
+    }
+  }
+
+  // check if there is a matching solver stored
+  // loop over all stored solvers
+  for (std::map<std::string, std::shared_ptr<Solver>>::iterator iter = solvers_[mpiCommunicator].begin(); iter != solvers_[mpiCommunicator].end(); iter++)
+  {
+    // check if type matches
+    if (std::dynamic_pointer_cast<SolverType>(iter->second))
+    {
+      // check if config is the  same
+      if (iter->second->configEquals(settings))
+      {
+        solvers_[mpiCommunicator].erase(iter);
+        return;
+      }
+    }
+  }
+}
+
 
 }  // namespace

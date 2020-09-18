@@ -16,6 +16,8 @@ class Solver
 public:
   //! construct solver from python settings
   Solver(PythonConfig specificSettings, std::string name);
+
+  //! destructor
   virtual ~Solver() {}
 
   //! determine if the own python config object is the same as config

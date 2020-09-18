@@ -39,6 +39,8 @@ initialize()
     filename_ = specificSettings.getOptionString("filename", "out/sampledPoints.csv");
     updatePointPositions_ = specificSettings.getOptionBool("updatePointPositions", false);
     xiTolerance_ = specificSettings.getOptionDouble("xiTolerance", 0.3, PythonUtility::NonNegative);
+    enableCsvFile_ = specificSettings.getOptionBool("enableCsvFile", true);
+    enableVtpFile_ = specificSettings.getOptionBool("enableVtpFile", true);
   }
 
   LOG(DEBUG) << "OutputSurface: initialize output writers";

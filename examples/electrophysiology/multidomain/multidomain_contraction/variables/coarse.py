@@ -146,8 +146,8 @@ dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
 dt_elasticity = 1e-1                # [ms] time step width of elasticity solver
-output_timestep_multidomain = 5e-1  # [ms] timestep for fiber output, 0.5
-output_timestep_elasticity = 5*dt_elasticity      # [ms] timestep for elasticity output files
+output_timestep_multidomain = 5     # [ms] timestep for fiber output, 0.5
+output_timestep_elasticity = 5      # [ms] timestep for elasticity output files
 
 # input files
 #cellml_file = "../../../input/new_slow_TK_2014_12_08.c"
@@ -157,7 +157,7 @@ fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
 fiber_file = "../../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-firing_times_file = "../../../input/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+#firing_times_file = "../../../input/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"
 
 # stride for sampling the 3D elements from the fiber data

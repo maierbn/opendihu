@@ -37,6 +37,9 @@
 #ifdef HAVE_PAT
 #include <pat_api.h>    // perftools, only available on hazel hen
 #endif
+#ifdef HAVE_EXTRAE
+#include "extrae.h"
+#endif
 #ifdef HAVE_MEGAMOL
 #include "Console.h"
 #endif
@@ -156,6 +159,11 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     // initialize MPI, this is necessary to be able to call PetscFinalize without MPI shutting down
     MPI_Init(&argc, &argv);
+
+#ifdef HAVE_EXTRAE
+    // Disable Extrae tracing at startup
+    Extrae_shutdown();
+#endif
 
     // create rankSubset with all ranks, i.e. MPI_COMM_WORLD
     rankSubset_ = std::make_shared<Partition::RankSubset>();   

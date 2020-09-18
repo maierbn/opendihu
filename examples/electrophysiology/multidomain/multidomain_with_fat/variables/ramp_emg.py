@@ -3,14 +3,9 @@ scenario_name = "ramp_emg"
 
 # material parameters
 # --------------------
-sigma_f = 8.93              # [mS/cm] conductivity in fiber direction (f)
-sigma_xf = 0                # [mS/cm] conductivity in cross-fiber direction (xf)
-sigma_e_f = 6.7             # [mS/cm] conductivity in extracellular space, fiber direction (f)
-sigma_e_xf = 3.35           # [mS/cm] conductivity in extracellular space, cross-fiber direction (xf) / transverse
-
-Am = 500.0                  # [cm^-1] surface area to volume ratio, actual values will be set by motor_units, not by this variable
-Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch), actual values will be set by motor_units, not by this variable
-
+Conductivity = 3.828      # [mS/cm] sigma, conductivity
+Am = 500.0                  # [cm^-1] surface area to volume ratio
+Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch)
 # diffusion prefactor = Conductivity/(Am*Cm)
 
 # timing and activation parameters
@@ -23,13 +18,13 @@ random.seed(0)  # ensure that random numbers are the same on every rank
 import numpy as np
 
 n_fibers_in_fiber_file = 169
-n_motor_units = 10   # number of motor units
+n_motor_units = 25   # number of motor units
 
 motor_units = []
 for mu_no in range(n_motor_units):
 
   # capacitance of the membrane
-  if mu_no <= 7:
+  if mu_no <= 0.7*n_motor_units:
     cm = 0.58    # slow twitch (type I)
   else:
     cm = 1.0     # fast twitch (type II)
@@ -37,28 +32,35 @@ for mu_no in range(n_motor_units):
   # fiber radius between 40 and 55 [μm]
   min_value = 40
   max_value = 55
-  
+
   # ansatz value(i) = c1 + c2*exp(i),
   # value(0) = min = c1 + c2  =>  c1 = min - c2
   # value(n-1) = max = min - c2 + c2*exp(n-1)  =>  max = min + c2*(exp(n-1) - 1)  =>  c2 = (max - min) / (exp(n-1) - 1)
-  c2 = (max_value - min_value) / (np.exp(n_motor_units-1) - 1)
+  c2 = (max_value - min_value) / (1.02**(n_motor_units-1) - 1)
   c1 = min_value - c2
-  radius = c1 + c2*np.exp(mu_no)
+  radius = c1 + c2*1.02**(mu_no)
+
+  # standard_deviation
+  min_value = 0.1
+  max_value = 0.6
+  c2 = (max_value - min_value) / (1.02**(n_motor_units-1) - 1)
+  c1 = min_value - c2
+  standard_deviation = c1 + c2*1.02**mu_no
+  maximum = 10.0/n_motor_units*standard_deviation
 
   # stimulation frequency [Hz] between 24 and 7
   min_value = 7
   max_value = 24
-  
-  c2 = (max_value - min_value) / (np.exp(n_motor_units-1) - 1)
+  c2 = (max_value - min_value) / (1.02**(n_motor_units-1) - 1)
   c1 = min_value - c2
-  stimulation_frequency = c1 + c2*np.exp(n_motor_units-1-mu_no)
+  stimulation_frequency = c1 + c2*1.02**(n_motor_units-1-mu_no)
 
   # exponential distribution: low number of fibers per MU, slow twitch (type I), activated first --> high number of fibers per MU, fast twitch (type II), activated last
   motor_units.append(
   {
-		"fiber_no":              random.randint(0,n_fibers_in_fiber_file),  # [-] fiber from input files that is the center of the motor unit domain
-    "maximum":               0.2,                    # [-] maximum value of f_r, create f_r as gaussian with standard_deviation and maximum around the fiber given in fiber_no
-    "standard_deviation":    0.2,                    # [-] standard deviation of f_r
+    "fiber_no":              random.randint(0,n_fibers_in_fiber_file),  # [-] fiber from input files that is the center of the motor unit domain
+    "maximum":               maximum,                # [-] maximum value of f_r, create f_r as gaussian with standard_deviation and maximum around the fiber g
+    "standard_deviation":    standard_deviation,     # [-] standard deviation of f_r
     "radius":                radius,                 # [μm] parameter for motor unit: radius of the fiber, used to compute Am
     "cm":                    cm,                     # [uF/cm^2] parameter Cm
     "activation_start_time": 0.1*mu_no,              # [s] when to start activating this motor unit, here it is a ramp
@@ -69,13 +71,17 @@ for mu_no in range(n_motor_units):
 
 # solvers
 # -------
-multidomain_solver_type = "gmres"          # solver for the multidomain problem
+# multidomain
+#multidomain_solver_type = "gmres"          # solver for the multidomain problem
+multidomain_solver_type = "lu"          # solver for the multidomain problem
 #multidomain_preconditioner_type = "bjacobi"   # preconditioner
 #multidomain_preconditioner_type = "boomeramg"   # preconditioner
-multidomain_preconditioner_type = "euclid"   # preconditioner
+#multidomain_preconditioner_type = "euclid"   # euclid ilu preconditioner, has a memory leak
+multidomain_preconditioner_type = "none"   # sor
+#multidomain_preconditioner_type = "sor"   # sor
 
 multidomain_alternative_solver_type = "gmres"            # alternative solver, used when normal solver diverges
-multidomain_alternative_preconditioner_type = "none"    # preconditioner of the alternative solver
+multidomain_alternative_preconditioner_type = "euclid"    # preconditioner of the alternative solver
 
 # set initial guess to zero for direct solver
 initial_guess_nonzero = "lu" not in multidomain_solver_type 
@@ -111,9 +117,9 @@ firing_times_file = "../../../input/MU_firing_times_always.txt"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
-sampling_stride_x = 1
-sampling_stride_y = 1
-sampling_stride_z = 20
+sampling_stride_x = 3
+sampling_stride_y = 3
+sampling_stride_z = 20      # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40
 sampling_stride_fat = 1
   
 # HD-EMG electrode parameters
@@ -125,20 +131,21 @@ hdemg_electrode_offset_xy = 2.0           # [cm] offset from border of 2D mesh w
 hdemg_inter_electrode_distance_z = 0.4    # [cm] distance between electrodes ("IED") in z direction (direction along muscle)
 hdemg_inter_electrode_distance_xy = 0.4   # [cm] distance between electrodes ("IED") in transverse direction
 hdemg_n_electrodes_z = 32           # number of electrodes in z direction (direction along muscle)
-hdemg_n_electrodes_xy = 12  
+hdemg_n_electrodes_xy = 12          # number of electrode across muscle
 
 # other options
 paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-states_output = False
-disable_firing_output = False
+states_output = False    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
+show_linear_solver_output = False    # if every solve of multidomain diffusion should be printed
+disable_firing_output = False   # if information about firing of MUs should be printed
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(mu_no):
   # get radius in cm, 1 μm = 1e-6 m = 1e-4*1e-2 m = 1e-4 cm
-  r = motor_units[mu_no]["radius"]*1e-4
+  r = motor_units[mu_no % len(motor_units)]["radius"]*1e-4
   # cylinder surface: A = 2*π*r*l, V = cylinder volume: π*r^2*l, Am = A/V = 2*π*r*l / (π*r^2*l) = 2/r
   return 2./r
   #return Am
@@ -162,6 +169,16 @@ def get_specific_states_call_enable_begin(mu_no):
   #return 0  # start directly
   return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3
   
+# output motor_unit config in a readable format
+if True:
+  import sys
+  # only on rank 0
+  if (int)(sys.argv[-2]) == 0:
+    for mu_no,item in enumerate(motor_units):    
+      print("MU {}".format(mu_no))
+      for (key,value) in item.items():
+        if key != "jitter":
+          print("  {}: {}".format(key,value))
   
 # boomerAMG literature: https://mooseframework.inl.gov/application_development/hypre.html
 # boomeramg options:

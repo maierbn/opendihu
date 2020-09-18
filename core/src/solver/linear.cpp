@@ -26,8 +26,9 @@ Linear::Linear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, std::str
 
 Linear::~Linear()
 {
-  PetscErrorCode ierr;
-  ierr = KSPDestroy(ksp_.get()); CHKERRV(ierr);
+  // do not destroy ksp because this results in double free corruption
+  //PetscErrorCode ierr;
+  //ierr = KSPDestroy(ksp_.get()); CHKERRV(ierr);
 }
 
 void Linear::parseOptions()

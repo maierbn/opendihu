@@ -29,3 +29,6 @@ echo now start program with 8 ranks
 # Run
 # mpirun -np 8 omplace -c 0-:st=4 ./trace.sh ./fast_fibers_emg ../settings_fibers_emg.py ramp_emg.py --end_time=1 
 mpirun -np 8 ./extrae_trace.sh ./fast_fibers_emg ../settings_fibers_emg.py ramp_emg.py --dt_0D 1e-3 --dt_1D 2e-3 --dt_splitting 2e-3 --dt_3D 2e-3 --end_time 8e-3 --diffusion_solver_reltol 0 --diffusion_solver_maxit 5 --emg_solver_reltol 0 --emg_solver_maxit 5 --potential_flow_solver_reltol 0 --potential_flow_solver_maxit 5 
+
+
+# open result with paraver

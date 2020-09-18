@@ -85,7 +85,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
     // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
     std::array<Vec3,nDofsPerElement> geometryValues;
     this->functionSpace_->getElementGeometry(elementNoLocal, geometryValues);
-    double_v_t approximateMeshWidth = MathUtility::computeApproximateMeshWidth<double_v_t,nDofsPerElement>(geometryValues);
+    double approximateMeshWidth = MathUtility::computeApproximateMeshWidth<double,nDofsPerElement>(geometryValues);
 
     const int nDofsPerNode = this->functionSpace_->nDofsPerNode();
     std::array<double,D> xi;
@@ -316,7 +316,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
     // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
     std::array<Vec3,nDofsPerElement> geometryValues;
     this->functionSpace_->getElementGeometry(elementNoLocal, geometryValues);
-    double_v_t approximateMeshWidth = MathUtility::computeApproximateMeshWidth<double_v_t,nDofsPerElement>(geometryValues);
+    double approximateMeshWidth = MathUtility::computeApproximateMeshWidth<double,nDofsPerElement>(geometryValues);
 
     std::array<double,D> xi;
 

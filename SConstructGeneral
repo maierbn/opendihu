@@ -260,8 +260,9 @@ else:
     if env["gprof"]:
       print("Adding flags for gprof.")
       env.Append(LINKFLAGS = "-pg")   # add gprof flags for linker
-      env.MergeFlags('-pg -g')
-    #env.MergeFlags('')
+      env.MergeFlags('-pg')
+    if env["USE_SCOREP"] or env["USE_EXTRAE"]:
+      env.MergeFlags('-g')
   
   if env["USE_CRAY_PAT"]:
     print("USE_CRAY_PAT=True: Compiling with -DHAVE_PAT (uses PAT_region_begin())\n")
@@ -285,10 +286,7 @@ else:
       print("ERROR: $SCOREP_WRAPPER_INSTRUMENTER_FLAGS is not set. Did you forget to `export SCOREP_WRAPPER_INSTRUMENTER_FLAGS='--nomemory --thread=none'`?")
     if "ZLIB_ROOT" not in os.environ:
       print("ERROR: $ZLIB_ROOT is not set. Did you forget to `module load zlib`?")
-    #for compiler in ["CC", "CXX", "mpicc", "mpiCC", "cc"]:
-    #  env[compiler] = "scorep --user --keep-files --instrument-filter=compile-time-filter.filt " + env[compiler]
-    env["CXX"] = "./scripts/fake-scorep.sh"
-    #env.MergeFlags('-L/lustre/cray/ws9/2/ws/icbbnmai-opendihu1/opendihu-hawk-gnu/examples/electrophysiology/fibers/fibers_contraction/no_precice/zlib-1.2.11/install/lib')
+    env["CXX"] = os.path.join(opendihu_home, "scripts/fake-scorep.sh")
 
 # flags to always include, except with cray compiler
 if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:

@@ -86,7 +86,6 @@ Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 
 import numpy as np
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
-import numpy as np
 
 n_motor_units = 15   # number of motor units
 

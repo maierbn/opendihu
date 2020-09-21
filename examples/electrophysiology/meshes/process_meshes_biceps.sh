@@ -25,6 +25,7 @@ opendihu_directory=$(pwd)/../../..
 parallel_fiber_estimation_directory=${opendihu_directory}/examples/fiber_tracing/parallel_fiber_estimation
 stl_utility_directory=${opendihu_directory}/scripts/stl_utility
 pyod=${opendihu_directory}/dependencies/python/install/bin/python3
+scons=${opendihu_directory}/dependencies/scons/scons.py
 
 mkdir -p processed_meshes
 
@@ -90,12 +91,12 @@ fi
 echo ""
 echo "--- Compile opendihu"
 cd $opendihu_directory
-scons no_tests=TRUE
+$scons no_tests=TRUE
 
 echo ""
 echo "--- Compile parallel fiber estimation"
 cd $parallel_fiber_estimation_directory
-scons
+$scons
 
 cd build_release
 

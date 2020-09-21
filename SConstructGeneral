@@ -86,6 +86,8 @@ vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
 vars.Add(BoolVariable('gprof', 'Include flags for gprof profiling.', False))
 vars.Add(BoolVariable('no_vectorization', 'Turn off SEE and AVX commands.', False))
 vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
+vars.Add(BoolVariable('USE_EXTRAE', 'Compile with extrae support. Not needed if you don\'t want to use `#include "extrae.h"` in the code.', False))
+vars.Add(BoolVariable('USE_SCOREP', 'Compile with scorep compiler wrapper.', False))
 vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
 vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
 vars.Add(BoolVariable('VERBOSE', 'Output raw shell commands for compilation.', False))
@@ -258,14 +260,33 @@ else:
     if env["gprof"]:
       print("Adding flags for gprof.")
       env.Append(LINKFLAGS = "-pg")   # add gprof flags for linker
-      env.MergeFlags('-pg -g')
-    #env.MergeFlags('')
+      env.MergeFlags('-pg')
+    if env["USE_SCOREP"] or env["USE_EXTRAE"]:
+      env.MergeFlags('-g')
   
   if env["USE_CRAY_PAT"]:
     print("USE_CRAY_PAT=True: Compiling with -DHAVE_PAT (uses PAT_region_begin())\n")
     env.Append(CPPDEFINES = "-DHAVE_PAT")
     if os.environ.get("PE_ENV") != "CRAY":
       env.MergeFlags('-finstrument-functions')   # instrument functions for pat_run,  works with GNU and Intel
+  if env["USE_EXTRAE"]:
+    if 'EXTRAE_HOME' not in os.environ:
+      print("ERROR: $EXTRAE_HOME is not set. Did you forget to `module load extrae`?")
+    else:
+      print("USE_EXTRAE=True: Compiling with -DHAVE_EXTRAE\n")
+      env.Append(CPPDEFINES = "-DHAVE_EXTRAE")
+      env.MergeFlags('-I{EXTRAE_HOME}/include -L{EXTRAE_HOME}/lib -lmpitrace'.format(EXTRAE_HOME=os.environ['EXTRAE_HOME']))
+  if env["USE_SCOREP"]:
+    print("Using scorep compiler wrapper, this only works on hawk.")
+    if 'SCOREP_ROOT' not in os.environ:
+      print("ERROR: $SCOREP_ROOT is not set. Did you forget to `module load scorep`?")
+    if 'SCOREP_WRAPPER_INSTRUMENTER_FLAGS' not in os.environ:
+      # --nomemory to reduce scons memory requirements
+      # --thread=none to avoid eror about confliciting Opari2 and pthreads adapter.
+      print("ERROR: $SCOREP_WRAPPER_INSTRUMENTER_FLAGS is not set. Did you forget to `export SCOREP_WRAPPER_INSTRUMENTER_FLAGS='--nomemory --thread=none'`?")
+    if "ZLIB_ROOT" not in os.environ:
+      print("ERROR: $ZLIB_ROOT is not set. Did you forget to `module load zlib`?")
+    env["CXX"] = os.path.join(opendihu_home, "scripts/fake-scorep.sh")
 
 # flags to always include, except with cray compiler
 if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:

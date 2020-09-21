@@ -31,6 +31,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
   std::array<double,MeshType::dim()> xiBest;
   double excessivityScoreBest = std::numeric_limits<double>::max();
   double residualBest = 0;
+  int ghostMeshNoBest = 0;
   bool elementFound = false;
 
   if (startSearchInCurrentElement)
@@ -118,6 +119,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
           xiBest = xi;
           residualBest = residual;
           excessivityScoreBest = excessivityScore;
+          ghostMeshNoBest = ghostMeshNo;
           VLOG(1) << "findPosition: stored element " << elementNoBest << ", xi " << xiBest << ", residual: " << residualBest << ", score: " << excessivityScoreBest;
         }
       }
@@ -156,6 +158,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
         xi = xiBest;
         residual = residualBest;
         elementNoLocal = elementNoBest;
+        ghostMeshNo = ghostMeshNoBest;
         return true;
       }
     }
@@ -170,6 +173,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
     elementNoLocal = elementNoBest;
     xi = xiBest;
     residual = residualBest;
+    ghostMeshNo = ghostMeshNoBest;
     
     VLOG(1) << "findPosition: element was found earlier with xi=" << xi << ", elementNo: " << elementNoLocal << ", excessivityScore=" << excessivityScoreBest << ", use it.";
 
@@ -245,7 +249,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
           xiBest = xi;
           residualBest = residual;
           excessivityScoreBest = excessivityScore;
-          ghostMeshNo = -1;   // not a ghost mesh
+          ghostMeshNoBest = -1;   // not a ghost mesh
           VLOG(1) << "findPosition, checking all elements: stored element " << elementNoBest << ", xi " << xiBest << ", residual: " << residualBest << ", score: " << excessivityScoreBest;
         }
       }
@@ -257,6 +261,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
     elementNoLocal = elementNoBest;
     xi = xiBest;
     residual = residualBest;
+    ghostMeshNo = ghostMeshNoBest;
     
     VLOG(1) << "findPosition: element was found earlier with xi=" << xi << ", elementNo: " << elementNoLocal << ", excessivityScore=" << excessivityScoreBest << ", use it.";
 

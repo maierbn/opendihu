@@ -722,7 +722,16 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       print("maximum area: ",max_area)
   
     #triangulation = triangle.triangulate(data, 'pq')
-    triangulation = triangle.triangulate(data, 'pqa'+str(max_area))
+    
+    try:
+      triangulation = triangle.triangulate(data, 'pqa'+str(max_area))
+    except:
+      print("Triangulation failed, n_points: {}, max_area: {}, loop_no: {}, projected_points: {}".format(n_points,max_area,loop_no,projected_points))
+      
+      t_stop = timeit.default_timer()
+      duration = t_stop - t_start
+      return [], duration
+      
     triangulated_projected_points = np.array(triangulation['vertices'])
     
     # transform projected points back to 3D points
@@ -2736,7 +2745,12 @@ def create_planar_mesh(border_points, loop_no, n_points, \
     ax[1,2].set_aspect('equal')
     
     filename = "out/loop_{:03}_p{}_harmonic_map.png".format(loop_no, os.getpid())
+    dirname = os.path.dirname(filename)
+    if not os.path.exists(dirname):
+      print("Create directory \"{}\".".format(dirname))
+      os.makedirs(dirname)
     print("Save \"{}\".".format(filename))
+      
     plt.savefig(filename)
     if show_plot:
       plt.show()
@@ -3041,7 +3055,7 @@ def create_3d_mesh_from_border_points_faces(border_points_faces, improve_mesh, l
   parametric_space_shape = 3   # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid
   max_area_factor = 2.    # only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
   show_plot = False
-  debugging_stl_output = False
+  debugging_stl_output = True
   #improve_mesh = True    # post-smooth mesh
 
   border_points_0minus = border_points_faces[0]   # the first / last point of each list for the face overlaps with an identical point on another face's list
@@ -3137,6 +3151,9 @@ def create_3d_mesh_from_border_points_faces(border_points_faces, improve_mesh, l
   if True:
     for loop_no,border_points in enumerate(border_point_loops):
       loop_grid_points[loop_no] = handle_loop(loop_no, border_points)
+      
+      if len(loop_grid_points[loop_no]) == 0:
+        return None
   
   # concurrent execution, currently not working, but not clear why
   if False:

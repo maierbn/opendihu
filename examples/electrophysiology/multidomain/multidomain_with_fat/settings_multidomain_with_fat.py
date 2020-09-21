@@ -143,10 +143,11 @@ multidomain_solver = {
   "endTime":                          variables.end_time,                   # end time, this is not relevant because it will be overridden by the splitting scheme
   "timeStepOutputInterval":           100,                                  # how often the output timestep should be printed
   "durationLogKey":                   "duration_multidomain",               # key for duration in log.csv file
+  "slotNames":                        ["vm_old", "vm_new", "g_mu", "g_tot"],  # names of the data connector slots, maximum length per name is 6 characters. g_mu is gamma (active stress) of the compartment, g_tot is the total gamma
   
   # material parameters for the compartments
   "nCompartments":                    variables.n_compartments,             # number of compartments
-  "compartmentRelativeFactors":       variables.relative_factors.tolist(),  # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
+  "compartmentRelativeFactors":       variables.relative_factors.tolist(),  # list of lists of (the factors for all dofs), because "inputIsGlobal": True, this contains the global dofs
   "inputIsGlobal":                    True,                                 # if values and dofs correspond to the global numbering
   "am":                               [variables.get_am(mu_no) for mu_no in range(variables.n_compartments)],   # Am parameter for every motor unit (ration of surface to volume of fibers)
   "cm":                               [variables.get_cm(mu_no) for mu_no in range(variables.n_compartments)],   # Cm parameter for every motor unit (capacitance of the cellular membrane)
@@ -154,8 +155,10 @@ multidomain_solver = {
   # solver options
   "solverName":                       "multidomainLinearSolver",            # reference to the solver used for the global linear system of the multidomain eq.
   "alternativeSolverName":            "multidomainAlternativeLinearSolver", # reference to the alternative solver, which is used when the normal solver diverges
-  "subSolverType":                    "cg",                                 # sub solver when block jacobi preconditioner is used
-  "subPreconditionerType":            "boomeramg",                          # sub preconditioner when block jacobi preconditioner is used
+  "subSolverType":                    "gamg",                               # sub solver when block jacobi preconditioner is used
+  "subPreconditionerType":            "none",                               # sub preconditioner when block jacobi preconditioner is used
+  #"subPreconditionerType":            "boomeramg",                          # sub preconditioner when block jacobi preconditioner is used, boomeramg is the AMG preconditioner of HYPRE
+
   "hypreOptions":                     "-pc_hypre_boomeramg_strong_threshold 0.7",       # additional options if a hypre preconditioner is selected
   "theta":                            variables.theta,                      # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
   "useLumpedMassMatrix":              variables.use_lumped_mass_matrix,     # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
@@ -164,6 +167,8 @@ multidomain_solver = {
   "enableFatComputation":             True,                                 # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
   "showLinearSolverOutput":           variables.show_linear_solver_output,  # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "updateSystemMatrixEveryTimestep":  False,                                # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
+  "recreateLinearSolverInterval":     0,                                    # how often the Petsc KSP object (linear solver) should be deleted and recreated. This is to remedy memory leaks in Petsc's implementation of some solvers. 0 means disabled.
+  "setDirichletBoundaryCondition":    True,                                 # if the last dof of the fat layer (MultidomainWithFatSolver) or the extracellular space (MultidomainSolver) should have a 0 Dirichlet boundary condition
   
   "PotentialFlow": {
     "FiniteElementMethod" : {  
@@ -171,7 +176,7 @@ multidomain_solver = {
       "solverName":                   "potentialFlowSolver",
       "prefactor":                    1.0,
       "dirichletBoundaryConditions":  variables.potential_flow_dirichlet_bc,
-      "dirichletOutputFilename":      None,               # output filename for the dirichlet boundary conditions, set to "" to have no output
+      "dirichletOutputFilename":      "out/dirichlet_potential_flow",               # output filename for the dirichlet boundary conditions, set to "" to have no output
       "neumannBoundaryConditions":    [],
       "inputMeshIsGlobal":            True,
       "slotName":                     "",
@@ -221,10 +226,10 @@ multidomain_solver = {
   
 config = {
   "scenarioName":          variables.scenario_name,
-  "logFormat":             "csv",   # "csv" or "json", format of the lines in the log file, csv gives smaller files
-  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
-  "mappingsBetweenMeshesLogFile":   "mappings_between_meshes.txt",   # log file for mappings between meshes
-  "meta": {                 # additional fields that will appear in the log
+  "logFormat":                      "csv",                                # "csv" or "json", format of the lines in the log file, csv gives smaller files
+  "solverStructureDiagramFile":     "solver_structure.txt",               # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "mappings_between_meshes_log.txt",    # log file for mappings 
+  "meta": {                                                               # additional fields that will appear in the log
     "partitioning":         [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
   "Meshes":                variables.meshes,
@@ -248,6 +253,11 @@ config = {
       "hypreOptions":       "-pc_hypre_boomeramg_strong_threshold 0.7",       # additional options if a hypre preconditioner is selected
       "dumpFormat":         "matlab",
       "dumpFilename":       "",
+          
+      # gamg specific options:
+      "gamgType":                         "agg",                          # one of agg, geo, or classical 
+      "cycleType":                        "cycleW",                             # either cycleV or cycleW
+      "nLevels":                          25,      
     },
     "multidomainAlternativeLinearSolver": {                                   # the alternative solver is used when the normal solver diverges
       "relativeTolerance":  variables.multidomain_relative_tolerance,
@@ -334,7 +344,7 @@ config = {
         "updatePointPositions":     False,               # the electrode points should be initialize in every timestep (set to False for the static case). This makes a difference if the muscle contracts, then True=fixed electrodes, False=electrodes moving with muscle.
         "filename":                 "out/{}/electrodes.csv".format(variables.scenario_name),
         "xiTolerance":              0.3,                 # tolerance for element-local coordinates xi, for finding electrode positions inside the elements. Increase or decrease this numbers if not all electrode points are found.
-        "MultidomainSolver" : multidomain_solver,
+        "MultidomainSolver":        multidomain_solver,
       }
     }
   }

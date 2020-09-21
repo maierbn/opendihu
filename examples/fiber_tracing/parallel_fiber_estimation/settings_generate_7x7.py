@@ -69,6 +69,7 @@ config = {
       "dirichletOutputFilename": None,    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
       "prefactor": 1.0,
       "inputMeshIsGlobal": True,
+      "slotName": "",
     },
     "OutputWriter" : [
       {"format": "Paraview", "outputInterval": 1, "filename": "out/biceps", "binary": True, "fixedFormat": False, "combineFiles": False, "fileNumbering": "incremental"},

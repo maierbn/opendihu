@@ -432,9 +432,46 @@ Fiber Tracing
 parallel_fiber_estimation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* **parallel_fiber_estimation**
+Functionality to create fiber geometry for the Biceps Brachii muscle from a surface mesh of the muscle. This is very sophisticated and can be run in parallel.
+  
+This is the parallel algorithm that creates the fiber meshes. Input is an STL mesh of the surface of the muscle volume. Output is a `\*.bin` file of the mesh.
 
-  Functionality to create fiber geometry for the Biceps Brachii muscle from a surface mesh of the muscle. This is very sophisticated and can be run in parallel.
+Use the following commands to compile the program:
+  
+.. code-block:: bash
+
+  cd $OPENDIHU_HOME/examples/fiber_tracing/parallel_fiber_estimation/build_debug
+  mkorn && sr       # build
+  cd build_release
+
+If the program is compiled for the debug target, additional output files will be created during the run.
+  
+The program can be run as follows. It takes several command arguments.
+
+.. code-block:: bash
+
+  # arguments: <splines_or_stl> <refinement> <improve_mesh> <use_gradient_field> <use_neumann_bc>
+  ./generate ../settings/settings.py splines 1 true true false 
+
+*splines_or_stl*
+
+  Which input file to choose. If set to ``splines``, the input file is ``../../../electrophysiology/input/biceps.surface.pickle``, otherwise it is ``../../../electrophysiology/input/biceps_splines.stl``.
+
+*refinement*
+
+  (Integer), how to refine the mesh prior to solving the Laplace problem. 1 means no refinement, 2 means half the mesh width, 3 third mesh width etc.
+
+*improve_mesh*
+
+  Either ``true`` or ``false``. If the 2D meshes on the slices should be smoothed, i.e. improved. If true, it takes longer but gives better results.
+  
+*use_gradient_field*
+
+  Either ``true`` or ``false``. If the tracing implementation using explicit gradient fields should be used.
+  
+*use_neumann_bc*
+
+  Either ``true`` or ``false``. If Neumann boundary conditions should be used for the Laplacian potential flow problem. If not, Dirichlet boundary conditions are used.
   
 streamline_tracer
 ^^^^^^^^^^^^^^^^^^^^^^^

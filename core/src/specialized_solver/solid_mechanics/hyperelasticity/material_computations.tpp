@@ -101,6 +101,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
     // get geometry field of reference configuration
     std::array<Vec3_v_t,nDisplacementsDofsPerElement> geometryReferenceValues;
     this->data_.geometryReference()->getElementValues(elementNoLocalv, geometryReferenceValues);
+    double_v_t approximateMeshWidth = MathUtility::computeApproximateMeshWidth<double_v_t,nDisplacementsDofsPerElement>(geometryReferenceValues);
 
     // get displacements field values for element
     std::array<Vec3_v_t,nDisplacementsDofsPerElement> displacementsValues;
@@ -134,7 +135,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       // compute the 3x3 jacobian of the parameter space to world space mapping
       Tensor2_v_t<D> jacobianMaterial = DisplacementsFunctionSpace::computeJacobian(geometryReferenceValues, xi);
       double_v_t jacobianDeterminant;
-      Tensor2_v_t<D> inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, jacobianDeterminant);
+      Tensor2_v_t<D> inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, approximateMeshWidth, jacobianDeterminant);
 
       // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
       // inverseJacobianMaterial[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
@@ -149,7 +150,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       Tensor2_v_t<D> rightCauchyGreen = this->computeRightCauchyGreenTensor(deformationGradient);  // C = F^T*F
 
       double_v_t rightCauchyGreenDeterminant;   // J^2
-      Tensor2_v_t<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse(rightCauchyGreen, rightCauchyGreenDeterminant);  // C^-1
+      Tensor2_v_t<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse(rightCauchyGreen, approximateMeshWidth, rightCauchyGreenDeterminant);  // C^-1
 
       // fiber direction
       Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
@@ -1062,6 +1063,7 @@ materialComputeJacobian()
     // get geometry field of reference configuration
     std::array<Vec3_v_t,nDisplacementsDofsPerElement> geometryReferenceValues;
     this->data_.geometryReference()->getElementValues(elementNoLocalv, geometryReferenceValues);
+    double_v_t approximateMeshWidth = MathUtility::computeApproximateMeshWidth<double_v_t,nDisplacementsDofsPerElement>(geometryReferenceValues);
 
     // get displacements field values for element
     std::array<Vec3_v_t,nDisplacementsDofsPerElement> displacementsValues;
@@ -1085,7 +1087,7 @@ materialComputeJacobian()
       // compute the 3x3 jacobian of the parameter space to world space mapping
       Tensor2_v_t<D> jacobianMaterial = DisplacementsFunctionSpace::computeJacobian(geometryReferenceValues, xi);
       double_v_t jacobianDeterminant;
-      Tensor2_v_t<D> inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, jacobianDeterminant);
+      Tensor2_v_t<D> inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, approximateMeshWidth, jacobianDeterminant);
 
       // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
       // inverseJacobianMaterial[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
@@ -1095,12 +1097,12 @@ materialComputeJacobian()
 
       Tensor2_v_t<D> deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);    // F
       double_v_t deformationGradientDeterminant;    // J
-      Tensor2_v_t<D> inverseDeformationGradient = MathUtility::computeInverse(deformationGradient, deformationGradientDeterminant);  // F^-1
+      Tensor2_v_t<D> inverseDeformationGradient = MathUtility::computeInverse(deformationGradient, approximateMeshWidth, deformationGradientDeterminant);  // F^-1
 
       Tensor2_v_t<D> rightCauchyGreen = this->computeRightCauchyGreenTensor(deformationGradient);  // C = F^T*F
 
       double_v_t rightCauchyGreenDeterminant;   // J^2
-      Tensor2_v_t<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse(rightCauchyGreen, rightCauchyGreenDeterminant);  // C^-1
+      Tensor2_v_t<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse(rightCauchyGreen, approximateMeshWidth, rightCauchyGreenDeterminant);  // C^-1
 
       // fiber direction
       Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);

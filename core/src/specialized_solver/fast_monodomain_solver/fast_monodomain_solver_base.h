@@ -159,6 +159,7 @@ protected:
 
     int fiberNoGlobal;                    //< fiberNo as given in settings (value of additionalArgument)
     int motorUnitNo;                      //< motor unit no.
+    int fiberStimulationPointIndex;       //< index of the point on the fiber where to stimulate, i.e. position of the neuromuscular junction, if at center, it is equal to (int)(fiberData_[fiberDataNo].valuesLength / 2)
 
     double lastStimulationCheckTime;      //< last time the fiber was checked for stimulation
     double setSpecificStatesCallFrequency;        //< value of option with the same name in the python settings
@@ -183,7 +184,7 @@ protected:
 
   OutputWriter::Manager outputWriterManager_;     //< manager object holding all output writers
 
-  std::vector<FiberData> fiberData_;  //< vector of fibers, the number of entries is the number of fibers to computed by the own rank (nFibersToCompute_)
+  std::vector<FiberData> fiberData_;  //< vector of fibers, the number of entries is the number of fibers to be computed by the own rank (nFibersToCompute_)
   int nFibersToCompute_;              //< number of fibers where own rank is involved (>= n.fibers that are computed by own rank)
   int nInstancesToCompute_;           //< number of instances of the Hodgkin-Huxley problem to compute on this rank
   double currentTime_;                //< the current time used for the output writer
@@ -202,9 +203,10 @@ protected:
   int nFiberPointBufferStatesCloseToEquilibrium_;                           //< number of "constant" entries in fiberPointBuffersStatesAreCloseToEquilibrium_
 
   std::vector<int> statesForTransfer_;          //< state no.s to transfer to other solvers within slot connector data
-  std::vector<int> algebraicsForTransfer_;   //< which algebraics should be transferred to other solvers as part of slot connector data
+  std::vector<int> algebraicsForTransfer_;      //< which algebraics should be transferred to other solvers as part of slot connector data
   std::vector<double> parameters_;              //< parameters vector
   double valueForStimulatedPoint_;              //< value to which the first state will be set if stimulated
+  double neuromuscularJunctionRelativeSize_;    //< relative size of the range where the neuromuscular junction is located
 
   std::vector<std::vector<Vc::double_v>> fiberPointBuffersParameters_;        //< constant parameter values, changing parameters is not implemented
   std::vector<std::vector<Vc::double_v>> fiberPointBuffersAlgebraicsForTransfer_;   //<  [fiberPointNo][algebraicToTransferNo], algebraic values to use for slot connector data

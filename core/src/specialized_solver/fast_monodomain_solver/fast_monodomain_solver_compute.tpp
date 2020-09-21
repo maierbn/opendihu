@@ -150,7 +150,7 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlge
     int indexInFiber = pointBuffersNo * Vc::double_v::Size - fiberData_[fiberDataNo].valuesOffset;
 
     // determine if current point is at center of fiber
-    int fiberCenterIndex = fiberData_[fiberDataNo].valuesLength / 2;
+    int fiberCenterIndex = fiberData_[fiberDataNo].fiberStimulationPointIndex;
     bool currentPointIsInCenter = ((fiberCenterIndex - indexInFiber) < Vc::double_v::Size);
     VLOG(3) << "currentPointIsInCenter: " << currentPointIsInCenter << ", pointBuffersNo: " << pointBuffersNo << ", fiberDataNo: " << fiberDataNo << ", indexInFiber:" << indexInFiber << ", fiberCenterIndex: " << fiberCenterIndex << ", " << (indexInFiber - fiberCenterIndex) << " < " << Vc::double_v::Size;
 
@@ -174,7 +174,9 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlge
       double currentTime = startTime + timeStepNo * timeStepWidth;
 
       // check if current point will be stimulated
-      const bool stimulateCurrentPoint = isCurrentPointStimulated(fiberDataNo, currentTime, currentPointIsInCenter);
+      bool stimulateCurrentPoint = false;
+      if (currentPointIsInCenter)
+        stimulateCurrentPoint = isCurrentPointStimulated(fiberDataNo, currentTime, currentPointIsInCenter);
       const bool argumentStoreAlgebraics = storeAlgebraicsForTransfer && timeStepNo == nTimeSteps-1;
 
       // if the current point does not need to get computed because the value won't change
@@ -537,17 +539,26 @@ isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointI
         && currentTime - (lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter)) > setSpecificStatesRepeatAfterFirstCall)
     {
       // advance time of last call to specificStates
+#ifndef NDEBUG
       LOG(DEBUG) << " old lastStimulationCheckTime: " << fiberDataCurrentPoint.lastStimulationCheckTime << ", currentJitter: " << currentJitter << ", add " << 1./(setSpecificStatesCallFrequency+currentJitter);
+#endif
+
       fiberDataCurrentPoint.lastStimulationCheckTime += 1./(setSpecificStatesCallFrequency+currentJitter);
 
+#ifndef NDEBUG
       LOG(DEBUG) << " new lastStimulationCheckTime: " << fiberDataCurrentPoint.lastStimulationCheckTime;
+#endif
 
       // compute new jitter value
       double jitterFactor = 0.0;
       if (setSpecificStatesFrequencyJitter.size() > 0)
         jitterFactor = setSpecificStatesFrequencyJitter[jitterIndex % setSpecificStatesFrequencyJitter.size()];
       currentJitter = jitterFactor * setSpecificStatesCallFrequency;
+
+#ifndef NDEBUG
       LOG(DEBUG) << " jitterIndex: " << jitterIndex << ", new jitterFactor: " << jitterFactor << ", currentJitter: " << currentJitter;
+#endif
+
       jitterIndex++;
 
       checkStimulation = false;
@@ -582,11 +593,13 @@ isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointI
       Control::StimulationLogging::logStimulationBegin(currentTime, fiberDataCurrentPoint.motorUnitNo, fiberDataCurrentPoint.fiberNoGlobal);
     }
 
+#ifndef NDEBUG
     LOG(DEBUG) << "stimulate fiber " << fiberDataCurrentPoint.fiberNoGlobal << ", MU " << motorUnitNo << " at t=" << currentTime;
     LOG(DEBUG) << "  motorUnitNo: " << motorUnitNo << " (" << motorUnitNo % firingEvents_[firingEventsIndex % firingEvents_.size()].size() << ")";
     LOG(DEBUG) << "  firing events index: " << firingEventsIndex << " (" << firingEventsIndex % firingEvents_.size() << ")";
     LOG(DEBUG) << "  setSpecificStatesCallEnableBegin: " << setSpecificStatesCallEnableBegin << ", lastStimulationCheckTime: " << lastStimulationCheckTime
       << ", stimulation already for " << + 1./(setSpecificStatesCallFrequency+currentJitter);
+#endif
 
     LOG(INFO) << "t: " << currentTime << ", stimulate fiber " << fiberDataCurrentPoint.fiberNoGlobal << ", MU " << motorUnitNo;
   }

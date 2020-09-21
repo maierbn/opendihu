@@ -3,6 +3,7 @@
 #include "partition/rank_subset.h"
 #include "control/diagnostic_tool/stimulation_logging.h"
 #include <Vc/Vc>
+#include <random>
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
@@ -50,6 +51,7 @@ initialize()
   onlyComputeIfHasBeenStimulated_ = specificSettings_.getOptionBool("onlyComputeIfHasBeenStimulated", true);
   disableComputationWhenStatesAreCloseToEquilibrium_ = specificSettings_.getOptionBool("disableComputationWhenStatesAreCloseToEquilibrium", true);
   valueForStimulatedPoint_ = specificSettings_.getOptionDouble("valueForStimulatedPoint", 20.0);
+  neuromuscularJunctionRelativeSize_ = specificSettings_.getOptionDouble("neuromuscularJunctionRelativeSize", 0.0);
 
   // output warning if there are output writers
   if (this->outputWriterManager_.hasOutputWriters())
@@ -163,6 +165,12 @@ initialize()
   fiberHasBeenStimulated_.resize(nFibersToCompute_, false);
   LOG(DEBUG) << "nFibers: " << nFibers << ", nFibersToCompute_: " << nFibersToCompute_;
 
+  // initialize random generator that is used to determine the stimulation point of the fiber
+  std::random_device randomDevice;              // Will be used to obtain a seed for the random number engine
+  std::mt19937 randomGenerator(randomDevice()); // Standard mersenne_twister_engine seeded with randomDevice()
+  std::uniform_real_distribution<> randomDistribution(0.5-neuromuscularJunctionRelativeSize_/2., 0.5+neuromuscularJunctionRelativeSize_/2.);
+  // now, a call to randomDistribution(randomGenerator)) will produce a uniformly distributed value between 0.5-a and 0.5+a. 0.5 corresponds to the center of the fiber.
+
   // determine total number of CellML instances to compute on this rank
   double firstStimulationTime = -1;
   int firstStimulationMotorUnitNo = 0;
@@ -204,6 +212,16 @@ initialize()
         fiberData_.at(fiberDataNo).fiberNoGlobal = fiberNoGlobal;
         fiberData_.at(fiberDataNo).motorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
         
+        // determine neuromuscular junction position, it is offset by a random value from the center
+        if (neuromuscularJunctionRelativeSize_ <= 0.0)
+        {
+          fiberData_.at(fiberDataNo).fiberStimulationPointIndex = (int)(fiberData_.at(fiberDataNo).valuesLength / 2);
+        }
+        else
+        {
+          fiberData_.at(fiberDataNo).fiberStimulationPointIndex = (int)(fiberData_.at(fiberDataNo).valuesLength * randomDistribution(randomGenerator));
+        }
+
         // copy settings
         fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency = cellmlAdapter.setSpecificStatesCallFrequency_;
         fiberData_.at(fiberDataNo).setSpecificStatesFrequencyJitter = cellmlAdapter.setSpecificStatesFrequencyJitter_;
@@ -494,7 +512,6 @@ initializeCellMLSourceFile()
     if (ret != 0)
     {
       LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
-      libraryFilename = "";
     }
     else
     {

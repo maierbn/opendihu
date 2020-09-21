@@ -29,7 +29,8 @@ if ".py" in sys.argv[0]:
   variables.__dict__.update(custom_variables.__dict__)
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
-  print("Error: no variables file was specified, e.g:\n ./biceps_contraction ../settings_biceps_contraction.py ramp.py")
+  if rank_no == 0:
+    print("Error: no variables file was specified, e.g:\n ./biceps_contraction ../settings_biceps_contraction.py ramp.py")
   exit(0)
 
 # -------------- begin user parameters ----------------
@@ -119,6 +120,7 @@ if rank_no == 0:
   print("output_timestep: {:0.0e}  stimulation_frequency: {} 1/ms = {} Hz".format(variables.output_timestep, variables.stimulation_frequency, variables.stimulation_frequency*1e3))
   print("fast_monodomain_solver_optimizations: {}, use_analytic_jacobian: {}, use_vc: {}".format(variables.fast_monodomain_solver_optimizations, variables.use_analytic_jacobian, variables.use_vc))
   print("fiber_file:              {}".format(variables.fiber_file))
+  print("fat_mesh_file:           {}".format(variables.fat_mesh_file))
   print("cellml_file:             {}".format(variables.cellml_file))
   print("fiber_distribution_file: {}".format(variables.fiber_distribution_file))
   print("firing_times_file:       {}".format(variables.firing_times_file))
@@ -150,17 +152,20 @@ if False:
 
 # define the config dict
 config = {
-  "scenarioName":          variables.scenario_name,
-  "logFormat":             "csv",
-  "solverStructureDiagramFile":     "out/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
-  "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",  # log file of when mappings between meshes occur
+  "scenarioName":                  variables.scenario_name,
+  "mappingsBetweenMeshesLogFile":  "out/mappings_between_meshes.txt",
+  "logFormat":                     "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
+  "solverStructureDiagramFile":    "out/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "meta": {                 # additional fields that will appear in the log
+    "partitioning": [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
+  },
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": variables.mappings_between_meshes,
   "Solvers": {
     "diffusionTermSolver": {# solver for the implicit timestepping scheme of the diffusion time step
       "maxIterations":      1e4,
       "relativeTolerance":  1e-10,
-      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "solverType":         variables.diffusion_solver_type,
       "preconditionerType": variables.diffusion_preconditioner_type,
       "dumpFilename":       "",   # "out/dump_"
@@ -168,7 +173,7 @@ config = {
     },
     "potentialFlowSolver": {# solver for the initial potential flow, that is needed to estimate fiber directions for the bidomain equation
       "relativeTolerance":  1e-10,
-      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "maxIterations":      1e4,
       "solverType":         variables.potential_flow_solver_type,
       "preconditionerType": variables.potential_flow_preconditioner_type,
@@ -178,7 +183,7 @@ config = {
     "mechanicsSolver": {   # solver for the dynamic mechanics problem
       "relativeTolerance":  1e-5,           # 1e-10 relative tolerance of the linear solver
       "absoluteTolerance":  1e-10,          # 1e-10 absolute tolerance of the residual of the linear solver
-      "solverType":         "lu",      # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
+      "solverType":         "gmres",  #"lu" if installed    # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
       "preconditionerType": "none",           # type of the preconditioner
       "maxIterations":       1e4,           # maximum number of iterations in the linear solver
       "snesMaxFunctionEvaluations": 1e8,    # maximum number of function iterations
@@ -238,7 +243,7 @@ config = {
                     "inputMeshIsGlobal":            True,                                    # the boundary conditions and initial values would be given as global numbers
                     "checkForNanInf":               True,                                    # abort execution if the solution contains nan or inf values
                     "nAdditionalFieldVariables":    0,                                       # number of additional field variables
-										"additionalSlotNames":          [],                                      # names for the additional slots
+                    "additionalSlotNames":          [],                                      # names for the additional slots
                       
                     "CellML" : {
                       "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
@@ -304,7 +309,7 @@ config = {
                     "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
                     "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
                     "nAdditionalFieldVariables":   1,                                       # number of additional field variables that will be written to the output file, here for stress
-										"additionalSlotNames":         "stress",                                # names for the additional slots, maximum length is 6 characters per slot name
+	            "additionalSlotNames":         "stress",                                # names for the additional slots, maximum length is 6 characters per slot name
                     "checkForNanInf":              True,                                    # abort execution if the solution contains nan or inf values
                     
                     "FiniteElementMethod" : {

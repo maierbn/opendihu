@@ -11,25 +11,51 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import csv
 
-path = "build_release/out/biceps"
+path1 = "build_release/out/biceps"
+path2 = "build_release/out"
+path3 = "build_release"
+
+emg_filename = "electrodes.csv"
+stimulation_times_filename = "stimulation.log"
 
 # parse file
-if len(sys.argv) > 1:
-  filenames = sys.argv[1:]
+if len(sys.argv) > 2:
+  emg_filename = sys.argv[1]
+  stimulation_times_filename = sys.argv[2]
+
+elif len(sys.argv) > 1:
+  emg_filename = sys.argv[1]
+  
 else:
-  print("usage: {} <filename>\n if no filename is given, search in subdirectory {}\n\n".format(sys.argv[0],path))
+  print("usage: {} <filename> <stimulation_times_filename>\n if no filename is given, search in subdirectory {}\n\n".format(sys.argv[0],path))
   
   # get all input data in current directory
-  files_at_path = os.listdir(path)
+  for path in [path1, path2, path3]:
+    files_at_path = os.listdir(path)
 
-  # sort files by number in file name
-  filenames = sorted(files_at_path)
+    if "electrodes.csv" in files_at_path:
+      emg_filename = os.path.join(path, "electrodes.csv")
+    if "stimulation.log" in files_at_path:
+      stimulation_times_filename = os.path.join(path, "stimulation.log")
 
-  filenames = [os.path.join(path,f) for f in filenames if ".csv" in f and "found" not in f]
-filename = filenames[0]
+# get filesize
+try:
+  filesize = os.path.getsize(emg_filename)
+except:
+  print("Could not open emg file \"{}\".".format(emg_filename))
+  quit()
+
+# CC BY-SA 3.0 by Sridhar Ratnakumar https://stackoverflow.com/a/1094933/10290071
+def sizeof_fmt(num, suffix='B'):
+  for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+    if abs(num) < 1024.0:
+      return "%3.1f %s%s" % (num, unit, suffix)
+    num /= 1024.0
+  return "%.1f%s%s" % (num, 'Yi', suffix)
+print("Input file \"{}\" is {}".format(emg_filename, sizeof_fmt(filesize)), end="")
 
 # parse csv file
-data = np.genfromtxt(filename, delimiter=';')
+data = np.genfromtxt(emg_filename, delimiter=';')
 t_list = data[:,1]
   
 n_points = (int)(data[0][2])
@@ -92,10 +118,10 @@ for j in range(n_points_z-1):
 inter_electrode_distance_xy = np.mean(distances_xy)
 inter_electrode_distance_z = np.mean(distances_z)
 
-print("Input file \"{}\" contains {} x {} = {} points".format(filename, n_points_xy, n_points_z, n_points))
+print(" and contains {} x {} = {} points".format(emg_filename, n_points_xy, n_points_z, n_points))
 print("Inter-electrode distance: {:.2f} mm x {:.2f} mm".format(10*inter_electrode_distance_xy, 10*inter_electrode_distance_z))
 
-# create plot
+# create grid plot
 n_plots_x = n_points_xy
 n_plots_y = n_points_z
 fig = plt.figure(figsize=(5,10))
@@ -112,15 +138,19 @@ plt.title("sEMG for {} x {} electrodes, t: [{}, {}]".format(n_points_xy, n_point
 all_values = data[:,3+n_points*3:]
 minimum_value = np.min(all_values)
 maximum_value = np.max(all_values)
-print("emg value range [mV]: [{},{}]".format(minimum_value, maximum_value))
+print("EMG value range [mV]: [{},{}]".format(minimum_value, maximum_value))
 print("time range [ms]: [{},{}]".format(t_list[0], t_list[-1]))
+sampling_frequency = 1000*len(t_list) / (t_list[-1]-t_list[0])
+print("sampling frequency [Hz]: {:.0f}".format(sampling_frequency))
+
+emg_data = data[:,3+n_points*3:]
 
 # loop over sub plots
 for j in range(n_plots_y):
   for i in range(n_plots_x):
     index = j*n_plots_x + i
     
-    emg_list = data[:,3+n_points*3+index]
+    emg_list = emg_data[:,index]
     
     ax = fig.add_subplot(n_plots_y,n_plots_x,index+1)   # nrows, ncols, index, plots start top left and increase to the right
     ax.plot(t_list, emg_list)
@@ -133,5 +163,158 @@ plt.axis('off')
 plt.subplots_adjust(hspace=0, wspace=0)
 plt.savefig("emg_plot.pdf")
 print("Created file \"emg_plot.pdf\".")
+
+plt.ion()
+plt.show()
+plt.draw()
+plt.pause(1)
+plt.ioff()
+
+# -------------------------
+# load stimulation times
+fiber_times = {}
+fiber_mu_nos = {}
+
+mu_times = {}
+end_time = 0
+
+# load data
+try:
+  with open(stimulation_times_filename) as f:
+    for line in f:
+      if '#' in line:
+        continue
+      values = line.split(";")
+      mu_no = int(values[0])
+      fiber_no = int(values[1])
+      times = [float(v)/1000.0 for v in values[2:-1]]
+      
+      fiber_mu_nos[fiber_no] = mu_no
+      fiber_times[fiber_no] = times
+      
+      if not mu_no in mu_times:
+        mu_times[mu_no] = set()
+      
+      for item in times:
+        if item > end_time:
+          end_time = item
+        mu_times[mu_no].add(item)
+
+  print("Stimulation file \"{}\" contains end time {:.3f} s, {} motor units, {} fibers".format(stimulation_times_filename, end_time, len(mu_times), len(fiber_times)))
+
+  max_mu = max(mu_times)
+except:
+  print("Stimulation file \"{}\" does not exit".format(stimulation_times_filename))
+  max_mu = 1
+
+# ------------------
+# create animation
+from matplotlib import animation
+from matplotlib import gridspec
+
+fig = plt.figure(figsize=(8,10))
+gs = gridspec.GridSpec(2, 1, height_ratios=[3, 1])
+ax1 = fig.add_subplot(gs[0])
+ax2 = fig.add_subplot(gs[1])
+
+handles = []
+time_line_handle = None
+text_handle = None
+
+def init():
+  global time_line_handle, text_handle
+  time_index = 0
+  
+  # top plot:
+  # plot electrode positions as '+'
+  # loop over electrodes
+  for j in range(n_points_z):
+    for i in range(n_points_xy):
+      electrode_index = j*n_points_xy + i
+  
+      emg_data[time_index,electrode_index]
+      handle = ax1.plot(i,j,'+',color=(0.5,0.5,0.5))
+  
+  # plot color
+  data = np.transpose(np.reshape(emg_data[time_index,:],(n_points_xy,n_points_z)))
+  handle = ax1.pcolormesh(data, cmap='RdBu', vmin=minimum_value, vmax=maximum_value)
+  handles.append(handle)
+  fig.colorbar(handle, ax=ax1)
+  ax1.set_aspect('equal')
+  
+  # left text
+  plt.figtext(0.05, 0.95, "{} x {} = {} electrodes".format(n_points_xy, n_points_z, n_points), horizontalalignment='left')
+  plt.figtext(0.05, 0.92, "IED: {:.1f} mm x {:.1f} mm".format(10*inter_electrode_distance_xy, 10*inter_electrode_distance_z), horizontalalignment='left')
+  plt.figtext(0.05, 0.89, "t: {} ms".format(t_list[-1]-t_list[0]), horizontalalignment='left')
+  plt.figtext(0.05, 0.86, "sampling frequency: {:.0f} Hz".format(sampling_frequency), horizontalalignment='left')
+  plt.figtext(0.05, 0.83, "{} motor units".format(len(mu_times.items())), horizontalalignment='left')
+  
+  # bottom plot:
+  # vertical line
+  time_line_handle, = ax2.plot([time_index,time_index], [0,1], color='b')
+  ax2.set_xlim(t_list[0]/1000, t_list[-1]/1000)
+  ax2.set_ylim(0,max_mu)
+  
+  # text
+  text_handle = ax2.text(0.05, 1.05, "", horizontalalignment='left', transform=ax2.transAxes, family='monospace')
+  
+  # firing times for fibers on mus
+  if mu_times:
+
+    # plot line for each MU
+    for (mu_no,times) in mu_times.items():
+      ax2.plot([0,end_time],[mu_no,mu_no],c=(0.8,0.8,0.8))
+
+    for (fiber_no,times) in fiber_times.items():
+      
+      mu_no = fiber_mu_nos[fiber_no]
+      # plot stimulation times as cross
+      ax2.plot(list(times),[mu_no for _ in times],'+')
+      
+    ax2.set_ylabel('motor unit no [-]')
+  ax2.set_xlabel('time [s]')
+  
+def animate(time_index):
+  global time_line_handle, text_handle
+  
+  time_index = time_index*frame_stride
+  
+  if time_index % 100 == 0:
+    print("{:.1f} %".format(100*time_index / len(t_list)))
+  
+  # top plot:
+  data = emg_data[time_index,:]
+  handles[0].set_array(data.flatten())
+  
+  # bottom plot:
+  t = t_list[time_index]/1000
+    
+  time_line_handle.set_data([t,t], [0,max_mu])
+  text_handle.set_text("{} s".format(t))
+  
+
+# compute timing values for the animation
+slowdown_factor = 10   # how much slower the video will be than the actual simulation
+target_fps = 20       # the framerate of the video
+
+# duration of the video
+duration = (t_list[-1] - t_list[0])/1000. * slowdown_factor
+frame_stride = (int)(len(t_list) / (target_fps*duration))   # n_frames / duration = 20 => (len(t_list) // frame_stride) / ((t_list[-1] - t_list[0])/1000. * slowdown_factor) = 20 =>  frame_stride = len(t_list) // (20*((t_list[-1] - t_list[0])/1000. * slowdown_factor))
+n_frames = len(t_list) // frame_stride
+interval = (int)(duration / n_frames * 1000)
+
+anim = animation.FuncAnimation(fig, animate, init_func=init, 
+                               frames=n_frames, interval=interval, blit=False, repeat=False)
+
+print("Saving animation with {} frames from {} data points, animation length {} s, data length {} s, {:.1f} frames/s".format(n_frames, len(t_list), duration, (t_list[-1] - t_list[0])/1000., n_frames/duration))
+
+plt.tight_layout()
+
+try:
+  anim.save("anim.mp4")
+  print("Saved \"anim.mp4\".")
+except:
+  print("An error occured during the animation.")
+
 plt.show()
 

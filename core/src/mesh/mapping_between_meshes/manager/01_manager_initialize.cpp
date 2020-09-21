@@ -32,6 +32,7 @@ void ManagerInitialize::storeMappingBetweenMeshes(std::string sourceMeshName, Py
       mappingWithSettings.enableWarnings = true;
       mappingWithSettings.compositeUseOnlyInitializedMappings = false;
       mappingWithSettings.isEnabledFixUnmappedDofs = true;
+      mappingWithSettings.defaultValue = 0.0;
       mappingsBetweenMeshes_[sourceMeshName].insert(std::pair<std::string,MappingWithSettings>(targetMeshToMapTo,mappingWithSettings));
 
       // log event, to be included in the log file
@@ -53,6 +54,7 @@ void ManagerInitialize::storeMappingBetweenMeshes(std::string sourceMeshName, Py
     bool enableWarnings = PythonUtility::getOptionBool(targetMeshPy, "enableWarnings", stringPath.str(), true);
     bool compositeUseOnlyInitializedMappings = PythonUtility::getOptionBool(targetMeshPy, "compositeUseOnlyInitializedMappings", stringPath.str(), false);
     bool isEnabledFixUnmappedDofs = PythonUtility::getOptionBool(targetMeshPy, "fixUnmappedDofs", stringPath.str(), true);
+    double defaultValue = PythonUtility::getOptionDouble(targetMeshPy, "defaultValue", stringPath.str(), 0.0);
 
     VLOG(1) << "Store mapping between mesh \"" << sourceMeshName << "\" and " << targetMeshToMapTo << " with xiTolerance " << xiTolerance;
 
@@ -66,6 +68,7 @@ void ManagerInitialize::storeMappingBetweenMeshes(std::string sourceMeshName, Py
       mappingWithSettings.enableWarnings = enableWarnings;
       mappingWithSettings.compositeUseOnlyInitializedMappings = compositeUseOnlyInitializedMappings;
       mappingWithSettings.isEnabledFixUnmappedDofs = isEnabledFixUnmappedDofs;
+      mappingWithSettings.defaultValue = defaultValue;
       mappingsBetweenMeshes_[sourceMeshName].insert(std::pair<std::string,MappingWithSettings>(targetMeshToMapTo,mappingWithSettings));
 
       // log event, to be included in the log file

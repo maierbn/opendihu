@@ -272,6 +272,7 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
   std::vector<double> targetFactorSums;
   targetFactorSum->getValuesWithoutGhosts(targetFactorSums);
 
+  std::string targetMeshName = fieldVariableTarget->functionSpace()->meshName();
   std::stringstream info;
 
   for (dof_no_t targetDofNoLocal = 0; targetDofNoLocal != nDofsLocalTarget; targetDofNoLocal++)
@@ -288,6 +289,13 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
     }
     else
     {
+      // if there was a default value specified, set the target value to the default value
+      if (defaultValues_.find(targetMeshName) != defaultValues_.end())
+      {
+        // set to default value if there is one
+        targetValues[targetDofNoLocal] = defaultValues_[targetMeshName];
+      }
+
 #ifndef NDEBUG
       // output warning message, compute helper variables
 
@@ -353,6 +361,8 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
   std::vector<double> targetFactorSums;
   targetFactorSum->getValuesWithoutGhosts(targetFactorSums);
 
+  std::string targetMeshName = fieldVariableTarget->functionSpace()->meshName();
+
   for (dof_no_t targetDofNoLocal = 0; targetDofNoLocal != nDofsLocalTarget; targetDofNoLocal++)
   {
     VLOG(2) << "  target dof " << targetDofNoLocal << ", divide value " << targetValues[targetDofNoLocal]
@@ -363,6 +373,12 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
     }
     else
     {
+      // if there was a default value specified, set the target value to the default value
+      if (defaultValues_.find(targetMeshName) != defaultValues_.end())
+      {
+        // set to default value if there is one
+        targetValues[targetDofNoLocal].fill(defaultValues_[targetMeshName]);
+      }
 
 #ifndef NDEBUG
       // output warning message, compute helper variables

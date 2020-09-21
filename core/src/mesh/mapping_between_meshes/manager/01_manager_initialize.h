@@ -58,9 +58,12 @@ protected:
     bool enableWarnings;        //< if warnings should be shown if source dofs are outside the target mesh with the given xi tolerance
     bool compositeUseOnlyInitializedMappings;   //< if for composite source meshes the mapping should be created from also defined mappings from the sub meshes
     bool isEnabledFixUnmappedDofs;              //< if the unmapped dofs in the target mesh should be fixed by interpolating in the source mesh
+    double defaultValue;        //< default value that is used if a target dof has no source dof that provides any values
   };
 
   std::map<std::string, std::shared_ptr<FieldVariable::FieldVariableBase>> targetFactorSum_;  //< for every target function space the field variable which accumulates the interpolation factors
+  std::map<std::string, double> defaultValues_;    //< for every target mesh name the default value to set all target field variables to where there are no source dofs
+
   std::map<std::string, std::map<std::string, MappingWithSettings>> mappingsBetweenMeshes_;   //<["key mesh from"]["key mesh to"] mapping between meshes
 
 };

@@ -57,6 +57,8 @@ sampling_stride_x = 2
 sampling_stride_y = 2
 sampling_stride_z = 50
 
+n_nodes_per_mm = 10
+
 # scenario name for log file
 scenario_name = ""
 

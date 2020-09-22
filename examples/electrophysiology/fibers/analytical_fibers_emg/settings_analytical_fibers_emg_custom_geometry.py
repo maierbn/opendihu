@@ -149,7 +149,7 @@ config = {
       "name": "3Dmesh", 
       "xiTolerance": 0.1, 
       "defaultValue": -90,
-      "enableWarnings": True,
+      "enableWarnings": False,
       "compositeUseOnlyInitializedMappings": False,
       "fixUnmappedDofs": True, 
     } for i in range(variables.n_fibers_total)
@@ -170,8 +170,8 @@ config = {
       "maxIterations":      variables.emg_solver_maxit,
       "solverType":         variables.emg_solver_type,
       "preconditionerType": variables.emg_preconditioner_type,
-      "dumpFilename":       "",
-      "dumpFormat":         "ascii",
+      "dumpFilename":       "matlab_output/emg" if variables.enable_matrix_output else "",
+      "dumpFormat":         "matlab",
     },
   },
   "Coupling": {

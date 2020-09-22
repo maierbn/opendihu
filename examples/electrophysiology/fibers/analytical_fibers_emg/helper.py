@@ -72,11 +72,12 @@ def last_stimulation_time_of_fiber(fiber_no, frequency, current_time):
   n_firing_times = np.size(variables.firing_times,0)
   
   current_index = index % n_firing_times
-  firing_indices = np.where(variables.firing_times[0:current_index, mu_no] == 1)
+  firing_indices = sorted(np.where(variables.firing_times[0:current_index, mu_no] == 1))
+
 
   last_firing_index = None
   if np.size(firing_indices) > 0:
-    last_firing_index = firing_indices[-1][0]
+    last_firing_index = firing_indices[0][-1]
     
   if not last_firing_index:
   #  print("t:{}, i:{}, firing_times: {}, firing_indices: {}, last_firing_index: {}".format(current_time, current_index, variables.firing_times[0:current_index, mu_no], firing_indices, last_firing_index))
@@ -146,7 +147,7 @@ def set_vm_values(n_dofs_global, n_nodes_global_per_coordinate_direction, time_s
       k = N/2 - k
     
     # transform position on fiber from cm to mm
-    k = k * 0.1                 # current position on the fiber in [mm]
+    k = k / variables.n_nodes_per_mm      # current position on the fiber in [mm]
     propagation_velocity = 4    # parameter conduction velocity [mm/ms]
     
     # if there was no stimulation yet, use equilibrium value -90
@@ -157,9 +158,7 @@ def set_vm_values(n_dofs_global, n_nodes_global_per_coordinate_direction, time_s
       values[local_dof_no] = g(-k + propagation_velocity*(current_time - last_stimulation_time))
       
       # debugging output
-      #if values[local_dof_no] > -90.01:
       #  print("  g(-{} + v*({}-{})) = g({}) = {}".format(k, current_time, last_stimulation_time, -k + propagation_velocity*(current_time - last_stimulation_time), values[local_dof_no]))
-    
 
 # load MU distribution and firing times
 variables.fiber_distribution = np.genfromtxt(variables.fiber_distribution_file, delimiter=" ")

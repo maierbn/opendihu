@@ -1585,6 +1585,62 @@ There is one script that visualizes all EMG measurements over time. It is locate
 .. figure:: examples/fibers_fat_emg4.png
   :width: 60%
   
+analytical_fibers_emg
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+This example uses an analytical description of action potential propagation, which replaces the Monodomain Equation on the fibers. Multiple fibers are coupled with Bidomain equation.
+Thus, this example is the same as `fibers_emg`, except that Monodomain eq. is replaced by an analytic equation.
+
+The analytic model is the one of `Rosenfalck 1969 <https://pubmed.ncbi.nlm.nih.gov/5383732/>`_.
+
+.. math::
+
+  G(z) = \begin{cases}
+    96\,z^3\,exp(-z) - 90 & \text{ for } z \geq 0 \\
+    -90 & \text{ for } z < 0
+  \end{cases}
+
+where :math:`z=U\cdot t` with propagation velocity :math:`U`, see :numref:`analytical_fibers_emg_3`.
+
+.. _analytical_fibers_emg_3:
+.. figure:: examples/analytical_fibers_emg_3.png
+  :width: 40%
+  
+  Rosenfalck function :math:`g(z)`. Note the the shapes of the propagating stimuli correspond to this graph, propagating to the left (negative z axis).
+  
+.. code-block:: bash
+  
+  cd $OPENDIHU_HOME/examples/electrophysiology/fibers/analytical_fibers_emg
+  mkorn && sr       # build
+  cd build_release
+  
+  mpirun -n 2 ./analytical_fibers_emg ../settings_analytical_fibers_emg.py biceps.py              # (1)
+  ./analytical_fibers_emg ../settings_analytical_fibers_emg_custom_geometry.py geometry_square.py # (2)
+  ./analytical_fibers_emg ../settings_analytical_fibers_emg_custom_geometry.py geometry_round.py  # (3)
+  
+Szenario (1) uses the biceps geometry and fiber files. It can be run in parallel.
+
+Scenarios (2) and (3) use a custom geometry that is defined in the python settings. The fibers are independent of the muscle geometry and can be parametrized with different angles. These scenarios only run in serial.
+  
+.. _analytical_fibers_emg_0:
+.. figure:: examples/analytical_fibers_emg_0.png
+  :width: 40%
+  
+  Results of scenario (1)
+  
+.. _analytical_fibers_emg_2:
+.. figure:: examples/analytical_fibers_emg_2.png
+  :width: 40%
+  
+  Results of scenario (2). The geometry has a square cross-section of the muscle. The "radius" along the muscle follows a sine curve.
+  
+.. _analytical_fibers_emg_1:
+.. figure:: examples/analytical_fibers_emg_1.png
+  :width: 40%
+  
+  Results of scenario (3). The geometry has a circular cross-section of the muscle. The radius along the muscle follows a sine curve. Top: geometry, bottom: fibers with angles :math:`\alpha=0.4\pi` and :math:`\beta=0.2\pi`.
+
+
 load_balancing
 ~~~~~~~~~~~~~~~~~~~~~~~~
 

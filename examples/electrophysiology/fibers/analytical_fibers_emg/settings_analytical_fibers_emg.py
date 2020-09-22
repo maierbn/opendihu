@@ -271,10 +271,11 @@ config = {
   }
 }
 
-instances = config["Coupling"]["Term1"]["MultipleInstances"]["instances"]
-for i,instance in enumerate(instances):
-  if instance is not None:
-    print("{}: instance {}, ranks: {}".format(rank_no,i,instance["ranks"]))
+if False:
+  instances = config["Coupling"]["Term1"]["MultipleInstances"]["instances"]
+  for i,instance in enumerate(instances):
+    if instance is not None:
+      print("{}: instance {}, ranks: {}".format(rank_no,i,instance["ranks"]))
 
 # stop timer and calculate how long parsing lasted
 if rank_no == 0:

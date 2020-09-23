@@ -34,6 +34,7 @@ output_timestep = 1e0               # [ms] timestep for output files
 output_timestep_3D_emg = 1e0        # [ms] timestep for output files
 output_timestep_3D = 1e0            # [ms] timestep for output files
 output_timestep_fibers = 1e0        # [ms] timestep for output files
+output_timestep_surface = 1e0       # [ms] timestep for output files of surface
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 
 # input files
@@ -80,6 +81,19 @@ sampling_stride_y = 2
 sampling_stride_z = 50
 
 mapping_tolerance = 0.1
+
+hdemg_electrode_faces = ["1+"],         # which faces of the 3D mesh should be written into the 2D mesh
+
+# HD-EMG electrode parameters
+fiber_file_for_hdemg_surface = fat_mesh_file    # use the fat mesh for placing electrodes, this option is the file of the 2D mesh on which electrode positions are set
+hdemg_electrode_faces = ["1+"]                  # which faces of this 2D mesh should be considered for placing the HD-EMG electrodes (list of faces, a face is one of "0-" (left), "0+" (right), "1-" (front), "1+" (back))
+
+# xy-direction = across muscle, z-direction = along muscle
+hdemg_electrode_offset_xy = 2.0           # [cm] offset from border of 2D mesh where the electrode array begins
+hdemg_inter_electrode_distance_z = 0.4    # [cm] distance between electrodes ("IED") in z direction (direction along muscle)
+hdemg_inter_electrode_distance_xy = 0.4   # [cm] distance between electrodes ("IED") in transverse direction
+hdemg_n_electrodes_z = 32           # number of electrodes in z direction (direction along muscle)
+hdemg_n_electrodes_xy = 12          # number of electrode across muscle
 
 # scenario name for log file
 scenario_name = ""

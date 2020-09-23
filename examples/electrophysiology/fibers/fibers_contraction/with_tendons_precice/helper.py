@@ -83,6 +83,7 @@ variables.mappings_between_meshes = {
     "enableWarnings": False, 
     "compositeUseOnlyInitializedMappings": False,
     "fixUnmappedDofs": True,
+    "defaultValue": 0,
   } for i in range(variables.n_fibers_total)
 }
 # set output writer    

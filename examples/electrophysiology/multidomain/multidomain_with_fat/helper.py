@@ -318,7 +318,7 @@ if False:
 
 # create mappings between meshes, currently none
 variables.mappings_between_meshes = {}
-#variables.mappings_between_meshes.update({"3Dmesh": {"name": "3DFatMesh", "xiTolerance": 1e-2}})    # only include overlapping elements
+#variables.mappings_between_meshes.update({"3Dmesh": {"name": "3DFatMesh", "xiTolerance": 1e-2, "defaultValue": 0}})    # only include overlapping elements
 
 # set variable mappings for cellml model
 if "hodgkin_huxley" in variables.cellml_file:

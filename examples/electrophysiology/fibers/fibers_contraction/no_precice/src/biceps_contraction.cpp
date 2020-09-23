@@ -43,7 +43,9 @@ int main(int argc, char *argv[])
         >
       >
     >,
-    MuscleContractionSolver<>
+    OutputWriter::OutputSurface<
+      MuscleContractionSolver<>
+    >
   > problem(settings);
   
   // run problem

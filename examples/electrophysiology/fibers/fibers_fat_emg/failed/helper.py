@@ -302,7 +302,7 @@ if False:
 
 # create mappings between meshes
 variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(variables.n_fibers_total)}
-variables.mappings_between_meshes.update({"3Dmesh": {"name": "3DFatMesh", "xiTolerance": 1e-2}})    # only include overlapping elements
+variables.mappings_between_meshes.update({"3Dmesh": {"name": "3DFatMesh", "xiTolerance": 1e-2, "defaultValue": 0}})    # only include overlapping elements
 
 # set output writer    
 variables.output_writer_fibers = []

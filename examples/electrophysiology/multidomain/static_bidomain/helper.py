@@ -356,6 +356,7 @@ variables.mappings_between_meshes = {
     "enableWarnings": True,
     "compositeUseOnlyInitializedMappings": False,
     "fixUnmappedDofs": False,
+    "defaultValue": 0,
   }
 }
 # only include overlapping elements

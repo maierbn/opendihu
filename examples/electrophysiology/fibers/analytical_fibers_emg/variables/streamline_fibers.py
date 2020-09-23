@@ -1,6 +1,23 @@
 
 # scenario name for log file
 scenario_name = "streamline_fibers"
+import sys
+import argparse
+parser = argparse.ArgumentParser(description='analytical_fibers_emg')
+
+# parameters that will be set by command line arguments
+# ------------------------------------------------------
+belly_width = 1.0       # this can be set by the command line argument --belly_width, it is available in settings_analytical_fibers_emg_custom_geometry.py as variables.belly_widt
+# i.e., run:
+# ./analytical_fibers_emg ../settings_analytical_fibers_emg_custom_geometry.py streamline_fibers.py --belly_width=0.1
+
+parser.add_argument('--belly_width', help='Parameter of the geometry', type=float, default=belly_width)
+
+# parse the command line arguments
+args,_ = parser.parse_known_args(args=sys.argv[:-2])
+locals().update(vars(args))
+
+print("belly_width: {}".format(belly_width))
 
 # timing parameters
 # -----------------
@@ -24,7 +41,7 @@ n_nodes_z = 100
 
 # belly shape function of the muscle, z in [0,1]
 def belly(z):
-  return 0.5 + (np.sin(z * 2*np.pi - 0.5*np.pi)+1)/2
+  return 0.5 + (np.sin(z * 2*np.pi - 0.5*np.pi)+1)/2 * belly_width
 
 def map_to_circle(i, j, n_grid_points_x, n_grid_points_y, radius_factor):
   """ 

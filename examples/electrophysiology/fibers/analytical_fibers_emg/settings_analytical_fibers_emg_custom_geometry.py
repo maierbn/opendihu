@@ -32,7 +32,7 @@ if ".py" in sys.argv[0]:
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 
 # define command line arguments
-parser = argparse.ArgumentParser(description='fibers_emg')
+parser = argparse.ArgumentParser(description='analytical_fibers_emg')
 parser.add_argument('--scenario_name',                       help='The name to identify this run in the log.',            default=variables.scenario_name)
 parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',             type=int)
 parser.add_argument('--n_subdomains_x', '-x',                help='Number of subdomains in x direction.',                 type=int, default=variables.n_subdomains_x)
@@ -67,8 +67,6 @@ parser.add_argument('-pause',                                help='Stop at paral
 
 # parse command line arguments and assign values to variables module
 args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
-if len(other_args) != 0 and rank_no == 0:
-    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:
@@ -260,11 +258,6 @@ config = {
     }
   }
 }
-
-instances = config["Coupling"]["Term1"]["MultipleInstances"]["instances"]
-for i,instance in enumerate(instances):
-  if instance is not None:
-    print("{}: instance {}, ranks: {}".format(rank_no,i,instance["ranks"]))
 
 # stop timer and calculate how long parsing lasted
 if rank_no == 0:

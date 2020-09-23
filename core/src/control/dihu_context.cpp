@@ -160,6 +160,13 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     // initialize MPI, this is necessary to be able to call PetscFinalize without MPI shutting down
     MPI_Init(&argc, &argv);
 
+    // get current MPI version
+    char versionString[MPI_MAX_LIBRARY_VERSION_STRING];
+    int resultLength;
+    MPI_Get_library_version(versionString, &resultLength);
+
+    std::string mpiVersion(versionString, versionString+resultLength);
+
 #ifdef HAVE_EXTRAE
     // Disable Extrae tracing at startup
     Extrae_shutdown();
@@ -183,7 +190,17 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     // print header text to console
     LOG(INFO) << "This is " << versionText() << ", " << metaText();
+    LOG(INFO) << mpiVersion;
+    LOG(DEBUG) << "MPI version: \"" << mpiVersion << "\".";
 
+    // warn if OpenMPI 4 is used, remove this warning if you know if the bug has been fixed (try running fibers_emg with at least 64 ranks)
+    if (mpiVersion.find("Open MPI v4") != std::string::npos)
+    {
+      LOG(WARNING) << "Using MPI 4, which might cause problems. \n"
+        << "In 2020 we found there is a bug in at least OpenMPI 4.0.4. Everything works fine with OpenMPI 3 (e.g. version 3.1.6). \n"
+        << "So, either use OpenMPI 3 or you might check if the issues have already be fixed in newer versions of OpenMPI 4 or higher. \n"
+        << "If so, remove this warning message.";
+    }
     // output process ID in debug
     int pid = getpid();
     LOG(DEBUG) << "PID " << pid;

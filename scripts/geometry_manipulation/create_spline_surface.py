@@ -114,7 +114,8 @@ if __name__ == "__main__":
     # duplicate first point
     new_loops = []
     for loop in loops:
-      #new_loop = loop + loop + loop + [loop[0]]
+      print("  loop has {} points".format(len(loop)))
+      #new_loop = loop + [loop[0]]
       new_loop = loop + loop + loop + [loop[0]]
       n_points_u = len(new_loop)
       new_loops.append(new_loop)
@@ -135,7 +136,7 @@ if __name__ == "__main__":
 
     [surface0, surface1] = operations.split_surface_u(surface_full, 0.4)
     [surface, surface2] = operations.split_surface_u(surface1, 0.5555)
-
+    
     pickle_filename = output_pickle_filename
     print("Write pickle file \"{}\"".format(pickle_filename))
 

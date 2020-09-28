@@ -131,17 +131,6 @@ sampling_stride_z = 74
 # Try to increase this such that all mappings have all points.
 mapping_tolerance = 0.5
 
-# HD-EMG electrode parameters
-fiber_file_for_hdemg_surface = fat_mesh_file    # use the fat mesh for placing electrodes, this option is the file of the 2D mesh on which electrode positions are set
-hdemg_electrode_faces = ["1+"]                  # which faces of this 2D mesh should be considered for placing the HD-EMG electrodes (list of faces, a face is one of "0-" (left), "0+" (right), "1-" (front), "1+" (back))
-
-# xy-direction = across muscle, z-direction = along muscle
-hdemg_electrode_offset_xy = 2.0           # [cm] offset from border of 2D mesh where the electrode array begins
-hdemg_inter_electrode_distance_z = 0.4    # [cm] distance between electrodes ("IED") in z direction (direction along muscle)
-hdemg_inter_electrode_distance_xy = 0.4   # [cm] distance between electrodes ("IED") in transverse direction
-hdemg_n_electrodes_z = 32           # number of electrodes in z direction (direction along muscle)
-hdemg_n_electrodes_xy = 12          # number of electrode across muscle
-
 # other options
 paraview_output = True
 adios_output = False

@@ -397,103 +397,89 @@ config = {
       "neuromuscularJunctionRelativeSize": 0.1,                        # range where the neuromuscular junction is located around the center, relative to fiber length. The actual position is draws randomly from the interval [0.5-s/2, 0.5+s/2) with s being this option. 0 means sharply at the center, 0.1 means located approximately at the center, but it can vary 10% in total between all fibers.
     },
     "Term2": {        # solid mechanics
-      "OutputSurface": {
-        "OutputWriter": [
-          {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
+      "MuscleContractionSolver": {
+        "numberTimeSteps":              1,                         # only use 1 timestep per interval
+        "timeStepOutputInterval":       100,                       # do not output time steps
+        "Pmax":                         variables.pmax,            # maximum PK2 active stress
+        "slotNames":                    ["lambda", "ldot", "gamma", "T"],   # names of the data slots (lamdba, lambdaDot, gamma, traction), maximum 6 characters per slot name
+        "OutputWriter" : [
+          {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
         ],
-        #"face":                    ["1+","0+"],         # which faces of the 3D mesh should be written into the 2D mesh
-        "face":                     ["1+"],              # which faces of the 3D mesh should be written into the 2D mesh
-        "samplingPoints":           variables.hdemg_electrode_positions,    # the electrode positions, they are created in the helper.py script
-        "updatePointPositions":     True,               # the electrode points should be initialize in every timestep (set to False for the static case). This makes a difference if the muscle contracts, then True=fixed electrodes, False=electrodes moving with muscle.
-        "filename":                 "out/{}/electrodes.csv".format(variables.scenario_name),
-        "enableCsvFile":            True,                # if the values at the sampling points should be written to csv files
-        "enableVtpFile":            True,               # if the values at the sampling points should be written to vtp files
-        "xiTolerance":              0.3,                 # tolerance for element-local coordinates xi, for finding electrode positions inside the elements. Increase or decrease this numbers if not all electrode points are found.
-
-        "MuscleContractionSolver": {
-          "numberTimeSteps":              1,                         # only use 1 timestep per interval
-          "timeStepOutputInterval":       100,                       # do not output time steps
-          "Pmax":                         variables.pmax,            # maximum PK2 active stress
-          "slotNames":                    ["lambda", "ldot", "gamma", "T"],   # names of the data slots (lamdba, lambdaDot, gamma, traction), maximum 6 characters per slot name
-          "OutputWriter" : [
-            {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-          ],
-          "mapGeometryToMeshes":          [],                        # the mesh names of the meshes that will get the geometry transferred
-          "dynamic":                      True,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
+        "mapGeometryToMeshes":          [],                        # the mesh names of the meshes that will get the geometry transferred
+        "dynamic":                      True,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
+        
+        # the actual solid mechanics solver, this is either "DynamicHyperelasticitySolver" or "HyperelasticitySolver", depending on the value of "dynamic"
+        "DynamicHyperelasticitySolver": {
+          "timeStepWidth":              variables.dt_3D,           # time step width 
+          "durationLogKey":             "nonlinear",               # key to find duration of this solver in the log file
+          "timeStepOutputInterval":     1,                         # how often the current time step should be printed to console
           
-          # the actual solid mechanics solver, this is either "DynamicHyperelasticitySolver" or "HyperelasticitySolver", depending on the value of "dynamic"
-          "DynamicHyperelasticitySolver": {
-            "timeStepWidth":              variables.dt_3D,           # time step width 
-            "durationLogKey":             "nonlinear",               # key to find duration of this solver in the log file
-            "timeStepOutputInterval":     1,                         # how often the current time step should be printed to console
+          "materialParameters":         variables.material_parameters,  # material parameters of the Mooney-Rivlin material
+          "density":                    variables.rho,             # density of the material
+          "displacementsScalingFactor": 1.0,                       # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
+          "residualNormLogFilename":    "log_residual_norm.txt",   # log file where residual norm values of the nonlinear solver will be written
+          "useAnalyticJacobian":        variables.use_analytic_jacobian,      # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
+          "useNumericJacobian":         not variables.use_analytic_jacobian,  # whether to use the numerically computed jacobian matrix in the nonlinear solver (slow), only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
             
-            "materialParameters":         variables.material_parameters,  # material parameters of the Mooney-Rivlin material
-            "density":                    variables.rho,             # density of the material
-            "displacementsScalingFactor": 1.0,                       # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
-            "residualNormLogFilename":    "log_residual_norm.txt",   # log file where residual norm values of the nonlinear solver will be written
-            "useAnalyticJacobian":        variables.use_analytic_jacobian,      # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
-            "useNumericJacobian":         not variables.use_analytic_jacobian,  # whether to use the numerically computed jacobian matrix in the nonlinear solver (slow), only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
-              
-            "dumpDenseMatlabVariables":   False,                     # whether to have extra output of matlab vectors, x,r, jacobian matrix (very slow)
-            # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
+          "dumpDenseMatlabVariables":   False,                     # whether to have extra output of matlab vectors, x,r, jacobian matrix (very slow)
+          # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
+          
+          # mesh
+          "inputMeshIsGlobal":          True,                     # the mesh is given locally
+          "meshName":                   "3Dmesh_quadratic",        # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
+          "fiberMeshNames":             variables.fiber_mesh_names,  # fiber meshes that will be used to determine the fiber direction, for multidomain there are no fibers so this would be empty list
+          #"fiberDirection":             [0,0,1],                  # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
+    
+          # solving
+          "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
+          #"loadFactors":                [0.25, 0.66, 1.0],                # load factors for every timestep
+          "loadFactorGiveUpThreshold":   1,                      # when to abort the solve
+          "loadFactors":                [],                        # no load factors, solve problem directly
+          "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
+          
+          # boundary and initial conditions
+          "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
+          "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
+          "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+          "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
+          "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
+          
+          "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+          "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+          "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
+          "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
+          
+          "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions",                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+          
+          # define which file formats should be written
+          # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
+          "OutputWriter" : [
             
-            # mesh
-            "inputMeshIsGlobal":          True,                     # the mesh is given locally
-            "meshName":                   "3Dmesh_quadratic",        # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
-            "fiberMeshNames":             variables.fiber_mesh_names,  # fiber meshes that will be used to determine the fiber direction, for multidomain there are no fibers so this would be empty list
-            #"fiberDirection":             [0,0,1],                  # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
-      
-            # solving
-            "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
-            #"loadFactors":                [0.25, 0.66, 1.0],                # load factors for every timestep
-            "loadFactorGiveUpThreshold":   1,                      # when to abort the solve
-            "loadFactors":                [],                        # no load factors, solve problem directly
-            "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
+            # Paraview files
+            {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             
-            # boundary and initial conditions
-            "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
-            "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
-            "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
-            "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
-            "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
-            
-            "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-            "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-            "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
-            "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
-            
-            "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions",                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-            
-            # define which file formats should be written
-            # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
+            # Python callback function "postprocess"
+            #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
+          ],
+          # 2. additional output writer that writes also the hydrostatic pressure
+          "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
             "OutputWriter" : [
-              
-              # Paraview files
-              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/u", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-              
-              # Python callback function "postprocess"
-              #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
+              #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/p", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+            ]
+          },
+          # 3. additional output writer that writes virtual work terms
+          "dynamic": {    # output of the dynamic solver, has additional virtual work values 
+            "OutputWriter" : [   # output files for displacements function space (quadratic elements)
+              #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+              #{"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ],
-            # 2. additional output writer that writes also the hydrostatic pressure
-            "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
-              "OutputWriter" : [
-                #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/p", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-              ]
-            },
-            # 3. additional output writer that writes virtual work terms
-            "dynamic": {    # output of the dynamic solver, has additional virtual work values 
-              "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-                #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-                #{"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-              ],
-            },
-            # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
-            "LoadIncrements": {   
-              "OutputWriter" : [
-                #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-              ]
-            },
-          }
+          },
+          # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
+          "LoadIncrements": {   
+            "OutputWriter" : [
+              #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+            ]
+          },
         }
       }
     }

@@ -423,6 +423,7 @@ config = {
         "filename":                 "out/{}/electrodes.csv".format(variables.scenario_name),
         "enableCsvFile":            True,                # if the values at the sampling points should be written to csv files
         "enableVtpFile":            False,               # if the values at the sampling points should be written to vtp files
+        "enableGeometryInCsvFile":  False,               # if the csv output file should contain geometry of the electrodes in every time step. This increases the file size and only makes sense if the geometry changed throughout time, i.e. when computing with contraction
         "xiTolerance":              0.3,                 # tolerance for element-local coordinates xi, for finding electrode positions inside the elements. Increase or decrease this numbers if not all electrode points are found.
         "StaticBidomainSolver": {             # solves Bidomain equation: K(sigma_i) Vm + K(sigma_i+sigma_e) phi_e = 0   => K(sigma_i+sigma_e) phi_e = -K(sigma_i) Vm
           "numberTimeSteps":        1,

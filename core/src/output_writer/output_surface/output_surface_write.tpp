@@ -248,7 +248,7 @@ writeSampledPointValues()
 
     // write result to files
     if (enableCsvFile_)
-      OutputPoints::writeCsvFile(filename_, currentTime_, sampledPointsPositionGlobal_, valuesGlobal_);
+      OutputPoints::writeCsvFile(filename_, currentTime_, sampledPointsPositionGlobal_, valuesGlobal_, enableGeometryInCsvFile_);
 
     if (enableVtpFile_)
       OutputPoints::writeVtpFile(vtpFile.str(), currentTime_, sampledPointsPositionGlobal_, valuesGlobal_, 1, partitioningGlobal_, "EMG");

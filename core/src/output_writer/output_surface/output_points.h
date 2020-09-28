@@ -32,7 +32,7 @@ public:
                            const std::vector<double> &values, int nComponents, const std::vector<int> &partitioning, std::string fieldVariableName);
 
   //! write a csv file with geometry and optionally values
-  static void writeCsvFile(std::string filename, double currentTime, const std::vector<double> &geometry, const std::vector<double> &values);
+  static void writeCsvFile(std::string filename, double currentTime, const std::vector<double> &geometry, const std::vector<double> &values, bool writeGeometry=true);
 
 protected:
 

@@ -9,7 +9,7 @@ namespace OutputWriter
 {
 
 void OutputPoints::
-writeCsvFile(std::string filename, double currentTime, const std::vector<double> &geometry, const std::vector<double> &values)
+writeCsvFile(std::string filename, double currentTime, const std::vector<double> &geometry, const std::vector<double> &values, bool writeGeometry)
 {
   std::ofstream file;
   Generic::openFile(file, filename, true);  // append to file
@@ -19,10 +19,26 @@ writeCsvFile(std::string filename, double currentTime, const std::vector<double>
   // in first timestep, write header
   if (currentTime <= 1e-5)
   {
-    file << "#timestamp;t;n_points";
-    for (int pointNo = 0; pointNo < nPointsGlobal; pointNo++)
+    if (!writeGeometry)
     {
-      file << ";p" << pointNo << "_x;p" << pointNo << "_y;p" << pointNo << "_z";
+      file << "#electrode positions (x0,y0,z0,x1,y1,z1,...);\n#; ";
+      for (int i = 0; i < nPointsGlobal; i++)
+      {
+        file << ";" << geometry[3*i+0]
+          << ";" << geometry[3*i+1]
+          << ";" << geometry[3*i+2];
+      }
+      file << std::endl;
+    }
+
+    file << "#timestamp;t;n_points";
+
+    if (writeGeometry)
+    {
+      for (int pointNo = 0; pointNo < nPointsGlobal; pointNo++)
+      {
+        file << ";p" << pointNo << "_x;p" << pointNo << "_y;p" << pointNo << "_z";
+      }
     }
 
     if (!values.empty())
@@ -43,11 +59,14 @@ writeCsvFile(std::string filename, double currentTime, const std::vector<double>
     << currentTime << ";" << nPointsGlobal;
 
   // write geometry
-  for (int i = 0; i < nPointsGlobal; i++)
+  if (writeGeometry)
   {
-    file << ";" << geometry[3*i+0]
-      << ";" << geometry[3*i+1]
-      << ";" << geometry[3*i+2];
+    for (int i = 0; i < nPointsGlobal; i++)
+    {
+      file << ";" << geometry[3*i+0]
+        << ";" << geometry[3*i+1]
+        << ";" << geometry[3*i+2];
+    }
   }
 
   // write values

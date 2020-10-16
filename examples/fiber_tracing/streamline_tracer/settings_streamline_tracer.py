@@ -110,7 +110,9 @@ else:
 use_gradient_field = ("linear" in output_filename)
 
 config = {
+  "scenarioName": "streamline_tracer",
   "logFormat": "csv",
+  "mappingsBetweenMeshesLogFile": None,
   "solverStructureDiagramFile": None,
   "Meshes": {
     "potentialFlow": {
@@ -151,10 +153,11 @@ config = {
       "neumannBoundaryConditions": [],
       "prefactor":  1.0,
       "inputMeshIsGlobal": True,
+      "slotName": "",
     },
     
     "OutputWriter": [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/"+output_filename, "binary": True, "fixedFormat": False, "combineFiles": True},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/"+output_filename, "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
       #{"format": "ExFile", "filename": "out/"+output_filename, "outputInterval": 2},
       #{"format": "PythonFile", "filename": "out/"+output_filename, "binary":False, "onlyNodalValues":True},
     ]

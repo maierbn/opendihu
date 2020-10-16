@@ -51,7 +51,7 @@ duration = 0
 
 # constant parameters
 triangulation_type = 1          # 0 = scipy, 1 = triangle, 2 = center pie (2 is best), 3 = minimized distance
-parametric_space_shape = 3      # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid
+parametric_space_shape = 3      # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid, 4 = like 3 but move grid points such that mean distance between points in world space gets optimal
 max_area_factor = 2.            # only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
 show_plot = False
 debug = False  
@@ -70,7 +70,7 @@ if parametric_space_shape == 0:  # for unit circle
   
   
 if len(sys.argv) < 2:
-  print("usage: ./create_mesh.py [<triangulation_type> [<parametric_space_shape> [<n_points_x> [<n_grid_points_x> [<improve_mesh> [<pickle output filename> <bin output filename>]]]]]]")
+  print("usage: ./create_mesh.py [<triangulation_type> [<parametric_space_shape> [<n_points_x> [<n_grid_points_x (-1=auto)> [<improve_mesh> [<pickle output filename> <bin output filename>]]]]]]")
   sys.exit(0)
 
 if len(sys.argv) >= 2:
@@ -85,8 +85,11 @@ if len(sys.argv) >= 4:
   n_grid_points_y = n_points_x+1
   
 if len(sys.argv) >= 5:
-  n_grid_points_x = int(sys.argv[4])
-  n_grid_points_y = n_grid_points_x
+  argument_value = int(sys.argv[4])
+  # if set to a negative value, do not use this value
+  if argument_value > 0:
+    n_grid_points_x = argument_value
+    n_grid_points_y = n_grid_points_x
   
 if len(sys.argv) >= 6:
   improve_mesh = False if int(sys.argv[5]) == 0 else True
@@ -95,8 +98,8 @@ if len(sys.argv) >= 8:
   pickle_output_filename = sys.argv[6]
   bin_output_filename = sys.argv[7]
   
-print("triangulation_type: {}".format(triangulation_type))
-print("parametric_space_shape: {}".format(parametric_space_shape))
+print("triangulation_type: {} (0 = scipy, 1 = triangle, 2 = center pie (2 is best), 3 = minimized distance)".format(triangulation_type))
+print("parametric_space_shape: {} (0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid, 4 = like 3 but move grid points such that mean distance between points in world space gets optimal)".format(parametric_space_shape))
 print("n_points_x: {}".format(n_points_x))
 print("n_grid_points_x: {}".format(n_grid_points_x))
 print("n_grid_points_y: {}".format(n_grid_points_y))
@@ -160,10 +163,10 @@ standard_deviation_relative_distance_between_world_mesh_nodes = np.mean(relative
 # save mean distance and duration
 if not os.path.isfile("mesh_quality.csv"):
   with open("mesh_quality.csv", "w") as f:
-    f.write("# triangulation_type; parametric_space_shape; n_grid_points_x; n_grid_points_y; number of rings; standard deviation of distance; standard deviation of relative distances (distance/mean distance on every slice); duration\n")
+    f.write("# triangulation_type; parametric_space_shape; improve_mesh; debugging_stl_output; n_grid_points_x; n_grid_points_y; number of rings; standard deviation of distance; standard deviation of relative distances (distance/mean distance on every slice); duration\n")
 with open("mesh_quality.csv", "a") as f:
-  f.write("{};{};{};{};{};{};{};{}\n".\
-  format(triangulation_type, parametric_space_shape, n_grid_points_x, n_grid_points_y, len(loops),\
+  f.write("{};{};{};{};{};{};{};{};{};{}\n".\
+  format(triangulation_type, parametric_space_shape, improve_mesh, debugging_stl_output, n_grid_points_x, n_grid_points_y, len(loops),\
     standard_deviation_distance_between_world_mesh_nodes,\
     standard_deviation_relative_distance_between_world_mesh_nodes,duration))
 

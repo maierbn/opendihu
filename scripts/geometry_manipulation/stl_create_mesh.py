@@ -751,11 +751,12 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       phi = float(original_point_no) / n_original_points * 2 * np.pi
       original_point_phi_value.append(phi)
     
-    # add additional points an ring
+    # add additional points on ring
     # settings
     determine_additional_points_on_ring = True
     rescale_phi = True
-    modify_phi = True
+    if parametric_space_shape == 3 or parametric_space_shape == 4:
+      modify_phi = True
     
     # normal implementation without searching for additional border points on ring that the triangulation created
     if not determine_additional_points_on_ring:
@@ -1427,7 +1428,11 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       if point_world_space is not None:
         grid_points_world_space[j*n_grid_points_x+i] = point_world_space
         grid_points_parametric_space[j*n_grid_points_x+i] = np.array([x,y])
-        grid_points_parametric_space_modified[j*n_grid_points_x+i] = np.array([x_modified,y_modified])
+        
+        if modify_phi:
+          grid_points_parametric_space_modified[j*n_grid_points_x+i] = np.array([x_modified,y_modified])
+        else:
+          grid_points_parametric_space_modified[j*n_grid_points_x+i] = grid_points_parametric_space[j*n_grid_points_x+i]
     
   if parametric_space_shape == 4:
     # move grid points such that mean distance between points in world space gets optimal
@@ -1697,8 +1702,11 @@ def create_planar_mesh(border_points, loop_no, n_points, \
         phi = float(y) * (n_grid_points_y-1.0) / n_grid_points_y  * 2.*np.pi
         for (ii,x) in enumerate(np.linspace(0.0,1.0,n_grid_points_x)):
     
-          if parametric_space_shape == 1 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square 
+          if parametric_space_shape == 1 or parametric_space_shape == 2 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square  
             if ii == n_grid_points_x-1 or jj == n_grid_points_x-1:
+              continue
+          if parametric_space_shape == 0:
+            if ii == n_grid_points_x-1:
               continue
             
           p0_improved = grid_points_world_space_improved[jj*n_grid_points_x+ii]
@@ -1896,7 +1904,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
                 grid_points_world_space_improved[jj*n_grid_points_x+ii] = p_changed
                 changed_a_point = True
                 
-                if True:
+                if debugging_stl_output:
                   plt.figure()
                                 
                   plt.plot(p[0],p[1],'ko')
@@ -1987,10 +1995,13 @@ def create_planar_mesh(border_points, loop_no, n_points, \
         phi = float(y) * (n_grid_points_y-1.0) / n_grid_points_y  * 2.*np.pi
         for (ii,x) in enumerate(np.linspace(0.0,1.0,n_grid_points_x)):
     
-          if parametric_space_shape == 1 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square 
+          if parametric_space_shape == 1 or parametric_space_shape == 2 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square  
             if ii == n_grid_points_x-1 or jj == n_grid_points_x-1:
               continue
-            
+          if parametric_space_shape == 0:
+            if ii == n_grid_points_x-1:
+              continue
+              
           p0_improved = grid_points_world_space_improved[jj*n_grid_points_x+ii]
           p1_improved = grid_points_world_space_improved[jj*n_grid_points_x+(ii+1)%n_grid_points_x]
           p2_improved = grid_points_world_space_improved[(jj+1)%n_grid_points_y*n_grid_points_x+ii]
@@ -2161,10 +2172,13 @@ def create_planar_mesh(border_points, loop_no, n_points, \
                   phi = float(y) * (n_grid_points_y-1.0) / n_grid_points_y  * 2.*np.pi
                   for (ii,x) in enumerate(np.linspace(0.0,1.0,n_grid_points_x)):
               
-                    if parametric_space_shape == 1 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square 
+                    if parametric_space_shape == 1 or parametric_space_shape == 2 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square  
                       if ii == n_grid_points_x-1 or jj == n_grid_points_x-1:
                         continue
-                      
+                    if parametric_space_shape == 0:
+                      if ii == n_grid_points_x-1:
+                        continue
+                        
                     p0_improved = grid_points_world_space_improved[jj*n_grid_points_x+ii]
                     p1_improved = grid_points_world_space_improved[jj*n_grid_points_x+(ii+1)%n_grid_points_x]
                     p2_improved = grid_points_world_space_improved[(jj+1)%n_grid_points_y*n_grid_points_x+ii]
@@ -2498,10 +2512,12 @@ def create_planar_mesh(border_points, loop_no, n_points, \
           [point+diag1,point+diag3,point+diag7],[point+diag1,point+diag7,point+diag5]  # right
         ]
 
-        if parametric_space_shape == 1 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square 
+        if parametric_space_shape == 1 or parametric_space_shape == 2 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square  
           if i == n_grid_points_x-1 or j == n_grid_points_x-1:
             continue
-          
+        if parametric_space_shape == 0:
+          if i == n_grid_points_x-1:
+            continue
         # p2 p3
         # p0 p1
           
@@ -2654,8 +2670,12 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       p = collections.PatchCollection(patches_parametric_modified,edgecolors="k",facecolors="white")
       ax[0,2].add_collection(p)
       ax[0,2].plot([p[0] for p in parametric_points_modified],[p[1] for p in parametric_points_modified], 'ko')
-      ax[0,2].set_xlim(-1.1,1.1)
-      ax[0,2].set_ylim(-1.1,1.1)
+      if parametric_space_shape == 1 or parametric_space_shape == 2:
+        ax[0,2].set_xlim(-0.1,1.1)
+        ax[0,2].set_ylim(-0.1,1.1)
+      else:
+        ax[0,2].set_xlim(-1.1,1.1)
+        ax[0,2].set_ylim(-1.1,1.1)
       plt.axis('equal')
         
       for j in range(n_grid_points_y):
@@ -2691,8 +2711,12 @@ def create_planar_mesh(border_points, loop_no, n_points, \
             ax[0,2].plot(p[0], p[1], 'ko')
         
     ax[0,2].set_title('quadrangulation in parametric space')
-    ax[0,2].set_xlim(-1.1,1.1)
-    ax[0,2].set_ylim(-1.1,1.1)
+    if parametric_space_shape == 1 or parametric_space_shape == 2:
+      ax[0,2].set_xlim(-0.1,1.1)
+      ax[0,2].set_ylim(-0.1,1.1)
+    else:
+      ax[0,2].set_xlim(-1.1,1.1)
+      ax[0,2].set_ylim(-1.1,1.1)
     
     # parametric space
     ax[1,0].triplot(u_list,v_list,point_indices_list,color='k')
@@ -2750,6 +2774,11 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       print("Create directory \"{}\".".format(dirname))
       os.makedirs(dirname)
     print("Save \"{}\".".format(filename))
+    
+    matplotlib.rcParams.update({
+      'font.size': 24,
+      'lines.markersize': 10
+    })
       
     plt.savefig(filename)
     if show_plot:
@@ -2780,8 +2809,12 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       p = collections.PatchCollection(patches_parametric_modified,edgecolors="k",facecolors="white")
       ax.add_collection(p)
       ax.plot([p[0] for p in parametric_points_modified],[p[1] for p in parametric_points_modified], 'ko')
-      ax.set_xlim(-1.1,1.1)
-      ax.set_ylim(-1.1,1.1)
+      if parametric_space_shape == 1 or parametric_space_shape == 2:
+        ax.set_xlim(-0.1,1.1)
+        ax.set_ylim(-0.1,1.1)
+      else:
+        ax.set_xlim(-1.1,1.1)
+        ax.set_ylim(-1.1,1.1)
       plt.axis('equal')
         
       for j in range(n_grid_points_y):

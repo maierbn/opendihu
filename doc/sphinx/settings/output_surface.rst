@@ -83,3 +83,25 @@ Python settings:
     # settings of the nested solver
   }
   
+enableGeometryInCsvFile
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Depending on the settings ``"enableGeometryInCsvFile"``, there are two possible file formats of the csv file:
+
+* If ``"enableGeometryInCsvFile": True``, the geometry information about the electrode positions is contained for every timestep. This increases the file size but allows to track moving electrodes (e.g. because of contraction). The csv file starts with the following lines:
+
+  .. code-block:: bash
+
+    #timestamp;t;n_points;p0_x;p0_y;p0_z;p1_x;p1_y;p1_z;p2_x;  (...)   p171_z;p0_value;p1_value;  (...)
+    2020/9/28 09:16:40;0;172;9.01393;15.7361;-54.7243;         (...)
+
+* if ``"enableGeometryInCsvFile": False``, the geometry information about the electrode positions is not contained for every timestep. Instead it is contained once as a comment at the beginning in the second line. This produces a smaller file. The csv file starts with the following lines:
+
+  .. code-block:: bash
+
+    #electrode positions (x0,y0,z0,x1,y1,z1,...);
+    #; ;9.92639;13.9759;-54.8722;                   (...)
+    #timestamp;t;n_points;p0_value;p1_value;        (...)
+    2020/9/29 10:08:48;0;384;0.0030616;0.00300943;  (...)
+
+The script under `$OPENDIHU_HOME/examples/electrophysiology/fibers/fibers_fat_emg/plot_emg.py` can be used to plot the file contents and create an animation.

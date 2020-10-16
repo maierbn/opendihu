@@ -52,6 +52,16 @@ Node positions are always stored as points in :math:`\mathbb{R}^3`. Consequently
 
 The **Composite** mesh is used when the geometry cannot be described by a single structured mesh because it does not have the shape of a cuboid. Then, 2 or more structured meshes are combined into a single mesh.
    
+The number of nodes in a mesh depends on the ansatz functions as visualized in :numref:`mesh_ansatz_functions`.
+
+.. _mesh_ansatz_functions:
+.. figure:: images/mesh_ansatz_functions.svg
+  :width: 100%
+  
+  1D ansatz functions and resulting elements.
+   
+A description of the numbering of nodes and degrees of freedom can be found under :doc:`boundary_conditions`.
+   
 .. _define_meshes:
 
 Python settings for Mesh
@@ -216,6 +226,8 @@ The following example shows how to use the own MPI rank number.
       }
     }
   }
+  
+.. _unstructured_deformable_mesh_settings:
   
 UnstructuredDeformable
 ^^^^^^^^^^^^^^^^^^^^^^^ 

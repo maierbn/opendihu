@@ -54,15 +54,48 @@ def sizeof_fmt(num, suffix='B'):
   return "%.1f%s%s" % (num, 'Yi', suffix)
 print("Input file \"{}\" is {}".format(emg_filename, sizeof_fmt(filesize)), end="")
 
-# parse csv file
+# depending on the settings "enableGeometryInCsvFile", there are two possible file formats of the csv file:
+#"enableGeometryInCsvFile": True
+# file starts with:
+#|  #timestamp;t;n_points;p0_x;p0_y;p0_z;p1_x;p1_y;p1_z;p2_x;  (...)   p171_z;p0_value;p1_value;  (...)
+#|  2020/9/28 09:16:40;0;172;9.01393;15.7361;-54.7243;         (...)
+
+#"enableGeometryInCsvFile": True
+# file starts with:
+#|  #electrode positions (x0,y0,z0,x1,y1,z1,...);
+#|  #; ;9.92639;13.9759;-54.8722;                   (...)
+#|  #timestamp;t;n_points;p0_value;p1_value;        (...)
+#|  2020/9/29 10:08:48;0;384;0.0030616;0.00300943;  (...)
+
+
+# parse position data
+position_data = None
+file_contains_transient_position_data = True
+electrode_data_begin = 3
+
+# open csv file and check if the position data is contained only as comment before the actual data
+with open(emg_filename, "r") as f:
+  line = f.readline()
+  if "#electrode positions" in line:
+    line = f.readline()
+    position_data = list(map(float,line.split(";")[2:]))
+    file_contains_transient_position_data = False
+
+# parse all csv values
 data = np.genfromtxt(emg_filename, delimiter=';')
 t_list = data[:,1]
   
+# determine the first column that contains EMG values
 n_points = (int)(data[0][2])
+if file_contains_transient_position_data:
+  electrode_data_begin = 3 + n_points*3
+else:
+  electrode_data_begin = 3
 
 # determine number of electrodes in x direction
 # extract all z positions (along muscle)
-position_data = data[0][3:3+3*n_points]
+if file_contains_transient_position_data:
+  position_data = data[0][3:3+3*n_points]
 electrode_positions = [np.array(position_data[3*i:3*i+3]) for i in range(n_points)]
 z_positions = np.array([position_data[3*i+2] for i in range(n_points)])
 
@@ -118,7 +151,7 @@ for j in range(n_points_z-1):
 inter_electrode_distance_xy = np.mean(distances_xy)
 inter_electrode_distance_z = np.mean(distances_z)
 
-print(" and contains {} x {} = {} points".format(emg_filename, n_points_xy, n_points_z, n_points))
+print(" and contains {} x {} = {} points".format(n_points_xy, n_points_z, n_points))
 print("Inter-electrode distance: {:.2f} mm x {:.2f} mm".format(10*inter_electrode_distance_xy, 10*inter_electrode_distance_z))
 
 # create grid plot
@@ -135,15 +168,13 @@ plt.ylabel("fiber direction")
 plt.title("sEMG for {} x {} electrodes, t: [{}, {}]".format(n_points_xy, n_points_z, t_list[0], t_list[-1]))
 
 # determine minimum and maximum overall values
-all_values = data[:,3+n_points*3:]
-minimum_value = np.min(all_values)
-maximum_value = np.max(all_values)
+emg_data = data[:,electrode_data_begin:]
+minimum_value = np.min(emg_data)
+maximum_value = np.max(emg_data)
 print("EMG value range [mV]: [{},{}]".format(minimum_value, maximum_value))
 print("time range [ms]: [{},{}]".format(t_list[0], t_list[-1]))
 sampling_frequency = 1000*len(t_list) / (t_list[-1]-t_list[0])
 print("sampling frequency [Hz]: {:.0f}".format(sampling_frequency))
-
-emg_data = data[:,3+n_points*3:]
 
 # loop over sub plots
 for j in range(n_plots_y):
@@ -167,7 +198,7 @@ print("Created file \"emg_plot.pdf\".")
 plt.ion()
 plt.show()
 plt.draw()
-plt.pause(1)
+plt.pause(5)
 plt.ioff()
 
 # -------------------------
@@ -295,6 +326,9 @@ def animate(time_index):
 
 # compute timing values for the animation
 slowdown_factor = 10   # how much slower the video will be than the actual simulation
+if len(t_list) > 40000:  # more than 20s
+  slowdown_factor = 2
+  
 target_fps = 20       # the framerate of the video
 
 # duration of the video

@@ -123,7 +123,7 @@ The option `inputMeshIsGlobal` decides which of the two cases is used. With  ``"
 
 However, if `inputMeshIsGlobal` is set to ``False``, the specified dofs are interpreted as local numbers in the subdomain. Then you have to specify values **also for the ghost dofs**. This means that you have to specify the same prescribed nodal values for a node on every process whose subdomain is adjacent to that node.
 
-In the example in :numref:`dof_numbering_parallel`, a mesh with :math:`7 \times 5` nodes is partitioned to two processes. The local dof numbers are given in blue. Process 0 has ghost dofs shown by the red numbers. If, e.g., the value of the third-to-last dof in the top row should be prescribed, you have to set both dof 25 on rank 0 and dof 12 on rank 1 to the same prescribed value as both subdomains are adjacent to this node.
+In the example in :numref:`dof_numbering_parallel`, a mesh with :math:`7 \times 5` nodes is partitioned to two processes. The local dof numbers are given in blue. Process 0 has ghost dofs shown by the red numbers. If, e.g., the value of the third-to-last dof in the top row should be prescribed, you have to set both dof 24 on rank 0 and dof 12 on rank 1 to the same prescribed value as both subdomains are adjacent to this node.
 
 .. _dof_numbering_parallel:
 .. figure:: images/dof_numbering_parallel.svg

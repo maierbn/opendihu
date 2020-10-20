@@ -84,7 +84,7 @@ with open(input_filename, "rb") as infile:
           coordinate_x = fiber_no % n_fibers_x
           coordinate_y = (int)(fiber_no / n_fibers_x)
           print("Error: streamline {}, ({},{})/({},{}) is invalid ({}. point)".format(fiber_no, coordinate_x, coordinate_y, n_fibers_x, n_fibers_y, z))
-          print("streamline so far: ",streamline[0:10])
+          #print("streamline so far: ",streamline[0:10])
         fiber_value = False
       
       x = fiber_no % n_fibers_x

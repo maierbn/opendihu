@@ -58,8 +58,7 @@ mv rings_created rings
 for triangulation_type in 0 1 2; do  # triangulation_type:  0 = scipy, 1 = triangle, 2 = custom (1 is best), 3 = optimized
 
   # loop over parametric space shape
-  #for parametric_space_shape in 0 1 2 3; do   # parametric_space_shape: 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid, 4 = like 3 but optimized point positions
-  for parametric_space_shape in 1 2; do   # parametric_space_shape: 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid, 4 = like 3 but optimized point positions
+  for parametric_space_shape in 0 1 2 3; do   # parametric_space_shape: 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid, 4 = like 3 but optimized point positions
 
     #for improve_mesh in 0 1; do
     for improve_mesh in 0; do

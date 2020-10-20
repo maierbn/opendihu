@@ -94,6 +94,15 @@ def triangle_contains_point(triangle, point):
   return (condition, xi)
   
 def transform_to_world_space(x,y,triangles_parametric_space,triangle_list,parametric_space_shape):
+  """
+  map from the parametric domain to the world space
+  :param x: first coordinate in the parametric domain, grid coordinate
+  :param y: second coordinate in the parametric domain, grid coordinate
+  :param triangles_parametric_space: the triangles in the parametric space that were mapped from the world space triangulation using the harmonic map
+  :param triangle_list: list of triangles in the world space
+  :param parametric_space_shape: which type of quadrangulation of the parameter space is given: 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid, 4 = like 3 but move grid points such that mean distance between points in world space gets optimal
+  :return: point in world space that corresponds to (x,y) in parameter space
+  """
 
   # transform to world space
   # find triangle in parametric space which contains grid point
@@ -184,6 +193,7 @@ def transform_to_world_space(x,y,triangles_parametric_space,triangle_list,parame
     p2 = triangle_world_space[1]
     p3 = triangle_world_space[2]
     
+    xi = xi_point
     point_world_space = (1 - xi[0] - xi[1])*p1 + xi[0]*p2 + xi[1]*p3
     return point_world_space
   
@@ -623,7 +633,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
   
   t_start = timeit.default_timer()
 
-  debug = False
+  debug = False   # enable debugging output
   
   if debugging_stl_output:
     [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
@@ -1421,6 +1431,10 @@ def create_planar_mesh(border_points, loop_no, n_points, \
         point_world_space = transform_to_world_space(x_modified,y_modified,triangles_parametric_space,triangle_list,parametric_space_shape)
       else:
         point_world_space = transform_to_world_space(x,y,triangles_parametric_space,triangle_list,parametric_space_shape)
+    
+      if debug and False:
+        print("modify_phi: {} [{},{}] -> {} (triangles_parametric_space={}, triangle_list={}, parametric_space_shape={})".
+          format(modify_phi, x,y, point_world_space, triangles_parametric_space, triangle_list, parametric_space_shape))
     
       if point_world_space is None:
         grid_points_world_space[j*n_grid_points_x+i] = np.array([0.0,0.0,0.0])

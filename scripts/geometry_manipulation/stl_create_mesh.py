@@ -1528,11 +1528,11 @@ def create_planar_mesh(border_points, loop_no, n_points, \
   # improve grid_points_world_space
   grid_points_world_space_improved = grid_points_world_space
   
-  if improve_mesh:   # optimize points
+  if improve_mesh:   # optimize points, fix self-intersections and Laplacian smoothing
     import copy
     import random
     random.seed(0)
-    print("improving")
+    print("improving (fixing self-intersections and smoothing)")
     
     grid_points_world_space_improved = copy.deepcopy(grid_points_world_space)
     
@@ -2153,6 +2153,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
             new_score = old_score
             
             use_nelder_mead = False
+            use_laplacian_smoothing = True
             if use_nelder_mead:
               initial_values = np.array(p)
               result = scipy.optimize.minimize(objective, initial_values, method='Nelder-Mead', options={"maxiter":5e1, "disp":False})
@@ -2160,6 +2161,10 @@ def create_planar_mesh(border_points, loop_no, n_points, \
               new_score = result["fun"]
               p_changed = np.array(result["x"])
               #new_score = objective(p_changed)
+            elif use_laplacian_smoothing:
+              
+              p_changed = 0.125 * (p0+p1+p2+p3+p4+p5+p6+p7)
+              new_score = old_score - 1
             else:
               n_tries = 0
               while new_score >= old_score and n_tries < 10:

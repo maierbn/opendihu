@@ -1,9 +1,9 @@
 # settings
-use_neumann_bc=true
+use_neumann_bc=false
 improve_mesh=true
 method=splines
 refinement=1
-nproc=8
+nproc=64
 
 # clear output directory
 rm -rf out

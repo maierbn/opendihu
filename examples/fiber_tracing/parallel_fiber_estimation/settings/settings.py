@@ -76,7 +76,7 @@ config = {
     "useGradientField":           use_gradient_field,    # set to False
     "maxLevel":                   2,            # maximum level (0=1 process, 1=8 processes, 2=64 processes)
     "lineStepWidth":              0.01,         # line width for tracing of fibers
-    "nNodesPerFiber": (220.-72.) / 0.1,         # number of nodes in each final fiber
+    "nNodesPerFiber": (220.-72.) / 0.1+1,       # number of nodes in each final fiber
     "maxIterations":              1e5,
     
     "improveMesh": improve_mesh,                # smooth the 2D meshes, required for bigger meshes or larger amount of ranks

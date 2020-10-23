@@ -53,8 +53,9 @@ n_fine_grid_fibers = args["n_fine_grid_fibers"]
 max_level = args["max_level"]
 new_max_level = min(max_level,(int)(np.log(n_ranks) / np.log(8)))
 if new_max_level != max_level:
-  print("Adjusting max_level (l) from {} to {} because there are only {} processes and 8^{} = {}, 8^{} = {}".
-    format(max_level, new_max_level, n_ranks, max_level, 8**max_level, new_max_level, 8**new_max_level))
+  if rank_no == 0:
+    print("Adjusting max_level (l) from {} to {} because there are only {} processes and 8^{} = {}, 8^{} = {}".
+      format(max_level, new_max_level, n_ranks, max_level, 8**max_level, new_max_level, 8**new_max_level))
   max_level = new_max_level
 
 scenario_name = "{}{}{}{}".format(refinement, "I" if improve_mesh else "n","G" if use_gradient_field else "n", "_neumann" if use_neumann_bc else "_dirichlet")
@@ -85,11 +86,6 @@ if rank_no == 0:
   print("  max_level:           l = {}".format(max_level))
   compute_sizes.output_size(n_fine_grid_fibers, max_level)
 
-else:
-  if rank_no == 0:
-    print("error, usage: splines_or_stl refinement improve_mesh use_gradient_field use_neumann_bc")
-  sys.exit(0)
-  
 config = {
   "scenarioName": scenario_name,
   "solverStructureDiagramFile": None,

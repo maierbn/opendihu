@@ -9,6 +9,9 @@
 
 import sys,os
 import pickle
+# add to python path in order to load stl_create_rings
+if os.environ.get("OPENDIHU_HOME"):
+  sys.path.append(os.path.join(os.environ.get("OPENDIHU_HOME"), "scripts/geometry_manipulation"))
 import stl_create_rings
 
 import datetime

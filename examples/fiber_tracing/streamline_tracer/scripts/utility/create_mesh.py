@@ -48,6 +48,10 @@ import pickle
 import timeit
 import datetime
 import time
+
+# add to python path in order to load stl_create_mesh
+if os.environ.get("OPENDIHU_HOME"):
+  sys.path.append(os.path.join(os.environ.get("OPENDIHU_HOME"), "scripts/geometry_manipulation"))
 import stl_create_mesh
 
 duration = 0

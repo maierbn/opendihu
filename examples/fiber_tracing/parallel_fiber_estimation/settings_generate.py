@@ -97,7 +97,7 @@ config = {
     "linearSolver": {
       "relativeTolerance":  1e-4,
       "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
-      "maxIterations":      1e3,
+      "maxIterations":      5e3,
       "solverType":         "gmres",
       "preconditionerType": "sor",
       "dumpFormat":         None,
@@ -137,7 +137,7 @@ config = {
       "slotName": "",
     },
     "OutputWriter": [
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/biceps", "binary": True, "fixedFormat": False, "combineFiles": False, "fileNumbering": "incremental"},
+    #  {"format": "Paraview", "outputInterval": 1, "filename": "out/biceps", "binary": True, "fixedFormat": False, "combineFiles": False, "fileNumbering": "incremental"},
     ]
   }
 }

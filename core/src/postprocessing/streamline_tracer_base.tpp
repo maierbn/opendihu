@@ -139,7 +139,8 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
       {
         LOG(DEBUG) << "elementalGradientValues: " << elementalGradientValues;
       }
-      LOG(FATAL) << "Abort because of missing gradient.";
+      //LOG(FATAL) << "Abort because of missing gradient.";
+      gradient[2] = 1.0; // fix gradient direction
     }
 
     // integrate streamline

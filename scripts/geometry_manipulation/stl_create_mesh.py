@@ -1908,7 +1908,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
               
               if n_tries < 200:
                 if is_properly_oriented(p0,p1,p2,p3):
-                  print("  successfully resolved self-intersection ({},{}) after {} iterations".format(i,j,n_tries))
+                  print("  \033[0;32mSuccessfully resolved self-intersection ({},{}) after {} iterations\033[0m".format(i,j,n_tries))
                 else:
                   current_score = (orientation_score(p0,p1,p7,p_changed) + orientation_score(p1,p2,p_changed,p3) \
                     + orientation_score(p7,p_changed,p6,p5) + orientation_score(p_changed,p3,p5,p4))
@@ -1945,7 +1945,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
                 
                 break
               else:
-                print("  self-intersection was not resolved after {} iterations".format(n_tries))
+                print("  \033[0;31mself-intersection was not resolved after {} iterations\033[0m".format(n_tries))
             
             if output_fix:
               p0 = grid_points_world_space_improved[j*n_grid_points_x+i]

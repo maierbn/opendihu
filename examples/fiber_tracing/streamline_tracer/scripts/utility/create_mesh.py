@@ -17,6 +17,9 @@
 #  The core functionality is implemented in opendihu/scripts/geometry_manipulation/stl_create_mesh.py. The main functions are 
 #  stl_create_mesh.standardize_loop, stl_create_mesh.create_planar_mesh, stl_create_mesh.create_3d_mesh
 #
+#  Note, that you need to create the pickle file `rings` first. This can be done with `scripts/utility/create_rings.py`.
+#  Instead of calling this python script, use $OPENDIHU_HOME/examples/fiber_tracing/streamline_tracer/scripts/run_evaluation.sh
+#
 # usage: ./create_mesh.py [<triangulation_type> [<parametric_space_shape> [<n_points_x> [<n_grid_points_x> [<improve_mesh> [<pickle output filename> <bin output filename>]]]]]]"
 
 import datetime

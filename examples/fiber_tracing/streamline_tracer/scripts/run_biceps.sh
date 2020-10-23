@@ -2,6 +2,7 @@
 #
 # This scripts creates fibers as streamlines in a potential flow simulation.
 # Input is an STL mesh of the surface of the muscle. Output is the pickle file that contains the fibers.
+# This is not the algorithm described in the dissertation of BM and the result is not a 3D mesh, but individual 1D fiber meshes with different lengths.
 #
 # This file needs to be run from the directory "examples/fiber_tracing/streamline_tracer/scripts"
 

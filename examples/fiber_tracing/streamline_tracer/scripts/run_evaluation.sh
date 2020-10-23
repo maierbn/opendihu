@@ -1,6 +1,8 @@
 #!/bin/bash
 #
 # This scripts tests the different algorithms for create_mesh.py
+# Input is an STL file of a triangulation of the biceps surface. 
+# Output is a *.bin file which contains the points of the 3D mesh or 1D fiber meshes.
 
 # directories
 basedir=$(pwd)/..

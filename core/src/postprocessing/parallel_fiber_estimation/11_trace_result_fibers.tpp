@@ -706,7 +706,7 @@ writeToFile(std::string filename, std::vector<std::vector<Vec3>> &fibers, int nF
 
   MPIUtility::handleReturnValue(MPI_File_close(&fileHandle), "MPI_File_close");
 
-  LOG(DEBUG) << "Fibers written to file \"" << filename << "\".";
+  LOG(DEBUG) << nFibersRow0 << "x" << nFibersRow0 << " fibers with " << nPointsWholeFiber << " points per fiber written to file \"" << filename << "\".";
 
   if (currentRankSubset_->ownRankNo() == 0)
   {

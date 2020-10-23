@@ -51,6 +51,7 @@ resampleFibersInFile(int nPointsPerFiber, std::string filename)
     moveCommand << "mv " << filename << " " << filenameExistingFile;
     int ret = std::system(moveCommand.str().c_str());
     ret++;
+    LOG(INFO) << nFibersX << "x" << nFibersX << " fibers with " << nPointsPerFiber << " points per fiber written to file \"" << filenameExistingFile << "\".";
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
@@ -154,7 +155,7 @@ resampleFibersInFile(int nPointsPerFiber, std::string filename)
   fileOld.close();
   fileNew.close();
 
-  LOG(INFO) << nFibersX << "x" << nFibersX << " fibers written to file \"" << filename << "\".";
+  LOG(INFO) << std::endl << nFibersX << "x" << nFibersX << " fibers with " << nNodesPerFiber_ << " points per fiber written to file \"" << filename << "\"." << std::endl;
 }
 
 } // namespace

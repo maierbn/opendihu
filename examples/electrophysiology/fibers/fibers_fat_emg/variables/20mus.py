@@ -1,6 +1,6 @@
 
 # scenario name for log file
-scenario_name = "50mus"
+scenario_name = "20mus"
 
 # material parameters
 # --------------------
@@ -17,7 +17,7 @@ import random
 random.seed(0)  # ensure that random numbers are the same on every rank
 import numpy as np
 
-n_motor_units = 50   # number of motor units
+n_motor_units = 20   # number of motor units
 
 motor_units = []
 for mu_no in range(n_motor_units):
@@ -75,7 +75,7 @@ fiber_file = "../../../input/left_biceps_brachii_37x37fibers.bin"
 #fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-fiber_distribution_file = "../../../input/MU_fibre_distribution_37x37_50.txt"
+fiber_distribution_file = "../../../input/MU_fibre_distribution_37x37_20.txt"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements

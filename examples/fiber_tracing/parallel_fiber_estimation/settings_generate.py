@@ -97,7 +97,7 @@ config = {
     "linearSolver": {
       "relativeTolerance":  1e-4,
       "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
-      "maxIterations":      1e3,
+      "maxIterations":      5e3,
       "solverType":         "gmres",
       "preconditionerType": "sor",
       "dumpFormat":         None,
@@ -124,6 +124,7 @@ config = {
     
     "improveMesh":                improve_mesh,          # smooth the 2D meshes, required for bigger meshes or larger amount of ranks
     "refinementFactors": [refinement,refinement,refinement],         # [2,2,2] factors in x,y,z direction by which the mesh should be refined prior to solving the laplace problem and tracing the streamlines
+    "laplacianSmoothingNIterations": 10,                 # number of Laplacian smoothing iterations on the final fibers grid
     
     "FiniteElementMethod": {
       "meshName":   "potentialFlow",

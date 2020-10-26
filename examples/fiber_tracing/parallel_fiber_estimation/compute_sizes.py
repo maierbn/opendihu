@@ -42,7 +42,7 @@ def output_size(m,l):
 
   filesize2 = 72 + N2*1481*3*8
    
-  print("Expected sizes for parameters m={}, l={}, needs {} processes:\n  {} x {} = {} fibers, filesize = {} ({}),\n  {} x {} = {} fibers, filesize = {} ({})".
+  print("Expected sizes for parameters m={}, lmax={}, needs {} processes:\n  {} x {} = {} fibers, filesize = {} ({}),\n  {} x {} = {} fibers, filesize = {} ({})".
     format(m, l, p, n, n, N, filesize, sizeof_fmt(filesize), n2, n2, N2, filesize2, sizeof_fmt(filesize2)))
 
 if __name__ == "__main__":
@@ -52,5 +52,5 @@ if __name__ == "__main__":
     l = (int)(sys.argv[2])
     output_size(m,l)
   else:
-    print("usage: ./compute_sizes.py <m> <l>\n  where m = number of fine grid fibers,\n        l = maximum recursion level")
+    print("usage: ./compute_sizes.py <m> <lmax>\n  where m = number of fine grid fibers,\n        lmax = maximum recursion level")
     sys.exit(0)

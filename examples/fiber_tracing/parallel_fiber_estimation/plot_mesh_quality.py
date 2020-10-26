@@ -34,13 +34,13 @@ labels = [
 plt.rcParams.update({'font.size': 18})
 
 x = np.arange(len(labels))  # the label locations
-width = 0.7  # the width of the bars
+width = 0.4  # the width of the bars
 
 color = (0.8,0.2,0.2)
-fig, ax = plt.subplots(figsize=(6,4))
+fig, ax = plt.subplots(figsize=(4.5,4))
 rects1 = ax.bar(x, list(data[:,4]), width, color=color)
-ax.set_ylabel('Standard deviation [-]')
-ax.set_xlabel('Max. recursion level $\ell$')
+ax.set_ylabel('Variance of angles [rad${}^2$]')
+ax.set_xlabel(r'Max. recursion level $\ell_\mathrm{max}$')
 ax.set_xticks(x)
 ax.set_xticklabels(labels)
 plt.grid(which='major', axis='y')

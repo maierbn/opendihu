@@ -199,6 +199,7 @@ protected:
   bool improveMesh_;                //< if the improveMesh_ flag should be set to the algorithm that creates the 3D mesh. This make the mesh smoother but it takes more time
   int level_;                       //< current level of the recursion, 0=1 process, 1=8 processes, 2=64 processes
   bool useNeumannBoundaryConditions_;     //< if neumann instead of dirichlet boundary conditions should be used
+  int laplacianSmoothingNIterations_;     //< number of iterations of Laplacian smoothing that is applied prior to tracing the fine grid fibers
 
   std::array<int,3> refinementFactors_;   //< factors by which the mesh should be refined prior to solving the Laplace problem and tracing the streamlines
 

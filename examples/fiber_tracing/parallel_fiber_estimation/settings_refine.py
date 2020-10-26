@@ -75,6 +75,7 @@ config = {
     "improveMesh":              True,               # smooth the 2D meshes, required for bigger meshes or larger amount of ranks
     "refinementFactors":        [1,1,1],            # no refinement
     "maxIterations":            1e5,
+    "laplacianSmoothingNIterations": 10,            # number of Laplacian smoothing iterations on the final fibers grid
     
     "FiniteElementMethod" : {
       "meshName":       "potentialFlow",

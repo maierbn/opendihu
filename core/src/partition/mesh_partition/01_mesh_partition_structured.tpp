@@ -339,6 +339,9 @@ refine(std::array<int,MeshType::dim()> refinementFactor)
 
   dofNosLocalNaturalOrdering_.clear();
 
+  // initialize local natural ordering if has not yet been done
+  initializeDofNosLocalNaturalOrdering();
+
   LOG(DEBUG) << "mesh partition after refinement: " << *this;
 }
 

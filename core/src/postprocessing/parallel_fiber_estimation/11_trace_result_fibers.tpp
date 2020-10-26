@@ -387,6 +387,38 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   PythonUtility::checkForError();
 #endif
 
+  // laplacian smoothing on key fibers
+  for (int iterationNo = 0; iterationNo < laplacianSmoothingNIterations_; iterationNo++)
+  {
+    for (int j = 1; j < nBorderPointsXNew_-2; j++)
+    {
+      for (int i = 1; i < nBorderPointsXNew_-2; i++)
+      {
+        // 6 7 8
+        // 3 4 5
+        // 0 1 2
+        int keyFiberPointIndex0 = (j-1) * (nFineGridFibers_+1) * nFibersX + (i-1) * (nFineGridFibers_+1);
+        int keyFiberPointIndex1 = (j-1) * (nFineGridFibers_+1) * nFibersX + i     * (nFineGridFibers_+1);
+        int keyFiberPointIndex2 = (j-1) * (nFineGridFibers_+1) * nFibersX + (i+1) * (nFineGridFibers_+1);
+        int keyFiberPointIndex3 = j     * (nFineGridFibers_+1) * nFibersX + (i-1) * (nFineGridFibers_+1);
+        int keyFiberPointIndex4 = j     * (nFineGridFibers_+1) * nFibersX + i     * (nFineGridFibers_+1);
+        int keyFiberPointIndex5 = j     * (nFineGridFibers_+1) * nFibersX + (i+1) * (nFineGridFibers_+1);
+        int keyFiberPointIndex6 = (j+1) * (nFineGridFibers_+1) * nFibersX + (i-1) * (nFineGridFibers_+1);
+        int keyFiberPointIndex7 = (j+1) * (nFineGridFibers_+1) * nFibersX + i     * (nFineGridFibers_+1);
+        int keyFiberPointIndex8 = (j+1) * (nFineGridFibers_+1) * nFibersX + (i+1) * (nFineGridFibers_+1);
+
+        for (int zLevelIndex = 0; zLevelIndex != nBorderPointsZ_; zLevelIndex++)
+        {
+          fibers[keyFiberPointIndex4][zLevelIndex] = 0.125 * (fibers[keyFiberPointIndex0][zLevelIndex]
+            + fibers[keyFiberPointIndex1][zLevelIndex] + fibers[keyFiberPointIndex2][zLevelIndex]
+            + fibers[keyFiberPointIndex3][zLevelIndex] + fibers[keyFiberPointIndex5][zLevelIndex]
+            + fibers[keyFiberPointIndex6][zLevelIndex] + fibers[keyFiberPointIndex7][zLevelIndex]
+            + fibers[keyFiberPointIndex8][zLevelIndex]);
+        }
+      }
+    }
+  }
+
   // interpolate fibers in between
   LOG(DEBUG) << "interpolate fibers in between key fibers, nFineGridFibers_: " << nFineGridFibers_;
   int nFibersNotInterpolated = 0;

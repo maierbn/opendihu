@@ -542,7 +542,8 @@ fixInvalidFibersInFile(std::string filename)
     }
     else
     {
-      LOG(INFO) << std::endl << "The file \"" << filenameExistingFile << "\" contains " << nFibersInvalid << " invalid fibers.";
+      LOG(INFO);
+      LOG(INFO) << "The file \"" << filenameExistingFile << "\" contains " << nFibersInvalid << " invalid fibers.";
       LOG(INFO) << "The file \"" << filename << "\"         contains " << nFibersInvalid-nFibersFixed << " invalid fibers." << std::endl;
     }
   }

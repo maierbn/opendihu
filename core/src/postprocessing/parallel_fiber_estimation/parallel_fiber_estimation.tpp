@@ -416,10 +416,11 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &bord
     {
       problem_->setDirichletBoundaryConditions(dirichletBoundaryConditions);
     }
-    problem_->initialize();
 
     problem_->debuggingFieldVariable_ = data_.debuggingFieldVariable();
     LOG(INFO) << "set debuggingFieldVariable to " << problem_->debuggingFieldVariable_;
+
+    problem_->initialize();
 
     // solve the laplace problem, globally on all subdomains on all ranks of the current rank subset
     problem_->run();

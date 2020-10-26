@@ -10,8 +10,8 @@ createDirichletBoundaryConditions(std::shared_ptr<SpatialDiscretization::Dirichl
   // create dirichlet BC object
   dirichletBoundaryConditions = std::make_shared<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>>(this->context_);
 
-  const double valueTop = 0.0;
-  const double valueBottom = 1.0;
+  const double valueTop = 1.0;
+  const double valueBottom = 0.0;
 
   typedef typename SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>::ElementWithNodes ElementWithNodes;
   const int nDofsPerElement1D = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerElement();

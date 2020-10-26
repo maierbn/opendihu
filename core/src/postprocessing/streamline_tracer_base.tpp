@@ -146,7 +146,7 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
     // integrate streamline
     LOG(DEBUG) << "  integrate from " << currentPoint << ", gradient: " << gradient << ", gradient normalized: " << MathUtility::normalized<3>(gradient)
       << ", lineStepWidth: " << lineStepWidth_;
-    currentPoint = currentPoint + MathUtility::normalized<3>(gradient)*lineStepWidth_*-direction;
+    currentPoint = currentPoint + MathUtility::normalized<3>(gradient)*lineStepWidth_*direction;
 
     LOG(DEBUG) << "              to " << currentPoint;
 

@@ -77,11 +77,26 @@ createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vect
 
   PyObject *object = PythonUtility::getOptionPyObject(meshData, "node_positions", "");
   nodePositions = PythonUtility::convertFromPython<std::vector<Vec3>>::get(object);
-  nElementsPerCoordinateDirectionLocal = PythonUtility::getOptionArray<int,3>(meshData, "n_linear_elements_per_coordinate_direction", "", std::array<int,3>({0,0,0}));
 
-  subdomainNNodesX = nElementsPerCoordinateDirectionLocal[0]+1;
-  subdomainNNodesY = nElementsPerCoordinateDirectionLocal[1]+1;
-  subdomainNNodesZ = nElementsPerCoordinateDirectionLocal[2]+1;
+  // for linear elements
+  if (BasisFunctionType::getBasisOrder() == 1)
+  {
+    nElementsPerCoordinateDirectionLocal = PythonUtility::getOptionArray<int,3>(meshData, "n_linear_elements_per_coordinate_direction", "", std::array<int,3>({0,0,0}));
+
+    subdomainNNodesX = nElementsPerCoordinateDirectionLocal[0]+1;
+    subdomainNNodesY = nElementsPerCoordinateDirectionLocal[1]+1;
+    subdomainNNodesZ = nElementsPerCoordinateDirectionLocal[2]+1;
+  }
+  else if (BasisFunctionType::getBasisOrder() == 2)
+  {
+    // for quadratic elements
+    nElementsPerCoordinateDirectionLocal = PythonUtility::getOptionArray<int,3>(meshData, "n_quadratic_elements_per_coordinate_direction", "", std::array<int,3>({0,0,0}));
+
+    subdomainNNodesX = 2*nElementsPerCoordinateDirectionLocal[0]+1;
+    subdomainNNodesY = 2*nElementsPerCoordinateDirectionLocal[1]+1;
+    subdomainNNodesZ = 2*nElementsPerCoordinateDirectionLocal[2]+1;
+  }
+
 
   LOG(DEBUG) << "subdomainNNodes: " << subdomainNNodesX << " x " << subdomainNNodesY << " x " << subdomainNNodesZ;
 

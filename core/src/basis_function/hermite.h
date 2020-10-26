@@ -25,7 +25,7 @@ public:
   //! evaluate the first derivative of the 1D basis function corresponding to element-local dof i at xi, interval for xi is [0,1]
   static double dphi_dxi(int i, double xi);
 
-  //! return the basis order value as used in python files and callbacks, e.g. 2
+  //! return the basis order value as used in python files and callbacks, i.e. 3
   static int getBasisOrder();
 
   //! return a basis function type string as used in python files and callbacks, i.e. "Hermite"

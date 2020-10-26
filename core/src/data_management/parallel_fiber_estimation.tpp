@@ -52,6 +52,7 @@ createPetscObjects()
   this->gradient_ = this->functionSpace_->template createFieldVariable<3>("gradient");
   this->dirichletValues_ = this->functionSpace_->template createFieldVariable<1>("dirichletValues");
   this->jacobianConditionNumber_ = this->functionSpace_->template createFieldVariable<1>("jacobianConditionNumber");
+  this->debuggingFieldVariable_ = this->functionSpace_->template createFieldVariable<1>("debuggingFieldVariable");
 }
 
 template<typename FunctionSpaceType>
@@ -76,6 +77,13 @@ std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> ParallelFiber
 }
 
 template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> ParallelFiberEstimation<FunctionSpaceType>::
+ debuggingFieldVariable()
+{
+  return this->debuggingFieldVariable_;
+}
+
+template<typename FunctionSpaceType>
 void ParallelFiberEstimation<FunctionSpaceType>::
 print()
 {
@@ -96,7 +104,8 @@ getFieldVariablesForOutputWriter()
     problem_->data().getFieldVariablesForOutputWriter(),
     std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>>(this->gradient_),
     std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>>(this->dirichletValues_),
-    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>>(this->jacobianConditionNumber_)
+    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>>(this->jacobianConditionNumber_),
+    std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>>(this->debuggingFieldVariable_)
   );
 }
 

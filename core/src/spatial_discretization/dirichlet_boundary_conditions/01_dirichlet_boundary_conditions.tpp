@@ -672,11 +672,25 @@ void DirichletBoundaryConditions<FunctionSpaceType,nComponents>::
 applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrixRead,
                     std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrixWrite,
                     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> boundaryConditionsRightHandSideSummand,
-                    bool systemMatrixAlreadySet
+                    bool systemMatrixAlreadySet, std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> debuggingNSummands
                    )
 {
   LOG(TRACE) << "DirichletDirichletBoundaryConditionsBase::applyInSystemMatrix, systemMatrixAlreadySet: " << systemMatrixAlreadySet;
   VLOG(1) << "boundaryConditionsRightHandSideSummand: " << *boundaryConditionsRightHandSideSummand;
+
+
+  boundaryConditionsRightHandSideSummand->setRepresentationGlobal();
+  boundaryConditionsRightHandSideSummand->startGhostManipulation();
+  boundaryConditionsRightHandSideSummand->zeroGhostBuffer();
+
+  // initialize debuggingNSummands field variable to 0
+  if (debuggingNSummands)
+  {
+    debuggingNSummands->zeroEntries();
+    debuggingNSummands->setRepresentationGlobal();
+    debuggingNSummands->startGhostManipulation();
+    debuggingNSummands->zeroGhostBuffer();
+  }
 
   // boundary conditions for local non-ghost dofs are stored in the following member variables:
   // std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;        //< vector of all local (non-ghost) boundary condition dofs
@@ -887,6 +901,12 @@ applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>
     {
       // for equations with one component, simply add values
       boundaryConditionsRightHandSideSummand->setValues(rowDofNosLocal, values, ADD_VALUES);
+
+      if (debuggingNSummands)
+      {
+        std::vector<double> ones(rowDofNosLocal.size(), 1.0);
+        debuggingNSummands->setValues(rowDofNosLocal, ones, ADD_VALUES);
+      }
     }
     else
     {
@@ -924,6 +944,10 @@ applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>
 
   VLOG(1) << "rhs summand afterwards: " << *boundaryConditionsRightHandSideSummand;
 
+  if (debuggingNSummands)
+  {
+    debuggingNSummands->finishGhostManipulation();
+  }
 
   /*
   struct GhostElement

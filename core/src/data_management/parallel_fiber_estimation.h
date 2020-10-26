@@ -44,6 +44,9 @@ public:
   //! return a reference to the field for the condition number of the jacobian
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> jacobianConditionNumber();
 
+  //! return a reference to the field for the debuggingFieldVariable_
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> debuggingFieldVariable();
+
   //! set the problem variable
   void setProblem(std::shared_ptr<FiniteElementMethodType> problem);
 
@@ -61,7 +64,8 @@ public:
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,   // rhs neumann bc
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // gradient field
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,  // dirichlet values
-    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>  // dirichlet values
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,  // jacobianConditionNumber
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>  // debugging field variable
   > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
@@ -75,6 +79,7 @@ protected:
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> gradient_;  //< the gradient field of the Laplace flow solution
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> dirichletValues_;  //< values of dirichlet BC or -1, where no dirichlet BC is prescribed
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> jacobianConditionNumber_;  //< condition number of the jacobian at each point
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> debuggingFieldVariable_;  //< debugging field variable that gets written to the output file
 
   std::shared_ptr<FiniteElementMethodType> problem_;   //< the DiscretizableInTime object that is used for FE solution
 

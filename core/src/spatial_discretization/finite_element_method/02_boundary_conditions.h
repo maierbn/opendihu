@@ -37,6 +37,7 @@ public:
   //! apply dirichlet boundary conditions, this calls applyBoundaryConditionsWeakForm
   virtual void applyBoundaryConditions();
 
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> debuggingFieldVariable_;  //< temporary debugging field variable that will be output
 protected:
 
   //! parse config and fill local member variables
@@ -54,6 +55,7 @@ protected:
   bool systemMatrixAlreadySet_ = false;             //< if the system matrix has been changed to account for dirichlet DCs, which means that rows/columns of BC dofs were set to zero and diagonal to 1
   bool neumannBoundaryConditionsApplied_ = false;   //< if the neumann BC were already applied
   bool dirichletBoundaryConditionsApplied_ = false; //< if the dirichlet BC were already applied after the last initialize() or setDirichletBoundaryConditions()
+
 };
 
 /**

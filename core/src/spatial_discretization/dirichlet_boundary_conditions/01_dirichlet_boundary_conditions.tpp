@@ -686,10 +686,15 @@ applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>
   // initialize debuggingNSummands field variable to 0
   if (debuggingNSummands)
   {
+    LOG(INFO) << "debuggingNSummands is set!";
     debuggingNSummands->zeroEntries();
     debuggingNSummands->setRepresentationGlobal();
     debuggingNSummands->startGhostManipulation();
     debuggingNSummands->zeroGhostBuffer();
+  }
+  else
+  {
+    LOG(INFO) << "debuggingNSummands is not set.";
   }
 
   // boundary conditions for local non-ghost dofs are stored in the following member variables:
@@ -901,12 +906,6 @@ applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>
     {
       // for equations with one component, simply add values
       boundaryConditionsRightHandSideSummand->setValues(rowDofNosLocal, values, ADD_VALUES);
-
-      if (debuggingNSummands)
-      {
-        std::vector<double> ones(rowDofNosLocal.size(), 1.0);
-        debuggingNSummands->setValues(rowDofNosLocal, ones, ADD_VALUES);
-      }
     }
     else
     {
@@ -937,6 +936,12 @@ applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>
         // perform action for component
         boundaryConditionsRightHandSideSummand->setValues(componentNo, dofNosBuffer, valuesBuffer, ADD_VALUES);
       }
+    }
+
+    if (debuggingNSummands)
+    {
+      std::vector<double> ones(rowDofNosLocal.size(), 1.0);
+      debuggingNSummands->setValues(rowDofNosLocal, ones, ADD_VALUES);
     }
 
     VLOG(1) << " after set values at " << rowDofNosLocal << ": " << *boundaryConditionsRightHandSideSummand;

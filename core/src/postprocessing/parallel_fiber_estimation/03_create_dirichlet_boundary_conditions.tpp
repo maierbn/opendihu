@@ -12,6 +12,7 @@ createDirichletBoundaryConditions(std::shared_ptr<SpatialDiscretization::Dirichl
 
   typedef typename SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>::ElementWithNodes ElementWithNodes;
   const int nDofsPerElement1D = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerElement();
+  const int nDofsLocalWithoutGhosts = this->functionSpace_->nDofsLocalWithoutGhosts();
 
   std::vector<ElementWithNodes> boundaryConditionElements;
   std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos;
@@ -49,7 +50,12 @@ createDirichletBoundaryConditions(std::shared_ptr<SpatialDiscretization::Dirichl
             elementWithNodes.elementalDofIndex.push_back(std::pair<int,std::array<double,1>>(elementalDofIndex, std::array<double,1>({0.0})));
 
             dof_no_t dofLocalNo = this->functionSpace_->getDofNo(elementNoLocal, elementalDofIndex);
-            boundaryConditionNonGhostDofLocalNosSet.insert(dofLocalNo);
+
+            // if this is a non-ghost dof
+            if (dofLocalNo < nDofsLocalWithoutGhosts)
+            {
+              boundaryConditionNonGhostDofLocalNosSet.insert(dofLocalNo);
+            }
           }
         }
         boundaryConditionElements.push_back(elementWithNodes);
@@ -81,7 +87,7 @@ createDirichletBoundaryConditions(std::shared_ptr<SpatialDiscretization::Dirichl
       for (element_no_t elementIndexY = 0; elementIndexY < nElementsPerCoordinateDirectionLocal[1]; elementIndexY++)
       {
         element_no_t elementNoLocal = elementIndexZ*nElementsPerCoordinateDirectionLocal[0]*nElementsPerCoordinateDirectionLocal[1]
-          + elementIndexY*nElementsPerCoordinateDirectionLocal[1] + elementIndexX;
+          + elementIndexY*nElementsPerCoordinateDirectionLocal[0] + elementIndexX;
 
         ElementWithNodes elementWithNodes;
         elementWithNodes.elementNoLocal = elementNoLocal;
@@ -97,7 +103,12 @@ createDirichletBoundaryConditions(std::shared_ptr<SpatialDiscretization::Dirichl
             elementWithNodes.elementalDofIndex.push_back(std::pair<int,std::array<double,1>>(elementalDofIndex, std::array<double,1>({1.0})));
 
             dof_no_t dofLocalNo = this->functionSpace_->getDofNo(elementNoLocal, elementalDofIndex);
-            boundaryConditionNonGhostDofLocalNosSet.insert(dofLocalNo);
+
+            // if this is a non-ghost dof
+            if (dofLocalNo < nDofsLocalWithoutGhosts)
+            {
+              boundaryConditionNonGhostDofLocalNosSet.insert(dofLocalNo);
+            }
           }
         }
         boundaryConditionElements.push_back(elementWithNodes);

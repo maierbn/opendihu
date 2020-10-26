@@ -10,6 +10,9 @@ createDirichletBoundaryConditions(std::shared_ptr<SpatialDiscretization::Dirichl
   // create dirichlet BC object
   dirichletBoundaryConditions = std::make_shared<SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>>(this->context_);
 
+  const double valueTop = 0.0;
+  const double valueBottom = 1.0;
+
   typedef typename SpatialDiscretization::DirichletBoundaryConditions<FunctionSpaceType,1>::ElementWithNodes ElementWithNodes;
   const int nDofsPerElement1D = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::nDofsPerElement();
   const int nDofsLocalWithoutGhosts = this->functionSpace_->nDofsLocalWithoutGhosts();
@@ -47,7 +50,7 @@ createDirichletBoundaryConditions(std::shared_ptr<SpatialDiscretization::Dirichl
           for (dof_no_t elementalDofIndexY = 0; elementalDofIndexY < nDofsPerElement1D; elementalDofIndexY++)
           {
             dof_no_t elementalDofIndex = elementalDofIndexY*nDofsPerElement1D + elementalDofIndexX;
-            elementWithNodes.elementalDofIndex.push_back(std::pair<int,std::array<double,1>>(elementalDofIndex, std::array<double,1>({0.0})));
+            elementWithNodes.elementalDofIndex.push_back(std::pair<int,std::array<double,1>>(elementalDofIndex, std::array<double,1>({valueBottom})));
 
             dof_no_t dofLocalNo = this->functionSpace_->getDofNo(elementNoLocal, elementalDofIndex);
 
@@ -70,7 +73,7 @@ createDirichletBoundaryConditions(std::shared_ptr<SpatialDiscretization::Dirichl
 
     // set the same amount of values 0.0 for the BC values
     boundaryConditionValues.resize(boundaryConditionNonGhostDofLocalNosSet.size());
-    std::fill(boundaryConditionValues.begin(), boundaryConditionValues.end(), std::array<double,1>({0.0}));
+    std::fill(boundaryConditionValues.begin(), boundaryConditionValues.end(), std::array<double,1>({valueBottom}));
     boundaryConditionNonGhostDofLocalNosSet.clear();
   }
 
@@ -100,7 +103,7 @@ createDirichletBoundaryConditions(std::shared_ptr<SpatialDiscretization::Dirichl
           {
             dof_no_t elementalDofIndex = elementalDofIndexZ*nDofsPerElement1D*nDofsPerElement1D
               + elementalDofIndexY*nDofsPerElement1D + elementalDofIndexX;
-            elementWithNodes.elementalDofIndex.push_back(std::pair<int,std::array<double,1>>(elementalDofIndex, std::array<double,1>({1.0})));
+            elementWithNodes.elementalDofIndex.push_back(std::pair<int,std::array<double,1>>(elementalDofIndex, std::array<double,1>({valueTop})));
 
             dof_no_t dofLocalNo = this->functionSpace_->getDofNo(elementNoLocal, elementalDofIndex);
 
@@ -123,7 +126,7 @@ createDirichletBoundaryConditions(std::shared_ptr<SpatialDiscretization::Dirichl
 
     // add the same amount of 1.0 values for the BC values
     boundaryConditionValues.resize(nBottomDofs + boundaryConditionNonGhostDofLocalNosSet.size());
-    std::fill(boundaryConditionValues.begin() + nBottomDofs, boundaryConditionValues.end(), std::array<double,1>({1.0}));
+    std::fill(boundaryConditionValues.begin() + nBottomDofs, boundaryConditionValues.end(), std::array<double,1>({valueTop}));
   }
 
   if (VLOG_IS_ON(1))

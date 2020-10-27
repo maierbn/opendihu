@@ -193,6 +193,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
     }  // dofIndex
   }  // elementNoLocal
 
+  gradientField->zeroGhostBuffer();
   gradientField->finishGhostManipulation();
   approximatedGradientField->finishGhostManipulation();
 

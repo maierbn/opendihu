@@ -769,6 +769,29 @@ applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>
     }
   }
 
+
+  if (debuggingNSummands)
+  {
+    for (typename std::map<global_no_t, std::pair<ValueType, std::set<global_no_t>>>::iterator actionIter = action.begin();
+       actionIter != action.end(); actionIter++)
+    {
+      //PetscInt columnDofNoGlobalPetsc = actionIter->first;
+
+      std::vector<PetscInt> rowDofNoGlobalPetsc(actionIter->second.second.begin(), actionIter->second.second.end());
+
+      // transform row dofs from global petsc no to local no
+      std::vector<PetscInt> rowDofNosLocal(rowDofNoGlobalPetsc.size());
+      std::transform(rowDofNoGlobalPetsc.begin(), rowDofNoGlobalPetsc.end(), rowDofNosLocal.begin(), [this](global_no_t nodeNoGlobalPetsc)
+      {
+        bool isLocal = false;
+        return this->functionSpace_->meshPartition()->getDofNoLocal(nodeNoGlobalPetsc, isLocal);
+      });
+
+      std::vector<double> ones(rowDofNosLocal.size(), 1.0);
+      debuggingNSummands->setValues(rowDofNosLocal, ones, ADD_VALUES);
+    }
+  }
+
   VLOG(1) << ownGhostElements_.size() << " ghost elements";
 
   // loop over ghost elements
@@ -941,12 +964,6 @@ applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>
         // perform action for component
         boundaryConditionsRightHandSideSummand->setValues(componentNo, dofNosBuffer, valuesBuffer, ADD_VALUES);
       }
-    }
-
-    if (debuggingNSummands)
-    {
-      std::vector<double> ones(rowDofNosLocal.size(), 1.0);
-      debuggingNSummands->setValues(rowDofNosLocal, ones, ADD_VALUES);
     }
 
     VLOG(1) << " after set values at " << rowDofNosLocal << ": " << *boundaryConditionsRightHandSideSummand;

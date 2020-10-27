@@ -743,6 +743,8 @@ applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>
       action[boundaryConditionColumnDofNoGlobal].first = boundaryConditionValue;
       action[boundaryConditionColumnDofNoGlobal].second.insert(rowDofNosGlobalPetsc.begin(), rowDofNosGlobalPetsc.end());
 
+      LOG(INFO) << rowDofNosGlobalPetsc.size() << " rows (in interior el) for column dof global " << boundaryConditionColumnDofNoGlobal;
+
       // do only store action, do not perform yet, all collected actions are duplicate-cleared (automatically, because of map) and executed at the end of this method
 
       // commented out code would perform action
@@ -800,6 +802,8 @@ applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>
       global_no_t boundaryConditionColumnDofNoGlobal = columnDofNoGlobalPetsc;
       action[boundaryConditionColumnDofNoGlobal].first = boundaryConditionValue;
       action[boundaryConditionColumnDofNoGlobal].second.insert(rowDofsGlobal.begin(), rowDofsGlobal.end());
+
+      LOG(INFO) << rowDofsGlobal.size() << " rows (in ghost el) for column dof global " << columnDofNoGlobalPetsc;
 
       // do only store action, do not perform yet, all collected actions are duplicate-cleared and executed at the end of this method
 
@@ -861,6 +865,7 @@ applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>
     ValueType boundaryConditionValue = actionIter->second.first;
 
     std::vector<PetscInt> rowDofNoGlobalPetsc(actionIter->second.second.begin(), actionIter->second.second.end());
+    LOG(INFO) << rowDofNoGlobalPetsc.size() << " action rows for column dof global " << columnDofNoGlobalPetsc;
 
     // transform row dofs from global petsc no to local no
     std::vector<PetscInt> rowDofNosLocal(rowDofNoGlobalPetsc.size());

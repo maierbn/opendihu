@@ -50,7 +50,7 @@ createDirichletBoundaryConditions(std::shared_ptr<SpatialDiscretization::Dirichl
           for (dof_no_t elementalDofIndexY = 0; elementalDofIndexY < nDofsPerElement1D; elementalDofIndexY++)
           {
             dof_no_t elementalDofIndex = elementalDofIndexY*nDofsPerElement1D + elementalDofIndexX;
-            elementWithNodes.elementalDofIndex.push_back(std::pair<int,std::array<double,1>>(elementalDofIndex, std::array<double,1>({valueBottom})));
+            elementWithNodes.elementalDofIndex.insert(std::pair<int,std::array<double,1>>(elementalDofIndex, std::array<double,1>({valueBottom})));
 
             dof_no_t dofLocalNo = this->functionSpace_->getDofNo(elementNoLocal, elementalDofIndex);
 
@@ -103,7 +103,7 @@ createDirichletBoundaryConditions(std::shared_ptr<SpatialDiscretization::Dirichl
           {
             dof_no_t elementalDofIndex = elementalDofIndexZ*nDofsPerElement1D*nDofsPerElement1D
               + elementalDofIndexY*nDofsPerElement1D + elementalDofIndexX;
-            elementWithNodes.elementalDofIndex.push_back(std::pair<int,std::array<double,1>>(elementalDofIndex, std::array<double,1>({valueTop})));
+            elementWithNodes.elementalDofIndex.insert(std::pair<int,std::array<double,1>>(elementalDofIndex, std::array<double,1>({valueTop})));
 
             dof_no_t dofLocalNo = this->functionSpace_->getDofNo(elementNoLocal, elementalDofIndex);
 

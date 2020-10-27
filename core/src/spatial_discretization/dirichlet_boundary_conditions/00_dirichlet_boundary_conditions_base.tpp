@@ -274,7 +274,7 @@ parseBoundaryConditionsForElements(std::string boundaryConditionsConfigKey)
           ElementWithNodes &boundaryConditionElement = boundaryConditionElements_.back();
 
           VLOG(2) << " add (el-dof, value)" << std::pair<int,ValueType>(elementalDofIndex, boundaryConditionValue) << ", to boundaryConditionElement of element " << boundaryConditionElement.elementNoLocal;
-            boundaryConditionElement.elementalDofIndex.push_back(std::pair<int,ValueType>(elementalDofIndex, boundaryConditionValue));
+            boundaryConditionElement.elementalDofIndex.insert(std::pair<int,ValueType>(elementalDofIndex, boundaryConditionValue));
 
           // also store localDofNo
           dof_no_t dofLocalNo = functionSpace_->getDofNo(elementNoLocal, elementalDofIndex);
@@ -380,15 +380,15 @@ generateBoundaryConditionsByComponent()
 //! add boundary conditions to the currently present boundary conditions
 template<typename FunctionSpaceType,int nComponents>
 void DirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::
-addBoundaryConditions(std::vector<ElementWithNodes> &boundaryConditionElements, bool overwriteBcOnSameDof)
+addBoundaryConditions(std::vector<ElementWithNodes> &newBoundaryConditionElements, bool overwriteBcOnSameDof)
 {
-  // merge boundaryConditionElements into boundaryConditionElements_
+  // merge newBoundaryConditionElements into boundaryConditionElements_
 #ifndef NDEBUG
-  LOG(DEBUG) << "addBoundaryConditions, overwriteBcOnSameDof=" << overwriteBcOnSameDof << ", " << boundaryConditionElements.size() << " elements";
-  for (ElementWithNodes elementWithNodes : boundaryConditionElements)
+  LOG(DEBUG) << "addBoundaryConditions, overwriteBcOnSameDof=" << overwriteBcOnSameDof << ", " << newBoundaryConditionElements.size() << " elements";
+  for (ElementWithNodes newElementWithNodes : newBoundaryConditionElements)
   {
     std::stringstream s;
-    for (std::pair<int,ValueType> dofIndex : elementWithNodes.elementalDofIndex)
+    for (std::pair<int,ValueType> dofIndex : newElementWithNodes.elementalDofIndex)
     {
       s << ", " << dofIndex.first << ": (";
       for (int i = 0; i < dofIndex.second.size(); i++)
@@ -399,49 +399,49 @@ addBoundaryConditions(std::vector<ElementWithNodes> &boundaryConditionElements, 
       }
       s << ")";
     }
-    LOG(DEBUG) << "elementWithNodes: elementNoLocal " << elementWithNodes.elementNoLocal << ", dofVectors: " << s.str();
+    LOG(DEBUG) << "newElementWithNodes: elementNoLocal " << newElementWithNodes.elementNoLocal << ", dofVectors: " << s.str();
   }
 #endif
 
-  // loop over given boundaryConditionElements_
-  for (const ElementWithNodes &elementWithNodes : boundaryConditionElements)
+  // loop over given boundaryConditionElements
+  for (const ElementWithNodes &newElementWithNodes : newBoundaryConditionElements)
   {
     // find corresponding element in boundaryConditionElements_
     bool elementFound = false;
     for (ElementWithNodes &existingElementWithNodes : boundaryConditionElements_)
     {
       // if the element was found
-      if (existingElementWithNodes.elementNoLocal == elementWithNodes.elementNoLocal)
+      if (existingElementWithNodes.elementNoLocal == newElementWithNodes.elementNoLocal)
       {
-        LOG(DEBUG) << "element " << elementWithNodes.elementNoLocal << " already exists with elementalDofIndex: " << elementWithNodes.elementalDofIndex;
+        LOG(DEBUG) << "element " << newElementWithNodes.elementNoLocal << " already exists with elementalDofIndex: "
+          << newElementWithNodes.elementalDofIndex;
 
         // loop over elemental dof indices and add all entries
         // std::vector<std::pair<int,ValueType>> elementalDofIndex;
-        for (const std::pair<int,ValueType> &elementalDofIndex : elementWithNodes.elementalDofIndex)
+        for (const std::pair<int,ValueType> &newElementalDofIndex : newElementWithNodes.elementalDofIndex)
         {
           bool elementalDofIndexFound = false;
-          for (std::pair<int,ValueType> existingElementalDofIndex : existingElementWithNodes.elementalDofIndex)
-          {
-            // if the dof already has a bc prescribed
-            if (existingElementalDofIndex.first == elementalDofIndex.first)
-            {
-              // if the bc values should be overwritten
-              if (overwriteBcOnSameDof)
-              {
-                LOG(DEBUG) << "  dof " << existingElementalDofIndex.first << ", overwrite previous bc value " << existingElementalDofIndex.second << " with new value " << elementalDofIndex.second;
-                existingElementalDofIndex.second = elementalDofIndex.second;
-              }
 
-              elementalDofIndexFound = true;
-              break;
+          // if the dof already has a prescribed value
+          if (existingElementWithNodes.elementalDofIndex.find(newElementalDofIndex.first) != existingElementWithNodes.elementalDofIndex.end())
+          {
+            // if the bc values should be overwritten
+            if (overwriteBcOnSameDof)
+            {
+              LOG(DEBUG) << "  dof " << newElementalDofIndex.first << ", overwrite previous bc value "
+                << existingElementWithNodes.elementalDofIndex[newElementalDofIndex.first] << " with new value " << newElementalDofIndex.second;
+              existingElementWithNodes.elementalDofIndex[newElementalDofIndex.first] = newElementalDofIndex.second;
             }
+
+            elementalDofIndexFound = true;
           }
 
           if (!elementalDofIndexFound)
           {
-            LOG(DEBUG) << "  add dof " << elementalDofIndex;
+            LOG(DEBUG) << "  add dof " << newElementalDofIndex;
 
-            existingElementWithNodes.elementalDofIndex.push_back(elementalDofIndex);
+            // if the newElementalDofIndex is not already present, add the whole data structure
+            existingElementWithNodes.elementalDofIndex.insert(newElementalDofIndex);
           }
         }
 
@@ -453,10 +453,10 @@ addBoundaryConditions(std::vector<ElementWithNodes> &boundaryConditionElements, 
     // if element was not existent yet, add it
     if (!elementFound)
     {
-      LOG(DEBUG) << "add element " << elementWithNodes.elementNoLocal;
+      LOG(DEBUG) << "add element " << newElementWithNodes.elementNoLocal;
 
       // add element
-      boundaryConditionElements_.push_back(elementWithNodes);
+      boundaryConditionElements_.push_back(newElementWithNodes);
     }
   }
 

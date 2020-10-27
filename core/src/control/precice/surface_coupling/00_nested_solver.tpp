@@ -253,16 +253,19 @@ addDirichletBoundaryConditions(NestedSolverType &nestedSolver,
   {
     typename SpatialDiscretization::DirichletBoundaryConditionsBase<FunctionSpace,3>::ElementWithNodes element3;
 
+    // copy elementNo from element6 to element3
     element3.elementNoLocal = element6.elementNoLocal;
 
-    element3.elementalDofIndex.resize(element6.elementalDofIndex.size());
-
+    // copy all bc entries from element6 to element3, use the first 3 components for every prescribed value
     for (int i = 0; i < element6.elementalDofIndex.size(); i++)
     {
-      element3.elementalDofIndex[i].first = element6.elementalDofIndex[i].first;
-      element3.elementalDofIndex[i].second[0] = element6.elementalDofIndex[i].second[0];
-      element3.elementalDofIndex[i].second[1] = element6.elementalDofIndex[i].second[1];
-      element3.elementalDofIndex[i].second[2] = element6.elementalDofIndex[i].second[2];
+      int elementalDofIndex = element6.elementalDofIndex[i].first;
+      std::array<double,3> value = {
+        element6.elementalDofIndex[i].second[0],
+        element6.elementalDofIndex[i].second[1],
+        element6.elementalDofIndex[i].second[2]
+      };
+      element3.elementalDofIndex[i].insert(std::pair<int,std::array<double,3>>(elementalDofIndex,value));
     }
 
     dirichletBoundaryConditionElements3.push_back(element3);

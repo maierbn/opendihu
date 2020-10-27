@@ -264,7 +264,7 @@ initializeDirichletBoundaryConditions()
           for (int indexX = 0; indexX < 3; indexX++)
           {
             int elementalDofIndex = indexZ * 9 + indexY * 3 + indexX;
-            elementWithNodes.elementalDofIndex.push_back(std::pair<int,VecD<6>>(elementalDofIndex, VecD<6>{0,0,0,0,0,0}));
+            elementWithNodes.elementalDofIndex.insert(std::pair<int,VecD<6>>(elementalDofIndex, VecD<6>{0,0,0,0,0,0}));
           }
         }
         dirichletBoundaryConditionElements.push_back(elementWithNodes);

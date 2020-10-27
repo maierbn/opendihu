@@ -37,7 +37,6 @@ public:
   //! apply dirichlet boundary conditions, this calls applyBoundaryConditionsWeakForm
   virtual void applyBoundaryConditions();
 
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> debuggingFieldVariable_;  //< temporary debugging field variable that will be output
 protected:
 
   //! parse config and fill local member variables

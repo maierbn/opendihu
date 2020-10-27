@@ -170,7 +170,7 @@ applyDirichletBoundaryConditions()
     // apply the boundary conditions in stiffness matrix
     // (set bc rows and columns of stiffnessMatrix to 0 and diagonal to 1), also add terms with matrix entries to rhs, for the reading of matrix entries, stiffnessMatrixWithoutBc is used.
     LOG(DEBUG) << "call applyInSystemMatrix from applyBoundaryConditions, this->systemMatrixAlreadySet: " << this->systemMatrixAlreadySet_;
-    dirichletBoundaryConditions_->applyInSystemMatrix(stiffnessMatrixWithoutBc, stiffnessMatrix, rightHandSide, this->systemMatrixAlreadySet_, this->debuggingFieldVariable_);
+    dirichletBoundaryConditions_->applyInSystemMatrix(stiffnessMatrixWithoutBc, stiffnessMatrix, rightHandSide, this->systemMatrixAlreadySet_);
     this->systemMatrixAlreadySet_ = true;
     dirichletBoundaryConditionsApplied_ = true;
 

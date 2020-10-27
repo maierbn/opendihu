@@ -45,7 +45,7 @@ public:
   void applyInSystemMatrix(const std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrixRead,
                            std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> systemMatrixWrite,
                            std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> boundaryConditionsRightHandSideSummand,
-                           bool systemMatrixAlreadySet=false, std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> debuggingNSummands=nullptr);
+                           bool systemMatrixAlreadySet=false);
 
   //! set the boundary conditions to the right hand side using the information in boundaryConditionsRightHandSideSummand that was obtained by applyInSystemMatrix
   //! if the argument boundaryConditionsRightHandSideSummand is also set as rightHandSide, only write prescribed values into rightHandSide, do not add anything

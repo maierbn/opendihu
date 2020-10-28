@@ -33,17 +33,22 @@ labels = [
 ]
 plt.rcParams.update({'font.size': 18})
 
-x = np.arange(len(labels))  # the label locations
+tlist = np.arange(len(labels))  # the label locations
 width = 0.4  # the width of the bars
 
-color = (0.8,0.2,0.2)
+datalist = [data[5,4], data[4,4], data[3,4]]
+
+color = (1.0,0.5,0.5)
 fig, ax = plt.subplots(figsize=(4.5,4))
-rects1 = ax.bar(x, list(data[:,4]), width, color=color)
-ax.set_ylabel('Variance of angles [rad${}^2$]')
-ax.set_xlabel(r'Max. recursion level $\ell_\mathrm{max}$')
-ax.set_xticks(x)
-ax.set_xticklabels(labels)
-plt.grid(which='major', axis='y')
+rects1 = ax.barh(tlist, datalist, width, color=color)
+for t,d in zip(tlist,datalist):
+  ax.text(d-0.01,t,"{:.3f}".format(d),color='black',verticalalignment='center',horizontalalignment='right')
+
+ax.set_xlabel('Variance of angles [rad${}^2$]')
+ax.set_ylabel(r'Max. recursion level $\ell_\mathrm{max}$')
+ax.set_yticks(tlist)
+ax.set_yticklabels(labels)
+plt.grid(which='major', axis='x')
 #ax.set_ylim(0,0.8)
 
 #plt.legend([rects1[0]], ['Standard deviation of \nrelative element lengths', 'Duration [s]'], fontsize=16, loc='upper center')

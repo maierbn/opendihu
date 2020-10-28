@@ -28,8 +28,6 @@ initializeGhostElements()
     std::array<dof_no_t,nDofsPerElement> dofNosLocal = this->functionSpace_->getElementDofNosLocal(elementNoLocal);
 
     using ValueType = typename std::array<double,nComponents>;
-    typename std::map<int,ValueType>::const_iterator boundaryConditionDofIter = iter->elementalDofIndex.begin();    // elemental dof index with prescribed value
-
     VLOG(1) << "element " << elementNoLocal << ", elemental dofs: " << iter->elementalDofIndex;
 
     std::map<int,std::vector<global_no_t>> nonBoundaryConditionDofsOfRankGlobalPetsc;
@@ -45,7 +43,7 @@ initializeGhostElements()
 
       VLOG(1) << " element " << elementNoLocal << ", dofIndex " << elementalDofIndex << ", dof " << boundaryConditionDofNoLocal;
 
-      // if the bc dof was found, i.e. (elementNoLocal,elementalDofIndex) and boundaryConditionDofIter both point to the same bc dof
+      // if the bc dof was found for (elementNoLocal,elementalDofIndex)
       if (iter->elementalDofIndex.find(elementalDofIndex) != iter->elementalDofIndex.end())
       {
         // current dof has a prescribed boundary condition value

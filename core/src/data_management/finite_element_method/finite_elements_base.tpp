@@ -68,8 +68,8 @@ getPetscMemoryParameters(int &nNonZerosDiagonal, int &nNonZerosOffdiagonal)
 {
   const int D = FunctionSpaceType::dim();
   const int nDofsPerNode = FunctionSpace::FunctionSpaceBaseDim<1,typename FunctionSpaceType::BasisFunction>::nDofsPerNode();
-  const int nDofsPerBasis = FunctionSpace::FunctionSpaceBaseDim<1,typename FunctionSpaceType::BasisFunction>::nDofsPerElement();
-  const int nOverlaps = (nDofsPerBasis*2 - 1) * nDofsPerNode;   // number of nodes of 2 neighbouring 1D elements (=number of ansatz functions in support of center ansatz function)
+  const int nDofsPerElement = FunctionSpace::FunctionSpaceBaseDim<1,typename FunctionSpaceType::BasisFunction>::nDofsPerElement();
+  const int nOverlaps = (nDofsPerElement*2 - 1) * nDofsPerNode;   // number of nodes of 2 neighbouring 1D elements (=number of ansatz functions in support of center ansatz function)
 
   // due to PETSc storage nNonZerosDiagonal and nNonZerosOffdiagonal should be both set to the maximum number of non-zero entries per row
 
@@ -80,7 +80,7 @@ getPetscMemoryParameters(int &nNonZerosDiagonal, int &nNonZerosOffdiagonal)
     nNonZerosOffdiagonal = nNonZerosDiagonal;
     break;
   case 2:
-    nNonZerosDiagonal = pow(nOverlaps, 2) + 16;   // because of boundary conditions there can be more entries, which are all zero, but stored as non-zero
+    nNonZerosDiagonal = pow(nOverlaps, 2);   // because of boundary conditions there can be more entries, which are all zero, but stored as non-zero
     nNonZerosOffdiagonal = nNonZerosDiagonal;
     break;
   case 3:
@@ -88,6 +88,9 @@ getPetscMemoryParameters(int &nNonZerosDiagonal, int &nNonZerosOffdiagonal)
     nNonZerosOffdiagonal = nNonZerosDiagonal;
     break;
   };
+
+  LOG(DEBUG) << "nOverlaps = (" << nDofsPerElement << "*2 - 1) * " << nDofsPerNode << " = " << nOverlaps
+    << ", nNonZerosDiagonal = " << nOverlaps << "^" << D << " = " << nNonZerosDiagonal << ", 2*" << nNonZerosDiagonal << "=" << 2*nNonZerosDiagonal;
 }
 
 template<typename FunctionSpaceType, int nComponents>

@@ -96,6 +96,7 @@ motor_units = [
   {"radius": 72.00, "activation_start_time": -1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
   {"radius": 80.00, "activation_start_time": -1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # high number of fibers
 ]
+#note: negative start time is the same as zero, it is just there for debugging. Delete the minus signs to get a ramp
 
 end_time = 0.001                      # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.

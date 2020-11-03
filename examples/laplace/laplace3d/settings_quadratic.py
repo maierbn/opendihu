@@ -4,9 +4,14 @@ import sys
 # 3D laplace problem with quadratic Lagrange basis, run with 4 processes
 
 # number of elements
-nx = 4
-ny = 4
-nz = 4
+nx = 50
+ny = 50
+nz = 50
+
+n = 10
+nx = n
+ny = n
+nz = n
 
 # number of nodes
 mx = 2*nx + 1

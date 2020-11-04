@@ -25,6 +25,7 @@ public:
 
   //! get the name of the solver
   std::string name();
+
 protected:
 
   PythonConfig specificSettings_;   //< the python config dict

@@ -227,7 +227,7 @@ setInformationToPreconditioner()
   ierr = PetscObjectTypeCompare((PetscObject)pc, PCHYPRE, &useHYPREPreconditioner); CHKERRV(ierr);
 
   // only set coordinates ith the GAMG preconditioner is selected
-  if (useGAMGPreconditioner || useHYPREPreconditioner)
+  if ((useGAMGPreconditioner && FunctionSpaceType::Mesh::dim() < 3) || useHYPREPreconditioner)
   {
     // set the local node positions for the preconditioner
     int nDofsPerNode = data_.functionSpace()->nDofsPerNode();

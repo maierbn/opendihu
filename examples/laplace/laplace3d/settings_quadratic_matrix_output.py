@@ -4,9 +4,9 @@ import sys
 # 3D laplace problem with quadratic Lagrange basis, run with 4 processes
 
 # number of elements
-nx = 50
-ny = 50
-nz = 50
+nx = 4
+ny = 4
+nz = 4
 
 # number of nodes
 mx = 2*nx + 1
@@ -63,7 +63,7 @@ config = {
 
     "maxIterations": 10000,
     "dumpFormat": "matlab",             # output solution, rhs and system matrix to a file given under dumpFilename
-    "dumpFilename": "",			        		# "" means no output, insert "out" to create the output files
+    "dumpFilename": "out",			     		# "" means no output, insert "out" to create the output files
 
     "OutputWriter" : [
       {"format": "Paraview", "outputInterval": 1, "filename": "out/laplace", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},      

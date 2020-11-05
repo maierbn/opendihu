@@ -14,7 +14,7 @@
 
 #include <chrono>
 
-#define SLOW_VARIANT
+#define SLOW_VARIANT     // use this define to switch between the "single quadrature"(=SLOW_VARIANT is defined) and the "combined quadrature" (SLOW_VARIANT is not defined) variants
 
 namespace SpatialDiscretization
 {
@@ -35,7 +35,6 @@ setStiffnessMatrix()
   // define shortcuts for integrator and basis
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
-  const int nUnknownsPerElement = nDofsPerElement*nComponents;
   typedef double_v_t EvaluationsType;
   typedef std::array<
             EvaluationsType,
@@ -286,11 +285,15 @@ setStiffnessMatrix()
   functionSpace->geometryField().startGhostManipulation();   // ensure that local ghost values of geometry field are set
 
   bool outputAssemble3DStiffnessMatrixHere = false;
+  std::chrono::time_point<std::chrono::system_clock> tStart;
   if (outputAssemble3DStiffnessMatrix_)
   {
     LOG(INFO) << "Compute stiffness matrix for " << D << "D problem with " << functionSpace->nDofsGlobal() << " global dofs.";
     outputAssemble3DStiffnessMatrix_ = false;
     outputAssemble3DStiffnessMatrixHere = true;
+
+    // start inline duration measurement
+    tStart = std::chrono::system_clock::now();
   }
 
   const element_no_t nElementsLocal = functionSpace->nElementsLocal();
@@ -474,7 +477,9 @@ setStiffnessMatrix()
 
   if (outputAssemble3DStiffnessMatrixHere && this->context_.ownRankNoCommWorld() == 0)
   {
-    std::cout << std::string(100,'\b') << "done.                       " << std::endl;
+    std::chrono::time_point<std::chrono::system_clock> tEnd = std::chrono::system_clock::now();
+    std::chrono::duration<double> duration = tEnd - tStart;
+    std::cout << std::string(100,'\b') << "done in " << duration.count() << " s.                       " << std::endl;
   }
 
   auto tEnd = std::chrono::system_clock::now();

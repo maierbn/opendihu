@@ -180,6 +180,9 @@ solve()
   VLOG(1) << "rhs: " << *data_.rightHandSide();
   VLOG(1) << "stiffnessMatrix: " << *stiffnessMatrix;
 
+  // initialize coordinates for PETSc geometric multi-grid solvers
+  setInformationToPreconditioner();
+
   // non-zero initial values
 #if 0  
   PetscScalar scalar = 0.5;
@@ -199,6 +202,54 @@ solve()
   
   
   VLOG(1) << "solution: " << *data_.solution();
+}
+
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
+setInformationToPreconditioner()
+{
+  // get linear solver context from solver manager
+  std::shared_ptr<Solver::Linear> linearSolver = this->context_.solverManager()->template solver<Solver::Linear>(
+    this->specificSettings_, this->data_.functionSpace()->meshPartition()->mpiCommunicator());
+  std::shared_ptr<KSP> ksp = linearSolver->ksp();
+  assert(ksp != nullptr);
+  PetscErrorCode ierr;
+
+  // get preconditioner
+  PC pc;
+  ierr = KSPGetPC(*ksp, &pc); CHKERRV(ierr);
+
+
+  // check, if GAMG preconditioner is selected
+  PetscBool useGAMGPreconditioner;
+  PetscBool useHYPREPreconditioner;
+  ierr = PetscObjectTypeCompare((PetscObject)pc, PCGAMG, &useGAMGPreconditioner); CHKERRV(ierr);
+  ierr = PetscObjectTypeCompare((PetscObject)pc, PCHYPRE, &useHYPREPreconditioner); CHKERRV(ierr);
+
+  // only set coordinates ith the GAMG preconditioner is selected
+  if ((useGAMGPreconditioner && FunctionSpaceType::Mesh::dim() < 3) || useHYPREPreconditioner)
+  {
+    // set the local node positions for the preconditioner
+    int nDofsPerNode = data_.functionSpace()->nDofsPerNode();
+    int nNodesLocal = data_.functionSpace()->nNodesLocalWithoutGhosts();
+
+    std::vector<double> nodePositionCoordinatesForPreconditioner;
+    nodePositionCoordinatesForPreconditioner.reserve(3*nNodesLocal);
+
+    // loop over nodes and add their node positions
+    for (dof_no_t dofNoLocal = 0; dofNoLocal < nNodesLocal*nDofsPerNode; dofNoLocal++)
+    {
+      Vec3 nodePosition = data_.functionSpace()->getGeometry(dofNoLocal);
+
+      // add the coordinates
+      for (int i = 0; i < 3; i++)
+        nodePositionCoordinatesForPreconditioner.push_back(nodePosition[i]);
+    }
+
+
+    LOG(DEBUG) << "set coordinates to preconditioner, " << nodePositionCoordinatesForPreconditioner.size() << " node coordinates";
+    ierr = PCSetCoordinates(pc, 3, nNodesLocal, nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
+  }
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>

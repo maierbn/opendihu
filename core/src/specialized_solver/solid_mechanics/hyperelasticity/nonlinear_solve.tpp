@@ -186,8 +186,9 @@ monitorSolvingIteration(SNES snes, PetscInt its, PetscReal currentNorm)
 
   //T* object = static_cast<T*>(mctx);
   std::stringstream message;
-  message << "  Nonlinear solver: iteration " << std::setw(2) << its << ", residual norm " << std::setw(11) << currentNorm
-          << ", e_new=e_old^c with c=" <<  std::setw(3) << experimentalOrderOfConvergence << std::setprecision(6);
+  message << "  Nonlinear solver: iteration " << std::setw(2) << its << ", residual norm " << std::setw(11) << currentNorm;
+  if (fabs(experimentalOrderOfConvergence) > 1e-12)
+    message << ", e_new=e_old^c with c=" <<  std::setw(3) << experimentalOrderOfConvergence << std::setprecision(6);
   LOG(INFO) << message.str();
 
   // if we got a better solution and this is load factor 1, store the solution

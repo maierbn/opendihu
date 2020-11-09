@@ -887,7 +887,7 @@ computePK2StressField()
 
       // compute surface traction
       // get normal
-      if (indexZ == 0)
+      if (indexZ == 0 || indexZ == 1)
       {
         // bottom node
         Vec3_v_t normal = displacementsFunctionSpace->getNormal(Mesh::face_t::face2Minus, elementNoLocalv, xi);

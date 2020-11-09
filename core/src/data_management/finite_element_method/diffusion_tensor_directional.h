@@ -10,7 +10,7 @@ namespace Data
 {
 
 /** A Diffusion tensor that points in a given fiber direction and can have a spatially varying prefactor, i.e.
- *  c(x)*A(f(x)),  f(x)...fibre direction at x, c(x)...scalar prefactor
+ *  c(x)*A(f(x)),  f(x)...fiber direction at x, c(x)...scalar prefactor
  *
  **/
 template<typename FunctionSpaceType>

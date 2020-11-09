@@ -12,13 +12,18 @@ C++ instantiation
   SpatialDiscretization::DynamicHyperelasticitySolver<
     Material
   >
+  // or:
+  SpatialDiscretization::DynamicHyperelasticitySolver<Material, true>   // default, same as without "false"
+  SpatialDiscretization::DynamicHyperelasticitySolver<Material, false>
 
-Where ``Material`` is a class that describes the used constitutive equations at compile time, see :doc:`hyperelasticity`.
+The two template parameters are same as in :doc:`hyperelasticity`. The first, ``Material`` is a class that describes the used constitutive equations at compile time.
+The second specifies if there should be also the :math:`P` and :math:`F` field variables in the output files, which produces larger files.
 
 Python settings
 -----------------
 
-In the following all possible options for the dynamic hyperelasticity solver are listed. They are explained by the comments. Most of them are also present in the :doc:`HyperelasticitySolver <hyperelasticity>`.
+In the following all possible options for the dynamic hyperelasticity solver are listed. They are explained by the comments. 
+Most of them are also present in the :doc:`HyperelasticitySolver <hyperelasticity>`.
 
 .. code-block:: python
 
@@ -80,6 +85,8 @@ In the following all possible options for the dynamic hyperelasticity solver are
     "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
     "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
     "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
+    
+    "dirichletOutputFilename":     "out/"+scenario_name+"/dirichlet_boundary_conditions_tendon",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     
     # define which file formats should be written
     # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.

@@ -10,9 +10,9 @@
 namespace SpatialDiscretization
 {
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-Tensor2<3,double_v_t> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+Tensor2<3,double_v_t> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computeDeformationGradient(const std::array<VecD<3,double_v_t>,DisplacementsFunctionSpace::nDofsPerElement()> &displacements,
                            const Tensor2<3,double_v_t> &inverseJacobianMaterial,
                            const std::array<double, 3> xi
@@ -72,9 +72,9 @@ computeDeformationGradient(const std::array<VecD<3,double_v_t>,DisplacementsFunc
   return deformationGradient;
 }
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-Tensor2<3,double_v_t> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+Tensor2<3,double_v_t> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computeDeformationGradientTimeDerivative(const std::array<VecD<3,double_v_t>,DisplacementsFunctionSpace::nDofsPerElement()> &velocities,
                                          const Tensor2<3,double_v_t> &inverseJacobianMaterial,
                                          const std::array<double, 3> xi
@@ -131,9 +131,9 @@ computeDeformationGradientTimeDerivative(const std::array<VecD<3,double_v_t>,Dis
   return deformationGradientTimeDerivative;
 }
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-Tensor2<3,double_v_t> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+Tensor2<3,double_v_t> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computeRightCauchyGreenTensor(const Tensor2<3,double_v_t> &deformationGradient)
 {
   // compute C = F^T*F where F is the deformationGradient and C is the right Cauchy-Green Tensor
@@ -159,9 +159,9 @@ computeRightCauchyGreenTensor(const Tensor2<3,double_v_t> &deformationGradient)
   return rightCauchyGreenTensor;
 }
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-std::array<double_v_t,5> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+std::array<double_v_t,5> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computeInvariants(const Tensor2<3,double_v_t> &rightCauchyGreen, const double_v_t rightCauchyGreenDeterminant, const VecD<3,double_v_t> fiberDirection)
 {
   std::array<double_v_t,5> invariants;
@@ -233,9 +233,9 @@ computeInvariants(const Tensor2<3,double_v_t> &rightCauchyGreen, const double_v_
   return invariants;
 }
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-std::array<double_v_t,5> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+std::array<double_v_t,5> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computeReducedInvariants(const std::array<double_v_t,5> invariants, const double_v_t deformationGradientDeterminant)
 {
   std::array<double_v_t,5> reducedInvariants;
@@ -280,9 +280,9 @@ computeReducedInvariants(const std::array<double_v_t,5> invariants, const double
   return reducedInvariants;
 }
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-Tensor2<3,double_v_t> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+Tensor2<3,double_v_t> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computePK2Stress(double_v_t &pressure,                                   //< [in] pressure value p
                  const Tensor2<3,double_v_t> &rightCauchyGreen,         //< [in] C
                  const Tensor2<3,double_v_t> &inverseRightCauchyGreen,  //< [in] C^{-1}
@@ -638,8 +638,8 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
   return pK2Stress;
 }
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computePK2StressField()
 {
   //LOG(TRACE) << "computePK2StressField";
@@ -933,9 +933,9 @@ computePK2StressField()
 }
 
 //! compute the material elasticity tensor
-template<typename Term,typename MeshType, int nDisplacementComponents>
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computeElasticityTensor(const Tensor2<3,double_v_t> &rightCauchyGreen,         //< [in] C
                         const Tensor2<3,double_v_t> &inverseRightCauchyGreen,  //< [in] C^{-1}
                         double_v_t deformationGradientDeterminant,             //< [in] J = det(F)
@@ -1502,9 +1502,9 @@ computeElasticityTensor(const Tensor2<3,double_v_t> &rightCauchyGreen,         /
   }
 }
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-Tensor2<3,double_v_t> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+Tensor2<3,double_v_t> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computePSbar(const Tensor2<3,double_v_t> &fictitiousPK2Stress, const Tensor2<3,double_v_t> &rightCauchyGreen)
 {
   // only needed for debugging in materialTesting

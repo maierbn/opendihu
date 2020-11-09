@@ -7,9 +7,9 @@
 namespace SpatialDiscretization
 {
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-double HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+double HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computeSbarC(const Tensor2<3,double_v_t> &Sbar, const Tensor2<3,double_v_t> &C)
 {
   double_v_t SbarC = 0;
@@ -23,9 +23,9 @@ computeSbarC(const Tensor2<3,double_v_t> &Sbar, const Tensor2<3,double_v_t> &C)
   return SbarC;
 }
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 materialTesting(const double_v_t pressure,                           //< [in] pressure value p
                 const Tensor2<3,double_v_t> &rightCauchyGreen,                //< [in] C
                 const Tensor2<3,double_v_t> &inverseRightCauchyGreen,         //< [in] C^{-1}

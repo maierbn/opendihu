@@ -10,8 +10,8 @@ namespace SpatialDiscretization
 {
 
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
-bool HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+bool HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 materialComputeInternalVirtualWork(bool communicateGhosts)
 {
   // compute Wint in solverVariableResidual_
@@ -399,8 +399,8 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
   return true;
 }
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
-bool HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+bool HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 materialComputeResidual(double loadFactor)
 {
   // This computes the residual, i.e. the nonlinear function to be solved.
@@ -534,8 +534,8 @@ materialComputeResidual(double loadFactor)
   return true;
 }
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 materialComputeExternalVirtualWorkDead()
 {
   // compute δW_ext,dead = int_Ω B^L * phi^L * phi^M * δu^M dx + int_∂Ω T^L * phi^L * phi^M * δu^M dS
@@ -658,8 +658,8 @@ materialComputeExternalVirtualWorkDead()
   //combinedVecExternalVirtualWorkDead_->startGhostManipulation();
 }
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
 {
   assert (nDisplacementComponents == 6);
@@ -875,8 +875,8 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
   //combinedVecExternalVirtualWorkDead_->startGhostManipulation();
 }
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
-bool HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+bool HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 materialComputeJacobian()
 {
   // analytic jacobian combinedMatrixJacobian_
@@ -1477,8 +1477,8 @@ materialComputeJacobian()
   return true;
 }
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
-unsigned int HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+unsigned int HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 materialDetermineNumberNonzerosInJacobian()
 {
   unsigned int nNonZeros = 0;

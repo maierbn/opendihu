@@ -50,7 +50,7 @@ namespace SpatialDiscretization
  * The template parameter @param nDisplacementComponents refers to the number of non-pressure components
  * and decides if the static (3) or the dynamic (6) case should be computed.
   */
-template<typename Term = Equation::SolidMechanics::MooneyRivlinIncompressible3D, typename MeshType = Mesh::StructuredDeformableOfDimension<3>, int nDisplacementComponents = 3>
+template<typename Term = Equation::SolidMechanics::MooneyRivlinIncompressible3D, bool withLargeOutput=true, typename MeshType = Mesh::StructuredDeformableOfDimension<3>, int nDisplacementComponents = 3>
 class HyperelasticitySolver :
   public Runnable
 {
@@ -60,7 +60,7 @@ public:
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> FiberFunctionSpace;
   typedef DisplacementsFunctionSpace FunctionSpace;
 
-  typedef Data::QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace,Term,Term> Data;
+  typedef Data::QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace,Term,withLargeOutput,Term> Data;
   typedef ::Data::QuasiStaticHyperelasticityPressureOutput<PressureFunctionSpace> PressureDataCopy;
 
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,3> DisplacementsFieldVariableType;

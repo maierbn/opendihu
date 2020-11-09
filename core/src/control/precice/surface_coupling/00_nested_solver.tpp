@@ -257,15 +257,15 @@ addDirichletBoundaryConditions(NestedSolverType &nestedSolver,
     element3.elementNoLocal = element6.elementNoLocal;
 
     // copy all bc entries from element6 to element3, use the first 3 components for every prescribed value
-    for (int i = 0; i < element6.elementalDofIndex.size(); i++)
+    for (std::map<int,std::array<double,6>>::const_iterator iter = element6.elementalDofIndex.cbegin(); iter != element6.elementalDofIndex.cend(); iter++)
     {
-      int elementalDofIndex = element6.elementalDofIndex[i].first;
+      int elementalDofIndex = iter->first;
       std::array<double,3> value = {
-        element6.elementalDofIndex[i].second[0],
-        element6.elementalDofIndex[i].second[1],
-        element6.elementalDofIndex[i].second[2]
+        iter->second[0],
+        iter->second[1],
+        iter->second[2]
       };
-      element3.elementalDofIndex[i].insert(std::pair<int,std::array<double,3>>(elementalDofIndex,value));
+      element3.elementalDofIndex.insert(std::pair<int,std::array<double,3>>(elementalDofIndex,value));
     }
 
     dirichletBoundaryConditionElements3.push_back(element3);

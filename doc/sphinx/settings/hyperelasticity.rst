@@ -18,10 +18,17 @@ C++ instantiation
   SpatialDiscretization::HyperelasticitySolver<
     Material
   >
+  // or:
+  SpatialDiscretization::HyperelasticitySolver<Material, true>   // default, same as without "false"
+  SpatialDiscretization::HyperelasticitySolver<Material, false>
 
-Where ``Material`` is a class that describes the used constitutive equations at compile time.
+If the second tempate parameter is ``true``, additionally the PK1 stress :math:`P` (instead of only the PK2 stress :math:`S`) and the deformation gradient :math:`F` will be contained in the output files. However, since :math:`P` is unsymmetric it will be more data (9 values per dof). If the second parameter is set to ``false``, the output files will be significantly smaller. 
+The first template parameter ``Material`` is a class that describes the used constitutive equations at compile time.
 
-The following classes are pre-defined:
+Specification of the Material
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following classes are pre-defined for the material:
 
 .. code-block:: c
 
@@ -307,13 +314,13 @@ The following shows all possible options. The meaning can be learned from the co
     "dirichletBoundaryConditions": elasticity_dirichlet_bc,             # the initial Dirichlet boundary conditions that define values for displacements u
     "neumannBoundaryConditions":   elasticity_neumann_bc,               # Neumann boundary conditions that define traction forces on surfaces of elements
     "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
-    "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
-    "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
-    
+     
     "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
     "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
     "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
     "constantBodyForce":           constant_body_force,                 # a constant force that acts on the whole body, e.g. for gravity
+    
+    "dirichletOutputFilename":     "out/"+scenario_name+"/dirichlet_boundary_conditions_tendon",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     
     # define which file formats should be written
     # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
@@ -340,12 +347,128 @@ The following shows all possible options. The meaning can be learned from the co
     },
   },
 
-`materialParameters`
-^^^^^^^^^^^^^^^^^^^^
+durationLogKey
+^^^^^^^^^^^^^^^^
+A key under which the duration for this solver is stored in the log file.
 
+`materialParameters`
+^^^^^^^^^^^^^^^^^^^^^^^
 A list of material parameters, must match the number of parameters in the material.
 
-`boundary conditions`
+displacementsScalingFactor"
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+A scaling factor for the displacements that will be written to the output files. This is mainly for debugging.
+Only set this to something other than 1 to increase the visual appearance for very small displacements.
+
+residualNormLogFilename
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+A txt log file where the residual norm values of the nonlinear solver will be written to. 
+
+The progression of the residual norm over number of iterations can be visualized using ``plot_residual_norm.py``.
+
+`useAnalyticJacobian` and `useNumericJacobian`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Whether to use the analytically computed jacobian matrix in the nonlinear solver (fast) or the numerically computed jacobian matrix in the nonlinear solver (slow). This only works with non-nested matrices, if both numeric and analytic are enabled, it uses the analytic for the preconditioner and the numeric as normal jacobian.
+  
+dumpDenseMatlabVariables
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Whether to have extra output of matlab vectors, x,r, jacobian matrix (very slow). This is mainly for debugging.
+If `useAnalyticJacobian`, `useNumericJacobian` and `dumpDenseMatlabVariables` are all three set to ``True``, the analytic and numeric Jacobian matrices will get compared to see if there are programming errors for the analytic jacobian. Use this only for very small problems (like 5 elements)
+
+meshName
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The mesh to use, this mesh has to use quadratic Lagrange basis functions. See :doc:`mesh` how to specify meshes.
+
+inputMeshIsGlobal
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This refers to the specification of the boundary conditions. Indicates whether the numberings used in the BCs is interpreted as global or local numbers. Note, that the mesh can be specified independently, i.e., it is possible to have the mesh specification in local numberings and the boundary conditions in global numberings.
+
+fiberMeshNames
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Fiber meshes that will be used to determine the fiber direction, used for anisotropic materials
+
+
+fiberDirection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system. Example: ``[0,0,1]``
+
+Nonlinear Solver
+^^^^^^^^^^^^^^^^^^^^^^^
+The following parameters can be given to specify the nonlinear solver:
+
+.. code-block:: python
+
+  "relativeTolerance":          1e-5,                         # 1e-10 relative tolerance of the linear solver
+  "absoluteTolerance":          1e-10,                        # 1e-10 absolute tolerance of the residual of the linear solver       
+  "solverType":                 "preonly",                    # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
+  "preconditionerType":         "lu",                         # type of the preconditioner
+  "maxIterations":              1e4,                          # maximum number of iterations in the linear solver
+  "snesMaxFunctionEvaluations": 1e8,                          # maximum number of function iterations
+  "snesMaxIterations":          100,                           # maximum number of iterations in the nonlinear solver
+  "snesRelativeTolerance":      1e-5,                         # relative tolerance of the nonlinear solver
+  "snesLineSearchType":         "l2",                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
+  "snesAbsoluteTolerance":      1e-5,                         # absolute tolerance of the nonlinear solver
+  "snesRebuildJacobianFrequency": 1,                          # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+  
+  "dumpFilename":               "",                           # dump disabled 
+  "dumpFormat":                 "default",                    # default, ascii, matlab
+
+Details, e.g., about `dumpFilename` can also be found under :doc:`solver`.
+
+loadFactors
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The load factors to solve the static problem. This should be a list of factors between 0 and 1 with the last factor 1. The loads will be scaled with these factors. After a solution with a factor was solved, the next solution uses the previous solution as initial values. Thus, it is possible to solve badly conditioned problems by increasing the load step by step.
+
+Examples for load factors:
+
+.. code-block:: python
+  
+  [0.1, 0.2, 0.35, 0.5, 1.0],
+  list(np.logspace(-2,0,10)),   # use 10 equidistant load factors in [0,1] in log space
+  [0.5, 1.0],
+  [],                           # no load factors, solve problem directly
+  
+nNonlinearSolveCalls
+^^^^^^^^^^^^^^^^^^^^^^^
+
+How often the same static problem should be solved. This should be set to 1, because it makes no sense to solve the same problem multiple times. It originates from the Chaste documentation, where they observed different solutions after the first solve (which doesn't make sense).
+
+
+Boundary Conditions
 ^^^^^^^^^^^^^^^^^^^^^^
-Refer to :doc:`boundary_conditions` how to specify boundary conditions and :doc:`dynamic_hyperelasticity` for the callbacks.
+Boundary conditions are specified with the keys ``dirichletBoundaryConditions``, ``neumannBoundaryConditions`` and ``divideNeumannBoundaryConditionValuesByTotalArea``.
+Refer to :doc:`boundary_conditions` how to specify boundary conditions.
+
+``divideNeumannBoundaryConditionValuesByTotalArea`` specifies if the given Neumann boundary condition values under ``neumannBoundaryConditions`` are total forces or surface loads. If ``True`` the values are surface loads and will be scaled by the surface area of all elements where Neumann BC are applied. The unit is then `N/cm^2`. If ``False``, the values are treated as normal Neumann boundary condition values, i.e. nodal force values with unit `N`.
+
+dirichletOutputFilename
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+A filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable. This is for debugging the Dirichlet boundary condition nodes
+
+Initial values
+^^^^^^^^^^^^^^^^^^^
+The initial values are given by ``initialValuesDisplacements`` and ``initialValuesVelocities``. A list of entries for all dofs is required, as vector of values for every node: ``[[node1-x,y,z], [node2-x,y,z], ...]``
+
+extrapolateInitialGuess
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities. This is faster and should be set to ``True``.
+
+constantBodyForce
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+A constant force that acts on the whole body, e.g. for gravity. The units are ``cm/ms^2`` It should be a 3d vector (list of 3 entries):
+
+.. code-block:: python
+  
+  constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
+  
+OutputWriters
+^^^^^^^^^^^^^^^^^^
+There are different types of output writers that output different variables.
+
+* ``"OutputWriter"``: 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
+* ``"pressure"``: 2. additional output writer that writes also the hydrostatic pressure
+* ``"LoadIncrements"``: 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
+
+},
 

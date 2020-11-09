@@ -13,8 +13,8 @@
 namespace SpatialDiscretization
 {
 
-template<typename Term,typename MeshType,int nDisplacementComponents>
-HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 HyperelasticitySolver(DihuContext context, std::string settingsKey) :
   context_(context[settingsKey]), data_(context_), pressureDataCopy_(context_), initialized_(false),
   endTime_(0), lastNorm_(0), secondLastNorm_(0), currentLoadFactor_(1.0), lastSolveSucceeded_(true), nNonZerosJacobian_(0)
@@ -76,8 +76,8 @@ HyperelasticitySolver(DihuContext context, std::string settingsKey) :
   this->outputWriterManagerLoadIncrements_.initialize(this->context_["LoadIncrements"], this->context_["LoadIncrements"].getPythonConfig());
 }
 
-template<typename Term,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 advanceTimeSpan()
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
@@ -102,8 +102,8 @@ advanceTimeSpan()
   this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 1, endTime_);
 }
 
-template<typename Term,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 run()
 {
   // initialize everything
@@ -113,15 +113,15 @@ run()
   this->advanceTimeSpan();
 }
 
-template<typename Term,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 setTimeSpan(double startTime, double endTime)
 {
   endTime_ = endTime;
 }
 
-template<typename Term,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 initialize()
 {
   if (this->initialized_)
@@ -196,8 +196,8 @@ initialize()
   this->initialized_ = true;
 }
 
-template<typename Term,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 initializeFiberDirections()
 {
   std::vector<std::string> fiberMeshNames;
@@ -320,9 +320,9 @@ initializeFiberDirections()
   LOG_N_TIMES(1,INFO) << "done (" << std::chrono::duration_cast<std::chrono::milliseconds>(tEnd-tStart).count() << " ms)";
 }
 
-template<typename Term,typename MeshType,int nDisplacementComponents>
-std::shared_ptr<typename HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::VecHyperelasticity>
-HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+std::shared_ptr<typename HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::VecHyperelasticity>
+HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 createPartitionedPetscVec(std::string name)
 {
   LOG(DEBUG) << "createPartitionedPetscVec(" << name << ")";
@@ -330,9 +330,9 @@ createPartitionedPetscVec(std::string name)
     displacementsFunctionSpace_->meshPartition(), pressureFunctionSpace_->meshPartition(), dirichletBoundaryConditions_, name);
 }
 
-template<typename Term,typename MeshType,int nDisplacementComponents>
-std::shared_ptr<typename HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::MatHyperelasticity>
-HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+std::shared_ptr<typename HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::MatHyperelasticity>
+HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 createPartitionedPetscMat(std::string name)
 {
   // determine number of non zero entries in matrix
@@ -355,15 +355,15 @@ createPartitionedPetscMat(std::string name)
 
 
 //! get the precomputed external virtual work
-template<typename Term,typename MeshType,int nDisplacementComponents>
-Vec HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+Vec HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 externalVirtualWork()
 {
   return externalVirtualWorkDead_;
 }
 
-template<typename Term,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 initializePetscVariables()
 {
   /*
@@ -488,47 +488,47 @@ initializePetscVariables()
 }
 
 //! get the PartitionedPetsVec for the residual and result of the nonlinear function
-template<typename Term,typename MeshType,int nDisplacementComponents>
-std::shared_ptr<typename HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::VecHyperelasticity> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+std::shared_ptr<typename HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::VecHyperelasticity> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 combinedVecResidual()
 {
   return this->combinedVecResidual_;
 }
 
 //! get the PartitionedPetsVec for the solution
-template<typename Term,typename MeshType,int nDisplacementComponents>
-std::shared_ptr<typename HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::VecHyperelasticity> HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+std::shared_ptr<typename HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::VecHyperelasticity> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 combinedVecSolution()
 {
   return this->combinedVecSolution_;
 }
 
-template<typename Term,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::reset()
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::reset()
 {
   this->initialized_ = false;
 }
 
-template<typename Term,typename MeshType,int nDisplacementComponents>
-typename HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::Data &HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+typename HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::Data &HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 data()
 {
   return data_;
 }
 
 //! get a pointer to the dirichlet boundary conditions object
-template<typename Term,typename MeshType,int nDisplacementComponents>
-std::shared_ptr<DirichletBoundaryConditions<typename HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::DisplacementsFunctionSpace,nDisplacementComponents>>
-HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+std::shared_ptr<DirichletBoundaryConditions<typename HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::DisplacementsFunctionSpace,nDisplacementComponents>>
+HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 dirichletBoundaryConditions()
 {
   return dirichletBoundaryConditions_;
 }
 
 //! set new neumann bc's = traction for the next solve
-template<typename Term,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
-updateNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<typename HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> newNeumannBoundaryConditions)
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+updateNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<typename HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> newNeumannBoundaryConditions)
 {
   neumannBoundaryConditions_ = newNeumannBoundaryConditions;
 
@@ -537,16 +537,16 @@ updateNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<typena
 }
 
 //! set new dirichlet boundary condition values for existing dofs
-template<typename Term,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 updateDirichletBoundaryConditions(std::vector<std::pair<global_no_t,std::array<double,3>>> newDirichletBCValues)
 {
   bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
   combinedVecSolution_->updateDirichletBoundaryConditions(newDirichletBCValues, inputMeshIsGlobal);
 }
 
-template<typename Term,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 addDirichletBoundaryConditions(std::vector<typename DirichletBoundaryConditions<DisplacementsFunctionSpace,nDisplacementComponents>::ElementWithNodes> &boundaryConditionElements, bool overwriteBcOnSameDof)
 {
   LOG(DEBUG) << "addDirichletBoundaryConditions, Term: " << StringUtility::demangle(typeid(Term).name());
@@ -631,8 +631,8 @@ addDirichletBoundaryConditions(std::vector<typename DirichletBoundaryConditions<
   ierr = VecAssemblyEnd(solverVariableSolution_); CHKERRV(ierr);
 }
 
-template<typename Term,typename MeshType,int nDisplacementComponents>
-Vec HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+Vec HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 currentState()
 {
   return solverVariableSolution_;

@@ -10,8 +10,8 @@
 namespace TimeSteppingScheme
 {
 
-template<typename Term,typename MeshType>
-DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 DynamicHyperelasticitySolver(DihuContext context) :
   TimeSteppingScheme(context["DynamicHyperelasticitySolver"]), hyperelasticitySolver_(context, "DynamicHyperelasticitySolver"), data_(context_)
 {
@@ -24,8 +24,8 @@ DynamicHyperelasticitySolver(DihuContext context) :
   this->outputWriterManager_.initialize(this->context_["dynamic"], this->context_["dynamic"].getPythonConfig());
 }
 
-template<typename Term,typename MeshType>
-void DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 initialize()
 {
   TimeSteppingScheme::initialize();
@@ -91,8 +91,8 @@ initialize()
   //hyperelasticitySolver_.debug();
 }
 
-template<typename Term,typename MeshType>
-void DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 callUpdateDirichletBoundaryConditionsFunction(double t)
 {
   if (pythonUpdateDirichletBoundaryConditionsFunction_ == NULL)
@@ -127,8 +127,8 @@ callUpdateDirichletBoundaryConditionsFunction(double t)
   Py_CLEAR(arglist);
 }
 
-template<typename Term,typename MeshType>
-void DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 updateDirichletBoundaryConditions(std::vector<std::pair<global_no_t,std::array<double,6>>> newDirichletBCValues)
 {
   // set the new DirichletBC values
@@ -136,8 +136,8 @@ updateDirichletBoundaryConditions(std::vector<std::pair<global_no_t,std::array<d
   uvp_->updateDirichletBoundaryConditions(newDirichletBCValues, inputMeshIsGlobal_);
 }
 
-template<typename Term,typename MeshType>
-void DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 addDirichletBoundaryConditions(std::vector<typename SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpace,6>::ElementWithNodes> &boundaryConditionElements, bool overwriteBcOnSameDof)
 {
   hyperelasticitySolver_.addDirichletBoundaryConditions(boundaryConditionElements, overwriteBcOnSameDof);
@@ -156,8 +156,8 @@ addDirichletBoundaryConditions(std::vector<typename SpatialDiscretization::Diric
 
 }
 
-template<typename Term,typename MeshType>
-void DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 callUpdateNeumannBoundaryConditionsFunction(double t)
 {
   if (pythonUpdateNeumannBoundaryConditionsFunction_ == NULL)
@@ -193,8 +193,8 @@ callUpdateNeumannBoundaryConditionsFunction(double t)
   Py_CLEAR(arglist);
 }
 
-template<typename Term,typename MeshType>
-void DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 setInitialValues()
 {
   // set initial values as given in settings, or set to zero if not given
@@ -268,8 +268,8 @@ setInitialValues()
   //uvp_->setRepresentationGlobal();
 }
 
-template<typename Term,typename MeshType>
-void DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 advanceTimeSpan()
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
@@ -334,8 +334,8 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
 
-template<typename Term,typename MeshType>
-void DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 run()
 {
   // initialize everything
@@ -344,22 +344,22 @@ run()
   this->advanceTimeSpan();
 }
 
-template<typename Term,typename MeshType>
-typename DynamicHyperelasticitySolver<Term,MeshType>::Data &DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+typename DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::Data &DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 data()
 {
   return data_;
 }
 
-template<typename Term,typename MeshType>
-Vec DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+Vec DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 currentState()
 {
   return uvp_->valuesGlobal();
 }
 
-template<typename Term,typename MeshType>
-typename DynamicHyperelasticitySolver<Term,MeshType>::HyperelasticitySolverType &DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+typename DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::HyperelasticitySolverType &DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 hyperelasticitySolver()
 {
   return hyperelasticitySolver_;

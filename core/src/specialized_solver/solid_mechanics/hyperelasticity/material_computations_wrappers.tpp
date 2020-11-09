@@ -5,8 +5,8 @@
 namespace SpatialDiscretization
 {
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
-bool HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+bool HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 materialComputeInternalVirtualWork(
   std::shared_ptr<VecHyperelasticity> displacements,
   std::shared_ptr<VecHyperelasticity> internalVirtualWork
@@ -38,8 +38,8 @@ materialComputeInternalVirtualWork(
   return successful;
 }
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 solveForDisplacements(
   std::shared_ptr<VecHyperelasticity> externalVirtualWork,
   std::shared_ptr<VecHyperelasticity> displacements
@@ -62,8 +62,8 @@ solveForDisplacements(
   ierr = VecSwap(result, solverVariableSolution_); CHKERRV(ierr);
 }
 
-template<typename Term,typename MeshType, int nDisplacementComponents>
-void HyperelasticitySolver<Term,MeshType,nDisplacementComponents>::
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 solveDynamicProblem(
   std::shared_ptr<VecHyperelasticity> displacementsVelocitiesPressure, bool isFirstTimeStep,
   Vec internalVirtualWork, Vec &externalVirtualWorkDead, Vec accelerationTerm

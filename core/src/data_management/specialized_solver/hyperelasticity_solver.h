@@ -181,9 +181,9 @@ public:
     std::shared_ptr<DisplacementsFieldVariableType>,  // velocities_
     std::shared_ptr<DisplacementsFieldVariableType>,  // material traction
     std::shared_ptr<StressFieldVariableType>,         // pK2Stress_
-    std::shared_ptr<DisplacementsFieldVariableType>,  // deformationGradient_
-    std::shared_ptr<DisplacementsFieldVariableType>,  // deformationGradientTimeDerivative_
-    std::shared_ptr<DisplacementsFieldVariableType>   // pK1Stress_
+    std::shared_ptr<DeformationGradientFieldVariableType>,  // deformationGradient_
+    std::shared_ptr<DeformationGradientFieldVariableType>,  // deformationGradientTimeDerivative_
+    std::shared_ptr<DeformationGradientFieldVariableType>   // pK1Stress_
   >
   FieldVariablesForOutputWriter;
 

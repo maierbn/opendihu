@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
   DihuContext settings(argc, argv);
   
   // define problem
-  PreciceAdapter::ContractionDirichletBoundaryConditions<
+  Control::PreciceAdapter<
     Control::Coupling<
       Control::MultipleInstances<
         OperatorSplitting::Godunov<

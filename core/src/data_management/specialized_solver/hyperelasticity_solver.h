@@ -128,6 +128,8 @@ protected:
   std::shared_ptr<DisplacementsFieldVariableType> fiberDirection_;                //< interpolated direction of fibers
   std::shared_ptr<DisplacementsFieldVariableType> materialTraction_;              //< T, the traction in reference configuration, for z- and z+ surfaces (top and bottom of mesh)
   std::shared_ptr<DeformationGradientFieldVariableType> pK1Stress_;               //< the unsymmetric PK1 stress tensor P=FS, this variable is only used internally for the output files
+  std::shared_ptr<DeformationGradientFieldVariableType> cauchyStress_;               //< the unsymmetric Cauchy stress tensor σ=J^-1 P F^T, this variable is only used internally for the output files
+  std::shared_ptr<FieldVariable::FieldVariable<DisplacementsFunctionSpace,1>> deformationGradientDeterminant_;  //< the determinant of the deformation gradient, J=det F
 };
 
 /** Helper class that outputs the field variables for the output writer.
@@ -183,7 +185,9 @@ public:
     std::shared_ptr<StressFieldVariableType>,         // pK2Stress_
     std::shared_ptr<DeformationGradientFieldVariableType>,  // deformationGradient_
     std::shared_ptr<DeformationGradientFieldVariableType>,  // deformationGradientTimeDerivative_
-    std::shared_ptr<DeformationGradientFieldVariableType>   // pK1Stress_
+    std::shared_ptr<DeformationGradientFieldVariableType>,  // pK1Stress_
+    std::shared_ptr<DeformationGradientFieldVariableType>,   // Cauchy stress
+    std::shared_ptr<FieldVariable::FieldVariable<DisplacementsFunctionSpace,1>>   // determinant of the material deformation gradient
   >
   FieldVariablesForOutputWriter;
 
@@ -243,7 +247,9 @@ public:
     std::shared_ptr<DisplacementsFieldVariableType>,  // material traction
     std::shared_ptr<DeformationGradientFieldVariableType>,  // deformationGradient_
     std::shared_ptr<DeformationGradientFieldVariableType>,  // deformationGradientTimeDerivative_
-    std::shared_ptr<DeformationGradientFieldVariableType>   // pK1Stress_
+    std::shared_ptr<DeformationGradientFieldVariableType>,  // pK1Stress_
+    std::shared_ptr<DeformationGradientFieldVariableType>,  // Cauchy stress
+    std::shared_ptr<FieldVariable::FieldVariable<DisplacementsFunctionSpace,1>>   // determinant of the material deformation gradient
   >
   FieldVariablesForOutputWriter;
 

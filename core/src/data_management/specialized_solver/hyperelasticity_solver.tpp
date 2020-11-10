@@ -62,6 +62,9 @@ createPetscObjects()
   {
     std::vector<std::string> componentNamesP{"P_11", "P_12", "P_13", "P_21", "P_22", "P_23", "P_31", "P_32", "P_33"};
     pK1Stress_               = this->displacementsFunctionSpace_->template createFieldVariable<9>("P (PK1 stress)", componentNamesP);
+    std::vector<std::string> componentNamesSigma{"σ_11", "σ_12", "σ_13", "σ_21", "σ_22", "σ_23", "σ_31", "σ_32", "σ_33"};
+    cauchyStress_            = this->displacementsFunctionSpace_->template createFieldVariable<9>("σ (Cauchy stress)", componentNamesSigma);
+    deformationGradientDeterminant_ = this->displacementsFunctionSpace_->template createFieldVariable<1>("J");     // J=det(F)
   }
 }
 
@@ -315,7 +318,7 @@ computePk1Stress()
     double Fzx = deformationGradientValues[dofNoLocal][6];
     double Fzy = deformationGradientValues[dofNoLocal][7];
     double Fzz = deformationGradientValues[dofNoLocal][8];
-    Tensor2<3> deformationGradient{Vec3{Fxx, Fxy, Fxz}, Vec3{Fyx, Fyy, Fyz}, Vec3{Fzx, Fzy, Fzz}};
+    Tensor2<3> deformationGradient{Vec3{Fxx, Fyx, Fzx}, Vec3{Fxy, Fyy, Fzy}, Vec3{Fxz, Fyz, Fzz}};
 
     // PK2 stress tensor S (symmetric)
     double Sx = pK2StressValues[dofNoLocal][0];
@@ -324,16 +327,35 @@ computePk1Stress()
     double Sxy = pK2StressValues[dofNoLocal][3];
     double Syz = pK2StressValues[dofNoLocal][4];
     double Sxz = pK2StressValues[dofNoLocal][5];
-    Tensor2<3> pK2Stress{Vec3{Sx,Sxy, Sxz}, Vec3{Sxy, Sy, Syz}, Vec3{Sxz, Syz, Sz}};
+    Tensor2<3> pK2Stress{Vec3{Sx, Sxy, Sxz}, Vec3{Sxy, Sy, Syz}, Vec3{Sxz, Syz, Sz}};
 
     // compute PK1 stress tensor P = F*S (unsymmetric)
     Tensor2<3> pK1Stress = deformationGradient * pK2Stress;
 
-    // store resulting value of the PK1 stress tensor
+    // store resulting value of the PK1 stress tensor (row-major)
     this->pK1Stress_->setValue(dofNoLocal, VecD<9>{
-      pK1Stress[0][0], pK1Stress[0][1], pK1Stress[0][2],
-      pK1Stress[1][0], pK1Stress[1][1], pK1Stress[1][2],
-      pK1Stress[2][0], pK1Stress[2][1], pK1Stress[2][2]
+      pK1Stress[0][0], pK1Stress[1][0], pK1Stress[2][0],
+      pK1Stress[0][1], pK1Stress[1][1], pK1Stress[2][1],
+      pK1Stress[0][2], pK1Stress[1][2], pK1Stress[2][2]
+    });
+
+    // compute J = determinant of F
+    double detF = MathUtility::computeDeterminant(deformationGradient);
+    this->deformationGradientDeterminant_->setValue(dofNoLocal, detF);
+
+    // compute Cauchy stress σ = J^-1 P F^T (unsymmetric)
+    Tensor2<3> cauchyStress = 1./detF * pK1Stress * MathUtility::computeTranspose(deformationGradient);
+    if (fabs(detF) < 1e-12)
+    {
+      detF = 3;
+      cauchyStress = Tensor2<3>{};
+    }
+
+    // store resulting value of the cauchy stress tensor (row-major)
+    this->cauchyStress_->setValue(dofNoLocal, VecD<9>{
+      cauchyStress[0][0], cauchyStress[1][0], cauchyStress[2][0],
+      cauchyStress[0][1], cauchyStress[1][1], cauchyStress[2][1],
+      cauchyStress[0][2], cauchyStress[1][2], cauchyStress[2][2]
     });
   }
 }
@@ -381,7 +403,9 @@ getFieldVariablesForOutputWriter()
     std::shared_ptr<StressFieldVariableType>(this->pK2Stress_),         // pK2Stress_
     std::shared_ptr<DeformationGradientFieldVariableType>(this->deformationGradient_),
     std::shared_ptr<DeformationGradientFieldVariableType>(this->deformationGradientTimeDerivative_),
-    std::shared_ptr<DeformationGradientFieldVariableType>(this->pK1Stress_)
+    std::shared_ptr<DeformationGradientFieldVariableType>(this->pK1Stress_),
+    std::shared_ptr<DeformationGradientFieldVariableType>(this->cauchyStress_),
+    std::shared_ptr<FieldVariable::FieldVariable<DisplacementsFunctionSpace,1>>(this->deformationGradientDeterminant_)
   );
 }
 
@@ -423,7 +447,9 @@ getFieldVariablesForOutputWriter()
     std::shared_ptr<DisplacementsFieldVariableType>(this->materialTraction_),
     std::shared_ptr<DeformationGradientFieldVariableType>(this->deformationGradient_),
     std::shared_ptr<DeformationGradientFieldVariableType>(this->deformationGradientTimeDerivative_),
-    std::shared_ptr<DeformationGradientFieldVariableType>(this->pK1Stress_)
+    std::shared_ptr<DeformationGradientFieldVariableType>(this->pK1Stress_),
+    std::shared_ptr<DeformationGradientFieldVariableType>(this->cauchyStress_),
+    std::shared_ptr<FieldVariable::FieldVariable<DisplacementsFunctionSpace,1>>(this->deformationGradientDeterminant_)
   );
 }
 

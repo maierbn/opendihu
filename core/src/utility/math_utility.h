@@ -120,6 +120,10 @@ Tensor2<2,double_v_t> computeCofactorMatrix(const Tensor2<2,double_v_t> &matrix)
 template<typename double_v_t>
 Tensor2<3,double_v_t> computeCofactorMatrix(const Tensor2<3,double_v_t> &matrix);
 
+//! computes the transpose matrix
+template<typename double_v_t>
+Tensor2<3,double_v_t> computeTranspose(const Tensor2<3,double_v_t> &matrix);
+
 //! transform a 3xD2 matrix to a DxD matrix by filling up with identity entries
 template<int D, int D2>
 std::array<std::array<double,D>,D> transformToDxD(const std::array<Vec3,D2> &matrix);

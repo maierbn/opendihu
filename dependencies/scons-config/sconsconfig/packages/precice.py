@@ -86,7 +86,7 @@ class precice(Package):
     # only build boost if it was not yet build
     self.set_build_handler([
       'mkdir -p ${PREFIX}/include',
-      'cd ${SOURCE_DIR} && wget http://bitbucket.org/eigen/eigen/get/3.3.7.tar.bz2 && tar xf 3.3.7.tar.bz2 && ln -s ${SOURCE_DIR}/eigen-eigen-323c052e1731/Eigen ${PREFIX}/include/Eigen',   # eigen
+      'cd ${SOURCE_DIR} && wget https://gitlab.com/libeigen/eigen/-/archive/3.3.8/eigen-3.3.8.tar.gz && tar xf eigen-3.3.8.tar.gz && ln -s ${SOURCE_DIR}/eigen-3.3.8/Eigen ${PREFIX}/include/Eigen',   # eigen
       '[ ! -d ${PREFIX}/include/boost ] && (cd ${SOURCE_DIR} && [ ! -f ${SOURCE_DIR}/boost_1_65_1.tar.gz ] && ( wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz && tar xf boost_1_65_1.tar.gz ); \
       cd boost_1_65_1 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test --prefix=${PREFIX} && \
       ./b2 install )',

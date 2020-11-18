@@ -237,7 +237,6 @@ global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionTyp
 beginNodeGlobalNatural(int coordinateDirection, int partitionIndex) const
 {
   //for degenerate mesh
-	//for degenerate mesh
   if (isDegenerate_)
     return 0;
 

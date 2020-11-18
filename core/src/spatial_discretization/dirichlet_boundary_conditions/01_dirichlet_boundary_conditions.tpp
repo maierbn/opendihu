@@ -17,6 +17,13 @@ initializeGhostElements()
   const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
 
+  // boundaryConditionElements_ has to be set prior to this method
+
+  // clear all variables that will be set in this function
+  foreignGhostElements_.clear();
+  nElementsFromRanks_.clear();
+  ownGhostElements_.clear();
+
   // determine own ghost elements that can be send to other ranks
   // loop over elements that have nodes with prescribed boundary conditions, only for those the integral term is non-zero
   for (typename std::vector<typename DirichletDirichletBoundaryConditionsBase<FunctionSpaceType,nComponents>::ElementWithNodes>::const_iterator iter = this->boundaryConditionElements_.cbegin();
@@ -142,7 +149,7 @@ initializeGhostElements()
     int nGhostElements = ghostElement.second.size();
     localMemory[foreignRankNo] = nGhostElements;
 
-    VLOG(1) << "put value " << localMemory[foreignRankNo] << " to rank " << foreignRankNo << ", offset " << ownRankNo;
+    LOG(DEBUG) << "put value " << localMemory[foreignRankNo] << " to rank " << foreignRankNo << ", offset " << ownRankNo;
 
     // start passive target communication (see http://www.mcs.anl.gov/research/projects/mpi/mpi-standard/mpi-report-2.0/node126.htm for introduction)
     MPIUtility::handleReturnValue(MPI_Win_lock(MPI_LOCK_SHARED, foreignRankNo, 0, mpiMemoryWindow), "MPI_Win_lock");
@@ -157,7 +164,7 @@ initializeGhostElements()
   //std::vector<std::pair<int,int>> nElementsFromRanks_;   /// (foreignRank,nElements), number of elements to receive from foreignRank
   for (int i = 0; i < nRanks; i++)
   {
-    VLOG(1) << " rank " << i << " nGhostElements: " << remoteAccessibleMemory[i];
+    LOG(DEBUG) << " rank " << i << " nGhostElements: " << remoteAccessibleMemory[i];
     if (remoteAccessibleMemory[i] > 0)
     {
       nElementsFromRanks_.push_back(std::pair<int,int>(i,remoteAccessibleMemory[i]));
@@ -167,7 +174,7 @@ initializeGhostElements()
   // deallocate mpi memory
   MPIUtility::handleReturnValue(MPI_Win_free(&mpiMemoryWindow), "MPI_Win_free");
 
-  VLOG(1) << "after fence, nElementsFromRanks_: " << nElementsFromRanks_;
+  LOG(DEBUG) << "after fence, nElementsFromRanks_: " << nElementsFromRanks_;
 
   // send lengths of arrays in ghost elements
   std::vector<std::vector<int>> sendBuffer(foreignGhostElements_.size());
@@ -199,6 +206,8 @@ initializeGhostElements()
       MPI_Request sendRequest;
       MPIUtility::handleReturnValue(MPI_Isend(sendBuffer[i].data(), nGhostElements*2, MPI_INT, foreignRankNo, 0, communicator, &sendRequest), "MPI_Isend");
       sendRequests.push_back(sendRequest);
+      LOG(DEBUG) << "send " << nGhostElements << " ghost elements to foreign rank " << foreignRankNo
+        << ", now sendRequests has " << sendRequests.size() << " entries";
     }
   }
 
@@ -219,6 +228,8 @@ initializeGhostElements()
       MPI_Request receiveRequest;
       MPIUtility::handleReturnValue(MPI_Irecv(receiveBuffer[i].data(), nGhostElementsFromRank*2, MPI_INT, foreignRankNo, 0, communicator, &receiveRequest), "MPI_Irecv");
       receiveRequests.push_back(receiveRequest);
+      LOG(DEBUG) << "receive " << nGhostElementsFromRank << " ghost elements from foreign Rank " << foreignRankNo
+        << ", now receiveRequests has " << receiveRequests.size() << " entries";
     }
   }
 

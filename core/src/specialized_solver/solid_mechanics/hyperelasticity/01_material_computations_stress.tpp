@@ -609,7 +609,10 @@ computePK2StressField()
         LOG(FATAL) << "deformationGradientDeterminant contains nan: " << deformationGradientDeterminant;
 
       if (MathUtility::containsNanOrInf(reducedInvariants))
-        LOG(FATAL) << "reducedInvariants contains nan: " << reducedInvariants << ", deformationGradient: " << deformationGradient << ", deformationGradientDeterminant: " << deformationGradientDeterminant;
+        LOG(FATAL) << "reducedInvariants contains nan: " << reducedInvariants
+          << ", invariants: " << invariants << ", deformationGradient: " << deformationGradient
+          << ", deformationGradientDeterminant: " << deformationGradientDeterminant
+          << ", rightCauchyGreenDeterminant: " << rightCauchyGreenDeterminant << ", rightCauchyGreen: " << rightCauchyGreen;
 
       if (MathUtility::containsNanOrInf(pressure))
         LOG(FATAL) << "pressure contains nan: " << pressure;

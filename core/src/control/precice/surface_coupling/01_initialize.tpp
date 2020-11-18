@@ -77,7 +77,10 @@ initialize()
   // initialize Dirichlet boundary conditions at all dofs that will get some prescribed values during coupling
   initializeDirichletBoundaryConditions();
 
+  // parse scalingFactor from settings
   scalingFactor_ = this->specificSettings_.getOptionDouble("scalingFactor", 1);
+
+  // determine maximum timestep size
   maximumPreciceTimestepSize_ = std::max(maximumPreciceTimestepSize_, preciceSolverInterface_->initialize());
 
   timeStepWidth_ = this->specificSettings_.getOptionDouble("timestepWidth", 0.01, PythonUtility::Positive);
@@ -137,48 +140,67 @@ initializePreciceMeshes()
       LOG(FATAL) << currentMeshConfig << "[\"face\"] is \"" << face << "\", valid values are: \"2-\", \"2+\".";
     }
 
-    // store number of nodes
-    preciceMesh->nNodesLocal = nNodesX * nNodesY;
 
-    // collect node positions for all surface nodes of the coupling surface
-    std::vector<double> geometryValuesSurface(3*preciceMesh->nNodesLocal);
-
-    // resize buffer for the local dof nos in the 3D mesh of the surface mesh
-    preciceMesh->dofNosLocal.resize(preciceMesh->nNodesLocal);
-
-    int nodeIndexZ = 0;
-    if (face == "2+")
+    // check if there are any local nodes of the surface on the local partition
+    bool localDomainHasPartOfSurface = true;
+    if (preciceMesh->face == PreciceMesh::face2Minus && functionSpace_->meshPartition()->ownRankPartitioningIndex(2) > 0)
     {
-      nodeIndexZ = (nNodesZ-1);
+      localDomainHasPartOfSurface = false;
+    }
+    else if (preciceMesh->face == PreciceMesh::face2Plus && functionSpace_->meshPartition()->ownRankPartitioningIndex(2) < functionSpace_->meshPartition()->nRanks(2)-1)
+    {
+      localDomainHasPartOfSurface = false;
     }
 
-    // loop over nodes
-    for (int nodeIndexY = 0; nodeIndexY < nNodesY; nodeIndexY++)
+    if (localDomainHasPartOfSurface)
     {
-      for (int nodeIndexX = 0; nodeIndexX < nNodesX; nodeIndexX++)
+      // store number of nodes
+      preciceMesh->nNodesLocal = nNodesX * nNodesY;
+
+      // collect node positions for all surface nodes of the coupling surface
+      std::vector<double> geometryValuesSurface(3*preciceMesh->nNodesLocal);
+
+      // resize buffer for the local dof nos in the 3D mesh of the surface mesh
+      preciceMesh->dofNosLocal.resize(preciceMesh->nNodesLocal);
+
+      int nodeIndexZ = 0;
+      if (face == "2+")
       {
-        node_no_t surfaceDofNo = nodeIndexY * nNodesX + nodeIndexX;
-        dof_no_t dofNoLocal =
-          nodeIndexZ * nNodesX * nNodesY
-          + nodeIndexY * nNodesX
-          + nodeIndexX;
+        nodeIndexZ = (nNodesZ-1);
+      }
 
-        preciceMesh->dofNosLocal[surfaceDofNo] = dofNoLocal;
-
-        for (int i = 0; i < 3; i++)
+      // loop over nodes
+      for (int nodeIndexY = 0; nodeIndexY < nNodesY; nodeIndexY++)
+      {
+        for (int nodeIndexX = 0; nodeIndexX < nNodesX; nodeIndexX++)
         {
-          geometryValuesSurface[3*surfaceDofNo + i] = geometryValues[dofNoLocal][i];
+          node_no_t surfaceDofNo = nodeIndexY * nNodesX + nodeIndexX;
+          dof_no_t dofNoLocal =
+            nodeIndexZ * nNodesX * nNodesY
+            + nodeIndexY * nNodesX
+            + nodeIndexX;
+
+          preciceMesh->dofNosLocal[surfaceDofNo] = dofNoLocal;
+
+          for (int i = 0; i < 3; i++)
+          {
+            geometryValuesSurface[3*surfaceDofNo + i] = geometryValues[dofNoLocal][i];
+          }
         }
       }
+
+      // resize buffer for vertex ids
+      preciceMesh->preciceVertexIds.resize(preciceMesh->nNodesLocal);
+
+      // give the node positions to precice and get the vertex ids
+      // void precice::SolverInterface::setMeshVertices(int meshID, int size, const double *positions, int *ids)
+      preciceSolverInterface_->setMeshVertices(preciceMesh->preciceMeshId, preciceMesh->nNodesLocal, geometryValuesSurface.data(), preciceMesh->preciceVertexIds.data());
     }
-
-    // resize buffer for vertex ids
-    preciceMesh->preciceVertexIds.resize(preciceMesh->nNodesLocal);
-
-    // give the node positions to precice get the vertex ids
-    // void precice::SolverInterface::setMeshVertices(int	meshID, int	size, const double *positions, int *ids)
-    preciceSolverInterface_->setMeshVertices(preciceMesh->preciceMeshId, preciceMesh->nNodesLocal, geometryValuesSurface.data(), preciceMesh->preciceVertexIds.data());
-
+    else
+    {
+      // there are no local nodes of this surface
+      preciceMesh->nNodesLocal = 0;
+    }
 
     // store the precice mesh to the vector of meshes
     preciceMeshes_.push_back(preciceMesh);

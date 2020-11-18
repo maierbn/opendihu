@@ -39,6 +39,7 @@ protected:
     int preciceMeshId;                        //< mesh ID of precice of the surface mesh that contains all nodes
     std::vector<int> preciceVertexIds;        //< the vertex ids in precice of the geometry values
     std::vector<dof_no_t> dofNosLocal;        //< the local dof nos in the 3D mesh of the surface mesh nodes
+    std::vector<double> geometryValuesSurface;  //< the geometry values, i.e., node positions
 
     int nNodesLocal;                          //< local number of nodes on the surface where the tendon is coupled
     enum {
@@ -72,8 +73,11 @@ protected:
     std::shared_ptr<PreciceMesh> preciceMesh; //< the coupling mesh, this is derived from the option preciceMeshName
   };
 
-  //! parse the options in "preciceMeshes" and initialize all meshes in precice, store in variable preciceMeshes_
+  //! parse the options in "preciceMeshes" and store in variable preciceMeshes_
   void initializePreciceMeshes();
+
+  //! initialize all meshes in precice from the variable preciceMeshes_
+  void setMeshesInPrecice();
 
   //! parse the options in "preciceData" and initialize all variables in precice, store in variable preciceData_
   void initializePreciceData();
@@ -98,6 +102,7 @@ protected:
 
 #endif
 
+  bool ownRankIsInvolved_;                    //< if the own rank has part of a coupling surface and is involved in the coupling
   bool couplingEnabled_;                      //< if the coupling is enabled, if not it can be used for debugging, without precice
   double maximumPreciceTimestepSize_;         //< maximum timestep size that precice will allow for the current time step
   double timeStepWidth_;                      //< timestep width of the solver

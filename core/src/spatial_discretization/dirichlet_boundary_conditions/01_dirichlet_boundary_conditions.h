@@ -71,6 +71,7 @@ protected:
     std::vector<ValueType> boundaryConditionValues;                //< the prescribed value, corresponding to boundaryConditionDofsGlobalPetsc
   };
   
+  // the following variables will be set by initializeGhostElements()
   std::map<int,std::vector<GhostElement>> foreignGhostElements_;   //< ghost elements that are normal elements on this rank, key is the rankNo of the rank to send them to
   std::vector<GhostElement> ownGhostElements_;                     //< the ghost elements for this rank
 

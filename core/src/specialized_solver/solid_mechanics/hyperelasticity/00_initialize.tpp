@@ -777,7 +777,7 @@ setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
     values.resize(nEntries);
     combinedVecSolution_->getValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
 
-    //if (VLOG_IS_ON(1))
+    if (VLOG_IS_ON(1))
       LOG(DEBUG) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, " << nEntries << " u values: " << values;
 
     u->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());

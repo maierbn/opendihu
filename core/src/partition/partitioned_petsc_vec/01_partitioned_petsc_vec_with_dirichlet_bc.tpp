@@ -89,7 +89,7 @@ valuesGlobal()
 
   VLOG(2) << "\"" << this->name_ << "\" valuesGlobal()";
 
-  LOG(DEBUG) << "valuesGlobal, return vectorCombinedWithoutDirichletDofsGlobal_";
+  //LOG(DEBUG) << "valuesGlobal, return vectorCombinedWithoutDirichletDofsGlobal_";
 
   return vectorCombinedWithoutDirichletDofsGlobal_;
 }

@@ -265,6 +265,14 @@ computeReducedInvariants(const std::array<double_v_t,5> invariants, const double
     reducedInvariants[3] = MathUtility::pow(deformationGradientDeterminant, factor23) * invariants[3];
     reducedInvariants[4] = MathUtility::pow(deformationGradientDeterminant, factor43) * invariants[4];
   }
+#ifndef NDEBUG
+  else
+  {
+    reducedInvariants[2] = 1;
+    reducedInvariants[3] = 0;
+    reducedInvariants[4] = 0;
+  }
+#endif
 
   if (Vc::any_of(deformationGradientDeterminant <= 0))
   {

@@ -58,9 +58,9 @@ if new_max_level != max_level:
       format(max_level, new_max_level, n_ranks, max_level, 8**max_level, new_max_level, 8**new_max_level))
   max_level = new_max_level
 
-scenario_name = "{}{}{}{}".format(refinement, "I" if improve_mesh else "n","G" if use_gradient_field else "n", "_neumann" if use_neumann_bc else "_dirichlet")
+scenario_name = "l{}_m{}_q{}{}{}{}".format(max_level, n_fine_grid_fibers, refinement, "I" if improve_mesh else "n","G" if use_gradient_field else "n", "_neumann" if use_neumann_bc else "_dirichlet")
 if args["output_filename"] == "":
-  output_filename = "0x0fibers_{}_out.bin".format(scenario_name)
+  output_filename = "0x0fibers_{}.bin".format(scenario_name)
 else:
   output_filename = args["output_filename"]
 

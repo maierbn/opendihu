@@ -388,6 +388,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
 #endif
 
   // laplacian smoothing on key fibers
+  LOG(INFO) << "Perform " << laplacianSmoothingNIterations_ << " iterations of Laplacian smoothing on the (" << nBorderPointsXNew_-1 << "x" << nBorderPointsXNew_-1 << " grid).";
   for (int iterationNo = 0; iterationNo < laplacianSmoothingNIterations_; iterationNo++)
   {
     for (int j = 1; j < nBorderPointsXNew_-2; j++)

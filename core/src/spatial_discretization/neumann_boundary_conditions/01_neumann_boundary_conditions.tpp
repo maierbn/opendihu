@@ -141,14 +141,14 @@ initializeRhs()
            dofVectorsIter++)
       {
         int dofIndex = dofVectorsIter->first;
-        VecD<nComponents> neumannValue = dofVectorsIter->second;   // this is the prescribed value, either a scalar of the flux or the traction vector
+        VecD<nComponents,double> neumannValue = dofVectorsIter->second;   // this is the prescribed value, either a scalar of the flux or the traction vector
 
         // if it is a traction vector given in actual configuration, convert it to reference configuration
         if (nComponents == 3 && !elementIter->isInReferenceConfiguration)
         {
 
           // column major storage of deformation gradient as a Tensor2<3>
-          Tensor2<3> deformationGradient{
+          Tensor2<3,double> deformationGradient{
             Vec3{deformationGradientAtXi[0], deformationGradientAtXi[3], deformationGradientAtXi[6]},
             Vec3{deformationGradientAtXi[1], deformationGradientAtXi[4], deformationGradientAtXi[7]},
             Vec3{deformationGradientAtXi[2], deformationGradientAtXi[5], deformationGradientAtXi[8]}};
@@ -156,11 +156,17 @@ initializeRhs()
           // compute inverse of deformation gradient
           const double approximateMeshWidth = 1;
           double deformationGradientDeterminant;
-          Tensor2<3> deformationGradientInverse = MathUtility::computeInverse(deformationGradient, approximateMeshWidth, deformationGradientDeterminant);
+          Tensor2<3,double> deformationGradientInverse = MathUtility::computeInverse(deformationGradient, approximateMeshWidth, deformationGradientDeterminant);
 
           // compute matrix*vector product T = F^-1*t  (T=neumannValue, F=deformationGradient, t=tractionInCurrentConfiguration)
-          VecD<nComponents> oldNeumannValue = neumannValue;
-          neumannValue = deformationGradientInverse * oldNeumannValue;
+          VecD<3,double> oldNeumannValue, newNeumannValue;
+          for (int i = 0; i < nComponents; i++)
+            oldNeumannValue[i] = neumannValue[i];
+
+          newNeumannValue = deformationGradientInverse * oldNeumannValue;
+
+          for (int i = 0; i < nComponents; i++)
+            neumannValue[i] = newNeumannValue[i];
 
           //VLOG(1) << "el " << elementNoLocal << ", xi: " << xi
           //  << ", F: " << deformationGradient << ", F^-1: " << deformationGradientInverse << ", traction t: " << oldNeumannValue << " -> T: " << neumannValue;

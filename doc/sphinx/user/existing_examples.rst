@@ -1779,10 +1779,11 @@ fibers_contraction/with_tendons_precice
 .. figure:: examples/model_schematic_fibers_contraction_with_tendons_precice.svg
   :width: 100%
   
-This example uses precice to couple the muscle and tendon solvers. The muscle material is incompressible hyperelastic, the tendon material is compressible hyperelastic.
-There are different scenarios with different coupling schemes.
+This example uses precice to couple the muscle and tendon solvers. 
+The muscle material is incompressible hyperelastic. The tendon material is compressible hyperelastic. Either an isotropic linear Saint-Venant Kirchhoff material or the anisotropic tendon material is used.
+There are different scenarios with different material models and different coupling schemes.
 
-Precice needs to be enabled in the `user-variables.scons.py` file.
+Precice needs to be enabled in the `user-variables.scons.py` file. The example
 
 .. code-block:: bash
   
@@ -1822,9 +1823,7 @@ Precice needs to be enabled in the `user-variables.scons.py` file.
     
     Reproduction of Fig.4 in of `Carniel et al. (2017) "A transversely isotropic coupled hyperelastic model for the mechanical behavior of tendons"  <https://www.sciencedirect.com/science/article/abs/pii/S0021929017300726?via%3Dihub>`_. Different parametrizations of the tendon material are shown. The plot matches the results very well.
 
-.. note::
-
-  The following examples are under construction at the moment. To use the documentation, checkout an earlier commit before 11/2020.
+  There are other examples where only the tendon (with real geometry or as a box) is computed. Try all directories that start with `only_tendon_`.
 
 * **Explicit Neumann-Dirichlet**
   
@@ -1836,13 +1835,15 @@ Precice needs to be enabled in the `user-variables.scons.py` file.
   Run the muscle and tendon solvers in two separate terminals. They will communicate over precice.
   
   .. code-block:: bash
-    
-    ./muscle ../settings_muscle_neumann_dirichlet.py ramp.py  # (terminal 1)
-    ./tendon ../settings_tendon_neumann_dirichlet.py          # (terminal 2)
+  
+    cd $OPENDIHU_HOME/examples/electrophysiology/fibers/fibers_contraction/with_tendons_precice/neumann_dirichlet
+    ./muscle_precice settings_muscle_neumann_dirichlet.py ramp.py  # (terminal 1)
+    ./tendon_precice_dynamic settings_tendon_neumann_dirichlet.py  # (terminal 2)
 
   The precice settings file is `precice_config_muscle_neumann_tendon_dirichlet.xml`.
 
-  This does not converge, after some timesteps it will fail.
+  This does not converge, after some timesteps it will fail. This is because of the explicit timestepping and the choice that the muscle has the Neumann boundary conditions and the tendon has the Dirichlet boundary conditions.
+  
   
 * **Explicit Dirichlet-Neumann**
   
@@ -1854,23 +1855,38 @@ Precice needs to be enabled in the `user-variables.scons.py` file.
   
   .. code-block:: bash
     
-    ./muscle ../settings_muscle_dirichlet_neumann.py ramp.py  # (terminal 1)
-    ./tendon ../settings_tendon_dirichlet_neumann.py          # (terminal 2)
+    cd $OPENDIHU_HOME/examples/electrophysiology/fibers/fibers_contraction/with_tendons_precice/dirichlet_neumann
+    ./muscle_precice settings_muscle_dirichlet_neumann.py ramp.py  # (terminal 1)
+    ./tendon_precice_dynamic settings_tendon_dirichlet_neumann.py  # (terminal 2)
 
   The precice settings file is `precice_config_muscle_dirichlet_tendon_neumann.xml`.
+  This scenario converges and works better than `Explicit Neumann-Dirichlet`.
   
-  This does not converge, after some timesteps it will fail. But it works better than the Neumann-Dirichlet scenario.
+  Note that there is a variant of this scenario in `dirichlet_neumann_linear` which uses a linear hyperelastic material for the tendon.
   
 * **Implicit Dirichlet-Neumann**
   
-  Same as explicit Dirichlet-Neumann scenario but this time with implicit Neumann-Dirichlet coupling.
+  This is the same as explicit Dirichlet-Neumann scenario but this time with implicit coupling in precice.
   
   .. code-block:: bash
     
-    ./muscle ../settings_muscle_implicit_dirichlet_neumann.py ramp.py  # (terminal 1)
-    ./tendon ../settings_tendon_implicit_dirichlet_neumann.py          # (terminal 2)
+    cd $OPENDIHU_HOME/examples/electrophysiology/fibers/fibers_contraction/with_tendons_precice/implicit_coupling_dirichlet_neumann
+    ./muscle_precice settings_muscle_implicit_dirichlet_neumann.py ramp.py  # (terminal 1)
+    ./tendon_precice_dynamic settings_tendon_implicit_dirichlet_neumann.py  # (terminal 2)
 
-  The precice settings file is `precice_config_muscle_dirichlet_tendon_neumann.xml`.
+  The precice settings file is `precice_config_muscle_dirichlet_tendon_neumann.xml`. This scenario also works.
+  
+* **Linear Implicit Dirichlet-Neumann**
+  
+  This is the same as `Implicit Dirichlet-Neumann` scenario except that it uses a linear Saint-Venant Kirchhoff material for the tendon instead of the nonlinear Tendon material. Note that the tendon is still geometrically nonlinear and therefore needs to be solved by a Newton scheme.
+  
+  .. code-block:: bash
+    
+    cd $OPENDIHU_HOME/examples/electrophysiology/fibers/fibers_contraction/with_tendons_precice/implicit_coupling_dirichlet_neumann_linear
+    ./muscle_precice settings_muscle_implicit_dirichlet_neumann.py ramp.py         # (terminal 1)
+    ./tendon_linear_precice_dynamic settings_tendon_implicit_dirichlet_neumann.py  # (terminal 2)
+
+  This scenario is a bit faster than `Implicit Dirichlet-Neumann`  because of the tendon solver. It also has better convergence properties.
   
 Multidomain
 ^^^^^^^^^^^

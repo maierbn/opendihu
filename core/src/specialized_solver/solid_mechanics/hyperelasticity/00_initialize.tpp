@@ -1,4 +1,4 @@
-#include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/00_initialize.h"
 
 #include <Python.h>  // has to be the first included header
 
@@ -9,15 +9,16 @@
 #include "control/diagnostic_tool/performance_measurement.h"
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 #include "partition/mesh_partition/01_mesh_partition_structured.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/02_petsc_callbacks.h"
 
 namespace SpatialDiscretization
 {
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
-HyperelasticitySolver(DihuContext context, std::string settingsKey) :
+HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+HyperelasticityInitialize(DihuContext context, std::string settingsKey) :
   context_(context[settingsKey]), data_(context_), pressureDataCopy_(context_), initialized_(false),
-  endTime_(0), lastNorm_(0), secondLastNorm_(0), currentLoadFactor_(1.0), lastSolveSucceeded_(true), nNonZerosJacobian_(0)
+  endTime_(0), lastNorm_(0), secondLastNorm_(0), currentLoadFactor_(1.0), nNonZerosJacobian_(0)
 {
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();
@@ -77,51 +78,7 @@ HyperelasticitySolver(DihuContext context, std::string settingsKey) :
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
-advanceTimeSpan()
-{
-  // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
-  if (this->durationLogKey_ != "")
-    Control::PerformanceMeasurement::start(this->durationLogKey_);
-
-  LOG(TRACE) << "advanceTimeSpan, endTime: " << endTime_;
-
-  // write reference output values but don't increment counter
-  this->outputWriterManager_.writeOutput(this->data_, 0, 0.0, 0);
-  this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, 0.0, 0);
-
-  nonlinearSolve();
-  postprocessSolution();
-
-  // stop duration measurement
-  if (this->durationLogKey_ != "")
-    Control::PerformanceMeasurement::stop(this->durationLogKey_);
-
-  // write current output values
-  this->outputWriterManager_.writeOutput(this->data_, 1, endTime_);
-  this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 1, endTime_);
-}
-
-template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
-run()
-{
-  // initialize everything
-  LOG(DEBUG) << "call initialize in run()";
-  initialize();
-
-  this->advanceTimeSpan();
-}
-
-template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
-setTimeSpan(double startTime, double endTime)
-{
-  endTime_ = endTime;
-}
-
-template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+void HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 initialize()
 {
   if (this->initialized_)
@@ -198,7 +155,7 @@ initialize()
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+void HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 initializeFiberDirections()
 {
   std::vector<std::string> fiberMeshNames;
@@ -369,7 +326,7 @@ initializeFiberDirections()
 
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+void HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 getElementalBasis(int i, int j, int k,
                   const std::array<Vec3,27> &geometry,
                   Vec3 &elementalX, Vec3 &elementalY, Vec3 &elementalZ)
@@ -432,8 +389,8 @@ getElementalBasis(int i, int j, int k,
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-std::shared_ptr<typename HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::VecHyperelasticity>
-HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+std::shared_ptr<typename HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::VecHyperelasticity>
+HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 createPartitionedPetscVec(std::string name)
 {
   LOG(DEBUG) << "createPartitionedPetscVec(" << name << ")";
@@ -442,8 +399,8 @@ createPartitionedPetscVec(std::string name)
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-std::shared_ptr<typename HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::MatHyperelasticity>
-HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+std::shared_ptr<typename HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::MatHyperelasticity>
+HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 createPartitionedPetscMat(std::string name)
 {
   // determine number of non zero entries in matrix
@@ -464,17 +421,47 @@ createPartitionedPetscMat(std::string name)
     combinedVecSolution_, nNonZerosDiagonal, nNonZerosOffdiagonal, name);
 }
 
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+unsigned int HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+materialDetermineNumberNonzerosInJacobian()
+{
+  unsigned int nNonZeros = 0;
+
+  // get pointer to function space
+  std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = this->data_.displacementsFunctionSpace();
+  std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace = this->data_.pressureFunctionSpace();
+
+  const int D = 3;  // dimension
+  const int nDisplacementsDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
+  const int nPressureDofsPerElement = PressureFunctionSpace::nDofsPerElement();
+  const int nElementsLocal = displacementsFunctionSpace->nElementsLocal();
+
+  nNonZeros = nElementsLocal * MathUtility::sqr(nDisplacementsDofsPerElement * D);
+
+  if (nDisplacementComponents == 6)
+  {
+    nNonZeros += nElementsLocal * MathUtility::sqr(nDisplacementsDofsPerElement * D) * 3;
+  }
+
+  if (Term::isIncompressible)
+  {
+    nNonZeros += nElementsLocal * nPressureDofsPerElement * nDisplacementsDofsPerElement * D * 2;
+    nNonZeros += nElementsLocal * nPressureDofsPerElement;
+  }
+
+  return nNonZeros;
+}
 
 //! get the precomputed external virtual work
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-Vec HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+Vec HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 externalVirtualWork()
 {
   return externalVirtualWorkDead_;
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+void HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 initializePetscVariables()
 {
   /*
@@ -598,9 +585,366 @@ initializePetscVariables()
   this->initializeSolutionVariable();
 }
 
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+initializeSolutionVariable()
+{
+  // set variable to all zero and dirichlet boundary condition value
+  LOG(DEBUG) << "zeroEntries, representation: " << combinedVecSolution_->currentRepresentation();
+  combinedVecSolution_->zeroEntries();
+
+
+  // set initial values as given in settings, or set to zero if not given
+  std::vector<Vec3> localValuesDisplacements;
+  std::vector<Vec3> localValuesVelocities;
+
+  std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = this->data_.functionSpace();
+
+  // determine if the initial values are given as global and local array
+  bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
+  if (inputMeshIsGlobal)
+  {
+
+    // if the settings specify a global list of values, extract the local values
+    assert(displacementsFunctionSpace);
+
+    // get number of global dofs, i.e. number of values in global list
+    const int nDofsGlobal = displacementsFunctionSpace->nDofsGlobal();
+    LOG(DEBUG) << "setInitialValues, nDofsGlobal = " << nDofsGlobal;
+
+    // extract only the local dofs out of the list of global values
+    this->specificSettings_.template getOptionVector<Vec3>("initialValuesDisplacements", nDofsGlobal, localValuesDisplacements);
+    displacementsFunctionSpace->meshPartition()->extractLocalDofsWithoutGhosts(localValuesDisplacements);
+  }
+  else
+  {
+    // input is already only the local dofs, use all
+    const int nDofsLocal = displacementsFunctionSpace->nDofsLocalWithoutGhosts();
+    this->specificSettings_.template getOptionVector<Vec3>("initialValuesDisplacements", nDofsLocal, localValuesDisplacements);
+  }
+  VLOG(1) << "set initial values for displacements to " << localValuesDisplacements;
+  VLOG(1) << "set initial values for velocities to " << localValuesVelocities;
+
+  // set the first component of the solution variable by the given values
+  this->data_.displacements()->setValuesWithoutGhosts(localValuesDisplacements);
+
+  // set displacement entries in combinedVecSolution_
+  int nDofsLocalWithoutGhosts = displacementsFunctionSpace->nDofsLocalWithoutGhosts();
+  std::vector<double> localValues(nDofsLocalWithoutGhosts);
+
+  combinedVecSolution_->startGhostManipulation();
+
+  // set displacement entries in combinedVecSolution_
+  for (int componentNo = 0; componentNo < 3; componentNo++)
+  {
+    for (int entryNo = 0; entryNo < nDofsLocalWithoutGhosts; entryNo++)
+    {
+      localValues[entryNo] = localValuesDisplacements[entryNo][componentNo];
+    }
+
+    combinedVecSolution_->setValues(componentNo, nDofsLocalWithoutGhosts, displacementsFunctionSpace->meshPartition()->dofNosLocal().data(), localValues.data());
+  }
+
+  // assemble vector
+  combinedVecSolution_->zeroGhostBuffer();
+  combinedVecSolution_->finishGhostManipulation();
+
+  LOG(DEBUG) << "values: " << PetscUtility::getStringVector(solverVariableSolution_);
+  LOG(DEBUG) << "after initialization: " << combinedVecSolution_->getString();
+}
+
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+setDisplacementsAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsFieldVariableType> u,
+                                           std::shared_ptr<PressureFieldVariableType> p)
+{
+  assert(nDisplacementComponents == 3);
+
+  // copy entries of combined vector x to this->data_.displacements() and this->data_.pressure()
+  std::vector<double> values;
+
+  if (VLOG_IS_ON(1))
+  {
+    PetscUtility::getVectorEntries(x, values);
+    VLOG(1) << "setDisplacementsAndPressureFromCombinedVec, x=" << PetscUtility::getStringVector(x);
+  }
+
+  bool backupVecs = false;
+  if (x != solverVariableSolution_)
+  {
+    backupVecs = true;
+  }
+
+  // move the values of x to variable solverVariableSolution_
+  if (backupVecs)
+  {
+    // this happens in computation of the numeric jacobian
+    VecSwap(x, solverVariableSolution_);
+  }
+
+  if (!u && !p)
+  {
+    u = this->data_.displacements();
+    if (Term::isIncompressible)
+      p = this->data_.pressure();   // p is only needed for incompressible formulation
+  }
+
+  // set displacement entries
+  u->zeroGhostBuffer();
+  if (p)
+  {
+    p->zeroGhostBuffer();
+  }
+  for (int componentNo = 0; componentNo < 3; componentNo++)
+  {
+    int nEntries = displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
+    values.resize(nEntries);
+    combinedVecSolution_->getValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+
+    u->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+  }
+  u->finishGhostManipulation();
+  u->startGhostManipulation();
+
+  // set pressure entries
+  if (p)
+  {
+    int nEntries = pressureFunctionSpace_->nDofsLocalWithoutGhosts();
+    values.resize(nEntries);
+
+    const int pressureComponent = nDisplacementComponents;
+    combinedVecSolution_->getValues(pressureComponent, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+    p->setValues(0, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+    p->finishGhostManipulation();
+    p->startGhostManipulation();
+  }
+
+  // undo the backup operation
+  if (backupVecs)
+  {
+    VecSwap(x, solverVariableSolution_);
+  }
+
+  //VLOG(1) << *u;
+  //VLOG(1) << *p;
+}
+
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
+                                                     std::shared_ptr<DisplacementsFieldVariableType> u,
+                                                     std::shared_ptr<DisplacementsFieldVariableType> v,
+                                                     std::shared_ptr<PressureFieldVariableType> p)
+{
+  assert(nDisplacementComponents == 6);
+
+  // copy entries of combined vector x to this->data_.displacements() and this->data_.pressure()
+  std::vector<double> values;
+
+  if (VLOG_IS_ON(1))
+  {
+    PetscUtility::getVectorEntries(x, values);
+    VLOG(1) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, x=" << PetscUtility::getStringVector(x);
+  }
+
+  bool backupVecs = false;
+  if (x != solverVariableSolution_)
+  {
+    backupVecs = true;
+  }
+
+  // move the values of x to variable solverVariableSolution_
+  if (backupVecs)
+  {
+    // this happens in computation of the numeric jacobian
+    VecSwap(x, solverVariableSolution_);
+  }
+
+  if (!u && !v && !p)
+  {
+    u = this->data_.displacements();
+    v = this->data_.velocities();
+
+    if (Term::isIncompressible)
+      p = this->data_.pressure();   // p is only needed for incompressible formulation
+  }
+
+  // set displacement entries
+  u->zeroGhostBuffer();
+  for (int componentNo = 0; componentNo < 3; componentNo++)
+  {
+    int nEntries = displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
+    values.resize(nEntries);
+    combinedVecSolution_->getValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+
+    //if (VLOG_IS_ON(1))
+      LOG(DEBUG) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, " << nEntries << " u values: " << values;
+
+    u->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+  }
+  u->finishGhostManipulation();
+  u->startGhostManipulation();
+
+  // set velocity entries
+  if (v)
+  {
+    v->zeroGhostBuffer();
+    for (int componentNo = 0; componentNo < 3; componentNo++)
+    {
+      int nEntries = displacementsFunctionSpace_->nDofsLocalWithoutGhosts();
+      values.resize(nEntries);
+      combinedVecSolution_->getValues(3 + componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+
+    if (VLOG_IS_ON(1))
+      VLOG(1) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, " << nEntries << " v values: " << values;
+
+      v->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+    }
+    v->finishGhostManipulation();
+    v->startGhostManipulation();
+  }
+  // set pressure entries
+  if (p)
+  {
+    p->zeroGhostBuffer();
+    int nEntries = pressureFunctionSpace_->nDofsLocalWithoutGhosts();
+    values.resize(nEntries);
+
+    const int pressureComponent = nDisplacementComponents;
+    combinedVecSolution_->getValues(pressureComponent, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+
+    if (VLOG_IS_ON(1))
+      VLOG(1) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, " << nEntries << " p values: " << values;
+
+    p->setValues(0, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+    p->finishGhostManipulation();
+    p->startGhostManipulation();
+  }
+
+  // undo the backup operation
+  if (backupVecs)
+  {
+    VecSwap(x, solverVariableSolution_);
+  }
+
+  //VLOG(1) << *u;
+  //VLOG(1) << *p;
+}
+
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+setUVP(Vec x)
+{
+  if (nDisplacementComponents == 3)
+  {
+    setDisplacementsAndPressureFromCombinedVec(x);
+  }
+  else if (nDisplacementComponents == 6)
+  {
+    setDisplacementsVelocitiesAndPressureFromCombinedVec(x);
+  }
+}
+
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+dumpJacobianMatrix(Mat jac)
+{
+  if (!dumpDenseMatlabVariables_)
+    return;
+
+  static int evaluationNo = 0;  // counter how often this function was called
+
+  std::stringstream filename;
+  filename << "out/jac_" << std::setw(3) << std::setfill('0') << evaluationNo << "r" <<  DihuContext::nRanksCommWorld();
+
+  evaluationNo++;
+
+  // if there are both numeric and analytic jacobian in use, this is the numeric jacobian
+  if (jac == solverMatrixAdditionalNumericJacobian_)
+  {
+    filename << "_numeric";
+    combinedMatrixAdditionalNumericJacobian_->dumpMatrixGlobalNatural(filename.str());
+  }
+  else if (jac == solverMatrixJacobian_)
+  {
+    // this is the normal jacobian, either numeric or analytic, if only one of both is in use
+
+    // if both matrices are used
+    if (solverMatrixAdditionalNumericJacobian_ != PETSC_NULL)
+    {
+      filename << "_analytic";
+      combinedMatrixJacobian_->dumpMatrixGlobalNatural(filename.str());
+
+      evaluationNo--;
+
+      // if matrix is not all zeros
+      double numericJacobianNorm = 0;
+      MatNorm(solverMatrixAdditionalNumericJacobian_, NORM_1, &numericJacobianNorm);
+
+      LOG(DEBUG) << "numericJacobianNorm: " << numericJacobianNorm;
+
+      if (numericJacobianNorm > 1e-5)
+      {
+        // compute difference between analytic and numeric jacobian
+        Mat difference;
+        PetscErrorCode ierr;
+        ierr = MatDuplicate(solverMatrixAdditionalNumericJacobian_, MAT_COPY_VALUES, &difference); CHKERRV(ierr);
+        ierr = MatCopy(solverMatrixAdditionalNumericJacobian_, difference, SAME_NONZERO_PATTERN); CHKERRV(ierr);
+        MatAXPY(difference, -1, solverMatrixJacobian_, DIFFERENT_NONZERO_PATTERN);
+
+        double norm1 = 0;
+        double normF = 0;
+        double normInf = 0;
+        MatNorm(difference, NORM_1, &norm1);
+        MatNorm(difference, NORM_FROBENIUS, &normF);
+        MatNorm(difference, NORM_INFINITY, &normInf);
+        LOG(INFO) << "difference between analytic and numeric jacobian matrices: "
+          << "1-norm: " << norm1 << ", frobenius norm: " << normF << ", infinity norm: " << normInf;
+
+        // compute differences for submatrices
+        int nRows = 2;
+        if (nDisplacementComponents == 6)
+          nRows = 3;
+        if (!Term::isIncompressible)    // compressible formulation does not have pressure component
+          nRows--;
+
+        for (int i = 0; i < nRows; i++)
+        {
+          for (int j = 0; j < nRows; j++)
+          {
+            Mat analyticJacobianSubmatrix = combinedMatrixJacobian_->getSubmatrix(i,j);
+            Mat numericJacobianSubmatrix = combinedMatrixAdditionalNumericJacobian_->getSubmatrix(i,j);
+
+            Mat differenceSubmatrix;
+            ierr = MatDuplicate(analyticJacobianSubmatrix, MAT_COPY_VALUES, &differenceSubmatrix); CHKERRV(ierr);
+            ierr = MatCopy(analyticJacobianSubmatrix, differenceSubmatrix, SAME_NONZERO_PATTERN); CHKERRV(ierr);
+            MatAXPY(differenceSubmatrix, -1, numericJacobianSubmatrix, DIFFERENT_NONZERO_PATTERN);
+
+            MatNorm(differenceSubmatrix, NORM_1, &norm1);
+            MatNorm(differenceSubmatrix, NORM_FROBENIUS, &normF);
+            MatNorm(differenceSubmatrix, NORM_INFINITY, &normInf);
+            LOG(INFO) << " submatrix (" << i << "," << j << "): 1-norm: " << norm1 << ", frobenius norm: " << normF << ", infinity norm: " << normInf;
+          }
+        }
+
+        if (norm1 > 1)
+          LOG(ERROR) << "norm mismatch";
+      }
+    }
+    else
+    {
+      combinedMatrixJacobian_->dumpMatrixGlobalNatural(filename.str());
+    }
+  }
+  else
+  {
+    LOG(ERROR) << "Could not output jacobian matrix " << jac << " (solverMatrixJacobian_: " << solverMatrixJacobian_ << ", solverMatrixAdditionalNumericJacobian_: " << solverMatrixAdditionalNumericJacobian_ << ")";
+  }
+}
+
 //! get the PartitionedPetsVec for the residual and result of the nonlinear function
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-std::shared_ptr<typename HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::VecHyperelasticity> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+std::shared_ptr<typename HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::VecHyperelasticity> HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 combinedVecResidual()
 {
   return this->combinedVecResidual_;
@@ -608,20 +952,21 @@ combinedVecResidual()
 
 //! get the PartitionedPetsVec for the solution
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-std::shared_ptr<typename HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::VecHyperelasticity> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+std::shared_ptr<typename HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::VecHyperelasticity> HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 combinedVecSolution()
 {
   return this->combinedVecSolution_;
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::reset()
+void HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+reset()
 {
   this->initialized_ = false;
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-typename HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::Data &HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+typename HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::Data &HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 data()
 {
   return data_;
@@ -629,8 +974,8 @@ data()
 
 //! get a pointer to the dirichlet boundary conditions object
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-std::shared_ptr<DirichletBoundaryConditions<typename HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::DisplacementsFunctionSpace,nDisplacementComponents>>
-HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+std::shared_ptr<DirichletBoundaryConditions<typename HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::DisplacementsFunctionSpace,nDisplacementComponents>>
+HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 dirichletBoundaryConditions()
 {
   return dirichletBoundaryConditions_;
@@ -638,8 +983,8 @@ dirichletBoundaryConditions()
 
 //! get a pointer to the neumann boundary conditions object
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-std::shared_ptr<NeumannBoundaryConditions<typename HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>>
-HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+std::shared_ptr<NeumannBoundaryConditions<typename HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>>
+HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 neumannBoundaryConditions()
 {
   return neumannBoundaryConditions_;
@@ -647,8 +992,8 @@ neumannBoundaryConditions()
 
 //! set new neumann bc's = traction for the next solve
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
-updateNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<typename HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> newNeumannBoundaryConditions)
+void HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+updateNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<typename HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> newNeumannBoundaryConditions)
 {
   neumannBoundaryConditions_ = newNeumannBoundaryConditions;
 
@@ -658,7 +1003,7 @@ updateNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<typena
 
 //! set new dirichlet boundary condition values for existing dofs
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+void HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 updateDirichletBoundaryConditions(std::vector<std::pair<global_no_t,std::array<double,3>>> newDirichletBCValues)
 {
   bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
@@ -666,7 +1011,7 @@ updateDirichletBoundaryConditions(std::vector<std::pair<global_no_t,std::array<d
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+void HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 addDirichletBoundaryConditions(std::vector<typename DirichletBoundaryConditions<DisplacementsFunctionSpace,nDisplacementComponents>::ElementWithNodes> &boundaryConditionElements, bool overwriteBcOnSameDof)
 {
   LOG(DEBUG) << "addDirichletBoundaryConditions, Term: " << StringUtility::demangle(typeid(Term).name());
@@ -752,10 +1097,33 @@ addDirichletBoundaryConditions(std::vector<typename DirichletBoundaryConditions<
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-Vec HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+Vec HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 currentState()
 {
   return solverVariableSolution_;
+}
+
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+std::string HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+getString(Vec x)
+{
+  if (x == solverVariableSolution_)
+  {
+    return combinedVecSolution_->getString();
+  }
+  else if (x == solverVariableResidual_)
+  {
+    return combinedVecResidual_->getString();
+  }
+  else if (x == externalVirtualWorkDead_)
+  {
+    return combinedVecExternalVirtualWorkDead_->getString();
+  }
+  else
+  {
+    LOG(FATAL) << "this should not be called";
+  }
+  return std::string("no getString representation");
 }
 
 

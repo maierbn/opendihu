@@ -1,4 +1,4 @@
-#include "specialized_solver/solid_mechanics/hyperelasticity/petsc_callbacks.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/02_petsc_callbacks.h"
 
 #include <Python.h>  // has to be the first included header
 #include <easylogging++.h>

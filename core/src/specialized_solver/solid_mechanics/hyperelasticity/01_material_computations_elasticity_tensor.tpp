@@ -1,4 +1,4 @@
-#include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/01_material_computations.h"
 
 #include <Python.h>  // has to be the first included header
 #include <array>
@@ -13,7 +13,7 @@ namespace SpatialDiscretization
 //! compute the material elasticity tensor
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+void HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computeElasticityTensor(const Tensor2<3,double_v_t> &rightCauchyGreen,         //< [in] C
                         const Tensor2<3,double_v_t> &inverseRightCauchyGreen,  //< [in] C^{-1}
                         double_v_t deformationGradientDeterminant,             //< [in] J = det(F)

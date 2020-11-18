@@ -1,4 +1,4 @@
-#include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/01_material_computations.h"
 
 #include <Python.h>  // has to be the first included header
 
@@ -9,7 +9,7 @@ namespace SpatialDiscretization
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-double HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+double HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computeSbarC(const Tensor2<3,double_v_t> &Sbar, const Tensor2<3,double_v_t> &C)
 {
   double_v_t SbarC = 0;
@@ -25,7 +25,7 @@ computeSbarC(const Tensor2<3,double_v_t> &Sbar, const Tensor2<3,double_v_t> &C)
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+void HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 materialTesting(const double_v_t pressure,                           //< [in] pressure value p
                 const Tensor2<3,double_v_t> &rightCauchyGreen,                //< [in] C
                 const Tensor2<3,double_v_t> &inverseRightCauchyGreen,         //< [in] C^{-1}

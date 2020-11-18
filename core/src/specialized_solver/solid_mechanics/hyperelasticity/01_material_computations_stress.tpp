@@ -1,4 +1,4 @@
-#include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/01_material_computations.h"
 
 #include <Python.h>  // has to be the first included header
 #include <array>
@@ -13,7 +13,7 @@ namespace SpatialDiscretization
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-Tensor2<3,double_v_t> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+Tensor2<3,double_v_t> HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computePK2Stress(double_v_t &pressure,                                   //< [in] pressure value p
                  const Tensor2<3,double_v_t> &rightCauchyGreen,         //< [in] C
                  const Tensor2<3,double_v_t> &inverseRightCauchyGreen,  //< [in] C^{-1}
@@ -370,7 +370,7 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+void HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computePK2StressField()
 {
   //LOG(TRACE) << "computePK2StressField";
@@ -689,7 +689,7 @@ computePK2StressField()
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+void HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computeBearingForceAndMoment(const std::vector<std::tuple<element_no_t,bool>> &elements,
                              Vec3 &bearingForceBottom, Vec3 &bearingMomentBottom, Vec3 &bearingForceTop, Vec3 &bearingMomentTop)
 {

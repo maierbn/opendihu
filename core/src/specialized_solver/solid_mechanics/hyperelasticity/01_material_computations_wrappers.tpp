@@ -1,4 +1,4 @@
-#include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/01_material_computations.h"
 
 #include <Python.h>  // has to be the first included header
 
@@ -6,7 +6,7 @@ namespace SpatialDiscretization
 {
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-bool HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+bool HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 materialComputeInternalVirtualWork(
   std::shared_ptr<VecHyperelasticity> displacements,
   std::shared_ptr<VecHyperelasticity> internalVirtualWork
@@ -39,7 +39,7 @@ materialComputeInternalVirtualWork(
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+void HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 solveForDisplacements(
   std::shared_ptr<VecHyperelasticity> externalVirtualWork,
   std::shared_ptr<VecHyperelasticity> displacements
@@ -55,7 +55,7 @@ solveForDisplacements(
   Vec result = displacements->valuesGlobal();
   ierr = VecSwap(result, solverVariableSolution_); CHKERRV(ierr);
 
-  nonlinearSolve();
+  this->nonlinearSolve();
 
   // restore value of ∂W_ext and solution
   ierr = VecSwap(rhs, externalVirtualWorkDead_); CHKERRV(ierr);
@@ -63,7 +63,7 @@ solveForDisplacements(
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+void HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 solveDynamicProblem(
   std::shared_ptr<VecHyperelasticity> displacementsVelocitiesPressure, bool isFirstTimeStep,
   Vec internalVirtualWork, Vec &externalVirtualWorkDead, Vec accelerationTerm
@@ -88,7 +88,7 @@ solveDynamicProblem(
     this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, 0.0, 0);
   }
 
-  if (extrapolateInitialGuess_)
+  if (this->extrapolateInitialGuess_)
   {
     // copy the solution values back to this->data_.displacements(), and this->data_.velocities() and this->data.pressure()
     setUVP(combinedVecSolution_->valuesGlobal());
@@ -122,17 +122,17 @@ solveDynamicProblem(
   }
 
   // save u,v,p of previous timestep from solverVariableSolution_
-  setDisplacementsVelocitiesAndPressureFromCombinedVec(solverVariableSolution_,
-                                                       this->data_.displacementsPreviousTimestep(),
-                                                       this->data_.velocitiesPreviousTimestep(),
-                                                       this->data_.pressurePreviousTimestep());
+  this->setDisplacementsVelocitiesAndPressureFromCombinedVec(solverVariableSolution_,
+                                                             this->data_.displacementsPreviousTimestep(),
+                                                             this->data_.velocitiesPreviousTimestep(),
+                                                             this->data_.pressurePreviousTimestep());
 
   LOG(DEBUG) << "saved initial uvp values: ";
   LOG(DEBUG) << *this->data_.displacementsPreviousTimestep();
   VLOG(1) << *this->data_.velocitiesPreviousTimestep();
   VLOG(1) << *this->data_.pressurePreviousTimestep();
 
-  if (extrapolateInitialGuess_)
+  if (this->extrapolateInitialGuess_)
   {
     combinedVecSolution_->startGhostManipulation();
 
@@ -170,12 +170,12 @@ solveDynamicProblem(
   }
 
   // find the solution for u,v,p of the nonlinear equation, potentially multiple load steps and repeated solve calls
-  nonlinearSolve();
+  this->nonlinearSolve();
 
   LOG(DEBUG) << "result: " << getString(solverVariableSolution_);
 
   // update geometry fields from displacements, compute PK2Stress, write output with output writers
-  postprocessSolution();
+  this->postprocessSolution();
 
   LOG(DEBUG) << "nonlinearSolve finished";
 
@@ -183,8 +183,8 @@ solveDynamicProblem(
   this->data_.displacements()->getValuesWithoutGhosts(displacementValues);
 
   // output with output writers of hyperelasticity_solver
-  this->outputWriterManager_.writeOutput(this->data_, 0, endTime_);
-  this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, endTime_);
+  this->outputWriterManager_.writeOutput(this->data_, 0, this->endTime_);
+  this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, this->endTime_);
 
   // determine output values for δW
   externalVirtualWorkDead = externalVirtualWorkDead_;

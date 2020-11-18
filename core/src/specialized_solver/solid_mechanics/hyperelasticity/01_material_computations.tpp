@@ -1,4 +1,4 @@
-#include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/01_material_computations.h"
 
 #include <Python.h>  // has to be the first included header
 #include <array>
@@ -9,9 +9,15 @@
 namespace SpatialDiscretization
 {
 
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+HyperelasticityMaterialComputations(DihuContext context, std::string settingsKey) :
+  HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::HyperelasticityInitialize(context, settingsKey)
+{
+}
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-bool HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+bool HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 materialComputeInternalVirtualWork(bool communicateGhosts)
 {
   // compute Wint in solverVariableResidual_
@@ -252,7 +258,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
         LOG(WARNING) << "Deformation gradient " << deformationGradient << " has zero or negative determinant " << deformationGradientDeterminant
           << std::endl << "Geometry values in element " << elementNoLocal << ": " << geometryReferenceValues << std::endl
           << "Displacements at xi " << xi << ": " << displacementsValues;
-        lastSolveSucceeded_ = false;
+        this->lastSolveSucceeded_ = false;
       }
 
       // loop over basis functions and evaluate integrand at xi for displacement part (δW_int - δW_ext)
@@ -395,7 +401,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
   //combinedVecResidual_->zeroGhostBuffer();
   //combinedVecResidual_->finishGhostManipulation();
 
-  if (!lastSolveSucceeded_)
+  if (!this->lastSolveSucceeded_)
   {
     // return false means the computation was not successful
     return false;
@@ -407,7 +413,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-bool HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+bool HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 materialComputeResidual(double loadFactor)
 {
   // This computes the residual, i.e. the nonlinear function to be solved.
@@ -542,7 +548,7 @@ materialComputeResidual(double loadFactor)
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+void HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 materialComputeExternalVirtualWorkDead()
 {
   // compute δW_ext,dead = int_Ω B^L * phi^L * phi^M * δu^M dx + int_∂Ω T^L * phi^L * phi^M * δu^M dS
@@ -558,7 +564,7 @@ materialComputeExternalVirtualWorkDead()
   for (int componentNo = 0; componentNo < 3; componentNo++)
   {
     values.clear();
-    neumannBoundaryConditions_->rhs()->getValuesWithoutGhosts(componentNo, values);
+    this->neumannBoundaryConditions_->rhs()->getValuesWithoutGhosts(componentNo, values);
     LOG(DEBUG) << "component " << componentNo << ", neumannBoundaryConditions_ rhs values: " << values;
 
     combinedVecExternalVirtualWorkDead_->setValues(componentNo, displacementsFunctionSpace_->meshPartition()->nDofsLocalWithoutGhosts(),
@@ -567,9 +573,9 @@ materialComputeExternalVirtualWorkDead()
 
   // integrate to account for body forces
   // -------------------------------------
-  if (fabs(constantBodyForce_[0]) > 1e-12 || fabs(constantBodyForce_[1]) > 1e-12 || fabs(constantBodyForce_[2]) > 1e-12)
+  if (fabs(this->constantBodyForce_[0]) > 1e-12 || fabs(this->constantBodyForce_[1]) > 1e-12 || fabs(this->constantBodyForce_[2]) > 1e-12)
   {
-    LOG(DEBUG) << "add contribution of body force " << constantBodyForce_;
+    LOG(DEBUG) << "add contribution of body force " << this->constantBodyForce_;
 
     const int D = 3;  // dimension
     std::shared_ptr<DisplacementsFunctionSpace> functionSpace = this->data_.displacementsFunctionSpace();
@@ -621,7 +627,7 @@ materialComputeExternalVirtualWorkDead()
             for (unsigned int elementalDofNoL = 0; elementalDofNoL < nDofsPerElement; elementalDofNoL++)   // dof index L
             {
               integrand += DisplacementsFunctionSpace::phi(elementalDofNoL,xi) * DisplacementsFunctionSpace::phi(elementalDofNoM,xi)
-                * constantBodyForce_[dimensionNo];
+                * this->constantBodyForce_[dimensionNo];
             }
 
             evaluationsArray[samplingPointIndex][elementalDofNoM*3 + dimensionNo] = integrand * integrationFactor;
@@ -657,7 +663,7 @@ materialComputeExternalVirtualWorkDead()
   if (combinedVecExternalVirtualWorkDead_->containsNanOrInf())
   {
     LOG(FATAL) << "The external virtual work, δW_ext,dead contains nan or inf values. " << std::endl
-      << "Check that the constantBodyForce (" << constantBodyForce_ << ") and the Neumann boundary condition values are valid.";
+      << "Check that the constantBodyForce (" << this->constantBodyForce_ << ") and the Neumann boundary condition values are valid.";
   }
 
   LOG(DEBUG) << "combinedVecExternalVirtualWorkDead (components 3-6 should be empty): " << combinedVecExternalVirtualWorkDead_->getString();
@@ -665,7 +671,7 @@ materialComputeExternalVirtualWorkDead()
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+void HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
 {
   assert (nDisplacementComponents == 6);
@@ -805,7 +811,7 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
             const double_v_t oldVelocity = oldVelocityValues[elementalDofNoL][dimensionNo];
             const double_v_t newVelocity = newVelocityValues[elementalDofNoL][dimensionNo];
 
-            integrand += density_ * (newVelocity - oldVelocity) / this->timeStepWidth_ * DisplacementsFunctionSpace::phi(elementalDofNoL,xi)
+            integrand += this->density_ * (newVelocity - oldVelocity) / this->timeStepWidth_ * DisplacementsFunctionSpace::phi(elementalDofNoL,xi)
               * DisplacementsFunctionSpace::phi(elementalDofNoM,xi);
 
             evaluationsArray[samplingPointIndex][elementalDofNoM*3 + dimensionNo] = integrand * integrationFactor;
@@ -882,7 +888,7 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-bool HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+bool HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 materialComputeJacobian()
 {
   // analytic jacobian combinedMatrixJacobian_
@@ -1186,7 +1192,7 @@ materialComputeJacobian()
           << std::endl << "Geometry values in element " << elementNoLocal << ": " << geometryReferenceValues << std::endl
           << "Displacements at xi " << xi << ": " << displacementsValues;
 
-        lastSolveSucceeded_ = false;
+        this->lastSolveSucceeded_ = false;
       }
 
       // add contributions of submatrix uu (upper left)
@@ -1332,7 +1338,7 @@ materialComputeJacobian()
           for (int mDof = 0; mDof < nDisplacementsDofsPerElement; mDof++)  // index over dofs, each dof has D components, M in derivation
           {
             // integrate ∫_Ω ρ0 ϕ^L ϕ^M dV, the actual needed value is 1/dt δ_ab ∫_Ω ρ0 ϕ^L ϕ^M dV, but this will be computed later
-            const double integrand = density_ * displacementsFunctionSpace->phi(lDof, xi) * displacementsFunctionSpace->phi(mDof, xi);
+            const double integrand = this->density_ * displacementsFunctionSpace->phi(lDof, xi) * displacementsFunctionSpace->phi(mDof, xi);
 
             // compute index of degree of freedom and component (result vector index)
             const int index = lDof*nDisplacementsDofsPerElement + mDof;
@@ -1480,7 +1486,7 @@ materialComputeJacobian()
 
   combinedMatrixJacobian_->assembly(MAT_FINAL_ASSEMBLY);
 
-  if (!lastSolveSucceeded_)
+  if (!this->lastSolveSucceeded_)
   {
     // return false means computation was not successful
     return false;
@@ -1490,35 +1496,5 @@ materialComputeJacobian()
   return true;
 }
 
-template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
-unsigned int HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
-materialDetermineNumberNonzerosInJacobian()
-{
-  unsigned int nNonZeros = 0;
-
-  // get pointer to function space
-  std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = this->data_.displacementsFunctionSpace();
-  std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace = this->data_.pressureFunctionSpace();
-
-  const int D = 3;  // dimension
-  const int nDisplacementsDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
-  const int nPressureDofsPerElement = PressureFunctionSpace::nDofsPerElement();
-  const int nElementsLocal = displacementsFunctionSpace->nElementsLocal();
-
-  nNonZeros = nElementsLocal * MathUtility::sqr(nDisplacementsDofsPerElement * D);
-
-  if (nDisplacementComponents == 6)
-  {
-    nNonZeros += nElementsLocal * MathUtility::sqr(nDisplacementsDofsPerElement * D) * 3;
-  }
-
-  if (Term::isIncompressible)
-  {
-    nNonZeros += nElementsLocal * nPressureDofsPerElement * nDisplacementsDofsPerElement * D * 2;
-    nNonZeros += nElementsLocal * nPressureDofsPerElement;
-  }
-
-  return nNonZeros;
-}
 
 } // namespace

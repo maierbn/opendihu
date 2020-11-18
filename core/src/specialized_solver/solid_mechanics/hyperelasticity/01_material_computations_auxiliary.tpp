@@ -1,4 +1,4 @@
-#include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/01_material_computations.h"
 
 #include <Python.h>  // has to be the first included header
 #include <array>
@@ -12,7 +12,7 @@ namespace SpatialDiscretization
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-Tensor2<3,double_v_t> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+Tensor2<3,double_v_t> HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computeDeformationGradient(const std::array<VecD<3,double_v_t>,DisplacementsFunctionSpace::nDofsPerElement()> &displacements,
                            const Tensor2<3,double_v_t> &inverseJacobianMaterial,
                            const std::array<double, 3> xi
@@ -74,7 +74,7 @@ computeDeformationGradient(const std::array<VecD<3,double_v_t>,DisplacementsFunc
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-Tensor2<3,double_v_t> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+Tensor2<3,double_v_t> HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computeDeformationGradientTimeDerivative(const std::array<VecD<3,double_v_t>,DisplacementsFunctionSpace::nDofsPerElement()> &velocities,
                                          const Tensor2<3,double_v_t> &inverseJacobianMaterial,
                                          const std::array<double, 3> xi
@@ -133,7 +133,7 @@ computeDeformationGradientTimeDerivative(const std::array<VecD<3,double_v_t>,Dis
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-Tensor2<3,double_v_t> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+Tensor2<3,double_v_t> HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computeRightCauchyGreenTensor(const Tensor2<3,double_v_t> &deformationGradient)
 {
   // compute C = F^T*F where F is the deformationGradient and C is the right Cauchy-Green Tensor
@@ -161,7 +161,7 @@ computeRightCauchyGreenTensor(const Tensor2<3,double_v_t> &deformationGradient)
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-std::array<double_v_t,5> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+std::array<double_v_t,5> HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computeInvariants(const Tensor2<3,double_v_t> &rightCauchyGreen, const double_v_t rightCauchyGreenDeterminant, const VecD<3,double_v_t> fiberDirection)
 {
   std::array<double_v_t,5> invariants;
@@ -235,7 +235,7 @@ computeInvariants(const Tensor2<3,double_v_t> &rightCauchyGreen, const double_v_
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-std::array<double_v_t,5> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+std::array<double_v_t,5> HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computeReducedInvariants(const std::array<double_v_t,5> invariants, const double_v_t deformationGradientDeterminant)
 {
   std::array<double_v_t,5> reducedInvariants;
@@ -282,7 +282,7 @@ computeReducedInvariants(const std::array<double_v_t,5> invariants, const double
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
-Tensor2<3,double_v_t> HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+Tensor2<3,double_v_t> HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computePSbar(const Tensor2<3,double_v_t> &fictitiousPK2Stress, const Tensor2<3,double_v_t> &rightCauchyGreen)
 {
   // only needed for debugging in materialTesting

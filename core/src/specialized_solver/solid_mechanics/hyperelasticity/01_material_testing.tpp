@@ -26,17 +26,19 @@ computeSbarC(const Tensor2<3,double_v_t> &Sbar, const Tensor2<3,double_v_t> &C)
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 template<typename double_v_t>
 void HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
-materialTesting(const double_v_t pressure,                           //< [in] pressure value p
-                const Tensor2<3,double_v_t> &rightCauchyGreen,                //< [in] C
-                const Tensor2<3,double_v_t> &inverseRightCauchyGreen,         //< [in] C^{-1}
-                const std::array<double_v_t,5> reducedInvariants,      //< [in] the reduced invariants Ibar_1, Ibar_2
-                const double_v_t deformationGradientDeterminant,       //< [in] J = det(F)
-                VecD<3,double_v_t> fiberDirection,                               //< [in] a0, direction of fibers
-                Tensor2<3,double_v_t> &fictitiousPK2Stress,                   //< [in] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
-                Tensor2<3,double_v_t> &pk2StressIsochoric                    //< [in] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
+materialTesting(const double_v_t pressure,                            //< [in] pressure value p
+                const Tensor2<3,double_v_t> &rightCauchyGreen,        //< [in] C
+                const Tensor2<3,double_v_t> &inverseRightCauchyGreen, //< [in] C^{-1}
+                const std::array<double_v_t,5> reducedInvariants,     //< [in] the reduced invariants Ibar_1, Ibar_2
+                const double_v_t deformationGradientDeterminant,      //< [in] J = det(F)
+                VecD<3,double_v_t> fiberDirection,                    //< [in] a0, direction of fibers
+                Tensor2<3,double_v_t> &fictitiousPK2Stress,           //< [in] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
+                Tensor2<3,double_v_t> &pk2StressIsochoric             //< [in] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
                )
 {
   // note, this is implemented for double_v_t == double
+
+  // this function contains a lot of checks if the implementation is correct
 
 #if 0
   LOG(DEBUG) << "materialTesting, parameters: " << this->materialParameters_ << ", C: " << rightCauchyGreen;

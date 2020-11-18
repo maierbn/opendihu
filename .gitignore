@@ -46,3 +46,4 @@ solver_structure.txt
 dependencies/*
 dependencies
 **/precice-*
+**/log_residual_norm*

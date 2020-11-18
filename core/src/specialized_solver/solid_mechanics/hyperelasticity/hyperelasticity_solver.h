@@ -174,6 +174,9 @@ public:
   //! get a pointer to the dirichlet boundary conditions object
   std::shared_ptr<DirichletBoundaryConditions<DisplacementsFunctionSpace,nDisplacementComponents>> dirichletBoundaryConditions();
 
+  //! get a pointer to the neumann boundary conditions object
+  std::shared_ptr<NeumannBoundaryConditions<DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions();
+
   //! set new neumann bc's = traction for the next solve
   void updateNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> newNeumannBoundaryConditions);
 
@@ -185,8 +188,14 @@ public:
   //! @param overwriteBcOnSameDof if existing bc dofs that are also in the ones to set newly should be overwritten, else they are not touched
   void addDirichletBoundaryConditions(std::vector<typename DirichletBoundaryConditions<DisplacementsFunctionSpace,nDisplacementComponents>::ElementWithNodes> &boundaryConditionElements, bool overwriteBcOnSameDof);
 
+  //! compute the resulting forces and moments at the 2- (bottom) and 2+ (top) surfaces of the volume
+  //! @param elements <element_no, isTop> a list of elements that are at bottom and top of the volume and on which the integration over forces and moments is performed, !isTop means bottom element
+  void computeBearingForceAndMoment(const std::vector<std::tuple<element_no_t,bool>> &elements,
+                                    Vec3 &bearingForceBottom, Vec3 &bearingMomentBottom, Vec3 &bearingForceTop, Vec3 &bearingMomentTop);
+
   //! get the Petsc Vec of the current state (uvp vector), this is needed to save and restore checkpoints from the PreciceAdapter
   Vec currentState();
+
 protected:
 
   //! initialize all Petsc Vec's and Mat's that will be used in the computation
@@ -297,6 +306,11 @@ protected:
   template<typename double_v_t>
   double computeSbarC(const Tensor2<3,double_v_t> &Sbar, const Tensor2<3,double_v_t> &C);
 
+  //! compute the elemental coordinate frame (elementalX,elementalY,elementalZ) at the node (i,j,k) in the element with node positions given by geometry
+  void getElementalBasis(int i, int j, int k,
+                         const std::array<Vec3,27> &geometry,
+                         Vec3 &elementalX, Vec3 &elementalY, Vec3 &elementalZ);
+
   DihuContext context_;                                     //< object that contains the python config for the current context and the global singletons meshManager and solverManager
 
   OutputWriter::Manager outputWriterManager_;               //< manager object holding all output writer for displacements based variables
@@ -347,12 +361,14 @@ protected:
   double secondLastNorm_;                                   //< residual norm of the second last iteration in the nonlinear solver
   double bestResidualNorm_;                                 //< best residual norm for load factor 1.0 achieved so far
   double currentLoadFactor_;                                //< current value of the load factor, this value is passed to materialComputeResidual(), 1.0 means normal computation, any lower value reduces the right hand side (scales body and traction forces)
+  double previousLoadFactor_;                               //< previous value of the load factor
   int nNonlinearSolveCalls_;                                //< how often the nonlinear solve should be called in sequence
   bool lastSolveSucceeded_;                                 //< if the last computation of the residual or jacobian succeeded, if this is false, it indicates that there was a negative jacobian
   double loadFactorGiveUpThreshold_;                        //< a threshold for the load factor, if it is below, the solve is aborted
   unsigned int nNonZerosJacobian_;                          //< number of nonzero entries in the material jacobian on the local domain, used for preallocation of the matrix
 
   std::vector<double> loadFactors_;                         //< vector of load factors, 1.0 means normal computation, any lower value reduces the right hand side (scales body and traction forces)
+  std::vector<double> norms_;                               //< vector that collects the norms in every iteration, it will be cleared for every new load factor
 
   bool useAnalyticJacobian_;                                //< if the analytically computed Jacobian of the Newton scheme should be used. Theoretically if it is correct, this is the fastest option.
   bool useNumericJacobian_;                                 //< if a numerically computed Jacobian should be used, approximated by finite differences
@@ -364,6 +380,8 @@ protected:
 #include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.tpp"
 #include "specialized_solver/solid_mechanics/hyperelasticity/material_computations.tpp"
 #include "specialized_solver/solid_mechanics/hyperelasticity/material_computations_auxiliary.tpp"
+#include "specialized_solver/solid_mechanics/hyperelasticity/material_computations_elasticity_tensor.tpp"
+#include "specialized_solver/solid_mechanics/hyperelasticity/material_computations_stress.tpp"
 #include "specialized_solver/solid_mechanics/hyperelasticity/material_computations_wrappers.tpp"
 #include "specialized_solver/solid_mechanics/hyperelasticity/nonlinear_solve.tpp"
 #include "specialized_solver/solid_mechanics/hyperelasticity/material_testing.tpp"

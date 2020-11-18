@@ -77,6 +77,7 @@ initialize()
   // initialize Dirichlet boundary conditions at all dofs that will get some prescribed values during coupling
   initializeDirichletBoundaryConditions();
 
+  scalingFactor_ = this->specificSettings_.getOptionDouble("scalingFactor", 1);
   maximumPreciceTimestepSize_ = std::max(maximumPreciceTimestepSize_, preciceSolverInterface_->initialize());
 
   timeStepWidth_ = this->specificSettings_.getOptionDouble("timestepWidth", 0.01, PythonUtility::Positive);

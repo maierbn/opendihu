@@ -162,6 +162,7 @@ initialize()
     typedef Quadrature::Gauss<3> QuadratureType;
     neumannBoundaryConditions_ = std::make_shared<NeumannBoundaryConditions<DisplacementsFunctionSpace,QuadratureType,3>>(this->context_);
     neumannBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "neumannBoundaryConditions");
+    neumannBoundaryConditions_->setDeformationGradientField(this->data_.deformationGradient());
   }
 
   // initialize fiber direction field
@@ -211,14 +212,57 @@ initializeFiberDirections()
   // if no fiber meshes were specified, use the settings fiberDirection
   if (fiberMeshNames.empty())
   {
-    Vec3 fiberDirection = this->specificSettings_.template getOptionArray<double,3>("fiberDirection", Vec3{0,0,1});
+    Vec3 fiberDirection = this->specificSettings_.template getOptionArray<double,3>("fiberDirection", Vec3{0,0,0});
 
-    LOG(DEBUG) << "displacements field variable type data: " << StringUtility::demangle(typeid(typename Data::DisplacementsFieldVariableType).name());
-    LOG(DEBUG) << "displacements function space type: " << StringUtility::demangle(typeid(DisplacementsFunctionSpace).name());
-    LOG(DEBUG) << "displacements function space mesh partition: " << *this->displacementsFunctionSpace_->meshPartition();
+    if (fiberDirection[0] == 0 && fiberDirection[1] == 0 && fiberDirection[2] == 0)
+    {
+      // fiberDirection was not specified, check localFiberDirection
+      Vec3 fiberDirectionInElement = this->specificSettings_.template getOptionArray<double,3>("fiberDirectionInElement", Vec3{0,0,1});
 
-    std::vector<Vec3> fiberDirections(this->displacementsFunctionSpace_->nDofsLocalWithGhosts(), fiberDirection);
-    this->data_.fiberDirection()->setValues(this->displacementsFunctionSpace_->meshPartition()->dofNosLocal(), fiberDirections);
+      const int nNodes1D = ::FunctionSpace::FunctionSpaceBaseDim<1,BasisFunction::LagrangeOfOrder<2>>::nNodesPerElement();
+      assert(nNodes1D == 3);
+      const int nDofsPerElement = DisplacementsFunctionSpace::nDofsPerElement();
+
+      // loop over elements
+      for (element_no_t elementNoLocal = 0; elementNoLocal < this->displacementsFunctionSpace_->nElementsLocal(); elementNoLocal++)
+      {
+        // get all node positions of nodes of this element
+        std::array<Vec3,nDofsPerElement> geometry;
+        this->displacementsFunctionSpace_->getElementGeometry(elementNoLocal, geometry);
+
+        // get indices of element-local dofs
+        std::array<dof_no_t,nDofsPerElement> dofNosLocal = this->displacementsFunctionSpace_->getElementDofNosLocal(elementNoLocal);
+
+        // loop over nodes in element
+        for (int k = 0; k < nNodes1D; k++)
+        {
+          for (int j = 0; j < nNodes1D; j++)
+          {
+            for (int i = 0; i < nNodes1D; i++)
+            {
+              int elementalNodeNo = k*nNodes1D*nNodes1D + j*nNodes1D + i;
+              dof_no_t dofNoLocal = dofNosLocal[elementalNodeNo];
+
+              Vec3 elementalX, elementalY, elementalZ;
+              getElementalBasis(i, j, k, geometry, elementalX, elementalY, elementalZ);
+
+              Vec3 fiberDirection = fiberDirectionInElement[0] * elementalX + fiberDirectionInElement[1] * elementalY + fiberDirectionInElement[2] * elementalZ;
+              this->data_.fiberDirection()->setValue(dofNoLocal, fiberDirection, INSERT_VALUES);
+            }
+          }
+        }
+      }
+    }
+    else
+    {
+      // fiberDirection was specified
+      LOG(DEBUG) << "displacements field variable type data: " << StringUtility::demangle(typeid(typename Data::DisplacementsFieldVariableType).name());
+      LOG(DEBUG) << "displacements function space type: " << StringUtility::demangle(typeid(DisplacementsFunctionSpace).name());
+      LOG(DEBUG) << "displacements function space mesh partition: " << *this->displacementsFunctionSpace_->meshPartition();
+
+      std::vector<Vec3> fiberDirections(this->displacementsFunctionSpace_->nDofsLocalWithGhosts(), fiberDirection);
+      this->data_.fiberDirection()->setValues(this->displacementsFunctionSpace_->meshPartition()->dofNosLocal(), fiberDirections);
+    }
   }
   else
   {
@@ -304,7 +348,10 @@ initializeFiberDirections()
     else
     {
       MathUtility::normalize<3>(valuesLocalWithoutGhosts[dofNoLocal]);
-      LOG(DEBUG) << "dof " << dofNoLocal << ", fiberDirection normalized: " << valuesLocalWithoutGhosts[dofNoLocal];
+#ifndef NDEBUG
+      LOG(DEBUG) << "dof " << dofNoLocal << ", fiberDirection normalized: " << valuesLocalWithoutGhosts[dofNoLocal]
+        << " (norm: " << MathUtility::norm<3>(valuesLocalWithoutGhosts[dofNoLocal]) << ")";
+#endif
     }
   }
 
@@ -318,6 +365,70 @@ initializeFiberDirections()
 
   auto tEnd = std::chrono::steady_clock::now();
   LOG_N_TIMES(1,INFO) << "done (" << std::chrono::duration_cast<std::chrono::milliseconds>(tEnd-tStart).count() << " ms)";
+}
+
+
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+getElementalBasis(int i, int j, int k,
+                  const std::array<Vec3,27> &geometry,
+                  Vec3 &elementalX, Vec3 &elementalY, Vec3 &elementalZ)
+{
+  const int nNodes1D = ::FunctionSpace::FunctionSpaceBaseDim<1,BasisFunction::LagrangeOfOrder<2>>::nNodesPerElement(); // 3
+
+  // get node position of node (i,j,k)
+  int elementalNodeNo = k*nNodes1D*nNodes1D + j*nNodes1D + i;
+
+  Vec3 nodePosition = geometry[elementalNodeNo];
+
+  // get vector between neighbouring nodes in x direction
+  int elementalNodeNoNextX;
+  int sign;
+  if (i == nNodes1D-1)
+  {
+    elementalNodeNoNextX = k*nNodes1D*nNodes1D + j*nNodes1D + i-1;
+    sign = -1;
+  }
+  else
+  {
+    elementalNodeNoNextX = k*nNodes1D*nNodes1D + j*nNodes1D + i+1;
+    sign = 1;
+  }
+
+  Vec3 nodePositionNextX = geometry[elementalNodeNoNextX];
+  elementalX = (-nodePosition + nodePositionNextX) * sign;
+
+  // get vector between neighbouring nodes in y direction
+  int elementalNodeNoNextY;
+  if (j == nNodes1D-1)
+  {
+    elementalNodeNoNextY = k*nNodes1D*nNodes1D + (j-1)*nNodes1D + i;
+    sign = -1;
+  }
+  else
+  {
+    elementalNodeNoNextY = k*nNodes1D*nNodes1D + (j+1)*nNodes1D + i;
+    sign = 1;
+  }
+
+  Vec3 nodePositionNextY = geometry[elementalNodeNoNextY];
+  elementalY = (-nodePosition + nodePositionNextY) * sign;
+
+  // get vector between neighbouring nodes in z direction
+  int elementalNodeNoNextZ;
+  if (k == nNodes1D-1)
+  {
+    elementalNodeNoNextZ = (k-1)*nNodes1D*nNodes1D + j*nNodes1D + i;
+    sign = -1;
+  }
+  else
+  {
+    elementalNodeNoNextZ = (k+1)*nNodes1D*nNodes1D + j*nNodes1D + i;
+    sign = 1;
+  }
+
+  Vec3 nodePositionNextZ = geometry[elementalNodeNoNextZ];
+  elementalZ = (-nodePosition + nodePositionNextZ) * sign;
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
@@ -483,7 +594,7 @@ initializePetscVariables()
   // assign all callback functions
   this->initializePetscCallbackFunctions();
 
-  // set solution vector to zero
+  // set solution vector to zero or initial value
   this->initializeSolutionVariable();
 }
 
@@ -523,6 +634,15 @@ HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 dirichletBoundaryConditions()
 {
   return dirichletBoundaryConditions_;
+}
+
+//! get a pointer to the neumann boundary conditions object
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+std::shared_ptr<NeumannBoundaryConditions<typename HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>>
+HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+neumannBoundaryConditions()
+{
+  return neumannBoundaryConditions_;
 }
 
 //! set new neumann bc's = traction for the next solve

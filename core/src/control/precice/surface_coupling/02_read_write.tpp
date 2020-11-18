@@ -218,6 +218,7 @@ setNeumannBoundaryConditions(typename PreciceAdapterInitialize<NestedSolver>::Pr
   using NeumannBoundaryConditionsType = SpatialDiscretization::NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>;
   std::shared_ptr<NeumannBoundaryConditionsType> neumannBoundaryConditions = std::make_shared<NeumannBoundaryConditionsType>(this->context_);
   neumannBoundaryConditions->initialize(this->functionSpace_, neumannBoundaryConditionElements);
+  neumannBoundaryConditions->setDeformationGradientField(this->deformationGradientField(this->nestedSolver_));
 
 #ifndef NDEBUG
   std::stringstream s;
@@ -279,6 +280,12 @@ preciceWriteData()
 #ifndef NDEBUG
         LOG(DEBUG) << "write displacements data to precice: " << displacementValues_;
 #endif
+        // scale displacement and velocity values
+        for (double &value : displacementValues_)
+          value *= this->scalingFactor_;
+
+        for (double &value : velocityValues_)
+          value *= this->scalingFactor_;
 
         // write displacement values in precice
         this->preciceSolverInterface_->writeBlockVectorData(preciceData.preciceDataIdDisplacements, preciceData.preciceMesh->nNodesLocal,
@@ -304,6 +311,12 @@ preciceWriteData()
         }
         LOG(DEBUG) << "z values of traction: " << s.str();
 #endif
+        // scale traction values, they are always scaled by the factor of -1
+        for (double &value : tractionValues_)
+        {
+          value *= this->scalingFactor_;
+          value *= -1;
+        }
 
         this->preciceSolverInterface_->writeBlockVectorData(preciceData.preciceDataIdTraction, preciceData.preciceMesh->nNodesLocal,
                                                             preciceData.preciceMesh->preciceVertexIds.data(), tractionValues_.data());

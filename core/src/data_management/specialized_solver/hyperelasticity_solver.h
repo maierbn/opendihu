@@ -57,10 +57,10 @@ public:
   //! field variable velocities v, but on the linear mesh
   std::shared_ptr<DisplacementsLinearFieldVariableType> velocitiesLinearMesh();
 
-  //! field variable of F
+  //! field variable of F, all 9 values in row-major ordering
   std::shared_ptr<DeformationGradientFieldVariableType> deformationGradient();
 
-  //! field variable of Fdot
+  //! field variable of Fdot, all 9 values in row-major ordering
   std::shared_ptr<DeformationGradientFieldVariableType> deformationGradientTimeDerivative();
 
   //! field variable of S (Voigt notation sxx, syy, szz, sxy, syz, sxz)
@@ -71,6 +71,9 @@ public:
 
   //! field variable of fiber direction
   std::shared_ptr<DisplacementsFieldVariableType> &fiberDirection();
+
+  //! traction in current configuration, for z- and z+ surfaces
+  std::shared_ptr<DisplacementsFieldVariableType> traction();
 
   //! traction in reference configuration, for z- and z+ surfaces
   std::shared_ptr<DisplacementsFieldVariableType> materialTraction();
@@ -126,7 +129,8 @@ protected:
   std::shared_ptr<DisplacementsLinearFieldVariableType> displacementsLinearMesh_; //< the displacements u, but on the linear mesh, not the quadratic. This is an internal helper field
   std::shared_ptr<DisplacementsLinearFieldVariableType> velocitiesLinearMesh_;    //< the velocities v, but on the linear mesh, not the quadratic. This is an internal helper field
   std::shared_ptr<DisplacementsFieldVariableType> fiberDirection_;                //< interpolated direction of fibers
-  std::shared_ptr<DisplacementsFieldVariableType> materialTraction_;              //< T, the traction in reference configuration, for z- and z+ surfaces (top and bottom of mesh)
+  std::shared_ptr<DisplacementsFieldVariableType> traction_;                      //< t, the traction in current configuration
+  std::shared_ptr<DisplacementsFieldVariableType> materialTraction_;              //< T, the traction in reference configuration
   std::shared_ptr<DeformationGradientFieldVariableType> pK1Stress_;               //< the unsymmetric PK1 stress tensor P=FS, this variable is only used internally for the output files
   std::shared_ptr<DeformationGradientFieldVariableType> cauchyStress_;               //< the unsymmetric Cauchy stress tensor σ=J^-1 P F^T, this variable is only used internally for the output files
   std::shared_ptr<FieldVariable::FieldVariable<DisplacementsFunctionSpace,1>> deformationGradientDeterminant_;  //< the determinant of the deformation gradient, J=det F
@@ -181,6 +185,7 @@ public:
     std::shared_ptr<DisplacementsFieldVariableType>,  // current geometry field
     std::shared_ptr<DisplacementsFieldVariableType>,  // displacements_
     std::shared_ptr<DisplacementsFieldVariableType>,  // velocities_
+    std::shared_ptr<DisplacementsFieldVariableType>,  // traction
     std::shared_ptr<DisplacementsFieldVariableType>,  // material traction
     std::shared_ptr<StressFieldVariableType>,         // pK2Stress_
     std::shared_ptr<DeformationGradientFieldVariableType>,  // deformationGradient_
@@ -244,6 +249,7 @@ public:
     std::shared_ptr<StressFieldVariableType>,         // pK2Stress_
     std::shared_ptr<StressFieldVariableType>,         // activePK2Stress_
     std::shared_ptr<DisplacementsFieldVariableType>,  // fiber direction
+    std::shared_ptr<DisplacementsFieldVariableType>,  // traction
     std::shared_ptr<DisplacementsFieldVariableType>,  // material traction
     std::shared_ptr<DeformationGradientFieldVariableType>,  // deformationGradient_
     std::shared_ptr<DeformationGradientFieldVariableType>,  // deformationGradientTimeDerivative_

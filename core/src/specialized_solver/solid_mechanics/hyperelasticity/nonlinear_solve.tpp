@@ -30,6 +30,7 @@ nonlinearSolve()
   std::shared_ptr<SNES> snes = nonlinearSolver_->snes();
   std::shared_ptr<KSP> ksp = nonlinearSolver_->ksp();
   bestResidualNorm_ = std::numeric_limits<double>::max();
+  currentLoadFactor_ = -2*loadFactorGiveUpThreshold_;
 
   // newline
   LOG(INFO);
@@ -40,6 +41,7 @@ nonlinearSolve()
   {
     double loadFactor = loadFactors[loadFactorIndex];
 
+    previousLoadFactor_ = currentLoadFactor_;
     currentLoadFactor_ = loadFactor;
     if (loadFactors.size() > 1)
     {
@@ -48,6 +50,18 @@ nonlinearSolve()
     if (currentLoadFactor_ < loadFactorGiveUpThreshold_)
     {
       LOG(WARNING) << "Nonlinear solver reached load factor " << currentLoadFactor_ << ", (no. " << loadFactorIndex << ") which "
+        << "is below give-up threshold of " << loadFactorGiveUpThreshold_ << ". "
+        << "Now abort, use best found solution with residual norm " << bestResidualNorm_;
+
+      // restore best found solution so far
+      PetscErrorCode ierr;
+      ierr = VecCopy(bestSolution_, solverVariableSolution_); CHKERRV(ierr);
+      break;
+    }
+    else if (currentLoadFactor_ - previousLoadFactor_ < 0 && previousLoadFactor_ - currentLoadFactor_ < loadFactorGiveUpThreshold_)
+    {
+      LOG(WARNING) << "Nonlinear solver reduced load factor from " << previousLoadFactor_ << " to " << currentLoadFactor_
+        << ", (no. " << loadFactorIndex << "), change " << previousLoadFactor_ - currentLoadFactor_ << " "
         << "is below give-up threshold of " << loadFactorGiveUpThreshold_ << ". "
         << "Now abort, use best found solution with residual norm " << bestResidualNorm_;
 
@@ -85,8 +99,17 @@ nonlinearSolve()
       ierr = SNESGetConvergedReason(*snes, &convergedReason); CHKERRV(ierr);
       ierr = KSPGetConvergedReason(*ksp, &kspConvergedReason); CHKERRV(ierr);
 
+      // compute mean norm
+      double normSum = 0;
+      for (double norm : norms_)
+      {
+        normSum += norm;
+      }
+      double meanNorm = normSum / norms_.size();
+      norms_.clear();
+
       // if the last solution failed, either diverged or got a negative jacobian
-      if (!lastSolveSucceeded_ || convergedReason < 0)
+      if (!lastSolveSucceeded_ || (convergedReason < 0 && residualNorm > meanNorm))
       {
         // add an intermediate load factor
         double lastSuccessfulLoadFactor = 0;
@@ -108,6 +131,14 @@ nonlinearSolve()
 
         // restore last solution
         ierr = VecCopy(lastSolution_, solverVariableSolution_); CHKERRV(ierr);
+      }
+      else if (convergedReason < 0 && residualNorm <= meanNorm)
+      {
+        // if the scheme diverged, but the last residual norm is better than average, accept result as solution
+        LOG(INFO) << "Solution accepted in " << numberOfIterations << " iterations, residual norm " << residualNorm
+          << " < mean (" << meanNorm << "): " << PetscUtility::getStringNonlinearConvergedReason(convergedReason) << ", "
+          << PetscUtility::getStringLinearConvergedReason(kspConvergedReason);
+        convergedReason = SNES_CONVERGED_ITS;
       }
       else
       {
@@ -183,6 +214,7 @@ monitorSolvingIteration(SNES snes, PetscInt its, PetscReal currentNorm)
 
   secondLastNorm_ = lastNorm_;
   lastNorm_ = currentNorm;
+  norms_.push_back(currentNorm);
 
   //T* object = static_cast<T*>(mctx);
   std::stringstream message;
@@ -192,7 +224,7 @@ monitorSolvingIteration(SNES snes, PetscInt its, PetscReal currentNorm)
   LOG(INFO) << message.str();
 
   // if we got a better solution and this is load factor 1, store the solution
-  if (currentLoadFactor_ == 1 && currentNorm < bestResidualNorm_)
+  if ((currentLoadFactor_ == 1 && currentNorm < bestResidualNorm_) || bestResidualNorm_ == std::numeric_limits<double>::max())
   {
     bestResidualNorm_ = currentNorm;
     PetscErrorCode ierr;
@@ -388,6 +420,62 @@ initializeSolutionVariable()
   // set variable to all zero and dirichlet boundary condition value
   LOG(DEBUG) << "zeroEntries, representation: " << combinedVecSolution_->currentRepresentation();
   combinedVecSolution_->zeroEntries();
+
+
+  // set initial values as given in settings, or set to zero if not given
+  std::vector<Vec3> localValuesDisplacements;
+  std::vector<Vec3> localValuesVelocities;
+
+  std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace = this->data_.functionSpace();
+
+  // determine if the initial values are given as global and local array
+  bool inputMeshIsGlobal = this->specificSettings_.getOptionBool("inputMeshIsGlobal", true);
+  if (inputMeshIsGlobal)
+  {
+
+    // if the settings specify a global list of values, extract the local values
+    assert(displacementsFunctionSpace);
+
+    // get number of global dofs, i.e. number of values in global list
+    const int nDofsGlobal = displacementsFunctionSpace->nDofsGlobal();
+    LOG(DEBUG) << "setInitialValues, nDofsGlobal = " << nDofsGlobal;
+
+    // extract only the local dofs out of the list of global values
+    this->specificSettings_.template getOptionVector<Vec3>("initialValuesDisplacements", nDofsGlobal, localValuesDisplacements);
+    displacementsFunctionSpace->meshPartition()->extractLocalDofsWithoutGhosts(localValuesDisplacements);
+  }
+  else
+  {
+    // input is already only the local dofs, use all
+    const int nDofsLocal = displacementsFunctionSpace->nDofsLocalWithoutGhosts();
+    this->specificSettings_.template getOptionVector<Vec3>("initialValuesDisplacements", nDofsLocal, localValuesDisplacements);
+  }
+  VLOG(1) << "set initial values for displacements to " << localValuesDisplacements;
+  VLOG(1) << "set initial values for velocities to " << localValuesVelocities;
+
+  // set the first component of the solution variable by the given values
+  this->data_.displacements()->setValuesWithoutGhosts(localValuesDisplacements);
+
+  // set displacement entries in combinedVecSolution_
+  int nDofsLocalWithoutGhosts = displacementsFunctionSpace->nDofsLocalWithoutGhosts();
+  std::vector<double> localValues(nDofsLocalWithoutGhosts);
+
+  combinedVecSolution_->startGhostManipulation();
+
+  // set displacement entries in combinedVecSolution_
+  for (int componentNo = 0; componentNo < 3; componentNo++)
+  {
+    for (int entryNo = 0; entryNo < nDofsLocalWithoutGhosts; entryNo++)
+    {
+      localValues[entryNo] = localValuesDisplacements[entryNo][componentNo];
+    }
+
+    combinedVecSolution_->setValues(componentNo, nDofsLocalWithoutGhosts, displacementsFunctionSpace->meshPartition()->dofNosLocal().data(), localValues.data());
+  }
+
+  // assemble vector
+  combinedVecSolution_->zeroGhostBuffer();
+  combinedVecSolution_->finishGhostManipulation();
 
   LOG(DEBUG) << "values: " << PetscUtility::getStringVector(solverVariableSolution_);
   LOG(DEBUG) << "after initialization: " << combinedVecSolution_->getString();

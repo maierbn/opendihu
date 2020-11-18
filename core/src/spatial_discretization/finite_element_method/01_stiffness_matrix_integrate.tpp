@@ -171,28 +171,6 @@ setStiffnessMatrix()
         = prefactor * IntegrandStiffnessMatrix<D,EvaluationsType,FunctionSpaceType,nComponents,double_v_t,dof_no_v_t,Term>::
           evaluateIntegrand(this->data_, jacobian, elementNoLocalv, xi);
 
-          /*
-      for (int i = 0; i < nDofsPerElement; i++)
-      {
-        for (int j = 0; j < nDofsPerElement; j++)
-        {
-          // loop over components (1,...,D for solid mechanics)
-          for (int rowComponentNo = 0; rowComponentNo < nComponents; rowComponentNo++)
-          {
-            for (int columnComponentNo = 0; columnComponentNo < nComponents; columnComponentNo++)
-            {
-              // integrate value and set entry in stiffness matrix
-              double evaluatedValue = evaluationsArray[samplingPointIndex](i*nComponents + rowComponentNo, j*nComponents + columnComponentNo);
-
-              if (rowComponentNo != columnComponentNo)
-                LOG(DEBUG) << rowComponentNo << columnComponentNo << ": evaluatedValue: " << evaluatedValue
-                  << " at (" << i*nComponents + rowComponentNo << "," << j*nComponents + columnComponentNo << ")";
-            }
-          }
-        }
-      }
-      */
-
     }  // function evaluations
 
     // integrate all values for the (i,j) dof pairs at once

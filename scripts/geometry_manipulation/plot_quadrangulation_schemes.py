@@ -1,10 +1,24 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
+import sys
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import collections, patches
+
+# define the number of grid points
+n_grid_points_x = 11
+n_grid_points_y = 11
+
+if len(sys.argv) > 1:
+  n_grid_points_x = (int)(sys.argv[1])
+  n_grid_points_y = n_grid_points_x
+  
+if len(sys.argv) == 1:
+  print("usage: plot_quadrangulation_schemes.py [<n_grid_points_x>]")
+
+print("Number of grid points: {} x {}".format(n_grid_points_x, n_grid_points_y))
 
 def create_reference_domain_quadrangulation(n_grid_points_x, n_grid_points_y, parametric_space_shape):
   """
@@ -135,9 +149,6 @@ def create_reference_domain_quadrangulation(n_grid_points_x, n_grid_points_y, pa
       
   return grid_points_parametric_space
   
-# define the number of grid points
-n_grid_points_x = 11
-n_grid_points_y = 11
 
 # The following code will plot 2x2 subplots with all four reference domain quadrangulations
 # ------------------------------------------------------------------------------------------

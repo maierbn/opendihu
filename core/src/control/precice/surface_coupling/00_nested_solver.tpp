@@ -116,6 +116,14 @@ currentState(NestedSolverType &nestedSolver)
   return nestedSolver.timeStepping2().dynamicHyperelasticitySolver()->currentState();
 }
 
+template<typename T1, typename T2, typename T3>
+std::shared_ptr<FieldVariable::FieldVariable<typename PreciceAdapterNestedSolver<Control::Coupling<Control::MultipleInstances<T1>,MuscleContractionSolver<T2,T3>>>::FunctionSpace,9>>
+PreciceAdapterNestedSolver<Control::Coupling<Control::MultipleInstances<T1>,MuscleContractionSolver<T2,T3>>>::
+deformationGradientField(NestedSolverType &nestedSolver)
+{
+  return nestedSolver.timeStepping2().dynamicHyperelasticitySolver()->hyperelasticitySolver().data().deformationGradient();
+}
+
 // --------------------------------------------------
 // DynamicHyperelasticitySolver
 
@@ -230,6 +238,13 @@ currentState(NestedSolverType &nestedSolver)
   return nestedSolver.currentState();
 }
 
+template<typename Material>
+std::shared_ptr<FieldVariable::FieldVariable<typename PreciceAdapterNestedSolver<TimeSteppingScheme::DynamicHyperelasticitySolver<Material>>::FunctionSpace, 9>>
+PreciceAdapterNestedSolver<TimeSteppingScheme::DynamicHyperelasticitySolver<Material>>::
+deformationGradientField(NestedSolverType &nestedSolver)
+{
+  return nestedSolver.hyperelasticitySolver().data().deformationGradient();
+}
 
 // --------------------------------------------------
 // HyperelasticitySolver
@@ -379,5 +394,12 @@ currentState(NestedSolverType &nestedSolver)
   return nestedSolver.currentState();
 }
 
+template<typename Material>
+std::shared_ptr<FieldVariable::FieldVariable<typename PreciceAdapterNestedSolver<SpatialDiscretization::HyperelasticitySolver<Material>>::FunctionSpace, 9>>
+PreciceAdapterNestedSolver<SpatialDiscretization::HyperelasticitySolver<Material>>::
+deformationGradientField(NestedSolverType &nestedSolver)
+{
+  return nestedSolver.data().deformationGradient();
+}
 
 }  // namespace

@@ -155,11 +155,18 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       // fiber direction
       Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
 
+      // fiberDirection is not automatically normalized because of the interpolation inside the element, normalize again
+      if (Term::usesFiberDirection)
+      {
+        MathUtility::normalize<3>(fiberDirection);
+      }
+
 #ifndef NDEBUG
       if (Term::usesFiberDirection)
       {
         if (fabs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3)
-          LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized, elementalDirectionValues:" << elementalDirectionValues;
+          LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized (a)(norm: " << MathUtility::norm<3>(fiberDirection)
+            << ", difference to 1: " << MathUtility::norm<3>(fiberDirection) - 1 << ") elementalDirectionValues:" << elementalDirectionValues;
       }
 #endif
 
@@ -553,7 +560,6 @@ materialComputeExternalVirtualWorkDead()
     values.clear();
     neumannBoundaryConditions_->rhs()->getValuesWithoutGhosts(componentNo, values);
     LOG(DEBUG) << "component " << componentNo << ", neumannBoundaryConditions_ rhs values: " << values;
-
 
     combinedVecExternalVirtualWorkDead_->setValues(componentNo, displacementsFunctionSpace_->meshPartition()->nDofsLocalWithoutGhosts(),
                                                    displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data(), INSERT_VALUES);
@@ -1107,11 +1113,18 @@ materialComputeJacobian()
       // fiber direction
       Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
 
+      // fiberDirection is not automatically normalized because of the interpolation inside the element, normalize again
+      if (Term::usesFiberDirection)
+      {
+        MathUtility::normalize<3>(fiberDirection);
+      }
+
 #ifndef NDEBUG
       if (Term::usesFiberDirection)
       {
         if (fabs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3)
-          LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized, elementalDirectionValues:" << elementalDirectionValues;
+          LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized (b)(norm: " << MathUtility::norm<3>(fiberDirection)
+            << ", difference to 1: " << MathUtility::norm<3>(fiberDirection) - 1 << ") elementalDirectionValues:" << elementalDirectionValues;
       }
 #endif
 

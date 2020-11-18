@@ -43,6 +43,9 @@ initialize()
   // indicate in solverStructureVisualizer that the child solver initialization is done
   DihuContext::solverStructureVisualizer()->endChild();
 
+  // determine if there is any traction defined in current configuration, if so it has to be converted to reference configuration in every timestep
+  isTractionInCurrentConfiguration_ = hyperelasticitySolver_.neumannBoundaryConditions()->isTractionInCurrentConfiguration();
+
   // create variable of unknowns
   uvp_ = hyperelasticitySolver_.createPartitionedPetscVec("uvp");
   //uvp_ = hyperelasticitySolver_.combinedVecSolution();
@@ -83,6 +86,66 @@ initialize()
       LOG(DEBUG) << "interval: " << updateNeumannBoundaryConditionsFunctionCallInterval_;
     }
   }
+
+  pythonTotalForceFunction_ = nullptr;
+  if (this->specificSettings_.hasKey("pythonTotalForceFunction_"))
+  {
+    LOG(DEBUG) << "parse pythonTotalForceFunction_";
+    PyObject *object = this->specificSettings_.getOptionPyObject("pythonTotalForceFunction_");
+    if (object != Py_None)
+    {
+      pythonTotalForceFunction_ = this->specificSettings_.getOptionFunction("pythonTotalForceFunction");
+      pythonTotalForceFunctionCallInterval_ = this->specificSettings_.getOptionInt("pythonTotalForceFunctionCallInterval", 1, PythonUtility::Positive);
+    }
+  }
+
+  // parse elements that are used to compute total force at top and bottom
+  if (this->specificSettings_.hasKey("totalForceTopElementNosGlobal"))
+  {
+    std::vector<global_no_t> totalForceTopElementsGlobal;
+    this->specificSettings_.getOptionVector<global_no_t>("totalForceTopElementNosGlobal", totalForceTopElementsGlobal);
+    std::set<global_no_t> totalForceTopElementsGlobalSet(totalForceTopElementsGlobal.begin(), totalForceTopElementsGlobal.end());
+
+    LOG(DEBUG) << "given elements top: " << totalForceTopElementsGlobalSet;
+
+    // iterate over local elements
+    for (element_no_t elementNoLocal = 0; elementNoLocal < this->data_.functionSpace()->nElementsLocal(); elementNoLocal++)
+    {
+      global_no_t elementNoGlobal = this->data_.functionSpace()->meshPartition()->getElementNoGlobalNatural(elementNoLocal);
+
+      if (totalForceTopElementsGlobalSet.find(elementNoGlobal) != totalForceTopElementsGlobalSet.end())
+      {
+        LOG(DEBUG) << " (" << elementNoLocal << "->" << elementNoGlobal << ") yes";
+        bottomTopElements_.push_back(std::tuple<element_no_t,bool>(elementNoLocal,true));
+      }
+      else
+        LOG(DEBUG) << " (" << elementNoLocal << "->" << elementNoGlobal << ") no";
+    }
+  }
+
+  if (this->specificSettings_.hasKey("totalForceBottomElementNosGlobal"))
+  {
+    std::vector<global_no_t> totalForceBottomElementsGlobal;
+    this->specificSettings_.getOptionVector<global_no_t>("totalForceBottomElementNosGlobal", totalForceBottomElementsGlobal);
+    std::set<global_no_t> totalForceBottomElementsGlobalSet(totalForceBottomElementsGlobal.begin(), totalForceBottomElementsGlobal.end());
+
+    LOG(DEBUG) << "given elements bottom: " << totalForceBottomElementsGlobalSet;
+    // iterate over local elements
+    for (element_no_t elementNoLocal = 0; elementNoLocal < this->data_.functionSpace()->nElementsLocal(); elementNoLocal++)
+    {
+      global_no_t elementNoGlobal = this->data_.functionSpace()->meshPartition()->getElementNoGlobalNatural(elementNoLocal);
+
+      if (totalForceBottomElementsGlobalSet.find(elementNoGlobal) != totalForceBottomElementsGlobalSet.end())
+      {
+        LOG(DEBUG) << " (" << elementNoLocal << "->" << elementNoGlobal << ") yes";
+        bottomTopElements_.push_back(std::tuple<element_no_t,bool>(elementNoLocal,false));
+      }
+      else
+        LOG(DEBUG) << " (" << elementNoLocal << "->" << elementNoGlobal << ") no";
+    }
+  }
+
+  totalForceLogFilename_ = this->specificSettings_.getOptionString("totalForceLogFilename", "");
 
   // write initial mesh but don't increment counter
   this->outputWriterManager_.writeOutput(this->data_, 0, 0.0, 0);
@@ -185,12 +248,28 @@ callUpdateNeumannBoundaryConditionsFunction(double t)
   using NeumannBoundaryConditionsType = typename SpatialDiscretization::NeumannBoundaryConditions<typename HyperelasticitySolverType::DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>;
   std::shared_ptr<NeumannBoundaryConditionsType> newNeumannBoundaryConditions = std::make_shared<NeumannBoundaryConditionsType>(this->context_);
   newNeumannBoundaryConditions->initialize(returnValue, this->data_.functionSpace(), "neumannBoundaryConditions");
+  newNeumannBoundaryConditions->setDeformationGradientField(this->hyperelasticitySolver_.data().deformationGradient());
+
+  isTractionInCurrentConfiguration_ = newNeumannBoundaryConditions->isTractionInCurrentConfiguration();
 
   hyperelasticitySolver_.updateNeumannBoundaryConditions(newNeumannBoundaryConditions);
 
   // decrement reference counters for python objects
   Py_CLEAR(returnValue);
   Py_CLEAR(arglist);
+}
+
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
+updateNeumannBoundaryConditions()
+{
+  LOG(INFO) << "Updating right hand side because traction was specified in current configuration.";
+
+  // update rhs with new traction values in reference configuration if there are moving loads (traction in current configuration)
+  hyperelasticitySolver_.neumannBoundaryConditions()->initializeRhs();
+
+  // update δW_ext,dead
+  hyperelasticitySolver_.updateNeumannBoundaryConditions(hyperelasticitySolver_.neumannBoundaryConditions());
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType>
@@ -323,6 +402,12 @@ advanceTimeSpan()
     // potentially update NeumannBC by calling "updateNeumannBoundaryConditionsFunction"
     callUpdateNeumannBoundaryConditionsFunction(currentTime);
 
+    if (isTractionInCurrentConfiguration_)
+      updateNeumannBoundaryConditions();
+
+    // compute the total force and torque at the z+ and z- surfaces of the volume
+    computeBearingForcesAndMoments(currentTime);
+
     // start duration measurement
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::start(this->durationLogKey_);
@@ -342,6 +427,85 @@ run()
   initialize();
 
   this->advanceTimeSpan();
+}
+
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
+computeBearingForcesAndMoments(double currentTime)
+{
+  if (totalForceLogFilename_.empty())
+    return;
+
+  LOG(DEBUG) << bottomTopElements_.size() << " elements: " << bottomTopElements_;
+
+  // compute the total forces and moments
+  Vec3 bearingForceBottom;
+  Vec3 bearingMomentBottom;
+  Vec3 bearingForceTop;
+  Vec3 bearingMomentTop;
+  hyperelasticitySolver_.computeBearingForceAndMoment(bottomTopElements_,
+    bearingForceBottom, bearingMomentBottom, bearingForceTop, bearingMomentTop);
+
+  if (DihuContext::ownRankNoCommWorld() == 0)
+  {
+    static bool headerWritten = false;
+
+    // append to file
+    std::ofstream file;
+    OutputWriter::Generic::openFile(file, totalForceLogFilename_, true);
+
+    if (!headerWritten)
+    {
+      file << "currentTime;forceBottomX;forceBottomY;forceBottomZ;momentBottomX;momentBottomY;momentBottomZ;"
+        << "forceTopX;forceTopY;forceTopZ;momentTopX;momentTopY;momentTopZ\n";
+      headerWritten = true;
+    }
+
+    // write currentTime;forceBottom;momentBottom;forceTop;momentTop
+    file << currentTime;
+
+    for (int i = 0; i < 3; i++)
+      file << ";" << bearingForceBottom[i];
+
+    for (int i = 0; i < 3; i++)
+      file << ";" << bearingMomentBottom[i];
+
+    for (int i = 0; i < 3; i++)
+      file << ";" << bearingForceTop[i];
+
+    for (int i = 0; i < 3; i++)
+      file << ";" << bearingMomentTop[i];
+    file << std::endl;
+  }
+
+  // call python callback
+  if (pythonTotalForceFunction_)
+  {
+    // only call this function at defined intervals
+    if (pythonTotalForceFunctionCallCount_ % pythonTotalForceFunctionCallInterval_ != 0)
+    {
+      pythonTotalForceFunctionCallCount_++;
+      return;
+    }
+    pythonTotalForceFunctionCallCount_++;
+
+    // create four python variables
+    PyObject *bearingForceBottomList = PythonUtility::convertToPython<Vec3>::get(bearingForceBottom);
+    PyObject *bearingMomentBottomList = PythonUtility::convertToPython<Vec3>::get(bearingMomentBottom);
+    PyObject *bearingForceTopList = PythonUtility::convertToPython<Vec3>::get(bearingForceTop);
+    PyObject *bearingMomentTopList = PythonUtility::convertToPython<Vec3>::get(bearingMomentTop);
+
+    // compose callback function
+    PyObject *arglist = Py_BuildValue("(O,O,O,O)", bearingForceBottomList, bearingMomentBottomList,
+                                      bearingForceTopList, bearingMomentTopList);
+    PyObject *returnValue = PyObject_CallObject(pythonTotalForceFunction_, arglist);
+
+    PythonUtility::checkForError();
+
+    // if there was an error while executing the function, print the error message
+    if (returnValue == NULL)
+      PyErr_Print();
+  }
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType>

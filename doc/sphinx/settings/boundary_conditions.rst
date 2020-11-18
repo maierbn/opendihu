@@ -233,6 +233,7 @@ The given object is a list of dicts as shown below. Each dict specifies one surf
       "constantVector": [1,0,0],  # specify only one of "constantVector", "constantValue" and "dofVectors"
       "constantValue": 0,
       "dofVectors":    {0:[1,0,0], 1:[2,0,0], 3:[2,1,0]},
+      "isInReferenceConfiguration": True,  # for dynamic hyperelasticity, if the traction is interpreted as specified in reference configuration or current configuration
     },
     {...}   # other dicts for prescribed values on more surfaces
   ]
@@ -277,3 +278,53 @@ The `"face"` that needs to be specified is indicated by one of "0-", "0+", "1-",
   :width: 100%
   
   Faces for specifying Neumann boundary conditions on 1D, 2D and 3D meshes.
+  
+Reference or current configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Traction boundary conditions can be either given in reference configuration (default) or in the actual configuration. For static problems there is no difference, as the system starts in reference configuration. However, for dynamic problems Neumann boundary conditions specified in reference configuration create "moving loads" that keep their angle relative to the surface, while the surface moves.
+
+To specify traction and forces that also point in the same global direction, they should be specified in the current configuration.
+
+The option `isInReferenceConfiguration` controls whether the specified boundary conditions on an element are "moving loads" in reference configuration (``True``) or fixed loads in actual configuration (``False``).
+
+The mapping between the traction :math:`T` in reference configuration and the traction :math:`t` in current configuration is given by the inverse deformation gradient:
+
+.. math::
+  T = F^{-1} t.
+  
+This transformation is computed in every timestep if `isInReferenceConfiguration` is set to `False` on any Neumann BC element. This may slow down the computation a little bit.
+
+When working with traction, the ``"constantVector"`` option is best suited as it directly specifies the direction of the traction. The option ``"constantValue"`` is also possible and corresponds to a load in normal direction. This normal direction, however, is set initially in the reference configuration and not updated during the simulation. 
+
+The following figures illustrate the difference between specified Neumann boundary conditions in reference and current configurations.
+The first image shows a horizontal rod in its reference configuration. A traction force in positive x direction is specified on the left surface. The first row shows the simulation where the traction force is specified in current configuration and, thus, always points "upwards". The second row shows the simulation with the exact same parameters, except the traction force is in reference configuration. It always points horizontal at the surface. As a result the rod bends more to the right.
+
+* Traction in current configuration (always pointing upwards):
+
+  .. image:: images/current_configuration_1.png
+    :width: 30%
+  .. image:: images/current_configuration_2.png
+    :width: 30%
+  .. image:: images/current_configuration_3.png
+    :width: 30%
+ 
+* Traction in reference configuration (always pointing orthogonal to the rod):
+
+  .. image:: images/current_configuration_1.png
+    :width: 30%
+  .. image:: images/reference_configuration_2.png
+    :width: 30%
+  .. image:: images/reference_configuration_3.png
+    :width: 30%
+ 
+How to run this simulation: 
+
+.. code-block:: bash
+
+  cd $OPENDIHU_HOME/examples/electrophysiology/fibers/fibers_contraction/with_tendons_precice/meshes
+  ./create_cuboid_meshes.sh     # create the cuboid mesh
+  cd $OPENDIHU_HOME/examples/electrophysiology/fibers/fibers_contraction/with_tendons_precice/traction_current_or_reference_configuration
+  mkorn && srr       # build
+  ./muscle_precice settings_current_configuration.py ramp.py
+  ./muscle_precice settings_reference_configuration.py ramp.py
+  

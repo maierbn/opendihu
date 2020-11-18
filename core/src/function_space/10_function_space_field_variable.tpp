@@ -127,7 +127,7 @@ double_v_t FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
 interpolateValueInElement(std::array<double_v_t,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
                           std::array<double,MeshType::dim()> xi) const
 {
-  double_v_t result = 0;
+  double_v_t result{};
   for (int dofIndex = 0; dofIndex < FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
   {
     result += elementalDofValues[dofIndex]*this->phi(dofIndex,xi);

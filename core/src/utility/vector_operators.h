@@ -38,34 +38,6 @@ std::array<double,nComponents> &operator*=(std::array<double,nComponents> &vecto
 template<std::size_t nComponents>
 std::array<double,nComponents> &operator/=(std::array<double,nComponents> &vector1, double lambda);
 
-//! scalar*vector multiplication
-template<typename double_v_t, std::size_t nComponents>
-std::array<double_v_t,nComponents> operator*(double lambda, std::array<double_v_t,nComponents> vector);
-
-//! scalar*vector multiplication
-template<typename double_v_t, std::size_t nComponents>
-std::array<double_v_t,nComponents> operator*(Vc::double_v lambda, std::array<double_v_t,nComponents> vector);
-
-//! vector*scalar multiplication
-template<typename double_v_t, std::size_t nComponents>
-std::array<double_v_t,nComponents> operator*(std::array<double_v_t,nComponents> vector, double lambda);
-
-//! vector*scalar multiplication
-template<typename double_v_t, std::size_t nComponents>
-std::array<double_v_t,nComponents> operator*(std::array<double_v_t,nComponents> vector, Vc::double_v lambda);
-
-//! vector*scalar multiplication
-template<typename T>
-std::vector<T> operator*(std::vector<T> vector, double lambda);
-
-//! component-wise vector multiplication
-template<std::size_t nComponents>
-std::array<double,nComponents> operator*(std::array<double,nComponents> vector1, std::array<double,nComponents> vector2); // component-wise multiplication
-
-//! vector multiplication, outer product
-template<std::size_t nComponents1, std::size_t nComponents2>
-std::array<std::array<double,nComponents1>,nComponents2> operator*(const std::array<double,nComponents2> vector1, const std::array<double,nComponents1> vector2);
-
 //! component-wise division
 template<typename T, std::size_t nComponents>
 std::array<T,nComponents> operator/(std::array<T,nComponents> vector1, std::array<T,nComponents> vector2);

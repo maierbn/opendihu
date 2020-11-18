@@ -1322,7 +1322,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
         # get segment
         if (n_grid_points_y%2 == 1 and j != int(n_grid_points_y/2.)) or n_grid_points_y%2 == 0:
           if j < n_grid_points_y/2.:   # bottom or side
-            if i >= j and i <= n_grid_points_x-1-j:   # bottom
+            if i >= j and i <= n_grid_points_x-1-j:   # bottom quarter /\
           
               # get layer
               a = ((n_grid_points_y-1)/2.-j)*1.0/(n_grid_points_y-1)    # distance between center of square and line of points

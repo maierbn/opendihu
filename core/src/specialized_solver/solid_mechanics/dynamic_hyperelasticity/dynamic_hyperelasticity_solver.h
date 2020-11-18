@@ -71,6 +71,12 @@ private:
   //! call the callback function to update Neumann boundary condition values
   void callUpdateNeumannBoundaryConditionsFunction(double t);
 
+  //! recreate the rhs of the neumann boundary conditions, needed if traction was specified in current configuration
+  void updateNeumannBoundaryConditions();
+
+  //! compute the total bearing forces and moments at the bottom (z-) and top (z+) of the domain
+  void computeBearingForcesAndMoments(double currentTime);
+
   HyperelasticitySolverType hyperelasticitySolver_;  //< hyperelasticity solver that solver the static problem
   Data data_;
 
@@ -83,13 +89,21 @@ private:
 
   bool inputMeshIsGlobal_;                      //< value of the setting "inputMeshIsGlobal", if the new dirichletBC values are given in global or local numbering
 
-  PyObject *pythonUpdateDirichletBoundaryConditionsFunction_;     //< the callback function
+  PyObject *pythonUpdateDirichletBoundaryConditionsFunction_;     //< the callback function that updates dirichlet boundary conditions
   int updateDirichletBoundaryConditionsFunctionCallInterval_;     //< the interval with which the function will be called
-  int updateDirichletBoundaryConditionsFunctionCallCount_ = 0;    //< the counter of number of call to the updateDirichletBoundaryConditionsFunction
+  int updateDirichletBoundaryConditionsFunctionCallCount_ = 0;    //< the counter of number of calls to the updateDirichletBoundaryConditionsFunction
 
-  PyObject *pythonUpdateNeumannBoundaryConditionsFunction_;       //< the callback function
+  PyObject *pythonUpdateNeumannBoundaryConditionsFunction_;       //< the callback function that updates neumann boundary conditions
   int updateNeumannBoundaryConditionsFunctionCallInterval_;       //< the interval with which the function will be called
-  int updateNeumannBoundaryConditionsFunctionCallCount_ = 0;      //< the counter of number of call to the updateNeumannBoundaryConditionsFunction
+  int updateNeumannBoundaryConditionsFunctionCallCount_ = 0;      //< the counter of number of calls to the updateNeumannBoundaryConditionsFunction
+
+  PyObject *pythonTotalForceFunction_;                            //< the callback function that gets the total bearing forces and moments
+  int pythonTotalForceFunctionCallInterval_;                      //< the interval with which the function will be called
+  int pythonTotalForceFunctionCallCount_ = 0;                     //< the counter of number of calls to the pythonTotalForceFunction_
+
+  std::vector<std::tuple<element_no_t,bool>> bottomTopElements_;  //< (elementNoLocal,isAtTopOfDomain) elements that are used to integrate total forces and moments
+  std::string totalForceLogFilename_;                             //< filename of the log file that will contain the total bearing forces at top and bottom elements
+  bool isTractionInCurrentConfiguration_;                         //< if traction is given in current configuration, then it has to be transformed to reference configuration in every timestep
 };
 
 }  // namespace

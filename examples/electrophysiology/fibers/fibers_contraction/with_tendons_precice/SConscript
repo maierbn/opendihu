@@ -12,5 +12,8 @@ if not env['no_examples']:
     
   # create the main executable
   env.Program(target = 'muscle_precice', source = "src/muscle_precice.cpp")
-  env.Program(target = 'tendon_precice_dynamic', source = "src/tendon_precice_dynamic.cpp")
-  env.Program(target = 'tendon_precice_quasistatic', source = "src/tendon_precice_quasistatic.cpp")
+  #env.Program(target = 'tendon_precice_dynamic', source = "src/tendon_precice_dynamic.cpp")
+#  env.Program(target = 'tendon_precice_quasistatic', source = "src/tendon_precice_quasistatic.cpp")
+#  env.Program(target = 'tendon_linear_precice_quasistatic', source = "src/tendon_linear_precice_quasistatic.cpp")
+#  env.Program(target = 'tendon_mooney_rivlin_precice_quasistatic', source = "src/tendon_mooney_rivlin_precice_quasistatic.cpp")
+  env.Program(target = 'tendon_linear_precice_dynamic', source = "src/tendon_linear_precice_dynamic.cpp")

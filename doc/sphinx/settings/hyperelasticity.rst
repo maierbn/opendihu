@@ -285,8 +285,10 @@ The following shows all possible options. The meaning can be learned from the co
     "meshName":                   "3Dmesh_quadratic",           # mesh with quadratic Lagrange ansatz functions
     "inputMeshIsGlobal":          True,                         # boundary conditions are specified in global numberings, whereas the mesh is given in local numberings
     
-    #"fiberMeshNames":             [],                           # fiber meshes that will be used to determine the fiber direction
-    #"fiberDirection":             [0,0,1],                      # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
+    "fiberMeshNames":             [],                           # fiber meshes that will be used to determine the fiber direction
+    "fiberDirection":             [],                           # if fiberMeshNames is empty, directly set the constant fiber direction, in global coordinate system
+    "fiberDirectionInElement":    [0,0,1],                      # if fiberMeshNames and fiberDirections are empty, directly set the constant fiber direction, in element coordinate system
+    
     
     # nonlinear solver
     "relativeTolerance":          1e-5,                         # 1e-10 relative tolerance of the linear solver
@@ -387,10 +389,9 @@ fiberMeshNames
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Fiber meshes that will be used to determine the fiber direction, used for anisotropic materials
 
-
-fiberDirection
+fiberDirection, fiberDirectionInElement
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-If fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system. Example: ``[0,0,1]``
+If fiberMeshNames is empty, directly set the constant fiber direction. Either use `fiberDirection` to specify a direction in the global coordinate system, or use `fiberDirectionInElement` to specify the direction in the element coordinate system. The direction should be a vector, e.g., ``[0,0,1]``
 
 Nonlinear Solver
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -470,5 +471,4 @@ There are different types of output writers that output different variables.
 * ``"pressure"``: 2. additional output writer that writes also the hydrostatic pressure
 * ``"LoadIncrements"``: 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
 
-},
 

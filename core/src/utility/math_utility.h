@@ -95,23 +95,23 @@ double_v_t computeDeterminant(const Tensor2<3,double_v_t> &jacobian);
 
 //! computes the inverse of the symmetric matrix and the determinant, for 2D matrix
 template<typename double_v_t=double>
-Tensor2<2,double_v_t> computeSymmetricInverse(const Tensor2<2,double_v_t> &matrix, double_v_t &approximateMeshWidth, double_v_t &determinant);
+Tensor2<2,double_v_t> computeSymmetricInverse(const Tensor2<2,double_v_t> &matrix, const double_v_t &approximateMeshWidth, double_v_t &determinant);
 
 //! computes the inverse of the symmetric matrix and the determinant, for 3D matrix
 template<typename double_v_t=double>
-Tensor2<3,double_v_t> computeSymmetricInverse(const Tensor2<3,double_v_t> &matrix, double_v_t &approximateMeshWidth, double_v_t &determinant);
+Tensor2<3,double_v_t> computeSymmetricInverse(const Tensor2<3,double_v_t> &matrix, const double_v_t &approximateMeshWidth, double_v_t &determinant);
 
 //! computes the inverse of the non-symmetric matrix and the determinant, for 1D matrix
 template<typename double_v_t=double>
-Tensor2<1,double_v_t> computeInverse(const Tensor2<1,double_v_t> &matrix, double_v_t &approximateMeshWidth, double_v_t &determinant);
+Tensor2<1,double_v_t> computeInverse(const Tensor2<1,double_v_t> &matrix, const double_v_t &approximateMeshWidth, double_v_t &determinant);
 
 //! computes the inverse of the non-symmetric matrix and the determinant, for 2D matrix
 template<typename double_v_t=double>
-Tensor2<2,double_v_t> computeInverse(const Tensor2<2,double_v_t> &matrix, double_v_t &approximateMeshWidth, double_v_t &determinant);
+Tensor2<2,double_v_t> computeInverse(const Tensor2<2,double_v_t> &matrix, const double_v_t &approximateMeshWidth, double_v_t &determinant);
 
 //! computes the inverse of the non-symmetric matrix and the determinant, for 3D matrix
 template<typename double_v_t=double>
-Tensor2<3,double_v_t> computeInverse(const Tensor2<3,double_v_t> &matrix, double_v_t &approximateMeshWidth, double_v_t &determinant);
+Tensor2<3,double_v_t> computeInverse(const Tensor2<3,double_v_t> &matrix, const double_v_t &approximateMeshWidth, double_v_t &determinant);
 
 //! computes the cofactor matrix of the non-symmetric matrix. inv = 1/det * adj, adj = cof^T, i.e. cof(M) = det(M) * M^{-T}
 template<typename double_v_t>

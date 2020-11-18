@@ -11,7 +11,7 @@ namespace SpatialDiscretization
 //constructor
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
 NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::NeumannBoundaryConditionsBase(DihuContext context) :
-  data_(context)
+  isTractionInCurrentConfiguration_(false), data_(context)
 {
 }
 
@@ -195,6 +195,22 @@ std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> Neu
 rhs()
 {
   return data_.rhs();
+}
+
+//! get the internal values of boundaryConditionElements_ for debugging
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
+const std::vector<typename NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces> &NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::
+boundaryConditionElements() const
+{
+  return boundaryConditionElements_;
+}
+
+//! determine whether any boundary condition was given with option "isInReferenceConfiguration": False
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
+bool NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::
+isTractionInCurrentConfiguration()
+{
+  return isTractionInCurrentConfiguration_;
 }
 
 }  // namespace

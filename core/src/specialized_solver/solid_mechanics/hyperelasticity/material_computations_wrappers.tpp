@@ -172,7 +172,7 @@ solveDynamicProblem(
   // find the solution for u,v,p of the nonlinear equation, potentially multiple load steps and repeated solve calls
   nonlinearSolve();
 
-  LOG(DEBUG) << "extrapolateInitialGuess: result: " << getString(solverVariableSolution_);
+  LOG(DEBUG) << "result: " << getString(solverVariableSolution_);
 
   // update geometry fields from displacements, compute PK2Stress, write output with output writers
   postprocessSolution();

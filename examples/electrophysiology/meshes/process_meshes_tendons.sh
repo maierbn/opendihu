@@ -10,18 +10,18 @@ input_file=original_meshes/left_biceps_brachii.stl
 
 # tendon 1 (bottom)
 # number of points in x and z direction of the extracted mesh
-tendon_1_n_points_z=5    # 11
-tendon_1_n_points_x=2
+tendon_1_n_points_z=11    # 11
+tendon_1_n_points_x=4
 
 # tendon 2a (top)
 # number of points in x and z direction of the extracted mesh
-tendon_2a_n_points_z=21
-tendon_2a_n_points_x=8
+tendon_2a_n_points_z=11   # 21
+tendon_2a_n_points_x=4    # 8
 
 # tendon 2b (top)
 # number of points in x and z direction of the extracted mesh
-tendon_2b_n_points_z=21
-tendon_2b_n_points_x=8
+tendon_2b_n_points_z=11   # 21
+tendon_2b_n_points_x=4    # 8
 
 # get filename and basename
 filename=${input_file##*/}    # left_triceps_brachii.stl
@@ -175,8 +175,8 @@ echo ""
 echo "--- for debugging, create vts file which can be viewed by ParaView"
 $pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
   ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_xy_swapped.bin
-$pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
-  ${current_directory}/processed_meshes/${basename}_09_tendon1_9x9.bin
+#$pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
+#  ${current_directory}/processed_meshes/${basename}_09_tendon1_9x9.bin
   
 if false; then   # disabled because we don't do fiber tracing for now
 # ---- c++ part, streamline tracing ------
@@ -232,7 +232,7 @@ $pyod $opendihu_directory/scripts/file_manipulation/translate_bin_fibers.py \
 fi  # endif streamline tracing
 
 # copy resulting mesh to input folder
-cp ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_y_reversed.bin ${current_directory}/processed_meshes/${basename}_tendon1_small.bin
+cp ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_y_reversed.bin ${current_directory}/processed_meshes/${basename}_tendon1.bin
   
 cd $current_directory
 
@@ -244,7 +244,7 @@ xmin=-inf
 xmax=inf
 ymin=-inf
 ymax=inf
-zmin=22.9
+zmin=22
 zmax=30
 
 # extract part for tendon 2

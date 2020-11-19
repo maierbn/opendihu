@@ -334,7 +334,7 @@ neighbourRank(Mesh::face_or_edge_t face)
     }
     else
     {
-      int neighbourRankNo = ownRankPartitioningIndex_[1]*nRanks_[0] + ownRankPartitioningIndex_[0]-1;  // 2D case
+      int neighbourRankNo = (ownRankPartitioningIndex_[1]+1)*nRanks_[0] + ownRankPartitioningIndex_[0]-1;  // 2D case
       if (MeshType::dim() == 3)
       {
         neighbourRankNo += ownRankPartitioningIndex_[2]*nRanks_[0]*nRanks_[1];
@@ -354,7 +354,7 @@ neighbourRank(Mesh::face_or_edge_t face)
     }
     else
     {
-      int neighbourRankNo = ownRankPartitioningIndex_[1]*nRanks_[0] + ownRankPartitioningIndex_[0]+1;  // 2D case
+      int neighbourRankNo = (ownRankPartitioningIndex_[1]+1)*nRanks_[0] + ownRankPartitioningIndex_[0]+1;  // 2D case
       if (MeshType::dim() == 3)
       {
         neighbourRankNo += ownRankPartitioningIndex_[2]*nRanks_[0]*nRanks_[1];

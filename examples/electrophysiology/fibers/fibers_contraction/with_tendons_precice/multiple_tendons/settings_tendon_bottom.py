@@ -145,6 +145,109 @@ def update_neumann_bc(t):
   print("prescribed pulling force to bottom: {}".format(variables.force*t))
   return config
 
+# update dirichlet boundary conditions to account for movement of humerus
+
+current_ulna_force = 0
+current_ulna_angle = 0
+
+# global coordinates of tendon bottom
+# global coordinates of elbow hinge
+elbow_hinge_point = np.array([3.54436, 11.4571, -58.5607])
+bottom_tendon_insertion_point = np.array([4.30, 14.81, -63.41])
+
+vec = -elbow_hinge_point + bottom_tendon_insertion_point
+angle_offset = np.arctan((bottom_tendon_insertion_point[2] - elbow_hinge_point[2]) / np.linalg.norm(vec))
+rotation_axis = np.array([-1.5, 1, 0])
+rotation_axis = rotation_axis / np.linalg.norm(rotation_axis)   # normalize rotation axis
+  
+def rotation_matrix(angle):
+  axis_x = rotation_axis[0]
+  axis_y = rotation_axis[1]
+  axis_z = rotation_axis[2]
+  
+  # compute rotation matrix
+  rotation_matrix = np.array([
+    [np.cos(angle) + axis_x**2*(1 - np.cos(angle)), 
+     axis_x*axis_y*(1 - np.cos(angle)) - axis_z*np.sin(angle), 
+     axis_x*axis_z*(1 - np.cos(angle)) + axis_y*np.sin(angle)],
+    [axis_y*axis_x*(1 - np.cos(angle)) + axis_z*np.sin(angle),
+     np.cos(angle) + axis_y**2*(1 - np.cos(angle)),
+     axis_y*axis_z*(1 - np.cos(angle)) - axis_x*np.sin(angle)],
+    [axis_z*axis_x*(1 - np.cos(angle)) - axis_y*np.sin(angle),
+     axis_z*axis_y*(1 - np.cos(angle)) + axis_x*np.sin(angle),
+     np.cos(angle) + axis_z**2*(1 - np.cos(angle))]])
+
+  return rotation_matrix
+
+# Function to update dirichlet boundary conditions over time, t.
+# Only those entries can be updated that were also initially set.
+def update_dirichlet_bc(t):
+  global current_ulna_angle
+
+  # determine parameter for the rotation of the tendon insertion point
+  angle = angle_offset + current_ulna_angle
+  rotation_point = elbow_hinge_point
+  vertex = bottom_tendon_insertion_point
+  
+  # rotation vertex about rotation_axis by angle
+  vertex = vertex - rotation_point
+  vertex = rotation_matrix(angle).dot(vertex)
+  vertex = vertex + rotation_point
+
+  new_insertion_point = vertex
+  offset = -bottom_tendon_insertion_point + new_insertion_point
+
+  # update dirichlet boundary conditions, set prescribed value to offset, do not constrain velocity
+  for key in variables.elasticity_dirichlet_bc.keys():
+    variables.elasticity_dirichlet_bc[key] = [offset[0],offset[1],offset[2],None,None,None]
+  
+  # store rotated ulna
+  ulna_stl_filename = "cm_left_ulna.stl"
+  try:
+    stl_mesh = mesh.Mesh.from_file(ulna_stl_filename)
+      
+    for p in stl_mesh.points:
+      # p contains the 9 entries [p1x p1y p1z p2x p2y p2z p3x p3y p3z] of the triangle with corner points (p1,p2,p3)
+
+      # transform vertices
+      vertex_list = []
+      
+      # apply rotation
+      for vertex in [np.array(p[0:3]), np.array(p[3:6]), np.array(p[6:9])]:
+        vertex = vertex - rotation_point
+        vertex = rotation_matrix.dot(vertex)
+        vertex = vertex + rotation_point
+        vertex_list.append(vertex)
+      
+      out_triangles += [vertex_list]
+
+    # Create the mesh
+    out_mesh = mesh.Mesh(np.zeros(len(out_triangles), dtype=mesh.Mesh.dtype))
+    for i, f in enumerate(out_triangles):
+      out_mesh.vectors[i] = f
+        
+    out_mesh.update_normals()
+    ulna_output_filename = "out/ulna_{}.stl".format(t)
+    out_mesh.save(ulna_output_filename)
+    print("Saved file {}".format(ulna_output_filename))
+  except:
+    print("Could not operate on {}".format(ulna_stl_filename))
+  
+  return variables.elasticity_dirichlet_bc
+
+def callback_total_force(t,bearing_force_bottom, bearing_moment_bottom, bearing_force_top, bearing_moment_top):
+  global current_ulna_angle
+  
+  current_ulna_force = bearing_force_bottom[2]
+  
+  # compute relation between force and angle of ulna
+  min_ulna_angle = -20  # [deg]
+  max_ulna_angle = 50   # [deg]
+  force_factor = min(1, max(0, current_ulna_force / 100))
+  current_ulna_angle = min_ulna_angle + force_factor * (max_ulna_angle-min_ulna_angle)
+  print("t: {}, force: {}, factor: {}, angle: {}".format(t, current_ulna_force, force_factor,current_ulna_angle))
+  current_ulna_angle *= np.pi/180   # convert from deg to rad
+
 config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyperelasticitySolver"
   "timeStepWidth":              variables.dt_elasticity,      # time step width 
   "endTime":                    variables.end_time,           # end time of the simulation time span    
@@ -196,7 +299,7 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
   "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
   "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
   "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
-  "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
+  "updateDirichletBoundaryConditionsFunction": update_dirichlet_bc,   # function that updates the dirichlet BCs while the simulation is running
   "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # stide every which step the update function should be called, 1 means every time step
   "updateNeumannBoundaryConditionsFunction": update_neumann_bc,       # a callback function to periodically update the Neumann boundary conditions
   "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step 
@@ -211,6 +314,8 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
   "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
   "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
   "totalForceTopElementNosGlobal":     [(nz-1)*ny*nx + j*nx + i for j in range(ny) for i in range(nx)],   # global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal
+  "totalForceFunction":          callback_total_force,                # callback function that gets the total force at bottom and top of the domain
+  "totalForceFunctionCallInterval": 1,                                # how often the "totalForceFunction" is called
       
   # define which file formats should be written
   # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.

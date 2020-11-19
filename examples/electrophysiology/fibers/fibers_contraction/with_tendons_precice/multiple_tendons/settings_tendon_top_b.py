@@ -39,6 +39,7 @@ variables.dt_elasticity = 1      # [ms] time step width for elasticity
 variables.end_time      = 10     # [ms] simulation time
 variables.scenario_name = "tendon_top_b"
 variables.is_bottom_tendon = False        # whether the tendon is at the bottom (negative z-direction), this is important for the boundary conditions
+variables.output_timestep_3D = 10  # [ms] output timestep
 
 # input mesh file
 #fiber_file = "../../../../input/left_biceps_brachii_tendon1.bin"        # bottom tendon
@@ -131,7 +132,7 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
   "materialParameters":         variables.material_parameters,  # material parameters of the Mooney-Rivlin material
   "density":                    variables.rho,                # density of the material
   "displacementsScalingFactor": 1.0,                          # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
-  "residualNormLogFilename":    "log_residual_norm.txt",      # log file where residual norm values of the nonlinear solver will be written
+  "residualNormLogFilename":    "out/log_residual_norm_tendon_top_b.txt",      # log file where residual norm values of the nonlinear solver will be written
   "useAnalyticJacobian":        True,                         # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
   "useNumericJacobian":         False,                        # whether to use the numerically computed jacobian matrix in the nonlinear solver (slow), only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
     
@@ -178,10 +179,10 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
   
   "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
   "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-  "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
+  "extrapolateInitialGuess":     False,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
   "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
   
-  "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions_tendon_top_b",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+  "dirichletOutputFilename":     "out/dirichlet_boundary_conditions_tendon_top_b",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
   "totalForceLogFilename":       "out/tendon_force_top_b.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
   "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
   "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
@@ -192,7 +193,7 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
   "OutputWriter" : [
     
     # Paraview files
-    {"format": "Paraview", "outputInterval": 5, "filename": "out/"+variables.scenario_name+"/tendon_top_b", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+    {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_3D), "filename": "out/tendon_top_b", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
     
     # Python callback function "postprocess"
     #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
@@ -206,7 +207,7 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
   # 3. additional output writer that writes virtual work terms
   "dynamic": {    # output of the dynamic solver, has additional virtual work values 
     "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-      {"format": "Paraview", "outputInterval": 5, "filename": "out/"+variables.scenario_name+"/tendon_top_b_virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+      {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_3D), "filename": "out/tendon_top_b_virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
     ],
   },

@@ -177,7 +177,7 @@ protected:
   bool neighbourExists(const std::array<bool,4> &subdomainIsAtBorder, Mesh::face_or_edge_t faceOrEdge);
 
   //! print if one of the surrounding neighbors is a boundary
-  void printNeighbourSituation(const std::array<bool,4> &subdomainIsAtBorder);
+  void printRanksInNeighbourhood(const std::array<bool,4> &subdomainIsAtBorder);
 
   const DihuContext context_;       //< object that contains the python config for the current context and the global singletons meshManager and solverManager
   std::shared_ptr<FiniteElementMethodType> problem_;   //< the DiscretizableInTime object that is managed by this class

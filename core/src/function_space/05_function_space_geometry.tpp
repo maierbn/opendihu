@@ -24,7 +24,7 @@ getElementGeometry(element_no_t elementNoLocal, std::array<Vec3, FunctionSpaceBa
   assert (this->geometryField_);
   assert (elementNoLocal >= 0);
   if (elementNoLocal >= this->nElementsLocal())
-    LOG(ERROR) << "FunctionSpace::getElementGeometry elementNoLocal: " << elementNoLocal << ", nElementsLocal: " << this->nElementsLocal();
+    LOG(ERROR) << "Invalid element no in FunctionSpace::getElementGeometry, elementNoLocal: " << elementNoLocal << ", nElementsLocal: " << this->nElementsLocal();
   assert (elementNoLocal < this->nElementsLocal());
 
   this->geometryField_->getElementValues(elementNoLocal, values);

@@ -519,7 +519,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
   {
     assert(this->ghostMesh_[ghostMeshNo]);
     coordinatesLocal = this->ghostMesh_[ghostMeshNo]->meshPartition()->getElementCoordinatesLocal(elementNo);
-    coordinatesLocal[0] -= -this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(0);
+    coordinatesLocal[0] -= this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(0);
   }
   else if (ghostMeshNo == (int)Mesh::face_t::face0Plus)   // right
   {
@@ -592,7 +592,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
   std::array<double,MeshType::dim()> xiBest; 
   double residualBest;
   double excessivityScoreBest = std::numeric_limits<double>::max();
-  LOG(DEBUG) << "intiialize excessivityScoreBest: " << excessivityScoreBest;
+  LOG(DEBUG) << "initialize excessivityScoreBest: " << excessivityScoreBest;
 
   bool elementFound = false;
 
@@ -720,7 +720,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
             ghostMeshCoordinates[0] += this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(0);
             neighbourElementNo = this->ghostMesh_[ghostMeshNo]->meshPartition()->getElementNoLocal(ghostMeshCoordinates);
 
-            VLOG(2) << "0- neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates
+            VLOG(1) << "0- neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates
               << " / (" << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(0) << "," << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(1) << "," << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(2) << ")";
           }
           else
@@ -739,7 +739,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
             ghostMeshCoordinates[0] -= this->meshPartition_->nElementsLocal(0);
             neighbourElementNo = this->ghostMesh_[ghostMeshNo]->meshPartition()->getElementNoLocal(ghostMeshCoordinates);
 
-            VLOG(2) << "0+ neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates
+            VLOG(1) << "0+ neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates
               << " / (" << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(0) << "," << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(1) << "," << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(2) << ")";
           }
           else
@@ -758,7 +758,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
             ghostMeshCoordinates[1] += this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(1);
             neighbourElementNo = this->ghostMesh_[ghostMeshNo]->meshPartition()->getElementNoLocal(ghostMeshCoordinates);
 
-            VLOG(2) << "1- neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates
+            VLOG(1) << "1- neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates
               << " / (" << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(0) << "," << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(1) << "," << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(2) << ")";
           }
         }
@@ -772,7 +772,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
             ghostMeshCoordinates[1] -= this->meshPartition_->nElementsLocal(1);
             neighbourElementNo = this->ghostMesh_[ghostMeshNo]->meshPartition()->getElementNoLocal(ghostMeshCoordinates);
 
-            VLOG(2) << "1+ neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates
+            VLOG(1) << "1+ neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates
               << " / (" << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(0) << "," << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(1) << "," << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(2) << ")";
           }
           else
@@ -791,7 +791,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
             ghostMeshCoordinates[2] += this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(2);
             neighbourElementNo = this->ghostMesh_[ghostMeshNo]->meshPartition()->getElementNoLocal(ghostMeshCoordinates);
 
-            VLOG(2) << "2- neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates
+            VLOG(1) << "2- neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates
               << " / (" << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(0) << "," << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(1) << "," << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(2) << ")";
           }
           else
@@ -810,7 +810,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
             ghostMeshCoordinates[2] -= this->meshPartition_->nElementsLocal(2);
             neighbourElementNo = this->ghostMesh_[ghostMeshNo]->meshPartition()->getElementNoLocal(ghostMeshCoordinates);
 
-            VLOG(2) << "2+ neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates
+            VLOG(1) << "2+ neighbourElementNo: " << neighbourElementNo << ", ghostMeshCoordinates: " << ghostMeshCoordinates
               << " / (" << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(0) << "," << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(1) << "," << this->ghostMesh_[ghostMeshNo]->meshPartition()->nElementsLocal(2) << ")";
           }
           else

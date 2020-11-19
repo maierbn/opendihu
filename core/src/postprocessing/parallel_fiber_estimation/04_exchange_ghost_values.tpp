@@ -35,7 +35,7 @@ neighbourExists(const std::array<bool,4> &subdomainIsAtBorder, Mesh::face_or_edg
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-printNeighbourSituation(const std::array<bool,4> &subdomainIsAtBorder)
+printRanksInNeighbourhood(const std::array<bool,4> &subdomainIsAtBorder)
 {
   std::stringstream s;
 
@@ -179,7 +179,7 @@ printNeighbourSituation(const std::array<bool,4> &subdomainIsAtBorder)
       s << " " << std::setw(2) << neighbourRankNo;
     }
   }
-  LOG(DEBUG) << "current rank situation:\n" << s.str();
+  LOG(DEBUG) << "current ranks in neighbourhood:\n" << s.str();
 }
 
 template<typename BasisFunctionType>
@@ -239,7 +239,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
   LOG(DEBUG) << "determined boundary elements, now communicate";
 
   // for debugging, output neighboring ranks
-  printNeighbourSituation(subdomainIsAtBorder);
+  printRanksInNeighbourhood(subdomainIsAtBorder);
 
   // blocking communication
 

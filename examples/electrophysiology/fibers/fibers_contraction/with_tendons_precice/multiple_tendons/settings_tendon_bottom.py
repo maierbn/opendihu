@@ -33,7 +33,7 @@ mu = shear_modulus       # Lamé parameter mu or G (shear modulus)
 variables.material_parameters = [lambd, mu]
 
 variables.constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
-variables.force = 1.0           # [N] pulling force to the bottom 
+variables.force = 100.0           # [N] pulling force to the bottom 
 
 variables.dt_elasticity = 1      # [ms] time step width for elasticity
 variables.end_time      = 10     # [ms] simulation time
@@ -122,7 +122,28 @@ for j in range(my):
        
 # set Neumann BC, set traction at the end of the tendon that is attached to the bone
 k = 0
-variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": [0,0,-variables.force], "face": "2-"} for j in range(ny) for i in range(nx)]
+# start with 0 BC
+variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": [0,0,0], "face": "2-"} for j in range(ny) for i in range(nx)]
+
+def update_neumann_bc(t):
+
+  # set new Neumann boundary conditions
+  k = 0
+  factor = max(1,t/100)   # for t ∈ [0,100] from 0 to 1
+  elasticity_neumann_bc = [{
+		"element": k*nx*ny + j*nx + i, 
+		"constantVector": [0,0,-variables.force*t], 		# force pointing to bottom
+		"face": "2-",
+    "isInReferenceConfiguration": True
+  } for j in range(ny) for i in range(nx)]
+
+  config = {
+    "inputMeshIsGlobal": True,
+    "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+    "neumannBoundaryConditions": elasticity_neumann_bc,
+  }
+  print("prescribed pulling force to bottom: {}".format(variables.force*t))
+  return config
 
 config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyperelasticitySolver"
   "timeStepWidth":              variables.dt_elasticity,      # time step width 
@@ -174,10 +195,12 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
   # boundary and initial conditions
   "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
   "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
-  "divideNeumannBoundaryConditionValuesByTotalArea": False,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+  "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
   "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
-  "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
-  
+  "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # stide every which step the update function should be called, 1 means every time step
+  "updateNeumannBoundaryConditionsFunction": update_neumann_bc,       # a callback function to periodically update the Neumann boundary conditions
+  "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step 
+ 
   "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
   "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
   "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities

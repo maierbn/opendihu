@@ -38,6 +38,7 @@ else:
 
 # -------------- begin user parameters ----------------
 variables.output_timestep_3D = 10     #[ms] output timestep of mechanics
+variables.output_timestep_fibers = 1000 # [ms] output timestep of fibers
 # -------------- end user parameters ----------------
 
 # define command line arguments
@@ -495,7 +496,7 @@ config = {
             "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
             "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
             
-            "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions_muscle",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+            "dirichletOutputFilename":     "out/dirichlet_boundary_conditions_muscle",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
             "totalForceLogFilename":       "out/muscle_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
             "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
             "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename

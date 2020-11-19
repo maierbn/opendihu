@@ -28,6 +28,7 @@ parser.add_argument('--n_elements_z_per_subdomain',  type=int,   default=50,    
 parser.add_argument('--n_elements_x_per_subdomain',  type=int,   default=4,          help='Number of elements in x direction per subdomain.')
 parser.add_argument('--n_fine_grid_fibers', '-m',    type=int,   default=0,          help='Number of fine grid fibers to interpolate between the key fibers, parameter is called m.')
 parser.add_argument('--max_level', '-l',             type=int,   default=2,          help='Maximum recursion level l, the required number of processes is 8^l. The maximum recursion level is also reached when there are not enough processes left, so a too high value for l is no problem.')
+parser.add_argument('--program_name',                            default="generate", help='If the program is run with the quadratic ansatz functions, this information is only for the scenario name.')
 
 # parse command line arguments and assign values to variables module
 args = vars(parser.parse_args(args=sys.argv[:-2]))
@@ -47,6 +48,7 @@ refinement = args["refinement_factor"]
 improve_mesh = args["improve_mesh"]
 use_gradient_field = args["use_gradient_field"]
 use_neumann_bc = args["use_neumann_bc"]
+use_quadratic = "quadratic" in args["program_name"]
 n_elements_z_per_subdomain = args["n_elements_z_per_subdomain"]
 n_elements_x_per_subdomain = args["n_elements_x_per_subdomain"]
 n_fine_grid_fibers = args["n_fine_grid_fibers"]
@@ -58,7 +60,7 @@ if new_max_level != max_level:
       format(max_level, new_max_level, n_ranks, max_level, 8**max_level, new_max_level, 8**new_max_level))
   max_level = new_max_level
 
-scenario_name = "l{}_m{}_q{}{}{}{}".format(max_level, n_fine_grid_fibers, refinement, "I" if improve_mesh else "n","G" if use_gradient_field else "n", "_neumann" if use_neumann_bc else "_dirichlet")
+scenario_name = "l{}_m{}_{}{}{}{}{}".format(max_level, n_fine_grid_fibers, "q" if use_quadratic else "", refinement, "I" if improve_mesh else "n","G" if use_gradient_field else "n", "_neumann" if use_neumann_bc else "_dirichlet")
 if args["output_filename"] == "":
   output_filename = "0x0fibers_{}.bin".format(scenario_name)
 else:
@@ -80,6 +82,8 @@ if rank_no == 0:
   print("  improve_mesh:        {}".format(improve_mesh))
   print("  use_gradient_field:  {}".format(use_gradient_field))
   print("  use_neumann_bc:      {}".format(use_neumann_bc))
+  print("  use_quadratic:       {} (program name: \"{}\")".format(use_quadratic,args["program_name"]))
+  print("  scenario_name:       {}".format(scenario_name))
   print("  n_elements_x_per_subdomain:  {}".format(n_elements_x_per_subdomain))
   print("  n_elements_z_per_subdomain:  {}".format(n_elements_z_per_subdomain))
   print("  n_fine_grid_fibers:  m = {}".format(n_fine_grid_fibers))
@@ -125,6 +129,7 @@ config = {
     "improveMesh":                improve_mesh,          # smooth the 2D meshes, required for bigger meshes or larger amount of ranks
     "refinementFactors": [refinement,refinement,refinement],         # [2,2,2] factors in x,y,z direction by which the mesh should be refined prior to solving the laplace problem and tracing the streamlines
     "laplacianSmoothingNIterations": 10,                 # number of Laplacian smoothing iterations on the final fibers grid
+    "ghostLayerWidth":            3,                     # width of the ghost layer of elements that is communicated between the subdomains, such that boundary streamlines do not leave the subdomains during tracing
     
     "FiniteElementMethod": {
       "meshName":   "potentialFlow",

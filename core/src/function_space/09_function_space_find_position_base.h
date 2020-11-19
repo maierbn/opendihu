@@ -3,6 +3,7 @@
 #include <Python.h>  // has to be the first included header
 
 #include "function_space/08_function_space_nodes.h"
+#include "mesh/face_or_edge_t.h"
 
 namespace FunctionSpace
 {
@@ -24,7 +25,10 @@ public:
   using FunctionSpaceNodes<MeshType,BasisFunctionType>::FunctionSpaceNodes;
 
   //! store a ghost mesh which is a neighouring mesh with only one layer of elements, this will be used by pointIsInElement and findPosition
-  void setGhostMesh(Mesh::face_t face, const std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>> ghostMesh);
+  void setGhostMesh(Mesh::face_or_edge_t face, const std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>> ghostMesh);
+
+  //! return a pointer to the ghost mesh indexed by faceOrEdge, the ghostMesh may be nullptr
+  std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>> ghostMesh(Mesh::face_or_edge_t faceOrEdge);
 
   //! get the element no and the xi value of the point, return true if the point is inside the mesh or false otherwise. Start search at given elementNo
   //! ghostMeshNo: -1 means main mesh, 0-5 means ghost Mesh with respecitve Mesh::face_t
@@ -42,7 +46,7 @@ protected:
   //! set elementNo, ghostMeshNo and xi appropriately
   virtual bool checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, double &residual, double xiTolerance) = 0;
 
-  std::array<std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>>,6> ghostMesh_;   // neighbouring functionSpaces of the local domain, i.e. containing ghost elements, this is used by findPosition
+  std::array<std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>>,10> ghostMesh_;   // neighbouring functionSpaces of the local domain, i.e. containing ghost elements, this is used by findPosition,
 };
 
 }  // namespace

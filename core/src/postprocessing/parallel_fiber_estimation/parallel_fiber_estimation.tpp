@@ -70,6 +70,7 @@ ParallelFiberEstimation(DihuContext context) :
   finalTopZClip_ = specificSettings_.getOptionDouble("finalTopZClip", topZClip_);
   refinementFactors_ = specificSettings_.getOptionArray<int,3>("refinementFactors", std::array<int,3>({1,1,1}));
   laplacianSmoothingNIterations_ = specificSettings_.getOptionInt("laplacianSmoothingNIterations", 10);
+  ghostLayerWidth_ = specificSettings_.getOptionInt("ghostLayerWidth", 1);
 
   this->lineStepWidth_ = specificSettings_.getOptionDouble("lineStepWidth", 1e-2, PythonUtility::Positive);
   this->maxNIterations_ = specificSettings_.getOptionInt("maxIterations", 100000, PythonUtility::Positive);

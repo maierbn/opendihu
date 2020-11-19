@@ -170,8 +170,14 @@ protected:
   //! create output file with fibers in it
   void writeToFile(std::string filename, std::vector<std::vector<Vec3>> &fibers, int nFibersX, bool withBoundaryLayer);
 
-  // compute the current level_ = log2(nRanksPerCoordinateDirection_)
+  //! compute the current level_ = log2(nRanksPerCoordinateDirection_)
   void determineLevel();
+
+  //! determine if a neighor rank exists in the given face or edge
+  bool neighbourExists(const std::array<bool,4> &subdomainIsAtBorder, Mesh::face_or_edge_t faceOrEdge);
+
+  //! print if one of the surrounding neighbors is a boundary
+  void printNeighbourSituation(const std::array<bool,4> &subdomainIsAtBorder);
 
   const DihuContext context_;       //< object that contains the python config for the current context and the global singletons meshManager and solverManager
   std::shared_ptr<FiniteElementMethodType> problem_;   //< the DiscretizableInTime object that is managed by this class
@@ -200,6 +206,7 @@ protected:
   int level_;                       //< current level of the recursion, 0=1 process, 1=8 processes, 2=64 processes
   bool useNeumannBoundaryConditions_;     //< if neumann instead of dirichlet boundary conditions should be used
   int laplacianSmoothingNIterations_;     //< number of iterations of Laplacian smoothing that is applied prior to tracing the fine grid fibers
+  int ghostLayerWidth_;             //< width of the ghost layer in elements that is created in parallel execution
 
   std::array<int,3> refinementFactors_;   //< factors by which the mesh should be refined prior to solving the Laplace problem and tracing the streamlines
 

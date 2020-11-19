@@ -102,7 +102,7 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
   std::array<std::vector<char>,4> receiveBufferValidity;
   for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
   {
-    int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)face);
+    int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_or_edge_t)face);
 
     // if there is no neighbour in that direction
     if (neighbourRankNo == -1)
@@ -189,7 +189,7 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
 
   for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
   {
-    int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)face);
+    int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_or_edge_t)face);
 
     // if there is no neighbour in that direction
     if (neighbourRankNo == -1)
@@ -217,7 +217,7 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
   // loop over faces
   for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
   {
-    int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)face);
+    int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_or_edge_t)face);
 
     // if there is no neighbour in that direction
     if (neighbourRankNo == -1)
@@ -321,7 +321,7 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
   // loop over faces
   for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
   {
-    int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)face);
+    int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_or_edge_t)face);
 
     // if there is no neighbour in that direction
     if (neighbourRankNo == -1)

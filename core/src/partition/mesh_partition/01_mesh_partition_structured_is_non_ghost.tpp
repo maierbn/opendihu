@@ -180,14 +180,14 @@ isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
 
 template<typename MeshType,typename BasisFunctionType>
 int MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-neighbourRank(Mesh::face_t face)
+neighbourRank(Mesh::face_or_edge_t face)
 {
   /*
-  face0Minus = 0, face0Plus,
-  face1Minus, face1Plus,
-  face2Minus, face2Plus
+  faceEdge0Minus = 0, faceEdge0Plus,
+  faceEdge1Minus, faceEdge1Plus,
+  faceEdge2Minus, faceEdge2Plus
   * */
-  if (face == Mesh::face_t::face0Minus)
+  if (face == Mesh::face_or_edge_t::faceEdge0Minus)
   {
     // if this subdomain is at the left end of the global domain
     if (ownRankPartitioningIndex_[0] == 0)
@@ -199,7 +199,7 @@ neighbourRank(Mesh::face_t face)
       return this->ownRankNo()-1;
     }
   }
-  else if (face == Mesh::face_t::face0Plus)
+  else if (face == Mesh::face_or_edge_t::faceEdge0Plus)
   {
     // if this subdomain is at the right end of the global domain
     if (ownRankPartitioningIndex_[0] == nRanks_[0]-1)
@@ -211,7 +211,7 @@ neighbourRank(Mesh::face_t face)
       return this->ownRankNo()+1;
     }
   }
-  else if (face == Mesh::face_t::face1Minus)
+  else if (face == Mesh::face_or_edge_t::faceEdge1Minus)
   {
     assert(MeshType::dim() >= 2);
 
@@ -230,7 +230,7 @@ neighbourRank(Mesh::face_t face)
       return neighbourRankNo;
     }
   }
-  else if (face == Mesh::face_t::face1Plus)
+  else if (face == Mesh::face_or_edge_t::faceEdge1Plus)
   {
     assert(MeshType::dim() >= 2);
 
@@ -250,7 +250,7 @@ neighbourRank(Mesh::face_t face)
       return neighbourRankNo;
     }
   }
-  else if (face == Mesh::face_t::face2Minus)
+  else if (face == Mesh::face_or_edge_t::faceEdge2Minus)
   {
     assert(MeshType::dim() == 3);
 
@@ -266,7 +266,7 @@ neighbourRank(Mesh::face_t face)
         + ownRankPartitioningIndex_[0];
     }
   }
-  else if (face == Mesh::face_t::face2Plus)
+  else if (face == Mesh::face_or_edge_t::faceEdge2Plus)
   {
     assert(MeshType::dim() == 3);
 
@@ -282,12 +282,93 @@ neighbourRank(Mesh::face_t face)
         + ownRankPartitioningIndex_[0];
     }
   }
+  else if (face == Mesh::face_or_edge_t::edge0Minus1Minus)
+  {
+    assert(MeshType::dim() >= 2);
+
+    // if this subdomain is at the left end of the global domain
+    // or at the front end of the global domain
+    if (ownRankPartitioningIndex_[0] == 0 || ownRankPartitioningIndex_[1] == 0)
+    {
+      return -1;
+    }
+    else
+    {
+      int neighbourRankNo = (ownRankPartitioningIndex_[1]-1)*nRanks_[0] + ownRankPartitioningIndex_[0]-1;  // 2D case
+      if (MeshType::dim() == 3)
+      {
+        neighbourRankNo += ownRankPartitioningIndex_[2]*nRanks_[0]*nRanks_[1];
+      }
+      return neighbourRankNo;
+    }
+  }
+  else if (face == Mesh::face_or_edge_t::edge0Plus1Minus)
+  {
+    assert(MeshType::dim() >= 2);
+
+    // if this subdomain is at the right end of the global domain
+    // or at the front end of the global domain
+    if (ownRankPartitioningIndex_[0] == nRanks_[0]-1 || ownRankPartitioningIndex_[1] == 0)
+    {
+      return -1;
+    }
+    else
+    {
+      int neighbourRankNo = (ownRankPartitioningIndex_[1]-1)*nRanks_[0] + ownRankPartitioningIndex_[0]+1;  // 2D case
+      if (MeshType::dim() == 3)
+      {
+        neighbourRankNo += ownRankPartitioningIndex_[2]*nRanks_[0]*nRanks_[1];
+      }
+      return neighbourRankNo;
+    }
+  }
+  else if (face == Mesh::face_or_edge_t::edge0Minus1Plus)
+  {
+    assert(MeshType::dim() >= 2);
+
+    // if this subdomain is at the left end of the global domain
+    // or at the back end of the global domain
+    if (ownRankPartitioningIndex_[0] == 0 || ownRankPartitioningIndex_[1] == nRanks_[1]-1)
+    {
+      return -1;
+    }
+    else
+    {
+      int neighbourRankNo = ownRankPartitioningIndex_[1]*nRanks_[0] + ownRankPartitioningIndex_[0]-1;  // 2D case
+      if (MeshType::dim() == 3)
+      {
+        neighbourRankNo += ownRankPartitioningIndex_[2]*nRanks_[0]*nRanks_[1];
+      }
+      return neighbourRankNo;
+    }
+  }
+  else if (face == Mesh::face_or_edge_t::edge0Plus1Plus)
+  {
+    assert(MeshType::dim() >= 2);
+
+    // if this subdomain is at the right end of the global domain
+    // or at the back end of the global domain
+    if (ownRankPartitioningIndex_[0] == nRanks_[0]-1 || ownRankPartitioningIndex_[1] == nRanks_[1]-1)
+    {
+      return -1;
+    }
+    else
+    {
+      int neighbourRankNo = ownRankPartitioningIndex_[1]*nRanks_[0] + ownRankPartitioningIndex_[0]+1;  // 2D case
+      if (MeshType::dim() == 3)
+      {
+        neighbourRankNo += ownRankPartitioningIndex_[2]*nRanks_[0]*nRanks_[1];
+      }
+      return neighbourRankNo;
+    }
+  }
+
   return -1;  // does not happen (but intel compiler does not recognize it)
 }
 
 template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_no_t,MeshType::dim()> &nBoundaryElements, std::vector<dof_no_t> &dofNos)
+getBoundaryElements(Mesh::face_or_edge_t face, int boundaryLayerWidth, int &neighbourRankNo, std::array<element_no_t,MeshType::dim()> &nBoundaryElements, std::vector<dof_no_t> &dofNos)
 {
   neighbourRankNo = neighbourRank(face);
 
@@ -298,24 +379,24 @@ getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_
   }
 
   /*
-  face0Minus = 0, face0Plus,
-  face1Minus, face1Plus,
-  face2Minus, face2Plus
+  faceEdge0Minus = 0, faceEdge0Plus,
+  faceEdge1Minus, faceEdge1Plus,
+  faceEdge2Minus, faceEdge2Plus
    */
 
   std::array<element_no_t,MeshType::dim()> boundaryElementIndexStart;
 
-  if (face == Mesh::face_t::face0Minus || face == Mesh::face_t::face0Plus)
+  if (face == Mesh::face_or_edge_t::faceEdge0Minus || face == Mesh::face_or_edge_t::faceEdge0Plus)
   {
-    if (face == Mesh::face_t::face0Minus)
+    if (face == Mesh::face_or_edge_t::faceEdge0Minus)
     {
       boundaryElementIndexStart[0] = 0;
-      nBoundaryElements[0] = 1;
+      nBoundaryElements[0] = boundaryLayerWidth;
     }
     else
     {
-      boundaryElementIndexStart[0] = nElementsLocal_[0]-1;
-      nBoundaryElements[0] = 1;
+      boundaryElementIndexStart[0] = nElementsLocal_[0]-boundaryLayerWidth;
+      nBoundaryElements[0] = boundaryLayerWidth;
     }
 
     if (MeshType::dim() >= 2)
@@ -329,19 +410,19 @@ getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_
       nBoundaryElements[2] = nElementsLocal_[2];
     }
   }
-  else if (face == Mesh::face_t::face1Minus || face == Mesh::face_t::face1Plus)
+  else if (face == Mesh::face_or_edge_t::faceEdge1Minus || face == Mesh::face_or_edge_t::faceEdge1Plus)
   {
     assert(MeshType::dim() >= 2);
 
-    if (face == Mesh::face_t::face1Minus)
+    if (face == Mesh::face_or_edge_t::faceEdge1Minus)
     {
       boundaryElementIndexStart[1] = 0;
-      nBoundaryElements[1] = 1;
+      nBoundaryElements[1] = boundaryLayerWidth;
     }
     else
     {
-      boundaryElementIndexStart[1] = nElementsLocal_[1]-1;
-      nBoundaryElements[1] = 1;
+      boundaryElementIndexStart[1] = nElementsLocal_[1]-boundaryLayerWidth;
+      nBoundaryElements[1] = boundaryLayerWidth;
     }
 
     boundaryElementIndexStart[0] = 0;
@@ -353,19 +434,19 @@ getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_
       nBoundaryElements[2] = nElementsLocal_[2];
     }
   }
-  else if (face == Mesh::face_t::face2Minus || face == Mesh::face_t::face2Plus)
+  else if (face == Mesh::face_or_edge_t::faceEdge2Minus || face == Mesh::face_or_edge_t::faceEdge2Plus)
   {
     assert(MeshType::dim() == 3);
 
-    if (face == Mesh::face_t::face2Minus)
+    if (face == Mesh::face_or_edge_t::faceEdge2Minus)
     {
       boundaryElementIndexStart[2] = 0;
-      nBoundaryElements[2] = 1;
+      nBoundaryElements[2] = boundaryLayerWidth;
     }
     else
     {
-      boundaryElementIndexStart[2] = nElementsLocal_[2]-1;
-      nBoundaryElements[2] = 1;
+      boundaryElementIndexStart[2] = nElementsLocal_[2]-boundaryLayerWidth;
+      nBoundaryElements[2] = boundaryLayerWidth;
     }
 
     boundaryElementIndexStart[0] = 0;
@@ -373,6 +454,58 @@ getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_
 
     boundaryElementIndexStart[1] = 0;
     nBoundaryElements[1] = nElementsLocal_[1];
+  }
+  else if (face == Mesh::face_or_edge_t::edge0Minus1Minus)
+  {
+    boundaryElementIndexStart[0] = 0;
+    boundaryElementIndexStart[1] = 0;
+    nBoundaryElements[0] = boundaryLayerWidth;
+    nBoundaryElements[1] = boundaryLayerWidth;
+
+    if (MeshType::dim() == 3)
+    {
+      boundaryElementIndexStart[2] = 0;
+      nBoundaryElements[2] = nElementsLocal_[2];
+    }
+  }
+  else if (face == Mesh::face_or_edge_t::edge0Plus1Minus)
+  {
+    boundaryElementIndexStart[0] = nElementsLocal_[0]-boundaryLayerWidth;
+    boundaryElementIndexStart[1] = 0;
+    nBoundaryElements[0] = boundaryLayerWidth;
+    nBoundaryElements[1] = boundaryLayerWidth;
+
+    if (MeshType::dim() == 3)
+    {
+      boundaryElementIndexStart[2] = 0;
+      nBoundaryElements[2] = nElementsLocal_[2];
+    }
+  }
+  else if (face == Mesh::face_or_edge_t::edge0Minus1Plus)
+  {
+    boundaryElementIndexStart[0] = 0;
+    boundaryElementIndexStart[1] = nElementsLocal_[1]-boundaryLayerWidth;
+    nBoundaryElements[0] = boundaryLayerWidth;
+    nBoundaryElements[1] = boundaryLayerWidth;
+
+    if (MeshType::dim() == 3)
+    {
+      boundaryElementIndexStart[2] = 0;
+      nBoundaryElements[2] = nElementsLocal_[2];
+    }
+  }
+  else if (face == Mesh::face_or_edge_t::edge0Plus1Plus)
+  {
+    boundaryElementIndexStart[0] = nElementsLocal_[0]-boundaryLayerWidth;
+    boundaryElementIndexStart[1] = nElementsLocal_[1]-boundaryLayerWidth;
+    nBoundaryElements[0] = boundaryLayerWidth;
+    nBoundaryElements[1] = boundaryLayerWidth;
+
+    if (MeshType::dim() == 3)
+    {
+      boundaryElementIndexStart[2] = 0;
+      nBoundaryElements[2] = nElementsLocal_[2];
+    }
   }
 
   const int averageNDofsPerElement1D = FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNDofsPerElement();
@@ -385,10 +518,13 @@ getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_
     nBoundaryDofsTotal = (nBoundaryElements[0]*averageNDofsPerElement1D + nDofsPerNode);
     break;
   case 2:
-    nBoundaryDofsTotal = (nBoundaryElements[0]*averageNDofsPerElement1D + nDofsPerNode) * (nBoundaryElements[1]*averageNDofsPerElement1D + nDofsPerNode);
+    nBoundaryDofsTotal = (nBoundaryElements[0]*averageNDofsPerElement1D + nDofsPerNode)
+      * (nBoundaryElements[1]*averageNDofsPerElement1D + nDofsPerNode);
     break;
   case 3:
-    nBoundaryDofsTotal = (nBoundaryElements[0]*averageNDofsPerElement1D + nDofsPerNode) * (nBoundaryElements[1]*averageNDofsPerElement1D + nDofsPerNode) * (nBoundaryElements[2]*averageNDofsPerElement1D + nDofsPerNode);
+    nBoundaryDofsTotal = (nBoundaryElements[0]*averageNDofsPerElement1D + nDofsPerNode)
+      * (nBoundaryElements[1]*averageNDofsPerElement1D + nDofsPerNode)
+      * (nBoundaryElements[2]*averageNDofsPerElement1D + nDofsPerNode);
     break;
   }
 
@@ -421,7 +557,7 @@ getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_
   }
   else if (MeshType::dim() == 2)
   {
-    int nDofsRow = nElementsLocal_[0]*averageNDofsPerElement1D + averageNDofsPerElement1D;
+    int nDofsRow = nElementsLocal_[0]*averageNDofsPerElement1D + nDofsPerNode;
     int dofIndex = 0;
     for (int j = boundaryDofIndexStart[1]; j < boundaryDofIndexStart[1]+nDofs[1]; j++)
     {
@@ -433,8 +569,8 @@ getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_
   }
   else if (MeshType::dim() == 3)
   {
-    int nDofsRow = nElementsLocal_[0]*averageNDofsPerElement1D + averageNDofsPerElement1D;
-    int nDofsPlane = (nElementsLocal_[1]*averageNDofsPerElement1D + averageNDofsPerElement1D) * nDofsRow;
+    int nDofsRow = nElementsLocal_[0]*averageNDofsPerElement1D + nDofsPerNode;
+    int nDofsPlane = (nElementsLocal_[1]*averageNDofsPerElement1D + nDofsPerNode) * nDofsRow;
     //LOG(DEBUG) << "nDofsRow: " << nDofsRow << ", nDofsPlane: " << nDofsPlane;
     int dofIndex = 0;
     for (int k = boundaryDofIndexStart[2]; k < boundaryDofIndexStart[2]+nDofs[2]; k++)

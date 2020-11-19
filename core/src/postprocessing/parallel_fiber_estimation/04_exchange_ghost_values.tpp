@@ -21,7 +21,7 @@ neighbourExists(const std::array<bool,4> &subdomainIsAtBorder, Mesh::face_or_edg
   {
     // it is an edge
     if (
-      (   faceOrEdge == Mesh::face_or_edge_t::edge0Minus1Minus && !subdomainIsAtBorder[Mesh::face_t::face0Minus] && !subdomainIsAtBorder[Mesh::face_t::face1Minus])
+         (faceOrEdge == Mesh::face_or_edge_t::edge0Minus1Minus && !subdomainIsAtBorder[Mesh::face_t::face0Minus] && !subdomainIsAtBorder[Mesh::face_t::face1Minus])
       || (faceOrEdge == Mesh::face_or_edge_t::edge0Plus1Minus  && !subdomainIsAtBorder[Mesh::face_t::face0Plus]  && !subdomainIsAtBorder[Mesh::face_t::face1Minus])
       || (faceOrEdge == Mesh::face_or_edge_t::edge0Minus1Plus  && !subdomainIsAtBorder[Mesh::face_t::face0Minus] && !subdomainIsAtBorder[Mesh::face_t::face1Plus])
       || (faceOrEdge == Mesh::face_or_edge_t::edge0Plus1Plus   && !subdomainIsAtBorder[Mesh::face_t::face0Plus]  && !subdomainIsAtBorder[Mesh::face_t::face1Plus])
@@ -37,48 +37,149 @@ template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
 printNeighbourSituation(const std::array<bool,4> &subdomainIsAtBorder)
 {
+  std::stringstream s;
+
   // output neighbouring ranks and own rank for debugging
-  if (!subdomainIsAtBorder[Mesh::face_t::face1Plus])
+  // top row
+  if (subdomainIsAtBorder[Mesh::face_t::face1Plus])
   {
-    int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::faceEdge1Plus);
-    LOG(DEBUG) << "     " << std::setw(2) << neighbourRankNo;
+    // left
+    if (subdomainIsAtBorder[Mesh::face_t::face0Minus])
+    {
+      s << "+--";
+    }
+    else
+    {
+      s << "---";
+    }
+
+    // center
+    s << "---";
+
+    // right
+    if (subdomainIsAtBorder[Mesh::face_t::face0Plus])
+    {
+      s << "+";
+    }
+    else
+    {
+      s << "---";
+    }
   }
   else
   {
-    LOG(DEBUG) << "     --  ";
+    // left
+    if (subdomainIsAtBorder[Mesh::face_t::face0Minus])
+    {
+      s << "|  ";
+    }
+    else
+    {
+      int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::edge0Minus1Plus);
+      s << " " << std::setw(2) << neighbourRankNo;
+    }
+
+    // center
+    int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::faceEdge1Plus);
+    s << " " << std::setw(2) << neighbourRankNo;
+
+    // right
+    if (subdomainIsAtBorder[Mesh::face_t::face0Plus])
+    {
+      s << "|";
+    }
+    else
+    {
+      int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::edge0Plus1Plus);
+      s << " " << std::setw(2) << neighbourRankNo;
+    }
   }
 
-  std::stringstream s;
-  if (!subdomainIsAtBorder[Mesh::face_t::face0Minus])
+  s << "\n";
+
+  // middle row
+  // left
+  if (subdomainIsAtBorder[Mesh::face_t::face0Minus])
+  {
+    s << "|  ";
+  }
+  else
   {
     int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::faceEdge0Minus);
-    s << " " << std::setw(2) << neighbourRankNo << " ";
+    s << " " << std::setw(2) << neighbourRankNo;
+  }
+
+  // center
+  s << " " << std::setw(2) << currentRankSubset_->ownRankNo();
+
+  // right
+  if (subdomainIsAtBorder[Mesh::face_t::face0Plus])
+  {
+    s << "|";
   }
   else
-    s << "  | ";
-
-  s << " " << currentRankSubset_->ownRankNo() << " ";
-
-  if (!subdomainIsAtBorder[Mesh::face_t::face0Plus])
   {
     int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::faceEdge0Plus);
-    s << " " << std::setw(2) << neighbourRankNo << " ";
+    s << " " << std::setw(2) << neighbourRankNo;
   }
-  else
-  {
-    s << " |  ";
-  }
-  LOG(DEBUG) << s.str();
 
-  if (!subdomainIsAtBorder[Mesh::face_t::face1Minus])
+  s << "\n";
+
+  // bottom row
+  if (subdomainIsAtBorder[Mesh::face_t::face1Minus])
   {
-    int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::faceEdge1Minus);
-    LOG(DEBUG) << "     " << std::setw(2) << neighbourRankNo;
+    // left
+    if (subdomainIsAtBorder[Mesh::face_t::face0Minus])
+    {
+      s << "+--";
+    }
+    else
+    {
+      s << "---";
+    }
+
+    // center
+    s << "---";
+
+    // right
+    if (subdomainIsAtBorder[Mesh::face_t::face0Plus])
+    {
+      s << "+";
+    }
+    else
+    {
+      s << "---";
+    }
   }
   else
   {
-    LOG(DEBUG) << "     --  ";
+    // left
+    if (subdomainIsAtBorder[Mesh::face_t::face0Minus])
+    {
+      s << "|  ";
+    }
+    else
+    {
+      int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::edge0Minus1Minus);
+      s << " " << std::setw(2) << neighbourRankNo;
+    }
+
+    // center
+    int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::faceEdge1Minus);
+    s << " " << std::setw(2) << neighbourRankNo;
+
+    // right
+    if (subdomainIsAtBorder[Mesh::face_t::face0Plus])
+    {
+      s << "|";
+    }
+    else
+    {
+      int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::edge0Plus1Minus);
+      s << " " << std::setw(2) << neighbourRankNo;
+    }
   }
+  LOG(DEBUG) << "current rank situation:\n" << s.str();
 }
 
 template<typename BasisFunctionType>
@@ -172,7 +273,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
           // blocking receive call to receive node position values
           ghostValuesBuffer[faceIndex].nodePositionValues.resize(nNodePositionValues);
           tag = currentRankSubset_->ownRankNo()*100 + neighbourRankNo*10000 + level_*10 + 1;
-          LOG(DEBUG) << "receive " << nNodePositionValues << " (" << ghostValuesBuffer[faceIndex].nodePositionValues.size() << ") from rank " << neighbourRankNo << " (tag: " << tag << ")";
+          LOG(DEBUG) << "receive " << nNodePositionValues << " (" << ghostValuesBuffer[faceIndex].nodePositionValues.size() << ") from rank " << neighbourRankNo << " (" << Mesh::getString(faceOrEdge) << ") (tag: " << tag << ")";
           MPIUtility::handleReturnValue(MPI_Recv(ghostValuesBuffer[faceIndex].nodePositionValues.data(), nNodePositionValues, MPI_DOUBLE,
                                                   neighbourRankNo, tag, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
 
@@ -180,7 +281,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
           // blocking receive call to receive solution values
           ghostValuesBuffer[faceIndex].solutionValues.resize(nSolutionValues);
           tag = currentRankSubset_->ownRankNo()*100 + neighbourRankNo*10000 + level_*10 + 2;
-          LOG(DEBUG) << "receive " << nSolutionValues << " (" << ghostValuesBuffer[faceIndex].solutionValues.size() << ") from rank " << neighbourRankNo << " (tag: " << tag << ")";
+          LOG(DEBUG) << "receive " << nSolutionValues << " (" << ghostValuesBuffer[faceIndex].solutionValues.size() << ") from rank " << neighbourRankNo << " (" << Mesh::getString(faceOrEdge) << ") (tag: " << tag << ")";
           MPIUtility::handleReturnValue(MPI_Recv(ghostValuesBuffer[faceIndex].solutionValues.data(), nSolutionValues, MPI_DOUBLE,
                                                   neighbourRankNo, tag, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
 
@@ -188,7 +289,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
           // blocking receive call to receive gradient values
           ghostValuesBuffer[faceIndex].gradientValues.resize(nGradientValues);
           tag = currentRankSubset_->ownRankNo()*100 + neighbourRankNo*10000 + level_*10 + 3;
-          LOG(DEBUG) << "receive " << nGradientValues << " (" << ghostValuesBuffer[faceIndex].gradientValues.size() << ") from rank " << neighbourRankNo << " (tag: " << tag << ")";
+          LOG(DEBUG) << "receive " << nGradientValues << " (" << ghostValuesBuffer[faceIndex].gradientValues.size() << ") from rank " << neighbourRankNo << " (" << Mesh::getString(faceOrEdge) << ") (tag: " << tag << ")";
           MPIUtility::handleReturnValue(MPI_Recv(ghostValuesBuffer[faceIndex].gradientValues.data(), nGradientValues, MPI_DOUBLE,
                                                   neighbourRankNo, tag, currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Recv");
 
@@ -199,21 +300,21 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
           // send values to neighbouring process
           // blocking send call to send solution values
           tag = currentRankSubset_->ownRankNo()*10000 + neighbourRankNo*100 + level_*10 + 1;
-          LOG(DEBUG) << "send " << nNodePositionValues << " (" << boundaryValues[faceIndex].nodePositionValues.size() << ") to rank " << neighbourRankNo << " (tag: " << tag << ")";
+          LOG(DEBUG) << "send " << nNodePositionValues << " (" << boundaryValues[faceIndex].nodePositionValues.size() << ") to rank " << neighbourRankNo << " (" << Mesh::getString(faceOrEdge) << ") (tag: " << tag << ")";
           MPIUtility::handleReturnValue(MPI_Send(boundaryValues[faceIndex].nodePositionValues.data(), nNodePositionValues, MPI_DOUBLE,
                                                   neighbourRankNo, tag, currentRankSubset_->mpiCommunicator()), "MPI_Send");
 
 
           // blocking send call to send solution values
           tag = currentRankSubset_->ownRankNo()*10000 + neighbourRankNo*100 + level_*10 + 2;
-          LOG(DEBUG) << "send " << nSolutionValues << " (" << boundaryValues[faceIndex].solutionValues.size() << ") to rank " << neighbourRankNo << " (tag: " << tag << ")";
+          LOG(DEBUG) << "send " << nSolutionValues << " (" << boundaryValues[faceIndex].solutionValues.size() << ") to rank " << neighbourRankNo << " (" << Mesh::getString(faceOrEdge) << ") (tag: " << tag << ")";
           MPIUtility::handleReturnValue(MPI_Send(boundaryValues[faceIndex].solutionValues.data(), nSolutionValues, MPI_DOUBLE,
                                                   neighbourRankNo, tag, currentRankSubset_->mpiCommunicator()), "MPI_Send");
 
 
           // blocking send call to send gradient values
           tag = currentRankSubset_->ownRankNo()*10000 + neighbourRankNo*100 + level_*10 + 3;
-          LOG(DEBUG) << "send " << nGradientValues << " (" << boundaryValues[faceIndex].gradientValues.size() << ") to rank " << neighbourRankNo << " (tag: " << tag << ")";
+          LOG(DEBUG) << "send " << nGradientValues << " (" << boundaryValues[faceIndex].gradientValues.size() << ") to rank " << neighbourRankNo << " (" << Mesh::getString(faceOrEdge) << ") (tag: " << tag << ")";
           MPIUtility::handleReturnValue(MPI_Send(boundaryValues[faceIndex].gradientValues.data(), nGradientValues, MPI_DOUBLE,
                                                   neighbourRankNo, tag, currentRankSubset_->mpiCommunicator()), "MPI_Send");
 
@@ -255,7 +356,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
       assert(nSolutionValues*3 == nGradientValues);
       assert(nNodePositionValues == nGradientValues);
 
-      LOG(DEBUG) << "exchange ghosts with neighbour " << neighbourRankNo << ": nNodePositionValues=" << nNodePositionValues << ", nSolutionValues=" << nSolutionValues << ", nGradientValues=" << nGradientValues;
+      LOG(DEBUG) << "exchange ghosts with neighbour " << neighbourRankNo << " (" << Mesh::getString(faceOrEdge) << ") : nNodePositionValues=" << nNodePositionValues << ", nSolutionValues=" << nSolutionValues << ", nGradientValues=" << nGradientValues;
 
       // if no checkpoint is used here for debugging
 #if !defined(USE_CHECKPOINT_GHOST_MESH)
@@ -282,9 +383,9 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
                                               neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
       receiveRequests.push_back(receiveRequest);
 
-      LOG(DEBUG) << "receive from rank " << neighbourRankNo << " completed";
+      LOG(DEBUG) << "receive from rank " << neighbourRankNo << " (" << Mesh::getString(faceOrEdge) << ") completed";
 
-      LOG(DEBUG) << "send to rank " << neighbourRankNo;
+      LOG(DEBUG) << "send to rank " << neighbourRankNo << " (" << Mesh::getString(faceOrEdge) << ")";
 
       // send values to neighbouring process
       // post non-blocking send call to send solution values
@@ -303,7 +404,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
                                               neighbourRankNo, 0, currentRankSubset_->mpiCommunicator(), &sendRequest), "MPI_Isend");
       sendRequests.push_back(sendRequest);
 
-      LOG(DEBUG) << "send to rank " << neighbourRankNo << " completed";
+      LOG(DEBUG) << "send to rank " << neighbourRankNo << " (" << Mesh::getString(faceOrEdge) << ") completed";
 #endif
     }
   }

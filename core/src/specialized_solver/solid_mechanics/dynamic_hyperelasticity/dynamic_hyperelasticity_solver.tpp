@@ -88,14 +88,14 @@ initialize()
   }
 
   pythonTotalForceFunction_ = nullptr;
-  if (this->specificSettings_.hasKey("pythonTotalForceFunction_"))
+  if (this->specificSettings_.hasKey("totalForceFunction"))
   {
-    LOG(DEBUG) << "parse pythonTotalForceFunction_";
-    PyObject *object = this->specificSettings_.getOptionPyObject("pythonTotalForceFunction_");
+    LOG(DEBUG) << "parse totalForceFunction";
+    PyObject *object = this->specificSettings_.getOptionPyObject("totalForceFunction");
     if (object != Py_None)
     {
-      pythonTotalForceFunction_ = this->specificSettings_.getOptionFunction("pythonTotalForceFunction");
-      pythonTotalForceFunctionCallInterval_ = this->specificSettings_.getOptionInt("pythonTotalForceFunctionCallInterval", 1, PythonUtility::Positive);
+      pythonTotalForceFunction_ = this->specificSettings_.getOptionFunction("totalForceFunction");
+      pythonTotalForceFunctionCallInterval_ = this->specificSettings_.getOptionInt("totalForceFunctionCallInterval", 1, PythonUtility::Positive);
     }
   }
 
@@ -496,7 +496,7 @@ computeBearingForcesAndMoments(double currentTime)
     PyObject *bearingMomentTopList = PythonUtility::convertToPython<Vec3>::get(bearingMomentTop);
 
     // compose callback function
-    PyObject *arglist = Py_BuildValue("(O,O,O,O)", bearingForceBottomList, bearingMomentBottomList,
+    PyObject *arglist = Py_BuildValue("(d,O,O,O,O)", currentTime, bearingForceBottomList, bearingMomentBottomList,
                                       bearingForceTopList, bearingMomentTopList);
     PyObject *returnValue = PyObject_CallObject(pythonTotalForceFunction_, arglist);
 

@@ -623,7 +623,8 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
         // determine coordinates of neighbor element that is currently examined
         neighbourCoordinatesLocal = coordinatesLocal + std::array<int,3>({x,y,z});
 
-        VLOG(2) << "(x,y,z) = (" << x << "," << y << "," << z << "), neighbourCoordinatesLocal: " << neighbourCoordinatesLocal;
+        LOG(DEBUG) << "(x,y,z) = (" << x << "," << y << "," << z << "), neighbourCoordinatesLocal: " << neighbourCoordinatesLocal
+          << "/(" << this->meshPartition_->nElementsLocal(0) << "," << this->meshPartition_->nElementsLocal(1) << "," << this->meshPartition_->nElementsLocal(2) << ")";
         functionSpace = this;
 
         if (neighbourCoordinatesLocal[2] >= 0 && neighbourCoordinatesLocal[2] < this->meshPartition_->nElementsLocal(2))

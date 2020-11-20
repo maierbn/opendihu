@@ -21,19 +21,23 @@ print('\33]0;{}\a'.format(title), end='', flush=True)
 # quantities in mechanics unit system
 variables.rho = 10          # [1e-4 kg/cm^3] 10 = density of the muscle (density of water)
 
-# material parameters for Saint Venant-Kirchhoff material
-# https://www.researchgate.net/publication/230248067_Bulk_Modulus
+# material parameters for tendon material, see Carniel 2017 "A transversely isotropic coupled hyperelastic model for the mechanical behavior of tendons"
+c = 9.98e-1                 # [N/cm^2 = 10kPa]    parameter for Fung model
+ca = 14.92e-1               # [N/cm^2 = 10kPa]    normal stress axial
+ct = 14.7e-1                # [N/cm^2 = 10kPa]    normal stress transversal
+cat = 9.64e-1               # [N/cm^2 = 10kPa]    shear stress axial-transversal
+ctt = 11.24e-1              # [N/cm^2 = 10kPa]    shear stress transversal-transversal
+mu = 3.76e-1                # [N/cm^2 = 10kPa]    parameter for Neo-Hookean model
+k1 = 42.217e2               # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, human achilles (Couppe 2015)
+k2 = 411.360e2              # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, human achilles (Couppe 2015)
+#k1 = 0.010e2                # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, human achilles (Csapo 2010) does not converge well
+#k2 = 197.34e2               # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, human achilles (Csapo 2010)
+#k1 = 2.893e2                # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, Equine(Horse) Digital Flexor (Thorpe 2012)
+#k2 = 357.23e2               # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, Equine Digital Flexor (Thorpe 2012)
+#k1 = 92.779e2               # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, Equine Digital Flexor (Vergari 2011)
+#k2 = 305.87e2               # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, Equine Digital Flexor (Vergari 2011)
 
-youngs_modulus = 7e4        # [N/cm^2 = 10kPa]  
-shear_modulus = 3e4
-
-#youngs_modulus*=1e-3
-#shear_modulus*=1e-3
-
-lambd = shear_modulus*(youngs_modulus - 2*shear_modulus) / (3*shear_modulus - youngs_modulus)  # Lamé parameter lambda
-mu = shear_modulus       # Lamé parameter mu or G (shear modulus)
-
-variables.material_parameters = [lambd, mu]
+variables.material_parameters = [c, ca, ct, cat, ctt, mu, k1, k2]
 
 variables.constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
 variables.force = 100.0           # [N] pulling force to the bottom 
@@ -326,7 +330,7 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
   "snesRelativeTolerance":      1e-2,                         # relative tolerance of the nonlinear solver
   "snesLineSearchType":         "l2",                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
   "snesAbsoluteTolerance":      1e-5,                         # absolute tolerance of the nonlinear solver
-  "snesRebuildJacobianFrequency": 5,                          # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+  "snesRebuildJacobianFrequency": 1,                          # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
   
   #"dumpFilename": "out/r{}/m".format(sys.argv[-1]),          # dump system matrix and right hand side after every solve
   "dumpFilename":               "",                           # dump disabled

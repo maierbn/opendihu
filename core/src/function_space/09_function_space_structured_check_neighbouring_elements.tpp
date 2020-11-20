@@ -580,7 +580,7 @@ checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghost
     coordinatesLocal[1] += this->meshPartition_->nElementsLocal(1);
   }
 
-  VLOG(2) << "nElementsLocal: [" << this->meshPartition_->nElementsLocal(0) << "," << this->meshPartition_->nElementsLocal(1)
+  LOG(DEBUG) << "nElementsLocal: [" << this->meshPartition_->nElementsLocal(0) << "," << this->meshPartition_->nElementsLocal(1)
     << "," << this->meshPartition_->nElementsLocal(2) << "] coordinatesLocal: " << coordinatesLocal
     << " interation z in " << zOffset << ", y in " << yOffset << " x in " << xOffset << "";
 

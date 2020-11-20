@@ -10,7 +10,7 @@ input_file=original_meshes/left_triceps_brachii.stl
 
 # [cm] range along z-axis for which the muscle volume is extracted
 bottom_z_clip=2
-top_z_clip=22
+top_z_clip=26.8
 
 # [cm] length of one 1D element in z-direction, the number of elements per fiber is thus (top_z_clip-bottom_z_clip)/element_length
 element_length=0.01

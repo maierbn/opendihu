@@ -25,13 +25,16 @@ public:
   RepeatedCallStatic(DihuContext context);
 
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps
-  virtual void advanceTimeSpan();
+  virtual void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
   //! initialize solver
   void initialize();
 
   //! first initialize that run the stepping
   void run();
+
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
   //! return the data object, with the call to this method the output writers get the data to create their output files
   Data &data();

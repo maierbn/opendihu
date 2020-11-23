@@ -35,13 +35,16 @@ public:
   DynamicHyperelasticitySolver(DihuContext context);
 
   //! advance simulation by the given time span
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
   //! initialize everything for the simulation
   void initialize();
 
   //! run the whole simulation, repeatedly calls advanceTimeSpan
   void run();
+
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
   //! return the data object, with the call to this method the output writers get the data to create their output files
   Data &data();

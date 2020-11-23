@@ -16,7 +16,7 @@ Strang(DihuContext context) :
 
 template<typename TimeStepping1, typename TimeStepping2>
 void Strang<TimeStepping1,TimeStepping2>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -65,7 +65,7 @@ advanceTimeSpan()
     LOG(DEBUG) << "  Strang: timeStepping1 (first half) advanceTimeSpan";
 
     // advance simulation by time span
-    this->timeStepping1_.advanceTimeSpan();
+    this->timeStepping1_.advanceTimeSpan(withOutputWritersEnabled);
 
     if (this->durationLogKey_ != "")
     {
@@ -96,7 +96,7 @@ advanceTimeSpan()
     this->timeStepping2_.setTimeSpan(currentTime, currentTime+this->timeStepWidth_);
 
     // advance simulation by time span
-    this->timeStepping2_.advanceTimeSpan();
+    this->timeStepping2_.advanceTimeSpan(withOutputWritersEnabled);
 
     if (this->durationLogKey_ != "")
     {
@@ -126,7 +126,7 @@ advanceTimeSpan()
     this->timeStepping1_.setTimeSpan(midTime,currentTime+this->timeStepWidth_);
 
     // advance simulation by time span
-    this->timeStepping1_.advanceTimeSpan();
+    this->timeStepping1_.advanceTimeSpan(withOutputWritersEnabled);
 
     if (this->durationLogKey_ != "")
     {

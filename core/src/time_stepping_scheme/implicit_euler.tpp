@@ -18,7 +18,8 @@ TimeSteppingImplicit<DiscretizableInTimeType>(context, "ImplicitEuler")
 }
 
 template<typename DiscretizableInTimeType>
-void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
+void ImplicitEuler<DiscretizableInTimeType>::
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -73,7 +74,8 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
     // write current output values
-    this->outputWriterManager_.writeOutput(*this->dataImplicit_, timeStepNo, currentTime);
+    if (withOutputWritersEnabled)
+      this->outputWriterManager_.writeOutput(*this->dataImplicit_, timeStepNo, currentTime);
     
     // start duration measurement
     if (this->durationLogKey_ != "")
@@ -129,6 +131,15 @@ setSystemMatrix(double timeStepWidth)
   this->dataImplicit_->systemMatrix()->assembly(MAT_FINAL_ASSEMBLY);
   
   VLOG(1) << *this->dataImplicit_->systemMatrix();
+}
+
+
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+template<typename DiscretizableInTimeType>
+void ImplicitEuler<DiscretizableInTimeType>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  this->outputWriterManager_.writeOutput(*this->dataImplicit_, timeStepNo, currentTime, callCountIncrement);
 }
 
 } // namespace TimeSteppingScheme

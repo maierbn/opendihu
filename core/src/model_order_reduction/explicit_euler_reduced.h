@@ -22,7 +22,7 @@ namespace ModelOrderReduction
     void run();
     
     //! advance the simulation by the time step
-    void advanceTimeSpan();
+    void advanceTimeSpan(bool withOutputWritersEnabled = true);
     
   protected:
   

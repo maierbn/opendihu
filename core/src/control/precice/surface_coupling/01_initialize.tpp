@@ -61,6 +61,7 @@ initialize()
   // initialize precice
   preciceParticipantName_ = this->specificSettings_.getOptionString("preciceParticipantName", "MuscleSolver");
   const std::string configFileName = this->specificSettings_.getOptionString("preciceConfigFilename", "../precice-config.xml");
+  outputOnlyConvergedTimeSteps_ = this->specificSettings_.getOptionBool("outputOnlyConvergedTimeSteps", true);
 
   int rankNo = functionSpace_->meshPartition()->rankSubset()->ownRankNo();
   int nRanks = functionSpace_->meshPartition()->rankSubset()->size();

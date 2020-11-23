@@ -25,7 +25,7 @@ MyNewTimesteppingSolver(DihuContext context) :
 
 template<typename TimeStepping>
 void MyNewTimesteppingSolver<TimeStepping>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // This method computes some time steps of the simulation by running a for loop over the time steps.
   // The number of steps, timestep width and current time are all set by the parent class, TimeSteppingScheme.
@@ -58,8 +58,8 @@ advanceTimeSpan()
     // This, in turn, may lead to multiple timesteps in the timeSteppingScheme_.
     this->timeSteppingScheme_.setTimeSpan(currentTime, currentTime+this->timeStepWidth_);
 
-    // advance the simulation by the specified time span
-    timeSteppingScheme_.advanceTimeSpan();
+    // advance the simulation by the specified time span, the parameter withOutputWritersEnabled specifies if the output writers should be called (usually yes)
+    timeSteppingScheme_.advanceTimeSpan(withOutputWritersEnabled);
 
     // probably do something more here, maybe in a separate method:
     //executeMyHelperMethod();
@@ -77,8 +77,9 @@ advanceTimeSpan()
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
-    // write current output values using the output writers
-    this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
+    // if the output writers are enabled, write current output values using the output writers
+    if (withOutputWritersEnabled)
+      this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
 
     // start duration measurement
     if (this->durationLogKey_ != "")
@@ -150,6 +151,16 @@ reset()
   timeSteppingScheme_.reset();
 
   // "uninitialize" everything
+}
+
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+template<typename TimeStepping>
+void MyNewTimesteppingSolver<TimeStepping>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  // Call the output writer manager to execute all output writers.
+  // This will check if there is a file to be written at the current timestep and then output the files.
+  this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime, callCountIncrement);
 }
 
 template<typename TimeStepping>

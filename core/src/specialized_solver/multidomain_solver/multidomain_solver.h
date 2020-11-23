@@ -40,13 +40,16 @@ public:
   MultidomainSolver(DihuContext context);
 
   //! advance simulation by the given time span, data in solution is used, afterwards new data is in solution
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
   //! initialize components of the simulation
   void initialize();
 
   //! run the simulation
   void run();
+
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  virtual void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
   //! return the data object
   Data &data();
@@ -59,9 +62,6 @@ protected:
 
   //! update the system matrix after the geometry has changed, this is done in advanceTimeSpan, if the option "updateSystemMatrixEveryTimestep" is True
   virtual void updateSystemMatrix();
-
-  //! call the output writer on the data object
-  virtual void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
   //! initialize everything except the matrices and vectors, this will also be called by the inherited class
   void initializeObjects();

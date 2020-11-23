@@ -38,7 +38,7 @@ QuasiStaticLinearElasticitySolver(DihuContext context) :
 
 template<typename FiniteElementMethod>
 void QuasiStaticLinearElasticitySolver<FiniteElementMethod>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -80,7 +80,8 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
   // write current output values
-  this->outputWriterManager_.writeOutput(this->data_, 0, endTime_);
+  if (withOutputWritersEnabled)
+    this->outputWriterManager_.writeOutput(this->data_, 0, endTime_);
 }
 
 template<typename FiniteElementMethod>
@@ -259,9 +260,18 @@ initialize()
 }
 
 template<typename FiniteElementMethod>
-void QuasiStaticLinearElasticitySolver<FiniteElementMethod>::reset()
+void QuasiStaticLinearElasticitySolver<FiniteElementMethod>::
+reset()
 {
   this->initialized_ = false;
+}
+
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+template<typename FiniteElementMethod>
+void QuasiStaticLinearElasticitySolver<FiniteElementMethod>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  this->outputWriterManager_.writeOutput(this->data_, 0, endTime_);
 }
 
 template<typename FiniteElementMethod>

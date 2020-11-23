@@ -16,7 +16,7 @@ LoadBalancingBase(DihuContext context) :
 
 template<typename TimeStepping>
 void LoadBalancingBase<TimeStepping>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -43,7 +43,7 @@ advanceTimeSpan()
     this->timeSteppingScheme_.setTimeSpan(currentTime, currentTime+this->timeStepWidth_);
 
     // advance the simulation by the specified time span
-    timeSteppingScheme_.advanceTimeSpan();
+    timeSteppingScheme_.advanceTimeSpan(withOutputWritersEnabled);
 
     // check if the dofs can be rebalanced
     rebalance();
@@ -78,6 +78,14 @@ void LoadBalancingBase<TimeStepping>::
 reset()
 {
   timeSteppingScheme_.reset();
+}
+
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+template<typename TimeStepping>
+void LoadBalancingBase<TimeStepping>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  timeSteppingScheme_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
 }
 
 template<typename TimeStepping>

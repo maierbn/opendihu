@@ -16,7 +16,7 @@ public:
   CrankNicolson(DihuContext context);
   
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
   
   void initialize();
 

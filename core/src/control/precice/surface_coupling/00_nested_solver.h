@@ -8,6 +8,7 @@ namespace Control
 {
 
 /** This is a base class of the precice adapter that contains functionality that depends on the type of the nested solver.
+ *  All solvers that should be able to use precice surface coupling have to implement this interface.
  */
 template<typename NestedSolver>
 class PreciceAdapterNestedSolver :

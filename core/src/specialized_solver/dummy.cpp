@@ -11,7 +11,7 @@ Dummy(DihuContext context) :
 }
 
 void Dummy::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
 }
 
@@ -33,6 +33,11 @@ void Dummy::run()
 {
   initialize();
   advanceTimeSpan();
+}
+
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+void Dummy::callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
 }
 
 void Dummy::reset()

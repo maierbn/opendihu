@@ -184,6 +184,16 @@ Extrae_restart();
 #endif
 }
 
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+template<typename TimeStepping1, typename TimeStepping2>
+void OperatorSplitting<TimeStepping1, TimeStepping2>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  // call output writers of nested solvers
+  timeStepping1_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
+  timeStepping2_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
+}
+
 template<typename TimeStepping1, typename TimeStepping2>
 std::shared_ptr<typename OperatorSplitting<TimeStepping1, TimeStepping2>::SlotConnectorDataType>
 OperatorSplitting<TimeStepping1, TimeStepping2>::

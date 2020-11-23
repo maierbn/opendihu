@@ -41,7 +41,7 @@ MuscleContractionSolver(DihuContext context) :
 
 template<typename MeshType,typename Term,bool withLargeOutputFiles>
 void MuscleContractionSolver<MeshType,Term,withLargeOutputFiles>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // This method computes some time steps of the simulation by running a for loop over the time steps.
   // The number of steps, timestep width and current time are all set by the parent class, TimeSteppingScheme.
@@ -79,7 +79,7 @@ advanceTimeSpan()
       LOG(DEBUG) << "call dynamic hyperelasticitySolver";
 
       // advance the simulation by the specified time span
-      dynamicHyperelasticitySolver_->advanceTimeSpan();
+      dynamicHyperelasticitySolver_->advanceTimeSpan(withOutputWritersEnabled);
     }
     else
     {
@@ -100,7 +100,8 @@ advanceTimeSpan()
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
     // write current output values using the output writers
-    this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
+    if (withOutputWritersEnabled)
+      this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
 
     // start duration measurement
     if (this->durationLogKey_ != "")
@@ -215,6 +216,25 @@ reset()
     staticHyperelasticitySolver_->reset();
 
   // "uninitialize" everything
+}
+
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+template<typename MeshType,typename Term,bool withLargeOutputFiles>
+void MuscleContractionSolver<MeshType,Term,withLargeOutputFiles>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  // write output of nested solver
+  if (isDynamic_)
+  {
+    this->dynamicHyperelasticitySolver_->callOutputWriter(timeStepNo, currentTime, callCountIncrement);
+  }
+  else
+  {
+    staticHyperelasticitySolver_->callOutputWriter(timeStepNo, currentTime, callCountIncrement);
+  }
+
+  // write output of own output writers
+  this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime, callCountIncrement);
 }
 
 template<typename MeshType,typename Term,bool withLargeOutputFiles>

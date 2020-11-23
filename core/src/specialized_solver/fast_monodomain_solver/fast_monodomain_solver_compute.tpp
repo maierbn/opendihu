@@ -13,7 +13,7 @@ run()
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   LOG(TRACE) << "FastMonodomainSolver::advanceTimeSpan";
 
@@ -30,19 +30,17 @@ advanceTimeSpan()
   // loop over fibers and communicate resulting values back
   updateFiberData();
 
-  //nestedSolvers_.advanceTimeSpan();
-
   // call output writer of diffusion
-  std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
-
-  for (int i = 0; i < instances.size(); i++)
+  if (withOutputWritersEnabled)
   {
-    // call write output of MultipleInstances, callCountIncrement is the number of times the output writer would have been called without FastMonodomainSolver
-    instances[i].timeStepping2().writeOutput(0, currentTime_, nTimeStepsSplitting_);
-  }
+    std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
-  // call own output writers, write current 0D output values, not yet implemented
-  //this->outputWriterManager_.writeOutput(*this->data_, 0, currentTime_);
+    for (int i = 0; i < instances.size(); i++)
+    {
+      // call write output of MultipleInstances, callCountIncrement is the number of times the output writer would have been called without FastMonodomainSolver
+      instances[i].timeStepping2().writeOwnOutput(0, currentTime_, nTimeStepsSplitting_);
+    }
+  }
 }
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>

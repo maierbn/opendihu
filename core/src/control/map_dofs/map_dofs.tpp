@@ -8,7 +8,7 @@ namespace Control
 //! advance simulation by the given time span
 template<typename FunctionSpaceType, typename NestedSolverType>
 void MapDofs<FunctionSpaceType,NestedSolverType>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   LOG(DEBUG) << "MapDofs::advanceTimeSpan, " << mappingsBeforeComputation_.size() << " mappings before computation, "
     << mappingsAfterComputation_.size() << " mappings after computation.";
@@ -18,7 +18,7 @@ advanceTimeSpan()
   performMappings(mappingsBeforeComputation_, nestedSolver_.startTime());
 
   // compute the simulation in the current time span with the nested solver
-  nestedSolver_.advanceTimeSpan();
+  nestedSolver_.advanceTimeSpan(withOutputWritersEnabled);
 
   LOG(DEBUG) << "MapDofs::performMappings afterComputation";
   // perform mapping from settings "afterComputation"
@@ -66,6 +66,15 @@ double MapDofs<FunctionSpaceType,NestedSolverType>::
 endTime()
 {
   return nestedSolver_.endTime();
+}
+
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+template<typename FunctionSpaceType, typename NestedSolverType>
+void MapDofs<FunctionSpaceType,NestedSolverType>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  // call the output writer of the nested solver
+  nestedSolver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
 }
 
 template<typename FunctionSpaceType, typename NestedSolverType>

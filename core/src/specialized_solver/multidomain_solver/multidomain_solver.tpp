@@ -58,7 +58,7 @@ MultidomainSolver(DihuContext context) :
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -151,7 +151,8 @@ advanceTimeSpan()
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
     // write current output values
-    callOutputWriter(timeStepNo, currentTime);
+    if (withOutputWritersEnabled)
+      callOutputWriter(timeStepNo, currentTime);
     
     // start duration measurement
     if (this->durationLogKey_ != "")

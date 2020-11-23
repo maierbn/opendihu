@@ -41,7 +41,8 @@ initialize()
 }
 
 template<typename Solver>
-void RepeatedCall<Solver>::advanceTimeSpan()
+void RepeatedCall<Solver>::
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -66,7 +67,7 @@ void RepeatedCall<Solver>::advanceTimeSpan()
     this->solver_.setTimeSpan(currentTime, currentTime+this->timeStepWidth_);
 
     // advance solver
-    this->solver_.advanceTimeSpan();
+    this->solver_.advanceTimeSpan(withOutputWritersEnabled);
 
     // advance simulation time
     timeStepNo++;
@@ -84,6 +85,14 @@ run()
 {
   initialize();
   advanceTimeSpan();
+}
+
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+template<typename Solver>
+void RepeatedCall<Solver>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  this->solver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
 }
 
 } // namespace

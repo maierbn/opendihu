@@ -15,7 +15,8 @@ Heun<DiscretizableInTime>::Heun(DihuContext context) :
 }
 
 template<typename DiscretizableInTime>
-void Heun<DiscretizableInTime>::initialize()
+void Heun<DiscretizableInTime>::
+initialize()
 {
   LOG(TRACE) << "Heun::initialize";
 
@@ -26,7 +27,8 @@ void Heun<DiscretizableInTime>::initialize()
 }
 
 template<typename DiscretizableInTime>
-void Heun<DiscretizableInTime>::advanceTimeSpan()
+void Heun<DiscretizableInTime>::
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -102,7 +104,8 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
     // write current output values
-    this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
+    if (withOutputWritersEnabled)
+      this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
 
     // start duration measurement
     if (this->durationLogKey_ != "")
@@ -115,7 +118,8 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
 }
 
 template<typename DiscretizableInTime>
-void Heun<DiscretizableInTime>::run()
+void Heun<DiscretizableInTime>::
+run()
 {
   TimeSteppingSchemeOde<DiscretizableInTime>::run();
 }

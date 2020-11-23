@@ -24,7 +24,7 @@ public:
   OutputSurface(DihuContext context);
 
   //! advance simulation by the given time span [startTime_, endTime_]
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
   //! initialize time span from specificSettings_
   void initialize();
@@ -37,6 +37,9 @@ public:
 
   //! set a new time interval
   void setTimeSpan(double startTime, double endTime);
+
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
   //! return the data object of the timestepping scheme
   Data &data();

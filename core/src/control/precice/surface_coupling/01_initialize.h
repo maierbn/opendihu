@@ -108,6 +108,7 @@ protected:
   double timeStepWidth_;                      //< timestep width of the solver
   int timeStepOutputInterval_;                //< interval in which to output current time
   double scalingFactor_;                      //< a factor to scale the exchanged data prior to communication
+  bool outputOnlyConvergedTimeSteps_;         //< option if the output should be written only for converged timesteps
 
   bool initialized_;                          //< if initialize() was already called
 };

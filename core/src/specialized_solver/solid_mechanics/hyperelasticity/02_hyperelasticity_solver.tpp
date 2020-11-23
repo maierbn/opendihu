@@ -22,7 +22,7 @@ HyperelasticitySolver(DihuContext context, std::string settingsKey) :
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -31,8 +31,11 @@ advanceTimeSpan()
   LOG(TRACE) << "advanceTimeSpan, endTime: " << endTime_;
 
   // write reference output values but don't increment counter
-  this->outputWriterManager_.writeOutput(this->data_, 0, 0.0, 0);
-  this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, 0.0, 0);
+  if (withOutputWritersEnabled)
+  {
+    this->outputWriterManager_.writeOutput(this->data_, 0, 0.0, 0);
+    this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, 0.0, 0);
+  }
 
   this->nonlinearSolve();
   postprocessSolution();
@@ -42,8 +45,11 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
   // write current output values
-  this->outputWriterManager_.writeOutput(this->data_, 1, endTime_);
-  this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 1, endTime_);
+  if (withOutputWritersEnabled)
+  {
+    this->outputWriterManager_.writeOutput(this->data_, 1, endTime_);
+    this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 1, endTime_);
+  }
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
@@ -63,5 +69,15 @@ setTimeSpan(double startTime, double endTime)
 {
   endTime_ = endTime;
 }
+
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  // call the own output writer
+  this->outputWriterManager_.writeOutput(this->data_, 1, endTime_);
+  this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 1, endTime_);
+}
+
 
 } // namespace SpatialDiscretization

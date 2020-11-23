@@ -146,9 +146,9 @@ initializeSampledPoints()
 
 template<typename Solver>
 void OutputSurface<Solver>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
-  solver_.advanceTimeSpan();
+  solver_.advanceTimeSpan(withOutputWritersEnabled);
 
   LOG(DEBUG) << "OutputSurface: writeOutput, ownRankInvolvedInOutput_: " << ownRankInvolvedInOutput_;
 
@@ -156,7 +156,8 @@ advanceTimeSpan()
   if (ownRankInvolvedInOutput_)
   {
     // write 2D surface files
-    outputWriterManager_.writeOutput(data_, timeStepNo_++);
+    if (withOutputWritersEnabled)
+      outputWriterManager_.writeOutput(data_, timeStepNo_++);
 
     // write out values at points
     writeSampledPointValues();
@@ -198,6 +199,21 @@ setTimeSpan(double startTime, double endTime)
 {
   currentTime_ = startTime;
   solver_.setTimeSpan(startTime, endTime);
+}
+
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+template<typename Solver>
+void OutputSurface<Solver>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  // call output writers of nested solvers
+  solver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
+
+  // call own output writers
+  if (ownRankInvolvedInOutput_)
+  {
+    outputWriterManager_.writeOutput(data_);
+  }
 }
 
 template<typename Solver>

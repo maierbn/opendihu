@@ -14,12 +14,14 @@ run()
   // initialize everything
   this->initialize();
 
+  // only run the solver if precice is disabled in settings
   if (!this->couplingEnabled_)
   {
     this->nestedSolver_.run();
     return;
   }
 
+  // assert that precice is properly initialized and the interface is available
   assert(this->preciceSolverInterface_);
 
   // perform initial data transfer, if required
@@ -63,7 +65,8 @@ run()
     this->nestedSolver_.setTimeSpan(currentTime, currentTime+timeStepWidth);
 
     // call the nested solver to proceed with the simulation for the assigned time span
-    this->nestedSolver_.advanceTimeSpan();
+    // the parameter specifies whether the output writers are enabled
+    this->nestedSolver_.advanceTimeSpan(!this->outputOnlyConvergedTimeSteps_);
 
     // write outgoing data to precice
     this->preciceWriteData();
@@ -83,6 +86,17 @@ run()
       currentTime = this->loadCheckpoint();
       this->preciceSolverInterface_->markActionFulfilled(precice::constants::actionReadIterationCheckpoint());
     }
+
+    // if the current time step did converge and subcycling is complete
+    if (this->preciceSolverInterface_->isTimeWindowComplete())
+    {
+      if (this->outputOnlyConvergedTimeSteps_)
+      {
+        // output all data in the nested solvers
+        this->nestedSolver_.callOutputWriter(timeStepNo, currentTime);
+      }
+    }
+
   }   // loop over time steps
 
   // finalize precice interface
@@ -92,10 +106,6 @@ run()
   LOG(FATAL) << "Not compiled with preCICE!";
 #endif
 }
-
-#ifdef HAVE_PRECICE
-
-#endif
 
 template<typename NestedSolver>
 void PreciceAdapter<NestedSolver>::

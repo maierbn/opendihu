@@ -17,7 +17,7 @@ public:
   Strang(DihuContext context);
 
   //! advance time stepping by span
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 };
 
 }  // namespace

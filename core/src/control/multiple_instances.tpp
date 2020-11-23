@@ -237,7 +237,7 @@ MultipleInstances(DihuContext context) :
 
 template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement
   if (this->logKey_ != "")
@@ -246,17 +246,16 @@ advanceTimeSpan()
   // This method advances the simulation by the specified time span. It will be needed when this MultipleInstances object is part of a parent control element, like a coupling to 3D model.
   for (int i = 0; i < nInstancesLocal_; i++)
   {
-    instancesLocal_[i].advanceTimeSpan();
+    instancesLocal_[i].advanceTimeSpan(withOutputWritersEnabled);
   }
 
   // stop duration measurement
   if (this->logKey_ != "")
     Control::PerformanceMeasurement::stop(this->logKey_);
 
-
   LOG(DEBUG) << "multipleInstances::advanceTimeSpan() complete, now call writeOutput, hasOutputWriters: " << this->outputWriterManager_.hasOutputWriters();
 
-  writeOutput(instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
+  writeOwnOutput(instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
 }
 
 template<typename TimeSteppingScheme>
@@ -430,10 +429,7 @@ run()
   assert(nInstancesLocal_ == instancesLocal_.size());
 
   // call the output writer
-  if (nInstancesLocal_ > 0)
-  {
-    this->outputWriterManager_.writeOutput(this->data_, instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
-  }
+  writeOwnOutput(instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
   LOG(DEBUG) << "end of multiple_instances run";
 }
 
@@ -470,7 +466,6 @@ getSlotConnectorData()
   return slotConnectorData_;
 }
 
-
 template<typename TimeSteppingScheme>
 std::vector<TimeSteppingScheme> &MultipleInstances<TimeSteppingScheme>::
 instancesLocal()
@@ -500,15 +495,28 @@ numberTimeSteps()
 
 template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
-writeOutput(int timeStepNo, double currentTime, int callCountIncrement)
+writeOwnOutput(int timeStepNo, double currentTime, int callCountIncrement)
 {
   if (nInstancesLocal_ > 0)
   {
     LOG(DEBUG) << "MultipleInstances::writeOutput, timeStepNo: " << timeStepNo << ", currentTime: " << currentTime;
     this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime, callCountIncrement);
-  }  
+  }
 }
 
+template<typename TimeSteppingScheme>
+void MultipleInstances<TimeSteppingScheme>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  // call the output writer of the MultipleInstances class
+  writeOwnOutput(timeStepNo, currentTime, callCountIncrement);
+
+  // call the output writers of the nested solvers
+  for (int i = 0; i < nInstancesLocal_; i++)
+  {
+    instancesLocal_[i].callOutputWriter(timeStepNo, currentTime, callCountIncrement);
+  }
+}
 
 template<typename TimeSteppingScheme>
 std::string MultipleInstances<TimeSteppingScheme>::

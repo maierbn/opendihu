@@ -52,9 +52,8 @@ NonlinearElasticitySolverFebio(DihuContext context, std::string solverName) :
   LOG(DEBUG) << "initialized NonlinearElasticitySolverFebio";
 }
 
-
 void NonlinearElasticitySolverFebio::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -71,7 +70,8 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
   // write current output values
-  this->outputWriterManager_.writeOutput(this->data_, 1, endTime_);
+  if (withOutputWritersEnabled)
+    this->outputWriterManager_.writeOutput(this->data_, 1, endTime_);
 }
 
 bool NonlinearElasticitySolverFebio::
@@ -819,13 +819,17 @@ run()
   this->advanceTimeSpan();
 }
 
-
 void NonlinearElasticitySolverFebio::
 setTimeSpan(double startTime, double endTime)
 {
   endTime_ = endTime;
 }
 
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+void NonlinearElasticitySolverFebio::callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  this->outputWriterManager_.writeOutput(this->data_, 1, endTime_);
+}
 
 void NonlinearElasticitySolverFebio::
 initialize()
@@ -854,12 +858,10 @@ initialize()
   this->initialized_ = true;
 }
 
-
 void NonlinearElasticitySolverFebio::reset()
 {
   this->initialized_ = false;
 }
-
 
 typename NonlinearElasticitySolverFebio::Data &NonlinearElasticitySolverFebio::
 data()

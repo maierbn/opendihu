@@ -29,6 +29,9 @@ public:
   //! initialize components of the simulation
   void initialize();
 
+  //! call the output writer on the data object
+  virtual void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
+
   //! return the data object
   DataFat &data();
 
@@ -36,9 +39,6 @@ protected:
 
   //! update the system matrix after the geometry has changed, this is done in advanceTimeSpan, if the option "updateSystemMatrixEveryTimestep" is True
   virtual void updateSystemMatrix() override;
-
-  //! call the output writer on the data object
-  virtual void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
   //! assemble the system matrix which is a block matrix containing stiffness matrices of the diffusion sub problems
   void setSystemMatrixSubmatrices(double timeStepWidth);

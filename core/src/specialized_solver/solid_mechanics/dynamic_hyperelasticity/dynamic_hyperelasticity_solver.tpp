@@ -349,7 +349,7 @@ setInitialValues()
 
 template<typename Term,bool withLargeOutput,typename MeshType>
 void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -394,7 +394,8 @@ advanceTimeSpan()
     hyperelasticitySolver_.setDisplacementsVelocitiesAndPressureFromCombinedVec(accelerationTerm_, this->data_.accelerationTerm());
 
     // write current output values
-    this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
+    if (withOutputWritersEnabled)
+      this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
 
     // potentially update DirichletBC by calling "updateDirichletBoundaryConditionsFunction"
     callUpdateDirichletBoundaryConditionsFunction(currentTime);
@@ -427,6 +428,18 @@ run()
   initialize();
 
   this->advanceTimeSpan();
+}
+
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  // call the output writer of the nested solver
+  this->hyperelasticitySolver_->callOutputWriter(timeStepNo, currentTime, callCountIncrement);
+
+  // call the own output writer
+  this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime, callCountIncrement);
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType>

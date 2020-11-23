@@ -10,7 +10,7 @@ namespace TimeSteppingScheme
 /** This solver is an adapter to the chaste software framework and uses the hyperelasticity implementation of chaste.
  *  It solves the nonlinear finite elasticity problem with Mooney-Rivlin material, for either 2D or 3D.
  *  Because Chaste is not able to solve nonlinear elasticity in parallel, nor solve anything else than the quasi-static case,
- *  integration in opendihu is not complete. This class should be deleted now.
+ *  integration in opendihu is not complete. This class should be deleted now (after graduation, in case I need it one more time).
  *
  */
 template<int D>
@@ -27,7 +27,7 @@ public:
   QuasiStaticNonlinearElasticitySolverChaste(DihuContext context);
 
   //! advance simulation by the given time span, data in solution is used, afterwards new data is in solution
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
   //! initialize components of the simulation
   void initialize();
@@ -40,6 +40,9 @@ public:
 
   //! reset state
   void reset();
+
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
   //! return the data object
   Data &data();

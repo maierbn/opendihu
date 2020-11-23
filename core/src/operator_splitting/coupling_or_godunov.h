@@ -19,7 +19,7 @@ public:
   using OperatorSplitting<TimeStepping1,TimeStepping2>::OperatorSplitting;
 
   //! advance time stepping by span
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
 protected:
 };

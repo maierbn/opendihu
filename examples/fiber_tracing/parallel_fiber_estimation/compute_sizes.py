@@ -43,8 +43,8 @@ def output_size(m,l,nel=4):
 
   filesize2 = 72 + N2*1481*3*8
    
-  print("Expected sizes for parameters m={}, lmax={}, needs {} processes:\n  {} x {} = {} fibers, filesize = {} ({}),\n  {} x {} = {} fibers, filesize = {} ({})".
-    format(m, l, p, n, n, N, filesize, sizeof_fmt(filesize), n2, n2, N2, filesize2, sizeof_fmt(filesize2)))
+  print("Expected sizes for parameters m={}, lmax={}, nel={}, needs {} process{}:\n  {} x {} = {} fibers, filesize = {} ({}),\n  {} x {} = {} fibers, filesize = {} ({})".
+    format(m, l, nel, p, "es" if p > 1 else "", n, n, N, filesize, sizeof_fmt(filesize), n2, n2, N2, filesize2, sizeof_fmt(filesize2)))
 
 if __name__ == "__main__":
 

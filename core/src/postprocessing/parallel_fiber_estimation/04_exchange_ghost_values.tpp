@@ -242,7 +242,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
   printRanksInNeighbourhood(subdomainIsAtBorder);
 
   // blocking communication
-
+#if 0
   // left: recv-send, right: send-recv
   // bottom: recv-send, top: send-recv
   // bottom-left: recv-send, top-right: send-recv
@@ -323,9 +323,10 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
       }
     }
   }
+#endif 
 
 // non-blocking communication, does not work with 64 processes
-#if 0
+#if 1
   sendRequests.clear();
   receiveRequests.clear();
 

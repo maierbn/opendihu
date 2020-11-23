@@ -45,3 +45,5 @@ solver_structure.txt
 *.json
 dependencies/*
 dependencies
+**/precice-*
+**/log_residual_norm*

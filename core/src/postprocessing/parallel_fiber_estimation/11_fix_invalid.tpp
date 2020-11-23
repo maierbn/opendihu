@@ -206,11 +206,13 @@ fixInvalidFibersInFile(std::string filename)
       << ", nPointsPerFiber: " << nPointsPerFiber << ", nFibersX: " << nFibersX << ", fiberDataSize: " << fiberDataSize
       << ", fileSize: " << fileSize;
 
-    if (int((fileSize-(32+headerLength)) / fiberDataSize) != nFibers)
+    int nFibersContainedInFile = int((fileSize-(32+headerLength)) / fiberDataSize);
+
+    if (nFibersContainedInFile != nFibers)
     {
       LOG(ERROR) << "File \"" << filename << "\" states to have " << nFibers << " fibers in header, but actually has "
-        << int((fileSize-(32+headerLength)) / fiberDataSize) << " fibers!" << std::endl
-        << "This can happen, if the file \"" << filename << "\" existed from a previous run, then this is not a problem.";
+        << nFibersContainedInFile << " fibers!" << std::endl
+        << "This can happen if the file \"" << filename << "\" existed from a previous run, then it is no a problem.";
     }
 
     for (int iterationNo = 0; iterationNo < 3 && (nFibersInvalid - nFibersFixed > 0 || iterationNo == 0); iterationNo++)
@@ -535,8 +537,14 @@ fixInvalidFibersInFile(std::string filename)
 
     if (nFibersFixed == 0)
     {
-      LOG(DEBUG) << "No invalid fibers were fixed, i.e. file did not change. Delete algebraic file " << filenameExistingFile << ", because it is has the same contents as " << filename;
+      LOG(DEBUG) << "No invalid fibers were fixed, i.e. file did not change. Delete intermediate file " << filenameExistingFile << ", because it is has the same contents as " << filename;
       remove(filenameExistingFile.c_str());
+    }
+    else
+    {
+      LOG(INFO);
+      LOG(INFO) << "The file \"" << filenameExistingFile << "\" contains " << nFibersInvalid << " invalid fibers.";
+      LOG(INFO) << "The file \"" << filename << "\"         contains " << nFibersInvalid-nFibersFixed << " invalid fibers." << std::endl;
     }
   }
 }

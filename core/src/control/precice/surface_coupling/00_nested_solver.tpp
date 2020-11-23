@@ -116,6 +116,14 @@ currentState(NestedSolverType &nestedSolver)
   return nestedSolver.timeStepping2().dynamicHyperelasticitySolver()->currentState();
 }
 
+template<typename T1, typename T2, typename T3>
+std::shared_ptr<FieldVariable::FieldVariable<typename PreciceAdapterNestedSolver<Control::Coupling<Control::MultipleInstances<T1>,MuscleContractionSolver<T2,T3>>>::FunctionSpace,9>>
+PreciceAdapterNestedSolver<Control::Coupling<Control::MultipleInstances<T1>,MuscleContractionSolver<T2,T3>>>::
+deformationGradientField(NestedSolverType &nestedSolver)
+{
+  return nestedSolver.timeStepping2().dynamicHyperelasticitySolver()->hyperelasticitySolver().data().deformationGradient();
+}
+
 // --------------------------------------------------
 // DynamicHyperelasticitySolver
 
@@ -230,6 +238,13 @@ currentState(NestedSolverType &nestedSolver)
   return nestedSolver.currentState();
 }
 
+template<typename Material>
+std::shared_ptr<FieldVariable::FieldVariable<typename PreciceAdapterNestedSolver<TimeSteppingScheme::DynamicHyperelasticitySolver<Material>>::FunctionSpace, 9>>
+PreciceAdapterNestedSolver<TimeSteppingScheme::DynamicHyperelasticitySolver<Material>>::
+deformationGradientField(NestedSolverType &nestedSolver)
+{
+  return nestedSolver.hyperelasticitySolver().data().deformationGradient();
+}
 
 // --------------------------------------------------
 // HyperelasticitySolver
@@ -253,16 +268,19 @@ addDirichletBoundaryConditions(NestedSolverType &nestedSolver,
   {
     typename SpatialDiscretization::DirichletBoundaryConditionsBase<FunctionSpace,3>::ElementWithNodes element3;
 
+    // copy elementNo from element6 to element3
     element3.elementNoLocal = element6.elementNoLocal;
 
-    element3.elementalDofIndex.resize(element6.elementalDofIndex.size());
-
-    for (int i = 0; i < element6.elementalDofIndex.size(); i++)
+    // copy all bc entries from element6 to element3, use the first 3 components for every prescribed value
+    for (std::map<int,std::array<double,6>>::const_iterator iter = element6.elementalDofIndex.cbegin(); iter != element6.elementalDofIndex.cend(); iter++)
     {
-      element3.elementalDofIndex[i].first = element6.elementalDofIndex[i].first;
-      element3.elementalDofIndex[i].second[0] = element6.elementalDofIndex[i].second[0];
-      element3.elementalDofIndex[i].second[1] = element6.elementalDofIndex[i].second[1];
-      element3.elementalDofIndex[i].second[2] = element6.elementalDofIndex[i].second[2];
+      int elementalDofIndex = iter->first;
+      std::array<double,3> value = {
+        iter->second[0],
+        iter->second[1],
+        iter->second[2]
+      };
+      element3.elementalDofIndex.insert(std::pair<int,std::array<double,3>>(elementalDofIndex,value));
     }
 
     dirichletBoundaryConditionElements3.push_back(element3);
@@ -376,5 +394,12 @@ currentState(NestedSolverType &nestedSolver)
   return nestedSolver.currentState();
 }
 
+template<typename Material>
+std::shared_ptr<FieldVariable::FieldVariable<typename PreciceAdapterNestedSolver<SpatialDiscretization::HyperelasticitySolver<Material>>::FunctionSpace, 9>>
+PreciceAdapterNestedSolver<SpatialDiscretization::HyperelasticitySolver<Material>>::
+deformationGradientField(NestedSolverType &nestedSolver)
+{
+  return nestedSolver.data().deformationGradient();
+}
 
 }  // namespace

@@ -669,10 +669,18 @@ element_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionTy
 getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const
 {
   // get global coordinates of the lower front left node of the element
-  std::array<global_no_t,3> coordinatesGlobal;
+  std::array<global_no_t,MeshType::dim()> coordinatesGlobal;
   coordinatesGlobal[0] = elementNoGlobalPetsc % nElementsGlobal(0);
-  coordinatesGlobal[1] = (elementNoGlobalPetsc % (nElementsGlobal(0)*nElementsGlobal(1))) / nElementsGlobal(0);
-  coordinatesGlobal[2] = elementNoGlobalPetsc / (nElementsGlobal(0)*nElementsGlobal(1));
+
+  if (MeshType::dim() >= 2)
+  {
+    coordinatesGlobal[1] = (elementNoGlobalPetsc % (nElementsGlobal(0)*nElementsGlobal(1))) / nElementsGlobal(0);
+  }
+
+  if (MeshType::dim() >= 3)
+  {
+    coordinatesGlobal[2] = elementNoGlobalPetsc / (nElementsGlobal(0)*nElementsGlobal(1));
+  }
 
   // get local coordinates
   std::array<int,MeshType::dim()> coordinatesLocal = getCoordinatesLocal(coordinatesGlobal, isOnLocalDomain);

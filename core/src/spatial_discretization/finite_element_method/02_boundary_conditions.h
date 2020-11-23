@@ -54,6 +54,7 @@ protected:
   bool systemMatrixAlreadySet_ = false;             //< if the system matrix has been changed to account for dirichlet DCs, which means that rows/columns of BC dofs were set to zero and diagonal to 1
   bool neumannBoundaryConditionsApplied_ = false;   //< if the neumann BC were already applied
   bool dirichletBoundaryConditionsApplied_ = false; //< if the dirichlet BC were already applied after the last initialize() or setDirichletBoundaryConditions()
+
 };
 
 /**

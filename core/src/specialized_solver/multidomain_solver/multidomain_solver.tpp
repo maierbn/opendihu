@@ -414,7 +414,7 @@ setInformationToPreconditioner()
   }
 
   LOG(DEBUG) << "set coordinates to preconditioner, " << nodePositionCoordinatesForPreconditioner.size() << " node coordinates";
-  ierr = PCSetCoordinates(pc, 3, nodePositionCoordinatesForPreconditioner.size(), nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
+  ierr = PCSetCoordinates(pc, 3, nNodesLocal, nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>

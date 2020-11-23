@@ -80,10 +80,6 @@ protected:
 
   std::shared_ptr<SlotConnectorDataType> slotConnectorData_;  //< the object that holds slot connector data that will be transferred between solvers
 
-private:
-  //! get maximum number of expected non-zeros in the system matrix
-  void getPetscMemoryParameters(int &nNonZerosDiagonal, int &nNonZerosOffdiagonal);
-
 };
 
 } // namespace Data

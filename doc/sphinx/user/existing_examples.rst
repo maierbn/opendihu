@@ -1790,6 +1790,14 @@ Precice needs to be enabled in the `user-variables.scons.py` file.
   mkorn && sr       # build
   cd build_release
 
+* **only_tendon_static**
+
+  .. code-block:: bash
+  
+    cd $OPENDIHU_HOME/examples/electrophysiology/fibers/fibers_contraction/with_tendons_precice/only_tendon_static
+    . run_force.sh      # run study
+    ./tendon_precice_quasistatic settings_only_tendon.py --fiber_file=../meshes/tendon_box.bin --force=1000   # run a single simulation
+
 * **Only Tendon**
   
   This settings file is to test and debug the tendon material. A box that is fixed on the right and pulled to the left is simulated. The data from `this paper <https://www.sciencedirect.com/science/article/abs/pii/S0021929017300726?via%3Dihub>`_ can be reproduced, but adjusting the material parameters for all variants.
@@ -1798,14 +1806,26 @@ Precice needs to be enabled in the `user-variables.scons.py` file.
 
   .. code-block:: bash
     
-    ./tendon ../settings_only_tendon.py --fiber_file=../tendon_box.bin
+    cd $OPENDIHU_HOME/examples/electrophysiology/fibers/fibers_contraction/with_tendons_precice/only_tendon_static
+    . run_force.sh      # run study
+    ./tendon_precice_quasistatic settings_only_tendon.py --fiber_file=../meshes/tendon_box.bin --force=1000   # run a single simulation
 
   .. _fibers_contraction_only_tendon:
   .. figure:: examples/fibers_contraction_only_tendon.png
     :width: 100%
     
-    Result of the tendon test.
+    A result of the tensile test of a cuboid tendon.
   
+  .. _fibers_contraction_only_tendon_1:
+  .. figure:: examples/fibers_contraction_only_tendon_1.png
+    :width: 70%
+    
+    Reproduction of Fig.4 in of `Carniel et al. (2017) "A transversely isotropic coupled hyperelastic model for the mechanical behavior of tendons"  <https://www.sciencedirect.com/science/article/abs/pii/S0021929017300726?via%3Dihub>`_. Different parametrizations of the tendon material are shown. The plot matches the results very well.
+
+.. note::
+
+  The following examples are under construction at the moment. To use the documentation, checkout an earlier commit before 11/2020.
+
 * **Explicit Neumann-Dirichlet**
   
   Scenario with explicit Neumann-Dirichlet coupling. Only one tendon (the bottom tendon) plus the muscle volume is considered here. 

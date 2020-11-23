@@ -49,11 +49,15 @@ setStiffnessMatrix()
   functionSpace->geometryField().startGhostManipulation();   // ensure that local ghost values of geometry field are set
 
   bool outputAssemble3DStiffnessMatrixHere = false;
+  std::chrono::time_point<std::chrono::system_clock> tStart;
   if (outputAssemble3DStiffnessMatrix_)
   {
     LOG(INFO) << "Compute stiffness matrix for " << D << "D problem with " << functionSpace->nDofsGlobal() << " global dofs.";
     outputAssemble3DStiffnessMatrix_ = false;
     outputAssemble3DStiffnessMatrixHere = true;
+
+    // start inline duration measurement
+    tStart = std::chrono::system_clock::now();
   }
 
   const element_no_t nElementsLocal = functionSpace->nElementsLocal();
@@ -167,28 +171,6 @@ setStiffnessMatrix()
         = prefactor * IntegrandStiffnessMatrix<D,EvaluationsType,FunctionSpaceType,nComponents,double_v_t,dof_no_v_t,Term>::
           evaluateIntegrand(this->data_, jacobian, elementNoLocalv, xi);
 
-          /*
-      for (int i = 0; i < nDofsPerElement; i++)
-      {
-        for (int j = 0; j < nDofsPerElement; j++)
-        {
-          // loop over components (1,...,D for solid mechanics)
-          for (int rowComponentNo = 0; rowComponentNo < nComponents; rowComponentNo++)
-          {
-            for (int columnComponentNo = 0; columnComponentNo < nComponents; columnComponentNo++)
-            {
-              // integrate value and set entry in stiffness matrix
-              double evaluatedValue = evaluationsArray[samplingPointIndex](i*nComponents + rowComponentNo, j*nComponents + columnComponentNo);
-
-              if (rowComponentNo != columnComponentNo)
-                LOG(DEBUG) << rowComponentNo << columnComponentNo << ": evaluatedValue: " << evaluatedValue
-                  << " at (" << i*nComponents + rowComponentNo << "," << j*nComponents + columnComponentNo << ")";
-            }
-          }
-        }
-      }
-      */
-
     }  // function evaluations
 
     // integrate all values for the (i,j) dof pairs at once
@@ -237,7 +219,9 @@ setStiffnessMatrix()
 
   if (outputAssemble3DStiffnessMatrixHere && this->context_.ownRankNoCommWorld() == 0)
   {
-    std::cout << std::string(100,'\b') << "done.                       " << std::endl;
+    std::chrono::time_point<std::chrono::system_clock> tEnd = std::chrono::system_clock::now();
+    std::chrono::duration<double> duration = tEnd - tStart;
+    std::cout << std::string(100,'\b') << "done in " << duration.count() << " s.                       " << std::endl;
   }
 
 #ifndef NDEBUG

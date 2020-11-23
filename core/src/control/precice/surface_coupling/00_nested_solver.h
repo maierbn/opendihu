@@ -15,7 +15,7 @@ class PreciceAdapterNestedSolver :
 {
 };
 
-/** Partial specialization for tendon or pure mechanics solver
+/** Partial specialization for tendon or pure mechanics solver, muscle contraction solver (nonlinear elasticity with active stress)
  */
 template<typename T1, typename T2, typename T3>
 class PreciceAdapterNestedSolver<
@@ -61,9 +61,12 @@ public:
 
   //! get at Petsc Vec that stores all values of the current state, to be used to store and restore checkpoints
   Vec currentState(NestedSolverType &nestedSolver);
+
+  //! get the field variable of the deformation gradient
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,9>> deformationGradientField(NestedSolverType &nestedSolver);
 };
 
-/** Partial specialization for tendon or pure mechanics solver
+/** Partial specialization for tendon or pure mechanics solver, dynamic nonlinear elasticity
  */
 template<typename Material>
 class PreciceAdapterNestedSolver<
@@ -104,9 +107,12 @@ public:
 
   //! get at Petsc Vec that stores all values of the current state, to be used to store and restore checkpoints
   Vec currentState(NestedSolverType &nestedSolver);
+
+  //! get the field variable of the deformation gradient
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,9>> deformationGradientField(NestedSolverType &nestedSolver);
 };
 
-/** Partial specialization for tendon or pure mechanics solver
+/** Partial specialization for tendon or pure mechanics solver, static nonlinear elasticity
  */
 template<typename Material>
 class PreciceAdapterNestedSolver<
@@ -147,6 +153,9 @@ public:
 
   //! get at Petsc Vec that stores all values of the current state, to be used to store and restore checkpoints
   Vec currentState(NestedSolverType &nestedSolver);
+
+  //! get the field variable of the deformation gradient
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,9>> deformationGradientField(NestedSolverType &nestedSolver);
 };
 
 

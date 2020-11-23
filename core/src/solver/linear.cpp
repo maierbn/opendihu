@@ -327,7 +327,7 @@ bool Linear::solve(Vec rightHandSide, Vec solution, std::string message)
   ierr = VecGetSize(rightHandSide, &nDofsGlobal); CHKERRQ(ierr);
 
   // compute residual norm
-  if (kspType_ == KSPPREONLY && (pcType_ == PCLU || pcType_ == PCILU))
+  if (kspType_ == std::string(KSPPREONLY) && (pcType_ == std::string(PCLU) || pcType_ == std::string(PCILU)))
   {
     if (!residual_)
     {

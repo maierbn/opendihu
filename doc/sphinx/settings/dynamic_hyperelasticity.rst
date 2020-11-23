@@ -12,13 +12,18 @@ C++ instantiation
   SpatialDiscretization::DynamicHyperelasticitySolver<
     Material
   >
+  // or:
+  SpatialDiscretization::DynamicHyperelasticitySolver<Material, true>   // default, same as without "false"
+  SpatialDiscretization::DynamicHyperelasticitySolver<Material, false>
 
-Where ``Material`` is a class that describes the used constitutive equations at compile time, see :doc:`hyperelasticity`.
+The two template parameters are same as in :doc:`hyperelasticity`. The first, ``Material`` is a class that describes the used constitutive equations at compile time.
+The second specifies if there should be also the :math:`P` and :math:`F` field variables in the output files, which produces larger files.
 
 Python settings
 -----------------
 
-In the following all possible options for the dynamic hyperelasticity solver are listed. They are explained by the comments. Most of them are also present in the :doc:`HyperelasticitySolver <hyperelasticity>`.
+In the following all possible options for the dynamic hyperelasticity solver are listed. They are explained by the comments. 
+Most of them are also present in the :doc:`HyperelasticitySolver <hyperelasticity>`. Information regarding Neumann and Dirichlet boundary conditions, which correspond to traction/forces and prescribed nodes can be found under :doc:`boundary_conditions`.
 
 .. code-block:: python
 
@@ -41,9 +46,10 @@ In the following all possible options for the dynamic hyperelasticity solver are
     # mesh
     "meshName":                   "3Dmesh_quadratic",           # mesh with quadratic Lagrange ansatz functions
     "inputMeshIsGlobal":          True,                         # boundary conditions are specified in global numberings, whereas the mesh is given in local numberings
-    
+  
     "fiberMeshNames":             [],                           # fiber meshes that will be used to determine the fiber direction
-    "fiberDirection":             [0,0,1],                      # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
+    "fiberDirection":             [],                           # if fiberMeshNames is empty, directly set the constant fiber direction, in global coordinate system
+    "fiberDirectionInElement":    [0,0,1],                      # if fiberMeshNames and fiberDirections are empty, directly set the constant fiber direction, in element coordinate system
     
     # nonlinear solver
     "relativeTolerance":          1e-5,                         # 1e-10 relative tolerance of the linear solver
@@ -81,6 +87,8 @@ In the following all possible options for the dynamic hyperelasticity solver are
     "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
     "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
     
+    "dirichletOutputFilename":     "out/"+scenario_name+"/dirichlet_boundary_conditions_tendon",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+    
     # define which file formats should be written
     # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
     "OutputWriter" : [
@@ -112,6 +120,26 @@ In the following all possible options for the dynamic hyperelasticity solver are
     },
   }
   
+  
+The following options only apply to ``DynamicHyperelasticitySolver`` and not ``HyperelasticitySolver``:
+
+`timeStepWidth`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The time step width of the time stepping solver, i.e., the timesteps in which the elasticity problem gets solved.
+
+`endTime`
+^^^^^^^^^^^^^^^^^^^
+End time of the simulation.
+
+`timeStepOutputInterval`
+^^^^^^^^^^^^^^^^^^^^^^^^^
+In which interval the current timestep will be written to the console.
+
+`density`
+^^^^^^^^^^^^
+A constant density of the body, needed for the inertia effects.
+
+
   
 `updateDirichletBoundaryConditionsFunction` (optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -158,7 +186,7 @@ The callback function has the following form:
     # Neumann boundary conditions
     k = 0
     factor = np.sin(t/10. * 2*np.pi)*0.1
-    neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": [factor,0,0], "face": "2-"} for j in range(ny) for i in range(nx)]
+    neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": [factor,0,0], "face": "2-", "isInReferenceConfiguration": True} for j in range(ny) for i in range(nx)]
     #neumann_bc = []
 
     config = {
@@ -175,14 +203,11 @@ The options `"inputMeshIsGlobal"`, `"divideNeumannBoundaryConditionValuesByTotal
  
 This means the value of "neumannBoundaryConditions" has the usual list format for Neumann boundary conditions.
 
-Changing Neumann boundary condition values only affects the right hand side of the mechanics problem. Therefore, any number of Neumann Bc values can be set, unlike in the Dirichlet BC callback. Previous Neumann boundary conditions are deleted.
+Changing Neumann boundary condition values only affects the right hand side of the mechanics problem. Therefore, Neumann BC values can be set for any number of elements, unlike in the Dirichlet BC callback. Previous Neumann boundary conditions are deleted.
 
 `updateNeumannBoundaryConditionsFunctionCallInterval` (optional)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 This option is the interval in which the callback function `updateNeumannBoundaryConditionsFunction` will be called.
 Only if `updateNeumannBoundaryConditionsFunction` was given in the config, this option is mandatory.
-
-
-
 
 

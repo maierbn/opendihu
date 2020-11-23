@@ -510,7 +510,7 @@ int MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,Bas
 neighbourRank(Mesh::face_t face)
 {
   // This method is only needed for parallel fiber estimation
-  LOG(FATAL) << "\"getBoundaryElements\" is not implemented for composite mesh.";
+  LOG(FATAL) << "\"neighbourRank\" is not implemented for composite mesh.";
   return 0;
 }
 

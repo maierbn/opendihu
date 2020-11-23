@@ -74,6 +74,12 @@ public:
   //! transform the global natural numbering to the local numbering
   virtual node_no_t getNodeNoLocalFromGlobalNatural(global_no_t nodeNoGlobalNatural, bool &isOnLocalDomain) const = 0;
 
+  //! get the local element no from the global element no, isOnLocalDomain is true
+  virtual element_no_t getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const = 0;
+
+  //! get the global natural element no for a local element no
+  virtual global_no_t getElementNoGlobalNatural(element_no_t elementNoLocal) const = 0;
+
   //! get a PETSc IS (index set) with the same information as dofNosLocal_
   const IS &dofNosLocalIS() const;
 

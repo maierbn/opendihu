@@ -50,8 +50,20 @@ Alternatively, the `Term`, i.e. material can be specified as second template arg
     Mesh::CompositeOfDimension<3>,
     Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D
   >
-  
-The given value of `Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D` is the default but can be replaced. The material has to set ``usesActiveStress=true`` in order for the active stress to work.
+    
+The given value of `Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D` is the default but can be replaced. 
+The material has to set ``usesActiveStress=true`` in order for the active stress to work.
+
+And additionally, the parameter `withLargeOutputFiles` can be specified as the third parameter (default is true). If set to false, smaller output files that don't contain :math:`P,\dot{F}` and :math:`F` values will be created.
+
+.. code-block:: c
+
+  // either with composite mesh:
+  MuscleContractionSolver<
+    Mesh::CompositeOfDimension<3>,
+    Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D,
+    true
+  >
 
 Python settings
 -----------------

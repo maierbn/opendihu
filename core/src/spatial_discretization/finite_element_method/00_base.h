@@ -59,6 +59,9 @@ public:
   friend class StiffnessMatrixTester;    //< a class used for testing
 protected:
 
+  //! initialize the coordinates in PETSc that are needed for AMG solvers
+  void setInformationToPreconditioner();
+
   //! read in rhs values from config and creates a FE rhs vector out of it
   virtual void setRightHandSide() = 0;
 

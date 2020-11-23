@@ -33,10 +33,10 @@ public:
   //! inherit constructor
   using FunctionSpacePartition<MeshType,BasisFunctionType>::FunctionSpacePartition;
 
-  //! return the local dof number of element-local dof dofIndex of element elementNoLocal
+  //! return the local dof number of element-local dof dofIndex of element elementNoLocal, the returned dof can be a ghost dof
   dof_no_t getDofNo(element_no_t elementNoLocal, int dofIndex) const;
 
-  //! return the local node number of element-local node nodeIndex of element with local no elementNoLocal
+  //! return the local node number of element-local node nodeIndex of element with local no elementNoLocal, the returned node no. can be a ghost node no.
   node_no_t getNodeNo(element_no_t elementNoLocal, int nodeIndex) const;
 
   //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoLocalGlobal
@@ -65,10 +65,10 @@ public:
   //! inherit constructor
   using FunctionSpacePartition<MeshType,BasisFunctionType>::FunctionSpacePartition;
 
-  //! return the local dof number of element-local dof dofIndex of element elementNoLocal
+  //! return the local dof number of element-local dof dofIndex of element elementNoLocal, the returned dof can be a ghost dof
   dof_no_t getDofNo(element_no_t elementNoLocal, int dofIndex) const;
 
-  //! return the local node number of element-local node nodeIndex of element elementNoLocal
+  //! return the local node number of element-local node nodeIndex of element elementNoLocal, the returned node no. can be a ghost node no.
   node_no_t getNodeNo(element_no_t elementNoLocal, int nodeIndex) const;
 
   //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoLocalGlobal
@@ -97,10 +97,10 @@ public:
   //! inherit constructor
   using FunctionSpacePartition<MeshType,BasisFunctionType>::FunctionSpacePartition;
 
-  //! return the local dof number of element-local dof dofIndex of element elementNoLocal
+  //! return the local dof number of element-local dof dofIndex of element elementNoLocal, the returned dof can be a ghost dof
   dof_no_t getDofNo(element_no_t elementNoLocal, int dofIndex) const;
 
-  //! return the local node number of element-local node nodeIndex of element elementNoLocal
+  //! return the local node number of element-local node nodeIndex of element elementNoLocal, the returned node no. can be a ghost node no.
   node_no_t getNodeNo(element_no_t elementNoLocal, int nodeIndex) const;
 
   //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoLocalGlobal

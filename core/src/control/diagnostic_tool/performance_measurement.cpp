@@ -247,7 +247,14 @@ void PerformanceMeasurement::parseStatusInformation()
   {
     message << s << "s";
   }
-  LOG(INFO) << "Total user time: " << message.str();
+
+  // do not use LOG(INFO) here, because the logging is already shut down
+  // LOG(INFO) << "Total user time: " << message.str();
+
+  if (DihuContext::ownRankNoCommWorld() == 0)
+  {
+    std::cout << "Total user time: " << message.str() << std::endl;
+  }
 }
 
 } // namespace

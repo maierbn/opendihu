@@ -10,8 +10,8 @@ input_file=original_meshes/left_biceps_brachii.stl
 
 # tendon 1 (bottom)
 # number of points in x and z direction of the extracted mesh
-tendon_1_n_points_z=21    # 11
-tendon_1_n_points_x=4
+tendon_1_n_points_z=5    # 11
+tendon_1_n_points_x=2
 
 # tendon 2a (top)
 # number of points in x and z direction of the extracted mesh
@@ -232,7 +232,7 @@ $pyod $opendihu_directory/scripts/file_manipulation/translate_bin_fibers.py \
 fi  # endif streamline tracing
 
 # copy resulting mesh to input folder
-cp ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_y_reversed.bin ${current_directory}/processed_meshes/${basename}_tendon1.bin
+cp ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_y_reversed.bin ${current_directory}/processed_meshes/${basename}_tendon1_small.bin
   
 cd $current_directory
 

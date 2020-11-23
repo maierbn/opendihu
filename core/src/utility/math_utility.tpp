@@ -233,9 +233,27 @@ Tensor2<2,double_v_t> computeCofactorMatrix(const Tensor2<2,double_v_t> &matrix)
   return result;
 }
 
+// compute transpose
+template<typename double_v_t>
+Tensor2<3,double_v_t> computeTranspose(const Tensor2<3,double_v_t> &matrix)
+{
+  // matrices are stored column-major
+  Tensor2<3,double_v_t> result;
+  result[0][0] = matrix[0][0];  // entry m11
+  result[1][0] = matrix[0][1];  // entry m12
+  result[2][0] = matrix[0][2];  // entry m13
+  result[0][1] = matrix[1][0];  // entry m21
+  result[1][1] = matrix[1][1];  // entry m22
+  result[2][1] = matrix[1][2];  // entry m23
+  result[0][2] = matrix[2][0];  // entry m31
+  result[1][2] = matrix[2][1];  // entry m32
+  result[2][2] = matrix[2][2];  // entry m33
+  return result;
+}
+
 // 3D symmetric matrix inverse
 template<typename double_v_t>
-Tensor2<3,double_v_t> computeSymmetricInverse(const Tensor2<3,double_v_t> &matrix, double_v_t &approximateMeshWidth, double_v_t &determinant)
+Tensor2<3,double_v_t> computeSymmetricInverse(const Tensor2<3,double_v_t> &matrix, const double_v_t &approximateMeshWidth, double_v_t &determinant)
 {
   // rename input values
         double_v_t m11 = matrix[0][0];
@@ -276,7 +294,7 @@ Tensor2<3,double_v_t> computeSymmetricInverse(const Tensor2<3,double_v_t> &matri
 
 // 2D symmetric matrix invers
 template<typename double_v_t>
-Tensor2<2,double_v_t> computeSymmetricInverse(const Tensor2<2,double_v_t> &matrix, double_v_t &approximateMeshWidth, double_v_t &determinant)
+Tensor2<2,double_v_t> computeSymmetricInverse(const Tensor2<2,double_v_t> &matrix, const double_v_t &approximateMeshWidth, double_v_t &determinant)
 {
   // rename input values
         double_v_t m11 = matrix[0][0];
@@ -309,7 +327,7 @@ Tensor2<2,double_v_t> computeSymmetricInverse(const Tensor2<2,double_v_t> &matri
 
 // 1D inverse
 template<typename double_v_t>
-Tensor2<1,double_v_t> computeInverse(const Tensor2<1,double_v_t> &matrix, double_v_t &approximateMeshWidth, double_v_t &determinant)
+Tensor2<1,double_v_t> computeInverse(const Tensor2<1,double_v_t> &matrix, const double_v_t &approximateMeshWidth, double_v_t &determinant)
 {
   // regularize matrix if near singular, by adding ε*h*I (small values on diagonal), scaling with h is for consistency
   double_v_t regularizationEpsilon = 0;
@@ -325,7 +343,7 @@ Tensor2<1,double_v_t> computeInverse(const Tensor2<1,double_v_t> &matrix, double
 
 // 2D inverse
 template<typename double_v_t>
-Tensor2<2,double_v_t> computeInverse(const Tensor2<2,double_v_t> &matrix, double_v_t &approximateMeshWidth, double_v_t &determinant)
+Tensor2<2,double_v_t> computeInverse(const Tensor2<2,double_v_t> &matrix, const double_v_t &approximateMeshWidth, double_v_t &determinant)
 {
   // matrices are stored column-major
 
@@ -360,7 +378,7 @@ Tensor2<2,double_v_t> computeInverse(const Tensor2<2,double_v_t> &matrix, double
 
 // 3D inverse
 template<typename double_v_t>
-Tensor2<3,double_v_t> computeInverse(const Tensor2<3,double_v_t> &matrix, double_v_t &approximateMeshWidth, double_v_t &determinant)
+Tensor2<3,double_v_t> computeInverse(const Tensor2<3,double_v_t> &matrix, const double_v_t &approximateMeshWidth, double_v_t &determinant)
 {
   // rename input values
   // matrices are stored column-major

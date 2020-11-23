@@ -74,7 +74,7 @@ if False:
   print(solve(Phi1 - xp1, xi1))
 
 # 2D linear quadrilateral
-if True:
+if False:
   # 3 4
   # 1 2
   
@@ -98,7 +98,7 @@ if True:
 
   expr = collect(solution[0][1], [xp1,xp2])
   print("xi2=",expr)
-  print(cxxcode(expr, standard='C++11')))
+  print(cxxcode(expr, standard='C++11'))
   print("")
 
   expr = simplify(solve(Phi1 - xp1, xi2))[0]

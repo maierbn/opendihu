@@ -10,8 +10,8 @@
 namespace TimeSteppingScheme
 {
 
-template<typename Term,typename MeshType>
-DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 DynamicHyperelasticitySolver(DihuContext context) :
   TimeSteppingScheme(context["DynamicHyperelasticitySolver"]), hyperelasticitySolver_(context, "DynamicHyperelasticitySolver"), data_(context_)
 {
@@ -24,8 +24,8 @@ DynamicHyperelasticitySolver(DihuContext context) :
   this->outputWriterManager_.initialize(this->context_["dynamic"], this->context_["dynamic"].getPythonConfig());
 }
 
-template<typename Term,typename MeshType>
-void DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 initialize()
 {
   TimeSteppingScheme::initialize();
@@ -42,6 +42,9 @@ initialize()
 
   // indicate in solverStructureVisualizer that the child solver initialization is done
   DihuContext::solverStructureVisualizer()->endChild();
+
+  // determine if there is any traction defined in current configuration, if so it has to be converted to reference configuration in every timestep
+  isTractionInCurrentConfiguration_ = hyperelasticitySolver_.neumannBoundaryConditions()->isTractionInCurrentConfiguration();
 
   // create variable of unknowns
   uvp_ = hyperelasticitySolver_.createPartitionedPetscVec("uvp");
@@ -84,6 +87,66 @@ initialize()
     }
   }
 
+  pythonTotalForceFunction_ = nullptr;
+  if (this->specificSettings_.hasKey("pythonTotalForceFunction_"))
+  {
+    LOG(DEBUG) << "parse pythonTotalForceFunction_";
+    PyObject *object = this->specificSettings_.getOptionPyObject("pythonTotalForceFunction_");
+    if (object != Py_None)
+    {
+      pythonTotalForceFunction_ = this->specificSettings_.getOptionFunction("pythonTotalForceFunction");
+      pythonTotalForceFunctionCallInterval_ = this->specificSettings_.getOptionInt("pythonTotalForceFunctionCallInterval", 1, PythonUtility::Positive);
+    }
+  }
+
+  // parse elements that are used to compute total force at top and bottom
+  if (this->specificSettings_.hasKey("totalForceTopElementNosGlobal"))
+  {
+    std::vector<global_no_t> totalForceTopElementsGlobal;
+    this->specificSettings_.getOptionVector<global_no_t>("totalForceTopElementNosGlobal", totalForceTopElementsGlobal);
+    std::set<global_no_t> totalForceTopElementsGlobalSet(totalForceTopElementsGlobal.begin(), totalForceTopElementsGlobal.end());
+
+    LOG(DEBUG) << "given elements top: " << totalForceTopElementsGlobalSet;
+
+    // iterate over local elements
+    for (element_no_t elementNoLocal = 0; elementNoLocal < this->data_.functionSpace()->nElementsLocal(); elementNoLocal++)
+    {
+      global_no_t elementNoGlobal = this->data_.functionSpace()->meshPartition()->getElementNoGlobalNatural(elementNoLocal);
+
+      if (totalForceTopElementsGlobalSet.find(elementNoGlobal) != totalForceTopElementsGlobalSet.end())
+      {
+        LOG(DEBUG) << " (" << elementNoLocal << "->" << elementNoGlobal << ") yes";
+        bottomTopElements_.push_back(std::tuple<element_no_t,bool>(elementNoLocal,true));
+      }
+      else
+        LOG(DEBUG) << " (" << elementNoLocal << "->" << elementNoGlobal << ") no";
+    }
+  }
+
+  if (this->specificSettings_.hasKey("totalForceBottomElementNosGlobal"))
+  {
+    std::vector<global_no_t> totalForceBottomElementsGlobal;
+    this->specificSettings_.getOptionVector<global_no_t>("totalForceBottomElementNosGlobal", totalForceBottomElementsGlobal);
+    std::set<global_no_t> totalForceBottomElementsGlobalSet(totalForceBottomElementsGlobal.begin(), totalForceBottomElementsGlobal.end());
+
+    LOG(DEBUG) << "given elements bottom: " << totalForceBottomElementsGlobalSet;
+    // iterate over local elements
+    for (element_no_t elementNoLocal = 0; elementNoLocal < this->data_.functionSpace()->nElementsLocal(); elementNoLocal++)
+    {
+      global_no_t elementNoGlobal = this->data_.functionSpace()->meshPartition()->getElementNoGlobalNatural(elementNoLocal);
+
+      if (totalForceBottomElementsGlobalSet.find(elementNoGlobal) != totalForceBottomElementsGlobalSet.end())
+      {
+        LOG(DEBUG) << " (" << elementNoLocal << "->" << elementNoGlobal << ") yes";
+        bottomTopElements_.push_back(std::tuple<element_no_t,bool>(elementNoLocal,false));
+      }
+      else
+        LOG(DEBUG) << " (" << elementNoLocal << "->" << elementNoGlobal << ") no";
+    }
+  }
+
+  totalForceLogFilename_ = this->specificSettings_.getOptionString("totalForceLogFilename", "");
+
   // write initial mesh but don't increment counter
   this->outputWriterManager_.writeOutput(this->data_, 0, 0.0, 0);
 
@@ -91,8 +154,8 @@ initialize()
   //hyperelasticitySolver_.debug();
 }
 
-template<typename Term,typename MeshType>
-void DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 callUpdateDirichletBoundaryConditionsFunction(double t)
 {
   if (pythonUpdateDirichletBoundaryConditionsFunction_ == NULL)
@@ -127,8 +190,8 @@ callUpdateDirichletBoundaryConditionsFunction(double t)
   Py_CLEAR(arglist);
 }
 
-template<typename Term,typename MeshType>
-void DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 updateDirichletBoundaryConditions(std::vector<std::pair<global_no_t,std::array<double,6>>> newDirichletBCValues)
 {
   // set the new DirichletBC values
@@ -136,8 +199,8 @@ updateDirichletBoundaryConditions(std::vector<std::pair<global_no_t,std::array<d
   uvp_->updateDirichletBoundaryConditions(newDirichletBCValues, inputMeshIsGlobal_);
 }
 
-template<typename Term,typename MeshType>
-void DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 addDirichletBoundaryConditions(std::vector<typename SpatialDiscretization::DirichletBoundaryConditions<DisplacementsFunctionSpace,6>::ElementWithNodes> &boundaryConditionElements, bool overwriteBcOnSameDof)
 {
   hyperelasticitySolver_.addDirichletBoundaryConditions(boundaryConditionElements, overwriteBcOnSameDof);
@@ -156,8 +219,8 @@ addDirichletBoundaryConditions(std::vector<typename SpatialDiscretization::Diric
 
 }
 
-template<typename Term,typename MeshType>
-void DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 callUpdateNeumannBoundaryConditionsFunction(double t)
 {
   if (pythonUpdateNeumannBoundaryConditionsFunction_ == NULL)
@@ -185,6 +248,9 @@ callUpdateNeumannBoundaryConditionsFunction(double t)
   using NeumannBoundaryConditionsType = typename SpatialDiscretization::NeumannBoundaryConditions<typename HyperelasticitySolverType::DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>;
   std::shared_ptr<NeumannBoundaryConditionsType> newNeumannBoundaryConditions = std::make_shared<NeumannBoundaryConditionsType>(this->context_);
   newNeumannBoundaryConditions->initialize(returnValue, this->data_.functionSpace(), "neumannBoundaryConditions");
+  newNeumannBoundaryConditions->setDeformationGradientField(this->hyperelasticitySolver_.data().deformationGradient());
+
+  isTractionInCurrentConfiguration_ = newNeumannBoundaryConditions->isTractionInCurrentConfiguration();
 
   hyperelasticitySolver_.updateNeumannBoundaryConditions(newNeumannBoundaryConditions);
 
@@ -193,8 +259,21 @@ callUpdateNeumannBoundaryConditionsFunction(double t)
   Py_CLEAR(arglist);
 }
 
-template<typename Term,typename MeshType>
-void DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
+updateNeumannBoundaryConditions()
+{
+  LOG(INFO) << "Updating right hand side because traction was specified in current configuration.";
+
+  // update rhs with new traction values in reference configuration if there are moving loads (traction in current configuration)
+  hyperelasticitySolver_.neumannBoundaryConditions()->initializeRhs();
+
+  // update δW_ext,dead
+  hyperelasticitySolver_.updateNeumannBoundaryConditions(hyperelasticitySolver_.neumannBoundaryConditions());
+}
+
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 setInitialValues()
 {
   // set initial values as given in settings, or set to zero if not given
@@ -268,8 +347,8 @@ setInitialValues()
   //uvp_->setRepresentationGlobal();
 }
 
-template<typename Term,typename MeshType>
-void DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 advanceTimeSpan()
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
@@ -323,6 +402,12 @@ advanceTimeSpan()
     // potentially update NeumannBC by calling "updateNeumannBoundaryConditionsFunction"
     callUpdateNeumannBoundaryConditionsFunction(currentTime);
 
+    if (isTractionInCurrentConfiguration_)
+      updateNeumannBoundaryConditions();
+
+    // compute the total force and torque at the z+ and z- surfaces of the volume
+    computeBearingForcesAndMoments(currentTime);
+
     // start duration measurement
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::start(this->durationLogKey_);
@@ -334,8 +419,8 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
 
-template<typename Term,typename MeshType>
-void DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 run()
 {
   // initialize everything
@@ -344,22 +429,101 @@ run()
   this->advanceTimeSpan();
 }
 
-template<typename Term,typename MeshType>
-typename DynamicHyperelasticitySolver<Term,MeshType>::Data &DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
+computeBearingForcesAndMoments(double currentTime)
+{
+  if (totalForceLogFilename_.empty())
+    return;
+
+  LOG(DEBUG) << bottomTopElements_.size() << " elements: " << bottomTopElements_;
+
+  // compute the total forces and moments
+  Vec3 bearingForceBottom;
+  Vec3 bearingMomentBottom;
+  Vec3 bearingForceTop;
+  Vec3 bearingMomentTop;
+  hyperelasticitySolver_.computeBearingForceAndMoment(bottomTopElements_,
+    bearingForceBottom, bearingMomentBottom, bearingForceTop, bearingMomentTop);
+
+  if (DihuContext::ownRankNoCommWorld() == 0)
+  {
+    static bool headerWritten = false;
+
+    // append to file
+    std::ofstream file;
+    OutputWriter::Generic::openFile(file, totalForceLogFilename_, true);
+
+    if (!headerWritten)
+    {
+      file << "currentTime;forceBottomX;forceBottomY;forceBottomZ;momentBottomX;momentBottomY;momentBottomZ;"
+        << "forceTopX;forceTopY;forceTopZ;momentTopX;momentTopY;momentTopZ\n";
+      headerWritten = true;
+    }
+
+    // write currentTime;forceBottom;momentBottom;forceTop;momentTop
+    file << currentTime;
+
+    for (int i = 0; i < 3; i++)
+      file << ";" << bearingForceBottom[i];
+
+    for (int i = 0; i < 3; i++)
+      file << ";" << bearingMomentBottom[i];
+
+    for (int i = 0; i < 3; i++)
+      file << ";" << bearingForceTop[i];
+
+    for (int i = 0; i < 3; i++)
+      file << ";" << bearingMomentTop[i];
+    file << std::endl;
+  }
+
+  // call python callback
+  if (pythonTotalForceFunction_)
+  {
+    // only call this function at defined intervals
+    if (pythonTotalForceFunctionCallCount_ % pythonTotalForceFunctionCallInterval_ != 0)
+    {
+      pythonTotalForceFunctionCallCount_++;
+      return;
+    }
+    pythonTotalForceFunctionCallCount_++;
+
+    // create four python variables
+    PyObject *bearingForceBottomList = PythonUtility::convertToPython<Vec3>::get(bearingForceBottom);
+    PyObject *bearingMomentBottomList = PythonUtility::convertToPython<Vec3>::get(bearingMomentBottom);
+    PyObject *bearingForceTopList = PythonUtility::convertToPython<Vec3>::get(bearingForceTop);
+    PyObject *bearingMomentTopList = PythonUtility::convertToPython<Vec3>::get(bearingMomentTop);
+
+    // compose callback function
+    PyObject *arglist = Py_BuildValue("(O,O,O,O)", bearingForceBottomList, bearingMomentBottomList,
+                                      bearingForceTopList, bearingMomentTopList);
+    PyObject *returnValue = PyObject_CallObject(pythonTotalForceFunction_, arglist);
+
+    PythonUtility::checkForError();
+
+    // if there was an error while executing the function, print the error message
+    if (returnValue == NULL)
+      PyErr_Print();
+  }
+}
+
+template<typename Term,bool withLargeOutput,typename MeshType>
+typename DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::Data &DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 data()
 {
   return data_;
 }
 
-template<typename Term,typename MeshType>
-Vec DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+Vec DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 currentState()
 {
   return uvp_->valuesGlobal();
 }
 
-template<typename Term,typename MeshType>
-typename DynamicHyperelasticitySolver<Term,MeshType>::HyperelasticitySolverType &DynamicHyperelasticitySolver<Term,MeshType>::
+template<typename Term,bool withLargeOutput,typename MeshType>
+typename DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::HyperelasticitySolverType &DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 hyperelasticitySolver()
 {
   return hyperelasticitySolver_;

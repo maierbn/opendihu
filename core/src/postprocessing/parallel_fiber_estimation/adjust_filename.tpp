@@ -19,7 +19,7 @@ adjustFilename(std::string &filename, int nFibersX)
     fileBase = fileBase.substr(fileBase.rfind("/")+1);
   }
 
-  LOG(INFO) << "adjust filename [" << filename << "], nFibersX: " << nFibersX << ", path: [" << path << "], fileBase: [" << fileBase << "]";
+  LOG(DEBUG) << "adjust filename [" << filename << "], nFibersX: " << nFibersX << ", path: [" << path << "], fileBase: [" << fileBase << "]";
 
   // create directory and wait until system has created it
   if (path != "")
@@ -68,7 +68,7 @@ adjustFilename(std::string &filename, int nFibersX)
     std::stringstream newFilename;
     newFilename << path << fileBase.substr(0,xNumbersBeginPos) << nFibersX << "x" << nFibersX  << fileBase.substr(suffixPos);
     filename = newFilename.str();
-    LOG(INFO) << "newFilename: [" << filename << "]";
+    LOG(DEBUG) << "newFilename: [" << filename << "]";
     return true;
   }
   else

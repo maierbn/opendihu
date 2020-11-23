@@ -139,3 +139,6 @@ multidomain_neuromuscular:
 
 only_neurons:
 	cd examples/electrophysiology/neuromuscular/only_neurons_flat && $(python) ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+contraction_no_precice:
+	cd examples/electrophysiology/fibers/fibers_contraction/with_tendons_precice && $(python) ../../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

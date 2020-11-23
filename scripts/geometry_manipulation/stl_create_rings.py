@@ -485,7 +485,7 @@ def create_border_points(input_filename, bottom_clip, top_clip, n_loops, n_point
       quit()
   
   # algorithm for STL mesh
-  loops = create_rings(input_filename, bottom_clip, top_clip, n_loops, False)
+  loops = create_rings(input_filename, bottom_clip, top_clip, n_loops, False)   # last argument is if debugging output should be written, set to False
   border_points, lengths = stl_create_mesh.rings_to_border_points(loops, n_points)
   border_points = stl_create_mesh.border_point_loops_to_list(border_points)
   

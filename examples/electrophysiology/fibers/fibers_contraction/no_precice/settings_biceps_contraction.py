@@ -356,6 +356,7 @@ config = {
                     "meshName":               "MeshFiber_{}".format(fiber_no),               # reference to the fiber mesh
                     "numberTimeSteps":        1,             # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step
                     "timeStepOutputInterval": 20,            # if the time step should be written to console, a value > 10 produces no output
+                    "slotNames": [],
                     
                     # a list of field variables that will get values assigned in every timestep, by the provided callback function
                     "fieldVariables1": [

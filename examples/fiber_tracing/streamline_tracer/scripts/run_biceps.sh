@@ -2,6 +2,7 @@
 #
 # This scripts creates fibers as streamlines in a potential flow simulation.
 # Input is an STL mesh of the surface of the muscle. Output is the pickle file that contains the fibers.
+# This is not the algorithm described in the dissertation of BM and the result is not a 3D mesh, but individual 1D fiber meshes with different lengths.
 #
 # This file needs to be run from the directory "examples/fiber_tracing/streamline_tracer/scripts"
 
@@ -96,6 +97,7 @@ for scheme_name in $schemes; do
   # run the simulation, created meshes with 100. elements per cm and the longest with 15 cm length
 
   # command arguments: <input_filename> <output_filename> [<target_element_length> [<target_fiber_length>]]
+  echo ./${scheme_name} ../settings_streamline_tracer.py ${input_mesh_name} ${prefix}${scheme_name} 1e-2 15
   ./${scheme_name} ../settings_streamline_tracer.py ${input_mesh_name} ${prefix}${scheme_name} 1e-2 15
 
   # convert csv output file to stl and pickle file

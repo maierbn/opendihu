@@ -21,7 +21,7 @@ public:
   struct ElementWithNodes
   {
     element_no_t elementNoLocal;   //< local element no
-    std::vector<std::pair<int,ValueType>> elementalDofIndex;   //< the element-local dof index and the value of the boundary condition on this dof
+    std::map<int,ValueType> elementalDofIndex;   //< the element-local dof index and the value of the boundary condition on this dof
   };
 
   struct BoundaryConditionsForComponent

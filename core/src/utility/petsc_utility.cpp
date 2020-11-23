@@ -438,7 +438,7 @@ std::string getStringLinearConvergedReason(KSPConvergedReason convergedReason)
     return ANSI_COLOR_GREEN "KSP_CONVERGED_STEP_LENGTH" ANSI_COLOR_RESET;
 
   case KSP_CONVERGED_ITERATING:
-    return ANSI_COLOR_GREEN "KSP_CONVERGED_ITERATING" ANSI_COLOR_RESET ": returned if the solver is not yet finished";
+    return "KSP_CONVERGED_ITERATING: returned if the solver is not yet finished";
 
   case KSP_DIVERGED_ITS:
     return ANSI_COLOR_RED "KSP_DIVERGED_ITS" ANSI_COLOR_RESET ": required more than its to reach convergence";
@@ -483,9 +483,9 @@ std::string getStringLinearConvergedReason(KSPConvergedReason convergedReason)
 
   std::stringstream s;
   if (convergedReason < 0)
-    s << "divergence, ";
+    s << ANSI_COLOR_RED "diverged" ANSI_COLOR_RESET ", ";
   else
-    s << "converged, ";
+    s << ANSI_COLOR_GREEN "converged" ANSI_COLOR_RESET ", ";
   s << "unknown reason (" << int(convergedReason) << ")";
   return s.str();
 }
@@ -549,9 +549,9 @@ std::string getStringNonlinearConvergedReason(SNESConvergedReason convergedReaso
 
   std::stringstream s;
   if (convergedReason < 0)
-    s << "divergence, ";
+    s << ANSI_COLOR_RED "diverged" ANSI_COLOR_RESET ", ";
   else
-    s << "converged, ";
+    s << ANSI_COLOR_GREEN "converged" ANSI_COLOR_RESET ", ";
   s << "unknown reason (" << int(convergedReason) << ")";
   return s.str();
 }

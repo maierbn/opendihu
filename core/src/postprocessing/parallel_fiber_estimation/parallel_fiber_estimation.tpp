@@ -76,6 +76,12 @@ ParallelFiberEstimation(DihuContext context) :
   this->maxNIterations_ = specificSettings_.getOptionInt("maxIterations", 100000, PythonUtility::Positive);
   this->useGradientField_ = specificSettings_.getOptionBool("useGradientField", false);
 
+  if ((nBorderPointsX_-1) % 2 != 0)
+  {
+    LOG(WARNING) << "Value for nElementsXPerSubdomain (" << (nBorderPointsX_-1) << ") is odd, should be even. "
+      << "Now changing to " << 2*int(nBorderPointsX_/2);
+  }
+
   // ensure nBorderPointsX is odd
   nBorderPointsX_ = 2*int(nBorderPointsX_/2)+1;
   // ensure nBorderPointsZ is odd

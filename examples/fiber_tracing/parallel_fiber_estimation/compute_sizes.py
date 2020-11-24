@@ -27,6 +27,10 @@ def output_size(m,l,nel=4):
       num /= 1024.0
     return "%.1f %s%s" % (num, 'Yi', suffix)
 
+  if nel%2 == 1:
+    print("Note, nel={} is odd, changing to {}.".format(nel,nel+1))
+    nel += 1
+
   # with border points
   # -------------------
   # number of fibers total

@@ -10,7 +10,7 @@ input_file=original_meshes/left_triceps_brachii.stl
 
 # [cm] range along z-axis for which the muscle volume is extracted
 bottom_z_clip=2
-top_z_clip=24
+top_z_clip=23
 
 # [cm] length of one 1D element in z-direction, the number of elements per fiber is thus (top_z_clip-bottom_z_clip)/element_length
 element_length=0.01
@@ -107,11 +107,11 @@ echo "--- Generate actual fiber meshes in different sizes using the parallel_fib
 # parameters for files with different numbers of fibers
 # number of fibers (number without boundary): 9(7),   11(9),   13(11),   25(23),   37(35),     65(63),     129(127),     257(255),     513(511)
 # total number of fibers:                     81(49), 121(81), 169(121), 625(529), 1369(1225), 4225(3969), 16641(16129), 66049(65025), 263139(261121)
-# l = maximum recursion level
 # m = number of fine grid fibers
+# l = maximum recursion level
 # n = number of elements in x and y coordinate directions
-array_l=(0 0 0 0 0 1 1 3 7)
-array_m=(0 0 0 1 1 1 2 2 2)
+array_m=(0 0 0 0 0 1 1 3 7)
+array_l=(0 0 0 1 1 1 2 2 2)
 array_n=(4 5 6 6 9 8 8 8 8)
 array_number_fibers1=(9 11 13 25 37 65 129 257 513)
 array_number_fibers2=(7 9  11 23 35 63 127 255 511)
@@ -126,32 +126,49 @@ for i in ${!array_l[@]}; do
   number_fibers1=${array_number_fibers1[i]}
   number_fibers2=${array_number_fibers2[i]}
 
+  # use the appropriate number of processes
+  if [[ "$l" -eq "0" ]]; then
+    mpi_command="mpirun -n 1"
+  elif [[ "$l" -eq "1" ]]; then
+    mpi_command="mpirun -n 8"
+  elif [[ "$l" -eq "2" ]]; then
+    mpi_command="mpirun -n 64"
+  fi
+
+  # for even number of elements use quadratic formulation
+  if [[ "$n" -eq "5" || "$n" -eq "9" ]]; then
+    program_name="generate"
+  else
+    program_name="generate_quadratic"
+  fi
+
   echo ""
   echo "--- Generate fiber mesh files with ${number_fibers1}x${number_fibers1} and ${number_fibers2}x${number_fibers2} fibers"
   cd $parallel_fiber_estimation_directory/build_release
   
   # create file, if does not yet exist
   if [[ ! -f "${current_directory}/processed_meshes/${basename}_${number_fibers1}x${number_fibers1}fibers.bin" ]]; then
-    echo "./generate_quadratic ../settings_generate.py \
+    echo "${mpi_command} ./${program_name} ../settings_generate.py \
       --input_filename_or_splines_or_stl ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
       --output_filename ${current_directory}/processed_meshes/${basename}_05_0x0fibers.bin \
       --bottom_z_clip $bottom_z_clip \
       --top_z_clip $top_z_clip \
       --element_size $element_length \
-      --n_elements_z_per_subdomain 10 \
+      --n_elements_z_per_subdomain 30 \
       --use_neumann_bc=False \
       -l=${l} -m=${m} --n_elements_x_per_subdomain=${n} \
-      --program_name=generate_quadratic"
-    ./generate_quadratic ../settings_generate.py \
+      --program_name=${program_name}"
+
+    ${mpi_command} ./${program_name} ../settings_generate.py \
       --input_filename_or_splines_or_stl ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
       --output_filename ${current_directory}/processed_meshes/${basename}_05_0x0fibers.bin \
       --bottom_z_clip $bottom_z_clip \
       --top_z_clip $top_z_clip \
       --element_size $element_length \
-      --n_elements_z_per_subdomain 10 \
+      --n_elements_z_per_subdomain 30 \
       --use_neumann_bc=False \
       -l=${l} -m=${m} --n_elements_x_per_subdomain=${n} \
-      --program_name=generate_quadratic
+      --program_name=${program_name}
 
     # move the fibers in the fibers.bin file back to their original position
     echo ""
@@ -208,11 +225,11 @@ for i in ${!array_l[@]}; do
     fi
     
     echo ""
-    echo "Create ${basename}_${number_fibers2}x${number_fibers2}fibers.bin_fat.bin if does not exist"
-    if [[ ! -f "${basename}_${number_fibers2}x${number_fibers2}fibers.bin_fat.bin" ]]; then
-      $pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_${number_fibers2}x${number_fibers2}fibers.bin
+    echo "Create ${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin_fat.bin if does not exist"
+    if [[ ! -f "${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin_fat.bin" ]]; then
+      $pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin
     else
-      echo "File ${basename}_${number_fibers2}x${number_fibers2}fibers.bin_fat.bin already exists, do not create again."
+      echo "File ${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin_fat.bin already exists, do not create again."
     fi
   else   
     echo ""

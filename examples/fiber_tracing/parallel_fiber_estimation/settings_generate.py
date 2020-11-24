@@ -20,10 +20,10 @@ parser.add_argument('--output_filename',                         default="",    
 parser.add_argument('--bottom_z_clip',               type=float, default=72.0,       help='bottom z value of the muscle volume where potential flow will be computed')
 parser.add_argument('--top_z_clip',                  type=float, default=220.0,      help='top z value of the muscle volume')
 parser.add_argument('--element_size',                type=float, default=0.1,        help='Size of one element of a fiber, i.e. the distance between the points on the fiber in the result')
-parser.add_argument('--refinement_factor',           type=int,   default=1,          help='Factor, used in x,y,z direction by which the mesh should be refined prior to solving the laplace problem and tracing the streamlines. The number of elements is increased by 8^refinement_factor')
+parser.add_argument('--refinement_factor',           type=int,   default=2,          help='Factor, used in x,y,z direction by which the mesh should be refined prior to solving the laplace problem and tracing the streamlines. The number of elements is increased by 8^refinement_factor')
 parser.add_argument('--improve_mesh',                type=mbool, default=True,       help='If Laplacian smoothing and fixing of invalid quadrilaterals should be enabled. This increases the runtime a bit.')
 parser.add_argument('--use_gradient_field',          type=mbool, default=False,      help='If the gradient field should be computed explicitely and used for tracing the fibers. If false, only solution values are computed and the gradient directions are computed from the gradient values of the ansatz functions, which is a bad idea for linear ansatz functions.')
-parser.add_argument('--use_neumann_bc',              type=mbool, default=True,       help='True = use Neumann BC, False = use Dirichlet BC for the potential flow Laplace problem')
+parser.add_argument('--use_neumann_bc',              type=mbool, default=False,      help='True = use Neumann BC, False = use Dirichlet BC for the potential flow Laplace problem')
 parser.add_argument('--n_elements_z_per_subdomain',  type=int,   default=50,         help='Number of elements in z direction per subdomain.')
 parser.add_argument('--n_elements_x_per_subdomain',  type=int,   default=4,          help='Number of elements in x direction per subdomain.')
 parser.add_argument('--n_fine_grid_fibers', '-m',    type=int,   default=0,          help='Number of fine grid fibers to interpolate between the key fibers, parameter is called m.')
@@ -129,7 +129,7 @@ config = {
     "improveMesh":                improve_mesh,          # smooth the 2D meshes, required for bigger meshes or larger amount of ranks
     "refinementFactors": [refinement,refinement,refinement],         # [2,2,2] factors in x,y,z direction by which the mesh should be refined prior to solving the laplace problem and tracing the streamlines
     "laplacianSmoothingNIterations": 10,                 # number of Laplacian smoothing iterations on the final fibers grid
-    "ghostLayerWidth":            3,                     # width of the ghost layer of elements that is communicated between the subdomains, such that boundary streamlines do not leave the subdomains during tracing
+    "ghostLayerWidth":            4,                     # width of the ghost layer of elements that is communicated between the subdomains, such that boundary streamlines do not leave the subdomains during tracing
     
     "FiniteElementMethod": {
       "meshName":   "potentialFlow",

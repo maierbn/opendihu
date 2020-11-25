@@ -1,6 +1,8 @@
 for use_neumann_bc in false true; do
-for improve_mesh in true false; do
-for method in splines stl; do
+#for improve_mesh in true false; do
+improve_mesh=true
+#for method in splines stl; do
+method=splines
 for refinement in 1 2 3; do
 for program_name in generate generate_quadratic; do
   
@@ -15,19 +17,21 @@ for program_name in generate generate_quadratic; do
     --refinement_factor $refinement \
     --improve_mesh $improve_mesh \
     --use_neumann_bc $use_neumann_bc \
+    -m=1 \
     --program_name $program_name | tee -a calls.txt
   
-  # run mesh_evaluate_quality on created files
-  for file in `ls -rt *.bin* | head -n 2`; do
-    mesh_evaluate_quality.py $file
-  done
-
   # rename output directory
   mv out out_${method}_${refinement}_${improve_mesh}_${use_neumann_bc}
 
 done
 done
 done
+
+# run mesh_evaluate_quality on created files
+for file in `ls -rt *.bin*`; do 
+  mesh_evaluate_quality.py $file
 done
-done
+
+#done
+#done
 

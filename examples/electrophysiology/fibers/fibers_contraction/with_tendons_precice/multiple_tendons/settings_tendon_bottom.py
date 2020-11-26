@@ -36,7 +36,7 @@ mu = shear_modulus       # Lamé parameter mu or G (shear modulus)
 variables.material_parameters = [lambd, mu]
 
 variables.constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
-variables.force = 10.0           # [N] pulling force to the bottom 
+variables.force = 100.0           # [N] pulling force to the bottom 
 
 variables.dt_elasticity = 1      # [ms] time step width for elasticity
 variables.end_time      = 10     # [ms] simulation time

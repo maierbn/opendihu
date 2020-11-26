@@ -34,8 +34,8 @@ k2 = 411.360e2              # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber st
 #k2 = 197.34e2               # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, human achilles (Csapo 2010)
 #k1 = 2.893e2                # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, Equine(Horse) Digital Flexor (Thorpe 2012)
 #k2 = 357.23e2               # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, Equine Digital Flexor (Thorpe 2012)
-#k1 = 92.779e2               # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, Equine Digital Flexor (Vergari 2011)
-#k2 = 305.87e2               # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, Equine Digital Flexor (Vergari 2011)
+k1 = 92.779e2               # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, Equine Digital Flexor (Vergari 2011)
+k2 = 305.87e2               # [N/cm^2 = 1e-2 MPa]   shape parameter for fiber stress, Equine Digital Flexor (Vergari 2011)
 
 variables.material_parameters = [c, ca, ct, cat, ctt, mu, k1, k2]
 
@@ -326,10 +326,10 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
   "preconditionerType":         "lu",                         # type of the preconditioner
   "maxIterations":              1e4,                          # maximum number of iterations in the linear solver
   "snesMaxFunctionEvaluations": 1e8,                          # maximum number of function iterations
-  "snesMaxIterations":          240,                           # maximum number of iterations in the nonlinear solver
+  "snesMaxIterations":          2400,                           # maximum number of iterations in the nonlinear solver
   "snesRelativeTolerance":      1e-2,                         # relative tolerance of the nonlinear solver
   "snesLineSearchType":         "l2",                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
-  "snesAbsoluteTolerance":      1e-5,                         # absolute tolerance of the nonlinear solver
+  "snesAbsoluteTolerance":      1e-2,                         # absolute tolerance of the nonlinear solver
   "snesRebuildJacobianFrequency": 1,                          # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
   
   #"dumpFilename": "out/r{}/m".format(sys.argv[-1]),          # dump system matrix and right hand side after every solve
@@ -346,9 +346,9 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
   "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
   "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
   "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
-  "updateDirichletBoundaryConditionsFunction": update_dirichlet_bc,   # function that updates the dirichlet BCs while the simulation is running
+  "updateDirichletBoundaryConditionsFunction": None,#update_dirichlet_bc,   # function that updates the dirichlet BCs while the simulation is running
   "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # stide every which step the update function should be called, 1 means every time step
-  "updateNeumannBoundaryConditionsFunction": update_neumann_bc,       # a callback function to periodically update the Neumann boundary conditions
+  "updateNeumannBoundaryConditionsFunction": None,#update_neumann_bc,       # a callback function to periodically update the Neumann boundary conditions
   "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step 
  
   "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]

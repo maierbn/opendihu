@@ -96,7 +96,7 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
       VLOG(1) << "use ghost mesh";
 
       // use ghost mesh as current function space
-      functionSpace = ghostMesh_[ghostMeshNo];
+      functionSpace = functionSpace_->ghostMesh((Mesh::face_or_edge_t)ghostMeshNo);
 
       if (useGradientField_)
       {

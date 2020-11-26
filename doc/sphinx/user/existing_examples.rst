@@ -1887,6 +1887,23 @@ Precice needs to be enabled in the `user-variables.scons.py` file. The example
     ./tendon_linear_precice_dynamic settings_tendon_implicit_dirichlet_neumann.py  # (terminal 2)
 
   This scenario is a bit faster than `Implicit Dirichlet-Neumann`  because of the tendon solver. It also has better convergence properties.
+
+  
+* **Multiple Tendons**
+  
+  This example simulates the biceps muscle with both tendons. It uses the Saint-Venant-Kirchhoff material for the tendons. The top tendons are represented by two separate meshes. In total, there are 4 coupling participants that are implicitely coupled with precice: three tendons, one muscle.
+  
+  .. code-block:: bash
+    
+    cd $OPENDIHU_HOME/examples/electrophysiology/fibers/fibers_contraction/with_tendons_precice/multiple_tendons
+    ./muscle_precice settings_muscle.py ramp.py               # (terminal 1)
+    ./tendon_linear_precice_dynamic settings_tendon_bottom.py # (terminal 2)
+    ./tendon_linear_precice_dynamic settings_tendon_top_a.py  # (terminal 3)
+    ./tendon_linear_precice_dynamic settings_tendon_top_b.py  # (terminal 4)
+
+  
+  
+
   
 Multidomain
 ^^^^^^^^^^^

@@ -269,16 +269,16 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
   }
   
   // if point was still not found, search in ghost meshes
-  for (int face = (int)Mesh::face_t::face0Minus; face <= (int)Mesh::face_t::face2Plus; face++)
+  for (int face = (int)Mesh::face_t::face0Minus; face <= (int)Mesh::face_or_edge_t::edge0Plus1Plus; face++)
   {
-    VLOG(3) << "consider ghost mesh " << Mesh::getString((Mesh::face_t)face);
+    VLOG(3) << "consider ghost mesh " << Mesh::getString((Mesh::face_or_edge_t)face);
     if (ghostMesh_[face] != nullptr)
     {
-      VLOG(3) << "   ghost mesh " << Mesh::getString((Mesh::face_t)face) << " is set";
+      VLOG(3) << "   ghost mesh " << Mesh::getString((Mesh::face_or_edge_t)face) << " is set";
       bool ghostSearchedAllElements = false;
       if (ghostMesh_[face]->findPosition(point, elementNoLocal, ghostMeshNo, xi, false, residual, ghostSearchedAllElements))
       {
-        VLOG(3) << "   point found in ghost mesh " << Mesh::getString((Mesh::face_t)face) << ", element " << elementNoLocal << ", xi " << xi;
+        VLOG(3) << "   point found in ghost mesh " << Mesh::getString((Mesh::face_or_edge_t)face) << ", element " << elementNoLocal << ", xi " << xi;
         ghostMeshNo = face;
         return true;
       }
@@ -289,7 +289,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
     }
     else
     {
-      VLOG(3) << "   ghost mesh " << Mesh::getString((Mesh::face_t)face) << " is not set";
+      VLOG(3) << "   ghost mesh " << Mesh::getString((Mesh::face_or_edge_t)face) << " is not set";
     }
   }
 
@@ -299,12 +299,31 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
 
 template<typename MeshType, typename BasisFunctionType>
 void FunctionSpaceStructuredFindPositionBase<MeshType,BasisFunctionType>::
-setGhostMesh(Mesh::face_t face, const std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>> ghostMesh)
+setGhostMesh(Mesh::face_or_edge_t faceOrEdge, const std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>> ghostMesh)
 {
-  assert(0 <= face);
-  assert(face < 6);
-  ghostMesh_[face] = ghostMesh;
-  VLOG(1) << "set ghost mesh for face " << Mesh::getString((Mesh::face_t)face) << " to " << (ghostMesh == nullptr? " null" : "x");
+  // values of faceOrEdge:
+  //     faceEdge0Minus=0, faceEdge0Plus=1, faceEdge1Minus=2, faceEdge1Plus=3, faceEdge2Minus=4, faceEdge2Plus=5,
+  //     edge0Minus1Minus=6, edge0Plus1Minus=7, edge0Minus1Plus=8,  edge0Plus1Plus=9
+
+  // ghost meshes:
+  //     face0Minus=0, face0Plus=1, face1Minus=2, face1Plus=3, face2Minus=4, face2Plus=5,
+  //     edge0Minus1Minus=6, edge0Plus1Minus=7, edge0Minus1Plus=8,  edge0Plus1Plus=9
+
+  assert(0 <= faceOrEdge);
+  assert(faceOrEdge < 10);
+  ghostMesh_[(int)faceOrEdge] = ghostMesh;
+
+  VLOG(1) << "set ghost mesh for face " << Mesh::getString((Mesh::face_or_edge_t)faceOrEdge) << " to " << (ghostMesh == nullptr? " null" : "x");
+}
+
+//! return a pointer to the ghost mesh indexed by faceOrEdge
+template<typename MeshType, typename BasisFunctionType>
+std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>> FunctionSpaceStructuredFindPositionBase<MeshType,BasisFunctionType>::
+ghostMesh(Mesh::face_or_edge_t faceOrEdge)
+{
+  assert(0 <= faceOrEdge);
+  assert(faceOrEdge < 10);
+  return ghostMesh_[(int)faceOrEdge];
 }
 
 template<typename MeshType, typename BasisFunctionType>
@@ -317,6 +336,11 @@ debugOutputGhostMeshSet()
   VLOG(1) << "ghost mesh 1+ is " << (ghostMesh_[(int)Mesh::face_t::face1Plus] == nullptr? "not" : "") << " set";
   VLOG(1) << "ghost mesh 2- is " << (ghostMesh_[(int)Mesh::face_t::face2Minus] == nullptr? "not" : "") << " set";
   VLOG(1) << "ghost mesh 2+ is " << (ghostMesh_[(int)Mesh::face_t::face2Plus] == nullptr? "not" : "") << " set";
+
+  VLOG(1) << "ghost mesh 0-1- is " << (ghostMesh_[(int)Mesh::face_or_edge_t::edge0Minus1Minus] == nullptr? "not" : "") << " set";
+  VLOG(1) << "ghost mesh 0+1- is " << (ghostMesh_[(int)Mesh::face_or_edge_t::edge0Plus1Minus] == nullptr? "not" : "") << " set";
+  VLOG(1) << "ghost mesh 0-1+ is " << (ghostMesh_[(int)Mesh::face_or_edge_t::edge0Minus1Plus] == nullptr? "not" : "") << " set";
+  VLOG(1) << "ghost mesh 0+1+ is " << (ghostMesh_[(int)Mesh::face_or_edge_t::edge0Plus1Plus] == nullptr? "not" : "") << " set";
 }
 
 } // namespace

@@ -9,6 +9,7 @@
 #include "partition/rank_subset.h"
 #include "mesh/type_traits.h"
 #include "mesh/face_t.h"
+#include "mesh/face_or_edge_t.h"
 
 // forward declaration
 namespace FunctionSpace 
@@ -214,12 +215,12 @@ public:
   //! get the rank on which the global natural node is located
   int getRankOfDofNoGlobalNatural(global_no_t dofNoGlobalNatural) const;
 
-  //! get information about neighbouring rank and boundary elements for specified face,
-  //! @param neighbourRankNo: the rank of the neighbouring process that shares the face, @param nElements: Size of one-layer mesh that contains boundary elements that touch the neighbouring process
-  void getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_no_t,MeshType::dim()> &nBoundaryElements, std::vector<dof_no_t> &dofNos);
+  //! get information about neighbouring rank and boundary elements for specified face. A layer with given width of element inside the domain touching the specified face is determined.
+  //! @param neighbourRankNo: the rank of the neighbouring process that shares the face, @param nElements: Size of one-layer mesh that contains boundary elements that touch the neighbouring process.
+  void getBoundaryElements(Mesh::face_or_edge_t face, int boundaryLayerWidth, int &neighbourRankNo, std::array<element_no_t,MeshType::dim()> &nBoundaryElements, std::vector<dof_no_t> &dofNos);
 
   //! get the rank no of the neighbour in direction face, -1 if there is no such neighbour
-  int neighbourRank(Mesh::face_t face);
+  int neighbourRank(Mesh::face_or_edge_t face);
 
   //! get the partitioning index in the coordinate direction, i.e. the no. of this rank in this direction, the total number of ranks in each direction can be retrieved by nRanks
   int ownRankPartitioningIndex(int coordinateDirection);

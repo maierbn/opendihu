@@ -170,7 +170,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
 #ifndef NDEBUG
       if (Term::usesFiberDirection)
       {
-        if (fabs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3)
+        if (Vc::any_of(MathUtility::abs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3))
           LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized (a)(norm: " << MathUtility::norm<3>(fiberDirection)
             << ", difference to 1: " << MathUtility::norm<3>(fiberDirection) - 1 << ") elementalDirectionValues:" << elementalDirectionValues;
       }
@@ -1128,7 +1128,7 @@ materialComputeJacobian()
 #ifndef NDEBUG
       if (Term::usesFiberDirection)
       {
-        if (fabs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3)
+        if (Vc::any_of(MathUtility::abs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3))
           LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized (b)(norm: " << MathUtility::norm<3>(fiberDirection)
             << ", difference to 1: " << MathUtility::norm<3>(fiberDirection) - 1 << ") elementalDirectionValues:" << elementalDirectionValues;
       }

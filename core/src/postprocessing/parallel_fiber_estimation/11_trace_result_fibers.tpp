@@ -372,6 +372,15 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       << ", finally invalid: " << nInvalidGlobal - nFibersFixedGlobal << ", finally valid: " << nValidGlobal + nFibersFixedGlobal;
   }
 
+  // save number of fixed fibers for statistics
+  if (nFibersFixed_.find(level_) == nFibersFixed_.end())
+  {
+    nFibersFixed_[level_] = nFibersFixedGlobal;
+  }
+  else
+  {
+    nFibersFixed_[level_] += nFibersFixedGlobal;
+  }
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
@@ -387,7 +396,8 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   PythonUtility::checkForError();
 #endif
 
-  // laplacian smoothing on key fibers
+  // laplacian smoothing on key fibers (disabled)
+#if 0
   LOG(INFO) << "Perform " << laplacianSmoothingNIterations_ << " iterations of Laplacian smoothing on the (" << nBorderPointsXNew_-1 << "x" << nBorderPointsXNew_-1 << " grid).";
   for (int iterationNo = 0; iterationNo < laplacianSmoothingNIterations_; iterationNo++)
   {
@@ -398,27 +408,23 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
         // 6 7 8
         // 3 4 5
         // 0 1 2
-        int keyFiberPointIndex0 = (j-1) * (nFineGridFibers_+1) * nFibersX + (i-1) * (nFineGridFibers_+1);
         int keyFiberPointIndex1 = (j-1) * (nFineGridFibers_+1) * nFibersX + i     * (nFineGridFibers_+1);
-        int keyFiberPointIndex2 = (j-1) * (nFineGridFibers_+1) * nFibersX + (i+1) * (nFineGridFibers_+1);
         int keyFiberPointIndex3 = j     * (nFineGridFibers_+1) * nFibersX + (i-1) * (nFineGridFibers_+1);
-        int keyFiberPointIndex4 = j     * (nFineGridFibers_+1) * nFibersX + i     * (nFineGridFibers_+1);
         int keyFiberPointIndex5 = j     * (nFineGridFibers_+1) * nFibersX + (i+1) * (nFineGridFibers_+1);
-        int keyFiberPointIndex6 = (j+1) * (nFineGridFibers_+1) * nFibersX + (i-1) * (nFineGridFibers_+1);
         int keyFiberPointIndex7 = (j+1) * (nFineGridFibers_+1) * nFibersX + i     * (nFineGridFibers_+1);
-        int keyFiberPointIndex8 = (j+1) * (nFineGridFibers_+1) * nFibersX + (i+1) * (nFineGridFibers_+1);
 
         for (int zLevelIndex = 0; zLevelIndex != nBorderPointsZ_; zLevelIndex++)
         {
-          fibers[keyFiberPointIndex4][zLevelIndex] = 0.125 * (fibers[keyFiberPointIndex0][zLevelIndex]
-            + fibers[keyFiberPointIndex1][zLevelIndex] + fibers[keyFiberPointIndex2][zLevelIndex]
-            + fibers[keyFiberPointIndex3][zLevelIndex] + fibers[keyFiberPointIndex5][zLevelIndex]
-            + fibers[keyFiberPointIndex6][zLevelIndex] + fibers[keyFiberPointIndex7][zLevelIndex]
-            + fibers[keyFiberPointIndex8][zLevelIndex]);
+          fibers[keyFiberPointIndex4][zLevelIndex] = 0.25 *
+            (fibers[keyFiberPointIndex1][zLevelIndex]
+              + fibers[keyFiberPointIndex3][zLevelIndex]
+              + fibers[keyFiberPointIndex5][zLevelIndex]
+              + fibers[keyFiberPointIndex7][zLevelIndex]);
         }
       }
     }
   }
+#endif
 
   // interpolate fibers in between
   LOG(DEBUG) << "interpolate fibers in between key fibers, nFineGridFibers_: " << nFineGridFibers_;

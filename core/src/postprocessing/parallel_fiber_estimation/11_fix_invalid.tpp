@@ -142,16 +142,6 @@ fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, 
   }
 
   LOG(DEBUG) << "n key fibers fixed: " << nFibersFixed;
-
-  // save number of fixed fibers for statistics
-  if (nFibersFixed_.find(level_) == nFibersFixed_.end())
-  {
-    nFibersFixed_[level_] = nFibersFixed;
-  }
-  else
-  {
-    nFibersFixed_[level_] += nFibersFixed;
-  }
 }
 
 template<typename BasisFunctionType>

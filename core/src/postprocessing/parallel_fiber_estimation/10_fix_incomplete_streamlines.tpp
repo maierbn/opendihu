@@ -392,7 +392,28 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
       }
     }
   }
-  LOG(DEBUG) << "communicateEdgeStreamlines: " << nStreamlinesFixed << " fixed";
+
+  // reduce number of fixed fibers on ranks
+  int nStreamlinesFixedGlobal = 0;
+  MPI_Reduce(&nStreamlinesFixed, &nStreamlinesFixedGlobal, 1, MPI_INT, MPI_SUM, 0, currentRankSubset_->mpiCommunicator());
+
+  if (currentRankSubset_->ownRankNo() == 0)
+  {
+    if (nStreamlinesFixedGlobal > 0)
+    {
+      LOG(INFO) << "Mechanism #1 (communicateEdgeStreamlines): " << nStreamlinesFixed << " fixed";
+
+      // save number of fixed fibers for statistics
+      if (nFibersFixed_.find(level_) == nFibersFixed_.end())
+      {
+        nFibersFixed_[level_] = nStreamlinesFixedGlobal;
+      }
+      else
+      {
+        nFibersFixed_[level_] += nStreamlinesFixedGlobal;
+      }
+    }
+  }
 }
 
 template<typename BasisFunctionType>
@@ -512,6 +533,28 @@ fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> 
     }
   }
   LOG(DEBUG) << "fixStreamlinesCorner: " << nStreamlinesFixed << " fixed";
+
+  // reduce number of fixed fibers on ranks
+  int nStreamlinesFixedGlobal = 0;
+  MPI_Reduce(&nStreamlinesFixed, &nStreamlinesFixedGlobal, 1, MPI_INT, MPI_SUM, 0, currentRankSubset_->mpiCommunicator());
+
+  if (currentRankSubset_->ownRankNo() == 0)
+  {
+    if (nStreamlinesFixedGlobal > 0)
+    {
+      LOG(INFO) << "Mechanism #2 (fixStreamlinesCorner): " << nStreamlinesFixed << " fixed";
+
+      // save number of fixed fibers for statistics
+      if (nFibersFixed_.find(level_) == nFibersFixed_.end())
+      {
+        nFibersFixed_[level_] = nStreamlinesFixedGlobal;
+      }
+      else
+      {
+        nFibersFixed_[level_] += nStreamlinesFixedGlobal;
+      }
+    }
+  }
 }
 
 template<typename BasisFunctionType>
@@ -629,7 +672,30 @@ fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8
       }
     }
   }
+
   LOG(DEBUG) << "fixStreamlinesInterior: " << nStreamlinesFixed << " fixed";
+
+  // reduce number of fixed fibers on ranks
+  int nStreamlinesFixedGlobal = 0;
+  MPI_Reduce(&nStreamlinesFixed, &nStreamlinesFixedGlobal, 1, MPI_INT, MPI_SUM, 0, currentRankSubset_->mpiCommunicator());
+
+  if (currentRankSubset_->ownRankNo() == 0)
+  {
+    if (nStreamlinesFixedGlobal > 0)
+    {
+      LOG(INFO) << "Mechanisms #3 and #4 (fixStreamlinesInterior): " << nStreamlinesFixed << " fixed";
+
+      // save number of fixed fibers for statistics
+      if (nFibersFixed_.find(level_) == nFibersFixed_.end())
+      {
+        nFibersFixed_[level_] = nStreamlinesFixedGlobal;
+      }
+      else
+      {
+        nFibersFixed_[level_] += nStreamlinesFixedGlobal;
+      }
+    }
+  }
 }
 
 } // namespace

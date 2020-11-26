@@ -255,7 +255,10 @@ advanceTimeSpan(bool withOutputWritersEnabled)
 
   LOG(DEBUG) << "multipleInstances::advanceTimeSpan() complete, now call writeOutput, hasOutputWriters: " << this->outputWriterManager_.hasOutputWriters();
 
-  writeOwnOutput(instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
+  if (nInstancesLocal_ > 0)
+  {
+    writeOwnOutput(instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
+  }
 }
 
 template<typename TimeSteppingScheme>
@@ -429,7 +432,10 @@ run()
   assert(nInstancesLocal_ == instancesLocal_.size());
 
   // call the output writer
-  writeOwnOutput(instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
+  if (nInstancesLocal_ > 0)
+  {
+    writeOwnOutput(instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
+  }
   LOG(DEBUG) << "end of multiple_instances run";
 }
 

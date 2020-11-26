@@ -579,8 +579,8 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   // output stastistics about fixed fibers
   for (std::pair<int,int> nFibersFixedOnLevel : nFibersFixed_)
   {
-    if (nFibersFixedOnLevel->second != 0)
-      LOG(INFO) << nFibersFixedOnLevel->second << " fibers were invalid and then fixed on recursion level " << nFibersFixedOnLevel->first;
+    if (nFibersFixedOnLevel.second != 0)
+      LOG(INFO) << nFibersFixedOnLevel.second << " fibers were invalid and then fixed on recursion level " << nFibersFixedOnLevel.first;
   }
 }
 

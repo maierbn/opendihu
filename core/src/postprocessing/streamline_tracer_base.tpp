@@ -20,7 +20,7 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
   element_no_t elementNo = 0;
   int ghostMeshNo = -1;
   std::array<double,(unsigned long int)3> xi;
-  std::shared_ptr<FunctionSpace> functionSpace = functionSpace_;  ///< the function space to use, this can be set to one of the ghost meshes
+  std::shared_ptr<FunctionSpace> functionSpace = functionSpace_;  //< the function space to use, this can be set to one of the ghost meshes
   
   // There are 2 implementations of streamline tracing.
   // The first one (useGradientField_) uses a precomputed gradient field that is interpolated linearly and the second uses the gradient directly from the Laplace solution_ field.
@@ -53,18 +53,22 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
     }
 
     VLOG(1) << "startSearchInCurrentElement=" << startSearchInCurrentElement << ", elementNo: " << elementNo << " ghostMeshNo: " << ghostMeshNo;
+    double residual;
+    bool searchedAllElements;
 
     // look for the element and xi value of the currentPoint, also considers ghost meshes if they are set
-    bool positionFound = functionSpace_->findPosition(currentPoint, elementNo, ghostMeshNo, xi, startSearchInCurrentElement);
+    bool positionFound = functionSpace_->findPosition(currentPoint, elementNo, ghostMeshNo, xi, startSearchInCurrentElement, residual, searchedAllElements);
 
     // if no position was found, the streamline exits the domain
     if (!positionFound)
     {
-      VLOG(2) << "streamline ends at iteration " << iterationNo << " because " << currentPoint << " is outside of domain";
+      LOG(DEBUG) << "streamline ends at iteration " << iterationNo << " because " << currentPoint << " is outside of domain."
+        << " startSearchInCurrentElement: " << startSearchInCurrentElement << ", residual: " << residual << ", searchedAllElements: " << searchedAllElements;
       break;
     }
 
-    VLOG(1) << " findPosition returned ghostMeshNo " << ghostMeshNo << ", elementNo " << elementNo << ", xi " << xi;
+    LOG(DEBUG) << " findPosition for " << currentPoint << " returned ghostMeshNo " << ghostMeshNo << ", elementNo " << elementNo << ", xi " << xi
+      << ", residual: " << residual << ", startSearchInCurrentElement: " << startSearchInCurrentElement << ", searchedAllElements: " << searchedAllElements;
 
     // get values for element that are later needed to compute the gradient
 
@@ -92,7 +96,7 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
       VLOG(1) << "use ghost mesh";
 
       // use ghost mesh as current function space
-      functionSpace = ghostMesh_[ghostMeshNo];
+      functionSpace = functionSpace_->ghostMesh((Mesh::face_or_edge_t)ghostMeshNo);
 
       if (useGradientField_)
       {
@@ -123,14 +127,44 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
       VLOG(2) << "use direct gradient";
     }
 
+    if (fabs(gradient[0] + gradient[1] + gradient[2]) < 1e-15)
+    {
+      LOG(ERROR) << "Gradient at element " << elementNo << ", xi " << xi << " is zero!";
+      if (!useGradientField_)
+      {
+        Tensor2<D> inverseJacobian = functionSpace->getInverseJacobian(geometryValues, elementNo, xi);
+        LOG(DEBUG) << "geometryValues: " << geometryValues << ", inverseJacobian: " << inverseJacobian << ", elementalSolutionValues: " << elementalSolutionValues;
+      }
+      else
+      {
+        LOG(DEBUG) << "elementalGradientValues: " << elementalGradientValues;
+      }
+      //LOG(FATAL) << "Abort because of missing gradient.";
+      gradient[2] = 1.0; // fix gradient direction
+    }
+
     // integrate streamline
-    VLOG(2) << "  integrate from " << currentPoint << ", gradient: " << gradient << ", gradient normalized: " << MathUtility::normalized<3>(gradient)
+    LOG(DEBUG) << "  integrate from " << currentPoint << ", gradient: " << gradient << ", gradient normalized: " << MathUtility::normalized<3>(gradient)
       << ", lineStepWidth: " << lineStepWidth_;
     currentPoint = currentPoint + MathUtility::normalized<3>(gradient)*lineStepWidth_*direction;
 
-    VLOG(2) << "              to " << currentPoint;
+    LOG(DEBUG) << "              to " << currentPoint;
 
     points.push_back(currentPoint);
+  }
+
+  if (points.empty())
+  {
+    LOG(DEBUG) << "traced streamline is completely empty, startingPoint: " << startingPoint;
+    points.push_back(startingPoint);
+  }
+  else if (points.size() == 1)
+  {
+    LOG(DEBUG) << "traced streamline has 1 point: " << points[0];
+  }
+  else
+  {
+    LOG(DEBUG) << "traced streamline has " << points.size() << " points, start: " << points[0] << ", end: " << points[points.size()-1];
   }
 }
 

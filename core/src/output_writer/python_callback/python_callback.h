@@ -16,16 +16,16 @@ class PythonCallback : public Generic
 public:
 
   //! constructor
-  PythonCallback(DihuContext context, PythonConfig specificSettings);
+  PythonCallback(DihuContext context, PythonConfig specificSettings, std::shared_ptr<Partition::RankSubset> rankSubset = nullptr);
 
   //! write out solution i.e. call the callback function in this case
   template<typename DataType>
-  void write(DataType &data, int timeStepNo = -1, double currentTime = -1);
+  void write(DataType &data, int timeStepNo = -1, double currentTime = -1, int callCountIncrement = 1);
 
 private:
 
-  PyObject *callback_;    ///< the python callback function object
-  bool onlyNodalValues_;  ///< if only nodal values should be output, this omits the derivative values for Hermite ansatz functions, for Lagrange functions it has no effect
+  PyObject *callback_;    //< the python callback function object
+  bool onlyNodalValues_;  //< if only nodal values should be output, this omits the derivative values for Hermite ansatz functions, for Lagrange functions it has no effect
 };
 
 } // namespace

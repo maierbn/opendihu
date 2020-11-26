@@ -11,7 +11,7 @@
 #include "easylogging++.h"
 
 #include "control/types.h"
-#include "control/settings_file_name.h"
+#include "control/python_config/settings_file_name.h"
 
 PyObject *PythonUtility::itemList = NULL;
 int PythonUtility::itemListIndex = 0;
@@ -20,7 +20,7 @@ int PythonUtility::listIndex = 0;
 
 bool PythonUtility::hasKey(const PyObject* settings, std::string keyString)
 {
-  if (settings)
+  if (settings && settings != Py_None)
   {
     // start critical section for python API calls
     // PythonUtility::GlobalInterpreterLock lock;
@@ -32,6 +32,41 @@ bool PythonUtility::hasKey(const PyObject* settings, std::string keyString)
     {
       Py_CLEAR(key);
       return true;
+    }
+    Py_CLEAR(key);
+  }
+  return false;
+}
+
+//! checks if this settings is the empty list or None
+bool PythonUtility::isEmpty(const PyObject *settings, std::string keyString)
+{
+  if (settings && settings != Py_None)
+  {
+    // start critical section for python API calls
+    // PythonUtility::GlobalInterpreterLock lock;
+
+    // check if input dictionary contains the key
+    PyObject *key = PyUnicode_FromString(keyString.c_str());
+
+    if (PyDict_Contains((PyObject *)settings, key))
+    {
+      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
+      Py_CLEAR(key);
+
+      if (value == Py_None)
+      {
+        return true;
+      }
+      else if (PyList_Check(value))
+      {
+        // type is a list, determine how many entries it contains
+        int listNEntries = PyList_Size(value);
+        if (listNEntries == 0)
+        {
+          return true;
+        }
+      }
     }
     Py_CLEAR(key);
   }
@@ -55,26 +90,32 @@ bool PythonUtility::isTypeList(const PyObject *object)
 
 PyObject *PythonUtility::getOptionPyObject(const PyObject *settings, std::string keyString, std::string pathString, PyObject *defaultValue)
 {
-  if (settings)
+  PyObject *result = defaultValue;
+
+  if (!settings || !PyDict_Check(settings))
   {
-    // start critical section for python API calls
-    // PythonUtility::GlobalInterpreterLock lock;
-    
-    // check if input dictionary contains the key
-    PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if (PyDict_Contains((PyObject *)settings, key))
-    {
-      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
-      Py_CLEAR(key);
-      return value;
-    }
-    else
-    {
-      LOG(WARNING) << "Dict does not contain " << pathString << "[\"" << keyString << "\"]!" << std::endl;
-      Py_CLEAR(key);
-      return defaultValue;
-    }
+    LOG(DEBUG) << "PyObject *settings is NULL.";
+    return result;
   }
+
+  // start critical section for python API calls
+  // PythonUtility::GlobalInterpreterLock lock;
+
+  // check if input dictionary contains the key
+  PyObject *key = PyUnicode_FromString(keyString.c_str());
+  if (PyDict_Contains((PyObject *)settings, key))
+  {
+    PyObject *value = PyDict_GetItem((PyObject *)settings, key);
+    Py_CLEAR(key);
+    return value;
+  }
+  else
+  {
+    LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming default value " << getString(defaultValue);
+    Py_CLEAR(key);
+    return defaultValue;
+  }
+
   return defaultValue;
 }
 
@@ -82,7 +123,7 @@ double PythonUtility::getOptionDouble(const PyObject* settings, std::string keyS
 {
   double result = defaultValue;
 
-  if (!settings)
+  if (!settings || !PyDict_Check(settings))
   {
     LOG(DEBUG) << "PyObject *settings is NULL.";
     return result;
@@ -179,7 +220,7 @@ int PythonUtility::getOptionInt(const PyObject *settings, std::string keyString,
 {
   int result = defaultValue;
 
-  if (!settings)
+  if (!settings || !PyDict_Check(settings))
     return result;
 
   // start critical section for python API calls
@@ -273,7 +314,7 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
 {
   int result = defaultValue;
 
-  if (!settings)
+  if (!settings || !PyDict_Check(settings))
     return result;
 
   // start critical section for python API calls
@@ -320,7 +361,8 @@ bool PythonUtility::getOptionBool(const PyObject *settings, std::string keyStrin
   }
   else
   {
-    LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming default value " << std::boolalpha << defaultValue << ".";
+    LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName
+      << "\". Assuming default value " << (defaultValue? "True": "False") << ".";
   }
   Py_CLEAR(key);
   return result;
@@ -330,7 +372,7 @@ std::string PythonUtility::getOptionString(const PyObject *settings, std::string
 {
   std::string result = defaultValue;
 
-  if (!settings)
+  if (!settings || !PyDict_Check(settings))
     return result;
 
   // start critical section for python API calls
@@ -359,7 +401,7 @@ PyObject *PythonUtility::getOptionFunction(const PyObject *settings, std::string
 {
   PyObject *result = NULL;
 
-  if (!settings)
+  if (!settings || !PyDict_Check(settings))
     return result;
 
   // start critical section for python API calls
@@ -383,6 +425,10 @@ PyObject *PythonUtility::getOptionFunction(const PyObject *settings, std::string
         LOG(WARNING) << "Value for " << pathString << "[\"" << keyString << "\"] is not a callable object.";
       }
     }
+    else if (function == Py_None)
+    {
+      result = NULL;
+    }
     else
     {
       LOG(WARNING) << "Value for " << pathString << "[\"" << keyString << "\"] is not a function.";
@@ -393,6 +439,7 @@ PyObject *PythonUtility::getOptionFunction(const PyObject *settings, std::string
     LOG(WARNING) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\".";
   }
   Py_CLEAR(key);
+
   return result;
 }
 
@@ -505,20 +552,7 @@ std::string PythonUtility::getString(PyObject *object, int indent, int first_ind
 
       line << std::endl << std::string(indent+2, ' ');
 
-      if (PyUnicode_Check(key))
-      {
-        std::string keyString = pyUnicodeToString(key);
-        line << keyString<< ": ";
-      }
-      else if (PyLong_Check(key))
-      {
-        std::string keyString = std::to_string(PyLong_AsLong(key));
-        line << keyString<< ": ";
-      }
-      else
-      {
-        line << "(key is of unknown type): ";
-      }
+      line << getString(key) << ": ";
 
       line << getString(value, indent+2, 0);
     }
@@ -642,207 +676,17 @@ void PythonUtility::getOptionVector(const PyObject* settings, std::string keyStr
   }
 }
 
-void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<int> &values)
-{
-  if (settings)
-  {
-    // start critical section for python API calls
-    // PythonUtility::GlobalInterpreterLock lock;
-
-    // check if input dictionary contains the key
-    PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if (PyDict_Contains((PyObject *)settings, key))
-    {
-      // extract the value of the key and check its type
-      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
-      if (PyList_Check(value))
-      {
-        // it is a list
-        int listNEntries = PyList_Size(value);
-
-        // do nothing if it is an empty list
-        if (listNEntries == 0)
-          return;
-
-        // get the first value from the list
-        int value = PythonUtility::getOptionListBegin<int>(settings, keyString, pathString);
-
-        // loop over other values
-        for (;
-            !PythonUtility::getOptionListEnd(settings, keyString, pathString);
-            PythonUtility::getOptionListNext<int>(settings, keyString, pathString, value))
-        {
-          values.push_back(value);
-        }
-      }
-      else
-      {
-        // not a list, but a different entry (only 1 entry)
-        int value = PythonUtility::getOptionInt(settings, keyString, pathString, 0);
-        values.push_back(value);
-      }
-    }
-    else
-    {
-      // this is no warning
-      LOG(DEBUG) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming " << values;
-    }
-    Py_CLEAR(key);
-  }
-}
-
-void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<std::string> &values)
-{
-  if (settings)
-  {
-    // start critical section for python API calls
-    // PythonUtility::GlobalInterpreterLock lock;
-
-    // check if input dictionary contains the key
-    PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if (PyDict_Contains((PyObject *)settings, key))
-    {
-      // extract the value of the key and check its type
-      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
-      if (PyList_Check(value))
-      {
-        // it is a list
-        int listNEntries = PyList_Size(value);
-
-        // do nothing if it is an empty list
-        if (listNEntries == 0)
-          return;
-
-        // get the first value from the list
-        std::string value = PythonUtility::getOptionListBegin<std::string>(settings, keyString, pathString);
-
-        // loop over other values
-        for (;
-            !PythonUtility::getOptionListEnd(settings, keyString, pathString);
-            PythonUtility::getOptionListNext<std::string>(settings, keyString, pathString, value))
-        {
-          values.push_back(value);
-        }
-      }
-      else
-      {
-        // not a list, but a different entry (only 1 entry)
-        std::string value = PythonUtility::getOptionString(settings, keyString, pathString, 0);
-        values.push_back(value);
-      }
-    }
-    else
-    {
-      // this is no warning
-      LOG(DEBUG) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming " << values;
-    }
-    Py_CLEAR(key);
-  }
-}
-
-void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<double> &values)
-{
-  if (settings)
-  {
-    // check if input dictionary contains the key
-    PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if (PyDict_Contains((PyObject *)settings, key))
-    {
-      // extract the value of the key and check its type
-      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
-      if (PyList_Check(value))
-      {
-        // it is a list
-        int listNEntries = PyList_Size(value);
-
-        // do nothing if it is an empty list
-        if (listNEntries == 0)
-          return;
-
-        // get the first value from the list
-        double value = PythonUtility::getOptionListBegin<double>(settings, keyString, pathString);
-
-        // loop over other values
-        for (;
-            !PythonUtility::getOptionListEnd(settings, keyString, pathString);
-            PythonUtility::getOptionListNext<double>(settings, keyString, pathString, value))
-        {
-          values.push_back(value);
-        }
-      }
-      else
-      {
-        // not a list, but a different entry (only 1 entry)
-        double value = PythonUtility::getOptionDouble(settings, keyString, pathString, 0.0);
-        values.push_back(value);
-      }
-    }
-    else
-    {
-      // this is no warning
-      LOG(DEBUG) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming " << values;
-    }
-    Py_CLEAR(key);
-  }
-}
-
-void PythonUtility::getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<PyObject *> &values)
-{
-  if (settings)
-  {
-    // check if input dictionary contains the key
-    PyObject *key = PyUnicode_FromString(keyString.c_str());
-    if (PyDict_Contains((PyObject *)settings, key))
-    {
-      // extract the value of the key and check its type
-      PyObject *value = PyDict_GetItem((PyObject *)settings, key);
-      if (PyList_Check(value))
-      {
-        // it is a list
-        int listNEntries = PyList_Size(value);
-
-        // do nothing if it is an empty list
-        if (listNEntries == 0)
-          return;
-
-        // get the first value from the list
-        PyObject *item = PythonUtility::getOptionListBegin<PyObject *>(settings, keyString, pathString);
-
-        // loop over other values
-        for (;
-            !PythonUtility::getOptionListEnd(settings, keyString, pathString);
-            PythonUtility::getOptionListNext<PyObject *>(settings, keyString, pathString, item))
-        {
-          values.push_back(item);
-        }
-      }
-      else
-      {
-        // not a list, but a single entry (only 1 entry)
-        PyObject *item = (PyObject *)settings;
-        values.push_back(item);
-      }
-    }
-    else
-    {
-      // this is no warning
-      LOG(DEBUG) << "" << pathString << "[\"" << keyString << "\"] not set in \"" << Control::settingsFileName << "\". Assuming vector " << values;
-    }
-    Py_CLEAR(key);
-  }
-}
-
 void PythonUtility::checkForError()
 {
 
   if (PyErr_Occurred())
   {
-    LOG(ERROR) << "Python exception";
+    //LOG(ERROR) << "Python exception";
 
     PyObject *type = NULL, *value = NULL, *traceback = NULL;
     PyErr_Fetch(&type, &value, &traceback);
     //PyErr_GetExcInfo(&type, &value, &traceback);
-    //PyErr_NormalizeException(&type, &value, &traceback);
+    PyErr_NormalizeException(&type, &value, &traceback);
 
     if (type == NULL && value == NULL && traceback == NULL)
       LOG(INFO) << "Error indicator is not set";
@@ -850,12 +694,12 @@ void PythonUtility::checkForError()
     PyObject* strType = PyObject_Str(type);
     PyObject* reprType = PyObject_Repr(type);
     if (strType != NULL && reprType != NULL)
-      LOG(INFO) << "type: " << convertFromPython<std::string>::get(strType) << ", " << convertFromPython<std::string>::get(reprType);
+      LOG(DEBUG) << "type: " << convertFromPython<std::string>::get(strType) << ", " << convertFromPython<std::string>::get(reprType);
 
     PyObject* strValue = PyObject_Str(value);
     PyObject* reprValue = PyObject_Repr(value);
     if (strValue != NULL && reprValue != NULL)
-      LOG(ERROR) << convertFromPython<std::string>::get(strValue);
+      LOG(DEBUG) << convertFromPython<std::string>::get(strValue);
 
     Py_XDECREF(strType);
     Py_XDECREF(strValue);
@@ -892,7 +736,7 @@ void PythonUtility::checkForError()
 
       if (strValue != NULL)
       {
-        LOG(INFO) << convertFromPython<std::string>::get(strValue);
+        LOG(DEBUG) << convertFromPython<std::string>::get(strValue);
       }
       else
       {
@@ -902,6 +746,8 @@ void PythonUtility::checkForError()
     else
     {
       LOG(DEBUG) << "(format_exception did not return a valid result)";
+
+      LOG(ERROR) << convertFromPython<std::string>::get(strValue);
     }
 
     PyErr_Restore(type, value, traceback);
@@ -914,11 +760,28 @@ PyObject *PythonUtility::convertToPythonList(std::vector<double> &data)
 {
   // start critical section for python API calls
   // PythonUtility::GlobalInterpreterLock lock;
-  
+
   PyObject *result = PyList_New((Py_ssize_t)data.size());
   for (unsigned int i=0; i<data.size(); i++)
   {
     PyObject *item = PyFloat_FromDouble(data[i]);
+    PyList_SetItem(result, (Py_ssize_t)i, item);    // steals reference to item
+  }
+  return result;    // return value: new reference
+}
+
+PyObject *PythonUtility::convertToPythonList(double *value, int nValues)
+{
+  // start critical section for python API calls
+  // PythonUtility::GlobalInterpreterLock lock;
+  
+
+  //! create a python list from a double *
+
+  PyObject *result = PyList_New((Py_ssize_t)nValues);
+  for (unsigned int i = 0; i < nValues; i++)
+  {
+    PyObject *item = PyFloat_FromDouble(*(value+i));
     PyList_SetItem(result, (Py_ssize_t)i, item);    // steals reference to item
   }
   return result;    // return value: new reference
@@ -1000,8 +863,10 @@ std::string PythonUtility::pyUnicodeToString(PyObject* object)
   // PythonUtility::GlobalInterpreterLock lock;
   
   PyObject *asciiString = PyUnicode_AsASCIIString(object);
-  std::string result = PyBytes_AsString(asciiString);
-  Py_DECREF(asciiString);
+  std::string result;
+  if (asciiString)
+    result = PyBytes_AsString(asciiString);
+  Py_CLEAR(asciiString);
 
   return result;
 }
@@ -1066,18 +931,7 @@ PythonUtility::GlobalInterpreterLock::~GlobalInterpreterLock()
 #if 0 
   PyGILState_Release(gstate_);
 #endif
-  /*}
-  nGILS_--;
-  //lock_.unlock();
-  
-  omp_unset_nest_lock(&lock_);
-  
-  //LOG(INFO) << omp_get_thread_num() << ": nGILS: " << nGILS_ << "(released)";
-  
-  //PyEval_RestoreThread(mainThreadState_); 
-  //Py_END_ALLOW_THREADS
-  //LOG(DEBUG) << "PyGILState_Release";
-  */
+
 }
 
 std::ostream &operator<<(std::ostream &stream, PyObject *object)

@@ -3,58 +3,66 @@
 #include "control/dihu_context.h"
 
 #include "function_space/function_space.h"
-#include "time_stepping_scheme/time_stepping_scheme.h"
-
-#include "model_order_reduction/mor.h"
+#include "time_stepping_scheme/02_time_stepping_scheme_ode.h"
+#include "slot_connection/slot_connector_data.h"
+#include "data_management/time_stepping/time_stepping_reduced.h"
+#include "model_order_reduction/model_order_reduction.h"
 
 namespace ModelOrderReduction
 {
 
-template<typename TimeSteppingType>
-class TimeSteppingSchemeOdeReduced :
-  public MORBase<typename TimeSteppingType::FunctionSpace>,
-  public TimeSteppingScheme::TimeSteppingScheme
-{
-public:
-  typedef FieldVariable::FieldVariable<FunctionSpace::Generic,1> FieldVariableType;
+  template<typename TimeSteppingType>
+  class TimeSteppingSchemeOdeReduced :
+    public MORBase<typename TimeSteppingType::FunctionSpace>,
+    public ::TimeSteppingScheme::TimeSteppingSchemeOdeBase<::FunctionSpace::Generic,1>
+  {
+  public:
+    typedef FieldVariable::FieldVariable<::FunctionSpace::Generic,1> FieldVariableType;  
+    typedef ::FunctionSpace::Generic GenericFunctionSpace;
+    typedef TimeSteppingType FullTimeSteppingType;
+    typedef ::Data::SlotConnectorData<GenericFunctionSpace,1> SlotConnectorDataType;
 
-  //! constructor
-  TimeSteppingSchemeOdeReduced(DihuContext context);
+    //! constructor
+    TimeSteppingSchemeOdeReduced(DihuContext context,std::string name);
 
-  //! destructor
-  virtual ~TimeSteppingSchemeOdeReduced(){};
+    //! destructor
+    virtual ~TimeSteppingSchemeOdeReduced(){};
+    
+    //! run simulation
+    virtual void run();
 
-  //! run simulation
-  virtual void run();
+    //! initialize timestepping member
+    virtual void initialize();
 
-  //! initialize timestepping member
-  virtual void initialize();
+    //! set the subset of ranks that will compute the work
+    void setRankSubset(Partition::RankSubset rankSubset);
 
-  //!
-  virtual void advanceTimeSpan()=0;
+    //! reset state such that new initialization becomes necessary
+    //virtual void reset();
 
-  //! return the Petsc solution vector
-  std::shared_ptr<FieldVariableType> &solution();
+    //! full-order timestepping object
+    TimeSteppingType fullTimestepping();
 
-  //! set the subset of ranks that will compute the work
-  void setRankSubset(Partition::RankSubset rankSubset);
+    //! get the data that will be transferred in the operator splitting to the other term of the splitting
+    //! the transfer is done by the slot_connector_data_transfer class
+    std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
-  //! reset state such that new initialization becomes necessary
-  virtual void reset();
+  protected:
+    //! read initial values from settings and set field accordingly
+    void setInitialValues();
 
-  //! return whether the scheme has a specified mesh type and is not independent of the mesh type
-  bool knowsMeshType();
+    //! prepare the discretizableInTime object for the following call to getSlotConnectorData()
+    virtual void prepareForGetSlotConnectorData() {}
 
-protected:
-  //! read initial values from settings and set field accordingly
-  void setInitialValues();
+    std::shared_ptr<GenericFunctionSpace> functionSpaceRed;
+    std::shared_ptr<GenericFunctionSpace> functionSpaceRowsSnapshots;
+    
+    TimeSteppingType fullTimestepping_;
+    std::shared_ptr<SlotConnectorDataType> slotConnectorData_;
 
-  TimeSteppingType timestepping_;
+    bool initialized_;     //< if initialize() was already called
 
-private:
-  bool initialized_;     ///< if initialize() was already called
-
-};
+  };
   
 } // namespace
 

@@ -13,7 +13,7 @@
 namespace Data
 {
 
-/**  The datastructures used for multidomain solver.
+/**  The datastructures used for static bidomain solver.
   */
 template<typename FunctionSpaceType>
 class StaticBidomain : public Data<FunctionSpaceType>
@@ -22,6 +22,7 @@ public:
 
   typedef FieldVariable::FieldVariable<FunctionSpaceType,1> FieldVariableType;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,3> GradientFieldVariableType;
+  typedef SlotConnectorData<FunctionSpaceType,1> SlotConnectorDataType;
 
   //! constructor
   StaticBidomain(DihuContext context);
@@ -53,31 +54,35 @@ public:
   //! print all stored data to stdout
   void print();
 
+  //! return the object that will be used to transfer values between solvers, in this case this includes only Vm
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
+
   //! field variables that will be output by outputWriters
   typedef std::tuple<
     std::shared_ptr<GradientFieldVariableType>,     // geometry
     std::shared_ptr<GradientFieldVariableType>,     // fiberDirection
-    std::shared_ptr<FieldVariableType>,              // solution of laplace potential flow
-    std::shared_ptr<FieldVariableType>,              // extra-cellular potential
-    std::shared_ptr<FieldVariableType>,              // transmembranePotential
-    std::shared_ptr<FieldVariableType>              // transmembraneFlow
-  > OutputFieldVariables;
+    std::shared_ptr<FieldVariableType>,             // transmembranePotential
+    std::shared_ptr<FieldVariableType>,             // extra-cellular potential
+    std::shared_ptr<FieldVariableType>,             // transmembraneFlow
+    std::shared_ptr<FieldVariableType>              // solution of laplace potential flow
+  > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
 private:
 
   //! initializes the vectors with size
   void createPetscObjects() override;
 
-  Mat rhsMatrix_;   ///< the rhs premultiplication matrix
-  std::shared_ptr<FieldVariableType> flowPotential_; ///< solution of the laplace flow
-  std::shared_ptr<GradientFieldVariableType> fiberDirection_; ///< the direction of fibers
-  std::shared_ptr<FieldVariableType> transmembraneFlow_;  ///< the Vm for the next timestep, this holds the solution in the linear solver which must be different from the rhs vector
-  std::shared_ptr<FieldVariableType> transmembranePotential_;  ///< the Vm value (transmembrane potential)
-  std::shared_ptr<FieldVariableType> extraCellularPotential_;  ///< the phi_e value which is the extra-cellular potential
-  std::shared_ptr<FieldVariableType> zero_;  ///< a field variable with constant value of zero, needed for the nested rhs vector
+  Mat rhsMatrix_;                                                 //< the rhs premultiplication matrix
+  std::shared_ptr<FieldVariableType> flowPotential_;              //< solution of the laplace flow
+  std::shared_ptr<GradientFieldVariableType> fiberDirection_;     //< the direction of fibers
+  std::shared_ptr<FieldVariableType> transmembraneFlow_;          //< the Vm for the next timestep, this holds the solution in the linear solver which must be different from the rhs vector
+  std::shared_ptr<FieldVariableType> transmembranePotential_;     //< the Vm value (transmembrane potential)
+  std::shared_ptr<FieldVariableType> extraCellularPotential_;     //< the phi_e value which is the extra-cellular potential
+  std::shared_ptr<FieldVariableType> zero_;                       //< a field variable with constant value of zero, needed for the nested rhs vector
+  std::shared_ptr<SlotConnectorDataType> slotConnectorData_;  //< the field variables that will be transferred to other solvers for the slot connector
 };
 
 } // namespace Data

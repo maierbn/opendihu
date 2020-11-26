@@ -1,48 +1,48 @@
-This is BibTeX, Version 0.99d (TeX Live 2015/Debian)
-Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+This is BibTeX, Version 0.99d (TeX Live 2017/Debian)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
 The top-level auxiliary file: doc.aux
 The style file: abbrv.bst
 Database file #1: literatur.bib
 Warning--empty journal in holzapfel2000nonlinear
-You've used 5 entries,
+You've used 6 entries,
             2118 wiz_defined-function locations,
-            526 strings with 4458 characters,
-and the built_in function-call counts, 1478 in all, are:
-= -- 134
-> -- 68
+            531 strings with 4600 characters,
+and the built_in function-call counts, 1762 in all, are:
+= -- 158
+> -- 86
 < -- 1
-+ -- 30
-- -- 22
-* -- 101
-:= -- 260
-add.period$ -- 15
-call.type$ -- 5
-change.case$ -- 24
++ -- 38
+- -- 28
+* -- 118
+:= -- 310
+add.period$ -- 18
+call.type$ -- 6
+change.case$ -- 29
 chr.to.int$ -- 0
-cite$ -- 6
-duplicate$ -- 56
-empty$ -- 120
-format.name$ -- 22
-if$ -- 299
+cite$ -- 7
+duplicate$ -- 68
+empty$ -- 142
+format.name$ -- 28
+if$ -- 357
 int.to.chr$ -- 0
-int.to.str$ -- 5
-missing$ -- 7
-newline$ -- 28
-num.names$ -- 10
-pop$ -- 31
+int.to.str$ -- 6
+missing$ -- 9
+newline$ -- 33
+num.names$ -- 12
+pop$ -- 41
 preamble$ -- 1
-purify$ -- 21
+purify$ -- 26
 quote$ -- 0
-skip$ -- 35
+skip$ -- 41
 stack$ -- 0
-substring$ -- 82
-swap$ -- 5
+substring$ -- 88
+swap$ -- 6
 text.length$ -- 1
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 16
+type$ -- 18
 warning$ -- 1
-while$ -- 12
-width$ -- 6
-write$ -- 54
+while$ -- 14
+width$ -- 7
+write$ -- 64
 (There was 1 warning)

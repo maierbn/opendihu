@@ -30,6 +30,9 @@ public:
   //! checks if the settings contain the given key, no warning is printed
   static bool hasKey(const PyObject *settings, std::string key);
 
+  //! checks if this settings is the empty list or None
+  static bool isEmpty(const PyObject *settings, std::string key);
+
   //! checks if the object is a python list
   static bool isTypeList(const PyObject *object);
 
@@ -52,12 +55,12 @@ public:
   static PyObject *getOptionFunction(const PyObject *settings, std::string key, std::string pathString);
 
   //! return the option value as array given by key in the python dictionary settings. If not found, return the defaultValue, also check if validityCriterion is met
-  template<class ValueType, int D>
+  template<typename ValueType, int D>
   static std::array<ValueType, D> getOptionArray(PyObject* settings, std::string keyString, std::string pathString, std::array<ValueType, D> defaultValue,
                                                 ValidityCriterion validityCriterion = None);
 
   //! return the option value as array given by key in the python dictionary settings. If not found, return the defaultValue, also check if validityCriterion is met
-  template<class ValueType, int D>
+  template<typename ValueType, int D>
   static std::array<ValueType, D> getOptionArray(PyObject* settings, std::string keyString, std::string pathString, ValueType defaultValue,
                                                 ValidityCriterion validityCriterion = None);
 
@@ -87,16 +90,8 @@ public:
   static void getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, int nEntries, std::vector<double> &values);
 
   //! extract a vector with unknown number of nEntries, must be a list
-  static void getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<double> &values);
-
-  //! extract a vector with unknown number of nEntries, must be a list
-  static void getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<int> &values);
-
-  //! extract a vector with unknown number of nEntries, must be a list
-  static void getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<std::string> &values);
-
-  //! extract a vector with unknown number of nEntries, must be a list
-  static void getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<PyObject *> &values);
+  template<typename ValueType>
+  static void getOptionVector(const PyObject *settings, std::string keyString, std::string pathString, std::vector<ValueType> &values);
 
   //! recursively print python dictionary to VLOG(1)
   static void printDict(PyObject *dict);
@@ -147,6 +142,9 @@ public:
   //! create a python list out of the long vector
   static PyObject *convertToPythonList(unsigned int nEntries, double *data);
 
+  //! create a python list from a double *
+  static PyObject *convertToPythonList(double *value, int nValues);
+
   //! convert a PyUnicode object to a std::string
   static std::string pyUnicodeToString(PyObject *object);
 
@@ -175,7 +173,7 @@ public:
     //static std::map<int, int> nGilsThreads_;
     //PyThreadState *mainThreadState_;
     
-    //static std::recursive_mutex mutex_;  ///< mutex for critical section
+    //static std::recursive_mutex mutex_;  //< mutex for critical section
     //static std::unique_lock<std::recursive_mutex> lock_;
     
     //static bool lockInitialized_;
@@ -184,11 +182,11 @@ public:
   
 private:
 
-  static PyObject *itemList;    ///< list of items (key,value) for dictionary,  to use for getOptionDictBegin, getOptionDictEnd, getOptionDictNext
-  static int itemListIndex;     ///< current index of itemList
+  static PyObject *itemList;    //< list of items (key,value) for dictionary,  to use for getOptionDictBegin, getOptionDictEnd, getOptionDictNext
+  static int itemListIndex;     //< current index of itemList
 
-  static PyObject *list;      ///< python list to use for getOptionListBegin, getOptionListEnd, getOptionListNext
-  static int listIndex;       ///< current index for list
+  static PyObject *list;        //< python list to use for getOptionListBegin, getOptionListEnd, getOptionListNext
+  static int listIndex;         //< current index for list
 };
 
 //! output python object
@@ -196,4 +194,5 @@ std::ostream &operator<<(std::ostream &stream, PyObject *object);
 
 
 #include "utility/python_utility.tpp"
-#include "utility/python_utility_convert.tpp"
+#include "utility/python_utility_convert_scalar.tpp"
+#include "utility/python_utility_convert_lists.tpp"

@@ -1,4 +1,4 @@
-#include "partition/mesh_partition/01_mesh_partition.h"
+#include "partition/mesh_partition/01_mesh_partition_unstructured.h"
 
 namespace Partition
 {
@@ -10,8 +10,8 @@ MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimensi
 MeshPartition(global_no_t nElementsGlobal, global_no_t nNodesGlobal, global_no_t nDofsGlobal, std::shared_ptr<RankSubset> rankSubset):
   MeshPartitionBase(rankSubset), nElements_(nElementsGlobal), nNodes_(nNodesGlobal), nDofs_(nDofsGlobal)
 {
-  global_no_t nDofsLocal = nDofsGlobal;
-  this->createLocalDofOrderings(nDofsLocal);
+  // initialize dofNosLocalIS_ and dofNosLocalNonGhostIS_
+  this->createLocalDofOrderings();
 }
 
 //! get the local to global mapping for the current partition
@@ -99,6 +99,16 @@ nNodesGlobal() const
 //! number of nodes in total
 template<int D, typename BasisFunctionType>
 global_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+nNodesGlobal(int coordinateDirection) const
+{
+  if (coordinateDirection == 0)
+    return nNodes_;
+  return 1;
+}
+
+//! number of nodes in total
+template<int D, typename BasisFunctionType>
+global_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
 nDofs() const
 {
   return nDofs_;
@@ -120,6 +130,15 @@ getElementNoGlobalNatural(element_no_t elementNoLocal) const
   return (global_no_t)(elementNoLocal);
 }
   
+//! get the local element no. from the global no., set isOnLocalDomain to true if the node with global coordinates is in the local domain
+template<int D, typename BasisFunctionType>
+element_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const
+{
+  isOnLocalDomain = true;
+  return elementNoGlobalPetsc;
+}
+
 template<int D, typename BasisFunctionType>
 template <typename T>
 void MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
@@ -164,16 +183,49 @@ getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const
 
 template<int D, typename BasisFunctionType>
 node_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-getNodeNoLocal(global_no_t nodeNoGlobalPetsc) const
+getNodeNoLocal(global_no_t nodeNoGlobalPetsc, bool &isLocal) const
 {
+  isLocal = true;
   return (node_no_t)nodeNoGlobalPetsc;
 }
 
 template<int D, typename BasisFunctionType>
 dof_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
-getDofNoLocal(global_no_t dofNoGlobalPetsc) const
+getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const
 {
+  isLocal = true;
   return (dof_no_t)dofNoGlobalPetsc;
+}
+
+//! get the local node no for its global coordinates
+template<int D, typename BasisFunctionType>
+node_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getNodeNoLocal(std::array<global_no_t,D> coordinatesGlobal, bool &isOnLocalDomain) const
+{
+  // this does not make sense for unstructured meshes
+  isOnLocalDomain = true;
+  return 0;
+}
+
+//! get the local dof no for the global coordinates of the node
+template<int D, typename BasisFunctionType>
+dof_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getDofNoLocal(std::array<global_no_t,D> coordinatesGlobal, int nodalDofIndex, bool &isOnLocalDomain) const
+{
+  node_no_t nodeNoLocal = getNodeNoLocal(coordinatesGlobal, isOnLocalDomain);
+  if (isOnLocalDomain)
+    return nodeNoLocal * FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>::nDofsPerNode() + nodalDofIndex;
+
+  return -1;
+}
+
+//! transform the global natural numbering to the local numbering
+template<int D, typename BasisFunctionType>
+dof_no_t MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getNodeNoLocalFromGlobalNatural(global_no_t nodeNoGlobalNatural, bool &isOnLocalDomain) const
+{
+  // global natural makes no sense for unstructured meshes
+  return -1;
 }
 
 template<int D, typename BasisFunctionType>
@@ -189,6 +241,22 @@ bool MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDi
 isNonGhost(node_no_t nodeNoLocal, int &neighbourRankNo) const
 {
   return true;
+}
+
+//! get the rank on which the global natural node is located
+template<int D, typename BasisFunctionType>
+int MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getRankOfNodeNoGlobalNatural(global_no_t nodeNoGlobalNatural) const
+{
+  return 0;
+}
+
+//! get the rank on which the global natural node is located
+template<int D, typename BasisFunctionType>
+int MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+getRankOfDofNoGlobalNatural(global_no_t dofNoGlobalNatural) const
+{
+  return 0;
 }
 
 //! get the node no in global petsc ordering from a local node no

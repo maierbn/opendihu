@@ -7,15 +7,16 @@
 
 #include "output_writer/paraview/loop_collect_field_variables_names.h"
 #include "output_writer/paraview/loop_output_point_data.h"
+#include "field_variable/field_variable.h"
 
 namespace OutputWriter
 {
 // regular fixed
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
-outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::string meshName, 
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>::
+outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, 
            std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>, BasisFunctionType>> mesh,
-           int nFieldVariablesOfMesh, PythonConfig specificSettings)
+           int nFieldVariablesOfMesh, PythonConfig specificSettings, double currentTime)
 {
   // write a RectilinearGrid
 
@@ -64,7 +65,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     s << filenameBaseWithPath << ".pvtr";
 
     // open file
-    std::ofstream file = Paraview::openFile(s.str());
+    std::ofstream file;
+    Paraview::openFile(file, s.str());
 
     LOG(DEBUG) << "Write PRectilinearGrid, file \"" << s.str() << "\".";
 
@@ -151,6 +153,9 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
       << "</VTKFile>" << std::endl;
 
     file.close();
+    
+    // register file at SeriesWriter to be included in the "*.vtk.series" JSON file
+    Paraview::seriesWriter().registerNewFile(std::string(s.str()), currentTime);
 
     // write serial slave file
     s.str("");
@@ -163,7 +168,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 
 
   // open file
-  std::ofstream file = Paraview::openFile(s.str());
+  std::ofstream file;
+  Paraview::openFile(file, s.str());
 
   LOG(DEBUG) << "Write RectilinearGrid, file \"" << s.str() << "\".";
 
@@ -288,11 +294,11 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
 }
   
 // structured deformable
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
-outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::string meshName, 
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>::
+outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, 
            std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType>> mesh,
-           int nFieldVariablesOfMesh, PythonConfig specificSettings)
+           int nFieldVariablesOfMesh, PythonConfig specificSettings, double currentTime)
 {
   // write a StructuredGrid
 
@@ -341,7 +347,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     s << filenameBaseWithPath << ".pvts";
 
     // open file
-    std::ofstream file = Paraview::openFile(s.str());
+    std::ofstream file;
+    Paraview::openFile(file, s.str());
 
     LOG(DEBUG) << "Write PStructuredGrid, file \"" << s.str() << "\".";
 
@@ -418,6 +425,9 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
       << "</VTKFile>" << std::endl;
 
     file.close();
+    
+    // register file at SeriesWriter to be included in the "*.vtk.series" JSON file
+    Paraview::seriesWriter().registerNewFile(std::string(s.str()), currentTime);
 
     // write serial slave file
     s.str("");
@@ -429,7 +439,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   }
 
   // open file
-  std::ofstream file = Paraview::openFile(s.str());
+  std::ofstream file;
+  Paraview::openFile(file, s.str());
 
   LOG(DEBUG) << "Write StructuredGrid, file \"" << s.str() << "\".";
 
@@ -493,11 +504,11 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   
   
 // unstructured deformable
-template<int D, typename BasisFunctionType, typename OutputFieldVariablesType>
-void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, OutputFieldVariablesType>::
-outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::string meshName, 
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+void ParaviewWriter<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, FieldVariablesForOutputWriterType>::
+outputFile(std::string filename, FieldVariablesForOutputWriterType fieldVariables, std::string meshName, 
            std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>> mesh,
-           int nFieldVariablesOfMesh, PythonConfig specificSettings)
+           int nFieldVariablesOfMesh, PythonConfig specificSettings, double currentTime)
 {
   // write an UnstructuredGrid
   // determine file name
@@ -505,7 +516,8 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
   s << filename << ".vtu";
 
   // open file
-  std::ofstream file = Paraview::openFile(s.str());
+  std::ofstream file;
+  Paraview::openFile(file, s.str());
 
   LOG(DEBUG) << "Write UnstructuredGrid, file \"" << s.str() << "\".";
 
@@ -643,6 +655,10 @@ outputFile(std::string filename, OutputFieldVariablesType fieldVariables, std::s
     << std::string(2, '\t') << "</Piece>" << std::endl
     << std::string(1, '\t') << "</UnstructuredGrid>" << std::endl
     << "</VTKFile>" << std::endl;
+    
+  // register file at SeriesWriter to be included in the "*.vtk.series" JSON file
+  Paraview::seriesWriter().registerNewFile(std::string(s.str()), currentTime);
+
 }
   
 }  // namespace

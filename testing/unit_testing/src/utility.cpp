@@ -35,14 +35,14 @@ double parseNumber(std::string::iterator &iterFileContents, std::string::iterato
   {
     std::stod(numberFileContents, nullptr);
   }
-  catch (std::exception &e)
+  catch (std::exception &e)   // fails for letter 'e'
   {
     std::string s;
     for(std::string::iterator iterFileContents2 = iterFileContentsBegin; iterFileContents2 != iterFileContentsEnd; iterFileContents2++)
     {
       s += *iterFileContents2;
     }
-    LOG(DEBUG) << "parsing of number [" << numberFileContents << "] from [" << s.substr(0,20) << "] failed: " << e.what();
+    //LOG(DEBUG) << "parsing of number [" << numberFileContents << "] from [" << s.substr(0,20) << "] failed: " << e.what();
   }
   return number;
 }
@@ -59,7 +59,7 @@ void removeVaryingContent(std::string &contents)
   }
 
   // also remove timestamp and meta information in python files
-  // example: {"version": "opendihu 0.1, build Jan 18 2019 20:51:36, C++ 201402, GCC 7.3.0", "meta": "current time: 2019/01/18 20:57:17, hostname: lapsgs05, n ranks: 4", "meshType" ...
+  // example: {"version": "opendihu 0.1, built Jan 18 2019 20:51:36, C++ 201402, GCC 7.3.0", "meta": "current time: 2019/01/18 20:57:17, hostname: lapsgs05, n ranks: 4", "meshType" ...
 
   while(contents.find("\"version") != std::string::npos)
   {
@@ -114,7 +114,7 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
   // read in file contents
   file.read(&fileContents[0], fileSize);
 
-  // remove parts of the contents that are dependend from version or time
+  // remove parts of the contents that are dependend on version or time
   removeVaryingContent(fileContents);
   removeVaryingContent(referenceContents);
   removeVaryingContent(referenceContents2);
@@ -128,7 +128,9 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
   for (std::string::iterator iterFileContents = fileContents.begin(); iterFileContents != fileContents.end() && iterReferenceContents != referenceContents.end();)
   {
     //VLOG(1) << "[" << *iterFileContents << "] ?= [" << *iterReferenceContents << "]";
-    if (isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-')   // characters with which a number can start (e.g. ".5", "-1")
+    if (isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-'
+      || isdigit(*iterReferenceContents) || *iterReferenceContents == '.' || *iterReferenceContents == '-'
+    )   // characters with which a number can start (e.g. ".5", "-1")
     {
       double numberFileContents = parseNumber(iterFileContents, fileContents.end());
       double numberReferenceContents = parseNumber(iterReferenceContents, referenceContents.end());
@@ -140,9 +142,29 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
     }
     else
     {
+      // Do not fail if one of the files has more whitespace at a certain position, this can happen if there are different numbers like " -1e-18" and "  1e-18" with different number of whitespaces.
+      if ((*iterFileContents == ' ' && *iterReferenceContents != ' ') || (*iterFileContents == '\n' && *iterReferenceContents != '\n'))
+      {
+        iterFileContents++;
+        continue;
+      }
+      if ((*iterFileContents != ' ' && *iterReferenceContents == ' ') || (*iterFileContents != '\n' && *iterReferenceContents == '\n'))
+      {
+        iterReferenceContents++;
+        continue;
+      }
+
+      // if character is diferrent
       if(*iterFileContents != *iterReferenceContents)
       {
-        msg << "mismatch at character, file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents) << " ";
+        // compose message for first mismatch
+        if (referenceContentMatches)
+        {
+          int pos = std::distance(fileContents.begin(),iterFileContents);
+          msg << "mismatch at character, file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: "
+            << pos << std::endl << "file: ... " << fileContents.substr(std::max(0,pos-50),std::min((int)fileContents.size()-std::max(0,pos-50),100)) << "..."
+            << std::endl << "ref:  ... " << referenceContents.substr(std::max(0,pos-50),std::min((int)referenceContents.size()-std::max(0,pos-50),100)) << "...";
+        }
         referenceContentMatches = false;
         //VLOG(1) << "mismatch!";
       }
@@ -159,7 +181,8 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
     iterReferenceContents = referenceContents2.begin(); 
     for (std::string::iterator iterFileContents = fileContents.begin(); iterFileContents != fileContents.end() && iterReferenceContents != referenceContents2.end();)
     {
-      if (isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-')
+      if (isdigit(*iterFileContents) || *iterFileContents == '.' || *iterFileContents == '-'
+        || isdigit(*iterReferenceContents) || *iterReferenceContents == '.' || *iterReferenceContents == '-')
       {
         double numberFileContents = parseNumber(iterFileContents, fileContents.end());
         double numberReferenceContents = parseNumber(iterReferenceContents, referenceContents2.end());
@@ -171,9 +194,30 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
       }
       else
       {
+        // Do not fail if one of the files has more whitespace at a certain position, this can happen if there are different numbers like " -1e-18" and "  1e-18" with different number of whitespaces.
+        if ((*iterFileContents == ' ' && *iterReferenceContents != ' ') || (*iterFileContents == '\n' && *iterReferenceContents != '\n'))
+        {
+          iterFileContents++;
+          continue;
+        }
+        if ((*iterFileContents != ' ' && *iterReferenceContents == ' ') || (*iterFileContents != '\n' && *iterReferenceContents == '\n'))
+        {
+          iterReferenceContents++;
+          continue;
+        }
+
+        // if character is diferrent
         if (*iterFileContents, *iterReferenceContents)
         {
-          msg << "mismatch at character file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents);
+          // compose message for first mismatch
+          if (referenceContentMatches)
+          {
+            int pos = std::distance(fileContents.begin(),iterFileContents);
+            msg << "mismatch at character, file: [" << *iterFileContents << "] != reference2: [" << *iterReferenceContents << "], pos: "
+              << pos << std::endl << "file: ... " << fileContents.substr(std::max(0,pos-50),std::min((int)fileContents.size()-std::max(0,pos-50),50)) << "..."
+              << std::endl << "ref2: ... " << referenceContents2.substr(std::max(0,pos-50),std::min((int)referenceContents2.size()-std::max(0,pos-50),50)) << "...";
+          }
+          //msg << "mismatch at character file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: " << std::distance(fileContents.begin(),iterFileContents);
           referenceContent2Matches = false;
         }
         iterFileContents++;
@@ -187,12 +231,30 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
   if (!referenceContentMatches && (referenceContents2 == "-" || !referenceContent2Matches))
   {
     if (!referenceContentMatches)
-      LOG(INFO) << "file content of file \"" << filename << "\" is different (referenceContents). fileContents: " << std::endl << fileContents << std::endl << ", referenceContents: " << std::endl << referenceContents;
+    {
+      LOG(INFO) << "file content of file \"" << filename << "\" is different (referenceContents). fileContents: " << std::endl
+        << fileContents.substr(0,100) << "..." << std::endl << ", referenceContents: " << std::endl << referenceContents.substr(0,100) << "...";
+    }
     if (!referenceContent2Matches)
-      LOG(INFO) << "file content of file \"" << filename << "\" is different (referenceContents2). fileContents: " << std::endl << fileContents << std::endl << ", referenceContents2: " << std::endl << referenceContents2;
-    
+    {
+      LOG(INFO) << "file content of file \"" << filename << "\" is different (referenceContents2). fileContents: " << std::endl
+        << fileContents.substr(0,100) << "..." << std::endl << ", referenceContents2: " << std::endl << referenceContents2.substr(0,100) << "...";
+    }
+
+    std::ofstream outReferenceContents("referenceContents");
+    outReferenceContents << referenceContents;
+    outReferenceContents.close();
+
+    std::ofstream outReferenceContents2("referenceContents2");
+    outReferenceContents2 << referenceContents2;
+    outReferenceContents2.close();
+
+    std::ofstream out("fileContents");
+    out << fileContents;
+    out.close();
+
     LOG(INFO) << msg.str();
-    ASSERT_TRUE(false) << "neither referenceContent nor referenceContent2 matches! " << msg.str();
+    ASSERT_TRUE(false) << "filename \"" << filename << "\": neither referenceContent nor referenceContent2 matches! " << msg.str();
   }
   
 }

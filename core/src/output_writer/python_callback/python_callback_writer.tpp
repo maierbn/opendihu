@@ -5,13 +5,14 @@
 
 #include "easylogging++.h"
 #include "output_writer/python/python.h"
+#include "utility/python_capture_stderr.h"
 
 namespace OutputWriter
 {
 
-template<typename FunctionSpaceType, typename OutputFieldVariablesType>
-void PythonCallbackWriter<FunctionSpaceType,OutputFieldVariablesType>::
-callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables,
+template<typename FunctionSpaceType, typename FieldVariablesForOutputWriterType>
+void PythonCallbackWriter<FunctionSpaceType,FieldVariablesForOutputWriterType>::
+callCallback(PyObject *callback, FieldVariablesForOutputWriterType fieldVariables,
              int timeStepNo, double currentTime, bool onlyNodalValues)
 {
   LOG(TRACE) << "callCallback timeStepNo=" << timeStepNo << ", currentTime=" << currentTime;
@@ -24,7 +25,7 @@ callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables,
 
   // collect all available meshes
   std::set<std::string> meshNames;
-  LoopOverTuple::loopCollectMeshNames<OutputFieldVariablesType>(fieldVariables, meshNames);
+  LoopOverTuple::loopCollectMeshNames<FieldVariablesForOutputWriterType>(fieldVariables, meshNames);
 
   // start critical section for python API calls
   // PythonUtility::GlobalInterpreterLock lock;
@@ -54,7 +55,7 @@ callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables,
     // }
 
     // build python object for data
-    PyObject *pyData = Python<FunctionSpaceType,OutputFieldVariablesType>::buildPyDataObject(fieldVariables, meshName, timeStepNo, currentTime, onlyNodalValues);
+    PyObject *pyData = Python<FunctionSpaceType,FieldVariablesForOutputWriterType>::buildPyDataObject(fieldVariables, meshName, timeStepNo, currentTime, onlyNodalValues);
     
     // set entry in list
     PyList_SetItem(pyDataList, (Py_ssize_t)meshIndex, pyData);    // steals reference to pyData
@@ -66,16 +67,38 @@ callCallback(PyObject *callback, OutputFieldVariablesType fieldVariables,
   //new signature def callback([data0,data1,...])
   PyObject *pyArglist = Py_BuildValue("(O)", pyDataList);
 
+  // import emb module which captures stderr
+  PyImport_ImportModule("emb");
+
+  // add callback function to capture stderr buffer
+  std::string errorBuffer;
+  emb::stderr_write_type write = [&errorBuffer] (std::string s) {errorBuffer += s; };
+  emb::set_stderr(write);
+
   // call callback function
   PyObject *pyReturnValue = PyObject_CallObject(callback, pyArglist);
 
+  emb::reset_stderr();
+
   // if there was an error while executing the function, print the error message
   if (pyReturnValue == NULL)
+  {
+    PythonUtility::checkForError();
     PyErr_Print();
+    LOG(ERROR) << "An error occured in the callback function of the output writer.\n" << errorBuffer;
+  }
+
+  if (pyReturnValue == Py_None)
+    LOG(DEBUG) << "callback returns None";
+  else
+  {
+    LOG(DEBUG) << "callback returns:";
+    LOG(DEBUG) << pyReturnValue;
+  }
 
   // decrement reference counters for python objects
-  Py_DECREF(pyReturnValue);
-  Py_DECREF(pyArglist);
+  Py_XDECREF(pyReturnValue);
+  Py_XDECREF(pyArglist);
 }
 
 }  // namespace

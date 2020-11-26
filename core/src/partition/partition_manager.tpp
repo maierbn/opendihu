@@ -38,9 +38,9 @@ createPartitioningUnstructured(global_no_t nElementsGlobal, global_no_t nNodesGl
 // use nElementsLocal and nRanks, fill nElementsGlobal
 template<typename FunctionSpace>
 std::shared_ptr<MeshPartition<FunctionSpace>> Manager::
-createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &nElementsGlobal,
+createPartitioningStructuredLocal(PythonConfig specificSettings, std::array<global_no_t,FunctionSpace::dim()> &nElementsGlobal,
                                   const std::array<element_no_t,FunctionSpace::dim()> nElementsLocal,
-                                  const std::array<int,FunctionSpace::dim()> nRanks)
+                                  const std::array<int,FunctionSpace::dim()> nRanks, std::vector<int> rankNos)
 { 
   LOG(DEBUG) << "Partition::Manager::createPartitioningStructuredLocal from localSize " << nElementsLocal 
     << ", nRanks " << nRanks;
@@ -55,13 +55,32 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
   {
     // create rank subset of all available MPI ranks
     rankSubset = std::make_shared<RankSubset>();
-    LOG(DEBUG) << "create new rank subset " << *rankSubset;
+    LOG(DEBUG) << specificSettings.getStringPath() << ": create new rank subset " << *rankSubset;
   }
-  else 
+  else
   {
     // if nextRankSubset was specified, use it
     rankSubset = nextRankSubset_;
-    LOG(DEBUG) << "use previously set rankSubset " << *rankSubset;
+    LOG(DEBUG) << specificSettings.getStringPath() << ": use previously set rankSubset " << *rankSubset;
+  }
+
+  // if rank Nos to use were given, use them
+  if (!rankNos.empty())
+  {
+    LOG(DEBUG) << specificSettings.getStringPath() << ": rankNos option was specified: " << rankNos;
+    rankSubset = std::make_shared<RankSubset>(rankNos.begin(), rankNos.end(), rankSubset);
+  }
+
+  LOG(DEBUG) << specificSettings.getStringPath() << ": using rankSubset " << *rankSubset;
+
+  if (!rankSubset->ownRankIsContained())
+  {
+    // return zero mesh partition
+    nElementsGlobal.fill(0);
+    std::array<global_no_t, D> beginGlobal({0});
+    std::array<element_no_t,FunctionSpace::dim()> nElementsLocalZero({0});
+    std::array<int,FunctionSpace::dim()> nRanksZero({0});
+    return std::make_shared<MeshPartition<FunctionSpace>>(nElementsLocalZero, nElementsGlobal, beginGlobal, nRanksZero, rankSubset);
   }
   
   int rankNoSubsetCommunicator = rankSubset->ownRankNo();
@@ -72,10 +91,21 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
   {
     nRanksTotal *= nRanks[i];
   }
+
+  if (rankSubset->size() != nRanksTotal && !nextRankSubset_)
+  {
+    LOG(ERROR) << specificSettings.getStringPath() << ": You specified " << nRanksTotal << " ranks (" << nRanks
+      << ") but only " << nRanksSubsetCommunicator << " are available.\n";
+
+    LOG(FATAL) << specificSettings.getStringPath() << ": mesh was created without `nextRankSubset_` being set by MultipleInstances. "
+      << "Therefore, it is not known which ranks should be on this mesh. However, you could set \"rankNos\".\n"
+      << "rankSubset: " << *rankSubset << " contains " << rankSubset->size() << " ranks, nRanks: " << nRanks << ", (total " << nRanksTotal
+      << "), nextRankSubset_ is nullptr.";
+  }
   
   if (nRanksSubsetCommunicator != nRanksTotal)
   {
-    LOG(ERROR) << "Number of ranks (" << nRanksSubsetCommunicator << ") in rank subset does not match given nRanks in config " << nRanks << ", total " << nRanksTotal << ".";
+    LOG(ERROR) << specificSettings.getStringPath() << ": Number of ranks (" << nRanksSubsetCommunicator << ") in rank subset does not match given nRanks in config " << nRanks << ", total " << nRanksTotal << ".";
   }
   
   std::array<int,3> rankGridCoordinate({0});  // the coordinate of the current rank in the nRanks[0] x nRanks[1] x nRanks[2] grid of ranks
@@ -105,7 +135,7 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
     
   // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
   MPIUtility::handleReturnValue(MPI_Comm_split(rankSubset->mpiCommunicator(), oneDimensionCommunicatorColor, rankNoSubsetCommunicator,
-                 &oneDimensionCommunicator[0]));
+                                               &oneDimensionCommunicator[0]), "MPI_Comm_split");
   
   if (D >= 2)
   {
@@ -114,7 +144,7 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
    
     // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
     MPIUtility::handleReturnValue(MPI_Comm_split(rankSubset->mpiCommunicator(), oneDimensionCommunicatorColor, rankNoSubsetCommunicator,
-                   &oneDimensionCommunicator[1]));
+                                                 &oneDimensionCommunicator[1]), "MPI_Comm_split");
   }
   
   if (D >= 3)
@@ -124,48 +154,85 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
    
     // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
     MPIUtility::handleReturnValue(MPI_Comm_split(rankSubset->mpiCommunicator(), oneDimensionCommunicatorColor, rankNoSubsetCommunicator,
-                   &oneDimensionCommunicator[2]));
+                                                 &oneDimensionCommunicator[2]), "MPI_Comm_split");
     VLOG(1) << "rankGridCoordinate: " << rankGridCoordinate << ", nRanks:" << nRanks << ", z color: " << oneDimensionCommunicatorColor;
   }
   
   // reduce the global sizes in the coordinate directions
-  std::array<element_no_t,D> globalSizeMpi;   // note: because of MPI this cannot be of type global_no_t, but has to be the same as the send buffer
-  if (rankGridCoordinate[1] == 0 && rankGridCoordinate[2] == 0)
+  std::array<element_no_t,D> globalSizeMpi({0});   // note: because of MPI this cannot be of type global_no_t, but has to be the same as the send buffer
+  std::array<element_no_t,D> ownGlobalSizeMpi = nElementsLocal;
+
+  // add up number of local elements along x axis
+  MPIUtility::handleReturnValue(MPI_Allreduce(&nElementsLocal[0], &ownGlobalSizeMpi[0], 1, MPIU_INT,
+                                            MPI_SUM, oneDimensionCommunicator[0]), "MPI_Allreduce");
+
+  VLOG(1) << "reduce in x direction: " << nElementsLocal[0] << " -> " << ownGlobalSizeMpi[0];
+  
+  // add up number of local elements along y axis
+  if (D >= 2)
   {
-    MPIUtility::handleReturnValue(MPI_Reduce(&nElementsLocal[0], &globalSizeMpi[0], 1, MPI_INT, 
-                                              MPI_SUM, 0, oneDimensionCommunicator[0]));
+     MPIUtility::handleReturnValue(MPI_Allreduce(&nElementsLocal[1], &ownGlobalSizeMpi[1], 1, MPIU_INT,
+                                               MPI_SUM, oneDimensionCommunicator[1]), "MPI_Allreduce");
+
+    VLOG(1) << "reduce in y direction: " << nElementsLocal[1] << " -> " << ownGlobalSizeMpi[1];
   }
   
-  if (D >= 2 && rankGridCoordinate[0] == 0 && rankGridCoordinate[2] == 0)
+  // add up number of local elements along z axis
+  if (D >= 3)
   {
-     MPIUtility::handleReturnValue(MPI_Reduce(&nElementsLocal[1], &globalSizeMpi[1], 1, MPI_INT, 
-                                               MPI_SUM, 0, oneDimensionCommunicator[1]));
-  }
-  
-  if (D >= 3 && rankGridCoordinate[0] == 0 && rankGridCoordinate[1] == 0)
-  {
-     MPIUtility::handleReturnValue(MPI_Reduce(&nElementsLocal[2], &globalSizeMpi[2], 1, MPI_INT, 
-                                               MPI_SUM, 0, oneDimensionCommunicator[2]));
+     MPIUtility::handleReturnValue(MPI_Allreduce(&nElementsLocal[2], &ownGlobalSizeMpi[2], 1, MPIU_INT,
+                                               MPI_SUM, oneDimensionCommunicator[2]), "MPI_Allreduce");
+
+    VLOG(1) << "reduce in z direction: " << nElementsLocal[2] << " -> " << ownGlobalSizeMpi[2];
   }
   
   // now broadcast globalSizeMpi value to all ranks
-  MPIUtility::handleReturnValue(MPI_Bcast(globalSizeMpi.data(), D, MPI_INT, 0, rankSubset->mpiCommunicator()));
-  
+  if (rankNoSubsetCommunicator == 0)
+  {
+    globalSizeMpi = ownGlobalSizeMpi;
+  }
 
-  LOG(DEBUG) << "globalSizeMpi: " << globalSizeMpi;
+  // broadcast the global size from rank 0. This could be avoided, but it is done here to check if the value is the same on every rank.
+  MPIUtility::handleReturnValue(MPI_Bcast(globalSizeMpi.data(), D, MPIU_INT, 0, rankSubset->mpiCommunicator()), "MPI_Bcast (7)");
+
+  bool globalSizeIsDifferent = ownGlobalSizeMpi[0] != globalSizeMpi[0];
+
+  if (D >= 2)
+    globalSizeIsDifferent = globalSizeIsDifferent || ownGlobalSizeMpi[1] != globalSizeMpi[1];
+
+  if (D == 3)
+    globalSizeIsDifferent = globalSizeIsDifferent || ownGlobalSizeMpi[2] != globalSizeMpi[2];
+
+  if (globalSizeIsDifferent)
+  {
+    LOG(FATAL) << specificSettings.getStringPath() << ": The specified partitioning is invalid. "
+      << "You set \"inputMeshIsGlobal\": False and specified "
+      << "the local number of elements for each rank with \"nRanks\": " << nRanks << "\n"
+      << "On rank " << rankNoSubsetCommunicator << " (rank grid coordinates " << rankGridCoordinate << ")"
+      << ", the local number of elements is: " << nElementsLocal << ".\n"
+      << "The determined global number of elements is: " << ownGlobalSizeMpi
+      << ", however, rank 0 determines the global number of elements differently, as: " << globalSizeMpi << ".\n"
+      << "Make sure that the \"nElements\" options on every rank define a regular grid in space.";
+  }
 
   // compute beginGlobal values by prefix sum
-  std::array<PetscInt, D> beginGlobal({0});
-  MPIUtility::handleReturnValue(MPI_Exscan(&nElementsLocal[0], &beginGlobal[0], 1, MPI_INT, MPI_SUM, oneDimensionCommunicator[0]));
+  std::array<global_no_t, D> beginGlobal({0});
+  std::array<global_no_t, D> nElementsLocalBigSize;
+  for (int i = 0; i < D; i++)
+  {
+    nElementsLocalBigSize[i] = nElementsLocal[i];
+  }
+
+  MPIUtility::handleReturnValue(MPI_Exscan(&nElementsLocalBigSize[0], &beginGlobal[0], 1, MPI_LONG_LONG_INT, MPI_SUM, oneDimensionCommunicator[0]), "MPI_Exscan");
   
   if (D >= 2)
   {
-    MPIUtility::handleReturnValue(MPI_Exscan(&nElementsLocal[1], &beginGlobal[1], 1, MPI_INT, MPI_SUM, oneDimensionCommunicator[1]));
+    MPIUtility::handleReturnValue(MPI_Exscan(&nElementsLocalBigSize[1], &beginGlobal[1], 1, MPI_LONG_LONG_INT, MPI_SUM, oneDimensionCommunicator[1]), "MPI_Exscan");
   }
   
   if (D >= 3)
   {
-    MPIUtility::handleReturnValue(MPI_Exscan(&nElementsLocal[2], &beginGlobal[2], 1, MPI_INT, MPI_SUM, oneDimensionCommunicator[2]));
+    MPIUtility::handleReturnValue(MPI_Exscan(&nElementsLocalBigSize[2], &beginGlobal[2], 1, MPI_LONG_LONG_INT, MPI_SUM, oneDimensionCommunicator[2]), "MPI_Exscan");
   }
   
   for (int i = 0; i < D; i++)
@@ -174,6 +241,9 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
     VLOG(1) << "set nElementsGlobal[" << i << "] = " << nElementsGlobal[i];
   }
   
+  LOG(DEBUG) << "create new meshPartition, nElementsLocal: " << nElementsLocal << ", nElementsGlobal: " << nElementsGlobal
+    << ", beginGlobal: " << beginGlobal << ", nRanks: " << nRanks << ", rankSubset : " << *rankSubset;
+
   // create a mesh partition with prescribed local partitions
   return std::make_shared<MeshPartition<FunctionSpace>>(nElementsLocal, nElementsGlobal, beginGlobal, nRanks, rankSubset);
 }
@@ -181,9 +251,9 @@ createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &
 // use nElementsGlobal, fill nElementsLocal and nRanks
 template<typename FunctionSpace>
 std::shared_ptr<MeshPartition<FunctionSpace>> Manager::
-createPartitioningStructuredGlobal(const std::array<global_no_t,FunctionSpace::dim()> nElementsGlobal, 
+createPartitioningStructuredGlobal(PythonConfig specificSettings, const std::array<global_no_t,FunctionSpace::dim()> nElementsGlobal,
                                    std::array<element_no_t,FunctionSpace::dim()> &nElementsLocal,
-                                   std::array<int,FunctionSpace::dim()> &nRanks)
+                                   std::array<int,FunctionSpace::dim()> &nRanks, std::vector<int> rankNos)
 { 
   LOG(DEBUG) << "Partition::Manager::createPartitioningStructuredGlobal from nElementsGlobal " << nElementsGlobal;
   
@@ -202,6 +272,13 @@ createPartitioningStructuredGlobal(const std::array<global_no_t,FunctionSpace::d
     rankSubset = nextRankSubset_;
   }
   
+  // if rank Nos to use were given, use them
+  if (!rankNos.empty())
+  {
+    LOG(DEBUG) << "rankNos option was specified: " << rankNos;
+    rankSubset = std::make_shared<RankSubset>(rankNos.begin(), rankNos.end(), rankSubset);
+  }
+
   LOG(DEBUG) << "using rankSubset " << *rankSubset;
   
   // create meshPartition
@@ -216,6 +293,44 @@ createPartitioningStructuredGlobal(const std::array<global_no_t,FunctionSpace::d
     VLOG(1) << "set nRanks[" << coordinateDirection << "] = " << nRanks[coordinateDirection];
   }
   
+  return meshPartition;
+}
+
+//! create new partitioning of a composite mesh, this emulates a normal mesh but the values are taken from the submeshes
+template<typename BasisFunctionType, int D>
+std::shared_ptr<MeshPartition<::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>>> Manager::
+createPartitioningComposite(const std::vector<std::shared_ptr<::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces, std::vector<int> rankNos)
+{
+  // the subset of ranks for the partition to be created
+  std::shared_ptr<RankSubset> rankSubset;
+
+  // if no nextRankSubset was specified, use all available ranks
+  if (nextRankSubset_ == nullptr)
+  {
+    // create rank subset of all available MPI ranks
+    rankSubset = std::make_shared<RankSubset>();
+  }
+  else
+  {
+    // if nextRankSubset was specified, use it
+    rankSubset = nextRankSubset_;
+  }
+
+  // if rank Nos to use were given, use them
+  if (!rankNos.empty())
+  {
+    LOG(DEBUG) << "rankNos option was specified: " << rankNos;
+    rankSubset = std::make_shared<RankSubset>(rankNos.begin(), rankNos.end(), rankSubset);
+  }
+
+  LOG(DEBUG) << "using rankSubset " << *rankSubset;
+
+  typedef ::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType> FunctionSpace;
+
+  // create meshPartition
+  std::shared_ptr<MeshPartition<FunctionSpace>> meshPartition
+    = std::make_shared<MeshPartition<FunctionSpace>>(subFunctionSpaces, rankSubset);
+
   return meshPartition;
 }
 

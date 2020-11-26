@@ -3,6 +3,8 @@
 #include <sstream>
 
 #include "utility/petsc_utility.h"
+#include "utility/string_utility.h"
+#include "control/types.h"
 #include "easylogging++.h"
 
 //! vector difference
@@ -83,80 +85,33 @@ std::array<double,nComponents> &operator/=(std::array<double,nComponents> &vecto
   return vector1;
 }
 
-//! scalar*vector multiplication
-template<std::size_t nComponents>
-std::array<double,nComponents> operator*(double lambda, const std::array<double,nComponents> vector)
+//! extract multiple values from a normal vector
+template<std::size_t N>
+std::array<Vc::double_v,N> getValuesAtIndices(const std::vector<std::array<double,N>> &values, Vc::int_v indices)
 {
-  std::array<double,nComponents> result;
+  std::array<Vc::double_v,N> result;
 
-  //#pragma omp simd
-  for (int i = 0; i < nComponents; i++)
+  for (int vcComponentNo = 0; vcComponentNo < Vc::double_v::size(); vcComponentNo++)
   {
-    result[i] = lambda * vector[i];
-  }
-  return result;
-}
+    int index = indices[vcComponentNo];
 
-//! vector*scalar multiplication
-template<std::size_t nComponents>
-std::array<double,nComponents> operator*(std::array<double,nComponents> vector, double lambda)
-{
-  std::array<double,nComponents> result;
-
-  //#pragma omp simd
-  for (int i = 0; i < nComponents; i++)
-  {
-    result[i] = lambda * vector[i];
-  }
-  return result;
-}
-
-//! vector*scalar multiplication
-template<typename T>
-std::vector<T> operator*(std::vector<T> vector, double lambda)
-{
-  std::vector<T> result(vector.size());
-
-  //#pragma omp simd
-  for (int i = 0; i < vector.size(); i++)
-  {
-    result[i] = lambda * vector[i];
-  }
-  return result;
-}
-
-//! component-wise vector multiplication
-template<std::size_t nComponents>
-std::array<double,nComponents> operator*(const std::array<double,nComponents> vector1, const std::array<double,nComponents> vector2)
-{
-  std::array<double,nComponents> result;
-
-  //#pragma omp simd
-  for (int i = 0; i < nComponents; i++)
-  {
-    result[i] = vector1[i] * vector2[i];
-  }
-  return result;
-}
-
-//! matrix-vector multiplication
-template<std::size_t M, std::size_t N>
-std::array<double,M> operator*(const std::array<std::array<double,M>,N> &matrix, const std::array<double,N> vector)
-{
-  std::array<double,M> result({0.0});
-
-  // column index
-  for (int j = 0; j < N; j++)
-  {
-    // row index
-    //#pragma omp simd
-    for (int i = 0; i < M; i++)
+    if (index != -1)
     {
-      result[i] += matrix[j][i] * vector[j];
+      for (int i = 0; i < N; i++)
+      {
+        result[i][vcComponentNo] = values[index][i];
+      }
     }
   }
   return result;
 }
+
+template<std::size_t N>
+std::array<double,N> getValuesAtIndices(const std::vector<std::array<double,N>> &values, int index)
+{
+  return values[index];
+}
+
 
 //! component-wise division
 template<typename T, std::size_t nComponents>
@@ -168,6 +123,20 @@ std::array<T,nComponents> operator/(const std::array<T,nComponents> vector1, con
   for (int i = 0; i < nComponents; i++)
   {
     result[i] = vector1[i] / vector2[i];
+  }
+  return result;
+}
+
+//! scalar division
+template<typename T, std::size_t nComponents>
+std::array<T,nComponents> operator/(const std::array<T,nComponents> vector1, const double value)
+{
+  std::array<T,nComponents> result;
+
+  //#pragma omp simd
+  for (int i = 0; i < nComponents; i++)
+  {
+    result[i] = vector1[i] / value;
   }
   return result;
 }
@@ -187,12 +156,43 @@ bool operator<(const std::array<T,N> &vector, double value)
 }
 
 //! output array content to stream
+template<std::size_t N>
+std::ostream &operator<<(std::ostream &stream, const std::array<double,N> &vector)
+{
+  stream << "(";
+
+  // first entry
+  if (vector[0] == std::numeric_limits<double>::max())
+    stream << "None";
+  else
+    stream << vector[0];
+
+  // subsequent entries
+  for (std::size_t i = 1; i < N; i++)
+  {
+    stream << ",";
+    if (vector[i] == std::numeric_limits<double>::max())
+      stream << "None[double]";
+    else
+      stream << vector[i];
+  }
+  stream << ")";
+  return stream;
+}
+
 template<typename T, std::size_t N>
 std::ostream &operator<<(std::ostream &stream, const std::array<T,N> &vector)
 {
-  stream << "(" << vector[0];
+  stream << "(";
+
+  // first entry
+  stream << vector[0];
+
+  // subsequent entries
   for (std::size_t i = 1; i < N; i++)
+  {
     stream << "," << vector[i];
+  }
   stream << ")";
   return stream;
 }
@@ -207,9 +207,15 @@ std::ostream &operator<<(std::ostream &stream, const std::array<std::size_t,N> v
   return stream;
 }
 
-
 template<typename T>
-std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
+std::ostream &operator<<(std::ostream &stream, std::reference_wrapper<T> value)
+{
+  stream << value.get();
+  return stream;
+}
+
+template<typename T,typename A>
+std::ostream &operator<<(std::ostream &stream, const std::vector<T,A> &values)
 {
   if (values.empty())
   {
@@ -223,16 +229,21 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T> &values)
   {
     // with VLOG output all entries
     for (unsigned long i = 1; i < values.size(); i++)
+    {
       stream << "," << values[i];
+    }
   }
   else
   {
     // without VLOG only output the first 100 entries
     unsigned long i = 1;
     for (; i < std::min(100ul,values.size()); i++)
+    {
       stream << "," << values[i];
+    }
     if (i == 100 && i < values.size())
-      stream << "... " << values.size() << " entries total, only showing the first 100";
+      stream << "..." << values[values.size()-3] << "," << values[values.size()-2] << "," << values[values.size()-1]
+        << " (" << values.size() << " entries total, only showing the first 100 (call with -vmodule=vector_operators*=1 to show all))";
   }
 
   stream << "]";
@@ -245,7 +256,7 @@ bool operator==(const std::vector<T> &vector1, const std::vector<T> &vector2)
 {
   if (vector1.size() != vector2.size())
     return false;
-  for (int i=0; i<vector1.size(); i++)
+  for (int i = 0; i < vector1.size(); i++)
     if (vector1[i] != vector2[i])
       return false;
   return true;
@@ -294,12 +305,12 @@ std::ostream &operator<<(std::ostream &stream, const std::set<T> &set)
 //! output operators for tuples or arbitrary type
 template <size_t index, typename... T>
 typename std::enable_if<(index >= sizeof...(T))>::type
-  getString(std::ostream &stream, const std::tuple<T...> &tuple)
+getString(std::ostream &stream, const std::tuple<T...> &tuple)
 {}
 
 template <size_t index, typename... T>
 typename std::enable_if<(index < sizeof...(T))>::type
-  getString(std::ostream &stream, const std::tuple<T...> &tuple)
+getString(std::ostream &stream, const std::tuple<T...> &tuple)
 {
   if (index != 0)
   {
@@ -319,43 +330,3 @@ std::ostream &operator<<(std::ostream& stream, const std::tuple<T...> &tuple)
 
   return stream;
 }
-
-/*
-std::ostream &operator<<(std::ostream &stream, const std::stringstream &stringstream)
-{
-  stream << "\"" << stringstream.str() << "\"";
-  return stream;
-}
-*/
-/*
-std::ostream &operator<<(std::ostream &stream, const Mat &mat)
-{
-  int nRows, nColumns;
-  MatGetSize(mat, &nRows, &nColumns);
-
-  if (nRows*nColumns > 100)
-  {
-    stream << "Mat(" << nRows << "x" << nColumns << ")";
-  }
-  else
-  {
-    stream << PetscUtility::getStringMatrix(mat);
-  }
-  return stream;
-}
-
-std::ostream &operator<<(std::ostream &stream, const Vec &vec)
-{
-  int nEntries;
-  VecGetSize(vec, &nEntries);
-
-  if (nEntries > 100)
-  {
-    stream << "Vec(" << nEntries << ")";
-  }
-  else
-  {
-    stream << PetscUtility::getStringVector(vec);
-  }
-  return stream;
-}*/

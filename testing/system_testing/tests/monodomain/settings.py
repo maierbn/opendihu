@@ -142,6 +142,7 @@ def callback(data, shape, nEntries, dim, timeStepNo, currentTime, null):
   pass
     
 config = {
+  "logFormat": "csv",
   "Meshes": {
     "MeshFibre": {
       "nElements": n_elements,

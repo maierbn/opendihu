@@ -62,8 +62,8 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
       /*
         struct Node
         {
-          std::vector<int> valueIndices;        ///< the indices of the dof values of this node in the exnode file node values (sub-)block (for the particular field variable/component) of the node. If there are not multiple versions, this is simply 0,1,...,ndofs-1. If there are e.g. 2 versions and 8 dofs per node, this can be 0,1,...,7 if the elements uses the 1st version, or 8,...,15 if the element uses the second version. Note, that the real index of the dofs inside the values block may be different when this is not the first component of the block.
-          std::vector<int> scaleFactorIndices;   ///< the indices of all scale factor entries for this node in the exelem element scale factors block. Thus this is kind of a node to element block mapping.
+          std::vector<int> valueIndices;          //< the indices of the dof values of this node in the exnode file node values (sub-)block (for the particular field variable/component) of the node. If there are not multiple versions, this is simply 0,1,...,ndofs-1. If there are e.g. 2 versions and 8 dofs per node, this can be 0,1,...,7 if the elements uses the 1st version, or 8,...,15 if the element uses the second version. Note, that the real index of the dofs inside the values block may be different when this is not the first component of the block.
+          std::vector<int> scaleFactorIndices;   //< the indices of all scale factor entries for this node in the exelem element scale factors block. Thus this is kind of a node to element block mapping.
         };
        */
 
@@ -80,22 +80,22 @@ std::shared_ptr<NodeToDofMapping> ElementToDofMapping::setup(std::shared_ptr<Exf
         /*
           struct NodeDofInformation
           {
-            std::vector<int> dofs;               ///< the dofs of the node
-            std::vector<double> scaleFactors;    ///< the scale factors for Hermite basis functions, not used yet, but set maybe for later use
+            std::vector<int> dofs;               //< the dofs of the node
+            std::vector<double> scaleFactors;    //< the scale factors for Hermite basis functions, not used yet, but set maybe for later use
 
-            struct ElementLocalNode
+            struct elementNoLocalde
             {
-              element_no_t elementGlobalNo;    ///< element global no
-              unsigned int nodeIdx;       ///< node index local to the element
+              element_no_t elementGlobalNo;      //< element global no
+              unsigned int nodeIdx;              //< node index local to the element
             };
-            std::vector<std::vector<ElementLocalNode>> elementsOfVersion;  ///< for each version the global element no. and node index of the element that is adjacent to this node and use the specified version. The number of versions is thus the size of the outer vector
+            std::vector<std::vector<elementNoLocalde>> elementsOfVersion;  //< for each version the global element no. and node index of the element that is adjacent to this node and use the specified version. The number of versions is thus the size of the outer vector
           };
         */
 
         nodeDofInformation.dofs.resize(exfileNode.valueIndices.back()+1);
         nodeDofInformation.elementsOfVersion.resize(versionNo+1);  // create version with given no.
         // add adjacent element to version
-        //NodeToDofMapping::NodeDofInformation::ElementLocalNode elementLocalNode;
+        //NodeToDofMapping::NodeDofInformation::elementNoLocalde elementNoLocalde;
         nodeDofInformation.elementsOfVersion[versionNo].push_back({elementGlobalNo, nodeIndex});
 
         // copy exfileNode valueIndices to nodeDofInformation

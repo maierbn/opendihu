@@ -31,6 +31,7 @@ dirichletBC = {
 }
 
 config = {
+  "logFormat": "csv",
   "FiniteElementMethod" : {
     "nElements": [nx,ny,nz],
     "nodeDimension": 1,

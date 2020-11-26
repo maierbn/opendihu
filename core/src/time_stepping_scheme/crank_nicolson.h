@@ -1,7 +1,7 @@
 #pragma once
 
-#include "time_stepping_scheme/time_stepping_scheme.h"
-#include "time_stepping_scheme/time_stepping_implicit.h"
+#include "time_stepping_scheme/00_time_stepping_scheme.h"
+#include "time_stepping_scheme/03_time_stepping_implicit.h"
 
 namespace TimeSteppingScheme
 {
@@ -18,11 +18,13 @@ public:
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
   void advanceTimeSpan();
   
-  //! initialize matrices
   void initialize();
-  
+
 protected:
   
+  //! initialize matrices and right hand side
+  virtual void initializeWithTimeStepWidth_impl(double timeStepWidth);
+
   //! precomputes the system matrix A=(I - dt/2 * M^(-1)K) for the implicit euler scheme
   void setSystemMatrix(double timeStepWidth);
 

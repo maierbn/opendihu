@@ -32,6 +32,7 @@ config = {
     "physicalExtent": 4.0,
     "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
+    "rightHandSide": [],
   },
   "OutputWriter" : [
     {"format": "Paraview", "interval": 1, "filename": "out", "binary": "false", "fixedFormat": False},
@@ -88,6 +89,7 @@ config = {
     "physicalExtent": 0.5,
     "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
+    "rightHandSide": [],
   },
 }
 )";
@@ -140,6 +142,7 @@ config = {
     "nElements": n,
     "physicalExtent": n,
     "relativeTolerance": 1e-15,
+    "rightHandSide": [],
   },
 }
 )";
@@ -208,6 +211,7 @@ config = {
     "physicalExtent": [6.0, 9.0],
     "dirichletBoundaryConditions": bc,
     "relativeTolerance": 1e-15,
+    "rightHandSide": [],
   },
 }
 )";
@@ -259,6 +263,7 @@ config = {
     "nElements": [4, 4],
     "physicalExtent": [4.0, 4.0],
     "relativeTolerance": 1e-15,
+    "rightHandSide": [],
   },
 }
 )";
@@ -338,6 +343,7 @@ config = {
     "nElements": [4, 4, 4],
     "physicalExtent": [4.0, 4.0, 4.0],
     "relativeTolerance": 1e-15,
+    "rightHandSide": [],
   },
 }
 )";

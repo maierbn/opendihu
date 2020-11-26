@@ -28,7 +28,10 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
   double timeSpan = this->endTime_ - this->startTime_;
   
   LOG(DEBUG) << "ImplicitEuler::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
-    << " n steps: " << this->numberTimeSteps_;
+    << " n steps: " << this->numberTimeSteps_ << ", time span: [" << this->startTime_ << "," << this->endTime_ << "]";
+
+  // recompute the system matrix and rhs if the step width changed
+  this->initializeWithTimeStepWidth(this->timeStepWidth());
 
   Vec solution = this->data_->solution()->valuesGlobal();
 
@@ -37,18 +40,18 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
   
   for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
     {
       LOG(INFO) << "Implicit Euler, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
     
-    //VLOG(1) << "initial solution: " << *this->data_->solution();
+    VLOG(1) << "initial solution (" << this->data_->solution() << "): " << *this->data_->solution();
 
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
     
-    // adjust rhs vector such that boundary conditions are satisfied
+    // adjust rhs vector, set prescribed dofs to prescribed values, such that boundary conditions are satisfied
     this->dirichletBoundaryConditions_->applyInRightHandSide(this->data_->solution(), this->dataImplicit_->boundaryConditionsRightHandSideSummand());
 
     //VLOG(1) << "solution after apply BC: " << *this->data_->solution();
@@ -59,8 +62,11 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
     
     if (VLOG_IS_ON(1))
     {
-      VLOG(1) << "new solution: " << *this->data_->solution();
+      VLOG(1) << "new solution (" << this->data_->solution() << "): " << *this->data_->solution();
     }
+
+    // check if the solution contains Nans or Inf values
+    this->checkForNanInf(timeStepNo, currentTime);
 
     // stop duration measurement
     if (this->durationLogKey_ != "")
@@ -90,24 +96,39 @@ setSystemMatrix(double timeStepWidth)
   
   Mat &inverseLumpedMassMatrix = this->discretizableInTime_.data().inverseLumpedMassMatrix()->valuesGlobal();
   Mat &stiffnessMatrix = this->discretizableInTime_.data().stiffnessMatrix()->valuesGlobal();
-  Mat systemMatrix;
-  
+
   PetscErrorCode ierr;
-  
+
   // compute systemMatrix = M^{-1}K
-  // the result matrix is created by MatMatMult
-  ierr = MatMatMult(inverseLumpedMassMatrix, stiffnessMatrix, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &systemMatrix);
-  this->dataImplicit_->initializeSystemMatrix(systemMatrix);
-  
+  if (!this->dataImplicit_->systemMatrix())
+  {
+    Mat systemMatrix;
+
+    // the result matrix is created by MatMatMult
+    ierr = MatMatMult(inverseLumpedMassMatrix, stiffnessMatrix, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &systemMatrix);
+
+    this->dataImplicit_->initializeSystemMatrix(systemMatrix);
+  }
+  else
+  {
+    // the matrix already exists. As changes to the time step width do not change the nonzero pattern, we can reuse the matrix
+    Mat& systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
+
+    // reuse existing matrix
+    ierr = MatMatMult(inverseLumpedMassMatrix, stiffnessMatrix, MAT_REUSE_MATRIX, PETSC_DEFAULT, &systemMatrix);
+  }
+
+  Mat& systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
+
   // scale systemMatrix by -dt, systemMatrix = -dt*M^{-1}K
-  ierr = MatScale(this->dataImplicit_->systemMatrix()->valuesGlobal(), -timeStepWidth); CHKERRV(ierr);
+  ierr = MatScale(systemMatrix, -timeStepWidth); CHKERRV(ierr);
   
   // add 1 on the diagonal: systemMatrix = I - dt*M^{-1}K
-  ierr = MatShift(this->dataImplicit_->systemMatrix()->valuesGlobal(), 1.0); CHKERRV(ierr);
+  ierr = MatShift(systemMatrix, 1.0); CHKERRV(ierr);
   
   this->dataImplicit_->systemMatrix()->assembly(MAT_FINAL_ASSEMBLY);
   
-  //VLOG(1) << *this->dataImplicit_->systemMatrix();
+  VLOG(1) << *this->dataImplicit_->systemMatrix();
 }
 
-} // namespace TimegSteppingScheme
+} // namespace TimeSteppingScheme

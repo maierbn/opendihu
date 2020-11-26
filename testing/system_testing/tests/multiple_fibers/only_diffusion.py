@@ -221,6 +221,7 @@ for fibre_no_index in range(nInstances):
   print("   Fibre {} is of MU {} and will be stimulated for the first time at {}".format(fibre_no_index, getMotorUnitNo(fibre_no_index), first_stimulation))
 
 config = {
+  "logFormat": "csv",
   "Meshes": meshes,
   "MultipleInstances": {
     "nInstances": nInstances,

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # This file contains functionality to creates a hexaeder mesh out of the rings given by create_rings.py. 
+# The terms "ring" and "loop" are used synonymously in this file.
 # Use create_mesh.py to actual perform the whole pipeline, or look at create_3d_mesh_simple or create_3d_mesh_from_border_points_faces.
 # Output is a dict containing
 #  {
@@ -43,6 +44,8 @@ import scipy.optimize
 import timeit
 
 import stl_debug_output
+import stl_create_rings
+import spline_surface
 
 def triangle_contains_point(triangle, point):
   """ check if a point lies inside a triangle, 2D """
@@ -92,6 +95,15 @@ def triangle_contains_point(triangle, point):
   return (condition, xi)
   
 def transform_to_world_space(x,y,triangles_parametric_space,triangle_list,parametric_space_shape):
+  """
+  map from the parametric domain to the world space
+  :param x: first coordinate in the parametric domain, grid coordinate
+  :param y: second coordinate in the parametric domain, grid coordinate
+  :param triangles_parametric_space: the triangles in the parametric space that were mapped from the world space triangulation using the harmonic map
+  :param triangle_list: list of triangles in the world space
+  :param parametric_space_shape: which type of quadrangulation of the parameter space is given: 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid, 4 = like 3 but move grid points such that mean distance between points in world space gets optimal
+  :return: point in world space that corresponds to (x,y) in parameter space
+  """
 
   # transform to world space
   # find triangle in parametric space which contains grid point
@@ -182,6 +194,7 @@ def transform_to_world_space(x,y,triangles_parametric_space,triangle_list,parame
     p2 = triangle_world_space[1]
     p3 = triangle_world_space[2]
     
+    xi = xi_point
     point_world_space = (1 - xi[0] - xi[1])*p1 + xi[0]*p2 + xi[1]*p3
     return point_world_space
   
@@ -323,19 +336,19 @@ def sample_border_points(loop, length, n_points, target_x, last_loop_start_point
   """
   
   debug = False
-  border_points = []
-  h = float(length) / n_points  # parameter increment
+  border_points = []            # this list will hold the result
+  h = float(length) / n_points  # parameter increment between border points
   
   # determine start point
   center_point = sum(loop)/len(loop)
   if target_x is None:
-    target_x = 0   # plane x=target_x on which the start point will lie, it has to be ensured, that all rings touch this plane
+    target_x = 0.5*(loop[0][0]+loop[-1][0])   # plane x=target_x on which the start point will lie, it has to be ensured, that all rings touch this plane
   
   if debug:
     print("sample_border_points, loop with {} points, length: {}, sample {} points, target_x: {}, h: {}, last_loop_start_point:{}\n".format(len(loop), length, n_points, target_x, h, last_loop_start_point))
-  
-  if debug:
-    # check if length is correct
+    print("loop: {}".format(loop))
+    
+    # check if given length is correct
     l = 0
     p0 = loop[0]
     for p in loop[1:]:
@@ -345,8 +358,6 @@ def sample_border_points(loop, length, n_points, target_x, last_loop_start_point
   
   start_point = None
   start_point_point_index = None
-  
-  #last_loop_start_point = None
   
   # determine if last_loop_start_point is used
   use_last_loop_start_point = False
@@ -415,13 +426,14 @@ def sample_border_points(loop, length, n_points, target_x, last_loop_start_point
   point_index = (point_index+1)%len(loop)
   start_point_reached = False
   loop_iteration_no = 0
+  end_iteration = False
   
-  # loop over points
-  while True:
+  # iterate over the loop of points until the start point is reached, then iterate one more time, collecting the sampled border points in equidistant intervals
+  while not end_iteration:
     loop_point = loop[point_index]
     
     if debug:
-      print("start_point: {}, point_index: {}, start_point_point_index: {}".format(start_point, point_index, start_point_point_index))
+      print(" - loop iteration point_index: {}, start_point_point_index: {} (start_point: {})".format(point_index, start_point_point_index, start_point))
     
     # (if start_point was not determined) if the current edge contains a point that is horizontal in y-direction to the center point and left of it
     # or (if start_point was determined) if the start point is the first one
@@ -435,27 +447,34 @@ def sample_border_points(loop, length, n_points, target_x, last_loop_start_point
     #  and (previous_loop_point[0] <= target_x <= loop_point[0] or \
     #    loop_point[0] <= target_x <= previous_loop_point[0]):
         
-      # if we meet this point again, the loop is closed
+      # here, we are at the start point
+        
+      # if we meet this point again, the loop is closed, 
+      # then proceed with current edge, p0-p1 where is ps is on it (p0-ps-p1), because the part p0-ps was not yet visited
       if start_point_reached:
-        break
-      start_point_reached = True
-      
-      if start_point is None:
-        edge = -previous_loop_point + loop_point 
-        edge_length = np.linalg.norm(edge)
-        alpha = (target_x - previous_loop_point[0]) / edge_length
-        start_point = previous_loop_point + alpha*edge
-      
-      # add starting point of loop as first border points
-      border_points.append(start_point)
-      if debug:
-        print("add start point: ",border_points)
-      
-      previous_loop_point = start_point
-      
-      t_previous_loop_point = 0
-      t_next_border_point = h
+        end_iteration = True
+      else:
+        # now the search for the start point has ended and the normal iterations where border points will be sampled continues
+        start_point_reached = True
+        
+        # if the start point is not yet set
+        if start_point is None:
+          edge = -previous_loop_point + loop_point 
+          edge_length = np.linalg.norm(edge)
+          alpha = (target_x - previous_loop_point[0]) / edge_length
+          start_point = previous_loop_point + alpha*edge
+        
+        # add starting point of loop as first border points
+        border_points.append(start_point)
+        if debug:
+          print("   add start point: ",border_points)
+        
+        previous_loop_point = start_point
+        
+        t_previous_loop_point = 0
+        t_next_border_point = h
           
+    # if we are at the second part of the loop iteration where the actual border points are collected
     if start_point_reached:
       # compute current edge
       edge = -previous_loop_point + loop_point 
@@ -470,15 +489,15 @@ def sample_border_points(loop, length, n_points, target_x, last_loop_start_point
         border_points.append(border_point)
         
         if debug:
-          print("border point {}, t previous: {}, edge length: {}, next: {},  t_previous_loop_point + edge_length: {}".format(border_point, t_previous_loop_point, edge_length, t_next_border_point,  t_previous_loop_point + edge_length))
+          print("   > border point {}, t previous: {}, edge length: {}, next: {},  t_previous_loop_point + edge_length: {}".format(border_point, t_previous_loop_point, edge_length, t_next_border_point,  t_previous_loop_point + edge_length))
         
         t_next_border_point += h
         if debug:
           n_on_edge += 1
-          print("new t_next_border_point: ",t_next_border_point)
+          print("   new t_next_border_point: ",t_next_border_point)
       
       if debug:
-        print("edge length ",edge_length," n_on_edge: ",n_on_edge," t_previous_loop_point: ",t_previous_loop_point," t_next_border_point:",t_next_border_point)
+        print("   edge length {}, edge ({}, {}), n_on_edge: {}, t_previous_loop_point: {} t_next_border_point: {}".format(edge_length,previous_loop_point,loop_point,n_on_edge,t_previous_loop_point,t_next_border_point))
       
       # move on to next edge
       t_previous_loop_point += edge_length
@@ -487,31 +506,44 @@ def sample_border_points(loop, length, n_points, target_x, last_loop_start_point
     point_index = (point_index+1)%len(loop)
     
     loop_iteration_no += 1
+    
+    # if the start point was not found
     if loop_iteration_no == 2*len(loop):
       print("Warning: target plane y={} does not intersect loop, center_point: {}!".format(target_x, center_point))
-      target_x = center_point[0]
+      target_x = None
       loop_iteration_no = 0
-    
+      last_loop_start_point = loop[0]
+      
+      # restart with last_loop_start_point set to the first point in the loop
+      return sample_border_points(loop, length, n_points, target_x, last_loop_start_point)
+  
+  # end of while loop
+  
   if debug:
+    print("visited ring length: {}, actual length: {}".format(t_previous_loop_point, length))
+  
+  if debug:
+    print("distances between border points, note this are not necessary the same as h:")
     p0 = border_points[0]
     for p in border_points[1:]:
-      print(np.linalg.norm(p0-p))
+      print("  {}".format(np.linalg.norm(p0-p)))
       p0 = p
   
-  # if there were too many points collected, due to rounding errors
+  # If there were too many points collected, crop to needed points.
+  # This happens because on the edge of the starting point, p0-ps-p1 (with edge p0-p1 and ps=starting point), the part ps-p1 is visited twice.
   if len(border_points) > n_points:
-    #if debug:
-    print("too many points: {}, n_points: {}".format(len(border_points), n_points))
+    if debug:
+      print("too many points: {}, n_points: {}, {}\n\n".format(len(border_points), n_points, border_points))
     border_points = border_points[:n_points]
+  elif len(border_points) < n_points:
+    print("Error, not enough points: {}, n_points: {}, {}\n\n".format(len(border_points), n_points, border_points))
   
   if debug:
+    print("result: ")
     print("start point: ",start_point)
     print("border points: ",len(border_points))
     print(border_points)
     print("h: ",h)
-    print("distances: ")
-    
-  
     print("n border points: {}".format(len(border_points)))
   
   return start_point,border_points
@@ -547,7 +579,7 @@ def rings_to_border_points(loops, n_points):
     if not loop:
       continue
     
-    # determine target_x
+    # determine target_x, the start point of the loop will lie on the plane x=target_x
     center_points = []
     smoothing_width = min(loop_no, len(sorted_loops)-loop_no-1, 5)
     for i in range(-smoothing_width,smoothing_width+1):
@@ -602,11 +634,14 @@ def create_planar_mesh(border_points, loop_no, n_points, \
   
   t_start = timeit.default_timer()
 
-  debug = False
+  debug = False   # enable debugging output
   
   if debugging_stl_output:
     [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
       markers_grid_points_parametric_space, markers_grid_points_world_space] = stl_triangle_lists
+    
+  if len(border_points) != n_points:
+    print("\nError in create_planar_mesh, n_points: {}, but {} border points given.\n border points: {}\n".format(n_points, len(border_points), border_points))
     
   # triangulate surface in world space
   points = np.reshape(border_points,(n_points,3))
@@ -698,7 +733,16 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       print("maximum area: ",max_area)
   
     #triangulation = triangle.triangulate(data, 'pq')
-    triangulation = triangle.triangulate(data, 'pqa'+str(max_area))
+    
+    try:
+      triangulation = triangle.triangulate(data, 'pqa'+str(max_area))
+    except:
+      print("Triangulation failed, n_points: {}, max_area: {}, loop_no: {}, projected_points: {}".format(n_points,max_area,loop_no,projected_points))
+      
+      t_stop = timeit.default_timer()
+      duration = t_stop - t_start
+      return [], duration
+      
     triangulated_projected_points = np.array(triangulation['vertices'])
     
     # transform projected points back to 3D points
@@ -718,11 +762,12 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       phi = float(original_point_no) / n_original_points * 2 * np.pi
       original_point_phi_value.append(phi)
     
-    # add additional points an ring
+    # add additional points on ring
     # settings
     determine_additional_points_on_ring = True
     rescale_phi = True
-    modify_phi = True
+    if parametric_space_shape == 3 or parametric_space_shape == 4:
+      modify_phi = True
     
     # normal implementation without searching for additional border points on ring that the triangulation created
     if not determine_additional_points_on_ring:
@@ -973,7 +1018,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
     
     #triangle_list = points[point_indices_list]  ## doesn't work sometimes
     
-  print("number of projected points: ",len(projected_points),", number of initial triangles: ", len(point_indices_list))
+  print("  number of projected points: ",len(projected_points),", number of initial triangles: ", len(point_indices_list))
     
   # solve Laplace equation on deformed mesh
   n_dofs = n_points
@@ -1277,7 +1322,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
         # get segment
         if (n_grid_points_y%2 == 1 and j != int(n_grid_points_y/2.)) or n_grid_points_y%2 == 0:
           if j < n_grid_points_y/2.:   # bottom or side
-            if i >= j and i <= n_grid_points_x-1-j:   # bottom
+            if i >= j and i <= n_grid_points_x-1-j:   # bottom quarter /\
           
               # get layer
               a = ((n_grid_points_y-1)/2.-j)*1.0/(n_grid_points_y-1)    # distance between center of square and line of points
@@ -1388,13 +1433,21 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       else:
         point_world_space = transform_to_world_space(x,y,triangles_parametric_space,triangle_list,parametric_space_shape)
     
+      if debug and False:
+        print("modify_phi: {} [{},{}] -> {} (triangles_parametric_space={}, triangle_list={}, parametric_space_shape={})".
+          format(modify_phi, x,y, point_world_space, triangles_parametric_space, triangle_list, parametric_space_shape))
+    
       if point_world_space is None:
         grid_points_world_space[j*n_grid_points_x+i] = np.array([0.0,0.0,0.0])
     
       if point_world_space is not None:
         grid_points_world_space[j*n_grid_points_x+i] = point_world_space
         grid_points_parametric_space[j*n_grid_points_x+i] = np.array([x,y])
-        grid_points_parametric_space_modified[j*n_grid_points_x+i] = np.array([x_modified,y_modified])
+        
+        if modify_phi:
+          grid_points_parametric_space_modified[j*n_grid_points_x+i] = np.array([x_modified,y_modified])
+        else:
+          grid_points_parametric_space_modified[j*n_grid_points_x+i] = grid_points_parametric_space[j*n_grid_points_x+i]
     
   if parametric_space_shape == 4:
     # move grid points such that mean distance between points in world space gets optimal
@@ -1476,11 +1529,11 @@ def create_planar_mesh(border_points, loop_no, n_points, \
   # improve grid_points_world_space
   grid_points_world_space_improved = grid_points_world_space
   
-  if improve_mesh:   # optimize points
+  if improve_mesh:   # optimize points, fix self-intersections and Laplacian smoothing
     import copy
     import random
     random.seed(0)
-    print("improving")
+    print("  improving mesh (fixing self-intersections and Laplacian smoothing)")
     
     grid_points_world_space_improved = copy.deepcopy(grid_points_world_space)
     
@@ -1528,7 +1581,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       return n_ccw >= 3
       
     def does_overlap(p0,p1p2,p3p4):
-      """ check if the triangles [p2 p0 p1] and [p4 p0 p3] overap """
+      """ check if the triangles [p2 p0 p1] and [p4 p0 p3] overlap """
       [p1,p2] = p1p2
       [p3,p4] = p3p4
       a14 = oriented_angle(-p0+p1,-p0+p4) 
@@ -1648,10 +1701,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
           score = get_element_score(p0,p1,p2,p3)
           element_score[j*(n_grid_points_x-1)+i] = score
           
-          #x = grid_points_parametric_space[j*n_grid_points_x+i,0]
-          #y = grid_points_parametric_space[j*n_grid_points_x+i,1]
-      
-        
+         
     # output grid
     output_pre_fix = False
     output_fix = False
@@ -1664,8 +1714,11 @@ def create_planar_mesh(border_points, loop_no, n_points, \
         phi = float(y) * (n_grid_points_y-1.0) / n_grid_points_y  * 2.*np.pi
         for (ii,x) in enumerate(np.linspace(0.0,1.0,n_grid_points_x)):
     
-          if parametric_space_shape == 1 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square 
+          if parametric_space_shape == 1 or parametric_space_shape == 2 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square  
             if ii == n_grid_points_x-1 or jj == n_grid_points_x-1:
+              continue
+          if parametric_space_shape == 0:
+            if ii == n_grid_points_x-1:
               continue
             
           p0_improved = grid_points_world_space_improved[jj*n_grid_points_x+ii]
@@ -1708,169 +1761,214 @@ def create_planar_mesh(border_points, loop_no, n_points, \
     factor = (extent_x*extent_y)/2 * 5e-3
     
     # try to resolve self-intersecting quadrilaterals
-    # loop over elements
-    for i in range(1,n_grid_points_x-2):
-      for j in range(1,n_grid_points_y-2):
-        # p2 p3
-        # p0 p1
-        
-        p0 = grid_points_world_space_improved[j*n_grid_points_x+i]
-        p1 = grid_points_world_space_improved[j*n_grid_points_x+(i+1)%n_grid_points_x]
-        p2 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+i]
-        p3 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x]
-  
-        if not is_properly_oriented(p0,p1,p2,p3):
-          print("self intersection: p0=np.array({}); p1=np.array({}); p2=np.array({}); p3=np.array({}); ".format(p0,p1,p2,p3))
-          
-          indices = [(i,j),(i+1,j),(i,j+1),(i+1,j+1)]
-          
-          # loop over 4 points of element
-          for k in range(4):
-            (ii,jj) = indices[k]
-            
-            p = grid_points_world_space_improved[jj*n_grid_points_x+ii]
-            p_old = np.array(p)
-            # p6 p5 p4
-            # p7 p  p3
-            # p0 p1 p2
-            p0 = grid_points_world_space_improved[(jj-1)*n_grid_points_x+(ii-1)]
-            p1 = grid_points_world_space_improved[(jj-1)*n_grid_points_x+ii]
-            p2 = grid_points_world_space_improved[(jj-1)*n_grid_points_x+(ii+1)]
-            p3 = grid_points_world_space_improved[jj*n_grid_points_x+(ii+1)]
-            p4 = grid_points_world_space_improved[(jj+1)*n_grid_points_x+(ii+1)]
-            p5 = grid_points_world_space_improved[(jj+1)*n_grid_points_x+ii]
-            p6 = grid_points_world_space_improved[(jj+1)*n_grid_points_x+(ii-1)]
-            p7 = grid_points_world_space_improved[jj*n_grid_points_x+(ii-1)]
-          
+    # repeatedly iterate over all elements until no more fixes could be achieved
+    while True:
+      changed_a_point = False
+      are_all_elements_properly_oriented = True
+      n_unresolved_self_intersections = 0
+      
+      # loop over all elements
+      for i in range(0,n_grid_points_x-1):
+        for j in range(0,n_grid_points_y-1):
+          # p2 p3
+          # p0 p1
+      
+          p0 = grid_points_world_space_improved[j*n_grid_points_x+i]
+          p1 = grid_points_world_space_improved[j*n_grid_points_x+(i+1)%n_grid_points_x]
+          p2 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+i]
+          p3 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x]
+    
+          if not is_properly_oriented(p0,p1,p2,p3):
+            are_all_elements_properly_oriented = False
             if output_fix:
-              plt.figure(figsize=(20,20))
-                            
-              plt.plot(p[0],p[1],'go')
-              plt.plot(p0[0],p0[1],'ro')
-              plt.plot(p1[0],p1[1],'ro')
-              plt.plot(p2[0],p2[1],'ro')
-              plt.plot(p3[0],p3[1],'ro')
-              plt.plot(p4[0],p4[1],'ro')
-              plt.plot(p5[0],p5[1],'ro')
-              plt.plot(p6[0],p6[1],'ro')
-              plt.plot(p7[0],p7[1],'ro')
-
-              plt.plot([p0[0],p1[0],p2[0],p3[0],p4[0],p5[0],p6[0],p7[0],p0[0]], [p0[1],p1[1],p2[1],p3[1],p4[1],p5[1],p6[1],p7[1],p0[1]], 'k-')
-              plt.plot([p1[0],p[0]], [p1[1],p[1]], 'k-')
-              plt.plot([p3[0],p[0]], [p3[1],p[1]], 'k-')
-              plt.plot([p5[0],p[0]], [p5[1],p[1]], 'k-')
-              plt.plot([p7[0],p[0]], [p7[1],p[1]], 'k-')
-                
-              s = ""
-              if does_overlap(p,[p1,p3],[p7,p5]):
-                s += "e"
-              if not is_properly_oriented(p0,p1,p7,p):
-                s += "f"
-              if not is_properly_oriented(p1,p2,p,p3):
-                s += "g"
-              if not is_properly_oriented(p7,p,p6,p5):
-                s += "h"
-              if not is_properly_oriented(p,p3,p5,p4):
-                s += "i"
+              print("  self intersection: p0=np.array([{},{},{}]); p1=np.array([{},{},{}]); p2=np.array([{},{},{}]); p3=np.array([{},{},{}]) # {}+{}+{}+{}<3".format(p0[0],p0[1],p0[2],p1[0],p1[1],p1[2],p2[0],p2[1],p2[2],p3[0],p3[1],p3[2],(1 if ccw(p0,p1,p3) else 0),(1 if ccw(p1,p3,p2) else 0),(1 if ccw(p3,p2,p0) else 0),(1 if ccw(p2,p0,p1) else 0)))
+            else:
+              print("  self intersection in element ({},{})".format(i,j))
+            
+            indices = [(i,j),(i+1,j),(i,j+1),(i+1,j+1)]
+            
+            # loop over 4 points of element
+            for k in range(4):
+              (ii,jj) = indices[k]
               
-              plt.savefig("out/{}_{}_areference_out_{}_{}.png".format(i,j,k,s))
-                            
-            n_tries = 0
-            p_changed = np.array(p)
-            while (does_overlap(p_changed,[p1,p3],[p7,p5]) \
-              or not is_properly_oriented(p0,p1,p7,p_changed) or not is_properly_oriented(p1,p2,p_changed,p3) \
-              or not is_properly_oriented(p7,p_changed,p6,p5) or not is_properly_oriented(p_changed,p3,p5,p4)) \
-              and n_tries < 100:
-              
-              p_changed = p + np.array([(random.random()-0.5)*factor, (random.random()-0.5)*factor, 0])
+              # do not consider border points, they cannot be changed
+              if ii <= 0 or jj <= 0 or ii >= n_grid_points_x-1 or jj >= n_grid_points_y-1:
+                continue
               
               if output_fix:
-                plt.figure()
+                print("({},{})/({},{})".format(ii,jj,n_grid_points_x,n_grid_points_y))
+              
+              # the point p will be moved, p0-p7 are the neighbouring points
+              p = grid_points_world_space_improved[jj*n_grid_points_x+ii]
+              p_old = np.array(p)
+              # p6 p5 p4
+              # p7 p  p3
+              # p0 p1 p2
+              p0 = grid_points_world_space_improved[(jj-1)*n_grid_points_x+(ii-1)]
+              p1 = grid_points_world_space_improved[(jj-1)*n_grid_points_x+ii]
+              p2 = grid_points_world_space_improved[(jj-1)*n_grid_points_x+(ii+1)]
+              p3 = grid_points_world_space_improved[jj*n_grid_points_x+(ii+1)]
+              p4 = grid_points_world_space_improved[(jj+1)*n_grid_points_x+(ii+1)]
+              p5 = grid_points_world_space_improved[(jj+1)*n_grid_points_x+ii]
+              p6 = grid_points_world_space_improved[(jj+1)*n_grid_points_x+(ii-1)]
+              p7 = grid_points_world_space_improved[jj*n_grid_points_x+(ii-1)]
+            
+              if output_fix:
+                plt.figure(figsize=(20,20))
                               
-                plt.plot(p[0],p[1],'ko')
-                plt.plot(p_changed[0],p_changed[1],'ro')
-                plt.plot(p0[0],p0[1],'bo')
-                plt.plot(p1[0],p1[1],'bo')
-                plt.plot(p2[0],p2[1],'bo')
-                plt.plot(p3[0],p3[1],'bo')
-                plt.plot(p4[0],p4[1],'bo')
-                plt.plot(p5[0],p5[1],'bo')
-                plt.plot(p6[0],p6[1],'bo')
-                plt.plot(p7[0],p7[1],'bo')
+                plt.plot(p[0],p[1],'go')
+                plt.plot(p0[0],p0[1],'ro')
+                plt.plot(p1[0],p1[1],'ro')
+                plt.plot(p2[0],p2[1],'ro')
+                plt.plot(p3[0],p3[1],'ro')
+                plt.plot(p4[0],p4[1],'ro')
+                plt.plot(p5[0],p5[1],'ro')
+                plt.plot(p6[0],p6[1],'ro')
+                plt.plot(p7[0],p7[1],'ro')
 
                 plt.plot([p0[0],p1[0],p2[0],p3[0],p4[0],p5[0],p6[0],p7[0],p0[0]], [p0[1],p1[1],p2[1],p3[1],p4[1],p5[1],p6[1],p7[1],p0[1]], 'k-')
-                plt.plot([p1[0],p_changed[0]], [p1[1],p_changed[1]], 'k-')
-                plt.plot([p3[0],p_changed[0]], [p3[1],p_changed[1]], 'k-')
-                plt.plot([p5[0],p_changed[0]], [p5[1],p_changed[1]], 'k-')
-                plt.plot([p7[0],p_changed[0]], [p7[1],p_changed[1]], 'k-')
-                
+                plt.plot([p1[0],p[0]], [p1[1],p[1]], 'k-')
+                plt.plot([p3[0],p[0]], [p3[1],p[1]], 'k-')
+                plt.plot([p5[0],p[0]], [p5[1],p[1]], 'k-')
+                plt.plot([p7[0],p[0]], [p7[1],p[1]], 'k-')
+                  
                 s = ""
                 if does_overlap(p,[p1,p3],[p7,p5]):
                   s += "e"
-                if not is_properly_oriented(p0,p1,p7,p_changed):
+                if not is_properly_oriented(p0,p1,p7,p):
                   s += "f"
-                if not is_properly_oriented(p1,p2,p_changed,p3):
+                if not is_properly_oriented(p1,p2,p,p3):
                   s += "g"
-                if not is_properly_oriented(p7,p_changed,p6,p5):
+                if not is_properly_oriented(p7,p,p6,p5):
                   s += "h"
-                if not is_properly_oriented(p_changed,p3,p5,p4):
+                if not is_properly_oriented(p,p3,p5,p4):
                   s += "i"
                 
-                plt.savefig("out/{}_{}_out_{}_{}_{}.png".format(i,j,k,n_tries,s))
-                
-              n_tries += 1
-            
-            if n_tries < 10:
-              #print("successfully resolved self-intersection")
-              grid_points_world_space_improved[jj*n_grid_points_x+ii] = p_changed
+                plt.savefig("out/{}_{}_areference_out_{}_{}.png".format(i,j,k,s))
+                        
+              n_tries = 0
+              size_factor = factor
+              p_changed = np.array(p)
               
-              break
-          
-          if output_fix:
-            p0 = grid_points_world_space_improved[j*n_grid_points_x+i]
-            p1 = grid_points_world_space_improved[j*n_grid_points_x+(i+1)%n_grid_points_x]
-            p2 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+i]
-            p3 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x]
-            print("p0=np.array({}); p1=np.array({}); p2=np.array({}); p3=np.array({}); ".format(p0,p1,p2,p3))
+              def orientation_score(p0,p1,p2,p3):
+                """ how well the quad is oriented, 0=worst, 3=properly """
+                # p2 p3
+                # p0 p1
+                n_ccw = (1 if ccw(p0,p1,p3) else 0) + (1 if ccw(p1,p3,p2) else 0) + (1 if ccw(p3,p2,p0) else 0) + (1 if ccw(p2,p0,p1) else 0)
+                return min(n_ccw,3)
+              
+              initial_score = orientation_score(p0,p1,p7,p_changed) + orientation_score(p1,p2,p_changed,p3) \
+                + orientation_score(p7,p_changed,p6,p5) + orientation_score(p_changed,p3,p5,p4)
+              
+              # while the score is not yet better (and maximum of 200 tries), deflect point p
+              while (\
+                (orientation_score(p0,p1,p7,p_changed) + orientation_score(p1,p2,p_changed,p3) \
+                + orientation_score(p7,p_changed,p6,p5) + orientation_score(p_changed,p3,p5,p4)) <= initial_score \
+                and n_tries < 200):
+                
+                # pseudo-randomly deflect point p
+                p_changed = p + np.array([(random.random()-0.5)*size_factor, (random.random()-0.5)*size_factor, 0])
+                size_factor *= 1.05    # 1.05**200 = 17292
+                
+                if output_fix:
+                  plt.figure()
+                                
+                  plt.plot(p[0],p[1],'ko')
+                  plt.plot(p_changed[0],p_changed[1],'ro')
+                  plt.plot(p0[0],p0[1],'bo')
+                  plt.plot(p1[0],p1[1],'bo')
+                  plt.plot(p2[0],p2[1],'bo')
+                  plt.plot(p3[0],p3[1],'bo')
+                  plt.plot(p4[0],p4[1],'bo')
+                  plt.plot(p5[0],p5[1],'bo')
+                  plt.plot(p6[0],p6[1],'bo')
+                  plt.plot(p7[0],p7[1],'bo')
+
+                  plt.plot([p0[0],p1[0],p2[0],p3[0],p4[0],p5[0],p6[0],p7[0],p0[0]], [p0[1],p1[1],p2[1],p3[1],p4[1],p5[1],p6[1],p7[1],p0[1]], 'k-')
+                  plt.plot([p1[0],p_changed[0]], [p1[1],p_changed[1]], 'k-')
+                  plt.plot([p3[0],p_changed[0]], [p3[1],p_changed[1]], 'k-')
+                  plt.plot([p5[0],p_changed[0]], [p5[1],p_changed[1]], 'k-')
+                  plt.plot([p7[0],p_changed[0]], [p7[1],p_changed[1]], 'k-')
+                  
+                  s = ""
+                  #if does_overlap(p,[p1,p3],[p7,p5]):
+                  #  s += "e"
+                  if not is_properly_oriented(p0,p1,p7,p_changed):
+                    s += "f"
+                  if not is_properly_oriented(p1,p2,p_changed,p3):
+                    s += "g"
+                  if not is_properly_oriented(p7,p_changed,p6,p5):
+                    s += "h"
+                  if not is_properly_oriented(p_changed,p3,p5,p4):
+                    s += "i"
+                  
+                  plt.savefig("out/{}_{}_out_{}_{}_{}_{}.png".format(i,j,k,n_tries,size_factor,s))
+                  plt.close()
+                  
+                n_tries += 1
+              
+              if n_tries < 200:
+                if is_properly_oriented(p0,p1,p2,p3):
+                  print("  \033[0;32mSuccessfully resolved self-intersection ({},{}) after {} iterations\033[0m".format(i,j,n_tries))
+                else:
+                  current_score = (orientation_score(p0,p1,p7,p_changed) + orientation_score(p1,p2,p_changed,p3) \
+                    + orientation_score(p7,p_changed,p6,p5) + orientation_score(p_changed,p3,p5,p4))
+                  print("  improvement regarding self-intersection ({},{}) after {} iterations, score: {} -> {}".format(i,j,n_tries, initial_score, current_score))
+                grid_points_world_space_improved[jj*n_grid_points_x+ii] = p_changed
+                changed_a_point = True
+                
+                if debugging_stl_output:
+                  plt.figure()
+                                
+                  plt.plot(p[0],p[1],'ko')
+                  plt.plot(p_changed[0],p_changed[1],'ro')
+                  plt.plot(p0[0],p0[1],'bo')
+                  plt.plot(p1[0],p1[1],'bo')
+                  plt.plot(p2[0],p2[1],'bo')
+                  plt.plot(p3[0],p3[1],'bo')
+                  plt.plot(p4[0],p4[1],'bo')
+                  plt.plot(p5[0],p5[1],'bo')
+                  plt.plot(p6[0],p6[1],'bo')
+                  plt.plot(p7[0],p7[1],'bo')
+
+                  plt.plot([p0[0],p1[0],p2[0],p3[0],p4[0],p5[0],p6[0],p7[0],p0[0]], [p0[1],p1[1],p2[1],p3[1],p4[1],p5[1],p6[1],p7[1],p0[1]], 'k-')
+                  plt.plot([p1[0],p_changed[0]], [p1[1],p_changed[1]], 'k-')
+                  plt.plot([p3[0],p_changed[0]], [p3[1],p_changed[1]], 'k-')
+                  plt.plot([p5[0],p_changed[0]], [p5[1],p_changed[1]], 'k-')
+                  plt.plot([p7[0],p_changed[0]], [p7[1],p_changed[1]], 'k-')
+                  
+                  score = (orientation_score(p0,p1,p7,p_changed) + orientation_score(p1,p2,p_changed,p3) \
+                    + orientation_score(p7,p_changed,p6,p5) + orientation_score(p_changed,p3,p5,p4))
+                  
+                  plt.savefig("out/{}_{}_out_{}_{}_{}_{}.png".format(i,j,k,n_tries,size_factor,score))
+                  plt.close()
+                  
+                
+                break
+              else:
+                n_unresolved_self_intersections += 1
+                print("  \033[0;31mself-intersection was not resolved after {} iterations\033[0m".format(n_tries))
             
-          
-        # change order of points in quadrilateral (bad idea -> will mess up connectivity)
-        if False:
-          # if the lines (p0,p1) and (p2,p3) intersect, swap points p0 and p2        
-          if lines_intersect(p0,p1,p2,p3):   
-            print("lines_intersect(p0,p1,p2,p3)")
+            if output_fix:
+              p0 = grid_points_world_space_improved[j*n_grid_points_x+i]
+              p1 = grid_points_world_space_improved[j*n_grid_points_x+(i+1)%n_grid_points_x]
+              p2 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+i]
+              p3 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x]
+              print("p0=np.array({}); p1=np.array({}); p2=np.array({}); p3=np.array({}); ".format(p0,p1,p2,p3))
+              
             
-            print("p0=np.array({}); p1=np.array({}); p2=np.array({}); p3=np.array({}); ".format(p0,p1,p2,p3))
-            
-            # swap p0,p2
-            pp2 = np.array(p2)
-            pp0 = np.array(p0)
-            grid_points_world_space_improved[j*n_grid_points_x+i] = pp2
-            grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+i] = pp0
-            p0 = grid_points_world_space_improved[j*n_grid_points_x+i]
-            p2 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+i]
-            print("({},{}) swap p0,p2: still self-intersecting: {}".format(i,j,is_self_intersecting(p0,p1,p2,p3)))
-            
-            print("p0=np.array({}); p1=np.array({}); p2=np.array({}); p3=np.array({}); ".format(p0,p1,p2,p3))
-          
-          # if the lines (p0,p2) and (p1,p3) intersect, swap points p0 and p1        
-          if lines_intersect(p0,p2,p1,p3):
-            print("lines_intersect(p0,p2,p1,p3)")
-            
-            print("p0=np.array({}); p1=np.array({}); p2=np.array({}); p3=np.array({}); ".format(p0,p1,p2,p3))
-            
-            # swap p0,p1
-            pp0 = np.array(p0)
-            pp1 = np.array(p1)
-            grid_points_world_space_improved[j*n_grid_points_x+i] = pp1
-            grid_points_world_space_improved[j*n_grid_points_x+(i+1)%n_grid_points_x] = pp0
-            p0 = grid_points_world_space_improved[j*n_grid_points_x+i]
-            p1 = grid_points_world_space_improved[j*n_grid_points_x+(i+1)%n_grid_points_x]
-            print("({},{}) swap p0,p1: still self-intersecting: {}".format(i,j,is_self_intersecting(p0,p1,p2,p3)))
-            print("p0=np.array({}); p1=np.array({}); p2=np.array({}); p3=np.array({}); ".format(p0,p1,p2,p3))
-          
-      #print("n_grid_points_x: {}, n_grid_points_y: {}, size: {}".format(n_grid_points_x, n_grid_points_y, len(grid_points_world_space_improved)))
+        #print("n_grid_points_x: {}, n_grid_points_y: {}, size: {}".format(n_grid_points_x, n_grid_points_y, len(grid_points_world_space_improved)))
       
+      # if there was a resolved self_intersection, restart iterations, otherwise we are done
+      if not changed_a_point:
+        if are_all_elements_properly_oriented:
+          print("  all elements are properly oriented")
+        break
+     
+      if n_unresolved_self_intersections > 1:
+        print("\033[0;31Abort after {} unresolved self-intersections.    \033[0m".format(n_unresolved_self_intersections))
+        sys.exit(-1)
+  
     # output grid
     if output_post_fix:
       patches_world_improved = []
@@ -1880,10 +1978,13 @@ def create_planar_mesh(border_points, loop_no, n_points, \
         phi = float(y) * (n_grid_points_y-1.0) / n_grid_points_y  * 2.*np.pi
         for (ii,x) in enumerate(np.linspace(0.0,1.0,n_grid_points_x)):
     
-          if parametric_space_shape == 1 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square 
+          if parametric_space_shape == 1 or parametric_space_shape == 2 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square  
             if ii == n_grid_points_x-1 or jj == n_grid_points_x-1:
               continue
-            
+          if parametric_space_shape == 0:
+            if ii == n_grid_points_x-1:
+              continue
+              
           p0_improved = grid_points_world_space_improved[jj*n_grid_points_x+ii]
           p1_improved = grid_points_world_space_improved[jj*n_grid_points_x+(ii+1)%n_grid_points_x]
           p2_improved = grid_points_world_space_improved[(jj+1)%n_grid_points_y*n_grid_points_x+ii]
@@ -1920,411 +2021,91 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       if show_plot:
         plt.show()
       plt.close()
-    # optimize points, move them a little bit such that score of surrounding elements is improved (lower score = better)
-    local_algorithm = True
-    spring_algorithm = False
     
+    # improve point locations by Laplacian smoothing
     random.seed(1)
-    if local_algorithm:
-      for k in range(20):
-        
-        for i in range(1,n_grid_points_x-1):
-          for j in range(1,n_grid_points_y-1):
-                      
-            #i = random.randint(1,n_grid_points_x-2)
-            #j = random.randint(1,n_grid_points_y-2)
-            
-            p = grid_points_world_space_improved[j*n_grid_points_x+i]
-            p_old = np.array(p)
-            # p6 p5 p4
-            # p7 p  p3
-            # p0 p1 p2
-            p0 = grid_points_world_space_improved[(j-1)*n_grid_points_x+(i-1)]
-            p1 = grid_points_world_space_improved[(j-1)*n_grid_points_x+i]
-            p2 = grid_points_world_space_improved[(j-1)*n_grid_points_x+(i+1)]
-            p3 = grid_points_world_space_improved[j*n_grid_points_x+(i+1)]
-            p4 = grid_points_world_space_improved[(j+1)*n_grid_points_x+(i+1)]
-            p5 = grid_points_world_space_improved[(j+1)*n_grid_points_x+i]
-            p6 = grid_points_world_space_improved[(j+1)*n_grid_points_x+(i-1)]
-            p7 = grid_points_world_space_improved[j*n_grid_points_x+(i-1)]
-          
-            characteristic_length = (extent_x+extent_y)/2.
-            factor = (extent_x*extent_y)/2 * 5e-3
-            
-            def objective(p_changed,output=False):
-              # compute variance of areas
-              areas = []
-              # pc pd
-              # pa pb
-              for (pa,pb,pc,pd) in [(p0,p1,p7,p), (p1,p2,p,p3), (p7,p,p6,p5), (p,p3,p5,p4)]:
-                diagonal0 = -pa+pd
-                diagonal1 = -pb+pc
-                
-                areas.append(0.5*abs(diagonal0[0]*diagonal1[1] - diagonal0[1]*diagonal1[0]))
-        
-              variance_areas = np.var(areas)
-                      
-              # compute variance of angles
-              a0 = np.arctan2(np.linalg.norm(np.cross(-p_changed+p3, -p_changed+p5)), np.dot(-p_changed+p3, -p_changed+p5))
-              a1 = np.arctan2(np.linalg.norm(np.cross(-p_changed+p5, -p_changed+p7)), np.dot(-p_changed+p5, -p_changed+p7))
-              a2 = np.arctan2(np.linalg.norm(np.cross(-p_changed+p7, -p_changed+p1)), np.dot(-p_changed+p7, -p_changed+p1))
-              a3 = np.arctan2(np.linalg.norm(np.cross(-p_changed+p1, -p_changed+p3)), np.dot(-p_changed+p1, -p_changed+p3))
-        
-              variance_angles = np.var([a0,a1,a2,a3])
-              variance_angles = 0
-              
-              # compute element score
-              element_score = get_element_score(p0, p1, p7, p_changed) + get_element_score(p1, p2, p_changed, p3) + get_element_score(p7, p_changed, p6, p5) + get_element_score(p_changed, p3, p5, p4)
-              
-              # penalize overlapping quadrilaterals
-              overlapping_penalty = 0
-              if does_overlap(p_changed,[p1,p3],[p7,p5]) \
-                or not is_properly_oriented(p0,p1,p7,p_changed) or not is_properly_oriented(p1,p2,p_changed,p3) or not is_properly_oriented(p7,p_changed,p6,p5) or not is_properly_oriented(p_changed,p3,p5,p4):
-                overlapping_penalty = 10000
-                
-              if quadrilateral_contains_point(p0,p1,p7,p_changed,p3) or quadrilateral_contains_point(p0,p1,p7,p_changed,p2) \
-                or quadrilateral_contains_point(p0,p1,p7,p_changed,p6) or quadrilateral_contains_point(p0,p1,p7,p_changed,p5) \
-                or quadrilateral_contains_point(p1,p2,p_changed,p3,p0) or quadrilateral_contains_point(p1,p2,p_changed,p3,p7) \
-                or quadrilateral_contains_point(p1,p2,p_changed,p3,p5) or quadrilateral_contains_point(p1,p2,p_changed,p3,p4) \
-                or quadrilateral_contains_point(p7,p_changed,p6,p5,p3) or quadrilateral_contains_point(p7,p_changed,p6,p5,p4) \
-                or quadrilateral_contains_point(p7,p_changed,p6,p5,p0) or quadrilateral_contains_point(p7,p_changed,p6,p5,p1) \
-                or quadrilateral_contains_point(p_changed,p3,p5,p4,p7) or quadrilateral_contains_point(p_changed,p3,p5,p4,p6) \
-                or quadrilateral_contains_point(p_changed,p3,p5,p4,p1) or quadrilateral_contains_point(p_changed,p3,p5,p4,p2):
-                overlapping_penalty += 10000
-                
-                if output:
-                  if quadrilateral_contains_point(p0,p1,p7,p_changed,p3) or quadrilateral_contains_point(p0,p1,p7,p_changed,p2):
-                    print("a")
-                  if quadrilateral_contains_point(p0,p1,p7,p_changed,p6) or quadrilateral_contains_point(p0,p1,p7,p_changed,p5):
-                    print("b")
-                  if quadrilateral_contains_point(p1,p2,p_changed,p3,p0) or quadrilateral_contains_point(p1,p2,p_changed,p3,p7):
-                    print("c")
-                  if quadrilateral_contains_point(p1,p2,p_changed,p3,p5) or quadrilateral_contains_point(p1,p2,p_changed,p3,p4):
-                    print("d")
-                  if quadrilateral_contains_point(p7,p_changed,p6,p5,p3) or quadrilateral_contains_point(p7,p_changed,p6,p5,p4):
-                    print("e")
-                  if quadrilateral_contains_point(p7,p_changed,p6,p5,p0) or quadrilateral_contains_point(p7,p_changed,p6,p5,p1):
-                    print("f")
-                  if quadrilateral_contains_point(p_changed,p3,p5,p4,p7) or quadrilateral_contains_point(p_changed,p3,p5,p4,p6):
-                    print("g")
-                  if quadrilateral_contains_point(p_changed,p3,p5,p4,p1) or quadrilateral_contains_point(p_changed,p3,p5,p4,p2):
-                    print("h")
-                
-              
-              if output:
-                print("areas: {:0.2f}, element: {:0.2f}={:0.2f}+{:0.2f}+{:0.2f}+{:0.2f}".format(variance_areas, element_score, get_element_score(p0, p1, p7, p_changed), get_element_score(p1, p2, p_changed, p3), get_element_score(p7, p_changed, p6, p5), get_element_score(p_changed, p3, p5, p4)))
-              
-              #print ("element_score: {}, variance_areas: {}, variance_angles: {}".format(element_score, variance_areas, variance_angles))
-              return element_score + variance_areas + variance_angles + overlapping_penalty
-            
-            old_score = objective(p)
-            new_score = old_score
-            
-            use_nelder_mead = False
-            if use_nelder_mead:
-              initial_values = np.array(p)
-              result = scipy.optimize.minimize(objective, initial_values, method='Nelder-Mead', options={"maxiter":5e1, "disp":False})
-              #print(result["message"])
-              new_score = result["fun"]
-              p_changed = np.array(result["x"])
-              #new_score = objective(p_changed)
-            else:
-              n_tries = 0
-              while new_score >= old_score and n_tries < 10:
-                p_changed = p + np.array([(random.random()-0.5)*factor, (random.random()-0.5)*factor, 0])
-                
-                new_score = objective(p_changed)
-                n_tries += 1
-            
-            if new_score < old_score and new_score < 9000:
-              #print("(i,j): ({},{}) factor: {}, p: {} -> {}, score: {} -> {}".format(i,j,factor,p,p_changed, old_score,new_score))
-              grid_points_world_space_improved[j*n_grid_points_x+i] = p_changed
-              
-              
-              # output grid
-              output = False
-              if output:
-                # print output in objective function
-                objective(p_changed,True)
-                
-                patches_world_improved = []
-                
-                # loop over grid points in parametric space
-                for (jj,y) in enumerate(np.linspace(0.0,1.0,n_grid_points_y)):
-                  phi = float(y) * (n_grid_points_y-1.0) / n_grid_points_y  * 2.*np.pi
-                  for (ii,x) in enumerate(np.linspace(0.0,1.0,n_grid_points_x)):
-              
-                    if parametric_space_shape == 1 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square 
-                      if ii == n_grid_points_x-1 or jj == n_grid_points_x-1:
-                        continue
-                      
-                    p0_improved = grid_points_world_space_improved[jj*n_grid_points_x+ii]
-                    p1_improved = grid_points_world_space_improved[jj*n_grid_points_x+(ii+1)%n_grid_points_x]
-                    p2_improved = grid_points_world_space_improved[(jj+1)%n_grid_points_y*n_grid_points_x+ii]
-                    p3_improved = grid_points_world_space_improved[(jj+1)%n_grid_points_y*n_grid_points_x+(ii+1)%n_grid_points_x]
-                    
-                    quadrilateral = np.zeros((4,2))
-                    quadrilateral[0] = p0_improved[0:2]
-                    quadrilateral[1] = p1_improved[0:2]
-                    quadrilateral[2] = p3_improved[0:2]
-                    quadrilateral[3] = p2_improved[0:2]
-                    
-                    min_x = min(min_x, min(quadrilateral[:,0]))
-                    min_y = min(min_y, min(quadrilateral[:,1]))
-                    max_x = max(max_x, max(quadrilateral[:,0]))
-                    max_y = max(max_y, max(quadrilateral[:,1]))
-                    
-                    polygon = patches.Polygon(quadrilateral, True)
-                    patches_world_improved.append(polygon)
-                    
-                # world space, improved
-                fig, ax = plt.subplots(figsize=(20,20))
-                  
-                xw_improved = np.reshape(grid_points_world_space_improved[:,0], (-1))
-                yw_improved = np.reshape(grid_points_world_space_improved[:,1], (-1))
-
-                patch_collection = collections.PatchCollection(patches_world_improved,edgecolors="k",facecolors="gray",alpha=0.5)
-                ax.add_collection(patch_collection)
-                ax.plot(xw_improved, yw_improved, "ok")
-                ax.plot(p_old[0],p_old[1], 'rx')
-                ax.plot(p_changed[0],p_changed[1], 'g+')
-                ax.set_xlim(min_x,max_x)
-                ax.set_ylim(min_y,max_y)
-                plt.axis('equal')
-                
-                plt.savefig("out/{}{}{}_loop_{:03}_p{}_world_mesh_improved_k{}_{}_{}.png".format(k,i,j,loop_no, os.getpid(), k, old_score, new_score));
-                if show_plot:
-                  plt.show()
-                plt.close()
-    elif spring_algorithm:
-                
-      n_dofs = 2*n_grid_points
-      displacements = np.zeros([n_dofs])   # vector of displacements, this is seeked, it is the solution of k_global * u = f
-      f = np.zeros([n_dofs, 1])   # vector of loads, this is the right hand side
-          
-      # determine fixed dofs and define dirichlet bc
-      fixed_dofs = []
-      dof_no = 0
-      for i in range(0,n_grid_points_x):
-        for j in range(0,n_grid_points_y):
-          if i == 0 or i == n_grid_points_x-1 or j == 0 or j == n_grid_points_y-1:
-            fixed_dofs += [dof_no, dof_no+1]
-          dof_no += 2
-          
-      print("fixed_dofs:",fixed_dofs)
+    for k in range(20):
       
-      c = 0.001       # spring stiffness
-      l_reference = 1.0   # reference length of spring
-      L = l_reference
-
-      def global_stiffness_matrix_times_u(displacements_reduced):
-        
-        debug = False
-        
-        # recover full vector
-        displacements = np.zeros([n_dofs])
-        
-        for dof in range(n_dofs):
-          if not (dof in fixed_dofs):
-            reduced_index = dof - sum([fixed_dof < dof for fixed_dof in fixed_dofs])
-            #print [fixed_dof < dof for fixed_dof in fixed_dofs]
-            #print "reduced_index:", reduced_index
-            displacements[dof] = displacements_reduced[reduced_index]
-        
-        ku_global = np.zeros(n_dofs)
-        
-        # set diagonal entries to 1
-        for dof_no in fixed_dofs:
-          ku_global[dof_no] = 0.0
-          
-        # loop over interior points
-        for i in range(0,n_grid_points_x-1):
-          for j in range(0,n_grid_points_y-1):
-            
-            # p2 p3
-            # p0 p1
-            p0 = grid_points_world_space_improved[j*n_grid_points_x+i]
-            p1 = grid_points_world_space_improved[j*n_grid_points_x+(i+1)]
-            p2 = grid_points_world_space_improved[(j+1)*n_grid_points_x+i]
-            p3 = grid_points_world_space_improved[(j+1)*n_grid_points_x+(i+1)]
-           
-            # --------------------------
-            # horizontal element (p0,p1)
-            if True:
-              id_matrix = [2*(j*n_grid_points_x+i) + 0, 2*(j*n_grid_points_x+i) + 1, 2*(j*n_grid_points_x+i+1) + 0, 2*(j*n_grid_points_x+i+1) + 1]
-              
-              alpha = np.arctan2(p1[1] - p0[1], p1[0] - p0[0])
-             
-              u_node0 = np.array([float(displacements[id_matrix[0]]), float(displacements[id_matrix[1]])])
-              u_node1 = np.array([float(displacements[id_matrix[2]]), float(displacements[id_matrix[3]])])
-              
-              node0_pos = np.array((p0[0],p0[1])) + u_node0
-              node1_pos = np.array((p1[0],p1[1])) + u_node1
-              
-              
-              # current length
-              l = np.linalg.norm(node1_pos - node0_pos)
-              #print("l=",l)
-              f = c*(l-l_reference)
-              
-              # add contribution to global ku
-              ku_global[id_matrix[0]] += -f * np.cos(alpha)
-              ku_global[id_matrix[1]] += -f * np.sin(alpha)
-            
-              ku_global[id_matrix[2]] += f * np.cos(alpha)
-              ku_global[id_matrix[3]] += f * np.sin(alpha)
-            
-            # --------------------------
-            # vertical element (p0,p2)
-            if False:
-              id_matrix = [2*(j*n_grid_points_x+i) + 0, 2*(j*n_grid_points_x+i) + 1, 2*((j+1)*n_grid_points_x+i) + 0, 2*((j+1)*n_grid_points_x+i) + 1]
-            
-              alpha = np.arctan2(p2[1] - p0[1], p2[0] - p0[0])
-              
-              u_node0 = np.array([float(displacements[id_matrix[0]]), float(displacements[id_matrix[1]])])
-              u_node1 = np.array([float(displacements[id_matrix[2]]), float(displacements[id_matrix[3]])])
-              
-              node0_pos = np.array((p0[0],p0[1])) + u_node0
-              node1_pos = np.array((p2[0],p2[1])) + u_node1
-              
-              
-              # current length
-              l = np.linalg.norm(node1_pos - node0_pos)
-              f = c*(l-l_reference)
-              
-              # add contribution to global ku
-              ku_global[id_matrix[0]] += -f * np.cos(alpha)
-              ku_global[id_matrix[1]] += -f * np.sin(alpha)
-            
-              ku_global[id_matrix[2]] += f * np.cos(alpha)
-              ku_global[id_matrix[3]] += f * np.sin(alpha)
-              
-        ku_global = np.delete(ku_global, fixed_dofs, 0)
-        
-        return ku_global
-        
-      if False:
-        # assemble global stiffness matrix
-        # loop over interior points
-        for i in range(0,n_grid_points_x-1):
-          for j in range(0,n_grid_points_y-1):
-            
-            # p2 p3
-            # p0 p1
-            p0 = grid_points_world_space_improved[j*n_grid_points_x+i]
-            p1 = grid_points_world_space_improved[j*n_grid_points_x+(i+1)]
-            p2 = grid_points_world_space_improved[(j+1)*n_grid_points_x+i]
-            p3 = grid_points_world_space_improved[(j+1)*n_grid_points_x+(i+1)]
-           
-            # --------------------------
-            # horizontal element (p0,p1)
-            alpha = np.arctan2(p1[1] - p0[1], p1[0] - p0[0])
-         
-            # compute length of member
-            l = np.linalg.norm(p1-p0)
-            
-            # rotate local stiffness matrix
-            k_local_rotated = rotation_matrix(alpha).dot(k_local*c).dot(rotation_matrix(alpha))
-                    
-            # add contribution of rotated local stiffness matrix to global stiffness matrix
-            id_matrix = [2*(j*n_grid_points_x+i) + 0, 2*(j*n_grid_points_x+i) + 1, 2*(j*n_grid_points_x+i+1) + 0, 2*(j*n_grid_points_x+i+1) + 1]
-            for ii in range(4):
-              for jj in range(4): 
-                dof_i = int(id_matrix[ii])
-                dof_j = int(id_matrix[jj])
-                k_global[dof_i, dof_j] += k_local_rotated[ii, jj]
-            
-            # compute local contribution to prestretch
-            force = c*l*0.1
-            f_local = np.array([[-force],\
-                                [     0],\
-                                [ force],\
-                                [     0]])
-     
-            # rotate local prestretch                                            
-            f_local_rotated = rotation_matrix(alpha).transpose().dot(f_local)
-            
-            # add contribution of pre-stretch to rhs force vector
-            for ii in range(4):
-              dof = int(id_matrix[ii])
-              f[dof] += f_local_rotated[ii]
-            
-            # --------------------------
-            # vertical element (p0,p2)
-            alpha = np.arctan2(p2[1] - p0[1], p2[0] - p0[0])
-         
-            # compute length of member
-            l = np.linalg.norm(p2-p0)
-            
-            # rotate local stiffness matrix
-            k_local_rotated = rotation_matrix(alpha).transpose().dot(k_local*c).dot(rotation_matrix(alpha))
-                    
-            # add contribution of rotated local stiffness matrix to global stiffness matrix
-            id_matrix = [2*(j*n_grid_points_x+i) + 0, 2*(j*n_grid_points_x+i) + 1, 2*((j+1)*n_grid_points_x+i) + 0, 2*((j+1)*n_grid_points_x+i) + 1]
-            for ii in range(4):
-              for jj in range(4): 
-                dof_i = int(id_matrix[ii])
-                dof_j = int(id_matrix[jj])
-                k_global[dof_i, dof_j] += k_local_rotated[ii, jj]
-          
-      
-      #f_reduced = np.delete(f, fixed_dofs, 0)
-      #k_global_reduced = np.delete(k_global, fixed_dofs, 0)
-      #k_global_reduced = np.delete(k_global_reduced, fixed_dofs, 1)
-          
-      # solve system
-      use_casadi = False
-      if use_casadi:
-        try:
-          import casadi   # sudo pip install casadi
-
-          print("n_dofs:",n_dofs)
-
-          # Symbols/expressions
-          displacements = casadi.SX.sym('u',n_dofs)
-          f = global_stiffness_matrix_times_u(displacements)
-
-          nlp = {}                 # NLP declaration
-          nlp['x']= displacements # decision vars
-          nlp['f'] = f             # objective
-          #nlp['g'] = rotation_angle(x,y)             # constraints
-          
-          print("create solver")
-          # Create solver instance
-          F = casadi.nlpsol('F','ipopt',nlp);
-
-          print("solve")
-          # Solve the problem using a guess
-          #result = F(x0=initial_values, ubg=370./180.*np.pi, lbg=350./180.*np.pi)
-          result = F()
-          print("result:{}".format(result))
-          displacements = result['x']
-          
-          #displacements_reduced = np.linalg.solve(k_global_reduced, f_reduced)
-          #print("solution: ",displacements_reduced)
-        except:
-          print("Linear system has no solution!")
-        
-      else:
-        x0 = np.zeros(n_dofs-len(fixed_dofs))
-        result = scipy.optimize.root(global_stiffness_matrix_times_u, x0)
-        print("result: ",result)
-        displacements_reduced = result["x"]
-        
-      # loop over interior points
-      if False:
-        dof_no = 0
-        for i in range(1,n_grid_points_x-1):
-          for j in range(1,n_grid_points_y-1):
-            grid_points_world_space_improved[j*n_grid_points_x+i] += np.array([displacements_reduced[dof_no,0], displacements_reduced[dof_no+1,0], 0])
-            dof_no += 2
-            
-      dof_no = 0
       for i in range(1,n_grid_points_x-1):
         for j in range(1,n_grid_points_y-1):
-          grid_points_world_space_improved[j*n_grid_points_x+i] += np.array([displacements_reduced[dof_no], displacements_reduced[dof_no+1], 0])
-        dof_no += 2
-      
+                    
+          p = grid_points_world_space_improved[j*n_grid_points_x+i]
+          p_old = np.array(p)
+          # p6 p5 p4
+          # p7 p  p3
+          # p0 p1 p2
+          p0 = grid_points_world_space_improved[(j-1)*n_grid_points_x+(i-1)]
+          p1 = grid_points_world_space_improved[(j-1)*n_grid_points_x+i]
+          p2 = grid_points_world_space_improved[(j-1)*n_grid_points_x+(i+1)]
+          p3 = grid_points_world_space_improved[j*n_grid_points_x+(i+1)]
+          p4 = grid_points_world_space_improved[(j+1)*n_grid_points_x+(i+1)]
+          p5 = grid_points_world_space_improved[(j+1)*n_grid_points_x+i]
+          p6 = grid_points_world_space_improved[(j+1)*n_grid_points_x+(i-1)]
+          p7 = grid_points_world_space_improved[j*n_grid_points_x+(i-1)]
+        
+          p_changed = 0.125 * (p0+p1+p2+p3+p4+p5+p6+p7)
+          
+          grid_points_world_space_improved[j*n_grid_points_x+i] = p_changed
+          
+          # output grid
+          output = False
+          if output:
+            # print output in objective function
+            objective(p_changed,True)
+            
+            patches_world_improved = []
+            
+            # loop over grid points in parametric space
+            for (jj,y) in enumerate(np.linspace(0.0,1.0,n_grid_points_y)):
+              phi = float(y) * (n_grid_points_y-1.0) / n_grid_points_y  * 2.*np.pi
+              for (ii,x) in enumerate(np.linspace(0.0,1.0,n_grid_points_x)):
+          
+                if parametric_space_shape == 1 or parametric_space_shape == 2 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square  
+                  if ii == n_grid_points_x-1 or jj == n_grid_points_x-1:
+                    continue
+                if parametric_space_shape == 0:
+                  if ii == n_grid_points_x-1:
+                    continue
+                    
+                p0_improved = grid_points_world_space_improved[jj*n_grid_points_x+ii]
+                p1_improved = grid_points_world_space_improved[jj*n_grid_points_x+(ii+1)%n_grid_points_x]
+                p2_improved = grid_points_world_space_improved[(jj+1)%n_grid_points_y*n_grid_points_x+ii]
+                p3_improved = grid_points_world_space_improved[(jj+1)%n_grid_points_y*n_grid_points_x+(ii+1)%n_grid_points_x]
+                
+                quadrilateral = np.zeros((4,2))
+                quadrilateral[0] = p0_improved[0:2]
+                quadrilateral[1] = p1_improved[0:2]
+                quadrilateral[2] = p3_improved[0:2]
+                quadrilateral[3] = p2_improved[0:2]
+                
+                min_x = min(min_x, min(quadrilateral[:,0]))
+                min_y = min(min_y, min(quadrilateral[:,1]))
+                max_x = max(max_x, max(quadrilateral[:,0]))
+                max_y = max(max_y, max(quadrilateral[:,1]))
+                
+                polygon = patches.Polygon(quadrilateral, True)
+                patches_world_improved.append(polygon)
+                
+            # world space, improved
+            fig, ax = plt.subplots(figsize=(20,20))
+              
+            xw_improved = np.reshape(grid_points_world_space_improved[:,0], (-1))
+            yw_improved = np.reshape(grid_points_world_space_improved[:,1], (-1))
+
+            patch_collection = collections.PatchCollection(patches_world_improved,edgecolors="k",facecolors="gray",alpha=0.5)
+            ax.add_collection(patch_collection)
+            ax.plot(xw_improved, yw_improved, "ok")
+            ax.plot(p_old[0],p_old[1], 'rx')
+            ax.plot(p_changed[0],p_changed[1], 'g+')
+            ax.set_xlim(min_x,max_x)
+            ax.set_ylim(min_y,max_y)
+            plt.axis('equal')
+            
+            plt.savefig("out/{}{}{}_loop_{:03}_p{}_world_mesh_improved_k{}_{}_{}.png".format(k,i,j,loop_no, os.getpid(), k, old_score, new_score));
+            if show_plot:
+              plt.show()
+            plt.close()
+    
   if debugging_stl_output:
     # create triangles of new grid points mesh
     grid_point_indices_world_space = []
@@ -2391,10 +2172,12 @@ def create_planar_mesh(border_points, loop_no, n_points, \
           [point+diag1,point+diag3,point+diag7],[point+diag1,point+diag7,point+diag5]  # right
         ]
 
-        if parametric_space_shape == 1 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square 
+        if parametric_space_shape == 1 or parametric_space_shape == 2 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square  
           if i == n_grid_points_x-1 or j == n_grid_points_x-1:
             continue
-          
+        if parametric_space_shape == 0:
+          if i == n_grid_points_x-1:
+            continue
         # p2 p3
         # p0 p1
           
@@ -2547,8 +2330,12 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       p = collections.PatchCollection(patches_parametric_modified,edgecolors="k",facecolors="white")
       ax[0,2].add_collection(p)
       ax[0,2].plot([p[0] for p in parametric_points_modified],[p[1] for p in parametric_points_modified], 'ko')
-      ax[0,2].set_xlim(-1.1,1.1)
-      ax[0,2].set_ylim(-1.1,1.1)
+      if parametric_space_shape == 1 or parametric_space_shape == 2:
+        ax[0,2].set_xlim(-0.1,1.1)
+        ax[0,2].set_ylim(-0.1,1.1)
+      else:
+        ax[0,2].set_xlim(-1.1,1.1)
+        ax[0,2].set_ylim(-1.1,1.1)
       plt.axis('equal')
         
       for j in range(n_grid_points_y):
@@ -2584,8 +2371,12 @@ def create_planar_mesh(border_points, loop_no, n_points, \
             ax[0,2].plot(p[0], p[1], 'ko')
         
     ax[0,2].set_title('quadrangulation in parametric space')
-    ax[0,2].set_xlim(-1.1,1.1)
-    ax[0,2].set_ylim(-1.1,1.1)
+    if parametric_space_shape == 1 or parametric_space_shape == 2:
+      ax[0,2].set_xlim(-0.1,1.1)
+      ax[0,2].set_ylim(-0.1,1.1)
+    else:
+      ax[0,2].set_xlim(-1.1,1.1)
+      ax[0,2].set_ylim(-1.1,1.1)
     
     # parametric space
     ax[1,0].triplot(u_list,v_list,point_indices_list,color='k')
@@ -2637,7 +2428,19 @@ def create_planar_mesh(border_points, loop_no, n_points, \
     ax[1,2].set_title('after improving')
     ax[1,2].set_aspect('equal')
     
-    plt.savefig("out/loop_{:03}_p{}_harmonic_map.png".format(loop_no, os.getpid()))
+    filename = "out/loop_{:03}_p{}_harmonic_map.png".format(loop_no, os.getpid())
+    dirname = os.path.dirname(filename)
+    if not os.path.exists(dirname):
+      print("Create directory \"{}\".".format(dirname))
+      os.makedirs(dirname)
+    print("Save \"{}\".".format(filename))
+    
+    matplotlib.rcParams.update({
+      'font.size': 24,
+      'lines.markersize': 10
+    })
+      
+    plt.savefig(filename)
     if show_plot:
       plt.show()
     plt.close()
@@ -2666,8 +2469,12 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       p = collections.PatchCollection(patches_parametric_modified,edgecolors="k",facecolors="white")
       ax.add_collection(p)
       ax.plot([p[0] for p in parametric_points_modified],[p[1] for p in parametric_points_modified], 'ko')
-      ax.set_xlim(-1.1,1.1)
-      ax.set_ylim(-1.1,1.1)
+      if parametric_space_shape == 1 or parametric_space_shape == 2:
+        ax.set_xlim(-0.1,1.1)
+        ax.set_ylim(-0.1,1.1)
+      else:
+        ax.set_xlim(-1.1,1.1)
+        ax.set_ylim(-1.1,1.1)
       plt.axis('equal')
         
       for j in range(n_grid_points_y):
@@ -2906,7 +2713,7 @@ def create_3d_mesh_simple(n_points_x, loops):
   for loop_no,(border_points,length) in enumerate(zip(border_point_loops,lengths)):
     
     print("")
-    print("Loop {}/{} with {} border points, length: {}".format(loop_no, n_loops, len(border_points), length))
+    print("Ring {}/{} with {} border points, length: {}".format(loop_no, n_loops, len(border_points), length))
     
     # create 2D mesh with border_points
     show_plot = False
@@ -2919,9 +2726,7 @@ def create_3d_mesh_simple(n_points_x, loops):
   data = stl_create_mesh.create_3d_mesh(loop_grid_points, n_grid_points_x, n_grid_points_y, debugging_stl_output, [])
   return data
 
-
-
-def create_3d_mesh_from_border_points_faces(border_points_faces, improve_mesh):
+def create_3d_mesh_from_border_points_faces(border_points_faces, improve_mesh, level_no):
   """
   Create the 3D mesh from border points which are organised as faces.
   :param border_points_faces: [border_points_0minus, border_points_0plus, border_points_1minus, border_points_1plus]
@@ -2993,7 +2798,7 @@ def create_3d_mesh_from_border_points_faces(border_points_faces, improve_mesh):
     n_grid_points_y = n_points_x+1
 
     print("")
-    print("Loop {}/{} with {} border points".format(loop_no, n_loops, n_points))
+    print("Level {}, ring {}/{} with {} border points".format(level_no, loop_no, n_loops, n_points))
     #print("border points: ", border_points)
     
     # create 2D mesh with border_points
@@ -3037,6 +2842,9 @@ def create_3d_mesh_from_border_points_faces(border_points_faces, improve_mesh):
   if True:
     for loop_no,border_points in enumerate(border_point_loops):
       loop_grid_points[loop_no] = handle_loop(loop_no, border_points)
+      
+      if len(loop_grid_points[loop_no]) == 0:
+        return None
   
   # concurrent execution, currently not working, but not clear why
   if False:
@@ -3061,9 +2869,9 @@ def create_3d_mesh_from_border_points_faces(border_points_faces, improve_mesh):
           try:
             result = future.result()
           except Exception as exc:
-            print("Loop {} generated an exception: {}".format(loop_no, exc))
+            print("Ring {} generated an exception: {}".format(loop_no, exc))
           else:
-            print("Loop {}/{} finished".format(loop_no,n_loops))
+            print("Ring {}/{} finished".format(loop_no,n_loops))
             loop_grid_points[loop_no] = result
     except Exception as e:
       print(e)

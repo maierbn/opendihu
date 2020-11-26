@@ -11,8 +11,8 @@ namespace SpatialDiscretization
 {
 
 
-template<typename FunctionSpaceType, typename QuadratureType, typename Term>
-void FiniteElementMethodMatrixInverseLumpedMass<FunctionSpaceType, QuadratureType, Term>::
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents, typename Term>
+void FiniteElementMethodMatrixInverseLumpedMass<FunctionSpaceType, QuadratureType, nComponents, Term>::
 setInverseLumpedMassMatrix()
 {
   LOG(TRACE) << "setInverseLumpedMassMatrix";

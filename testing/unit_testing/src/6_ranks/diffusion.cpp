@@ -61,9 +61,12 @@ config = {
           "nElements": [nx, ny],
           "physicalExtent": [2*nx, 2*ny],
           "relativeTolerance": 1e-15,
+          "dirichletBoundaryConditions": {},
+          "neumannBoundaryConditions": [],
+          "prefactor": 1,
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out0", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -115,9 +118,12 @@ config = {
           "nElements": [nx, ny],
           "physicalExtent": [2*nx, 2*ny],
           "relativeTolerance": 1e-15,
+          "dirichletBoundaryConditions": {},
+          "neumannBoundaryConditions": [],
+          "prefactor": 1,
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out0", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -130,7 +136,7 @@ config = {
   problemSerial.run();
 
 
-  std::vector<std::string> outputFilesToCheck = {"out_0000004.py", "out_0000004.0.py", "out_0000004.1.py", "out_0000004.2.py", "out_0000004.3.py", "out_0000004.4.py", "out_0000004.5.py"};
+  std::vector<std::string> outputFilesToCheck = {"out0_0000004.py", "out0_0000004.0.py", "out0_0000004.1.py", "out0_0000004.2.py", "out0_0000004.3.py", "out0_0000004.4.py", "out0_0000004.5.py"};
   if (ownRankNo == 0)
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);
@@ -191,9 +197,12 @@ config = {
           "nElements": [nx, ny],
           "physicalExtent": [2*nx, 2*ny],
           "relativeTolerance": 1e-15,
+          "dirichletBoundaryConditions": {},
+          "neumannBoundaryConditions": [],
+          "prefactor": 1,
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out1", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -253,9 +262,12 @@ config = {
           "nRanks": [3,2],
           "physicalExtent": [2*nx, 2*ny],
           "relativeTolerance": 1e-15,
+          "dirichletBoundaryConditions": {},
+          "neumannBoundaryConditions": [],
+          "prefactor": 1,
         },
         "OutputWriter" : [
-          {"format": "PythonFile", "filename": "out", "outputInterval": 1, "binary": False}
+          {"format": "PythonFile", "filename": "out1", "outputInterval": 1, "binary": False}
         ]
       }
     }]
@@ -268,7 +280,7 @@ config = {
 
   problemLocalSettings.run();
 
-  std::vector<std::string> outputFilesToCheck = {"out_0000004.py", "out_0000004.0.py", "out_0000004.1.py", "out_0000004.2.py", "out_0000004.3.py", "out_0000004.4.py", "out_0000004.5.py"};
+  std::vector<std::string> outputFilesToCheck = {"out1_0000004.py", "out1_0000004.0.py", "out1_0000004.1.py", "out1_0000004.2.py", "out1_0000004.3.py", "out1_0000004.4.py", "out1_0000004.5.py"};
   if (ownRankNo == 0)
   {
     assertParallelEqualsSerialOutputFiles(outputFilesToCheck);

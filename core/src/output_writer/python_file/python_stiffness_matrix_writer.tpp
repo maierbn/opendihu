@@ -10,8 +10,8 @@ namespace OutputWriter
 {
 
 template<int D,typename BasisFunctionType,typename Term>
-void PythonStiffnessMatrixWriter<Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term>>::
-writeNumpySolution(Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term> &data, std::string filename)
+void PythonStiffnessMatrixWriter<Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,1,Term>>::
+writeNumpySolution(Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,1,Term> &data, std::string filename)
 {
   // This should dump debugging data, e.g. matrices in a numpy array format.
   // But because there are issues with linking to the numpy library, it is left out.
@@ -52,8 +52,8 @@ writeNumpySolution(Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::Struc
 }
 
 template<int D,typename BasisFunctionType,typename Term>
-void PythonStiffnessMatrixWriter<Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term>>::
-writeMatrices(Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,Term> &data, std::string filename)
+void PythonStiffnessMatrixWriter<Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,1,Term>>::
+writeMatrices(Data::FiniteElements<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<D>,BasisFunctionType>,1,Term> &data, std::string filename)
 {
   // solution and rhs vectors in mesh shape
   // determine file names
@@ -113,7 +113,7 @@ template<typename DataType>
 void PythonStiffnessMatrixWriter<DataType>::
 writeNumpySolution(DataType &data, std::string filename)
 {
- // TODO: change to data.OutputFieldVariables instead of data.solution
+ // TODO: change to data.FieldVariablesForOutputWriter instead of data.solution
 
  /*
   // determine file names

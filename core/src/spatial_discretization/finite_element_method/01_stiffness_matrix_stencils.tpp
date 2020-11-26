@@ -8,8 +8,8 @@
 #include "mesh/structured_regular_fixed.h"
 #include "basis_function/lagrange.h"
 
-#include <Python.h>
 #include <memory>
+#include <functional>
 
 #include "spatial_discretization/spatial_discretization.h"
 #include "interfaces/runnable.h"
@@ -26,8 +26,8 @@ namespace SpatialDiscretization
 {
 
 // 1D stiffness matrix
-template<typename QuadratureType, typename Term>
-void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<1>, Equation::hasLaplaceOperator<Term>,BasisFunction::LagrangeOfOrder<1>>::
+template<typename QuadratureType,typename Term>
+void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>,BasisFunction::LagrangeOfOrder<1>>,QuadratureType,1,Term,Mesh::StructuredRegularFixedOfDimension<1>,Equation::hasLaplaceOperator<Term>,BasisFunction::LagrangeOfOrder<1>>::
 setStiffnessMatrix()
 {
   LOG(TRACE) << "setStiffnessMatrix 1D for Mesh::RegularFixed using stencils";
@@ -38,10 +38,11 @@ setStiffnessMatrix()
   std::shared_ptr<FunctionSpaceType> functionSpace = std::static_pointer_cast<FunctionSpaceType>(this->data_.functionSpace());
   element_no_t nElements = functionSpace->nElementsLocal();
   node_no_t nNodes0 = functionSpace->nNodesLocalWithGhosts(0);
-  double elementLength = functionSpace->meshWidth();
+  const double elementLength = functionSpace->meshWidth();
 
   double integralFactor = 1./elementLength;
-  double prefactor = this->specificSettings_.getOptionDouble("prefactor", 1.0);
+  double prefactor;
+  this->prefactor_.getValue((element_no_t)0, prefactor);  // prefactor value is constant over the domain
 
   integralFactor = prefactor*integralFactor;
 
@@ -101,8 +102,8 @@ setStiffnessMatrix()
 }
 
 // 2D stiffness matrix
-template<typename QuadratureType, typename Term>
-void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<2>, Equation::hasLaplaceOperator<Term>,BasisFunction::LagrangeOfOrder<1>>::
+template<typename QuadratureType,typename Term>
+void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<2>,BasisFunction::LagrangeOfOrder<1>>,QuadratureType,1,Term,Mesh::StructuredRegularFixedOfDimension<2>,Equation::hasLaplaceOperator<Term>,BasisFunction::LagrangeOfOrder<1>>::
 setStiffnessMatrix()
 {
   LOG(TRACE) << "setStiffnessMatrix 2D for Mesh::RegularFixed using stencils";
@@ -126,7 +127,8 @@ setStiffnessMatrix()
   }
 
   double integralFactor = 1.;
-  double prefactor = this->specificSettings_.getOptionDouble("prefactor", 1.0);
+  double prefactor;
+  this->prefactor_.getValue(0, prefactor);  // prefactor value is constant over the domain
 
   integralFactor = prefactor*integralFactor;
 
@@ -158,9 +160,9 @@ setStiffnessMatrix()
     {1./6, -2./3}
   };
 
-  auto dofIndex = [&functionSpace](int x, int y)
+  std::function<node_no_t(int,int)> dofIndex = [&functionSpace](int x, int y) -> node_no_t
   {
-    return functionSpace->getNodeNo(std::array<int,2>({x,y}));  // nDofsPerNode == 1
+    return functionSpace->meshPartition()->getNodeNoLocal(std::array<int,2>({x,y}));  // nDofsPerNode == 1
   };
   double value;
   dof_no_t dofNo;
@@ -319,8 +321,8 @@ setStiffnessMatrix()
 }
 
 // 3D stiffness matrix
-template<typename QuadratureType, typename Term>
-void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<3>, Equation::hasLaplaceOperator<Term>,BasisFunction::LagrangeOfOrder<1>>::
+template<typename QuadratureType,typename Term>
+void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<3>,BasisFunction::LagrangeOfOrder<1>>,QuadratureType,1,Term,Mesh::StructuredRegularFixedOfDimension<3>,Equation::hasLaplaceOperator<Term>,BasisFunction::LagrangeOfOrder<1>>::
 setStiffnessMatrix()
 {
   typedef FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> FunctionSpaceType;
@@ -348,7 +350,8 @@ setStiffnessMatrix()
   }
 
   double integralFactor = elementLength0;
-  double prefactor = this->specificSettings_.getOptionDouble("prefactor", 1.0);
+  double prefactor;
+  this->prefactor_.getValue(0, prefactor);  // prefactor value is constant over the domain
 
   integralFactor = prefactor*integralFactor;
 
@@ -414,7 +417,7 @@ setStiffnessMatrix()
 
   auto dofIndex = [&functionSpace](int x, int y, int z)
   {
-    return functionSpace->getNodeNo(std::array<int,3>({x,y,z}));  // nDofsPerNode == 1
+    return functionSpace->meshPartition()->getNodeNoLocal(std::array<int,3>({x,y,z}));  // nDofsPerNode == 1
   };
   double value;
   dof_no_t dofNo;

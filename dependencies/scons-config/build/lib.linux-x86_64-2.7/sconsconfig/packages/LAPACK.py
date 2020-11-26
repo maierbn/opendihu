@@ -21,7 +21,7 @@ class LAPACK(Package):
   def __init__(self, **kwargs):
     defaults = {
         #'download_url': 'https://github.com/Reference-LAPACK/lapack-release/archive/lapack-3.7.1.zip',
-        'download_url': 'http://github.com/xianyi/OpenBLAS/archive/v0.2.20.tar.gz',
+        'download_url': 'http://github.com/xianyi/OpenBLAS/archive/v0.3.7.tar.gz',
     }
     defaults.update(kwargs)
     super(LAPACK, self).__init__(**defaults)
@@ -61,6 +61,11 @@ return EXIT_SUCCESS;
     if "docker" in output:
       run_in_docker = True
     
+    # detect if we are on kryton, the POWER9 machine of SGS
+    install_on_krypton = False
+    if os.environ.get("HOSTNAME") == "krypton":
+      install_on_krypton = True
+      
     # Setup the build handler.
     if os.environ.get("PE_ENV") is not None:
     #if os.environ.get("LIBSCI_BASE_DIR") is not None:
@@ -114,18 +119,22 @@ return EXIT_SUCCESS;
       if run_in_docker:
         self.set_build_handler([
           'mkdir -p ${PREFIX}',
-          'cd ${SOURCE_DIR} && make DYNAMIC_ARCH=1 USE_OPENMP=1 && make install PREFIX=${PREFIX} USE_OPENMP=1',
+          'cd ${SOURCE_DIR} && make DYNAMIC_ARCH=1 USE_OPENMP=0 && make install PREFIX=${PREFIX} USE_OPENMP=1',
         ])
         self.number_output_lines = 30662
-        
+      elif install_on_krypton:
+        self.set_build_handler([
+          'mkdir -p ${PREFIX}',
+          'cd ${SOURCE_DIR} && make TARGET=POWER9 USE_OPENMP=0 CC='+ctx.env["CC"]+' CXX='+ctx.env["CXX"]+' FTN=gfortran && make install PREFIX=${PREFIX} USE_OPENMP=0',
+        ])
       else:                
         self.set_build_handler([
           'mkdir -p ${PREFIX}',
-          'cd ${SOURCE_DIR} && make USE_OPENMP=1 && make install PREFIX=${PREFIX} USE_OPENMP=1',
+          'cd ${SOURCE_DIR} && make USE_OPENMP=0 && make install PREFIX=${PREFIX} USE_OPENMP=0',
         ])
         self.number_output_lines = 19129
     
-      self.libs = ["openblas"]
+      self.libs = [["openblas"],["blas"]]
       self.headers = ["lapacke.h"]
 
     env = ctx.env

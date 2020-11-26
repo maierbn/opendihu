@@ -33,14 +33,14 @@ public:
   //! inherit constructor
   using FunctionSpacePartition<MeshType,BasisFunctionType>::FunctionSpacePartition;
 
-  //! return the local dof number of element-local dof dofIndex of element elementNo
-  dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
+  //! return the local dof number of element-local dof dofIndex of element elementNoLocal, the returned dof can be a ghost dof
+  dof_no_t getDofNo(element_no_t elementNoLocal, int dofIndex) const;
 
-  //! return the local node number of element-local node nodeIndex of element with local no elementNo
-  node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
+  //! return the local node number of element-local node nodeIndex of element with local no elementNoLocal, the returned node no. can be a ghost node no.
+  node_no_t getNodeNo(element_no_t elementNoLocal, int nodeIndex) const;
 
-  //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoGlobal
-  global_no_t getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const;
+  //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoLocalGlobal
+  global_no_t getNodeNoGlobalNatural(global_no_t elementNoLocalGlobalNatural, int nodeIndex) const;
 
   //! get all dofs of a specific node, as vector
   void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;
@@ -53,9 +53,6 @@ public:
 
   //! get neighbouring node to nodeNoLocal or -1 if there is no such node, nodeNoLocal has to be a non-ghost local node
   node_no_t getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const;
-
-  //! get node local no from the local coordinate in natural local numbering
-  node_no_t getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const;
 };
 
 /** class to compute local dof and node no.s, partial specialization for structured mesh, D=2
@@ -68,14 +65,14 @@ public:
   //! inherit constructor
   using FunctionSpacePartition<MeshType,BasisFunctionType>::FunctionSpacePartition;
 
-  //! return the local dof number of element-local dof dofIndex of element elementNo
-  dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
+  //! return the local dof number of element-local dof dofIndex of element elementNoLocal, the returned dof can be a ghost dof
+  dof_no_t getDofNo(element_no_t elementNoLocal, int dofIndex) const;
 
-  //! return the local node number of element-local node nodeIndex of element elementNo
-  node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
+  //! return the local node number of element-local node nodeIndex of element elementNoLocal, the returned node no. can be a ghost node no.
+  node_no_t getNodeNo(element_no_t elementNoLocal, int nodeIndex) const;
 
-  //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoGlobal
-  global_no_t getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const;
+  //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoLocalGlobal
+  global_no_t getNodeNoGlobalNatural(global_no_t elementNoLocalGlobalNatural, int nodeIndex) const;
 
   //! get all dofs of a specific node, as vector
   void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;
@@ -88,9 +85,6 @@ public:
 
   //! get neighbouring node to nodeNoLocal or -1 if there is no such node, nodeNoLocal has to be a non-ghost local node
   node_no_t getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const;
-
-  //! get node local no from the local coordinate in natural local numbering
-  node_no_t getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const;
 };
 
 /** class to compute local dof and node no.s, partial specialization for structured mesh, D=3
@@ -103,14 +97,14 @@ public:
   //! inherit constructor
   using FunctionSpacePartition<MeshType,BasisFunctionType>::FunctionSpacePartition;
 
-  //! return the local dof number of element-local dof dofIndex of element elementNo
-  dof_no_t getDofNo(element_no_t elementNo, int dofIndex) const;
+  //! return the local dof number of element-local dof dofIndex of element elementNoLocal, the returned dof can be a ghost dof
+  dof_no_t getDofNo(element_no_t elementNoLocal, int dofIndex) const;
 
-  //! return the local node number of element-local node nodeIndex of element elementNo
-  node_no_t getNodeNo(element_no_t elementNo, int nodeIndex) const;
+  //! return the local node number of element-local node nodeIndex of element elementNoLocal, the returned node no. can be a ghost node no.
+  node_no_t getNodeNo(element_no_t elementNoLocal, int nodeIndex) const;
 
-  //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoGlobal
-  global_no_t getNodeNoGlobalNatural(global_no_t elementNoGlobalNatural, int nodeIndex) const;
+  //! return the global/natural node number of element-local node nodeIndex of element with global no elementNoLocalGlobal
+  global_no_t getNodeNoGlobalNatural(global_no_t elementNoLocalGlobalNatural, int nodeIndex) const;
 
   //! get all dofs of a specific node, as vector
   void getNodeDofs(node_no_t nodeGlobalNo, std::vector<dof_no_t> &dofGlobalNos) const;
@@ -123,10 +117,29 @@ public:
 
   //! get neighbouring node to nodeNoLocal or -1 if there is no such node, nodeNoLocal has to be a non-ghost local node
   node_no_t getNeighbourNodeNoLocal(node_no_t nodeNoLocal, Mesh::face_t direction) const;
-
-  //! get node local no from the local coordinate in natural local numbering
-  node_no_t getNodeNo(std::array<int,MeshType::dim()> coordinateLocal) const;
 };
+
+/** class that provides a numbering method that is the same for all dimensionalities
+ */
+template<typename MeshType,typename BasisFunctionType,typename DummyForTraits=MeshType>
+class FunctionSpaceNumbersCommon
+{};
+
+/** partial specialization for StructuredDeformableOfDimension<D> (not CompositeOfDimension<D>)
+ */
+template<typename MeshType,typename BasisFunctionType>
+class FunctionSpaceNumbersCommon<MeshType,BasisFunctionType,Mesh::isStructured<MeshType>> :
+  public FunctionSpaceNumbers<MeshType,BasisFunctionType>
+{
+public:
+  //! inherit constructor
+  using FunctionSpaceNumbers<MeshType,BasisFunctionType>::FunctionSpaceNumbers;
+
+  //! get the node no in the global natural ordering
+  global_no_t getNodeNoGlobalNaturalFromElementNoLocal(element_no_t elementNoLocal, int nodeIndex) const;
+
+};
+
 
 
 }  // namespace

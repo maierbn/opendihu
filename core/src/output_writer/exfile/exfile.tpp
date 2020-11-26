@@ -23,10 +23,10 @@ namespace OutputWriter
 {
 
 template<typename DataType>
-void Exfile::write(DataType& data, int timeStepNo, double currentTime)
+void Exfile::write(DataType& data, int timeStepNo, double currentTime, int callCountIncrement)
 {
   // check if output should be written in this timestep and prepare filename
-  if (!Generic::prepareWrite(data, timeStepNo, currentTime))
+  if (!Generic::prepareWrite(data, timeStepNo, currentTime, callCountIncrement))
   {
     return;
   }
@@ -35,7 +35,7 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
   
   // collect all available meshes
   std::set<std::string> meshNames;
-  LoopOverTuple::loopCollectMeshNames<typename DataType::OutputFieldVariables>(data.getOutputFieldVariables(), meshNames);
+  LoopOverTuple::loopCollectMeshNames<typename DataType::FieldVariablesForOutputWriter>(data.getFieldVariablesForOutputWriter(), meshNames);
   
   LOG(DEBUG) << "collected meshNames: ";
   for (std::string meshName : meshNames)
@@ -61,10 +61,11 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
     
 
     // open file
-    std::ofstream file = openFile(filenameExelem);
+    std::ofstream file;
+    openFile(file, filenameExelem);
     // output the exelem file for all field variables that are defined on the specified meshName
     std::shared_ptr<Mesh::Mesh> mesh = nullptr;
-    ExfileLoopOverTuple::loopOutputExelem(data.getOutputFieldVariables(), data.getOutputFieldVariables(), meshName, file, mesh);
+    ExfileLoopOverTuple::loopOutputExelem(data.getFieldVariablesForOutputWriter(), data.getFieldVariablesForOutputWriter(), meshName, file, mesh);
     file.close();
 
     // exnode file
@@ -73,9 +74,9 @@ void Exfile::write(DataType& data, int timeStepNo, double currentTime)
     std::string filenameExnode = s.str();
 
     // open file
-    file = openFile(filenameExnode);
+    openFile(file, filenameExnode);
     // output the exnode file for all field variables that are defined on the specified meshName
-    ExfileLoopOverTuple::loopOutputExnode(data.getOutputFieldVariables(), data.getOutputFieldVariables(), meshName, file);
+    ExfileLoopOverTuple::loopOutputExnode(data.getFieldVariablesForOutputWriter(), data.getFieldVariablesForOutputWriter(), meshName, file);
     file.close();
 
     // store created filename

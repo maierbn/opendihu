@@ -5,6 +5,7 @@
 #include "utility/python_utility.h"
 #include "utility/petsc_utility.h"
 #include "data_management/specialized_solver/multidomain.h"
+#include "control/diagnostic_tool/performance_measurement.h"
 
 namespace TimeSteppingScheme
 {
@@ -25,6 +26,8 @@ StaticBidomainSolver(DihuContext context) :
   {
     this->durationLogKey_ = specificSettings_.getOptionString("durationLogKey", "");
   }
+
+  this->initialGuessNonzero_ = specificSettings_.getOptionBool("initialGuessNonzero", true);
 
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_);
@@ -86,8 +89,17 @@ initialize()
   LOG(DEBUG) << "initialize static_bidomain_solver";
   assert(this->specificSettings_.pyObject());
 
+  // add this solver to the solvers diagram
+  DihuContext::solverStructureVisualizer()->addSolver("StaticBidomainSolver");
+
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild("PotentialFlow");
+
   // initialize the potential flow finite element method, this also creates the function space
   finiteElementMethodPotentialFlow_.initialize();
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
 
   // initialize the data object
   data_.setFunctionSpace(finiteElementMethodPotentialFlow_.functionSpace());
@@ -95,23 +107,44 @@ initialize()
 
   LOG(INFO) << "Run potential flow simulation for fiber directions.";
 
+  // avoid that solver structure file is created, this should only be done after the whole simulation has finished
+  DihuContext::solverStructureVisualizer()->disable();
+
   // solve potential flow Laplace problem
   finiteElementMethodPotentialFlow_.run();
 
+  // enable again
+  DihuContext::solverStructureVisualizer()->enable();
+  DihuContext::solverStructureVisualizer()->beginChild("Activation Transmembrane");
+
+  LOG(DEBUG) << "fem flow solution: " << *finiteElementMethodPotentialFlow_.data().solution();
   LOG(DEBUG) << "compute gradient field";
 
   // compute a gradient field from the solution of the potential flow
   data_.flowPotential()->setValues(*finiteElementMethodPotentialFlow_.data().solution());
+  LOG(DEBUG) << "flow potential: " << *data_.flowPotential();
+
   data_.flowPotential()->computeGradientField(data_.fiberDirection());
+  // note, fiberDirection is not normalized, it gets normalized in the initialize method of the finite element data class (diffusion_tensor_directional.tpp)
 
   VLOG(1) << "flow potential: " << *data_.flowPotential();
   VLOG(1) << "fiber direction: " << *data_.fiberDirection();
 
   // initialize the finite element class, from which only the stiffness matrix is needed
   // diffusion object without prefactor, for normal diffusion (1st multidomain eq.)
+
+  // initialize(direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor)
   finiteElementMethodDiffusionTransmembrane_.initialize(data_.fiberDirection(), nullptr);
-  // direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor=false
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
+  DihuContext::solverStructureVisualizer()->beginChild("Activation Extracellular");
+
+  // direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor=true
   finiteElementMethodDiffusionExtracellular_.initialize(data_.fiberDirection(), nullptr, true);
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
 
   // initialize the matrix to be used for computing the rhs
   data_.rhsMatrix() = finiteElementMethodDiffusionTransmembrane_.data().stiffnessMatrix()->valuesGlobal();
@@ -135,6 +168,17 @@ initialize()
   assert(this->linearSolver_->ksp());
   ierr = KSPSetOperators(*this->linearSolver_->ksp(), systemMatrix, systemMatrix); CHKERRV(ierr);
 
+  // set the nullspace of the matrix
+  // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
+  MatNullSpace constantFunctions;
+  MatNullSpaceCreate(rankSubset_->mpiCommunicator(), PETSC_TRUE, 0, nullptr, &constantFunctions);
+  MatSetNullSpace(systemMatrix, constantFunctions);
+  MatSetNearNullSpace(systemMatrix, constantFunctions); // for multigrid methods
+  MatNullSpaceDestroy(&constantFunctions);
+
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
+
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
 }
@@ -149,41 +193,105 @@ template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodD
 void StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 solveLinearSystem()
 {
-  PetscErrorCode ierr;
 
   VLOG(1) << "in solveLinearSystem";
 
   // configure that the initial value for the iterative solver is the value in solution, not zero
-  ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
+  if (initialGuessNonzero_)
+  {
+    PetscErrorCode ierr;
+    ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
+  }
 
   // rename the involved vectors
   Vec rightHandSide = data_.transmembraneFlow()->valuesGlobal();
   Vec solution = data_.extraCellularPotential()->valuesGlobal();
 
+  // check if there are nans
+  data_.transmembraneFlow()->checkNansInfs();
+
+  // dump vectors to be able to later check values
+  //debugDumpData();
+
   // solve the system, KSPSolve(ksp,b,x)
-  ierr = KSPSolve(*this->linearSolver_->ksp(), rightHandSide, solution); CHKERRV(ierr);
-
-  // print output message with iteration statistics
-  int numberOfIterations = 0;
-  PetscReal residualNorm = 0.0;
-  ierr = KSPGetIterationNumber(*this->linearSolver_->ksp(), &numberOfIterations); CHKERRV(ierr);
-  ierr = KSPGetResidualNorm(*this->linearSolver_->ksp(), &residualNorm); CHKERRV(ierr);
-
-  KSPConvergedReason convergedReason;
-  ierr = KSPGetConvergedReason(*this->linearSolver_->ksp(), &convergedReason); CHKERRV(ierr);
-
-  lastNumberOfIterations_ = numberOfIterations;
-
-  LOG(DEBUG) << "Linear system of bidomain problem solved in " << numberOfIterations << " iterations, residual norm " << residualNorm
-    << ": " << PetscUtility::getStringLinearConvergedReason(convergedReason);
+#ifndef NDEBUG
+  this->linearSolver_->solve(rightHandSide, solution, "Linear system of bidomain problem solved");
+#else
+  this->linearSolver_->solve(rightHandSide, solution);
+#endif
 }
 
 //! return whether the underlying discretizableInTime object has a specified mesh type and is not independent of the mesh type
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
-bool StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-knowsMeshType()
+void StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+debugDumpData()
 {
-  return true;
+  static int counter = 0;
+
+  // compute matrix norm
+  double norm1, normFrobenius, normInfinity;
+  MatNorm(finiteElementMethodDiffusionExtracellular_.data().stiffnessMatrix()->valuesGlobal(), NORM_1, &norm1);
+  MatNorm(finiteElementMethodDiffusionExtracellular_.data().stiffnessMatrix()->valuesGlobal(), NORM_FROBENIUS, &normFrobenius);
+  MatNorm(finiteElementMethodDiffusionExtracellular_.data().stiffnessMatrix()->valuesGlobal(), NORM_INFINITY, &normInfinity);
+
+  double directionNorm;
+  VecNorm(data_.fiberDirection()->valuesGlobal(), NORM_2, &directionNorm);
+
+
+  std::stringstream filename;
+  filename << "norm_" << counter << ".txt";
+  std::ofstream file0;
+  file0.open(filename.str().c_str(), std::ios::out | std::ios::app);
+
+  file0 << Control::PerformanceMeasurement::getParameter("scenarioName") << ";" << DihuContext::ownRankNoCommWorld() << "/" << DihuContext::nRanksCommWorld() << ";"
+    << norm1 << ";" << normFrobenius << ";" << normInfinity << ";directionNorm;" << directionNorm<< std::endl;
+  file0.close();
+
+
+  filename.str("");
+  filename << "rhs_" << Control::PerformanceMeasurement::getParameter("scenarioName") << "_" << counter << "." << DihuContext::ownRankNoCommWorld() << ".bin";
+  std::ofstream file;
+  file.open(filename.str().c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+
+  if (file.is_open())
+  {
+    std::vector<double> values;
+    data_.transmembraneFlow()->getValuesWithoutGhosts(values);
+
+    // loop over rhs vector
+    for (int i = 0; i < values.size(); i++)
+    {
+      file.write((char *)(&values[i]), 8);
+    }
+    file.close();
+  }
+  else
+  {
+    LOG(INFO) << "Could not open file";
+  }
+
+
+  filename.str("");
+  filename << "initial_value_" << Control::PerformanceMeasurement::getParameter("scenarioName") << "_" << counter << "." << DihuContext::ownRankNoCommWorld() << ".bin";
+  file.open(filename.str().c_str(), std::ios::out | std::ios::trunc | std::ios::binary);
+
+  if (file.is_open())
+  {
+    std::vector<double> values;
+    data_.extraCellularPotential()->getValuesWithoutGhosts(values);
+
+    // loop over rhs vector
+    for (int i = 0; i < values.size(); i++)
+    {
+      file.write((char *)(&values[i]), 8);
+    }
+    file.close();
+  }
+  else
+  {
+    LOG(INFO) << "Could not open file";
+  }
+  counter++;
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -194,22 +302,22 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the solution_vector_mapping class
+//! the transfer is done by the slot_connector_data_transfer class
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
-typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::TransferableSolutionDataType
+std::shared_ptr<typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::SlotConnectorDataType>
 StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-getSolutionForTransfer()
+getSlotConnectorData()
 {
-  return this->data_.transmembranePotential();
+  return this->data_.getSlotConnectorData();  // transmembranePotential
 }
 
 //! output the given data for debugging
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 std::string StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-getString(typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::TransferableSolutionDataType &data)
+getString(std::shared_ptr<typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::SlotConnectorDataType> data)
 {
   std::stringstream s;
-  s << "<StaticBidomain:" << *data << ">";
+  s << "<StaticBidomain:" << data << ">";
   return s.str();
 }
 

@@ -51,7 +51,9 @@ face_t oppositeFace(face_t face)
   default:
     return face_t((int)face - 1);
   }
+#ifndef __PGI
   return face0Minus;
+#endif
 }
 
 template<>
@@ -149,5 +151,12 @@ Vec2 getXiOnFace(face_t face, std::array<double,1> xiSurface)
   }
   return xi;
 }
+
+//! dummy function
+VecD<1> getXiOnFace(face_t face, std::array<double,0> xiSurface)
+{
+  return VecD<1>({});
+}
+
 
 }  // namespace

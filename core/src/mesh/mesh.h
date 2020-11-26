@@ -4,7 +4,7 @@
 #include <control/types.h>
 #include <memory>
 #include "partition/mesh_partition/00_mesh_partition_base.h"
-#include "control/python_config.h"
+#include "control/python_config/python_config.h"
 
 namespace Mesh
 {
@@ -47,11 +47,13 @@ public:
   void setMeshName(std::string meshName);
   
   //! get the name of the mesh
-  std::string meshName();
+  std::string meshName() const;
+
 protected:
-  std::string meshName_;  ///< the name of this mesh, which can be given in the python config and is the key by which the mesh is stored in Mesh::Manager
-  PythonConfig specificSettings_;  ///< the python object of the settings for this mesh
-  bool initialized_;   ///< if the mesh is already initialized
+
+  std::string meshName_;            //< the name of this mesh, which can be given in the python config and is the key by which the mesh is stored in Mesh::Manager
+  PythonConfig specificSettings_;   //< the python object of the settings for this mesh
+  bool initialized_;                //< if the mesh is already initialized
 };
 
 /**

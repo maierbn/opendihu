@@ -7,12 +7,15 @@
 #include "utility/vector_operators.h"
 #include "easylogging++.h"
 
+class DihuContext;   // forward declaration
+
 namespace Partition 
 {
   
 template<typename Iter>
 RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubset> parentRankSubset) : ownRankNo_(-1), nCommunicatorsSplit_(0)
 {
+  isWorldCommunicator_ = false;
   MPI_Comm parentCommunicator = MPI_COMM_WORLD;
   int ownRankParentCommunicator = 0;
   if (parentRankSubset)
@@ -20,13 +23,14 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubse
     LOG(DEBUG) << "create RankSubset with " << std::distance(ranksBegin,ranksEnd) << " ranks, use parent communicator";
     parentCommunicator = parentRankSubset->mpiCommunicator();
     ownRankParentCommunicator = parentRankSubset->ownRankNo();
-    LOG(DEBUG) << "determined own rank: " << ownRankParentCommunicator;
+    VLOG(1) << "determined own rank: " << ownRankParentCommunicator;
   }
   else
   {
-    LOG(DEBUG) << "create RankSubset with " << std::distance(ranksBegin,ranksEnd) << " ranks, from MPI_COMM_WORLD";
+    VLOG(1) << "create RankSubset with " << std::distance(ranksBegin,ranksEnd) << " ranks, from MPI_COMM_WORLD";
+    // get the own rank in the parent communicator which is MPI_COMM_WORLD
     MPIUtility::handleReturnValue(MPI_Comm_rank(MPI_COMM_WORLD, &ownRankParentCommunicator), "MPI_Comm_rank");
-    LOG(DEBUG) << "determined own rank: " << ownRankParentCommunicator;
+    VLOG(1) << "determined own rank: " << ownRankParentCommunicator;
   }
 
   // get the own rank in the communicator
@@ -34,20 +38,26 @@ RankSubset::RankSubset(Iter ranksBegin, Iter ranksEnd, std::shared_ptr<RankSubse
   
   std::copy(ranksBegin, ranksEnd, std::inserter(rankNo_, rankNo_.begin()));
 
+  int orderKey = 0;
   // if ownRankParentCommunicator is contained in rank subset
-  if (std::find(ranksBegin,ranksEnd,ownRankParentCommunicator) != ranksEnd)
+  Iter pos = std::find(ranksBegin,ranksEnd,ownRankParentCommunicator);
+  if (pos != ranksEnd)
+  {
     color = 1;
-  
-  VLOG(1) << "RankSubset constructor from rank list " << rankNo_ << ", ownRankParentCommunicator=" << ownRankParentCommunicator << ", color=" << color;
+    orderKey = std::distance(ranksBegin, pos);
+  }
+
+  VLOG(1) << "RankSubset constructor from rank list " << rankNo_ << ", ownRankParentCommunicator=" << ownRankParentCommunicator
+    << ", color=" << color << ", orderKey: " << orderKey;
 
   // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
-  MPIUtility::handleReturnValue(MPI_Comm_split(parentCommunicator, color, 0, &mpiCommunicator_), "MPI_Comm_split");
+  MPIUtility::handleReturnValue(MPI_Comm_split(parentCommunicator, color, orderKey, &mpiCommunicator_), "MPI_Comm_split");
 
   // update rankNo_ set
   if (color == 1)
   {
     int nRanksInCommunicator;
-    MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanksInCommunicator));
+    MPIUtility::handleReturnValue(MPI_Comm_size(mpiCommunicator_, &nRanksInCommunicator), "MPI_Comm_size");
     if (nRanksInCommunicator != rankNo_.size())
     {
       if (nRanksInCommunicator < rankNo_.size())

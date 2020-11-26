@@ -103,7 +103,7 @@ setFunctionSpace(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::Unstructured
 
 template<int D, typename BasisFunctionType, int nComponents>
 void FieldVariableData<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-setGeometryField(bool isGeometryField)
+setIsGeometryField(bool isGeometryField)
 {
   this->isGeometryField_ = isGeometryField;
 }
@@ -802,6 +802,13 @@ valuesGlobal(int componentNo)
 
 template<int D, typename BasisFunctionType, int nComponents>
 Vec &FieldVariableData<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
+valuesGlobal()
+{
+  return this->values_->valuesGlobal();
+}
+
+template<int D, typename BasisFunctionType, int nComponents>
+Vec &FieldVariableData<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
 getValuesContiguous()
 {
   return this->values_->getValuesContiguous();
@@ -1072,6 +1079,14 @@ output(std::ostream &stream) const
     stream << "null" << std::endl;
   else
     stream << *exfileRepresentation_ << std::endl;
+  if (values_ == nullptr)
+  {
+    stream << "(no values vector)";
+  }
+  else
+  {
+    stream << "values: " << *values_;
+  }
   /*
     << "  elementToDofMapping: " << std::endl
     << *elementToDofMapping_ << std::endl

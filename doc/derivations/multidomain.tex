@@ -1,0 +1,726 @@
+\input{header.tex}
+
+\graphicspath{
+{images/png/}{images/}{images/plots/}
+}
+
+
+\begin{document}
+%------------------------------------------------------------------------------------------------
+\section{Multidomain}
+
+The multidomain equations generalize the bidomain equation and have multiple compartments at each spatial point. 
+Each compartment $k$ describes one of the $M_\text{mu}$ motor units.
+The electric potential in the extra-cellular space is designated by $\phi_e$ and the intra-cellular potential of motor unit $k$ is desribed by $\phi_i$. The transmembrane voltages are given by $V_m^k = \phi_i^k - \phi_e$.
+
+
+The first multidomain equation balances current flow between intra and extra-cellular space:
+\begin{equation}\label{eq:multidomain1}
+  \begin{array}{lll}
+    \div\big(\bfsigma_e\,\grad(\phi_e)\big) + \s{k=1}{M_\text{mu}} f_r^k\,\div\big(\bfsigma_i^k\,\grad(\ub{V_m^k + \phi_e}{=\phi_i^k})\big) = 0.
+  \end{array}
+\end{equation}
+It can be reformulated as:
+\begin{equation}\label{eq:multidomain1-1}
+  \begin{array}{lll}
+    \div\big((\bfsigma_e + \ub{\ds\sum\limits_{k}^{M_\text{mu}} f_r^k\bfsigma_i^k}{=:\bfsigma_i}) \,\grad(\phi_e)\big) + \s{k=1}{M_\text{mu}} f_r^k\,\div\big(\bfsigma_i^k\,\grad(V_m^k )\big) = 0.
+  \end{array}
+\end{equation}
+%
+The second multidomain equations describe flow over the membrane and hold for each compartment:
+\begin{equation}
+  \begin{array}{lll}\label{eq:multidomain2}
+    \div\big(\bfsigma_i^k\,\grad(\ub{V_m^k + \phi_e}{=\phi_i^k})\big) = A_m^k\,\big(C_m^k\,\p{V_m^k}{t} + I_\text{ion}(V_m^k)\big) \qquad \forall\,k \in 1\dots M_\text{mu}
+  \end{array}
+\end{equation}
+The unknowns are the transmembrane voltages of compartment $k$, $V_m^k$ and the extracellular potential, $\phi_e$. $f_r^k \in [0,1]$ is a spatially varying factor of the presence of the compartment with $\sum_k f_i^k = 1$.
+$\bfsigma_i^k$ and $\bfsigma_e$ are the conductivity tensors of the intra- and extracellular spaces.
+
+Solving \eqref{eq:multidomain2} for $∂V_m^k/∂t$ yields:
+\begin{equation*}
+  \begin{array}{lll}
+    \p{V_m^k}{t} = \dfrac{1}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big) - \dfrac{1}{C_m^k}\,I_\text{ion}(V_m^k)\\[4mm]
+  \end{array}
+\end{equation*}
+We solve using an operator splitting approach, e.g. Godunov splitting.
+The reaction term is solved with an explicit Euler scheme.
+\begin{equation*}
+  \begin{array}{lll}
+    V_m^{k,(*)} = V_m^{k,(i)} - dt\,\dfrac{1}{C_m^k}\,I_\text{ion}(V_m^{k,(i)}).
+  \end{array}
+\end{equation*}
+The subcellular model provided by the CellML description computes $(-1/C_m^k\,I_\text{ion})$.
+
+The diffusion term is solved using an implicit scheme, e.g. backward Euler.
+\begin{equation}\label{eq:diffusion_term}
+  \begin{array}{lll}
+    V_m^{k,(i+1)} = V_m^{k,(*)} + dt\,\dfrac{1}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(V_m^{k,(i+1)} + \phi_e)\big)\\[4mm]
+  \end{array}
+\end{equation}
+\begin{equation*}
+  \begin{array}{lll}    \Leftrightarrow\quad 
+    V_m^{k,(i+1)} -\dfrac{dt}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(V_m^{k,(i+1)})\big) - \dfrac{dt}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(\phi_e)\big) = V_m^{k,(*)}
+  \end{array}
+\end{equation*}
+
+After discretizing the spatial terms with the Finite Element Method the following matrix equation is obtained:
+\begin{equation*}
+  \begin{array}{lll}
+    \left[\begin{array}{@{}ccc|c@{}}
+      \bfA_{V_m,V_m}^1 &  & & \bfB^1_{V_m,\phi_e} \\[2mm]
+      & \ddots &   & \vdots \\[2mm]
+      &  & \bfA_{V_m,V_m}^{M_\text{mu}} & \bfB^{M_\text{mu}}_{V_m,\phi_e} \\[2mm] \hline
+      \bfB_{\phi_e,V_m}^1 & \dots & \bfB_{\phi_e,V_m}^{M_\text{mu}} & \bfB_{\phi_e,\phi_e} \\[2mm]
+    \end{array}\right]
+    \left[\begin{array}{@{}c@{}}
+      V_{m}^{1,(i+1)} \\[2mm] \vdots \\[2mm] V_{m}^{M_\text{mu},(i+1)} \\[2mm]\hline \phi_{e,i} 
+    \end{array}\right]
+    = 
+    \left[\begin{array}{@{}c@{}}
+      \bfb_{V_m}^{1,(i+1)} \\[2mm] \vdots \\[2mm] \bfb_{V_m}^{M_\text{mu},(i+1)} \\[2mm]\hline \bfzero
+    \end{array}\right]
+  \end{array},
+\end{equation*}
+where
+\begin{equation*}
+  \begin{array}{lll}
+    \bfA^k_{V_m,V_m} &\dots\quad\text{ discretization of }\quad -\dfrac{dt}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(\cdot)\big) + (\cdot) \\[4mm]
+    \bfB^k_{V_m,\phi_e} &\dots\quad\text{ discretization of }\quad -\dfrac{dt}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(\cdot)\big)\\[4mm]
+    \bfB^k_{\phi_e,V_m} &\dots\quad\text{ discretization of }\quad f_r^k\,\div\big(\bfsigma_i^k\,\grad(\cdot)\big)\\[4mm]
+    \bfB_{\phi_e,\phi_e} &\dots\quad\text{ discretization of }\quad 
+  \div\big((\bfsigma_e + \bfsigma_i)\,\grad(\cdot)\big)
+  \end{array}
+\end{equation*}
+%
+\begin{equation*}
+  \begin{array}{lll}
+    \bfb_{V_m}^{k,(i+1)} = V_m^{k,(*)} = V_m^{k,(i)} - \dfrac{dt}{C_m^k}\,I_\text{ion}(V_{m}^{k,(i)}) \quad \text{($I_\text{ion}$ solved using splitting scheme)}
+  \end{array}
+\end{equation*}
+    
+    
+The bidomain equation is the special case for $M_\text{mu}=1$. It can also be used for computation of EMG ($\phi_e$) from $V_m$ in the fiber based model.
+\begin{equation*}
+  \begin{array}{lll}
+    \div\big((\bfsigma_i + \bfsigma_e)\,\grad \phi_e\big) = - \div(\bfsigma_i\,\grad V_m)
+  \end{array}
+\end{equation*}
+
+\subsection{Finite Element formulation}
+In this section the finite element formulation for the multidomain equation is derived. We start with an example problem.
+\subsubsection{Diffusion problem}
+In general, the weak form of a diffusion problem discretized with Crank-Nicolson,
+\begin{equation}\label{eq:weak_form0}
+  \begin{array}{lll}
+    Δu = u_t, \qquad \p{u}{\bfn} = f \quad \text{on }\Gamma_f, \qquad \p{u}{\bfn} = 0 \quad \text{on } ∂Ω\backslash \Gamma_f \\[4mm]
+    \Rightarrow\quad \ds\int_Ω \big(\theta\,Δu^{(i+1)} + (1-\theta)\,Δu^{(i)}\big)\,\phi \,\d\bfx = \dfrac{1}{dt} \ds\int_Ω(u^{(i+1)} - u^{(i)})\,\phi\,\d\bfx, \quad \forall \phi \in V_h\\[4mm]
+  \end{array}
+\end{equation}
+Discretize in space with $u = \sum_j u_j\,\varphi_j, V_h = \span\{\varphi_j | j = 1\dots N\}$ and using Divergence theorem
+\begin{equation}\label{eq:weak_form1}
+  \begin{array}{lll}
+    \ds\sum\limits_{j=1}^{N} \big(\theta\,u_j^{(i+1)} + (1-\theta)\,u_j^{(i)}\big)  \left(-\ds\int_Ω ∇\varphi_j\cdot ∇\varphi_k \,\d\bfx + \ds\int_{∂Ω} (∇\varphi_j\cdot \bfn)\varphi_k \,\d\bfx  \right) \\[4mm]
+    \quad = \dfrac{1}{dt} \sum\limits_{j=1}^{N} \big(u_j^{(i+1)} - u_j^{(i)}\big) \ds\int_Ω \varphi_j\,\varphi_k\,\d\bfx, \quad \forall k = 1\dots N.\\[4mm]
+  \end{array}
+\end{equation}
+This can be written in matrix notation as
+\begin{equation}\label{eq:diffusion_weak_form_matrix}
+  \begin{array}{lll}
+    \bfA\,\bfu^{(i+1)} = \bfb(\bfu^{(i)}),
+  \end{array}
+\end{equation}
+where
+\begin{equation}\label{eq:diffusion_weak_form_matrix2}
+  \begin{array}{lll}
+    \bfA = \theta\,(\bfK + \bfB) -\dfrac{1}{dt}\bfM, \\[4mm]
+    \bfb = \big((\theta-1)\,(\bfK + \bfB) - \dfrac{1}{dt} \bfM \big)\,\bfu^{(i)},
+  \end{array}
+\end{equation} 
+with 
+\begin{equation*}
+  \begin{array}{lll}
+     \bfK_{kj} = -\ds\int_Ω ∇\varphi_j\cdot ∇\varphi_k \,\d\bfx \qquad \text{(note, the minus sign is correct for $+Δ$)},\\[4mm]
+     \bfB_{kj} = \ds\int_{\Gamma_f} (∇\varphi_j\cdot \bfn)\varphi_k \,\d\bfx,\\[4mm]
+     \bfM_{kj} = \ds\int_Ω \varphi_j\,\varphi_k\,\d\bfx,
+  \end{array}
+\end{equation*}
+or written in component form:
+\begin{equation*}
+  \begin{array}{lll}
+    \bfA_{kj} = \theta\,\left(-\ds\int_Ω ∇\varphi_j\cdot ∇\varphi_k \,\d\bfx + \ds\int_{∂Ω} (∇\varphi_j\cdot \bfn)\varphi_k \,\d\bfx \right) - \dfrac{1}{dt}\,\ds\int_Ω \varphi_j\,\varphi_k\,\d\bfx,\\[4mm]
+    \bfb_k = \ds\sum\limits_{j=1}^{N} -(1-\theta)\,u_j^{(i)}\,\left(-\ds\int_Ω ∇\varphi_j\cdot ∇\varphi_k \,\d\bfx + \ds\int_{∂Ω} (∇\varphi_j\cdot \bfn)\varphi_k \,\d\bfx \right)
+     + \dfrac{1}{dt} \ds\sum\limits_{j=1}^{N} -u_j^{(i)} \ds\int_Ω \varphi_j\,\varphi_k\,\d\bfx.
+  \end{array}
+\end{equation*}
+So far we did not plug in the boundary conditions. For $f=0$ we get $\bfB = \bfzero$. The case $f \neq 0$ is handled in the next subsection.
+
+\subsubsection{Boundary conditions}
+The boundary condition $∇u\cdot\bfn = f$ can be written as
+\begin{equation*}
+  \begin{array}{lll}
+    ∇u\cdot\bfn = \s{j=1}{N}u_j\,(∇\varphi_j\cdot \bfn) = f,
+  \end{array}
+\end{equation*}
+We discretize the flow over the boundary, $f$, by different ansatz functions, $\psi_j$, with coefficients $f_j$:
+\begin{equation*}
+  \begin{array}{lll}
+    f = \s{j=1}{N}f_j\,\psi_j
+  \end{array}
+\end{equation*}
+We get from \eqref{eq:weak_form1} 
+\begin{equation*}
+  \begin{array}{lll}
+    \ds\sum\limits_{j=1}^{N} \big(\theta\,u_j^{(i+1)} + (1-\theta)\,u_j^{(i)}\big) 
+     \left(-\ds\int_Ω ∇\varphi_j\cdot ∇\varphi_k \,\d\bfx \right)
+      + \ds\int_{\Gamma_f} \big(\theta\,f^{(i+1)} + (1-\theta)\,f^{(i)}\big)\,\varphi_k \,\d\bfx \\[4mm]
+    \quad = \dfrac{1}{dt} \sum\limits_{j=1}^{N} \big(u_j^{(i+1)} - u_j^{(i)}\big) \ds\int_Ω \varphi_j\,\varphi_k\,\d\bfx, \quad \forall k = 1\dots N,\\[4mm]
+    \Leftrightarrow \quad 
+    \ds\sum\limits_{j=1}^{N} \big(\theta\,u_j^{(i+1)} + (1-\theta)\,u_j^{(i)}\big) 
+     \left(-\ds\int_Ω ∇\varphi_j\cdot ∇\varphi_k \,\d\bfx \right)
+      + \ds\sum\limits_{j=1}^{N} \big(\theta\,f_j^{(i+1)} + (1-\theta)\,f_j^{(i)}\big) 
+      \ds\int_{\Gamma_f} \psi_j\,\varphi_k \,\d\bfx \\[4mm]
+    \quad = \dfrac{1}{dt} \sum\limits_{j=1}^{N} \big(u_j^{(i+1)} - u_j^{(i)}\big) \ds\int_Ω \varphi_j\,\varphi_k\,\d\bfx, \quad \forall k = 1\dots N,\\[4mm]
+  \end{array}
+\end{equation*}
+In matrix notation,
+\begin{equation}\label{eq:diffusion_weak_form_matrix}
+  \begin{array}{lll}
+    \bfA\,\bfu^{(i+1)} = \bfb(\bfu^{(i)}),
+  \end{array}
+\end{equation}
+we have
+\begin{equation}\label{eq:diffusion_weak_form_matrix2}
+  \begin{array}{lll}
+    \bfA = \theta\,\bfK -\dfrac{1}{dt}\bfM, \\[4mm]
+    \bfb = \big((\theta-1)\,\bfK - \dfrac{1}{dt} \bfM \big)\,\bfu^{(i)} - \bfB_{\Gamma_f}\,\big(\theta\,\bff^{(i+1)} + (1-\theta)\,\bff^{(i)}\big),
+  \end{array}
+\end{equation} 
+with 
+\begin{equation*}
+  \begin{array}{lll}
+     \bfK_{kj} = -\ds\int_Ω ∇\varphi_j\cdot ∇\varphi_k \,\d\bfx \qquad \text{(note, the minus sign is correct for $+Δ$)},\\[4mm]
+     \bfM_{kj} = \ds\int_Ω \varphi_j\,\varphi_k\,\d\bfx,\\[4mm]
+     \bfB_{\Gamma_f,kj} = \ds\int_{\Gamma_f} \psi_j\,\varphi_k \,\d\bfx,
+  \end{array}
+\end{equation*}
+
+\subsubsection{Laplace problem}
+We consider $Δu = 0, \partial u/\partial \bfn = f$.
+This leads to 
+\begin{equation*}
+  \begin{array}{lll}
+    (\bfK + \bfB)\,\bfu = \bfzero \qquad \text{or} \qquad \bfK\,\bfu + \bfB_{\Gamma_f}\,\bff = 0.
+  \end{array}
+\end{equation*}
+
+\subsubsection{First multidomain equation}
+Back to the first multidomain equation \eqref{eq:multidomain1-1}:
+\begin{equation*}
+  \begin{array}{lll}
+    \div\big((\bfsigma_e + \ub{\ds\sum\limits_{k}^{M_\text{mu}} f_r^k\bfsigma_i^k}{=:\bfsigma_i}) \,\grad(\phi_e)\big) + \s{k=1}{M_\text{mu}} f_r^k\,\div\big(\bfsigma_i^k\,\grad(V_m^k )\big) = 0,
+  \end{array}
+\end{equation*}
+The weak form can be written as
+\begin{equation*}
+  \begin{array}{lll}
+    \ds\sum\limits_{j=1}^{N} \phi_{e,j} \left(-\ds\int_Ω (\bfsigma_e + \bfsigma_i) ∇\varphi_j\cdot ∇\varphi_\ell \,\d\bfx + \ds\int_{∂Ω} ((\bfsigma_e + \bfsigma_i) ∇\varphi_j\cdot \bfn)\varphi_\ell \,\d\bfx  \right) \\[4mm]
+    \quad +  \s{k=1}{M_\text{mu}} f_r^k\,\left(\ds\sum\limits_{j=1}^{N} V^k_{m,j} \left(-\ds\int_Ω \bfsigma_i^k ∇\varphi_j\cdot ∇\varphi_\ell \,\d\bfx + \ds\int_{∂Ω} (\bfsigma_i^k ∇\varphi_j\cdot \bfn)\varphi_\ell \,\d\bfx  \right)\right) = 0 \quad \forall \ell=1,\dots,N,
+  \end{array}
+\end{equation*}
+which is in matrix notation,
+\begin{equation}\label{eq:multidomain1_matrix1}
+  \begin{array}{lll}
+    \big(\bfK_{\bfsigma_e + \bfsigma_i} + \bfB_{\bfsigma_e + \bfsigma_i}\big)\bfphi_{e} +  \s{k=1}{M_\text{mu}} f_r^k \big(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k}\big)\bfV_m^k = 0
+  \end{array}
+\end{equation}
+\subsubsection{Second multidomain equation}
+The diffusion part of the second multidomain equation is given by
+\begin{equation*}
+  \begin{array}{lll}
+    \dfrac{V_m^{k,(i+1)}-V_m^{k,(*)}}{dt} = \dfrac{1}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(V_m^{k,(i+1)})\big) + \dfrac{1}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(\phi_e)\big).
+  \end{array}
+\end{equation*}
+The weak form is given by
+\begin{equation*}
+  \begin{array}{lll}
+    \dfrac{1}{A^k_m\,C_m^k}\ds\sum\limits_{j=1}^{N} \big(\theta\,V_{m,j}^{(i+1)} + (1-\theta)\,V_{m,j}^{(i)}\big) \left(-\ds\int_Ω \bfsigma_i^{k}\, ∇\varphi_j\cdot ∇\varphi_\ell \,\d\bfx + \ds\int_{∂Ω} (\bfsigma_i^k\,∇\varphi_j\cdot \bfn)\varphi_\ell \,\d\bfx  \right) \\[4mm]
+    + \dfrac{1}{A^k_m\,C_m^k} \ds\sum\limits_{j=1}^{N} \big(\theta\,\phi_{e,j}^{(i+1)} + (1-\theta)\,\phi_{e,j}^{(i)}\big) \left(-\ds\int_Ω \bfsigma_i^k\,∇\varphi_j\cdot ∇\varphi_\ell \,\d\bfx + \ds\int_{∂Ω} (\bfsigma_i^k\,∇\varphi_j\cdot \bfn)\varphi_\ell \,\d\bfx  \right) \\[4mm]
+    \quad = \dfrac{1}{dt} \sum\limits_{j=1}^{N} \big(V_{m,j}^{(i+1)} - V_{m,j}^{(i)}\big) \ds\int_Ω \varphi_j\,\varphi_\ell\,\d\bfx, \quad \forall \ell = 1\dots N\\[4mm]
+  \end{array}
+\end{equation*}
+Analogous to \eqref{eq:diffusion_weak_form_matrix} we get 
+\begin{equation}\label{eq:multidomain2_matrix1}
+  \begin{array}{lll}
+    \bfA\,\mat{\bfV_m^{(i+1)}\\ \bfphi_{e}^{(i+1)}} = \bfb,
+  \end{array}
+\end{equation}
+where
+\begin{equation}\label{eq:multidomain2_matrix2}
+  \begin{array}{lll}
+    \bfA = \mat{
+      \dfrac{1}{A_m^k\,C_m^k}\theta\,(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k}) -\dfrac{1}{dt}\bfM & \quad
+      \dfrac{1}{A_m^k\,C_m^k}\theta\,(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k})
+    } \\[4mm]
+    \bfb = \Big( \dfrac{1}{A_m^k\,C_m^k}(\theta-1)\,(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k}) - \dfrac{1}{dt}\bfM\Big) \bfV_m^{(i)} 
+      + (\theta - 1)\,(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k})\,\bfphi_e^{(i)}
+  \end{array}
+\end{equation}
+
+Together, \eqref{eq:multidomain1_matrix1} and \eqref{eq:multidomain2_matrix1},\eqref{eq:multidomain2_matrix2} form the following system
+\begin{equation}\label{eq:matrix_equation_1}
+  \begin{array}{lll}
+    \matt{
+      \dfrac{1}{A_m^k\,C_m^k}\theta\,(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k}) -\dfrac{1}{dt}\bfM &
+      \dfrac{1}{A_m^k\,C_m^k}\theta\,(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k}) \\[4mm]
+      f_r^k \big(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k}\big) &
+      \big(\bfK_{\bfsigma_e + \bfsigma_i} + \bfB_{\bfsigma_e + \bfsigma_i}\big)
+    }
+    \matt{
+      \bfV_m^{(i+1)}\\[4mm]
+       \bfphi_{e}^{(i+1)}
+    }\\[4mm]
+    = 
+    \matt{
+      \big((\theta-1)\, \dfrac{1}{A_m^k\,C_m^k}(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k}) - \dfrac{1}{dt}\bfM\big) \bfV_m^{(i)} 
+      + (\theta - 1)\,(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k})\,\bfphi_e^{(i)}\\[4mm]
+      \bfzero
+    }
+  \end{array}
+\end{equation}
+By multiplying the first row with $-dt\,\bfM^{-1}$ we get
+\begin{equation}\label{eq:matrix_equation_2}
+  \begin{array}{lll}
+    \matt{
+      \dfrac{-dt\,\theta}{A_m^k\,C_m^k}\bfM^{-1}(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k}) + \bfI &
+      \dfrac{-dt\,\theta}{A_m^k\,C_m^k}\bfM^{-1}(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k}) \\[4mm]
+      f_r^k \big(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k}\big) &
+      \big(\bfK_{\bfsigma_e + \bfsigma_i} + \bfB_{\bfsigma_e + \bfsigma_i}\big)
+    }
+    \matt{
+      \bfV_m^{(i+1)}\\[4mm]
+       \bfphi_{e}^{(i+1)}
+    }\\[12mm]
+    = 
+    \matt{
+      \left(\dfrac{(1-\theta)\,dt}{A_m^k\,C_m^k}\bfM^{-1}(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k}) + \bfI\right) \bfV_m^{(i)}
+      + (1 - \theta)\,dt\,\bfM^{-1}\,(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k})\,\bfphi_e^{(i)} \\[4mm]
+      \bfzero
+    }
+  \end{array}
+\end{equation}
+
+For a forward Euler scheme ($\theta = 1$) and homogeneous Dirichlet boundary conditions ($\bfB = \bfzero$) the equation simplifies to
+\begin{equation*}
+  \begin{array}{lll}
+   \matt{
+      \dfrac{1}{A_m^k\,C_m^k}\bfK_{\bfsigma_i^k} -\dfrac{1}{dt}\bfM\ & \quad
+      \dfrac{1}{A_m^k\,C_m^k}\bfK_{\bfsigma_i^k} \\[4mm]
+      f_r^k \bfK_{\bfsigma_i^k} &
+      \bfK_{\bfsigma_e + \bfsigma_i}
+    }
+    \matt{
+      \bfV_m^{(i+1)}\\[4mm]
+       \bfphi_{e}^{(i+1)}
+    }
+    = 
+    \matt{
+       -\dfrac{1}{dt}\bfM\,\bfV_m^{(i)} \\[4mm]
+      \bfzero
+    }
+  \end{array}
+\end{equation*}
+or equivalently,
+\begin{equation*}
+  \begin{array}{lll}
+   \matt{
+      \dfrac{-dt}{A_m^k\,C_m^k}\bfM^{-1}\bfK_{\bfsigma_i^k} +\bfI & \quad
+      \dfrac{-dt}{A_m^k\,C_m^k}\bfM^{-1}\bfK_{\bfsigma_i^k} \\[4mm]
+      f_r^k \bfK_{\bfsigma_i^k} &
+      \bfK_{\bfsigma_e + \bfsigma_i}
+    }
+    \matt{
+      \bfV_m^{(i+1)}\\[4mm]
+       \bfphi_{e}^{(i+1)}
+    }
+    = 
+    \matt{
+       \bfV_m^{(i)} \\[4mm]
+      \bfzero
+    }
+  \end{array}
+\end{equation*}
+
+\subsection{Boundary conditions}
+The boundary conditions to the multidomain equations are given by
+\begin{equation*}
+  \begin{array}{lll}
+    (\bfsigma_i^{k}\,∇\phi_i^{k})\cdot \bfn_m = 0  \qquad \text{on } \Gamma_M
+  \end{array}
+\end{equation*}
+With $\phi_i = V_m + \phi_e$ this translates to
+\begin{equation}\label{eq:flux_bc}
+  \begin{array}{lll}
+    (\bfsigma_i^{k}\,∇V_m^{k})\cdot \bfn_m = -(\bfsigma_i^{k}\,∇\phi_e)\cdot \bfn_m =: p^k  \qquad \text{on } \Gamma_M
+  \end{array}
+\end{equation}
+For now, we assume $\partial\phi_e/\partial \bfn = 0$ on $\Gamma_M$. 
+
+%%
+
+%\subsubsection{Diffusion example}
+%How to handle the inhomogeneous Neumann-type boundary conditions will be derived in the following subsection. 
+%Consider the example problem \eqref{eq:weak_form0}:
+%\begin{equation*}
+  %\begin{array}{lll}
+    %∇\cdot(\bfsigma\,∇ u) = u_t, \qquad (\bfsigma \,∇u)\cdot\bfn = f \quad \text{on }\Gamma_f, \qquad (\bfsigma\,∇u)\cdot\bfn = 0\quad \text{on }∂Ω\backslash \Gamma_f.
+  %\end{array}
+%\end{equation*}
+%Analogous to \eqref{eq:weak_form1} we have
+%\begin{equation*}
+  %\begin{array}{lll}
+    %\ds\sum\limits_{j=1}^{N} \big(\theta\,u_j^{(i+1)} + (1-\theta)\,u_j^{(i)}\big)  \left(-\ds\int_Ω \bfsigma\,∇\varphi_j\cdot ∇\varphi_k \,\d\bfx\right) 
+    %+ \ds\sum\limits_{j=1}^{N}\big(\theta\,u_j^{(i+1)} + (1-\theta)\,u_j^{(i)}\big)\left(\ds\int_{\Gamma_f} (\bfsigma\,∇\varphi_j\cdot \bfn)\varphi_k \,\d\bfx  \right) \\[4mm]
+    %\quad = \dfrac{1}{dt} \sum\limits_{j=1}^{N} \big(u_j^{(i+1)} - u_j^{(i)}\big) \ds\int_Ω \varphi_j\,\varphi_k\,\d\bfx, \quad \forall k = 1\dots N\\[4mm]
+  %\end{array}
+%\end{equation*}
+%The boundary condition $(\bfsigma \,∇u)\cdot\bfn = f$ can be written as
+%\begin{equation*}
+  %\begin{array}{lll}
+    %(\bfsigma \,∇u)\cdot\bfn = \s{j=1}{N}u_j\,(\bfsigma\,∇\varphi_j\cdot \bfn) = f
+  %\end{array}
+%\end{equation*}
+%and we get
+%\begin{equation*}
+  %\begin{array}{lll}
+    %\ds\sum\limits_{j=1}^{N} \big(\theta\,u_j^{(i+1)} + (1-\theta)\,u_j^{(i)}\big) 
+     %\left(-\ds\int_Ω \bfsigma\,∇\varphi_j\cdot ∇\varphi_k \,\d\bfx + \ds\int_{\Gamma_f} f\,\varphi_k \,\d\bfx  \right)\\[4mm]
+    %\quad = \dfrac{1}{dt} \sum\limits_{j=1}^{N} \big(u_j^{(i+1)} - u_j^{(i)}\big) \ds\int_Ω \varphi_j\,\varphi_k\,\d\bfx, \quad \forall k = 1\dots N,\\[4mm]
+  %\end{array}
+%\end{equation*}
+%which is the same as
+%\begin{equation*}
+  %\begin{array}{lll}
+    %\ds\sum\limits_{j=1}^{N} \big(\theta\,u_j^{(i+1)} + (1-\theta)\,u_j^{(i)}\big)  \left(-\ds\int_Ω \bfsigma\,∇\varphi_j\cdot ∇\varphi_k \,\d\bfx\right) 
+    %+ \ds\sum\limits_{j=1}^{N}\big(\theta\,f_j^{(i+1)} + (1-\theta)\,f_j^{(i)}\big) \left(\ds\int_{\Gamma_f}  \varphi_j\,\varphi_k  \,\d\bfx  \right) \\[4mm]
+    %\quad = \dfrac{1}{dt} \sum\limits_{j=1}^{N} \big(u_j^{(i+1)} - u_j^{(i)}\big) \ds\int_Ω \varphi_j\,\varphi_k\,\d\bfx, \quad \forall k = 1\dots N.\\[4mm]
+  %\end{array}
+%\end{equation*}
+%This translates to the matrix equation
+%\begin{equation*}
+  %\begin{array}{lll}
+   %\matt{
+      %\theta\,\bfK_{\bfsigma} -\dfrac{1}{dt}\bfM & \quad
+      %(1-\theta)\,\bfM_\Gamma \quad & 
+      %\theta\,\bfM_\Gamma
+    %}
+    %\matt{
+      %\bfu^{(i+1)}\\
+      %\bff^{(i)}\\
+      %\bff^{(i+1)}
+    %}
+    %= 
+    %\matt{
+       %\big((\theta-1)\,\bfK_{\bfsigma} - \dfrac{1}{dt} \bfM \big)\,\bfu^{(i)}
+    %},
+  %\end{array}
+%\end{equation*}
+%where
+%\begin{equation*}
+  %\begin{array}{lll}
+     %\bfK_{\bfsigma} = -\ds\int_Ω \bfsigma\,∇\varphi_j\cdot ∇\varphi_k \,\d\bfx, \quad \bfK = \bfK_\bfI \qquad \text{(note, the minus sign is correct for $+Δ$)},\\[4mm]
+     %\bfM_\Gamma = \ds\int_{\Gamma_f} \varphi_j\,\varphi_k \,\d\bfx\\[4mm]
+     %\bfM = \ds\int_Ω \varphi_j\,\varphi_k\,\d\bfx,
+  %\end{array}
+%\end{equation*}
+%\subsubsection{Laplace example}
+%Another example is
+%\begin{equation*}
+  %\begin{array}{lll}
+    %Δu = 0, \qquad \p{u}{\bfn} = f \quad \text{on }\Gamma_f.
+  %\end{array}
+%\end{equation*}
+%We get
+%\begin{equation*}
+  %\begin{array}{lll}
+    %\ds\sum\limits_{j=1}^{N} u_j \left(-\ds\int_Ω ∇\varphi_j\cdot ∇\varphi_k \,\d\bfx\right) 
+    %+ \ds\sum\limits_{j=1}^{N} f_j\ds\int_{\Gamma_f} \varphi_j\,\varphi_k \,\d\bfx = 0 \quad \forall k = 1\dots N,\\[4mm]
+  %\end{array}
+%\end{equation*}
+%which is in matrix form
+%\begin{equation*}
+  %\begin{array}{lll}
+    %\matt{
+     %\bfK & 
+      %\bfM_\Gamma
+    %}
+    %\matt{
+      %\bfu\\
+      %\bff\\
+    %}
+    %= 
+    %\bfzero,
+  %\end{array}
+%\end{equation*}
+
+\subsubsection{Multidomain example}
+Starting from \eqref{eq:matrix_equation_1} with $\bfB= \bfzero$ we have
+\begin{equation}\label{eq:matrix_equation_3}
+  \begin{array}{lll}
+  \matt{
+      \dfrac{1}{A_m^k\,C_m^k}\theta\,\bfK_{\bfsigma_i^k} -\dfrac{1}{dt}\bfM &
+      \dfrac{1}{A_m^k\,C_m^k}\theta\,\bfK_{\bfsigma_i^k} \\[4mm]
+      f_r^k \,\bfK_{\bfsigma_i^k}  &
+      \bfK_{\bfsigma_e + \bfsigma_i}
+    }
+    \matt{
+      \bfV_m^{(i+1)}\\[4mm]
+       \bfphi_{e}^{(i+1)}
+    }\\[8mm]
+    = 
+    \matt{
+      \big((\theta-1)\, \dfrac{1}{A_m^k\,C_m^k}\bfK_{\bfsigma_i^k} - \dfrac{1}{dt}\bfM\big) \bfV_m^{(i)} 
+      + (\theta - 1)\,\bfK_{\bfsigma_i^k}\,\bfphi_e^{(i)}\\[4mm]
+      \bfzero
+    }.
+  \end{array}
+\end{equation}
+Now we add the flux variables as unknowns and incorporate the boundary condition \eqref{eq:flux_bc}:
+\begin{equation}\label{eq:multidomain_fe_flux}
+  \begin{array}{ll|lll}
+    \matt{
+      \dfrac{1}{A_m^k\,C_m^k}\theta\,\bfK_{\bfsigma_i^k} -\dfrac{1}{dt}\bfM &
+      \dfrac{1}{A_m^k\,C_m^k}\theta\,\bfK_{\bfsigma_i^k} &
+       \ub{(1-\theta)\,\bfB_{\Gamma_M}- (1-\theta)\,\bfB_{\Gamma_M}}{=\bfzero} \quad & 
+      \ub{\theta\,\bfB_{\Gamma_M} - \theta\,\bfB_{\Gamma_M}}{=\bfzero}\\[8mm]      
+      f_r^k \,\bfK_{\bfsigma_i^k}  &
+      \bfK_{\bfsigma_e + \bfsigma_i} &
+      & f_r^k \,\bfB_{\Gamma_M} &
+      \bfM_\Gamma
+    }
+    \matt{
+      \bfV_m^{(i+1)}\\[2mm]
+       \bfphi_{e}^{(i+1)}\\[2mm]
+       \bfp^{k,(i)}\\[2mm]
+      \bfp^{k,(i+1)}\\[4mm]
+        \bfq^{(i+1)}
+    }\\[2mm]
+    = 
+    \matt{
+      \big((\theta-1)\, \dfrac{1}{A_m^k\,C_m^k}\bfK_{\bfsigma_i^k} - \dfrac{1}{dt}\bfM\big) \bfV_m^{(i)} 
+      + (\theta - 1)\,\bfK_{\bfsigma_i^k}\,\bfphi_e^{(i)}\\[4mm]
+      \bfzero
+    },
+  \end{array}
+\end{equation}
+where 
+\begin{equation*}
+  \begin{array}{lll}
+    p^{k,(i)} &= (\bfsigma_i^k \,∇V_m^{k,(i)})\cdot \bfn_m &= -(\bfsigma_i^k\,∇\phi_e^{(i)})\cdot \bfn_m\\[4mm]
+    q^{(i+1)} &:= \big((\bfsigma_e + \bfsigma_i)∇\,\phi_e\big)\cdot \bfn_m
+  \end{array}
+\end{equation*}
+So far we haven't specified a boundary condition for the second row. 
+
+%%
+
+\subsection{Additional body region}
+To simulate surface-electromyography we add a domain $\Omega_B$ which represents fat tissue. The setting is visualized by Fig.~\ref{fig:body_domain2}.
+
+\bild{body_domain2}{0.3\textwidth}{Computational domains}
+
+On the muscle domain $\Omega_M$, we have the 1st and 2nd Multidomain equation,
+\begin{equation*}
+  \begin{array}{lll}
+    %\div\big(\bfsigma_e\,\grad(\phi_e)\big) + \s{k=1}{M_\text{mu}} f_r^k\,\div\big(\bfsigma_i^k\,\grad(\phi_i^k)\big) = 0.\\[4mm]
+    \div\big((\bfsigma_e + \bfsigma_i) \,\grad(\phi_e)\big) + \s{k=1}{M_\text{mu}} f_r^k\,\div\big(\bfsigma_i^k\,\grad(V_m^k )\big) = 0,\\[4mm]
+    \div\big(\bfsigma_i^k\,\grad(\phi_i^k)\big) = A_m^k\,\big(C_m^k\,\p{V_m^k}{t} + I_\text{ion}(V_m^k)\big), \qquad \forall\,k \in 1\dots M_\text{mu}.
+  \end{array}
+\end{equation*}
+The 2nd Multidomain equation is solved using an operator splitting approach, which yields the following diffusion equation to be solved as one part of the splitting \eqref{eq:diffusion_term}:
+\begin{equation*} 
+  \begin{array}{lll}
+    \p{V_m^k}{t} = \dfrac{1}{A^k_m\,C_m^k}\div\big(\bfsigma_i^k\,\grad(V_m^k + \phi_e)\big)
+  \end{array}
+\end{equation*}
+
+We assume a harmonic electric potential on $\Omega_B$:
+\begin{equation*}
+  \begin{array}{lll}
+    \div \big(\bfsigma_b\,\grad (\phi_b)\big) = 0 \qquad \text{on } \Omega_B.
+  \end{array}
+\end{equation*}
+
+The boundary conditions on $\Gamma_M$ are given by \eqref{eq:flux_bc}:
+\begin{equation}\label{eq:bc1}
+  \begin{array}{lll}
+    &(\bfsigma_i^{k}\,∇\phi_i^{k})\cdot \bfn_m = 0   \qquad &\text{on } \Gamma_M \\[4mm]
+    \quad \Rightarrow \quad
+    &(\bfsigma_i^{k}\,∇V_m^{k})\cdot \bfn_m = -(\bfsigma_i^{k}\,∇\phi_e)\cdot \bfn_m =: p^k  \qquad &\text{on } \Gamma_M.
+  \end{array}
+\end{equation}
+For the diffusion part of the 2nd Multidomain equation, boundary condition \eqref{eq:bc1} is satisfied automatically when all flux terms are neglected (cf. \eqref{eq:multidomain_fe_flux}).
+
+The connection between muscle and body domain is given by the following conditions:
+\begin{equation*}
+  \begin{array}{lll}
+    \phi_e = \phi_b  \qquad &\text{on } \Gamma_M,\\[4mm]
+    (\bfsigma_e ∇ \phi_e)\cdot \bfn_m = -(\bfsigma_b ∇ \phi_b)\cdot \bfn_m =: q \qquad &\text{on } \Gamma_M.
+  \end{array}
+\end{equation*}
+Furthermore we have with $\phi_e = \phi^k_i - V_m^k$:
+\begin{equation*}
+  \begin{array}{lll}
+    \big((\bfsigma_e + \bfsigma_i)\,∇\phi_e\big) \cdot \bfn_m\\[4mm]
+    = (\bfsigma_e\,∇\phi_e)\cdot \bfn_m + (\bfsigma_i\,∇\phi_e)\cdot \bfn_m\\[4mm]
+    = q + \s{k=1}{M_\text{mu}}f_r^k\big( -\ub{( \bfsigma_i^k\,∇V_m^k)\cdot \bfn_m}{=p^k} 
+    + \ub{(\bfsigma_i^k \,∇\phi^k_i)\cdot \bfn_m}{=0, \,\eqref{eq:bc1}}\big)\\[4mm]
+    = q - \s{k=1}{M_\text{mu}} f_r^k\,p^k
+  \end{array}
+\end{equation*}
+
+The boundary conditions on the outer boundary of $∂\Omega_B$ are given by
+\begin{equation*}
+  \begin{array}{lll}
+   (\bfsigma_b ∇\phi_b)\cdot \bfn_b = 0 \qquad &\text{on } \Gamma^\text{out}_B \cup \Gamma_M^\text{out}.
+  \end{array}
+\end{equation*}
+
+\subsection{System of linear equations} 
+With the body potential, $\bfphi_b$, and for $M_\text{mu}=1$ motor unit, we get the following system:
+\begin{equation*}
+  \begin{array}{lll}
+    \left[\begin{array}{@{}c|c|c|ccc@{}}
+      \bfA_{V_m,V_m} & \bfB_{V_m,\phi_e} & &&\\[2mm]
+      \bfB_{\phi_e,V_m} & \bfB_{\phi_e,\phi_e} & &f_r^k \,\bfB_{\Gamma_M}-f_r^k \,\bfB_{\Gamma_M}  & \bfB_{\Gamma_M}& \\[2mm] \hline
+      &&\bfC_{\phi_b,\phi_b} & & -\bfB_{\Gamma_M}&\\[2mm]\hline
+      & \bfI_{\Gamma_M} & -\bfI_{\Gamma_M} && &\\[2mm]
+    \end{array}\right]
+    \left[\begin{array}{@{}c@{}}
+      V_{m}^{(i+1)}  \\[2mm]\hline 
+      \bfphi_{e}^{(i+1)} \\[2mm]\hline
+      \bfphi_{b}^{(i+1)} \\[2mm]\hline
+      \bfp^{k,(i+1)} \\[2mm] 
+      \bfq^{(i+1)}
+    \end{array}\right]
+    = 
+    \left[\begin{array}{@{}c@{}}
+      \bfb_{V_m}^{(i+1)} \\
+      \bfzero \\\hline
+      \bfzero\\\hline 
+      \bfzero
+    \end{array}\right]\\[4mm]
+    \Leftrightarrow
+    \quad 
+    \left[\begin{array}{@{}c|c|c|c@{}}
+      \bfA_{V_m,V_m} & \bfB_{V_m,\phi_e} & &\\[2mm]
+      \bfB_{\phi_e,V_m} & \bfB_{\phi_e,\phi_e} & &\bfB_{\Gamma_M} \\[2mm] \hline
+      &&\bfC_{\phi_b,\phi_b} & -\bfB_{\Gamma_M}\\[2mm]\hline
+      & \bfI_{\Gamma_M} & -\bfI_{\Gamma_M} &\\[2mm]
+    \end{array}\right]
+    \left[\begin{array}{@{}c@{}}
+      V_{m}^{(i+1)}  \\[2mm]\hline 
+      \bfphi_{e}^{(i+1)} \\[2mm]\hline
+      \bfphi_{b}^{(i+1)}  \\[2mm]\hline
+      \bfq^{(i+1)}
+    \end{array}\right]
+    = 
+    \left[\begin{array}{@{}c@{}}
+      \bfb_{V_m}^{(i+1)} \\[2mm]
+      \bfzero\\\hline
+      \bfzero\\\hline 
+      \bfzero
+    \end{array}\right]
+  \end{array},
+\end{equation*}
+where
+\begin{equation*}
+  \begin{array}{lll}
+    \bfA_{V_m,V_m} = \dfrac{1}{A_m^k\,C_m^k}\theta\,\bfK_{\bfsigma_i^k} -\dfrac{1}{dt}\bfM,\\[4mm]
+    \bfB_{V_m,\phi_e} = \dfrac{1}{A_m^k\,C_m^k}\theta\,\bfK_{\bfsigma_i^k},\\[4mm]
+    \bfB_{\phi_e,V_m} = f_r^k \,\bfK_{\bfsigma_i^k},\\[4mm]
+    \bfB_{\phi_e,\phi_e} = \bfK_{\bfsigma_e + \bfsigma_i},\\[4mm]
+    \bfB_{\Gamma_B,kj} = \ds\int_{\Gamma_M} \psi_j\,\varphi_k \,\d\bfx,\\[4mm]
+    \bfC_{\phi_b,\phi_b} = \bfK_{\bfsigma_b},\\[4mm]
+    \bfI_{\Gamma_M} \text{ containing 1 entries for boundary dofs},\\[4mm]
+    \bfb_{V_m}^{(i+1)} = \big((\theta-1)\, \dfrac{1}{A_m^k\,C_m^k}\bfK_{\bfsigma_i^k} - \dfrac{1}{dt}\bfM\big) \bfV_m^{(i)} 
+      + (\theta - 1)\,\bfK_{\bfsigma_i^k}\,\bfphi_e^{(i)}\\[4mm]
+  \end{array}
+\end{equation*}
+
+This matrix can be condensed and takes the form
+\begin{equation*}
+  \begin{array}{lll}
+    \Leftrightarrow
+    \quad 
+    \left[\begin{array}{@{}c|c|c@{}}
+      \bfA_{V_m,V_m} & \bfB_{V_m,\phi_e} & \\[2mm]
+      \bfB_{\phi_e,V_m} & \bfB_{\phi_e,\phi_e} & \bfD \\[2mm] \hline
+      &\bfE &\bfC_{\phi_b,\phi_b}\\[2mm]
+    \end{array}\right]
+    \left[\begin{array}{@{}c@{}}
+      V_{m}^{(i+1)}  \\[2mm]\hline 
+      \bfphi_{e}^{(i+1)} \\[2mm]\hline
+      \hat{\bfphi}_{b}^{(i+1)}
+    \end{array}\right]
+    = 
+    \left[\begin{array}{@{}c@{}}
+      \bfb_{V_m}^{(i+1)} \\[2mm]
+      \bfzero\\\hline
+      \bfzero
+    \end{array}\right]
+  \end{array}.
+\end{equation*}
+Here, $\bfD$ and $\bfE$ contain entries for the dofs in the elements that are adajacent to the border dofs. The size of the last row and column of the system matrix is the number of dofs in the fat domain, without the border dofs, as they are already included in the second column and row.
+
+$\hat{\bfphi}_{b}^{(i+1)}$ is the vector of body potential without dofs on the border.
+
+\subsection{Summary}
+\begin{equation*}
+  \begin{array}{lll}
+    \left[\begin{array}{@{}ccc|c|c@{}}
+      \bfA^1_{V_m,V_m} & & &\bfB^1_{V_m,\phi_e} & \\[2mm]
+      &\bfA^2_{V_m,V_m} &  &\bfB^2_{V_m,\phi_e} & \\[2mm]
+      &&\bfA^k_{V_m,V_m}  &\bfB^k_{V_m,\phi_e} & \\[2mm]
+      \bfB^1_{\phi_e,V_m} & \bfB^2_{\phi_e,V_m} & \bfB^k_{\phi_e,V_m} & \bfB_{\phi_e,\phi_e} & \bfD \\[2mm] \hline
+      &&&\bfE &\bfC_{\phi_b,\phi_b}\\[2mm]
+    \end{array}\right]
+    \left[\begin{array}{@{}c@{}}
+      V_{m}^{1,(i+1)}  \\[2mm]
+      V_{m}^{2,(i+1)}  \\[2mm]
+      V_{m}^{k,(i+1)}  \\[2mm]\hline 
+      \bfphi_{e}^{(i+1)} \\[2mm]\hline
+      \hat{\bfphi}_{b}^{(i+1)}
+    \end{array}\right]
+    = 
+    \left[\begin{array}{@{}c@{}}
+      \bfb_{V_m}^{1,(i+1)} \\[2mm]
+      \bfb_{V_m}^{2,(i+1)} \\[2mm]
+      \bfb_{V_m}^{k,(i+1)} \\[2mm]
+      \bfzero\\\hline
+      \bfzero
+    \end{array}\right]
+  \end{array}.
+\end{equation*}
+
+%\subsubsection{Flux boundary conditions}
+
+%\begin{equation*}
+  %\begin{array}{lll}
+    %(\bfsigma_i^{k}\,∇V_m^{k})\cdot \bfn_m = -(\bfsigma_i^{k}\,∇\phi_e)\cdot \bfn_m &=: f  \qquad &\text{on } \Gamma_M\\[4mm]
+    %(\bfsigma_e ∇ \phi_e)\cdot \bfn_m = -(\bfsigma_b ∇ \phi_b)\cdot \bfn_m &=: g \qquad &\text{on } \Gamma_M\\[4mm]
+    %\big((\bfsigma_e + \bfsigma_i)∇\phi_e\big)\cdot \bfn_m &=: h
+  %\end{array}
+%\end{equation*}
+
+
+% -------------- Literaturseite --------------------
+\newpage
+\nocite{*}
+\bibliography{literatur}{}
+\bibliographystyle{abbrv}
+
+% -------------- Anhang ------------
+%\appendix
+%\input{8_anhang.tex}
+
+\end{document}

@@ -17,6 +17,18 @@ initialize()
   if (this->meshPartition_) 
   {
     LOG(DEBUG) << "in FunctionSpacePartition<structured>: meshPartition already set";
+
+    // Set number of global and local elements and number of ranks to be consistent with the values stored in meshPartition.
+    // These local values of function space are the buffer to which the values from python config are parsed. This data duplication is needed because when the config is parsed there is no meshPartition yet.
+    // The values are used e.g. in the python output writer.
+    // At all other places, the values stored in mesh partition are used.
+    for (int i = 0; i < MeshType::dim(); i++)
+    {
+      this->nElementsPerCoordinateDirectionGlobal_[i] = this->meshPartition_->nElementsGlobal(i);
+      this->nElementsPerCoordinateDirectionLocal_[i] = this->meshPartition_->nElementsLocal(i);
+      this->nRanks_[i] = this->meshPartition_->nRanks(i);
+    }
+
     return;
   }
   
@@ -42,16 +54,22 @@ initialize()
     LOG(DEBUG) << "got inputMeshIsGlobal = " << std::boolalpha << inputMeshIsGlobal << " from config";
   }
 
+  // get rankNos if it was set
+  std::vector<int> rankNos;
+  if (this->specificSettings_.hasKey("rankNos"))
+    this->specificSettings_.template getOptionVector<int>("rankNos", rankNos);
+
   if (inputMeshIsGlobal)
   {
     this->meshPartition_ = this->partitionManager_->template createPartitioningStructuredGlobal<FunctionSpace<MeshType,BasisFunctionType>>(
-      this->nElementsPerCoordinateDirectionGlobal_, this->nElementsPerCoordinateDirectionLocal_, this->nRanks_);
+      this->specificSettings_, this->nElementsPerCoordinateDirectionGlobal_, this->nElementsPerCoordinateDirectionLocal_, this->nRanks_, rankNos);
   }
   else 
   {
     this->meshPartition_ = this->partitionManager_->template createPartitioningStructuredLocal<FunctionSpace<MeshType,BasisFunctionType>>(
-      this->nElementsPerCoordinateDirectionGlobal_, this->nElementsPerCoordinateDirectionLocal_, this->nRanks_);
+      this->specificSettings_, this->nElementsPerCoordinateDirectionGlobal_, this->nElementsPerCoordinateDirectionLocal_, this->nRanks_, rankNos);
   }
+
   assert(this->meshPartition_);
 }
 

@@ -30,7 +30,7 @@ outputBorderPoints(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &b
 
   std::stringstream filename;
   filename << name;
-  PyObject_CallFunction(functionOutputPoints_, "s i O f", filename.str().c_str(), currentRankSubset_->ownRankNo(),
+  PyObject_CallFunction(functionOutputPoints_, "s i i O f", filename.str().c_str(), currentRankSubset_->ownRankNo(), level_,
                         PythonUtility::convertToPython<std::vector<Vec3>>::get(points), 0.1);
   PythonUtility::checkForError();
 #endif
@@ -66,7 +66,7 @@ outputStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &bo
 
   std::stringstream filename;
   filename << name;
-  PyObject_CallFunction(functionOutputStreamlines_, "s i O f", filename.str().c_str(), currentRankSubset_->ownRankNo(),
+  PyObject_CallFunction(functionOutputStreamlines_, "s i i O f", filename.str().c_str(), currentRankSubset_->ownRankNo(), level_,
                         PythonUtility::convertToPython<std::vector<std::vector<Vec3>>>::get(streamlines), 0.1);
   PythonUtility::checkForError();
 #endif

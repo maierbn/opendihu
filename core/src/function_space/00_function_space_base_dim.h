@@ -6,7 +6,7 @@
 namespace FunctionSpace
 {
 
-/** base class that provided constants for the numbers of dofs, elements and nodes
+/** base class that provides constants for the numbers of dofs, elements and nodes
   */
 template<int D,typename BasisFunctionType>
 class FunctionSpaceBaseDim

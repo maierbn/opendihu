@@ -7,13 +7,14 @@
 #include <iostream>
 #include "easylogging++.h"
 #include "utility/python_utility.h"
+#include "utility/string_utility.h"
 
 namespace Solver
 {
 
 //! return previously created solver or create on the fly
 template<typename SolverType>
-std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiCommunicator)
+std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiCommunicator, std::string solverNameKey)
 {
   LOG(TRACE) << "Manager::solver";
 
@@ -24,13 +25,14 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
   }
 
   // if solver has already been created earlier
-  if (settings.hasKey("solverName"))
+  if (settings.hasKey(solverNameKey))
   {
-    std::string solverName = settings.getOptionString("solverName", "");
+    std::string solverName = settings.getOptionString(solverNameKey, "");
     
     if (hasSolver(solverName, mpiCommunicator))
     {
-      LOG(DEBUG) << "Solver with solverName \"" << solverName << "\" requested and found, type is " << typeid(solvers_[mpiCommunicator][solverName]).name();
+      LOG(DEBUG) << "Solver with solverName \"" << solverName << "\" requested and found, type is "
+        << StringUtility::demangle(typeid(solvers_[mpiCommunicator][solverName]).name());
 
       return std::static_pointer_cast<SolverType>(solvers_[mpiCommunicator][solverName]);
     }
@@ -38,9 +40,13 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
     {
       // solver was preconfigured, do nothing specific here, created standard solver
       LOG(DEBUG) << "Solver configuration for \"" << solverName << "\" requested and found, create solver. "
-        << "Type is " << typeid(SolverType).name() << ".";
+        << "Type is " << StringUtility::demangle(typeid(SolverType).name()) << ".";
 
+      // create new solver object
       std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(solverConfiguration_.at(solverName), mpiCommunicator, solverName);
+      
+      // initialize solver
+      solver->initialize();
 
       solvers_[mpiCommunicator][solverName] = solver;
 
@@ -74,16 +80,59 @@ std::shared_ptr<SolverType> Manager::solver(PythonConfig settings, MPI_Comm mpiC
     }
   }
 
-
   // create new solver, store as anonymous object
   std::stringstream anonymousName;
   anonymousName << "anonymous" << numberAnonymousSolvers_++;
-  LOG(DEBUG) << "Create new solver with type " << typeid(SolverType).name() << " and name \"" <<anonymousName.str() << "\".";
+  LOG(DEBUG) << "Create new solver with type " << StringUtility::demangle(typeid(SolverType).name())
+    << " and name \"" <<anonymousName.str() << "\".";
+  
+  // create new solver object
   std::shared_ptr<SolverType> solver = std::make_shared<SolverType>(settings, mpiCommunicator, anonymousName.str());
+  
+  // initialize solver
+  solver->initialize();
 
   solvers_[mpiCommunicator][anonymousName.str()] = solver;
 
   return solver;
 }
+
+template<typename SolverType>
+void Manager::deleteSolver(PythonConfig settings, MPI_Comm mpiCommunicator, std::string solverNameKey)
+{
+  // if there is no entry for the mpi communicator, there is no such solver
+  if (solvers_.find(mpiCommunicator) == solvers_.end())
+  {
+    return;
+  }
+
+  // if solver has been created earlier
+  if (settings.hasKey(solverNameKey))
+  {
+    std::string solverName = settings.getOptionString(solverNameKey, "");
+
+    if (hasSolver(solverName, mpiCommunicator))
+    {
+      solvers_[mpiCommunicator].erase(solverName);
+    }
+  }
+
+  // check if there is a matching solver stored
+  // loop over all stored solvers
+  for (std::map<std::string, std::shared_ptr<Solver>>::iterator iter = solvers_[mpiCommunicator].begin(); iter != solvers_[mpiCommunicator].end(); iter++)
+  {
+    // check if type matches
+    if (std::dynamic_pointer_cast<SolverType>(iter->second))
+    {
+      // check if config is the  same
+      if (iter->second->configEquals(settings))
+      {
+        solvers_[mpiCommunicator].erase(iter);
+        return;
+      }
+    }
+  }
+}
+
 
 }  // namespace

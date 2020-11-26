@@ -4,7 +4,7 @@
 
 namespace MathUtility
 {
-
+/*
 double sqr(double v)
 {
   return v*v;
@@ -13,21 +13,21 @@ double sqr(double v)
 int sqr(int v)
 {
   return v*v;
+}*/
+
+template<>
+Vc::double_v pow(Vc::double_v base, double exponent)
+{
+  return base.apply([exponent](double d)
+  {
+    return std::pow(d, exponent);
+  });
 }
 
 template<>
-double length<2>(const Vec2 node)
+double pow(double base, double exponent)
 {
-  return sqrt(sqr(node[0])
-    + sqr(node[1]));
-}
-
-template<>
-double length<3>(const Vec3 node)
-{
-  return sqrt(sqr(node[0])
-    + sqr(node[1])
-    + sqr(node[2]));
+  return std::pow(base, exponent);
 }
 
 template<>
@@ -63,336 +63,65 @@ double normSquared<3>(const VecD<3> node)
   return sqr(node[0]) + sqr(node[1]) + sqr(node[2]);
 }
 
-
-std::array<double,9> computeTransformationMatrixAndDeterminant(const std::array<Vec3,3> &jacobian, double &determinant)
-{
-  // rename input values
-  const double m11 = jacobian[0][0];
-  const double m21 = jacobian[0][1];
-  const double m31 = jacobian[0][2];
-  const double m12 = jacobian[1][0];
-  const double m22 = jacobian[1][1];
-  const double m32 = jacobian[1][2];
-  const double m13 = jacobian[2][0];
-  const double m23 = jacobian[2][1];
-  const double m33 = jacobian[2][2];
-
-  // the following code is copy&pasted from the output of ./invert_mapping.py
-  determinant = m11*m22*m33 - m11*m23*m32 - m12*m21*m33 + m12*m23*m31 + m13*m21*m32 - m13*m22*m31;
-  double prefactor = 1./sqr(determinant);
-
-  // 0 1 2
-  // 3 4 5
-  // 6 7 8
-
-  // compute matrix entries of symmetric matrix
-  std::array<double, 9> result;
-  result[0] = prefactor * (sqr(m12*m23 - m13*m22) + sqr(m12*m33 - m13*m32) + sqr(m22*m33 - m23*m32));
-  result[1] = prefactor * (-(m11*m23 - m13*m21)*(m12*m23 - m13*m22) - (m11*m33 - m13*m31)*(m12*m33 - m13*m32) - (m21*m33 - m23*m31)*(m22*m33 - m23*m32));
-  result[2] = prefactor * ((m11*m22 - m12*m21)*(m12*m23 - m13*m22) + (m11*m32 - m12*m31)*(m12*m33 - m13*m32) + (m21*m32 - m22*m31)*(m22*m33 - m23*m32));
-  result[3] = result[1];
-  result[4] = prefactor * (sqr(m11*m23 - m13*m21) + sqr(m11*m33 - m13*m31) + sqr(m21*m33 - m23*m31));
-  result[5] = prefactor * (-(m11*m22 - m12*m21)*(m11*m23 - m13*m21) - (m11*m32 - m12*m31)*(m11*m33 - m13*m31) - (m21*m32 - m22*m31)*(m21*m33 - m23*m31));
-  result[6] = result[2];
-  result[7] = result[5];
-  result[8] = prefactor * (sqr(m11*m22 - m12*m21) + sqr(m11*m32 - m12*m31) + sqr(m21*m32 - m22*m31));
-
-  return result;
-}
-
-// 1D integration factor
 template<>
-double computeIntegrationFactor<1>(const std::array<Vec3,1> &jacobian)
+double normSquared<1>(const VecD<1,Vc::double_v> node)
 {
-  return length<3>(jacobian[0]);
-}
-
-// 2D integration factor
-template<>
-double computeIntegrationFactor<2>(const std::array<Vec3,2> &jacobian)
-{
-  // rename input values
-  const double m11 = jacobian[0][0];
-  const double m21 = jacobian[0][1];
-  const double m31 = jacobian[0][2];
-  const double m12 = jacobian[1][0];
-  const double m22 = jacobian[1][1];
-  const double m32 = jacobian[1][2];
-  return sqrt(sqr(m11*m22) + sqr(m11*m32) - 2*m11*m12*m21*m22 - 2*m11*m12*m31*m32
-    + sqr(m12*m21) + sqr(m12*m31) + sqr(m21*m32) - 2*m21*m22*m31*m32 + sqr(m22*m31));
-}
-
-// 3D integration factor
-template<>
-double computeIntegrationFactor<3>(const std::array<Vec3,3> &jacobian)
-{
-  // rename input values
-  const double m11 = jacobian[0][0];
-  const double m21 = jacobian[0][1];
-  const double m31 = jacobian[0][2];
-  const double m12 = jacobian[1][0];
-  const double m22 = jacobian[1][1];
-  const double m32 = jacobian[1][2];
-  const double m13 = jacobian[2][0];
-  const double m23 = jacobian[2][1];
-  const double m33 = jacobian[2][2];
-
-  double determinant = m11*m22*m33 - m11*m23*m32 - m12*m21*m33 + m12*m23*m31 + m13*m21*m32 - m13*m22*m31;
-
-  return fabs(determinant);
-}
-
-double applyTransformation(const std::array<double,9> &transformationMatrix, const Vec3 &vector1, const Vec3 &vector2)
-{
-  double result;
-
-  // rename input values
-  const double v11 = vector1[0];
-  const double v12 = vector1[1];
-  const double v13 = vector1[2];
-  const double v21 = vector2[0];
-  const double v22 = vector2[1];
-  const double v23 = vector2[2];
-  // 0 1 2
-  // 3 4 5
-  // 6 7 8
-  const double m11 = transformationMatrix[0];
-  const double m12 = transformationMatrix[1];
-  const double m13 = transformationMatrix[2];
-  const double m22 = transformationMatrix[4];
-  const double m23 = transformationMatrix[5];
-  const double m33 = transformationMatrix[8];
-
-  //! computes v1^T * T * v2 where T is the symmetric transformation matrix
-  //! computed by doc/compute_generalized_laplace.py
-
-  // compute result
-  result = v21*(m11*v11 + m12*v12 + m13*v13) + v22*(m12*v11 + m22*v12 + m23*v13) + v23*(m13*v11 + m23*v12 + m33*v13);
-  return result;
-}
-
-double applyTransformation(const std::array<double,4> &transformationMatrix, const Vec2 &vector1, const Vec2 &vector2)
-{
-  double result;
-
-  // rename input values
-  const double v11 = vector1[0];
-  const double v12 = vector1[1];
-  const double v21 = vector2[0];
-  const double v22 = vector2[1];
-  // 0 1
-  // 2 3
-  const double m11 = transformationMatrix[0];
-  const double m12 = transformationMatrix[1];
-  const double m22 = transformationMatrix[3];
-
-  //! computes v1^T * T * v2 where T is the symmetric transformation matrix
-  //! computed by doc/compute_generalized_laplace.py
-
-  // compute result
-  result = v21*(m11*v11 + m12*v12) + v22*(m12*v11 + m22*v12);
+  Vc::double_v vcResult = sqr(node[0]);
+  double result = 0;
+  for (int vcComponent = 0; vcComponent < Vc::double_v::size(); vcComponent++)
+  {
+    result += sqr(vcResult[vcComponent]);
+  }
   return result;
 }
 
 template<>
-double computeDeterminant<3>(const Tensor2<3> &jacobian)
+double normSquared<2>(const VecD<2,Vc::double_v> node)
 {
-  // rename input values
-  const double m11 = jacobian[0][0];
-  const double m21 = jacobian[0][1];
-  const double m31 = jacobian[0][2];
-  const double m12 = jacobian[1][0];
-  const double m22 = jacobian[1][1];
-  const double m32 = jacobian[1][2];
-  const double m13 = jacobian[2][0];
-  const double m23 = jacobian[2][1];
-  const double m33 = jacobian[2][2];
-
-  return m11*m22*m33 - m11*m23*m32 - m12*m21*m33 + m12*m23*m31 + m13*m21*m32 - m13*m22*m31;
-}
-
-template<>
-double computeDeterminant<2>(const Tensor2<2> &jacobian)
-{
-  // rename input values
-  const double m11 = jacobian[0][0];
-  const double m21 = jacobian[0][1];
-  const double m12 = jacobian[1][0];
-  const double m22 = jacobian[1][1];
-
-  return m11*m22 - m12*m21;
-}
-
-template<>
-Tensor2<3> computeSymmetricInverse<3>(const Tensor2<3> &matrix, double &determinant)
-{
-  // rename input values
-  const double m11 = matrix[0][0];
-  const double m21 = matrix[0][1];
-  const double m31 = matrix[0][2];
-  //const double m12 = matrix[1][0];
-  const double m22 = matrix[1][1];
-  const double m32 = matrix[1][2];
-  const double m33 = matrix[2][2];
-
-  determinant = m11*m22*m33 - m11*sqr(m32) - sqr(m21)*m33 + 2*m21*m31*m32 - m22*sqr(m31);
-  double invDet = 1./determinant;
-
-  std::array<Vec3,3> result;
-
-  result[0][0] = invDet*(m22*m33 - sqr(m32));  // entry m11
-  result[1][0] = invDet*(-m21*m33 + m31*m32);  // entry m12
-  result[2][0] = invDet*(m21*m32 - m22*m31);   // entry m13
-  result[0][1] = invDet*(-m21*m33 + m31*m32);  // entry m21
-  result[1][1] = invDet*(m11*m33 - sqr(m31));  // entry m22
-  result[2][1] = invDet*(-m11*m32 + m21*m31);  // entry m23
-  result[0][2] = invDet*(m21*m32 - m22*m31);   // entry m31
-  result[1][2] = invDet*(-m11*m32 + m21*m31);  // entry m32
-  result[2][2] = invDet*(m11*m22 - sqr(m21));  // entry m33
-
+  Vc::double_v vcResult = sqr(node[0]) + sqr(node[1]);
+  double result = 0;
+  for (int vcComponent = 0; vcComponent < Vc::double_v::size(); vcComponent++)
+  {
+    result += sqr(vcResult[vcComponent]);
+  }
   return result;
 }
 
 template<>
-Tensor2<2> computeSymmetricInverse<2>(const Tensor2<2> &matrix, double &determinant)
+double normSquared<3>(const Vec3_v node)
 {
-  // rename input values
-  const double m11 = matrix[0][0];
-  const double m21 = matrix[0][1];
-  //const double m12 = matrix[1][0];
-  const double m22 = matrix[1][1];
-
-  determinant = m11*m22 - sqr(m21);
-  double invDet = 1./determinant;
-
-  Tensor2<2> result;
-
-  result[0][0] = invDet * m22;  // entry m11
-  result[1][0] = invDet * -m21;  // entry m12
-  result[0][1] = invDet * -m21;  // entry m21
-  result[1][1] = invDet * m11;  // entry m22
-
+  Vc::double_v vcResult = sqr(node[0]) + sqr(node[1]) + sqr(node[2]);
+  double result = 0;
+  for (int vcComponent = 0; vcComponent < Vc::double_v::size(); vcComponent++)
+  {
+    result += sqr(vcResult[vcComponent]);
+  }
   return result;
 }
 
+//! arc cosine
 template<>
-Tensor2<3> computeInverse<3>(const Tensor2<3> &matrix, double &determinant)
+double acos<double>(double value)
 {
-  // matrices are stored column-major
-
-  // rename input values
-  const double m11 = matrix[0][0];
-  const double m21 = matrix[0][1];
-  const double m31 = matrix[0][2];
-  const double m12 = matrix[1][0];
-  const double m22 = matrix[1][1];
-  const double m32 = matrix[1][2];
-  const double m13 = matrix[2][0];
-  const double m23 = matrix[2][1];
-  const double m33 = matrix[2][2];
-
-  determinant =  m11*m22*m33 - m11*m23*m32 - m12*m21*m33 + m12*m23*m31 + m13*m21*m32 - m13*m22*m31;
-  double invDet = 1./determinant;
-
-  std::array<Vec3,3> result;
-
-  result[0][0] = invDet*(m22*m33 - m23*m32);   // entry m11
-  result[1][0] = invDet*(-m12*m33 + m13*m32);  // entry m12
-  result[2][0] = invDet*(m12*m23 - m13*m22);   // entry m13
-  result[0][1] = invDet*(-m21*m33 + m23*m31);  // entry m21
-  result[1][1] = invDet*(m11*m33 - m13*m31);   // entry m22
-  result[2][1] = invDet*(-m11*m23 + m13*m21);  // entry m23
-  result[0][2] = invDet*(m21*m32 - m22*m31);   // entry m31
-  result[1][2] = invDet*(-m11*m32 + m12*m31);  // entry m32
-  result[2][2] = invDet*(m11*m22 - m12*m21);   // entry m33
-
-  return result;
+  return std::acos(value);
 }
 
 template<>
-Tensor2<2> computeInverse<2>(const Tensor2<2> &matrix, double &determinant)
+Vc::double_v acos<Vc::double_v>(Vc::double_v value)
 {
-  // matrices are stored column-major
-
-  // rename input values
-  const double m11 = matrix[0][0];
-  const double m21 = matrix[0][1];
-  const double m12 = matrix[1][0];
-  const double m22 = matrix[1][1];
-
-  determinant =  m11*m22 - m12*m21;
-  double invDet = 1./determinant;
-
-  Tensor2<2> result;
-
-  result[0][0] = invDet*(m22);   // entry m11
-  result[1][0] = invDet*(-m12);  // entry m12
-  result[0][1] = invDet*(-m21);  // entry m21
-  result[1][1] = invDet*(m11);   // entry m22
-
-  return result;
+  return value.apply([](double v){return std::acos(v);});
 }
 
 template<>
-Tensor2<1> computeInverse<1>(const Tensor2<1> &matrix, double &determinant)
+double abs<double>(double value)
 {
-  determinant = matrix[0][0];
-  
-  Tensor2<1> result;
-  result[0][0] = 1./determinant;
-  return result;
+  return fabs(value);
 }
 
 template<>
-Tensor2<3> computeCofactorMatrix<3>(const Tensor2<3> &matrix)
+Vc::double_v abs<Vc::double_v>(Vc::double_v value)
 {
-  // matrices are stored column-major
-
-  // rename input values
-  const double m11 = matrix[0][0];
-  const double m21 = matrix[0][1];
-  const double m31 = matrix[0][2];
-  const double m12 = matrix[1][0];
-  const double m22 = matrix[1][1];
-  const double m32 = matrix[1][2];
-  const double m13 = matrix[2][0];
-  const double m23 = matrix[2][1];
-  const double m33 = matrix[2][2];
-
-  std::array<Vec3,3> result;
-
-  result[0][0] = m22*m33 - m23*m32;   // entry m11
-  result[1][0] = -m21*m33 + m23*m31;  // entry m12
-  result[2][0] = m21*m32 - m22*m31;   // entry m13
-  result[0][1] = -m12*m33 + m13*m32;  // entry m21
-  result[1][1] = m11*m33 - m13*m31;   // entry m22
-  result[2][1] = -m11*m32 + m12*m31;  // entry m23
-  result[0][2] = m12*m23 - m13*m22;   // entry m31
-  result[1][2] = -m11*m23 + m13*m21;  // entry m32
-  result[2][2] = m11*m22 - m12*m21;   // entry m33
-
-  return result;
-}
-
-template<>
-Tensor2<2> computeCofactorMatrix<2>(const Tensor2<2> &matrix)
-{
-  // matrices are stored column-major
-
-  // rename input values
-  const double m11 = matrix[0][0];
-  const double m21 = matrix[0][1];
-  const double m12 = matrix[1][0];
-  const double m22 = matrix[1][1];
-
-  Tensor2<2> result;
-
-  result[0][0] = m22;   // entry m11
-  result[1][0] = -m21;  // entry m12
-  result[0][1] = -m12;  // entry m21
-  result[1][1] = m11;   // entry m22
-
-  return result;
+  return Vc::abs(value);
 }
 
 //! transform a 3xD2 matrix to a DxD matrix by filling up with identity entries
@@ -426,6 +155,48 @@ template<>
 std::array<std::array<double,1>,1> transformToDxD<1,1>(const std::array<Vec3,1> &matrix)
 {
   return std::array<std::array<double,1>,1>({std::array<double,1>({matrix[0][0]})});
+}
+
+//! transform a 3xD2 matrix to a DxD matrix by filling up with identity entries
+template<>
+std::array<Vec3_v,3> transformToDxD<3,3>(const std::array<Vec3_v,3> &matrix)
+{
+  return matrix;
+}
+
+template<>
+std::array<Vec3_v,3> transformToDxD<3,2>(const std::array<Vec3_v,2> &matrix)
+{
+  return std::array<Vec3_v,3>({
+    matrix[0],
+    matrix[1],
+    Vec3_v({Vc::double_v::Zero(), Vc::double_v::Zero(), Vc::double_v::One()})
+  });
+}
+
+template<>
+std::array<std::array<Vc::double_v,2>,2> transformToDxD<2,2>(const std::array<Vec3_v,2> &matrix)
+{
+  return std::array<std::array<Vc::double_v,2>,2>({
+    std::array<Vc::double_v,2>({matrix[0][0], matrix[0][1]}),
+    std::array<Vc::double_v,2>({matrix[1][0], matrix[1][1]})
+  });
+}
+
+template<>
+std::array<Vec3_v,3> transformToDxD<3,1>(const std::array<Vec3_v,1> &matrix)
+{
+  return std::array<Vec3_v,3>({
+    matrix[0],
+    Vec3_v({Vc::double_v::Zero(), Vc::double_v::One(), Vc::double_v::Zero()}),
+    Vec3_v({Vc::double_v::Zero(), Vc::double_v::Zero(), Vc::double_v::One()})}
+  );
+}
+
+template<>
+std::array<std::array<Vc::double_v,1>,1> transformToDxD<1,1>(const std::array<Vec3_v,1> &matrix)
+{
+  return std::array<std::array<Vc::double_v,1>,1>({std::array<Vc::double_v,1>({matrix[0][0]})});
 }
 
 template<>
@@ -500,6 +271,36 @@ bool isSubsequenceOf(std::vector<int> a, std::vector<int> b, size_t &subsequence
   return true;
 }
 
+template<>
+bool equals<1>(std::array<double,1> a, std::array<double,1> b, double tolerance)
+{
+  return fabs(a[0] - b[0]) <= tolerance;
+}
+
+template<>
+bool equals<2>(std::array<double,2> a, std::array<double,2> b, double tolerance)
+{
+  return fabs(a[0] - b[0]) <= tolerance && fabs(a[1] - b[1]) <= tolerance;
+}
+
+template<>
+bool equals<3>(std::array<double,3> a, std::array<double,3> b, double tolerance)
+{
+  return fabs(a[0] - b[0]) <= tolerance && fabs(a[1] - b[1]) <= tolerance && fabs(a[2] - b[2]) <= tolerance;
+}
+
+template<>
+bool isFinite<double>(double value)
+{
+  return std::isfinite(value);
+}
+
+template<>
+bool isFinite<Vc::double_v>(Vc::double_v value)
+{
+  return Vc::all_of(Vc::isfinite(value));
+}
+
 int permutation(int i, int j, int k)
 {
   if ((i==1 && j==2 && k==3) || (i==2 && j==3 && k==1) || (i==3 && j==1 && k==2))
@@ -509,107 +310,181 @@ int permutation(int i, int j, int k)
   return 0;
 }
 
+void quadrilateralGetPointCoordinates(double xp1, double x11, double x21, double x31, double x41,
+                                      double xp2, double x12, double x22, double x32, double x42,
+                                      double &xi1, double &xi2)
+{
+  // Find the coordinates (xi1,xi2) such that xp = (1-xi1)*(1-xi2)*x1 + xi1*(1-xi2)*x2 + (1-xi1)*xi2*x3 + xi1*xi2*x4.
+  // This formula was derived using sympy, in the file opendihu/doc/sympy/invert_mapping.py (section 2D linear quadrilateral).
+  // There are two solutions to this problem, sometimes the correct solution is the first, sometimes it is the second.
+  // Compute both and select the better one.
+
+  // 1st solution
+  const double xi1a = (1.0L/2.0L)*(2*x11*x32 - x11*x42 - 2*x12*x31 + x12*x41 - x21*x32 + x22*x31 + xp1*(x12 - x22 - x32 + x42) + xp2*(-x11 + x21 + x31 - x41) + std::sqrt(std::pow(x11, 2)*std::pow(x42, 2) - 2*std::pow(x11, 2)*x42*xp2 + std::pow(x11, 2)*std::pow(xp2, 2) - 2*x11*x12*x41*x42 + 2*x11*x12*x41*xp2 + 2*x11*x12*x42*xp1 - 2*x11*x12*xp1*xp2 - 2*x11*x21*x32*x42 + 2*x11*x21*x32*xp2 + 2*x11*x21*x42*xp2 - 2*x11*x21*std::pow(xp2, 2) - 2*x11*x22*x31*x42 + 2*x11*x22*x31*xp2 + 4*x11*x22*x32*x41 - 4*x11*x22*x32*xp1 - 4*x11*x22*x41*xp2 + 2*x11*x22*x42*xp1 + 2*x11*x22*xp1*xp2 + 2*x11*x31*x42*xp2 - 2*x11*x31*std::pow(xp2, 2) - 4*x11*x32*x41*xp2 + 2*x11*x32*x42*xp1 + 2*x11*x32*xp1*xp2 + 2*x11*x41*x42*xp2 + 2*x11*x41*std::pow(xp2, 2) - 2*x11*std::pow(x42, 2)*xp1 - 2*x11*x42*xp1*xp2 + std::pow(x12, 2)*std::pow(x41, 2) - 2*std::pow(x12, 2)*x41*xp1 + std::pow(x12, 2)*std::pow(xp1, 2) + 4*x12*x21*x31*x42 - 4*x12*x21*x31*xp2 - 2*x12*x21*x32*x41 + 2*x12*x21*x32*xp1 + 2*x12*x21*x41*xp2 - 4*x12*x21*x42*xp1 + 2*x12*x21*xp1*xp2 - 2*x12*x22*x31*x41 + 2*x12*x22*x31*xp1 + 2*x12*x22*x41*xp1 - 2*x12*x22*std::pow(xp1, 2) + 2*x12*x31*x41*xp2 - 4*x12*x31*x42*xp1 + 2*x12*x31*xp1*xp2 + 2*x12*x32*x41*xp1 - 2*x12*x32*std::pow(xp1, 2) - 2*x12*std::pow(x41, 2)*xp2 + 2*x12*x41*x42*xp1 - 2*x12*x41*xp1*xp2 + 2*x12*x42*std::pow(xp1, 2) + std::pow(x21, 2)*std::pow(x32, 2) - 2*std::pow(x21, 2)*x32*xp2 + std::pow(x21, 2)*std::pow(xp2, 2) - 2*x21*x22*x31*x32 + 2*x21*x22*x31*xp2 + 2*x21*x22*x32*xp1 - 2*x21*x22*xp1*xp2 + 2*x21*x31*x32*xp2 - 4*x21*x31*x42*xp2 + 2*x21*x31*std::pow(xp2, 2) - 2*x21*std::pow(x32, 2)*xp1 + 2*x21*x32*x41*xp2 + 2*x21*x32*x42*xp1 - 2*x21*x32*xp1*xp2 - 2*x21*x41*std::pow(xp2, 2) + 2*x21*x42*xp1*xp2 + std::pow(x22, 2)*std::pow(x31, 2) - 2*std::pow(x22, 2)*x31*xp1 + std::pow(x22, 2)*std::pow(xp1, 2) - 2*x22*std::pow(x31, 2)*xp2 + 2*x22*x31*x32*xp1 + 2*x22*x31*x41*xp2 + 2*x22*x31*x42*xp1 - 2*x22*x31*xp1*xp2 - 4*x22*x32*x41*xp1 + 2*x22*x32*std::pow(xp1, 2) + 2*x22*x41*xp1*xp2 - 2*x22*x42*std::pow(xp1, 2) + std::pow(x31, 2)*std::pow(xp2, 2) - 2*x31*x32*xp1*xp2 - 2*x31*x41*std::pow(xp2, 2) + 2*x31*x42*xp1*xp2 + std::pow(x32, 2)*std::pow(xp1, 2) + 2*x32*x41*xp1*xp2 - 2*x32*x42*std::pow(xp1, 2) + std::pow(x41, 2)*std::pow(xp2, 2) - 2*x41*x42*xp1*xp2 + std::pow(x42, 2)*std::pow(xp1, 2)))/(x11*x32 - x11*x42 - x12*x31 + x12*x41 - x21*x32 + x21*x42 + x22*x31 - x22*x41);
+  const double xi2a = (x11*xi1a - x11 - x21*xi1a + xp1)/(x11*xi1a - x11 - x21*xi1a - x31*xi1a + x31 + x41*xi1a);
+
+  // 2nd solution
+  const double xi1b = (1.0L/2.0L)*(2*x11*x32 - x11*x42 - 2*x12*x31 + x12*x41 - x21*x32 + x22*x31 + xp1*(x12 - x22 - x32 + x42) + xp2*(-x11 + x21 + x31 - x41) - std::sqrt(std::pow(x11, 2)*std::pow(x42, 2) - 2*std::pow(x11, 2)*x42*xp2 + std::pow(x11, 2)*std::pow(xp2, 2) - 2*x11*x12*x41*x42 + 2*x11*x12*x41*xp2 + 2*x11*x12*x42*xp1 - 2*x11*x12*xp1*xp2 - 2*x11*x21*x32*x42 + 2*x11*x21*x32*xp2 + 2*x11*x21*x42*xp2 - 2*x11*x21*std::pow(xp2, 2) - 2*x11*x22*x31*x42 + 2*x11*x22*x31*xp2 + 4*x11*x22*x32*x41 - 4*x11*x22*x32*xp1 - 4*x11*x22*x41*xp2 + 2*x11*x22*x42*xp1 + 2*x11*x22*xp1*xp2 + 2*x11*x31*x42*xp2 - 2*x11*x31*std::pow(xp2, 2) - 4*x11*x32*x41*xp2 + 2*x11*x32*x42*xp1 + 2*x11*x32*xp1*xp2 + 2*x11*x41*x42*xp2 + 2*x11*x41*std::pow(xp2, 2) - 2*x11*std::pow(x42, 2)*xp1 - 2*x11*x42*xp1*xp2 + std::pow(x12, 2)*std::pow(x41, 2) - 2*std::pow(x12, 2)*x41*xp1 + std::pow(x12, 2)*std::pow(xp1, 2) + 4*x12*x21*x31*x42 - 4*x12*x21*x31*xp2 - 2*x12*x21*x32*x41 + 2*x12*x21*x32*xp1 + 2*x12*x21*x41*xp2 - 4*x12*x21*x42*xp1 + 2*x12*x21*xp1*xp2 - 2*x12*x22*x31*x41 + 2*x12*x22*x31*xp1 + 2*x12*x22*x41*xp1 - 2*x12*x22*std::pow(xp1, 2) + 2*x12*x31*x41*xp2 - 4*x12*x31*x42*xp1 + 2*x12*x31*xp1*xp2 + 2*x12*x32*x41*xp1 - 2*x12*x32*std::pow(xp1, 2) - 2*x12*std::pow(x41, 2)*xp2 + 2*x12*x41*x42*xp1 - 2*x12*x41*xp1*xp2 + 2*x12*x42*std::pow(xp1, 2) + std::pow(x21, 2)*std::pow(x32, 2) - 2*std::pow(x21, 2)*x32*xp2 + std::pow(x21, 2)*std::pow(xp2, 2) - 2*x21*x22*x31*x32 + 2*x21*x22*x31*xp2 + 2*x21*x22*x32*xp1 - 2*x21*x22*xp1*xp2 + 2*x21*x31*x32*xp2 - 4*x21*x31*x42*xp2 + 2*x21*x31*std::pow(xp2, 2) - 2*x21*std::pow(x32, 2)*xp1 + 2*x21*x32*x41*xp2 + 2*x21*x32*x42*xp1 - 2*x21*x32*xp1*xp2 - 2*x21*x41*std::pow(xp2, 2) + 2*x21*x42*xp1*xp2 + std::pow(x22, 2)*std::pow(x31, 2) - 2*std::pow(x22, 2)*x31*xp1 + std::pow(x22, 2)*std::pow(xp1, 2) - 2*x22*std::pow(x31, 2)*xp2 + 2*x22*x31*x32*xp1 + 2*x22*x31*x41*xp2 + 2*x22*x31*x42*xp1 - 2*x22*x31*xp1*xp2 - 4*x22*x32*x41*xp1 + 2*x22*x32*std::pow(xp1, 2) + 2*x22*x41*xp1*xp2 - 2*x22*x42*std::pow(xp1, 2) + std::pow(x31, 2)*std::pow(xp2, 2) - 2*x31*x32*xp1*xp2 - 2*x31*x41*std::pow(xp2, 2) + 2*x31*x42*xp1*xp2 + std::pow(x32, 2)*std::pow(xp1, 2) + 2*x32*x41*xp1*xp2 - 2*x32*x42*std::pow(xp1, 2) + std::pow(x41, 2)*std::pow(xp2, 2) - 2*x41*x42*xp1*xp2 + std::pow(x42, 2)*std::pow(xp1, 2)))/(x11*x32 - x11*x42 - x12*x31 + x12*x41 - x21*x32 + x21*x42 + x22*x31 - x22*x41);
+  const double xi2b = (x11*xi1b - x11 - x21*xi1b + xp1)/(x11*xi1b - x11 - x21*xi1b - x31*xi1b + x31 + x41*xi1b);
+
+  // choose the one that is closer to the interval [0,1]
+  double scoreA = 0;
+  if (xi1a < 0)
+    scoreA = std::max(scoreA, -xi1a);
+  else if (xi1a > 1)
+    scoreA = std::max(scoreA, xi1a - 1);
+
+  if (xi2a < 0)
+    scoreA = std::max(scoreA, -xi2a);
+  else if (xi2a > 1)
+    scoreA = std::max(scoreA, xi2a - 1);
+
+  double scoreB = 0;
+  if (xi1b < 0)
+    scoreB = std::max(scoreB, -xi1b);
+  else if (xi1b > 1)
+    scoreB = std::max(scoreB, xi1b - 1);
+
+  if (xi2b < 0)
+    scoreB = std::max(scoreB, -xi2b);
+  else if (xi2b > 1)
+    scoreB = std::max(scoreB, xi2b - 1);
+
+  if (scoreA < scoreB)
+  {
+    xi1 = xi1a;
+    xi2 = xi2a;
+  }
+  else
+  {
+    xi1 = xi1b;
+    xi2 = xi2b;
+  }
+
+}
+
+
 void quadrilateralGetPointCoordinates(const std::array<Vec3,4> geometryValues, const Vec3 point, Vec2 &xi)
 {
   // derivation using sympy in script invert_mapping.py
-  const double xp1 = point[0];
-  const double xp2 = point[1];
 
-  double x11 = geometryValues[0][0];
-  double x12 = geometryValues[0][1];
+  // project point onto plane of triangle
+  // https://math.stackexchange.com/questions/544946/determine-if-projection-of-3d-point-onto-plane-is-within-a-triangle
 
-  const double x21 = geometryValues[1][0];
-  const double x22 = geometryValues[1][1];
+  Vec3 u = geometryValues[1] - geometryValues[0];
+  Vec3 v = geometryValues[2] - geometryValues[0];
+  Vec3 w = point - geometryValues[0];
+  Vec3 n = cross(u,v);
+  double nSquared = normSquared<3>(n);
+  double gamma = dot(cross(u,w), n) / nSquared;
+  double beta = dot(cross(w,v), n) / nSquared;
+  double alpha = 1 - gamma - beta;
 
-  const double x31 = geometryValues[2][0];
-  const double x32 = geometryValues[2][1];
+  Vec3 pointProjected = alpha * geometryValues[0] + beta * geometryValues[1] + gamma * geometryValues[2];
 
-  const double x41 = geometryValues[3][0];
-  const double x42 = geometryValues[3][1];
+  // We have 3D points but the problem whether the point is inside the quadrilateral is 2D, therefore an axis-aligned projection is performed
+  // It is not clear which two coordinates should be used. Therefore we do all three choices and use the best result.
 
-  // compute analytic solution for xi
-  // avoid division by 0
-  const double divisor = (x11*x32 - x11*x42 - x12*x31 + x12*x41 - x21*x32 + x21*x42 + x22*x31 - x22*x41);
-  const double eps = 1e-12;
-  if (fabs(divisor) < eps)
+  // loop over different choices for the two coordinates to use
+  std::array<int,3> coordinates0 = {0, 0, 1};
+  std::array<int,3> coordinates1 = {1, 2, 2};
+  std::array<int,3> coordinates2 = {2, 1, 0};
+  double bestError = -1;
+
+  for (int i = 0; i < coordinates0.size(); i++)
   {
-    x11 += eps;
-    x12 += 0.8*eps;
+    const int coordinate0 = coordinates0[i];
+    const int coordinate1 = coordinates1[i];
+    const int coordinate2 = coordinates2[i];
+
+    // rename involved points
+    const double xp1 = pointProjected[coordinate0];
+    const double xp2 = pointProjected[coordinate1];
+
+    const double x11 = geometryValues[0][coordinate0];
+    const double x12 = geometryValues[0][coordinate1];
+
+    const double x21 = geometryValues[1][coordinate0];
+    const double x22 = geometryValues[1][coordinate1];
+
+    const double x31 = geometryValues[2][coordinate0];
+    const double x32 = geometryValues[2][coordinate1];
+
+    const double x41 = geometryValues[3][coordinate0];
+    const double x42 = geometryValues[3][coordinate1];
+
+    // call formula
+    double xi1, xi2;
+    quadrilateralGetPointCoordinates(xp1, x11, x21, x31, x41,
+                                     xp2, x12, x22, x32, x42, xi1, xi2);
+
+    // validation, determine error
+    const double test = (1-xi1)*(1-xi2)*geometryValues[0][coordinate2]
+                        + xi1*(1-xi2)*geometryValues[1][coordinate2]
+                        + (1-xi1)*xi2*geometryValues[2][coordinate2]
+                        + xi1*xi2*geometryValues[3][coordinate2];
+    double error = (test-pointProjected[coordinate2]) * (test-pointProjected[coordinate2]);
+
+    if (bestError == -1 || error < bestError)
+    {
+      bestError = error;
+      xi[0] = xi1;
+      xi[1] = xi2;
+    }
+  }
+}
+
+double estimateMaximumEigenvalue(const Tensor2<3> &matrix)
+{
+  Vec3 v({1.0,0.0,0.0});
+
+  double normVPrevious = 0;
+  double normV = 1;
+
+  // power iteration
+  for (int i = 0; i < 15 && fabs(normVPrevious - normV) >= 1e-5; i++)
+  {
+    normVPrevious = normV;
+
+    v = matrix*v;
+
+    // normalize vector
+    normV = norm<3>(v);
+    v /= normV;
+
+    //VLOG(1) << " eigenvalue estimation, it " << i << ", v: " << v << ", value: " << normV << ", error: " << fabs(normVPrevious - normV);
   }
 
-  double xi1 = 0.5*(2*x11*x32 - x11*x42 - 2*x12*x31 + x12*x41 - x21*x32 + x22*x31 + xp1*(x12 - x22 - x32 + x42) + xp2*(-x11 + x21 + x31 - x41) + std::sqrt(std::pow(x11, 2)*std::pow(x42, 2) - 2*std::pow(x11, 2)*x42*xp2 + std::pow(x11, 2)*std::pow(xp2, 2) - 2*x11*x12*x41*x42 + 2*x11*x12*x41*xp2 + 2*x11*x12*x42*xp1 - 2*x11*x12*xp1*xp2 - 2*x11*x21*x32*x42 + 2*x11*x21*x32*xp2 + 2*x11*x21*x42*xp2 - 2*x11*x21*std::pow(xp2, 2) - 2*x11*x22*x31*x42 + 2*x11*x22*x31*xp2 + 4*x11*x22*x32*x41 - 4*x11*x22*x32*xp1 - 4*x11*x22*x41*xp2 + 2*x11*x22*x42*xp1 + 2*x11*x22*xp1*xp2 + 2*x11*x31*x42*xp2 - 2*x11*x31*std::pow(xp2, 2) - 4*x11*x32*x41*xp2 + 2*x11*x32*x42*xp1 + 2*x11*x32*xp1*xp2 + 2*x11*x41*x42*xp2 + 2*x11*x41*std::pow(xp2, 2) - 2*x11*std::pow(x42, 2)*xp1 - 2*x11*x42*xp1*xp2 + std::pow(x12, 2)*std::pow(x41, 2) - 2*std::pow(x12, 2)*x41*xp1 + std::pow(x12, 2)*std::pow(xp1, 2) + 4*x12*x21*x31*x42 - 4*x12*x21*x31*xp2 - 2*x12*x21*x32*x41 + 2*x12*x21*x32*xp1 + 2*x12*x21*x41*xp2 - 4*x12*x21*x42*xp1 + 2*x12*x21*xp1*xp2 - 2*x12*x22*x31*x41 + 2*x12*x22*x31*xp1 + 2*x12*x22*x41*xp1 - 2*x12*x22*std::pow(xp1, 2) + 2*x12*x31*x41*xp2 - 4*x12*x31*x42*xp1 + 2*x12*x31*xp1*xp2 + 2*x12*x32*x41*xp1 - 2*x12*x32*std::pow(xp1, 2) - 2*x12*std::pow(x41, 2)*xp2 + 2*x12*x41*x42*xp1 - 2*x12*x41*xp1*xp2 + 2*x12*x42*std::pow(xp1, 2) + std::pow(x21, 2)*std::pow(x32, 2) - 2*std::pow(x21, 2)*x32*xp2 + std::pow(x21, 2)*std::pow(xp2, 2) - 2*x21*x22*x31*x32 + 2*x21*x22*x31*xp2 + 2*x21*x22*x32*xp1 - 2*x21*x22*xp1*xp2 + 2*x21*x31*x32*xp2 - 4*x21*x31*x42*xp2 + 2*x21*x31*std::pow(xp2, 2) - 2*x21*std::pow(x32, 2)*xp1 + 2*x21*x32*x41*xp2 + 2*x21*x32*x42*xp1 - 2*x21*x32*xp1*xp2 - 2*x21*x41*std::pow(xp2, 2) + 2*x21*x42*xp1*xp2 + std::pow(x22, 2)*std::pow(x31, 2) - 2*std::pow(x22, 2)*x31*xp1 + std::pow(x22, 2)*std::pow(xp1, 2) - 2*x22*std::pow(x31, 2)*xp2 + 2*x22*x31*x32*xp1 + 2*x22*x31*x41*xp2 + 2*x22*x31*x42*xp1 - 2*x22*x31*xp1*xp2 - 4*x22*x32*x41*xp1 + 2*x22*x32*std::pow(xp1, 2) + 2*x22*x41*xp1*xp2 - 2*x22*x42*std::pow(xp1, 2) + std::pow(x31, 2)*std::pow(xp2, 2) - 2*x31*x32*xp1*xp2 - 2*x31*x41*std::pow(xp2, 2) + 2*x31*x42*xp1*xp2 + std::pow(x32, 2)*std::pow(xp1, 2) + 2*x32*x41*xp1*xp2 - 2*x32*x42*std::pow(xp1, 2) + std::pow(x41, 2)*std::pow(xp2, 2) - 2*x41*x42*xp1*xp2 + std::pow(x42, 2)*std::pow(xp1, 2)))/(x11*x32 - x11*x42 - x12*x31 + x12*x41 - x21*x32 + x21*x42 + x22*x31 - x22*x41);
+  return normV;
+}
 
+double estimateConditionNumber(const Tensor2<3> &matrix, const Tensor2<3> &inverseMatrix)
+{
+  double maximumEigenvalue = estimateMaximumEigenvalue(matrix);
+  double minimumEigenvalue = 1./estimateMaximumEigenvalue(inverseMatrix);
 
-  // avoid division by 0
-  const double divisor2 = (x11*xi1 - x11 - x21*xi1 - x31*xi1 + x31 + x41*xi1);
-  if (fabs(divisor2) < eps)
+  return maximumEigenvalue / minimumEigenvalue;
+}
+
+bool containsNanOrInf(const double value)
+{
+  if (!std::isfinite(value) || fabs(value) > 1e+75 || value == std::numeric_limits<double>::max())
   {
-    x11 -= 0.6*eps;
-    xi1 += 0.8*eps;
+    return true;
   }
-  const double xi2 = (x11*xi1 - x11 - x21*xi1 + xp1)/(x11*xi1 - x11 - x21*xi1 - x31*xi1 + x31 + x41*xi1);
-
-  xi[0] = xi1;
-  xi[1] = xi2;
+  return false;
 }
 
-template<>
-void rotateMatrix<1>(Matrix<1,1> &matrix, Vec3 directionVector)
+bool containsNanOrInf(const Vc::double_v value)
 {
-  // 1D case does not make sense
-  assert(false);
-}
-
-template<>
-void rotateMatrix<2>(Matrix<2,2> &matrix, Vec3 directionVector)
-{
-  // derivation in compute_rotation_tensor.py
-  const double b1 = directionVector[0];
-  const double b2 = directionVector[1];
-
-  Matrix<2,2> rotationMatrix(
+  for (int i = 0; i < Vc::double_v::size(); i++)
   {
-    b1, -b2,
-    b2, -b1
-  });
-
-  const double determinant = (b1 - b2)*(b1 + b2);  // b1^2 - b2^2
-  Matrix<2,2> rotationMatrixInverse(
-  {
-    b1/determinant, -b2/determinant,
-    b2/determinant, -b1/determinant
-  });
-
-  matrix = rotationMatrixInverse * matrix * rotationMatrix;
-}
-
-template<>
-void rotateMatrix<3>(Matrix<3,3> &matrix, Vec3 directionVector)
-{
-  // derivation in compute_rotation_tensor.py
-  const double b1 = directionVector[0];
-  const double b2 = directionVector[1];
-  const double b3 = directionVector[2];
-
-  Matrix<3,3> rotationMatrix(
-  {
-    b1, -b2, -b3,
-    b2, -(b1*sqr(b2) - sqr(b3))/(sqr(b2) + sqr(b3)), -b2*b3*(b1 + 1)/(sqr(b2) + sqr(b3)),
-    b3, -b2*b3*(b1 + 1)/(sqr(b2) + sqr(b3)), -(b1*sqr(b3) - sqr(b2))/(sqr(b2) + sqr(b3))
-  });
-
-  const double determinant = -sqr(b1) + sqr(b2) + sqr(b3);
-  Matrix<3,3> rotationMatrixInverse(
-  {
-    -b1/determinant, b2/determinant, b3/determinant,
-    -b2/determinant, (-sqr(b1)*sqr(b3) + b1*sqr(b2) + sqr(b2)*sqr(b3) + pow(b3,4))/((sqr(b2) + sqr(b3))*determinant), b2*b3*(sqr(b1) + b1 - sqr(b2) - sqr(b3))/((sqr(b2) + sqr(b3))*determinant),
-    -b3/determinant, b2*b3*(sqr(b1) + b1 - sqr(b2) - sqr(b3))/((sqr(b2) + sqr(b3))*determinant), (-sqr(b1)*sqr(b2) + b1*sqr(b3) + pow(b2,4) + sqr(b2)*sqr(b3))/((sqr(b2) + sqr(b3))*determinant)
-  });
-
-  VLOG(1) << "direction: " << directionVector << ", determinant: " << determinant;
-  VLOG(1) << "rotationMatrix: " << rotationMatrix << ", rotationMatrixInverse: " << rotationMatrixInverse;
-
-  matrix = rotationMatrixInverse * matrix * rotationMatrix;
+    if (containsNanOrInf(value[i]))
+    {
+      return true;
+    }
+  }
+  return false;
 }
 
 }  // namespace

@@ -28,24 +28,10 @@ Data<FunctionSpaceType>::
 }
 
 template<typename FunctionSpaceType>
-dof_no_t Data<FunctionSpaceType>::
-nUnknownsLocalWithGhosts()
+DihuContext &Data<FunctionSpaceType>::
+context()
 {
-  return this->functionSpace_->nDofsLocalWithGhosts() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
-}
-
-template<typename FunctionSpaceType>
-dof_no_t Data<FunctionSpaceType>::
-nUnknownsLocalWithoutGhosts()
-{
-  return this->functionSpace_->nDofsLocalWithoutGhosts() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
-}
-
-template<typename FunctionSpaceType>
-global_no_t Data<FunctionSpaceType>::
-nUnknownsGlobal()
-{
-  return this->functionSpace_->nDofsGlobal() * 1;  // value for 1 component, can be overloaded to also have the factor nComponents in it
+  return this->context_;
 }
 
 template<typename FunctionSpaceType>

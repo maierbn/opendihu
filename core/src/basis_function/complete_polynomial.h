@@ -10,6 +10,9 @@ namespace BasisFunction
  *  2D Examples: order=0: p=c0, order=1: p=c0 + c1*x + c2*y, order=2: p=c0 + c1*x^2 + c2*x*y + c3*y^2
  *  Coefficients of the basis functions in FE computation are later element-based, not node-based like Lagrange basis functions.
  *  The class CompletePolynomialNDofs computes the numbers of dofs for D and order.
+ *
+ *  The implementation of complete polynomials is not completed so they cannot be used right now.
+ *  However it would not be too difficult to fully implement this functionality.
   */
 template<int D, int order>
 class CompletePolynomialNDofs

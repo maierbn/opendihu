@@ -31,20 +31,35 @@ void Paraview::writeAsciiDataShared(MPI_File fileHandle, int ownRankNo, std::str
   }
 }
 
-void Paraview::writeCombinedTypesVector(MPI_File fileHandle, int ownRankNo, int nValues, int identifier)
+void Paraview::writeCombinedTypesVector(MPI_File fileHandle, int ownRankNo, int nValues, bool output3DMeshes, int identifier)
 {
   std::string writeBuffer;
 
   if (binaryOutput_)
   {
-    std::vector<int> values(nValues, 12);
-    writeBuffer = Paraview::encodeBase64UInt8(values.begin(), values.end());
+    if (output3DMeshes)
+    {
+      std::vector<int> values(nValues, 12);
+      writeBuffer = Paraview::encodeBase64UInt8(values.begin(), values.end());
+    }
+    else
+    {
+      std::vector<int> values(nValues, 9);
+      writeBuffer = Paraview::encodeBase64UInt8(values.begin(), values.end());
+    }
   }
   else
   {
     for (int i = 0; i < nValues; i++)
     {
-      writeBuffer += std::string("12 ");
+      if (output3DMeshes)
+      {
+        writeBuffer += std::string("12 ");
+      }
+      else
+      {
+        writeBuffer += std::string("9 ");
+      }
     }
   }
 
@@ -59,6 +74,29 @@ void Paraview::writeCombinedTypesVector(MPI_File fileHandle, int ownRankNo, int 
     char b[1];
     MPI_Status status;
     MPIUtility::handleReturnValue(MPI_File_write_ordered(fileHandle, b, 0, MPI_BYTE, &status), "MPI_File_write_ordered", &status);
+  }
+}
+
+//! constructor, initialize nPoints and nCells to 0
+Paraview::VTKPiece::VTKPiece()
+{
+  properties.nPointsLocal = 0;
+  properties.nCellsLocal = 0;
+  properties.nPointsGlobal = 0;
+  properties.nCellsGlobal = 0;
+  properties.dimensionality = 0;
+}
+
+//! assign the correct values to firstScalarName and firstVectorName, only if properties has been set
+void Paraview::VTKPiece::setVTKValues()
+{
+  // set values for firstScalarName and firstVectorName from the values in pointDataArrays
+  for (auto pointDataArray : properties.pointDataArrays)
+  {
+    if (firstScalarName == "" && pointDataArray.nComponents != 3)
+      firstScalarName = pointDataArray.name;
+    if (firstVectorName == "" && pointDataArray.nComponents == 3)
+      firstVectorName = pointDataArray.name;
   }
 }
 

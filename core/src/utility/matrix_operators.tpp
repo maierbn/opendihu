@@ -2,10 +2,10 @@
 
 
 //! matrix difference
-template<int nRows, int nColumns>
-MathUtility::Matrix<nRows,nColumns> operator-(const MathUtility::Matrix<nRows,nColumns> matrix1, const MathUtility::Matrix<nRows,nColumns> matrix2)
+template<int nRows, int nColumns, typename double_v_t>
+MathUtility::Matrix<nRows,nColumns,double_v_t> operator-(const MathUtility::Matrix<nRows,nColumns,double_v_t> matrix1, const MathUtility::Matrix<nRows,nColumns,double_v_t> matrix2)
 {
-  MathUtility::Matrix<nRows,nColumns> result;
+  MathUtility::Matrix<nRows,nColumns,double_v_t> result;
 
   //#pragma omp simd
   for (int i = 0; i < nRows*nColumns; i++)
@@ -16,10 +16,10 @@ MathUtility::Matrix<nRows,nColumns> operator-(const MathUtility::Matrix<nRows,nC
 }
 
 //! matrix addition
-template<int nRows, int nColumns>
-MathUtility::Matrix<nRows,nColumns> operator+(const MathUtility::Matrix<nRows,nColumns> matrix1, const MathUtility::Matrix<nRows,nColumns> matrix2)
+template<int nRows, int nColumns, typename double_v_t>
+MathUtility::Matrix<nRows,nColumns,double_v_t> operator+(const MathUtility::Matrix<nRows,nColumns,double_v_t> matrix1, const MathUtility::Matrix<nRows,nColumns,double_v_t> matrix2)
 {
-  MathUtility::Matrix<nRows,nColumns> result;
+  MathUtility::Matrix<nRows,nColumns,double_v_t> result;
 
   //#pragma omp simd
   for (int i = 0; i < nRows*nColumns; i++)
@@ -30,8 +30,8 @@ MathUtility::Matrix<nRows,nColumns> operator+(const MathUtility::Matrix<nRows,nC
 }
 
 //! matrix increment operation
-template<int nRows, int nColumns>
-MathUtility::Matrix<nRows,nColumns> &operator+=(MathUtility::Matrix<nRows,nColumns> &matrix1, const MathUtility::Matrix<nRows,nColumns> matrix2)
+template<int nRows, int nColumns, typename double_v_t>
+MathUtility::Matrix<nRows,nColumns,double_v_t> &operator+=(MathUtility::Matrix<nRows,nColumns,double_v_t> &matrix1, const MathUtility::Matrix<nRows,nColumns,double_v_t> matrix2)
 {
   //#pragma omp simd
   for (int i = 0; i < nRows*nColumns; i++)
@@ -42,10 +42,10 @@ MathUtility::Matrix<nRows,nColumns> &operator+=(MathUtility::Matrix<nRows,nColum
 }
 
 //! scalar*matrix multiplication
-template<int nRows, int nColumns>
-MathUtility::Matrix<nRows,nColumns> operator*(double lambda, const MathUtility::Matrix<nRows,nColumns> matrix)
+template<int nRows, int nColumns, typename double_v1_t, typename double_v2_t>
+MathUtility::Matrix<nRows,nColumns,double_v2_t> operator*(double_v1_t lambda, const MathUtility::Matrix<nRows,nColumns,double_v2_t> matrix)
 {
-  MathUtility::Matrix<nRows,nColumns> result;
+  MathUtility::Matrix<nRows,nColumns,double_v2_t> result;
 
   //#pragma omp simd
   for (int i = 0; i < nRows*nColumns; i++)
@@ -56,10 +56,10 @@ MathUtility::Matrix<nRows,nColumns> operator*(double lambda, const MathUtility::
 }
 
 //! matrix*scalar multiplication
-template<int nRows, int nColumns>
-MathUtility::Matrix<nRows,nColumns> operator*(MathUtility::Matrix<nRows,nColumns> matrix, double lambda)
+template<int nRows, int nColumns, typename double_v1_t>
+MathUtility::Matrix<nRows,nColumns,double_v1_t> operator*(MathUtility::Matrix<nRows,nColumns,double_v1_t> matrix, double_v1_t lambda)
 {
-  MathUtility::Matrix<nRows,nColumns> result;
+  MathUtility::Matrix<nRows,nColumns,double_v1_t> result;
 
   //#pragma omp simd
   for (int i = 0; i < nRows*nColumns; i++)
@@ -69,22 +69,73 @@ MathUtility::Matrix<nRows,nColumns> operator*(MathUtility::Matrix<nRows,nColumns
   return result;
 }
 
-//! component-wise matrix multiplication
-template<int nRows, int nColumns>
-MathUtility::Matrix<nRows,nColumns> operator*(const MathUtility::Matrix<nRows,nColumns> matrix1, const MathUtility::Matrix<nRows,nColumns> matrix2)
+// extra operator* when compiled with USE_VECTORIZED_FE_MATRIX_ASSEMBLY
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
+
+//! matrix*scalar multiplication
+template<int nRows, int nColumns, typename double_v1_t>
+MathUtility::Matrix<nRows,nColumns,double_v1_t> operator*(MathUtility::Matrix<nRows,nColumns,double_v1_t> matrix, double lambda)
 {
-  MathUtility::Matrix<nRows,nColumns> result;
+  MathUtility::Matrix<nRows,nColumns,double_v1_t> result;
 
   //#pragma omp simd
   for (int i = 0; i < nRows*nColumns; i++)
   {
-    result[i] = matrix1[i] * matrix2[i];
+    result[i] = lambda * matrix[i];
   }
   return result;
 }
 
-template<int nRows, int nColumns>
-std::ostream &operator<<(std::ostream &stream, MathUtility::Matrix<nRows,nColumns> &matrix)
+#endif
+
+//! matrix-matrix multiplication
+template<int nRows, int nColumns, int nColumns2, typename double_v_t>
+MathUtility::Matrix<nRows,nColumns2,double_v_t> operator*(MathUtility::Matrix<nRows,nColumns,double_v_t> matrix1, MathUtility::Matrix<nColumns,nColumns2,double_v_t> matrix2)
+{
+  MathUtility::Matrix<nRows,nColumns2,double_v_t> result;
+
+  //#pragma omp simd
+  for (int i = 0; i < nRows; i++)
+  {
+    for (int j = 0; j < nColumns2; j++)
+    {
+      result[i*nColumns2 + j] = 0;
+
+      for (int k = 0; k < nColumns; k++)
+      {
+        result[i*nColumns2 + j] += matrix1[i*nColumns + k] * matrix2[k*nColumns2 + j];
+      }
+    }
+  }
+  return result;
+}
+
+//! matrix-matrix multiplication for Tensor2
+template<long unsigned int D, typename double_v_t>
+Tensor2<D,double_v_t> operator*(const Tensor2<D,double_v_t> &matrix1, const Tensor2<D,double_v_t> &matrix2)
+{
+  Tensor2<D,double_v_t> result;
+
+  // row no
+  for (int i = 0; i < D; i++)
+  {
+    // column no
+    for (int j = 0; j < D; j++)
+    {
+      result[j][i] = 0;
+
+      for (int k = 0; k < D; k++)
+      {
+        result[j][i] += matrix1[k][i] * matrix2[j][k];
+      }
+    }
+  }
+  return result;
+
+}
+
+template<int nRows, int nColumns, typename double_v_t>
+std::ostream &operator<<(std::ostream &stream, MathUtility::Matrix<nRows,nColumns,double_v_t> &matrix)
 {
   if (matrix.empty())
   {

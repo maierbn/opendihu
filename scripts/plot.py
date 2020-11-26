@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 #
 # Script to visualize python output files.
 #
+# usage: 
+#   plot                                            # plot all python files in current directory
+#   plot file1.py file2.py ...                      # plot specific files
+#   plot monodomain*                                # plot all files starting with monodomain
+#   plot 0 [<files.py>]                             # don't show plot window
+#   plot membrane/V_s membrane/V_d  [<files.py>]    # plot the specified fields
 
 import sys
 import numpy as np
@@ -17,21 +22,29 @@ import time
 import pickle
 import py_reader    # reader utility for opendihu *.py files
 
-files = ""
+filenames = ""
+specified_field_names = []
 
+show_field_variable_names = True
 show_plot = True
 if len(sys.argv) > 1:
   try:
     show_plot = int(sys.argv[1])
-    files = sys.argv[2:]
+    filenames = sys.argv[2:]
   except:
-    files = sys.argv[1:]
+    filenames = sys.argv[1:]
+    
+  for filename in filenames:
+    if ".py" in filename:
+      break
+    else:
+      specified_field_names.append(filename)
 else:
   # get all input data in current directory
   ls = os.listdir(".")
 
-  # sort files by number in file name
-  files = sorted(ls)
+  # sort file_names by number in file name
+  filenames = sorted(ls)
 
 
 # import needed packages from matplotlib
@@ -46,14 +59,9 @@ from matplotlib import cm
 from matplotlib.patches import Polygon
 import matplotlib.gridspec as gridspec
 
-# extract the files that are npy files
-solution_condition = lambda filename: "solution.npy" in filename
-solution_shaped_condition = lambda filename: "solution_shaped.npy" in filename
+# extract the filenames that are python files
 solution_py_condition = lambda filename: ".py" in filename
-
-solution_files = list(np.extract(np.array(list(map(solution_condition, files))), files))              # map to array doesn't work in python3 anymore. must first convert to list. --Aaron
-solution_shaped_files = list(np.extract(np.array(list(map(solution_shaped_condition, files))), files))
-solution_py_files = list(np.extract(np.array(list(map(solution_py_condition, files))), files))
+solution_py_files = list(np.extract(np.array(list(map(solution_py_condition, filenames))), filenames))
 
 
 # sort files by number in file name
@@ -70,12 +78,21 @@ else:
 # load data
 data = py_reader.load_data(solution_py_files)
 
+if show_field_variable_names and data:  
+  print("")
+  print("Available field variables (use `plot <field variable or component names> <files>` to plot selected variables over time):")
+  field_variable_names = py_reader.get_field_variable_names(data[0])
+  for field_variable_name in field_variable_names:
+    component_names = py_reader.get_component_names(data[0], field_variable_name)
+    print("*  {}, {} components: {}".format(field_variable_name, len(component_names), component_names))
+  print("")
+
 if len(data) == 0:
   print( "no data found.")
   sys.exit(0)
 
 # set global parameters for font sizes
-plt.rcParams.update({'font.size': 20})
+plt.rcParams.update({'font.size': 14})
 plt.rcParams['lines.linewidth'] = 3
 plt.rcParams['lines.markersize'] = 8
 
@@ -85,28 +102,93 @@ dimension = data[0]['dimension']
 # 1D
 if dimension == 1:
   
-  fig = plt.figure(figsize=(10,12))
+  fig = plt.figure(figsize=(10,8))
   
   show_geometry = True     # if the fibre geometry should be displayed in a 3D plot in a separate axis (ax2) on top of the solution plot
   show_components = False  # if all the components of the solution should be displayed
+  show_specified_fields = False   # if only the specified fields should be plotted in 2D in a single axis
   plot_over_time = data[0]['nElements'] == [0]   # if the plot should have time as x-axis instead of geometry
   
+  if len(specified_field_names) > 0:
+    show_specified_fields = True
+    plot_over_time = True
+  
+  min_x, max_x = py_reader.get_min_max(data, "geometry", "x")
+  min_y, max_y = py_reader.get_min_max(data, "geometry", "y")
+  min_z, max_z = py_reader.get_min_max(data, "geometry", "z")
+  if abs(min_x-max_x) < 1e-5 and abs(min_y-max_y) < 1e-5 and abs(min_z-max_z) < 1e-5:
+    plot_over_time = True
+
+  if plot_over_time:
+    print("Plot over time.")
+
+  last_length = 0
+  
   def init():
-    global geometry_component, line_2D, lines_3D, line_comp, cbar, top_text, ax1, ax2, cmap, show_geometry, show_components, solution_components, scaling_factors
+    global geometry_component, line_2D, lines_2D, lines_3D, line_comp, cbar, top_text, ax1, ax2, cmap, show_geometry, show_components, show_specified_fields, \
+      specified_fields, solution_components, solution_name, solution_component, scaling_factors, min_x, max_x, min_y, max_y, min_z, max_z
       
-    # determine in which direction the 1D fibre extends the most
-    min_x, max_x = py_reader.get_min_max(data, "geometry", "x")
-    min_y, max_y = py_reader.get_min_max(data, "geometry", "y")
-    min_z, max_z = py_reader.get_min_max(data, "geometry", "z")
-    min_s, max_s = py_reader.get_min_max(data, "solution", "0")
-    print( "value range: [{}, {}]".format(min_s, max_s))
-    if np.isinf(min_s) or np.isnan(min_s):
-      min_s = 0
-    if np.isinf(max_s) or np.isnan(max_s):
-      max_s = 0
+    field_variable_names = py_reader.get_field_variable_names(data[0])
     
-    solution_components = py_reader.get_component_names(data[0], "solution")
-    n_components = len(solution_components)
+    # determine solution variable and component
+    # if field names have been specified, only plot those
+    if show_specified_fields:
+    
+      # get the specified fields as (field_variable_name, component_name) tuples
+      specified_fields = []
+      for specified_field_name in specified_field_names:
+        for field_variable_name in field_variable_names:
+          component_names = py_reader.get_component_names(data[0], field_variable_name)
+          if field_variable_name == specified_field_name:
+            if len(component_names) == 1:
+              component_name = component_names[0]
+              specified_fields.append((field_variable_name,component_name))
+            else:
+              for component_name in component_names:
+                specified_fields.append((field_variable_name,component_name))
+          elif specified_field_name in component_names:
+            specified_fields.append((field_variable_name,specified_field_name))
+      
+      if len(specified_fields) == 0:
+        print("\033[0;31mError! Given names {} do not match any existing field variable names or component names.\033[0m\n".format(specified_field_names))
+        quit()
+      
+      n_components = 0
+      
+      # determine min/max values
+      min_s = None
+      max_s = None
+      for (field_variable_name, component_name) in specified_fields:
+        min_s_, max_s_ = py_reader.get_min_max(data, field_variable_name, component_name)
+        print("\"{}.{}\" value range: [{}, {}]".format(field_variable_name,component_name, min_s_, max_s_))
+      
+        min_s = (min_s_ if min_s is None else min(min_s_, min_s))
+        max_s = (max_s_ if max_s is None else max(max_s_, max_s))
+         
+    # if no field names have been specified, search for the solution variable and component
+    else:
+      solution_name = "solution"
+      if "solution" not in field_variable_names:
+        for field_variable_name in field_variable_names:
+          if field_variable_name != "geometry":
+            component_names = py_reader.get_component_names(data[0], field_variable_name)
+            if len(component_names) == 1:
+              solution_name = field_variable_name
+              break
+              
+      component_names = py_reader.get_component_names(data[0], solution_name)
+      solution_component = component_names[0]
+      
+      min_s, max_s = py_reader.get_min_max(data, solution_name, solution_component)
+      print( "\"{}\" value range: [{}, {}]".format(solution_name, min_s, max_s))
+        
+      solution_components = py_reader.get_component_names(data[0], solution_name)
+      n_components = len(solution_components)
+      
+    if min_s is None or np.isinf(min_s) or np.isnan(min_s):
+      min_s = 0
+    if max_s is None or np.isinf(max_s) or np.isnan(max_s):
+      max_s = 0
     
     span_x = max_x - min_x
     span_y = max_y - min_y
@@ -117,7 +199,8 @@ if dimension == 1:
       show_geometry = False
     if (not show_geometry) and n_components > 1:
       if solution_components[1] != "1":
-        show_components = True
+        if not show_specified_fields:
+          show_components = True
     
     if span_x >= span_y and span_x >= span_z:
       geometry_component = "x"
@@ -149,25 +232,47 @@ if dimension == 1:
     else:
       ax1 = plt.gca()
     
-    # prepare main plot
-    if data[0]["basisFunction"] == "Hermite" and data[0]["onlyNodalValues"] == False:  # for Hermite
-      line_2D, = ax1.plot([], [], '-', color="b", lw=2, label=solution_components[0])
-    else:
-      line_2D, = ax1.plot([], [], '+-', color="b", lw=2, label=solution_components[0])
-    margin = abs(max_s - min_s) * 0.1
-    ax1.set_xlim(min_x, max_x)
-    ax1.set_ylim(min_s - margin, max_s + margin)
-    top_text = ax1.text(0.5,0.95,"",size=20,horizontalalignment='center',transform=ax1.transAxes)
-    
-    xlabel = geometry_component
-    if plot_over_time:
+    # prepare plot of specified fields
+    if show_specified_fields:
+      lines_2D = []
+      for (field_variable_name, component_name) in specified_fields:
+        if component_name == "0":
+          label = field_variable_name
+        else:
+          label = component_name
+        line, = ax1.plot([], [], '+-', lw=2, label=label)
+        lines_2D.append(line)
+      ax1.set_xlim(min_x, max_x)
       ax1.set_xlabel('t')
+      plt.subplots_adjust(right=0.66, top=0.94, bottom=0.18)
+      ax1.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., frameon=False)
+      
     else:
-      ax1.set_xlabel(xlabel.upper())
-    ax1.set_ylabel('Solution')
-    if solution_components[0] != "0":
-      ax1.legend()
+      # prepare main plot
+      if data[0]["basisFunction"] == "Hermite" and data[0]["onlyNodalValues"] == False:  # for Hermite
+        line_2D, = ax1.plot([], [], '-', color="b", lw=2, label=solution_components[0])
+      else:
+        line_2D, = ax1.plot([], [], '+-', color="b", lw=2, label=solution_components[0])
+      
+      last_length = 0
     
+      xlabel = geometry_component
+      if plot_over_time:
+        ax1.set_xlabel('t')
+      else:
+        ax1.set_xlabel(xlabel.upper())
+      ax1.set_ylabel(solution_name)
+      if solution_components[0] != "0":
+        plt.subplots_adjust(right=0.66, top=0.94, bottom=0.18)
+        ax1.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., frameon=False) 
+        plt.tight_layout()
+        
+    ax1.set_xlim(min_x, max_x)
+    margin = abs(max_s - min_s) * 0.1
+    ax1.set_ylim(min_s - margin, max_s + margin)
+    top_text = ax1.text(0.5, 0.94, "", horizontalalignment='center', transform=ax1.transAxes, family='monospace')
+    plt.grid(which='major')
+      
     # prepare geometry plot
     if show_geometry:
       ax2.set_title("geometry")
@@ -201,8 +306,8 @@ if dimension == 1:
       min_value = 0
       max_value = 1
       for (j,component_name) in enumerate(solution_components):
-        min_comp, max_comp = py_reader.get_min_max(data, "solution", component_name)
-        values_comp = py_reader.get_values(data[0], "solution", component_name)
+        min_comp, max_comp = py_reader.get_min_max(data, solution_name, component_name)
+        values_comp = py_reader.get_values(data[0], solution_name, component_name)
         
         v = max(abs(max_comp), abs(min_comp))
         if abs(v) < 1e-5:
@@ -228,81 +333,99 @@ if dimension == 1:
       ax3.set_ylim(min_value - margin, max_value + margin)
       ax3.set_ylabel('Other components')
       if len(solution_components) > 5:
-        ncol = len(solution_components)/10
-        ax3.legend(prop={'size': 6, }, ncol=ncol)
+        ncol = max(1,len(solution_components)/10)
+        plt.subplots_adjust(right=0.66, top=0.94, bottom=0.18)
+        ax3.legend(prop={'size': 6, }, ncol=ncol, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., frameon=False)
       else:
-        ax3.legend()
+        plt.subplots_adjust(right=0.66, top=0.94, bottom=0.18)
+        ax3.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., frameon=False)
     return top_text,
 
   def animate(i):
-    global top_text
+    global top_text, solution_name, solution_component, last_length
     
     ##################
     # 2D plot of main solution component
     # display data
     
-    # plot over time instead of geometry (for cellml single instance)
-    if plot_over_time:
-      xdata = []
-      sdata = []
+    if show_specified_fields:
+        for i,(field_variable_name, component_name) in enumerate(specified_fields):
+          
+          xdata = []
+          sdata = []
+          for d in data:
+            solution_values = py_reader.get_values(d, field_variable_name, component_name)
+            xdata.append(d['currentTime'])
+            sdata.append(solution_values[0])
+          
+          # refresh the line object that is the graph of the curve
+          lines_2D[i].set_data(xdata,sdata)
+      
+    else:
+      
+      # plot over time instead of geometry (for cellml single instance)
       if plot_over_time:
+        xdata = []
+        sdata = []
+        
         for d in data:
-          solution_values = py_reader.get_values(d, "solution", "0")
+          solution_values = py_reader.get_values(d, solution_name, solution_component)
           
           xdata.append(d['currentTime'])
           sdata.append(solution_values[0])
-    
-    else:
-      # plot over geometry
-      xdata = py_reader.get_values(data[i], "geometry", geometry_component)
-      sdata = py_reader.get_values(data[i], "solution", "0")
+      
+      else:
+        # plot over geometry
+        xdata = py_reader.get_values(data[i], "geometry", geometry_component)
+        sdata = py_reader.get_values(data[i], solution_name, solution_component)
 
-      # handle Hermite that have derivative values saved
-      if data[i]["basisFunction"] == "Hermite" and data[i]["onlyNodalValues"] == False:
-        
-        def hermite0(xi):
-          return 1 - 3*xi*xi + 2*xi*xi*xi
+        # handle Hermite that have derivative values saved
+        if data[i]["basisFunction"] == "Hermite" and data[i]["onlyNodalValues"] == False:
           
-        def hermite1(xi):
-          return xi * (xi-1) * (xi-1)
-
-        def hermite2(xi):
-          return xi*xi * (3 - 2*xi)
-
-        def hermite3(xi):
-          return xi*xi * (xi-1)
-        
-        n_elements = data[i]["nElements"][0]
-        
-        n = 20
-        new_xdata = np.zeros(n_elements*n)
-        new_sdata = np.zeros(n_elements*n)
-        
-        #print("n entries: {}, new_xdata:{}".format(n_elements*n, new_xdata))
-        #print("xdata: {}".format(xdata))
-        
-        for el_no in range(n_elements):
-          c0 = sdata[2*el_no+0]
-          c1 = sdata[2*el_no+1]
-          c2 = sdata[2*el_no+2]
-          c3 = sdata[2*el_no+3]
-          
-          #print("parsed coefficients: {} {} {} {}".format(c0,c1,c2,c3))
-          
-          for j in range(n):
-            xi = float(j)/n
-            x = (1-xi)*xdata[2*el_no+0] + xi*xdata[2*el_no+2]
+          def hermite0(xi):
+            return 1 - 3*xi*xi + 2*xi*xi*xi
             
-            #print("xi={}, x={}".format(xi,x))
-            
-            new_xdata[el_no*n+j] = x
-            new_sdata[el_no*n+j] = c0*hermite0(xi) + c1*hermite1(xi) + c2*hermite2(xi) + c3*hermite3(xi)
+          def hermite1(xi):
+            return xi * (xi-1) * (xi-1)
+
+          def hermite2(xi):
+            return xi*xi * (3 - 2*xi)
+
+          def hermite3(xi):
+            return xi*xi * (xi-1)
           
-        xdata = new_xdata
-        sdata = new_sdata
-        
-    # refresh the line object that is the graph of the curve
-    line_2D.set_data(xdata,sdata)
+          n_elements = data[i]["nElements"][0]
+          
+          n = 20
+          new_xdata = np.zeros(n_elements*n)
+          new_sdata = np.zeros(n_elements*n)
+          
+          #print("n entries: {}, new_xdata:{}".format(n_elements*n, new_xdata))
+          #print("xdata: {}".format(xdata))
+          
+          for el_no in range(n_elements):
+            c0 = sdata[2*el_no+0]
+            c1 = sdata[2*el_no+1]
+            c2 = sdata[2*el_no+2]
+            c3 = sdata[2*el_no+3]
+            
+            #print("parsed coefficients: {} {} {} {}".format(c0,c1,c2,c3))
+            
+            for j in range(n):
+              xi = float(j)/n
+              x = (1-xi)*xdata[2*el_no+0] + xi*xdata[2*el_no+2]
+              
+              #print("xi={}, x={}".format(xi,x))
+              
+              new_xdata[el_no*n+j] = x
+              new_sdata[el_no*n+j] = c0*hermite0(xi) + c1*hermite1(xi) + c2*hermite2(xi) + c3*hermite3(xi)
+            
+          xdata = new_xdata
+          sdata = new_sdata
+          
+      # refresh the line object that is the graph of the curve
+      line_2D.set_data(xdata,sdata)
+      
     ##################
     # 3D plot of geometry
     
@@ -336,12 +459,12 @@ if dimension == 1:
           data_comp = []
           if plot_over_time:
             for d in data:
-              solution_values = py_reader.get_values(d, "solution", component_name)
+              solution_values = py_reader.get_values(d, solution_name, component_name)
               
               xdata.append(d['currentTime'])
               data_comp.append(solution_values[0])
         else:
-          data_comp = py_reader.get_values(data[i], "solution", component_name)
+          data_comp = py_reader.get_values(data[i], solution_name, component_name)
           
         # refresh the line object that is the graph of the curve
         line_comp[j].set_data(xdata,np.array(data_comp)*scaling_factors[j])
@@ -355,7 +478,11 @@ if dimension == 1:
         
       max_timestep = len(data)-1
         
-      top_text.set_text("timestep {}/{}, t = {}".format(timestep, max_timestep, current_time))
+      t = "timestep {}/{}, t = {}".format(timestep, max_timestep, current_time)
+      if last_length > len(t):
+        t += " "*(last_length-len(t))
+      last_length = len(t)
+      top_text.set_text(t)
       
     return top_text,
     
@@ -371,7 +498,10 @@ if dimension == 1:
     anim = animation.FuncAnimation(fig, animate, init_func=init,
                frames=len(data), interval=interval, blit=False)
 
-    anim.save("anim.mp4")
+    try:
+      anim.save("anim.mp4")
+    except:
+      print("An error occured during the animation.")
     
     # create plot with first and last dataset
     # plot first dataset
@@ -411,20 +541,32 @@ if dimension == 1:
 if dimension == 2:
   
   field_variable_names = py_reader.get_field_variable_names(data[0])
+
+  solution_name = "solution"
+  if "solution" not in field_variable_names:
+    for field_variable_name in field_variable_names:
+      if field_variable_name != "geometry":
+        component_names = py_reader.get_component_names(data[0], field_variable_name)
+        if len(component_names) == 1:
+          solution_name = field_variable_name
+          break
+          
+  component_names = py_reader.get_component_names(data[0], solution_name)
+  solution_component = component_names[0]
   
   # classical 2D scalar field variables, like in Laplace eq.
-  if "solution" in field_variable_names:
+  if "displacements" not in field_variable_names:
     
     debug = False
     
-    min_value, max_value = py_reader.get_min_max(data, "solution", "0")
+    min_value, max_value = py_reader.get_min_max(data, solution_name, solution_component)
     min_x, max_x = py_reader.get_min_max(data, "geometry", "x")
     min_y, max_y = py_reader.get_min_max(data, "geometry", "y")
     
     print( "value range: [{}, {}]".format(min_value, max_value))
     
     # prepare plot
-    fig = plt.figure()
+    fig = plt.figure(1)
 
     margin = abs(max_value - min_value) * 0.1
     ax = fig.add_subplot(111, projection='3d', xlim=(min_x, max_x), ylim=(min_y, max_y), zlim=(min_value-margin, max_value+margin))
@@ -503,7 +645,7 @@ if dimension == 2:
       ax.clear()
       
       # display data
-      solution_shaped = py_reader.get_values(data[i], "solution", "0")
+      solution_shaped = py_reader.get_values(data[i], solution_name, solution_component)
       
       try:
         Z = np.reshape(solution_shaped, nEntries)
@@ -536,7 +678,7 @@ if dimension == 2:
       if 'currentTime' in data[i]:
         current_time = data[i]['currentTime']
         
-      if timestep == -1:
+      if timestep == -1 or timestep == 0 or timestep == 1:
         text.set_text("t = {}".format(current_time))
       else:
         text.set_text("timestep {}/{}, t = {}".format(timestep, max_timestep, current_time))
@@ -549,21 +691,26 @@ if dimension == 2:
       animate(0)
       plt.savefig("fig.pdf")
       
-    else:# create animation
+    else:     # create animation
       anim = animation.FuncAnimation(fig, animate,
                  frames=len(data), interval=interval, blit=False)
 
       anim.save("anim.mp4")
       
       # create plot with first and last dataset
-      fig = plt.figure(figsize=(5,10))
-      ax = fig.add_subplot(211, projection='3d', xlim=(min_x, max_x), ylim=(min_y, max_y), zlim=(min_value-margin, max_value+margin))
+      fig2 = plt.figure(2,figsize=(5,10))
+      ax2 = fig2.add_subplot(211, projection='3d', xlim=(min_x, max_x), ylim=(min_y, max_y), zlim=(min_value-margin, max_value+margin))
+      
+      ax1 = ax
       
       # plot first dataset
+      ax = ax2
       plot0, = animate(0)
       
       # plot last dataset
-      ax = fig.add_subplot(212, projection='3d', xlim=(min_x, max_x), ylim=(min_y, max_y), zlim=(min_value-margin, max_value+margin))
+      ax2 = fig2.add_subplot(212, projection='3d', xlim=(min_x, max_x), ylim=(min_y, max_y), zlim=(min_value-margin, max_value+margin))
+    
+      fig2.suptitle('first and last timesteps')
     
       i = len(data)-1
       if 'timeStepNo' in data[i]:
@@ -571,12 +718,12 @@ if dimension == 2:
       if 'currentTime' in data[i]:
         current_time = data[i]['currentTime']
         
+      ax = ax2
       plot1, = animate(i)
       
-      text = plt.figtext(0.15,0.85,"timestep",size=20)
-      text.set_text("timesteps 0 and {}".format(timestep))
+      ax = ax1
       
-      ax = plt.gca()
+      #ax = plt.gca()
       #ax.add_line(line0)
       #ax.add_line(line1)
       plt.legend()

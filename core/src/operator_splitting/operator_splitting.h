@@ -1,11 +1,12 @@
 #pragma once
 
-#include "time_stepping_scheme/time_stepping_scheme.h"
+#include "time_stepping_scheme/00_time_stepping_scheme.h"
 #include "output_writer/manager.h"
 #include "interfaces/runnable.h"
 #include "data_management/time_stepping/time_stepping.h"
 #include "partition/rank_subset.h"
-#include "operator_splitting/solution_vector_mapping/solution_vector_mapping.h"
+#include "slot_connection/slot_connector_data_transfer.h"
+#include "data_management/operator_splitting.h"
 
 namespace OperatorSplitting
 {
@@ -14,15 +15,19 @@ template<typename TimeStepping1, typename TimeStepping2>
 class OperatorSplitting :
   public ::TimeSteppingScheme::TimeSteppingScheme,    // contains also Multipliable
   public Runnable
-  //public Printer<typename TimeStepping2::TransferableSolutionDataType>
 {
 public:
   typedef typename TimeStepping1::FunctionSpace FunctionSpace;
-  typedef typename TimeStepping1::Data Data;
-  typedef typename TimeStepping1::TransferableSolutionDataType TransferableSolutionDataType;  // needed when this class is itself part of an operator splitting
- 
+  typedef Data::OperatorSplitting<TimeStepping1,TimeStepping2> Data;
+  typedef typename Data::SlotConnectorDataType SlotConnectorDataType;  // needed when this class is itself part of an operator splitting
+  typedef TimeStepping1 TimeStepping1Type;
+  typedef TimeStepping2 TimeStepping2Type;
+
   //! constructor
   OperatorSplitting(DihuContext context, std::string schemeName);
+
+  //! constructor, the two timestepping schemes are to be initialize before this constructor. This is needed for MultipleCoupling class.
+  OperatorSplitting(DihuContext context, std::string schemeName, TimeStepping1 &&timeStepping1, TimeStepping2 &&timeStepping2);
 
   //! destructor
   virtual ~OperatorSplitting() {}
@@ -31,10 +36,7 @@ public:
   void run();
 
   //! get the data to be reused in further computations
-  TransferableSolutionDataType getSolutionForTransfer();
-
-  //! return whether the object has a specified mesh type or if it is independent of any mesh type
-  bool knowsMeshType();
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);
@@ -48,28 +50,34 @@ public:
   //! return the data object
   Data &data();
 
+  //! get a reference to the first timestepping object
+  TimeStepping1 &timeStepping1();
+
+  //! get a reference to the second timestepping object
+  TimeStepping2 &timeStepping2();
+
   //! output the given data for debugging
-  std::string getString(TransferableSolutionDataType &data);
+  std::string getString(std::shared_ptr<SlotConnectorDataType> data);
 
 protected:
 
-  TimeStepping1 timeStepping1_;    ///< the object to be discretized
-  TimeStepping2 timeStepping2_;    ///< the object to be discretized
+  TimeStepping1 timeStepping1_;     //< the object to be discretized
+  TimeStepping2 timeStepping2_;     //< the object to be discretized
 
-  int timeStepOutputInterval_;    ///< time step number and time is output every timeStepOutputInterval_ time steps
-  std::string schemeName_;        ///< the key as in the contig, i.e. "Strang" or "Godunov" or "Coupling", only for debugging outputs
+  Data data_;                       //< data object that stores the slotConnectorData_ object which is a tuple of both slotConnectorData objects of the timestepping schemes
 
-  bool initialized_;               ///< if initialize() was already called
+  int timeStepOutputInterval_;      //< time step number and time is output every timeStepOutputInterval_ time steps
+  std::string schemeName_;          //< the key as in the contig, i.e. "Strang" or "Godunov" or "Coupling", only for debugging outputs
+  std::string description_;         //< a description that will be printed in debugging output and in the solver structure visualization
+  std::string logKeyTimeStepping1AdvanceTimeSpan_;  //< key for logging of the duration of the advanceTimeSpan() call of timeStepping1
+  std::string logKeyTimeStepping2AdvanceTimeSpan_;  //< key for logging of the duration of the advanceTimeSpan() call of timeStepping2
+  std::string logKeyTransfer12_;    //< key for logging of the duration of data transfer from timestepping 1 to 2
+  std::string logKeyTransfer21_;    //< key for logging of the duration of data transfer from timestepping 2 to 1
+
+  std::shared_ptr<SlotsConnection> slotsConnection_; //< information regarding the mapping between the data slots of the two terms
+
+  bool initialized_;                //< if initialize() was already called
 };
-
-/*
-template<typename TransferableSolutionDataType>
-class Printer
-{
-  void print(TransferableSolutionDataType &data);
-};
-
-*/
 
 }  // namespace
 

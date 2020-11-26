@@ -23,14 +23,12 @@
 #include "mesh/mesh.h"
 #include "control/types.h"
 
-
-
 namespace SpatialDiscretization
 {
 
 // 1D massMatrix
 template<typename QuadratureType, typename Term>
-void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<1>, Equation::hasLaplaceOperator<Term>>::
+void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, 1, Term, Mesh::StructuredRegularFixedOfDimension<1>, Equation::hasLaplaceOperator<Term>>::
 setMassMatrix()
 {
   typedef typename FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>, BasisFunction::LagrangeOfOrder<1>> FunctionSpaceType;
@@ -112,12 +110,12 @@ setMassMatrix()
 
 // 2D massMatrix
 template<typename QuadratureType, typename Term>
-void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<2>, Equation::hasLaplaceOperator<Term>>::
+void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, 1, Term, Mesh::StructuredRegularFixedOfDimension<2>, Equation::hasLaplaceOperator<Term>>::
 setMassMatrix()
 {
   typedef typename FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<2>, BasisFunction::LagrangeOfOrder<1>> FunctionSpaceType;
 
-  LOG(TRACE) << "setMassMatrix 2D for Mesh::RegularFixed using stencils";
+  LOG(INFO) << "setMassMatrix 2D for Mesh::RegularFixed using stencils";
 
   // check if matrix discretization matrix exists
   if (!this->data_.massMatrix())
@@ -170,7 +168,7 @@ setMassMatrix()
 
   auto dofIndex = [&functionSpace](int x, int y)
   {
-    return functionSpace->getNodeNo(std::array<int,2>({x,y}));  // nDofsPerNode == 1
+    return functionSpace->meshPartition()->getNodeNoLocal(std::array<int,2>({x,y}));  // nDofsPerNode == 1
   };
   // loop over all dofs and set values with stencilCenter
   // set entries for interior nodes
@@ -314,7 +312,7 @@ setMassMatrix()
 
 // 3D massMatrix
 template<typename QuadratureType, typename Term>
-void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, Term, Mesh::StructuredRegularFixedOfDimension<3>, Equation::hasLaplaceOperator<Term>>::
+void FiniteElementMethodMatrix<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>>, QuadratureType, 1, Term, Mesh::StructuredRegularFixedOfDimension<3>, Equation::hasLaplaceOperator<Term>>::
 setMassMatrix()
 {
   typedef typename FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<3>, BasisFunction::LagrangeOfOrder<1>> FunctionSpaceType;
@@ -403,7 +401,7 @@ setMassMatrix()
 
   auto dofIndex = [&functionSpace](int x, int y, int z)
   {
-    return functionSpace->getNodeNo(std::array<int,3>({x,y,z}));  // nDofsPerNode == 1
+    return functionSpace->meshPartition()->getNodeNoLocal(std::array<int,3>({x,y,z}));  // nDofsPerNode == 1
   };
   double value;
   node_no_t dofNo;

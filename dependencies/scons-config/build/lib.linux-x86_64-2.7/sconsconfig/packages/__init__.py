@@ -48,3 +48,12 @@ from SvgPath import SvgPath
 from pythonPackages import pythonPackages
 from MegaMol import MegaMol
 from ADIOS import ADIOS
+from VTK import VTK
+from XercesC import XercesC
+from xsd import xsd
+from boost import boost
+from chaste import Chaste
+from vc import Vc
+from xbraid import xbraid
+from opencor import OpenCOR
+from precice import precice

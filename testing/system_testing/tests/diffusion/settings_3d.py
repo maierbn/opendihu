@@ -174,6 +174,7 @@ initial_values = [initial_values_function(x0,x1,x2) for x2 in np.linspace(0,phys
 
 
 config = {
+  "logFormat": "csv",
   "ExplicitEuler" : {
     "initialValues": initial_values,
     "numberTimeSteps": 1500,

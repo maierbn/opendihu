@@ -8,7 +8,7 @@ namespace Solver
 Solver::Solver(PythonConfig specificSettings, std::string name) :
   specificSettings_(specificSettings), name_(name)
 {
-
+  durationLogKey_ = std::string("durationSolve_") + name_;
 }
 
 bool Solver::configEquals(PythonConfig config)
@@ -23,6 +23,9 @@ bool Solver::configEquals(PythonConfig config)
   return false;
 }
 
-
+std::string Solver::name()
+{
+  return name_;
+}
 
 } // namespace

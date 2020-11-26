@@ -112,7 +112,6 @@ config = {
   StiffnessMatrixTester::compareRhs(equationDiscretized1, referenceRhs);
   StiffnessMatrixTester::checkDirichletBCInSolution(equationDiscretized1, dirichletBC);
 }
-/*
 
 TEST(NumericalIntegrationTest, StiffnessMatrixIsCorrect2D)
 {
@@ -213,9 +212,9 @@ config = {
   equationDiscretized2.run();
   
   StiffnessMatrixTester::checkEqual(equationDiscretized1, equationDiscretized2);
-}*/
+}
 /*
- * // the following tests are commented out because the take very long to compile, they should work, however
+ * // the following tests are commented out because they take very long to compile, they should work, however
 TEST(NumericalIntegrationTest, GaussIntegrationHigherOrderWorks)
 {
   std::string pythonConfig = R"(

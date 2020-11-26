@@ -4,7 +4,7 @@
 #include <vector>
 #include <map>
 #include "utility/petsc_utility.h"
-#include "mesh/mesh_manager.h"
+#include "mesh/mesh_manager/mesh_manager.h"
 #include "mesh/structured_deformable.h"
 
 namespace Mesh

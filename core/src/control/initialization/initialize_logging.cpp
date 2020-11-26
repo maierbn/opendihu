@@ -2,7 +2,7 @@
 
 #include <Python.h>  // this has to be the first included header
 
-void DihuContext::initializeLogging(int argc, char *argv[])
+void DihuContext::initializeLogging(int &argc, char *argv[])
 {
   START_EASYLOGGINGPP(argc, argv);
 /*
@@ -56,16 +56,49 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   el::Configurations conf;
   conf.setToDefault();
 
-  int rankNo;
-  MPIUtility::handleReturnValue (MPI_Comm_rank(MPI_COMM_WORLD, &rankNo));
-  
   // set prefix for output that includes current rank no
   std::string prefix;
   if (nRanksCommWorld_ > 1)
   {
     std::stringstream s;
-    s << rankNo << "/" << nRanksCommWorld_ << " ";
+    s << ownRankNoCommWorld_ << "/" << nRanksCommWorld_ << " ";
     prefix = s.str();
+  }
+
+  // set location of log files
+  std::string logFilesPath = "/tmp/logs/";   // must end with '/'
+
+  // if the 3rd argument starts with '--log=', interpret it as logging path under /tmp/logs/
+  if (argc >= 3)
+  {
+    std::string argument(argv[2]);
+    if (argument.substr(0,6) == "--log=")
+    {
+      // parse logging directory, ensure that last character is '/'
+      std::string logDirectory = argument.substr(6);
+      if (logDirectory[logDirectory.size()-1] != '/')
+        logDirectory += "/";
+
+      logFilesPath += logDirectory;
+
+      // remove this argument
+      argc--;
+      for (int i = 2; i < argc; i++)
+      {
+        argv[i] = argv[i+1];
+      }
+    }
+    else if (argument.substr(0,15) == "--log-no-prefix")
+    {
+      prefix = "";
+
+      // remove this argument
+      argc--;
+      for (int i = 2; i < argc; i++)
+      {
+        argv[i] = argv[i+1];
+      }
+    }
   }
   
 #ifdef NDEBUG      // if release
@@ -81,12 +114,10 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   conf.setGlobally(el::ConfigurationType::Format, prefix+"INFO : %msg");
 #endif
 
-  // set location of log files
-  std::string logFilesPath = "/tmp/logs/";   // must end with '/'
   if (nRanksCommWorld_ > 1)
   {
     std::stringstream s;
-    s << logFilesPath << rankNo << "_opendihu.log";
+    s << logFilesPath << ownRankNoCommWorld_ << "_opendihu.log";
     conf.setGlobally(el::ConfigurationType::Filename, s.str());
 
     // truncate logfile
@@ -109,7 +140,8 @@ void DihuContext::initializeLogging(int argc, char *argv[])
 
   // set format of outputs
   conf.set(el::Level::Debug, el::ConfigurationType::Format, prefix+"DEBUG: %msg");
-  conf.set(el::Level::Trace, el::ConfigurationType::Format, prefix+"TRACE: %msg");
+  conf.set(el::Level::Trace, el::ConfigurationType::Format, prefix+"TRACE: %msg (" ANSI_COLOR_LIGHT_GRAY "%func" ANSI_COLOR_RESET " at "
+    ANSI_COLOR_LIGHT_GRAY "%loc" ANSI_COLOR_RESET ")");
   conf.set(el::Level::Verbose, el::ConfigurationType::Format, ANSI_COLOR_LIGHT_WHITE "" + prefix+"VERB%vlevel: %msg" ANSI_COLOR_RESET);
   conf.set(el::Level::Warning, el::ConfigurationType::Format,
   //         prefix+"WARN : %loc %func: \n" ANSI_COLOR_YELLOW "Warning: " ANSI_COLOR_RESET "%msg");
@@ -123,7 +155,7 @@ void DihuContext::initializeLogging(int argc, char *argv[])
            +"\n\nFatal error: %msg\n"+separator+ANSI_COLOR_RESET+"\n");
 
   // disable output for ranks != 0
-  if (rankNo > 0)
+  if (ownRankNoCommWorld_ > 0)
   {
     conf.set(el::Level::Info, el::ConfigurationType::Enabled, "false");
     conf.set(el::Level::Warning, el::ConfigurationType::Enabled, "false");
@@ -139,4 +171,19 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   // reconfigure all loggers
   el::Loggers::reconfigureAllLoggers(conf);
   el::Loggers::removeFlag(el::LoggingFlag::AllowVerboseIfModuleNotSpecified);
+  LOG(DEBUG) << "Log to \"" << logFilesPath << "\".";
+
+#if 0
+  // configure additional special logger, enable this and enable the CLOG(INFO, "mpi") line in mpi_utility.cpp to get a log of every mpi call
+  el::Loggers::getLogger("mpi");
+
+  // configure control and numerics logger to use different log files
+  el::Configurations configuration;
+  configuration.setToDefault();
+
+  configuration.setGlobally(el::ConfigurationType::Filename, "mpi.log");
+  el::Loggers::reconfigureLogger("mpi", configuration);
+
+  CLOG(INFO, "mpi") << "starting mpi log";
+#endif
 }

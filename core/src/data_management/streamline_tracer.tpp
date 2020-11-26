@@ -103,13 +103,6 @@ nNodesLocalWithoutGhosts()
 }
 
 template<typename FunctionSpaceType,typename BaseDataType>
-constexpr int StreamlineTracer<FunctionSpaceType,BaseDataType>::
-getNDofsPerNode()
-{
-  return 1;
-}
-
-template<typename FunctionSpaceType,typename BaseDataType>
 void StreamlineTracer<FunctionSpaceType,BaseDataType>::
 print()
 {
@@ -122,10 +115,10 @@ print()
 }
 
 template<typename FunctionSpaceType,typename BaseDataType>
-typename StreamlineTracer<FunctionSpaceType,BaseDataType>::OutputFieldVariables StreamlineTracer<FunctionSpaceType,BaseDataType>::
-getOutputFieldVariables()
+typename StreamlineTracer<FunctionSpaceType,BaseDataType>::FieldVariablesForOutputWriter StreamlineTracer<FunctionSpaceType,BaseDataType>::
+getFieldVariablesForOutputWriter()
 {
-  return std::tuple_cat(baseData_->getOutputFieldVariables(),
+  return std::tuple_cat(baseData_->getFieldVariablesForOutputWriter(),
                         std::tuple<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>>(gradient_),
                         std::tuple<std::vector<std::shared_ptr<FieldVariableFiberGeometry>>>(fiberGeometry_)
                        );

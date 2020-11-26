@@ -13,6 +13,7 @@ template<typename FunctionSpaceType>
 std::shared_ptr<FunctionSpaceType> FieldVariableBaseFunctionSpace<FunctionSpaceType>::
 functionSpace()
 {
+  // profiling/tracing showed that this method is called very often and has a significant impact on runtime
   return functionSpace_;
 }
 
@@ -23,11 +24,26 @@ name() const
   return this->name_;
 }
 
+//! set the name of the field variable
+template<typename FunctionSpaceType>
+void FieldVariableBaseFunctionSpace<FunctionSpaceType>::
+setName(std::string name)
+{
+  this->name_ = name;
+}
+
 template<typename FunctionSpaceType>
 bool FieldVariableBaseFunctionSpace<FunctionSpaceType>::
 isGeometryField() const
 {
   return this->isGeometryField_;
+}
+
+template<typename FunctionSpaceType>
+void FieldVariableBaseFunctionSpace<FunctionSpaceType>::
+setIsGeometryField(bool isGeometryField)
+{
+  isGeometryField_ = isGeometryField;
 }
 
 template<typename FunctionSpaceType>
@@ -41,27 +57,35 @@ checkNansInfs(int componentNo) const
   // determine if there are nans or high values
   int nNans = 0;
   int nHighValues = 0;
+  int nInfs = 0;
   for (int i = 0; i < values.size(); i++)
   {
     if (std::isnan(values[i]))
       nNans++;
+    else if (std::isinf(values[i]))
+      nInfs++;
     else if (fabs(values[i]) > 1e100)
       nHighValues++;
   }
 
   if (nNans > 0)
   {
-    LOG(WARNING) << "Solution contains " << nNans << " Nans, out of " << values.size() << " total values";
+    LOG(ERROR) << "Solution contains " << nNans << " Nans, out of " << values.size() << " total values";
   }
 
   if (nHighValues > 0)
   {
-    LOG(WARNING) << "Solution contains " << nHighValues << " high values with absolute value > 1e100, out of " << values.size() << " total values";
+    LOG(ERROR) << "Solution contains " << nHighValues << " high values with absolute value > 1e100, out of " << values.size() << " total values";
   }
 
-  if (nNans == values.size())
+  if (nInfs > 0)
   {
-    LOG(FATAL) << "There are only Nans, abort computation.";
+    LOG(ERROR) << "Solution contains " << nInfs << " inf values, out of " << values.size() << " total values";
+  }
+
+  if (nNans+nInfs == values.size())
+  {
+    LOG(FATAL) << "There are only Nans and Infs, abort computation.";
   }
 }
 

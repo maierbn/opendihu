@@ -48,6 +48,7 @@ if name == "1d_unstructured_deformable_quadratic":
   elements = [[i, i+1, i+2] for i in range(0,n_nodes-1,2)]
 
 config = {
+  "logFormat": "csv",
   "FiniteElementMethod" : {
     "nElements": n,
     "nodeDimension": 1,

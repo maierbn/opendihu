@@ -1,0 +1,1 @@
+cd $OPENDIHU_HOME && time $OPENDIHU_HOME/dependencies/scons/scons.py BUILD_TYPE=releasewithdebuginfo no_tests=True -j 4 $* && (cd - && echo "opendihu release with debug info build without tests succeeded") || (echo "opendihu release with debug info build without tests failed" && cd - && exit -1)

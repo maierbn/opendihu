@@ -41,6 +41,9 @@ public:
   //! return a reference to the dirichletValues field
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> dirichletValues();
 
+  //! return a reference to the field for the condition number of the jacobian
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> jacobianConditionNumber();
+
   //! set the problem variable
   void setProblem(std::shared_ptr<FiniteElementMethodType> problem);
 
@@ -55,22 +58,25 @@ public:
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // geometry
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,  // solution
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,   // rhs
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,   // rhs neumann bc
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // gradient field
-    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>  // dirichlet values
-  > OutputFieldVariables;
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,  // dirichlet values
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>  // jacobianConditionNumber
+  > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
 protected:
 
   //! initializes the vectors with size
   virtual void createPetscObjects();
 
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> gradient_;  ///< the gradient field of the Laplace flow solution
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> dirichletValues_;  ///< values of dirichlet BC or -1, where no dirichlet BC is prescribed
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> gradient_;  //< the gradient field of the Laplace flow solution
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> dirichletValues_;  //< values of dirichlet BC or -1, where no dirichlet BC is prescribed
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> jacobianConditionNumber_;  //< condition number of the jacobian at each point
 
-  std::shared_ptr<FiniteElementMethodType> problem_;   ///< the DiscretizableInTime object that is used for FE solution
+  std::shared_ptr<FiniteElementMethodType> problem_;   //< the DiscretizableInTime object that is used for FE solution
 
 };
 

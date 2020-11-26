@@ -23,6 +23,11 @@ T.~Sussman and K.-J. Bathe.
   inelastic analysis.
 \newblock {\em Computers \& Structures}, 26(1):357 -- 409, 1987.
 
+\bibitem{zienkiewicz2005finite}
+O.~C. Zienkiewicz, R.~L. Taylor, and J.~Z. Zhu.
+\newblock {\em The finite element method: its basis and fundamentals}.
+\newblock Elsevier, 2005.
+
 \bibitem{zienkiewicz1977finite}
 O.~C. Zienkiewicz, R.~L. Taylor, O.~C. Zienkiewicz, and R.~L. Taylor.
 \newblock {\em The finite element method}, volume~3.

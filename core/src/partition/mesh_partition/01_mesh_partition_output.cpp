@@ -39,7 +39,7 @@ std::ostream &operator<<(std::ostream &stream, ISLocalToGlobalMapping localToGlo
   if (nproc > 0)
   {
     stream << "0=";
-    for (int j = 0; j < std::min(numprocs[0], 100); j++)
+    for (int j = 0; j < std::min((int)numprocs[0], (int)100); j++)
     {
       stream << indices[0][j] << " ";
       if (j == 99)
@@ -49,7 +49,7 @@ std::ostream &operator<<(std::ostream &stream, ISLocalToGlobalMapping localToGlo
   for (int i = 1; i < nproc; i++)
   {
     stream << "; " << i << "=";
-    for (int j = 0; j < std::min(numprocs[i], 100); j++)
+    for (int j = 0; j < std::min((int)numprocs[i], (int)100); j++)
     {
       stream << indices[i][j] << " ";
       if (j == 99)
@@ -70,7 +70,7 @@ std::ostream &operator<<(std::ostream &stream, ISLocalToGlobalMapping localToGlo
     stream << "l0=p" << localIndices[0];
   }
 
-  int indicesEnd = std::min(100, nLocalIndices);
+  int indicesEnd = std::min(100, (int)nLocalIndices);
   if (VLOG_IS_ON(1))
   {
     indicesEnd = nLocalIndices;

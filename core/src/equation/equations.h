@@ -1,5 +1,6 @@
 #include "equation/diffusion.h"
 #include "equation/laplace.h"
-#include "equation/mooney_rivlin_compressible.h"
 #include "equation/mooney_rivlin_incompressible.h"
 #include "equation/poisson.h"
+#include "equation/linear_elasticity.h"
+#include "equation/saint_venant_kirchhoff.h"

@@ -36,9 +36,6 @@ public:
   //! set the data object that holds the field frorm which stream lines are generated
   void setBaseData(std::shared_ptr<BaseDataType> baseData);
 
-  //! return the number of degrees of freedom per mesh node
-  static constexpr int getNDofsPerNode();
-
   //! return the total number of degrees of freedom, this can be a multiple of the number of nodes of the mesh
   virtual dof_no_t nNodesLocalWithGhosts();
   
@@ -52,26 +49,26 @@ public:
   typedef FieldVariable::FieldVariable<FunctionSpaceFiber,3> FieldVariableFiberGeometry;
   
   //! field variables that will be output by outputWriters
-  typename BaseDataType::OutputFieldVariables dummy;
+  typename BaseDataType::FieldVariablesForOutputWriter dummy;
   typedef decltype(std::tuple_cat(dummy, std::tuple<
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // gradient field
     std::vector<std::shared_ptr<FieldVariableFiberGeometry>>   // geometry fields of meshes
-  >())) OutputFieldVariables;
+  >())) FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
-  OutputFieldVariables getOutputFieldVariables();
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
 protected:
 
   //! initializes the vectors with size
   virtual void createPetscObjects();
 
-  std::shared_ptr<BaseDataType> baseData_;    ///< the data object that holds the field frorm which stream lines are generated
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> gradient_;    ///< the gradient field of the solution field variable
+  std::shared_ptr<BaseDataType> baseData_;    //< the data object that holds the field frorm which stream lines are generated
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> gradient_;    //< the gradient field of the solution field variable
 
-  std::vector<std::shared_ptr<FieldVariableFiberGeometry>> fiberGeometry_;   ///< geometry fields of fibers
+  std::vector<std::shared_ptr<FieldVariableFiberGeometry>> fiberGeometry_;   //< geometry fields of fibers
   
-  int fiberNo_ = 0; ///< counter for names of generated fibers
+  int fiberNo_ = 0; //< counter for names of generated fibers
 };
 
 } // namespace Data

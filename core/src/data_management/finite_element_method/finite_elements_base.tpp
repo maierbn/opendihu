@@ -19,27 +19,37 @@
 namespace Data
 {
 
-template<typename FunctionSpaceType>
-FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+FiniteElementsBase<FunctionSpaceType,nComponents>::
 FiniteElementsBase(DihuContext context) : Data<FunctionSpaceType>(context)
 {
 }
 
-template<typename FunctionSpaceType>
-FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+FiniteElementsBase<FunctionSpaceType,nComponents>::
 ~FiniteElementsBase()
 {
 }
 
-template<typename FunctionSpaceType>
-void FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
 initialize()
 {
   LOG(DEBUG) << "Data::FiniteElementsBase::initialize";
   Data<FunctionSpaceType>::initialize();
+
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
+  slotConnectorData_->addFieldVariable(this->solution());
+
+  // parse slot names of the additional field variables
+  std::string slotName = this->context_.getPythonConfig().getOptionString("slotName", "");
+  slotConnectorData_->slotNames.push_back(slotName);
+
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
 }
-template<typename FunctionSpaceType>
-void FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
 reset()
 {
   LOG(DEBUG) << "Data::FiniteElementsBase::reset";
@@ -47,117 +57,156 @@ reset()
   Data<FunctionSpaceType>::reset();
 
   // deallocate Petsc matrices
+  this->stiffnessMatrixWithoutBc_ = nullptr;
   this->stiffnessMatrix_ = nullptr;
+  LOG(DEBUG) << "stiffnessMatrix_ set to nullptr";
 }
 
-template<typename FunctionSpaceType>
-void FiniteElementsBase<FunctionSpaceType>::
-getPetscMemoryParameters(int &diagonalNonZeros, int &offdiagonalNonZeros)
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
+getPetscMemoryParameters(int &nNonZerosDiagonal, int &nNonZerosOffdiagonal)
 {
-  const int D = this->functionSpace_->dimension();
+  const int D = FunctionSpaceType::dim();
   const int nDofsPerNode = FunctionSpace::FunctionSpaceBaseDim<1,typename FunctionSpaceType::BasisFunction>::nDofsPerNode();
-  const int nDofsPerBasis = FunctionSpace::FunctionSpaceBaseDim<1,typename FunctionSpaceType::BasisFunction>::nDofsPerElement();
-  const int nOverlaps = (nDofsPerBasis*2 - 1) * nDofsPerNode;   // number of nodes of 2 neighbouring 1D elements (=number of ansatz functions in support of center ansatz function)
+  const int nDofsPerElement = FunctionSpace::FunctionSpaceBaseDim<1,typename FunctionSpaceType::BasisFunction>::nDofsPerElement();
+  const int nOverlaps = (nDofsPerElement*2 - 1) * nDofsPerNode;   // number of nodes of 2 neighbouring 1D elements (=number of ansatz functions in support of center ansatz function)
 
-  // due to PETSc storage diagonalNonZeros and offdiagonalNonZeros should be both set to the maximum number of non-zero entries per row
+  // due to PETSc storage nNonZerosDiagonal and nNonZerosOffdiagonal should be both set to the maximum number of non-zero entries per row
 
   switch (D)
   {
   case 1:
-    diagonalNonZeros = nOverlaps;
-    offdiagonalNonZeros = diagonalNonZeros;
+    nNonZerosDiagonal = nOverlaps;
+    nNonZerosOffdiagonal = nNonZerosDiagonal;
     break;
   case 2:
-    diagonalNonZeros = pow(nOverlaps, 2) + 16;   // because of boundary conditions there can be more entries, which are all zero, but stored as non-zero
-    offdiagonalNonZeros = diagonalNonZeros;
+    nNonZerosDiagonal = pow(nOverlaps, 2);   // because of boundary conditions there can be more entries, which are all zero, but stored as non-zero
+    nNonZerosOffdiagonal = nNonZerosDiagonal;
     break;
   case 3:
-    diagonalNonZeros = pow(nOverlaps, 3);
-    offdiagonalNonZeros = diagonalNonZeros;
+    nNonZerosDiagonal = pow(nOverlaps, 3);
+    nNonZerosOffdiagonal = nNonZerosDiagonal;
     break;
   };
+
+  LOG(DEBUG) << "nOverlaps = (" << nDofsPerElement << "*2 - 1) * " << nDofsPerNode << " = " << nOverlaps
+    << ", nNonZerosDiagonal = " << nOverlaps << "^" << D << " = " << nNonZerosDiagonal << ", 2*" << nNonZerosDiagonal << "=" << 2*nNonZerosDiagonal;
 }
 
-template<typename FunctionSpaceType>
-void FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
 createPetscObjects()
 {
   LOG(TRACE) << "FiniteElements::createPetscObjects";
+
+  assert(this->functionSpace_);
 
   // get the partitioning from the function space
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition = this->functionSpace_->meshPartition();
   
   // create field variables on local partition
-  this->rhs_ = this->functionSpace_->template createFieldVariable<1>("rhs");
-  this->solution_ = this->functionSpace_->template createFieldVariable<1>("solution");
+  this->rhs_ = this->functionSpace_->template createFieldVariable<nComponents>("rightHandSide");
+  this->solution_ = this->functionSpace_->template createFieldVariable<nComponents>("solution");
+  this->negativeRhsNeumannBoundaryConditions_ = this->functionSpace_->template createFieldVariable<nComponents>("zero");
 
   // create PETSc matrix object
 
   // PETSc MatCreateAIJ parameters
-  int diagonalNonZeros = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
-  int offdiagonalNonZeros = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int nNonZerosDiagonal = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int nNonZerosOffdiagonal = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
 
-  getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
+  getPetscMemoryParameters(nNonZerosDiagonal, nNonZerosOffdiagonal);
 
   LOG(DEBUG) << "d=" << this->functionSpace_->dimension()
-    << ", number of diagonal non-zeros: " << diagonalNonZeros << ", number of off-diagonal non-zeros: " <<offdiagonalNonZeros;
+    << ", number of diagonal non-zeros: " << nNonZerosDiagonal << ", number of off-diagonal non-zeros: " <<nNonZerosOffdiagonal;
 
-  int nComponents = 1;
-  this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(meshPartition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "stiffnessMatrix");
-
+  LOG(DEBUG) << "create new stiffnessMatrix";
+  this->stiffnessMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(meshPartition, nComponents, nNonZerosDiagonal, nNonZerosOffdiagonal, "stiffnessMatrix");
+  this->stiffnessMatrixWithoutBc_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(meshPartition, nComponents, nNonZerosDiagonal, nNonZerosOffdiagonal, "stiffnessMatrixWithoutBc");
 }
 
-template<typename FunctionSpaceType>
-std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsBase<FunctionSpaceType,nComponents>::
 stiffnessMatrix()
 {
   return this->stiffnessMatrix_;
 }
 
-template<typename FunctionSpaceType>
-std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsBase<FunctionSpaceType,nComponents>::
+stiffnessMatrixWithoutBc()
+{
+  return this->stiffnessMatrixWithoutBc_;
+}
+
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsBase<FunctionSpaceType,nComponents>::
 massMatrix()
 {
   return this->massMatrix_;
 }
 
-template<typename FunctionSpaceType>
-std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> FiniteElementsBase<FunctionSpaceType,nComponents>::
 inverseLumpedMassMatrix()
 {
   return this->inverseLumpedMassMatrix_;
 }
 
-template<typename FunctionSpaceType>
-std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> FiniteElementsBase<FunctionSpaceType,nComponents>::
 rightHandSide()
 {
   return this->rhs_;
 }
 
-template<typename FunctionSpaceType>
-std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> FiniteElementsBase<FunctionSpaceType,nComponents>::
+negativeRightHandSideNeumannBoundaryConditions()
+{
+  return this->negativeRhsNeumannBoundaryConditions_;
+}
+
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> FiniteElementsBase<FunctionSpaceType,nComponents>::
 solution()
 {
   return this->solution_;
 }
 
-template<typename FunctionSpaceType>
-typename FiniteElementsBase<FunctionSpaceType>::TransferableSolutionDataType FiniteElementsBase<FunctionSpaceType>::
-getSolutionForTransfer()
+//! set the solution variable if it is initialized externally, such as in a timestepping scheme
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
+setSolutionVariable(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> solution)
 {
-  LOG(INFO) << "retutrn FiniteElementsBase solution";
-  return this->solution_;
+  // this will be called by the time stepping scheme after initialize()
+  this->solution_ = solution;
 }
 
-template<typename FunctionSpaceType>
-void FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
+setNegativeRightHandSideNeumannBoundaryConditions(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> negativeRightHandSideNeumannBoundaryConditions)
+{
+  this->negativeRhsNeumannBoundaryConditions_ = negativeRightHandSideNeumannBoundaryConditions;
+}
+
+template<typename FunctionSpaceType, int nComponents>
+std::shared_ptr<typename FiniteElementsBase<FunctionSpaceType,nComponents>::SlotConnectorDataType>
+FiniteElementsBase<FunctionSpaceType,nComponents>::
+getSlotConnectorData()
+{
+  return this->slotConnectorData_;
+}
+
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
 print()
 {
   if (!VLOG_IS_ON(4))
     return;
 
   VLOG(4) << "======================";
+  VLOG(4) << "nComponents: " << nComponents;
   VLOG(4) << *this->stiffnessMatrix_;
   VLOG(4) << *this->rhs_;
   VLOG(4) << *this->solution_;
@@ -185,8 +234,8 @@ print()
   VLOG(4) << "======================";
 }
 
-template<typename FunctionSpaceType>
-void FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
 initializeMassMatrix()
 {
   // if the massMatrix is already initialized do not initialize again
@@ -196,18 +245,17 @@ initializeMassMatrix()
   // create PETSc matrix object
 
   // PETSc MatCreateAIJ parameters
-  int diagonalNonZeros = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
-  int offdiagonalNonZeros = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int nNonZerosDiagonal = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int nNonZerosOffdiagonal = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
 
-  getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
+  getPetscMemoryParameters(nNonZerosDiagonal, nNonZerosOffdiagonal);
 
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
-  const int nComponents = 1;
-  this->massMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "massMatrix");
+  this->massMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, nComponents, nNonZerosDiagonal, nNonZerosOffdiagonal, "massMatrix");
 }
 
-template<typename FunctionSpaceType>
-void FiniteElementsBase<FunctionSpaceType>::
+template<typename FunctionSpaceType, int nComponents>
+void FiniteElementsBase<FunctionSpaceType,nComponents>::
 initializeInverseLumpedMassMatrix()
 {
   // if the inverseLumpedMassMatrix_ is already initialized do not initialize again
@@ -217,33 +265,30 @@ initializeInverseLumpedMassMatrix()
   // create PETSc matrix object
 
   // PETSc MatCreateAIJ parameters
-  int diagonalNonZeros = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
-  int offdiagonalNonZeros = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int nNonZerosDiagonal = 3;   // number of nonzeros per row in DIAGONAL portion of local submatrix (same value is used for all local rows)
+  int nNonZerosOffdiagonal = 0;   //  number of nonzeros per row in the OFF-DIAGONAL portion of local submatrix (same value is used for all local rows)
 
-  getPetscMemoryParameters(diagonalNonZeros, offdiagonalNonZeros);
+  getPetscMemoryParameters(nNonZerosDiagonal, nNonZerosOffdiagonal);
 
+  assert(this->functionSpace_);
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
-  const int nComponents = 1;
-  this->inverseLumpedMassMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, nComponents, diagonalNonZeros, offdiagonalNonZeros, "inverseLumpedMassMatrix");
+  this->inverseLumpedMassMatrix_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, nComponents, nNonZerosDiagonal, nNonZerosOffdiagonal, "inverseLumpedMassMatrix");
 }
 
-template<typename FunctionSpaceType>
-typename FiniteElementsBase<FunctionSpaceType>::OutputFieldVariables FiniteElementsBase<FunctionSpaceType>::
-getOutputFieldVariables()
+template<typename FunctionSpaceType, int nComponents>
+typename FiniteElementsBase<FunctionSpaceType,nComponents>::FieldVariablesForOutputWriter FiniteElementsBase<FunctionSpaceType,nComponents>::
+getFieldVariablesForOutputWriter()
 {
+  // these field variables will be written to output files
+  assert(this->functionSpace_);
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
-  /*
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> generalField;
 
-  generalField = std::static_pointer_cast<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->fieldVariable("general"));
-  if (!generalField)
-   generalField = geometryField;
-  */
-  return OutputFieldVariables(
+  return FieldVariablesForOutputWriter(
     geometryField,
     solution_,
-    rhs_
+    rhs_,
+    negativeRhsNeumannBoundaryConditions_
   );
 }
 

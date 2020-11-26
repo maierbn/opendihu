@@ -21,8 +21,8 @@ public:
    */
   struct Element
   {
-    std::vector<int> nodeGlobalNo;      ///< the global node numbers of the nodes of the element. E.g. for 3D Hermite elements this vector will contain 8 entries.
-    std::vector<double> scaleFactors;   ///< the scale factors of the element. there is one scale factor per dof. E.g. for 3D Hermite elements this vector will contain 64 entries (8 dofs per node, 8 nodes).
+    std::vector<int> nodeGlobalNo;      //< the global node numbers of the nodes of the element. E.g. for 3D Hermite elements this vector will contain 8 entries.
+    std::vector<double> scaleFactors;   //< the scale factors of the element. there is one scale factor per dof. E.g. for 3D Hermite elements this vector will contain 64 entries (8 dofs per node, 8 nodes).
   };
 
   //! resize internal representation variable to number of elements
@@ -39,7 +39,7 @@ public:
 
 private:
 
-  std::vector<Element> elements_;   ///< for global element no the nodes and scale factors
+  std::vector<Element> elements_;   //< for global element no the nodes and scale factors
 };
 
 } // namespace

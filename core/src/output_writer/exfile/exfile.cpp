@@ -28,7 +28,8 @@ void Exfile::outputComFile()
   s <<filenameBase_<< ".com";
   std::string filenameCom = s.str();
   // open file
-  std::ofstream file = openFile(filenameCom);
+  std::ofstream file;
+  openFile(file, filenameCom);
 
   // filename without path
   std::string basename = filenameBase_;

@@ -171,3 +171,11 @@ validate_parallel.py out.py out.0.py out.1.py   # do the same but with explicit 
 2. modules needed: PrgEnv-gnu, perftools-base, perftools-preload.
 3. aprun command: aprun (aprun opts like -n= ...) pat_run (pat_run options, at least: -gmpi -r -m lite-events. for more, see man pat_run) example_name (example options)
  for example: ´aprun -n8 pat_run -m lite-events -gmpi -r ./shorten_implicit ../settings.py´
+
+# build sphinx doc:
+```
+sudo pip install sphinx
+sudo pip install recommonmark
+sudo pip install sphinx_rtd_theme
+make html
+```

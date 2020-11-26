@@ -1,6 +1,6 @@
 #pragma once
 
-#include "field_variable/08_field_variable_vector.h"
+#include "field_variable/09_field_variable_composite.h"
 
 namespace FieldVariable
 {
@@ -10,11 +10,11 @@ namespace FieldVariable
  */
 template<typename FunctionSpaceType,int nComponents>
 class FieldVariable :
-  public FieldVariableVector<FunctionSpaceType,nComponents>
+  public FieldVariableComposite<FunctionSpaceType,nComponents>
 {
 public:
   //! inherited constructor
-  using FieldVariableVector<FunctionSpaceType,nComponents>::FieldVariableVector;
+  using FieldVariableComposite<FunctionSpaceType,nComponents>::FieldVariableComposite;
 
   typedef FunctionSpaceType FunctionSpace;
   
@@ -36,14 +36,18 @@ public:
 
   //! set the internal representation to be contiguous, i.e. using the contiguous vectors
   void setRepresentationContiguous();
-};
 
+  //! check if the field variable contains Nan or Inf values
+  bool containsNanOrInf();
+};
 
 // output operator
 template<typename FunctionSpaceType,int nComponents>
 std::ostream &operator<<(std::ostream &stream, const FieldVariable<FunctionSpaceType,nComponents> &rhs)
 {
+#ifndef NDEBUG
   rhs.output(stream);
+#endif
   return stream;
 }
 

@@ -22,10 +22,10 @@ initializeRhs()
   LOG(TRACE) << "NeumannBoundaryConditions::initializeRhs, D=" << FunctionSpaceType::dim() << ", nComponents=" << nComponents;
   // initialize RHS for mesh dimension 2 or 3, this is the same for nComponents == 1 and nComponents > 1
 
-  if (!initialized_)
+  if (!this->initialized_)
   {
     // initialize also calls initializeRhs at the end
-    this->initialize();
+    this->initialize(this->functionSpace_, this->boundaryConditionElements_);
     return;
   }
 

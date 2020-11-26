@@ -447,7 +447,8 @@ materialComputeResidual(double loadFactor)
   combinedVecResidual_->zeroEntries();
   combinedVecResidual_->startGhostManipulation();
 
-  bool successful = materialComputeInternalVirtualWork(false);    // compute without communicating ghost values, because startGhostManipulation has been called
+  bool successful = true;
+  successful = materialComputeInternalVirtualWork(false);    // compute without communicating ghost values, because startGhostManipulation has been called
 
   // if there was a negative jacobian, exit this computation
   if (!successful)

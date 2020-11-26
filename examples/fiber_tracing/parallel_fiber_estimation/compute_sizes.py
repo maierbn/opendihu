@@ -8,11 +8,12 @@
 import sys, os
 import numpy as np
 
-def output_size(m,l):
+def output_size(m,l,nel=4):
   """
   Output the expected number of generated fibers and the filesizes, for both files with and without border fibers.
   :param m: number of fine grid fibers
   :param l: maximum recursion level
+  :param n: number of elements in x direction
   """
 
   nx = 2**l  # number of processes per coordinate direction
@@ -26,10 +27,14 @@ def output_size(m,l):
       num /= 1024.0
     return "%.1f %s%s" % (num, 'Yi', suffix)
 
+  if nel%2 == 1:
+    print("Note, nel={} is odd, changing to {}.".format(nel,nel+1))
+    nel += 1
+
   # with border points
   # -------------------
   # number of fibers total
-  n = 8*nx*(1+m)+1
+  n = 2*nel*nx*(1+m)+1
   N = n**2
 
   filesize = 72 + N*1481*3*8
@@ -37,20 +42,26 @@ def output_size(m,l):
   # without border points
   # -------------------
   # number of fibers total
-  n2 = 8*nx*(1+m)-1
+  n2 = 2*nel*nx*(1+m)-1
   N2 = n2**2
 
   filesize2 = 72 + N2*1481*3*8
    
-  print("Expected sizes for parameters m={}, lmax={}, needs {} processes:\n  {} x {} = {} fibers, filesize = {} ({}),\n  {} x {} = {} fibers, filesize = {} ({})".
-    format(m, l, p, n, n, N, filesize, sizeof_fmt(filesize), n2, n2, N2, filesize2, sizeof_fmt(filesize2)))
+  print("Expected sizes for parameters m={}, lmax={}, nel={}, needs {} process{}:\n  {} x {} = {} fibers, filesize = {} ({}),\n  {} x {} = {} fibers, filesize = {} ({})".
+    format(m, l, nel, p, "es" if p > 1 else "", n, n, N, filesize, sizeof_fmt(filesize), n2, n2, N2, filesize2, sizeof_fmt(filesize2)))
 
 if __name__ == "__main__":
 
   if len(sys.argv) == 3:
     m = (int)(sys.argv[1])
     l = (int)(sys.argv[2])
-    output_size(m,l)
+    n = 4
+    output_size(m,l,n)
+  elif len(sys.argv) == 4:
+    m = (int)(sys.argv[1])
+    l = (int)(sys.argv[2])
+    n = (int)(sys.argv[3])
+    output_size(m,l,n)
   else:
-    print("usage: ./compute_sizes.py <m> <lmax>\n  where m = number of fine grid fibers,\n        lmax = maximum recursion level")
+    print("usage: ./compute_sizes.py <m> <lmax> [<n>]\n  where m = number of fine grid fibers,\n        lmax = maximum recursion level,\n        n = number of elements in x and y coordinate directions (default: 4)")
     sys.exit(0)

@@ -93,7 +93,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
         Vec3 leftForeignBorderPoint = leftBorderPoint;
         Vec3 rightForeignBorderPoint = rightBorderPoint;
 
-        int leftNeighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)leftNeighbourFace[face]);
+        int leftNeighbourRankNo = meshPartition_->neighbourRank((Mesh::face_or_edge_t)leftNeighbourFace[face]);
         if (leftNeighbourRankNo != -1)
         {
           LOG(DEBUG) << "zLevelIndex " << zLevelIndex << ", face " << Mesh::getString((Mesh::face_t)face)
@@ -109,7 +109,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
           LOG(DEBUG) << "zLevelIndex " << zLevelIndex << ", face " << Mesh::getString((Mesh::face_t)face) << ", has no left neighbour";
         }
 
-        int rightNeighbourRankNo = meshPartition_->neighbourRank((Mesh::face_t)rightNeighbourFace[face]);
+        int rightNeighbourRankNo = meshPartition_->neighbourRank((Mesh::face_or_edge_t)rightNeighbourFace[face]);
         if (rightNeighbourRankNo != -1)
         {
           LOG(DEBUG) << "zLevelIndex " << zLevelIndex << ", face " << Mesh::getString((Mesh::face_t)face)

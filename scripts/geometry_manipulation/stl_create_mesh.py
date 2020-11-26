@@ -1765,6 +1765,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
     while True:
       changed_a_point = False
       are_all_elements_properly_oriented = True
+      n_unresolved_self_intersections = 0
       
       # loop over all elements
       for i in range(0,n_grid_points_x-1):
@@ -1945,6 +1946,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
                 
                 break
               else:
+                n_unresolved_self_intersections += 1
                 print("  \033[0;31mself-intersection was not resolved after {} iterations\033[0m".format(n_tries))
             
             if output_fix:
@@ -1962,7 +1964,11 @@ def create_planar_mesh(border_points, loop_no, n_points, \
         if are_all_elements_properly_oriented:
           print("  all elements are properly oriented")
         break
-      
+     
+      if n_unresolved_self_intersections > 1:
+        print("\033[0;31Abort after {} unresolved self-intersections.    \033[0m".format(n_unresolved_self_intersections))
+        sys.exit(-1)
+  
     # output grid
     if output_post_fix:
       patches_world_improved = []

@@ -17,7 +17,7 @@ exchangeBorderSeedPoints(int nRanksZ, int rankZNo, bool streamlineDirectionUpwar
   // receive seed points from rank above
   if (rankZNo == int(nRanksZ/2) - 1)
   {
-    int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Plus);
+    int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::faceEdge2Plus);
 
     // receive seed points
     int tag = currentRankSubset_->ownRankNo()*100 + neighbourRankNo*10000 + level_*10 + 6;
@@ -40,7 +40,7 @@ exchangeBorderSeedPoints(int nRanksZ, int rankZNo, bool streamlineDirectionUpwar
   else if (rankZNo == int(nRanksZ/2))
   {
     // send seed points to rank below
-    int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Minus);
+    int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::faceEdge2Minus);
 
     // fill send buffer
     std::vector<double> sendBuffer(seedPoints.size()*3);
@@ -76,11 +76,11 @@ exchangeBorderSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineD
     int neighbourRankNo;
     if (streamlineDirectionUpwards)
     {
-      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Minus);
+      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::faceEdge2Minus);
     }
     else
     {
-      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Plus);
+      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::faceEdge2Plus);
     }
 
     // receive seed points
@@ -137,11 +137,11 @@ exchangeBorderSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDi
     int neighbourRankNo;
     if (streamlineDirectionUpwards)
     {
-      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Plus);
+      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::faceEdge2Plus);
     }
     else
     {
-      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Minus);
+      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::faceEdge2Minus);
     }
 
     // fill send buffer
@@ -184,11 +184,11 @@ exchangeSeedPointsBeforeTracingKeyFibers(int nRanksZ, int rankZNo, bool streamli
     int neighbourRankNo;
     if (streamlineDirectionUpwards)
     {
-      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Minus);
+      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::faceEdge2Minus);
     }
     else
     {
-      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Plus);
+      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::faceEdge2Plus);
     }
 
     // receive seed points
@@ -220,7 +220,7 @@ exchangeSeedPointsBeforeTracingKeyFibers(int nRanksZ, int rankZNo, bool streamli
   //  rank int(nRanksZ/2)-1   | | | tracing direction: v
   if (rankZNo == int(nRanksZ/2))
   {
-    int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Minus);
+    int neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::faceEdge2Minus);
 
     // fill send buffer
     std::vector<double> sendBuffer(seedPoints.size()*3);
@@ -271,12 +271,12 @@ exchangeSeedPointsAfterTracingKeyFibers(int nRanksZ, int rankZNo, bool streamlin
     int neighbourRankNo;
     if (streamlineDirectionUpwards)
     {
-      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Plus);
+      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::faceEdge2Plus);
       LOG(DEBUG) << "get 2+ neighbourRankNo: " << neighbourRankNo;
     }
     else
     {
-      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_t::face2Minus);
+      neighbourRankNo = meshPartition_->neighbourRank(Mesh::face_or_edge_t::faceEdge2Minus);
       LOG(DEBUG) << "get 2- neighbourRankNo: " << neighbourRankNo;
     }
 

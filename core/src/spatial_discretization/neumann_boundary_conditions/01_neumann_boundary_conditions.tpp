@@ -22,6 +22,12 @@ initializeRhs()
   LOG(TRACE) << "NeumannBoundaryConditions::initializeRhs, D=" << FunctionSpaceType::dim() << ", nComponents=" << nComponents;
   // initialize RHS for mesh dimension 2 or 3, this is the same for nComponents == 1 and nComponents > 1
 
+  if (!initialized_)
+  {
+    // initialize also calls initializeRhs at the end
+    this->initialize();
+    return;
+  }
 
   this->data_.rhs()->setRepresentationGlobal();
   this->data_.rhs()->zeroEntries();
@@ -245,7 +251,7 @@ initializeRhs()
   } // elementGlobalNo
 
   // allreduce surface area
-  double surfaceAreaGlobal;
+  double surfaceAreaGlobal = 0;
   MPI_Comm mpiCommunicator = this->data_.functionSpace()->meshPartition()->rankSubset()->mpiCommunicator();
   MPIUtility::handleReturnValue(MPI_Allreduce(&surfaceArea, &surfaceAreaGlobal, 1, MPI_DOUBLE, MPI_SUM, mpiCommunicator), "MPI_Allreduce");
 

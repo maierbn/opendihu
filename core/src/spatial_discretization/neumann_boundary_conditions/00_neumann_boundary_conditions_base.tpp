@@ -175,6 +175,9 @@ template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
 void NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::
 initialize(std::shared_ptr<FunctionSpaceType> functionSpace, const std::vector<typename NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces> &boundaryConditionElements)
 {
+  if (initialized_)
+    return;
+
   this->functionSpace_ = functionSpace;
   data_.setFunctionSpace(functionSpace_);
   data_.initialize();
@@ -191,6 +194,7 @@ initialize(std::shared_ptr<FunctionSpaceType> functionSpace, const std::vector<t
       << ", dofVectors on surface: " << elementWithFaces.dofVectors << ", surfaceDofs on volume: " << elementWithFaces.surfaceDofs;
   }
 
+  initialized_ = true;
   initializeRhs();
 }
 

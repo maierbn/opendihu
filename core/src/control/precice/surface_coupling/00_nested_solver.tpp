@@ -5,16 +5,18 @@
 namespace Control
 {
 
+// --------------------------------------------------
+// Coupling<T1,MuscleContractionSolver<T2,T3>>
 template<typename T1, typename T2, typename T3>
-std::shared_ptr<typename PreciceAdapterNestedSolver<Control::Coupling<Control::MultipleInstances<T1>,MuscleContractionSolver<T2,T3>>>::FunctionSpace>
-PreciceAdapterNestedSolver<Control::Coupling<Control::MultipleInstances<T1>,MuscleContractionSolver<T2,T3>>>::
+std::shared_ptr<typename PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::FunctionSpace>
+PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::
 functionSpace(NestedSolverType &nestedSolver)
 {
   return nestedSolver.timeStepping2().data().functionSpace();
 }
 
 template<typename T1, typename T2, typename T3>
-void PreciceAdapterNestedSolver<Control::Coupling<Control::MultipleInstances<T1>,MuscleContractionSolver<T2,T3>>>::
+void PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::
 addDirichletBoundaryConditions(NestedSolverType &nestedSolver,
                                std::vector<typename SpatialDiscretization::DirichletBoundaryConditionsBase<FunctionSpace,6>::ElementWithNodes> &dirichletBoundaryConditionElements)
 {
@@ -25,7 +27,7 @@ addDirichletBoundaryConditions(NestedSolverType &nestedSolver,
 
 //! update existing boundary conditions with new values
 template<typename T1, typename T2, typename T3>
-void PreciceAdapterNestedSolver<Control::Coupling<Control::MultipleInstances<T1>,MuscleContractionSolver<T2,T3>>>::
+void PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::
 updateDirichletBoundaryConditions(NestedSolverType &nestedSolver,
                                   std::vector<std::pair<global_no_t,std::array<double,6>>> newDirichletBoundaryConditionValues)
 {
@@ -33,7 +35,7 @@ updateDirichletBoundaryConditions(NestedSolverType &nestedSolver,
 }
 
 template<typename T1, typename T2, typename T3>
-void PreciceAdapterNestedSolver<Control::Coupling<Control::MultipleInstances<T1>,MuscleContractionSolver<T2,T3>>>::
+void PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::
 updateNeumannBoundaryConditions(NestedSolverType &nestedSolver,
                                 std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions)
 {
@@ -42,7 +44,7 @@ updateNeumannBoundaryConditions(NestedSolverType &nestedSolver,
 
 //! get the displacement and velocity vectors of the given local dof nos
 template<typename T1, typename T2, typename T3>
-void PreciceAdapterNestedSolver<Control::Coupling<Control::MultipleInstances<T1>,MuscleContractionSolver<T2,T3>>>::
+void PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::
 getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<dof_no_t> &dofNosLocal,
                                std::vector<double> &displacementValues, std::vector<double> &velocityValues)
 {
@@ -80,7 +82,7 @@ getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<
 
 //! get the traction vectors of the given local dof nos
 template<typename T1, typename T2, typename T3>
-void PreciceAdapterNestedSolver<Control::Coupling<Control::MultipleInstances<T1>,MuscleContractionSolver<T2,T3>>>::
+void PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::
 getTractionValues(NestedSolverType &nestedSolver, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &tractionValues)
 {
   /*std::vector<Vec3> values0;
@@ -110,15 +112,15 @@ getTractionValues(NestedSolverType &nestedSolver, const std::vector<dof_no_t> &d
 }
 
 template<typename T1, typename T2, typename T3>
-Vec PreciceAdapterNestedSolver<Control::Coupling<Control::MultipleInstances<T1>,MuscleContractionSolver<T2,T3>>>::
+Vec PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::
 currentState(NestedSolverType &nestedSolver)
 {
   return nestedSolver.timeStepping2().dynamicHyperelasticitySolver()->currentState();
 }
 
 template<typename T1, typename T2, typename T3>
-std::shared_ptr<FieldVariable::FieldVariable<typename PreciceAdapterNestedSolver<Control::Coupling<Control::MultipleInstances<T1>,MuscleContractionSolver<T2,T3>>>::FunctionSpace,9>>
-PreciceAdapterNestedSolver<Control::Coupling<Control::MultipleInstances<T1>,MuscleContractionSolver<T2,T3>>>::
+std::shared_ptr<FieldVariable::FieldVariable<typename PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::FunctionSpace,9>>
+PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::
 deformationGradientField(NestedSolverType &nestedSolver)
 {
   return nestedSolver.timeStepping2().dynamicHyperelasticitySolver()->hyperelasticitySolver().data().deformationGradient();

@@ -142,6 +142,16 @@ fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, 
   }
 
   LOG(DEBUG) << "n key fibers fixed: " << nFibersFixed;
+
+  // save number of fixed fibers for statistics
+  if (nFibersFixed_.find(level_) == nFibersFixed_.end())
+  {
+    nFibersFixed_[level_] = nFibersFixed;
+  }
+  else
+  {
+    nFibersFixed_[level_] += nFibersFixed;
+  }
 }
 
 template<typename BasisFunctionType>
@@ -545,6 +555,16 @@ fixInvalidFibersInFile(std::string filename)
       LOG(INFO);
       LOG(INFO) << "The file \"" << filenameExistingFile << "\" contains " << nFibersInvalid << " invalid fibers.";
       LOG(INFO) << "The file \"" << filename << "\"         contains " << nFibersInvalid-nFibersFixed << " invalid fibers." << std::endl;
+    }
+
+    // save number of fixed fibers for statistics
+    if (nFibersFixed_.find(level_) == nFibersFixed_.end())
+    {
+      nFibersFixed_[level_] = nFibersFixed;
+    }
+    else
+    {
+      nFibersFixed_[level_] += nFibersFixed;
     }
   }
 }

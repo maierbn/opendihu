@@ -207,6 +207,7 @@ protected:
   bool useNeumannBoundaryConditions_;     //< if neumann instead of dirichlet boundary conditions should be used
   int laplacianSmoothingNIterations_;     //< number of iterations of Laplacian smoothing that is applied prior to tracing the fine grid fibers
   int ghostLayerWidth_;             //< width of the ghost layer in elements that is created in parallel execution
+  std::map<int,int> nFibersFixed_;  //< [recursionLevel] number of fibers that was fixed on each recursion level
 
   std::array<int,3> refinementFactors_;   //< factors by which the mesh should be refined prior to solving the Laplace problem and tracing the streamlines
 

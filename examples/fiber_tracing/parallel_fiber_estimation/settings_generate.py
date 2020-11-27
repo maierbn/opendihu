@@ -28,6 +28,7 @@ parser.add_argument('--n_elements_z_per_subdomain',  type=int,   default=50,    
 parser.add_argument('--n_elements_x_per_subdomain',  type=int,   default=4,          help='Number of elements in x direction per subdomain.')
 parser.add_argument('--n_fine_grid_fibers', '-m',    type=int,   default=0,          help='Number of fine grid fibers to interpolate between the key fibers, parameter is called m.')
 parser.add_argument('--max_level', '-l',             type=int,   default=2,          help='Maximum recursion level l, the required number of processes is 8^l. The maximum recursion level is also reached when there are not enough processes left, so a too high value for l is no problem.')
+parser.add_argument('--ghost_layer_width',           type=int,   default=-1,          help='Thickness of the ghost layer in number of elements. The value -1 means equal to 4*refinement_factor.')
 parser.add_argument('--program_name',                            default="generate", help='If the program is run with the quadratic ansatz functions, this information is only for the scenario name.')
 
 # parse command line arguments and assign values to variables module
@@ -49,6 +50,9 @@ improve_mesh = args["improve_mesh"]
 use_gradient_field = args["use_gradient_field"]
 use_neumann_bc = args["use_neumann_bc"]
 use_quadratic = "quadratic" in args["program_name"]
+ghost_layer_width = args["ghost_layer_width"]
+if ghost_layer_width == -1:
+  ghost_layer_witdh = 4*refinement
 n_elements_z_per_subdomain = args["n_elements_z_per_subdomain"]
 n_elements_x_per_subdomain = args["n_elements_x_per_subdomain"]
 n_fine_grid_fibers = args["n_fine_grid_fibers"]
@@ -83,6 +87,7 @@ if rank_no == 0:
   print("  use_gradient_field:  {}".format(use_gradient_field))
   print("  use_neumann_bc:      {}".format(use_neumann_bc))
   print("  use_quadratic:       {} (program name: \"{}\")".format(use_quadratic,args["program_name"]))
+  print("  ghost_layer_width:   {}".format(ghost_layer_width))
   print("  scenario_name:       {}".format(scenario_name))
   print("  n_elements_x_per_subdomain:  {}".format(n_elements_x_per_subdomain))
   print("  n_elements_z_per_subdomain:  {}".format(n_elements_z_per_subdomain))
@@ -129,7 +134,7 @@ config = {
     "improveMesh":                improve_mesh,          # smooth the 2D meshes, required for bigger meshes or larger amount of ranks
     "refinementFactors": [refinement,refinement,refinement],         # [2,2,2] factors in x,y,z direction by which the mesh should be refined prior to solving the laplace problem and tracing the streamlines
     "laplacianSmoothingNIterations": 10,                 # number of Laplacian smoothing iterations on the final fibers grid
-    "ghostLayerWidth":            4,                     # width of the ghost layer of elements that is communicated between the subdomains, such that boundary streamlines do not leave the subdomains during tracing
+    "ghostLayerWidth":            ghost_layer_width,     # width of the ghost layer of elements that is communicated between the subdomains, such that boundary streamlines do not leave the subdomains during tracing
     
     "FiniteElementMethod": {
       "meshName":   "potentialFlow",

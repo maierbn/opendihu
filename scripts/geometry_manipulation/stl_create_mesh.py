@@ -2024,11 +2024,29 @@ def create_planar_mesh(border_points, loop_no, n_points, \
     
     # improve point locations by Laplacian smoothing
     random.seed(1)
+    
+    # iterations: ||: from bottom left, from top right, from bottom right, from top left :||
+    i_start_list = [1, n_grid_points_x-2, n_grid_points_x-2, 1]
+    j_start_list = [1, n_grid_points_y-2, 1, n_grid_points_y-2]
+    i_end_list = [n_grid_points_x-1, 0, 0, n_grid_points_x-1]
+    j_end_list = [n_grid_points_y-1, 0, n_grid_points_y-1, 0]
+    i_increment_list = [1, -1, -1, 1]
+    j_increment_list = [1, -1, 1, -1]
+    
+    # for total number of smoothing steps
     for k in range(20):
       
-      for i in range(1,n_grid_points_x-1):
-        for j in range(1,n_grid_points_y-1):
-                    
+      # for interior mesh points
+      i_start = i_start_list[k%len(i_start_list)]
+      j_start = j_start_list[k%len(j_start_list)]
+      i_end = i_end_list[k%len(i_end_list)]
+      j_end = j_end_list[k%len(j_end_list)]
+      i_increment = i_increment_list[k%len(i_increment_list)]
+      j_increment = j_increment_list[k%len(j_increment_list)]
+      
+      for j in range(j_start,j_end,j_increment):
+        for i in range(i_start,i_end,i_increment):
+      
           p = grid_points_world_space_improved[j*n_grid_points_x+i]
           p_old = np.array(p)
           # p6 p5 p4
@@ -2043,7 +2061,14 @@ def create_planar_mesh(border_points, loop_no, n_points, \
           p6 = grid_points_world_space_improved[(j+1)*n_grid_points_x+(i-1)]
           p7 = grid_points_world_space_improved[j*n_grid_points_x+(i-1)]
         
-          p_changed = 0.125 * (p0+p1+p2+p3+p4+p5+p6+p7)
+          # compute new point position as average of all 4 or 8 neighbors
+          #p_changed = 0.125 * (p0+p1+p2+p3+p4+p5+p6+p7)
+          p_changed = 0.25 * (p1+p3+p5+p7)
+          
+          # discard smoothing step if it would lead to an invalid mesh
+          if not is_properly_oriented(p0,p1,p7,p_changed) or not is_properly_oriented(p1,p2,p_changed,p3) \
+             or not is_properly_oriented(p7,p_changed,p6,p5) or not is_properly_oriented(p_changed,p3,p5,p4):
+            continue
           
           grid_points_world_space_improved[j*n_grid_points_x+i] = p_changed
           
@@ -2744,7 +2769,7 @@ def create_3d_mesh_from_border_points_faces(border_points_faces, improve_mesh, l
   # constant parameters
   triangulation_type = 1  # 0 = scipy, 1 = triangle, 2 = center pie (2 is best), 3 = minimized distance
   parametric_space_shape = 3   # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid
-  max_area_factor = 2.    # only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
+  max_area_factor = 100.    # only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
   show_plot = False
   debugging_stl_output = False
   #improve_mesh = True    # post-smooth mesh

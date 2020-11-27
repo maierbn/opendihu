@@ -411,7 +411,6 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
       << logMessage.str();
     file.close();
   }
-
   LOG(DEBUG) << "end of communicateEdgeStreamlines";
 }
 
@@ -549,7 +548,7 @@ fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> 
       << logMessage.str();
     file.close();
   }
-
+  
   LOG(DEBUG) << "end of fixStreamlinesCorner";
 }
 
@@ -686,7 +685,7 @@ fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8
       << logMessage.str();
     file.close();
   }
-
+  
   LOG(DEBUG) << "end of fixStreamlinesInterior";
 }
 

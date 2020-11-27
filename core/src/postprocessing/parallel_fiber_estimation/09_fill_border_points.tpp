@@ -10,6 +10,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
                  std::array<bool,4> &subdomainIsAtBorder)
 {
   LOG(DEBUG) << "fillBorderPoints";
+  // this method fills in the points that are on the outer boundary of the domain ("muscle surface")
 
   int nRanksZ = meshPartition_->nRanks(2);
   int rankZNo = meshPartition_->ownRankPartitioningIndex(2);
@@ -26,26 +27,40 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
   std::array<int,4> leftNeighbourFace = {Mesh::face_t::face1Plus, Mesh::face_t::face1Minus, Mesh::face_t::face0Minus, Mesh::face_t::face0Plus};
   std::array<int,4> rightNeighbourFace = {Mesh::face_t::face1Minus, Mesh::face_t::face1Plus, Mesh::face_t::face0Plus, Mesh::face_t::face0Minus};
 
-  // fill in points that are on the border of the domain
   // loop over z levels
   double currentZ;
   for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZNew_; zLevelIndex++)
   {
     currentZ = bottomZClip + double(zLevelIndex) / (nBorderPointsZNew_-1) * (topZClip - bottomZClip);
 
-    Vec3 startPoint;
-    Vec3 endPoint;
+    // communication variables and buffers
+    std::array<int,4> leftNeighbourRankNo;
+    std::array<int,4> rightNeighbourRankNo;
+
+    std::array<Vec3,4> leftBorderPoint;
+    std::array<Vec3,4> leftForeignBorderPoint;
+    std::array<Vec3,4> rightBorderPoint;
+    std::array<Vec3,4> rightForeignBorderPoint;
+
+    MPI_Request request;
+    std::vector<MPI_Request> mpiRequests;
 
     //   ^ --(1+)-> ^
     // ^ 0-         0+
     // | | --(1-)-> |
     // +-->
 
+    // determine start and end points for each face that is at the border
+
     for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
     {
+      // if "face" is at the outer muscle boundary
       if (subdomainIsAtBorder[face])
       {
-        // get start and end point of horizontal line on boundary that is to be found
+        Vec3 startPoint, endPoint;
+
+        // get start and end point of horizontal line on boundary that is to be found, in counterclockwise direction
+        // by default, use the previous border point of the old boundary
         if (zLevelIndex % 2 == 0)
         {
           startPoint = borderPoints[face][zLevelIndex/2][0];
@@ -57,7 +72,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
           endPoint = 0.5 * (borderPoints[face][zLevelIndex/2][nBorderPointsXNew_-1] + borderPoints[face][zLevelIndex/2+1][nBorderPointsXNew_-1]);
         }
 
-        // use traced streamlines along corners [0],[1],[2],[3] to determine startPoint and endPoint for border mesh
+        // if available, use traced streamlines along corners [0],[1],[2],[3] to determine startPoint and endPoint for border mesh
         //  [2]           [3]
         //    ^ --(1+)-> ^
         // ^  0-         0+
@@ -68,6 +83,7 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
         int beginIndex = startEndCornerIndices[face].first;
         int endIndex = startEndCornerIndices[face].second;
 
+        // if the respective corner streamlines were corretly traced, use them instead of the old border points
         if (cornerStreamlines[beginIndex].size() == nBorderPointsZNew_)
         {
           LOG(DEBUG) << "cornerStreamline " << beginIndex << " is valid, use new start point " << cornerStreamlines[beginIndex][zLevelIndex] << " instead of " << startPoint;
@@ -82,68 +98,105 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
 
         // assure that the neighbour rank uses the same border point
         // this is done by taking the average point with the neighbouring rank
-        Vec3 leftBorderPoint = startPoint;
-        Vec3 rightBorderPoint = endPoint;
+        leftBorderPoint[face] = startPoint;
+        rightBorderPoint[face] = endPoint;
+
+        // left and right refers to the beginning and end of the arrow, which is left/right or bottom/top of this scheme:
+        //    ^ --(1+)-> ^
+        // ^  0-         0+
+        // |  | --(1-)-> |
+        // +-->
         if (face == (int)Mesh::face_t::face1Plus || face == (int)Mesh::face_t::face0Minus)
         {
-          leftBorderPoint = endPoint;
-          rightBorderPoint = startPoint;
+          leftBorderPoint[face] = endPoint;
+          rightBorderPoint[face] = startPoint;
         }
 
-        Vec3 leftForeignBorderPoint = leftBorderPoint;
-        Vec3 rightForeignBorderPoint = rightBorderPoint;
+        leftForeignBorderPoint[face] = leftBorderPoint[face];
+        rightForeignBorderPoint[face] = rightBorderPoint[face];
 
-        int leftNeighbourRankNo = meshPartition_->neighbourRank((Mesh::face_or_edge_t)leftNeighbourFace[face]);
-        if (leftNeighbourRankNo != -1)
+        leftNeighbourRankNo[face] = meshPartition_->neighbourRank((Mesh::face_or_edge_t)leftNeighbourFace[face]);
+        if (leftNeighbourRankNo[face] != -1)
         {
           LOG(DEBUG) << "zLevelIndex " << zLevelIndex << ", face " << Mesh::getString((Mesh::face_t)face)
-            << ", send borderPoint " << leftBorderPoint << " to left rank " << leftNeighbourRankNo << ", receive from left rank";
+            << ", send borderPoint " << leftBorderPoint[face] << " to left rank " << leftNeighbourRankNo[face] << ", receive from left rank";
 
           // send and receive left border point
-          MPIUtility::handleReturnValue(MPI_Sendrecv(leftBorderPoint.data(), 3, MPI_DOUBLE, leftNeighbourRankNo, 1,
-                                                     leftForeignBorderPoint.data(), 3, MPI_DOUBLE, leftNeighbourRankNo, 1,
-                                                     currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Send");
+          MPIUtility::handleReturnValue(MPI_Isend(leftBorderPoint[face].data(), 3, MPI_DOUBLE, leftNeighbourRankNo[face], 1,
+                                                  currentRankSubset_->mpiCommunicator(), &request), "MPI_Isend");
+          mpiRequests.push_back(request);
+
+          MPIUtility::handleReturnValue(MPI_Irecv(leftForeignBorderPoint[face].data(), 3, MPI_DOUBLE, leftNeighbourRankNo[face], 1,
+                                                  currentRankSubset_->mpiCommunicator(), &request), "MPI_Irecv");
+          mpiRequests.push_back(request);
         }
         else
         {
           LOG(DEBUG) << "zLevelIndex " << zLevelIndex << ", face " << Mesh::getString((Mesh::face_t)face) << ", has no left neighbour";
         }
 
-        int rightNeighbourRankNo = meshPartition_->neighbourRank((Mesh::face_or_edge_t)rightNeighbourFace[face]);
-        if (rightNeighbourRankNo != -1)
+        rightNeighbourRankNo[face] = meshPartition_->neighbourRank((Mesh::face_or_edge_t)rightNeighbourFace[face]);
+        if (rightNeighbourRankNo[face] != -1)
         {
           LOG(DEBUG) << "zLevelIndex " << zLevelIndex << ", face " << Mesh::getString((Mesh::face_t)face)
-            << ", send borderPoint " << rightBorderPoint << " to right rank " << rightNeighbourRankNo << ", receive from right rank";
+            << ", send borderPoint " << rightBorderPoint[face] << " to right rank " << rightNeighbourRankNo[face] << ", receive from right rank";
 
           // send and receive right border point
-          MPIUtility::handleReturnValue(MPI_Sendrecv(rightBorderPoint.data(), 3, MPI_DOUBLE, rightNeighbourRankNo, 1,
-                                                     rightForeignBorderPoint.data(), 3, MPI_DOUBLE, rightNeighbourRankNo, 1,
-                                                     currentRankSubset_->mpiCommunicator(), MPI_STATUS_IGNORE), "MPI_Send");
+          MPIUtility::handleReturnValue(MPI_Isend(rightBorderPoint[face].data(), 3, MPI_DOUBLE, rightNeighbourRankNo[face], 1,
+                                                  currentRankSubset_->mpiCommunicator(), &request), "MPI_Isend");
+          mpiRequests.push_back(request);
+
+          MPIUtility::handleReturnValue(MPI_Irecv(rightForeignBorderPoint[face].data(), 3, MPI_DOUBLE, rightNeighbourRankNo[face], 1,
+                                                  currentRankSubset_->mpiCommunicator(), &request), "MPI_Irecv");
+          mpiRequests.push_back(request);
         }
         else
         {
           LOG(DEBUG) << "zLevelIndex " << zLevelIndex << ", face " << Mesh::getString((Mesh::face_t)face) << ", has no right neighbour";
         }
+      }
+    }
 
-        LOG(DEBUG) << "left: neighbourRankNo: " << leftNeighbourRankNo << ", borderPoint: " << leftBorderPoint << ", foreignBorderPoint: " << leftForeignBorderPoint;
-        LOG(DEBUG) << "right: neighbourRankNo: " << rightNeighbourRankNo << ", borderPoint: " << rightBorderPoint << ", foreignBorderPoint: " << rightForeignBorderPoint;
+    // wait for communication to finish
+    if (!mpiRequests.empty())
+      MPIUtility::handleReturnValue(MPI_Waitall(mpiRequests.size(), mpiRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
 
-        leftBorderPoint = 0.5*(leftBorderPoint + leftForeignBorderPoint);
-        rightBorderPoint = 0.5*(rightBorderPoint + rightForeignBorderPoint);
+    for (int face = Mesh::face_t::face0Minus; face <= Mesh::face_t::face1Plus; face++)
+    {
+      // if "face" is at the outer muscle boundary
+      if (subdomainIsAtBorder[face])
+      {
+        // start end end points are determined here for the face
+        //  [2]           [3]
+        //    ^ --(1+)-> ^
+        // ^  0-         0+
+        // |  | --(1-)-> |
+        // |[0]           [1]
+        // +-->
 
+        LOG(DEBUG) << "left: neighbourRankNo: " << leftNeighbourRankNo[face]
+          << ", borderPoint: " << leftBorderPoint[face] << ", foreignBorderPoint: " << leftForeignBorderPoint[face];
+        LOG(DEBUG) << "right: neighbourRankNo: " << rightNeighbourRankNo[face]
+          << ", borderPoint: " << rightBorderPoint[face] << ", foreignBorderPoint: " << rightForeignBorderPoint[face];
+
+        // compute border points as average of the two corner streamlines of the adjacent processes
+        leftBorderPoint[face] = 0.5*(leftBorderPoint[face] + leftForeignBorderPoint[face]);
+        rightBorderPoint[face] = 0.5*(rightBorderPoint[face] + rightForeignBorderPoint[face]);
 
         LOG(DEBUG) << "new leftBorderPoint: " << leftBorderPoint << ", new rightBorderPoint: " << rightBorderPoint;
 
+        Vec3 startPoint, endPoint;
         if (face == (int)Mesh::face_t::face1Plus || face == (int)Mesh::face_t::face0Minus)
         {
-          endPoint = leftBorderPoint;
-          startPoint = rightBorderPoint;
+          endPoint = leftBorderPoint[face];
+          startPoint = rightBorderPoint[face];
         }
         else
         {
-          startPoint = leftBorderPoint;
-          endPoint = rightBorderPoint;
+          startPoint = leftBorderPoint[face];
+          endPoint = rightBorderPoint[face];
         }
+        // here, the points startPoint and endPoint define the line segment on the boundary that has to be determined now
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT
@@ -162,8 +215,9 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
 #endif
 #endif
 #endif
-
-        LOG(DEBUG) << "z: " << zLevelIndex << ", face " << Mesh::getString(Mesh::face_t(face)) << ", startPoint: " << startPoint << ", endPoint: " << endPoint << ", currentZ: " << currentZ << ", nBorderPointsXNew_: " << nBorderPointsXNew_;
+        LOG(DEBUG) << "z: " << zLevelIndex << ", face " << Mesh::getString(Mesh::face_t(face))
+          << ", startPoint: " << startPoint << ", endPoint: " << endPoint << ", currentZ: " << currentZ
+          << ", nBorderPointsXNew_: " << nBorderPointsXNew_;
 
         // determine boundary points between startPoint and endPoint, with same zLevel value
         // call stl_create_rings.create_ring_section_mesh
@@ -347,9 +401,9 @@ fillBorderPoints(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std
 #endif
         }
 
-      }
-    }  // for
-  }
+      }  // if subdomain is at border
+    }  // for face
+  }  // for z level
 
 #ifndef NDEBUG
 #ifdef STL_OUTPUT

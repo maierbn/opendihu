@@ -182,8 +182,10 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
   }
 
   // wait for non-blocking communication to finish
-  MPIUtility::handleReturnValue(MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
-  MPIUtility::handleReturnValue(MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+  if (!sendRequests.empty())
+    MPIUtility::handleReturnValue(MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+  if (!receiveRequests.empty())
+    MPIUtility::handleReturnValue(MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
 
   LOG(DEBUG) << "waitall (" << sendRequests.size() << " send requests, " << receiveRequests.size() << " receiveRequests) complete";
 
@@ -312,8 +314,10 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
   }
 
   // wait for non-blocking communication to finish
-  MPIUtility::handleReturnValue(MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
-  MPIUtility::handleReturnValue(MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+  if (!sendRequests.empty())
+    MPIUtility::handleReturnValue(MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
+  if (!receiveRequests.empty())
+    MPIUtility::handleReturnValue(MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
 
   LOG(DEBUG) << "waitall (" << sendRequests.size() << " send requests, " << receiveRequests.size() << " receiveRequests) complete";
 
@@ -394,11 +398,15 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
   }
 
   // reduce number of fixed fibers on ranks
+  LOG(DEBUG) << "reduce number of fixed fibers on ranks, local: " << nStreamlinesFixed;
+
   int nStreamlinesFixedGlobal = 0;
-  MPI_Reduce(&nStreamlinesFixed, &nStreamlinesFixedGlobal, 1, MPI_INT, MPI_SUM, 0, currentRankSubset_->mpiCommunicator());
+  MPIUtility::handleReturnValue(MPI_Reduce(&nStreamlinesFixed, &nStreamlinesFixedGlobal, 1, MPI_INT,
+                                           MPI_SUM, 0, currentRankSubset_->mpiCommunicator()), "MPI_Reduce");
 
   if (currentRankSubset_->ownRankNo() == 0)
   {
+    LOG(DEBUG) << "rank 0 got " << nStreamlinesFixedGlobal << " global fixed fibers.";
     if (nStreamlinesFixedGlobal > 0)
     {
       LOG(INFO) << "Mechanism #1 (communicateEdgeStreamlines): " << nStreamlinesFixed << " fixed";
@@ -414,6 +422,7 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
       }
     }
   }
+  LOG(DEBUG) << "end of communicateEdgeStreamlines";
 }
 
 template<typename BasisFunctionType>
@@ -536,10 +545,12 @@ fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> 
 
   // reduce number of fixed fibers on ranks
   int nStreamlinesFixedGlobal = 0;
-  MPI_Reduce(&nStreamlinesFixed, &nStreamlinesFixedGlobal, 1, MPI_INT, MPI_SUM, 0, currentRankSubset_->mpiCommunicator());
+  MPIUtility::handleReturnValue(MPI_Reduce(&nStreamlinesFixed, &nStreamlinesFixedGlobal, 1, MPI_INT,
+                                           MPI_SUM, 0, currentRankSubset_->mpiCommunicator()), "MPI_Reduce");
 
   if (currentRankSubset_->ownRankNo() == 0)
   {
+    LOG(DEBUG) << "rank 0 got " << nStreamlinesFixedGlobal << " global fixed fibers.";
     if (nStreamlinesFixedGlobal > 0)
     {
       LOG(INFO) << "Mechanism #2 (fixStreamlinesCorner): " << nStreamlinesFixed << " fixed";
@@ -555,6 +566,8 @@ fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> 
       }
     }
   }
+
+  LOG(DEBUG) << "end of fixStreamlinesCorner";
 }
 
 template<typename BasisFunctionType>
@@ -677,13 +690,15 @@ fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8
 
   // reduce number of fixed fibers on ranks
   int nStreamlinesFixedGlobal = 0;
-  MPI_Reduce(&nStreamlinesFixed, &nStreamlinesFixedGlobal, 1, MPI_INT, MPI_SUM, 0, currentRankSubset_->mpiCommunicator());
+  MPIUtility::handleReturnValue(MPI_Reduce(&nStreamlinesFixed, &nStreamlinesFixedGlobal, 1, MPI_INT,
+                                           MPI_SUM, 0, currentRankSubset_->mpiCommunicator()), "MPI_Reduce");
 
   if (currentRankSubset_->ownRankNo() == 0)
   {
+    LOG(DEBUG) << "rank 0 got " << nStreamlinesFixedGlobal << " global fixed fibers.";
     if (nStreamlinesFixedGlobal > 0)
     {
-      LOG(INFO) << "Mechanisms #3 and #4 (fixStreamlinesInterior): " << nStreamlinesFixed << " fixed";
+      LOG(INFO) << "Mechanisms #3a and #3b and #3c (fixStreamlinesInterior): " << nStreamlinesFixed << " fixed";
 
       // save number of fixed fibers for statistics
       if (nFibersFixed_.find(level_) == nFibersFixed_.end())
@@ -696,6 +711,8 @@ fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8
       }
     }
   }
+
+  LOG(DEBUG) << "end of fixStreamlinesInterior";
 }
 
 } // namespace

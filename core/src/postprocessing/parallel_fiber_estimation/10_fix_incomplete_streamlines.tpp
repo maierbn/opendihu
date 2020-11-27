@@ -397,6 +397,7 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
     }
   }
 
+#if 0
   // reduce number of fixed fibers on ranks
   LOG(DEBUG) << "reduce number of fixed fibers on ranks, local: " << nStreamlinesFixed;
 
@@ -422,6 +423,7 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
       }
     }
   }
+#endif
   LOG(DEBUG) << "end of communicateEdgeStreamlines";
 }
 
@@ -543,6 +545,7 @@ fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> 
   }
   LOG(DEBUG) << "fixStreamlinesCorner: " << nStreamlinesFixed << " fixed";
 
+#if 0
   // reduce number of fixed fibers on ranks
   int nStreamlinesFixedGlobal = 0;
   MPIUtility::handleReturnValue(MPI_Reduce(&nStreamlinesFixed, &nStreamlinesFixedGlobal, 1, MPI_INT,
@@ -566,7 +569,7 @@ fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> 
       }
     }
   }
-
+#endif
   LOG(DEBUG) << "end of fixStreamlinesCorner";
 }
 
@@ -687,7 +690,7 @@ fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8
   }
 
   LOG(DEBUG) << "fixStreamlinesInterior: " << nStreamlinesFixed << " fixed";
-
+#if 0
   // reduce number of fixed fibers on ranks
   int nStreamlinesFixedGlobal = 0;
   MPIUtility::handleReturnValue(MPI_Reduce(&nStreamlinesFixed, &nStreamlinesFixedGlobal, 1, MPI_INT,
@@ -711,7 +714,7 @@ fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8
       }
     }
   }
-
+#endif
   LOG(DEBUG) << "end of fixStreamlinesInterior";
 }
 

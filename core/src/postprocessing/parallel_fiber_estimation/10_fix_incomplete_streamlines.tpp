@@ -471,14 +471,16 @@ fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> 
     if (!borderPointsSubdomainAreValid[subdomainIndex0][face0][pointIndex0]
       || !borderPointsSubdomainAreValid[subdomainIndex1][face1][pointIndex1])
     {
-      LOG(DEBUG) << "found invalid streamline at corner";
+      LOG(ERROR) << "found invalid streamline at corner, "
+        << "subdomain " << subdomainIndex0 << " " << Mesh::getString((Mesh::face_t)face0) << "," << Mesh::getString((Mesh::face_t)face1);
       fixCorner = true;
     }
 
     // if it is an interior border definitely fix it, because it may be corrupted by sending it between processes
     if (!subdomainIsAtBorder[face0] && !subdomainIsAtBorder[face1])
     {
-      LOG(DEBUG) << "found streamline at corner in interior";
+      LOG(ERROR) << "found streamline at corner in interior, "
+        << "subdomain " << subdomainIndex0 << " " << Mesh::getString((Mesh::face_t)face0) << "," << Mesh::getString((Mesh::face_t)face1);
       fixCorner = true;
     }
 

@@ -214,6 +214,7 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
 
   std::array<std::vector<std::vector<double>>,4> sendBufferStreamline;
   std::array<std::vector<std::vector<double>>,4> receiveBufferStreamline;
+  std::stringstream logMessage;
 
   int nStreamlinesFixed = 0;
   // loop over faces
@@ -265,6 +266,9 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
       if (sendBufferValidity[face][pointIndex] && !receiveBufferValidity[face][pointIndex])
       {
         nStreamlinesFixed++;
+
+        logMessage << "    face " << Mesh::getString((Mesh::face_t)face) << " subdomain " << subdomainIndex << ", streamline " << streamlineIndex
+          << ", valid on own subdomain (rank " << currentRankSubset_->ownRankNo() << "), invalid on neighbor subdomain (rank " << neighbourRankNo << ")" << std::endl;
 
         // send streamline to neighbouring process
         sendBufferStreamline[face][pointIndex].resize(nBorderPointsZNew_*3);
@@ -397,33 +401,16 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
     }
   }
 
-#if 0
-  // reduce number of fixed fibers on ranks
-  LOG(DEBUG) << "reduce number of fixed fibers on ranks, local: " << nStreamlinesFixed;
-
-  int nStreamlinesFixedGlobal = 0;
-  MPIUtility::handleReturnValue(MPI_Reduce(&nStreamlinesFixed, &nStreamlinesFixedGlobal, 1, MPI_INT,
-                                           MPI_SUM, 0, currentRankSubset_->mpiCommunicator()), "MPI_Reduce");
-
-  if (currentRankSubset_->ownRankNo() == 0)
+  // log invalid key fibers to log file
+  if (nStreamlinesFixed > 0)
   {
-    LOG(DEBUG) << "rank 0 got " << nStreamlinesFixedGlobal << " global fixed fibers.";
-    if (nStreamlinesFixedGlobal > 0)
-    {
-      LOG(INFO) << "Mechanism #1 (communicateEdgeStreamlines): " << nStreamlinesFixed << " fixed";
-
-      // save number of fixed fibers for statistics
-      if (nFibersFixed_.find(level_) == nFibersFixed_.end())
-      {
-        nFibersFixed_[level_] = nStreamlinesFixedGlobal;
-      }
-      else
-      {
-        nFibersFixed_[level_] += nStreamlinesFixedGlobal;
-      }
-    }
+    std::ofstream file;
+    std::string logFilename = "out/log_fixed_streamlines.txt";
+    OutputWriter::Generic::openFile(file, logFilename, true);
+    file << currentRankSubset_->ownRankNo() << ": communicateEdgeStreamlines, nFixed: " << nStreamlinesFixed << "\n"
+      << logMessage.str();
+    file.close();
   }
-#endif
   LOG(DEBUG) << "end of communicateEdgeStreamlines";
 }
 
@@ -452,6 +439,7 @@ fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> 
   };
   LOG(DEBUG) << "fixStreamlinesCorner";
   int nStreamlinesFixed = 0;
+  std::stringstream logMessage;
 
   // TODO: center point (not needed apparently)
 
@@ -490,6 +478,11 @@ fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> 
       nStreamlinesFixed++;
       // derive the corner streamline from the initial border points
 
+      // debugging output for log file
+      logMessage << "    corner streamline of new subdomain " << subdomainIndex0 << ", face " << Mesh::getString((Mesh::face_t)face0)
+        << "," << Mesh::getString((Mesh::face_t)face1) << ", derive from border points" << std::endl;
+
+      // debugging output
       LOG(DEBUG) << " subdomain " << subdomainIndex0 << " face " << Mesh::getString((Mesh::face_t)face0)
         << " pointIndex " << pointIndex0 << " valid: " << std::boolalpha << borderPointsSubdomainAreValid[subdomainIndex0][face0][pointIndex0];
       LOG(DEBUG) << "           " << subdomainIndex1 << " face " << Mesh::getString((Mesh::face_t)face1)
@@ -547,31 +540,17 @@ fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> 
   }
   LOG(DEBUG) << "fixStreamlinesCorner: " << nStreamlinesFixed << " fixed";
 
-#if 0
-  // reduce number of fixed fibers on ranks
-  int nStreamlinesFixedGlobal = 0;
-  MPIUtility::handleReturnValue(MPI_Reduce(&nStreamlinesFixed, &nStreamlinesFixedGlobal, 1, MPI_INT,
-                                           MPI_SUM, 0, currentRankSubset_->mpiCommunicator()), "MPI_Reduce");
-
-  if (currentRankSubset_->ownRankNo() == 0)
+  // log invalid key fibers to log file
+  if (nStreamlinesFixed > 0)
   {
-    LOG(DEBUG) << "rank 0 got " << nStreamlinesFixedGlobal << " global fixed fibers.";
-    if (nStreamlinesFixedGlobal > 0)
-    {
-      LOG(INFO) << "Mechanism #2 (fixStreamlinesCorner): " << nStreamlinesFixed << " fixed";
-
-      // save number of fixed fibers for statistics
-      if (nFibersFixed_.find(level_) == nFibersFixed_.end())
-      {
-        nFibersFixed_[level_] = nStreamlinesFixedGlobal;
-      }
-      else
-      {
-        nFibersFixed_[level_] += nStreamlinesFixedGlobal;
-      }
-    }
+    std::ofstream file;
+    std::string logFilename = "out/log_fixed_streamlines.txt";
+    OutputWriter::Generic::openFile(file, logFilename, true);
+    file << currentRankSubset_->ownRankNo() << ": fixStreamlinesCorner, nFixed: " << nStreamlinesFixed << "\n"
+      << logMessage.str();
+    file.close();
   }
-#endif
+  
   LOG(DEBUG) << "end of fixStreamlinesCorner";
 }
 
@@ -582,6 +561,7 @@ fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8
 {
   LOG(DEBUG) << "fixStreamlinesInterior";
   int nStreamlinesFixed = 0;
+  std::stringstream logMessage;
 
   // fill invalid streamlines, loop over the bottom 4 subdomains, the top are considered at the same iteration
   for (int subdomainIndex = 0; subdomainIndex < 4; subdomainIndex++)
@@ -651,6 +631,10 @@ fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8
 
                 LOG(DEBUG) << "alpha: " << alpha;
 
+                // debugging output for log file
+                logMessage << "    invalidStreamline " << invalidStreamlineIndex << ", seedPointZLevelIndex: " << seedPointZLevelIndex
+                  << ", seedPointSubdomainIndex: " << seedPointSubdomainIndex << ", alpha: " << alpha;
+
                 if (alpha < 0 || alpha > 1)
                   LOG(WARNING) << "Interpolating invalid streamline in subdomain " << subdomainIndex
                     << ", face " << Mesh::getString((Mesh::face_t)face) << " with alpha = " << alpha << ", alpha should be in [0,1].";
@@ -692,31 +676,18 @@ fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8
   }
 
   LOG(DEBUG) << "fixStreamlinesInterior: " << nStreamlinesFixed << " fixed";
-#if 0
-  // reduce number of fixed fibers on ranks
-  int nStreamlinesFixedGlobal = 0;
-  MPIUtility::handleReturnValue(MPI_Reduce(&nStreamlinesFixed, &nStreamlinesFixedGlobal, 1, MPI_INT,
-                                           MPI_SUM, 0, currentRankSubset_->mpiCommunicator()), "MPI_Reduce");
 
-  if (currentRankSubset_->ownRankNo() == 0)
+  // log invalid key fibers to log file
+  if (nStreamlinesFixed > 0)
   {
-    LOG(DEBUG) << "rank 0 got " << nStreamlinesFixedGlobal << " global fixed fibers.";
-    if (nStreamlinesFixedGlobal > 0)
-    {
-      LOG(INFO) << "Mechanisms #3a and #3b and #3c (fixStreamlinesInterior): " << nStreamlinesFixed << " fixed";
-
-      // save number of fixed fibers for statistics
-      if (nFibersFixed_.find(level_) == nFibersFixed_.end())
-      {
-        nFibersFixed_[level_] = nStreamlinesFixedGlobal;
-      }
-      else
-      {
-        nFibersFixed_[level_] += nStreamlinesFixedGlobal;
-      }
-    }
+    std::ofstream file;
+    std::string logFilename = "out/log_fixed_streamlines.txt";
+    OutputWriter::Generic::openFile(file, logFilename, true);
+    file << currentRankSubset_->ownRankNo() << ": fixStreamlinesInterior, nFixed: " << nStreamlinesFixed << "\n"
+      << logMessage.str();
+    file.close();
   }
-#endif
+  
   LOG(DEBUG) << "end of fixStreamlinesInterior";
 }
 

@@ -304,6 +304,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   std::vector<std::vector<bool>> keyFiberIsValid(nBorderPointsXNew_, std::vector<bool>(nBorderPointsXNew_, true));  // this only stores for key fibers if they are valid, dimensions are nBorderPointsXNew_ x nBorderPointsXNew_
 
   int nValid = 0;
+  std::stringstream logMessage;
   for (int j = 0; j < nBorderPointsXNew_; j++)
   {
     for (int i = 0; i < nBorderPointsXNew_; i++)
@@ -314,25 +315,33 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
       if (fibers[pointIndex].size() != nBorderPointsZNew_)
       {
         LOG(DEBUG) << "fiber[" << pointIndex << "] (" << i << "," << j << ") of (" << nBorderPointsXNew_ << "," << nBorderPointsXNew_ << ")"
-          << " is not long enough (size: " << fibers[pointIndex].size() << ")";
+          << " is invalid: not long enough, size: " << fibers[pointIndex].size() << " != " << nBorderPointsZNew_;
+        logMessage << "    fiber[" << pointIndex << "] (" << i << "," << j << ") of (" << nBorderPointsXNew_ << "," << nBorderPointsXNew_ << ")"
+          << " is not long enough (size: " << fibers[pointIndex].size() << " != " << nBorderPointsZNew_ << ")" << std::endl;
         isValid = false;
       }
       else if (MathUtility::norm<3>(fibers[pointIndex][0]) < 1e-4)
       {
         LOG(DEBUG) << "fiber[" << pointIndex << "] (" << i << "," << j << ") of (" << nBorderPointsXNew_ << "," << nBorderPointsXNew_ << ")"
-          << ", first point is zero";
+          << " is invalid: first point is zero";
+        logMessage << "    fiber[" << pointIndex << "] (" << i << "," << j << ") of (" << nBorderPointsXNew_ << "," << nBorderPointsXNew_ << ")"
+          << " is invalid: first point is zero" << std::endl;
         isValid = false;
       }
       else if (MathUtility::norm<3>(fibers[pointIndex][1]) < 1e-4)
       {
         LOG(DEBUG) << "fiber[" << pointIndex << "] (" << i << "," << j << ") of (" << nBorderPointsXNew_ << "," << nBorderPointsXNew_ << ")"
-          << ", second point is zero";
+          << " is invalid: second point is zero";
+        logMessage << "    fiber[" << pointIndex << "] (" << i << "," << j << ") of (" << nBorderPointsXNew_ << "," << nBorderPointsXNew_ << ")"
+          << " is invalid: second point is zero" << std::endl;
         isValid = false;
       }
       else if (MathUtility::norm<3>(fibers[pointIndex][nBorderPointsZNew_/2]) < 1e-4)
       {
         LOG(DEBUG) << "fiber[" << pointIndex << "] (" << i << "," << j << ") of (" << nBorderPointsXNew_ << "," << nBorderPointsXNew_ << ")"
-          << ", center point is zero";
+          << " is invalid: center point is zero";
+        logMessage << "    fiber[" << pointIndex << "] (" << i << "," << j << ") of (" << nBorderPointsXNew_ << "," << nBorderPointsXNew_ << ")"
+          << " is invalid: center point is zero" << std::endl;
         isValid = false;
       }
       else
@@ -354,6 +363,17 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
   LOG(DEBUG) << "fixInvalidKeyFibers";
   int nFibersFixed = 0;
   fixInvalidKeyFibers(nFibersX, keyFiberIsValid, fibers, nFibersFixed);
+
+  // log invalid key fibers to log file
+  if (nInvalid > 0)
+  {
+    std::ofstream file;
+    std::string logFilename = "out/log_fixed_streamlines.txt";
+    OutputWriter::Generic::openFile(file, logFilename, true);
+    file << currentRankSubset_->ownRankNo() << ": key fibers, nInvalid: " << nInvalid << ", nFixed: " << nFibersFixed << "\n"
+      << logMessage.str();
+    file.close();
+  }
 
   // send end points of streamlines to next rank that continues the streamline
   exchangeSeedPointsAfterTracingKeyFibers(nRanksZ, rankZNo, streamlineDirectionUpwards, nFibersX, seedPoints, fibers);

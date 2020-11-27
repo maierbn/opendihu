@@ -39,10 +39,10 @@ variables.constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant f
 variables.force = 100.0           # [N] pulling force to the bottom 
 
 variables.dt_elasticity = 1      # [ms] time step width for elasticity
-variables.end_time      = 10     # [ms] simulation time
+variables.end_time      = 1000   # [ms] simulation time
 variables.scenario_name = "tendon_bottom"
 variables.is_bottom_tendon = True        # whether the tendon is at the bottom (negative z-direction), this is important for the boundary conditions
-variables.output_timestep_3D = 10  # [ms] output timestep
+variables.output_timestep_3D = 1  # [ms] output timestep
 
 # input mesh file
 fiber_file = "../../../../input/left_biceps_brachii_tendon1.bin"        # bottom tendon
@@ -459,7 +459,7 @@ config = {
   "PreciceAdapter": {        # precice adapter for bottom tendon
     "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
     "timestepWidth":            1,                          # coupling time step width, must match the value in the precice config
-    "couplingEnabled":          True,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
+    "couplingEnabled":          False,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
     "preciceConfigFilename":    "precice_config_muscle_dirichlet_tendon_neumann_implicit_coupling_multiple_tendons.xml",    # the preCICE configuration file
     "preciceParticipantName":   "TendonSolverBottom",       # name of the own precice participant, has to match the name given in the precice xml config file
     "scalingFactor":            1,                          # a factor to scale the exchanged data, prior to communication

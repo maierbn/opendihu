@@ -195,6 +195,7 @@ config = {
   "PreciceAdapter": {        # precice adapter for muscle
     "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
     "timestepWidth":            1,                          # coupling time step width, must match the value in the precice config
+    "couplingEnabled":          False,                      # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
     "preciceConfigFilename":    "precice_config_muscle_dirichlet_tendon_neumann_implicit_coupling_multiple_tendons.xml",    # the preCICE configuration file
     "preciceParticipantName":   "MuscleSolver",             # name of the own precice participant, has to match the name given in the precice xml config file
     "scalingFactor":            1,                          # a factor to scale the exchanged data, prior to communication
@@ -295,6 +296,7 @@ config = {
                       "inputMeshIsGlobal":            True,                                    # the boundary conditions and initial values would be given as global numbers
                       "checkForNanInf":               True,                                    # abort execution if the solution contains nan or inf values
                       "nAdditionalFieldVariables":    0,                                       # number of additional field variables
+                      "additionalSlotNames":          "",
                         
                       "CellML" : {
                         "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
@@ -358,7 +360,8 @@ config = {
                       "dirichletOutputFilename":     None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                       "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
                       "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
-                      "nAdditionalFieldVariables":   2,                                       # number of additional field variables that will be written to the output file, here for stress
+                      "nAdditionalFieldVariables":   1,                                       # number of additional field variables that will be written to the output file, here for stress
+                      "additionalSlotNames":         ["stress"],
                       "checkForNanInf":              True,                                    # abort execution if the solution contains nan or inf values
                       
                       "FiniteElementMethod" : {
@@ -366,6 +369,7 @@ config = {
                         "meshName":                  "MeshFiber_{}".format(fiber_no),
                         "solverName":                "diffusionTermSolver",
                         "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
+                        "slotName":                  None,
                       },
                       "OutputWriter" : [
                         #{"format": "Paraview", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles": True},

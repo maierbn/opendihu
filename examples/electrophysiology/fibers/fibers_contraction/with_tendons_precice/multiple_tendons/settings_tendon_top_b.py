@@ -155,7 +155,7 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
   "maxIterations":              1e4,                          # maximum number of iterations in the linear solver
   "snesMaxFunctionEvaluations": 1e8,                          # maximum number of function iterations
   "snesMaxIterations":          240,                           # maximum number of iterations in the nonlinear solver
-  "snesRelativeTolerance":      1e-2,                         # relative tolerance of the nonlinear solver
+  "snesRelativeTolerance":      1e-4,                         # relative tolerance of the nonlinear solver
   "snesLineSearchType":         "l2",                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
   "snesAbsoluteTolerance":      1e-5,                         # absolute tolerance of the nonlinear solver
   "snesRebuildJacobianFrequency": 5,                          # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 

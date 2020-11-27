@@ -370,7 +370,7 @@ traceResultFibers(double streamlineDirection, int seedPointsZIndex, const std::v
     std::ofstream file;
     std::string logFilename = "out/log_fixed_streamlines.txt";
     OutputWriter::Generic::openFile(file, logFilename, true);
-    file << currentRankSubset_->ownRankNo() << ": key fibers, nInvalid: " << nInvalid << ", nFixed: " << nFibersFixed << "\n"
+    file << currentRankSubset_->ownRankNo() << ": l=" << level_ << " key fibers, nInvalid: " << nInvalid << ", nFixed: " << nFibersFixed << "\n"
       << logMessage.str();
     file.close();
   }

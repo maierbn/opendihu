@@ -407,7 +407,7 @@ communicateEdgeStreamlines(std::array<std::array<std::vector<std::vector<Vec3>>,
     std::ofstream file;
     std::string logFilename = "out/log_fixed_streamlines.txt";
     OutputWriter::Generic::openFile(file, logFilename, true);
-    file << currentRankSubset_->ownRankNo() << ": communicateEdgeStreamlines, nFixed: " << nStreamlinesFixed << "\n"
+    file << currentRankSubset_->ownRankNo() << ": l=" << level_ << " communicateEdgeStreamlines, nFixed: " << nStreamlinesFixed << "\n"
       << logMessage.str();
     file.close();
   }
@@ -546,7 +546,7 @@ fixStreamlinesCorner(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> 
     std::ofstream file;
     std::string logFilename = "out/log_fixed_streamlines.txt";
     OutputWriter::Generic::openFile(file, logFilename, true);
-    file << currentRankSubset_->ownRankNo() << ": fixStreamlinesCorner, nFixed: " << nStreamlinesFixed << "\n"
+    file << currentRankSubset_->ownRankNo() << ": l=" << level_ << " fixStreamlinesCorner, nFixed: " << nStreamlinesFixed << "\n"
       << logMessage.str();
     file.close();
   }
@@ -683,7 +683,7 @@ fixStreamlinesInterior(std::array<std::array<std::vector<std::vector<Vec3>>,4>,8
     std::ofstream file;
     std::string logFilename = "out/log_fixed_streamlines.txt";
     OutputWriter::Generic::openFile(file, logFilename, true);
-    file << currentRankSubset_->ownRankNo() << ": fixStreamlinesInterior, nFixed: " << nStreamlinesFixed << "\n"
+    file << currentRankSubset_->ownRankNo() << ": l=" << level_ << " fixStreamlinesInterior, nFixed: " << nStreamlinesFixed << "\n"
       << logMessage.str();
     file.close();
   }

@@ -106,6 +106,15 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
       {
         LOG(DEBUG) << "Streamline does not reach topZClip: " << topZClip << ", but finishes at " << (*streamlineIter)[2]
           << " (" << (topZClip - (*streamlineIter)[2]) / (topZClip - bottomZClip) * 100.0 << "% too early)";
+
+        // write to log about invalid streamlines
+        std::ofstream file;
+        std::string logFilename = "out/log_fixed_streamlines.txt";
+        OutputWriter::Generic::openFile(file, logFilename, true);
+        file << currentRankSubset_->ownRankNo() << ": l=" << level_ << " streamline " << streamlineNoForDebugging
+          << " does not reach topZClip: " << topZClip << ", but finishes at " << (*streamlineIter)[2]
+          << ", z level " << zLevelIndex << "/" << nBorderPointsZNew_ << " (" << (topZClip - (*streamlineIter)[2]) / (topZClip - bottomZClip) * 100.0 << "% too early)" << std::endl;
+        file.close();
         break;
       }
     }

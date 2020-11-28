@@ -52,7 +52,7 @@ use_neumann_bc = args["use_neumann_bc"]
 use_quadratic = "quadratic" in args["program_name"]
 ghost_layer_width = args["ghost_layer_width"]
 if ghost_layer_width == -1:
-  ghost_layer_witdh = 4*refinement
+  ghost_layer_width = 2*refinement
 n_elements_z_per_subdomain = args["n_elements_z_per_subdomain"]
 n_elements_x_per_subdomain = args["n_elements_x_per_subdomain"]
 n_fine_grid_fibers = args["n_fine_grid_fibers"]

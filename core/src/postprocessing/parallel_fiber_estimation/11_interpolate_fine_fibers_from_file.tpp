@@ -96,7 +96,7 @@ interpolateFineFibersFromFile()
 
   if (int((fileOldSize-(32+headerLength)) / fiberDataSize) != nFibersOld)
   {
-    LOG(ERROR) << "File \"" << resultFilename_ << "\" states to have " << nFibersOld << " fibers in header, but actually has "
+    LOG(DEBUG) << "File \"" << resultFilename_ << "\" states to have " << nFibersOld << " fibers in header, but actually has "
       << int((fileOldSize-(32+headerLength)) / fiberDataSize) << " fibers!";
   }
 

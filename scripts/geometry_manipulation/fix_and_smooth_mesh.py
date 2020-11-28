@@ -459,7 +459,116 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
     if show_plot:
       plt.show()
     plt.close()
+      
+  # improve point locations by Laplacian smoothing
+  random.seed(1)
   
+  # iterations: ||: from bottom left, from top right, from bottom right, from top left :||
+  i_start_list = [1, n_grid_points_x-2, n_grid_points_x-2, 1]
+  j_start_list = [1, n_grid_points_y-2, 1, n_grid_points_y-2]
+  i_end_list = [n_grid_points_x-1, 0, 0, n_grid_points_x-1]
+  j_end_list = [n_grid_points_y-1, 0, n_grid_points_y-1, 0]
+  i_increment_list = [1, -1, -1, 1]
+  j_increment_list = [1, -1, 1, -1]
+  
+  # for total number of smoothing steps
+  for k in range(20):
+    
+    # for interior mesh points
+    i_start = i_start_list[k%len(i_start_list)]
+    j_start = j_start_list[k%len(j_start_list)]
+    i_end = i_end_list[k%len(i_end_list)]
+    j_end = j_end_list[k%len(j_end_list)]
+    i_increment = i_increment_list[k%len(i_increment_list)]
+    j_increment = j_increment_list[k%len(j_increment_list)]
+    
+    for j in range(j_start,j_end,j_increment):
+      for i in range(i_start,i_end,i_increment):
+    
+        p = grid_points_world_space_improved[j*n_grid_points_x+i]
+        p_old = np.array(p)
+        # p6 p5 p4
+        # p7 p  p3
+        # p0 p1 p2
+        p0 = grid_points_world_space_improved[(j-1)*n_grid_points_x+(i-1)]
+        p1 = grid_points_world_space_improved[(j-1)*n_grid_points_x+i]
+        p2 = grid_points_world_space_improved[(j-1)*n_grid_points_x+(i+1)]
+        p3 = grid_points_world_space_improved[j*n_grid_points_x+(i+1)]
+        p4 = grid_points_world_space_improved[(j+1)*n_grid_points_x+(i+1)]
+        p5 = grid_points_world_space_improved[(j+1)*n_grid_points_x+i]
+        p6 = grid_points_world_space_improved[(j+1)*n_grid_points_x+(i-1)]
+        p7 = grid_points_world_space_improved[j*n_grid_points_x+(i-1)]
+      
+        # compute new point position as average of all 4 or 8 neighbors
+        #p_changed = 0.125 * (p0+p1+p2+p3+p4+p5+p6+p7)
+        p_changed = 0.25 * (p1+p3+p5+p7)
+        
+        # discard smoothing step if it would lead to an invalid mesh
+        if not is_properly_oriented(p0,p1,p7,p_changed) or not is_properly_oriented(p1,p2,p_changed,p3) \
+           or not is_properly_oriented(p7,p_changed,p6,p5) or not is_properly_oriented(p_changed,p3,p5,p4):
+          continue
+        
+        grid_points_world_space_improved[j*n_grid_points_x+i] = p_changed
+        
+        # output grid
+        output = False
+        if output:
+          # print output in objective function
+          objective(p_changed,True)
+          
+          patches_world_improved = []
+          
+          # loop over grid points in parametric space
+          for (jj,y) in enumerate(np.linspace(0.0,1.0,n_grid_points_y)):
+            phi = float(y) * (n_grid_points_y-1.0) / n_grid_points_y  * 2.*np.pi
+            for (ii,x) in enumerate(np.linspace(0.0,1.0,n_grid_points_x)):
+        
+              if parametric_space_shape == 1 or parametric_space_shape == 2 or parametric_space_shape == 3:  # unit square  
+                if ii == n_grid_points_x-1 or jj == n_grid_points_x-1:
+                  continue
+              if parametric_space_shape == 0:
+                if ii == n_grid_points_x-1:
+                  continue
+                  
+              p0_improved = grid_points_world_space_improved[jj*n_grid_points_x+ii]
+              p1_improved = grid_points_world_space_improved[jj*n_grid_points_x+(ii+1)%n_grid_points_x]
+              p2_improved = grid_points_world_space_improved[(jj+1)%n_grid_points_y*n_grid_points_x+ii]
+              p3_improved = grid_points_world_space_improved[(jj+1)%n_grid_points_y*n_grid_points_x+(ii+1)%n_grid_points_x]
+              
+              quadrilateral = np.zeros((4,2))
+              quadrilateral[0] = p0_improved[0:2]
+              quadrilateral[1] = p1_improved[0:2]
+              quadrilateral[2] = p3_improved[0:2]
+              quadrilateral[3] = p2_improved[0:2]
+              
+              min_x = min(min_x, min(quadrilateral[:,0]))
+              min_y = min(min_y, min(quadrilateral[:,1]))
+              max_x = max(max_x, max(quadrilateral[:,0]))
+              max_y = max(max_y, max(quadrilateral[:,1]))
+              
+              polygon = patches.Polygon(quadrilateral, True)
+              patches_world_improved.append(polygon)
+              
+          # world space, improved
+          fig, ax = plt.subplots(figsize=(20,20))
+            
+          xw_improved = np.reshape(grid_points_world_space_improved[:,0], (-1))
+          yw_improved = np.reshape(grid_points_world_space_improved[:,1], (-1))
+
+          patch_collection = collections.PatchCollection(patches_world_improved,edgecolors="k",facecolors="gray",alpha=0.5)
+          ax.add_collection(patch_collection)
+          ax.plot(xw_improved, yw_improved, "ok")
+          ax.plot(p_old[0],p_old[1], 'rx')
+          ax.plot(p_changed[0],p_changed[1], 'g+')
+          ax.set_xlim(min_x,max_x)
+          ax.set_ylim(min_y,max_y)
+          plt.axis('equal')
+          
+          plt.savefig("out/{}{}{}_loop_{:03}_p{}_world_mesh_improved_k{}_{}_{}.png".format(k,i,j,loop_no, os.getpid(), k, old_score, new_score));
+          if show_plot:
+            plt.show()
+          plt.close()
+         
   # try to improve quadrilaterals with too small angles
   # --------------------------------------------------
   def angle_constraint_is_met(p0,p1,p2,p3):
@@ -581,115 +690,6 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
       if n_unresolved_bad_angles > 0:
         print("\033[0;31m  {} elements have angles < 10 degrees.    \033[0m".format(n_unresolved_bad_angles))
       break
-      
-  # improve point locations by Laplacian smoothing
-  random.seed(1)
-  
-  # iterations: ||: from bottom left, from top right, from bottom right, from top left :||
-  i_start_list = [1, n_grid_points_x-2, n_grid_points_x-2, 1]
-  j_start_list = [1, n_grid_points_y-2, 1, n_grid_points_y-2]
-  i_end_list = [n_grid_points_x-1, 0, 0, n_grid_points_x-1]
-  j_end_list = [n_grid_points_y-1, 0, n_grid_points_y-1, 0]
-  i_increment_list = [1, -1, -1, 1]
-  j_increment_list = [1, -1, 1, -1]
-  
-  # for total number of smoothing steps
-  for k in range(20):
-    
-    # for interior mesh points
-    i_start = i_start_list[k%len(i_start_list)]
-    j_start = j_start_list[k%len(j_start_list)]
-    i_end = i_end_list[k%len(i_end_list)]
-    j_end = j_end_list[k%len(j_end_list)]
-    i_increment = i_increment_list[k%len(i_increment_list)]
-    j_increment = j_increment_list[k%len(j_increment_list)]
-    
-    for j in range(j_start,j_end,j_increment):
-      for i in range(i_start,i_end,i_increment):
-    
-        p = grid_points_world_space_improved[j*n_grid_points_x+i]
-        p_old = np.array(p)
-        # p6 p5 p4
-        # p7 p  p3
-        # p0 p1 p2
-        p0 = grid_points_world_space_improved[(j-1)*n_grid_points_x+(i-1)]
-        p1 = grid_points_world_space_improved[(j-1)*n_grid_points_x+i]
-        p2 = grid_points_world_space_improved[(j-1)*n_grid_points_x+(i+1)]
-        p3 = grid_points_world_space_improved[j*n_grid_points_x+(i+1)]
-        p4 = grid_points_world_space_improved[(j+1)*n_grid_points_x+(i+1)]
-        p5 = grid_points_world_space_improved[(j+1)*n_grid_points_x+i]
-        p6 = grid_points_world_space_improved[(j+1)*n_grid_points_x+(i-1)]
-        p7 = grid_points_world_space_improved[j*n_grid_points_x+(i-1)]
-      
-        # compute new point position as average of all 4 or 8 neighbors
-        #p_changed = 0.125 * (p0+p1+p2+p3+p4+p5+p6+p7)
-        p_changed = 0.25 * (p1+p3+p5+p7)
-        
-        # discard smoothing step if it would lead to an invalid mesh
-        if not is_properly_oriented(p0,p1,p7,p_changed) or not is_properly_oriented(p1,p2,p_changed,p3) \
-           or not is_properly_oriented(p7,p_changed,p6,p5) or not is_properly_oriented(p_changed,p3,p5,p4):
-          continue
-        
-        grid_points_world_space_improved[j*n_grid_points_x+i] = p_changed
-        
-        # output grid
-        output = False
-        if output:
-          # print output in objective function
-          objective(p_changed,True)
-          
-          patches_world_improved = []
-          
-          # loop over grid points in parametric space
-          for (jj,y) in enumerate(np.linspace(0.0,1.0,n_grid_points_y)):
-            phi = float(y) * (n_grid_points_y-1.0) / n_grid_points_y  * 2.*np.pi
-            for (ii,x) in enumerate(np.linspace(0.0,1.0,n_grid_points_x)):
-        
-              if parametric_space_shape == 1 or parametric_space_shape == 2 or parametric_space_shape == 3:  # unit square  
-                if ii == n_grid_points_x-1 or jj == n_grid_points_x-1:
-                  continue
-              if parametric_space_shape == 0:
-                if ii == n_grid_points_x-1:
-                  continue
-                  
-              p0_improved = grid_points_world_space_improved[jj*n_grid_points_x+ii]
-              p1_improved = grid_points_world_space_improved[jj*n_grid_points_x+(ii+1)%n_grid_points_x]
-              p2_improved = grid_points_world_space_improved[(jj+1)%n_grid_points_y*n_grid_points_x+ii]
-              p3_improved = grid_points_world_space_improved[(jj+1)%n_grid_points_y*n_grid_points_x+(ii+1)%n_grid_points_x]
-              
-              quadrilateral = np.zeros((4,2))
-              quadrilateral[0] = p0_improved[0:2]
-              quadrilateral[1] = p1_improved[0:2]
-              quadrilateral[2] = p3_improved[0:2]
-              quadrilateral[3] = p2_improved[0:2]
-              
-              min_x = min(min_x, min(quadrilateral[:,0]))
-              min_y = min(min_y, min(quadrilateral[:,1]))
-              max_x = max(max_x, max(quadrilateral[:,0]))
-              max_y = max(max_y, max(quadrilateral[:,1]))
-              
-              polygon = patches.Polygon(quadrilateral, True)
-              patches_world_improved.append(polygon)
-              
-          # world space, improved
-          fig, ax = plt.subplots(figsize=(20,20))
-            
-          xw_improved = np.reshape(grid_points_world_space_improved[:,0], (-1))
-          yw_improved = np.reshape(grid_points_world_space_improved[:,1], (-1))
-
-          patch_collection = collections.PatchCollection(patches_world_improved,edgecolors="k",facecolors="gray",alpha=0.5)
-          ax.add_collection(patch_collection)
-          ax.plot(xw_improved, yw_improved, "ok")
-          ax.plot(p_old[0],p_old[1], 'rx')
-          ax.plot(p_changed[0],p_changed[1], 'g+')
-          ax.set_xlim(min_x,max_x)
-          ax.set_ylim(min_y,max_y)
-          plt.axis('equal')
-          
-          plt.savefig("out/{}{}{}_loop_{:03}_p{}_world_mesh_improved_k{}_{}_{}.png".format(k,i,j,loop_no, os.getpid(), k, old_score, new_score));
-          if show_plot:
-            plt.show()
-          plt.close()
-          
+       
   return grid_points_world_space_improved
  

@@ -1,8 +1,10 @@
-for use_neumann_bc in false true; do
+
 #for improve_mesh in true false; do
 improve_mesh=true
-#for method in splines stl; do
-method=splines
+
+for use_gradient_field in false true; do
+for use_neumann_bc in false true; do
+for method in splines stl; do
 for refinement in 1 2 3; do
 for program_name in generate generate_quadratic; do
   
@@ -17,6 +19,7 @@ for program_name in generate generate_quadratic; do
     --refinement_factor $refinement \
     --improve_mesh $improve_mesh \
     --use_neumann_bc $use_neumann_bc \
+    --use_gradient_field $use_gradient_field \
     -m=1 \
     --program_name $program_name | tee -a calls.txt
   
@@ -26,12 +29,13 @@ for program_name in generate generate_quadratic; do
 done
 done
 done
+done
+done
+#done
 
 # run mesh_evaluate_quality on created files
-for file in `ls -rt *.bin*`; do 
+for file in `ls -rt *.bin`; do 
   mesh_evaluate_quality.py $file
 done
 
-#done
-#done
 

@@ -35,8 +35,10 @@ parser.add_argument('--program_name',                            default="genera
 args = vars(parser.parse_args(args=sys.argv[:-2]))
 
 # set input_mesh_name
+use_splines = False
 if args["input_filename_or_splines_or_stl"] == "splines":
   input_mesh_filename = "../../../electrophysiology/input/biceps.surface.pickle"
+  use_splines = True
 elif args["input_filename_or_splines_or_stl"] == "stl":
   input_mesh_filename = "../../../electrophysiology/input/biceps_splines.stl"
 else:
@@ -64,7 +66,14 @@ if new_max_level != max_level:
       format(max_level, new_max_level, n_ranks, max_level, 8**max_level, new_max_level, 8**new_max_level))
   max_level = new_max_level
 
-scenario_name = "l{}_m{}_n{}_{}{}{}{}{}".format(max_level, n_fine_grid_fibers, n_elements_x_per_subdomain, "q" if use_quadratic else "l", "N" if use_neumann_bc else "D", refinement, "g" if use_gradient_field else "s", "i" if improve_mesh else "n")
+scenario_name = "l{}_m{}_n{}_{}{}{}{}{}_{}".format(max_level, n_fine_grid_fibers, n_elements_x_per_subdomain, 
+  "q" if use_quadratic else "l", 
+  "N" if use_neumann_bc else "D", 
+  refinement, 
+  "g" if use_gradient_field else "s", 
+  "splines" if use_splines else "stl",
+  "i" if improve_mesh else "n")
+
 if args["output_filename"] == "":
   output_filename = "0x0fibers_{}.bin".format(scenario_name)
 else:

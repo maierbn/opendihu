@@ -11,7 +11,7 @@ with open(input_filename,"r") as f:
   for line in f:
     if '#' in line:
       header = line
-    else:
+    elif "31x31fibers" in line and "lowres" not in line:
       lines.append(line)
 
 # sort by variance of angles

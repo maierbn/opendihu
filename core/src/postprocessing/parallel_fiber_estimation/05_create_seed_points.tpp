@@ -147,7 +147,9 @@ createSeedPoints(const std::array<bool,4> &subdomainIsAtBorder, int seedPointsZI
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::array<std::vector<Vec3>,4> cornerStreamlines, const std::array<bool,4> &subdomainIsAtBorder,
+extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
+                                  std::array<std::vector<Vec3>,4> cornerStreamlines,
+                                  const std::array<bool,4> &subdomainIsAtBorder,
                                   bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints)
 {
   // extract the seed points from the fixed border points, they are needed to be send to the neighbor process in z direction to continue the streamline tracing
@@ -192,6 +194,21 @@ extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::v
     iEndHorizontal -= 1;
 
   LOG(DEBUG) << "seedPoints: starting with faces";
+
+  std::vector<Vec3> debugPoints1Plus, debugPoints0Plus;
+  for (int zIndex = 0; zIndex < nBorderPointsZ_; zIndex++)
+  {
+    debugPoints1Plus.push_back(borderPointsSubdomain[3][(int)Mesh::face_t::face1Plus][zIndex][iEndHorizontal-1]);
+    debugPoints0Plus.push_back(borderPointsSubdomain[3][(int)Mesh::face_t::face0Plus][zIndex][iEndVertical-1]);
+  }
+
+  PyObject_CallFunction(functionOutputPoints_, "s i i O f", "03_build_seed_points_1+", currentRankSubset_->ownRankNo(), level_,
+                        PythonUtility::convertToPython<std::vector<Vec3>>::get(debugPoints1Plus), 0.1);
+  PythonUtility::checkForError();
+  PyObject_CallFunction(functionOutputPoints_, "s i i O f", "03_build_seed_points_0+", currentRankSubset_->ownRankNo(), level_,
+                        PythonUtility::convertToPython<std::vector<Vec3>>::get(debugPoints0Plus), 0.1);
+  PythonUtility::checkForError();
+
 
   // face0Minus
   if (!subdomainIsAtBorder[(int)Mesh::face_t::face0Minus])

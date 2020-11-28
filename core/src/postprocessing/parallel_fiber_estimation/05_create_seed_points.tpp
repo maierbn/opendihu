@@ -150,11 +150,27 @@ void ParallelFiberEstimation<BasisFunctionType>::
 extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain, std::array<std::vector<Vec3>,4> cornerStreamlines, const std::array<bool,4> &subdomainIsAtBorder,
                                   bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints)
 {
+  // extract the seed points from the fixed border points, they are needed to be send to the neighbor process in z direction to continue the streamline tracing
   int seedPointsZIndex = 0;
   if (streamlineDirectionUpwards)
   {
     seedPointsZIndex = nBorderPointsZ_-1;
   }
+
+  //  +--(1+)--+
+  // (0-)     (0+)
+  //  +--(1-)--+
+
+  //                                     <--+ nBorderPointsXNew_   (=9) = nBorderPointsX_*2-1
+  //   ^ --(1+)-> ^   ^ --(1+)-> ^       <--+ nBorderPointsXNew_-1 (=8)
+  //   0-   [2]   0+  0-   [3]   0+      <--+ nBorderPointsX_      (=5)
+  //   | --(1-)-> |   | --(1-)-> |       <--+ nBorderPointsX_-1    (=4)
+  //                                        |
+  //   ^ --(1+)-> ^   ^ --(1+)-> ^       <--+ nBorderPointsX_-1    (=4)
+  // ^ 0-   [0]   0+  0-   [1]   0+         |
+  // | | --(1-)-> |   | --(1-)-> |       <--+ 0
+  // +-->
+
   // boundary indices for face0Minus and face0Plus (vertical direction)
   int iBeginVertical = 0;
   int iEndVertical = nBorderPointsXNew_;
@@ -188,6 +204,10 @@ extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::v
     }
   }
 
+  PyObject_CallFunction(functionOutputPoints_, "s i i O f", "03_build_seed_points_a", currentRankSubset_->ownRankNo(), level_,
+                        PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.2);
+  PythonUtility::checkForError();
+
   // face0Plus
   if (!subdomainIsAtBorder[(int)Mesh::face_t::face0Plus])
   {
@@ -198,6 +218,10 @@ extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::v
       seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][seedPointsZIndex][streamlineIndex]);
     }
   }
+
+  PyObject_CallFunction(functionOutputPoints_, "s i i O f", "03_build_seed_points_b", currentRankSubset_->ownRankNo(), level_,
+                        PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.2);
+  PythonUtility::checkForError();
 
   // face1Minus (with corner points)
   if (!subdomainIsAtBorder[(int)Mesh::face_t::face1Minus])
@@ -210,6 +234,10 @@ extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::v
     }
   }
 
+  PyObject_CallFunction(functionOutputPoints_, "s i i O f", "03_build_seed_points_c", currentRankSubset_->ownRankNo(), level_,
+                        PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.2);
+  PythonUtility::checkForError();
+
   // face1Plus (with corner points)
   if (!subdomainIsAtBorder[(int)Mesh::face_t::face1Plus])
   {
@@ -221,6 +249,10 @@ extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::v
     }
   }
 
+  PyObject_CallFunction(functionOutputPoints_, "s i i O f", "03_build_seed_points_d", currentRankSubset_->ownRankNo(), level_,
+                        PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.2);
+  PythonUtility::checkForError();
+
   // horizontal center line (with corner points)
   for (int i = iBeginHorizontal; i < iEndHorizontal; i++)
   {
@@ -229,6 +261,10 @@ extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::v
     seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][seedPointsZIndex][streamlineIndex]);
   }
 
+  PyObject_CallFunction(functionOutputPoints_, "s i i O f", "03_build_seed_points_e", currentRankSubset_->ownRankNo(), level_,
+                        PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.2);
+  PythonUtility::checkForError();
+
   // vertical center line (with corner points and center point)
   for (int i = iBeginVertical; i < iEndVertical; i++)
   {
@@ -236,6 +272,10 @@ extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::v
     int streamlineIndex = i % (nBorderPointsX_-1);
     seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][seedPointsZIndex][streamlineIndex]);
   }
+
+  PyObject_CallFunction(functionOutputPoints_, "s i i O f", "03_build_seed_points_f", currentRankSubset_->ownRankNo(), level_,
+                        PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.2);
+  PythonUtility::checkForError();
 
   // corner streamlines
   if (streamlineDirectionUpwards)
@@ -246,6 +286,11 @@ extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::v
   {
     seedPoints.push_back(cornerStreamlines[i][seedPointsZIndex]);
   }
+
+  PyObject_CallFunction(functionOutputPoints_, "s i i O f", "03_build_seed_points_g", currentRankSubset_->ownRankNo(), level_,
+                        PythonUtility::convertToPython<std::vector<Vec3>>::get(seedPoints), 0.2);
+  PythonUtility::checkForError();
+
 }
 
 } // namespace

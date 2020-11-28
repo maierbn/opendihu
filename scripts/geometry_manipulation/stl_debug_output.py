@@ -13,21 +13,24 @@ import stl_create_rings
 
 def output_points(filename, rankNo, level, points, size):
   
+  with_vtk = False
   triangles = []
-  print("> output_points(filename={}, rankNo={}, level={}, n points: {}, size={})".format(filename, rankNo, level, len(points), size))
+  #print("> output_points(filename={}, rankNo={}, level={}, n points: {}, size={})".format(filename, rankNo, level, len(points), size))
   
-  try:
-    # setup points and vertices
-    vtk_points = vtk.vtkPoints()
-  except:
-    pass
+  if with_vtk:
+    try:
+      # setup points and vertices
+      vtk_points = vtk.vtkPoints()
+    except:
+      pass
   
   factor = 1.0
   for p in points:
     point = np.array([p[0], p[1], p[2]])
     
     # add point to vtk data set
-    vtk_points.InsertNextPoint(p[0],p[1],p[2])
+    if with_vtk:
+      vtk_points.InsertNextPoint(p[0],p[1],p[2])
   
     # add triangle to stl dataset
     stl_create_rings.create_point_marker(point, triangles, size*factor)
@@ -50,17 +53,18 @@ def output_points(filename, rankNo, level, points, size):
   out_mesh.save(outfile)
   print("saved {} triangles to \"{}\"".format(len(triangles),outfile))
   
-  try:
-    polydata = vtk.vtkPolyData()
-    polydata.SetPoints(vtk_points)
-    polydata.Modified()
+  if with_vtk:
+    try:
+      polydata = vtk.vtkPolyData()
+      polydata.SetPoints(vtk_points)
+      polydata.Modified()
 
-    writer = vtk.vtkXMLPolyDataWriter()
-    writer.SetFileName(outfile+".vtp")
-    writer.SetInputData(polydata)
-    writer.Write()
-  except:
-    print("writing vtp file {} failed".format(filename))
+      writer = vtk.vtkXMLPolyDataWriter()
+      writer.SetFileName(outfile+".vtp")
+      writer.SetInputData(polydata)
+      writer.Write()
+    except:
+      print("writing vtp file {} failed".format(filename))
     
   print("> output_points(filename={}, rankNo={}, level={}, n points: {}, size={}) done".format(filename, rankNo, level, len(points), size))
 

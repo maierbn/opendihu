@@ -5,7 +5,8 @@ namespace Postprocessing
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints)
+traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool streamlineDirectionUpwards,
+                 std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints)
 {
   int nStreamlines = seedPoints.size();
   streamlinePoints.resize(nStreamlines);

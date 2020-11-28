@@ -1580,6 +1580,28 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       
       return n_ccw >= 3
       
+    def oriented_angle(v1,v2):
+      """ compute the angle between v1 and v2, with proper sign """
+      phi = np.arccos(v1.dot(v2)/(np.linalg.norm(v1)*np.linalg.norm(v2)))
+      orientation = v1[0]*v2[1] - v1[1]*v2[0]
+      if abs(orientation) < 1e-12:
+        if abs(v2[0]) > abs(v2[1]):
+          if v1[0]/v2[0] > 0:
+            return 0
+          else:
+            return np.pi
+        else:
+          if v1[1]/v2[1] > 0:
+            return 0
+          else:
+            return np.pi
+      elif orientation > 0:
+        return phi
+      else:
+        return -phi
+      
+      return angle
+    
     def does_overlap(p0,p1p2,p3p4):
       """ check if the triangles [p2 p0 p1] and [p4 p0 p3] overlap """
       [p1,p2] = p1p2
@@ -1610,99 +1632,8 @@ def create_planar_mesh(border_points, loop_no, n_points, \
         
       return False
     
-    def oriented_angle(v1,v2):
-      """ compute the angle between v1 and v2, with proper sign """
-      phi = np.arccos(v1.dot(v2)/(np.linalg.norm(v1)*np.linalg.norm(v2)))
-      orientation = v1[0]*v2[1] - v1[1]*v2[0]
-      if abs(orientation) < 1e-12:
-        if abs(v2[0]) > abs(v2[1]):
-          if v1[0]/v2[0] > 0:
-            return 0
-          else:
-            return np.pi
-        else:
-          if v1[1]/v2[1] > 0:
-            return 0
-          else:
-            return np.pi
-      elif orientation > 0:
-        return phi
-      else:
-        return -phi
-      
-      return angle
-    
-    # compute score of elements, a low score means a good shaped element
-    def get_element_score(p0,p1,p2,p3):
-      
-      debug = False
-      
-      # variance of side lengths, favours quadrilaterals with same side lengths
-      p01 = p1-p0
-      p12 = p3-p1
-      p23 = p2-p3
-      p30 = p0-p2
-      characteristic_length = (extent_x+extent_y)/2.
-      l01 = np.linalg.norm(p01) / characteristic_length
-      l12 = np.linalg.norm(p12) / characteristic_length
-      l23 = np.linalg.norm(p23) / characteristic_length
-      l30 = np.linalg.norm(p30) / characteristic_length
-      
-      #variance_side_lengths = np.var([l01, l12, l23, l30]) * 5
-      
-      cutoff = 10  # lower cutoff means penalize short side lengths stronger, which leads to longer side lengths
-      variance_side_lengths = max(0, 1./l01-cutoff) + max(0, 1./l12-cutoff) + max(0, 1./l23-cutoff) + max(0, 1./l30-cutoff)   # penalize small side lengths
-      variance_side_lengths *= 5e-2
-      
-      # angles
-      a0 = np.arctan2(np.linalg.norm(np.cross(p01, -p30)), np.dot(p01, -p30))
-      a1 = np.arctan2(np.linalg.norm(np.cross(p12, -p01)), np.dot(p12, -p01))
-      a2 = np.arctan2(np.linalg.norm(np.cross(p23, -p12)), np.dot(p23, -p12))
-      a3 = np.arctan2(np.linalg.norm(np.cross(p30, -p23)), np.dot(p30, -p23))
-      
-      
-      #angles_score1 = np.linalg.norm([a0-np.pi/4., a1-np.pi/4., a2-np.pi/4., a3-np.pi/4.])   # penalize derivation from 90 degrees
-      
-      angles_score2 = max(0.,1./(a0**1)-1) + max(0.,1./(a1**1)-1) + max(0.,1./(a2**1)-1) + max(0.,1./(a3**1)-1)   # penalize small angles
-      
-      #angles_score3 = (max(0, -a0) + max(0, -a1) + max(0, -a2) + max(0, -a3))*10000  # penalize negative angles
-      
-      # massively penalize self-intersecting quadrilaterals
-      angles_score3 = 0 if is_properly_oriented(p0,p1,p2,p3) else 10000
-      
-      #print("ccw: ",ccw(p0,p1,p3), ccw(p1,p3,p2), ccw(p3,p2,p0), ccw(p2,p0,p1))
-      
-      #angles_score4 = np.var([a0,a1,a2,a3])*1e-1
-      angles_score4 = 0
-      
-      #print(angles_score2, angles_score4)
-      variance_angles_lengths = (angles_score2 + angles_score3 + angles_score4)
-      
-      score = variance_angles_lengths + variance_side_lengths
-      
-      if debug:
-        print("side_lengths: {} {} {} {} score: {}, angles: {} {} {}, score: {}, total: {}".format(1./l01, 1./l12, 1./l23, 1./l30, variance_side_lengths, angles_score2, angles_score3, angles_score4, variance_angles_lengths, score))
-      return score
-      
-    # compute score for all elements
-    if False:  # not needed      
-      n_elements = (n_grid_points_x-1) * (n_grid_points_y-1)
-      element_score = np.zeros(n_elements)
-      for j in range(0,n_grid_points_y-1):
-        for i in range(0,n_grid_points_x-1):
-          # p2 p3
-          # p0 p1
-            
-          p0 = grid_points_world_space_improved[j*n_grid_points_x+i]
-          p1 = grid_points_world_space_improved[j*n_grid_points_x+(i+1)%n_grid_points_x]
-          p2 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+i]
-          p3 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x]
-          
-          score = get_element_score(p0,p1,p2,p3)
-          element_score[j*(n_grid_points_x-1)+i] = score
-          
-         
     # output grid
+    # set the following options to produce more output files for debugging
     output_pre_fix = False
     output_fix = False
     output_post_fix = False
@@ -1761,6 +1692,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
     factor = (extent_x*extent_y)/2 * 5e-3
     
     # try to resolve self-intersecting quadrilaterals
+    # --------------------------------------------------
     # repeatedly iterate over all elements until no more fixes could be achieved
     while True:
       changed_a_point = False
@@ -2022,6 +1954,117 @@ def create_planar_mesh(border_points, loop_no, n_points, \
         plt.show()
       plt.close()
     
+    # try to improve quadrilaterals with too low angles
+    # --------------------------------------------------
+    def angle_constraint_is_met(p0,p1,p2,p3):
+      # p2 p3
+      # p0 p1
+      
+      # variance of side lengths, favours quadrilaterals with same side lengths
+      p01 = p1-p0
+      p12 = p3-p1
+      p23 = p2-p3
+      p30 = p0-p2
+      
+      # angles
+      a0 = np.arctan2(np.linalg.norm(np.cross(p01, -p30)), np.dot(p01, -p30))
+      a1 = np.arctan2(np.linalg.norm(np.cross(p12, -p01)), np.dot(p12, -p01))
+      a2 = np.arctan2(np.linalg.norm(np.cross(p23, -p12)), np.dot(p23, -p12))
+      a3 = np.arctan2(np.linalg.norm(np.cross(p30, -p23)), np.dot(p30, -p23))
+    
+      angle_constraint = 45/180.*np.pi
+      return abs(a0) >= angle_constraint and abs(a1) >= angle_constraint and abs(a2) >= angle_constraint and abs(a3) >= angle_constraint
+    
+    def angle_constraint_score(p0,p1,p2,p3):
+      return 1 if angle_constraint_is_met(p0,p1,p2,p3) else 0
+    
+    # repeatedly iterate over all elements until no more fixes could be achieved
+    while True:
+      changed_a_point = False
+      n_unresolved_bad_angles = 0
+      n_resolved_bad_angles = 0
+      
+      # loop over all elements
+      for i in range(0,n_grid_points_x-1):
+        for j in range(0,n_grid_points_y-1):
+          # p2 p3
+          # p0 p1
+      
+          p0 = grid_points_world_space_improved[j*n_grid_points_x+i]
+          p1 = grid_points_world_space_improved[j*n_grid_points_x+(i+1)%n_grid_points_x]
+          p2 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+i]
+          p3 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x]
+    
+          if not angle_constraint_is_met(p0,p1,p2,p3):
+            indices = [(i,j),(i+1,j),(i,j+1),(i+1,j+1)]
+            
+            # loop over 4 points of element
+            for k in range(4):
+              (ii,jj) = indices[k]
+              
+              # do not consider border points, they cannot be changed
+              if ii <= 0 or jj <= 0 or ii >= n_grid_points_x-1 or jj >= n_grid_points_y-1:
+                continue
+              
+              # the point p will be moved, p0-p7 are the neighbouring points
+              p = grid_points_world_space_improved[jj*n_grid_points_x+ii]
+              p_old = np.array(p)
+              # p6 p5 p4
+              # p7 p  p3
+              # p0 p1 p2
+              p0 = grid_points_world_space_improved[(jj-1)*n_grid_points_x+(ii-1)]
+              p1 = grid_points_world_space_improved[(jj-1)*n_grid_points_x+ii]
+              p2 = grid_points_world_space_improved[(jj-1)*n_grid_points_x+(ii+1)]
+              p3 = grid_points_world_space_improved[jj*n_grid_points_x+(ii+1)]
+              p4 = grid_points_world_space_improved[(jj+1)*n_grid_points_x+(ii+1)]
+              p5 = grid_points_world_space_improved[(jj+1)*n_grid_points_x+ii]
+              p6 = grid_points_world_space_improved[(jj+1)*n_grid_points_x+(ii-1)]
+              p7 = grid_points_world_space_improved[jj*n_grid_points_x+(ii-1)]
+                
+              n_tries = 0
+              size_factor = factor
+              p_changed = np.array(p)
+              
+              def orientation_score(p0,p1,p2,p3):
+                """ how well the quad is oriented, 0=worst, 3=properly """
+                # p2 p3
+                # p0 p1
+                n_ccw = (1 if ccw(p0,p1,p3) else 0) + (1 if ccw(p1,p3,p2) else 0) + (1 if ccw(p3,p2,p0) else 0) + (1 if ccw(p2,p0,p1) else 0)
+                return min(n_ccw,3)
+              
+              initial_score = angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
+                + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4)
+              
+              # while the score is not yet better (and maximum of 200 tries), deflect point p
+              while (\
+                (angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
+                + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4)) <= initial_score \
+                and n_tries < 200):
+                
+                # pseudo-randomly deflect point p
+                p_changed = p + np.array([(random.random()-0.5)*size_factor, (random.random()-0.5)*size_factor, 0])
+                size_factor *= 1.05    # 1.05**200 = 17292
+                
+                n_tries += 1
+              if n_tries < 200:
+                if angle_constraint_is_met(p0,p1,p2,p3):
+                  print("  \033[0;32mSuccessfully resolved bad angle ({},{}) after {} iterations\033[0m".format(i,j,n_tries))
+                else:
+                  current_score = (angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
+                    + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4))
+                  print("  improvement regarding self-intersection ({},{}) after {} iterations, number of bad angles: {} -> {}".format(i,j,n_tries, initial_score, current_score))
+                grid_points_world_space_improved[jj*n_grid_points_x+ii] = p_changed
+                changed_a_point = True
+                
+              
+      # if there was a resolved self_intersection, restart iterations, otherwise we are done
+      if not changed_a_point:
+        if n_resolved_bad_angles > 0:
+          print("{} elements with angles < 10 degrees have been improved.".format(n_resolved_bad_angles))
+        if n_unresolved_bad_angles > 0:
+          print("\033[0;31{} elements have angles < 10 degrees.    \033[0m".format(n_unresolved_bad_angles))
+        break
+        
     # improve point locations by Laplacian smoothing
     random.seed(1)
     

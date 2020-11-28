@@ -157,6 +157,7 @@ resampleFibersInFile(int nPointsPerFiber, std::string filename)
   fileNew.close();
 
   LOG(INFO) << nFibersX << "x" << nFibersX << " fibers with " << nNodesPerFiber_ << " points per fiber written to file \"" << filename << "\"." << std::endl;
+  LOG(INFO) << "Use the following command to convert the file to various formats for inspection:\n  examine_bin_fibers.py \"" << filenameExistingFile << "\"" << std::endl;
 }
 
 } // namespace

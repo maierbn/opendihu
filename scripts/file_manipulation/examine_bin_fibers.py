@@ -332,6 +332,8 @@ with open(input_filename, "rb") as infile:
     # write vtk file
     gridToVTK(output_filename, positions_x, positions_y, positions_z, pointData = {"fiber_no" : field_fiber_no})
     print("Wrote file \"{}.vts\"".format(output_filename))
+    print("Now run: ")
+    print("  paraview \"{}.vts\"".format(output_filename))
   
   #---------------------------------------
   # Postprocessing

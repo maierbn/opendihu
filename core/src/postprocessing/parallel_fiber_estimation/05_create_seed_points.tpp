@@ -195,11 +195,13 @@ extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::v
 
   LOG(DEBUG) << "seedPoints: starting with faces";
 
+  // borderPointsSubdomain[3][(int)Mesh::face_t::face0Plus][0][3] equals borderPointsSubdomain[1][(int)Mesh::face_t::face0Plus][0][3] but this is wrong
+
   std::vector<Vec3> debugPoints1Plus, debugPoints0Plus;
   for (int zIndex = 0; zIndex < nBorderPointsZ_; zIndex++)
   {
-    debugPoints1Plus.push_back(borderPointsSubdomain[3][(int)Mesh::face_t::face1Plus][zIndex][iEndHorizontal-1]);
-    debugPoints0Plus.push_back(borderPointsSubdomain[3][(int)Mesh::face_t::face0Plus][zIndex][iEndVertical-1]);
+    debugPoints1Plus.push_back(borderPointsSubdomain[3][(int)Mesh::face_t::face1Plus][zIndex][4]);
+    debugPoints0Plus.push_back(borderPointsSubdomain[3][(int)Mesh::face_t::face0Plus][zIndex][4]);
   }
 
   PyObject_CallFunction(functionOutputPoints_, "s i i O f", "03_build_seed_points_1+", currentRankSubset_->ownRankNo(), level_,
@@ -216,7 +218,7 @@ extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::v
     for (int i = iBeginVertical; i < iEndVertical; i++)
     {
       int subdomainIndex = (i < nBorderPointsX_-1? 0 : 2) + (streamlineDirectionUpwards? 4 : 0);
-      int streamlineIndex = i % (nBorderPointsX_-1);
+      int streamlineIndex = (i < nBorderPointsX_-1? i : i - (nBorderPointsX_-1));
       seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][seedPointsZIndex][streamlineIndex]);
     }
   }
@@ -231,7 +233,7 @@ extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::v
     for (int i = iBeginVertical; i < iEndVertical; i++)
     {
       int subdomainIndex = (i < nBorderPointsX_-1? 1 : 3) + (streamlineDirectionUpwards? 4 : 0);
-      int streamlineIndex = i % (nBorderPointsX_-1);
+      int streamlineIndex = (i < nBorderPointsX_-1? i : i - (nBorderPointsX_-1));
       seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Plus][seedPointsZIndex][streamlineIndex]);
     }
   }
@@ -246,7 +248,7 @@ extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::v
     for (int i = iBeginHorizontal; i < iEndHorizontal; i++)
     {
       int subdomainIndex = (i < nBorderPointsX_-1? 0 : 1) + (streamlineDirectionUpwards? 4 : 0);
-      int streamlineIndex = i % (nBorderPointsX_-1);
+      int streamlineIndex = (i < nBorderPointsX_-1? i : i - (nBorderPointsX_-1));
       seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Minus][seedPointsZIndex][streamlineIndex]);
     }
   }
@@ -261,7 +263,7 @@ extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::v
     for (int i = iBeginHorizontal; i < iEndHorizontal; i++)
     {
       int subdomainIndex = (i < nBorderPointsX_-1? 2 : 3) + (streamlineDirectionUpwards? 4 : 0);
-      int streamlineIndex = i % (nBorderPointsX_-1);
+      int streamlineIndex = (i < nBorderPointsX_-1? i : i - (nBorderPointsX_-1));
       seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][seedPointsZIndex][streamlineIndex]);
     }
   }
@@ -274,7 +276,7 @@ extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::v
   for (int i = iBeginHorizontal; i < iEndHorizontal; i++)
   {
     int subdomainIndex = (i < nBorderPointsX_-1? 0 : 1) + (streamlineDirectionUpwards? 4 : 0);
-    int streamlineIndex = i % (nBorderPointsX_-1);
+    int streamlineIndex = (i < nBorderPointsX_-1? i : i - (nBorderPointsX_-1));
     seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face1Plus][seedPointsZIndex][streamlineIndex]);
   }
 
@@ -286,7 +288,7 @@ extractSeedPointsFromBorderPoints(const std::array<std::array<std::vector<std::v
   for (int i = iBeginVertical; i < iEndVertical; i++)
   {
     int subdomainIndex = (i < nBorderPointsX_-1? 1 : 3) + (streamlineDirectionUpwards? 4 : 0);
-    int streamlineIndex = i % (nBorderPointsX_-1);
+    int streamlineIndex = (i < nBorderPointsX_-1? i : i - (nBorderPointsX_-1));
     seedPoints.push_back(borderPointsSubdomain[subdomainIndex][(int)Mesh::face_t::face0Minus][seedPointsZIndex][streamlineIndex]);
   }
 

@@ -308,7 +308,7 @@ createGenericFunctionSpace(int nEntries, std::shared_ptr<Partition::MeshPartitio
 
   if (meshPartition->ownRankNo() == meshPartition->nRanks()-1)
   {
-    // on the right border, have one element less than nodes, because nodes are left and right of the 1D element
+    // on the right boundary, have one element less than nodes, because nodes are left and right of the 1D element
     nElements[0] = nEntries-1;
   }
   else

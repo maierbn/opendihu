@@ -115,11 +115,11 @@ findSharedNodesBetweenMuscleAndFat()
         VLOG(2) << "   node is shared.";
         sharedNodes_[nodeNoLocal] = nodeNoLocalOtherMesh;
 
-        // add dofs at node to set of border nodes of fat mesh
+        // add dofs at node to set of boundary nodes of fat mesh
         for (int i = 0; i < FunctionSpace::nDofsPerNode(); i++)
         {
           dof_no_t dofNoLocalFat = FunctionSpace::nDofsPerNode()*nodeNoLocalOtherMesh + i;
-          borderDofsFat_.insert(dofNoLocalFat);
+          boundaryDofsFat_.insert(dofNoLocalFat);
         }
 
         break;
@@ -127,22 +127,22 @@ findSharedNodesBetweenMuscleAndFat()
     }
   }
 
-  nSharedDofsLocal_ = borderDofsFat_.size();
+  nSharedDofsLocal_ = boundaryDofsFat_.size();
 
   LOG(DEBUG) << "functionSpaceMuscle: " << *functionSpaceMuscle->meshPartition();
   LOG(DEBUG) << "functionSpaceFat: " << *functionSpaceFat->meshPartition();
 
   LOG(DEBUG) << sharedNodes_.size() << "sharedNodes_ (\"muscle mesh dof\": fat mesh dof):\n" << sharedNodes_;
-  LOG(DEBUG) << borderDofsFat_.size() << " borderDofsFat_:\n" << borderDofsFat_;
+  LOG(DEBUG) << boundaryDofsFat_.size() << " boundaryDofsFat_:\n" << boundaryDofsFat_;
   
   LOG(DEBUG) << "n dofs muscle (global): " << functionSpaceMuscle->nDofsGlobal() << " (local without ghosts: " 
     << functionSpaceMuscle->nDofsLocalWithoutGhosts() << ", local with ghosts: " << functionSpaceMuscle->nDofsLocalWithGhosts() << ")";
   LOG(DEBUG) << "n dofs fat (global): " << functionSpaceFat->nDofsGlobal() << " (local without ghosts: " 
     << functionSpaceFat->nDofsLocalWithoutGhosts() << ", local with ghosts: " << functionSpaceFat->nDofsLocalWithGhosts() << ")";
-  LOG(DEBUG) << "n shared dofs (global): " << borderDofsGlobalFat_.size() << " (local: " << nSharedDofsLocal_ << ")";
+  LOG(DEBUG) << "n shared dofs (global): " << boundaryDofsGlobalFat_.size() << " (local: " << nSharedDofsLocal_ << ")";
 
 
-  // globally exchange border dofs
+  // globally exchange boundary dofs
   int nRanks = functionSpaceFat->meshPartition()->rankSubset()->size();
   int ownRankNo = functionSpaceFat->meshPartition()->rankSubset()->ownRankNo();
   MPI_Comm mpiCommunicator =  functionSpaceFat->meshPartition()->rankSubset()->mpiCommunicator();
@@ -150,7 +150,7 @@ findSharedNodesBetweenMuscleAndFat()
   std::vector<std::vector<global_no_t>> sharedNodesFatOnRanks(nRanks);   //< for every rank the shared nodes in the fat mesh global petsc numbering
   std::vector<std::vector<PetscInt>> sharedDofsGlobalOnRanks(nRanks);
 
-  // store mapping between fat and muscle border dof nos for own rank
+  // store mapping between fat and muscle boundary dof nos for own rank
   sharedDofsGlobalOnRanks[ownRankNo].reserve(sharedNodes_.size()*2);    // mapping between fat and muscle shared dofs 
 
   for (std::pair<node_no_t,node_no_t> sharedNodes : sharedNodes_)
@@ -170,9 +170,9 @@ findSharedNodesBetweenMuscleAndFat()
     }
   }
   
-  // store global nos from borderDofsFat_ in sharedNodesFatOnRanks[ownRankNo]
-  sharedNodesFatOnRanks[ownRankNo].reserve(borderDofsFat_.size());
-  for (dof_no_t dofNoLocalFat : borderDofsFat_)
+  // store global nos from boundaryDofsFat_ in sharedNodesFatOnRanks[ownRankNo]
+  sharedNodesFatOnRanks[ownRankNo].reserve(boundaryDofsFat_.size());
+  for (dof_no_t dofNoLocalFat : boundaryDofsFat_)
   {
     global_no_t dofNoGlobalPetsc = functionSpaceFat->meshPartition()->getDofNoGlobalPetsc(dofNoLocalFat);
     sharedNodesFatOnRanks[ownRankNo].push_back(dofNoGlobalPetsc);
@@ -180,7 +180,7 @@ findSharedNodesBetweenMuscleAndFat()
 
   // determine number of shared nodes on all the ranks
   std::vector<PetscInt> nSharedNodesOnRanks(nRanks);
-  nSharedNodesOnRanks[ownRankNo] = borderDofsFat_.size();
+  nSharedNodesOnRanks[ownRankNo] = boundaryDofsFat_.size();
 
   // communicate how many shared nodes there are on every rank
   MPIUtility::handleReturnValue(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, nSharedNodesOnRanks.data(),
@@ -204,7 +204,7 @@ findSharedNodesBetweenMuscleAndFat()
   for (int rankNo = 0; rankNo < nRanks; rankNo++)                                            
   {
     // add global nos for fat mesh
-    borderDofsGlobalFat_.insert(sharedNodesFatOnRanks[rankNo].begin(), sharedNodesFatOnRanks[rankNo].end());
+    boundaryDofsGlobalFat_.insert(sharedNodesFatOnRanks[rankNo].begin(), sharedNodesFatOnRanks[rankNo].end());
 
     // add mapping from fat mesh dofs to muscle mesh dofs to a single map
     assert(sharedDofsGlobalOnRanks[rankNo].size() == nSharedNodesOnRanks[rankNo]*2);
@@ -217,11 +217,11 @@ findSharedNodesBetweenMuscleAndFat()
 
   // output result
 #ifndef NDEBUG
-  LOG(DEBUG) << borderDofsGlobalFat_.size() << " borderDofsGlobalFat_:\n" << borderDofsGlobalFat_;
+  LOG(DEBUG) << boundaryDofsGlobalFat_.size() << " boundaryDofsGlobalFat_:\n" << boundaryDofsGlobalFat_;
   std::stringstream s;
   for (PetscInt dofNoGlobal = 0; dofNoGlobal < this->finiteElementMethodFat_.data().functionSpace()->nDofsGlobal(); dofNoGlobal++)
   {
-    if (borderDofsGlobalFat_.find(dofNoGlobal) != borderDofsGlobalFat_.end())
+    if (boundaryDofsGlobalFat_.find(dofNoGlobal) != boundaryDofsGlobalFat_.end())
     {
       s << dofNoGlobal << ":shared, ";
     }
@@ -233,7 +233,7 @@ findSharedNodesBetweenMuscleAndFat()
   LOG(DEBUG) << "global nos without shared dofs: " << s.str();
 
   s.str("");
-  for (PetscInt dofNoGlobalFat : borderDofsGlobalFat_)
+  for (PetscInt dofNoGlobalFat : boundaryDofsGlobalFat_)
   {
     PetscInt dofNoGlobalMuscle = getDofNoGlobalMuscleFromDofNoGlobalFat(dofNoGlobalFat);
      
@@ -242,8 +242,8 @@ findSharedNodesBetweenMuscleAndFat()
   
   LOG(DEBUG) << fatDofToMuscleDofGlobal_.size() << " fatDofToMuscleDofGlobal_: " << fatDofToMuscleDofGlobal_;
   LOG(DEBUG) << muscleDofToFatDofGlobal_.size() << " muscleDofToFatDofGlobal_: " << muscleDofToFatDofGlobal_;
-  LOG(DEBUG) << borderDofsGlobalFat_.size() << " borderDofsGlobalFat_: " << borderDofsGlobalFat_;
-  LOG(DEBUG) << "border dofs fat:muscle " << s.str();
+  LOG(DEBUG) << boundaryDofsGlobalFat_.size() << " boundaryDofsGlobalFat_: " << boundaryDofsGlobalFat_;
+  LOG(DEBUG) << "boundary dofs fat:muscle " << s.str();
 #endif
 }
 
@@ -251,7 +251,7 @@ template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodD
 PetscInt MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
 getDofNoGlobalFatWithoutSharedDofs(PetscInt dofNoGlobal)
 {
-  int nSharedBefore = std::distance(borderDofsGlobalFat_.begin(), borderDofsGlobalFat_.upper_bound(dofNoGlobal));
+  int nSharedBefore = std::distance(boundaryDofsGlobalFat_.begin(), boundaryDofsGlobalFat_.upper_bound(dofNoGlobal));
   PetscInt dofNoGlobalWithoutSharedDofs = dofNoGlobal - nSharedBefore;
   return dofNoGlobalWithoutSharedDofs;
 }
@@ -274,7 +274,7 @@ getDofNoGlobalFatFromDofNoGlobalMuscle(PetscInt dofNoGlobal)
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
-initializeBorderVariables()
+initializeBoundaryVariables()
 {
   // system to be solved:
   //
@@ -367,7 +367,7 @@ initializeBorderVariables()
   LOG(DEBUG) << "originalMatrixC: " << nRows << "x" << nColumns;
   LOG(DEBUG) << "n dofs muscle (global): " << this->finiteElementMethodDiffusionTotal_.data().functionSpace()->nDofsGlobal() << " (local: " << this->finiteElementMethodDiffusionTotal_.data().functionSpace()->nDofsLocalWithoutGhosts() << ")";
   LOG(DEBUG) << "n dofs fat (global): " << this->finiteElementMethodFat_.data().functionSpace()->nDofsGlobal() << " (local: " << this->finiteElementMethodFat_.data().functionSpace()->nDofsLocalWithoutGhosts() << ")";
-  LOG(DEBUG) << "n shared dofs (global): " << borderDofsGlobalFat_.size() << " (local: " << nSharedDofsLocal_ << ")";
+  LOG(DEBUG) << "n shared dofs (global): " << boundaryDofsGlobalFat_.size() << " (local: " << nSharedDofsLocal_ << ")";
   
   // get number of allocated non-zeros of full c matrix
   MatInfo matInfo;
@@ -443,12 +443,12 @@ initializeBorderVariables()
   ierr = MatGetSize(matrixD, &nRowsMatrixD, &nColumnsMatrixD); CHKERRV(ierr);
   ierr = MatGetSize(matrixE, &nRowsMatrixE, &nColumnsMatrixE); CHKERRV(ierr);
   
-  LOG(DEBUG) << "n shared nodes local: " << sharedNodes_.size() << ", n shared dofs local: " << nSharedDofsLocal_ << ", global: " << borderDofsGlobalFat_.size() 
+  LOG(DEBUG) << "n shared nodes local: " << sharedNodes_.size() << ", n shared dofs local: " << nSharedDofsLocal_ << ", global: " << boundaryDofsGlobalFat_.size() 
     << ", create gamma matrices: matrixB: " << nRowsMatrixB << "x" << nColumnsMatrixB << ", matrixC: " << nRowsMatrixC << "x" << nColumnsMatrixC 
     << ", matrixD: " << nRowsMatrixD << "x" << nColumnsMatrixD << ", matrixE: " << nRowsMatrixE << "x" << nColumnsMatrixE;
 
   // compute entries
-  setEntriesBorderMatrices(originalMatrixB, originalMatrixC, matrixB, matrixC, matrixD, matrixE);
+  setEntriesBoundaryMatrices(originalMatrixB, originalMatrixC, matrixB, matrixC, matrixD, matrixE);
 
   // store the matrices in the system matrix
   this->submatricesSystemMatrix_[(this->nCompartments_+0)*this->nColumnSubmatricesSystemMatrix_ + this->nCompartments_+0] = matrixB;
@@ -459,7 +459,7 @@ initializeBorderVariables()
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
-setEntriesBorderMatrices(Mat originalMatrixB, Mat originalMatrixC, Mat matrixB, Mat matrixC, Mat matrixD, Mat matrixE)
+setEntriesBoundaryMatrices(Mat originalMatrixB, Mat originalMatrixC, Mat matrixB, Mat matrixC, Mat matrixD, Mat matrixE)
 {
   PetscErrorCode ierr;
   MPI_Comm mpiCommunicator = this->dataFat_.functionSpace()->meshPartition()->mpiCommunicator();
@@ -512,7 +512,7 @@ setEntriesBorderMatrices(Mat originalMatrixB, Mat originalMatrixC, Mat matrixB, 
     const double *values;
     ierr = MatGetRow(localSubMatrix[0], rowNoLocal, &nNonzeroEntriesInRow, &columnIndices, &values); CHKERRV(ierr);
 
-    bool currentRowDofIsBorder = borderDofsFat_.find(rowNoLocal) != borderDofsFat_.end();
+    bool currentRowDofIsBoundary = boundaryDofsFat_.find(rowNoLocal) != boundaryDofsFat_.end();
 
     std::stringstream s;
     // loop over columns
@@ -528,15 +528,15 @@ setEntriesBorderMatrices(Mat originalMatrixB, Mat originalMatrixC, Mat matrixB, 
       PetscInt columnNoGlobal = columnIndices[columnIndex];
       double value = values[columnIndex];
 
-      bool currentColumnDofIsBorder = borderDofsGlobalFat_.find(columnNoGlobal) != borderDofsGlobalFat_.end();
+      bool currentColumnDofIsBoundary = boundaryDofsGlobalFat_.find(columnNoGlobal) != boundaryDofsGlobalFat_.end();
 
       VLOG(2) << "C[" << rowNoGlobal << "," << columnNoGlobal << "] = " << value;
 
       // if the current row is a shared dof
-      if (currentRowDofIsBorder)
+      if (currentRowDofIsBoundary)
       {
         // if the current column is a shared dof
-        if (currentColumnDofIsBorder)
+        if (currentColumnDofIsBoundary)
         {
           PetscInt rowNoGlobalMuscle = getDofNoGlobalMuscleFromDofNoGlobalFat(rowNoGlobal);
           PetscInt columnNoGlobalMuscle = getDofNoGlobalMuscleFromDofNoGlobalFat(columnNoGlobal);
@@ -560,7 +560,7 @@ setEntriesBorderMatrices(Mat originalMatrixB, Mat originalMatrixC, Mat matrixB, 
         // if the current row is not a shared dof
         
         // if the current column is a shared dof
-        if (currentColumnDofIsBorder)
+        if (currentColumnDofIsBoundary)
         {
           // the current entry if from a shared row but not shared column
           PetscInt rowNoGlobalWithoutSharedDofs = getDofNoGlobalFatWithoutSharedDofs(rowNoGlobal);
@@ -595,7 +595,7 @@ setEntriesBorderMatrices(Mat originalMatrixB, Mat originalMatrixC, Mat matrixB, 
   ierr = MatAssemblyEnd(matrixD, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
   ierr = MatAssemblyEnd(matrixE, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
 
-  LOG(DEBUG) << "setEntriesBorderMatrices";
+  LOG(DEBUG) << "setEntriesBoundaryMatrices";
   LOG(DEBUG) << "B: " << matrixB << ", C: " << matrixC << ", D: " << matrixD << ", E: " << matrixE;
 
   if (VLOG_IS_ON(1))
@@ -609,7 +609,7 @@ setEntriesBorderMatrices(Mat originalMatrixB, Mat originalMatrixC, Mat matrixB, 
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
-updateBorderMatrices()
+updateBoundaryMatrices()
 {
   // this method computes the entries again, after the geometry has updated by the contraction
 
@@ -623,7 +623,7 @@ updateBorderMatrices()
   Mat &matrixE = this->submatricesSystemMatrix_[(this->nCompartments_+1)*this->nColumnSubmatricesSystemMatrix_ + this->nCompartments_+0];
 
   // compute entries
-  setEntriesBorderMatrices(originalMatrixB, originalMatrixC, matrixB, matrixC, matrixD, matrixE);
+  setEntriesBoundaryMatrices(originalMatrixB, originalMatrixC, matrixB, matrixC, matrixD, matrixE);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
@@ -656,7 +656,7 @@ copyPhiBToSolution()
     PetscInt dofNoLocalFat = dofNoGlobal - dofNoGlobalBegin;
 
     // if dof is not shared
-    if (borderDofsFat_.find(dofNoLocalFat) == borderDofsFat_.end())
+    if (boundaryDofsFat_.find(dofNoLocalFat) == boundaryDofsFat_.end())
     {
       // set the value in the solution
       double value = values[dofNoLocalFat];
@@ -670,7 +670,7 @@ copyPhiBToSolution()
   ierr = VecAssemblyEnd(solution); CHKERRV(ierr);
 
   LOG(DEBUG) << "copyPhiBToSolution: get from phi_b and set in solution";
-  LOG(DEBUG) << "borderDofsFat_: " << borderDofsFat_;
+  LOG(DEBUG) << "boundaryDofsFat_: " << boundaryDofsFat_;
   LOG(DEBUG) << "phi_b: " << PetscUtility::getStringVector(phiB);
   LOG(DEBUG) << "solution: " << PetscUtility::getStringVector(solution);
 }
@@ -726,7 +726,7 @@ copySolutionToPhiB()
     PetscInt dofNoLocalFat = dofNoGlobalFat - dofNoGlobalBeginFat;
 
     // if dof is shared, use value from phiE
-    if (borderDofsFat_.find(dofNoLocalFat) != borderDofsFat_.end())
+    if (boundaryDofsFat_.find(dofNoLocalFat) != boundaryDofsFat_.end())
     {
       // set the value in the result
       PetscInt dofNoGlobalMuscle = getDofNoGlobalMuscleFromDofNoGlobalFat(dofNoGlobalFat);
@@ -749,7 +749,7 @@ copySolutionToPhiB()
   ierr = VecAssemblyEnd(result); CHKERRV(ierr);
 
   LOG(DEBUG) << "copySolutionToPhiB: from phi_b and phi_e get result = whole phi_b";
-  LOG(DEBUG) << "borderDofsFat_: " << borderDofsFat_;
+  LOG(DEBUG) << "boundaryDofsFat_: " << boundaryDofsFat_;
   LOG(DEBUG) << "phi_b (without shared dofs): " << PetscUtility::getStringVector(phiB);
   LOG(DEBUG) << "phi_e (with shared dofs): " << PetscUtility::getStringVector(phiE);
   LOG(DEBUG) << "result: " << PetscUtility::getStringVector(result);

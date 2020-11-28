@@ -16,7 +16,7 @@ def create_slice_tringulation(triangulation_type, modify_phi, n_points, points, 
   Create a 2d triangulation on a slice using different methods.
   :param triangulation_type: 0 = scipy, 1 = triangle, 2 = center pie (2 is best), 3 = minimized distance
   :param modify_phi: if the grid should be rotated
-  :param n_points: number of points on the border of the resulting mesh
+  :param n_points: number of points on the boundary of the resulting mesh
   :param points: a vector of 3D points with shape (n_points x 3), each row is one point
   :param max_area_factor: only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
   :return: point_indices_list,triangle_list,n_points
@@ -38,6 +38,7 @@ def create_slice_tringulation(triangulation_type, modify_phi, n_points, points, 
   original_points = np.array(points)
   n_original_points = n_points
   n_points_per_face = (int)(n_original_points/4)
+  n_regular_grid_boundary_points = n_original_points
   
   # project points on xy=z_value plane
   projected_points = []
@@ -103,7 +104,7 @@ def create_slice_tringulation(triangulation_type, modify_phi, n_points, points, 
     # determine the phi angle in the circle of the current point
     
     for original_point_no in range(n_original_points):
-      border_point = points[original_point_no]
+      boundary_point = points[original_point_no]
     
       phi = float(original_point_no) / n_original_points * 2 * np.pi
       original_point_phi_value.append(phi)
@@ -113,7 +114,7 @@ def create_slice_tringulation(triangulation_type, modify_phi, n_points, points, 
     determine_additional_points_on_ring = True
     rescale_phi = True
     
-    # normal implementation without searching for additional border points on ring that the triangulation created
+    # normal implementation without searching for additional boundary points on ring that the triangulation created
     if not determine_additional_points_on_ring:
       point_indices_list = triangulation["triangles"]
       triangle_list = points[point_indices_list]
@@ -130,35 +131,35 @@ def create_slice_tringulation(triangulation_type, modify_phi, n_points, points, 
         point = points[point_index]
         
         current_point_is_on_boundary = False
-        # check if this point lies between two border points
-        # loop over initial border points
-        for border_point_index in range(n_original_points):
-          border_point1 = points[border_point_index]
-          border_point2 = points[(border_point_index+1)%n_original_points]
+        # check if this point lies between two boundary points
+        # loop over initial boundary points
+        for boundary_point_index in range(n_original_points):
+          boundary_point1 = points[boundary_point_index]
+          boundary_point2 = points[(boundary_point_index+1)%n_original_points]
           
-          v1 = -point + border_point1
-          v2 = -point + border_point2
-          v3 = -border_point1 + border_point2
+          v1 = -point + boundary_point1
+          v2 = -point + boundary_point2
+          v3 = -boundary_point1 + boundary_point2
           
           v1 = v1 / np.linalg.norm(v1)
           v2 = v2 / np.linalg.norm(v2)
           
-          # if the point lies on the line between the two border points
+          # if the point lies on the line between the two boundary points
           if abs(np.linalg.norm(np.cross(v1,v2))) < 1e-3:
             if abs(v3[0]) < abs(v3[1]):            
-              alpha = (point[1] - border_point1[1]) / v3[1]
+              alpha = (point[1] - boundary_point1[1]) / v3[1]
             else:
-              alpha = (point[0] - border_point1[0]) / v3[0]
+              alpha = (point[0] - boundary_point1[0]) / v3[0]
             
             if alpha > 1.0 or alpha < 0.0:
               #print("alpha: {} continue".format(alpha))
               continue
             
-            phi = original_point_phi_value[border_point_index] + alpha * \
-               (original_point_phi_value[(border_point_index+1)%n_original_points] - original_point_phi_value[border_point_index])
+            phi = original_point_phi_value[boundary_point_index] + alpha * \
+               (original_point_phi_value[(boundary_point_index+1)%n_original_points] - original_point_phi_value[boundary_point_index])
             original_point_phi_value.append(phi)
         
-            #print("{} alpha: {}, phi: {} {} -> {}".format(point_index, alpha, original_point_phi_value[border_point_index], original_point_phi_value[(border_point_index+1)%n_original_points], phi))
+            #print("{} alpha: {}, phi: {} {} -> {}".format(point_index, alpha, original_point_phi_value[boundary_point_index], original_point_phi_value[(boundary_point_index+1)%n_original_points], phi))
         
             new_points.append(point)
             additional_points_on_ring.append(point_index)
@@ -168,7 +169,7 @@ def create_slice_tringulation(triangulation_type, modify_phi, n_points, points, 
         if not current_point_is_on_boundary:
           interior_points.append(point)
       
-      # store points such that points = [<previous original points>, <newly determined points on the border>, <rest of points>]
+      # store points such that points = [<previous original points>, <newly determined points on the boundary>, <rest of points>]
       
       original_points = np.array(new_points)
       new_points += interior_points
@@ -186,7 +187,7 @@ def create_slice_tringulation(triangulation_type, modify_phi, n_points, points, 
           
           if point_index >= n_original_points:
             
-            # count number of border points before old point_index
+            # count number of boundary points before old point_index
             n_additional_points_on_ring_before_point_index = 0
             for j in range(n_additional_points_on_ring):
               if additional_points_on_ring[j] < point_index:
@@ -199,11 +200,11 @@ def create_slice_tringulation(triangulation_type, modify_phi, n_points, points, 
                 point_indices_list[i][point_no] = point_index + n_additional_points_on_ring - n_additional_points_on_ring_before_point_index
                 break
       
-      # points has the following structure: [<list of original border points>, <list of new border points>, <list of interior points>]
-      # original_points has the following structure: [<list of original border points>, <list of new border points>]
+      # points has the following structure: [<list of original boundary points>, <list of new boundary points>, <list of interior points>]
+      # original_points has the following structure: [<list of original boundary points>, <list of new boundary points>]
       points = np.array(new_points)
       triangle_list = points[point_indices_list]
-      n_regular_grid_border_points = n_original_points
+      n_regular_grid_boundary_points = n_original_points
       n_original_points += n_additional_points_on_ring
       
       previous_original_point_phi_value = list(original_point_phi_value)
@@ -219,11 +220,11 @@ def create_slice_tringulation(triangulation_type, modify_phi, n_points, points, 
           original_point_phi_value[index] = equidistant_values[i]
         #print("original_point_phi_value: {}".format(original_point_phi_value))
     
-      #print("previous border points: {}, n_original_points: {}, n_additional_points_on_ring: {}, interior: {}, n_points: {}".\
+      #print("previous boundary points: {}, n_original_points: {}, n_additional_points_on_ring: {}, interior: {}, n_points: {}".\
       #  format(n_original_points-n_additional_points_on_ring, n_original_points, n_additional_points_on_ring, n_points-n_original_points, n_points))
       #print("additional_points_on_ring: {}".format(additional_points_on_ring))
       
-      # setup map between parameter space regular grid in the circle and the transformed parameter space grid with the additional border points
+      # setup map between parameter space regular grid in the circle and the transformed parameter space grid with the additional boundary points
       # this is done by defining a map for phi
       # map from phi to phi
       
@@ -233,24 +234,24 @@ def create_slice_tringulation(triangulation_type, modify_phi, n_points, points, 
         if phi_in < 0:
           phi_in += 2*np.pi
         
-        # determine position of phi between regular grid border points
-        phi_increment = (2*np.pi) / n_regular_grid_border_points
-        previous_border_point_index = (int)(phi_in / phi_increment)
+        # determine position of phi between regular grid boundary points
+        phi_increment = (2*np.pi) / n_regular_grid_boundary_points
+        previous_boundary_point_index = (int)(phi_in / phi_increment)
         
-        # determine factor between previous and next border point
-        alpha = (phi_in - previous_border_point_index*phi_increment) / phi_increment
+        # determine factor between previous and next boundary point
+        alpha = (phi_in - previous_boundary_point_index*phi_increment) / phi_increment
         
-        # determine positions of phi in the new border points
+        # determine positions of phi in the new boundary points
         next_phi_value = 2*np.pi
-        if previous_border_point_index+1 < len(original_point_phi_value):
-          next_phi_value = original_point_phi_value[previous_border_point_index+1]
+        if previous_boundary_point_index+1 < len(original_point_phi_value):
+          next_phi_value = original_point_phi_value[previous_boundary_point_index+1]
           
-        previous_phi_value = original_point_phi_value[previous_border_point_index]
+        previous_phi_value = original_point_phi_value[previous_boundary_point_index]
         
-        # compute phi value with alpha between new border points
+        # compute phi value with alpha between new boundary points
         phi_out = previous_phi_value + alpha * (next_phi_value - previous_phi_value)
         
-        #print("phi_in: {}, phi_increment: {}, previous_border_point_index:{} [{},{}], alpha:{} new:[{},{}], phi_out: {}".format(phi_in, phi_increment, previous_border_point_index, previous_border_point_index*phi_increment, (previous_border_point_index+1)*phi_increment, alpha,\
+        #print("phi_in: {}, phi_increment: {}, previous_boundary_point_index:{} [{},{}], alpha:{} new:[{},{}], phi_out: {}".format(phi_in, phi_increment, previous_boundary_point_index, previous_boundary_point_index*phi_increment, (previous_boundary_point_index+1)*phi_increment, alpha,\
         #  previous_phi_value, next_phi_value, phi_out))
         
         return phi_out
@@ -259,7 +260,7 @@ def create_slice_tringulation(triangulation_type, modify_phi, n_points, points, 
     # 2: simple custom triangulation with triangles around one center point in CoG
     # 3: custom triangulation with triangles around point for which distance is minimized
 
-    # compute the center point by minimizing the distances to the border points
+    # compute the center point by minimizing the distances to the boundary points
     if triangulation_type == 3:
       
       # objective function
@@ -274,7 +275,7 @@ def create_slice_tringulation(triangulation_type, modify_phi, n_points, points, 
         distance += distance_to_cog*1e-8   
         return distance
       
-      # compute the rotation angle when iterating over all connection vectors between center and border point
+      # compute the rotation angle when iterating over all connection vectors between center and boundary point
       def rotation_angle(center_point_x, center_point_y):
         total_angle = 0
         last_vector = None
@@ -363,5 +364,5 @@ def create_slice_tringulation(triangulation_type, modify_phi, n_points, points, 
     #triangle_list = points[point_indices_list]  ## doesn't work sometimes
     
   print("  number of projected points: ",len(projected_points),", number of initial triangles: ", len(point_indices_list))
-  return point_indices_list, triangle_list, n_points, points, n_original_points, original_points, original_point_phi_value, get_modified_phi, n_regular_grid_border_points, extent_x, extent_y
+  return point_indices_list, triangle_list, n_points, points, n_original_points, original_points, original_point_phi_value, get_modified_phi, n_regular_grid_boundary_points, extent_x, extent_y, n_additional_points_on_ring, determine_additional_points_on_ring
   

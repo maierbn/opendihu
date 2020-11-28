@@ -157,7 +157,7 @@ def transform_to_world_space(x, y, triangles_parametric_space, triangle_list, pa
     point_world_space = (1 - xi[0] - xi[1])*p1 + xi[0]*p2 + xi[1]*p3
     return point_world_space
   
-def map_quadrangulation_to_world_space(u, v, n_grid_points_x, n_grid_points_y, parametric_space_shape, modify_phi, original_point_phi_value, get_modified_phi, n_regular_grid_border_points, point_indices_list, triangle_list, extent_x, debugging_stl_output, stl_triangle_lists):
+def map_quadrangulation_to_world_space(u, v, n_grid_points_x, n_grid_points_y, parametric_space_shape, modify_phi, original_point_phi_value, get_modified_phi, n_regular_grid_boundary_points, point_indices_list, triangle_list, extent_x, points, debugging_stl_output, stl_triangle_lists):
   """
   This is a helper function for stl_create_mesh.create_planar_mesh, defined in create_planar_mesh.py
   Map a quadrangulation on the parameter domain to the world domain (2D slice)
@@ -170,13 +170,13 @@ def map_quadrangulation_to_world_space(u, v, n_grid_points_x, n_grid_points_y, p
   :param point_indices_list: a list of the indices into the points array for each triangle of the triangulation
   :param triangle_list: the resulting triangles with their points
   :param debugging_stl_output: if list should be filled with STL triangles that can be output to a STL mesh for debugging
-  :param stl_triangle_lists: the debugging lists: [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
+  :param stl_triangle_lists: the debugging lists: [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
   :return: grid_points_world_space, grid_points_parametric_space, the mapped grid points of the quadrangulation
   """
   
   debug = False   # enable debugging output
   if debugging_stl_output:
-    [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
+    [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
       markers_grid_points_parametric_space, markers_grid_points_world_space] = stl_triangle_lists
 
   
@@ -198,6 +198,9 @@ def map_quadrangulation_to_world_space(u, v, n_grid_points_x, n_grid_points_y, p
     
   if debugging_stl_output:
     # create parametric space triangles for debugging output, move near ring and scale 10x
+    center_point = np.sum(points,axis=0)/len(points)
+    z_value = center_point[2]
+  
     x_offset = center_point[0] + extent_x*1.5
     y_offset = center_point[1]
     scale = 10.0
@@ -336,7 +339,7 @@ def map_quadrangulation_to_world_space(u, v, n_grid_points_x, n_grid_points_y, p
           y_modified = 0.
           
       # transform to world space
-      # if there were additional border points from the triangulation that also got Dirichlet BC, and modifiy_phi is set to true, compute world points differently
+      # if there were additional boundary points from the triangulation that also got Dirichlet BC, and modifiy_phi is set to true, compute world points differently
       if modify_phi:
         point_world_space = transform_to_world_space(x_modified,y_modified,triangles_parametric_space,triangle_list,parametric_space_shape)
       else:
@@ -361,4 +364,4 @@ def map_quadrangulation_to_world_space(u, v, n_grid_points_x, n_grid_points_y, p
   #distances_current_loop,relative_distances_current_loop = compute_mean_distances(grid_points_world_space)
   #print("transformed, std: {}".format(np.std(relative_distances_current_loop))
   
-  return grid_points_world_space, grid_points_parametric_space
+  return grid_points_world_space, grid_points_parametric_space, grid_points_parametric_space_modified

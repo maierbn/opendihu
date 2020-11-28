@@ -123,11 +123,11 @@ print("{} loops".format(n_loops))
 
 # sample loop with 4*n_points_x equidistant points
 n_points = 4*n_points_x
-border_point_loops,lengths = stl_create_mesh.rings_to_border_points(loops, n_points)
+boundary_point_loops,lengths = stl_create_mesh.rings_to_boundary_points(loops, n_points)
 
 # triangle lists for debugging output to stl files
 out_triangulation_world_space = []
-markers_border_points_world_space = []
+markers_boundary_points_world_space = []
 out_triangulation_parametric_space = []
 grid_triangles_world_space = []
 grid_triangles_parametric_space = []
@@ -139,17 +139,17 @@ loop_grid_points = []  # list of grid point, for every slice, only contains loop
 distances_between_world_mesh_nodes_std = []   # list of distances between neighboring grid points
 relative_distances_between_world_mesh_nodes_std = []   # list of relative distances between neighbouring grid points, relative per slice
 
-# loop over all loops of border points
-for loop_no,(border_points,length) in enumerate(zip(border_point_loops,lengths)):
+# loop over all loops of boundary points
+for loop_no,(boundary_points,length) in enumerate(zip(boundary_point_loops,lengths)):
     
   print("")
-  print("Loop {}/{} with {} border points, length: {}".format(loop_no, n_loops, len(border_points), length))
+  print("Loop {}/{} with {} boundary points, length: {}".format(loop_no, n_loops, len(boundary_points), length))
   
-  # create 2D mesh with border_points
+  # create 2D mesh with boundary_points
   show_plot = False
-  grid_points_world_space,duration_1d = stl_create_mesh.create_planar_mesh(border_points, loop_no, n_points, \
+  grid_points_world_space,duration_1d = stl_create_mesh.create_planar_mesh(boundary_points, loop_no, n_points, \
     n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, improve_mesh, show_plot, debugging_stl_output,\
-    [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
+    [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
       markers_grid_points_parametric_space, markers_grid_points_world_space])
 
   duration += duration_1d
@@ -255,7 +255,7 @@ def write_stl(triangles, outfile, description):
 
 if debugging_stl_output:
   print("current working directory: {}".format(os.getcwd()))
-  write_stl(markers_border_points_world_space,   "out/mesh_02_border_points_w.stl", "border points")
+  write_stl(markers_boundary_points_world_space,   "out/mesh_02_boundary_points_w.stl", "boundary points")
   write_stl(out_triangulation_world_space,       "out/mesh_03_triangulation_w.stl", "triangulation world space")
   write_stl(out_triangulation_parametric_space,  "out/mesh_04_triangulation_p.stl", "triangulation parametric space")
   write_stl(grid_triangles_parametric_space,     "out/mesh_05_grid_triangles_p.stl","grid parametric space")

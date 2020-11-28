@@ -283,8 +283,8 @@ nNodesGlobal(int coordinateDirection) const
   return nElementsGlobal_[coordinateDirection] * FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
 }
 
-//! get if there are nodes on both borders in the given coordinate direction
-//! this is the case if the local partition touches the right/top/back border
+//! get if there are nodes on both boundarys in the given coordinate direction
+//! this is the case if the local partition touches the right/top/back boundary
 template<typename MeshType,typename BasisFunctionType>
 bool MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 hasFullNumberOfNodes(int coordinateDirection, int partitionIndex) const
@@ -299,7 +299,7 @@ hasFullNumberOfNodes(int coordinateDirection, int partitionIndex) const
   }
   else
   {
-    // determine if the local partition is at the x+/y+/z+ border of the global domain
+    // determine if the local partition is at the x+/y+/z+ boundary of the global domain
     return (partitionIndex == nRanks_[coordinateDirection]-1);
   }
 }

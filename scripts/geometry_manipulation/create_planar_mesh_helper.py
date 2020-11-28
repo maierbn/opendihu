@@ -18,7 +18,8 @@ from mpl_toolkits.mplot3d import axes3d
 import matplotlib.pyplot as plt
 from matplotlib import collections, patches
 
-def output_debugging_files(grid_points_world_space, grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, parametric_space_shape, point_indices_list, triangle_list, stl_triangle_lists):
+def output_debugging_files(grid_points_parametric_space, grid_points_world_space, grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, parametric_space_shape,
+                           u, v, points, n_points_per_face, n_additional_points_on_ring, loop_no, show_plot, extent_x, determine_additional_points_on_ring, grid_points_parametric_space_modified, point_indices_list, triangle_list, stl_triangle_lists):
   """
   This is a helper function for stl_create_mesh.create_planar_mesh, defined in create_planar_mesh.py
   Output various plots for debugging.
@@ -30,10 +31,10 @@ def output_debugging_files(grid_points_world_space, grid_points_world_space_impr
   :param point_indices_list: a list of the indices into the points array for each triangle of the triangulation
   :param triangle_list: the resulting triangles with their points
   :param debugging_stl_output: if list should be filled with STL triangles that can be output to a STL mesh for debugging
-  :param stl_triangle_lists: the debugging lists: [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
+  :param stl_triangle_lists: the debugging lists: [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
   """
   
-  [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
+  [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
     markers_grid_points_parametric_space, markers_grid_points_world_space] = stl_triangle_lists
 
   # create triangles of new grid points mesh
@@ -50,6 +51,13 @@ def output_debugging_files(grid_points_world_space, grid_points_world_space_impr
   max_x = -100000
   max_y = -100000
   factor = 1.0
+  scale = 10  
+
+  center_point = np.sum(points,axis=0)/len(points)
+  z_value = center_point[2]
+  
+  x_offset = center_point[0] + extent_x*1.5
+  y_offset = center_point[1]
   
   # loop over grid points in parametric space
   for (j,y) in enumerate(np.linspace(0.0,1.0,n_grid_points_y)):

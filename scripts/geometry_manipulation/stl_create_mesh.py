@@ -3,7 +3,7 @@
 #
 # This file contains functionality to creates a hexaeder mesh out of the rings given by create_rings.py. 
 # The terms "ring" and "loop" are used synonymously in this file.
-# Use create_mesh.py to actual perform the whole pipeline, or look at create_3d_mesh_simple or create_3d_mesh_from_border_points_faces.
+# Use create_mesh.py to actual perform the whole pipeline, or look at create_3d_mesh_simple or create_3d_mesh_from_boundary_points_faces.
 # Output is a dict containing
 #  {
 #  "node_positions": nodes, 
@@ -174,25 +174,25 @@ def standardize_loop(loop, lengths):
     
   return sorted_loop
     
-def sample_border_points(loop, length, n_points, target_x, last_loop_start_point):
+def sample_boundary_points(loop, length, n_points, target_x, last_loop_start_point):
   """
   Given a loops of points (which are spaced like the initial STL triangles were), sample the loops at n_points equidistant points.
   The starting point is determined as follows: If last_loop_start_point is None, it determines the start point from target_x.
   The start point lies on the intersection of the plane x=target_x with the loop. if there are multiple intersections, the first that is in y- direction from the cog is taken.
   If last_loop_start_point is given, the start point is the point which has the lowest distance to last_loop_start_point., i.e. the connection line is perpendicular to the loop.
-  This is helpful to ensure that two neighbouring loops on different z-levels yield similar border point loops.
+  This is helpful to ensure that two neighbouring loops on different z-levels yield similar boundary point loops.
   
   :param loop:   List of points that form the loop to be sampled.
   :param length:  The length of the loop, should be measured previously
   :param n_points: Number of points that will be created.
   :param target_x: a plane x=target_x that will determine the start point in the loop. The start point lies on that plane and is the one left (in x- direction) of the center.
   :param last_loop_start_point: If None, target_x will be used to determine the start_point, if given the start_point is chosen in a way such that its distance to last_loop_start_point is minimal.
-  :return: start_point, border_points
+  :return: start_point, boundary_points
   """
   
   debug = False
-  border_points = []            # this list will hold the result
-  h = float(length) / n_points  # parameter increment between border points
+  boundary_points = []            # this list will hold the result
+  h = float(length) / n_points  # parameter increment between boundary points
   
   # determine start point
   center_point = sum(loop)/len(loop)
@@ -200,7 +200,7 @@ def sample_border_points(loop, length, n_points, target_x, last_loop_start_point
     target_x = 0.5*(loop[0][0]+loop[-1][0])   # plane x=target_x on which the start point will lie, it has to be ensured, that all rings touch this plane
   
   if debug:
-    print("sample_border_points, loop with {} points, length: {}, sample {} points, target_x: {}, h: {}, last_loop_start_point:{}\n".format(len(loop), length, n_points, target_x, h, last_loop_start_point))
+    print("sample_boundary_points, loop with {} points, length: {}, sample {} points, target_x: {}, h: {}, last_loop_start_point:{}\n".format(len(loop), length, n_points, target_x, h, last_loop_start_point))
     print("loop: {}".format(loop))
     
     # check if given length is correct
@@ -283,7 +283,7 @@ def sample_border_points(loop, length, n_points, target_x, last_loop_start_point
   loop_iteration_no = 0
   end_iteration = False
   
-  # iterate over the loop of points until the start point is reached, then iterate one more time, collecting the sampled border points in equidistant intervals
+  # iterate over the loop of points until the start point is reached, then iterate one more time, collecting the sampled boundary points in equidistant intervals
   while not end_iteration:
     loop_point = loop[point_index]
     
@@ -309,7 +309,7 @@ def sample_border_points(loop, length, n_points, target_x, last_loop_start_point
       if start_point_reached:
         end_iteration = True
       else:
-        # now the search for the start point has ended and the normal iterations where border points will be sampled continues
+        # now the search for the start point has ended and the normal iterations where boundary points will be sampled continues
         start_point_reached = True
         
         # if the start point is not yet set
@@ -319,17 +319,17 @@ def sample_border_points(loop, length, n_points, target_x, last_loop_start_point
           alpha = (target_x - previous_loop_point[0]) / edge_length
           start_point = previous_loop_point + alpha*edge
         
-        # add starting point of loop as first border points
-        border_points.append(start_point)
+        # add starting point of loop as first boundary points
+        boundary_points.append(start_point)
         if debug:
-          print("   add start point: ",border_points)
+          print("   add start point: ",boundary_points)
         
         previous_loop_point = start_point
         
         t_previous_loop_point = 0
-        t_next_border_point = h
+        t_next_boundary_point = h
           
-    # if we are at the second part of the loop iteration where the actual border points are collected
+    # if we are at the second part of the loop iteration where the actual boundary points are collected
     if start_point_reached:
       # compute current edge
       edge = -previous_loop_point + loop_point 
@@ -337,22 +337,22 @@ def sample_border_points(loop, length, n_points, target_x, last_loop_start_point
       
       n_on_edge = 0
       
-      # collect all border points on current edge
-      while t_next_border_point <= t_previous_loop_point + edge_length:
+      # collect all boundary points on current edge
+      while t_next_boundary_point <= t_previous_loop_point + edge_length:
         
-        border_point = previous_loop_point + edge * (t_next_border_point - t_previous_loop_point) / edge_length
-        border_points.append(border_point)
+        boundary_point = previous_loop_point + edge * (t_next_boundary_point - t_previous_loop_point) / edge_length
+        boundary_points.append(boundary_point)
         
         if debug:
-          print("   > border point {}, t previous: {}, edge length: {}, next: {},  t_previous_loop_point + edge_length: {}".format(border_point, t_previous_loop_point, edge_length, t_next_border_point,  t_previous_loop_point + edge_length))
+          print("   > boundary point {}, t previous: {}, edge length: {}, next: {},  t_previous_loop_point + edge_length: {}".format(boundary_point, t_previous_loop_point, edge_length, t_next_boundary_point,  t_previous_loop_point + edge_length))
         
-        t_next_border_point += h
+        t_next_boundary_point += h
         if debug:
           n_on_edge += 1
-          print("   new t_next_border_point: ",t_next_border_point)
+          print("   new t_next_boundary_point: ",t_next_boundary_point)
       
       if debug:
-        print("   edge length {}, edge ({}, {}), n_on_edge: {}, t_previous_loop_point: {} t_next_border_point: {}".format(edge_length,previous_loop_point,loop_point,n_on_edge,t_previous_loop_point,t_next_border_point))
+        print("   edge length {}, edge ({}, {}), n_on_edge: {}, t_previous_loop_point: {} t_next_boundary_point: {}".format(edge_length,previous_loop_point,loop_point,n_on_edge,t_previous_loop_point,t_next_boundary_point))
       
       # move on to next edge
       t_previous_loop_point += edge_length
@@ -370,7 +370,7 @@ def sample_border_points(loop, length, n_points, target_x, last_loop_start_point
       last_loop_start_point = loop[0]
       
       # restart with last_loop_start_point set to the first point in the loop
-      return sample_border_points(loop, length, n_points, target_x, last_loop_start_point)
+      return sample_boundary_points(loop, length, n_points, target_x, last_loop_start_point)
   
   # end of while loop
   
@@ -378,38 +378,38 @@ def sample_border_points(loop, length, n_points, target_x, last_loop_start_point
     print("visited ring length: {}, actual length: {}".format(t_previous_loop_point, length))
   
   if debug:
-    print("distances between border points, note this are not necessary the same as h:")
-    p0 = border_points[0]
-    for p in border_points[1:]:
+    print("distances between boundary points, note this are not necessary the same as h:")
+    p0 = boundary_points[0]
+    for p in boundary_points[1:]:
       print("  {}".format(np.linalg.norm(p0-p)))
       p0 = p
   
   # If there were too many points collected, crop to needed points.
   # This happens because on the edge of the starting point, p0-ps-p1 (with edge p0-p1 and ps=starting point), the part ps-p1 is visited twice.
-  if len(border_points) > n_points:
+  if len(boundary_points) > n_points:
     if debug:
-      print("too many points: {}, n_points: {}, {}\n\n".format(len(border_points), n_points, border_points))
-    border_points = border_points[:n_points]
-  elif len(border_points) < n_points:
-    print("Error, not enough points: {}, n_points: {}, {}\n\n".format(len(border_points), n_points, border_points))
+      print("too many points: {}, n_points: {}, {}\n\n".format(len(boundary_points), n_points, boundary_points))
+    boundary_points = boundary_points[:n_points]
+  elif len(boundary_points) < n_points:
+    print("Error, not enough points: {}, n_points: {}, {}\n\n".format(len(boundary_points), n_points, boundary_points))
   
   if debug:
     print("result: ")
     print("start point: ",start_point)
-    print("border points: ",len(border_points))
-    print(border_points)
+    print("boundary points: ",len(boundary_points))
+    print(boundary_points)
     print("h: ",h)
-    print("n border points: {}".format(len(border_points)))
+    print("n boundary points: {}".format(len(boundary_points)))
   
-  return start_point,border_points
+  return start_point,boundary_points
     
-def rings_to_border_points(loops, n_points):
+def rings_to_boundary_points(loops, n_points):
   """
   Standardize every ring to be in counter-clockwise direction and starting with the point with lowest x coordinate,
-  then sample border points
+  then sample boundary points
   :param loops: list of rings
-  :param n_points: number of border points that should be sampled per ring
-  :returns: border_point_loops,lengths  where lengths is a list of lengths of each loop and border_point_loops is the list of loops with border points
+  :param n_points: number of boundary points that should be sampled per ring
+  :returns: boundary_point_loops,lengths  where lengths is a list of lengths of each loop and boundary_point_loops is the list of loops with boundary points
   """
   # standardize all rings
   sorted_loops = []
@@ -426,8 +426,8 @@ def rings_to_border_points(loops, n_points):
   #mean_point = sum(sum(loop)/len(loop) for loop in loops)/len(loops)
   #target_x = mean_point[1]
   
-  # sample border points for each ring
-  border_point_loops = []
+  # sample boundary points for each ring
+  boundary_point_loops = []
   last_loop_start_point = None
   for loop_no,(loop,length) in enumerate(zip(sorted_loops,lengths)):
     
@@ -448,31 +448,31 @@ def rings_to_border_points(loops, n_points):
     target_x = center_point[0]
     
     # sample loop with n_points equidistant points
-    start_point,border_points = sample_border_points(loop, length, n_points, target_x, last_loop_start_point)
+    start_point,boundary_points = sample_boundary_points(loop, length, n_points, target_x, last_loop_start_point)
     last_loop_start_point = start_point
-    border_point_loops.append(border_points)
+    boundary_point_loops.append(boundary_points)
     
-  return border_point_loops,lengths
+  return boundary_point_loops,lengths
 
-def border_point_loops_to_list(border_point_loops):
+def boundary_point_loops_to_list(boundary_point_loops):
   """
   transform the points from numpy array to list, such that they can be extracted from the opendihu C++ code
   """
   result = []
-  for border_point_loop in border_point_loops:
-    result_border_points = []
-    for border_point in border_point_loop:
-      result_border_points.append(border_point.tolist())
-    result.append(result_border_points)
+  for boundary_point_loop in boundary_point_loops:
+    result_boundary_points = []
+    for boundary_point in boundary_point_loop:
+      result_boundary_points.append(boundary_point.tolist())
+    result.append(result_boundary_points)
   return result
 
-def create_planar_mesh(border_points, loop_no, n_points, \
+def create_planar_mesh(boundary_points, loop_no, n_points, \
     n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, improve_mesh, show_plot, debugging_stl_output, stl_triangle_lists):
   """
-  Create a 2d mesh using the harmonic map algorithm. Input is a list of border points which will be the boundary nodes of the mesh.
-  :param border_points: list of points on the border that will be the nodes, (each point is again a list with 3 entries)
+  Create a 2d mesh using the harmonic map algorithm. Input is a list of boundary points which will be the boundary nodes of the mesh.
+  :param boundary_points: list of points on the boundary that will be the nodes, (each point is again a list with 3 entries)
   :param loop_no: the number of the current loop, this is only needed for debugging output filename
-  :param n_points: number of points on the border of the resulting mesh
+  :param n_points: number of points on the boundary of the resulting mesh
   :param n_grid_points_x: number of grid points in x direction of the final quadrangulation
   :param n_grid_points_y: number of grid points in y direction of the final quadrangulation
   :param triangulation_type: 0 = scipy, 1 = triangle, 2 = center pie (2 is best), 3 = minimized distance
@@ -481,7 +481,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
   :param improve_mesh: if the generated mesh should be smoothed afterwards
   :param show_plot: if the matplotlib plots of geometry and harmonic map should be generated
   :param debugging_stl_output: if list should be filled with STL triangles that can be output to a STL mesh for debugging
-  :param stl_triangle_lists: the debugging lists: [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
+  :param stl_triangle_lists: the debugging lists: [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
   """
 
   # note: the first and last point in the loop is the same, because it represents the edges between the points
@@ -494,18 +494,19 @@ def create_planar_mesh(border_points, loop_no, n_points, \
   debug = False   # enable debugging output
   
   if debugging_stl_output:
-    [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
+    [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
       markers_grid_points_parametric_space, markers_grid_points_world_space] = stl_triangle_lists
     
-  if len(border_points) != n_points:
-    print("\nError in create_planar_mesh, n_points: {}, but {} border points given.\n border points: {}\n".format(n_points, len(border_points), border_points))
+  if len(boundary_points) != n_points:
+    print("\nError in create_planar_mesh, n_points: {}, but {} boundary points given.\n boundary points: {}\n".format(n_points, len(boundary_points), boundary_points))
   
   modify_phi = False
   if parametric_space_shape == 3:
     modify_phi = True
   
   # triangulate surface in world space
-  points = np.reshape(border_points,(n_points,3))
+  points = np.reshape(boundary_points,(n_points,3))
+  n_points_per_face = (int)(n_points/4)
   
   if debug:  
     print("")
@@ -513,7 +514,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
     print(points)
 
   if debugging_stl_output:
-    # for debugging create markers at border points
+    # for debugging create markers at boundary points
     factor = 1.0
     for point in points:
       factor *= 1.02
@@ -528,7 +529,7 @@ def create_planar_mesh(border_points, loop_no, n_points, \
       diag5 = np.array([size,-size,size])
       diag6 = np.array([-size,size,size])
       diag7 = np.array([size,size,size])
-      markers_border_points_world_space += [
+      markers_boundary_points_world_space += [
         [point+diag0,point+diag3,point+diag1],[point+diag0,point+diag2,point+diag3],  # bottom
         [point+diag4,point+diag5,point+diag7],[point+diag4,point+diag7,point+diag6],  # top
         [point+diag0,point+diag1,point+diag5],[point+diag0,point+diag5,point+diag4],  # front
@@ -537,26 +538,33 @@ def create_planar_mesh(border_points, loop_no, n_points, \
         [point+diag1,point+diag3,point+diag7],[point+diag1,point+diag7,point+diag5]  # right
       ]
 
+  # In the following, helper functions are called that implement the high-level steps of the algorithm. These helper functions are defined in their own script files.
+  # The high number of return variables is because the output_debugging_files functions needs them to output them all
+
   # create a triangulation on the 2D slice
-  point_indices_list, triangle_list, n_points, points, n_original_points, original_points, original_point_phi_value, get_modified_phi, n_regular_grid_border_points, extent_x, extent_y \
+  point_indices_list, triangle_list, n_points, points, n_original_points, original_points, original_point_phi_value, get_modified_phi, n_regular_grid_boundary_points, extent_x, extent_y, n_additional_points_on_ring, determine_additional_points_on_ring \
    = create_slice_tringulation.create_slice_tringulation(triangulation_type, modify_phi, n_points, points, max_area_factor)
 
   # solve Laplace equation on deformed mesh
   u,v = solve_laplace_problem.solve_laplace_problem(n_points, points, n_original_points, original_points, original_point_phi_value, triangulation_type, parametric_space_shape, point_indices_list, triangle_list, debugging_stl_output, stl_triangle_lists)
   
   # now the mapping x -> u,v is computed (from parameter space to world space)
-  grid_points_world_space, grid_points_parametric_space \
-   = map_quadrangulation_to_world_space.map_quadrangulation_to_world_space(u, v, n_grid_points_x, n_grid_points_y, parametric_space_shape, modify_phi, original_point_phi_value, get_modified_phi, n_regular_grid_border_points, point_indices_list, triangle_list, extent_x, debugging_stl_output, stl_triangle_lists)
+  grid_points_world_space, grid_points_parametric_space, grid_points_parametric_space_modified \
+   = map_quadrangulation_to_world_space.map_quadrangulation_to_world_space(u, v, n_grid_points_x, n_grid_points_y, parametric_space_shape, modify_phi, original_point_phi_value, get_modified_phi, n_regular_grid_boundary_points, point_indices_list, triangle_list, extent_x, points, debugging_stl_output, stl_triangle_lists)
   
   # improve the world mesh by Laplacian smoothing and fixing of self-intersections
   grid_points_world_space_improved = grid_points_world_space
   
-  if improve_mesh:   # optimize points, fix self-intersections and Laplacian smoothing
+  # if this is enabled
+  if improve_mesh:   
+    # optimize points, fix self-intersections and Laplacian smoothing
     grid_points_world_space_improved \
      = fix_and_smooth_mesh.fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_y, point_indices_list, triangle_list, extent_x, extent_y, debugging_stl_output, stl_triangle_lists)
   
+  # create various STL files that help understand and debug the algorithm
   if debugging_stl_output:
-    create_planar_mesh_helper.output_debugging_files(grid_points_world_space, grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, parametric_space_shape, point_indices_list, triangle_list, stl_triangle_lists)
+    create_planar_mesh_helper.output_debugging_files(grid_points_parametric_space, grid_points_world_space, grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, parametric_space_shape, 
+                                                     u, v, points, n_points_per_face, n_additional_points_on_ring, loop_no, show_plot, extent_x, determine_additional_points_on_ring, grid_points_parametric_space_modified, point_indices_list, triangle_list, stl_triangle_lists)
   
   t_stop = timeit.default_timer()
   duration = t_stop - t_start
@@ -738,19 +746,19 @@ def create_3d_mesh_simple(n_points_x, loops):
 
   # sample loop with 4*n_points_x equidistant points
   n_points = 4*n_points_x
-  border_point_loops,lengths = rings_to_border_points(loops, n_points)
+  boundary_point_loops,lengths = rings_to_boundary_points(loops, n_points)
 
   loop_grid_points = []  # list of grid point, for every slice, only contains loops that are not empty  
     
-  # loop over all loops of border points
-  for loop_no,(border_points,length) in enumerate(zip(border_point_loops,lengths)):
+  # loop over all loops of boundary points
+  for loop_no,(boundary_points,length) in enumerate(zip(boundary_point_loops,lengths)):
     
     print("")
-    print("Ring {}/{} with {} border points, length: {}".format(loop_no, n_loops, len(border_points), length))
+    print("Ring {}/{} with {} boundary points, length: {}".format(loop_no, n_loops, len(boundary_points), length))
     
-    # create 2D mesh with border_points
+    # create 2D mesh with boundary_points
     show_plot = False
-    grid_points_world_space,duration_1d = stl_create_mesh.create_planar_mesh(border_points, loop_no, n_points, \
+    grid_points_world_space,duration_1d = stl_create_mesh.create_planar_mesh(boundary_points, loop_no, n_points, \
       n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, improve_mesh, show_plot, debugging_stl_output, [])
         
     # store grid points in world space of current loop
@@ -759,20 +767,20 @@ def create_3d_mesh_simple(n_points_x, loops):
   data = stl_create_mesh.create_3d_mesh(loop_grid_points, n_grid_points_x, n_grid_points_y, debugging_stl_output, [])
   return data
 
-def create_3d_mesh_from_border_points_faces(border_points_faces, improve_mesh, level_no):
+def create_3d_mesh_from_boundary_points_faces(boundary_points_faces, improve_mesh, level_no):
   """
-  Create the 3D mesh from border points which are organised as faces.
-  :param border_points_faces: [border_points_0minus, border_points_0plus, border_points_1minus, border_points_1plus]
+  Create the 3D mesh from boundary points which are organised as faces.
+  :param boundary_points_faces: [boundary_points_0minus, boundary_points_0plus, boundary_points_1minus, boundary_points_1plus]
   :param improve_mesh: if the 2D meshes should be smoothed, this takes a lot of time but improves the result
   """
   
-  print("create_3d_mesh_from_border_points_faces")
+  print("create_3d_mesh_from_boundary_points_faces")
 
   if False:
-    filename = "dump_border_points_faces_{}.py".format(os.getpid())
+    filename = "dump_boundary_points_faces_{}.py".format(os.getpid())
     print("dump to filename:{}".format(filename))
     with open(filename, 'wb') as f:
-      pickle.dump(border_points_faces, f)
+      pickle.dump(boundary_points_faces, f)
           
   # constant parameters
   triangulation_type = 1  # 0 = scipy, 1 = triangle, 2 = center pie (2 is best), 3 = minimized distance
@@ -782,99 +790,99 @@ def create_3d_mesh_from_border_points_faces(border_points_faces, improve_mesh, l
   debugging_stl_output = False
   #improve_mesh = True    # post-smooth mesh
 
-  border_points_0minus = border_points_faces[0]   # the first / last point of each list for the face overlaps with an identical point on another face's list
-  border_points_0plus = border_points_faces[1]
-  border_points_1minus = border_points_faces[2]
-  border_points_1plus = border_points_faces[3]
-  n_loops = len(border_points_0minus)
-  #print("border_points_0minus: {}".format(border_points_0minus))
+  boundary_points_0minus = boundary_points_faces[0]   # the first / last point of each list for the face overlaps with an identical point on another face's list
+  boundary_points_0plus = boundary_points_faces[1]
+  boundary_points_1minus = boundary_points_faces[2]
+  boundary_points_1plus = boundary_points_faces[3]
+  n_loops = len(boundary_points_0minus)
+  #print("boundary_points_0minus: {}".format(boundary_points_0minus))
   
   #   ^ --(1+)-> ^
   # ^ 0-         0+
   # | | --(1-)-> |
   # +-->
 
-  border_point_loops = []
+  boundary_point_loops = []
   for loop_no in range(n_loops):
-    border_point_loop = []
+    boundary_point_loop = []
     
-    # do not consider last point of border_points which is the same as the first of the next face
-    for point in border_points_1minus[loop_no][0:-1]:
-      border_point_loop.append(np.array(point))
+    # do not consider last point of boundary_points which is the same as the first of the next face
+    for point in boundary_points_1minus[loop_no][0:-1]:
+      boundary_point_loop.append(np.array(point))
 
-    for point in border_points_0plus[loop_no][0:-1]:
-      border_point_loop.append(np.array(point))
+    for point in boundary_points_0plus[loop_no][0:-1]:
+      boundary_point_loop.append(np.array(point))
 
-    for i,point in enumerate(reversed(border_points_1plus[loop_no])):
-      if i == len(border_points_1plus[loop_no])-1:
+    for i,point in enumerate(reversed(boundary_points_1plus[loop_no])):
+      if i == len(boundary_points_1plus[loop_no])-1:
         break
-      border_point_loop.append(np.array(point))
+      boundary_point_loop.append(np.array(point))
 
-    for i,point in enumerate(reversed(border_points_0minus[loop_no])):
-      if i == len(border_points_0minus[loop_no])-1:
+    for i,point in enumerate(reversed(boundary_points_0minus[loop_no])):
+      if i == len(boundary_points_0minus[loop_no])-1:
         break
-      border_point_loop.append(np.array(point))
+      boundary_point_loop.append(np.array(point))
 
-    border_point_loops.append(border_point_loop)
+    boundary_point_loops.append(boundary_point_loop)
 
-  #print("border_point_loops: {}".format(border_point_loops))
+  #print("boundary_point_loops: {}".format(boundary_point_loops))
 
-  n_points = len(border_point_loops[0])    
+  n_points = len(boundary_point_loops[0])    
   n_points_x = (int)(n_points/4)  
   n_grid_points_x = n_points_x+1   # grid width of generated 2d mesh
   n_grid_points_y = n_points_x+1
     
-  def handle_loop(loop_no, border_points):
-    n_points = len(border_points)    
+  def handle_loop(loop_no, boundary_points):
+    n_points = len(boundary_points)    
     n_points_x = (int)(n_points/4)  
     n_grid_points_x = n_points_x+1   # grid width of generated 2d mesh
     n_grid_points_y = n_points_x+1
 
     print("")
-    print("Level {}, ring {}/{} with {} border points".format(level_no, loop_no, n_loops, n_points))
-    #print("border points: ", border_points)
+    print("Level {}, ring {}/{} with {} boundary points".format(level_no, loop_no, n_loops, n_points))
+    #print("boundary points: ", boundary_points)
     
-    # create 2D mesh with border_points
+    # create 2D mesh with boundary_points
     if debugging_stl_output:
       out_triangulation_world_space = []
-      markers_border_points_world_space = []
+      markers_boundary_points_world_space = []
       out_triangulation_parametric_space = []
       grid_triangles_world_space = []
       grid_triangles_parametric_space = []
       markers_grid_points_parametric_space = []
       markers_grid_points_world_space = []
-      debugging_output_lists = [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
+      debugging_output_lists = [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
     else:
       debugging_output_lists = []
     
     if loop_no == 0 and False:
-      output = (border_points, loop_no, n_points, n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, show_plot)
+      output = (boundary_points, loop_no, n_points, n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, show_plot)
       filename = "dump_mesh_2d_{}.py".format(os.getpid())
       print("dump to filename:{}".format(filename))
       with open(filename, 'wb') as f:
         pickle.dump(output, f)
     
-    grid_points_world_space,duration_1d = create_planar_mesh(border_points, loop_no, n_points, \
+    grid_points_world_space,duration_1d = create_planar_mesh(boundary_points, loop_no, n_points, \
       n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, improve_mesh, show_plot, debugging_stl_output, debugging_output_lists)
       
     if debugging_stl_output and False:
       stl_debug_output.output_triangles("2dmesh_loop_{}_w_triangulation".format(loop_no), out_triangulation_world_space)
       stl_debug_output.output_triangles("2dmesh_loop_{}_p_triangulation".format(loop_no), out_triangulation_parametric_space)
       stl_debug_output.output_triangles("2dmesh_loop_{}_p_grid".format(loop_no), grid_triangles_parametric_space + markers_grid_points_parametric_space)
-      stl_debug_output.output_triangles("2dmesh_loop_{}_w_border".format(loop_no), markers_border_points_world_space)
+      stl_debug_output.output_triangles("2dmesh_loop_{}_w_boundary".format(loop_no), markers_boundary_points_world_space)
       stl_debug_output.output_triangles("2dmesh_loop_{}_w_grid".format(loop_no), grid_triangles_world_space + markers_grid_points_world_space)
         
     # store grid points in world space of current loop
     #loop_grid_points.append(grid_points_world_space)
     return grid_points_world_space
   
-  loop_grid_points = [[] for i in range(len(border_point_loops))]  # list of grid point, for every slice, only contains loops that are not empty  
+  loop_grid_points = [[] for i in range(len(boundary_point_loops))]  # list of grid point, for every slice, only contains loops that are not empty  
   
-  print("create 2D meshes on {} loops, then create a 3D mesh".format(len(border_point_loops)))
+  print("create 2D meshes on {} loops, then create a 3D mesh".format(len(boundary_point_loops)))
   # serial implementation
   if True:
-    for loop_no,border_points in enumerate(border_point_loops):
-      loop_grid_points[loop_no] = handle_loop(loop_no, border_points)
+    for loop_no,boundary_points in enumerate(boundary_point_loops):
+      loop_grid_points[loop_no] = handle_loop(loop_no, boundary_points)
       
       if len(loop_grid_points[loop_no]) == 0:
         return None
@@ -882,16 +890,16 @@ def create_3d_mesh_from_border_points_faces(border_points_faces, improve_mesh, l
   # concurrent execution, currently not working, but not clear why
   if False:
     print("start concurrent call")
-    # concurrently call handle_loop(loop_no, border_points) with the points in border_point_loops, this is the same as 
-    # for loop_no,border_points in enumerate(border_point_loops):
-    #   loop_grid_points[loop_no] = handle_loop(loop_no, border_points)
+    # concurrently call handle_loop(loop_no, boundary_points) with the points in boundary_point_loops, this is the same as 
+    # for loop_no,boundary_points in enumerate(boundary_point_loops):
+    #   loop_grid_points[loop_no] = handle_loop(loop_no, boundary_points)
     #
     try:
       import concurrent.futures
       with concurrent.futures.ProcessPoolExecutor(max_workers=10) as executor:
         
         print("create futures")
-        futures = {executor.submit(handle_loop, loop_no, border_points): loop_no for loop_no,border_points in enumerate(border_point_loops)}
+        futures = {executor.submit(handle_loop, loop_no, boundary_points): loop_no for loop_no,boundary_points in enumerate(boundary_point_loops)}
         print("futures created")
         #concurrent.futures.wait(futures)
         #print("futures finished")

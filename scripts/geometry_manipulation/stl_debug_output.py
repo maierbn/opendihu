@@ -261,7 +261,7 @@ def output_rings(filename, rankNo, level, rings, size):
       #if factor > 3:
       #  factor = 3.0
 
-    # close loop (not for border points on faces)
+    # close loop (not for boundary points on faces)
     if previous_point is not None:
       triangles.append([previous_point, first_point, 0.5*(previous_point+first_point)])
     
@@ -311,18 +311,18 @@ def output_rings(filename, rankNo, level, rings, size):
     
   print("> output_rings(filename={}, rankNo={}, n rings: {}, size={}) done".format(filename, rankNo, level, len(rings), size))
 
-def output_border_points(filename, rankNo, level, points, size):
+def output_boundary_points(filename, rankNo, level, points, size):
   
   triangles = []
   
-  print("> output_border_points(filename={}, rankNo={}, level={}, n points: {}, size={})".format(filename, rankNo, level, len(points), size))
+  print("> output_boundary_points(filename={}, rankNo={}, level={}, n points: {}, size={})".format(filename, rankNo, level, len(points), size))
   
   try:
     # setup points and vertices
     vtk_points = vtk.vtkPoints()
     vtk_lines = vtk.vtkCellArray()
   except Exception as error:
-    print("Error in setup for output_border_points, {}: {}".format(filename, error))
+    print("Error in setup for output_boundary_points, {}: {}".format(filename, error))
   
   
   # data structure:
@@ -356,7 +356,7 @@ def output_border_points(filename, rankNo, level, points, size):
             vtk_lines.InsertNextCell(vtk_line)
             line_no += 1
           except Exception as error:
-            print("Error in creating vtk dataset in output_border_points({}): {}".format(filename, error))
+            print("Error in creating vtk dataset in output_boundary_points({}): {}".format(filename, error))
             
         previous_point = point
         
@@ -365,7 +365,7 @@ def output_border_points(filename, rankNo, level, points, size):
         #if factor > 3:
         #  factor = 3.0        
       
-      # close loop (not for border points on faces)
+      # close loop (not for boundary points on faces)
       #if previous_point is not None:
       #  triangles.append([previous_point, first_point, 0.5*(previous_point+first_point)])
 
@@ -399,7 +399,7 @@ def output_border_points(filename, rankNo, level, points, size):
   except Exception as error:
     print("writing vtp file {} failed: {}".format(filename, error))
     
-  print("> output_border_points(filename={}, rankNo={}, level={}, n points: {}, size={}) done".format(filename, rankNo, level, len(points), size))
+  print("> output_boundary_points(filename={}, rankNo={}, level={}, n points: {}, size={}) done".format(filename, rankNo, level, len(points), size))
 
 def output_triangles(filename, triangles):
   #---------------------------------------

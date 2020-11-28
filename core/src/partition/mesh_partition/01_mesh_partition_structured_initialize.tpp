@@ -11,7 +11,7 @@ template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 initializeHasFullNumberOfNodes()
 {
-  // determine if the local partition is at the x+/y+/z+ border of the global domain
+  // determine if the local partition is at the x+/y+/z+ boundary of the global domain
   for (int i = 0; i < MeshType::dim(); i++)
   {
     assert (beginElementGlobal_[i] + nElementsLocal_[i] <= (int)nElementsGlobal_[i]);

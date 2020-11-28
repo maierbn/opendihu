@@ -12,7 +12,7 @@ import scipy.spatial
 import os
 import pickle
 import stl_create_rings # for create_rings
-import stl_create_mesh   # for rings_to_border_points
+import stl_create_mesh   # for rings_to_boundary_points
 
 import matplotlib
 from matplotlib import cm
@@ -105,9 +105,9 @@ if __name__ == "__main__":
 
     write_output_mesh = False
     rings = stl_create_rings.create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_mesh)
-    [loops, lengths] = stl_create_mesh.rings_to_border_points(rings, n_points_u-1)
+    [loops, lengths] = stl_create_mesh.rings_to_boundary_points(rings, n_points_u-1)
 
-    loops = stl_create_mesh.border_point_loops_to_list(loops)
+    loops = stl_create_mesh.boundary_point_loops_to_list(loops)
 
     #print("loops: ",loops)
 

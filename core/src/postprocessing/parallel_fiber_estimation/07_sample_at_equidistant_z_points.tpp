@@ -76,10 +76,10 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
   // loop over z levels of the streamline
   const double epsilon = 1e-5;   // this has to be ~1e-5 because the seed points are perturbed by MPI communcation around this amount
   double currentZ;
-  for (int zLevelIndex = 0; zLevelIndex < nBorderPointsZNew_; zLevelIndex++)
+  for (int zLevelIndex = 0; zLevelIndex < nBoundaryPointsZNew_; zLevelIndex++)
   {
     // compute current z level at which a point is searched
-    currentZ = bottomZClip + double(zLevelIndex) / (nBorderPointsZNew_-1) * (topZClip - bottomZClip);
+    currentZ = bottomZClip + double(zLevelIndex) / (nBoundaryPointsZNew_-1) * (topZClip - bottomZClip);
     VLOG(1) << "zLevelIndex " << zLevelIndex << ", currentZ: " << currentZ;
 
     // advance streamline until current z is reached
@@ -113,7 +113,7 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
         OutputWriter::Generic::openFile(file, logFilename, true);
         file << currentRankSubset_->ownRankNo() << ": l=" << level_ << " streamline " << streamlineNoForDebugging
           << " does not reach topZClip: " << topZClip << ", but finishes at " << (*streamlineIter)[2]
-          << ", z level " << zLevelIndex << "/" << nBorderPointsZNew_ << " (" << (topZClip - (*streamlineIter)[2]) / (topZClip - bottomZClip) * 100.0 << "% too early)" << std::endl;
+          << ", z level " << zLevelIndex << "/" << nBoundaryPointsZNew_ << " (" << (topZClip - (*streamlineIter)[2]) / (topZClip - bottomZClip) * 100.0 << "% too early)" << std::endl;
         file.close();
         break;
       }
@@ -163,7 +163,7 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
   LOG(DEBUG) << " n sampled points: " << streamlineZPoints.size()
     << ", clip: [" << bottomZClip << "," << topZClip << "], first: " << streamlineZPoints[0]
     << ", last: " << streamlineZPoints[streamlineZPoints.size()-1]
-    << ", nBorderPointsXNew_: " << nBorderPointsXNew_ << ", nBorderPointsZNew_: " << nBorderPointsZNew_;
+    << ", nBoundaryPointsXNew_: " << nBoundaryPointsXNew_ << ", nBoundaryPointsZNew_: " << nBoundaryPointsZNew_;
 
 #ifndef NDEBUG
 
@@ -181,7 +181,7 @@ sampleStreamlineAtEquidistantZPoints(std::vector<Vec3> &streamlinePoints, const 
 #endif
 
   // if streamline is not complete
-  if (streamlineZPoints.size() != nBorderPointsZNew_)
+  if (streamlineZPoints.size() != nBoundaryPointsZNew_)
   {
     LOG(DEBUG) << "Streamline " << streamlineNoForDebugging << " is not complete, i.e. does not run from \"bottomZClip\" to \"topZClip\" .";
 

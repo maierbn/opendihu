@@ -112,7 +112,7 @@ interpolateFineFibersFromFile()
   parameter = nFibersNew;
   fileNew.write(c, 4);
 
-  // nBorderPointsXNew
+  // nBoundaryPointsXNew
   fileNew.seekp(32+3*4);
   parameter = nFibersOldX;
   fileNew.write(c, 4);

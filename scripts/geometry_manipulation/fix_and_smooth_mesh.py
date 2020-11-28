@@ -122,11 +122,11 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
   :param point_indices_list: a list of the indices into the points array for each triangle of the triangulation
   :param triangle_list: the resulting triangles with their points
   :param debugging_stl_output: if list should be filled with STL triangles that can be output to a STL mesh for debugging
-  :param stl_triangle_lists: the debugging lists: [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
+  :param stl_triangle_lists: the debugging lists: [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
   """
   debug = False   # enable debugging output
   if debugging_stl_output:
-    [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
+    [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
       markers_grid_points_parametric_space, markers_grid_points_world_space] = stl_triangle_lists
 
   import copy
@@ -227,7 +227,7 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
           for k in range(4):
             (ii,jj) = indices[k]
             
-            # do not consider border points, they cannot be changed
+            # do not consider boundary points, they cannot be changed
             if ii <= 0 or jj <= 0 or ii >= n_grid_points_x-1 or jj >= n_grid_points_y-1:
               continue
             
@@ -508,7 +508,7 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
           for k in range(4):
             (ii,jj) = indices[k]
             
-            # do not consider border points, they cannot be changed
+            # do not consider boundary points, they cannot be changed
             if ii <= 0 or jj <= 0 or ii >= n_grid_points_x-1 or jj >= n_grid_points_y-1:
               continue
             

@@ -49,7 +49,7 @@ initialize()
     LOG(WARNING) << this->specificSettings_ << "[\"enableFatComputation\"] is set to false. This will disable the fat layer computation.";
   }
 
-  // initialize sharedNodes_ i.e. the border nodes that are shared between muscle and fat mesh
+  // initialize sharedNodes_ i.e. the boundary nodes that are shared between muscle and fat mesh
   findSharedNodesBetweenMuscleAndFat();
 
   // system to be solved (here for nCompartments_=3):
@@ -75,7 +75,7 @@ initialize()
 
   // initialize matrices B,C,D,E in submatrices for system matrix,
   // also set the last zero entry of the rhs and the entry for phi_b^(i+1) in the solution vector
-  initializeBorderVariables();
+  initializeBoundaryVariables();
 
   // from the initialize submatrices create the actual system matrix, this->nestedSystemMatrix_ 
   // as nested Petsc Mat and also the single Mat, this->singleSystemMatrix_ 
@@ -96,7 +96,7 @@ initialize()
   ierr = MatCreateVecs(b1_[0], &temporary_, NULL); CHKERRV(ierr);
 
   // initialize subvectors for rhs
-  // entry nCompartments was already set to zero by MultidomainSolver, entry nCompartments+1 was already set by initializeBorderVariables()
+  // entry nCompartments was already set to zero by MultidomainSolver, entry nCompartments+1 was already set by initializeBoundaryVariables()
   for (int k = 0; k < this->nCompartments_; k++)
   {    
     // initialize top part of rhs
@@ -105,7 +105,7 @@ initialize()
 
   // set values for phi_e
   this->subvectorsRightHandSide_[this->nCompartments_] = this->dataMultidomain_.zero()->valuesGlobal();
-  // subvectorsRightHandSide_[nCompartments_+1] has been set by initializeBorderVariables()
+  // subvectorsRightHandSide_[nCompartments_+1] has been set by initializeBoundaryVariables()
 
   // set vectors of Vm in compartments in subvectorsSolution_
   for (int k = 0; k < this->nCompartments_; k++)
@@ -118,7 +118,7 @@ initialize()
   // set values for phi_e
   this->subvectorsSolution_[this->nCompartments_] = this->dataMultidomain_.extraCellularPotential()->valuesGlobal();
   ierr = VecZeroEntries(this->subvectorsSolution_[this->nCompartments_]); CHKERRV(ierr);
-  // subvectorsSolution_[nCompartments_+1] has been set by initializeBorderVariables()
+  // subvectorsSolution_[nCompartments_+1] has been set by initializeBoundaryVariables()
 
   // create the nested Petsc Vec's
   LOG(DEBUG) << "create nested vector";
@@ -423,7 +423,7 @@ setInformationToPreconditioner()
   for (dof_no_t dofNoLocalFat = 0; dofNoLocalFat < this->dataFat_.functionSpace()->nDofsLocalWithoutGhosts(); dofNoLocalFat++)
   {
     // if current fat dof is not shared
-    if (borderDofsFat_.find(dofNoLocalFat) == borderDofsFat_.end())
+    if (boundaryDofsFat_.find(dofNoLocalFat) == boundaryDofsFat_.end())
     {
       Vec3 nodePosition = this->dataFat_.functionSpace()->getGeometry(dofNoLocalFat);
       
@@ -547,7 +547,7 @@ updateSystemMatrix()
   setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
   
   // also compute new entries for the matrices B, C, D and E
-  updateBorderMatrices();
+  updateBoundaryMatrices();
 
   // create the system matrix again
   this->createSystemMatrixFromSubmatrices();
@@ -667,8 +667,8 @@ solveLinearSystem()
   // to the nested Petsc Vec, nestedSolution_ which contains the components in subvectorsSolution_
   NestedMatVecUtility::fillNestedVec(this->singleSolution_, this->nestedSolution_);
 
-  // the vector for phi_b in nestedSolution_ contains only entries for non-border dofs, 
-  // copy all values and the border dof values to the proper phi_b which is dataFat_.extraCellularPotentialFat()->valuesGlobal()
+  // the vector for phi_b in nestedSolution_ contains only entries for non-boundary dofs, 
+  // copy all values and the boundary dof values to the proper phi_b which is dataFat_.extraCellularPotentialFat()->valuesGlobal()
   copySolutionToPhiB();
 
   LOG(DEBUG) << "after linear solver:";

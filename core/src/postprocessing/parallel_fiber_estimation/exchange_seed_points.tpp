@@ -5,7 +5,7 @@ namespace Postprocessing
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-exchangeBorderSeedPoints(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints)
+exchangeBoundarySeedPoints(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints)
 {
   if (nRanksZ == 1)
     return;
@@ -62,10 +62,10 @@ exchangeBorderSeedPoints(int nRanksZ, int rankZNo, bool streamlineDirectionUpwar
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-exchangeBorderSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints)
+exchangeBoundarySeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints)
 {
   // determine if previously set seedPoints are used or if they are received from neighbouring rank
-  LOG(DEBUG) << "exchangeBorderSeedPointsBeforeTracing, rankZNo: " << rankZNo
+  LOG(DEBUG) << "exchangeBoundarySeedPointsBeforeTracing, rankZNo: " << rankZNo
     << ", streamlineDirectionUpwards: " << streamlineDirectionUpwards << ", int(nRanksZ/2): " << int(nRanksZ/2) << ", n seed points: " << seedPoints.size();
 
   if (nRanksZ == 1)
@@ -110,13 +110,13 @@ exchangeBorderSeedPointsBeforeTracing(int nRanksZ, int rankZNo, bool streamlineD
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-exchangeBorderSeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, const std::array<bool,4> &subdomainIsAtBorder,
-                                     const std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &borderPointsSubdomain,
+exchangeBoundarySeedPointsAfterTracing(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, const std::array<bool,4> &subdomainIsAtBoundary,
+                                     const std::array<std::array<std::vector<std::vector<Vec3>>,4>,8> &boundaryPointsSubdomain,
                                      const std::array<std::vector<Vec3>,4> &cornerStreamlines)
 {
-  // borderPointsSubdomain[subdomainIndex][face][z-level][fiberNo]
+  // boundaryPointsSubdomain[subdomainIndex][face][z-level][fiberNo]
   std::vector<Vec3> seedPoints;
-  extractSeedPointsFromBorderPoints(borderPointsSubdomain, cornerStreamlines, subdomainIsAtBorder,
+  extractSeedPointsFromBoundaryPoints(boundaryPointsSubdomain, cornerStreamlines, subdomainIsAtBoundary,
                                     streamlineDirectionUpwards, seedPoints);
 
 #ifndef NDEBUG
@@ -245,7 +245,7 @@ void ParallelFiberEstimation<BasisFunctionType>::
 exchangeSeedPointsAfterTracingKeyFibers(int nRanksZ, int rankZNo, bool streamlineDirectionUpwards, int nFibersX, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints)
 {
   // nRanksZ, rankZNo, streamlineDirectionUpwards, nFibersX, seedPoints, fibers
-  // seedPoints size is nBorderPointsXNew_ * nBorderPointsXNew_
+  // seedPoints size is nBoundaryPointsXNew_ * nBoundaryPointsXNew_
   // streamlinePoints size is nFibersX * nFibersX
 
   LOG(DEBUG) << "exchangeSeedPointsAfterTracingKeyFibers, nRanksZ: " << nRanksZ << ", rankZNo: " << rankZNo << ", streamlineDirectionUpwards: " << streamlineDirectionUpwards
@@ -283,9 +283,9 @@ exchangeSeedPointsAfterTracingKeyFibers(int nRanksZ, int rankZNo, bool streamlin
     // fill send buffer
     std::vector<double> sendBuffer(seedPoints.size()*3, -1.0);
       
-    for (int j = 0; j < nBorderPointsXNew_; j++)
+    for (int j = 0; j < nBoundaryPointsXNew_; j++)
     {
-      for (int i = 0; i < nBorderPointsXNew_; i++)
+      for (int i = 0; i < nBoundaryPointsXNew_; i++)
       {
         int seedPointIndex = j * (nFineGridFibers_+1) * nFibersX + i * (nFineGridFibers_+1);
 
@@ -300,7 +300,7 @@ exchangeSeedPointsAfterTracingKeyFibers(int nRanksZ, int rankZNo, bool streamlin
 
         for (int k = 0; k < 3; k++)
         {
-          int seedPointIndex = j*nBorderPointsXNew_ + i;
+          int seedPointIndex = j*nBoundaryPointsXNew_ + i;
           sendBuffer[seedPointIndex*3+k] = streamlinePoints[seedPointIndex][streamlinePointNo][k];
         }
       }

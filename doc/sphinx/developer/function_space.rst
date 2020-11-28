@@ -159,7 +159,7 @@ A meshPartition object has the following methods:
   
 .. cpp:function:: bool hasFullNumberOfNodes(int coordinateDirection, int partitionIndex = -1) const
   
-  Get if there are nodes on both borders in the given coordinate direction this is the case if the partition touches the right/top/back border Consider the partition specified by partitionIndex or the current partition if partitionIndex == -1.
+  Get if there are nodes on both boundaries in the given coordinate direction this is the case if the partition touches the right/top/back boundary. Consider the partition specified by partitionIndex or the current partition if partitionIndex == -1.
   
   :param int coordinateDirection: 
   :param int partitionIndex = -1: 
@@ -360,12 +360,12 @@ The function space object has the following methods:
   
 .. cpp:function:: static constexpr int averageNDofsPerElement()
   
-  If one assigns every dof to an element it is contained in, the number of degrees of freedom per element (not considering border elements).
+  If one assigns every dof to an element it is contained in, the number of degrees of freedom per element (not considering boundary elements).
   
   
 .. cpp:function:: static constexpr int averageNNodesPerElement()
   
-  If one assigns every node to an element it is contained in, the number of nodes per element (not considering border elements).
+  If one assigns every node to an element it is contained in, the number of nodes per element (not considering boundary elements).
   
   
 .. cpp:function:: static double phi(int dofIndex, std::array<double,MeshType::dim()> xi)

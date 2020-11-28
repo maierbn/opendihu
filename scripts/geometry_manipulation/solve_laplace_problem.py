@@ -16,7 +16,7 @@ def solve_laplace_problem(n_points, points, n_original_points, original_points, 
   This is a helper function for stl_create_mesh.create_planar_mesh, defined in create_planar_mesh.py
   Solve the Laplace problem / potential flow to construct the harmonic map from world domain to parameter domain
   
-  :param n_points: number of points on the border of the resulting mesh
+  :param n_points: number of points on the boundary of the resulting mesh
   :param points: a vector of 3D points with shape (n_points x 3), each row is one point
   :param n_original_points: size of original_points
   :param original_points: a copy of points made before additional boundary points were added
@@ -24,13 +24,13 @@ def solve_laplace_problem(n_points, points, n_original_points, original_points, 
   :param point_indices_list: a list of the indices into the points array for each triangle of the triangulation
   :param triangle_list: the resulting triangles with their points
   :param debugging_stl_output: if list should be filled with STL triangles that can be output to a STL mesh for debugging
-  :param stl_triangle_lists: the debugging lists: [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
+  :param stl_triangle_lists: the debugging lists: [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
   :return: u,v the solution vectors for the two harmonic maps
   """
   
   debug = False   # enable debugging output
   if debugging_stl_output:
-    [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
+    [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
       markers_grid_points_parametric_space, markers_grid_points_world_space] = stl_triangle_lists
 
   # solve Laplace equation on deformed mesh

@@ -12,7 +12,7 @@ import copy
 import scipy.spatial
 import os
 import pickle
-import stl_create_mesh   # for standardize_loop and rings_to_border_points
+import stl_create_mesh   # for standardize_loop and rings_to_boundary_points
 import stl_debug_output
 import spline_surface
 
@@ -91,7 +91,7 @@ def get_intersecting_line_segment(triangle, z_value):
   if debug:
     print("xi1 = m*xi2 + c with m={}, c={}".format(m,c))
   
-  # check which of the borders of the triangle in parameter space are intersected by the line segment intersects
+  # check which of the boundarys of the triangle in parameter space are intersected by the line segment intersects
   intersects_xi2_equals_0 = (0 <= c <= 1)        # xi1 = c
 
   if abs(m) < 1e-12:
@@ -459,9 +459,9 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
   
   return loops
 
-def create_border_points(input_filename, bottom_clip, top_clip, n_loops, n_points):
+def create_boundary_points(input_filename, bottom_clip, top_clip, n_loops, n_points):
   """ 
-  This is a top-level function that performs all the steps to create the initial border points of the whole mesh. 
+  This is a top-level function that performs all the steps to create the initial boundary points of the whole mesh. 
   It is called by the C++ implementation.
   :param input_filename: filenamem of either an STL mesh or a geomdl B-spline Surface stored as pickle
   :param bottom_clip:
@@ -479,17 +479,17 @@ def create_border_points(input_filename, bottom_clip, top_clip, n_loops, n_point
         
       f = open(input_filename,"rb")
       surface = pickle.load(f)
-      return spline_surface.create_border_points(surface, bottom_clip, top_clip, n_loops, n_points)
+      return spline_surface.create_boundary_points(surface, bottom_clip, top_clip, n_loops, n_points)
     except:
-      print("Error! Could not create border points from file \"{}\".".format(input_filename))
+      print("Error! Could not create boundary points from file \"{}\".".format(input_filename))
       quit()
   
   # algorithm for STL mesh
   loops = create_rings(input_filename, bottom_clip, top_clip, n_loops, False)   # last argument is if debugging output should be written, set to False
-  border_points, lengths = stl_create_mesh.rings_to_border_points(loops, n_points)
-  border_points = stl_create_mesh.border_point_loops_to_list(border_points)
+  boundary_points, lengths = stl_create_mesh.rings_to_boundary_points(loops, n_points)
+  boundary_points = stl_create_mesh.boundary_point_loops_to_list(boundary_points)
   
-  return border_points
+  return boundary_points
 
 def create_point_marker(point, markers, size=None):
   if size is None:
@@ -525,7 +525,7 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
   :param start_point: the line starts at the point on the surface with given z_value, that is the nearest to start_point
   :param end_point: the line ends at the point on the surface with given z_value, that is the nearest to end_point
   :param z_value: the z level of the line on the surface
-  :param n_points: number of points on the border
+  :param n_points: number of points on the boundary
   :return: list of points
   """
   
@@ -567,7 +567,7 @@ def create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points
   :param start_point: the line starts at the point on the surface with given z_value, that is the nearest to start_point
   :param end_point: the line ends at the point on the surface with given z_value, that is the nearest to end_point
   :param z_value: the z level of the line on the surface
-  :param n_points: number of points on the border
+  :param n_points: number of points on the boundary
   :return: list of points
   """
   

@@ -93,7 +93,7 @@ def n_sampled_points_in_subdomain_x(subdomain_coordinate_x):
       
   elif variables.granularity == 2:      # for quadratic elements
     n = n_fibers_in_subdomain_x(subdomain_coordinate_x)       # there are as many "linear" elements as nodes
-    if subdomain_coordinate_x == variables.n_subdomains_x-1:  # only at the right border there is one more point, i.e. one element less than points
+    if subdomain_coordinate_x == variables.n_subdomains_x-1:  # only at the right boundary there is one more point, i.e. one element less than points
       n -= 1  
     result = (int)(np.floor(n / (variables.sampling_stride_x*2))*2)
     
@@ -111,7 +111,7 @@ def n_sampled_points_in_subdomain_y(subdomain_coordinate_y):
       
   elif variables.granularity == 2:      # for quadratic elements
     n = n_fibers_in_subdomain_y(subdomain_coordinate_y)       # there are as many "linear" elements as nodes
-    if subdomain_coordinate_y == variables.n_subdomains_y-1:  # only at the right border there is one more point, i.e. one element less than points
+    if subdomain_coordinate_y == variables.n_subdomains_y-1:  # only at the right boundary there is one more point, i.e. one element less than points
       n -= 1  
     result = (int)(np.floor(n / (variables.sampling_stride_y*2))*2)
     if subdomain_coordinate_y == variables.n_subdomains_y-1:
@@ -127,7 +127,7 @@ def n_sampled_points_in_subdomain_z(subdomain_coordinate_z):
       
   elif variables.granularity == 2:      # for quadratic elements
     n = n_points_in_subdomain_z(subdomain_coordinate_z)       # there are as many "linear" elements as nodes
-    if subdomain_coordinate_z == variables.n_subdomains_z-1:  # only at the right border there is one more point, i.e. one element less than points
+    if subdomain_coordinate_z == variables.n_subdomains_z-1:  # only at the right boundary there is one more point, i.e. one element less than points
       n -= 1  
     result = (int)(np.floor(n / (variables.sampling_stride_z*2))*2)
     if subdomain_coordinate_z == variables.n_subdomains_z-1:
@@ -368,7 +368,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     for j in range(n_sampled_points_in_own_subdomain_y):
       fiber_in_subdomain_coordinate_y = j*variables.sampling_stride_y
       
-      # on border rank set last node positions to be the border nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
+      # on boundary rank set last node positions to be the boundary nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
       if own_subdomain_coordinate_y == variables.n_subdomains_y-1 and j == n_sampled_points_in_own_subdomain_y-1:
         fiber_in_subdomain_coordinate_y = n_fibers_in_subdomain_y(own_subdomain_coordinate_y)-1
       
@@ -379,7 +379,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
       for i in range(n_sampled_points_in_own_subdomain_x):
         fiber_in_subdomain_coordinate_x = i*variables.sampling_stride_x
         
-        # on border rank set last node positions to be the border nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
+        # on boundary rank set last node positions to be the boundary nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
         if own_subdomain_coordinate_x == variables.n_subdomains_x-1 and i == n_sampled_points_in_own_subdomain_x-1:
           fiber_in_subdomain_coordinate_x = n_fibers_in_subdomain_x(own_subdomain_coordinate_x)-1
         
@@ -431,7 +431,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
       n_sampled_points_in_own_subdomain_z
     ]
   
-  # border subdomains have one element less than fibers
+  # boundary subdomains have one element less than fibers
   if own_subdomain_coordinate_x == variables.n_subdomains_x-1:
     variables.n_elements_3D_mesh_linear[0] -= 1
   if own_subdomain_coordinate_y == variables.n_subdomains_y-1:
@@ -480,7 +480,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
             # loop over fiber in y-direction
             for j in range(n_sampled_points_in_subdomain_y(subdomain_coordinate_y)):
               fiber_in_subdomain_coordinate_y = j*variables.sampling_stride_y
-              # on border subdomain set last node positions to be the border nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
+              # on boundary subdomain set last node positions to be the boundary nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
               if subdomain_coordinate_y == variables.n_subdomains_y-1 and j == n_sampled_points_in_subdomain_y(subdomain_coordinate_y)-1:
                 fiber_in_subdomain_coordinate_y = n_fibers_in_subdomain_y(subdomain_coordinate_y)-1
                   
@@ -489,7 +489,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
                 # loop over fiber in x-direction
                 for i in range(n_sampled_points_in_subdomain_x(subdomain_coordinate_x)):
                   fiber_in_subdomain_coordinate_x = i*variables.sampling_stride_x
-                  # on border subdomain set last node positions to be the border nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
+                  # on boundary subdomain set last node positions to be the boundary nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
                   if subdomain_coordinate_x == variables.n_subdomains_x-1 and i == n_sampled_points_in_subdomain_x(subdomain_coordinate_x)-1:
                     fiber_in_subdomain_coordinate_x = n_fibers_in_subdomain_x(subdomain_coordinate_x)-1
                   

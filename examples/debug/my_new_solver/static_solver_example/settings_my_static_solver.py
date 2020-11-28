@@ -6,7 +6,7 @@ nx = 10
 ny = 10
 
 # boundary conditions (for linear elements)
-# set bottom and top border to 1
+# set bottom and top boundary to 1
 bc = {}
 for i in range(int(nx+1)):
   x = i/(nx+1.)
@@ -43,7 +43,7 @@ config = {
       "prefactor": 1,                      # prefactor of the laplace operator
       "dirichletBoundaryConditions": bc,   # Dirichlet boundary conditions as dict  
       "dirichletOutputFilename":  None,    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-      "neumannBoundaryConditions": [{"element": j*nx, "constantVector": 1.0, "face": "0-"} for j in range(ny)],   # Neumann boundary conditions: at border
+      "neumannBoundaryConditions": [{"element": j*nx, "constantVector": 1.0, "face": "0-"} for j in range(ny)],   # Neumann boundary conditions: at boundary
       "inputMeshIsGlobal": True,           # boundary condition values are given for all dofs, even if executed in parallel
     },
 

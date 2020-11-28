@@ -132,7 +132,7 @@ def generate_mu_positions(n_motor_units, n_fibers_x, enable_plots, output_filena
   mu_positions = []
   
   # determine range in which the motor unit should be placed
-  # add a margin of 10% at the border where the center of the motor unit should not be
+  # add a margin of 10% at the boundary where the center of the motor unit should not be
   x_start = (int)(np.round(0.1*(n_fibers_x-1)))
   x_end = (int)(np.round(0.9*(n_fibers_x-1)))
     

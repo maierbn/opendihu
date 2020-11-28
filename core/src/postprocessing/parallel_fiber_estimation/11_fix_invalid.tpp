@@ -14,9 +14,9 @@ fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, 
   nFibersFixed = 0;
 
   // loop over invalid fibers and fix them from neighbouring fibers
-  for (int fiberIndexY = 0; fiberIndexY != nBorderPointsXNew_; fiberIndexY++)
+  for (int fiberIndexY = 0; fiberIndexY != nBoundaryPointsXNew_; fiberIndexY++)
   {
-    for (int fiberIndexX = 0; fiberIndexX != nBorderPointsXNew_; fiberIndexX++)
+    for (int fiberIndexX = 0; fiberIndexX != nBoundaryPointsXNew_; fiberIndexX++)
     {
       if (!fiberIsValid[fiberIndexY][fiberIndexX])
       {
@@ -39,7 +39,7 @@ fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, 
 
         // find next neighoubr
         int rightNeighbourIndex = -1;
-        for (int neighbouringFiberIndexX = fiberIndexX+1; neighbouringFiberIndexX < nBorderPointsXNew_; neighbouringFiberIndexX++)
+        for (int neighbouringFiberIndexX = fiberIndexX+1; neighbouringFiberIndexX < nBoundaryPointsXNew_; neighbouringFiberIndexX++)
         {
           if (fiberIsValid[fiberIndexY][neighbouringFiberIndexX])
           {
@@ -62,7 +62,7 @@ fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, 
 
         // find next neighoubr
         int backNeighbourIndex = -1;
-        for (int neighbouringFiberIndexY = fiberIndexY+1; neighbouringFiberIndexY < nBorderPointsXNew_; neighbouringFiberIndexY++)
+        for (int neighbouringFiberIndexY = fiberIndexY+1; neighbouringFiberIndexY < nBoundaryPointsXNew_; neighbouringFiberIndexY++)
         {
           if (fiberIsValid[neighbouringFiberIndexY][fiberIndexX])
           {
@@ -85,10 +85,10 @@ fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, 
 
           // resize invalid fiber vector
           int interpolatedFiberIndex = (fiberIndexY*nFibersX + fiberIndexX) * (nFineGridFibers_+1);
-          fibers[interpolatedFiberIndex].resize(nBorderPointsZNew_);
+          fibers[interpolatedFiberIndex].resize(nBoundaryPointsZNew_);
 
           // loop over all points of the fiber
-          for (int zIndex = 0; zIndex != nBorderPointsZNew_; zIndex++)
+          for (int zIndex = 0; zIndex != nBoundaryPointsZNew_; zIndex++)
           {
             // get the left and right valid fibers
             int previousFiberIndex = (fiberIndexY*nFibersX + leftNeighbourIndex) * (nFineGridFibers_+1);
@@ -117,10 +117,10 @@ fixInvalidKeyFibers(int nFibersX, std::vector<std::vector<bool>> &fiberIsValid, 
 
           // resize invalid fiber vector
           int interpolatedFiberIndex = (fiberIndexY*nFibersX + fiberIndexX) * (nFineGridFibers_+1);
-          fibers[interpolatedFiberIndex].resize(nBorderPointsZNew_);
+          fibers[interpolatedFiberIndex].resize(nBoundaryPointsZNew_);
 
           // loop over all points of the fiber
-          for (int zIndex = 0; zIndex != nBorderPointsZNew_; zIndex++)
+          for (int zIndex = 0; zIndex != nBoundaryPointsZNew_; zIndex++)
           {
             // get the left and right valid fibers
             int previousFiberIndex = (frontNeighbourIndex*nFibersX + fiberIndexX) * (nFineGridFibers_+1);

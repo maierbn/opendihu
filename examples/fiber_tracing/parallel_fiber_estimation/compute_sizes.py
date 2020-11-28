@@ -10,7 +10,7 @@ import numpy as np
 
 def output_size(m,l,nel=4):
   """
-  Output the expected number of generated fibers and the filesizes, for both files with and without border fibers.
+  Output the expected number of generated fibers and the filesizes, for both files with and without boundary fibers.
   :param m: number of fine grid fibers
   :param l: maximum recursion level
   :param n: number of elements in x direction
@@ -31,7 +31,7 @@ def output_size(m,l,nel=4):
     print("Note, nel={} is odd, changing to {}.".format(nel,nel+1))
     nel += 1
 
-  # with border points
+  # with boundary points
   # -------------------
   # number of fibers total
   n = 2*nel*nx*(1+m)+1
@@ -39,7 +39,7 @@ def output_size(m,l,nel=4):
 
   filesize = 72 + N*1481*3*8
    
-  # without border points
+  # without boundary points
   # -------------------
   # number of fibers total
   n2 = 2*nel*nx*(1+m)-1

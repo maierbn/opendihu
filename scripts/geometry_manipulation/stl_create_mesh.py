@@ -559,7 +559,7 @@ def create_planar_mesh(boundary_points, loop_no, n_points, \
   if improve_mesh:   
     # optimize points, fix self-intersections and Laplacian smoothing
     grid_points_world_space_improved \
-     = fix_and_smooth_mesh.fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_y, point_indices_list, triangle_list, extent_x, extent_y, debugging_stl_output, stl_triangle_lists)
+     = fix_and_smooth_mesh.fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_y, point_indices_list, triangle_list, extent_x, extent_y, loop_no, debugging_stl_output, stl_triangle_lists)
   
   # create various STL files that help understand and debug the algorithm
   if debugging_stl_output:
@@ -836,7 +836,7 @@ def create_3d_mesh_from_boundary_points_faces(boundary_points_faces, improve_mes
     n_grid_points_x = n_points_x+1   # grid width of generated 2d mesh
     n_grid_points_y = n_points_x+1
 
-    print("")
+    #print("")
     print("Level {}, ring {}/{} with {} boundary points".format(level_no, loop_no, n_loops, n_points))
     #print("boundary points: ", boundary_points)
     

@@ -88,7 +88,9 @@ class precice(Package):
       'mkdir -p ${PREFIX}/include',
 
       # Eigen
-      'cd ${SOURCE_DIR} && wget https://gitlab.com/libeigen/eigen/-/archive/3.3.8/eigen-3.3.8.tar.gz && tar xf eigen-3.3.8.tar.gz && ln -s ${SOURCE_DIR}/eigen-3.3.8/Eigen ${PREFIX}/include/Eigen',   # eigen
+      'cd ${SOURCE_DIR} && \
+        if [[ ! -f eigen-3.3.8.tar.gz ]]; then wget https://gitlab.com/libeigen/eigen/-/archive/3.3.8/eigen-3.3.8.tar.gz; fi; \
+        tar xf eigen-3.3.8.tar.gz && ln -s ${SOURCE_DIR}/eigen-3.3.8/Eigen ${PREFIX}/include/Eigen',   # eigen
 
       # precice
       'cd ${SOURCE_DIR} && mkdir -p build && cd build && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} \
@@ -111,7 +113,10 @@ class precice(Package):
         'mkdir -p ${PREFIX}/include',
 
         # Eigen
-        'cd ${SOURCE_DIR} && wget https://gitlab.com/libeigen/eigen/-/archive/3.3.8/eigen-3.3.8.tar.gz && tar xf eigen-3.3.8.tar.gz && ln -s ${SOURCE_DIR}/eigen-3.3.8/Eigen ${PREFIX}/include/Eigen',
+        # Eigen
+        'cd ${SOURCE_DIR} && \
+          if [[ ! -f eigen-3.3.8.tar.gz ]]; then wget https://gitlab.com/libeigen/eigen/-/archive/3.3.8/eigen-3.3.8.tar.gz; fi; \
+          tar xf eigen-3.3.8.tar.gz && ln -s ${SOURCE_DIR}/eigen-3.3.8/Eigen ${PREFIX}/include/Eigen',   # eigen
 
         # boost
         '[ ! -d ${PREFIX}/include/boost ] && (cd ${SOURCE_DIR} && [ ! -f ${SOURCE_DIR}/boost_1_65_1.tar.gz ] && \

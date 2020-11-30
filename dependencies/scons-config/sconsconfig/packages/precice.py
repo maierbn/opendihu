@@ -88,30 +88,40 @@ class precice(Package):
       'mkdir -p ${PREFIX}/include',
 
       # Eigen
-      'cd ${SOURCE_DIR} && wget https://gitlab.com/libeigen/eigen/-/archive/3.3.8/eigen-3.3.8.tar.gz && tar xf eigen-3.3.8.tar.gz && ln -s ${SOURCE_DIR}/eigen-3.3.8/Eigen ${PREFIX}/include/Eigen',   # eigen
+      'cd ${SOURCE_DIR} && \
+        if [[ ! -f eigen-3.3.8.tar.gz ]]; then wget https://gitlab.com/libeigen/eigen/-/archive/3.3.8/eigen-3.3.8.tar.gz; fi; \
+        tar xf eigen-3.3.8.tar.gz && ln -s ${SOURCE_DIR}/eigen-3.3.8/Eigen ${PREFIX}/include/Eigen',   # eigen
 
       # precice
       'cd ${SOURCE_DIR} && mkdir -p build && cd build && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} \
-      -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=${DEPENDENCIES_DIR}/python/install/bin/python3 \
-      -DPETSC_DIR=${PETSC_DIR} -DPETSC_EXECUTABLE_RUNS=TRUE \
-      -DLIBXML2_INCLUDE_DIR=${LIBXML2_DIR}/include -DLIBXML2_LIBRARY=${LIBXML2_DIR}/lib/libxml2.so -DPRECICE_ENABLE_FORTRAN=OFF \
-      -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR .. && \
-      cd ${SOURCE_DIR}/build && make precice install -j 4'
+        -DCMAKE_BUILD_TYPE=RELEASE \
+        -DPYTHON_EXECUTABLE=/lustre/cray/ws9/2/ws/icbbnmai-opendihu1/opendihu-hawk-gnu/dependencies/python/install/bin/python3 \
+        -DPRECICE_PythonActions=OFF \
+        -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=${DEPENDENCIES_DIR}/python/install/bin/python3 \
+        -DPETSC_DIR=${PETSC_DIR} -DPETSC_EXECUTABLE_RUNS=TRUE \
+        -DPRECICE_ENABLE_FORTRAN=OFF \
+        -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR \
+        -DEigen3_ROOT=${SOURCE_DIR}/eigen-3.3.8 \
+        ..',
+      'cd ${SOURCE_DIR}/build && CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:${PREFIX}/include/libxml2 make precice install -j 16'
     ])
     
     res = super(precice, self).check(ctx)
   
-    # if installation of petsc failed with the current command, retry with different options 
+    # if installation of precice failed with the current command, retry with different options 
     if not res[0]:
-      ctx.Log('Retry (1) with manually building boost\n')
-      ctx.Message('Retry (1) with manually building boost.')
+      ctx.Log('Retry (1) with manually building boost and libxml2\n')
+      ctx.Message('Retry (1) with manually building boost and libxml2.')
 
       # only build boost if it was not yet build
       self.set_build_handler([
         'mkdir -p ${PREFIX}/include',
 
         # Eigen
-        'cd ${SOURCE_DIR} && wget https://gitlab.com/libeigen/eigen/-/archive/3.3.8/eigen-3.3.8.tar.gz && tar xf eigen-3.3.8.tar.gz && ln -s ${SOURCE_DIR}/eigen-3.3.8/Eigen ${PREFIX}/include/Eigen',
+        # Eigen
+        'cd ${SOURCE_DIR} && \
+          if [[ ! -f eigen-3.3.8.tar.gz ]]; then wget https://gitlab.com/libeigen/eigen/-/archive/3.3.8/eigen-3.3.8.tar.gz; fi; \
+          tar xf eigen-3.3.8.tar.gz && ln -s ${SOURCE_DIR}/eigen-3.3.8/Eigen ${PREFIX}/include/Eigen',   # eigen
 
         # boost
         '[ ! -d ${PREFIX}/include/boost ] && (cd ${SOURCE_DIR} && [ ! -f ${SOURCE_DIR}/boost_1_65_1.tar.gz ] && \
@@ -119,13 +129,22 @@ class precice(Package):
           cd boost_1_65_1 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test --prefix=${PREFIX} && \
           ./b2 install )',
 
+        # libxml2
+        'cd ${SOURCE_DIR} && if [ ! -f ${SOURCE_DIR}/libxml2-2.9.9.tar.gz ]; then wget ftp://xmlsoft.org/libxml2/libxml2-2.9.9.tar.gz; fi; \
+         tar xf libxml2-2.9.9.tar.gz; cd libxml2-2.9.9; ./configure --prefix=${PREFIX} && make install -j 16',
+
         # precice
         'cd ${SOURCE_DIR} && mkdir -p build && cd build && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+        -DCMAKE_BUILD_TYPE=RELEASE \
+        -DPYTHON_EXECUTABLE=/lustre/cray/ws9/2/ws/icbbnmai-opendihu1/opendihu-hawk-gnu/dependencies/python/install/bin/python3 \
+        -DPRECICE_PythonActions=OFF \
         -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=${DEPENDENCIES_DIR}/python/install/bin/python3 \
         -DPETSC_DIR=${PETSC_DIR} -DPETSC_EXECUTABLE_RUNS=TRUE \
-        -DLIBXML2_INCLUDE_DIR=${LIBXML2_DIR}/include -DLIBXML2_LIBRARY=${LIBXML2_DIR}/lib/libxml2.so -DPRECICE_ENABLE_FORTRAN=OFF \
-        -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR .. && \
-        cd ${SOURCE_DIR}/build && make precice install -j 4'
+        -DLIBXML2_INCLUDE_DIR=${PREFIX}/include -DLIBXML2_LIBRARY=${PREFIX}/lib/libxml2.so -DPRECICE_ENABLE_FORTRAN=OFF \
+        -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR \
+        -DEigen3_ROOT=${SOURCE_DIR}/eigen-3.3.8 \
+        ..',
+        'cd ${SOURCE_DIR}/build && CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:${PREFIX}/include/libxml2 make precice install -j 16'
       ])  
   
     self.check_options(env)

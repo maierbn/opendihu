@@ -210,7 +210,7 @@ fixInvalidFibersInFile(std::string filename)
 
     if (nFibersContainedInFile != nFibers)
     {
-      LOG(WARNING) << "File \"" << filename << "\" states to have " << nFibers << " fibers in header, but actually has "
+      LOG(DEBUG) << "File \"" << filename << "\" states to have " << nFibers << " fibers in header, but actually has "
         << nFibersContainedInFile << " fibers!" << std::endl
         << "This can happen if the file \"" << filename << "\" existed from a previous run, then it is not a problem.";
     }

@@ -44,7 +44,8 @@ sconsconfig.select(
     #packages.flex(required=False),    # "Fast Lexical Analyzer" needed by PTScotch which is needed by MUMPS which is needed by Petsc
     packages.PETSc(required=True),     # Petsc depends on LAPACK/BLAS and bison
     #packages.bzip2(required=False),
-    packages.Python(required=True),    # This compiles python 3.6 from source to be able to embedd the python interpreter in opendihu. All further python packages are installed in this installation tree under dependencies/python/install
+    #packages.zlib(required=False),     # zlib is needed to build python on hawk
+    packages.Python(required=True),    # This compiles python 3.9 or python 3.6 from source to be able to embedd the python interpreter in opendihu. All further python packages are installed in this installation tree under dependencies/python/install
     packages.pythonPackages(required=False),   # all further python utils that can be installed via pip
     packages.Base64(required=True),    # Base64 is an encoding library that is needed for binary VTK output.
     packages.googletest(required=False),   # This is the testing framework.

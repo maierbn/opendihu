@@ -1,9 +1,9 @@
-#!/usr/bin/env ../../../dependencies/python/install/bin/python3
+#!/usr/bin/env ../../../../dependencies/python/install/bin/python3 
 # -*- coding: utf-8 -*-
 #
 # This scripts reads a fibers.bin file and evaluates the quality of the mesh, how the spacing between the fibers is.
 #
-# usage: ./read_mpi_fibers.py [<filename>]
+# usage: ./mesh_evaluate_quality.py [<filename>]
 
 import sys, os
 import numpy as np
@@ -19,7 +19,8 @@ include_boundary = True
 if len(sys.argv) >= 2:
   input_filename = sys.argv[1]
 
-print("input filename: {}".format(input_filename))
+print("\nEvaluate the quality of the generated mesh by computing variances of relative element lengths and angles.")
+print("Input filename: {}".format(input_filename))
 
 with open(input_filename, "rb") as infile:
   
@@ -45,8 +46,8 @@ with open(input_filename, "rb") as infile:
   if False:
     print("nFibersTotal:      {n_fibers} = {n_fibers_x} x {n_fibers_x}".format(n_fibers=parameters[0], n_fibers_x=n_fibers_x))
     print("nPointsWholeFiber: {}".format(parameters[1]))
-    print("nBorderPointsXNew: {}".format(parameters[2]))
-    print("nBorderPointsZNew: {}".format(parameters[3]))
+    print("nBoundaryPointsXNew: {}".format(parameters[2]))
+    print("nBoundaryPointsZNew: {}".format(parameters[3]))
     print("nFineGridFibers_:  {}".format(parameters[4]))
     print("nRanks:            {}".format(parameters[5]))
     print("nRanksZ:           {}".format(parameters[6]))
@@ -84,7 +85,7 @@ with open(input_filename, "rb") as infile:
           coordinate_x = fiber_no % n_fibers_x
           coordinate_y = (int)(fiber_no / n_fibers_x)
           print("Error: streamline {}, ({},{})/({},{}) is invalid ({}. point)".format(fiber_no, coordinate_x, coordinate_y, n_fibers_x, n_fibers_y, z))
-          print("streamline so far: ",streamline[0:10])
+          #print("streamline so far: ",streamline[0:10])
         fiber_value = False
       
       x = fiber_no % n_fibers_x
@@ -96,7 +97,7 @@ with open(input_filename, "rb") as infile:
     else:
       n_fibers_invalid += 1
   
-  print("fibers n valid: {}, n invalid: {}".format(n_fibers_valid, n_fibers_invalid))
+  print("Fibers n valid: {}, n invalid: {}, {} points for fiber. Computing all angles for the mesh can take a bit ...".format(n_fibers_valid, n_fibers_invalid, n_points_whole_fiber))
   
   # compute variance
   # loop over z levels
@@ -113,6 +114,7 @@ with open(input_filename, "rb") as infile:
     y_start = 1
     y_end = n_points_y-1
   
+  angles = []
   for z in range(n_points_whole_fiber):
     edge_lengths = []
     for y in range(y_start,y_end):
@@ -122,16 +124,65 @@ with open(input_filename, "rb") as infile:
         elif y < y_end-1:
           edge_lengths.append(np.linalg.norm(points[z,y,x,:] - points[z,y+1,x,:]))
 
+        #     u1
+        #  u2 p  u0
+        #     u3
+        # angle between u0 and u1
+        if x < x_end-1 and y < y_end-1:
+          u0 = -points[z,y,x,:] + points[z,y,x+1,:]
+          if np.linalg.norm(u0) != 0: 
+            u0 /= np.linalg.norm(u0)
+          u1 = -points[z,y,x,:] + points[z,y+1,x,:]
+          if np.linalg.norm(u1) != 0: 
+            u1 /= np.linalg.norm(u1)
+          angle = np.arccos(u0.dot(u1))
+          angles.append(angle)
+          
+        # angle between u1 and u2
+        if x > 0 and y < y_end-1:
+          u1 = -points[z,y,x,:] + points[z,y+1,x,:]
+          if np.linalg.norm(u1) != 0: 
+            u1 /= np.linalg.norm(u1)
+          u2 = -points[z,y,x,:] + points[z,y,x-1,:]
+          if np.linalg.norm(u2) != 0: 
+            u2 /= np.linalg.norm(u2)
+          angle = np.arccos(u1.dot(u2))
+          angles.append(angle)
+          
+        # angle between u2 and u3
+        if x > 0 and y > 0:
+          u2 = -points[z,y,x,:] + points[z,y,x-1,:]
+          if np.linalg.norm(u2) != 0: 
+            u2 /= np.linalg.norm(u2)
+          u3 = -points[z,y,x,:] + points[z,y-1,x,:]
+          if np.linalg.norm(u3) != 0: 
+            u3 /= np.linalg.norm(u3)
+          angle = np.arccos(u2.dot(u3))
+          angles.append(angle)
+          
+        # angle between u3 and u0
+        if x < x_end-1 and y > 0:
+          u3 = -points[z,y,x,:] + points[z,y-1,x,:]
+          if np.linalg.norm(u3) != 0: 
+            u3 /= np.linalg.norm(u3)
+          u0 = -points[z,y,x,:] + points[z,y,x+1,:]
+          if np.linalg.norm(u0) != 0: 
+            u0 /= np.linalg.norm(u0)
+          angle = np.arccos(u0.dot(u3))
+          angles.append(angle)
+
     mean = np.mean(edge_lengths)
     variance = np.var(edge_lengths)
     #print("z: {}, mean: {}, var: {}, var/mean^2: {}".format(z, mean, variance, variance / (mean*mean)))
     variance_sum += variance / (mean*mean)
 
   variance = variance_sum / n_points_whole_fiber
+  variance_angles = np.var(angles)
+  mean_angle = np.mean(angles)
   
-  print("variance: {}".format(variance))
+  print("lengths variance: {}, angles variance: {}, angles mean: {}".format(variance, variance_angles, mean_angle/np.pi*180))
   
   # write to log file
   with open("variances.csv","a") as f:
-    f.write("{};{};{};{}\n".format(scenario_name,input_filename,n_fibers_valid,variance))
+    f.write("{};{};{};{};{}\n".format(scenario_name,input_filename,n_fibers_valid,variance,variance_angles))
   print("appended to variances.csv")

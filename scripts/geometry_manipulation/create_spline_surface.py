@@ -12,7 +12,7 @@ import scipy.spatial
 import os
 import pickle
 import stl_create_rings # for create_rings
-import stl_create_mesh   # for rings_to_border_points
+import stl_create_mesh   # for rings_to_boundary_points
 
 import matplotlib
 from matplotlib import cm
@@ -78,8 +78,8 @@ if __name__ == "__main__":
   bottom_clip = 70
   top_clip = 250
   if len(sys.argv) == 6:
-    bottom_clip = int(sys.argv[4])
-    top_clip = int(sys.argv[5])
+    bottom_clip = float(sys.argv[4])
+    top_clip = float(sys.argv[5])
   n_loops = 12
   
   n_points_u = 10          # x-y direction (along rings)
@@ -98,21 +98,24 @@ if __name__ == "__main__":
   try:
     f = open(output_pickle_filename,"rb")
     surface = pickle.load(f)
-  except:
+  except Exception as e:
+    
+    print("Create rings because pickle file {} does not yet exist.".format(output_pickle_filename))
     # create surface
 
     write_output_mesh = False
     rings = stl_create_rings.create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_mesh)
-    [loops, lengths] = stl_create_mesh.rings_to_border_points(rings, n_points_u-1)
+    [loops, lengths] = stl_create_mesh.rings_to_boundary_points(rings, n_points_u-1)
 
-    loops = stl_create_mesh.border_point_loops_to_list(loops)
+    loops = stl_create_mesh.boundary_point_loops_to_list(loops)
 
     #print("loops: ",loops)
 
     # duplicate first point
     new_loops = []
     for loop in loops:
-      #new_loop = loop + loop + loop + [loop[0]]
+      print("  loop has {} points".format(len(loop)))
+      #new_loop = loop + [loop[0]]
       new_loop = loop + loop + loop + [loop[0]]
       n_points_u = len(new_loop)
       new_loops.append(new_loop)
@@ -133,7 +136,7 @@ if __name__ == "__main__":
 
     [surface0, surface1] = operations.split_surface_u(surface_full, 0.4)
     [surface, surface2] = operations.split_surface_u(surface1, 0.5555)
-
+    
     pickle_filename = output_pickle_filename
     print("Write pickle file \"{}\"".format(pickle_filename))
 

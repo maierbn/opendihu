@@ -15,7 +15,7 @@ TimeSteppingSchemeOdeReducedImplicit<TimeSteppingImplicitType>(context,"Implicit
 
 template<typename TimeSteppingImplicitType>
 void ImplicitEulerReduced<TimeSteppingImplicitType>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -73,11 +73,14 @@ advanceTimeSpan()
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
     
-    // write the current output values of the full timestepping
-    this->fullTimestepping_.outputWriterManager().writeOutput(this->fullTimestepping_.data(), timeStepNo, currentTime);
+    if(withOutputWritersEnabled)
+    {
+      // write the current output values of the full timestepping
+      this->fullTimestepping_.outputWriterManager().writeOutput(this->fullTimestepping_.data(), timeStepNo, currentTime);
     
-    // write the current output values of the (reduced) timestepping
-    this->outputWriterManager().writeOutput(*this->data_, timeStepNo, currentTime);
+      // write the current output values of the (reduced) timestepping
+      this->outputWriterManager().writeOutput(*this->data_, timeStepNo, currentTime);
+    }
     
     // start duration measurement
     if (this->durationLogKey_ != "")
@@ -95,7 +98,6 @@ void ImplicitEulerReduced<TimeSteppingImplicitType>::
 run()
 {
   TimeSteppingSchemeOdeReduced<TimeSteppingImplicitType>::run();
-  
 }
   
 } //namespace

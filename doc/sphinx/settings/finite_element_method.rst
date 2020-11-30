@@ -135,8 +135,7 @@ For the following equations, the ``FiniteElementMethod`` class needs to be wrapp
   where the diffusion tensor, :math:`A`, depends on a direction field :math:`v`.
     
 
-  
-Equations are defined in the directory `equation <https://github.com/maierbn/opendihu/tree/develop/core/src/equation>`_.
+Equations are defined in the directory `equation <https://github.com/maierbn/opendihu/tree/develop/core/src/equation>`_. The prefactors :math:`c` and :math:`A` can vary over the domain.
 
   
 Python Settings
@@ -151,23 +150,27 @@ The following keywords in the python dictionary are recognized:
     # <solver>
     # <output writer>
     
-    "prefactor":          # double
-    "rightHandSide":      # list of double
-    "inputMeshIsGlobal":  # bool
-    "diffusionTensor":    # list of double
+    "prefactor":          # type: double
+    "rightHandSide":      # type: list of double
+    "inputMeshIsGlobal":  # type: bool
+    "diffusionTensor":    # type: list of double
     
-    "nElements":          # integer 
-    "physicalExtent":     # double
-    "dirichletBoundaryConditions": # {} 
-    "updatePrescribedValuesFromSolution": # bool
-    "nodePositions":      # [[x,y,z], [x,y,z], ...]
-    "elements":           # [[i1,i2,...], [i1,i2,...] ],
-    "relativeTolerance":  # double
-    "inputMeshIsGlobal":  # bool
-    "OutputWriter":       # [{}, {}, ...]
+    "nElements":          # type: integer 
+    "physicalExtent":     # type: double
+    "dirichletBoundaryConditions": # type: dict, {} 
+    "neumannBoundaryConditions": # type: list, []
+    "updatePrescribedValuesFromSolution": # type: bool
+    "nodePositions":      # type: [[x,y,z], [x,y,z], ...]
+    "elements":           # type: [[i1,i2,...], [i1,i2,...] ],
+    "relativeTolerance":  # type: double
+    "inputMeshIsGlobal":  # type: bool
+    "slotName":           # type: string
+    "OutputWriter":       # type: [{}, {}, ...]
   },
 
 The items ``# <mesh>``, ``# <solver>`` and ``# <output writer>`` are placeholders for :doc:`/settings/mesh`, :doc:`/settings/solver` and :doc:`/settings/output_writer`.
+
+.. _femesh:
 
 <mesh>
 ^^^^^^^^^^^^^
@@ -225,17 +228,19 @@ To specify properties of the mesh there are two possibilities:
   
 The first option is useful to reuse meshes that only need to be defined once. 
 
+If a ``"meshName"`` is provided, all mesh properties specified under ``"FiniteElementMethod"`` other than ``"inputMeshIsGlobal"`` will be ignored.
+
 <solver>
 ^^^^^^^^^^^^^
 The solver is the solver of the linear system 
 
-.. math:
+.. math::
   K u = f,
 
 with stiffness matrix :math:`K`, vector of unknowns, :math:`u` and right hand side :math:`f`. This is needed when the Laplace or Poisson problem is solved (by calling ``run()`` of the object). Furthermore, in an explicit Euler timestepping of the diffusion equation we compute
 
-.. math:
-  u^{t+1} = u^{t} + dt M^{-1} K u_{t}
+.. math::
+  u^{(t+1)} = u^{(t)} + dt M^{-1} K u_{t}
 
 For this also the linear solver is used.
 
@@ -274,6 +279,13 @@ The specification of the solver can be given directly in-place or by specifying 
   
 The first option is useful when the same solver should be used for multiple classes.
 
+If a ``"solverName"`` is provided, all solver properties specified under ``"FiniteElementMethod"`` will be ignored.
+
+slotName
+^^^^^^^^^^^^^^^^^
+
+The `FiniteElementMethod` class exposes one slot that contains the solution variable. The option `slot name` specifies the name of the slot. Slot names are needed for coupling schemes to connect field variables between solvers. For details, see :doc:`output_connector_slots`.
+
 <output writer>
 ^^^^^^^^^^^^^^^^^
 
@@ -284,6 +296,10 @@ prefactor
 *Default: 1*
 
 The prefactor is a scalar multiplier of the Laplace operator term, i.e. :math:`c` in :math:`c\cdot  Δu` or :math:`c\cdot∇ \cdot (A ∇u)`. 
+
+It can be specified spatially varying, :math:`c(x)` by providing a list with as many entries as degrees of freedom (dofs). Depending on ``"inputMeshIsGlobal"``, you have to set as many entries as there are global or local dofs.
+
+When using a composite mesh, you can also provide a list with as many entries as there are sub meshes. Then each value will be set in a sub mesh and :math:`c(x)` will be constant in the sub mesh.
 
 rightHandSide
 ^^^^^^^^^^^^^^^
@@ -298,46 +314,11 @@ The given values correspond to global degrees of freedom, if ``"inputMeshIsGloba
 
 dirichletBoundaryConditions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+See :doc:`boundary_conditions`.
 
-The Dirichlet type boundary conditions. These are dofs that will have a prescribed value. It is a Dict of ``{<dof no>: <value>}`` entries. 
-Negative dof nos are interpreted as counted from the end, i.e. -1 is the last dof, -2 is the second-last etc.
-
-Dirichlet boundary conditions are specified for dof numbers, not nodes, such that for Hermite it is possible to prescribe derivatives. For Lagrange ansatz functions, dof numbers are equivalent to node numbers.
-
-For unstructured meshes, the ordering of the dofs cannot be known at the time when the settings are parsed, because they depend on the mesh which could be read from ``*.ex`` files after the settings get parsed.
-Therefore the ordering is special.
-For every node there are as many values as dofs, in contiguous order.
-
-Consider the following example for 2D Hermite, unstructured grid, 2x2 elements:
-
-.. code-block:: python
-
-  node numbering:
-   6_7_8
-  3|_4_|5
-  0|_1_|2
-
-  dof numbering:
-   6_7_8
-  2|_3_|5
-  0|_1_|4
-
-To specify du/dn = 0 at the left boundary in this example you would set:
-
-.. code-block:: python
-  
-  bc[0*2+1] = 0, bc[3*2+1] = 0, bc[6*2+1] = 0
-
-To specifiy u=0 on the bottom, you would set:
-
-.. code-block:: python
-  
-  bc[0] = 0, bc[2] = 0, bc[4] = 0
-
-When `inputMeshIsGlobal` is set to ``False``, the specified dofs are interpreted as local to the subdomain. Then you have to specify values also for ghost dofs. 
-This means that you have to specify prescribed nodal values on every process whose subdomain is adjacent to that node.
-
-When the value to set is a vector, e.g. for solid mechanics problems where displacements can be prescribed, specify a list of the components for each prescribed dof, e.g. ``[1.0, 2.0, 3.0]`` to set a Dirichlet boundary condition of :math:`\bar{u} = (1,2,3)^\top`. When not all components should be prescribed, replace the entry by ``None``, e.g. ``[None, 2.0, None]`` to only prescribe the y component.
+neumannBoundaryConditions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+See :doc:`boundary_conditions`.
 
 updatePrescribedValuesFromSolution
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -394,6 +375,10 @@ For anisotropic diffusion, the diffusion tensor can be given as a list of double
     # further options of FiniteElementMethod
     # ...
   }
+
+The ``diffusionTensor`` can be specified spatially varying, :math:`A(x)` just like the ``prefactor``. This can be achieved by providing a list with as many entries as degrees of freedom (dofs). Depending on ``"inputMeshIsGlobal"``, you have to set as many items as there are global or local dofs. Note that one item is again a list of the entries of the matrix.
+
+When using a composite mesh, you can also provide a list with as many items as there are sub meshes. Then each tensor will be set in a sub mesh and :math:`A(x)` will be constant in the sub mesh.
 
 Properties
 ----------

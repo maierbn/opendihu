@@ -11,7 +11,7 @@ template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 initializeHasFullNumberOfNodes()
 {
-  // determine if the local partition is at the x+/y+/z+ border of the global domain
+  // determine if the local partition is at the x+/y+/z+ boundary of the global domain
   for (int i = 0; i < MeshType::dim(); i++)
   {
     assert (beginElementGlobal_[i] + nElementsLocal_[i] <= (int)nElementsGlobal_[i]);
@@ -25,11 +25,10 @@ initializeHasFullNumberOfNodes()
 
 template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>> functionSpace)
+initializeDofNosLocalNaturalOrdering()
 {
   if (dofNosLocalNaturalOrdering_.empty())
   {
-
     // resize the vector to hold number of localWithGhosts dofs
     dofNosLocalNaturalOrdering_.resize(nDofsLocalWithGhosts());
 
@@ -40,12 +39,12 @@ initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpac
       // loop over local nodes in local natural numbering
       for (node_no_t nodeX = 0; nodeX < nNodesLocalWithGhosts(0); nodeX++)
       {
-        std::array<int,MeshType::dim()> coordinates({nodeX});
+        std::array<int,MeshType::dim()> coordinates({(int)nodeX});
 
         // loop over dofs of node
         for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
         {
-          dof_no_t dofNoLocal = functionSpace->getNodeNo(coordinates)*nDofsPerNode + dofOnNodeIndex;
+          dof_no_t dofNoLocal = getNodeNoLocal(coordinates)*nDofsPerNode + dofOnNodeIndex;
           dofNosLocalNaturalOrdering_[index++] = dofNoLocal;
         }
       }
@@ -58,13 +57,13 @@ initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpac
         for (node_no_t nodeX = 0; nodeX < nNodesLocalWithGhosts(0); nodeX++)
         {
           std::array<int,MeshType::dim()> coordinates;
-          coordinates[0] = nodeX;
-          coordinates[1] = nodeY;
+          coordinates[0] = (int)nodeX;
+          coordinates[1] = (int)nodeY;
 
           // loop over dofs of node
           for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
           {
-            dof_no_t dofNoLocal = functionSpace->getNodeNo(coordinates)*nDofsPerNode + dofOnNodeIndex;
+            dof_no_t dofNoLocal = getNodeNoLocal(coordinates)*nDofsPerNode + dofOnNodeIndex;
             dofNosLocalNaturalOrdering_[index++] = dofNoLocal;
           }
         }
@@ -80,14 +79,14 @@ initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpac
           for (node_no_t nodeX = 0; nodeX < nNodesLocalWithGhosts(0); nodeX++)
           {
             std::array<int,MeshType::dim()> coordinates;
-            coordinates[0] = nodeX;
-            coordinates[1] = nodeY;
-            coordinates[2] = nodeZ;
+            coordinates[0] = (int)nodeX;
+            coordinates[1] = (int)nodeY;
+            coordinates[2] = (int)nodeZ;
 
             // loop over dofs of node
             for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
             {
-              dof_no_t dofNoLocal = functionSpace->getNodeNo(coordinates)*nDofsPerNode + dofOnNodeIndex;
+              dof_no_t dofNoLocal = getNodeNoLocal(coordinates)*nDofsPerNode + dofOnNodeIndex;
               dofNosLocalNaturalOrdering_[index++] = dofNoLocal;
             }
           }
@@ -109,6 +108,7 @@ initialize1NodeMesh()
 
   LOG(DEBUG) << "initialize mesh partition for mesh with 1 dof";
 
+  isDegenerate_ = false;
   dmElements_ = nullptr;
   beginElementGlobal_[0] = 0;
   nElementsLocal_[0] = 0;
@@ -137,6 +137,34 @@ initialize1NodeMesh()
 
 template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+initializeDegenerateMesh()
+{
+  // We initialize for a mesh with 0 elements and 0 nodes and dofs, this occurs when the mpi communicator is MPI_COMM_NULL
+  LOG(DEBUG) << "initialize mesh partition for degenerate mesh";
+
+  isDegenerate_ = true;
+  dmElements_ = nullptr;
+  beginElementGlobal_.fill(0);
+  nElementsLocal_.fill(0);
+  nElementsGlobal_.fill(0);
+  nRanks_.fill(0);
+  ownRankPartitioningIndex_.fill(0);
+  localSizesOnPartitions_.fill(std::vector<element_no_t>({0}));
+  hasFullNumberOfNodes_.fill(false);
+
+  onlyNodalDofLocalNos_.clear();
+
+  dofNosLocalNaturalOrdering_.clear();
+  localToGlobalPetscMappingDofs_ = NULL;
+  nDofsLocalWithoutGhosts_ = 0;
+
+  this->dofNosLocal_.clear();
+
+  localToGlobalPetscMappingDofs_ = nullptr;
+}
+
+template<typename MeshType,typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 createDmElements()
 {
   dmElements_ = std::make_shared<DM>();
@@ -160,12 +188,19 @@ createDmElements()
   else
   {
 
+
     // create PETSc DMDA object that is a topology interface handling parallel data layout on structured grids
     if (MeshType::dim() == 1)
     {
       // create 1d decomposition
-      ierr = DMDACreate1d(mpiCommunicator(), DM_BOUNDARY_NONE, nElementsGlobal_[0], nDofsPerElement, ghostLayerWidth,
+      ierr = DMDACreate1d(mpiCommunicator(), DM_BOUNDARY_NONE, (PetscInt)nElementsGlobal_[0], nDofsPerElement, ghostLayerWidth,
                           NULL, dmElements_.get()); CHKERRV(ierr);
+
+      ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
+      ierr = DMSetUp(*dmElements_);
+      if (ierr)
+        LOG(ERROR) << "Could not create 1D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+      CHKERRV(ierr);
 
       // get global coordinates of local partition
       PetscInt x, m;
@@ -174,11 +209,18 @@ createDmElements()
       nElementsLocal_[0] = (element_no_t)m;
 
       // get number of ranks in each coordinate direction
-      ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks_[0], NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+      std::array<PetscInt,1> nRanks;
+      ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks[0], NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+      nRanks_[0] = nRanks[0];
 
       // get local sizes on the ranks
       const PetscInt *lxData;
-      ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, NULL, NULL);
+      ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, NULL, NULL); CHKERRV(ierr);
+
+      if (lxData == NULL)
+      {
+        LOG(FATAL) << "Petsc does not set ownership in DMDAGetOwnershipRanges. This might be an error in Petsc!";
+      }
 
       VLOG(1) << "nRanks_[0] = " << nRanks_[0];
       VLOG(1) << "lxData: " << intptr_t(lxData);
@@ -197,6 +239,12 @@ createDmElements()
                           nElementsGlobal_[0], nElementsGlobal_[1], PETSC_DECIDE, PETSC_DECIDE,
                           nDofsPerElement, ghostLayerWidth, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
 
+      ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
+      ierr = DMSetUp(*dmElements_);
+      if (ierr)
+        LOG(ERROR) << "Could not create 2D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+      CHKERRV(ierr);
+
       // get global coordinates of local partition
       PetscInt x, y, m, n;
       ierr = DMDAGetCorners(*dmElements_, &x, &y, NULL, &m, &n, NULL); CHKERRV(ierr);
@@ -206,12 +254,21 @@ createDmElements()
       nElementsLocal_[1] = (element_no_t)n;
 
       // get number of ranks in each coordinate direction
-      ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks_[0], &nRanks_[1], NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+      std::array<PetscInt,2> nRanks;
+      ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks[0], &nRanks[1], NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+      nRanks_[0] = nRanks[0];
+      nRanks_[1] = nRanks[1];
 
       // get local sizes on the ranks
       const PetscInt *lxData;
       const PetscInt *lyData;
-      ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL);
+      ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL); CHKERRV(ierr);
+
+      if (lxData == NULL || lyData == NULL)
+      {
+        LOG(FATAL) << "Petsc does not set ownership in DMDAGetOwnershipRanges. This might be an error in Petsc!";
+      }
+
       localSizesOnPartitions_[0].assign(lxData, lxData + nRanks_[0]);
       localSizesOnPartitions_[1].assign(lyData, lyData + nRanks_[1]);
 
@@ -219,7 +276,7 @@ createDmElements()
       MPI_Comm cartesianCommunicator;
       MPIUtility::handleReturnValue(
         MPI_Cart_create(mpiCommunicator(), 2, nRanks_.data(), meshIsPeriodicInDimension.data(), true, &cartesianCommunicator),
-      "MPI_Cart_create");
+        "MPI_Cart_create");
     }
     else if (MeshType::dim() == 3)
     {
@@ -232,6 +289,12 @@ createDmElements()
                             PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE,
                             nDofsPerElement, ghostLayerWidth, NULL, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
 
+        ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
+        ierr = DMSetUp(*dmElements_);
+        if (ierr)
+          LOG(ERROR) << "Could not create 3D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+        CHKERRV(ierr);
+
         // get global coordinates of local partition
         PetscInt x, y, z, m, n, p;
         ierr = DMDAGetCorners(*dmElements_, &x, &y, &z, &m, &n, &p); CHKERRV(ierr);
@@ -243,13 +306,23 @@ createDmElements()
         nElementsLocal_[2] = (element_no_t)p;
 
         // get number of ranks in each coordinate direction
-        ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks_[0], &nRanks_[1], &nRanks_[2], NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+        std::array<PetscInt,3> nRanks;
+        ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks[0], &nRanks[1], &nRanks[2], NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+        nRanks_[0] = nRanks[0];
+        nRanks_[1] = nRanks[1];
+        nRanks_[2] = nRanks[2];
 
         // get local sizes on the ranks
         const PetscInt *lxData;
         const PetscInt *lyData;
         const PetscInt *lzData;
-        ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, &lzData);
+        ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, &lzData); CHKERRV(ierr);
+
+        if (lxData == NULL || lyData == NULL || lzData == NULL)
+        {
+          LOG(FATAL) << "Petsc does not set ownership in DMDAGetOwnershipRanges. This might be an error in Petsc!";
+        }
+
         localSizesOnPartitions_[0].assign(lxData, lxData + nRanks_[0]);
         localSizesOnPartitions_[1].assign(lyData, lyData + nRanks_[1]);
         localSizesOnPartitions_[2].assign(lzData, lzData + nRanks_[2]);
@@ -274,6 +347,12 @@ createDmElements()
                               nElementsGlobal_[1], nElementsGlobal_[2], PETSC_DECIDE, PETSC_DECIDE,
                               nDofsPerElement, ghostLayerWidth, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
 
+          ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
+          ierr = DMSetUp(*dmElements_);
+          if (ierr)
+            LOG(ERROR) << "Could not create 2D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+          CHKERRV(ierr);
+
           // get global coordinates of local partition
           PetscInt x, y, m, n;
           ierr = DMDAGetCorners(*dmElements_, &x, &y, NULL, &m, &n, NULL); CHKERRV(ierr);
@@ -285,13 +364,16 @@ createDmElements()
           nElementsLocal_[2] = (element_no_t)n;
 
           // get number of ranks in each coordinate direction
-          ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks_[1], &nRanks_[2], NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+          std::array<PetscInt,3> nRanks;
+          ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks[1], &nRanks[2], NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
           nRanks_[0] = 1;
+          nRanks_[1] = nRanks[1];
+          nRanks_[2] = nRanks[2];
 
           // get local sizes on the ranks
           const PetscInt *lxData;
           const PetscInt *lyData;
-          ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL);
+          ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL); CHKERRV(ierr);
           localSizesOnPartitions_[0].resize(1);
           localSizesOnPartitions_[0][0] = 1;
           localSizesOnPartitions_[1].assign(lxData, lxData + nRanks_[1]);
@@ -304,6 +386,12 @@ createDmElements()
                               nElementsGlobal_[0], nElementsGlobal_[2], PETSC_DECIDE, PETSC_DECIDE,
                               nDofsPerElement, ghostLayerWidth, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
 
+          ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
+          ierr = DMSetUp(*dmElements_);
+          if (ierr)
+            LOG(ERROR) << "Could not create 2D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+          CHKERRV(ierr);
+
           // get global coordinates of local partition
           PetscInt x, y, m, n;
           ierr = DMDAGetCorners(*dmElements_, &x, &y, NULL, &m, &n, NULL); CHKERRV(ierr);
@@ -315,13 +403,16 @@ createDmElements()
           nElementsLocal_[2] = (element_no_t)n;
 
           // get number of ranks in each coordinate direction
-          ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks_[0], &nRanks_[2], NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+          std::array<PetscInt,3> nRanks;
+          ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks[0], &nRanks[2], NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
           nRanks_[1] = 1;
+          nRanks_[0] = nRanks[0];
+          nRanks_[2] = nRanks[2];
 
           // get local sizes on the ranks
           const PetscInt *lxData;
           const PetscInt *lyData;
-          ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL);
+          ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL); CHKERRV(ierr);
           localSizesOnPartitions_[0].assign(lxData, lxData + nRanks_[0]);
           localSizesOnPartitions_[1].resize(1);
           localSizesOnPartitions_[1][0] = 1;
@@ -334,6 +425,12 @@ createDmElements()
                               nElementsGlobal_[0], nElementsGlobal_[1], PETSC_DECIDE, PETSC_DECIDE,
                               nDofsPerElement, ghostLayerWidth, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
 
+          ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
+          ierr = DMSetUp(*dmElements_);
+          if (ierr)
+            LOG(ERROR) << "Could not create 2D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+          CHKERRV(ierr);
+
           // get global coordinates of local partition
           PetscInt x, y, m, n;
           ierr = DMDAGetCorners(*dmElements_, &x, &y, NULL, &m, &n, NULL); CHKERRV(ierr);
@@ -345,13 +442,16 @@ createDmElements()
           nElementsLocal_[2] = 1;
 
           // get number of ranks in each coordinate direction
-          ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks_[0], &nRanks_[1], NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
+          std::array<PetscInt,2> nRanks;
+          ierr = DMDAGetInfo(*dmElements_, NULL, NULL, NULL, NULL, &nRanks[0], &nRanks[1], NULL, NULL, NULL, NULL, NULL, NULL, NULL); CHKERRV(ierr);
           nRanks_[2] = 1;
+          nRanks_[0] = nRanks[0];
+          nRanks_[1] = nRanks[1];
 
           // get local sizes on the ranks
           const PetscInt *lxData;
           const PetscInt *lyData;
-          ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL);
+          ierr = DMDAGetOwnershipRanges(*dmElements_, &lxData, &lyData, NULL); CHKERRV(ierr);
           localSizesOnPartitions_[0].assign(lxData, lxData + nRanks_[0]);
           localSizesOnPartitions_[1].assign(lyData, lyData + nRanks_[1]);
           localSizesOnPartitions_[2].resize(1);
@@ -405,7 +505,8 @@ createLocalDofOrderings()
   VLOG(1) << "--------------------";
   VLOG(1) << "createLocalDofOrderings " << MeshType::dim() << "D";
 
-  MeshPartitionBase::createLocalDofOrderings(nDofsLocalWithGhosts());
+  // initialize dofNosLocalIS_ and dofNosLocalNonGhostIS_
+  MeshPartitionBase::createLocalDofOrderings();
 
   // fill onlyNodalDofLocalNos_
   const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();

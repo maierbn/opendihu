@@ -154,6 +154,7 @@ def get_instance_config(i):
           "initialValues": [],
           #"numberTimeSteps": 1,
           "timeStepWidth": dt_1D,  # 1e-5
+          "timeStepWidthRelativeTolerance": 1e-10,
           "logTimeStepWidthAsKey": "dt_1D",
           "durationLogKey": "duration_1D",
           "timeStepOutputInterval": 1e4,
@@ -226,6 +227,7 @@ if rank_no == 0:
 
 config = {
   "scenarioName": "1e3_fibers_1e4_cores",
+  "logFormat": "csv",
   "Meshes": meshes,
   "Solvers": {
     "implicitSolver": {

@@ -10,7 +10,7 @@
 #include "../utility.h"
 #include "partition/partitioned_petsc_vec/01_partitioned_petsc_vec_with_dirichlet_bc.h"
 #include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity.h"
-#include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
+#include "spatial_discretization/dirichlet_boundary_conditions/01_dirichlet_boundary_conditions.h"
 
 TEST(PartitionedPetscVecTest, TwoElementsBCGlobal)
 {
@@ -115,7 +115,7 @@ config = {
   // 110-2-+
 
 
-  std::vector<int> indices({0, 1, 2, 3});
+  std::vector<PetscInt> indices({0, 1, 2, 3});
   std::vector<double> values(4);
   vec0->getValues(0, 4, indices.data(), values.data());
 
@@ -235,7 +235,7 @@ config = {
 
   if (settings.ownRankNo() == 0)
   {
-    std::vector<int> indices({0,1,3});
+    std::vector<PetscInt> indices({0,1,3});
     std::vector<double> values({100, 101, 4});
     vec0->setValue(1, 0, 110);
     vec0->setValues(0, indices.size(), indices.data(), values.data());
@@ -273,7 +273,7 @@ config = {
   // 110-2-+
 
 
-  std::vector<int> indices({0, 1, 2, 3});
+  std::vector<PetscInt> indices({0, 1, 2, 3});
   std::vector<double> values(4);
   vec0->getValues(0, 4, indices.data(), values.data());
 
@@ -365,8 +365,9 @@ config = {
 
   dirichletBoundaryConditions->initialize(settings.getPythonConfig(), displacementsFunctionSpace, "dirichletBoundaryConditions");
 
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>> vec0
-    = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>>(
+  using Term = Equation::SolidMechanics::MooneyRivlinIncompressible3D;
+  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term>> vec0
+    = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term>>(
     displacementsFunctionSpace->meshPartition(), pressureFunctionSpace->meshPartition(), dirichletBoundaryConditions, "up");
 
   vec0->zeroEntries();
@@ -400,7 +401,7 @@ config = {
   // component 0
   if (settings.ownRankNo() == 0)
   {
-    std::vector<int> indices({0,1,2});
+    std::vector<PetscInt> indices({0,1,2});
     std::vector<double> values(indices.size());
 
     vec0->getValues(0, indices.size(), indices.data(), values.data());
@@ -411,7 +412,7 @@ config = {
   }
   else
   {
-    std::vector<int> indices({19,20});
+    std::vector<PetscInt> indices({19,20});
     std::vector<double> values(indices.size());
 
     vec0->getValues(0, indices.size(), indices.data(), values.data());
@@ -423,7 +424,7 @@ config = {
   // component 1
   if (settings.ownRankNo() == 0)
   {
-    std::vector<int> indices({23,22});
+    std::vector<PetscInt> indices({23,22});
     std::vector<double> values(indices.size());
 
     vec0->getValues(1, indices.size(), indices.data(), values.data());
@@ -433,7 +434,7 @@ config = {
   }
   else
   {
-    std::vector<int> indices({15,12});
+    std::vector<PetscInt> indices({15,12});
     std::vector<double> values(indices.size());
 
     vec0->getValues(1, indices.size(), indices.data(), values.data());
@@ -445,7 +446,7 @@ config = {
   // component 3
   if (settings.ownRankNo() == 0)
   {
-    std::vector<int> indices({3,4});
+    std::vector<PetscInt> indices({3,4});
     std::vector<double> values(indices.size());
 
     vec0->getValues(3, indices.size(), indices.data(), values.data());
@@ -455,7 +456,7 @@ config = {
   }
   else
   {
-    std::vector<int> indices({0,1,2});
+    std::vector<PetscInt> indices({0,1,2});
     std::vector<double> values(indices.size());
 
     vec0->getValues(3, indices.size(), indices.data(), values.data());
@@ -520,8 +521,9 @@ config = {
 
   dirichletBoundaryConditions->initialize(settings.getPythonConfig(), displacementsFunctionSpace, "dirichletBoundaryConditions");
 
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>> vec0
-    = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>>(
+  using Term = Equation::SolidMechanics::MooneyRivlinIncompressible3D;
+  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term>> vec0
+    = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term>>(
     displacementsFunctionSpace->meshPartition(), pressureFunctionSpace->meshPartition(), dirichletBoundaryConditions, "up");
 
   vec0->zeroEntries();
@@ -552,7 +554,7 @@ config = {
   // component 0
   if (settings.ownRankNo() == 0)
   {
-    std::vector<int> indices({0,1,2});
+    std::vector<PetscInt> indices({0,1,2});
     std::vector<double> values(indices.size());
 
     vec0->getValues(0, indices.size(), indices.data(), values.data());
@@ -563,7 +565,7 @@ config = {
   }
   else
   {
-    std::vector<int> indices({19,20});
+    std::vector<PetscInt> indices({19,20});
     std::vector<double> values(indices.size());
 
     vec0->getValues(0, indices.size(), indices.data(), values.data());
@@ -578,7 +580,7 @@ config = {
   }
   else
   {
-    std::vector<int> indices({15});
+    std::vector<PetscInt> indices({15});
     std::vector<double> values(indices.size());
 
     vec0->getValues(1, indices.size(), indices.data(), values.data());
@@ -589,7 +591,7 @@ config = {
   // component 3
   if (settings.ownRankNo() == 0)
   {
-    std::vector<int> indices({3});
+    std::vector<PetscInt> indices({3});
     std::vector<double> values(indices.size());
 
     vec0->getValues(3, indices.size(), indices.data(), values.data());
@@ -598,7 +600,7 @@ config = {
   }
   else
   {
-    std::vector<int> indices({1,2});
+    std::vector<PetscInt> indices({1,2});
     std::vector<double> values(indices.size());
 
     vec0->getValues(3, indices.size(), indices.data(), values.data());

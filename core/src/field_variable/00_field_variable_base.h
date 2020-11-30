@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <memory>
 #include "field_variable/interface.h"
-//#include "function_space/function_space.h"
+#include "easylogging++.h"
 
 namespace FieldVariable
 {
@@ -37,6 +37,9 @@ public:
 
   //! if the field has the flag "geometry field", i.e. in the exelem file its type was specified as "coordinate"
   bool isGeometryField() const;
+
+  //! set the field variable to be a "geometry field"
+  void setIsGeometryField(bool isGeometryField);
 
   //! check if there are NaNs or high values in the current variable, if yes output a warning
   void checkNansInfs(int componentNo = 0) const;
@@ -124,10 +127,10 @@ public:
 
 protected:
  
-  bool isGeometryField_;     ///< if the type of this FieldVariable is a coordinate, i.e. geometric information
+  bool isGeometryField_;     //< if the type of this FieldVariable is a coordinate, i.e. geometric information
 
-  std::shared_ptr<FunctionSpaceType> functionSpace_;  ///< the mesh/function_space for which the field variable is defined
-  std::string name_;     ///< name of the field variable
+  std::shared_ptr<FunctionSpaceType> functionSpace_;  //< the mesh/function_space for which the field variable is defined
+  std::string name_;     //< name of the field variable
 };
 
 // output operator

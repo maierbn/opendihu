@@ -59,6 +59,9 @@ public:
   //! get the values corresponding to all element-local dofs for all components
   void getElementValues(element_no_t elementNo, std::array<double,FunctionSpaceType::nDofsPerElement()> &values) const;
 
+  //! get the values corresponding to all element-local dofs for all components
+  void getElementValues(Vc::int_v elementNoLocal, std::array<Vc::double_v,FunctionSpaceType::nDofsPerElement()> &values) const;
+
   //! get a single value from local dof no. for all components
   double getValue(node_no_t dofLocalNo) const;
 
@@ -73,6 +76,12 @@ public:
   
   //! set a single dof (all components) , after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
   void setValue(dof_no_t dofLocalNo, double value, InsertMode petscInsertMode=INSERT_VALUES);
+
+  //! set Vc::double_v::size() dofs with the vectorized value, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
+  void setValue(const Vc::int_v &dofLocalNo, const Vc::double_v &value, InsertMode petscInsertMode=INSERT_VALUES);
+
+  //! set Vc::double_v::size() dofs with the same value
+  void setValue(const Vc::int_v &dofLocalNo, double value, InsertMode petscInsertMode=INSERT_VALUES);
 
   //! set the values from a petsc Vec
   void setValues(Vec petscVector);

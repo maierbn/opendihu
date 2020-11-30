@@ -100,8 +100,8 @@ config = {
   // get functionSpace manager object that are stored in the DihuContext object
   std::shared_ptr<Mesh::Manager> meshManager = settings.meshManager();
 
-  std::array<int,2> nElements1({2,2});
-  std::array<int,2> nElements2({3,3});
+  std::array<PetscInt,2> nElements1({2,2});
+  std::array<PetscInt,2> nElements2({3,3});
   std::array<double,2> physicalExtent({0});
   std::array<int,2> nRanks({1,1});
   std::shared_ptr<FunctionSpace1> functionSpace1 = meshManager->createFunctionSpace<FunctionSpace1>("functionSpace1", nElements1, physicalExtent, nRanks);

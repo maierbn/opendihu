@@ -44,9 +44,9 @@ phi(int i, double xi)
   // phi2(xi) = 2*xi^2 - xi
 
   if (i==0)
-    return 2*xi*xi - 3*xi + 1;
+    return (2*xi - 1) * (xi-1);    // 2*xi*xi - 3*xi + 1
   else if (i==1)
-    return -4*xi*xi + 4*xi;
+    return 4*(xi - xi*xi);
   return 2*xi*xi - xi;
 }
 

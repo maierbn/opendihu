@@ -5,7 +5,7 @@
 #include "output_writer/paraview/paraview.h"
 #include "output_writer/exfile/exfile.h"
 #include "output_writer/megamol/megamol.h"
-#include "control/performance_measurement.h"
+#include "control/diagnostic_tool/performance_measurement.h"
 
 namespace OutputWriter
 {

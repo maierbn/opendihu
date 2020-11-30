@@ -3,6 +3,7 @@
 #include <Python.h>  // has to be the first included header
 
 #include "function_space/09_function_space_find_position_base.h"
+#include "function_space/09_function_space_find_position_base_composite.h"
 
 namespace FunctionSpace
 {
@@ -29,9 +30,9 @@ public:
 
 protected:
 
-  //! check if the point is in a neighbouring element to elementNo on ghostMeshNo (-1=main mesh, 0-5=ghost mesh on respective face, 0=face0Minus, 1=face0Plus, etc.), return true if the element was found amoung the neighbours
+  //! check if the point is in a neighbouring element to elementNo on ghostMeshNo (-1=main mesh, 0-9=ghost mesh on respective face, 0=face0Minus, 1=face0Plus, etc.), return true if the element was found amoung the neighbours
   //! set elementNo, ghostMeshNo and xi appropriately
-  bool checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi);
+  bool checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, double &residual, double xiTolerance);
 };
 
 /** Partial specialization for 2D meshes
@@ -47,9 +48,9 @@ public:
 
 protected:
 
-  //! check if the point is in a neighbouring element to elementNo on ghostMeshNo (-1=main mesh, 0-5=ghost mesh on respective face, 0=face0Minus, 1=face0Plus, etc.), return true if the element was found amoung the neighbours
+  //! check if the point is in a neighbouring element to elementNo on ghostMeshNo (-1=main mesh, 0-9=ghost mesh on respective face, 0=face0Minus, 1=face0Plus, etc.), return true if the element was found amoung the neighbours
   //! set elementNo, ghostMeshNo and xi appropriately
-  bool checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi);
+  bool checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, double &residual, double xiTolerance);
 };
 
 /** Partial specialization for 3D meshes
@@ -65,9 +66,9 @@ public:
 
 protected:
 
-  //! check if the point is in a neighbouring element to elementNo on ghostMeshNo (-1=main mesh, 0-5=ghost mesh on respective face, 0=face0Minus, 1=face0Plus, etc.), return true if the element was found amoung the neighbours
+  //! check if the point is in a neighbouring element to elementNo on ghostMeshNo (-1=main mesh, 0-9=ghost mesh on respective face, 0=face0Minus, 1=face0Plus, etc.), return true if the element was found amoung the neighbours
   //! set elementNo, ghostMeshNo and xi appropriately
-  bool checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi);
+  bool checkNeighbouringElements(const Vec3 &point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,MeshType::dim()> &xi, double &residual, double xiTolerance);
 };
 
 

@@ -15,7 +15,7 @@ namespace Data
  *   Template arguments are the two function spaces of the mixed formulation.
  *   Typically, PressureFunctionSpace is linear and DisplacementsFunctionSpace is quadratic.
   */
-template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term, bool withLargeOutput>
 class QuasiStaticHyperelasticityBase :
   public Data<DisplacementsFunctionSpace>
 {
@@ -24,7 +24,8 @@ public:
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,3> DisplacementsFieldVariableType;
   typedef FieldVariable::FieldVariable<PressureFunctionSpace,3> DisplacementsLinearFieldVariableType;
   typedef FieldVariable::FieldVariable<PressureFunctionSpace,1> PressureFieldVariableType;
-  typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,6> StressFieldVariableType;
+  typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,6> StressFieldVariableType;     // Voigt notation
+  typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,9> DeformationGradientFieldVariableType;  // row-major
 
   //! constructor
   QuasiStaticHyperelasticityBase(DihuContext context);
@@ -56,12 +57,26 @@ public:
   //! field variable velocities v, but on the linear mesh
   std::shared_ptr<DisplacementsLinearFieldVariableType> velocitiesLinearMesh();
 
-  //! field variable of S
+  //! field variable of F, all 9 values in row-major ordering
+  std::shared_ptr<DeformationGradientFieldVariableType> deformationGradient();
+
+  //! field variable of Fdot, all 9 values in row-major ordering
+  std::shared_ptr<DeformationGradientFieldVariableType> deformationGradientTimeDerivative();
+
+  //! field variable of S (Voigt notation sxx, syy, szz, sxy, syz, sxz)
   std::shared_ptr<StressFieldVariableType> pK2Stress();
 
-  //! field variable of fiber direction
-  std::shared_ptr<DisplacementsFieldVariableType> fiberDirection();
+  //! field variable of S_act
+  std::shared_ptr<StressFieldVariableType> activePK2Stress();
 
+  //! field variable of fiber direction
+  std::shared_ptr<DisplacementsFieldVariableType> &fiberDirection();
+
+  //! traction in current configuration, for z- and z+ surfaces
+  std::shared_ptr<DisplacementsFieldVariableType> traction();
+
+  //! traction in reference configuration, for z- and z+ surfaces
+  std::shared_ptr<DisplacementsFieldVariableType> materialTraction();
 
   //! initialize
   void initialize();
@@ -92,6 +107,9 @@ protected:
   //! initializes the vectors with size
   void createPetscObjects() override;
 
+  //! compute the field variable pK1Stress_ as P=F*S
+  void computePk1Stress();
+
   std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace_;            //< function space object that discretizes the pressure field variable
   std::shared_ptr<DisplacementsFunctionSpace> displacementsFunctionSpace_;  //< function space object that discretizes the displacements field variable
 
@@ -105,21 +123,31 @@ protected:
   std::shared_ptr<PressureFieldVariableType> pressure_;                           //< p^(n+1) for dynamic case or p for static case, the pressure variable
   std::shared_ptr<PressureFieldVariableType> pressurePreviousTimestep_;           //< p^(n), the pressure variable
   std::shared_ptr<StressFieldVariableType> pK2Stress_;                            //< the symmetric PK2 stress tensor in Voigt notation
+  std::shared_ptr<StressFieldVariableType> activePK2Stress_;                      //< the symmetric PK2 stress tensor of the active contribution in Voigt notation
+  std::shared_ptr<DeformationGradientFieldVariableType> deformationGradient_;     //< the deformation gradient, F, all 9 values in row-major ordering
+  std::shared_ptr<DeformationGradientFieldVariableType> deformationGradientTimeDerivative_;     //< the time derivative of the deformation gradient, \dot{F}, all 9 values in row-major ordering
   std::shared_ptr<DisplacementsLinearFieldVariableType> displacementsLinearMesh_; //< the displacements u, but on the linear mesh, not the quadratic. This is an internal helper field
   std::shared_ptr<DisplacementsLinearFieldVariableType> velocitiesLinearMesh_;    //< the velocities v, but on the linear mesh, not the quadratic. This is an internal helper field
   std::shared_ptr<DisplacementsFieldVariableType> fiberDirection_;                //< interpolated direction of fibers
+  std::shared_ptr<DisplacementsFieldVariableType> traction_;                      //< t, the traction in current configuration
+  std::shared_ptr<DisplacementsFieldVariableType> materialTraction_;              //< T, the traction in reference configuration
+  std::shared_ptr<DeformationGradientFieldVariableType> pK1Stress_;               //< the unsymmetric PK1 stress tensor P=FS, this variable is only used internally for the output files
+  std::shared_ptr<DeformationGradientFieldVariableType> cauchyStress_;               //< the unsymmetric Cauchy stress tensor σ=J^-1 P F^T, this variable is only used internally for the output files
+  std::shared_ptr<FieldVariable::FieldVariable<DisplacementsFunctionSpace,1>> deformationGradientDeterminant_;  //< the determinant of the deformation gradient, J=det F
 };
 
 /** Helper class that outputs the field variables for the output writer.
  *  Depending on the Term if it uses fiberDirection information, also output a fiber direction field.
  *  The normal isotropic Mooney-Rivlin thus has no fiber direction output.
+ *
+ *  withLargeOutput = false, Term::usesFiberDirection = false
  */
-template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term, typename DummyForTraits=Term>
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term, bool withLargeOutput=false, typename DummyForTraits=Term>
 class QuasiStaticHyperelasticity :
-  public QuasiStaticHyperelasticityBase<PressureFunctionSpace, DisplacementsFunctionSpace, Term>
+  public QuasiStaticHyperelasticityBase<PressureFunctionSpace, DisplacementsFunctionSpace, Term, withLargeOutput>
 {
 public:
-  using QuasiStaticHyperelasticityBase<PressureFunctionSpace, DisplacementsFunctionSpace, Term>::QuasiStaticHyperelasticityBase;
+  using QuasiStaticHyperelasticityBase<PressureFunctionSpace, DisplacementsFunctionSpace, Term, withLargeOutput>::QuasiStaticHyperelasticityBase;
 
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,3> DisplacementsFieldVariableType;
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,6> StressFieldVariableType;
@@ -130,6 +158,7 @@ public:
     std::shared_ptr<DisplacementsFieldVariableType>,  // current geometry field
     std::shared_ptr<DisplacementsFieldVariableType>,  // displacements_
     std::shared_ptr<DisplacementsFieldVariableType>,  // velocities_
+    std::shared_ptr<DisplacementsFieldVariableType>,  // material traction
     std::shared_ptr<StressFieldVariableType>         // pK2Stress_
   >
   FieldVariablesForOutputWriter;
@@ -138,12 +167,46 @@ public:
   FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 };
 
+// withLargeOutput = true, Term::usesFiberDirection = false
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
-class QuasiStaticHyperelasticity<PressureFunctionSpace, DisplacementsFunctionSpace, Term, std::enable_if_t<Term::usesFiberDirection,Term>> :
-  public QuasiStaticHyperelasticityBase<PressureFunctionSpace, DisplacementsFunctionSpace, Term>
+class QuasiStaticHyperelasticity<PressureFunctionSpace, DisplacementsFunctionSpace, Term, true, std::enable_if_t<!Term::usesFiberDirection,Term>> :
+  public QuasiStaticHyperelasticityBase<PressureFunctionSpace, DisplacementsFunctionSpace, Term, true>
 {
 public:
-  using QuasiStaticHyperelasticityBase<PressureFunctionSpace, DisplacementsFunctionSpace, Term>::QuasiStaticHyperelasticityBase;
+  using QuasiStaticHyperelasticityBase<PressureFunctionSpace, DisplacementsFunctionSpace, Term, true>::QuasiStaticHyperelasticityBase;
+
+  typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,3> DisplacementsFieldVariableType;
+  typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,6> StressFieldVariableType;
+  typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,9> DeformationGradientFieldVariableType;  // row-major
+
+  //! field variables that will be output by outputWriters
+  //type to use if there is no fiber direction field variable
+  typedef std::tuple<
+    std::shared_ptr<DisplacementsFieldVariableType>,  // current geometry field
+    std::shared_ptr<DisplacementsFieldVariableType>,  // displacements_
+    std::shared_ptr<DisplacementsFieldVariableType>,  // velocities_
+    std::shared_ptr<DisplacementsFieldVariableType>,  // traction
+    std::shared_ptr<DisplacementsFieldVariableType>,  // material traction
+    std::shared_ptr<StressFieldVariableType>,         // pK2Stress_
+    std::shared_ptr<DeformationGradientFieldVariableType>,  // deformationGradient_
+    std::shared_ptr<DeformationGradientFieldVariableType>,  // deformationGradientTimeDerivative_
+    std::shared_ptr<DeformationGradientFieldVariableType>,  // pK1Stress_
+    std::shared_ptr<DeformationGradientFieldVariableType>,   // Cauchy stress
+    std::shared_ptr<FieldVariable::FieldVariable<DisplacementsFunctionSpace,1>>   // determinant of the material deformation gradient
+  >
+  FieldVariablesForOutputWriter;
+
+  //! get pointers to all field variables that can be written by output writers
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
+};
+
+// withLargeOutput = false, Term::usesFiberDirection = true
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+class QuasiStaticHyperelasticity<PressureFunctionSpace, DisplacementsFunctionSpace, Term, false, std::enable_if_t<Term::usesFiberDirection,Term>> :
+  public QuasiStaticHyperelasticityBase<PressureFunctionSpace, DisplacementsFunctionSpace, Term, false>
+{
+public:
+  using QuasiStaticHyperelasticityBase<PressureFunctionSpace, DisplacementsFunctionSpace, Term, false>::QuasiStaticHyperelasticityBase;
 
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,3> DisplacementsFieldVariableType;
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,6> StressFieldVariableType;
@@ -155,7 +218,9 @@ public:
     std::shared_ptr<DisplacementsFieldVariableType>,  // displacements_
     std::shared_ptr<DisplacementsFieldVariableType>,  // velocities_
     std::shared_ptr<StressFieldVariableType>,         // pK2Stress_
-    std::shared_ptr<DisplacementsFieldVariableType>   // fiber direction
+    std::shared_ptr<StressFieldVariableType>,         // activePK2Stress_
+    std::shared_ptr<DisplacementsFieldVariableType>,  // fiber direction
+    std::shared_ptr<DisplacementsFieldVariableType>   // material traction
   >
   FieldVariablesForOutputWriter;
 
@@ -163,6 +228,42 @@ public:
   FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 };
 
+// withLargeOutput = true, Term::usesFiberDirection = true
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term>
+class QuasiStaticHyperelasticity<PressureFunctionSpace, DisplacementsFunctionSpace, Term, true, std::enable_if_t<Term::usesFiberDirection,Term>> :
+  public QuasiStaticHyperelasticityBase<PressureFunctionSpace, DisplacementsFunctionSpace, Term, true>
+{
+public:
+  using QuasiStaticHyperelasticityBase<PressureFunctionSpace, DisplacementsFunctionSpace, Term, true>::QuasiStaticHyperelasticityBase;
+
+  typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,3> DisplacementsFieldVariableType;
+  typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,6> StressFieldVariableType;
+  typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,9> DeformationGradientFieldVariableType;  // row-major
+
+  //! field variables that will be output by outputWriters
+  // type to use if we have a fiber direction field variable
+  typedef std::tuple<
+    std::shared_ptr<DisplacementsFieldVariableType>,  // current geometry field
+    std::shared_ptr<DisplacementsFieldVariableType>,  // displacements_
+    std::shared_ptr<DisplacementsFieldVariableType>,  // velocities_
+    std::shared_ptr<StressFieldVariableType>,         // pK2Stress_
+    std::shared_ptr<StressFieldVariableType>,         // activePK2Stress_
+    std::shared_ptr<DisplacementsFieldVariableType>,  // fiber direction
+    std::shared_ptr<DisplacementsFieldVariableType>,  // traction
+    std::shared_ptr<DisplacementsFieldVariableType>,  // material traction
+    std::shared_ptr<DeformationGradientFieldVariableType>,  // deformationGradient_
+    std::shared_ptr<DeformationGradientFieldVariableType>,  // deformationGradientTimeDerivative_
+    std::shared_ptr<DeformationGradientFieldVariableType>,  // pK1Stress_
+    std::shared_ptr<DeformationGradientFieldVariableType>,  // Cauchy stress
+    std::shared_ptr<FieldVariable::FieldVariable<DisplacementsFunctionSpace,1>>   // determinant of the material deformation gradient
+  >
+  FieldVariablesForOutputWriter;
+
+  //! get pointers to all field variables that can be written by output writers
+  FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
+};
+
+// ------------------------------------------------------------------------------------------------------
 /** This is a helper class that stores copies of the pressure variables.
  *  With the normal class, QuasiStaticHyperelasticity only variables on the DisplacementsFunctionSpace can be written.
  *  Using an object of this class, the pressure values can be written.

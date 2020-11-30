@@ -17,7 +17,7 @@ class RepeatedCallStatic :
 {
 public:
 
-  typedef typename Solver::OutputConnectorDataType OutputConnectorDataType;
+  typedef typename Solver::SlotConnectorDataType SlotConnectorDataType;
   typedef typename Solver::Data Data;
   typedef typename Solver::FunctionSpace FunctionSpace;
 
@@ -25,7 +25,7 @@ public:
   RepeatedCallStatic(DihuContext context);
 
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps
-  virtual void advanceTimeSpan();
+  virtual void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
   //! initialize solver
   void initialize();
@@ -33,12 +33,15 @@ public:
   //! first initialize that run the stepping
   void run();
 
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
+
   //! return the data object, with the call to this method the output writers get the data to create their output files
   Data &data();
 
   //! Get the data that will be transferred in the operator splitting or coupling to the other term of the splitting/coupling.
-  //! the transfer is done by the output_connector_data_transfer class
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
 private:
 

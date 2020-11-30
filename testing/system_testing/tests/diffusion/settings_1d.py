@@ -52,6 +52,7 @@ initial_values = [initial_values_function(x) for x in np.linspace(0,4.0,n_nodes)
   
 
 config = {
+  "logFormat": "csv",
   "ExplicitEuler" : {
     "initialValues": initial_values,
     "numberTimeSteps": 1500,

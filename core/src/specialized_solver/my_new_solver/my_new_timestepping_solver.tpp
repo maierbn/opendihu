@@ -3,7 +3,7 @@
 #include <omp.h>
 #include <sstream>
 
-template<class TimeStepping>
+template<typename TimeStepping>
 MyNewTimesteppingSolver<TimeStepping>::
 MyNewTimesteppingSolver(DihuContext context) :
   Runnable(),
@@ -23,9 +23,9 @@ MyNewTimesteppingSolver(DihuContext context) :
   LOG(DEBUG) << "myOption: " << myOption;
 }
 
-template<class TimeStepping>
+template<typename TimeStepping>
 void MyNewTimesteppingSolver<TimeStepping>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // This method computes some time steps of the simulation by running a for loop over the time steps.
   // The number of steps, timestep width and current time are all set by the parent class, TimeSteppingScheme.
@@ -47,7 +47,7 @@ advanceTimeSpan()
   for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
     // in defined intervals (settings "timeStepOutputInterval") print out the current timestep
-    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
     {
       LOG(INFO) << "MyNewTimesteppingSolver, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
@@ -58,11 +58,11 @@ advanceTimeSpan()
     // This, in turn, may lead to multiple timesteps in the timeSteppingScheme_.
     this->timeSteppingScheme_.setTimeSpan(currentTime, currentTime+this->timeStepWidth_);
 
-    // advance the simulation by the specified time span
-    timeSteppingScheme_.advanceTimeSpan();
+    // advance the simulation by the specified time span, the parameter withOutputWritersEnabled specifies if the output writers should be called (usually yes)
+    timeSteppingScheme_.advanceTimeSpan(withOutputWritersEnabled);
 
     // probably do something more here, maybe in a separate method:
-    executeMyHelperMethod();
+    //executeMyHelperMethod();
 
     // ...
 
@@ -77,8 +77,9 @@ advanceTimeSpan()
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
-    // write current output values using the output writers
-    this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
+    // if the output writers are enabled, write current output values using the output writers
+    if (withOutputWritersEnabled)
+      this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
 
     // start duration measurement
     if (this->durationLogKey_ != "")
@@ -90,7 +91,7 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 }
 
-template<class TimeStepping>
+template<typename TimeStepping>
 void MyNewTimesteppingSolver<TimeStepping>::
 initialize()
 {
@@ -99,8 +100,18 @@ initialize()
   // call initialize of the parent class, this parses the timestepping settings from the settings file
   TimeSteppingScheme::TimeSteppingScheme::initialize();
 
+  // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
+  DihuContext::solverStructureVisualizer()->addSolver("MyNewTimesteppingSolver", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means slot connector data is shared with the first subsolver
+  // if you have your own slot connector data rather than the one of the subsolver, call "addSolver" with false as second argument
+
+  // indicate in solverStructureVisualizer that now a child solver will be initialized
+  DihuContext::solverStructureVisualizer()->beginChild();
+
   // call initialize of the nested timestepping solver
   timeSteppingScheme_.initialize();
+
+  // indicate in solverStructureVisualizer that the child solver initialization is done
+  DihuContext::solverStructureVisualizer()->endChild();
 
   // In order to initialize the data object and actuall create all variables, we first need to assign a function space to the data object.
   // A function space object of type FunctionSpace<MeshType,BasisFunctionType> (see "function_space/function_space.h")
@@ -115,22 +126,25 @@ initialize()
   // now call initialize, data will then create all variables (Petsc Vec's)
   data_.initialize();
 
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
+
   // here is the space to initialize anything else that is needed for your solver
 }
 
-template<class TimeStepping>
+template<typename TimeStepping>
 void MyNewTimesteppingSolver<TimeStepping>::
 run()
 {
   // The run method should not be changed. It is the method that gets called directly from the example main file.
   // If this solver itself is nested in other solvers or coupling schemes,
-  // run() will not be called, but the surrounding solver will call initialize() and advanceTimeSpan().
+  // run() will not be called, but the enclosing solver will call initialize() and advanceTimeSpan().
   initialize();
 
   advanceTimeSpan();
 }
 
-template<class TimeStepping>
+template<typename TimeStepping>
 void MyNewTimesteppingSolver<TimeStepping>::
 reset()
 {
@@ -139,7 +153,17 @@ reset()
   // "uninitialize" everything
 }
 
-template<class TimeStepping>
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+template<typename TimeStepping>
+void MyNewTimesteppingSolver<TimeStepping>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  // Call the output writer manager to execute all output writers.
+  // This will check if there is a file to be written at the current timestep and then output the files.
+  this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime, callCountIncrement);
+}
+
+template<typename TimeStepping>
 void MyNewTimesteppingSolver<TimeStepping>::
 executeMyHelperMethod()
 {
@@ -165,7 +189,7 @@ executeMyHelperMethod()
   ierr = VecShift(fieldVariableA->valuesGlobal(), 1.0); CHKERRV(ierr);
 }
 
-template<class TimeStepping>
+template<typename TimeStepping>
 typename MyNewTimesteppingSolver<TimeStepping>::Data &MyNewTimesteppingSolver<TimeStepping>::
 data()
 {
@@ -177,12 +201,12 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
-template<class TimeStepping>
-std::shared_ptr<typename MyNewTimesteppingSolver<TimeStepping>::OutputConnectorDataType> MyNewTimesteppingSolver<TimeStepping>::
-getOutputConnectorData()
+//! the transfer is done by the slot_connector_data_transfer class
+template<typename TimeStepping>
+std::shared_ptr<typename MyNewTimesteppingSolver<TimeStepping>::SlotConnectorDataType> MyNewTimesteppingSolver<TimeStepping>::
+getSlotConnectorData()
 {
   //! This is relevant only, if this solver is part of a splitting or coupling scheme. Then this method returns the values/variables that will be
   // transferred to the other solvers. We can just reuse the values of the timeSteppingScheme_.
-  return timeSteppingScheme_.getOutputConnectorData();
+  return timeSteppingScheme_.getSlotConnectorData();
 }

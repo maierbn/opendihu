@@ -6,7 +6,7 @@
 namespace FunctionSpace
 {
 
-/** base class that provided constants for the numbers of dofs, elements and nodes
+/** base class that provides constants for the numbers of dofs, elements and nodes
   */
 template<int D,typename BasisFunctionType>
 class FunctionSpaceBaseDim
@@ -22,10 +22,10 @@ public:
   //! number of dofs per node
   static constexpr int nDofsPerNode();
 
-  //! if one assigns every dof to an element it is contained in, the number of degrees of freedom per element (not considering border elements)
+  //! if one assigns every dof to an element it is contained in, the number of degrees of freedom per element (not considering boundary elements)
   static constexpr int averageNDofsPerElement();
 
-  //! if one assigns every node to an element it is contained in, the number of nodes per element (not considering border elements)
+  //! if one assigns every node to an element it is contained in, the number of nodes per element (not considering boundary elements)
   static constexpr int averageNNodesPerElement();
 };
 
@@ -45,10 +45,10 @@ public:
   //! number of dofs per node
   static constexpr int nDofsPerNode();
 
-  //! if one assigns every dof to an element it is contained in, the number of degrees of freedom per element (not considering border elements)
+  //! if one assigns every dof to an element it is contained in, the number of degrees of freedom per element (not considering boundary elements)
   static constexpr int averageNDofsPerElement();
 
-  //! if one assigns every node to an element it is contained in, the number of nodes per element (not considering border elements)
+  //! if one assigns every node to an element it is contained in, the number of nodes per element (not considering boundary elements)
   static constexpr int averageNNodesPerElement();
 };
 

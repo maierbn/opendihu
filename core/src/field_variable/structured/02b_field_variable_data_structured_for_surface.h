@@ -24,6 +24,8 @@ public:
   using FieldVariableDataStructured<FunctionSpaceType,nComponents_>::FieldVariableDataStructured;
 };
 
+/** this is the 2D field variable
+ */
 template<typename BasisFunctionType, int nComponents>
 class FieldVariableDataStructuredForSurface<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents> :
   public FieldVariableDataStructured<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>
@@ -32,19 +34,26 @@ public:
   using FieldVariableDataStructured<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<2>,BasisFunctionType>,nComponents>::FieldVariableDataStructured;
 
   typedef FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunctionType>,nComponents> FieldVariable3D;
+  typedef FieldVariable<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>,BasisFunctionType>,nComponents> FieldVariableComposite3D;
 
-  //! constructor from a 3D field variable, this 2D field variable is at the surface given by face (only 2- or 2+ is possible). ownRankInvolvedInOutput is set to false if the own rank does not have any part of the data on this surface.
+  //! constructor from a 3D field variable, this 2D field variable is at the surface given by face. ownRankInvolvedInOutput is set to false if the own rank does not have any part of the data on this surface.
   FieldVariableDataStructuredForSurface(FieldVariable3D &rhs, Mesh::face_t face, bool &ownRankInvolvedInOutput);
+
+  //! constructor from a 3D field variable with composite mesh, this 2D field variable is at the surface given by face. ownRankInvolvedInOutput is set to false if the own rank does not have any part of the data on this surface.
+  FieldVariableDataStructuredForSurface(FieldVariableComposite3D &rhs, Mesh::face_t face, bool &ownRankInvolvedInOutput);
 
   //! set values from 3D field variables
   void setValues(FieldVariable3D &rhs);
 
+  //! set values from 3D field variables with composite mesh
+  void setValues(FieldVariableComposite3D &rhs);
+
 protected:
 
   // for a 3D numbering scheme with x*y*z numbers (e.g. dofs or ranks), get the surface dofs for face
-  void getSurfaceNumbers(const std::array<int,3> size, int nDofsPerNode, Mesh::face_t face, std::vector<int> &surfaceNumbers);
+  void getSurfaceNumbers(const std::array<node_no_t,3> size, int nDofsPerNode, Mesh::face_t face, std::vector<node_no_t> &surfaceNumbers);
 
-  std::vector<dof_no_t> surfaceDofs_;   ///< local dof nos of the 3D field variable that specify the surface
+  std::vector<dof_no_t> surfaceDofs_;   //< local dof nos of the 3D field variable that specify the surface
 
 };
 

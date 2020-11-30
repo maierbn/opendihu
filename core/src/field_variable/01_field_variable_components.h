@@ -39,7 +39,7 @@ protected:
   //! get the componentNo that matches the componentName
   int findComponent(std::string componentName);
 
-  std::array<std::string,nComponentsValue> componentNames_;   ///< names of the components, e.g. "x","y","z"
+  std::array<std::string,nComponentsValue> componentNames_;   //< names of the components, e.g. "x","y","z"
 };
 
 }  // namespace

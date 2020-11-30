@@ -17,7 +17,7 @@ namespace ModelOrderReduction
    
   template<typename TimeSteppingExplicitType>
   void ExplicitEulerReduced<TimeSteppingExplicitType>::
-  advanceTimeSpan()
+  advanceTimeSpan(bool withOutputWritersEnabled)
   {
     // compute timestep width
     double timeSpan = this->endTime_ - this->startTime_;
@@ -87,11 +87,13 @@ namespace ModelOrderReduction
       this->MatMultFull(basis, redSolution , solution);
       VLOG(1) << "solution after integration" << *this->fullTimestepping_.data().solution(); 
       
-      this->fullTimestepping_.outputWriterManager().writeOutput(this->fullTimestepping_.data(), timeStepNo, currentTime);
-      
-      // write the current output values of the (reduced) timestepping
-      this->outputWriterManager().writeOutput(*this->data_, timeStepNo, currentTime);
-                  
+      if(withOutputWritersEnabled)
+      {
+        this->fullTimestepping_.outputWriterManager().writeOutput(this->fullTimestepping_.data(), timeStepNo, currentTime);
+
+        // write the current output values of the (reduced) timestepping
+        this->outputWriterManager().writeOutput(*this->data_, timeStepNo, currentTime);
+      }
     }
     
     this->fullTimestepping_.data().solution()->restoreValuesContiguous();

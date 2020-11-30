@@ -14,15 +14,25 @@ TimeSteppingScheme::TimeSteppingScheme(DihuContext context) :
 
 void TimeSteppingScheme::setTimeStepWidth(double timeStepWidth)
 {
+  timeStepTargetWidth_ = timeStepWidth;
+
   double epsilon = 1e-1;
   // Increase time step width by maximum of epsilon=10%.
   // Increasing time step width is potentially dangerous, because it can make the timestepping scheme unstable.
-  // Ideally changing the timestep width should not be possible at all, if it is given correctly in the config.
+  // Ideally changing the timestep width should not be necessary at all, if it is given correctly in the config.
   // Examples:
   //  t_end = 1.09, dt = 1.0 -> increase dt to 1.09, one timestep
   //  t_end = 1.11, dt = 1.0 -> decrease dt to 0.555, two timesteps
 
-  numberTimeSteps_ = std::max(1,int(std::ceil((endTime_ - startTime_) / timeStepWidth - epsilon)));
+  long double n = std::ceil((long double)(endTime_ - startTime_) / timeStepWidth - epsilon);
+  numberTimeSteps_ = std::max(1,int(n));
+
+  if (n > (double)std::numeric_limits<int>::max())
+  {
+    LOG(FATAL) << "Number of timesteps " << n << " for timeStepWidth " << timeStepWidth
+      << " in time span [" << startTime_ << "," << endTime_ << "] is too high.";
+  }
+
   setNumberTimeSteps(numberTimeSteps_);
 }
 
@@ -30,7 +40,8 @@ void TimeSteppingScheme::setNumberTimeSteps(int numberTimeSteps)
 {
   numberTimeSteps_ = numberTimeSteps;
   timeStepWidth_ = (endTime_ - startTime_) / numberTimeSteps;
-  LOG(DEBUG) << "timeStepWidth_ in setNumberTimeSteps: " << timeStepWidth_;
+  LOG(DEBUG) << "numberTimeSteps_: " << numberTimeSteps_ << ", endTime:" << endTime_
+    << ", startTime: " << startTime_ << " timeStepWidth_ in setNumberTimeSteps: " << timeStepWidth_;
 }
 
 void TimeSteppingScheme::setTimeSpan(double startTime, double endTime)
@@ -38,16 +49,21 @@ void TimeSteppingScheme::setTimeSpan(double startTime, double endTime)
   startTime_ = startTime;
   endTime_ = endTime;
 
-  if (timeStepWidth_ > endTime_-startTime_)
-  {
-    LOG(DEBUG) << "time span [" << startTime << "," << endTime << "], reduce timeStepWidth from " << timeStepWidth_ << " to " << endTime_-startTime_;
-    timeStepWidth_ = endTime_-startTime_;
-  }
-
+  // recompute step width for new interval
   if (isTimeStepWidthSignificant_)
   {
+    if (timeStepTargetWidth_ > endTime_ - startTime_)
+    {
+      LOG(DEBUG) << "time span [" << startTime << "," << endTime << "], reduce timeStepWidth from " << timeStepTargetWidth_ << " to " << endTime_ - startTime_;
+      timeStepWidth_ = endTime_ - startTime_;
+    }
     setTimeStepWidth(timeStepWidth_);
-    LOG(DEBUG) << "set number of time steps to " <<numberTimeSteps_<< " from timeStepWidth " << timeStepWidth_;
+    LOG(DEBUG) << "set number of time steps to " << numberTimeSteps_ << " from timeStepWidth " << timeStepWidth_;
+  }
+  else
+  {
+    setNumberTimeSteps(numberTimeSteps_);
+    LOG(DEBUG) << "set time step width to " << timeStepWidth_ << " from numberTimeSteps " << numberTimeSteps_;
   }
 }
 
@@ -75,20 +91,29 @@ void TimeSteppingScheme::initialize()
 
   if (specificSettings_.hasKey("timeStepWidth"))
   {
-    timeStepWidth_ = specificSettings_.getOptionDouble("timeStepWidth", 0.001, PythonUtility::Positive);
-    setTimeStepWidth(timeStepWidth_);
+    timeStepTargetWidth_ = specificSettings_.getOptionDouble("timeStepWidth", 0.001, PythonUtility::Positive);
+    setTimeStepWidth(timeStepTargetWidth_);
 
-    LOG(DEBUG) << "  TimeSteppingScheme::initialize, timeStepWidth="
-      << specificSettings_.getOptionDouble("timeStepWidth", 0.001, PythonUtility::Positive)
-      << ", compute numberTimeSteps=" <<numberTimeSteps_;
+    LOG(DEBUG) << "  TimeSteppingScheme::initialize, timeStepWidth in settings: "  << timeStepTargetWidth_
+      << ", timeStepWidth_: " << timeStepWidth_ << ", compute numberTimeSteps=" << numberTimeSteps_;
 
     if (specificSettings_.hasKey("numberTimeSteps"))
     {
-      numberTimeSteps_ = specificSettings_.getOptionInt("numberTimeSteps", 10, PythonUtility::Positive);
-      isTimeStepWidthSignificant_ = false;
-      LOG(WARNING) << "Time step width will be overridden by number of time steps (" << numberTimeSteps_ << ")";
+      const int numberTimeSteps = specificSettings_.getOptionInt("numberTimeSteps", 10, PythonUtility::NonNegative);
+      if (numberTimeSteps > 0)
+      {
+        numberTimeSteps_ = numberTimeSteps;
+        isTimeStepWidthSignificant_ = false;
+        timeStepTargetWidth_ = 0.0;
+        LOG(WARNING) << "Time step width (" << timeStepTargetWidth_ << ") will be overridden by number of time steps (" << numberTimeSteps_ << ")";
 
-      setNumberTimeSteps(numberTimeSteps_);
+        setNumberTimeSteps(numberTimeSteps_);
+      }
+      else
+      {
+        LOG(WARNING) << "Time step width (" << timeStepTargetWidth_ << ") will NOT be overridden by number of time steps (" << numberTimeSteps << ")";
+        isTimeStepWidthSignificant_ = true;
+      }
     }
     else
     {
@@ -98,6 +123,8 @@ void TimeSteppingScheme::initialize()
   else
   {
     int numberTimeSteps = specificSettings_.getOptionInt("numberTimeSteps", 10, PythonUtility::Positive);
+    isTimeStepWidthSignificant_ = false;
+    timeStepTargetWidth_ = 0.0;
     LOG(DEBUG) << "  TimeSteppingScheme::initialize, timeStepWidth not specified, read numberTimeSteps: " << numberTimeSteps;
     setNumberTimeSteps(numberTimeSteps);
   }
@@ -106,10 +133,15 @@ void TimeSteppingScheme::initialize()
     << ", time step width: " << timeStepWidth_;
 
   // log timeStepWidth as the key that is given by "logTimeStepWidthAsKey"
-  if (specificSettings_.hasKey("logTimeStepWidthAsKey"))
+  if (specificSettings_.hasKey("logTimeStepWidthAsKey") && isTimeStepWidthSignificant_)
   {
     std::string timeStepWidthKey = specificSettings_.getOptionString("logTimeStepWidthAsKey", "timeStepWidth");
-    Control::PerformanceMeasurement::setParameter(timeStepWidthKey, timeStepWidth_);
+    Control::PerformanceMeasurement::setParameter(timeStepWidthKey, timeStepTargetWidth_);
+  }
+  else if (specificSettings_.hasKey("logNumberTimeStepsAsKey") && !isTimeStepWidthSignificant_)
+  {
+    std::string numberTimeStepsKey = specificSettings_.getOptionString("logNumberTimeStepsAsKey", "numberTimeSteps");
+    Control::PerformanceMeasurement::setParameter(numberTimeStepsKey, numberTimeSteps_);
   }
 
   if (specificSettings_.hasKey("durationLogKey"))

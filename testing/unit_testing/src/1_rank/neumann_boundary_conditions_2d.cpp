@@ -40,6 +40,7 @@ if False:
       ]
 
 config = {
+  "solverStructureDiagramFile": "solver_structure.txt",
   "FiniteElementMethod" : {
     "nElements": [nx, ny],
     "inputMeshIsGlobal": True,
@@ -53,6 +54,8 @@ config = {
     "solverType": "gmres",
     "preconditionerType": "sor",
     "maxIterations": 10000,
+    "dumpFormat": "default",
+    "dumpFilename": "",
     "OutputWriter" : []
   },
 }
@@ -129,6 +132,7 @@ if False:
       ]
 
 config = {
+  "solverStructureDiagramFile": "solver_structure.txt",
   "FiniteElementMethod" : {
     "nElements": [nx, ny],
     "inputMeshIsGlobal": True,
@@ -142,6 +146,8 @@ config = {
     "solverType": "gmres",
     "preconditionerType": "sor",
     "maxIterations": 10000,
+    "dumpFormat": "default",
+    "dumpFilename": "",
     "OutputWriter" : []
   },
 }
@@ -218,6 +224,7 @@ if False:
       ]
 
 config = {
+  "solverStructureDiagramFile": "solver_structure.txt",
   "FiniteElementMethod" : {
     "nElements": [nx, ny],
     "inputMeshIsGlobal": True,
@@ -232,6 +239,8 @@ config = {
     "solverType": "gmres",
     "preconditionerType": "sor",
     "maxIterations": 10000,
+    "dumpFormat": "default",
+    "dumpFilename": "",
     "OutputWriter" : [
       {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":False},
       {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True},

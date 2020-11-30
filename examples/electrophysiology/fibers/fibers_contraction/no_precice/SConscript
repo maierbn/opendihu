@@ -13,4 +13,8 @@ if not env['no_examples']:
   # create the main executable
   env.Program(target = 'biceps_contraction', source = "src/biceps_contraction.cpp")
 #  env.Program(target = 'biceps_contraction_not_fast', source = "src/biceps_contraction_not_fast.cpp")
+<<<<<<< HEAD
 #  env.Program(target = 'biceps_contraction_no_cell', source = "src/biceps_contraction_no_cell.cpp")
+=======
+  env.Program(target = 'biceps_contraction_no_cell', source = "src/biceps_contraction_no_cell.cpp")
+>>>>>>> c72fb9797169260437f508a46e1f07b1fc5449c2

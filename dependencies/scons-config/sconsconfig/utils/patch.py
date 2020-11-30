@@ -1,5 +1,5 @@
 import os, subprocess
-from command import *
+from .command import *
 
 def apply_patch(path, patch):
     cwd = os.getcwd()

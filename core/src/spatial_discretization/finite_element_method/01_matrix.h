@@ -16,7 +16,6 @@ public:
   // use constructor of base class
   using FiniteElementMethodInitializeData<FunctionSpaceType,QuadratureType,nComponents,Term>::FiniteElementMethodInitializeData;
 
-protected:
   //! set entries in stiffness matrix by normal integration
   void setStiffnessMatrix();
 
@@ -43,7 +42,6 @@ public:
   //! use constructor of base class
   using FiniteElementMethodInitializeData<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1ul>,BasisFunction::LagrangeOfOrder<1>>, QuadratureType, 1, Term>::FiniteElementMethodInitializeData;
 
-protected:
   //! set entries in stiffness matrix by using stencils
   void setStiffnessMatrix();
 
@@ -69,7 +67,6 @@ public:
   //! use constructor of base class
   using FiniteElementMethodInitializeData<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<2ul>,BasisFunction::LagrangeOfOrder<1>>, QuadratureType, 1, Term>::FiniteElementMethodInitializeData;
 
-protected:
   //! set entries in stiffness matrix by using stencils
   void setStiffnessMatrix();
 
@@ -95,7 +92,6 @@ public:
   //! use constructor of base class
   using FiniteElementMethodInitializeData<FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<3ul>,BasisFunction::LagrangeOfOrder<1>>, QuadratureType, 1, Term>::FiniteElementMethodInitializeData;
 
-protected:
   //! set entries in stiffness matrix by using stencils
   void setStiffnessMatrix();
 
@@ -146,7 +142,7 @@ public:
   void setInverseLumpedMassMatrix();
 };
 
-extern bool outputAssemble3DStiffnessMatrix_;   ///< if the message about assembly of the 3D stiffness matrix was printed
+extern bool outputAssemble3DStiffnessMatrix_;   //< if the message about assembly of the 3D stiffness matrix was printed
 
 
 } // namespace

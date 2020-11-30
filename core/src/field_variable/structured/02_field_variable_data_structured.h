@@ -31,9 +31,10 @@ public:
   //! Note, it is not possible to make rhs const, because VecCopy needs globalValues() and this may change rhs
   FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents_> &rhs, std::string name, bool reuseData=false);
 
-  //! contructor as data copy (reuseData=false) or reusing the Petsc Vec's (reuseData=true), with a different name and different components
+  //! contructor as data copy (reuseData=false) or reusing the Petsc Vec's (reuseData=true), with a different name and different components,
+  //! @param rhsComponentNoBegin the first component of the rhs to reuse for this field variable
   template <int nComponents2>
-  FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents2> &rhs, std::string name, std::vector<std::string> componentNames, bool reuseData=false);
+  FieldVariableDataStructured(FieldVariable<FunctionSpaceType,nComponents2> &rhs, std::string name, std::vector<std::string> componentNames, bool reuseData=false, int rhsComponentNoBegin=0);
 
   //! constructor with functionSpace, name and components and if it is a geometry field. This constructs a complete field variable
   FieldVariableDataStructured(std::shared_ptr<FunctionSpaceType> functionSpace, std::string name, std::vector<std::string> componentNames, bool isGeometryField=false);
@@ -111,7 +112,7 @@ public:
   
 protected:
 
-  std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents_>> values_ = nullptr;          ///< Petsc vector containing the values, the values for the components are stored as struct of array, e.g. (comp1val1, comp1val2, comp1val3, ..., comp2val1, comp2val2, comp2val3, ...). Dof ordering proceeds fastest over dofs of a node, then over nodes, node numbering is along whole domain, fastes in x, then in y,z direction.
+  std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents_>> values_ = nullptr;          //< Petsc vector containing the values, the values for the components are stored as struct of array, e.g. (comp1val1, comp1val2, comp1val3, ..., comp2val1, comp2val2, comp2val3, ...). Dof ordering proceeds fastest over dofs of a node, then over nodes, node numbering is along whole domain, fastes in x, then in y,z direction.
 };
 
 } // namespace

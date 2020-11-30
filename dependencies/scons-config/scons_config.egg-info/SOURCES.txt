@@ -48,13 +48,11 @@ sconsconfig/packages/VTK.py
 sconsconfig/packages/XercesC.py
 sconsconfig/packages/__init__.py
 sconsconfig/packages/alsa.py
-sconsconfig/packages/bison.py
 sconsconfig/packages/boost.py
 sconsconfig/packages/bzip2.py
 sconsconfig/packages/cfitsio.py
 sconsconfig/packages/chaste.py
 sconsconfig/packages/clock.py
-sconsconfig/packages/flex.py
 sconsconfig/packages/glut.py
 sconsconfig/packages/googletest.py
 sconsconfig/packages/libcellml.py
@@ -63,6 +61,8 @@ sconsconfig/packages/libsamplerate.py
 sconsconfig/packages/libsndfile.py
 sconsconfig/packages/libusb.py
 sconsconfig/packages/libxml2.py
+sconsconfig/packages/opencor.py
+sconsconfig/packages/precice.py
 sconsconfig/packages/pugixml.py
 sconsconfig/packages/pythonPackages.py
 sconsconfig/packages/rapidxml.py

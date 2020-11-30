@@ -21,8 +21,14 @@ public:
   //! constructor
   HeunAdaptive(DihuContext context);
 
+  //! destructor to write log file
+  virtual ~HeunAdaptive();
+
+  //! initialize the data object
+  virtual void initialize();
+
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
   //! Returns the current time passed in the simulation. Used to trigger rebalancing
   double currentHeunTime();
@@ -62,12 +68,12 @@ private:
   int multiplicator_;
 
   // vector norm between two solutions
-  PetscReal vecnorm;
+  PetscReal vecnorm_;
 
   // temporary vectors for calculation
   Vec temp_solution_normal;
   Vec temp_solution_tilde;
-  Vec temp_solution_tilde_intermediate;
+  Vec temp_solution_tilde_algebraic;
   Vec temp_increment_1;
   Vec temp_increment_2;
 
@@ -83,7 +89,12 @@ private:
   // current time of the simulation
   double currentTimeHeun_;
 
+  std::string timeStepWidthsLogFilename_;   //< filename of log file that will contain timestep widths
+
+  std::vector<double> times_;               //< time points that are visited
+  std::vector<double> timeStepWidths_;      //< a vector of all used timestep widths, to be written to a log at the end
 };
+
 }  // namespace
 
 #include "time_stepping_scheme/heun_adaptive.tpp"

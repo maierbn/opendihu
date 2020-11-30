@@ -4,7 +4,14 @@
 #include <memory>
 
 #include "partition/mesh_partition/01_mesh_partition.h"
-#include "control/python_config.h"
+#include "control/python_config/python_config.h"
+
+// forward declaration
+namespace FunctionSpace
+{
+template<typename MeshType,typename BasisFunctionType>
+class FunctionSpace;
+}
 
 namespace Partition
 {
@@ -26,17 +33,27 @@ public:
   //! create new partitioning over all available processes, respective the rank subset that was set by the last call to setRankSubsetForNextCreatedPartitioning, for a structured mesh, from global sizes
   //! use globalSize, fill localSize and nRanks
   template<typename FunctionSpace>
-  std::shared_ptr<MeshPartition<FunctionSpace>> createPartitioningStructuredGlobal(const std::array<global_no_t,FunctionSpace::dim()> nElementsGlobal,
-                                                                                 std::array<element_no_t,FunctionSpace::dim()> &nElementsLocal, 
-                                                                                 std::array<int,FunctionSpace::dim()> &nRanks);
+  std::shared_ptr<MeshPartition<FunctionSpace>> createPartitioningStructuredGlobal(PythonConfig specificSettings,
+                                                                                   const std::array<global_no_t,FunctionSpace::dim()> nElementsGlobal,
+                                                                                   std::array<element_no_t,FunctionSpace::dim()> &nElementsLocal,
+                                                                                   std::array<int,FunctionSpace::dim()> &nRanks,
+                                                                                   std::vector<int> rankNos);
 
   //! create new partitioning over all available processes, respective the rank subset that was set by the last call to setRankSubsetForNextCreatedPartitioning, for a structured mesh, from local sizes
   //! use localSize and nRanks, fill globalSize
   //! @param nRanks The number of ranks in the coordinate directions.
   template<typename FunctionSpace>
-  std::shared_ptr<MeshPartition<FunctionSpace>> createPartitioningStructuredLocal(std::array<global_no_t,FunctionSpace::dim()> &nElementsGlobal,
-                                                                                const std::array<element_no_t,FunctionSpace::dim()> nElementsLocal,
-                                                                                const std::array<int,FunctionSpace::dim()> nRanks);
+  std::shared_ptr<MeshPartition<FunctionSpace>> createPartitioningStructuredLocal(PythonConfig specificSettings,
+                                                                                  std::array<global_no_t,FunctionSpace::dim()> &nElementsGlobal,
+                                                                                  const std::array<element_no_t,FunctionSpace::dim()> nElementsLocal,
+                                                                                  const std::array<int,FunctionSpace::dim()> nRanks,
+                                                                                  std::vector<int> rankNos);
+
+  //! create new partitioning of a composite mesh, this emulates a normal mesh but the values are taken from the submeshes
+  template<typename BasisFunctionType, int D>
+  std::shared_ptr<MeshPartition<::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>>> createPartitioningComposite(
+    const std::vector<std::shared_ptr<::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> &subFunctionSpaces,
+    std::vector<int> rankNos);
 
   //! store a rank subset that will be used for the next partitioning that will be created
   void setRankSubsetForNextCreatedPartitioning(std::shared_ptr<RankSubset> nextRankSubset);
@@ -49,10 +66,10 @@ public:
   
 private:
  
-  PythonConfig specificSettings_;  ///< the settings object for the partition manager
+  PythonConfig specificSettings_;  //< the settings object for the partition manager
   
-  std::shared_ptr<RankSubset> nextRankSubset_;   ///< rank subset that will be used for the next partitioning that will be created
-  std::shared_ptr<RankSubset> rankSubsetForCollectiveOperations_;    ///< the ranks which should be used for collective MPI operations
+  std::shared_ptr<RankSubset> nextRankSubset_;   //< rank subset that will be used for the next partitioning that will be created
+  std::shared_ptr<RankSubset> rankSubsetForCollectiveOperations_;    //< the ranks which should be used for collective MPI operations
 };
 
 }  // namespace

@@ -9,7 +9,7 @@
 #include "opendihu.h"
 #include "../utility.h"
 #include "partition/partitioned_petsc_vec/01_partitioned_petsc_vec_with_dirichlet_bc.h"
-#include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
+#include "spatial_discretization/dirichlet_boundary_conditions/01_dirichlet_boundary_conditions.h"
 
 TEST(PartitionedPetscVecTest, Test)
 {
@@ -108,7 +108,7 @@ config = {
   vec0->startGhostManipulation();
 
 
-  std::vector<int> indices({0, 1, 2, 3});
+  std::vector<PetscInt> indices({0, 1, 2, 3});
   std::vector<double> values(4);
   vec0->getValues(0, 4, indices.data(), values.data());
 

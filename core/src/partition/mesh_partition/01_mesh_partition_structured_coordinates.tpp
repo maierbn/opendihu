@@ -11,6 +11,9 @@ template<typename MeshType,typename BasisFunctionType>
 std::array<global_no_t,MeshType::dim()> MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 getCoordinatesGlobal(node_no_t nodeNoLocal) const
 {
+  if (nNodesLocalWithoutGhosts() == 0)
+    return std::array<global_no_t,MeshType::dim()>({0});
+
   if (MeshType::dim() == 1)
   {
     return std::array<global_no_t,MeshType::dim()>({beginNodeGlobalNatural(0) + nodeNoLocal});
@@ -89,8 +92,18 @@ getCoordinatesGlobal(node_no_t nodeNoLocal) const
         {
           if (hasFullNumberOfNodes(2))
           {
+            // for degenerate mesh partition
+            coordinates[0] = 0;
+            coordinates[1] = 0;
+            coordinates[2] = 0;
+
+            LOG(ERROR) << "degenerate mesh partition: " << nNodesLocalWithoutGhosts() << " local nodes";
+
+            return coordinates;
+
+
             // domain has no ghost nodes, should be handled by other if branch
-            assert(false);
+            //assert(false);
           }
           else
           {
@@ -114,7 +127,7 @@ getCoordinatesGlobal(node_no_t nodeNoLocal) const
           else
           {
             // domain has back (y+) and top (z+) ghost nodes
-            if (nodeNoLocal < nNodesLocalWithoutGhosts() + nNodesLocalWithoutGhosts(0)*nNodesLocalWithoutGhosts(1))
+            if (nodeNoLocal < nNodesLocalWithoutGhosts() + nNodesLocalWithoutGhosts(0)*nNodesLocalWithoutGhosts(2))
             {
               // ghost is on back plane
               global_no_t ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts();
@@ -125,7 +138,7 @@ getCoordinatesGlobal(node_no_t nodeNoLocal) const
             else
             {
               // ghost is on top plane
-              global_no_t ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts() - nNodesLocalWithoutGhosts(0)*nNodesLocalWithoutGhosts(1);
+              global_no_t ghostNo = nodeNoLocal - nNodesLocalWithoutGhosts() - nNodesLocalWithoutGhosts(0)*nNodesLocalWithoutGhosts(2);
               coordinates[0] = beginNodeGlobalNatural(0) + ghostNo % nNodesLocalWithoutGhosts(0);
               coordinates[1] = beginNodeGlobalNatural(1) + ghostNo / nNodesLocalWithoutGhosts(0);
               coordinates[2] = beginNodeGlobalNatural(2) + nNodesLocalWithGhosts(2) - 1;
@@ -235,11 +248,13 @@ getCoordinatesGlobal(node_no_t nodeNoLocal) const
   return std::array<global_no_t,MeshType::dim()>({0});  // this never happens, but the intel compiler does not recognize it (gcc does)
 }
 
-
 template<typename MeshType,typename BasisFunctionType>
 std::array<int,MeshType::dim()> MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 getCoordinatesLocal(node_no_t nodeNoLocal) const
 {
+  if (nNodesLocalWithoutGhosts() == 0)
+    return std::array<int,MeshType::dim()>({0});
+
   std::array<global_no_t,MeshType::dim()> coordinatesGlobal = getCoordinatesGlobal(nodeNoLocal);
   std::array<int,MeshType::dim()> coordinatesLocal;
 
@@ -284,8 +299,6 @@ getCoordinatesLocal(std::array<global_no_t,MeshType::dim()> coordinatesGlobal, b
   }
 
   return coordinatesLocal;
-
-  //node_no_t nodeNoLocalFromCoordinates = functionSpace->getNodeNo(coordinatesLocal);
 }
 
   //! get the local coordinates for a local element no
@@ -314,6 +327,189 @@ getElementCoordinatesLocal(element_no_t elementNoLocal) const
     assert(false);
   }
   return result;
+}
+
+template<typename MeshType,typename BasisFunctionType>
+std::array<global_no_t,MeshType::dim()> MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getCoordinatesGlobalOfNodeNoGlobalNatural(global_no_t nodeNoGlobalNatural) const
+{
+  std::array<global_no_t,MeshType::dim()> coordinatesGlobal;
+
+  if (MeshType::dim() == 1)
+  {
+    coordinatesGlobal[0] = nodeNoGlobalNatural;
+  }
+  else if (MeshType::dim() == 2)
+  {
+    coordinatesGlobal[0] = nodeNoGlobalNatural % nNodesGlobal(0);
+    coordinatesGlobal[1] = nodeNoGlobalNatural / nNodesGlobal(0);
+  }
+  else if (MeshType::dim() == 3)
+  {
+    coordinatesGlobal[0] = nodeNoGlobalNatural % nNodesGlobal(0);
+    coordinatesGlobal[1] = (nodeNoGlobalNatural % (nNodesGlobal(0) * nNodesGlobal(1))) / nNodesGlobal(0);
+    coordinatesGlobal[2] = nodeNoGlobalNatural / (nNodesGlobal(0) * nNodesGlobal(1));
+  }
+
+  return coordinatesGlobal;
+}
+
+//! get the local node no for its local coordinates, also works for ghost nodes
+template<typename MeshType,typename BasisFunctionType>
+node_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+getNodeNoLocal(std::array<int,MeshType::dim()> coordinatesLocal) const
+{
+  if (MeshType::dim() == 1)
+  {
+    return coordinatesLocal[0];
+  }
+  else if (MeshType::dim() == 2)
+  {
+    dof_no_t localX = coordinatesLocal[0];
+    dof_no_t localY = coordinatesLocal[1];
+
+    //VLOG(3) << "getNodeNo(" << coordinatesLocal << "), nNodesLocalWithoutGhosts: " << nNodesLocalWithoutGhosts()
+    //  << ", nNodesLocalWithoutGhosts: (" << nNodesLocalWithoutGhosts(0) << "," << nNodesLocalWithoutGhosts(1) << ")";
+
+    if (localX == nNodesLocalWithoutGhosts(0))   // point is on right ghost row
+    {
+      if (localY == nNodesLocalWithoutGhosts(1))  // point is on top ghost row
+      {
+        // top right ghost point
+        //VLOG(3) << "  a: " << nNodesLocalWithGhosts()-1;
+        return nNodesLocalWithGhosts()-1;
+      }
+      else
+      {
+        // on right ghost row
+        //VLOG(3) << "  b: " << nNodesLocalWithoutGhosts() + localY;
+        return nNodesLocalWithoutGhosts() + localY;
+      }
+    }
+    else
+    {
+      if (localY == nNodesLocalWithoutGhosts(1))   // point is on top ghost row
+      {
+        // on top ghost row
+        if (hasFullNumberOfNodes(0))
+        {
+          // there are only ghost on the top (y+)
+          //VLOG(3) << "  c: " << nNodesLocalWithoutGhosts() + localX;
+          return nNodesLocalWithoutGhosts() + localX;
+        }
+        else
+        {
+          // there are ghosts on the right (x+) and top (y+)
+          //VLOG(3) << "  d: " << nNodesLocalWithoutGhosts() + nNodesLocalWithoutGhosts(1) + localX;
+          return nNodesLocalWithoutGhosts() + nNodesLocalWithoutGhosts(1) + localX;
+        }
+      }
+      else
+      {
+        // point is in interior
+        //VLOG(3) << " e: " << nNodesLocalWithoutGhosts() + nNodesLocalWithoutGhosts(0)*localY + localX;
+        return nNodesLocalWithoutGhosts(0)*localY + localX;
+      }
+    }
+  }
+  else if (MeshType::dim() == 3)
+  {
+    dof_no_t localX = coordinatesLocal[0];
+    dof_no_t localY = coordinatesLocal[1];
+    dof_no_t localZ = coordinatesLocal[2];
+
+    /*VLOG(3) << "getNodeNo(" << coordinatesLocal << "), nNodesLocalWithoutGhosts: " << nNodesLocalWithoutGhosts()
+      << ", nNodesLocalWithoutGhosts: (" << nNodesLocalWithoutGhosts(0) << "," << nNodesLocalWithoutGhosts(1) << "," << nNodesLocalWithoutGhosts(2) << ")"
+      << ", hasFullNumberOfNodes: (" << hasFullNumberOfNodes(0) << "," << hasFullNumberOfNodes(1) << "," << hasFullNumberOfNodes(2) << ")";*/
+
+    if (localZ == nNodesLocalWithoutGhosts(2))  // point is on top ghost row
+    {
+      if (hasFullNumberOfNodes(1)) // there is no ghosts at y+
+      {
+        if (hasFullNumberOfNodes(0)) // there is no ghosts at x+
+        {
+          // there are only ghosts at z+ and point is at z+
+          return nNodesLocalWithoutGhosts()
+            + nNodesLocalWithoutGhosts(0)*localY + localX;
+        }
+        else  // there are ghosts at x+
+        {
+          // there are ghosts at x+ and z+ and point is at z+
+          return nNodesLocalWithoutGhosts()
+            + nNodesLocalWithoutGhosts(1)*nNodesLocalWithoutGhosts(2)
+            + nNodesLocalWithGhosts(0)*localY + localX;
+        }
+      }
+      else  // there are ghosts at y+
+      {
+        if (hasFullNumberOfNodes(0)) // there is no ghosts at x+
+        {
+          // there are ghosts at y+ and z+ and point is at z+
+          return nNodesLocalWithoutGhosts()
+            + nNodesLocalWithoutGhosts(0)*nNodesLocalWithoutGhosts(2)
+            + nNodesLocalWithoutGhosts(0)*localY + localX;
+        }
+        else  // there are ghosts at x+
+        {
+          // there are ghosts at x+, y+ and z+ and point is at z+
+          const int nNodesPerL = nNodesLocalWithoutGhosts(0) + nNodesLocalWithGhosts(1);
+          return nNodesLocalWithoutGhosts()
+            + nNodesPerL*nNodesLocalWithoutGhosts(2)
+            + nNodesLocalWithGhosts(0)*localY + localX;
+        }
+      }
+    }
+    else if (localX == nNodesLocalWithoutGhosts(0))   // point is on right ghost row (x+)
+    {
+      if (hasFullNumberOfNodes(1)) // there is no ghosts at y+
+      {
+        // there are only ghosts at x+
+        return nNodesLocalWithoutGhosts()
+            + nNodesLocalWithoutGhosts(1)*localZ + localY;
+      }
+      else  // there are ghosts at y+
+      {
+        const int nNodesPerL = nNodesLocalWithoutGhosts(0) + nNodesLocalWithGhosts(1);
+        if (localY == nNodesLocalWithoutGhosts(1))  // point is on back ghost row (y+)
+        {
+          // ghost is at right back vertical edge
+          return nNodesLocalWithoutGhosts()
+            + nNodesPerL*localZ + nNodesLocalWithoutGhosts(1) + nNodesLocalWithoutGhosts(0);
+        }
+        else
+        {
+          // there are ghosts at x+ and y+
+          return nNodesLocalWithoutGhosts()
+              + nNodesPerL*localZ + localY;
+        }
+      }
+    }
+    else if (localY == nNodesLocalWithoutGhosts(1))  // point is on back ghost row (y+)
+    {
+      if (hasFullNumberOfNodes(0)) // there is no ghosts at x+
+      {
+        // there are only ghosts at y+
+        return nNodesLocalWithoutGhosts()
+            + nNodesLocalWithoutGhosts(0)*localZ + localX;
+      }
+      else  // there are ghosts at x+
+      {
+        // there are ghosts at x+ and y+
+        const int nNodesPerL = nNodesLocalWithoutGhosts(0) + nNodesLocalWithGhosts(1);
+        return nNodesLocalWithoutGhosts()
+            + nNodesPerL*localZ + nNodesLocalWithoutGhosts(1) + localX;
+      }
+    }
+    else
+    {
+      // ghost is in interior
+      return nNodesLocalWithoutGhosts(0)*nNodesLocalWithoutGhosts(1)*localZ
+        + nNodesLocalWithoutGhosts(0)*localY + localX;
+    }
+  }
+#ifndef __PGI
+  return 0;  // should not happen, but cray compiler does not recognize it
+#endif
 }
 
 }  // namespace

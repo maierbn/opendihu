@@ -8,6 +8,8 @@
 namespace Mesh
 {
 
+/** The 6 face of a 3D element, used, e.g., for Neumann BC or specifying neighboring domains.
+ */
 enum face_t
 {
   face0Minus = 0, face0Plus,

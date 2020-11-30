@@ -14,11 +14,16 @@ If you are new, start with the :ref:`introduction <introduction>` or continue cl
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: User documentation
    
    introduction
-   examples
+   user/existing_examples
    settings
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Developer documentation
+   
    developer_information
    
 .. * :ref:`genindex`

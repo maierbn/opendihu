@@ -10,27 +10,27 @@
 namespace MathUtility
 {
 
-template<int nRows, int nColumns>
-Matrix<nRows,nColumns>::
-Matrix(const std::array<double, nRows*nColumns> &rhs) : std::array<double, nRows*nColumns>(rhs)
+template<int nRows, int nColumns, typename double_v_t>
+Matrix<nRows,nColumns,double_v_t>::
+Matrix(const std::array<double_v_t, nRows*nColumns> &rhs) : std::array<double_v_t, nRows*nColumns>(rhs)
 {
 }
 
-template<int nRows, int nColumns>
-Matrix<nRows,nColumns>::
-Matrix(const std::array<double, nRows*nColumns> &&rhs) : std::array<double, nRows*nColumns>(rhs)
+template<int nRows, int nColumns, typename double_v_t>
+Matrix<nRows,nColumns,double_v_t>::
+Matrix(const std::array<double_v_t, nRows*nColumns> &&rhs) : std::array<double_v_t, nRows*nColumns>(rhs)
 {
 }
 /*
-template<int nRows, int nColumns>
-Matrix<nRows,nColumns>::
-Matrix(double value) : std::array<double, nRows*nColumns>({value})
+template<int nRows, int nColumns, typename double_v_t>
+Matrix<nRows,nColumns,double_v_t>::
+Matrix(double_v_t value) : std::array<double_v_t, nRows*nColumns>({value})
 {
 }*/
 
 //! return a reference to the entry (rowIndex,columnIndex)
-template<int nRows, int nColumns>
-double &Matrix<nRows,nColumns>::
+template<int nRows, int nColumns, typename double_v_t>
+double_v_t &Matrix<nRows,nColumns,double_v_t>::
 operator()(int rowIndex, int columnIndex)
 {
   assert(rowIndex >= 0);
@@ -43,8 +43,8 @@ operator()(int rowIndex, int columnIndex)
 }
 
 //! return a const reference to the entry (rowIndex,columnIndex)
-template<int nRows, int nColumns>
-const double &Matrix<nRows,nColumns>::
+template<int nRows, int nColumns, typename double_v_t>
+const double_v_t &Matrix<nRows,nColumns,double_v_t>::
 operator()(int rowIndex, int columnIndex) const
 {
   assert(rowIndex >= 0);
@@ -57,8 +57,8 @@ operator()(int rowIndex, int columnIndex) const
 }
 
 //! fill a PETSc matrix with the own values
-template<int nRows, int nColumns>
-void Matrix<nRows,nColumns>::
+template<int nRows, int nColumns, typename double_v_t>
+void Matrix<nRows,nColumns,double_v_t>::
 setPetscMatrix(Mat &mat)
 {
   // prepare index arrays for MatSetValues
@@ -72,14 +72,14 @@ setPetscMatrix(Mat &mat)
   MatSetValues(mat, nRows, rowIndices.data, nColumns, columnIndices.data(), this->data(), INSERT_VALUES);
 }
 
-template<int nRows, int nColumns>
-std::array<double,nRows> Matrix<nRows,nColumns>::
-operator*(const std::array<double,nColumns> &vector)
+template<int nRows, int nColumns, typename double_v_t>
+template<typename double_v2_t>
+std::array<double_v_t,nRows> Matrix<nRows,nColumns,double_v_t>::
+operator*(const std::array<double_v2_t,nColumns> &vector)
 {
-  std::array<double,nRows> result({0});
+  std::array<double_v_t,nRows> result({0});
   for (int columnIndex = 0; columnIndex < nColumns; columnIndex++)
   {
-//#pragma omp simd
     for (int rowIndex = 0; rowIndex < nRows; rowIndex++)
     {
       result[rowIndex] += this->operator()(rowIndex, columnIndex) * vector[columnIndex];

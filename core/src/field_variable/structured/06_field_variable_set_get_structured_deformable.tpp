@@ -17,4 +17,13 @@ setValues(FieldVariable<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableO
   this->values_->setValues(*rhs.partitionedPetscVec());
 }
 
+//! copy the values from another field variable of the same type
+template<int D,typename BasisFunctionType,int nComponents>
+void FieldVariableSetGet<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents>::
+setValues(FieldVariable<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,nComponents> &rhs)
+{
+  assert(this->values_);
+  this->values_->setValues(*rhs.partitionedPetscVec());
+}
+
 }  // namespace

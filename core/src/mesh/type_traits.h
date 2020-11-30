@@ -3,6 +3,7 @@
 #include "mesh/structured_regular_fixed.h"
 #include "mesh/structured_deformable.h"
 #include "mesh/unstructured_deformable.h"
+#include "mesh/composite.h"
 
 namespace Mesh
 {
@@ -25,6 +26,22 @@ using isStructured = std::enable_if_t<
   || std::is_same<MeshType, StructuredDeformableOfDimension<1>>::value
   || std::is_same<MeshType, StructuredDeformableOfDimension<2>>::value
   || std::is_same<MeshType, StructuredDeformableOfDimension<3>>::value
+  ,
+  MeshType
+>;
+
+// structured and composite meshes
+template<typename MeshType>
+using isStructuredOrComposite = std::enable_if_t<
+  std::is_same<MeshType, StructuredRegularFixedOfDimension<1>>::value
+  || std::is_same<MeshType, StructuredRegularFixedOfDimension<2>>::value
+  || std::is_same<MeshType, StructuredRegularFixedOfDimension<3>>::value
+  || std::is_same<MeshType, StructuredDeformableOfDimension<1>>::value
+  || std::is_same<MeshType, StructuredDeformableOfDimension<2>>::value
+  || std::is_same<MeshType, StructuredDeformableOfDimension<3>>::value
+  || std::is_same<MeshType, CompositeOfDimension<1>>::value
+  || std::is_same<MeshType, CompositeOfDimension<2>>::value
+  || std::is_same<MeshType, CompositeOfDimension<3>>::value
   ,
   MeshType
 >;
@@ -56,6 +73,7 @@ using isDim = std::enable_if_t<
   std::is_same<MeshType, StructuredRegularFixedOfDimension<D>>::value
   || std::is_same<MeshType, StructuredDeformableOfDimension<D>>::value
   || std::is_same<MeshType, UnstructuredDeformableOfDimension<D>>::value
+  || std::is_same<MeshType, CompositeOfDimension<D>>::value
   ,
   MeshType
 >;
@@ -69,29 +87,11 @@ using isNotDim = std::enable_if_t<
   MeshType
 >;
 
-// define the mesh class for the surface of an element, e.g. for 3D elements the 2D surface
-template<typename MeshType>
-struct SurfaceMesh
-{
-  typedef MeshType type;
-};
-
-template<int D>
-struct SurfaceMesh<StructuredRegularFixedOfDimension<D>>
-{
-  typedef StructuredRegularFixedOfDimension<D-1> type;
-};
-
-template<int D>
-struct SurfaceMesh<StructuredDeformableOfDimension<D>>
-{
-  typedef StructuredDeformableOfDimension<D-1> type;
-};
-
-template<int D>
-struct SurfaceMesh<UnstructuredDeformableOfDimension<D>>
-{
-  typedef UnstructuredDeformableOfDimension<D-1> type;
-};
+// if field variable has a mesh of type composite
+template<typename FieldVariableTypeSharedPtr>
+using isComposite = std::is_same<
+  typename FieldVariableTypeSharedPtr::element_type::FunctionSpace::Mesh,
+  CompositeOfDimension<FieldVariableTypeSharedPtr::element_type::FunctionSpace::Mesh::dim()>
+>;
 
 } // namespace Mesh

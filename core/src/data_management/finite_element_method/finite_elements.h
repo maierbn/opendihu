@@ -34,10 +34,12 @@ public:
 };
 
 /*
- * partial specialization for term with constant diffusion tensor
+ * partial specialization for term with constant diffusion tensor, e.g.
+ * Equation::Dynamic::AnisotropicDiffusion or
+ * Equation::Static::GeneralizedLaplace
  */
-template<typename FunctionSpaceType,int nComponents>
-class FiniteElements<FunctionSpaceType,nComponents,Equation::Dynamic::AnisotropicDiffusion> :
+template<typename FunctionSpaceType,int nComponents,typename Term>
+class FiniteElements<FunctionSpaceType,nComponents,Term,Equation::hasGeneralizedLaplaceOperator<Term>> :
   public FiniteElementsBase<FunctionSpaceType,nComponents>,
   public DiffusionTensorConstant<FunctionSpaceType>
 {
@@ -46,9 +48,10 @@ public:
   //! constructor
   FiniteElements(DihuContext context);
 
-  // !intialize base class and diffusion tensor
+  // !initialize base class and diffusion tensor
   virtual void initialize();
 };
+
 
 /** for directional diffusion use the diffusion tensor that depends upon a direction field
  */
@@ -64,7 +67,7 @@ public:
   //! dummy method
   virtual void initialize(){};
 
-  // !intialize base class and diffusion tensor which needs the direction field and the number of compartments in the multidomain context
+  // !initialize base class and diffusion tensor which needs the direction field and the number of compartments in the multidomain context
   virtual void initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction,
                           std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> spatiallyVaryingPrefactor,
                           bool useAdditionalDiffusionTensor = false);
@@ -100,5 +103,3 @@ protected:
 }  // namespace
 
 #include "data_management/finite_element_method/finite_elements.tpp"
-//#include "data_management/finite_element_method/finite_elements_mixed.h"
-//#include "data_management/finite_element_method/finite_elements_solid_mechanics.h"

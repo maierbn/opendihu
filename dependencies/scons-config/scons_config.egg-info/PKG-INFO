@@ -1,12 +1,13 @@
-Metadata-Version: 1.1
+Metadata-Version: 1.2
 Name: scons-config
 Version: 0.1
 Summary: Augmented configuration for SCons
 Home-page: https://github.com/furious-luke/scons-config
 Author: Luke Hodkinson
 Author-email: furious.luke@gmail.com
+Maintainer: Luke Hodkinson
+Maintainer-email: furious.luke@gmail.com
 License: BSD
-Description-Content-Type: UNKNOWN
 Description: ============
         scons-config
         ============

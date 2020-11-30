@@ -21,7 +21,7 @@ namespace ModelOrderReduction
     void run();
     
     //! 
-    void advanceTimeSpan();
+    void advanceTimeSpan(bool withOutputWritersEnabled = true);
     
   protected:
     

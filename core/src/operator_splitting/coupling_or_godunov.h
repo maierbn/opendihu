@@ -14,11 +14,12 @@ class CouplingOrGodunov  :
   public OperatorSplitting<TimeStepping1,TimeStepping2>
 {
 public:
-  //! constructor, name is the config key, i.e. "GodunovSplitting" for Godunov and "Coupling" for Coupling
-  CouplingOrGodunov(DihuContext context, std::string name);
+
+  //! reuse constructor of base class
+  using OperatorSplitting<TimeStepping1,TimeStepping2>::OperatorSplitting;
 
   //! advance time stepping by span
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
 protected:
 };

@@ -13,7 +13,7 @@ namespace Mesh
 {
 
 /**
- * An arbitrary mesh where each element can be adjacent to any other element or at the border of the computational domain.
+ * An arbitrary mesh where each element can be adjacent to any other element or at the boundary of the computational domain.
  * There is no restriction that the total domain must be quadratic or cubic.
  */
 template<int D>

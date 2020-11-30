@@ -194,6 +194,7 @@ def get_instance_config(i):
           "initialValues": [],
           #"numberTimeSteps": 1,
           "timeStepWidth": dt_1D,  # 1e-5
+          "timeStepWidthRelativeTolerance": 1e-10,
           "logTimeStepWidthAsKey": "dt_1D",
           "durationLogKey": "duration_1D",
           "timeStepOutputInterval": 1e4,
@@ -220,6 +221,7 @@ def get_instance_config(i):
     
 config = {
   "scenarioName": scenario_name,
+  "logFormat": "csv",
   "Meshes": {
     "MeshFiber": {
       "nElements": n_nodes_per_fiber-1,

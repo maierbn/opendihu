@@ -3,120 +3,232 @@
 namespace Data
 {
 
-template <int nStates, int nIntermediates, typename FunctionSpaceType>
-CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
 CellmlAdapter(DihuContext context) :
   Data<FunctionSpaceType>::Data(context), specificSettings_(PythonConfig(context.getPythonConfig(), "CellML"))
 {
 }
 
-template <int nStates, int nIntermediates, typename FunctionSpaceType>
-void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+//! constructor as a copy
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
+CellmlAdapter(DihuContext context, const CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType> &rhs) :
+  Data<FunctionSpaceType>::Data(context), specificSettings_(rhs.specificSettings_)
+{
+  // the followign variables are not copied:
+  // std::shared_ptr<FieldVariableAlgebraics> algebraics_;   //< algebraics field variable
+  // std::shared_ptr<FieldVariableStates> states_;           //< states field variable, this is a shared pointer with the timestepping scheme, which own the actual variable (creates it)
+  // std::shared_ptr<FieldVariableAlgebraics> parameters_;   //< parameters field variable, the number of components is equal or less than the number of algebraics in order to not have to specify the number of parameters at compile time. This possibly creates a vector that is too large which is not harmful.
+  // double *parameterValues_;                               //< a pointer to the data of the parameters_ Petsc Vec of the field variable
+
+  algebraicNames_ = rhs.algebraicNames_;               //< component names of the algebraics field variable
+  parameterNames_ = rhs.parameterNames_;               //< component names of the parameter field variable
+  slotNames_ = rhs.slotNames_;                    //< names of the data slots that are used for slot connectors
+
+  slotConnectorData_ = rhs.slotConnectorData_;    //< the object that holds all components of field variables that will be transferred to other solvers
+
+  statesForTransfer_ = rhs.statesForTransfer_;                    //< state no.s to transfer to other solvers within slot connector data
+  algebraicsForTransfer_ = rhs.algebraicsForTransfer_;                //< algebraic no.s to transfer to other solvers within slot connector data
+  parametersForTransfer_ = rhs.parametersForTransfer_;                //< parameter no.s to transfer to other solvers within slot connector data
+}
+
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
 initialize()
 {
   // call initialize of base class
   Data<FunctionSpaceType>::initialize();
 }
 
-template <int nStates, int nIntermediates, typename FunctionSpaceType>
-void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
-initializeOutputConnectorData()
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
+initializeSlotConnectorData()
 {
-  this->specificSettings_.getOptionVector<int>("statesForTransfer", statesForTransfer_);
-  this->specificSettings_.getOptionVector<int>("intermediatesForTransfer", intermediatesForTransfer_);
+  LOG(DEBUG) << "got the following states for transfer: " << statesForTransfer_ << " (states: " << this->states()
+    << "), algebraics: " << algebraicsForTransfer_ << ", parameters: " << parametersForTransfer_;
 
-  LOG(DEBUG) << "parsed the following states for transfer: " << statesForTransfer_ << " (states: " << this->states()
-    << "), intermediates: " << intermediatesForTransfer_;
-
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
 
   // add states components
   for (std::vector<int>::iterator iter = statesForTransfer_.begin(); iter != statesForTransfer_.end(); iter++)
   {
-    outputConnectorData_->addFieldVariable(this->states(), *iter);
+    slotConnectorData_->addFieldVariable(this->states(), *iter);
   }
 
-  // add intermediate components
-  for (std::vector<int>::iterator iter = intermediatesForTransfer_.begin(); iter != intermediatesForTransfer_.end(); iter++)
+  // add algebraic components
+  for (std::vector<int>::iterator iter = algebraicsForTransfer_.begin(); iter != algebraicsForTransfer_.end(); iter++)
   {
-    outputConnectorData_->addFieldVariable2(this->intermediates(), *iter);
+    slotConnectorData_->addFieldVariable2(this->algebraics(), *iter);
   }
 
-  if (this->specificSettings_.hasKey("outputIntermediateIndex"))
+  // add parameters components
+  for (std::vector<int>::iterator iter = parametersForTransfer_.begin(); iter != parametersForTransfer_.end(); iter++)
   {
-    LOG(WARNING) << specificSettings_ << "[\"outputIntermediateIndex\"] is no longer a valid option, use \"intermediatesForTransfer\" instead!";
+    slotConnectorData_->addFieldVariable2(this->parameters(), *iter);
   }
 
-  if (this->specificSettings_.hasKey("outputStateIndex"))
-  {
-    LOG(WARNING) << specificSettings_ << "[\"outputStateIndex\"] is no longer a valid option, use \"statesForTransfer\" instead!";
-  }
+  // add slot names if given
+  slotConnectorData_->slotNames.assign(slotNames_.begin(), slotNames_.end());
+
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
+
+  LOG(DEBUG) << "set slot names: " << slotNames_ << " -> " << slotConnectorData_->slotNames;
+
+  LOG(DEBUG) << "slotConnectorData: " << *slotConnectorData_;
 }
 
-template <int nStates, int nIntermediates, typename FunctionSpaceType>
-void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
-setStatesVariable(std::shared_ptr<CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::FieldVariableStates> states)
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
+setStatesVariable(std::shared_ptr<CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::FieldVariableStates> states)
 {
+  // this will be called by the time stepping scheme after initialize()
   this->states_ = states;
 
-  // after states variable has been set, continue initialize of output connector data
-  initializeOutputConnectorData();
+  // after states variable has been set, continue initialize of slot connector data
+  initializeSlotConnectorData();
 }
 
-template <int nStates, int nIntermediates, typename FunctionSpaceType>
-void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
-setIntermediateNames(std::vector<std::string> &intermediateNames)
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
+setAlgebraicAndParameterNames(const std::vector<std::string> &algebraicNames, const std::vector<std::string> &parameterNames, const std::vector<std::string> &slotNames)
 {
-  intermediateNames_ = intermediateNames;
+  algebraicNames_ = algebraicNames;
+  parameterNames_ = parameterNames;
+  slotNames_ = slotNames;
 }
 
-template <int nStates, int nIntermediates, typename FunctionSpaceType>
-void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
 createPetscObjects()
 {
-  this->intermediates_ = this->functionSpace_->template createFieldVariable<nIntermediates>("intermediates", intermediateNames_);
-  this->intermediates_->setRepresentationContiguous();
+  LOG(DEBUG) << "CellmlAdapter::createPetscObjects";
+
+  // The states field variable is allocated by the timestepping class because this is the solution vector that the timestepping scheme operates on.
+  // It gets then passed to this class by the call to setStatesVariable.
+  // Therefore, here we only create the algebraics and the parameters field variables.
+  this->algebraics_ = this->functionSpace_->template createFieldVariable<nAlgebraics>("algebraics", algebraicNames_);
+  this->algebraics_->setRepresentationContiguous();
+
+  std::vector<std::string> parameterNames;
+
+  for (int i = 0; i < parameterNames_.size(); i++)
+  {
+    std::stringstream s;
+    s << "(P)" << parameterNames_[i];
+    parameterNames.push_back(s.str());
+  }
+
+  for (int i = parameterNames.size(); i < nAlgebraics; i++)
+  {
+    std::stringstream s;
+    s << "unusedParameter_" << i;
+    parameterNames.push_back(s.str());
+  }
+
+  this->parameters_ = this->functionSpace_->template createFieldVariable<nAlgebraics>("parameters", parameterNames);
 }
 
-template <int nStates, int nIntermediates, typename FunctionSpaceType>
-std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nIntermediates>> CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
-intermediates()
+//! return a reference to the parameters vector
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nAlgebraics>> CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
+parameters()
 {
-  return this->intermediates_;
+  return this->parameters_;
 }
 
-template <int nStates, int nIntermediates, typename FunctionSpaceType>
-std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nStates>> CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+double *CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
+parameterValues()
+{
+  return this->parameterValues_;
+}
+
+//! get the parameteValues_ pointer from the parameters field variable, then the field variable can no longer be used until restoreParameterValues() gets called
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
+prepareParameterValues()
+{
+  this->parameters_->setRepresentationContiguous();
+  PetscErrorCode ierr;
+  Vec contiguousVec = this->parameters_->getValuesContiguous();
+  ierr = VecGetArray(contiguousVec, &parameterValues_); CHKERRV(ierr);
+#if 0
+  PetscInt nValues;
+  ierr = VecGetLocalSize(contiguousVec, &nValues); CHKERRV(ierr);
+  LOG(DEBUG) << "parameter values has " << nValues << " entries: ";
+
+  if (nValues == 11)
+    counter++;
+  if (counter == 22)
+    LOG(FATAL) << "end, component 3 should not be -75 but -75.0059";
+  //for (int i = 0; i < nValues; i++)
+  //  LOG(DEBUG) << i << ": " << parameterValues_[i];
+#endif
+}
+
+//! restore the parameterValues_ pointer, such that the field variable can be used again
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
+restoreParameterValues()
+{
+  PetscErrorCode ierr;
+  ierr = VecRestoreArray(this->parameters_->getValuesContiguous(), &parameterValues_); CHKERRV(ierr);
+}
+
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nAlgebraics>> CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
+algebraics()
+{
+  return this->algebraics_;
+}
+
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nStates>> CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
 states()
 {
   return this->states_;
 }
 
-template <int nStates, int nIntermediates, typename FunctionSpaceType>
-void CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
-getStatesIntermediatesForTransfer(std::vector<int> &statesForTransfer, std::vector<int> &intermediatesForTransfer)
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+std::vector<int> &CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
+statesForTransfer()
 {
-  statesForTransfer = statesForTransfer_;
-  intermediatesForTransfer = intermediatesForTransfer_;
+  return statesForTransfer_;
 }
 
-template <int nStates, int nIntermediates, typename FunctionSpaceType>
-std::shared_ptr<typename CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::OutputConnectorDataType>
-CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
-getOutputConnectorData()
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+std::vector<int> &CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
+algebraicsForTransfer()
 {
-  return this->outputConnectorData_;
+  return algebraicsForTransfer_;
 }
 
-template <int nStates, int nIntermediates, typename FunctionSpaceType>
-typename CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::FieldVariablesForOutputWriter CellmlAdapter<nStates,nIntermediates,FunctionSpaceType>::
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+std::vector<int> &CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
+parametersForTransfer()
+{
+  return parametersForTransfer_;
+}
+
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+std::shared_ptr<typename CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::SlotConnectorDataType>
+CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
+getSlotConnectorData()
+{
+  return this->slotConnectorData_;
+}
+
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+typename CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::FieldVariablesForOutputWriter CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
 getFieldVariablesForOutputWriter()
 {
   // these field variables will be written to output files
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField
     = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,3>>(this->functionSpace_->geometryField());
 
-  return std::make_tuple(geometryField, intermediates_, states_);
+  return std::make_tuple(geometryField, algebraics_, states_, parameters_);
 }
 
 } // namespace

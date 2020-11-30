@@ -1,4 +1,4 @@
-#i Configuration for scons build system
+# Configuration for scons build system
 #
 # For each package the following variables are available:
 # <PACKAGE>_DIR         Location of the package, must contain subfolders "include" and "lib" or "lib64" with header and library files.
@@ -18,12 +18,7 @@
 # set compiler to use
 cc = "gcc"   # c compiler
 CC = "g++"   # c++ compiler
-<<<<<<< Updated upstream
-=======
-#CC = "scorep --user --thread=none --nomemory g++"   # c++ compiler
-#CC = "/lustre/cray/ws9/2/ws/icbbnmai-opendihu1/opendihu-hawk-gnu/scripts/fake-scorep.sh"   # c++ compiler, instead set environment variable $SCOREP_WRAPPER_INSTRUMENTER_FLAGS
 mpiCC = "mpic++"
->>>>>>> Stashed changes
 
 cmake="cmake"
 
@@ -32,8 +27,6 @@ LAPACK_DOWNLOAD = True
 
 # PETSc, this downloads and installs MUMPS (direct solver package) and its dependencies PT-Scotch, SCAlapack, ParMETIS, METIS
 PETSC_DOWNLOAD = True
-PETSC_REDOWNLOAD = False
-PETSC_REBUILD = False
 
 # Python 3.6
 PYTHON_DOWNLOAD = True    # This downloads and uses Python, use it to be independent of an eventual system python
@@ -54,29 +47,32 @@ SEMT_DOWNLOAD = True
 EASYLOGGINGPP_DOWNLOAD = True
 
 # ADIOS2, adaptable I/O library, needed for interfacing MegaMol
-ADIOS_DOWNLOAD = True
+ADIOS_DOWNLOAD = False
 
 # MegaMol, visualization framework of VISUS, optional, needs ADIOS2
 MEGAMOL_DOWNLOAD = False    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
 
-# Vc, vectorization types
-VC_DOWNLOAD=True
+# Vc, vectorization types and C++ utility to produce vectorized code
+VC_DOWNLOAD = True
 
 # xbraid, used for parallel-in time methods
-XBRAID_DOWNLOAD=True
+XBRAID_DOWNLOAD = True
+
+# OpenCOR, utility view CellML models and to convert them from xml format to c code
+OPENCOR_DOWNLOAD = True
+
+# preCICE coupling library
+LIBXML2_DOWNLOAD = False
+PRECICE_DOWNLOAD = False
 
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
-<<<<<<< Updated upstream
-MPI_DIR = "/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
-=======
 #MPI_DIR = "/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
 MPI_DIR = "/usr/lib/x86_64-linux-gnu/openmpi"    # standard path for openmpi on ubuntu >18.04
 
 # Vectorized code for matrix assembly
 # Set to True for fastest code, set to False for faster compilation
-USE_VECTORIZED_FE_MATRIX_ASSEMBLY = True
->>>>>>> Stashed changes
+USE_VECTORIZED_FE_MATRIX_ASSEMBLY = False
 
 # chaste and dependencies
 have_chaste = False
@@ -88,13 +84,13 @@ XSD_DOWNLOAD = have_chaste
 BOOST_DOWNLOAD = False
 CHASTE_DOWNLOAD = have_chaste
 
-# automatically set MPI_DIR for other systems, like ubuntu 18.04 and Debian
+# automatically set MPI_DIR for other systems, like ubuntu 16.04 and Debian
 try:
   import lsb_release
   lsb_info = lsb_release.get_lsb_information()   # get information about ubuntu version, if available
   if "RELEASE" in lsb_info:
-    if lsb_info["RELEASE"] == "18.04":
-      MPI_DIR="/usr/lib/x86_64-linux-gnu/openmpi"   # this is the standard path on ubuntu 18.04
+    if lsb_info["RELEASE"] == "16.04":
+      MPI_DIR="/usr/lib/openmpi"   # this is the standard path on ubuntu 16.04
 except:
   pass
 
@@ -113,7 +109,7 @@ try:
     
   # for Travis CI, build MPI ourselves
   if os.environ.get("TRAVIS") is not None:
-    print "Travis CI detected, del MPI_DIR"
+    print("Travis CI detected, del MPI_DIR")
     del MPI_DIR
     MPI_DOWNLOAD=True
   
@@ -154,7 +150,6 @@ try:
     mpiCC = "mpic++"
 
     LAPACK_DOWNLOAD = False
-<<<<<<< Updated upstream
     
     MPI_DIR = "/usr/local.nfs/sw/pgi/pgi-18.10-u1604/linux86-64/2018/mpi/openmpi/"
     DISABLE_RUN = True   # do not run executables for checks, because they need mpirun as prefix
@@ -164,11 +159,24 @@ try:
   elif "lead" in socket.gethostname():
     MPI_DIR = os.environ["MPI_HOME"]
 
-=======
     PETSC_DOWNLOAD = False
     PETSC_DIR = os.environ["PETSC_ROOT"]
     PYTHONPACKAGES_DOWNLOAD = False
     GOOGLETEST_DOWNLOAD = False 
+  
+  elif "hawk" in os.environ["SITE_PLATFORM_NAME"]:
+    print("on hawk load the following modules: \"module load adios2/2.5.0 cmake python mkl petsc/3.12.2-int32-shared\"")
+    if "MPT_ROOT" in os.environ:
+      MPI_DIR = os.environ["MPT_ROOT"]
+    else:
+      MPI_DIR = os.environ["MPI_ROOT"]
+    
+    MPI_IGNORE_MPICC = True
+    LAPACK_DOWNLOAD = False
+    PETSC_DOWNLOAD = False
+    PETSC_DIR = os.environ["PETSC_ROOT"]
+    PYTHONPACKAGES_DOWNLOAD = False
+    GOOGLETEST_DOWNLOAD = True 
     XBRAID_DOWNLOAD = True
     ADIOS_DOWNLOAD = False
     ADIOS_DIR = os.environ["ADIOS2_ROOT"]
@@ -179,7 +187,6 @@ try:
 #    CC = "icpc "  
 #    cc = "clang"
 #    CC = "clang++"
->>>>>>> Stashed changes
 except:
   pass
 
@@ -188,7 +195,8 @@ if False:
   del MPI_DIR
   MPI_DOWNLOAD = True
   MPI_IGNORE_MPICC = True    # this downloads and builds openmpi
-  MPI_DEBUG = True            # this enables debugging flags such that valgrind memcheck can track MPI errors
+
+#PETSC_DEBUG = True            # this enables debugging flags such that valgrind memcheck can track MPI errors
 
 # specialized settings for supercomputer (HazelHen)
 import os

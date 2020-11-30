@@ -26,6 +26,9 @@ if len(sys.argv) >= 6:
   translation_x = float(sys.argv[3])
   translation_y = float(sys.argv[4])
   translation_z = float(sys.argv[5])
+else:
+  print("usage: translate_bin_fibers.py <input filename> <output filename> <x> <y> <z>")
+  sys.exit(0)
   
 print("input file:         {}".format(input_filename))
 print("output file:        {}".format(output_filename))
@@ -61,8 +64,8 @@ with open(input_filename, "rb") as infile:
   print("nFibersTotal:      {n_fibers} = {n_fibers_x} x {n_fibers_y}".format(n_fibers=parameters[0], n_fibers_x=n_fibers_x, n_fibers_y=n_fibers_y))
   print("nPointsWholeFiber: {}".format(parameters[1]))
   if "version 2" not in header_str.decode('utf-8'):
-    print("nBorderPointsXNew: {}".format(parameters[2]))
-    print("nBorderPointsZNew: {}".format(parameters[3]))
+    print("nBoundaryPointsXNew: {}".format(parameters[2]))
+    print("nBoundaryPointsZNew: {}".format(parameters[3]))
   print("nFineGridFibers_:  {}".format(parameters[4]))
   print("nRanks:            {}".format(parameters[5]))
   print("nRanksZ:           {}".format(parameters[6]))
@@ -119,12 +122,21 @@ with open(input_filename, "rb") as infile:
     outfile.seek(32+4)
     outfile.write(struct.pack('i', n_fibers_total))
     
+    # write parameter[1]: n_fibers_total
+    outfile.seek(32+2*4)
+    outfile.write(struct.pack('i', parameters[1]))
+    
     # write parameter[2]: n_fibers_x
-    outfile.seek(32+4*4)
+    outfile.seek(32+3*4)
     outfile.write(struct.pack('i', n_fibers_x))
     
     # write parameter[3]: n_fibers_y
+    outfile.seek(32+4*4)
     outfile.write(struct.pack('i', n_fibers_y))
+    
+    for i in range(5,9):
+      outfile.seek(32+i*4)
+      outfile.write(struct.pack('i', parameters[i-1]))
     
     # write timestamp
     outfile.seek(32+9*4)
@@ -147,8 +159,8 @@ with open(input_filename, "rb") as infile:
         point[2] += translation_z
         
         # write point
-        for i in range(3):
-          double_raw = struct.pack('d', point[i])
+        for component_no in range(3):
+          double_raw = struct.pack('d', point[component_no])
           outfile.write(double_raw)
           
     print("File {} written.".format(output_filename))

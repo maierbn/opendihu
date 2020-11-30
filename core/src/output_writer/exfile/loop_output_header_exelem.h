@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utility/type_utility.h"
+#include "mesh/type_traits.h"
 
 #include <cstdlib>
 
@@ -40,21 +41,29 @@ loopOutputHeaderExelem(const FieldVariablesForOutputWriterType &fieldVariables, 
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-outputHeaderExelem(VectorType currentFieldVariableVector, int &fieldVariableIndex, std::string meshName, 
+outputHeaderExelem(VectorType currentFieldVariableGradient, int &fieldVariableIndex, std::string meshName, 
                    std::ostream &stream, element_no_t currentFieldVariableGlobalNo);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-outputHeaderExelem(VectorType currentFieldVariableVector, int &fieldVariableIndex, std::string meshName, 
+outputHeaderExelem(VectorType currentFieldVariableGradient, int &fieldVariableIndex, std::string meshName, 
                    std::ostream &stream, element_no_t currentFieldVariableGlobalNo);
 
  /**  Loop body for a pointer element
  */
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
+  && !Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
 outputHeaderExelem(CurrentFieldVariableType currentFieldVariable, int &fieldVariableIndex, std::string meshName, 
+                   std::ostream &stream, element_no_t currentFieldVariableGlobalNo);
+
+/** Loop body for a field variables with Mesh::CompositeOfDimension<D>
+ */
+template<typename CurrentFieldVariableType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
+outputHeaderExelem(CurrentFieldVariableType currentFieldVariable, int &fieldVariableIndex, std::string meshName,
                    std::ostream &stream, element_no_t currentFieldVariableGlobalNo);
 
 }  // namespace ExfileLoopOverTuple

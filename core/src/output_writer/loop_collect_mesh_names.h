@@ -3,6 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <set>
 #include "utility/type_utility.h"
+#include "mesh/type_traits.h"
 
 #include <cstdlib>
 
@@ -38,18 +39,25 @@ loopCollectMeshNames(const FieldVariablesForOutputWriterType &fieldVariables, st
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-collectMeshNames(VectorType currentFieldVariableVector, std::set<std::string> &meshNames);
+collectMeshNames(VectorType currentFieldVariableGradient, std::set<std::string> &meshNames);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-collectMeshNames(VectorType currentFieldVariableVector, std::set<std::string> &meshNames);
+collectMeshNames(VectorType currentFieldVariableGradient, std::set<std::string> &meshNames);
 
 /**  Loop body for a pointer element
  */
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
+  && !Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
+collectMeshNames(CurrentFieldVariableType currentFieldVariable, std::set<std::string> &meshNames);
+
+/** Loop body for a field variables with Mesh::CompositeOfDimension<D>
+ */
+template<typename CurrentFieldVariableType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
 collectMeshNames(CurrentFieldVariableType currentFieldVariable, std::set<std::string> &meshNames);
 
 }  // namespace ExfileLoopOverTuple

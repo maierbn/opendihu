@@ -3,6 +3,7 @@
 #include "output_writer/loop_count_n_field_variables_of_mesh.h"
 
 #include <cstdlib>
+#include "field_variable/field_variable.h"
 
 namespace OutputWriter
 {
@@ -30,7 +31,7 @@ loopOutputExnode(const FieldVariablesForOutputWriterType &fieldVariables, const 
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value && !Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
 outputExnode(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
              std::ofstream &file)
 {
@@ -56,10 +57,10 @@ outputExnode(CurrentFieldVariableType currentFieldVariable, const FieldVariables
 // Elementent i is of vector type
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-outputExnode(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
+outputExnode(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
              std::ofstream &file)
 {
-  for (auto& currentFieldVariable : currentFieldVariableVector)
+  for (auto& currentFieldVariable : currentFieldVariableGradient)
   {
     // call function on all vector entries
     if (outputExnode<typename VectorType::value_type,FieldVariablesForOutputWriterType>(currentFieldVariable, fieldVariables, meshName, file))
@@ -80,6 +81,31 @@ outputExnode(TupleType currentFieldVariableTuple, const AllFieldVariablesForOutp
   return false;  // do not break iteration 
 }
 
+// element i is a field variables with Mesh::CompositeOfDimension<D>
+template<typename CurrentFieldVariableType, typename AllFieldVariablesForOutputWriterType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
+outputExnode(CurrentFieldVariableType currentFieldVariable, const AllFieldVariablesForOutputWriterType &fieldVariables, std::string meshName,
+             std::ofstream &file)
+{
+  const int D = CurrentFieldVariableType::element_type::FunctionSpace::dim();
+  typedef typename CurrentFieldVariableType::element_type::FunctionSpace::BasisFunction BasisFunctionType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType> SubFunctionSpaceType;
+  const int nComponents = CurrentFieldVariableType::element_type::nComponents();
+
+  typedef FieldVariable::FieldVariable<SubFunctionSpaceType, nComponents> SubFieldVariableType;
+
+  std::vector<std::shared_ptr<SubFieldVariableType>> subFieldVariables;
+  currentFieldVariable->getSubFieldVariables(subFieldVariables);
+
+  for (auto& currentSubFieldVariable : subFieldVariables)
+  {
+    // call function on all vector entries
+    if (outputExnode<std::shared_ptr<SubFieldVariableType>,AllFieldVariablesForOutputWriterType>(currentSubFieldVariable, fieldVariables, meshName, file))
+      return true;
+  }
+
+  return false;  // do not break iteration
+}
 }  // namespace ExfileLoopOverTuple
 }  // namespace OutputWriter
 

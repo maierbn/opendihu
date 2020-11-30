@@ -1,6 +1,7 @@
 #include "output_writer/exfile/loop_check_if_new_exelem_header_necessary.h"
 
 #include <cstdlib>
+#include "field_variable/field_variable.h"
 
 namespace OutputWriter
 {
@@ -25,7 +26,7 @@ loopCheckIfNewExelemHeaderNecessary(const FieldVariablesForOutputWriterType &fie
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value && !Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
 checkIfNewExelemHeaderNecessary(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                                 element_no_t currentFieldVariableGlobalNo, bool &newHeaderNecessary)
 {
@@ -51,10 +52,10 @@ checkIfNewExelemHeaderNecessary(CurrentFieldVariableType currentFieldVariable, s
 // element i is of vector type
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-checkIfNewExelemHeaderNecessary(VectorType currentFieldVariableVector, std::string meshName, 
+checkIfNewExelemHeaderNecessary(VectorType currentFieldVariableGradient, std::string meshName, 
                                 element_no_t currentFieldVariableGlobalNo, bool &newHeaderNecessary)
 {
-  for (auto& currentFieldVariable : currentFieldVariableVector)
+  for (auto& currentFieldVariable : currentFieldVariableGradient)
   {
     // call function on all vector entries
     if (checkIfNewExelemHeaderNecessary<typename VectorType::value_type>(currentFieldVariable, meshName, currentFieldVariableGlobalNo, newHeaderNecessary))
@@ -76,5 +77,30 @@ checkIfNewExelemHeaderNecessary(TupleType currentFieldVariableTuple, std::string
   return false;  // do not break iteration
 }
 
+// element i is a field variables with Mesh::CompositeOfDimension<D>
+template<typename CurrentFieldVariableType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
+checkIfNewExelemHeaderNecessary(CurrentFieldVariableType currentFieldVariable, std::string meshName,
+                                element_no_t currentFieldVariableGlobalNo, bool &newHeaderNecessary)
+{
+  const int D = CurrentFieldVariableType::element_type::FunctionSpace::dim();
+  typedef typename CurrentFieldVariableType::element_type::FunctionSpace::BasisFunction BasisFunctionType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType> SubFunctionSpaceType;
+  const int nComponents = CurrentFieldVariableType::element_type::nComponents();
+
+  typedef FieldVariable::FieldVariable<SubFunctionSpaceType, nComponents> SubFieldVariableType;
+
+  std::vector<std::shared_ptr<SubFieldVariableType>> subFieldVariables;
+  currentFieldVariable->getSubFieldVariables(subFieldVariables);
+
+  for (auto& currentSubFieldVariable : subFieldVariables)
+  {
+    // call function on all vector entries
+    if (checkIfNewExelemHeaderNecessary<std::shared_ptr<SubFieldVariableType>>(currentSubFieldVariable, meshName, currentFieldVariableGlobalNo, newHeaderNecessary))
+      return true;
+  }
+
+  return false;  // do not break iteration
+}
 }  // namespace ExfileLoopOverTuple
 }  // namespace OutputWriter

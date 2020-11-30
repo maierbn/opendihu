@@ -71,6 +71,9 @@ public:
   //! get the total number of elements on the global domain, for structured meshes this is directly implemented in the Mesh itself (not FunctionSpace like here)
   global_no_t nElementsGlobal() const;
 
+  //! get the node no in the global natural ordering
+  global_no_t getNodeNoGlobalNaturalFromElementNoLocal(element_no_t elementNoLocal, int nodeIndex) const;
+
   // nDofsGlobal() is defined in 06_function_space_dofs_nodes.h
   
   //! initialize geometry
@@ -95,13 +98,13 @@ protected:
   //! initialize the meshPartition of this mesh (by calling FunctionSpacePartition::initialize()), then create the partitioned Petsc vectors in each field variable
   void initializeValuesVector();
   
-  std::map<std::string, std::shared_ptr<FieldVariableBaseFunctionSpaceType>> fieldVariable_; ///< all non-geometry field field variables that were present in exelem/exnode files
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField_ = nullptr;  ///< the geometry field variable
+  std::map<std::string, std::shared_ptr<FieldVariableBaseFunctionSpaceType>> fieldVariable_; //< all non-geometry field field variables that were present in exelem/exnode files
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> geometryField_ = nullptr;  //< the geometry field variable
 
-  std::shared_ptr<FieldVariable::ElementToNodeMapping> elementToNodeMapping_;   ///< for every element the adjacent nodes and the field variable + dofs for their position
-  element_no_t nElements_ = 0;    ///< number of elements in exelem file
-  dof_no_t nDofs_ = 0;        ///< number of degrees of freedom. This can be different from nNodes * nDofsPerNode because of versions and shared nodes
-  bool noGeometryField_;     ///< this is set if there is no geometry field stored. this is only needed for solid mechanics mixed formulation where the lower order basisOnMesh does not need its own geometry information
+  std::shared_ptr<FieldVariable::ElementToNodeMapping> elementToNodeMapping_;   //< for every element the adjacent nodes and the field variable + dofs for their position
+  element_no_t nElements_ = 0;    //< number of elements in exelem file
+  dof_no_t nDofs_ = 0;        //< number of degrees of freedom. This can be different from nNodes * nDofsPerNode because of versions and shared nodes
+  bool noGeometryField_;     //< this is set if there is no geometry field stored. this is only needed for solid mechanics mixed formulation where the lower order basisOnMesh does not need its own geometry information
 
 };
 

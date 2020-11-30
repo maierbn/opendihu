@@ -23,6 +23,7 @@ void BoundaryConditions<FunctionSpaceType,QuadratureType,nComponents,Term,Dummy>
 setDirichletBoundaryConditions(std::shared_ptr<DirichletBoundaryConditions<FunctionSpaceType,nComponents>> dirichletBoundaryConditions)
 {
   this->dirichletBoundaryConditions_ = dirichletBoundaryConditions;
+  this->dirichletBoundaryConditionsApplied_ = false;
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>
@@ -41,12 +42,20 @@ reset()
   LOG(DEBUG) << "delete dirichlet boundary conditions object";
   this->dirichletBoundaryConditions_ = nullptr;
   this->systemMatrixAlreadySet_ = false;
+  this->dirichletBoundaryConditionsApplied_ = false;
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>
 void BoundaryConditions<FunctionSpaceType,QuadratureType,nComponents,Term,Dummy>::
 applyBoundaryConditions()
 {
+  // There are currently 3 possibilities where Dirichlet Bc are set:
+  // 1. By a single run() from a static problem, e.g. Laplace. Then applyBoundaryConditions() will be called in initialize() where it sets Dirichlet bcs
+  //    and again in solve(), where it does not do anything.
+  // 2. If the static problem is nested in any timestepping scheme, then it will be called repeatedly. applyBoundaryConditions() will be called in initialize() and again in every solve().
+  //    Then, the system matrix does not change, if updatePrescribedValuesFromSolution_ is set, the Dirichlet BCs change.
+  // 3. By implicit timestepping scheme. This scheme does not call applyBoundaryConditions() but does the apply by calling applyInRightHandSide() directly.
+
   if (!boundaryConditionHandlingEnabled_)
   {
     if (this->specificSettings_.hasKey("dirichletBoundaryConditions"))
@@ -110,36 +119,64 @@ template<typename FunctionSpaceType,typename QuadratureType,int nComponents,type
 void BoundaryConditions<FunctionSpaceType,QuadratureType,nComponents,Term,Dummy>::
 applyDirichletBoundaryConditions()
 {
+  bool updateMatrixAndRightHandSide = false;
+
   // handle Dirichlet boundary conditions
   if (dirichletBoundaryConditions_ == nullptr)
   {
     LOG(DEBUG) << "no Dirichlet boundary conditions are present, create object";
     dirichletBoundaryConditions_ = std::make_shared<DirichletBoundaryConditions<FunctionSpaceType,nComponents>>(this->context_);
     dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "dirichletBoundaryConditions");
+
+    updateMatrixAndRightHandSide = true;
+  }
+  else if (!dirichletBoundaryConditionsApplied_)
+  {
+    LOG(DEBUG) << "dirichlet BCs have been set by but not yet applied.";
+    updateMatrixAndRightHandSide = true;
   }
   else
   {
     LOG(DEBUG) << "dirichlet BC object already exists";
+    // Normally, applyDirichletBoundaryConditions() is called twice, the first time from initialize() (then, initially, dirichletBoundaryConditions_==nullptr)
+    // the second time from solve(), then it goes into this branch and does not do anything.
+    // Only if solve() is called multiple times (e.g. if this is nested in a timestepping scheme) and updatePrescribedValuesFromSolution_ is set,
+    // we need to update the system matrix and the rhs again.
+
+    updateMatrixAndRightHandSide = false;
   }
 
   // if the option to use the bc values from solution is set
   if (this->updatePrescribedValuesFromSolution_)
   {
+    LOG(DEBUG) << "updatePrescribedValuesFromSolution";
+
     // update the prescribed boundary condition values
     dirichletBoundaryConditions_->updatePrescribedValuesFromSolution(this->data_.solution());
+
+    // reset right hand side
+    this->setRightHandSide();
+
+    updateMatrixAndRightHandSide = true;
   }
 
-  // get abbreviations
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSide = this->data_.rightHandSide();
-  std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
+  if (updateMatrixAndRightHandSide)
+  {
+    // get abbreviations
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rightHandSide = this->data_.rightHandSide();
+    std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrix = this->data_.stiffnessMatrix();
+    std::shared_ptr<PartitionedPetscMat<FunctionSpaceType>> stiffnessMatrixWithoutBc = this->data_.stiffnessMatrixWithoutBc();
 
-  // apply the boundary conditions in stiffness matrix (set bc rows and columns of matrix to 0 and diagonal to 1), also add terms with matrix entries to rhs
-  LOG(DEBUG) << "call applyInSystemMatrix from applyBoundaryConditions, this->systemMatrixAlreadySet: " << this->systemMatrixAlreadySet_;
-  dirichletBoundaryConditions_->applyInSystemMatrix(stiffnessMatrix, rightHandSide, this->systemMatrixAlreadySet_);
-  this->systemMatrixAlreadySet_ = true;
+    // apply the boundary conditions in stiffness matrix
+    // (set bc rows and columns of stiffnessMatrix to 0 and diagonal to 1), also add terms with matrix entries to rhs, for the reading of matrix entries, stiffnessMatrixWithoutBc is used.
+    LOG(DEBUG) << "call applyInSystemMatrix from applyBoundaryConditions, this->systemMatrixAlreadySet: " << this->systemMatrixAlreadySet_;
+    dirichletBoundaryConditions_->applyInSystemMatrix(stiffnessMatrixWithoutBc, stiffnessMatrix, rightHandSide, this->systemMatrixAlreadySet_);
+    this->systemMatrixAlreadySet_ = true;
+    dirichletBoundaryConditionsApplied_ = true;
 
-  // set prescribed values in rhs
-  dirichletBoundaryConditions_->applyInRightHandSide(rightHandSide, rightHandSide);
+    // set prescribed values in rhs
+    dirichletBoundaryConditions_->applyInRightHandSide(rightHandSide, rightHandSide);
+  }
 }
 
 } // namespace

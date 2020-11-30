@@ -103,7 +103,7 @@ setFunctionSpace(std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::Unstructured
 
 template<int D, typename BasisFunctionType, int nComponents>
 void FieldVariableData<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,nComponents>::
-setGeometryField(bool isGeometryField)
+setIsGeometryField(bool isGeometryField)
 {
   this->isGeometryField_ = isGeometryField;
 }

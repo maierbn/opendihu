@@ -15,12 +15,6 @@ TEST(DiffusionTest, ExplicitEuler1D)
 {
   std::string pythonConfig = R"(
 
-import pip
-installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
-print("installed packages: ",installed_packages_list)
-
-
 # Diffusion 1D
 n = 5
 config = {
@@ -52,33 +46,28 @@ config = {
 }
 )";
 
-  DihuContext settings(argc, argv, pythonConfig);
+  {
+    DihuContext settings(argc, argv, pythonConfig);
 
-  TimeSteppingScheme::ExplicitEuler<
-    SpatialDiscretization::FiniteElementMethod<
-      Mesh::StructuredRegularFixedOfDimension<1>,
-      BasisFunction::LagrangeOfOrder<>,
-      Quadrature::None,
-      Equation::Dynamic::IsotropicDiffusion
-    >
-  > problem(settings);
+    TimeSteppingScheme::ExplicitEuler<
+      SpatialDiscretization::FiniteElementMethod<
+        Mesh::StructuredRegularFixedOfDimension<1>,
+        BasisFunction::LagrangeOfOrder<>,
+        Quadrature::None,
+        Equation::Dynamic::IsotropicDiffusion
+      >
+    > problem(settings);
 
-  problem.run();
+    problem.run();
 
-  std::string referenceOutput = "{\"meshType\": \"StructuredRegularFixed\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [5], \"beginNodeGlobalNatural\": [0], \"hasFullNumberOfNodes\": [true], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"nRanks\": 1, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 0.8, 1.6, 2.4000000000000004, 3.2, 4.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.9161287833235827, 2.4114632239553027, 3.842059137806608, 4.19088848006689, 2.6521927547112885, 1.8906640235962393]}]}], \"timeStepNo\": 5, \"currentTime\": 0.1}";
-  assertFileMatchesContent("out_diffusion1d_0000004.py", referenceOutput);
-
+    std::string referenceOutput = "{\"meshType\": \"StructuredRegularFixed\", \"dimension\": 1, \"nElementsGlobal\": [5], \"nElementsLocal\": [5], \"beginNodeGlobalNatural\": [0], \"hasFullNumberOfNodes\": [true], \"basisFunction\": \"Lagrange\", \"basisOrder\": 1, \"onlyNodalValues\": true, \"nRanks\": 1, \"ownRankNo\": 0, \"data\": [{\"name\": \"geometry\", \"components\": [{\"name\": \"x\", \"values\": [0.0, 0.8, 1.6, 2.4000000000000004, 3.2, 4.0]}, {\"name\": \"y\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}, {\"name\": \"z\", \"values\": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}]}, {\"name\": \"solution\", \"components\": [{\"name\": \"0\", \"values\": [1.9161287833235827, 2.4114632239553027, 3.842059137806608, 4.19088848006689, 2.6521927547112885, 1.8906640235962393]}]}], \"timeStepNo\": 5, \"currentTime\": 0.1}";
+    assertFileMatchesContent("out_diffusion1d_0000004.py", referenceOutput);
+  }
 }
 
 TEST(DiffusionTest, Heun1D)
 {
   std::string pythonConfig = R"(
-
-import pip
-installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
-print("installed packages: ",installed_packages_list)
-
 
 # Diffusion 1D
 n = 5
@@ -123,18 +112,13 @@ TEST(DiffusionTest, ImplicitEuler1D)
 {
   std::string pythonConfig = R"(
 
-import pip
-installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
-print("installed packages: ",installed_packages_list)
-
-
 # Diffusion 1D
 n = 5
 config = {
   "ImplicitEuler" : {
     "initialValues": [2,2,4,5,2,2],
     "numberTimeSteps": 5,
+    "timeStepWidthRelativeTolerance": 1e-10,
     "endTime": 0.1,
     "FiniteElementMethod" : {
       "nElements": n,
@@ -168,6 +152,8 @@ config = {
 
 }
 
+/*
+ * this test is disabled, because it required LAPACK which is not default
 TEST(DiffusionTest, ImplicitEuler1DPOD)
 {
   
@@ -284,16 +270,11 @@ config = {
   // compare to full output of POD problem
   assertFileMatchesContent("diffusion1d_pod_full_0000004.py", referenceOutput);
 }
+*/
 
 TEST(DiffusionTest, CrankNicolson1D)
 {
   std::string pythonConfig = R"(
-    
-import pip
-installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
-print("installed packages: ",installed_packages_list)
-    
     
 # Diffusion 1D
 n = 5
@@ -301,6 +282,7 @@ config = {
   "CrankNicolson" : {
     "initialValues": [2,2,4,5,2,2],
     "numberTimeSteps": 5,
+    "timeStepWidthRelativeTolerance": 1e-10,
     "endTime": 0.1,
     "FiniteElementMethod" : {
     "nElements": n,
@@ -337,12 +319,6 @@ config = {
 TEST(DiffusionTest, ExplicitEuler1DStructuredDeformable)
 {
   std::string pythonConfig = R"(
-
-import pip
-installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
-print("installed packages: ",installed_packages_list)
-
 
 # Diffusion 1D
 n = 5
@@ -387,12 +363,6 @@ TEST(DiffusionTest, Heun1DStructuredDeformable)
 {
   std::string pythonConfig = R"(
 
-import pip
-installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
-print("installed packages: ",installed_packages_list)
-
-
 # Diffusion 1D
 n = 5
 config = {
@@ -436,18 +406,13 @@ TEST(DiffusionTest, ImplicitEuler1DStructuredDeformable)
 {
   std::string pythonConfig = R"(
 
-import pip
-installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
-print("installed packages: ",installed_packages_list)
-
-
 # Diffusion 1D
 n = 5
 config = {
   "ImplicitEuler" : {
     "initialValues": [2,2,4,5,2,2],
     "numberTimeSteps": 5,
+    "timeStepWidthRelativeTolerance": 1e-10,
     "endTime": 0.1,
     "FiniteElementMethod" : {
       "nElements": n,
@@ -485,18 +450,13 @@ TEST(DiffusionTest, CrankNicolson1DStructuredDeformable)
 {
   std::string pythonConfig = R"(
     
-import pip
-installed_packages = pip.get_installed_distributions()
-installed_packages_list = sorted(["%s==%s" % (i.key, i.version) for i in installed_packages])
-print("installed packages: ",installed_packages_list)
-    
-    
 # Diffusion 1D
 n = 5
 config = {
   "CrankNicolson" : {
     "initialValues": [2,2,4,5,2,2],
     "numberTimeSteps": 5,
+    "timeStepWidthRelativeTolerance": 1e-10,
     "endTime": 0.1,
     "FiniteElementMethod" : {
     "nElements": n,

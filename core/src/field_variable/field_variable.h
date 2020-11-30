@@ -1,6 +1,6 @@
 #pragma once
 
-#include "field_variable/08_field_variable_vector.h"
+#include "field_variable/09_field_variable_composite.h"
 
 namespace FieldVariable
 {
@@ -10,11 +10,11 @@ namespace FieldVariable
  */
 template<typename FunctionSpaceType,int nComponents>
 class FieldVariable :
-  public FieldVariableVector<FunctionSpaceType,nComponents>
+  public FieldVariableComposite<FunctionSpaceType,nComponents>
 {
 public:
   //! inherited constructor
-  using FieldVariableVector<FunctionSpaceType,nComponents>::FieldVariableVector;
+  using FieldVariableComposite<FunctionSpaceType,nComponents>::FieldVariableComposite;
 
   typedef FunctionSpaceType FunctionSpace;
   

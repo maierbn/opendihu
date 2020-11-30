@@ -133,7 +133,7 @@ public:
     finiteElementMethod2.setMassMatrix();
     Mat &massMatrix = finiteElementMethod2.data_.massMatrix()->valuesGlobal();
     
-    int n, m;
+    PetscInt n, m;
     MatGetSize(massMatrix, &n, &m);
     LOG(DEBUG) << "matrix size: " << n << "x" << m << ", rhsValues size: " << rhsValues.size() << std::endl;
     ASSERT_EQ(n,rhsValues.size());

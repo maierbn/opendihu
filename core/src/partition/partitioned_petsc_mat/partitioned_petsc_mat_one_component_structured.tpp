@@ -5,20 +5,20 @@
 
 //! constructor, create square sparse matrix
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartition,
-                                int diagonalNonZeros, int offdiagonalNonZeros, std::string name) :
+                                int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name) :
   PartitionedPetscMatOneComponentBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(meshPartition, meshPartition, name)
 {
   VLOG(1) << "create PartitionedPetscMatOneComponent<structured> (square sparse matrix) from meshPartition " << meshPartition;
 
   MatType matrixType = MATAIJ;  // sparse matrix type
-  createMatrix(matrixType, diagonalNonZeros, offdiagonalNonZeros);
+  createMatrix(matrixType, nNonZerosDiagonal, nNonZerosOffdiagonal);
 }
 
 //! constructor, create square dense matrix
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartition, std::string name) :
   PartitionedPetscMatOneComponentBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(meshPartition, meshPartition, name)
 {
@@ -30,22 +30,22 @@ PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<Functio
 
 //! constructor, create non-square matrix
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartitionRows,
                                 std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> meshPartitionColumns,
-                                int diagonalNonZeros, int offdiagonalNonZeros, std::string name) :
+                                int nNonZerosDiagonal, int nNonZerosOffdiagonal, std::string name) :
   PartitionedPetscMatOneComponentBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>(meshPartitionRows, meshPartitionColumns, name)
 {
   VLOG(1) << "create PartitionedPetscMatOneComponent<structured> (non-square sparse matrix) "
     << "from meshPartition rows: " << meshPartitionRows << ", columns: " << meshPartitionColumns;
 
   MatType matrixType = MATAIJ;  // sparse matrix type
-  createMatrix(matrixType, diagonalNonZeros, offdiagonalNonZeros);
+  createMatrix(matrixType, nNonZerosDiagonal, nNonZerosOffdiagonal);
 }
 
 //! constructor, create non-square matrix
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartitionRows,
                                 std::shared_ptr<Partition::MeshPartition<ColumnsFunctionSpaceType>> meshPartitionColumns,
                                 std::string name) :
@@ -60,7 +60,7 @@ PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<Functio
 
 //! constructor, use provided global matrix
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>> meshPartition,
                                 Mat &globalMatrix, std::string name) :
   PartitionedPetscMatOneComponentBase<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>>(meshPartition, meshPartition, name)
@@ -75,10 +75,10 @@ PartitionedPetscMatOneComponent(std::shared_ptr<Partition::MeshPartition<Functio
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 ~PartitionedPetscMatOneComponent()
 {
-  LOG(DEBUG) << "destroy PartitionedPetscMat \"" << this->name_ << "\"";
+  //LOG(DEBUG) << "destroy PartitionedPetscMat \"" << this->name_ << "\"";
   PetscErrorCode ierr;
   ierr = MatDestroy(&this->globalMatrix_); CHKERRV(ierr);
   ierr = MatDestroy(&this->localMatrix_); CHKERRV(ierr);
@@ -86,8 +86,8 @@ PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunct
 
 //! create a distributed Petsc matrix, according to the given partition
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
-createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros)
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
+createMatrix(MatType matrixType, int nNonZerosDiagonal, int nNonZerosOffdiagonal)
 {
   PetscErrorCode ierr;
   
@@ -101,7 +101,7 @@ createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros)
   dof_no_t nColumnsGlobal = this->meshPartitionColumns_->nNodesGlobal() * nColumnDofsPerNode;
 
   //ierr = MatCreateAIJ(rankSubset_->mpiCommunicator(), partition.(), partition.(), n, n,
-  //                    diagonalNonZeros, NULL, offdiagonalNonZeros, NULL, &matrix); CHKERRV(ierr);
+  //                    nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL, &matrix); CHKERRV(ierr);
 
   assert(this->meshPartitionRows_);
   assert(this->meshPartitionColumns_);
@@ -135,16 +135,33 @@ createMatrix(MatType matrixType, int diagonalNonZeros, int offdiagonalNonZeros)
     // MATAIJ = "aij" - A matrix type to be used for sparse matrices. This matrix type is identical to MATSEQAIJ when constructed with a single process communicator, and MATMPIAIJ otherwise.
     // As a result, for single process communicators, MatSeqAIJSetPreallocation is supported, and similarly MatMPIAIJSetPreallocation is supported for communicators controlling multiple processes.
     // It is recommended that you call both of the above preallocation routines for simplicity.
-    ierr = MatSeqAIJSetPreallocation(this->globalMatrix_, diagonalNonZeros, NULL); CHKERRV(ierr);
-    ierr = MatMPIAIJSetPreallocation(this->globalMatrix_, diagonalNonZeros, NULL, offdiagonalNonZeros, NULL); CHKERRV(ierr);
-    LOG(DEBUG) << "Mat SetPreallocation, diagonalNonZeros: " << diagonalNonZeros << ", offdiagonalNonZeros: " << offdiagonalNonZeros;
+    ierr = MatSeqAIJSetPreallocation(this->globalMatrix_, nNonZerosDiagonal, NULL); CHKERRV(ierr);
+    ierr = MatMPIAIJSetPreallocation(this->globalMatrix_, nNonZerosDiagonal, NULL, nNonZerosOffdiagonal, NULL); CHKERRV(ierr);
+    LOG(DEBUG) << "Mat SetPreallocation, nNonZerosDiagonal: " << nNonZerosDiagonal << ", nNonZerosOffdiagonal: " << nNonZerosOffdiagonal;
+
+    // strictly do not allow new entries that are not covered by preallocation
+    ierr = MatSetOption(this->globalMatrix_, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_TRUE); CHKERRV(ierr);
   }
 
   createLocalMatrix();
 }
 
+
+/*template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
+createMatrix(Mat rhsMat)
+{
+  PetscErrorCode ierr;
+
+  // create matrix as duplicate of rhs matrix, all values are copied
+  ierr = MatDuplicate(rhsMat, MAT_COPY_VALUES, &this->globalMatrix_); CHKERRV(ierr);
+  ierr = PetscObjectSetName((PetscObject) this->globalMatrix_, this->name_.c_str()); CHKERRV(ierr);
+
+  createLocalMatrix();
+}*/
+
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 createLocalMatrix()
 {
   VLOG(1) << "set local to global mapping for matrix: rows: " << (ISLocalToGlobalMapping)this->meshPartitionRows_->localToGlobalMappingDofs()
@@ -154,17 +171,20 @@ createLocalMatrix()
   ierr = MatSetLocalToGlobalMapping(this->globalMatrix_, this->meshPartitionRows_->localToGlobalMappingDofs(), this->meshPartitionColumns_->localToGlobalMappingDofs()); CHKERRV(ierr);
 
   // output size of created matrix
-  int nRows, nRowsLocal, nColumns, nColumnsLocal;
+  PetscInt nRows, nRowsLocal, nColumns, nColumnsLocal;
   ierr = MatGetSize(this->globalMatrix_, &nRows, &nColumns); CHKERRV(ierr);
   ierr = MatGetLocalSize(this->globalMatrix_, &nRowsLocal, &nColumnsLocal); CHKERRV(ierr);
   LOG(DEBUG) << "matrix \"" << this->name_ << "\" created, size global: " << nRows << "x" << nColumns << ", local: " << nRowsLocal << "x" << nColumnsLocal;
+
+  if (nRows == 1 && nColumns == 1)
+    LOG(ERROR) << "Trying to create a " << nRows << "x" << nColumns << " matrix.";
 
   // get the local submatrix from the global matrix
   ierr = MatGetLocalSubMatrix(this->globalMatrix_, this->meshPartitionRows_->dofNosLocalIS(), this->meshPartitionColumns_->dofNosLocalIS(), &this->localMatrix_); CHKERRV(ierr);
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode)
 {
   if (VLOG_IS_ON(2))
@@ -180,20 +200,63 @@ setValue(PetscInt row, PetscInt col, PetscScalar value, InsertMode mode)
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
+setValue(Vc::int_v rows, Vc::int_v columns, PetscScalar value, InsertMode mode)
+{
+  // this wraps the standard PETSc MatSetValue on the local matrix
+  PetscErrorCode ierr;
+  for (int vcComponentNo = 0; vcComponentNo < Vc::double_v::size(); vcComponentNo++)
+  {
+    PetscInt rowNo = rows[vcComponentNo];
+    if (rowNo != -1)
+    {
+      PetscInt columnNo = columns[vcComponentNo];
+      if (columnNo != -1)
+      {
+        ierr = MatSetValuesLocal(this->localMatrix_, 1, &rowNo, 1, &columnNo, &value, mode); CHKERRV(ierr);
+      }
+    }
+  }
+}
+
+template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
+setValue(Vc::int_v rows, Vc::int_v columns, Vc::double_v values, InsertMode mode)
+{
+  std::array<double,Vc::double_v::size()> data;
+  values.store(data.data());
+
+  // this wraps the standard PETSc MatSetValue on the local matrix
+  PetscErrorCode ierr;
+  for (int vcComponentNo = 0; vcComponentNo < Vc::double_v::size(); vcComponentNo++)
+  {
+    PetscInt rowNo = rows[vcComponentNo];
+    if (rowNo != -1)
+    {
+      PetscInt columnNo = columns[vcComponentNo];
+      if (columnNo != -1)
+      {
+        ierr = MatSetValuesLocal(this->localMatrix_, 1, &rowNo, 1, &columnNo, &(data[vcComponentNo]), mode); CHKERRV(ierr);
+      }
+    }
+  }
+}
+
+template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv)
 {
   if (VLOG_IS_ON(2))
   {
     std::stringstream stream;
     stream << "\"" << this->name_ << "\" setValues " << (addv==INSERT_VALUES? "(insert)" : "(add)") << ", rows [";
-    for (int i = 0; i < m; i++)
+    for (PetscInt i = 0; i < m; i++)
       stream << idxm[i] << " ";
     stream << "], cols [";
-    for (int i = 0; i < n; i++)
+    for (PetscInt i = 0; i < n; i++)
       stream << idxn[i] << " ";
     stream << "], values [";
-    for (int i = 0; i < n*m; i++)
+    for (PetscInt i = 0; i < n*m; i++)
       stream << v[i] << " ";
     stream << "]";
     VLOG(2) << stream.str();
@@ -205,14 +268,14 @@ setValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], 
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 zeroRowsColumns(PetscInt numRows, const PetscInt rows[], PetscScalar diag)
 {
   if (VLOG_IS_ON(2))
   {
     std::stringstream stream;
     stream << "\"" << this->name_ << "\" zeroRowsColumns rows [";
-    for (int i = 0; i < numRows; i++)
+    for (PetscInt i = 0; i < numRows; i++)
       stream << rows[i] << " ";
     stream << "], diag " << diag;
     VLOG(2) << stream.str();
@@ -251,7 +314,7 @@ zeroRowsColumns(PetscInt numRows, const PetscInt rows[], PetscScalar diag)
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 zeroRows(PetscInt numRows, const PetscInt rows[])
 {
   if (VLOG_IS_ON(2))
@@ -270,7 +333,7 @@ zeroRows(PetscInt numRows, const PetscInt rows[])
   //ierr = MatAssemblyBegin(this->globalMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
   //ierr = MatAssemblyEnd(this->globalMatrix_, MAT_FINAL_ASSEMBLY); CHKERRV(ierr);
 
-  //std::vector<int> rowIndicesGlobal(numRows);
+  //std::vector<PetscInt> rowIndicesGlobal(numRows);
   //ierr = ISLocalToGlobalMappingApply(this->meshPartitionRows_->localToGlobalMappingDofs(), numRows, rows, rowIndicesGlobal.data()); CHKERRV(ierr);
 
   //MatSetOption(this->globalMatrix_, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE);
@@ -298,7 +361,7 @@ zeroRows(PetscInt numRows, const PetscInt rows[])
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 zeroEntries()
 {
   PetscErrorCode ierr;
@@ -314,7 +377,7 @@ zeroEntries()
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 assembly(MatAssemblyType type)
 {
   VLOG(2) << "\"" << this->name_ << "\" assembly " << (type == MAT_FINAL_ASSEMBLY? "(MAT_FINAL_ASSEMBLY)" : "(MAT_FLUSH_ASSEMBLY)");
@@ -335,7 +398,7 @@ assembly(MatAssemblyType type)
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) const
 {
   // this wraps the standard PETSc MatGetValues, for the global indexing, only retrieves locally stored indices
@@ -351,11 +414,11 @@ getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
 
   if (VLOG_IS_ON(1))
   {
-    for (int i = 0; i < m; i++)
+    for (PetscInt i = 0; i < m; i++)
     {
       assert(idxm[i] < this->meshPartitionRows_->nDofsGlobal());
     }
-    for (int i = 0; i < n; i++)
+    for (PetscInt i = 0; i < n; i++)
     {
       assert(idxn[i] < this->meshPartitionColumns_->nDofsGlobal());
     }
@@ -368,13 +431,13 @@ getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
   {
     std::stringstream stream;
     stream << "\"" << this->name_ << "\" getValuesGlobalPetscIndexing, rows [";
-    for (int i = 0; i < m; i++)
+    for (PetscInt i = 0; i < m; i++)
       stream << idxm[i] << " ";
     stream << "], cols [";
-    for (int i = 0; i < n; i++)
+    for (PetscInt i = 0; i < n; i++)
       stream << idxn[i] << " ";
     stream << "], values [";
-    for (int i = 0; i < n*m; i++)
+    for (PetscInt i = 0; i < n*m; i++)
       stream << v[i] << " ";
     stream << "]";
     VLOG(2) << stream.str();
@@ -382,7 +445,7 @@ getValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 setValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], const PetscScalar v[], InsertMode addv)
 {
   // this wraps the standard PETSc MatSetValues, for the global indexing
@@ -390,11 +453,11 @@ setValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
 
   if (VLOG_IS_ON(1))
   {
-    for (int i = 0; i < m; i++)
+    for (PetscInt i = 0; i < m; i++)
     {
       assert(idxm[i] < this->meshPartitionRows_->nDofsGlobal());
     }
-    for (int i = 0; i < n; i++)
+    for (PetscInt i = 0; i < n; i++)
     {
       assert(idxn[i] < this->meshPartitionColumns_->nDofsGlobal());
     }
@@ -413,13 +476,13 @@ setValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
   {
     std::stringstream stream;
     stream << "\"" << this->name_ << "\" setValuesGlobalPetscIndexing, rows [";
-    for (int i = 0; i < m; i++)
+    for (PetscInt i = 0; i < m; i++)
       stream << idxm[i] << " ";
     stream << "], cols [";
-    for (int i = 0; i < n; i++)
+    for (PetscInt i = 0; i < n; i++)
       stream << idxn[i] << " ";
     stream << "], values [";
-    for (int i = 0; i < n*m; i++)
+    for (PetscInt i = 0; i < n*m; i++)
       stream << v[i] << " ";
     stream << "]";
     VLOG(2) << stream.str();
@@ -427,7 +490,7 @@ setValuesGlobalPetscIndexing(PetscInt m, const PetscInt idxm[], PetscInt n, cons
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], PetscScalar v[]) const
 {
   // this wraps the standard PETSc MatGetValues, for the global indexing, only retrieves locally stored indices
@@ -437,17 +500,17 @@ getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], 
   {
     std::stringstream stream;
     stream << "\"" << this->name_ << "\" getValues, rows [";
-    for (int i = 0; i < m; i++)
+    for (PetscInt i = 0; i < m; i++)
       stream << idxm[i] << " ";
     stream << "], cols [";
-    for (int i = 0; i < n; i++)
+    for (PetscInt i = 0; i < n; i++)
       stream << idxn[i] << " ";
     stream << "], ";
     VLOG(2) << stream.str();
   }
   // transfer the local indices to global indices
-  std::vector<int> rowIndicesGlobal(m);
-  std::vector<int> columnIndicesGlobal(n);
+  std::vector<PetscInt> rowIndicesGlobal(m);
+  std::vector<PetscInt> columnIndicesGlobal(n);
   ierr = ISLocalToGlobalMappingApply(this->meshPartitionRows_->localToGlobalMappingDofs(), m, idxm, rowIndicesGlobal.data()); CHKERRV(ierr);
   ierr = ISLocalToGlobalMappingApply(this->meshPartitionColumns_->localToGlobalMappingDofs(), n, idxn, columnIndicesGlobal.data()); CHKERRV(ierr);
 
@@ -463,7 +526,7 @@ getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], 
   {
     std::stringstream stream;
     stream << "values [";
-    for (int i = 0; i < n*m; i++)
+    for (PetscInt i = 0; i < n*m; i++)
       stream << v[i] << " ";
     stream << "]";
     VLOG(2) << stream.str();
@@ -472,21 +535,21 @@ getValues(PetscInt m, const PetscInt idxm[], PetscInt n, const PetscInt idxn[], 
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-Mat &PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+Mat &PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 valuesLocal()
 {
   return this->localMatrix_;
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-Mat &PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+Mat &PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 valuesGlobal()
 {
   return this->globalMatrix_;
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 output(std::ostream &stream) const
 {
 #ifndef NDEBUG  
@@ -495,14 +558,14 @@ output(std::ostream &stream) const
   PetscMPIInt nRanks = this->meshPartitionRows_->nRanks();
   
   // get global size of matrix 
-  int nRowsGlobal, nColumnsGlobal, nRowsLocal, nColumnsLocal;
+  PetscInt nRowsGlobal, nColumnsGlobal, nRowsLocal, nColumnsLocal;
   PetscErrorCode ierr;
   ierr = MatGetSize(this->globalMatrix_, &nRowsGlobal, &nColumnsGlobal); CHKERRV(ierr);
   ierr = MatGetLocalSize(this->globalMatrix_, &nRowsLocal, &nColumnsLocal); CHKERRV(ierr);
   
   // retrieve local values
-  int nRowDofsLocal = this->meshPartitionRows_->nDofsLocalWithoutGhosts();
-  int nColumnDofsLocal = this->meshPartitionColumns_->nDofsLocalWithoutGhosts();
+  PetscInt nRowDofsLocal = this->meshPartitionRows_->nDofsLocalWithoutGhosts();
+  PetscInt nColumnDofsLocal = this->meshPartitionColumns_->nDofsLocalWithoutGhosts();
   std::vector<double> localValues;
   localValues.resize(nRowDofsLocal*nColumnDofsLocal);
   
@@ -574,7 +637,7 @@ output(std::ostream &stream) const
 }
 
 template<typename MeshType, typename BasisFunctionType, typename ColumnsFunctionSpaceType>
-void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType,Mesh::isStructured<MeshType>>::
+void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,ColumnsFunctionSpaceType>::
 dumpMatrix(std::string filename, std::string format)
 {
   // std::string filename, std::string format, Mat &matrix, MPI_Comm mpiCommunicator

@@ -12,7 +12,7 @@ PartitionedPetscVec(std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>>
 template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
 template<int nComponents2>
 PartitionedPetscVec<FunctionSpaceType,nComponents,DummyForTraits>::
-PartitionedPetscVec(PartitionedPetscVec<FunctionSpaceType,nComponents2> &rhs, std::string name, bool reuseData) :
+PartitionedPetscVec(PartitionedPetscVec<FunctionSpaceType,nComponents2> &rhs, std::string name, bool reuseData, int rhsComponentNoBegin) :
   PartitionedPetscVecBase<FunctionSpaceType>(rhs.meshPartition(), name)
  
 {
@@ -30,7 +30,11 @@ PartitionedPetscVec(PartitionedPetscVec<FunctionSpaceType,nComponents2> &rhs, st
     // loop over the components of this field variable
     for (int componentNo = 0; componentNo < std::min(nComponents,nComponents2); componentNo++)
     {
-      values_[componentNo] = rhs.values_[componentNo];
+      if (rhsComponentNoBegin + componentNo >= rhs.values_.size())
+      {
+        LOG(FATAL) << "Trying to create a partitioned petsc vec with " << nComponents << " from another one with " << nComponents2 << ", starting at component " << rhsComponentNoBegin;
+      }
+      values_[componentNo] = rhs.values_[rhsComponentNoBegin + componentNo];
     }
 
     // create VecNest object, if number of components > 1
@@ -163,7 +167,7 @@ setValues(int componentNo, PetscInt ni, const PetscInt ix[], const PetscScalar y
   {
     std::stringstream str;
     str << "\"" << this->name_ << "\", representation \""
-      << Partition::valuesRepresentationString[this->currentRepresentation_]
+      << this->getCurrentRepresentationString()
       << "\", setValues(componentNo=" << componentNo << ", indices=";
     for (int i = 0; i < ni; i++)
     {
@@ -521,7 +525,7 @@ output(std::ostream &stream)
     if (ownRankNo == 0)
     {
       stream << "vector \"" << this->name_ << "\", representation \""
-        << Partition::valuesRepresentationString[this->currentRepresentation_] << "\"" << std::endl;
+        << this->getCurrentRepresentationString() << "\"" << std::endl;
       stream << "component " << componentNo << ": [";
       for (int rankNo = 0; rankNo < nRanks; rankNo++)
       {

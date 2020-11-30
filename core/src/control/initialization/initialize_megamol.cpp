@@ -11,8 +11,8 @@
 #endif
 
 #ifdef HAVE_MEGAMOL
-std::shared_ptr<zmq::context_t> DihuContext::zmqContext_;  ///< the 0mq context
-std::shared_ptr<zmq::socket_t> DihuContext::zmqSocket_;  ///< a socket that is connected to one megamol
+std::shared_ptr<zmq::context_t> DihuContext::zmqContext_;  //< the 0mq context
+std::shared_ptr<zmq::socket_t> DihuContext::zmqSocket_;  //< a socket that is connected to one megamol
 #endif
 
 void DihuContext::initializeAdios(int argc, char *argv[])
@@ -20,7 +20,8 @@ void DihuContext::initializeAdios(int argc, char *argv[])
 #ifdef HAVE_ADIOS
   LOG(DEBUG) << "initializeAdios";
 
-  adios_ = std::make_shared<adios2::ADIOS>(MPI_COMM_WORLD);
+  const bool adiosDebugMode = true;
+  adios_ = std::make_shared<adios2::ADIOS>(MPI_COMM_WORLD, adiosDebugMode);
 #endif
 }
 

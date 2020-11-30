@@ -24,7 +24,9 @@ if not env['no_tests']:
                 'src/1_rank/cellml.cpp',
                 'src/1_rank/faces.cpp',
                 'src/1_rank/field_variable.cpp',
-                'src/1_rank/laplace.cpp',
+                'src/1_rank/laplace_1d.cpp',
+                'src/1_rank/laplace_2d.cpp',
+                'src/1_rank/laplace_3d.cpp',
                 'src/1_rank/main.cpp',
                 'src/1_rank/mesh.cpp',
                 'src/1_rank/neumann_boundary_conditions_1d.cpp',
@@ -36,37 +38,41 @@ if not env['no_tests']:
                 'src/1_rank/poisson.cpp',
                 'src/1_rank/solid_mechanics.cpp',
                 'src/1_rank/unstructured_deformable.cpp',
+                'src/1_rank/composite_mesh.cpp',
                 'src/utility.cpp']
 
-    #src_files = ['src/1_rank/cellml.cpp', 'src/1_rank/main.cpp', 'src/utility.cpp']
-    #print ""
-    #print "WARNING: only compiling tests ",src_files
+    #src_files = ['src/1_rank/solid_mechanics.cpp', 'src/1_rank/main.cpp', 'src/utility.cpp']
+    #print("")
+    #print("WARNING: only compiling tests ",src_files)
 
     program = env.Program('1_rank_tests', source=src_files)
 
     # add command that runs the tests after build
-    test = env.Command(target = 'test1', source = './1_rank_tests', action = 'cd testing/unit_testing/'+variant_directory+' && ./1_rank_tests || sudo -n ./1_rank_tests -on_error_attach_debugger')
+    test = env.Command(target = 'test1', source = './1_rank_tests', action = 'cd testing/unit_testing/'+variant_directory+' && mpirun -n 1 --allow-run-as-root -quiet ./1_rank_tests || [ -f "SUCCESS1" ]')
     AlwaysBuild(test)
 
 
   # ---- parallel unit tests: 2 ranks ----
   if True:
-    src_files = ['src/2_ranks/laplace.cpp',
+    src_files = ['src/2_ranks/laplace_1d.cpp',
+                 'src/2_ranks/laplace_2d.cpp',
+                 'src/2_ranks/laplace_3d.cpp',
                  'src/2_ranks/diffusion.cpp',
                  'src/2_ranks/poisson.cpp',
                  'src/2_ranks/neumann_boundary_conditions.cpp',
                  'src/2_ranks/solid_mechanics.cpp',
                  'src/2_ranks/main.cpp',
                  'src/utility.cpp',
-                 'src/2_ranks/partitioned_petsc_vec.cpp']
+                 'src/2_ranks/partitioned_petsc_vec.cpp',
+                 'src/2_ranks/composite_mesh.cpp']
     #src_files = ['src/2_ranks/solid_mechanics.cpp', 'src/2_ranks/main.cpp', 'src/utility.cpp']
-    #print ""
-    #print "WARNING: only compiling tests ",src_files
+    #print("")
+    #print("WARNING: only compiling tests ",src_files)
 
     program = env.Program('2_ranks_tests', source=src_files)
 
     # Add command that runs the tests after build, there is a construction that some MPI ranks can fail after they are successfully done because they are aborted because MPI_Finalize cannot be called in unit tests because after that MPI_Init cannot be called again and this would be needed to run multiple unit tests in one executable.
-    test = env.Command(target = 'test2', source = './2_ranks_tests', action = 'cd testing/unit_testing/'+variant_directory+' && mpirun -n 2 -quiet --allow-run-as-root ./2_ranks_tests || [ -f "SUCCESS2" ]')
+    test = env.Command(target = 'test2', source = './2_ranks_tests', action = 'cd testing/unit_testing/'+variant_directory+' && mpirun -n 2 --allow-run-as-root -quiet ./2_ranks_tests || [ -f "SUCCESS2" ]')
     AlwaysBuild(test)
 
   # ---- parallel unit tests: 6 ranks ----
@@ -77,7 +83,7 @@ if not env['no_tests']:
     program = env.Program('6_ranks_tests', source=src_files)
 
     # add command that runs the tests after build
-    test = env.Command(target = 'test6', source = './6_ranks_tests', action = 'cd testing/unit_testing/'+variant_directory+' && mpirun -n 6 -quiet --allow-run-as-root ./6_ranks_tests || [ -f "SUCCESS6" ]')
+    test = env.Command(target = 'test6', source = './6_ranks_tests', action = 'cd testing/unit_testing/'+variant_directory+' && mpirun -n 6 --allow-run-as-root -quiet ./6_ranks_tests || [ -f "SUCCESS6" ]')
     AlwaysBuild(test)
 
   # ---- test compilation of examples ----
@@ -87,8 +93,8 @@ if not env['no_tests']:
       test = env.Command(target = 'test_examples', source = None, action = 'cd scripts && ./check_if_examples_compile.sh')
       Depends(test, '../../../core/build_release/libopendihu.a')
 
-   # summary command, exit -1 if one the three tests failed
-  test = env.Command(target = 'summary', source = None, action = 'cd testing/unit_testing/'+variant_directory+' && [ -f "SUCCESS1" ] && (echo unit tests on 1 rank SUCCEDED) || (echo unit tests on 1 rank FAILED) && [ -f "SUCCESS2" ] && (echo unit tests on 2 ranks SUCCEDED) || (echo unit tests on 2 ranks FAILED)  && [ -f "SUCCESS6" ] && (echo unit tests on 6 ranks SUCCEDED) || (echo unit tests on 6 ranks FAILED) && (([ ! -f "SUCCESS1" ] || [ ! -f "SUCCESS2" ] || [ ! -f "SUCCESS6" ]) && exit -1) || exit 0')
+   # summary command, exit 1 if one the three tests failed
+  test = env.Command(target = 'summary', source = None, action = 'cd testing/unit_testing/'+variant_directory+' && [ -f "SUCCESS1" ] && (echo unit tests on 1 rank SUCCEDED) || (echo unit tests on 1 rank FAILED) && [ -f "SUCCESS2" ] && (echo unit tests on 2 ranks SUCCEDED) || (echo unit tests on 2 ranks FAILED)  && [ -f "SUCCESS6" ] && (echo unit tests on 6 ranks SUCCEDED) || (echo unit tests on 6 ranks FAILED) && (([ ! -f "SUCCESS1" ] || [ ! -f "SUCCESS2" ] || [ ! -f "SUCCESS6" ]) && exit 1) || exit 0')
   if env["BUILD_TYPE"] == "release":
     Depends(test, ['test_examples', 'test1', 'test2', 'test6'])
   else:

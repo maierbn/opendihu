@@ -47,6 +47,20 @@ public:
                                      std::string meshName, int timeStepNo, double currentTime, bool onlyNodalValues);
 };
 
+// specialization for Composite
+template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
+class Python<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,FieldVariablesForOutputWriterType> :
+  public PythonBase<FieldVariablesForOutputWriterType>
+{
+public:
+  // the function space is StructuredDeformable whereas the FunctionSpace of the class is CompositeOfDimension
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType> FunctionSpaceType;
+
+  //! call python callback
+  static PyObject *buildPyDataObject(FieldVariablesForOutputWriterType fieldVariables,
+                                     std::string meshName, int timeStepNo, double currentTime, bool onlyNodalValues);
+};
+
 // specialization for UnstructuredDeformable
 template<int D, typename BasisFunctionType, typename FieldVariablesForOutputWriterType>
 class Python<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>,FieldVariablesForOutputWriterType> :
@@ -68,4 +82,5 @@ private:
 
 #include "output_writer/python/python_structured_regular_fixed.tpp"
 #include "output_writer/python/python_structured_deformable.tpp"
+#include "output_writer/python/python_composite.tpp"
 #include "output_writer/python/python_unstructured_deformable.tpp"

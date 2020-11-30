@@ -110,7 +110,29 @@ def does_overlap(p0,p1p2,p3p4):
     return True
     
   return False
+
+def angle_constraint_is_met(p0,p1,p2,p3):
+  # p2 p3
+  # p0 p1
   
+  # variance of side lengths, favours quadrilaterals with same side lengths
+  p01 = p1-p0
+  p12 = p3-p1
+  p23 = p2-p3
+  p30 = p0-p2
+  
+  # angles
+  a0 = np.arctan2(np.linalg.norm(np.cross(p01, -p30)), np.dot(p01, -p30))
+  a1 = np.arctan2(np.linalg.norm(np.cross(p12, -p01)), np.dot(p12, -p01))
+  a2 = np.arctan2(np.linalg.norm(np.cross(p23, -p12)), np.dot(p23, -p12))
+  a3 = np.arctan2(np.linalg.norm(np.cross(p30, -p23)), np.dot(p30, -p23))
+
+  angle_constraint = 10/180.*np.pi
+  return abs(a0) >= angle_constraint and abs(a1) >= angle_constraint and abs(a2) >= angle_constraint and abs(a3) >= angle_constraint
+
+def angle_constraint_score(p0,p1,p2,p3):
+  return 1 if angle_constraint_is_met(p0,p1,p2,p3) else 0
+
 def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_y, point_indices_list, triangle_list, extent_x, extent_y, debugging_stl_output, stl_triangle_lists):
   """
   This is a helper function for stl_create_mesh.create_planar_mesh, defined in create_planar_mesh.py
@@ -461,6 +483,7 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
     plt.close()
       
   # improve point locations by Laplacian smoothing
+  # --------------------------------------------------
   random.seed(1)
   
   # iterations: ||: from bottom left, from top right, from bottom right, from top left :||
@@ -501,11 +524,19 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
       
         # compute new point position as average of all 4 or 8 neighbors
         #p_changed = 0.125 * (p0+p1+p2+p3+p4+p5+p6+p7)
-        p_changed = 0.25 * (p1+p3+p5+p7)
+        p_changed = 2/12*(p1+p3+p5+p7) + 1/12*(p0+p2+p4+p6)
+        #p_changed = 0.25 * (p1+p3+p5+p7)
         
         # discard smoothing step if it would lead to an invalid mesh
         if not is_properly_oriented(p0,p1,p7,p_changed) or not is_properly_oriented(p1,p2,p_changed,p3) \
            or not is_properly_oriented(p7,p_changed,p6,p5) or not is_properly_oriented(p_changed,p3,p5,p4):
+          continue
+          
+        # if new quad violates angle constraint, where all angles have to be > 10 degrees
+        if (angle_constraint_is_met(p0,p1,p7,p) and not angle_constraint_is_met(p0,p1,p7,p_changed)) \
+          or (angle_constraint_is_met(p1,p2,p,p3) and not angle_constraint_is_met(p1,p2,p_changed,p3)) \
+          or (angle_constraint_is_met(p7,p,p6,p5) and not angle_constraint_is_met(p7,p_changed,p6,p5)) \
+          or (angle_constraint_is_met(p,p3,p5,p4) and not angle_constraint_is_met(p_changed,p3,p5,p4)):
           continue
         
         grid_points_world_space_improved[j*n_grid_points_x+i] = p_changed
@@ -571,125 +602,104 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
          
   # try to improve quadrilaterals with too small angles
   # --------------------------------------------------
-  def angle_constraint_is_met(p0,p1,p2,p3):
-    # p2 p3
-    # p0 p1
+  if False:
+    # repeatedly iterate over all elements until no more fixes could be achieved
+    while True:
+      changed_a_point = False
+      n_unresolved_bad_angles = 0
+      n_resolved_bad_angles = 0
+      
+      # loop over all elements
+      for i in range(0,n_grid_points_x-1):
+        for j in range(0,n_grid_points_y-1):
+          # p2 p3
+          # p0 p1
+      
+          p0 = grid_points_world_space_improved[j*n_grid_points_x+i]
+          p1 = grid_points_world_space_improved[j*n_grid_points_x+(i+1)%n_grid_points_x]
+          p2 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+i]
+          p3 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x]
     
-    # variance of side lengths, favours quadrilaterals with same side lengths
-    p01 = p1-p0
-    p12 = p3-p1
-    p23 = p2-p3
-    p30 = p0-p2
-    
-    # angles
-    a0 = np.arctan2(np.linalg.norm(np.cross(p01, -p30)), np.dot(p01, -p30))
-    a1 = np.arctan2(np.linalg.norm(np.cross(p12, -p01)), np.dot(p12, -p01))
-    a2 = np.arctan2(np.linalg.norm(np.cross(p23, -p12)), np.dot(p23, -p12))
-    a3 = np.arctan2(np.linalg.norm(np.cross(p30, -p23)), np.dot(p30, -p23))
-  
-    angle_constraint = 10/180.*np.pi
-    return abs(a0) >= angle_constraint and abs(a1) >= angle_constraint and abs(a2) >= angle_constraint and abs(a3) >= angle_constraint
-  
-  def angle_constraint_score(p0,p1,p2,p3):
-    return 1 if angle_constraint_is_met(p0,p1,p2,p3) else 0
-  
-  # repeatedly iterate over all elements until no more fixes could be achieved
-  while True:
-    changed_a_point = False
-    n_unresolved_bad_angles = 0
-    n_resolved_bad_angles = 0
-    
-    # loop over all elements
-    for i in range(0,n_grid_points_x-1):
-      for j in range(0,n_grid_points_y-1):
-        # p2 p3
-        # p0 p1
-    
-        p0 = grid_points_world_space_improved[j*n_grid_points_x+i]
-        p1 = grid_points_world_space_improved[j*n_grid_points_x+(i+1)%n_grid_points_x]
-        p2 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+i]
-        p3 = grid_points_world_space_improved[(j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x]
-  
-        if not angle_constraint_is_met(p0,p1,p2,p3):
-          indices = [(i,j),(i+1,j),(i,j+1),(i+1,j+1)]
-          
-          # loop over 4 points of element
-          for k in range(4):
-            (ii,jj) = indices[k]
+          if not angle_constraint_is_met(p0,p1,p2,p3):
+            indices = [(i,j),(i+1,j),(i,j+1),(i+1,j+1)]
             
-            # do not consider boundary points, they cannot be changed
-            if ii <= 0 or jj <= 0 or ii >= n_grid_points_x-1 or jj >= n_grid_points_y-1:
-              continue
-            
-            # the point p will be moved, p0-p7 are the neighbouring points
-            p = grid_points_world_space_improved[jj*n_grid_points_x+ii]
-            p_old = np.array(p)
-            # p6 p5 p4
-            # p7 p  p3
-            # p0 p1 p2
-            p0 = grid_points_world_space_improved[(jj-1)*n_grid_points_x+(ii-1)]
-            p1 = grid_points_world_space_improved[(jj-1)*n_grid_points_x+ii]
-            p2 = grid_points_world_space_improved[(jj-1)*n_grid_points_x+(ii+1)]
-            p3 = grid_points_world_space_improved[jj*n_grid_points_x+(ii+1)]
-            p4 = grid_points_world_space_improved[(jj+1)*n_grid_points_x+(ii+1)]
-            p5 = grid_points_world_space_improved[(jj+1)*n_grid_points_x+ii]
-            p6 = grid_points_world_space_improved[(jj+1)*n_grid_points_x+(ii-1)]
-            p7 = grid_points_world_space_improved[jj*n_grid_points_x+(ii-1)]
+            # loop over 4 points of element
+            for k in range(4):
+              (ii,jj) = indices[k]
               
-            n_tries = 0
-            size_factor = factor
-            p_changed = np.array(p)
-            
-            def orientation_score(p0,p1,p2,p3):
-              """ how well the quad is oriented, 0=worst, 3=properly """
-              # p2 p3
-              # p0 p1
-              n_ccw = (1 if ccw(p0,p1,p3) else 0) + (1 if ccw(p1,p3,p2) else 0) + (1 if ccw(p3,p2,p0) else 0) + (1 if ccw(p2,p0,p1) else 0)
-              return min(n_ccw,3)
-            
-            initial_score = angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
-              + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4)
-            
-            # while the score is not yet better (and maximum of 200 tries), deflect point p
-            while (\
-              (angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
-              + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4)) <= initial_score \
-              and n_tries < 35):
+              # do not consider boundary points, they cannot be changed
+              if ii <= 0 or jj <= 0 or ii >= n_grid_points_x-1 or jj >= n_grid_points_y-1:
+                continue
               
-              # pseudo-randomly deflect point p
-              p_changed = p + np.array([(random.random()-0.5)*size_factor, (random.random()-0.5)*size_factor, 0])
-              size_factor *= 1.05    # 1.05**200 = 17292
-              
-              n_tries += 1
-              
-            # discard smoothing step if it would lead to an invalid mesh
-            if not is_properly_oriented(p0,p1,p7,p_changed) or not is_properly_oriented(p1,p2,p_changed,p3) \
-               or not is_properly_oriented(p7,p_changed,p6,p5) or not is_properly_oriented(p_changed,p3,p5,p4):
-              continue
-              
-            if n_tries < 35:
-              if angle_constraint_is_met(p0,p1,p2,p3):
-                print("  \033[0;32mSuccessfully resolved bad angle ({},{}) after {} iterations\033[0m".format(i,j,n_tries))
-                n_resolved_bad_angles += 1
-              else:
-                current_score = (angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
-                  + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4))
-                print("  improvement regarding bad angles ({},{}) after {} iterations, number of bad angles: {} -> {}".format(i,j,n_tries, 4-initial_score, 4-current_score))
+              # the point p will be moved, p0-p7 are the neighbouring points
+              p = grid_points_world_space_improved[jj*n_grid_points_x+ii]
+              p_old = np.array(p)
+              # p6 p5 p4
+              # p7 p  p3
+              # p0 p1 p2
+              p0 = grid_points_world_space_improved[(jj-1)*n_grid_points_x+(ii-1)]
+              p1 = grid_points_world_space_improved[(jj-1)*n_grid_points_x+ii]
+              p2 = grid_points_world_space_improved[(jj-1)*n_grid_points_x+(ii+1)]
+              p3 = grid_points_world_space_improved[jj*n_grid_points_x+(ii+1)]
+              p4 = grid_points_world_space_improved[(jj+1)*n_grid_points_x+(ii+1)]
+              p5 = grid_points_world_space_improved[(jj+1)*n_grid_points_x+ii]
+              p6 = grid_points_world_space_improved[(jj+1)*n_grid_points_x+(ii-1)]
+              p7 = grid_points_world_space_improved[jj*n_grid_points_x+(ii-1)]
                 
-              # assign newly found point
-              grid_points_world_space_improved[jj*n_grid_points_x+ii] = p_changed
-              changed_a_point = True
+              n_tries = 0
+              size_factor = factor
+              p_changed = np.array(p)
               
-            else:
-              n_unresolved_bad_angles += 1
-            
-    # if there was a resolved self_intersection, restart iterations, otherwise we are done
-    if not changed_a_point:
-      if n_resolved_bad_angles > 0:
-        print("  {} elements with angles < 10 degrees have been improved.".format(n_resolved_bad_angles))
-      if n_unresolved_bad_angles > 0:
-        print("\033[0;31m  {} elements have angles < 10 degrees.    \033[0m".format(n_unresolved_bad_angles))
-      break
-       
+              def orientation_score(p0,p1,p2,p3):
+                """ how well the quad is oriented, 0=worst, 3=properly """
+                # p2 p3
+                # p0 p1
+                n_ccw = (1 if ccw(p0,p1,p3) else 0) + (1 if ccw(p1,p3,p2) else 0) + (1 if ccw(p3,p2,p0) else 0) + (1 if ccw(p2,p0,p1) else 0)
+                return min(n_ccw,3)
+              
+              initial_score = angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
+                + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4)
+              
+              # while the score is not yet better (and maximum of 200 tries), deflect point p
+              while (\
+                (angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
+                + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4)) <= initial_score \
+                and n_tries < 35):
+                
+                # pseudo-randomly deflect point p
+                p_changed = p + np.array([(random.random()-0.5)*size_factor, (random.random()-0.5)*size_factor, 0])
+                size_factor *= 1.05    # 1.05**200 = 17292
+                
+                n_tries += 1
+                
+              # discard smoothing step if it would lead to an invalid mesh
+              if not is_properly_oriented(p0,p1,p7,p_changed) or not is_properly_oriented(p1,p2,p_changed,p3) \
+                 or not is_properly_oriented(p7,p_changed,p6,p5) or not is_properly_oriented(p_changed,p3,p5,p4):
+                continue
+                
+              if n_tries < 35:
+                if angle_constraint_is_met(p0,p1,p2,p3):
+                  print("  \033[0;32mSuccessfully resolved bad angle ({},{}) after {} iterations\033[0m".format(i,j,n_tries))
+                  n_resolved_bad_angles += 1
+                else:
+                  current_score = (angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
+                    + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4))
+                  print("  improvement regarding bad angles ({},{}) after {} iterations, number of bad angles: {} -> {}".format(i,j,n_tries, 4-initial_score, 4-current_score))
+                  
+                # assign newly found point
+                grid_points_world_space_improved[jj*n_grid_points_x+ii] = p_changed
+                changed_a_point = True
+                
+              else:
+                n_unresolved_bad_angles += 1
+              
+      # if there was a resolved self_intersection, restart iterations, otherwise we are done
+      if not changed_a_point:
+        if n_resolved_bad_angles > 0:
+          print("  {} elements with angles < 10 degrees have been improved.".format(n_resolved_bad_angles))
+        if n_unresolved_bad_angles > 0:
+          print("\033[0;31m  {} elements have angles < 10 degrees.    \033[0m".format(n_unresolved_bad_angles))
+        break
+         
   return grid_points_world_space_improved
  

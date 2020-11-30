@@ -97,13 +97,14 @@ class precice(Package):
       -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=${DEPENDENCIES_DIR}/python/install/bin/python3 \
       -DPETSC_DIR=${PETSC_DIR} -DPETSC_EXECUTABLE_RUNS=TRUE \
       -DLIBXML2_INCLUDE_DIR=${LIBXML2_DIR}/include -DLIBXML2_LIBRARY=${LIBXML2_DIR}/lib/libxml2.so -DPRECICE_ENABLE_FORTRAN=OFF \
-      -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR .. && \
+      -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR \
+      -DEigen3_ROOT=${SOURCE_DIR}/eigen-3.3.8 .. && \
       cd ${SOURCE_DIR}/build && make precice install -j 4'
     ])
     
     res = super(precice, self).check(ctx)
   
-    # if installation of petsc failed with the current command, retry with different options 
+    # if installation of precice failed with the current command, retry with different options 
     if not res[0]:
       ctx.Log('Retry (1) with manually building boost\n')
       ctx.Message('Retry (1) with manually building boost.')
@@ -124,12 +125,19 @@ class precice(Package):
           cd boost_1_65_1 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test --prefix=${PREFIX} && \
           ./b2 install )',
 
+        # libxml2
+        'cd ${SOURCE_DIR} && if [ ! -f ${SOURCE_DIR}/libxml2-2.9.9.tar.gz ]; then wget ftp://xmlsoft.org/libxml2/libxml2-2.9.9.tar.gz; fi; \
+         tar xf libxml2-2.9.9.tar.gz; cd libxml2-2.9.9; ./configure --prefix=${PREFIX} && make install',
+
         # precice
         'cd ${SOURCE_DIR} && mkdir -p build && cd build && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} \
         -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=${DEPENDENCIES_DIR}/python/install/bin/python3 \
         -DPETSC_DIR=${PETSC_DIR} -DPETSC_EXECUTABLE_RUNS=TRUE \
         -DLIBXML2_INCLUDE_DIR=${LIBXML2_DIR}/include -DLIBXML2_LIBRARY=${LIBXML2_DIR}/lib/libxml2.so -DPRECICE_ENABLE_FORTRAN=OFF \
-        -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR .. && \
+        -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR \
+        -DEigen3_ROOT=${SOURCE_DIR}/eigen-3.3.8 \
+        -DLibXml_DIR=${PREFIX} \
+        .. && \
         cd ${SOURCE_DIR}/build && make precice install -j 4'
       ])  
   

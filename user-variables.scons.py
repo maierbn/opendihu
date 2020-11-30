@@ -1,4 +1,4 @@
-# Configuration for scons build system
+#i Configuration for scons build system
 #
 # For each package the following variables are available:
 # <PACKAGE>_DIR         Location of the package, must contain subfolders "include" and "lib" or "lib64" with header and library files.
@@ -122,47 +122,8 @@ try:
   if "sgscl" in socket.gethostname():
     MPI_DIR="/scratch-nfs/maierbn/openmpi/install-3.1"
   
-  # on cmcs09 (CPU-GPU):
-  if socket.gethostname() == 'cmcs09':
-    print "Setting PGI settings for GPU-offloading, since host cmcs09 was detected."
-    
-    cc="pgcc"   # c compiler
-    CC="pgc++"   # c++ compiler
-    
-    #PYTHON_DOWNLOAD=True
-    PYTHON_DIR="/usr/local/home/kraemer/python/install"#"/afs/.mathematik.uni-stuttgart.de/home/cmcs/share/environment-modules/Packages/python/python-3.6.5" #"/usr/local/home/kraemer/python/install"
-
-    
-    #del MPI_DIR
-    MPI_DIR="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2"
-    #MPI_DOWNLOAD=False
-    #cc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/18.10/bin/pgcc"
-    #CC="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/18.10/bin/pgc++"
-    #mpiCC="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpic++"
-    #mpicc="/usr/local/home/kraemer/offloading/pgi_gcc7.2.0/linux86-64/2018/mpi/openmpi-2.1.2/bin/mpicc"
-    MPI_DISABLE_CHECKS=True
-    PETSC_DISABLE_CHECKS=True
-    GOOGLETEST_DISABLE_CHECKS=True
-
-  elif "argon" in socket.gethostname() and False:
-    cc = "pgcc"
-    CC = "pgc++"
-    mpiCC = "mpic++"
-
-    LAPACK_DOWNLOAD = False
-    
-    MPI_DIR = "/usr/local.nfs/sw/pgi/pgi-18.10-u1604/linux86-64/2018/mpi/openmpi/"
-    DISABLE_RUN = True   # do not run executables for checks, because they need mpirun as prefix
-    #PETSC_DISABLE_CHECKS = True
-    GOOGLETEST_DISABLE_CHECK = True
-
   elif "lead" in socket.gethostname():
     MPI_DIR = os.environ["MPI_HOME"]
-
-    PETSC_DOWNLOAD = False
-    PETSC_DIR = os.environ["PETSC_ROOT"]
-    PYTHONPACKAGES_DOWNLOAD = False
-    GOOGLETEST_DOWNLOAD = False 
   
   elif "hawk" in os.environ["SITE_PLATFORM_NAME"]:
     print("on hawk load the following modules: \"module load adios2/2.5.0 cmake python mkl petsc/3.12.2-int32-shared\"")

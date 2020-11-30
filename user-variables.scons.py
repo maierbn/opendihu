@@ -18,6 +18,12 @@
 # set compiler to use
 cc = "gcc"   # c compiler
 CC = "g++"   # c++ compiler
+<<<<<<< Updated upstream
+=======
+#CC = "scorep --user --thread=none --nomemory g++"   # c++ compiler
+#CC = "/lustre/cray/ws9/2/ws/icbbnmai-opendihu1/opendihu-hawk-gnu/scripts/fake-scorep.sh"   # c++ compiler, instead set environment variable $SCOREP_WRAPPER_INSTRUMENTER_FLAGS
+mpiCC = "mpic++"
+>>>>>>> Stashed changes
 
 cmake="cmake"
 
@@ -61,7 +67,16 @@ XBRAID_DOWNLOAD=True
 
 # MPI
 # MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
+<<<<<<< Updated upstream
 MPI_DIR = "/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
+=======
+#MPI_DIR = "/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
+MPI_DIR = "/usr/lib/x86_64-linux-gnu/openmpi"    # standard path for openmpi on ubuntu >18.04
+
+# Vectorized code for matrix assembly
+# Set to True for fastest code, set to False for faster compilation
+USE_VECTORIZED_FE_MATRIX_ASSEMBLY = True
+>>>>>>> Stashed changes
 
 # chaste and dependencies
 have_chaste = False
@@ -139,6 +154,7 @@ try:
     mpiCC = "mpic++"
 
     LAPACK_DOWNLOAD = False
+<<<<<<< Updated upstream
     
     MPI_DIR = "/usr/local.nfs/sw/pgi/pgi-18.10-u1604/linux86-64/2018/mpi/openmpi/"
     DISABLE_RUN = True   # do not run executables for checks, because they need mpirun as prefix
@@ -148,6 +164,22 @@ try:
   elif "lead" in socket.gethostname():
     MPI_DIR = os.environ["MPI_HOME"]
 
+=======
+    PETSC_DOWNLOAD = False
+    PETSC_DIR = os.environ["PETSC_ROOT"]
+    PYTHONPACKAGES_DOWNLOAD = False
+    GOOGLETEST_DOWNLOAD = False 
+    XBRAID_DOWNLOAD = True
+    ADIOS_DOWNLOAD = False
+    ADIOS_DIR = os.environ["ADIOS2_ROOT"]
+#    cc = "mpicc -cc="+os.environ["CC"]
+#    CC = "mpicxx -cxx=g++ -ftemplate-backtrace-limit=0"   
+#    CC = "mpicxx -cxx="+os.environ["CXX"]+" -ftemplate-backtrace-limit=0"   
+#    cc = "icc"
+#    CC = "icpc "  
+#    cc = "clang"
+#    CC = "clang++"
+>>>>>>> Stashed changes
 except:
   pass
 

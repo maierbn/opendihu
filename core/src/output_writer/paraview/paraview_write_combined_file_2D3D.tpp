@@ -731,7 +731,7 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
   MPIUtility::handleReturnValue(MPI_File_open(this->rankSubset_->mpiCommunicator(), filenameStr.c_str(),
                                               //MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_UNIQUE_OPEN,
                                               MPI_MODE_WRONLY | MPI_MODE_CREATE,
-                                              MPI_INFO_NULL, &fileHandle), "MPI_File_open");
+                                              info, &fileHandle), "MPI_File_open");
 
   Control::PerformanceMeasurement::start("durationParaview3DWrite");
 

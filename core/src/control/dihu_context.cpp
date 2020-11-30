@@ -159,7 +159,14 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
 
     // initialize MPI, this is necessary to be able to call PetscFinalize without MPI shutting down
     MPI_Init(&argc, &argv);
+#define XSTR(x) STR(x)
+#define STR(x) #x
+#pragma message "The value of MPI_VERSION: " XSTR(MPI_VERSION)
+#if MPI_VERSION >= 3
+    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);   // MPI >= 4
+#else
     MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+#endif
 
     // get current MPI version
     char versionString[MPI_MAX_LIBRARY_VERSION_STRING];

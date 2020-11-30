@@ -1,7 +1,8 @@
 # refine the given, serially created file with 7x7 fibers
 
 # input fiber
-input=/store/software/opendihu/examples/electrophysiology/input/7x7fibers.bin
+#input=/store/software/opendihu/examples/electrophysiology/input/7x7fibers.bin
+input=/data/scratch/maierbn/input/7x7fibers.bin
 
 cd build_release
 ./refine ../settings_refine.py 1 $input     # 13

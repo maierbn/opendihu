@@ -116,6 +116,14 @@ run()
   this->advanceTimeSpan();
 }
 
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+template<typename FunctionSpaceType, int nComponents>
+void TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime, callCountIncrement);
+}
+
 template<typename FunctionSpaceType, int nComponents>
 void TimeSteppingSchemeOdeBase<FunctionSpaceType, nComponents>::
 checkForNanInf(int timeStepNo, double currentTime)

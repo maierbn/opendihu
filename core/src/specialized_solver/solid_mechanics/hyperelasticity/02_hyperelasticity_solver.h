@@ -66,13 +66,16 @@ public:
   HyperelasticitySolver(DihuContext context, std::string settingsKey = "HyperelasticitySolver");
 
   //! advance simulation by the given time span, data in solution is used, afterwards new data is in solution
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
   //! dummy method, set endTime as current output time
   void setTimeSpan(double startTime, double endTime);
 
   //! run the simulation
   void run();
+
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
   //! this evaluates the actual nonlinear function f(x) that should be solved f(x) = 0
   //! @return if computation was successful

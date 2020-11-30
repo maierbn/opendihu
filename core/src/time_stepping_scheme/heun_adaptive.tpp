@@ -87,7 +87,8 @@ HeunAdaptive<DiscretizableInTime>::
 }
 
 template<typename DiscretizableInTime>
-void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
+void HeunAdaptive<DiscretizableInTime>::
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
 
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
@@ -404,7 +405,8 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
       }
 
       // write current output values
-      this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
+      if (withOutputWritersEnabled)
+        this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
 
       // start duration measurement
       if (this->durationLogKey_ != "")
@@ -586,7 +588,8 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
       }
 
       // write current output values
-      this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
+      if (withOutputWritersEnabled)
+        this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
 
       // start duration measurement
       if (this->durationLogKey_ != "")

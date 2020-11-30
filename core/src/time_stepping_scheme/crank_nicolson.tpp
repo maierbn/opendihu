@@ -18,7 +18,8 @@ TimeSteppingImplicit<DiscretizableInTimeType>(context, "CrankNicolson")
 }
 
 template<typename DiscretizableInTimeType>
-void CrankNicolson<DiscretizableInTimeType>::advanceTimeSpan()
+void CrankNicolson<DiscretizableInTimeType>::
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -70,7 +71,8 @@ void CrankNicolson<DiscretizableInTimeType>::advanceTimeSpan()
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
     // write current output values
-    this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
+    if (withOutputWritersEnabled)
+      this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
     
     // start duration measurement
     if (this->durationLogKey_ != "")

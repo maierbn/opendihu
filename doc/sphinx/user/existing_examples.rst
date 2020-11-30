@@ -1972,7 +1972,7 @@ It has been used for investigating parallel-in-time algorithms, such as Multigri
   
   The relative factors, :math:`f_r^k` for two compartments, :math:`k=1,2`.
   
-Care must be taken to use exact solvers and low tolerances, as well as a high spatial resolution. Otherwise the stimuli will reflect at the borders of the muscle which is not physical.
+Care must be taken to use exact solvers and low tolerances, as well as a high spatial resolution. Otherwise the stimuli will reflect at the boundaries of the muscle which is not physical.
   
 multidomain_with_fat
 ~~~~~~~~~~~~~~~~~~~~~~~~

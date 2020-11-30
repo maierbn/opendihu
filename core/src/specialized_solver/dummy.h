@@ -26,7 +26,7 @@ public:
   Dummy(DihuContext context);
 
   //! advance simulation by the given time span [startTime_, endTime_]
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
   //! initialize time span from specificSettings_
   void initialize();
@@ -36,6 +36,9 @@ public:
 
   //! reset state of this object, such that a new initialize() is necessary ("uninitialize")
   void reset();
+
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
   //! return the data object of the timestepping scheme, with the call to this method the output writers get the data to create their output files
   Data &data();

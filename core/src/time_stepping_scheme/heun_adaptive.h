@@ -28,7 +28,7 @@ public:
   virtual void initialize();
 
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps, data in solution is used, afterwards new data is in solution
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
   //! Returns the current time passed in the simulation. Used to trigger rebalancing
   double currentHeunTime();

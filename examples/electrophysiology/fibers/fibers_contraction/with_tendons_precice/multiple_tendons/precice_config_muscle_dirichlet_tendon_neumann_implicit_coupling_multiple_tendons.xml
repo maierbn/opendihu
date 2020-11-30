@@ -234,7 +234,7 @@
       <participant name="TendonSolverTopB"/>
       
       <max-time value="1000.0"/>           <!-- end time of the whole simulation -->
-      <time-window-size value="1"/>   <!-- timestep width for coupling -->
+      <time-window-size value="1.0"/>   <!-- timestep width for coupling -->
       
       <absolute-convergence-measure limit="0.1" data="Displacement" mesh="TendonMeshTop" />
       <absolute-convergence-measure limit="0.1" data="Displacement" mesh="TendonMeshBottomA" />
@@ -244,9 +244,9 @@
       <!--<relative-convergence-measure limit="0.1" data="Displacement" mesh="TendonMeshBottomB" />-->
       <!--<min-iteration-convergence-measure min-iterations="{integer}" data="{string}" mesh="{string}" strict="0" suffices="0"/>-->
       
-      <!--<acceleration:constant>
+      <acceleration:constant>
         <relaxation value="0.5" />
-      </acceleration:constant>-->
+      </acceleration:constant>
   
       <exchange data="Displacement"    mesh="TendonMeshTop"      from="TendonSolverBottom" to="MuscleSolver"/>
       <exchange data="Velocity"        mesh="TendonMeshTop"      from="TendonSolverBottom" to="MuscleSolver"/>

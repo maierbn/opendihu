@@ -50,7 +50,7 @@ selected_mus = list(range(1,n_motor_units+1))
 mu_positions = []
 
 # determine range in which the motor unit should be placed
-# add a margin of 10% at the border where the center of the motor unit should not be
+# add a margin of 10% at the boundary where the center of the motor unit should not be
 x_start = (int)(np.round(0.1*(n_fibers_x-1)))
 x_end = (int)(np.round(0.9*(n_fibers_x-1)))
   

@@ -31,7 +31,7 @@ public:
   MultipleInstances(DihuContext context);
 
   //! advance simulation by the given time span [startTime_, endTime_]
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
   //! set a new time interval that will be simulated by next call to advanceTimeSpan. This also potentially changes the time step width (it preserves the number of timesteps in the new time span)
   void setTimeSpan(double startTime, double endTime);
@@ -64,10 +64,11 @@ public:
   //! number of time steps in simulation time
   int numberTimeSteps();
 
-  /** write data to file using the output writer manager
-   * @param callCountIncrement increment to the counter to reduce the output frequency in settings, this is only needed for FastMonodomainSolver
-   */
-  void writeOutput(int timeStepNo, double currentTime, int callCountIncrement = 1);
+  //! call the own output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  void writeOwnOutput(int timeStepNo, double currentTime, int callCountIncrement = 1);
+
+  //! call the output writer on the data object and all nested solvers, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
 protected:
 

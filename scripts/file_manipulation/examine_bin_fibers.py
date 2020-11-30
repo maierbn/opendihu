@@ -69,8 +69,8 @@ with open(input_filename, "rb") as infile:
   print("nFibersTotal:      {n_fibers} = {n_fibers_x} x {n_fibers_y}".format(n_fibers=parameters[0], n_fibers_x=n_fibers_x, n_fibers_y=n_fibers_y))
   print("nPointsWholeFiber: {}".format(parameters[1]))
   if "version 2" not in header_str.decode("utf-8"):
-    print("nBorderPointsXNew: {}".format(parameters[2]))
-    print("nBorderPointsZNew: {}".format(parameters[3]))
+    print("nBoundaryPointsXNew: {}".format(parameters[2]))
+    print("nBoundaryPointsZNew: {}".format(parameters[3]))
   print("nFineGridFibers_:  {}".format(parameters[4]))
   print("nRanks:            {}".format(parameters[5]))
   print("nRanksZ:           {}".format(parameters[6]))
@@ -332,6 +332,8 @@ with open(input_filename, "rb") as infile:
     # write vtk file
     gridToVTK(output_filename, positions_x, positions_y, positions_z, pointData = {"fiber_no" : field_fiber_no})
     print("Wrote file \"{}.vts\"".format(output_filename))
+    print("Now run: ")
+    print("  paraview \"{}.vts\"".format(output_filename))
   
   #---------------------------------------
   # Postprocessing

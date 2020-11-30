@@ -5,14 +5,14 @@ namespace Postprocessing
 
 template<typename BasisFunctionType>
 bool ParallelFiberEstimation<BasisFunctionType>::
-neighbourExists(const std::array<bool,4> &subdomainIsAtBorder, Mesh::face_or_edge_t faceOrEdge)
+neighbourExists(const std::array<bool,4> &subdomainIsAtBoundary, Mesh::face_or_edge_t faceOrEdge)
 {
   // determine if there is a neighboring rank
 
   // if it is a face
   if (faceOrEdge < 4)
   {
-    if (!subdomainIsAtBorder[faceOrEdge])
+    if (!subdomainIsAtBoundary[faceOrEdge])
     {
       return true;
     }
@@ -21,10 +21,10 @@ neighbourExists(const std::array<bool,4> &subdomainIsAtBorder, Mesh::face_or_edg
   {
     // it is an edge
     if (
-         (faceOrEdge == Mesh::face_or_edge_t::edge0Minus1Minus && !subdomainIsAtBorder[Mesh::face_t::face0Minus] && !subdomainIsAtBorder[Mesh::face_t::face1Minus])
-      || (faceOrEdge == Mesh::face_or_edge_t::edge0Plus1Minus  && !subdomainIsAtBorder[Mesh::face_t::face0Plus]  && !subdomainIsAtBorder[Mesh::face_t::face1Minus])
-      || (faceOrEdge == Mesh::face_or_edge_t::edge0Minus1Plus  && !subdomainIsAtBorder[Mesh::face_t::face0Minus] && !subdomainIsAtBorder[Mesh::face_t::face1Plus])
-      || (faceOrEdge == Mesh::face_or_edge_t::edge0Plus1Plus   && !subdomainIsAtBorder[Mesh::face_t::face0Plus]  && !subdomainIsAtBorder[Mesh::face_t::face1Plus])
+         (faceOrEdge == Mesh::face_or_edge_t::edge0Minus1Minus && !subdomainIsAtBoundary[Mesh::face_t::face0Minus] && !subdomainIsAtBoundary[Mesh::face_t::face1Minus])
+      || (faceOrEdge == Mesh::face_or_edge_t::edge0Plus1Minus  && !subdomainIsAtBoundary[Mesh::face_t::face0Plus]  && !subdomainIsAtBoundary[Mesh::face_t::face1Minus])
+      || (faceOrEdge == Mesh::face_or_edge_t::edge0Minus1Plus  && !subdomainIsAtBoundary[Mesh::face_t::face0Minus] && !subdomainIsAtBoundary[Mesh::face_t::face1Plus])
+      || (faceOrEdge == Mesh::face_or_edge_t::edge0Plus1Plus   && !subdomainIsAtBoundary[Mesh::face_t::face0Plus]  && !subdomainIsAtBoundary[Mesh::face_t::face1Plus])
     )
     {
       return true;
@@ -35,16 +35,16 @@ neighbourExists(const std::array<bool,4> &subdomainIsAtBorder, Mesh::face_or_edg
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-printRanksInNeighbourhood(const std::array<bool,4> &subdomainIsAtBorder)
+printRanksInNeighbourhood(const std::array<bool,4> &subdomainIsAtBoundary)
 {
   std::stringstream s;
 
   // output neighbouring ranks and own rank for debugging
   // top row
-  if (subdomainIsAtBorder[Mesh::face_t::face1Plus])
+  if (subdomainIsAtBoundary[Mesh::face_t::face1Plus])
   {
     // left
-    if (subdomainIsAtBorder[Mesh::face_t::face0Minus])
+    if (subdomainIsAtBoundary[Mesh::face_t::face0Minus])
     {
       s << "+--";
     }
@@ -57,7 +57,7 @@ printRanksInNeighbourhood(const std::array<bool,4> &subdomainIsAtBorder)
     s << "---";
 
     // right
-    if (subdomainIsAtBorder[Mesh::face_t::face0Plus])
+    if (subdomainIsAtBoundary[Mesh::face_t::face0Plus])
     {
       s << "+";
     }
@@ -69,7 +69,7 @@ printRanksInNeighbourhood(const std::array<bool,4> &subdomainIsAtBorder)
   else
   {
     // left
-    if (subdomainIsAtBorder[Mesh::face_t::face0Minus])
+    if (subdomainIsAtBoundary[Mesh::face_t::face0Minus])
     {
       s << "|  ";
     }
@@ -84,7 +84,7 @@ printRanksInNeighbourhood(const std::array<bool,4> &subdomainIsAtBorder)
     s << " " << std::setw(2) << neighbourRankNo;
 
     // right
-    if (subdomainIsAtBorder[Mesh::face_t::face0Plus])
+    if (subdomainIsAtBoundary[Mesh::face_t::face0Plus])
     {
       s << "|";
     }
@@ -99,7 +99,7 @@ printRanksInNeighbourhood(const std::array<bool,4> &subdomainIsAtBorder)
 
   // middle row
   // left
-  if (subdomainIsAtBorder[Mesh::face_t::face0Minus])
+  if (subdomainIsAtBoundary[Mesh::face_t::face0Minus])
   {
     s << "|  ";
   }
@@ -113,7 +113,7 @@ printRanksInNeighbourhood(const std::array<bool,4> &subdomainIsAtBorder)
   s << " " << std::setw(2) << currentRankSubset_->ownRankNo();
 
   // right
-  if (subdomainIsAtBorder[Mesh::face_t::face0Plus])
+  if (subdomainIsAtBoundary[Mesh::face_t::face0Plus])
   {
     s << "|";
   }
@@ -126,10 +126,10 @@ printRanksInNeighbourhood(const std::array<bool,4> &subdomainIsAtBorder)
   s << "\n";
 
   // bottom row
-  if (subdomainIsAtBorder[Mesh::face_t::face1Minus])
+  if (subdomainIsAtBoundary[Mesh::face_t::face1Minus])
   {
     // left
-    if (subdomainIsAtBorder[Mesh::face_t::face0Minus])
+    if (subdomainIsAtBoundary[Mesh::face_t::face0Minus])
     {
       s << "+--";
     }
@@ -142,7 +142,7 @@ printRanksInNeighbourhood(const std::array<bool,4> &subdomainIsAtBorder)
     s << "---";
 
     // right
-    if (subdomainIsAtBorder[Mesh::face_t::face0Plus])
+    if (subdomainIsAtBoundary[Mesh::face_t::face0Plus])
     {
       s << "+";
     }
@@ -154,7 +154,7 @@ printRanksInNeighbourhood(const std::array<bool,4> &subdomainIsAtBorder)
   else
   {
     // left
-    if (subdomainIsAtBorder[Mesh::face_t::face0Minus])
+    if (subdomainIsAtBoundary[Mesh::face_t::face0Minus])
     {
       s << "|  ";
     }
@@ -169,7 +169,7 @@ printRanksInNeighbourhood(const std::array<bool,4> &subdomainIsAtBorder)
     s << " " << std::setw(2) << neighbourRankNo;
 
     // right
-    if (subdomainIsAtBorder[Mesh::face_t::face0Plus])
+    if (subdomainIsAtBoundary[Mesh::face_t::face0Plus])
     {
       s << "|";
     }
@@ -184,7 +184,7 @@ printRanksInNeighbourhood(const std::array<bool,4> &subdomainIsAtBorder)
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
+exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBoundary)
 {
   struct GhostValues
   {
@@ -214,7 +214,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
   {
     Mesh::face_or_edge_t faceOrEdge = faces[faceIndex];
 
-    if (neighbourExists(subdomainIsAtBorder, faceOrEdge))
+    if (neighbourExists(subdomainIsAtBoundary, faceOrEdge))
     {
       LOG(DEBUG) << "determine ghost elements for face " << Mesh::getString((Mesh::face_or_edge_t)faceOrEdge);
 
@@ -239,7 +239,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
   LOG(DEBUG) << "determined boundary elements, now communicate";
 
   // for debugging, output neighboring ranks
-  printRanksInNeighbourhood(subdomainIsAtBorder);
+  printRanksInNeighbourhood(subdomainIsAtBoundary);
 
   // blocking communication
 #if 0
@@ -252,7 +252,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
   {
     Mesh::face_or_edge_t faceOrEdge = faces[faceIndex];
 
-    if (neighbourExists(subdomainIsAtBorder, faceOrEdge))
+    if (neighbourExists(subdomainIsAtBoundary, faceOrEdge))
     {
       int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_or_edge_t)faceOrEdge);
       assert (neighbourRankNo != -1);
@@ -335,7 +335,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
   {
     Mesh::face_or_edge_t faceOrEdge = faces[faceIndex];
 
-    if (neighbourExists(subdomainIsAtBorder, faceOrEdge))
+    if (neighbourExists(subdomainIsAtBoundary, faceOrEdge))
     {
       int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_or_edge_t)faceOrEdge);
       assert (neighbourRankNo != -1);
@@ -429,7 +429,7 @@ exchangeGhostValues(const std::array<bool,4> &subdomainIsAtBorder)
   {
     Mesh::face_or_edge_t faceOrEdge = faces[faceIndex];
 
-    if (neighbourExists(subdomainIsAtBorder, faceOrEdge))
+    if (neighbourExists(subdomainIsAtBoundary, faceOrEdge))
     {
 #if defined(WRITE_CHECKPOINT_GHOST_MESH) || defined(USE_CHECKPOINT_GHOST_MESH) || !defined(NDEBUG)
       int neighbourRankNo = meshPartition_->neighbourRank((Mesh::face_or_edge_t)faceOrEdge);

@@ -18,7 +18,7 @@ template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementC
 HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 HyperelasticityInitialize(DihuContext context, std::string settingsKey) :
   context_(context[settingsKey]), data_(context_), pressureDataCopy_(context_), initialized_(false),
-  endTime_(0), lastNorm_(0), secondLastNorm_(0), currentLoadFactor_(1.0), nNonZerosJacobian_(0)
+  endTime_(0), lastNorm_(0), secondLastNorm_(0), currentLoadFactor_(1.0), lastSolveSucceeded_(false), nNonZerosJacobian_(0)
 {
   // get python config
   this->specificSettings_ = this->context_.getPythonConfig();

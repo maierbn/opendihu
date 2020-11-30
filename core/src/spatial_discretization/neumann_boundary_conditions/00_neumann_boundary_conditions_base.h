@@ -68,6 +68,7 @@ protected:
 
   bool divideNeumannBoundaryConditionValuesByTotalArea_;      //< if the value in dofVectors is to be divided by the total area of the surface of all elements that have neumann bc
   bool isTractionInCurrentConfiguration_;                     //< if any boundary condition was given with option "isInReferenceConfiguration": False
+  bool initialized_;                                          //< if initialize() has already been called
 
   Data::NeumannBoundaryConditions<FunctionSpaceType, nComponents> data_;    //< data object that contains the rhs vector with the BC contribution
 };

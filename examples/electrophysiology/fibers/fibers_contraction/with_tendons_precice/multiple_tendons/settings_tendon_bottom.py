@@ -8,6 +8,9 @@ import sys
 sys.path.insert(0, '.')
 import variables              # file variables.py, defines default values for all parameters, you can set the parameters there
 from create_partitioned_meshes_for_settings import *   # file create_partitioned_meshes_for_settings with helper functions about own subdomain
+import stl
+from stl import mesh
+import json
 
 # set title of terminal
 title = "tendon_bottom"
@@ -129,10 +132,10 @@ def update_neumann_bc(t):
 
   # set new Neumann boundary conditions
   k = 0
-  factor = max(1,t/100)   # for t ∈ [0,100] from 0 to 1
+  factor = min(1, t/100)   # for t ∈ [0,100] from 0 to 1
   elasticity_neumann_bc = [{
 		"element": k*nx*ny + j*nx + i, 
-		"constantVector": [0,0,-variables.force*t], 		# force pointing to bottom
+		"constantVector": [0,0,-variables.force*factor], 		# force pointing to bottom
 		"face": "2-",
     "isInReferenceConfiguration": True
   } for j in range(ny) for i in range(nx)]
@@ -142,7 +145,7 @@ def update_neumann_bc(t):
     "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
     "neumannBoundaryConditions": elasticity_neumann_bc,
   }
-  print("prescribed pulling force to bottom: {}".format(variables.force*t))
+  print("prescribed pulling force to bottom: {}".format(variables.force*factor))
   return config
 
 # update dirichlet boundary conditions to account for movement of humerus
@@ -179,33 +182,60 @@ def rotation_matrix(angle):
 
   return rotation_matrix
 
+call_count = 0
+ulna_series_files = []
+ulna_stl_filename = os.path.join(os.getcwd(),"cm_left_ulna.stl")
+stl_mesh = None
+try:
+  stl_mesh = mesh.Mesh.from_file(ulna_stl_filename)
+except: 
+  print("Could not open file {} in directory {}".format(ulna_stl_filename, os.getcwd()))
+  sys.exit(0)
+
 # Function to update dirichlet boundary conditions over time, t.
 # Only those entries can be updated that were also initially set.
 def update_dirichlet_bc(t):
   global current_ulna_angle
 
   # determine parameter for the rotation of the tendon insertion point
-  angle = angle_offset + current_ulna_angle
+  angle = current_ulna_angle
   rotation_point = elbow_hinge_point
+  rotation_mat = rotation_matrix(angle)
   vertex = bottom_tendon_insertion_point
   
   # rotation vertex about rotation_axis by angle
   vertex = vertex - rotation_point
-  vertex = rotation_matrix(angle).dot(vertex)
+  vertex = rotation_mat.dot(vertex)
   vertex = vertex + rotation_point
 
   new_insertion_point = vertex
   offset = -bottom_tendon_insertion_point + new_insertion_point
+  print("angle: {} deg, rot matrix: {}".format(angle*180/np.pi,rotation_matrix(angle)))
+  print("old insertion point: {}, new insertion point: {}, offset: {}".format(bottom_tendon_insertion_point,new_insertion_point,offset))
+  #offset[0] = 0
+  #offset[1] = 0
+  #offset[2] = 0
 
   # update dirichlet boundary conditions, set prescribed value to offset, do not constrain velocity
   for key in variables.elasticity_dirichlet_bc.keys():
     variables.elasticity_dirichlet_bc[key] = [offset[0],offset[1],offset[2],None,None,None]
-  
+  return variables.elasticity_dirichlet_bc
+ 
+def store_rotated_ulna(t): 
+  global current_ulna_angle, call_count, stl_mesh, ulna_series_files
+
+  if np.isnan(current_ulna_angle):
+    return
+
   # store rotated ulna
-  ulna_stl_filename = "cm_left_ulna.stl"
-  try:
-    stl_mesh = mesh.Mesh.from_file(ulna_stl_filename)
-      
+  call_count += 1
+  output_interval = 10
+  if call_count % output_interval == 0:
+    out_triangles = []
+
+    rotation_point = elbow_hinge_point
+    rotation_mat = rotation_matrix(current_ulna_angle)
+
     for p in stl_mesh.points:
       # p contains the 9 entries [p1x p1y p1z p2x p2y p2z p3x p3y p3z] of the triangle with corner points (p1,p2,p3)
 
@@ -215,7 +245,7 @@ def update_dirichlet_bc(t):
       # apply rotation
       for vertex in [np.array(p[0:3]), np.array(p[3:6]), np.array(p[6:9])]:
         vertex = vertex - rotation_point
-        vertex = rotation_matrix.dot(vertex)
+        vertex = rotation_mat.dot(vertex)
         vertex = vertex + rotation_point
         vertex_list.append(vertex)
       
@@ -227,26 +257,97 @@ def update_dirichlet_bc(t):
       out_mesh.vectors[i] = f
         
     out_mesh.update_normals()
-    ulna_output_filename = "out/ulna_{}.stl".format(t)
-    out_mesh.save(ulna_output_filename)
-    print("Saved file {}".format(ulna_output_filename))
-  except:
-    print("Could not operate on {}".format(ulna_stl_filename))
-  
-  return variables.elasticity_dirichlet_bc
+    ulna_output_filename = "ulna_{:04d}.stl".format((int)(call_count/output_interval))
+    ulna_output_path = os.path.join("out",ulna_output_filename)
+    out_mesh.save(ulna_output_path)
+    print("Saved file {}".format(ulna_output_path))
+    ulna_series_files.append({"name": ulna_output_filename, "time": t})
 
-def callback_total_force(t,bearing_force_bottom, bearing_moment_bottom, bearing_force_top, bearing_moment_top):
+    # save json series file
+    ulna_series_filename = "out/ulna.stl.series"
+    with open(ulna_series_filename, "w") as f:  
+      data = {"file-series-version" : "1.0", "files" : ulna_series_files}
+      json.dump(data, f, indent='\t')
+
+forces = []
+def callback_total_force(t, bearing_force_bottom, bearing_moment_bottom, bearing_force_top, bearing_moment_top):
   global current_ulna_angle
-  
+  # this callback functions gets the current total forces that are exerted by the muscle  
+
   current_ulna_force = bearing_force_bottom[2]
+
+  # compute average of last 10 values
+  forces.append(current_ulna_force)
+
+  if len(forces) > 10:
+    forces.pop(0)
+  current_ulna_force = np.mean(forces)
+  print("callback_total_force, t: {}, force: {}".format(t, current_ulna_force))
   
   # compute relation between force and angle of ulna
-  min_ulna_angle = -20  # [deg]
-  max_ulna_angle = 50   # [deg]
-  force_factor = min(1, max(0, current_ulna_force / 100))
-  current_ulna_angle = min_ulna_angle + force_factor * (max_ulna_angle-min_ulna_angle)
-  print("t: {}, force: {}, factor: {}, angle: {}".format(t, current_ulna_force, force_factor,current_ulna_angle))
-  current_ulna_angle *= np.pi/180   # convert from deg to rad
+  if False:
+    # positive angle = elbow flexion (ulna move downwards)
+    min_ulna_angle = 0  # [deg]
+    max_ulna_angle = -45   # [deg]
+    force_factor = -current_ulna_force / 500
+    force_factor = min(1.5, max(-0.5, force_factor))
+
+    current_ulna_angle = min_ulna_angle + force_factor * (max_ulna_angle-min_ulna_angle)
+    print("callback_total_force, t: {}, force: {}, factor: {}, angle: {}".format(t, current_ulna_force, force_factor,current_ulna_angle))
+    current_ulna_angle *= np.pi/180   # convert from deg to rad
+
+
+
+# Function to postprocess the output
+# This function gets periodically called by the running simulation. 
+# It provides all current variables for each node: geometry (position), u, v, stress, etc.
+def postprocess(result):
+  global current_ulna_angle
+
+  result = result[0]
+  # print result for debugging
+  #print(result)
+  
+  # get current time
+  current_time = result["currentTime"]
+  timestep_no = result["timeStepNo"]
+
+  # get number of nodes
+  nx = result["nElementsLocal"][0]		# number of elements
+  ny = result["nElementsLocal"][1]    # number of elements
+  nz = result["nElementsLocal"][2]    # number of elements
+  mx = 2*nx + 1  # number of nodes for quadratic elements
+  my = 2*ny + 1
+  mz = 2*nz + 1
+  
+  # parse variables
+  field_variables = result["data"]
+  
+  #for f in field_variables:
+  #  print(f["name"])
+  
+  # field_variables[0] is the geometry
+  # field_variables[1] is the displacements u
+  # etc., uncomment the above to see all field variables
+  
+  displacement_components = field_variables[1]["components"]
+  
+  # traction values contains the traction vector in reference configuration
+  u1_values = displacement_components[0]["values"]   # displacement in x-direction
+  u2_values = displacement_components[1]["values"]   # displacement in y-direction
+  u3_values = displacement_components[2]["values"]   # displacement in z-direction
+  u3_values_bottom = [u3_values[j*mx+i] for j in range(my) for i in range(mx)]
+  z_displacement = np.mean(u3_values)
+
+  #print("nx,ny: {},{}, mx,my: {},{}, {}={}".format(nx,ny,mx,my,mx*my*mz,len(u3_values)))
+
+  # compute elbow angle from displacement of muscle in z direction
+  vec = -elbow_hinge_point + bottom_tendon_insertion_point
+  current_ulna_angle = -np.arcsin(z_displacement / np.linalg.norm(vec))
+ 
+  print("z displacement: {} ({}), current_ulna_angle: {} deg".format(z_displacement, np.linalg.norm(vec), current_ulna_angle*180/np.pi))
+
+  store_rotated_ulna(current_time)
 
 config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyperelasticitySolver"
   "timeStepWidth":              variables.dt_elasticity,      # time step width 
@@ -299,7 +400,7 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
   "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
   "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
   "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
-  "updateDirichletBoundaryConditionsFunction": update_dirichlet_bc,   # function that updates the dirichlet BCs while the simulation is running
+  "updateDirichletBoundaryConditionsFunction": None, #update_dirichlet_bc,   # function that updates the dirichlet BCs while the simulation is running
   "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # stide every which step the update function should be called, 1 means every time step
   "updateNeumannBoundaryConditionsFunction": update_neumann_bc,       # a callback function to periodically update the Neumann boundary conditions
   "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step 
@@ -314,7 +415,7 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
   "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
   "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
   "totalForceTopElementNosGlobal":     [(nz-1)*ny*nx + j*nx + i for j in range(ny) for i in range(nx)],   # global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal
-  "totalForceFunction":          callback_total_force,                # callback function that gets the total force at bottom and top of the domain
+  "totalForceFunction":          None, #callback_total_force,                # callback function that gets the total force at bottom and top of the domain
   "totalForceFunctionCallInterval": 1,                                # how often the "totalForceFunction" is called
       
   # define which file formats should be written
@@ -325,7 +426,7 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
     {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_3D), "filename": "out/tendon_bottom", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
     
     # Python callback function "postprocess"
-    #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
+    {"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
   ],
   # 2. additional output writer that writes also the hydrostatic pressure
   "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
@@ -362,6 +463,7 @@ config = {
     "preciceConfigFilename":    "precice_config_muscle_dirichlet_tendon_neumann_implicit_coupling_multiple_tendons.xml",    # the preCICE configuration file
     "preciceParticipantName":   "TendonSolverBottom",       # name of the own precice participant, has to match the name given in the precice xml config file
     "scalingFactor":            1,                          # a factor to scale the exchanged data, prior to communication
+    "outputOnlyConvergedTimeSteps": True,                   # if the output writers should be called only after a time window of precice is complete, this means the timestep has converged
     "preciceMeshes": [                                      # the precice meshes get created as the top or bottom surface of the main geometry mesh of the nested solver
       {
         "preciceMeshName":      "TendonMeshTop",            # precice name of the 2D coupling mesh

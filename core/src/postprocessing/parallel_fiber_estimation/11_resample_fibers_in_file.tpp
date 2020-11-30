@@ -8,7 +8,7 @@ void ParallelFiberEstimation<BasisFunctionType>::
 resampleFibersInFile(int nPointsPerFiber, std::string filename)
 {
   // create a new file with all the fibers from the old file but resampled such that they have nNodesPerFiber_ nodes
-  LOG(DEBUG) << "resample fibers in file, this is completely serial, nBorderPointsXNew_: " << nBorderPointsXNew_;
+  LOG(DEBUG) << "resample fibers in file, this is completely serial, nBoundaryPointsXNew_: " << nBoundaryPointsXNew_;
   LOG(INFO);  // newline
 
   // determine nFibersX of the input file
@@ -157,6 +157,7 @@ resampleFibersInFile(int nPointsPerFiber, std::string filename)
   fileNew.close();
 
   LOG(INFO) << nFibersX << "x" << nFibersX << " fibers with " << nNodesPerFiber_ << " points per fiber written to file \"" << filename << "\"." << std::endl;
+  LOG(INFO) << "Use the following command to convert the file to various formats for inspection:\n  examine_bin_fibers.py \"" << filenameExistingFile << "\"" << std::endl;
 }
 
 } // namespace

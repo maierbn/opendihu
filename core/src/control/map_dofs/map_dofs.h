@@ -33,7 +33,7 @@ public:
   MapDofs(DihuContext context);
 
   //! advance simulation by the given time span
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
   //! initialize field variables and everything needed for the dofs mapping
   void initialize();
@@ -52,6 +52,9 @@ public:
 
   //! end time of simulation
   double endTime();
+
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
   //! return the data object of the timestepping scheme
   Data &data();

@@ -58,7 +58,7 @@ for mu_no in range(n_motor_units):
 
 # timing parameters
 # -----------------
-end_time = 60000.0                      # [ms] end time of the simulation
+end_time = 37000.0                      # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
 dt_0D = 2.5e-3                        # [ms] timestep width of ODEs (2e-3)
@@ -88,7 +88,7 @@ fiber_file_for_hdemg_surface = fat_mesh_file    # use the fat mesh for placing e
 hdemg_electrode_faces = ["1+"]                  # which faces of this 2D mesh should be considered for placing the HD-EMG electrodes (list of faces, a face is one of "0-" (left), "0+" (right), "1-" (front), "1+" (back))
 
 # xy-direction = across muscle, z-direction = along muscle
-hdemg_electrode_offset_xy = 2.0           # [cm] offset from border of 2D mesh where the electrode array begins
+hdemg_electrode_offset_xy = 2.0           # [cm] offset from boundary of 2D mesh where the electrode array begins
 hdemg_inter_electrode_distance_z = 0.4    # [cm] distance between electrodes ("IED") in z direction (direction along muscle)
 hdemg_inter_electrode_distance_xy = 0.4   # [cm] distance between electrodes ("IED") in transverse direction
 hdemg_n_electrodes_z = 32           # number of electrodes in z direction (direction along muscle)

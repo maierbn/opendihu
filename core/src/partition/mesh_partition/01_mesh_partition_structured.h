@@ -109,8 +109,8 @@ public:
   //! number of nodes in total
   global_no_t nNodesGlobal(int coordinateDirection) const;
   
-  //! get if there are nodes on both borders in the given coordinate direction
-  //! this is the case if the partition touches the right/top/back border
+  //! get if there are nodes on both boundarys in the given coordinate direction
+  //! this is the case if the partition touches the right/top/back boundary
   //! Consider the partition specified by partitionIndex or the current partition if partitionIndex == -1.
   bool hasFullNumberOfNodes(int coordinateDirection, int partitionIndex = -1) const;
   
@@ -278,7 +278,7 @@ protected:
 
   std::array<std::vector<element_no_t>,MeshType::dim()> localSizesOnPartitions_;  //< the sizes of different partitions in each coordinate direction, i.e. localSizesOnPartitions_[0] is (width partition #0, width partition #1, ...)
 
-  std::array<bool,MeshType::dim()> hasFullNumberOfNodes_;       //< if the own local partition has nodes on both sides of the 1D projection at the border. This is only true at the right/top/back-most partition.
+  std::array<bool,MeshType::dim()> hasFullNumberOfNodes_;       //< if the own local partition has nodes on both sides of the 1D projection at the boundary. This is only true at the right/top/back-most partition.
   
   std::vector<dof_no_t> onlyNodalDofLocalNos_;                  //< vector of local nos of the dofs, not including derivatives for Hermite
   std::vector<dof_no_t> ghostDofNosGlobalPetsc_;                //< vector of global/petsc dof nos of the ghost dofs which are stored on the local partition

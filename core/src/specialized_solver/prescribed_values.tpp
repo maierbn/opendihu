@@ -24,7 +24,7 @@ PrescribedValues(DihuContext context) :
 
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>
 void PrescribedValues<FunctionSpaceType,nComponents1,nComponents2>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -61,7 +61,8 @@ advanceTimeSpan()
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
     // write current output values using the output writers
-    this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
+    if (withOutputWritersEnabled)
+      this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
 
     // start duration measurement
     if (this->durationLogKey_ != "")
@@ -301,6 +302,14 @@ reset()
   // "uninitialize" everything
   callbackFunctions1_.clear();
   callbackFunctions2_.clear();
+}
+
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skippedtemplate<typename FunctionSpaceType, int nComponents1, int nComponents2>
+template<typename FunctionSpaceType, int nComponents1, int nComponents2>
+void PrescribedValues<FunctionSpaceType,nComponents1,nComponents2>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime, callCountIncrement);
 }
 
 template<typename FunctionSpaceType, int nComponents1, int nComponents2>

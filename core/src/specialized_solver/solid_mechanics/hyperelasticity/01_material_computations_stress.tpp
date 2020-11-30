@@ -575,7 +575,7 @@ computePK2StressField()
 #ifndef NDEBUG
       if (Term::usesFiberDirection)
       {
-        if (fabs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3)
+        if (Vc::any_of(MathUtility::abs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3))
           LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized (c)(norm: " << MathUtility::norm<3>(fiberDirection)
             << ", difference to 1: " << MathUtility::norm<3>(fiberDirection) - 1 << ") elementalDirectionValues:" << elementalDirectionValues;
       }

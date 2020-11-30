@@ -8,6 +8,7 @@ namespace Control
 {
 
 /** This is a base class of the precice adapter that contains functionality that depends on the type of the nested solver.
+ *  All solvers that should be able to use precice surface coupling have to implement this interface.
  */
 template<typename NestedSolver>
 class PreciceAdapterNestedSolver :
@@ -15,12 +16,12 @@ class PreciceAdapterNestedSolver :
 {
 };
 
-/** Partial specialization for tendon or pure mechanics solver, muscle contraction solver (nonlinear elasticity with active stress)
+/** Partial specialization for tendon or pure mechanics solver in a coupling scheme, muscle contraction solver (nonlinear elasticity with active stress)
  */
 template<typename T1, typename T2, typename T3>
 class PreciceAdapterNestedSolver<
   Control::Coupling<
-    Control::MultipleInstances<T1>,
+    T1,
     MuscleContractionSolver<T2,T3>
   >
 >
@@ -28,7 +29,7 @@ class PreciceAdapterNestedSolver<
 public:
   //! define the type of the nested solver
   typedef Control::Coupling<
-    Control::MultipleInstances<T1>,
+    T1,
     MuscleContractionSolver<T2,T3>
   > NestedSolverType;
 
@@ -157,7 +158,6 @@ public:
   //! get the field variable of the deformation gradient
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,9>> deformationGradientField(NestedSolverType &nestedSolver);
 };
-
 
 }  // namespace
 

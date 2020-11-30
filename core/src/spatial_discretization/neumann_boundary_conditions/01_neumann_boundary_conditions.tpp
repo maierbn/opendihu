@@ -22,6 +22,12 @@ initializeRhs()
   LOG(TRACE) << "NeumannBoundaryConditions::initializeRhs, D=" << FunctionSpaceType::dim() << ", nComponents=" << nComponents;
   // initialize RHS for mesh dimension 2 or 3, this is the same for nComponents == 1 and nComponents > 1
 
+  if (!this->initialized_)
+  {
+    // initialize also calls initializeRhs at the end
+    this->initialize(this->functionSpace_, this->boundaryConditionElements_);
+    return;
+  }
 
   this->data_.rhs()->setRepresentationGlobal();
   this->data_.rhs()->zeroEntries();
@@ -245,7 +251,7 @@ initializeRhs()
   } // elementGlobalNo
 
   // allreduce surface area
-  double surfaceAreaGlobal;
+  double surfaceAreaGlobal = 0;
   MPI_Comm mpiCommunicator = this->data_.functionSpace()->meshPartition()->rankSubset()->mpiCommunicator();
   MPIUtility::handleReturnValue(MPI_Allreduce(&surfaceArea, &surfaceAreaGlobal, 1, MPI_DOUBLE, MPI_SUM, mpiCommunicator), "MPI_Allreduce");
 
@@ -420,13 +426,13 @@ parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpa
     // get dofs indices within the numbering of the volume element that correspond to the selected face
     const int D = FunctionSpaceType::dim();
     const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
-    const int nVolumeDofsBorder = FunctionSpace::FunctionSpaceBaseDim<D-1,typename FunctionSpaceType::BasisFunction>::nNodesPerElement() * nDofsPerNode;
-    std::array<dof_no_t,nVolumeDofsBorder> dofIndices;
+    const int nVolumeDofsBoundary = FunctionSpace::FunctionSpaceBaseDim<D-1,typename FunctionSpaceType::BasisFunction>::nNodesPerElement() * nDofsPerNode;
+    std::array<dof_no_t,nVolumeDofsBoundary> dofIndices;
     FunctionSpaceType::getFaceDofs(result.face, dofIndices);
 
-    LOG(DEBUG) << "nVolumeDofsBorder on " << D-1 << "D face: " << nVolumeDofsBorder << ": " << dofIndices;
+    LOG(DEBUG) << "nVolumeDofsBoundary on " << D-1 << "D face: " << nVolumeDofsBoundary << ": " << dofIndices;
 
-    for (int i = 0; i < nVolumeDofsBorder; i++)
+    for (int i = 0; i < nVolumeDofsBoundary; i++)
     {
       result.surfaceDofs.push_back(dofIndices[i]);
     }
@@ -534,8 +540,8 @@ parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpa
                                          FunctionSpaceSurface;
 
     // number of dofs for Neumann BC, this is equal to the number of nodes (also for Hermite), because only nodal dofs are considered
-    const int nDofsBorder = FunctionSpaceSurface::nDofsPerElement();
-    for (int i = 0; i < nDofsBorder; i++)
+    const int nDofsBoundary = FunctionSpaceSurface::nDofsPerElement();
+    for (int i = 0; i < nDofsBoundary; i++)
     {
       result.dofVectors.push_back(std::pair<dof_no_t, VecD<1>>(i, constantVector));
     }
@@ -543,13 +549,13 @@ parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpa
     // get dofs indices within the numbering of the volume element that correspond to the selected face
     const int D = FunctionSpaceType::dim();
     const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
-    const int nVolumeDofsBorder = FunctionSpace::FunctionSpaceBaseDim<D-1,typename FunctionSpaceType::BasisFunction>::nNodesPerElement() * nDofsPerNode;
-    std::array<dof_no_t,nVolumeDofsBorder> dofIndices;
+    const int nVolumeDofsBoundary = FunctionSpace::FunctionSpaceBaseDim<D-1,typename FunctionSpaceType::BasisFunction>::nNodesPerElement() * nDofsPerNode;
+    std::array<dof_no_t,nVolumeDofsBoundary> dofIndices;
     FunctionSpaceType::getFaceDofs(result.face, dofIndices);
 
-    LOG(DEBUG) << "nVolumeDofsBorder on " << D-1 << "D face: " << nVolumeDofsBorder << ": " << dofIndices;
+    LOG(DEBUG) << "nVolumeDofsBoundary on " << D-1 << "D face: " << nVolumeDofsBoundary << ": " << dofIndices;
 
-    for (int i = 0; i < nVolumeDofsBorder; i++)
+    for (int i = 0; i < nVolumeDofsBoundary; i++)
     {
       result.surfaceDofs.push_back(dofIndices[i]);
     }
@@ -647,7 +653,7 @@ parseElementWithFaces(PythonConfig specificSettings, std::shared_ptr<FunctionSpa
     FunctionSpaceType::getFaceDofs(result.face, dofIndices);
     // for Hermite we get 2 dofs in dofIndices, only use the first one
 
-    VLOG(1) << "nVolumeDofsBorder on 0D face " << Mesh::getString(result.face) << ": " << dofIndices;
+    VLOG(1) << "nVolumeDofsBoundary on 0D face " << Mesh::getString(result.face) << ": " << dofIndices;
 
     result.dofVectors.push_back(std::pair<dof_no_t, VecD<1>>(dofIndices[0], constantVector));
   }

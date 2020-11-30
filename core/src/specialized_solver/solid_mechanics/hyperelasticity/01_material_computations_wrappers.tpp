@@ -66,7 +66,7 @@ template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementC
 void HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 solveDynamicProblem(
   std::shared_ptr<VecHyperelasticity> displacementsVelocitiesPressure, bool isFirstTimeStep,
-  Vec internalVirtualWork, Vec &externalVirtualWorkDead, Vec accelerationTerm
+  Vec internalVirtualWork, Vec &externalVirtualWorkDead, Vec accelerationTerm, bool withOutputWritersEnabled
 )
 {
   // solve δW_int - δW_ext,dead + ∫_Ω ρ0 1/dt (v^(n+1),L - v^(n),L)/dt ϕ^L ϕ^M δu dV = 0,
@@ -183,8 +183,11 @@ solveDynamicProblem(
   this->data_.displacements()->getValuesWithoutGhosts(displacementValues);
 
   // output with output writers of hyperelasticity_solver
-  this->outputWriterManager_.writeOutput(this->data_, 0, this->endTime_);
-  this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, this->endTime_);
+  if (withOutputWritersEnabled)
+  {
+    this->outputWriterManager_.writeOutput(this->data_, 0, this->endTime_);
+    this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, this->endTime_);
+  }
 
   // determine output values for δW
   externalVirtualWorkDead = externalVirtualWorkDead_;

@@ -17,7 +17,8 @@ ExplicitEuler<DiscretizableInTime>::ExplicitEuler(DihuContext context) :
 }
 
 template<typename DiscretizableInTime>
-void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
+void ExplicitEuler<DiscretizableInTime>::
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -75,7 +76,8 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
     // write current output values
-    this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
+    if (withOutputWritersEnabled)
+      this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
 
     // start duration measurement
     if (this->durationLogKey_ != "")
@@ -90,7 +92,8 @@ void ExplicitEuler<DiscretizableInTime>::advanceTimeSpan()
 }
 
 template<typename DiscretizableInTime>
-void ExplicitEuler<DiscretizableInTime>::run()
+void ExplicitEuler<DiscretizableInTime>::
+run()
 {
   TimeSteppingSchemeOde<DiscretizableInTime>::run();
 }

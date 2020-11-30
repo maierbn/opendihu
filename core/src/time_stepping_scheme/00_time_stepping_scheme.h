@@ -21,7 +21,7 @@ public:
   TimeSteppingScheme(DihuContext context);
 
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps
-  virtual void advanceTimeSpan() = 0;
+  virtual void advanceTimeSpan(bool withOutputWritersEnabled=true) = 0;
 
   //! set a new time step width, gets transferred to numberTimeSteps_
   void setTimeStepWidth(double timeStepWidth);
@@ -40,6 +40,9 @@ public:
 
   //! reset state such that new initialization becomes necessary
   virtual void reset();
+
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  virtual void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1) = 0;
 
   //! start time of time interval to be simulated
   double startTime();

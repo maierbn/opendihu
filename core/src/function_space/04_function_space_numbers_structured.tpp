@@ -199,8 +199,8 @@ getNodeNo(element_no_t elementNoLocal, int nodeIndex) const
   // check for ghost nodes which have nos after the normal contiguous numbering scheme
   if (!this->meshPartition_->hasFullNumberOfNodes(1) && elementY == nElements[1]-1 && localY == nNodesPerElement1D-1)
   {
-    // node is a ghost node on the top border   
-    // if there are ghost nodes on the right border
+    // node is a ghost node on the top boundary   
+    // if there are ghost nodes on the right boundary
     if (!this->meshPartition_->hasFullNumberOfNodes(0))
     {
       //VLOG(3) << "getNodeNo<2D>b(elementNoLocal=" << elementNoLocal << ", nodeIndex=" << nodeIndex << ") = "
@@ -224,7 +224,7 @@ getNodeNo(element_no_t elementNoLocal, int nodeIndex) const
     //VLOG(3) << "getNodeNo<2D>d(elementNoLocal=" << elementNoLocal << ", nodeIndex=" << nodeIndex << ") = "
     //  << this->meshPartition_->nNodesLocalWithoutGhosts() + averageNNodesPerElement1D * elementY + localY;
     
-    // node is a ghost node on the right border
+    // node is a ghost node on the right boundary
     return this->meshPartition_->nNodesLocalWithoutGhosts() + averageNNodesPerElement1D * elementY + localY;
   }
   
@@ -258,11 +258,11 @@ getNodeNo(element_no_t elementNoLocal, int nodeIndex) const
   dof_no_t localX = nodeIndex % nNodesPerElement1D;
 
   // check for ghost nodes which have nos after the normal contiguous numbering scheme
-  // handle ghosts on z+ border
+  // handle ghosts on z+ boundary
   if (!this->meshPartition_->hasFullNumberOfNodes(2) && elementZ == nElements[2]-1 && localZ == nNodesPerElement1D-1)
   {
-    // node is a ghost node on the z+ border, i.e. lies in a x-y plane on top of the non-ghost dofs
-    // get number of first dof on z+ border
+    // node is a ghost node on the z+ boundary, i.e. lies in a x-y plane on top of the non-ghost dofs
+    // get number of first dof on z+ boundary
     node_no_t nodeNo = this->meshPartition_->nNodesLocalWithoutGhosts();
     if (this->meshPartition_->hasFullNumberOfNodes(0))     // if there are no ghosts on x+
     {
@@ -293,10 +293,10 @@ getNodeNo(element_no_t elementNoLocal, int nodeIndex) const
     return nodeNo;
   }
   
-  // handle ghosts on y+ border
+  // handle ghosts on y+ boundary
   if (!this->meshPartition_->hasFullNumberOfNodes(1) && elementY == nElements[1]-1 && localY == nNodesPerElement1D-1)
   {
-    // node is a ghost node on the y+ border, i.e. lies in a x-z plane
+    // node is a ghost node on the y+ boundary, i.e. lies in a x-z plane
     node_no_t nodeNo = this->meshPartition_->nNodesLocalWithoutGhosts();
     if (this->meshPartition_->hasFullNumberOfNodes(0))
     {
@@ -315,10 +315,10 @@ getNodeNo(element_no_t elementNoLocal, int nodeIndex) const
     return nodeNo;
   }
   
-  // handle ghosts on x+ border
+  // handle ghosts on x+ boundary
   if (!this->meshPartition_->hasFullNumberOfNodes(0) && elementX == nElements[0]-1 && localX == nNodesPerElement1D-1)
   {
-    // node is a ghost node on the x+ border, i.e. lies in a y-z plane
+    // node is a ghost node on the x+ boundary, i.e. lies in a y-z plane
     node_no_t nodeNo = this->meshPartition_->nNodesLocalWithoutGhosts();
     if (this->meshPartition_->hasFullNumberOfNodes(1))
     {

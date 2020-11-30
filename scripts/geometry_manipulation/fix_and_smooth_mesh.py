@@ -134,7 +134,7 @@ def angle_constraint_is_met(p0,p1,p2,p3):
   a2 = np.arctan2(np.linalg.norm(np.cross(p23, -p12)), np.dot(p23, -p12))
   a3 = np.arctan2(np.linalg.norm(np.cross(p30, -p23)), np.dot(p30, -p23))
 
-  angle_constraint = 20/180.*np.pi
+  angle_constraint = 30/180.*np.pi
   return abs(a0) >= angle_constraint and abs(a1) >= angle_constraint and abs(a2) >= angle_constraint and abs(a3) >= angle_constraint
 
 def angle_constraint_score(p0,p1,p2,p3):
@@ -310,7 +310,7 @@ def resolve_small_angles(grid_points_world_space_improved, n_grid_points_x, n_gr
         a1 = np.arctan2(np.linalg.norm(np.cross(p12, -p01)), np.dot(p12, -p01))
         a2 = np.arctan2(np.linalg.norm(np.cross(p23, -p12)), np.dot(p23, -p12))
         a3 = np.arctan2(np.linalg.norm(np.cross(p30, -p23)), np.dot(p30, -p23))
-        angle_constraint = 20/180.*np.pi
+        angle_constraint = 30/180.*np.pi
         
         if a0 < angle_constraint or a1 < angle_constraint or a2 < angle_constraint or a3 < angle_constraint:
           print("({},{}): {} angles {:.2f} {:.2f} {:.2f} {:.2f}".format(i,j,angle_constraint_is_met(p0,p1,p2,p3),
@@ -785,7 +785,7 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
     plt.close()
       
   random.seed(1)
-  for i in range(25):
+  for i in range(50):
     # improve point locations by Laplacian smoothing
     # --------------------------------------------------
     perform_laplacian_smoothing(grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, point_indices_list, triangle_list, extent_x, extent_y, loop_no, debugging_stl_output, stl_triangle_lists)

@@ -774,8 +774,6 @@ def create_3d_mesh_from_boundary_points_faces(boundary_points_faces, improve_mes
   :param improve_mesh: if the 2D meshes should be smoothed, this takes a lot of time but improves the result
   """
   
-  print("create_3d_mesh_from_boundary_points_faces")
-
   if False:
     filename = "dump_boundary_points_faces_{}.py".format(os.getpid())
     print("dump to filename:{}".format(filename))

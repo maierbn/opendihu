@@ -131,7 +131,22 @@ def angle_constraint_is_met(p0,p1,p2,p3):
   return abs(a0) >= angle_constraint and abs(a1) >= angle_constraint and abs(a2) >= angle_constraint and abs(a3) >= angle_constraint
 
 def angle_constraint_score(p0,p1,p2,p3):
-  return 1 if angle_constraint_is_met(p0,p1,p2,p3) else 0
+  # p2 p3
+  # p0 p1
+  
+  # variance of side lengths, favours quadrilaterals with same side lengths
+  p01 = p1-p0
+  p12 = p3-p1
+  p23 = p2-p3
+  p30 = p0-p2
+  
+  # angles
+  a0 = abs(np.arctan2(np.linalg.norm(np.cross(p01, -p30)), np.dot(p01, -p30)))
+  a1 = abs(np.arctan2(np.linalg.norm(np.cross(p12, -p01)), np.dot(p12, -p01)))
+  a2 = abs(np.arctan2(np.linalg.norm(np.cross(p23, -p12)), np.dot(p23, -p12)))
+  a3 = abs(np.arctan2(np.linalg.norm(np.cross(p30, -p23)), np.dot(p30, -p23)))
+
+  return (min(30/180.*np.pi, a0) + min(30/180.*np.pi, a1) + min(30/180.*np.pi, a2) + min(30/180.*np.pi, a3))
 
 def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_y, point_indices_list, triangle_list, extent_x, extent_y, debugging_stl_output, stl_triangle_lists):
   """
@@ -602,7 +617,7 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
          
   # try to improve quadrilaterals with too small angles
   # --------------------------------------------------
-  if False:
+  if True:
     # repeatedly iterate over all elements until no more fixes could be achieved
     while True:
       changed_a_point = False
@@ -660,11 +675,11 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
               initial_score = angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
                 + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4)
               
-              # while the score is not yet better (and maximum of 200 tries), deflect point p
+              # while the score is not yet better (and maximum of 50 tries), deflect point p
               while (\
                 (angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
                 + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4)) <= initial_score \
-                and n_tries < 35):
+                and n_tries < 50):
                 
                 # pseudo-randomly deflect point p
                 p_changed = p + np.array([(random.random()-0.5)*size_factor, (random.random()-0.5)*size_factor, 0])
@@ -677,14 +692,14 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
                  or not is_properly_oriented(p7,p_changed,p6,p5) or not is_properly_oriented(p_changed,p3,p5,p4):
                 continue
                 
-              if n_tries < 35:
+              if n_tries < 50:
                 if angle_constraint_is_met(p0,p1,p2,p3):
                   print("  \033[0;32mSuccessfully resolved bad angle ({},{}) after {} iterations\033[0m".format(i,j,n_tries))
                   n_resolved_bad_angles += 1
                 else:
                   current_score = (angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
                     + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4))
-                  print("  improvement regarding bad angles ({},{}) after {} iterations, number of bad angles: {} -> {}".format(i,j,n_tries, 4-initial_score, 4-current_score))
+                  print("  improvement regarding bad angles ({},{}) after {} iterations, score: {} -> {} (max: 120)".format(i,j,n_tries, 4-initial_score, 4-current_score))
                   
                 # assign newly found point
                 grid_points_world_space_improved[jj*n_grid_points_x+ii] = p_changed

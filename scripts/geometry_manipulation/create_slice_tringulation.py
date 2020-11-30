@@ -363,6 +363,6 @@ def create_slice_tringulation(triangulation_type, modify_phi, n_points, points, 
     
     #triangle_list = points[point_indices_list]  ## doesn't work sometimes
     
-  print("  number of projected points: ",len(projected_points),", number of initial triangles: ", len(point_indices_list))
+  #print("  number of projected points: ",len(projected_points),", number of initial triangles: ", len(point_indices_list))
   return point_indices_list, triangle_list, n_points, points, n_original_points, original_points, original_point_phi_value, get_modified_phi, n_regular_grid_boundary_points, extent_x, extent_y, n_additional_points_on_ring, determine_additional_points_on_ring
   

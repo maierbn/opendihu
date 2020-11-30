@@ -436,8 +436,8 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
     
     # if there was a resolved self_intersection, restart iterations, otherwise we are done
     if not changed_a_point:
-      if are_all_elements_properly_oriented:
-        print("  all elements are properly oriented")
+      #if are_all_elements_properly_oriented:
+      #  print("  all elements are properly oriented")
       break
    
     if n_unresolved_self_intersections > 1:
@@ -623,6 +623,7 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
       changed_a_point = False
       n_unresolved_bad_angles = 0
       n_resolved_bad_angles = 0
+      output_fix = True
       
       # loop over all elements
       for i in range(0,n_grid_points_x-1):
@@ -665,13 +666,6 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
               size_factor = factor
               p_changed = np.array(p)
               
-              def orientation_score(p0,p1,p2,p3):
-                """ how well the quad is oriented, 0=worst, 3=properly """
-                # p2 p3
-                # p0 p1
-                n_ccw = (1 if ccw(p0,p1,p3) else 0) + (1 if ccw(p1,p3,p2) else 0) + (1 if ccw(p3,p2,p0) else 0) + (1 if ccw(p2,p0,p1) else 0)
-                return min(n_ccw,3)
-              
               initial_score = angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
                 + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4)
               
@@ -684,7 +678,46 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
                 # pseudo-randomly deflect point p
                 p_changed = p + np.array([(random.random()-0.5)*size_factor, (random.random()-0.5)*size_factor, 0])
                 size_factor *= 1.05    # 1.05**200 = 17292
-                
+                  
+                if output_fix:
+                  plt.figure()
+                                
+                  plt.plot(p[0],p[1],'ko')
+                  plt.plot(p_changed[0],p_changed[1],'ro')
+                  plt.plot(p0[0],p0[1],'bo')
+                  plt.plot(p1[0],p1[1],'bo')
+                  plt.plot(p2[0],p2[1],'bo')
+                  plt.plot(p3[0],p3[1],'bo')
+                  plt.plot(p4[0],p4[1],'bo')
+                  plt.plot(p5[0],p5[1],'bo')
+                  plt.plot(p6[0],p6[1],'bo')
+                  plt.plot(p7[0],p7[1],'bo')
+
+                  plt.plot([p0[0],p1[0],p2[0],p3[0],p4[0],p5[0],p6[0],p7[0],p0[0]], [p0[1],p1[1],p2[1],p3[1],p4[1],p5[1],p6[1],p7[1],p0[1]], 'k-')
+                  plt.plot([p1[0],p_changed[0]], [p1[1],p_changed[1]], 'k-')
+                  plt.plot([p3[0],p_changed[0]], [p3[1],p_changed[1]], 'k-')
+                  plt.plot([p5[0],p_changed[0]], [p5[1],p_changed[1]], 'k-')
+                  plt.plot([p7[0],p_changed[0]], [p7[1],p_changed[1]], 'k-')
+                  
+                  s = ""
+                  #if does_overlap(p,[p1,p3],[p7,p5]):
+                  #  s += "e"
+                  if not is_properly_oriented(p0,p1,p7,p_changed):
+                    s += "f"
+                  if not is_properly_oriented(p1,p2,p_changed,p3):
+                    s += "g"
+                  if not is_properly_oriented(p7,p_changed,p6,p5):
+                    s += "h"
+                  if not is_properly_oriented(p_changed,p3,p5,p4):
+                    s += "i"
+                    
+                  current_score=(angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
+                    + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4))
+                  
+                  print("({},{}): {}->{}".format(i, j, initial_score, current_score))
+                  
+                  plt.savefig("out/{}_{}_out_{}_{}_{}_{}_{}->{}.png".format(i,j,k,n_tries,size_factor,s,initial_score,current_score))
+                  plt.close()
                 n_tries += 1
                 
               # discard smoothing step if it would lead to an invalid mesh

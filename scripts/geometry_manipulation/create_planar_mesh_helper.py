@@ -18,6 +18,8 @@ from mpl_toolkits.mplot3d import axes3d
 import matplotlib.pyplot as plt
 from matplotlib import collections, patches
 
+np.seterr(all='raise')
+
 def output_debugging_files(grid_points_parametric_space, grid_points_world_space, grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, parametric_space_shape,
                            u, v, points, n_points_per_face, n_additional_points_on_ring, loop_no, show_plot, extent_x, determine_additional_points_on_ring, grid_points_parametric_space_modified, point_indices_list, triangle_list, stl_triangle_lists):
   """
@@ -123,8 +125,7 @@ def output_debugging_files(grid_points_parametric_space, grid_points_world_space
       p2 = grid_points_world_space[(j+1)%n_grid_points_y*n_grid_points_x+i]
       p3 = grid_points_world_space[(j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x]
       
-      grid_point_indices_world_space.append([j*n_grid_points_x+i, j*n_grid_points_x+(i+1)%n_grid_points_x, (j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x])
-      grid_point_indices_world_space.append([j*n_grid_points_x+i, (j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x, (j+1)%n_grid_points_y*n_grid_points_x+i])
+      grid_point_indices_world_space.append([j*n_grid_points_x+i, j*n_grid_points_x+(i+1)%n_grid_points_x, (j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x, (j+1)%n_grid_points_y*n_grid_points_x+i])
       
       grid_triangles_world_space.append([p0,p1,p3])
       grid_triangles_world_space.append([p0,p3,p2])
@@ -323,7 +324,12 @@ def output_debugging_files(grid_points_parametric_space, grid_points_world_space
   ax[1,0].set_aspect('equal')
   
   # world space grid
-  ax[1,1].triplot(xw,yw,grid_point_indices_world_space,color='k')
+  #ax[1,1].triplot(xw,yw,grid_point_indices_world_space,color='k')
+  for quad in grid_point_indices_world_space:
+    ax[1,1].plot([xw[quad[0]], xw[quad[1]]], [yw[quad[0]], yw[quad[1]]], '-k')
+    ax[1,1].plot([xw[quad[1]], xw[quad[2]]], [yw[quad[1]], yw[quad[2]]], '-k')
+    ax[1,1].plot([xw[quad[2]], xw[quad[3]]], [yw[quad[2]], yw[quad[3]]], '-k')
+    ax[1,1].plot([xw[quad[3]], xw[quad[0]]], [yw[quad[3]], yw[quad[0]]], '-k')
   
   for j in range(n_grid_points_y):
     for i in range(n_grid_points_x):
@@ -343,7 +349,12 @@ def output_debugging_files(grid_points_parametric_space, grid_points_world_space
   ax[1,1].set_aspect('equal')
   
   # world space grid
-  ax[1,2].triplot(xw_improved,yw_improved,grid_point_indices_world_space,color='k')
+  for quad in grid_point_indices_world_space:
+    ax[1,2].plot([xw_improved[quad[0]], xw_improved[quad[1]]], [yw_improved[quad[0]], yw_improved[quad[1]]], '-k')
+    ax[1,2].plot([xw_improved[quad[1]], xw_improved[quad[2]]], [yw_improved[quad[1]], yw_improved[quad[2]]], '-k')
+    ax[1,2].plot([xw_improved[quad[2]], xw_improved[quad[3]]], [yw_improved[quad[2]], yw_improved[quad[3]]], '-k')
+    ax[1,2].plot([xw_improved[quad[3]], xw_improved[quad[0]]], [yw_improved[quad[3]], yw_improved[quad[0]]], '-k')
+  
   for j in range(n_grid_points_y):
     for i in range(n_grid_points_x):
       p = grid_points_world_space_improved[j*n_grid_points_x+i]

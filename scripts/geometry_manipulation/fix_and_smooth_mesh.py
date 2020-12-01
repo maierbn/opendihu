@@ -134,7 +134,7 @@ def angle_constraint_is_met(p0,p1,p2,p3):
   a2 = np.arctan2(np.linalg.norm(np.cross(p23, -p12)), np.dot(p23, -p12))
   a3 = np.arctan2(np.linalg.norm(np.cross(p30, -p23)), np.dot(p30, -p23))
 
-  angle_constraint = 30/180.*np.pi
+  angle_constraint = 20/180.*np.pi
   return abs(a0) >= angle_constraint and abs(a1) >= angle_constraint and abs(a2) >= angle_constraint and abs(a3) >= angle_constraint
 
 def angle_constraint_score(p0,p1,p2,p3):
@@ -310,7 +310,7 @@ def resolve_small_angles(grid_points_world_space_improved, n_grid_points_x, n_gr
         a1 = np.arctan2(np.linalg.norm(np.cross(p12, -p01)), np.dot(p12, -p01))
         a2 = np.arctan2(np.linalg.norm(np.cross(p23, -p12)), np.dot(p23, -p12))
         a3 = np.arctan2(np.linalg.norm(np.cross(p30, -p23)), np.dot(p30, -p23))
-        angle_constraint = 30/180.*np.pi
+        angle_constraint = 20/180.*np.pi
         
         if a0 < angle_constraint or a1 < angle_constraint or a2 < angle_constraint or a3 < angle_constraint:
           print("({},{}): {} angles {:.2f} {:.2f} {:.2f} {:.2f}".format(i,j,angle_constraint_is_met(p0,p1,p2,p3),
@@ -415,7 +415,7 @@ def resolve_small_angles(grid_points_world_space_improved, n_grid_points_x, n_gr
               else:
                 current_score = (angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
                   + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4))
-                print("  improvement regarding bad angles ({},{}) after {} iterations, score: {} -> {} (max: 120)".format(i,j,n_tries, initial_score*180/np.pi, current_score*180/np.pi))
+                print("  improvement regarding bad angles ({},{}) after {} iterations, score: {} -> {} (max: 480)".format(i,j,n_tries, initial_score*180/np.pi, current_score*180/np.pi))
                 
               # assign newly found point
               grid_points_world_space_improved[jj*n_grid_points_x+ii] = p_changed
@@ -428,9 +428,9 @@ def resolve_small_angles(grid_points_world_space_improved, n_grid_points_x, n_gr
     # if there was a resolved self_intersection, restart iterations, otherwise we are done
     if not changed_a_point:
       if n_resolved_bad_angles > 0:
-        print("  {} elements with angles < 10 degrees have been improved.".format(n_resolved_bad_angles))
+        print("  {} elements with angles < 20 degrees have been improved.".format(n_resolved_bad_angles))
       if n_unresolved_bad_angles > 0:
-        print("\033[0;31m  {} elements have angles < 10 degrees.    \033[0m".format(n_unresolved_bad_angles))
+        print("\033[0;31m  {} elements have angles < 20 degrees.    \033[0m".format(n_unresolved_bad_angles))
       break
       
   return any_point_was_changed
@@ -798,5 +798,7 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
     if not any_point_was_changed:
       break
     
+  if i > 1:
+    print("({} smoothing iterations)".format(i))
   return grid_points_world_space_improved
  

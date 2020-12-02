@@ -278,7 +278,7 @@ def perform_laplacian_smoothing(grid_points_world_space_improved, n_grid_points_
 
 def resolve_small_angles(grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, point_indices_list, triangle_list, extent_x, extent_y, loop_no):
   
-  factor = (extent_x*extent_y)/2 * 1e-4
+  factor = (extent_x*extent_y)/2 * 5e-3
   any_point_was_changed = False
   
   # repeatedly iterate over all elements until no more fixes could be achieved
@@ -355,12 +355,12 @@ def resolve_small_angles(grid_points_world_space_improved, n_grid_points_x, n_gr
             # while the score is not yet better (and maximum of 50 tries), deflect point p
             while (\
               (angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
-              + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4)) <= initial_score+1/180*np.pi \
+              + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4)) <= initial_score \
               and n_tries < 200):
               
               # pseudo-randomly deflect point p
               p_changed = p + np.array([(random.random()-0.5)*size_factor, (random.random()-0.5)*size_factor, 0])
-              size_factor *= 1.05    # 1.05**200 = 17292
+              size_factor *= 1.025    # 1.05**200 = 17292
               if size_factor > 1e3:
                 n_tries=200
               

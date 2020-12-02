@@ -372,7 +372,7 @@ def output_debugging_files(grid_points_parametric_space, grid_points_world_space
   ax[1,2].set_title('after improving')
   ax[1,2].set_aspect('equal')
   
-  filename = "out/loop_{:03}_p{}_harmonic_map.png".format(loop_no, os.getpid())
+  filename = "out/loop_{:03}_p{}_harmonic_map.pdf".format(loop_no, os.getpid())
   dirname = os.path.dirname(filename)
   if not os.path.exists(dirname):
     print("Create directory \"{}\".".format(dirname))
@@ -406,68 +406,68 @@ def output_debugging_files(grid_points_parametric_space, grid_points_world_space
       plt.show()
     plt.close()
   
-  # parametric space with modified phi
-  if determine_additional_points_on_ring:
-    fig, ax = plt.subplots(figsize=(10,10))
-  
-    p = collections.PatchCollection(patches_parametric_modified,edgecolors="k",facecolors="white")
-    ax.add_collection(p)
-    ax.plot([p[0] for p in parametric_points_modified],[p[1] for p in parametric_points_modified], 'ko')
-    if parametric_space_shape == 1 or parametric_space_shape == 2:
-      ax.set_xlim(-0.1,1.1)
-      ax.set_ylim(-0.1,1.1)
-    else:
-      ax.set_xlim(-1.1,1.1)
-      ax.set_ylim(-1.1,1.1)
-    plt.axis('equal')
+    # parametric space with modified phi
+    if determine_additional_points_on_ring:
+      fig, ax = plt.subplots(figsize=(10,10))
+    
+      p = collections.PatchCollection(patches_parametric_modified,edgecolors="k",facecolors="white")
+      ax.add_collection(p)
+      ax.plot([p[0] for p in parametric_points_modified],[p[1] for p in parametric_points_modified], 'ko')
+      if parametric_space_shape == 1 or parametric_space_shape == 2:
+        ax.set_xlim(-0.1,1.1)
+        ax.set_ylim(-0.1,1.1)
+      else:
+        ax.set_xlim(-1.1,1.1)
+        ax.set_ylim(-1.1,1.1)
+      plt.axis('equal')
+        
+      for j in range(n_grid_points_y):
+        for i in range(n_grid_points_x):
+          p = grid_points_parametric_space_modified[j*n_grid_points_x+i]
+          if j == 0:
+            ax.plot(p[0], p[1], 'ro')
+          elif j == n_grid_points_y-1:
+            ax.plot(p[0], p[1], 'go')
+          elif i == 0: 
+            ax.plot(p[0], p[1], 'bo')
+          elif i == n_grid_points_x-1: 
+            ax.plot(p[0], p[1], 'yo')
+          else:
+            ax.plot(p[0], p[1], 'ko')
+      plt.savefig("out/loop_{:03}_p{}_modified_parametric_mesh.png".format(loop_no, os.getpid()));
+      if show_plot:
+        plt.show()
+      plt.close()
       
-    for j in range(n_grid_points_y):
-      for i in range(n_grid_points_x):
-        p = grid_points_parametric_space_modified[j*n_grid_points_x+i]
-        if j == 0:
-          ax.plot(p[0], p[1], 'ro')
-        elif j == n_grid_points_y-1:
-          ax.plot(p[0], p[1], 'go')
-        elif i == 0: 
-          ax.plot(p[0], p[1], 'bo')
-        elif i == n_grid_points_x-1: 
-          ax.plot(p[0], p[1], 'yo')
-        else:
-          ax.plot(p[0], p[1], 'ko')
-    plt.savefig("out/loop_{:03}_p{}_modified_parametric_mesh.png".format(loop_no, os.getpid()));
+    # world space
+    fig, ax = plt.subplots(figsize=(20,20))
+      
+    patch_collection_world = collections.PatchCollection(patches_world,edgecolors="k",facecolors="gray",alpha=0.5)
+    ax.add_collection(patch_collection_world)
+    #ax.plot(xw,yw, 'ko',markersize=10)
+    ax.plot(xw,yw, 'ko')
+    ax.set_xlim(min_x,max_x)
+    ax.set_ylim(min_y,max_y)
+    plt.axis('equal')
+    
+    plt.savefig("out/loop_{:03}_p{}_world_mesh.png".format(loop_no, os.getpid()));
     if show_plot:
       plt.show()
     plt.close()
     
-  # world space
-  fig, ax = plt.subplots(figsize=(20,20))
+    # world space, improved
+    fig, ax = plt.subplots(figsize=(20,20))
+      
+    patch_collection_improved = collections.PatchCollection(patches_world_improved,edgecolors="k",facecolors="gray",alpha=0.5)
+    ax.add_collection(patch_collection_improved)
+    #ax.plot(xw,yw, 'ko',markersize=10)
+    ax.plot(xw,yw, 'yx')
+    ax.plot(xw_improved,yw_improved, 'ko')
+    ax.set_xlim(min_x,max_x)
+    ax.set_ylim(min_y,max_y)
+    plt.axis('equal')
     
-  patch_collection_world = collections.PatchCollection(patches_world,edgecolors="k",facecolors="gray",alpha=0.5)
-  ax.add_collection(patch_collection_world)
-  #ax.plot(xw,yw, 'ko',markersize=10)
-  ax.plot(xw,yw, 'ko')
-  ax.set_xlim(min_x,max_x)
-  ax.set_ylim(min_y,max_y)
-  plt.axis('equal')
-  
-  plt.savefig("out/loop_{:03}_p{}_world_mesh.png".format(loop_no, os.getpid()));
-  if show_plot:
-    plt.show()
-  plt.close()
-  
-  # world space, improved
-  fig, ax = plt.subplots(figsize=(20,20))
-    
-  patch_collection_improved = collections.PatchCollection(patches_world_improved,edgecolors="k",facecolors="gray",alpha=0.5)
-  ax.add_collection(patch_collection_improved)
-  #ax.plot(xw,yw, 'ko',markersize=10)
-  ax.plot(xw,yw, 'yx')
-  ax.plot(xw_improved,yw_improved, 'ko')
-  ax.set_xlim(min_x,max_x)
-  ax.set_ylim(min_y,max_y)
-  plt.axis('equal')
-  
-  plt.savefig("out/loop_{:03}_p{}_world_mesh_improved.png".format(loop_no, os.getpid()));
+    plt.savefig("out/loop_{:03}_p{}_world_mesh_improved.png".format(loop_no, os.getpid()));
   if show_plot:
     plt.show()
   plt.close()

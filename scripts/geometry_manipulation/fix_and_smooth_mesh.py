@@ -361,6 +361,8 @@ def resolve_small_angles(grid_points_world_space_improved, n_grid_points_x, n_gr
               # pseudo-randomly deflect point p
               p_changed = p + np.array([(random.random()-0.5)*size_factor, (random.random()-0.5)*size_factor, 0])
               size_factor *= 1.025    # 1.05**200 = 17292
+              if size_factor > 1e3:
+                n_tries=200
               
               # discard operation step if it would lead to an invalid mesh
               if not is_properly_oriented(p0,p1,p7,p_changed) or not is_properly_oriented(p1,p2,p_changed,p3) \
@@ -415,7 +417,7 @@ def resolve_small_angles(grid_points_world_space_improved, n_grid_points_x, n_gr
               else:
                 current_score = (angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
                   + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4))
-                print("  improvement regarding bad angles ({},{}) after {} iterations, score: {} -> {} (max: 120)".format(i,j,n_tries, initial_score*180/np.pi, current_score*180/np.pi))
+                print("  improvement regarding bad angles ({},{}) after {} iterations, score: {} -> {} (max: 480)".format(i,j,n_tries, initial_score*180/np.pi, current_score*180/np.pi))
                 
               # assign newly found point
               grid_points_world_space_improved[jj*n_grid_points_x+ii] = p_changed
@@ -428,9 +430,9 @@ def resolve_small_angles(grid_points_world_space_improved, n_grid_points_x, n_gr
     # if there was a resolved self_intersection, restart iterations, otherwise we are done
     if not changed_a_point:
       if n_resolved_bad_angles > 0:
-        print("  {} elements with angles < 10 degrees have been improved.".format(n_resolved_bad_angles))
+        print("  {} elements with angles < 20 degrees have been improved.".format(n_resolved_bad_angles))
       if n_unresolved_bad_angles > 0:
-        print("\033[0;31m  {} elements have angles < 10 degrees.    \033[0m".format(n_unresolved_bad_angles))
+        print("\033[0;31m  {} elements have angles < 20 degrees.    \033[0m".format(n_unresolved_bad_angles))
       break
       
   return any_point_was_changed
@@ -785,7 +787,7 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
     plt.close()
       
   random.seed(1)
-  for i in range(25):
+  for i in range(50):
     # improve point locations by Laplacian smoothing
     # --------------------------------------------------
     perform_laplacian_smoothing(grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, point_indices_list, triangle_list, extent_x, extent_y, loop_no, debugging_stl_output, stl_triangle_lists)
@@ -798,5 +800,7 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
     if not any_point_was_changed:
       break
     
+  if i > 1:
+    print("({} smoothing iterations)".format(i))
   return grid_points_world_space_improved
  

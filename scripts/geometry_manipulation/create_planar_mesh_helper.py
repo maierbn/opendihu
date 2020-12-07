@@ -18,7 +18,7 @@ from mpl_toolkits.mplot3d import axes3d
 import matplotlib.pyplot as plt
 from matplotlib import collections, patches
 
-np.seterr(all='raise')
+#np.seterr(all='raise')
 
 def output_debugging_files(grid_points_parametric_space, grid_points_world_space, grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, parametric_space_shape,
                            u, v, points, n_points_per_face, n_additional_points_on_ring, loop_no, show_plot, extent_x, determine_additional_points_on_ring, grid_points_parametric_space_modified, point_indices_list, triangle_list, stl_triangle_lists):

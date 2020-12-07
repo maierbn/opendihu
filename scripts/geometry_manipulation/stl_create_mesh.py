@@ -785,7 +785,7 @@ def create_3d_mesh_from_boundary_points_faces(boundary_points_faces, improve_mes
   parametric_space_shape = 3   # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid
   max_area_factor = 100.    # only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
   show_plot = False               # set this to true such that the plots will be opened instead of written to a file
-  debugging_stl_output = True       # set this value to true to enable the matplotlib output during the parallel_fiber_estimation runs
+  debugging_stl_output = False       # set this value to true to enable the matplotlib output during the parallel_fiber_estimation runs
   #improve_mesh = True    # post-smooth mesh
 
   boundary_points_0minus = boundary_points_faces[0]   # the first / last point of each list for the face overlaps with an identical point on another face's list

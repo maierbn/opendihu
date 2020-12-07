@@ -205,10 +205,9 @@ def map_quadrangulation_to_world_space(u, v, n_grid_points_x, n_grid_points_y, p
     y_offset = center_point[1]
     scale = 10.0
     for triangle_parametric_space in triangles_parametric_space:
-      
       out_triangle_parametric_space = []
       for p in triangle_parametric_space:
-        out_triangle_parametric_space.append(np.array([p[0]*scale+x_offset, p[1]*scale+y_offset, z_value]))
+        out_triangle_parametric_space.append(np.array([p[0,0]*scale+x_offset, p[1,0]*scale+y_offset, z_value]))
         
       out_triangulation_parametric_space.append(out_triangle_parametric_space)
       

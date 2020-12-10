@@ -88,7 +88,9 @@ class precice(Package):
       'mkdir -p ${PREFIX}/include',
 
       # Eigen
-      'cd ${SOURCE_DIR} && wget https://gitlab.com/libeigen/eigen/-/archive/3.3.8/eigen-3.3.8.tar.gz && tar xf eigen-3.3.8.tar.gz && ln -s ${SOURCE_DIR}/eigen-3.3.8/Eigen ${PREFIX}/include/Eigen',   # eigen
+      'cd ${SOURCE_DIR} && if [ ! -f eigen-3.3.8.tar.gz ]; then \
+        wget https://gitlab.com/libeigen/eigen/-/archive/3.3.8/eigen-3.3.8.tar.gz && tar xf eigen-3.3.8.tar.gz; fi && \
+        ln -s ${SOURCE_DIR}/eigen-3.3.8/Eigen ${PREFIX}/include/Eigen',   # eigen
 
       # precice
       'cd ${SOURCE_DIR} && mkdir -p build && cd build && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} \
@@ -111,13 +113,17 @@ class precice(Package):
         'mkdir -p ${PREFIX}/include',
 
         # Eigen
-        'cd ${SOURCE_DIR} && wget https://gitlab.com/libeigen/eigen/-/archive/3.3.8/eigen-3.3.8.tar.gz && tar xf eigen-3.3.8.tar.gz && ln -s ${SOURCE_DIR}/eigen-3.3.8/Eigen ${PREFIX}/include/Eigen',
+        'cd ${SOURCE_DIR} && if [ ! -f eigen-3.3.8.tar.gz ]; then \
+          wget https://gitlab.com/libeigen/eigen/-/archive/3.3.8/eigen-3.3.8.tar.gz && tar xf eigen-3.3.8.tar.gz; fi && \
+          ln -s ${SOURCE_DIR}/eigen-3.3.8/Eigen ${PREFIX}/include/Eigen',   # eigen
 
         # boost
-        '[ ! -d ${PREFIX}/include/boost ] && (cd ${SOURCE_DIR} && [ ! -f ${SOURCE_DIR}/boost_1_65_1.tar.gz ] && \
+        'if [ ! -d ${PREFIX}/include/boost ]; then \
+          cd ${SOURCE_DIR} && [ ! -f ${SOURCE_DIR}/boost_1_65_1.tar.gz ] && \
           ( wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz && tar xf boost_1_65_1.tar.gz ); \
           cd boost_1_65_1 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test --prefix=${PREFIX} && \
-          ./b2 install )',
+          ./b2 install; \
+        fi',
 
         # precice
         'cd ${SOURCE_DIR} && mkdir -p build && cd build && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} \
@@ -125,7 +131,7 @@ class precice(Package):
         -DPETSC_DIR=${PETSC_DIR} -DPETSC_EXECUTABLE_RUNS=TRUE \
         -DLIBXML2_INCLUDE_DIR=${LIBXML2_DIR}/include -DLIBXML2_LIBRARY=${LIBXML2_DIR}/lib/libxml2.so -DPRECICE_ENABLE_FORTRAN=OFF \
         -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR .. && \
-        cd ${SOURCE_DIR}/build && make precice install -j 4'
+        cd ${SOURCE_DIR}/build && make precice install -j'
       ])  
   
     self.check_options(env)

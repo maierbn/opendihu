@@ -156,5 +156,5 @@ n_subdomains_x = 1
 n_subdomains_y = 1
 n_subdomains_z = 1
 states_initial_values = []
-
+enable_coupling = True
 

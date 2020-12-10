@@ -133,7 +133,7 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
   "materialParameters":         variables.material_parameters,  # material parameters of the Mooney-Rivlin material
   "density":                    variables.rho,                # density of the material
   "displacementsScalingFactor": 1.0,                          # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
-  "residualNormLogFilename":    "out/log_residual_norm_tendon_top_a.txt",      # log file where residual norm values of the nonlinear solver will be written
+  "residualNormLogFilename":    "out/tendon_top_a_log_residual_norm.txt",      # log file where residual norm values of the nonlinear solver will be written
   "useAnalyticJacobian":        True,                         # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
   "useNumericJacobian":         False,                        # whether to use the numerically computed jacobian matrix in the nonlinear solver (slow), only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
     
@@ -183,8 +183,8 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
   "extrapolateInitialGuess":     False,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
   "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
   
-  "dirichletOutputFilename":     "out/dirichlet_boundary_conditions_tendon_top_a",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-  "totalForceLogFilename":       "out/tendon_force_top_a.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
+  "dirichletOutputFilename":     "out/tendon_top_a_dirichlet_boundary_conditions_tendon_top_a",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+  "totalForceLogFilename":       "out/tendon_top_a_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
   "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
   "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
   "totalForceTopElementNosGlobal":     [(nz-1)*ny*nx + j*nx + i for j in range(ny) for i in range(nx)],   # global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal
@@ -223,8 +223,8 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
 config = {
   "scenarioName":                   variables.scenario_name,      # scenario name to identify the simulation runs in the log file
   "logFormat":                      "csv",                        # "csv" or "json", format of the lines in the log file, csv gives smaller files
-  "solverStructureDiagramFile":     "out/solver_structure.txt",       # output file of a diagram that shows data connection between solvers
-  "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes_log.txt",    # log file for mappings 
+  "solverStructureDiagramFile":     "out/tendon_top_a_solver_structure.txt",       # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "out/tendon_top_a_mappings_between_meshes_log.txt",    # log file for mappings 
   "Meshes":                         variables.meshes,
   
   "PreciceAdapter": {        # precice adapter for bottom tendon

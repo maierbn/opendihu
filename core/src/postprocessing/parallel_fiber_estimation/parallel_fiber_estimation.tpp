@@ -178,7 +178,7 @@ generateParallelMesh()
 {
   LOG(DEBUG) << "generateParallelMesh, nBoundaryPointsX: " << nBoundaryPointsX_;
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  //MPI_Barrier(MPI_COMM_WORLD);
 
   // prepare rankSubset
   //currentRankSubset_ = std::make_shared<Partition::RankSubset>(0);  // rankSubset with only the master rank (rank no 0)
@@ -546,7 +546,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &boun
     {
       traceResultFibers(streamlineDirection, seedPointsZIndex, nodePositions, boundaryPointsSubdomain, true);
 
-      MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
+      //MPI_Barrier(this->currentRankSubset_->mpiCommunicator());
       LOG(DEBUG) << "algorithm is finished";
 
       // algorithm is finished
@@ -561,7 +561,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &boun
 
   LOG(DEBUG) << "create subdomains";
 
-  MPI_Barrier(MPI_COMM_WORLD);
+  //MPI_Barrier(MPI_COMM_WORLD);
 
   // create subdomains
   // create new rank subset i.e. a new MPI communicator
@@ -683,7 +683,7 @@ loadInitialCheckpoints(std::array<std::vector<std::vector<Vec3>>,4> &boundaryPoi
 
 
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    //MPI_Barrier(MPI_COMM_WORLD);
   }
 #endif
 

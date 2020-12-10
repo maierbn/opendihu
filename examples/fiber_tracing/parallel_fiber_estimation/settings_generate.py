@@ -27,7 +27,7 @@ parser.add_argument('--use_neumann_bc',                   type=mbool, default=Fa
 parser.add_argument('--n_elements_z_per_subdomain', '-z', type=int,   default=50,         help='Number of elements in z direction per subdomain.')
 parser.add_argument('--n_elements_x_per_subdomain', '-x', type=int,   default=4,          help='Number of elements in x direction per subdomain.')
 parser.add_argument('--n_fine_grid_fibers', '-m',         type=int,   default=0,          help='Number of fine grid fibers to interpolate between the key fibers, parameter is called m.')
-parser.add_argument('--max_level', '-l',                  type=int,   default=2,          help='Maximum recursion level l, the required number of processes is 8^l. The maximum recursion level is also reached when there are not enough processes left, so a too high value for l is no problem.')
+parser.add_argument('--max_level', '-l',                  type=int,   default=4,          help='Maximum recursion level l, the required number of processes is 8^l. The maximum recursion level is also reached when there are not enough processes left, so a too high value for l is no problem.')
 parser.add_argument('--ghost_layer_width',                type=int,   default=-1,          help='Thickness of the ghost layer in number of elements. The value -1 means equal to 4*refinement_factor.')
 parser.add_argument('--program_name',                                 default="generate", help='If the program is run with the quadratic ansatz functions, this information is only for the scenario name.')
 

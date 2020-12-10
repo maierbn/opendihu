@@ -307,10 +307,8 @@ computeLambda()
     // d/dt λ = d/dt ||F a0|| = (F a0) • (Fdot a0) / ||F a0||   (where Fdot = d/dt F)
     // d/dt dx = d/dt F
     // d/dt lambda = d/dt ||dx•a0|| = 1 / ||Fa|| (F a0 • Fdot a0) = 1/lambda (Fa • Fdot a0)
-    const double lambdaDot = 0.0;
-
     Vec3 FdotA0 = fDot * fiberDirection;
-    lambdaDot = 1 / lambda * MathUtility::dot(fiberDirectionCurrentConfiguration, FdotA0);
+    const double lambdaDot = 1 / lambda * MathUtility::dot(fiberDirectionCurrentConfiguration, FdotA0);
 
     lambdaVariable->setValue(dofNoLocal, lambda);
     lambdaDotVariable->setValue(dofNoLocal, lambdaDot);

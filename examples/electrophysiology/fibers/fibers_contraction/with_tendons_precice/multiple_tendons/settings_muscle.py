@@ -4,6 +4,7 @@ import sys, os
 import timeit
 import argparse
 import importlib
+import distutils.util
 
 # set title of terminal
 title = "muscle"
@@ -42,6 +43,7 @@ variables.output_timestep_fibers = 1000 # [ms] output timestep of fibers
 # -------------- end user parameters ----------------
 
 # define command line arguments
+mbool = lambda x:bool(distutils.util.strtobool(x))   # function to parse bool arguments
 parser = argparse.ArgumentParser(description='muscle')
 parser.add_argument('--scenario_name',                       help='The name to identify this run in the log.',   default=variables.scenario_name)
 parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',    type=int)
@@ -64,7 +66,7 @@ parser.add_argument('--dt_1D',                               help='The timestep 
 parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',             type=float, default=variables.dt_splitting)
 parser.add_argument('--dt_3D',                               help='The timestep for the 3D model, i.e. dynamic solid mechanics.', type=float, default=variables.dt_3D)
 parser.add_argument('--disable_firing_output',               help='Disables the initial list of fiber firings.', default=variables.disable_firing_output, action='store_true')
-parser.add_argument('--enable_coupling',                     help='Enables the precice coupling.', default=True, action='store_true')
+parser.add_argument('--enable_coupling',                     help='Enables the precice coupling.',               type=mbool, default=variables.enable_coupling)
 parser.add_argument('--v',                                   help='Enable full verbosity in c++ code')
 parser.add_argument('-v',                                    help='Enable verbosity level in c++ code', action="store_true")
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
@@ -455,7 +457,7 @@ config = {
           "numberTimeSteps":              1,                         # only use 1 timestep per interval
           "timeStepOutputInterval":       100,                       # do not output time steps
           "Pmax":                         variables.pmax,            # maximum PK2 active stress
-          "slotNames":                    ["λ", "λdot", "γ", "T"],   # names of the data connector slots
+          "slotNames":                    ["lambda", "ldadot", "gamma", "T"],   # names of the data connector slots
           "OutputWriter" : [
             {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/muscle_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
           ],

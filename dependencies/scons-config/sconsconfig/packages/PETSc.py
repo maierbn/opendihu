@@ -146,7 +146,7 @@ class PETSc(Package):
           '$rm -rf $(ls | grep "linux")',
           './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
             --with-cc='+env["mpicc"]+' --with-cxx='+env["mpiCC"]+' \
-            --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
+            --download-fblaslapack=1 --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
             COPTFLAGS=-O3 \
             CXXOPTFLAGS=-O3 \
             FOPTFLAGS="-O3 -fallow-argument-mismatch" | tee out.txt',
@@ -181,7 +181,7 @@ class PETSc(Package):
             '$rm -rf $(ls | grep "linux")',
             './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
               --with-mpi-dir=${MPI_DIR} \
-              --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
+              --download-fblaslapack=1 --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
               COPTFLAGS=-O3 \
               CXXOPTFLAGS=-O3 \
               FOPTFLAGS="-O3 -fallow-argument-mismatch" | tee out.txt',
@@ -220,7 +220,7 @@ class PETSc(Package):
             self.set_build_handler([
               'mkdir -p ${PREFIX}',
               '$rm -rf $(ls | grep "linux")',
-              './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no \
+              './configure --prefix=${PREFIX} --with-shared-libraries=1 --with-debugging=no --download-fblaslapack=1 \
                 COPTFLAGS=-O3 \
                 CXXOPTFLAGS=-O3 \
                 FOPTFLAGS=-O3 | tee out.txt',

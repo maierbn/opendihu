@@ -112,14 +112,26 @@ def get_u_by_xy_value(curve, xyvalue):
       
     x,x_prime = curve.derivatives(u, 1)
     f = np.linalg.norm(np.array(x[:2]) - np.array(xyvalue))
+    
+    #print("x={}, x_prime={}, f={}".format(x,x_prime,f))
+    
+    if f == 0:
+      f_prime = 1.0 * ((x[0] - xyvalue[0])*x_prime[0] + (x[1] - xyvalue[1])*x_prime[1])
+      
     f_prime = 1/f * ((x[0] - xyvalue[0])*x_prime[0] + (x[1] - xyvalue[1])*x_prime[1])
     return np.array([f_prime])
     
-  u0 = [0.2]
-  result0 = scipy.optimize.minimize(function, u0, jac=jacobian, bounds=[(0,1)])
+  try:
+      
+    u0 = [0.2]
+    result0 = scipy.optimize.minimize(function, u0, jac=jacobian, bounds=[(0,1)])
+    
+    u0 = [0.8]
+    result1 = scipy.optimize.minimize(function, u0, jac=jacobian, bounds=[(0,1)])
   
-  u0 = [0.8]
-  result1 = scipy.optimize.minimize(function, u0, jac=jacobian, bounds=[(0,1)])
+  except Exception as e: 
+    print(e)
+    pass
   
   if result0["fun"] < result1["fun"]:
     return result0["x"][0]

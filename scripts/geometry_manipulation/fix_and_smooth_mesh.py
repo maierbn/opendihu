@@ -134,7 +134,7 @@ def angle_constraint_is_met(p0,p1,p2,p3):
   a2 = np.arctan2(np.linalg.norm(np.cross(p23, -p12)), np.dot(p23, -p12))
   a3 = np.arctan2(np.linalg.norm(np.cross(p30, -p23)), np.dot(p30, -p23))
 
-  angle_constraint = 30/180.*np.pi
+  angle_constraint = 20/180.*np.pi
   return abs(a0) >= angle_constraint and abs(a1) >= angle_constraint and abs(a2) >= angle_constraint and abs(a3) >= angle_constraint
 
 def angle_constraint_score(p0,p1,p2,p3):
@@ -170,7 +170,7 @@ def perform_laplacian_smoothing(grid_points_world_space_improved, n_grid_points_
   j_increment_list = [1, -1, 1, -1]
   
   # for total number of smoothing steps
-  for k in range(20):
+  for k in range(5):
     
     # for interior mesh points
     i_start = i_start_list[k%len(i_start_list)]
@@ -310,14 +310,14 @@ def resolve_small_angles(grid_points_world_space_improved, n_grid_points_x, n_gr
         a1 = np.arctan2(np.linalg.norm(np.cross(p12, -p01)), np.dot(p12, -p01))
         a2 = np.arctan2(np.linalg.norm(np.cross(p23, -p12)), np.dot(p23, -p12))
         a3 = np.arctan2(np.linalg.norm(np.cross(p30, -p23)), np.dot(p30, -p23))
-        angle_constraint = 30/180.*np.pi
+        angle_constraint = 20/180.*np.pi
         
-        if a0 < angle_constraint or a1 < angle_constraint or a2 < angle_constraint or a3 < angle_constraint:
-          print("({},{}): {} angles {:.2f} {:.2f} {:.2f} {:.2f}".format(i,j,angle_constraint_is_met(p0,p1,p2,p3),
-            a0*180/np.pi,
-            a1*180/np.pi,
-            a2*180/np.pi,
-            a3*180/np.pi))
+        #if a0 < angle_constraint or a1 < angle_constraint or a2 < angle_constraint or a3 < angle_constraint:
+        #  print("({},{}): constraint met={}, angles {:.2f} {:.2f} {:.2f} {:.2f}".format(i,j,angle_constraint_is_met(p0,p1,p2,p3),
+        #    a0*180/np.pi,
+        #    a1*180/np.pi,
+        #    a2*180/np.pi,
+        #    a3*180/np.pi))
   
         if not angle_constraint_is_met(p0,p1,p2,p3):
           indices = [(i,j),(i+1,j),(i,j+1),(i+1,j+1)]
@@ -362,6 +362,10 @@ def resolve_small_angles(grid_points_world_space_improved, n_grid_points_x, n_gr
               p_changed = p + np.array([(random.random()-0.5)*size_factor, (random.random()-0.5)*size_factor, 0])
               size_factor *= 1.025    # 1.05**200 = 17292
               
+              # exit loop if size factor is too big
+              if size_factor > 1e6:
+                n_tries = 200
+                
               # discard operation step if it would lead to an invalid mesh
               if not is_properly_oriented(p0,p1,p7,p_changed) or not is_properly_oriented(p1,p2,p_changed,p3) \
                  or not is_properly_oriented(p7,p_changed,p6,p5) or not is_properly_oriented(p_changed,p3,p5,p4):
@@ -415,7 +419,7 @@ def resolve_small_angles(grid_points_world_space_improved, n_grid_points_x, n_gr
               else:
                 current_score = (angle_constraint_score(p0,p1,p7,p_changed) + angle_constraint_score(p1,p2,p_changed,p3) \
                   + angle_constraint_score(p7,p_changed,p6,p5) + angle_constraint_score(p_changed,p3,p5,p4))
-                print("  improvement regarding bad angles ({},{}) after {} iterations, score: {} -> {} (max: 120)".format(i,j,n_tries, initial_score*180/np.pi, current_score*180/np.pi))
+                print("  improvement regarding bad angles ({},{}) after {} iterations, score: {} -> {} (max: 480)".format(i,j,n_tries, initial_score*180/np.pi, current_score*180/np.pi))
                 
               # assign newly found point
               grid_points_world_space_improved[jj*n_grid_points_x+ii] = p_changed
@@ -428,95 +432,16 @@ def resolve_small_angles(grid_points_world_space_improved, n_grid_points_x, n_gr
     # if there was a resolved self_intersection, restart iterations, otherwise we are done
     if not changed_a_point:
       if n_resolved_bad_angles > 0:
-        print("  {} elements with angles < 10 degrees have been improved.".format(n_resolved_bad_angles))
+        print("  {} elements with angles < 20 degrees have been improved.".format(n_resolved_bad_angles))
       if n_unresolved_bad_angles > 0:
-        print("\033[0;31m  {} elements have angles < 10 degrees.    \033[0m".format(n_unresolved_bad_angles))
+        print("\033[0;31m  {} elements have angles < 20 degrees.    \033[0m".format(n_unresolved_bad_angles))
       break
       
   return any_point_was_changed
        
+       
+def resolve_self_intersections(grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, extent_x, extent_y, debugging_stl_output):
   
-def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_y, point_indices_list, triangle_list, extent_x, extent_y, loop_no, debugging_stl_output, stl_triangle_lists):
-  """
-  This is a helper function for stl_create_mesh.create_planar_mesh, defined in create_planar_mesh.py
-  Improve the mesh by fixing invalid quadrilaterals, elements with small angles and applying Laplacian smoothing.
-  :param grid_points_world_space: the grid points on the muscle slice
-  :param n_grid_points_x: number of grid points in x direction of the final quadrangulation
-  :param n_grid_points_y: number of grid points in y direction of the final quadrangulation
-  
-  :param point_indices_list: a list of the indices into the points array for each triangle of the triangulation
-  :param triangle_list: the resulting triangles with their points
-  :param debugging_stl_output: if list should be filled with STL triangles that can be output to a STL mesh for debugging
-  :param stl_triangle_lists: the debugging lists: [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
-  """
-  debug = False   # enable debugging output
-  if debugging_stl_output:
-    [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
-      markers_grid_points_parametric_space, markers_grid_points_world_space] = stl_triangle_lists
-
-  random.seed(0)
-  #print("  improving mesh (fixing self-intersections and Laplacian smoothing)")
-  
-  factor = (extent_x*extent_y)/2 * 5e-3
-  grid_points_world_space_improved = copy.deepcopy(grid_points_world_space)
-  
-  # output grid
-  # set the following options to produce more output files for debugging
-  output_pre_fix = False
-  output_fix = False
-  output_post_fix = False
-  if output_pre_fix:
-    patches_world_improved = []
-    
-    # loop over grid points in parametric space
-    for (jj,y) in enumerate(np.linspace(0.0,1.0,n_grid_points_y)):
-      phi = float(y) * (n_grid_points_y-1.0) / n_grid_points_y  * 2.*np.pi
-      for (ii,x) in enumerate(np.linspace(0.0,1.0,n_grid_points_x)):
-  
-        if parametric_space_shape == 1 or parametric_space_shape == 2 or parametric_space_shape == 3:  # unit square  
-          if ii == n_grid_points_x-1 or jj == n_grid_points_x-1:
-            continue
-        if parametric_space_shape == 0:
-          if ii == n_grid_points_x-1:
-            continue
-          
-        p0_improved = grid_points_world_space_improved[jj*n_grid_points_x+ii]
-        p1_improved = grid_points_world_space_improved[jj*n_grid_points_x+(ii+1)%n_grid_points_x]
-        p2_improved = grid_points_world_space_improved[(jj+1)%n_grid_points_y*n_grid_points_x+ii]
-        p3_improved = grid_points_world_space_improved[(jj+1)%n_grid_points_y*n_grid_points_x+(ii+1)%n_grid_points_x]
-        
-        quadrilateral = np.zeros((4,2))
-        quadrilateral[0] = p0_improved[0:2]
-        quadrilateral[1] = p1_improved[0:2]
-        quadrilateral[2] = p3_improved[0:2]
-        quadrilateral[3] = p2_improved[0:2]
-        
-        min_x = min(min_x, min(quadrilateral[:,0]))
-        min_y = min(min_y, min(quadrilateral[:,1]))
-        max_x = max(max_x, max(quadrilateral[:,0]))
-        max_y = max(max_y, max(quadrilateral[:,1]))
-        
-        polygon = patches.Polygon(quadrilateral, True)
-        patches_world_improved.append(polygon)
-        
-    # world space, improved
-    fig, ax = plt.subplots(figsize=(20,20))
-      
-    xw_improved = np.reshape(grid_points_world_space_improved[:,0], (-1))
-    yw_improved = np.reshape(grid_points_world_space_improved[:,1], (-1))
-
-    patch_collection = collections.PatchCollection(patches_world_improved,edgecolors="k",facecolors="gray",alpha=0.5)
-    ax.add_collection(patch_collection)
-    ax.plot(xw_improved, yw_improved, "ok")
-    ax.set_xlim(min_x,max_x)
-    ax.set_ylim(min_y,max_y)
-    plt.axis('equal')
-    
-    plt.savefig("out/loop_{:03}_p{}_world_mesh_pre_fix.png".format(loop_no, os.getpid()));
-    if show_plot:
-      plt.show()
-    plt.close()
-      
   factor = (extent_x*extent_y)/2 * 5e-3
   
   # try to resolve self-intersecting quadrilaterals
@@ -731,6 +656,90 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
       print("\033[0;31Abort after {} unresolved self-intersections.    \033[0m".format(n_unresolved_self_intersections))
       sys.exit(-1)
 
+  
+def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_y, point_indices_list, triangle_list, extent_x, extent_y, loop_no, debugging_stl_output, stl_triangle_lists):
+  """
+  This is a helper function for stl_create_mesh.create_planar_mesh, defined in create_planar_mesh.py
+  Improve the mesh by fixing invalid quadrilaterals, elements with small angles and applying Laplacian smoothing.
+  :param grid_points_world_space: the grid points on the muscle slice
+  :param n_grid_points_x: number of grid points in x direction of the final quadrangulation
+  :param n_grid_points_y: number of grid points in y direction of the final quadrangulation
+  
+  :param point_indices_list: a list of the indices into the points array for each triangle of the triangulation
+  :param triangle_list: the resulting triangles with their points
+  :param debugging_stl_output: if list should be filled with STL triangles that can be output to a STL mesh for debugging
+  :param stl_triangle_lists: the debugging lists: [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
+  """
+  debug = False   # enable debugging output
+  if debugging_stl_output:
+    [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
+      markers_grid_points_parametric_space, markers_grid_points_world_space] = stl_triangle_lists
+
+  random.seed(0)
+  #print("  improving mesh (fixing self-intersections and Laplacian smoothing)")
+  
+  factor = (extent_x*extent_y)/2 * 5e-3
+  grid_points_world_space_improved = copy.deepcopy(grid_points_world_space)
+  
+  # output grid
+  # set the following options to produce more output files for debugging
+  output_pre_fix = False
+  output_fix = False
+  output_post_fix = False
+  if output_pre_fix:
+    patches_world_improved = []
+    
+    # loop over grid points in parametric space
+    for (jj,y) in enumerate(np.linspace(0.0,1.0,n_grid_points_y)):
+      phi = float(y) * (n_grid_points_y-1.0) / n_grid_points_y  * 2.*np.pi
+      for (ii,x) in enumerate(np.linspace(0.0,1.0,n_grid_points_x)):
+  
+        if parametric_space_shape == 1 or parametric_space_shape == 2 or parametric_space_shape == 3:  # unit square  
+          if ii == n_grid_points_x-1 or jj == n_grid_points_x-1:
+            continue
+        if parametric_space_shape == 0:
+          if ii == n_grid_points_x-1:
+            continue
+          
+        p0_improved = grid_points_world_space_improved[jj*n_grid_points_x+ii]
+        p1_improved = grid_points_world_space_improved[jj*n_grid_points_x+(ii+1)%n_grid_points_x]
+        p2_improved = grid_points_world_space_improved[(jj+1)%n_grid_points_y*n_grid_points_x+ii]
+        p3_improved = grid_points_world_space_improved[(jj+1)%n_grid_points_y*n_grid_points_x+(ii+1)%n_grid_points_x]
+        
+        quadrilateral = np.zeros((4,2))
+        quadrilateral[0] = p0_improved[0:2]
+        quadrilateral[1] = p1_improved[0:2]
+        quadrilateral[2] = p3_improved[0:2]
+        quadrilateral[3] = p2_improved[0:2]
+        
+        min_x = min(min_x, min(quadrilateral[:,0]))
+        min_y = min(min_y, min(quadrilateral[:,1]))
+        max_x = max(max_x, max(quadrilateral[:,0]))
+        max_y = max(max_y, max(quadrilateral[:,1]))
+        
+        polygon = patches.Polygon(quadrilateral, True)
+        patches_world_improved.append(polygon)
+        
+    # world space, improved
+    fig, ax = plt.subplots(figsize=(20,20))
+      
+    xw_improved = np.reshape(grid_points_world_space_improved[:,0], (-1))
+    yw_improved = np.reshape(grid_points_world_space_improved[:,1], (-1))
+
+    patch_collection = collections.PatchCollection(patches_world_improved,edgecolors="k",facecolors="gray",alpha=0.5)
+    ax.add_collection(patch_collection)
+    ax.plot(xw_improved, yw_improved, "ok")
+    ax.set_xlim(min_x,max_x)
+    ax.set_ylim(min_y,max_y)
+    plt.axis('equal')
+    
+    plt.savefig("out/loop_{:03}_p{}_world_mesh_pre_fix.png".format(loop_no, os.getpid()));
+    if show_plot:
+      plt.show()
+    plt.close()
+      
+  resolve_self_intersections(grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, extent_x, extent_y, debugging_stl_output)
+  
   # output grid
   if output_post_fix:
     patches_world_improved = []
@@ -785,18 +794,28 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
     plt.close()
       
   random.seed(1)
-  for i in range(50):
+  
+  #perform_laplacian_smoothing(grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, point_indices_list, triangle_list, extent_x, extent_y, loop_no, debugging_stl_output, stl_triangle_lists)
+  #return grid_points_world_space_improved
+  
+  for i in range(25):
     # improve point locations by Laplacian smoothing
     # --------------------------------------------------
     perform_laplacian_smoothing(grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, point_indices_list, triangle_list, extent_x, extent_y, loop_no, debugging_stl_output, stl_triangle_lists)
+  
+    #resolve_self_intersections(grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, extent_x, extent_y, debugging_stl_output)
   
     # try to improve quadrilaterals with too small angles
     # --------------------------------------------------
     any_point_was_changed = resolve_small_angles(grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, point_indices_list, triangle_list, extent_x, extent_y, loop_no)
     
+    #resolve_self_intersections(grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, extent_x, extent_y, debugging_stl_output)
+  
     # if there was no change, do not do smoothing again
     if not any_point_was_changed:
       break
     
+  if i > 1:
+    print("({} smoothing iterations)".format(i))
   return grid_points_world_space_improved
  

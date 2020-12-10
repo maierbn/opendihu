@@ -491,8 +491,10 @@ def fiber_gets_stimulated(fiber_no, frequency, current_time):
   
   #if variables.firing_times[index % n_firing_times, mu_no] == 1:
     #print("{}: fiber {} is mu {}, t = {}, row: {}, stimulated: {} {}".format(rank_no, fiber_no, mu_no, current_time, (index % n_firing_times), variables.firing_times[index % n_firing_times, mu_no], "true" if variables.firing_times[index % n_firing_times, mu_no] == 1 else "false"))
-  
-  return variables.firing_times[index % n_firing_times, mu_no] == 1
+ 
+  #print("n_firing_times: {}, index: {}, shape: {}, mu_no: {}".format(n_firing_times, index, variables.firing_times.shape, mu_no))
+ 
+  return variables.firing_times[index % n_firing_times, mu_no % 100] == 1
   
 def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fiber_no):
   

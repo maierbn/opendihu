@@ -153,8 +153,8 @@ if False:
 config = {
   "scenarioName":          variables.scenario_name,
   "logFormat":             "csv",
-  "solverStructureDiagramFile":     "out/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
-  "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",  # log file of when mappings between meshes occur
+  "solverStructureDiagramFile":     "out/solver_structure_muscle.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes_muscle.txt",  # log file of when mappings between meshes occur
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": variables.mappings_between_meshes,
   "Solvers": {

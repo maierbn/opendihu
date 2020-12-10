@@ -222,8 +222,8 @@ config_hyperelasticity = {    # for both "HyperelasticitySolver" and "DynamicHyp
 config = {
   "scenarioName":                   variables.scenario_name,      # scenario name to identify the simulation runs in the log file
   "logFormat":                      "csv",                        # "csv" or "json", format of the lines in the log file, csv gives smaller files
-  "solverStructureDiagramFile":     "out/solver_structure.txt",       # output file of a diagram that shows data connection between solvers
-  "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes_log.txt",    # log file for mappings 
+  "solverStructureDiagramFile":     "out/solver_structure_tendon_top_a.txt",       # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes_tendon_top_a_log.txt",    # log file for mappings 
   "Meshes":                         variables.meshes,
   
   "PreciceAdapter": {        # precice adapter for bottom tendon

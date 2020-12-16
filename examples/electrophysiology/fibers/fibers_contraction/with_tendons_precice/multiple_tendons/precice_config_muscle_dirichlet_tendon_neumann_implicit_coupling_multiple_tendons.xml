@@ -5,7 +5,7 @@
   <log>
     <sink type="stream" output="stdout"  filter='(%Severity% >= debug) and (not (%Function% = "advance"))' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />
     <!--<sink type="stream" output="stdout"  filter='%Severity% >= debug' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />-->
-    <!--<sink type="file" output="debug.log" filter= "(%Severity% >= debug)" format="%Message%" enabled="true" />	-->
+    <!--<sink type="file" output="debug.log" filter= "(%Severity% >= debug)" format="%Message%" enabled="true" />  -->
   </log>
 
   <solver-interface dimensions="3">
@@ -245,8 +245,24 @@
       <!--<min-iteration-convergence-measure min-iterations="{integer}" data="{string}" mesh="{string}" strict="0" suffices="0"/>-->
       
       <acceleration:constant>
-        <relaxation value="0.5" />
+        <relaxation value="0.2" />
       </acceleration:constant>
+
+      <!-- aitken works worse than constant -->
+      <!--<acceleration:aitken>
+       <initial-relaxation value="0.5" enforce="0"/>
+       <data mesh="TendonMeshTop" name="Displacement"/>
+      </acceleration:aitken>-->
+
+      <!-- does not really work -->
+      <!--<acceleration:IQN-ILS>
+        <initial-relaxation value="0.5" enforce="0"/>
+        <max-used-iterations value="10"/>
+        <time-windows-reused value="5"/>
+        <data scaling="0.5" mesh="TendonMeshTop" name="Displacement"/>-->
+        <!--<filter limit="1e-16" type="QR1"/>-->
+        <!--<preconditioner freeze-after="-1" type="residual-sum"/>-->
+      <!--</acceleration:IQN-ILS>-->
   
       <exchange data="Displacement"    mesh="TendonMeshTop"      from="TendonSolverBottom" to="MuscleSolver"/>
       <exchange data="Velocity"        mesh="TendonMeshTop"      from="TendonSolverBottom" to="MuscleSolver"/>

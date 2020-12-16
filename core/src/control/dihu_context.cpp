@@ -160,6 +160,17 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     // initialize MPI, this is necessary to be able to call PetscFinalize without MPI shutting down
     MPI_Init(&argc, &argv);
 
+   // the following three lines output the MPI version during compilation, use for debugging
+   //#define XSTR(x) STR(x)
+   //#define STR(x) #x
+   //#pragma message "The value of MPI_VERSION: " XSTR(MPI_VERSION)
+
+#if MPI_VERSION >= 3
+    MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);   // MPI >= 4
+#else
+    MPI_Errhandler_set(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
+#endif
+
     // get current MPI version
     char versionString[MPI_MAX_LIBRARY_VERSION_STRING];
     int resultLength;
@@ -194,9 +205,9 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
     LOG(DEBUG) << "MPI version: \"" << mpiVersion << "\".";
 
     // warn if OpenMPI 4 is used, remove this warning if you know if the bug has been fixed (try running fibers_emg with at least 64 ranks)
-    if (mpiVersion.find("Open MPI v4") != std::string::npos)
+    if (mpiVersion.find("Open MPI v4") != std::string::npos && metaText().find("ipvs-epyc") != std::string::npos)
     {
-      LOG(WARNING) << "Using MPI 4, which might cause problems. \n"
+      LOG(WARNING) << "Using MPI 4 on ipvs-epyc, which might cause problems. \n"
         << "In 2020 we found there is a bug in at least OpenMPI 4.0.4. Everything works fine with OpenMPI 3 (e.g. version 3.1.6). \n"
         << "So, either use OpenMPI 3 or you might check if the issues have already be fixed in newer versions of OpenMPI 4 or higher. \n"
         << "If so, remove this warning message.";

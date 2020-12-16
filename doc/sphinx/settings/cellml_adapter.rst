@@ -403,6 +403,7 @@ as well as the connection of `connectorSlots` to `states`, `algebraics` and `par
       ("connectorSlot", 3, "A"):  ("algebraic", "leakage_current/i_L"),
       ("connectorSlot", 3, "A"):  "leakage_current/i_L",                    # alternative
       ("connectorSlot", "slotB"): ("parameter", 0),
+      ("connectorSlot", "lambda"):("constant", "razumova/L_S"),         # expose fiber stretch to get the current fiber stretch from the mechanics solver
     }
     
 The value of `mappings` is a Python Dict. 
@@ -456,7 +457,8 @@ Typical mappings and initial values of parameters by commonly used cellml models
       ("parameter", 0):     ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
       ("parameter", 1):     ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
       ("connectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
-      ("connectorSlot", 1): ("algebraic", "razumova/stress"),  # expose algebraic 12 = γ to the operator splitting
+      ("connectorSlot", 1): ("algebraic", "razumova/stress"),     # expose algebraic 12 = γ to the operator splitting
+      ("connectorSlot", "lambda"):("constant", "razumova/L_S"),   # expose fiber stretch to get the current fiber stretch from the mechanics solver
     }
     parameters_initial_values = [0.0, 1.0]                    # wal_environment/I_HH = I_stim, razumova/L_S = λ
     
@@ -467,7 +469,7 @@ Typical mappings and initial values of parameters by commonly used cellml models
       ("parameter", 1):     ("constant", "Razumova/l_hs"),        # parameter 1 is constant 8 = fiber stretch λ
       ("parameter", 2):     ("constant", "Razumova/velo"),        # parameter 2 is constant 9 = fiber contraction velocity \dot{λ}
       ("connectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
-      ("connectorSlot", 1): ("algebraic", "Razumova/sigma"),   # expose algebraic 0 = γ to the operator splitting
+      ("connectorSlot", 1): ("algebraic", "Razumova/sigma"),      # expose algebraic 0 = γ to the operator splitting
     }
     parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
     

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Extract a cuboid partion from the mesh in the stl file.
+# Extract a cuboid portion from the mesh in the stl file.
 
 import numpy as np
 import os, sys

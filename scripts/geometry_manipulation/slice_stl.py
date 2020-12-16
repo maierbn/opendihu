@@ -1,9 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Slice an stl file with plane parallel to the z direction
+# Extracts a subset of a given volume bounded by an STL mesh. The extracted part is between two planes that are parallel to the z direction.
+# Input is a tubular surface as STL file, output is an enclosed surface of the extracted part (also the bottom and top planes are triangulated, such that the output is fully enclosed.)
 #
-# usage:  ./slice_stl.py [<input filename> [<output filename>]]
+# usage:  ./slice_stl.py [<input filename> [<output filename> [<bottom clip> [<top clip> [<n loops>]]]]]
 
 import sys, os
 import numpy as np

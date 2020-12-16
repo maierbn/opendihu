@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
+# Remove triangles in the interior of a STL mesh, such that the surface triangles remain.
+# This is needed for STL files that were exported using cmgui from exelem/exnode files.
 
 import datetime
 now = datetime.datetime.now()

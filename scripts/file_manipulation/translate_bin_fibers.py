@@ -58,8 +58,6 @@ with open(input_filename, "rb") as infile:
     n_fibers_x = parameters[2]
     n_fibers_y = parameters[3]
   
-  print("extract {} x {} fibers from file with {} x {} fibers\n".format(n_fibers_x_extract,n_fibers_x_extract,n_fibers_x,n_fibers_y))
-
   print("header: {}".format(header_str))
   print("nFibersTotal:      {n_fibers} = {n_fibers_x} x {n_fibers_y}".format(n_fibers=parameters[0], n_fibers_x=n_fibers_x, n_fibers_y=n_fibers_y))
   print("nPointsWholeFiber: {}".format(parameters[1]))
@@ -110,6 +108,9 @@ with open(input_filename, "rb") as infile:
   
   print("n valid: {}, n invalid: {}".format(n_streamlines_valid, n_streamlines_invalid))
   
+  bounding_box_min = [None,None,None]
+  bounding_box_max = [None,None,None]
+  
   # create output file
   with open(output_filename,"wb") as outfile:
     
@@ -158,10 +159,21 @@ with open(input_filename, "rb") as infile:
         point[1] += translation_y
         point[2] += translation_z
         
+        # update bounding box
+        for i in range(3):
+          if bounding_box_min[i] is None:
+            bounding_box_min[i] = point[i]
+            bounding_box_max[i] = point[i]
+          bounding_box_min[i] = min(bounding_box_min[i],point[i])
+          bounding_box_max[i] = max(bounding_box_max[i],point[i])
+        
         # write point
         for component_no in range(3):
           double_raw = struct.pack('d', point[component_no])
           outfile.write(double_raw)
           
+    print("New bounding box: [{},{}] x [{},{}] x [{},{}],\n size: {} x {} x {}".
+      format(bounding_box_min[0],bounding_box_max[0],bounding_box_min[1],bounding_box_max[1],bounding_box_min[2],bounding_box_max[2],
+             bounding_box_max[0]-bounding_box_min[0],bounding_box_max[1]-bounding_box_min[1],bounding_box_max[2]-bounding_box_min[2]))
     print("File {} written.".format(output_filename))
     

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+# This script needs a STL file of a tubular muscle surface as input and then creates a NURBS surface approximation.
 # Sample the input STL mesh at 12 z levels and create a spline surface from these points, save it as stl and pickle file.
 
 import sys

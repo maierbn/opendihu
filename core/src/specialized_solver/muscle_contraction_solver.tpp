@@ -289,20 +289,27 @@ computeLambda()
 
     // get deformation gradient, project lambda and lambda dot
     // dx = F dX, dx^2 = C dX^2
-    // lambda = ||dx•a0||
-    // project displacements on normalized fiberDirection, a0
+    // λ = ||dx•a0||
+    // project displacements on normalized fiberDirection a0
     //const double lambda = displacement[0] * fiberDirection[0] + displacement[1] * fiberDirection[1] + displacement[2] * fiberDirection[2];
 
-    Vec3 fiberDirectionCurrentConfiguration = deformationGradient * fiberDirection;
-    const double lambda = MathUtility::norm<3>(fiberDirectionCurrentConfiguration);
+    // convert fiber direction from reference configuration into current configuration
+    Vec3 fiberDirectionCurrentConfiguration = deformationGradient * fiberDirection;   // F a0
+    // λ = ||F a0||
+    const double lambda = MathUtility::norm<3>(fiberDirectionCurrentConfiguration);   // stretch in current configuration
 
-    // compute lambda lambda dot
+    // exemplary derivative of λ for dim=2:
+    //  λ = ||F a0|| = sqrt[(F11*a1 + F12*a2)^2 + (F21*a1 + F22*a2)^2]
+    // d/dt ||F a0|| = 1/(2*sqrt[(F11*a1 + F12*a2)^2 + (F21*a1 + F22*a2)^2])
+    //                 * (2*(F11*a1 + F12*a2)*(F11'*a1 + F12'*a2) + 2*(F21*a1 + F22*a2)*(F21'*a1 + F22'*a2))
+    //               = (F a0) • (F' a0) / ||F a0||
+
+    // compute lambda dot
+    // d/dt λ = d/dt ||F a0|| = (F a0) • (Fdot a0) / ||F a0||   (where Fdot = d/dt F)
     // d/dt dx = d/dt F
-    // d/dt lambda = d/dt ||dx•a0|| = 1 / ||Fa|| (Fa0 • dot{F}a0) = 1/lambda (Fa • Fdot a0)
-    // d/dt lambda = d/dt
-    const double lambdaDot = 0.0;
-
-    //
+    // d/dt lambda = d/dt ||dx•a0|| = 1 / ||Fa|| (F a0 • Fdot a0) = 1/lambda (Fa • Fdot a0)
+    Vec3 FdotA0 = fDot * fiberDirection;
+    const double lambdaDot = 1 / lambda * MathUtility::dot(fiberDirectionCurrentConfiguration, FdotA0);
 
     lambdaVariable->setValue(dofNoLocal, lambda);
     lambdaDotVariable->setValue(dofNoLocal, lambdaDot);

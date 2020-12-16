@@ -4,6 +4,7 @@ import sys, os
 import timeit
 import argparse
 import importlib
+import distutils.util
 
 # set title of terminal
 title = "muscle"
@@ -42,6 +43,7 @@ variables.output_timestep_fibers = 1000 # [ms] output timestep of fibers
 # -------------- end user parameters ----------------
 
 # define command line arguments
+mbool = lambda x:bool(distutils.util.strtobool(x))   # function to parse bool arguments
 parser = argparse.ArgumentParser(description='muscle')
 parser.add_argument('--scenario_name',                       help='The name to identify this run in the log.',   default=variables.scenario_name)
 parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',    type=int)
@@ -64,6 +66,7 @@ parser.add_argument('--dt_1D',                               help='The timestep 
 parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',             type=float, default=variables.dt_splitting)
 parser.add_argument('--dt_3D',                               help='The timestep for the 3D model, i.e. dynamic solid mechanics.', type=float, default=variables.dt_3D)
 parser.add_argument('--disable_firing_output',               help='Disables the initial list of fiber firings.', default=variables.disable_firing_output, action='store_true')
+parser.add_argument('--enable_coupling',                     help='Enables the precice coupling.',               type=mbool, default=variables.enable_coupling)
 parser.add_argument('--v',                                   help='Enable full verbosity in c++ code')
 parser.add_argument('-v',                                    help='Enable verbosity level in c++ code', action="store_true")
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
@@ -153,8 +156,8 @@ if False:
 config = {
   "scenarioName":          variables.scenario_name,
   "logFormat":             "csv",
-  "solverStructureDiagramFile":     "out/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
-  "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",  # log file of when mappings between meshes occur
+  "solverStructureDiagramFile":     "out/muscle_solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "out/muscle_mappings_between_meshes.txt",  # log file of when mappings between meshes occur
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": variables.mappings_between_meshes,
   "Solvers": {
@@ -195,6 +198,7 @@ config = {
   "PreciceAdapter": {        # precice adapter for muscle
     "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
     "timestepWidth":            1,                          # coupling time step width, must match the value in the precice config
+    "couplingEnabled":          variables.enable_coupling,  # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
     "preciceConfigFilename":    "precice_config_muscle_dirichlet_tendon_neumann_implicit_coupling_multiple_tendons.xml",    # the preCICE configuration file
     "preciceParticipantName":   "MuscleSolver",             # name of the own precice participant, has to match the name given in the precice xml config file
     "scalingFactor":            1,                          # a factor to scale the exchanged data, prior to communication
@@ -295,6 +299,7 @@ config = {
                       "inputMeshIsGlobal":            True,                                    # the boundary conditions and initial values would be given as global numbers
                       "checkForNanInf":               True,                                    # abort execution if the solution contains nan or inf values
                       "nAdditionalFieldVariables":    0,                                       # number of additional field variables
+                      "additionalSlotNames":          "",
                         
                       "CellML" : {
                         "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
@@ -358,7 +363,8 @@ config = {
                       "dirichletOutputFilename":     None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                       "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
                       "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
-                      "nAdditionalFieldVariables":   2,                                       # number of additional field variables that will be written to the output file, here for stress
+                      "nAdditionalFieldVariables":   1,                                       # number of additional field variables that will be written to the output file, here for stress
+                      "additionalSlotNames":         ["stress"],
                       "checkForNanInf":              True,                                    # abort execution if the solution contains nan or inf values
                       
                       "FiniteElementMethod" : {
@@ -366,6 +372,7 @@ config = {
                         "meshName":                  "MeshFiber_{}".format(fiber_no),
                         "solverName":                "diffusionTermSolver",
                         "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
+                        "slotName":                  None,
                       },
                       "OutputWriter" : [
                         #{"format": "Paraview", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles": True},
@@ -443,13 +450,14 @@ config = {
         "onlyComputeIfHasBeenStimulated": True,                          # only compute fibers after they have been stimulated for the first time
         "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again      
         "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set      
+        "neuromuscularJunctionRelativeSize": 0.1,                        # range where the neuromuscular junction is located around the center, relative to fiber length. The actual position is draws randomly from the interval [0.5-s/2, 0.5+s/2) with s being this option. 0 means sharply at the center, 0.1 means located approximately at the center, but it can vary 10% in total between all fibers.
       },
       "Term2": {        # solid mechanics
         "MuscleContractionSolver": {
           "numberTimeSteps":              1,                         # only use 1 timestep per interval
           "timeStepOutputInterval":       100,                       # do not output time steps
           "Pmax":                         variables.pmax,            # maximum PK2 active stress
-          "slotNames":                    [],                        # names of the data connector slots
+          "slotNames":                    ["lambda", "ldadot", "gamma", "T"],   # names of the data connector slots
           "OutputWriter" : [
             {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/muscle_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
           ],
@@ -465,7 +473,7 @@ config = {
             "materialParameters":         variables.material_parameters,  # material parameters of the Mooney-Rivlin material
             "density":                    variables.rho,             # density of the material
             "displacementsScalingFactor": 1.0,                       # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
-            "residualNormLogFilename":    "log_residual_norm.txt",   # log file where residual norm values of the nonlinear solver will be written
+            "residualNormLogFilename":    "muscle_log_residual_norm.txt",   # log file where residual norm values of the nonlinear solver will be written
             "useAnalyticJacobian":        True,                      # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
             "useNumericJacobian":         False,                     # whether to use the numerically computed jacobian matrix in the nonlinear solver (slow), only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
               
@@ -497,7 +505,7 @@ config = {
             "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
             "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
             
-            "dirichletOutputFilename":     "out/dirichlet_boundary_conditions_muscle",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+            "dirichletOutputFilename":     "out/muscle_dirichlet_boundary_conditions",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
             "totalForceLogFilename":       "out/muscle_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
             "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
             "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename

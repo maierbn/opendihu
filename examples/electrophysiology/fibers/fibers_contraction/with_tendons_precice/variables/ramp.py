@@ -70,13 +70,8 @@ bottom_traction = [0.0,0.0,0.0]        # [N]
 # Monodomain parameters
 # --------------------
 # quantities in CellML unit system
-sigma_f = 8.93              # [mS/cm] conductivity in fiber direction (f)
-sigma_xf = 0                # [mS/cm] conductivity in cross-fiber direction (xf)
-sigma_e_f = 6.7             # [mS/cm] conductivity in extracellular space, fiber direction (f)
-sigma_e_xf = 3.35           # [mS/cm] conductivity in extracellular space, cross-fiber direction (xf) / transverse
-
 Conductivity = 3.828      # [mS/cm] sigma, conductivity
-Am = 500.0                  # [cm^-1] surface area to volume ratio
+Am = 500.0                  # [cm^-1] surface area to volume ratio (this is not used, instead values of motor_units are used)
 Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch)
 # diffusion prefactor = Conductivity/(Am*Cm)
 

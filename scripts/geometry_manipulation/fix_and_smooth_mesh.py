@@ -795,8 +795,9 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
       
   random.seed(1)
   
-  #perform_laplacian_smoothing(grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, point_indices_list, triangle_list, extent_x, extent_y, loop_no, debugging_stl_output, stl_triangle_lists)
-  #return grid_points_world_space_improved
+  #for i in range(5):
+  #  perform_laplacian_smoothing(grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, point_indices_list, triangle_list, extent_x, extent_y, loop_no, debugging_stl_output, stl_triangle_lists)
+  #  return grid_points_world_space_improved
   
   for i in range(25):
     # improve point locations by Laplacian smoothing

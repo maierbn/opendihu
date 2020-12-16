@@ -28,7 +28,8 @@ parser.add_argument('--n_elements_z_per_subdomain', '-z', type=int,   default=50
 parser.add_argument('--n_elements_x_per_subdomain', '-x', type=int,   default=4,          help='Number of elements in x direction per subdomain.')
 parser.add_argument('--n_fine_grid_fibers', '-m',         type=int,   default=0,          help='Number of fine grid fibers to interpolate between the key fibers, parameter is called m.')
 parser.add_argument('--max_level', '-l',                  type=int,   default=4,          help='Maximum recursion level l, the required number of processes is 8^l. The maximum recursion level is also reached when there are not enough processes left, so a too high value for l is no problem.')
-parser.add_argument('--ghost_layer_width',                type=int,   default=-1,          help='Thickness of the ghost layer in number of elements. The value -1 means equal to 4*refinement_factor.')
+parser.add_argument('--ghost_layer_width',                type=int,   default=-1,         help='Thickness of the ghost layer in number of elements. The value -1 means equal to 4*refinement_factor.')
+parser.add_argument('--max_area_factor',                  type=float, default=100.0,      help='factor only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint.')
 parser.add_argument('--program_name',                                 default="generate", help='If the program is run with the quadratic ansatz functions, this information is only for the scenario name.')
 
 # parse command line arguments and assign values to variables module
@@ -58,6 +59,7 @@ if ghost_layer_width == -1:
 n_elements_z_per_subdomain = args["n_elements_z_per_subdomain"]
 n_elements_x_per_subdomain = args["n_elements_x_per_subdomain"]
 n_fine_grid_fibers = args["n_fine_grid_fibers"]
+max_area_factor = args["max_area_factor"]
 max_level = args["max_level"]
 new_max_level = min(max_level,(int)(np.log(n_ranks) / np.log(8)))
 if new_max_level != max_level:
@@ -139,6 +141,7 @@ config = {
     "lineStepWidth":              0.01,                  # line width for tracing of fibers
     "nNodesPerFiber": n_nodes_per_fiber,                 # number of nodes in each final fiber
     "maxIterations":              1e5,                   # maximum number of iterations in the solver
+    "maxAreaFactor":              max_area_factor,       # factor only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
     
     "improveMesh":                improve_mesh,          # smooth the 2D meshes, required for bigger meshes or larger amount of ranks
     "refinementFactors": [refinement,refinement,refinement],         # [2,2,2] factors in x,y,z direction by which the mesh should be refined prior to solving the laplace problem and tracing the streamlines

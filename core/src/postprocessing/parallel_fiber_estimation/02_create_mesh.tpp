@@ -54,7 +54,8 @@ createMesh(std::array<std::vector<std::vector<Vec3>>,4> &boundaryPoints, std::ve
   //LOG(DEBUG) << PythonUtility::getString(boundaryPointsFacesPy);
   LOG(DEBUG) << "call function create_3d_mesh_from_boundary_points_faces";
 
-  PyObject *meshData = PyObject_CallFunction(functionCreate3dMeshFromBoundaryPointsFaces_, "(O,O,i)", boundaryPointsFacesPy, (improveMesh_? Py_True : Py_False), level_);
+  PyObject *meshData = PyObject_CallFunction(functionCreate3dMeshFromBoundaryPointsFaces_, "(O,O,d,i)", 
+                                             boundaryPointsFacesPy, (improveMesh_? Py_True : Py_False), maxAreaFactor_, level_);
   PythonUtility::checkForError();
 
   if (meshData == Py_None)

@@ -14,24 +14,12 @@ import pickle
 import stl_create_rings # for create_rings
 import stl_create_mesh   # for rings_to_boundary_points
 
-import matplotlib
-from matplotlib import cm
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
-
 import stl
 from stl import mesh
 
-import geomdl
-from geomdl import NURBS
-from geomdl import BSpline
-from geomdl import utilities
-from geomdl import exchange
-from geomdl import construct
-from geomdl import linalg
-from geomdl import operations
-from geomdl import fitting
-from geomdl import exchange
+import geomdl.operations
+import geomdl.fitting
+import geomdl.exchange
 
 try:
   from geomdl.visualization import VisPlotly
@@ -39,34 +27,10 @@ try:
 except:
   pass
 
-# source: https://stackoverflow.com/questions/13685386/matplotlib-equal-unit-length-with-equal-aspect-ratio-z-axis-is-not-equal-to
-def set_axes_radius(ax, origin, radius):
-    ax.set_xlim3d([origin[0] - radius, origin[0] + radius])
-    ax.set_ylim3d([origin[1] - radius, origin[1] + radius])
-    ax.set_zlim3d([origin[2] - radius, origin[2] + radius])
-
-def set_axes_equal(ax):
-    '''Make axes of 3D plot have equal scale so that spheres appear as spheres,
-    cubes as cubes, etc..  This is one possible solution to Matplotlib's
-    ax.set_aspect('equal') and ax.axis('equal') not working for 3D.
-
-    Input
-      ax: a matplotlib axis, e.g., as output from plt.gca().
-    '''
-
-    limits = np.array([
-        ax.get_xlim3d(),
-        ax.get_ylim3d(),
-        ax.get_zlim3d(),
-    ])
-
-    origin = np.mean(limits, axis=1)
-    radius = 0.5 * np.max(np.abs(limits[:, 1] - limits[:, 0]))
-    set_axes_radius(ax, origin, radius)
-
 # load stl mesh and evaluate 
 if __name__ == "__main__":
 
+  # parse command arguments
   if len(sys.argv) < 6:
     print("usage: {} <input filename> <output stl filename> <output pickle filename> [<bottom clip> <top clip>]".format(sys.argv[0]))
     sys.exit(0)
@@ -82,36 +46,34 @@ if __name__ == "__main__":
     top_clip = float(sys.argv[5])
   n_loops = 12
   
+  # define number of control points
   n_points_u = 10          # x-y direction (along rings)
   n_points_v = n_loops    # z direction
 
-  
+  # output parameters
   print("input_filename:         {}".format(input_filename))
   print("output_stl_filename:    {}".format(output_stl_filename))
   print("output_pickle_filename: {}".format(output_pickle_filename))
   print("bottom_clip:            {}".format(bottom_clip))
   print("top_clip:               {}".format(top_clip))
   
-  debug = False
-  
-  # try to load stored surface
+  # try to load stored surface as pickle file
   try:
     f = open(output_pickle_filename,"rb")
     surface = pickle.load(f)
   except Exception as e:
     
+    # if the pickle file does not exist, create it
     print("Create rings because pickle file {} does not yet exist.".format(output_pickle_filename))
-    # create surface
-
+    
+    # sample surface at equidistant z intervals using the stl_create_rings script
     write_output_mesh = False
     rings = stl_create_rings.create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_mesh)
     [loops, lengths] = stl_create_mesh.rings_to_boundary_points(rings, n_points_u-1)
 
     loops = stl_create_mesh.boundary_point_loops_to_list(loops)
 
-    #print("loops: ",loops)
-
-    # duplicate first point
+    # duplicate the rings: 3x given ring + first point
     new_loops = []
     for loop in loops:
       print("  loop has {} points".format(len(loop)))

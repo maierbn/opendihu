@@ -63,6 +63,7 @@
 
 #include "postprocessing/streamline_tracer.h"
 #include "postprocessing/parallel_fiber_estimation/parallel_fiber_estimation.h"
+#include "postprocessing/scale_fibers_in_file.h"
 
 #include "cellml/03_cellml_adapter.h"
 

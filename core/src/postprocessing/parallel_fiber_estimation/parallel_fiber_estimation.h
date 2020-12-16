@@ -216,8 +216,6 @@ protected:
   PyObject *moduleStlCreateRings_;  //< python module, file "stl_create_rings.py"
   PyObject *moduleStlDebugOutput_;  //< python module, file "stl_debug_output.py"
   PyObject *functionCreateRingSection_;   //< python function create_ring_section
-  PyObject *functionCreateRingSectionMesh_;   //< python function create_ring_section_mesh
-  PyObject *functionGetStlMesh_;              //< python function get_stl_mesh
   PyObject *functionCreateBoundaryPoints_;      //< function that creates the initial boundary points of the mesh as loops
   PyObject *functionOutputPoints_;            //< output_points
   PyObject *functionOutputBoundaryPoints_;      //< output_boundary_points

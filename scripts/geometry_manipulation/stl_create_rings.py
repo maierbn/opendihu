@@ -146,7 +146,8 @@ def create_loop(z_value, stl_mesh, loop):
   debug = False
 
   if debug:
-    print(" z_value: {}, n points: {}".format(len(stl_mesh.points)))
+    print(" z_value: {}, n points: {}".format(z_value, len(stl_mesh.points)))
+  print(" z_value: {}, n points: {}: {}".format(z_value, len(stl_mesh.points), stl_mesh.points))
 
   # loop over all triangles in mesh
   for (no,p) in enumerate(stl_mesh.points):
@@ -469,12 +470,11 @@ def create_boundary_points(input_filename, bottom_clip, top_clip, n_loops, n_poi
   """
   
   # if the file contains a spline curve, try to load it and call the function from spline_surface
-  if "surface.pickle" in input_filename:
+  if ".pickle" in input_filename:
+    print("Interpreting \"{}\" as pickle file containing a NURBS surface.".format(input_filename))
     try:
       # check if file exists
-      if os.path.exists(input_filename):
-        print("File \"{}\" exists.".format(input_filename))
-      else:
+      if not os.path.exists(input_filename):
         print("File \"{}\" does not exist".format(input_filename))
         
       f = open(input_filename,"rb")
@@ -485,6 +485,7 @@ def create_boundary_points(input_filename, bottom_clip, top_clip, n_loops, n_poi
       quit()
   
   # algorithm for STL mesh
+  print("Interpreting \"{}\" as STL file containing the surface.".format(input_filename))
   loops = create_rings(input_filename, bottom_clip, top_clip, n_loops, False)   # last argument is if debugging output should be written, set to False
   boundary_points, lengths = stl_create_mesh.rings_to_boundary_points(loops, n_points)
   boundary_points = stl_create_mesh.boundary_point_loops_to_list(boundary_points)
@@ -521,7 +522,7 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
   """
   Create a curve on the intersection of a horizontal plane given by z_value and the surface from the stl file.
   From nearest point to start_point to nearest point to end_point, the direction is such that the length of the curve is minimal (there are 2 possible orientations cw/ccw)
-  :param input_filename: file name of an stl file that contains the closed surface mesh of the muscle, aligned with the z-axis
+  :param input_filename: file name of an stl file that contains the closed surface mesh of the muscle, aligned with the z-axis, or alternatively a pickle file of the surface
   :param start_point: the line starts at the point on the surface with given z_value, that is the nearest to start_point
   :param end_point: the line ends at the point on the surface with given z_value, that is the nearest to end_point
   :param z_value: the z level of the line on the surface
@@ -529,8 +530,8 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
   :return: list of points
   """
   
-  # if the file contains a spline curve, try to load it and call the function from spline_surface
-  if "surface.pickle" in input_filename:
+  # if the file contains a NURBS surface, try to load it and call the function from spline_surface
+  if ".pickle" in input_filename:
     try:
       f = open(input_filename,"rb")
       surface = pickle.load(f)
@@ -540,6 +541,7 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
     debugging_points = []
     result = spline_surface.create_ring_section(surface, start_point, end_point, z_value, n_points, debugging_points)
     
+    # debugging output
     if False:
       level = 0
       rank_no = z_value
@@ -556,6 +558,7 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
     return result
     
   # else interpret the file as stl mesh and use the stl mesh algorithm
+  print("Interpreting \"{}\" as STL file containing the surface.".format(input_filename))
   stl_mesh = get_stl_mesh(input_filename)
   return create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points)
       

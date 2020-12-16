@@ -118,27 +118,15 @@ initialize()
   PythonUtility::checkForError();
   assert(moduleStlDebugOutput_);
 
+  // load functions from those modules
+  // actual functions
   functionCreateRingSection_ = PyObject_GetAttrString(moduleStlCreateRings_, "create_ring_section");
   assert(functionCreateRingSection_);
-
-  functionCreateRingSectionMesh_ = PyObject_GetAttrString(moduleStlCreateRings_, "create_ring_section_mesh");
-  assert(functionCreateRingSectionMesh_);
-
-  functionGetStlMesh_ = PyObject_GetAttrString(moduleStlCreateRings_, "get_stl_mesh");
-  assert(functionGetStlMesh_);
-
-  //functionCreateRings_ = PyObject_GetAttrString(moduleStlCreateRings_, "create_rings");
-  //assert(functionCreateRings_);
-
-  //functionRingsToBoundaryPoints_ = PyObject_GetAttrString(moduleStlCreateMesh_, "rings_to_boundary_points");
-  //assert(functionRingsToBoundaryPoints_);
-
-  //functionBoundaryPointLoopsToList_ = PyObject_GetAttrString(moduleStlCreateMesh_, "boundary_point_loops_to_list");
-  //assert(functionBoundaryPointLoopsToList_);
 
   functionCreateBoundaryPoints_ = PyObject_GetAttrString(moduleStlCreateRings_, "create_boundary_points");
   assert(functionCreateBoundaryPoints_);
 
+  // debugging functions
   functionOutputPoints_ = PyObject_GetAttrString(moduleStlDebugOutput_, "output_points");
   assert(functionOutputPoints_);
 
@@ -498,6 +486,7 @@ generateParallelMeshRecursion(std::array<std::vector<std::vector<Vec3>>,4> &boun
     createSeedPoints(subdomainIsAtBoundary, seedPointsZIndex, nodePositions, seedPoints);
 
     LOG(DEBUG) << "traceStreamlines";
+    LOG(INFO) << "tracing streamlines ...";
 
     // trace streamlines from seed points, this also exchanges the seed points
     std::vector<std::vector<Vec3>> streamlinePoints;

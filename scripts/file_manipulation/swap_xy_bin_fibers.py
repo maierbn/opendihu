@@ -25,7 +25,8 @@ output_filename = "{}.swapped".format(input_filename)
 if len(sys.argv) >= 3:
   output_filename = sys.argv[2]
   
-print("{} -> {}".format(input_filename, output_filename))
+print("input file:  {}".format(input_filename))
+print("output file: {}".format(output_filename))
 
 with open(input_filename, "rb") as infile:
   

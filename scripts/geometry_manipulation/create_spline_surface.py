@@ -121,43 +121,48 @@ if __name__ == "__main__":
       new_loops.append(new_loop)
     loops = new_loops
 
-    # collect points
+    # collect points on every ring
     evaluated_points = []
     for i in range(n_points_u):
       for j in range(n_points_v):
         evaluated_points.append(loops[j][i])
 
-
     print("n_points_u: ",n_points_u)
     print("n_points_v: ",n_points_v)
     print("{} points".format(len(evaluated_points)))
     #print("evaluated_points: ",evaluated_points)
-    surface_full = fitting.approximate_surface(evaluated_points, n_points_u, n_points_v, 3, 2, centripetal=True, ctrlpts_size_u=n_points_u-3, ctrlpts_size_v=n_points_v-3)
-
-    [surface0, surface1] = operations.split_surface_u(surface_full, 0.4)
-    [surface, surface2] = operations.split_surface_u(surface1, 0.5555)
     
+    # call NURBS surface fitting algorithm of the geomdl.fitting library
+    surface_full = geomdl.fitting.approximate_surface(evaluated_points, n_points_u, n_points_v, 3, 2, centripetal=True, ctrlpts_size_u=n_points_u-3, ctrlpts_size_v=n_points_v-3)
+
+    # cut out the inner part that represents the actual surface
+    [surface0, surface1] = geomdl.operations.split_surface_u(surface_full, 0.4)
+    [surface, surface2] = geomdl.operations.split_surface_u(surface1, 0.5555)
+
+    # save surface to a pickle file    
     pickle_filename = output_pickle_filename
     print("Write pickle file \"{}\"".format(pickle_filename))
 
-    # save surface
     with open(pickle_filename,"wb") as f:
       pickle.dump(surface,f)
   
-  # here we have surface
-  
+  # here we have the surface, either loaded from an existing pickle file or newly created
+
+  # triangulate the surface for output
   for surf in [surface]:
     surf.sample_size = 100
     surf.evaluate()
   
-  #surface.vis = VisMPL.VisSurfWireframe()
+  # plot the result
   if False:
     surface_full.vis = VisPlotly.VisSurface()
     surface_full.render()
     surface.vis = VisPlotly.VisSurface()
+    #surface.vis = VisMPL.VisSurfWireframe()
     surface.render()
+    
+  # export as STL file
   print("write stl file \"{}\"".format(output_stl_filename))
-  
-  exchange.export_stl(surface, output_stl_filename)
+  geomdl.exchange.export_stl(surface, output_stl_filename)
   print("File \"{}\" written.".format(output_stl_filename))
   

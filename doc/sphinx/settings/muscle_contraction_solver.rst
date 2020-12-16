@@ -77,6 +77,8 @@ Depending on the value of ``dynamic``, either an instance of ``DynamicHyperelast
     "numberTimeSteps":              1,                         # number of timesteps to use per call
     "timeStepOutputInterval":       100,                       # How often the current timestep will be displayed, if this is >100 and numberTimeSteps is 1, nothing will be printed
     "Pmax":                         variables.pmax,            # maximum PK2 active stress
+    "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
+    "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
     "OutputWriter" : [                                         # This is an output writer that writes files with all required fields.
       {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
     ],

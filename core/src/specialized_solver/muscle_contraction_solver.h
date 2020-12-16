@@ -75,14 +75,15 @@ protected:
   std::shared_ptr<DynamicHyperelasticitySolverType> dynamicHyperelasticitySolver_;   //< the dynamic hyperelasticity solver that solves for the dynamic contraction
   std::shared_ptr<StaticHyperelasticitySolverType> staticHyperelasticitySolver_;     //< the static hyperelasticity solver that can be used for quasi-static solution
 
-  Data data_;   //< the data object that holds all field variables
+  Data data_;                                   //< the data object that holds all field variables
   OutputWriter::Manager outputWriterManager_;   //< manager object holding all output writers
 
-  double pmax_;   //< settings of "Pmax" maximum active stress of the muscle
-  bool isDynamic_;  //< if the dynamic formulation or the quasi-static formulation is used
+  double pmax_;                                 //< settings of "Pmax" maximum active stress of the muscle
+  bool isDynamic_;                              //< if the dynamic formulation or the quasi-static formulation is used
+  bool enableForceLengthRelation_;              //< if the force-length relation factor f_l(λ_f) should be multiplied
   std::vector<std::string> meshNamesOfGeometryToMapTo_;   //< a list of mesh names which will get updated with the geometry
 
-  bool initialized_;   //< if initialize was already called
+  bool initialized_;                            //< if initialize was already called
 };
 
 #include "specialized_solver/muscle_contraction_solver.tpp"

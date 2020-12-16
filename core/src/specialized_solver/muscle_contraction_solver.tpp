@@ -35,6 +35,7 @@ MuscleContractionSolver(DihuContext context) :
 
   // parse options
   pmax_ = this->specificSettings_.getOptionDouble("Pmax", 1.0, PythonUtility::Positive);
+  enableForceLengthRelation_ = this->specificSettings_.getOptionBool("enableForceLengthRelation", true);
 
   this->specificSettings_.template getOptionVector<std::string>("mapGeometryToMeshes", meshNamesOfGeometryToMapTo_);
 }
@@ -357,10 +358,14 @@ computeActiveStress()
     const double lambdaRelative = lambda / lambdaOpt;
 
     // compute f function
-    double f = 0;
-    if (0.6 <= lambdaRelative && lambdaRelative <= 1.4)
+    double f = 1.0;
+
+    if (enableForceLengthRelation_)
     {
-      f = -25./4 * lambdaRelative*lambdaRelative + 25./2 * lambdaRelative - 5.25;
+      if (0.6 <= lambdaRelative && lambdaRelative <= 1.4)
+      {
+        f = -25./4 * lambdaRelative*lambdaRelative + 25./2 * lambdaRelative - 5.25;
+      }
     }
 
     const double factor = 1./lambda * pmax_ * f * gamma;

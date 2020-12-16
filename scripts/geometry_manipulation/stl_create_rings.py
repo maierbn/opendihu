@@ -146,8 +146,7 @@ def create_loop(z_value, stl_mesh, loop):
   debug = False
 
   if debug:
-    print(" z_value: {}, n points: {}".format(z_value, len(stl_mesh.points)))
-  print(" z_value: {}, n points: {}: {}".format(z_value, len(stl_mesh.points), stl_mesh.points))
+    print(" z_value: {}, n points: {}: {}".format(z_value, len(stl_mesh.points), stl_mesh.points))
 
   # loop over all triangles in mesh
   for (no,p) in enumerate(stl_mesh.points):

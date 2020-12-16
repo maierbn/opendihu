@@ -157,4 +157,6 @@ n_subdomains_y = 1
 n_subdomains_z = 1
 states_initial_values = []
 enable_coupling = True
+enable_force_length_relation = True
+lambda_dot_scaling_factor = 1
 

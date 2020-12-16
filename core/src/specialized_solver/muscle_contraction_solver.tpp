@@ -35,6 +35,8 @@ MuscleContractionSolver(DihuContext context) :
 
   // parse options
   pmax_ = this->specificSettings_.getOptionDouble("Pmax", 1.0, PythonUtility::Positive);
+  enableForceLengthRelation_ = this->specificSettings_.getOptionBool("enableForceLengthRelation", true);
+  lambdaDotScalingFactor_ = this->specificSettings_.getOptionDouble("lambdaDotScalingFactor", 1.0);
 
   this->specificSettings_.template getOptionVector<std::string>("mapGeometryToMeshes", meshNamesOfGeometryToMapTo_);
 }
@@ -308,7 +310,7 @@ computeLambda()
     // d/dt dx = d/dt F
     // d/dt lambda = d/dt ||dx•a0|| = 1 / ||Fa|| (F a0 • Fdot a0) = 1/lambda (Fa • Fdot a0)
     Vec3 FdotA0 = fDot * fiberDirection;
-    const double lambdaDot = 1 / lambda * MathUtility::dot(fiberDirectionCurrentConfiguration, FdotA0);
+    const double lambdaDot = 1 / lambda * MathUtility::dot(fiberDirectionCurrentConfiguration, FdotA0) * lambdaDotScalingFactor_;
 
     lambdaVariable->setValue(dofNoLocal, lambda);
     lambdaDotVariable->setValue(dofNoLocal, lambdaDot);
@@ -364,10 +366,14 @@ computeActiveStress()
     const double lambdaRelative = lambda / lambdaOpt;
 
     // compute f function
-    double f = 0;
-    if (0.6 <= lambdaRelative && lambdaRelative <= 1.4)
+    double f = 1.0;
+
+    if (enableForceLengthRelation_)
     {
-      f = -25./4 * lambdaRelative*lambdaRelative + 25./2 * lambdaRelative - 5.25;
+      if (0.6 <= lambdaRelative && lambdaRelative <= 1.4)
+      {
+        f = -25./4 * lambdaRelative*lambdaRelative + 25./2 * lambdaRelative - 5.25;
+      }
     }
 
     const double factor = 1./lambda * pmax_ * f * gamma;

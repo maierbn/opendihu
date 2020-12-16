@@ -40,8 +40,8 @@ if "cuboid.bin" in variables.fiber_file:
       outfile.write(struct.pack('i', 40))  # header length
       outfile.write(struct.pack('i', variables.n_fibers_x*variables.n_fibers_y))   # n_fibers
       outfile.write(struct.pack('i', variables.n_points_whole_fiber))   # variables.n_points_whole_fiber
-      outfile.write(struct.pack('i', 0))   # nBorderPointsXNew
-      outfile.write(struct.pack('i', 0))   # nBorderPointsZNew
+      outfile.write(struct.pack('i', 0))   # nBoundaryPointsXNew
+      outfile.write(struct.pack('i', 0))   # nBoundaryPointsZNew
       outfile.write(struct.pack('i', 0))   # nFineGridFibers_
       outfile.write(struct.pack('i', 1))   # nRanks
       outfile.write(struct.pack('i', 1))   # nRanksZ

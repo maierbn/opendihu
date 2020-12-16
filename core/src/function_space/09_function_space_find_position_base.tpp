@@ -220,7 +220,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
           << " in neighbourhood of element " << elementNoLocal
           << (ghostMeshNo != -1? std::string(" in ghost mesh ")+Mesh::getString((Mesh::face_t)ghostMeshNo) : "")
           << ", tested all elements (no ghost elements) and found element " << currentElementNo << ". "
-          << "This can happen if the elements lies on the border of the higher dimensional element, e.g. if a fiber lies on the outer border of the 3D muscle mesh.";
+          << "This can happen if the elements lies on the boundary of the higher dimensional element, e.g. if a fiber lies on the outer boundary of the 3D muscle mesh.";
 #endif
       }
 

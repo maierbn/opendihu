@@ -25,7 +25,8 @@ output_filename = "{}.reversed".format(input_filename)
 if len(sys.argv) >= 3:
   output_filename = sys.argv[2]
   
-print("{} -> {}".format(input_filename, output_filename))
+print("input file:  {}".format(input_filename))
+print("output file: {}".format(output_filename))
 
 with open(input_filename, "rb") as infile:
   
@@ -57,8 +58,8 @@ with open(input_filename, "rb") as infile:
   print("nFibersTotal:      {n_fibers} = {n_fibers_x} x {n_fibers_y}".format(n_fibers=parameters[0], n_fibers_x=n_fibers_x, n_fibers_y=n_fibers_y))
   print("nPointsWholeFiber: {}".format(parameters[1]))
   if "version 2" not in str(header_str):
-    print("nBorderPointsXNew: {}".format(parameters[2]))
-    print("nBorderPointsZNew: {}".format(parameters[3]))
+    print("nBoundaryPointsXNew: {}".format(parameters[2]))
+    print("nBoundaryPointsZNew: {}".format(parameters[3]))
   print("nFineGridFibers_:  {}".format(parameters[4]))
   print("nRanks:            {}".format(parameters[5]))
   print("nRanksZ:           {}".format(parameters[6]))

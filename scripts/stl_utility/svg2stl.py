@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
+# Extrude a svg file to create a 3D volume.
+
 import sys
 import numpy as np
 import matplotlib.pyplot as plt

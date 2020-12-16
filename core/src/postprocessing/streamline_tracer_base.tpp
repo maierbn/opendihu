@@ -67,7 +67,7 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
       break;
     }
 
-    LOG(DEBUG) << " findPosition for " << currentPoint << " returned ghostMeshNo " << ghostMeshNo << ", elementNo " << elementNo << ", xi " << xi
+    VLOG(1) << " findPosition for " << currentPoint << " returned ghostMeshNo " << ghostMeshNo << ", elementNo " << elementNo << ", xi " << xi
       << ", residual: " << residual << ", startSearchInCurrentElement: " << startSearchInCurrentElement << ", searchedAllElements: " << searchedAllElements;
 
     // get values for element that are later needed to compute the gradient
@@ -144,11 +144,11 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
     }
 
     // integrate streamline
-    LOG(DEBUG) << "  integrate from " << currentPoint << ", gradient: " << gradient << ", gradient normalized: " << MathUtility::normalized<3>(gradient)
+    VLOG(1) << "  integrate from " << currentPoint << ", gradient: " << gradient << ", gradient normalized: " << MathUtility::normalized<3>(gradient)
       << ", lineStepWidth: " << lineStepWidth_;
     currentPoint = currentPoint + MathUtility::normalized<3>(gradient)*lineStepWidth_*direction;
 
-    LOG(DEBUG) << "              to " << currentPoint;
+    VLOG(1) << "              to " << currentPoint;
 
     points.push_back(currentPoint);
   }

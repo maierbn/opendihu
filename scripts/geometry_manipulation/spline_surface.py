@@ -112,14 +112,26 @@ def get_u_by_xy_value(curve, xyvalue):
       
     x,x_prime = curve.derivatives(u, 1)
     f = np.linalg.norm(np.array(x[:2]) - np.array(xyvalue))
+    
+    #print("x={}, x_prime={}, f={}".format(x,x_prime,f))
+    
+    if f == 0:
+      f_prime = 1.0 * ((x[0] - xyvalue[0])*x_prime[0] + (x[1] - xyvalue[1])*x_prime[1])
+      
     f_prime = 1/f * ((x[0] - xyvalue[0])*x_prime[0] + (x[1] - xyvalue[1])*x_prime[1])
     return np.array([f_prime])
     
-  u0 = [0.2]
-  result0 = scipy.optimize.minimize(function, u0, jac=jacobian, bounds=[(0,1)])
+  try:
+      
+    u0 = [0.2]
+    result0 = scipy.optimize.minimize(function, u0, jac=jacobian, bounds=[(0,1)])
+    
+    u0 = [0.8]
+    result1 = scipy.optimize.minimize(function, u0, jac=jacobian, bounds=[(0,1)])
   
-  u0 = [0.8]
-  result1 = scipy.optimize.minimize(function, u0, jac=jacobian, bounds=[(0,1)])
+  except Exception as e: 
+    print(e)
+    pass
   
   if result0["fun"] < result1["fun"]:
     return result0["x"][0]
@@ -232,7 +244,7 @@ def create_loop(z_value, spline_surface, v_curve, n_points, loop):
     point[2] = z_value
     loop.append(point)
   
-def create_border_points(spline_surface, bottom_clip, top_clip, n_loops, n_points):
+def create_boundary_points(spline_surface, bottom_clip, top_clip, n_loops, n_points):
   
   # get curve in z direction
   v_curve = construct.extract_curves(spline_surface)["v"][0]
@@ -253,7 +265,7 @@ def create_ring_section(spline_surface, start_point, end_point, z_value, n_point
   :param start_point: the line starts at the point on the surface with given z_value, that is the nearest to start_point
   :param end_point: the line ends at the point on the surface with given z_value, that is the nearest to end_point
   :param z_value: the z level of the line on the surface
-  :param n_points: number of points on the border
+  :param n_points: number of points on the boundary
   """
   
   debug = False
@@ -310,10 +322,10 @@ def create_ring_section(spline_surface, start_point, end_point, z_value, n_point
   points = []
   u = u_start
   
-  # if passing border at u=1, u=0 is involved
+  # if passing boundary at u=1, u=0 is involved
   if s_end < s_start:
     if debug:
-      print("passing border")
+      print("passing boundary")
     
     section_length = curve_length - s_start + s_end
     interval_length = section_length / (n_points-1)

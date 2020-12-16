@@ -5,7 +5,7 @@ namespace Postprocessing
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vector<Vec3> &nodePositions, std::array<int,3> &nElementsPerCoordinateDirectionLocal)
+createMesh(std::array<std::vector<std::vector<Vec3>>,4> &boundaryPoints, std::vector<Vec3> &nodePositions, std::array<int,3> &nElementsPerCoordinateDirectionLocal)
 {
   int subdomainNNodesX;
   int subdomainNNodesY;
@@ -47,19 +47,20 @@ createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vect
   file.close();
 
 #else
-  // call stl_create_mesh.create_3d_mesh_from_border_points_faces
-  PyObject *borderPointsFacesPy = PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPoints);
+  // call stl_create_mesh.create_3d_mesh_from_boundary_points_faces
+  PyObject *boundaryPointsFacesPy = PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(boundaryPoints);
   PythonUtility::checkForError();
 
-  //LOG(DEBUG) << PythonUtility::getString(borderPointsFacesPy);
-  LOG(DEBUG) << "call function create_3d_mesh_from_border_points_faces";
+  //LOG(DEBUG) << PythonUtility::getString(boundaryPointsFacesPy);
+  LOG(DEBUG) << "call function create_3d_mesh_from_boundary_points_faces";
 
-  PyObject *meshData = PyObject_CallFunction(functionCreate3dMeshFromBorderPointsFaces_, "(O,O,i)", borderPointsFacesPy, (improveMesh_? Py_True : Py_False), level_);
+  PyObject *meshData = PyObject_CallFunction(functionCreate3dMeshFromBoundaryPointsFaces_, "(O,O,d,i)", 
+                                             boundaryPointsFacesPy, (improveMesh_? Py_True : Py_False), maxAreaFactor_, level_);
   PythonUtility::checkForError();
 
   if (meshData == Py_None)
   {
-    LOG(FATAL) << "Python function create_3d_mesh_from_border_points_faces returned None!";
+    LOG(FATAL) << "Python function create_3d_mesh_from_boundary_points_faces returned None!";
   }
 
   //LOG(DEBUG) << PythonUtility::getString(meshData);
@@ -100,15 +101,15 @@ createMesh(std::array<std::vector<std::vector<Vec3>>,4> &borderPoints, std::vect
 
   LOG(DEBUG) << "subdomainNNodes: " << subdomainNNodesX << " x " << subdomainNNodesY << " x " << subdomainNNodesZ;
 
-  if (subdomainNNodesX != nBorderPointsXNew_ || subdomainNNodesY != nBorderPointsXNew_ || subdomainNNodesZ != nBorderPointsZ_)
+  if (subdomainNNodesX != nBoundaryPointsXNew_ || subdomainNNodesY != nBoundaryPointsXNew_ || subdomainNNodesZ != nBoundaryPointsZ_)
   {
-    PyObject_CallFunction(functionOutputBorderPoints_, "s i i O f", "xx_failed_border_points", currentRankSubset_->ownRankNo(), level_,
-                          PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(borderPoints), 0.03);
+    PyObject_CallFunction(functionOutputBoundaryPoints_, "s i i O f", "xx_failed_boundary_points", currentRankSubset_->ownRankNo(), level_,
+                          PythonUtility::convertToPython<std::array<std::vector<std::vector<Vec3>>,4>>::get(boundaryPoints), 0.03);
     PythonUtility::checkForError();
   }
-  assert(subdomainNNodesX == nBorderPointsXNew_);
-  assert(subdomainNNodesY == nBorderPointsXNew_);
-  assert(subdomainNNodesZ == nBorderPointsZ_);
+  assert(subdomainNNodesX == nBoundaryPointsXNew_);
+  assert(subdomainNNodesY == nBoundaryPointsXNew_);
+  assert(subdomainNNodesZ == nBoundaryPointsZ_);
 /*
   // revert order of node positions
   std::vector<Vec3> nodePositions(nodePositionsOrderReversed.size());

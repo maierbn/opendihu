@@ -70,35 +70,49 @@ $pyod ${stl_utility_directory}/translate_stl.py \
   processed_meshes/${basename}_03_bottom_at_zero.stl \
   0 0 ${translate_value}
 
-
 # now ${basename}_03_bottom_at_zero.stl is the same as "biceps_full.stl"
+
+# scale back to mm, because the `parallel_fiber_estimation` step has been fine-tuned for the mm mesh (sorry for that)
+echo ""
+echo "--- Scale back to mm"
+$pyod ${stl_utility_directory}/scale_stl.py \
+  processed_meshes/${basename}_03_bottom_at_zero.stl \
+  processed_meshes/${basename}_03_bottom_at_zero_mm.stl \
+  10 10 10
 
 echo ""
 echo "--- Create a spline surface of the geometry"
 
+# compute bottom and top limits in mm
+bottom_z_clip_mm=`python -c "print(${bottom_z_clip}*10)"`
+top_z_clip_mm=`python -c "print(${top_z_clip}*10)"`
+
+bottom_z_clip_mm_extended=`python -c "print(${bottom_z_clip_mm}-2)"`
+top_z_clip_mm_extended=`python -c "print(${top_z_clip_mm}+2)"`
+
 # create spline surface
-cd $opendihu_directory/scripts/geometry_manipulation
-if [[ ! -f "${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle" ]]; then
+"cd" $opendihu_directory/scripts/geometry_manipulation
+if [[ ! -f "${current_directory}/processed_meshes/${basename}_04_spline_surface_mm.pickle" ]]; then
   $pyod ./create_spline_surface.py \
-    ${current_directory}/processed_meshes/${basename}_03_bottom_at_zero.stl \
-    ${current_directory}/processed_meshes/${basename}_04_spline_surface.stl \
-    ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
-    $bottom_z_clip $top_z_clip
+    ${current_directory}/processed_meshes/${basename}_03_bottom_at_zero_mm.stl \
+    ${current_directory}/processed_meshes/${basename}_04_spline_surface_mm.stl \
+    ${current_directory}/processed_meshes/${basename}_04_spline_surface_mm.pickle \
+    $bottom_z_clip_mm_extended $top_z_clip_mm_extended
 else
-  echo "file processed_meshes/${basename}_04_spline_surface.pickle already exists"
+  echo "file processed_meshes/${basename}_04_spline_surface_mm.pickle already exists"
 fi
 
 echo ""
 echo "--- Compile opendihu"
-cd $opendihu_directory
+"cd" $opendihu_directory
 $scons no_tests=TRUE
 
 echo ""
 echo "--- Compile parallel fiber estimation"
-cd $parallel_fiber_estimation_directory
+"cd" $parallel_fiber_estimation_directory
 $scons
 
-cd build_release
+"cd" build_release
 
 echo ""
 echo "--- Generate actual fiber meshes in different sizes using the parallel_fiber_estimation example"
@@ -121,10 +135,6 @@ array_number_fibers2=(7 11 23 31 47 71)
 #array_n=(4 6 6 4 4 6 4 4)
 #array_number_fibers1=(9 13 25 33 49 73 161 353 513)
 #array_number_fibers2=(7 11 23 31 47 71 159 351 511)
-
-# compute bottom and top limits in mm
-bottom_z_clip_mm=`python -c "print(${bottom_z_clip}*10)"`
-top_z_clip_mm=`python -c "print(${top_z_clip}*10)"`
 
 # loop over parameter combinations
 for i in ${!array_l[@]}; do
@@ -154,7 +164,7 @@ for i in ${!array_l[@]}; do
 
   echo ""
   echo "--- Generate fiber mesh files with ${number_fibers1}x${number_fibers1} and ${number_fibers2}x${number_fibers2} fibers"
-  cd $parallel_fiber_estimation_directory/build_release
+  "cd" $parallel_fiber_estimation_directory/build_release
 
   # max_area_factor: 100 for mm meshes
   # computation: max_area = extent_x * extent_y / max_area_factor
@@ -162,23 +172,36 @@ for i in ${!array_l[@]}; do
   # create file, if does not yet exist
   if [[ ! -f "${current_directory}/processed_meshes/${basename}_${number_fibers1}x${number_fibers1}fibers.bin" ]]; then
     echo "${mpi_command} ./${program_name} ../settings_generate.py \
-      --input_filename_or_splines_or_stl ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
-      --output_filename ${current_directory}/processed_meshes/${basename}_05_0x0fibers.bin \
-      --bottom_z_clip $bottom_z_clip \
-      --top_z_clip $top_z_clip \
+      --input_filename_or_splines_or_stl ${current_directory}/processed_meshes/${basename}_04_spline_surface_mm.pickle \
+      --output_filename ${current_directory}/processed_meshes/${basename}_05_0x0fibers_mm.bin \
+      --bottom_z_clip $bottom_z_clip_mm \
+      --top_z_clip $top_z_clip_mm \
       --element_size $element_length \
       -l=${l} -m=${m} --n_elements_x_per_subdomain=${n} \
       --max_area_factor 
       --program_name=${program_name}"
 
     ${mpi_command} ./${program_name} ../settings_generate.py \
-      --input_filename_or_splines_or_stl ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
-      --output_filename ${current_directory}/processed_meshes/${basename}_05_0x0fibers.bin \
-      --bottom_z_clip $bottom_z_clip \
-      --top_z_clip $top_z_clip \
+      --input_filename_or_splines_or_stl ${current_directory}/processed_meshes/${basename}_04_spline_surface_mm.pickle \
+      --output_filename ${current_directory}/processed_meshes/${basename}_05_0x0fibers_mm.bin \
+      --bottom_z_clip $bottom_z_clip_mm \
+      --top_z_clip $top_z_clip_mm \
       --element_size $element_length \
       -l=${l} -m=${m} --n_elements_x_per_subdomain=${n} \
       --program_name=${program_name}
+
+    # scale from mm to cm
+    echo ""
+    echo "--- Scale from mm to cm"
+    $parallel_fiber_estimation_directory/build_release/scale \
+      ${current_directory}/processed_meshes/${basename}_05_${number_fibers1}x${number_fibers1}fibers_mm.bin \
+      ${current_directory}/processed_meshes/${basename}_05_${number_fibers1}x${number_fibers1}fibers.bin \
+      0.1
+      
+    $parallel_fiber_estimation_directory/build_release/scale \
+      ${current_directory}/processed_meshes/${basename}_05_${number_fibers2}x${number_fibers2}fibers_mm.no_boundary.bin \
+      ${current_directory}/processed_meshes/${basename}_05_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin \
+      0.1
 
     # move the fibers in the fibers.bin file back to their original position
     echo ""
@@ -214,7 +237,8 @@ for i in ${!array_l[@]}; do
     # rename the fibers to their final name
     mv ${current_directory}/processed_meshes/${basename}_08_${number_fibers1}x${number_fibers1}fibers_xy_swapped.bin ${current_directory}/processed_meshes/${basename}_${number_fibers1}x${number_fibers1}fibers.bin
     mv ${current_directory}/processed_meshes/${basename}_08_${number_fibers2}x${number_fibers2}fibers_xy_swapped.bin ${current_directory}/processed_meshes/${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin
-
+    echo "final result: " ${basename}_${number_fibers1}x${number_fibers1}fibers.bin
+    echo "final result: " ${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin
   else
     echo "File processed_meshes/${basename}_${number_fibers1}x${number_fibers1}fibers.bin already exists, do not create again."
   fi

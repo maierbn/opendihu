@@ -255,7 +255,7 @@ config = {
                       # optimization parameters
                       "optimizationType":                       "vc" if variables.use_vc else "simd",           # "vc", "simd", "openmp" type of generated optimizated source file
                       "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
-                      "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
+                      "compilerFlags":                          "-fPIC -O3 -march=native -Wno-deprecated-declarations -shared ",             # compiler flags used to compile the optimized model code
                       "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
                       
                       # stimulation callbacks
@@ -308,8 +308,8 @@ config = {
                     "dirichletOutputFilename":     None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                     "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
                     "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
-                    "nAdditionalFieldVariables":   1,                                       # number of additional field variables that will be written to the output file, here for stress
-                    "additionalSlotNames":         "stress",                                # names for the additional slots, maximum length is 6 characters per slot name
+                    "nAdditionalFieldVariables":   4,                                       # number of additional field variables that will be written to the output file, here for stress
+                    "additionalSlotNames":         ["stress", "alpha", "lambda", "ldot"],   # names for the additional slots, maximum length is 6 characters per slot name
                     "checkForNanInf":              True,                                    # abort execution if the solution contains nan or inf values
                     
                     "FiniteElementMethod" : {
@@ -402,6 +402,8 @@ config = {
         "numberTimeSteps":              1,                         # only use 1 timestep per interval
         "timeStepOutputInterval":       100,                       # do not output time steps
         "Pmax":                         variables.pmax,            # maximum PK2 active stress
+        "enableForceLengthRelation":    variables.enable_force_length_relation,  # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
+        "lambdaDotScalingFactor":       variables.lambda_dot_scaling_factor,     # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
         "slotNames":                    ["lambda", "ldot", "gamma", "T"],   # names of the data slots (lamdba, lambdaDot, gamma, traction), maximum 6 characters per slot name
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
@@ -451,6 +453,7 @@ config = {
           "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
           
           "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions",                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+          "totalForceLogFilename":       "out/"+variables.scenario_name+"/total_force.txt",                              # filename for a log file with the total force
           
           # define which file formats should be written
           # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.

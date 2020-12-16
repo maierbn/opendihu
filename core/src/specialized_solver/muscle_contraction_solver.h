@@ -81,6 +81,7 @@ protected:
   double pmax_;                                 //< settings of "Pmax" maximum active stress of the muscle
   bool isDynamic_;                              //< if the dynamic formulation or the quasi-static formulation is used
   bool enableForceLengthRelation_;              //< if the force-length relation factor f_l(λ_f) should be multiplied
+  double lambdaDotScalingFactor_;               //< scaling factor for the computation of lambdaDot
   std::vector<std::string> meshNamesOfGeometryToMapTo_;   //< a list of mesh names which will get updated with the geometry
 
   bool initialized_;                            //< if initialize was already called

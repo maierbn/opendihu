@@ -244,7 +244,7 @@ for i in ${!array_l[@]}; do
   fi
   
   # create fat layer meshes for the smaller files
-  if [[ "${number_fibers1}" -le "100" ]]; then
+  if [[ "${number_fibers1}" -le "33" ]]; then
   
     echo ""
     echo "--- Create fat layer meshes for ${number_fibers1}x${number_fibers1} and ${number_fibers2}x${number_fibers2} fibers"

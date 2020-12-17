@@ -34,12 +34,13 @@ if ".py" in sys.argv[0]:
   variables.__dict__.update(custom_variables.__dict__)
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
-  print("Error: no variables file was specified, e.g:\n ./muscle ../settings_muscle.py ramp.py")
+  if rank_no == 0:
+    print("Error: no variables file was specified, e.g:\n ./biceps_contraction ../settings_biceps_contraction.py ramp.py")
   exit(0)
 
 # -------------- begin user parameters ----------------
-variables.output_timestep_3D = 10     #[ms] output timestep of mechanics
-variables.output_timestep_fibers = 1000 # [ms] output timestep of fibers
+variables.output_timestep_3D = 50     #[ms] output timestep of mechanics
+variables.output_timestep_fibers = 50 # [ms] output timestep of fibers
 # -------------- end user parameters ----------------
 
 # define command line arguments
@@ -311,7 +312,7 @@ config = {
                         # optimization parameters
                         "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
                         "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
-                        "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
+                        "compilerFlags":                          "-fPIC -O3 -march=native -Wno-deprecated-declarations -shared ",             # compiler flags used to compile the optimized model code
                         "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
                         
                         # stimulation callbacks
@@ -363,8 +364,8 @@ config = {
                       "dirichletOutputFilename":     None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                       "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
                       "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
-                      "nAdditionalFieldVariables":   1,                                       # number of additional field variables that will be written to the output file, here for stress
-                      "additionalSlotNames":         ["stress"],
+                      "nAdditionalFieldVariables":   2,                                       # number of additional field variables that will be written to the output file, here for stress
+                      "additionalSlotNames":         ["stress", "activation"],
                       "checkForNanInf":              True,                                    # abort execution if the solution contains nan or inf values
                       
                       "FiniteElementMethod" : {
@@ -385,7 +386,9 @@ config = {
                       for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) \
                         for fiber_no in [get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)] \
                           for motor_unit_no in [get_motor_unit_no(fiber_no)]],
-                  "OutputWriter" : variables.output_writer_fibers,
+                  "OutputWriter": [
+                    {"format": "Paraview", "outputInterval": int(1/variables.dt_splitting*variables.output_timestep_fibers), "filename": "out/fibers", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
+                  ],
                 },
               },
             },
@@ -457,7 +460,9 @@ config = {
           "numberTimeSteps":              1,                         # only use 1 timestep per interval
           "timeStepOutputInterval":       100,                       # do not output time steps
           "Pmax":                         variables.pmax,            # maximum PK2 active stress
-          "slotNames":                    ["lambda", "ldadot", "gamma", "T"],   # names of the data connector slots
+          "enableForceLengthRelation":    variables.enable_force_length_relation,  # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
+          "lambdaDotScalingFactor":       variables.lambda_dot_scaling_factor,     # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
+          "slotNames":                    ["lambda", "ldot", "gamma", "T"],   # names of the data connector slots
           "OutputWriter" : [
             {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/muscle_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
           ],

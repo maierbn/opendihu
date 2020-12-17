@@ -59,7 +59,7 @@ d  = 9.1733                 # [-] anisotropy parameter
 
 material_parameters = [c1, c2, b, d]   # material parameters
 pmax = 7.3                  # [N/cm^2] maximum isometric active stress (30-40)
-pmax = 0.73
+#pmax = 0.73
 
 # load
 constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
@@ -94,7 +94,7 @@ motor_units = [
 
 # timing parameters
 # -----------------
-end_time = 4000.0                      # [ms] end time of the simulation
+end_time = 20000.0                      # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
 dt_0D = 2e-4                        # [ms] timestep width of ODEs (1e-3)

@@ -107,7 +107,8 @@ output_timestep_3D = dt_3D              # [ms] timestep for output of fibers and
 
 # input files
 #fiber_file = "../../../../input/left_biceps_brachii_9x9fibers.bin"
-fiber_file = "../../../../input/left_biceps_brachii_31x31fibers.bin"
+#fiber_file = "../../../../input/left_biceps_brachii_31x31fibers.no_boundary.bin"
+fiber_file = "../../../../input/left_biceps_brachii_33x33fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../../../input/MU_fibre_distribution_10MUs.txt"

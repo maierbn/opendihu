@@ -86,6 +86,7 @@ echo "--- Create a spline surface of the geometry"
 # compute bottom and top limits in mm
 bottom_z_clip_mm=`python -c "print(${bottom_z_clip}*10)"`
 top_z_clip_mm=`python -c "print(${top_z_clip}*10)"`
+element_length_mm=`python -c "print(${element_length}*10)"`
 
 bottom_z_clip_mm_extended=`python -c "print(${bottom_z_clip_mm}-2)"`
 top_z_clip_mm_extended=`python -c "print(${top_z_clip_mm}+2)"`
@@ -176,7 +177,7 @@ for i in ${!array_l[@]}; do
       --output_filename ${current_directory}/processed_meshes/${basename}_05_0x0fibers_mm.bin \
       --bottom_z_clip $bottom_z_clip_mm \
       --top_z_clip $top_z_clip_mm \
-      --element_size $element_length \
+      --element_size $element_length_mm \
       -l=${l} -m=${m} --n_elements_x_per_subdomain=${n} \
       --max_area_factor 
       --program_name=${program_name}"
@@ -186,7 +187,7 @@ for i in ${!array_l[@]}; do
       --output_filename ${current_directory}/processed_meshes/${basename}_05_0x0fibers_mm.bin \
       --bottom_z_clip $bottom_z_clip_mm \
       --top_z_clip $top_z_clip_mm \
-      --element_size $element_length \
+      --element_size $element_length_mm \
       -l=${l} -m=${m} --n_elements_x_per_subdomain=${n} \
       --program_name=${program_name}
 

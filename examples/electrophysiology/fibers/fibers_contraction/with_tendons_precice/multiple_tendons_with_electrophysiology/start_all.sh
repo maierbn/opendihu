@@ -11,9 +11,14 @@
 #. ~/load_modules_hawk.sh
 #unset PYTHONPATH
 
+# kill previous runs
+killall -9 tendon_linear_precice
+killall -9 muscle_electrophysiology_precice
+
 # Change to the directory that the job was submitted from
 export PBS_O_WORKDIR=$(pwd)    # comment this in for local execution without job
 cd $PBS_O_WORKDIR
+export PBS_JOB_ID=1
 
 export OMP_NUM_THREADS=1
 export PRGENV=gnu
@@ -23,8 +28,10 @@ export EXAMPLE_HOME=${OPENDIHU_HOME}/examples/electrophysiology/fibers/fibers_co
 export INPUT_DIR=${OPENDIHU_HOME}/examples/electrophysiology/input
 
 # specify partitioning for muscle simulation [x,y,z,f], f is number of fibers in one coordinate direction
-partitioning="[2,2,15,31]"
 # values from weak scaling:
+#partitioning="[2,2,2,9]"
+#partitioning="[2,2,4,9]"
+partitioning="[4,4,5,33]"
 #"[2,2,1,7]" \
 #"[3,3,2,13]" \
 #"[4,4,4,25]" \

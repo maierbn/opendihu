@@ -261,22 +261,62 @@ std::string getStringVector(const Vec& vector)
 #ifdef NDEBUG
   return std::string("");
 #else
-  std::vector<double> vectorValues;
-  getVectorEntries(vector, vectorValues);
+  PetscErrorCode ierr;
+  VecType type;
+  ierr = VecGetType(vector, &type); CHKERRABORT(MPI_COMM_WORLD,ierr);
 
-  PetscInt nEntries;
-  VecGetLocalSize(vector, &nEntries);
-
-  const double zeroTolerance = 1e-15;
-
-  std::stringstream s;
-  s << "(" << nEntries << " entries) ";
-  for (PetscInt i=0; i<nEntries; i++)
+  if (std::string(type) == std::string(VECNEST))
   {
-    s << std::setprecision(9) << (fabs(vectorValues[i]) < zeroTolerance? 0.0 : vectorValues[i]) << " ";
+    PetscInt nSubvectors = 0;
+    Vec *subVectors;
+    ierr = VecNestGetSubVecs(vector, &nSubvectors, &subVectors); CHKERRABORT(MPI_COMM_WORLD,ierr);
+    
+    std::stringstream s;
+    s << "(nested Vec with " << nSubvectors << " sub vecs) ";
+    for (int subVecNo = 0; subVecNo < nSubvectors; subVecNo++)
+    {
+      if (subVectors[subVecNo])
+      {
+        std::vector<double> vectorValues;
+        getVectorEntries(subVectors[subVecNo], vectorValues);
+        
+        PetscInt nEntries;
+        ierr = VecGetLocalSize(subVectors[subVecNo], &nEntries); CHKERRABORT(MPI_COMM_WORLD,ierr);
+      
+        const double zeroTolerance = 1e-15;
+      
+        s << " subVec " << subVecNo << " with " << nEntries << " local entries: ";
+        for (PetscInt i = 0; i < nEntries; i++)
+        {
+          s << std::setprecision(9) << (fabs(vectorValues[i]) < zeroTolerance? 0.0 : vectorValues[i]) << " ";
+        }
+      }
+      else
+      {
+        s << " subVec " << subVecNo << " is NULL ";
+      }
+    }
+    return s.str();
   }
+  else 
+  {
+    std::vector<double> vectorValues;
+    getVectorEntries(vector, vectorValues);
 
-  return s.str();
+    PetscInt nEntries;
+    VecGetLocalSize(vector, &nEntries);
+
+    const double zeroTolerance = 1e-15;
+
+    std::stringstream s;
+    s << "(" << nEntries << " local entries) ";
+    for (PetscInt i=0; i<nEntries; i++)
+    {
+      s << std::setprecision(9) << (fabs(vectorValues[i]) < zeroTolerance? 0.0 : vectorValues[i]) << " ";
+    }
+
+    return s.str();
+  }
 #endif
 }
 
@@ -398,7 +438,7 @@ std::string getStringLinearConvergedReason(KSPConvergedReason convergedReason)
     return ANSI_COLOR_GREEN "KSP_CONVERGED_STEP_LENGTH" ANSI_COLOR_RESET;
 
   case KSP_CONVERGED_ITERATING:
-    return ANSI_COLOR_GREEN "KSP_CONVERGED_ITERATING" ANSI_COLOR_RESET ": returned if the solver is not yet finished";
+    return "KSP_CONVERGED_ITERATING: returned if the solver is not yet finished";
 
   case KSP_DIVERGED_ITS:
     return ANSI_COLOR_RED "KSP_DIVERGED_ITS" ANSI_COLOR_RESET ": required more than its to reach convergence";
@@ -443,9 +483,9 @@ std::string getStringLinearConvergedReason(KSPConvergedReason convergedReason)
 
   std::stringstream s;
   if (convergedReason < 0)
-    s << "divergence, ";
+    s << ANSI_COLOR_RED "diverged" ANSI_COLOR_RESET ", ";
   else
-    s << "converged, ";
+    s << ANSI_COLOR_GREEN "converged" ANSI_COLOR_RESET ", ";
   s << "unknown reason (" << int(convergedReason) << ")";
   return s.str();
 }
@@ -509,9 +549,9 @@ std::string getStringNonlinearConvergedReason(SNESConvergedReason convergedReaso
 
   std::stringstream s;
   if (convergedReason < 0)
-    s << "divergence, ";
+    s << ANSI_COLOR_RED "diverged" ANSI_COLOR_RESET ", ";
   else
-    s << "converged, ";
+    s << ANSI_COLOR_GREEN "converged" ANSI_COLOR_RESET ", ";
   s << "unknown reason (" << int(convergedReason) << ")";
   return s.str();
 }
@@ -713,7 +753,7 @@ void dumpMatrix(std::string filename, std::string format, Mat &matrix, MPI_Comm 
 
   // open file given by filename, create directory if necessary
   std::ofstream file;
-  OutputWriter::Generic::openFile(file, filename);
+  OutputWriter::Generic::openFile(file, matrixOutputFilename.str());
   file.close();
 
   // if the matrix is nested, created single matrix
@@ -732,24 +772,41 @@ void dumpMatrix(std::string filename, std::string format, Mat &matrix, MPI_Comm 
       PetscInt nRowsGlobal = 0;
       PetscInt nColumnsGlobal = 0;
 
+      std::vector<PetscInt> nColumnsSubMats(nNestedColumns);
+      std::vector<PetscInt> nRowsSubMats(nNestedRows);
+
       // collect global size
       // number of columns
       PetscInt nRows, nColumns;
-      PetscInt j = 0;
       for (PetscInt i = 0; i < nNestedColumns; i++)
       {
-        MatGetSize(nestedMats[j][i], &nRows, &nColumns);
+        for (PetscInt j = 0; j < nNestedRows; j++)
+        {
+          if (nestedMats[j][i])
+          {
+            MatGetSize(nestedMats[j][i], &nRows, &nColumns);
 
-        nColumnsGlobal += nColumns;
+            nColumnsSubMats[i] = nColumns;
+            nColumnsGlobal += nColumns;
+            break;
+          }
+        }
       }
 
       // number of rows
-      PetscInt i = 0;
       for (PetscInt j = 0; j < nNestedRows; j++)
       {
-        MatGetSize(nestedMats[j][i], &nRows, &nColumns);
+        for (PetscInt i = 0; i < nNestedColumns; i++)
+        {
+          if (nestedMats[j][i])
+          {
+            MatGetSize(nestedMats[j][i], &nRows, &nColumns);
 
-        nRowsGlobal += nRows;
+            nRowsSubMats[j] = nRows;
+            nRowsGlobal += nRows;
+            break;
+          }
+        }
       }
 
       int ownRankNo = 0;
@@ -763,7 +820,7 @@ void dumpMatrix(std::string filename, std::string format, Mat &matrix, MPI_Comm 
 
       if (ownRankNo == 0)
       {
-        MatCreateSeqDense(MPI_COMM_SELF, nRowsGlobal, nColumnsGlobal, NULL, &globalMatrix);
+        MatCreateSeqAIJ(MPI_COMM_SELF, nRowsGlobal, nColumnsGlobal, PETSC_DEFAULT, NULL, &globalMatrix);
         const char *name = "matrix";
         PetscObjectSetName((PetscObject)globalMatrix, name);
       }
@@ -779,66 +836,94 @@ void dumpMatrix(std::string filename, std::string format, Mat &matrix, MPI_Comm 
         globalColumnOffset = 0;
         for (PetscInt i = 0; i < nNestedColumns; i++)
         {
-          MatGetSize(nestedMats[j][i], &nRows, &nColumns);
-
-          const PetscInt *ranges;
-          MatGetOwnershipRanges(nestedMats[j][i], &ranges);
-
-          std::vector<double> values;
-
-          for (int rankNo = 0; rankNo < nRanks; rankNo++)
+          if (nestedMats[j][i])
           {
-            PetscInt nRows = ranges[rankNo+1] - ranges[rankNo];
-            values.resize(nColumns * nRows, 0.0);
 
-            //LOG(DEBUG) << "(" << j << "," << i << ") rank " << rankNo << " has " << nRows << " rows";
+            MatGetSize(nestedMats[j][i], &nRows, &nColumns);
 
-            if (ownRankNo == rankNo)
+            const PetscInt *ranges;
+            MatGetOwnershipRanges(nestedMats[j][i], &ranges);
+
+            std::vector<double> values;
+
+            for (int rankNo = 0; rankNo < nRanks; rankNo++)
             {
-              // get own data
-              std::vector<PetscInt> rowIndices(nRows);
-              std::iota(rowIndices.begin(), rowIndices.end(), ranges[rankNo]);
+              PetscInt nRows = ranges[rankNo+1] - ranges[rankNo];
+              values.resize(nColumns * nRows, 0.0);
 
-              std::vector<PetscInt> columnIndices(nColumns);
-              std::iota(columnIndices.begin(), columnIndices.end(), 0);
+              //LOG(DEBUG) << "(" << j << "," << i << ") rank " << rankNo << " has " << nRows << " rows";
 
-              ierr = MatGetValues(nestedMats[j][i], nRows, rowIndices.data(), nColumns, columnIndices.data(), values.data()); CHKERRV(ierr);
-
-              // send data to root
-              if (rankNo != 0)
+              if (ownRankNo == rankNo)
               {
-                MPI_Send(values.data(), nColumns * nRows, MPI_DOUBLE, 0, 0, mpiCommunicator);
+                // get own data
+                std::vector<PetscInt> rowIndices(nRows);
+                std::iota(rowIndices.begin(), rowIndices.end(), ranges[rankNo]);
+
+                std::vector<PetscInt> columnIndices(nColumns);
+                std::iota(columnIndices.begin(), columnIndices.end(), 0);
+
+                ierr = MatGetValues(nestedMats[j][i], nRows, rowIndices.data(), nColumns, columnIndices.data(), values.data()); CHKERRV(ierr);
+
+                // send data to root
+                if (rankNo != 0)
+                {
+                  MPI_Send(values.data(), nColumns * nRows, MPI_DOUBLE, 0, 0, mpiCommunicator);
+                }
+
+                VLOG(1) << nColumns << "x" << nRows << " values [" << j << "," << i << "] from rank " << rankNo << ", starting at (" << ranges[rankNo] << ", 0): " << values;
+                //LOG(DEBUG) << "send " << nColumns*nRows << " values to 0";
               }
 
-              VLOG(1) << nColumns << "x" << nRows << " values [" << j << "," << i << "] from rank " << rankNo << ", starting at (" << ranges[rankNo] << ", 0): " << values;
-              //LOG(DEBUG) << "send " << nColumns*nRows << " values to 0";
-            }
-
-            if (ownRankNo == 0)
-            {
-              // receive data
-              if (rankNo != 0)
+              if (ownRankNo == 0)
               {
-                MPI_Recv(values.data(), nColumns * nRows, MPI_DOUBLE, rankNo, 0, mpiCommunicator, MPI_STATUS_IGNORE);
+                // receive data
+                if (rankNo != 0)
+                {
+                  MPI_Recv(values.data(), nColumns * nRows, MPI_DOUBLE, rankNo, 0, mpiCommunicator, MPI_STATUS_IGNORE);
+                }
+                //LOG(DEBUG) << "receive " << nColumns*nRows << " values from " << rankNo;
+
+                // set data
+                std::vector<PetscInt> rowIndices(nRows);
+                std::iota(rowIndices.begin(), rowIndices.end(), globalRowOffset + ranges[rankNo]);
+
+                std::vector<PetscInt> columnIndices(nColumns);
+                std::iota(columnIndices.begin(), columnIndices.end(), globalColumnOffset);
+
+                std::vector<double> nonZeroValues;
+                nonZeroValues.reserve(nColumns);
+                std::vector<PetscInt> nonZeroIndices;
+                nonZeroIndices.reserve(nColumns);
+
+
+                // extract non-zero entries
+                for (int rowNo = 0; rowNo < nRows; rowNo++)
+                {
+                  int rowNoGlobal = globalRowOffset + ranges[rankNo] + rowNo;
+
+                  nonZeroValues.clear();
+                  nonZeroIndices.clear();
+                  for (int columnNo = 0; columnNo < nColumns; columnNo++)
+                  {
+                    if (values[rowNo*nColumns + columnNo] != 0.0)
+                    {
+                      nonZeroValues.push_back(values[columnNo*nRows + rowNo]);
+                      nonZeroIndices.push_back(globalColumnOffset + columnNo);
+                    }
+                  }
+
+                  ierr = MatSetValues(globalMatrix, 1, &rowNoGlobal, nonZeroIndices.size(), nonZeroIndices.data(), nonZeroValues.data(), INSERT_VALUES); CHKERRV(ierr);
+                }
+
+                //VLOG(1) << "insert at (" << globalRowOffset + ranges[rankNo] << "," << globalColumnOffset << ") " << nRows << "x" << nColumns << " values [" << j << "," << i << "] from rank " << rankNo << ": " << values;
+                //ierr = MatSetValues(globalMatrix, nRows, rowIndices.data(), nColumns, columnIndices.data(), values.data(), INSERT_VALUES); CHKERRV(ierr);
               }
-              //LOG(DEBUG) << "receive " << nColumns*nRows << " values from " << rankNo;
-
-              // set data
-              std::vector<PetscInt> rowIndices(nRows);
-              std::iota(rowIndices.begin(), rowIndices.end(), globalRowOffset + ranges[rankNo]);
-
-              std::vector<PetscInt> columnIndices(nColumns);
-              std::iota(columnIndices.begin(), columnIndices.end(), globalColumnOffset);
-
-              VLOG(1) << "insert at (" << globalRowOffset + ranges[rankNo] << "," << globalColumnOffset << ") " << nRows << "x" << nColumns << " values [" << j << "," << i << "] from rank " << rankNo << ": " << values;
-              ierr = MatSetValues(globalMatrix, nRows, rowIndices.data(), nColumns, columnIndices.data(), values.data(), INSERT_VALUES); CHKERRV(ierr);
             }
           }
-          globalColumnOffset += nColumns;
+          globalColumnOffset += nColumnsSubMats[i];
         }
-        MatGetSize(nestedMats[j][0], &nRows, &nColumns);
 
-        globalRowOffset += nRows;
+        globalRowOffset += nRowsSubMats[j];
       }
 
       matrix = globalMatrix;

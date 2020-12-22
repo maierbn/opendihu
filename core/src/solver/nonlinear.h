@@ -23,12 +23,14 @@ public:
   std::shared_ptr<SNES> snes();
 
 protected:
-  std::shared_ptr<SNES> snes_;   ///< the PETSc SNES (scalable nonlinear equations solvers) object
+  std::shared_ptr<SNES> snes_;   //< the PETSc SNES (scalable nonlinear equations solvers) object
 
-  double snesAbsoluteTolerance_;         ///< absolute solver tolerance
-  double snesRelativeTolerance_;         ///< relative solver tolerance
-  long int snesMaxIterations_;           ///< maximum number of iterations
-  long int snesMaxFunctionEvaluations_;  ///< maximum number of function evaluations
+  double snesAbsoluteTolerance_;         //< absolute solver tolerance
+  double snesRelativeTolerance_;         //< relative solver tolerance
+  long int snesMaxIterations_;           //< maximum number of iterations
+  long int snesMaxFunctionEvaluations_;  //< maximum number of function evaluations
+  int snesRebuildJacobianFrequency_;     //< how often the jacobian will be rebuild, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+  std::string snesLineSearchType_;       //< linesearch type of the snes object (SNESLineSearchType)
 };
 
 }  // namespace

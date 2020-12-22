@@ -161,6 +161,7 @@ config = {
       "nElements": n,
       "physicalExtent": 4.0,
       "relativeTolerance": 1e-15,
+      "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    
       "diffusionTensor": [5.0],
     },
     "OutputWriter" : [

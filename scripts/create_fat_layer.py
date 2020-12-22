@@ -48,16 +48,16 @@ with open(input_filename, "rb") as infile:
   n_fibers_x = (int)(np.sqrt(parameters[0]))
   n_fibers_y = n_fibers_x
   
-  if "version 2" in header_str:   # the version 2 has number of fibers explicitly stored and thus also allows non-square dimension of fibers
+  if "version 2" in str(header_str):   # the version 2 has number of fibers explicitly stored and thus also allows non-square dimension of fibers
     n_fibers_x = parameters[2]
     n_fibers_y = parameters[3]
   
-  print("header: {}".format(header_str))
+  print("header: {}".format(str(header_str)))
   print("nFibersTotal:      {n_fibers} = {n_fibers_x} x {n_fibers_y}".format(n_fibers=parameters[0], n_fibers_x=n_fibers_x, n_fibers_y=n_fibers_y))
   print("nPointsWholeFiber: {}".format(parameters[1]))
-  if "version 2" not in header_str:
-    print("nBorderPointsXNew: {}".format(parameters[2]))
-    print("nBorderPointsZNew: {}".format(parameters[3]))
+  if "version 2" not in str(header_str):
+    print("nBoundaryPointsXNew: {}".format(parameters[2]))
+    print("nBoundaryPointsZNew: {}".format(parameters[3]))
   print("nFineGridFibers_:  {}".format(parameters[4]))
   print("nRanks:            {}".format(parameters[5]))
   print("nRanksZ:           {}".format(parameters[6]))
@@ -104,20 +104,24 @@ with open(input_filename, "rb") as infile:
   print("n valid: {}, n invalid: {}".format(n_streamlines_valid, n_streamlines_invalid))
   
   # create mesh, oriented in x and z direction along fibers, in y direction normal to muscle belly
-  x_stride = 2
-  z_stride = 50
+  # set the sampling stride to 1, the mesh will be sampled by the script that does the partitioning in the simulation
+  x_stride = 1
+  z_stride = 1
   y_size = 5
-  thickness = 10.0
+  thickness = 1.0  #[cm]
   
   result_n_points_x = len(range(0, n_fibers_x+n_fibers_y-1, x_stride))
   result_n_points_y = y_size
-  result_n_points_z = len(range(0, n_points_whole_fiber, z_stride))
+  
+  # for z range, ensure that last value is contained
+  z_range = list(range(0, n_points_whole_fiber, z_stride))+([n_points_whole_fiber-1] if (n_points_whole_fiber-1)%z_stride !=0 else [])
+  result_n_points_z = len(z_range)
   result_n_points = result_n_points_x * result_n_points_y * result_n_points_z
   
   print("create mesh of size {}x{}x{} = {}".format(result_n_points_x, result_n_points_y, result_n_points_z, result_n_points))
   
   result_mesh = []
-  for k in range(0, n_points_whole_fiber, z_stride):
+  for k in z_range:
     for j in range(0, y_size):
       for i in range(0, n_fibers_x+n_fibers_y-1, x_stride):
         
@@ -152,7 +156,7 @@ with open(input_filename, "rb") as infile:
     
     infile.seek(0)
     header_str = "opendihu binary fibers version 2".format(header_str)
-    outfile.write(struct.pack('32s', header_str))
+    outfile.write(struct.pack('32s', str(header_str).encode('utf-8')))
     outfile.write(header_length_raw)
     
     # write header
@@ -186,8 +190,8 @@ with open(input_filename, "rb") as infile:
           point = result_mesh[k*result_n_points_x*result_n_points_y + j*result_n_points_x + i]
           
           # parse point
-          for p in range(3):
-            double_raw = struct.pack('d', point[p])
+          for component_no in range(3):
+            double_raw = struct.pack('d', point[component_no])
             outfile.write(double_raw)
             
     print("File {} written.".format(output_filename))

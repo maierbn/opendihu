@@ -64,7 +64,7 @@ QuasiStaticNonlinearElasticitySolverChaste(DihuContext context) :
 
 template<int D>
 void QuasiStaticNonlinearElasticitySolverChaste<D>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -380,7 +380,8 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
   // write current output values
-  this->outputWriterManager_.writeOutput(this->data_, 0, endTime_);
+  if (withOutputWritersEnabled)
+    this->outputWriterManager_.writeOutput(this->data_, 0, endTime_);
 }
 
 template<int D>
@@ -438,11 +439,11 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
+//! the transfer is done by the slot_connector_data_transfer class
 template<int D>
-std::shared_ptr<typename QuasiStaticNonlinearElasticitySolverChaste<D>::OutputConnectorDataType>
+std::shared_ptr<typename QuasiStaticNonlinearElasticitySolverChaste<D>::SlotConnectorDataType>
 QuasiStaticNonlinearElasticitySolverChaste<D>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
   return nullptr;
 }
@@ -450,7 +451,7 @@ getOutputConnectorData()
 //! output the given data for debugging
 template<int D>
 std::string QuasiStaticNonlinearElasticitySolverChaste<D>::
-getString(std::shared_ptr<typename QuasiStaticNonlinearElasticitySolverChaste<D>::OutputConnectorDataType> data)
+getString(std::shared_ptr<typename QuasiStaticNonlinearElasticitySolverChaste<D>::SlotConnectorDataType> data)
 {
   std::stringstream s;
   s << "<QuasiStaticNonlinearElasticitySolverChaste:" << data << ">";

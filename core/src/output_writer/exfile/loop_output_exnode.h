@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utility/type_utility.h"
+#include "mesh/type_traits.h"
 
 #include <cstdlib>
 
@@ -40,21 +41,29 @@ loopOutputExnode(const FieldVariablesForOutputWriterType &fieldVariables, const 
  */
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-outputExnode(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
+outputExnode(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
              std::ofstream &file);
 
 /** Loop body for a vector element
  */
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-outputExnode(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
+outputExnode(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
              std::ofstream &file);
 
  /**  Loop body for a pointer element
  */
 template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
+  && !Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
 outputExnode(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName, 
+             std::ofstream &file);
+
+/** Loop body for a field variables with Mesh::CompositeOfDimension<D>
+ */
+template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
+outputExnode(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables, std::string meshName,
              std::ofstream &file);
 
 }  // namespace ExfileLoopOverTuple

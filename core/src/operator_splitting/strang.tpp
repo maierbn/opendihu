@@ -2,7 +2,7 @@
 
 #include "utility/python_utility.h"
 #include "data_management/time_stepping/time_stepping.h"
-#include "data_management/output_connector_data.h"
+#include "slot_connection/slot_connector_data.h"
 
 namespace OperatorSplitting
 {
@@ -16,7 +16,7 @@ Strang(DihuContext context) :
 
 template<typename TimeStepping1, typename TimeStepping2>
 void Strang<TimeStepping1,TimeStepping2>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -47,7 +47,7 @@ advanceTimeSpan()
     // compute midTime once per step to reuse it. [currentTime, midTime=currentTime+0.5*timeStepWidth, currentTime+timeStepWidth]
     midTime = currentTime + 0.5 * this->timeStepWidth_;
 
-    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
     {
       LOG(INFO) << "Strang, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
@@ -65,7 +65,7 @@ advanceTimeSpan()
     LOG(DEBUG) << "  Strang: timeStepping1 (first half) advanceTimeSpan";
 
     // advance simulation by time span
-    this->timeStepping1_.advanceTimeSpan();
+    this->timeStepping1_.advanceTimeSpan(withOutputWritersEnabled);
 
     if (this->durationLogKey_ != "")
     {
@@ -77,11 +77,11 @@ advanceTimeSpan()
     LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2";
 
     // set transfer direction 1->2
-    this->outputConnection_.setTransferDirection(true);
+    this->slotsConnection_->setTransferDirection(true);
 
     // transfer to timestepping2_
-    SolutionVectorMapping<typename TimeStepping1::OutputConnectorDataType, typename TimeStepping2::OutputConnectorDataType>::
-      transfer(this->timeStepping1_.getOutputConnectorData(), this->timeStepping2_.getOutputConnectorData(), this->outputConnection_);
+    SlotConnectorDataTransfer<typename TimeStepping1::SlotConnectorDataType, typename TimeStepping2::SlotConnectorDataType>::
+      transfer(this->timeStepping1_.getSlotConnectorData(), this->timeStepping2_.getSlotConnectorData(), *this->slotsConnection_);
 
     if (this->durationLogKey_ != "")
     {
@@ -96,7 +96,7 @@ advanceTimeSpan()
     this->timeStepping2_.setTimeSpan(currentTime, currentTime+this->timeStepWidth_);
 
     // advance simulation by time span
-    this->timeStepping2_.advanceTimeSpan();
+    this->timeStepping2_.advanceTimeSpan(withOutputWritersEnabled);
 
     if (this->durationLogKey_ != "")
     {
@@ -108,11 +108,11 @@ advanceTimeSpan()
     LOG(DEBUG) << "  Strang: transfer timeStepping2 -> timeStepping1";
 
     // set transfer direction 2->1
-    this->outputConnection_.setTransferDirection(false);
+    this->slotsConnection_->setTransferDirection(false);
 
     // scale solution in timeStepping2 and transfer to timestepping1_
-    SolutionVectorMapping<typename TimeStepping2::OutputConnectorDataType, typename TimeStepping1::OutputConnectorDataType>::
-      transfer(this->timeStepping2_.getOutputConnectorData(), this->timeStepping1_.getOutputConnectorData(), this->outputConnection_);
+    SlotConnectorDataTransfer<typename TimeStepping2::SlotConnectorDataType, typename TimeStepping1::SlotConnectorDataType>::
+      transfer(this->timeStepping2_.getSlotConnectorData(), this->timeStepping1_.getSlotConnectorData(), *this->slotsConnection_);
 
     if (this->durationLogKey_ != "")
     {
@@ -126,7 +126,7 @@ advanceTimeSpan()
     this->timeStepping1_.setTimeSpan(midTime,currentTime+this->timeStepWidth_);
 
     // advance simulation by time span
-    this->timeStepping1_.advanceTimeSpan();
+    this->timeStepping1_.advanceTimeSpan(withOutputWritersEnabled);
 
     if (this->durationLogKey_ != "")
     {
@@ -149,11 +149,11 @@ advanceTimeSpan()
     LOG(DEBUG) << "  Strang: transfer timeStepping1 -> timeStepping2";
 
     // set transfer direction 1->2
-    this->outputConnection_.setTransferDirection(true);
+    this->slotsConnection_->setTransferDirection(true);
 
     // transfer to timestepping2_
-    SolutionVectorMapping<typename TimeStepping1::OutputConnectorDataType, typename TimeStepping2::OutputConnectorDataType>::
-      transfer(this->timeStepping1_.getOutputConnectorData(), this->timeStepping2_.getOutputConnectorData(), this->outputConnection_);
+    SlotConnectorDataTransfer<typename TimeStepping1::SlotConnectorDataType, typename TimeStepping2::SlotConnectorDataType>::
+      transfer(this->timeStepping1_.getSlotConnectorData(), this->timeStepping2_.getSlotConnectorData(), this->slotsConnection_);
 #endif
 
     // advance simulation time

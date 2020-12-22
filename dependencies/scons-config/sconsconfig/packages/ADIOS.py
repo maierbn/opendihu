@@ -1,5 +1,5 @@
 import sys, os, multiprocessing
-from Package import Package
+from .Package import Package
 import subprocess
 
 class ADIOS(Package):
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
       'cd ${SOURCE_DIR} && mkdir -p build && cd build && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} \
       -DCMAKE_BUILD_TYPE=RELEASE -DADIOS2_USE_SST=OFF -DADIOS2_USE_Fortran=OFF -DADIOS2_BUILD_TESTING=OFF -DADIOS2_BUILD_EXAMPLE=OFF \
       -DCMAKE_C_COMPILER='+ctx.env["CC"]+' -DCMAKE_CXX_COMPILER='+ctx.env["CXX"]+' ..',
-      'cd ${SOURCE_DIR}/build && make all install'
+      '!cd ${SOURCE_DIR}/build && make all install'
     ])
     
     res = super(ADIOS, self).check(ctx)

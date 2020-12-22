@@ -1,9 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Slice an stl file with plane parallel to the z direction
+# Extracts a subset of a given volume bounded by an STL mesh. The extracted part is between two planes that are parallel to the z direction.
+# Input is a tubular surface as STL file, output is an enclosed surface of the extracted part (also the bottom and top planes are triangulated, such that the output is fully enclosed.)
 #
-# usage:  ./slice_stl.py [<input filename> [<output filename>]]
+# usage:  ./slice_stl.py [<input filename> [<output filename> [<bottom clip> [<top clip> [<n loops>]]]]]
 
 import sys, os
 import numpy as np
@@ -48,25 +49,25 @@ write_output_mesh = False
 loops = stl_create_rings.create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_mesh)
 n_points = 20
 
-border_point_loops,lengths = stl_create_mesh.rings_to_border_points(loops, n_points)
+boundary_point_loops,lengths = stl_create_mesh.rings_to_boundary_points(loops, n_points)
 
 triangles = []
 
-n_loops = len(border_point_loops)
+n_loops = len(boundary_point_loops)
 
 # mantle triangles
 for i in range(n_loops-1):
   for j in range(n_points):
-    p0 = border_point_loops[i][j]
-    p1 = border_point_loops[i][(j+1)%n_points]
-    p2 = border_point_loops[i+1][j]
-    p3 = border_point_loops[i+1][(j+1)%n_points]
+    p0 = boundary_point_loops[i][j]
+    p1 = boundary_point_loops[i][(j+1)%n_points]
+    p2 = boundary_point_loops[i+1][j]
+    p3 = boundary_point_loops[i+1][(j+1)%n_points]
     triangles.append([p0,p1,p3])
     triangles.append([p0,p3,p2])
 
 # bottom and top triangles
 is_bottom = True
-for z_value,points in zip([bottom_clip, top_clip],[border_point_loops[0], border_point_loops[-1]]):
+for z_value,points in zip([bottom_clip, top_clip],[boundary_point_loops[0], boundary_point_loops[-1]]):
 
   print("z : {}".format(z_value))
 

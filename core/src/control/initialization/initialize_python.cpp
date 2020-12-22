@@ -24,11 +24,14 @@ void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFi
 
   // add the emb module that captures stderr to the existing table of built-in modules
   PyImport_AppendInittab("emb", emb::PyInit_emb);
-    
+
   // initialize python
   Py_Initialize();
 
+  // only python <= 3.6 needs to additionally call PyEval_InitThreads
+#if PY_MINOR_VERSION <= 6
   PyEval_InitThreads();
+#endif
 
   //VLOG(4) << "PyEval_ReleaseLock()";
   //PyEval_ReleaseLock();
@@ -175,7 +178,7 @@ bool DihuContext::loadPythonScriptFromFile(std::string filename)
       {
         commandToSetFile << "__file__ = '" << filename << "' "<< std::endl;
       }
-      else 
+      else
       {
         commandToSetFile << "__file__ = '" << currentWorkingDirectory << "/" << filename << "' "<< std::endl;
       }
@@ -208,7 +211,8 @@ void DihuContext::loadPythonScript(std::string text)
   // execute python code
   int ret = 0;
   std::string errorBuffer;
-  LOG(INFO) << std::string(80, '-');
+  std::string stdoutBuffer;
+  LOG(INFO) << std::string(40, '-') << " begin python output " << std::string(40, '-');
   try
   {
     // check if numpy module could be loaded
@@ -218,36 +222,52 @@ void DihuContext::loadPythonScript(std::string text)
       // get standard python path
       wchar_t *standardPythonPathWChar = Py_GetPath();
       std::wstring standardPythonPath(standardPythonPathWChar);
-      LOG(ERROR) << "Failed to import numpy. \n Python home directory: \"" << PYTHON_HOME_DIRECTORY 
-        << "\", Standard python path: " << standardPythonPath;
-      
+
       wchar_t *homeWChar = Py_GetPythonHome();
       char *home = Py_EncodeLocale(homeWChar, NULL);
-      LOG(ERROR) << "python home: " << home;
 
       wchar_t *pathWChar = Py_GetPath();
       char *path = Py_EncodeLocale(pathWChar, NULL);
-      LOG(ERROR) << "python path: " << path;
 
       const char *version = Py_GetVersion();
-      LOG(ERROR) << "python version: " << version;
+      LOG(ERROR) << "Failed to import numpy. \n" 
+        << " - Python home directory: \"" << PYTHON_HOME_DIRECTORY << "\",\n"
+        << " - Standard python path: " << standardPythonPath << "\n"
+        << " - Python home: " << home << "\n"
+        << " - Python path: " << path << "\n"
+        << " - Python version: " << version << "\n\n"
+        << "The python packages were obviously not installed properly.\n"
+        << "Try the following:\n"
+        << "  scons PYTHONPACKAGES_REBUILD=True\n"
+        << "\n"
+        << "If this fails, try the commands by hand or do the following:\n"
+        << "  cd " << PYTHON_HOME_DIRECTORY << "\n"
+        << "  python3 -m pip install numpy matplotlib scipy numpy-stl svg.path triangle geomdl vtk\n"
+        << "Try to omit all packages that fail.";
     }
 
     // add callback function to capture stderr buffer
-    emb::stderr_write_type write = [&errorBuffer] (std::string s) {errorBuffer += s; };
-    emb::set_stderr(write);
+    emb::stderr_write_type stderrWrite = [&errorBuffer] (std::string s) {errorBuffer += s; };
+    emb::set_stderr(stderrWrite);
+
+    // add callback function to capture stdout buffer
+    emb::stdout_write_type stdoutWrite = [&stdoutBuffer] (std::string s) {std::cout << s; stdoutBuffer += s; };
+    emb::set_stdout(stdoutWrite);
 
     // execute config script
     ret = PyRun_SimpleString(pythonScriptText_.c_str());
 
     emb::reset_stderr();
+    emb::reset_stdout();
+
+    LOG(DEBUG) << stdoutBuffer;
 
     PythonUtility::checkForError();
   }
   catch(...)
   {
   }
-  LOG(INFO) << std::string(80, '-');
+  LOG(INFO) << std::string(40, '-') << "- end python output -" << std::string(40, '-');
 
   // if there was an error in the python code
   if (ret != 0)
@@ -261,6 +281,13 @@ void DihuContext::loadPythonScript(std::string text)
 
     PyErr_Print();
     LOG(FATAL) << "An error occured in the python config.\n" << errorBuffer;
+  }
+  else if (!errorBuffer.empty())
+  {
+    LOG(WARNING) << "The python config wrote to stderr.\n";
+    LOG(INFO) << std::string(37, '-') << " begin python error output " << std::string(37, '-');
+    LOG(INFO) << errorBuffer;
+    LOG(INFO) << std::string(37, '-') << "- end python error output -" << std::string(37, '-');
   }
 
   // load main module and extract config
@@ -283,14 +310,28 @@ void DihuContext::loadPythonScript(std::string text)
 void DihuContext::parseGlobalParameters()
 {
   // parse scenario name
-  std::string scenarioName = "";
-  if (pythonConfig_.hasKey("scenarioName"))
-  {
-    scenarioName = pythonConfig_.getOptionString("scenarioName", "");
-  }
+  std::string scenarioName = pythonConfig_.getOptionString("scenarioName", "");
   Control::PerformanceMeasurement::setParameter("scenarioName", scenarioName);
 
-  // parse all keys under meta
+  // parse desired log file format
+  std::string logFormat = pythonConfig_.getOptionString("logFormat", "csv");
+  if (logFormat == "csv")
+  {
+    setLogFormat(logFormatCsv);
+  }
+  else if (logFormat == "json")
+  {
+    setLogFormat(logFormatJson);
+  }
+  else
+  {
+    LOG(ERROR) << "Unknown option for \"logFormat\": \"" << logFormat << "\". Use one of \"csv\" or \"json\". Falling back to \"csv\".";
+    setLogFormat(logFormatCsv);
+  }
+
+  // parse all keys under meta and add forward them directly to the log file
+  // These parameters are not used by opendihu but can hold information that the
+  // user wants to have in the log file.
   if (pythonConfig_.hasKey("meta"))
   {
 
@@ -317,4 +358,6 @@ void DihuContext::parseGlobalParameters()
 
   // filename for solver structure diagram
   solverStructureDiagramFile_ = pythonConfig_.getOptionString("solverStructureDiagramFile", "solver_structure.txt");
+  if (solverStructureDiagramFile_ == "None")
+    solverStructureDiagramFile_ = "";
 }

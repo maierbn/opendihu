@@ -50,7 +50,7 @@ externalVirtualWorkDead()
   return this->externalVirtualWorkDead_;
 }
 
-//! field variable of v_compressible
+//! field variable of ∂W_int_compressible
 template<typename FunctionSpaceType>
 std::shared_ptr<typename DynamicHyperelasticitySolver<FunctionSpaceType>::DisplacementsFieldVariableType> DynamicHyperelasticitySolver<FunctionSpaceType>::
 internalVirtualWork()
@@ -58,7 +58,7 @@ internalVirtualWork()
   return this->internalVirtualWork_;
 }
 
-//! field variable of ∂W_int_compressible
+//! field variable of
 template<typename FunctionSpaceType>
 std::shared_ptr<typename DynamicHyperelasticitySolver<FunctionSpaceType>::DisplacementsFieldVariableType> DynamicHyperelasticitySolver<FunctionSpaceType>::
 accelerationTerm()

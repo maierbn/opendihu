@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utility/type_utility.h"
+#include "mesh/type_traits.h"
 
 #include <cstdlib>
 
@@ -37,21 +38,29 @@ loopCheckIfNewExnodeHeaderNecessary(const FieldVariablesForOutputWriterType &fie
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-checkIfNewExnodeHeaderNecessary(VectorType currentFieldVariableVector, std::string meshName, 
+checkIfNewExnodeHeaderNecessary(VectorType currentFieldVariableGradient, std::string meshName, 
                                 element_no_t currentNodeGlobalNo, bool &newHeaderNecessary);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-checkIfNewExnodeHeaderNecessary(VectorType currentFieldVariableVector, std::string meshName, 
+checkIfNewExnodeHeaderNecessary(VectorType currentFieldVariableGradient, std::string meshName, 
                                 element_no_t currentNodeGlobalNo, bool &newHeaderNecessary);
 
  /**  Loop body for a pointer tuple element
  */
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
+  && !Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
 checkIfNewExnodeHeaderNecessary(CurrentFieldVariableType currentFieldVariable, std::string meshName, 
+                                element_no_t currentNodeGlobalNo, bool &newHeaderNecessary);
+
+/** Loop body for a field variables with Mesh::CompositeOfDimension<D>
+ */
+template<typename CurrentFieldVariableType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
+checkIfNewExnodeHeaderNecessary(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                                 element_no_t currentNodeGlobalNo, bool &newHeaderNecessary);
 
 }  // namespace ExfileLoopOverTuple

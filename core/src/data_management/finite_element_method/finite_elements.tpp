@@ -46,7 +46,7 @@ initialize()
   FiniteElementsBase<FunctionSpaceType,nComponents>::initialize();
 
   // set up diffusion tensor if there is any
-  DiffusionTensorConstant<FunctionSpaceType>::initialize();
+  DiffusionTensorConstant<FunctionSpaceType>::initialize(this->functionSpace_);
 }
 
 template<typename FunctionSpaceType,int nComponents>
@@ -58,7 +58,7 @@ initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> di
   FiniteElementsBase<FunctionSpaceType,nComponents>::initialize();
 
   // set up diffusion tensor, initialize with given direction field
-  DiffusionTensorDirectional<FunctionSpaceType>::initialize(direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor);
+  DiffusionTensorDirectional<FunctionSpaceType>::initialize(this->functionSpace_, direction, spatiallyVaryingPrefactor, useAdditionalDiffusionTensor);
 }
 
 //! initialize, store the reference geometry as copy of the current geometry
@@ -164,8 +164,12 @@ computeStrain(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nCo
       // set value at node
       strain->setValue(dofNoLocal, epsilon, INSERT_VALUES);
 
-      LOG(DEBUG) << "compute strain dof " << dofIndexL << ", displacements: " << displacementValues[dofIndexL]
-        << ", strain: " << epsilon;
+      if (VLOG_IS_ON(1))
+      {
+        int k = dofNoLocal / (this->functionSpace_->meshPartition()->nNodesGlobal(0) * this->functionSpace_->meshPartition()->nNodesGlobal(1));
+        VLOG(1) << "k: " << k << ", compute strain dof " << dofIndexL << ", displacements z: " << displacementValues[dofIndexL][2] << ", dphi/dx: " << dPhiL_dX[2]
+          << ", strain: " << epsilon;
+      }
 
     } // dofIndexL
   }  // elementNoLocal

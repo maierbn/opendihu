@@ -8,8 +8,7 @@ namespace Mesh
 {
 
 Manager::Manager(PythonConfig specificSettings) :
-  MappingBetweenMeshesManager::MappingBetweenMeshesManager(specificSettings),
-  partitionManager_(nullptr), numberAnonymousMeshes_(0)
+  partitionManager_(nullptr), specificSettings_(specificSettings), numberAnonymousMeshes_(0)
 {
   LOG(TRACE) << "MeshManager constructor";
   storePreconfiguredMeshes();
@@ -23,7 +22,7 @@ void Manager::setPartitionManager(std::shared_ptr<Partition::Manager> partitionM
 void Manager::storePreconfiguredMeshes()
 {
   LOG(TRACE) << "MeshManager::storePreconfiguredMeshes";
-  if (specificSettings_.pyObject())
+  if (this->specificSettings_.pyObject())
   {
     std::string keyString("Meshes");
     if (specificSettings_.hasKey("Meshes"))
@@ -52,7 +51,7 @@ void Manager::storePreconfiguredMeshes()
         }
         else
         {
-          LOG(DEBUG) << "Store mesh configuration with key \"" << key << "\".";
+          VLOG(1) << "Store mesh configuration with key \"" << key << "\".";
           if (meshConfiguration_.find(key) != meshConfiguration_.end())
           {
             meshConfiguration_.at(key).setPyObject(value);
@@ -142,12 +141,12 @@ void Manager::loadGeometryFromFile()
     int filenameLength = filename.length();
 
     // broadcast length of filename
-    MPIUtility::handleReturnValue(MPI_Bcast(&filenameLength, 1, MPI_INT, nodePositionsAreInFileOnRankGlobal, mpiCommunicator), "MPI_Bcast");
+    MPIUtility::handleReturnValue(MPI_Bcast(&filenameLength, 1, MPI_INT, nodePositionsAreInFileOnRankGlobal, mpiCommunicator), "MPI_Bcast (1)");
 
     // broadcast filename
     std::vector<char> receiveBuffer(filenameLength+1, char(0));
     strcpy(receiveBuffer.data(), filename.c_str());
-    MPIUtility::handleReturnValue(MPI_Bcast(receiveBuffer.data(), filenameLength, MPI_CHAR, nodePositionsAreInFileOnRankGlobal, mpiCommunicator), "MPI_Bcast");
+    MPIUtility::handleReturnValue(MPI_Bcast(receiveBuffer.data(), filenameLength, MPI_CHAR, nodePositionsAreInFileOnRankGlobal, mpiCommunicator), "MPI_Bcast (2)");
 
     std::string openFileName(receiveBuffer.begin(), receiveBuffer.end());
     while (openFileName[openFileName.length()-1] == 0)
@@ -287,6 +286,16 @@ createGenericFieldVariable(int nEntries, std::string name)
 bool Manager::hasFunctionSpace(std::string meshName)
 {
   return functionSpaces_.find(meshName) != functionSpaces_.end();
+}
+
+//! remove a function space if it exists
+void Manager::deleteFunctionSpace(std::string meshName)
+{
+  if (hasFunctionSpace(meshName))
+  {
+    LOG(DEBUG) << "deleteFunctionSpace(" << meshName << ")";
+    functionSpaces_.erase(meshName);
+  }
 }
 
 } // namespace

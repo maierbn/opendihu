@@ -23,6 +23,7 @@ void BoundaryConditions<FunctionSpaceType,QuadratureType,nComponents,Term,Dummy>
 setDirichletBoundaryConditions(std::shared_ptr<DirichletBoundaryConditions<FunctionSpaceType,nComponents>> dirichletBoundaryConditions)
 {
   this->dirichletBoundaryConditions_ = dirichletBoundaryConditions;
+  this->dirichletBoundaryConditionsApplied_ = false;
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>
@@ -41,6 +42,7 @@ reset()
   LOG(DEBUG) << "delete dirichlet boundary conditions object";
   this->dirichletBoundaryConditions_ = nullptr;
   this->systemMatrixAlreadySet_ = false;
+  this->dirichletBoundaryConditionsApplied_ = false;
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term,typename Dummy>
@@ -128,6 +130,11 @@ applyDirichletBoundaryConditions()
 
     updateMatrixAndRightHandSide = true;
   }
+  else if (!dirichletBoundaryConditionsApplied_)
+  {
+    LOG(DEBUG) << "dirichlet BCs have been set by but not yet applied.";
+    updateMatrixAndRightHandSide = true;
+  }
   else
   {
     LOG(DEBUG) << "dirichlet BC object already exists";
@@ -165,6 +172,7 @@ applyDirichletBoundaryConditions()
     LOG(DEBUG) << "call applyInSystemMatrix from applyBoundaryConditions, this->systemMatrixAlreadySet: " << this->systemMatrixAlreadySet_;
     dirichletBoundaryConditions_->applyInSystemMatrix(stiffnessMatrixWithoutBc, stiffnessMatrix, rightHandSide, this->systemMatrixAlreadySet_);
     this->systemMatrixAlreadySet_ = true;
+    dirichletBoundaryConditionsApplied_ = true;
 
     // set prescribed values in rhs
     dirichletBoundaryConditions_->applyInRightHandSide(rightHandSide, rightHandSide);

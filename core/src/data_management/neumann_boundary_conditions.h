@@ -28,15 +28,19 @@ public:
   //! reset the object and deallocate matrices
   virtual void reset() override;
 
-  //! return reference to a stiffness matrix
+  //! return reference to the rhs field variable
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rhs();
+
+  //! return reference to the deformation gradient field variable
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,9>> &deformationGradient();
 
 private:
 
   //! initializes the vectors and stiffness matrix with size
   void createPetscObjects();
 
-  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rhs_;  ///< the rhs vector contribution from Neumann BC
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> rhs_;  //< the rhs vector contribution from Neumann BC
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,9>> deformationGradient_;  //< the deformation gradient in the field, which is needed to transform traction bc in current configuration to traction bc in reference configuration
 
 };
 }  // namespace

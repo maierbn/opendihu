@@ -9,15 +9,159 @@
 #include <iostream>
 #include "easylogging++.h"
 
+
+void CellmlSourceCodeGeneratorBase::
+parseNamesInSourceCodeFile()
+{
+  // input source filename is this->sourceFilename_
+  nAlgebraicsInSource_ = 0;
+  unsigned int nStatesInSource = 0;
+  bool errorWrongNumberOfAlgebraicsOrStates = false;
+
+  // read in source from file
+  std::ifstream sourceFile(this->sourceFilename_.c_str());
+  if (!sourceFile.is_open())
+  {
+    LOG(FATAL) << "Could not open source file \"" << this->sourceFilename_<< "\" for reading!";
+  }
+  else
+  {
+    // read whole file contents to source
+    std::stringstream source;
+    source << sourceFile.rdbuf();
+    sourceFile.close();
+
+    // step through lines
+    while(!source.eof())
+    {
+      std::string line;
+      getline(source, line);
+
+      if (line.find(" * STATES") == 0)  // line in OpenCOR generated input file of type " * STATES[55] is P_C_SR in component razumova (milliM)."
+      {
+        // parse name of state
+        unsigned int index = atoi(line.substr(10,line.find("]")-10).c_str());
+        int posBegin = line.find("is",12)+3;
+        int posEnd = line.rfind(" in");
+        std::string name = line.substr(posBegin,posEnd-posBegin);
+
+        posBegin = line.find("component")+10;
+        posEnd = line.find(" (",posBegin);
+        std::string cellMLComponentName = line.substr(posBegin,posEnd-posBegin);
+
+        VLOG(1) << "state parse name=[" << name << "], cellMLComponentName=[" << cellMLComponentName << "], line=[" << line << "]";
+        std::stringstream fullName;
+        fullName << cellMLComponentName << "/" << name;
+
+        nStatesInSource = std::max(nStatesInSource, index+1);
+
+        if (index >= this->stateNames_.size())
+        {
+          LOG(ERROR) << "The CellML file \"" << sourceFilename_ << "\" contains more than " << index << " states "
+            << " but only " << this->stateNames_.size() << " were given as template argument to CellMLAdapter.";
+          errorWrongNumberOfAlgebraicsOrStates = true;
+        }
+        else
+        {
+          this->stateNames_[index] = fullName.str();
+        }
+
+        VLOG(1) << "store stateName [" << fullName.str() << "] at index " << index << ", now: " << this->stateNames_;
+      }
+      else if (line.find(" * ALGEBRAIC") == 0)  // line in OpenCOR generated input file of type " * ALGEBRAIC[35] is g_Cl in component sarco_Cl_channel (milliS_per_cm2)."
+      {
+        // parse name of algebraic
+        unsigned int index = atoi(line.substr(13,line.find("]")-13).c_str());
+        int posBegin = line.find("is",15)+3;
+        int posEnd = line.rfind(" in");
+        std::string name = line.substr(posBegin,posEnd-posBegin);
+
+        posBegin = line.find("component")+10;
+        posEnd = line.find(" (",posBegin);
+        std::string cellMLComponentName = line.substr(posBegin,posEnd-posBegin);
+
+        VLOG(1) << "algebraic parse name=[" << name << "], cellMLComponentName=[" << cellMLComponentName << "], line=[" << line << "]";
+        std::stringstream fullName;
+        fullName << cellMLComponentName << "/" << name;
+
+        nAlgebraicsInSource_ = std::max(nAlgebraicsInSource_, index+1);
+
+        if (index >= this->algebraicNames_.size())
+        {
+          LOG(ERROR) << "The CellML file \"" << sourceFilename_ << "\" contains more than " << index << " algebraics "
+            << " but only " << this->algebraicNames_.size() << " were given as template argument to CellMLAdapter.";
+          errorWrongNumberOfAlgebraicsOrStates = true;
+        }
+        else
+        {
+          this->algebraicNames_[index] = fullName.str();
+        }
+
+        VLOG(1) << "store algebraicName [" << fullName.str() << "] at index " << index << ", now: " << this->algebraicNames_;
+      }
+      else if (line.find(" * CONSTANTS") == 0)  // line in OpenCOR generated input file of type " * ALGEBRAIC[35] is g_Cl in component sarco_Cl_channel (milliS_per_cm2)."
+      {
+        // parse name of algebraic
+        unsigned int index = atoi(line.substr(13,line.find("]")-13).c_str());
+        int posBegin = line.find("is",15)+3;
+        int posEnd = line.rfind(" in");
+        std::string name = line.substr(posBegin,posEnd-posBegin);
+
+        posBegin = line.find("component")+10;
+        posEnd = line.find(" (",posBegin);
+        std::string cellMLComponentName = line.substr(posBegin,posEnd-posBegin);
+
+        VLOG(1) << "constant parse name=[" << name << "], cellMLComponentName=[" << cellMLComponentName << "], line=[" << line << "]";
+        std::stringstream fullName;
+        fullName << cellMLComponentName << "/" << name;
+
+        if (index >= this->constantNames_.size())
+        {
+          this->constantNames_.resize(index+1);
+        }
+        this->constantNames_[index] = fullName.str();
+
+        VLOG(1) << "store constantName [" << fullName.str() << "] at index " << index << ", now: " << this->constantNames_;
+      }
+
+      // if the initConsts function starts, we are done with parsing stateNames, algebraicNames and constantNames
+      if (line.find("initConsts") != std::string::npos)
+      {
+        break;
+      }
+    }
+
+    if (errorWrongNumberOfAlgebraicsOrStates)
+    {
+      LOG(FATAL) << "The CellML model \"" << sourceFilename_ << "\" has " << nStatesInSource << " states and "
+        << nAlgebraicsInSource_ << " algebraics, but the CellMLAdapter only supports "
+        << nStates_ << " states and " << nAlgebraics_ << " algebraics." << std::endl
+        << "You have to set the correct number in the c++ file and recompile. " << std::endl
+        << "(Use \"CellmlAdapter<" << nStatesInSource << "," << nAlgebraicsInSource_ << ">\".)";
+    }
+
+    // check number of algebraics and states in source file
+    if (nAlgebraicsInSource_ != nAlgebraics_)
+    {
+      LOG(WARNING) << "The CellML model \"" << sourceFilename_ << "\" needs " << nAlgebraicsInSource_ << " algebraics and CellMLAdapter supports " << nAlgebraics_
+        << ". You should recompile with the correct number to avoid performance penalties." << std::endl
+        << "(Use \"CellmlAdapter<" << nStatesInSource << "," << nAlgebraicsInSource_ << ">\".)";
+    }
+    if (nStatesInSource != nStates_)
+    {
+      LOG(ERROR) << "The CellML model \"" << sourceFilename_ << "\" has " << nStatesInSource << " states and CellMLAdapter supports " << nStates_
+        << ". This means the last " << nStates_ - nStatesInSource << " state(s) will have undefined values. You should recompile with the correct number of states." << std::endl
+        << "(Use \"CellmlAdapter<" << nStatesInSource << "," << nAlgebraicsInSource_ << ">\".)";
+    }
+  }
+}
+
 void CellmlSourceCodeGeneratorBase::
 parseSourceCodeFile()
 {
   // input source filename is this->sourceFilename_
 
-  // parse source file, set initial values for states (only one instance) and nParameters_, nConstants_ and nIntermediatesInSource_
-  nIntermediatesInSource_ = 0;
-  unsigned int nStatesInSource = 0;
-  bool errorWrongNumberOfIntermediatesOrStates = false;
+  // parse source file, set initial values for states (only one instance) and nParameters_, nConstants_ and nAlgebraicsInSource_
   bool currentlyInInitConstsFunction = false;
 
   // read in source from file
@@ -35,6 +179,7 @@ parseSourceCodeFile()
 
     bool discardOpenBrace = false;   // if the next line consisting of only "{" should be discarded
     bool headerDone = false;         // if everything before computeRates was parsed
+    std::set<int> parsedAlgebraicAssignments;   // algebraic no.s for which a line ALGEBRAIC[no] = ... has been parsed
 
     std::string name;  // the parsed name of a specifier that follows
 
@@ -59,70 +204,27 @@ parseSourceCodeFile()
         line += std::string(" ") + line2;
       }
 
-      // parse initial values for states, constants and intermediates
+      // parse initial values for states, constants and algebraics
       if (!headerDone)
       {
-        if (line.find(" * STATES") == 0)  // line in OpenCOR generated input file of type " * STATES[55] is P_C_SR in component razumova (milliM)."
-        {
-          // parse name of state
-          unsigned int index = atoi(line.substr(10,line.find("]")-10).c_str());
-          int posBegin = line.find("is",12)+3;
-          int posEnd = line.rfind(" in");
-          name = line.substr(posBegin,posEnd-posBegin);
-          VLOG(1) << "index= " << index << ", this->stateNames_.size() = " << this->stateNames_.size();
-          nStatesInSource = std::max(nStatesInSource, index+1);
-
-          if (index >= this->stateNames_.size())
-          {
-            LOG(ERROR) << "The CellML file \"" << sourceFilename_ << "\" contains more than " << index << " states "
-              << " but only " << this->stateNames_.size() << " were given as template argument to CellMLAdapter.";
-            errorWrongNumberOfIntermediatesOrStates = true;
-          }
-          else
-          {
-            this->stateNames_[index] = name;
-          }
-        }
-        else if (line.find(" * ALGEBRAIC") == 0)  // line in OpenCOR generated input file of type " * ALGEBRAIC[35] is g_Cl in component sarco_Cl_channel (milliS_per_cm2)."
-        {
-          // parse name of intermediate
-          unsigned int index = atoi(line.substr(13,line.find("]")-13).c_str());
-          int posBegin = line.find("is",15)+3;
-          int posEnd = line.rfind(" in");
-          name = line.substr(posBegin,posEnd-posBegin);
-          VLOG(1) << "index= " << index << ", this->intermediateNames_.size() = " << this->intermediateNames_.size();
-          nIntermediatesInSource_ = std::max(nIntermediatesInSource_, index+1);
-
-          if (index >= this->intermediateNames_.size())
-          {
-            LOG(ERROR) << "The CellML file \"" << sourceFilename_ << "\" contains more than " << index << " intermediates "
-              << " but only " << this->intermediateNames_.size() << " were given as template argument to CellMLAdapter.";
-            errorWrongNumberOfIntermediatesOrStates = true;
-          }
-          else
-          {
-            this->intermediateNames_[index] = name;
-          }
-        }
-        else if (line.find("STATES[") == 0)   // line contains assignment in OpenCOR generated input file
+        if (line.find("STATES[") == 0)   // line contains assignment in OpenCOR generated input file
         {
           // parse initial value of state
           unsigned int index = atoi(line.substr(7,line.find("]",7)-7).c_str());
           double value = atof(line.substr(line.find("= ")+2).c_str());
           if (index >= statesInitialValues_.size())
           {
-            errorWrongNumberOfIntermediatesOrStates = true;
+            LOG(FATAL) << "The CellML model \"" << sourceFilename_ << "\" initializes at least " << index+1 << " states but " << statesInitialValues_.size() << " are specified by the template argument.";
           }
           else
           {
             statesInitialValues_[index] = value;
           }
-          nStatesInSource = std::max(nStatesInSource, index+1);
         }
         else if (line.find("ALGEBRAIC[") == 0)  // assignment to an algebraic variable in both OpenCMISS and OpenCOR generated files, in OpenCMISS generated files, this does not count towards the algebraic variables that are hold by opendihu
         {
           unsigned int algebraicIndex = atoi(line.substr(10,line.find("]",10)-10).c_str());
-          nIntermediatesInSource_ = std::max(nIntermediatesInSource_, algebraicIndex+1);
+          nAlgebraicsInSource_ = std::max(nAlgebraicsInSource_, algebraicIndex+1);
         }
         else if (line.find("CONSTANTS[") != std::string::npos)  // usage of a constant
         {
@@ -133,7 +235,7 @@ parseSourceCodeFile()
         else if (line.find("OC_CellML_RHS_routine") != std::string::npos)
         {
           LOG(FATAL) << "Cellml sourceFilename \"" << sourceFilename_ << "\" is OpenCMISS generated. This is not supported. "
-            << "Please use OpenCOR to generate the c source file.";
+            << "Please use OpenCOR to generate the C source file or let opendihu do the conversion by just providing the cellml file as \"modelFilename\".";
         }
       }
 
@@ -150,11 +252,6 @@ parseSourceCodeFile()
       {
         constantAssignments_.push_back(line);
       }
-      else if (line.find("void computeVariables") != std::string::npos)
-      {
-        // this is the end of the normal c source file
-        break;
-      }
       // line contains OpenCOR function head (computeRates)
       else if (line.find("computeRates") != std::string::npos)
       {
@@ -164,6 +261,20 @@ parseSourceCodeFile()
       // line contains normal assignment
       else if (line.find("ALGEBRAIC") == 0 || line.find("RATES") == 0)
       {
+
+        // check if this is an assignment of an algebraic, if this algebraic was already assigned, skip line
+        if (line.find("ALGEBRAIC[") == 0)
+        {
+          int algebraicNo = atoi(line.substr(std::string("ALGEBRAIC[").length()).c_str());
+
+          // if the assignment for this algebraic was already parsed (happens in computeVariables, where some algebraics are assigned again)
+          if (parsedAlgebraicAssignments.find(algebraicNo) != parsedAlgebraicAssignments.end())
+          {
+            // do not parse this line
+            continue;
+          }
+        }
+
         // parse line
         cellMLCode_.lines.emplace_back();
 
@@ -171,17 +282,22 @@ parseSourceCodeFile()
 
         VLOG(1) << "parse line [" << line << "] -> " << cellMLCode_.lines.back().getString();
 
-        cellMLCode_.lines.back().visitLeafs([this](code_expression_t &entry, bool isFirstVariable)
+        // replace algebraics and constants that are parameters
+        cellMLCode_.lines.back().visitLeafs([this,&parsedAlgebraicAssignments](code_expression_t &entry, bool isFirstVariable)
         {
           if (entry.type == code_expression_t::variableName)
           {
 
-            // check if this is an assignment to a algebraic value that is actually an explicit parameter (set by parametersUsedAsIntermediate)
-            if (entry.code == "intermediates" && isFirstVariable)
+            // check if this is an assignment to a algebraic value that is actually an explicit parameter (set by parametersUsedAsAlgebraic)
+            if (entry.code == "algebraics" && isFirstVariable)
             {
-              for (int parameterUsedAsIntermediate : this->parametersUsedAsIntermediate_)
+              // this is a line "ALGEBRAIC[`no`] = ", save `no` to parsedAlgebraicAssignments
+              int no = entry.arrayIndex;
+              parsedAlgebraicAssignments.insert(no);
+
+              for (int parameterUsedAsAlgebraic : this->parametersUsedAsAlgebraic_)
               {
-                if (entry.arrayIndex == parameterUsedAsIntermediate)
+                if (entry.arrayIndex == parameterUsedAsAlgebraic)
                 {
                   entry.type = code_expression_t::commented_out;
                   break;
@@ -189,13 +305,13 @@ parseSourceCodeFile()
               }
             }
 
-            // replace algebraic by parameter if it is an explicit parameter set by parametersUsedAsIntermediate
-            else if (entry.code == "intermediates")
+            // replace algebraic by parameter if it is an explicit parameter set by parametersUsedAsAlgebraic
+            else if (entry.code == "algebraics")
             {
-              // loop over all parametersUsedAsIntermediate_
-              for (int j = 0; j < this->parametersUsedAsIntermediate_.size(); j++)
+              // loop over all parametersUsedAsAlgebraic_
+              for (int j = 0; j < this->parametersUsedAsAlgebraic_.size(); j++)
               {
-                if (entry.arrayIndex == this->parametersUsedAsIntermediate_[j])
+                if (entry.arrayIndex == this->parametersUsedAsAlgebraic_[j])
                 {
                   entry.code = "parameters";
                   entry.arrayIndex = j;
@@ -213,7 +329,7 @@ parseSourceCodeFile()
                 if (entry.arrayIndex == this->parametersUsedAsConstant_[j])
                 {
                   entry.code = "parameters";
-                  entry.arrayIndex = this->parametersUsedAsIntermediate_.size() + j;
+                  entry.arrayIndex = this->parametersUsedAsAlgebraic_.size() + j;
                   break;
                 }
               }
@@ -236,29 +352,6 @@ parseSourceCodeFile()
 
         VLOG(2) << "line is not special, copy: [" << line << "]";
       }
-    }
-
-    if (errorWrongNumberOfIntermediatesOrStates)
-    {
-      LOG(FATAL) << "The CellML model \"" << sourceFilename_ << "\" has " << nStatesInSource << " states and "
-        << nIntermediatesInSource_ << " intermediates, but the CellMLAdapter only supports "
-        << nStates_ << " states and " << nIntermediates_ << " intermediates." << std::endl
-        << "You have to set the correct number in the c++ file and recompile. " << std::endl
-        << "(Use \" CellmlAdapter<" << nStatesInSource << "," << nIntermediatesInSource_ << ">\".)";
-    }
-
-    // check number of intermediates and states in source file
-    if (nIntermediatesInSource_ != nIntermediates_)
-    {
-      LOG(WARNING) << "The CellML model \"" << sourceFilename_ << "\" needs " << nIntermediatesInSource_ << " intermediates and CellMLAdapter supports " << nIntermediates_
-        << ". You should recompile with the correct number to avoid performance penalties." << std::endl
-        << "(Use \" CellmlAdapter<" << nStatesInSource << "," << nIntermediatesInSource_ << ">\".)";
-    }
-    if (nStatesInSource != nStates_)
-    {
-      LOG(ERROR) << "The CellML model \"" << sourceFilename_ << "\" has " << nStatesInSource << " states and CellMLAdapter supports " << nStates_
-        << ". This means the last " << nStates_ - nStatesInSource << " state(s) will have undefined values. You should recompile with the correct number of states." << std::endl
-        << "(Use \" CellmlAdapter<" << nStatesInSource << "," << nIntermediatesInSource_ << ">\".)";
     }
   }
 }
@@ -478,7 +571,7 @@ parse(std::string line)
       else if (entry.code == "RATES")
         entry.code = "rates";
       else if (entry.code == "ALGEBRAIC")
-        entry.code = "intermediates";
+        entry.code = "algebraics";
 
       // extract array index
       entry.arrayIndex = atoi(line.substr(posBracket+1).c_str());

@@ -8,7 +8,8 @@ void ParallelFiberEstimation<BasisFunctionType>::
 resampleFibersInFile(int nPointsPerFiber, std::string filename)
 {
   // create a new file with all the fibers from the old file but resampled such that they have nNodesPerFiber_ nodes
-  LOG(INFO) << "resample fibers in file, this is completely serial, nBorderPointsXNew_: " << nBorderPointsXNew_;
+  LOG(DEBUG) << "resample fibers in file, this is completely serial, nBoundaryPointsXNew_: " << nBoundaryPointsXNew_;
+  LOG(INFO);  // newline
 
   // determine nFibersX of the input file
   std::ifstream file(filename.c_str(), std::ios::in | std::ios::binary);
@@ -51,6 +52,7 @@ resampleFibersInFile(int nPointsPerFiber, std::string filename)
     moveCommand << "mv " << filename << " " << filenameExistingFile;
     int ret = std::system(moveCommand.str().c_str());
     ret++;
+    LOG(INFO) << nFibersX << "x" << nFibersX << " fibers with " << nPointsPerFiber << " points per fiber written to file \"" << filenameExistingFile << "\".";
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 
@@ -96,8 +98,8 @@ resampleFibersInFile(int nPointsPerFiber, std::string filename)
     Vec3 previousPoint;
     Vec3 nextPoint;
 
-    int oldZIndexPrevious0 = -1;    /// z index of the point that is currently loadad in previousPoint
-    int oldZIndexNext0 = -1;        /// z index of the point that is currently loadad in nextPoint
+    int oldZIndexPrevious0 = -1;    /// z index of the point that is currently loaded in previousPoint
+    int oldZIndexNext0 = -1;        /// z index of the point that is currently loaded in nextPoint
 
     // loop over nodes of the new fiber and write them to the new file
     for (int zIndex = 0; zIndex < nNodesPerFiber_; zIndex++)
@@ -154,7 +156,8 @@ resampleFibersInFile(int nPointsPerFiber, std::string filename)
   fileOld.close();
   fileNew.close();
 
-  LOG(INFO) << nFibersX << "x" << nFibersX << " fibers written to file \"" << filename << "\".";
+  LOG(INFO) << nFibersX << "x" << nFibersX << " fibers with " << nNodesPerFiber_ << " points per fiber written to file \"" << filename << "\"." << std::endl;
+  LOG(INFO) << "Use the following command to convert the file to various formats for inspection:\n  examine_bin_fibers.py \"" << filenameExistingFile << "\"" << std::endl;
 }
 
 } // namespace

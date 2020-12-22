@@ -14,7 +14,7 @@ public:
   //! use constructor of base class
   using AssembleRightHandSide<FunctionSpaceType, QuadratureType, nComponents, Term>::AssembleRightHandSide;
 
-  friend class StiffnessMatrixTester;    ///< a class used for testing
+  friend class StiffnessMatrixTester;    //< a class used for testing
 
   //! read in rhs values from config and transfer to weak form
   void setRightHandSide();
@@ -30,7 +30,7 @@ public:
   //! use constructor of base class
   using AssembleRightHandSide<FunctionSpaceType, QuadratureType, nComponents, Equation::Static::LinearElasticityActiveStress>::AssembleRightHandSide;
 
-  friend class StiffnessMatrixTester;    ///< a class used for testing
+  friend class StiffnessMatrixTester;    //< a class used for testing
 
   //! assemble active stress values into rhs
   void setRightHandSide();

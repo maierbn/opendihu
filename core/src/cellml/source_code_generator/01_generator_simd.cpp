@@ -26,7 +26,7 @@ generateSourceFileSimd(std::string outputFilename)
     << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem.\n "
     << " * The \"optimizationType\" is \"simd\". (Other options are \"vc\" and \"openmp\".) */" << std::endl
     << "void computeCellMLRightHandSide("
-    << "void *context, double t, double *states, double *rates, double *intermediates, double *parameters)" << std::endl << "{" << std::endl;
+    << "void *context, double t, double *states, double *rates, double *algebraics, double *parameters)" << std::endl << "{" << std::endl;
 
   simdSource << "  double VOI = t;   /* current simulation time */" << std::endl;
   simdSource << std::endl << "  /* define constants */" << std::endl
@@ -66,7 +66,7 @@ generateSourceFileSimd(std::string outputFilename)
           }
           else
           {
-            // all other variables (states, rates, intermediates, parameters) exist for every instance
+            // all other variables (states, rates, algebraics, parameters) exist for every instance
             simdSource << expression.code << "[" << expression.arrayIndex * this->nInstances_ << "+i]";
           }
           break;
@@ -90,6 +90,9 @@ generateSourceFileSimd(std::string outputFilename)
 
   // add footer
   simdSource << cellMLCode_.footer << std::endl;
+
+  // add code for a single instance
+  simdSource << singleInstanceCode_;
 
   // write out source file
   std::ofstream simdSourceFile;

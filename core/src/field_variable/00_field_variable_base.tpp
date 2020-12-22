@@ -13,6 +13,7 @@ template<typename FunctionSpaceType>
 std::shared_ptr<FunctionSpaceType> FieldVariableBaseFunctionSpace<FunctionSpaceType>::
 functionSpace()
 {
+  // profiling/tracing showed that this method is called very often and has a significant impact on runtime
   return functionSpace_;
 }
 
@@ -36,6 +37,13 @@ bool FieldVariableBaseFunctionSpace<FunctionSpaceType>::
 isGeometryField() const
 {
   return this->isGeometryField_;
+}
+
+template<typename FunctionSpaceType>
+void FieldVariableBaseFunctionSpace<FunctionSpaceType>::
+setIsGeometryField(bool isGeometryField)
+{
+  isGeometryField_ = isGeometryField;
 }
 
 template<typename FunctionSpaceType>

@@ -11,7 +11,7 @@ template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 initializeHasFullNumberOfNodes()
 {
-  // determine if the local partition is at the x+/y+/z+ border of the global domain
+  // determine if the local partition is at the x+/y+/z+ boundary of the global domain
   for (int i = 0; i < MeshType::dim(); i++)
   {
     assert (beginElementGlobal_[i] + nElementsLocal_[i] <= (int)nElementsGlobal_[i]);
@@ -25,11 +25,10 @@ initializeHasFullNumberOfNodes()
 
 template<typename MeshType,typename BasisFunctionType>
 void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
-initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>> functionSpace)
+initializeDofNosLocalNaturalOrdering()
 {
   if (dofNosLocalNaturalOrdering_.empty())
   {
-
     // resize the vector to hold number of localWithGhosts dofs
     dofNosLocalNaturalOrdering_.resize(nDofsLocalWithGhosts());
 
@@ -45,7 +44,7 @@ initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpac
         // loop over dofs of node
         for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
         {
-          dof_no_t dofNoLocal = functionSpace->getNodeNo(coordinates)*nDofsPerNode + dofOnNodeIndex;
+          dof_no_t dofNoLocal = getNodeNoLocal(coordinates)*nDofsPerNode + dofOnNodeIndex;
           dofNosLocalNaturalOrdering_[index++] = dofNoLocal;
         }
       }
@@ -64,7 +63,7 @@ initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpac
           // loop over dofs of node
           for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
           {
-            dof_no_t dofNoLocal = functionSpace->getNodeNo(coordinates)*nDofsPerNode + dofOnNodeIndex;
+            dof_no_t dofNoLocal = getNodeNoLocal(coordinates)*nDofsPerNode + dofOnNodeIndex;
             dofNosLocalNaturalOrdering_[index++] = dofNoLocal;
           }
         }
@@ -87,7 +86,7 @@ initializeDofNosLocalNaturalOrdering(std::shared_ptr<FunctionSpace::FunctionSpac
             // loop over dofs of node
             for (int dofOnNodeIndex = 0; dofOnNodeIndex < nDofsPerNode; dofOnNodeIndex++)
             {
-              dof_no_t dofNoLocal = functionSpace->getNodeNo(coordinates)*nDofsPerNode + dofOnNodeIndex;
+              dof_no_t dofNoLocal = getNodeNoLocal(coordinates)*nDofsPerNode + dofOnNodeIndex;
               dofNosLocalNaturalOrdering_[index++] = dofNoLocal;
             }
           }
@@ -109,6 +108,7 @@ initialize1NodeMesh()
 
   LOG(DEBUG) << "initialize mesh partition for mesh with 1 dof";
 
+  isDegenerate_ = false;
   dmElements_ = nullptr;
   beginElementGlobal_[0] = 0;
   nElementsLocal_[0] = 0;
@@ -133,6 +133,34 @@ initialize1NodeMesh()
   PetscErrorCode ierr;
   PetscInt index = 0;
   ierr = ISLocalToGlobalMappingCreate(rankSubset_->mpiCommunicator(), 1, 1, &index, PETSC_COPY_VALUES, &localToGlobalPetscMappingDofs_); CHKERRV(ierr);
+}
+
+template<typename MeshType,typename BasisFunctionType>
+void MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+initializeDegenerateMesh()
+{
+  // We initialize for a mesh with 0 elements and 0 nodes and dofs, this occurs when the mpi communicator is MPI_COMM_NULL
+  LOG(DEBUG) << "initialize mesh partition for degenerate mesh";
+
+  isDegenerate_ = true;
+  dmElements_ = nullptr;
+  beginElementGlobal_.fill(0);
+  nElementsLocal_.fill(0);
+  nElementsGlobal_.fill(0);
+  nRanks_.fill(0);
+  ownRankPartitioningIndex_.fill(0);
+  localSizesOnPartitions_.fill(std::vector<element_no_t>({0}));
+  hasFullNumberOfNodes_.fill(false);
+
+  onlyNodalDofLocalNos_.clear();
+
+  dofNosLocalNaturalOrdering_.clear();
+  localToGlobalPetscMappingDofs_ = NULL;
+  nDofsLocalWithoutGhosts_ = 0;
+
+  this->dofNosLocal_.clear();
+
+  localToGlobalPetscMappingDofs_ = nullptr;
 }
 
 template<typename MeshType,typename BasisFunctionType>
@@ -169,7 +197,10 @@ createDmElements()
                           NULL, dmElements_.get()); CHKERRV(ierr);
 
       ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
-      ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
+      ierr = DMSetUp(*dmElements_);
+      if (ierr)
+        LOG(ERROR) << "Could not create 1D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+      CHKERRV(ierr);
 
       // get global coordinates of local partition
       PetscInt x, m;
@@ -209,7 +240,10 @@ createDmElements()
                           nDofsPerElement, ghostLayerWidth, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
 
       ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
-      ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
+      ierr = DMSetUp(*dmElements_);
+      if (ierr)
+        LOG(ERROR) << "Could not create 2D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+      CHKERRV(ierr);
 
       // get global coordinates of local partition
       PetscInt x, y, m, n;
@@ -242,7 +276,7 @@ createDmElements()
       MPI_Comm cartesianCommunicator;
       MPIUtility::handleReturnValue(
         MPI_Cart_create(mpiCommunicator(), 2, nRanks_.data(), meshIsPeriodicInDimension.data(), true, &cartesianCommunicator),
-      "MPI_Cart_create");
+        "MPI_Cart_create");
     }
     else if (MeshType::dim() == 3)
     {
@@ -256,7 +290,10 @@ createDmElements()
                             nDofsPerElement, ghostLayerWidth, NULL, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
 
         ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
-        ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
+        ierr = DMSetUp(*dmElements_);
+        if (ierr)
+          LOG(ERROR) << "Could not create 3D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+        CHKERRV(ierr);
 
         // get global coordinates of local partition
         PetscInt x, y, z, m, n, p;
@@ -311,7 +348,10 @@ createDmElements()
                               nDofsPerElement, ghostLayerWidth, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
 
           ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
-          ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
+          ierr = DMSetUp(*dmElements_);
+          if (ierr)
+            LOG(ERROR) << "Could not create 2D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+          CHKERRV(ierr);
 
           // get global coordinates of local partition
           PetscInt x, y, m, n;
@@ -347,7 +387,10 @@ createDmElements()
                               nDofsPerElement, ghostLayerWidth, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
 
           ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
-          ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
+          ierr = DMSetUp(*dmElements_);
+          if (ierr)
+            LOG(ERROR) << "Could not create 2D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+          CHKERRV(ierr);
 
           // get global coordinates of local partition
           PetscInt x, y, m, n;
@@ -383,7 +426,10 @@ createDmElements()
                               nDofsPerElement, ghostLayerWidth, NULL, NULL, dmElements_.get()); CHKERRV(ierr);
 
           ierr = DMSetFromOptions(*dmElements_); CHKERRV(ierr);
-          ierr = DMSetUp(*dmElements_); CHKERRV(ierr);
+          ierr = DMSetUp(*dmElements_);
+          if (ierr)
+            LOG(ERROR) << "Could not create 2D decomposition of domain with " << nElementsGlobal_ << " global elements for " << nRanks_ << " MPI ranks";
+          CHKERRV(ierr);
 
           // get global coordinates of local partition
           PetscInt x, y, m, n;
@@ -459,7 +505,8 @@ createLocalDofOrderings()
   VLOG(1) << "--------------------";
   VLOG(1) << "createLocalDofOrderings " << MeshType::dim() << "D";
 
-  MeshPartitionBase::createLocalDofOrderings(nDofsLocalWithGhosts());
+  // initialize dofNosLocalIS_ and dofNosLocalNonGhostIS_
+  MeshPartitionBase::createLocalDofOrderings();
 
   // fill onlyNodalDofLocalNos_
   const int nDofsPerNode = FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>::nDofsPerNode();

@@ -17,6 +17,9 @@ public:
 
   //! use constructor of base class
   using LoadBalancingBase<TimeStepping>::LoadBalancingBase;
+
+protected:
+  virtual void rebalance(){};
 };
 
 /** This is the partial specialization for strang splitting, for which load balancing is implemented.

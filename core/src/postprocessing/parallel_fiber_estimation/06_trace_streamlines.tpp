@@ -5,7 +5,8 @@ namespace Postprocessing
 
 template<typename BasisFunctionType>
 void ParallelFiberEstimation<BasisFunctionType>::
-traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool streamlineDirectionUpwards, std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints)
+traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool streamlineDirectionUpwards,
+                 std::vector<Vec3> &seedPoints, std::vector<std::vector<Vec3>> &streamlinePoints)
 {
   int nStreamlines = seedPoints.size();
   streamlinePoints.resize(nStreamlines);
@@ -65,13 +66,13 @@ traceStreamlines(int nRanksZ, int rankZNo, double streamlineDirection, bool stre
     // Rank int(nRanksZ/2) send the initial seed points to the rank below (int(nRanksZ/2)-1)
     // Then every rank traces its streamlines and sends the end points as new seed points to the next rank (lower or upper neighbour, depending on streamlineDirection)
 
-    LOG(DEBUG) << "call exchangeBorderSeedPoints with " << seedPoints.size() << " seed points";
+    LOG(DEBUG) << "call exchangeBoundarySeedPoints with " << seedPoints.size() << " seed points";
 
     // determine if previously set seedPoints are used or if they are received from neighbouring rank, receive seed points or send them to lower neighbour, if own rank is int(nRanksZ/2)
-    exchangeBorderSeedPoints(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints);
+    exchangeBoundarySeedPoints(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints);
 
     // receive seed points from neighbouring rank
-    exchangeBorderSeedPointsBeforeTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints);
+    exchangeBoundarySeedPointsBeforeTracing(nRanksZ, rankZNo, streamlineDirectionUpwards, seedPoints);
 
     LOG(DEBUG) << " on " << nRanksZ << " ranks in Z direction, trace " << nStreamlines << " streamlines, streamlineDirectionUpwards: " << streamlineDirectionUpwards;
     LOG(DEBUG) << " There are " << seedPoints.size() << " seed points: " << seedPoints;

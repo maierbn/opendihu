@@ -7,8 +7,11 @@
 #include <vector>
 #include <functional>
 #include <petscmat.h>
+#include <limits>
+#include <Vc/Vc>
 
 /** This file contains elemental operators for vectors, stored as `std::array<double,nComponents>`.
+ *  The template typename double_v_t usually stands for double and Vc::double_v.
  */
 
 //! arbitrary type difference
@@ -35,26 +38,6 @@ std::array<double,nComponents> &operator*=(std::array<double,nComponents> &vecto
 template<std::size_t nComponents>
 std::array<double,nComponents> &operator/=(std::array<double,nComponents> &vector1, double lambda);
 
-//! scalar*vector multiplication
-template<std::size_t nComponents>
-std::array<double,nComponents> operator*(double lambda, std::array<double,nComponents> vector);
-
-//! vector*scalar multiplication
-template<std::size_t nComponents>
-std::array<double,nComponents> operator*(std::array<double,nComponents> vector, double lambda);
-
-//! vector*scalar multiplication
-template<typename T>
-std::vector<T> operator*(std::vector<T> vector, double lambda);
-
-//! component-wise vector multiplication
-template<std::size_t nComponents>
-std::array<double,nComponents> operator*(std::array<double,nComponents> vector1, std::array<double,nComponents> vector2); // component-wise multiplication
-
-//! vector multiplication, outer product
-template<std::size_t nComponents1, std::size_t nComponents2>
-std::array<std::array<double,nComponents1>,nComponents2> operator*(const std::array<double,nComponents2> vector1, const std::array<double,nComponents1> vector2);
-
 //! component-wise division
 template<typename T, std::size_t nComponents>
 std::array<T,nComponents> operator/(std::array<T,nComponents> vector1, std::array<T,nComponents> vector2);
@@ -63,9 +46,13 @@ std::array<T,nComponents> operator/(std::array<T,nComponents> vector1, std::arra
 template<typename T, std::size_t nComponents>
 std::array<T,nComponents> operator/(std::array<T,nComponents> vector1, double value);
 
-//! matrix-vector multiplication, note that there is a matrix class with also matrix-vector multiplication. It stores matrices in row-major order, here column-major order is assumed
-template<std::size_t M, std::size_t N>
-std::array<double,M> operator*(const std::array<std::array<double,M>,N> &matrix, const std::array<double,N> vector);
+//! extract multiple values from a normal vector
+template<std::size_t N>
+std::array<Vc::double_v,N> getValuesAtIndices(const std::vector<std::array<double,N>> &values, Vc::int_v indices);
+
+//! extract multiple values from a normal vector
+template<std::size_t N>
+std::array<double,N> getValuesAtIndices(const std::vector<std::array<double,N>> &values, int index);
 
 //! comparison operator with double value, true if any of the components fulfills the conditions " < value"
 template<typename T, std::size_t N>
@@ -74,6 +61,9 @@ bool operator<(const std::array<T,N> &vector, double value);
 //! output array content to stream
 template<typename T, std::size_t N>
 std::ostream &operator<<(std::ostream &stream, const std::array<T,N> &vector);
+
+template<std::size_t N>
+std::ostream &operator<<(std::ostream &stream, const std::array<double,N> &vector);
 
 //! output array content to stream
 template<std::size_t N>

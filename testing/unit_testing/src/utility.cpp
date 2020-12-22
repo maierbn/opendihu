@@ -59,7 +59,7 @@ void removeVaryingContent(std::string &contents)
   }
 
   // also remove timestamp and meta information in python files
-  // example: {"version": "opendihu 0.1, build Jan 18 2019 20:51:36, C++ 201402, GCC 7.3.0", "meta": "current time: 2019/01/18 20:57:17, hostname: lapsgs05, n ranks: 4", "meshType" ...
+  // example: {"version": "opendihu 0.1, built Jan 18 2019 20:51:36, C++ 201402, GCC 7.3.0", "meta": "current time: 2019/01/18 20:57:17, hostname: lapsgs05, n ranks: 4", "meshType" ...
 
   while(contents.find("\"version") != std::string::npos)
   {
@@ -162,8 +162,8 @@ void assertFileMatchesContent(std::string filename, std::string referenceContent
         {
           int pos = std::distance(fileContents.begin(),iterFileContents);
           msg << "mismatch at character, file: [" << *iterFileContents << "] != reference: [" << *iterReferenceContents << "], pos: "
-            << pos << std::endl << "file: ... " << fileContents.substr(std::max(0,pos-50),std::min((int)fileContents.size()-std::max(0,pos-50),50)) << "..."
-            << std::endl << "ref:  ... " << referenceContents.substr(std::max(0,pos-50),std::min((int)referenceContents.size()-std::max(0,pos-50),50)) << "...";
+            << pos << std::endl << "file: ... " << fileContents.substr(std::max(0,pos-50),std::min((int)fileContents.size()-std::max(0,pos-50),100)) << "..."
+            << std::endl << "ref:  ... " << referenceContents.substr(std::max(0,pos-50),std::min((int)referenceContents.size()-std::max(0,pos-50),100)) << "...";
         }
         referenceContentMatches = false;
         //VLOG(1) << "mismatch!";

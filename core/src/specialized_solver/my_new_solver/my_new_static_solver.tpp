@@ -7,7 +7,7 @@
 #include "braid.h"
 #endif
 
-template<class NestedSolver>
+template<typename NestedSolver>
 MyNewStaticSolver<NestedSolver>::
 MyNewStaticSolver(DihuContext context) :
   Runnable(),
@@ -25,7 +25,7 @@ MyNewStaticSolver(DihuContext context) :
   LOG(DEBUG) << "myOption: " << myOption;
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MyNewStaticSolver<NestedSolver>::
 initialize()
 {
@@ -35,8 +35,9 @@ initialize()
 
   // initialize() will be called before the simulation starts.
 
-  // add this solver to the solvers diagram, which is a SVG file that will be created at the end of the simulation.
-  DihuContext::solverStructureVisualizer()->addSolver("MyNewStaticSolver");
+  // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
+  DihuContext::solverStructureVisualizer()->addSolver("MyNewStaticSolver", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means slot connector data is shared with the first subsolver
+  // if you have your own slot connector data rather than the one of the subsolver, call "addSolver" with false as second argument
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();
@@ -63,8 +64,8 @@ initialize()
   // it is also possible to pass some field variables from the data of the NestedSolver to own data object
   data_.setSolutionVariable(nestedSolver_.data().solution());
 
-  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
 
   // here is the space to initialize anything else that is needed for your solver
@@ -80,7 +81,7 @@ initialize()
   initialized_ = true;
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MyNewStaticSolver<NestedSolver>::
 run()
 {
@@ -99,7 +100,7 @@ run()
   this->outputWriterManager_.writeOutput(this->data_);
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MyNewStaticSolver<NestedSolver>::
 reset()
 {
@@ -109,7 +110,7 @@ reset()
   // "uninitialize" everything
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 void MyNewStaticSolver<NestedSolver>::
 executeMyHelperMethod()
 {
@@ -141,7 +142,7 @@ executeMyHelperMethod()
   ierr = MatShift(m, 1.0); CHKERRV(ierr);
 }
 
-template<class NestedSolver>
+template<typename NestedSolver>
 typename MyNewStaticSolver<NestedSolver>::Data &MyNewStaticSolver<NestedSolver>::
 data()
 {
@@ -153,12 +154,12 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
-template<class NestedSolver>
-std::shared_ptr<typename MyNewStaticSolver<NestedSolver>::OutputConnectorDataType> MyNewStaticSolver<NestedSolver>::
-getOutputConnectorData()
+//! the transfer is done by the slot_connector_data_transfer class
+template<typename NestedSolver>
+std::shared_ptr<typename MyNewStaticSolver<NestedSolver>::SlotConnectorDataType> MyNewStaticSolver<NestedSolver>::
+getSlotConnectorData()
 {
   //! This is relevant only, if this solver is part of a splitting or coupling scheme. Then this method returns the values/variables that will be
   // transferred to the other solvers. We can just reuse the values of the nestedSolver_.
-  return nestedSolver_.getOutputConnectorData();
+  return nestedSolver_.getSlotConnectorData();
 }

@@ -7,12 +7,12 @@ namespace FunctionSpace
 
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>
 Vec3 FunctionSpaceGeometry<MeshType,BasisFunctionType,DummyForTraits>::
-getGeometry(node_no_t dofGlobalNo) const
+getGeometry(node_no_t dofLocalNo) const
 {
   // assert that geometry field variable is set
   assert (this->geometryField_);
 
-  return this->geometryField_->getValue(dofGlobalNo);
+  return this->geometryField_->getValue(dofLocalNo);
 }
 
 //! return an array containing all geometry entries for an element
@@ -24,8 +24,21 @@ getElementGeometry(element_no_t elementNoLocal, std::array<Vec3, FunctionSpaceBa
   assert (this->geometryField_);
   assert (elementNoLocal >= 0);
   if (elementNoLocal >= this->nElementsLocal())
-    LOG(ERROR) << "FunctionSpace::getElementGeometry elementNoLocal: " << elementNoLocal << ", nElementsLocal: " << this->nElementsLocal();
+    LOG(ERROR) << "Invalid element no in FunctionSpace::getElementGeometry, elementNoLocal: " << elementNoLocal << ", nElementsLocal: " << this->nElementsLocal();
   assert (elementNoLocal < this->nElementsLocal());
+
+  this->geometryField_->getElementValues(elementNoLocal, values);
+}
+
+//! get all geometry entries for an element
+template<typename MeshType,typename BasisFunctionType,typename DummyForTraits>
+void FunctionSpaceGeometry<MeshType,BasisFunctionType,DummyForTraits>::
+getElementGeometry(Vc::int_v elementNoLocal, std::array<Vec3_v, FunctionSpaceBaseDim<MeshType::dim(),BasisFunctionType>::nDofsPerElement()> &values)
+{
+  // assert that geometry field variable is set
+  assert (this->geometryField_);
+  assert (elementNoLocal[0] >= 0);
+  assert (elementNoLocal[0] < this->nElementsLocal());
 
   this->geometryField_->getElementValues(elementNoLocal, values);
 }

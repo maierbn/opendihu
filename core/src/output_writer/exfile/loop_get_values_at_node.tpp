@@ -1,6 +1,7 @@
 #include "output_writer/exfile/loop_get_values_at_node.h"
 
 #include <cstdlib>
+#include "field_variable/field_variable.h"
 
 namespace OutputWriter
 {
@@ -26,7 +27,7 @@ loopGetValuesAtNode(const FieldVariablesForOutputWriterType &fieldVariables, std
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value && !Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
 getValuesAtNode(CurrentFieldVariableType currentFieldVariable, std::string meshName, 
                 element_no_t currentNodeGlobalNo, std::vector<double> &valuesAtNode)
 {
@@ -70,10 +71,10 @@ getValuesAtNode(TupleType currentFieldVariableTuple, std::string meshName,
 // element i is of vector type
 template<typename VectorType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-getValuesAtNode(VectorType currentFieldVariableVector, std::string meshName, 
+getValuesAtNode(VectorType currentFieldVariableGradient, std::string meshName, 
                 element_no_t currentNodeGlobalNo, std::vector<double> &valuesAtNode)
 {
-  for (auto& currentFieldVariable : currentFieldVariableVector)
+  for (auto& currentFieldVariable : currentFieldVariableGradient)
   {
     // call function on all vector entries
     if (getValuesAtNode<typename VectorType::value_type>(
@@ -83,5 +84,30 @@ getValuesAtNode(VectorType currentFieldVariableVector, std::string meshName,
   return false;  // do not break iteration
 }
 
+// element i is a field variables with Mesh::CompositeOfDimension<D>
+template<typename CurrentFieldVariableType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
+getValuesAtNode(CurrentFieldVariableType currentFieldVariable, std::string meshName,
+                element_no_t currentNodeGlobalNo, std::vector<double> &valuesAtNode)
+{
+  const int D = CurrentFieldVariableType::element_type::FunctionSpace::dim();
+  typedef typename CurrentFieldVariableType::element_type::FunctionSpace::BasisFunction BasisFunctionType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType> SubFunctionSpaceType;
+  const int nComponents = CurrentFieldVariableType::element_type::nComponents();
+
+  typedef FieldVariable::FieldVariable<SubFunctionSpaceType, nComponents> SubFieldVariableType;
+
+  std::vector<std::shared_ptr<SubFieldVariableType>> subFieldVariables;
+  currentFieldVariable->getSubFieldVariables(subFieldVariables);
+
+  for (auto& currentSubFieldVariable : subFieldVariables)
+  {
+    // call function on all vector entries
+    if (getValuesAtNode<std::shared_ptr<SubFieldVariableType>>(currentSubFieldVariable, meshName, currentNodeGlobalNo, valuesAtNode))
+      return true;
+  }
+
+  return false;  // do not break iteration
+}
 }  // namespace ExfileLoopOverTuple
 }  // namespace OutputWriter

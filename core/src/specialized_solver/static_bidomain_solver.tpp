@@ -35,7 +35,7 @@ StaticBidomainSolver(DihuContext context) :
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 void StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -59,7 +59,8 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
   // write current output values
-  this->outputWriterManager_.writeOutput(this->data_, 0, endTime_);
+  if (withOutputWritersEnabled)
+    this->outputWriterManager_.writeOutput(this->data_, 0, endTime_);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -117,11 +118,15 @@ initialize()
   DihuContext::solverStructureVisualizer()->enable();
   DihuContext::solverStructureVisualizer()->beginChild("Activation Transmembrane");
 
+  LOG(DEBUG) << "fem flow solution: " << *finiteElementMethodPotentialFlow_.data().solution();
   LOG(DEBUG) << "compute gradient field";
 
   // compute a gradient field from the solution of the potential flow
   data_.flowPotential()->setValues(*finiteElementMethodPotentialFlow_.data().solution());
+  LOG(DEBUG) << "flow potential: " << *data_.flowPotential();
+
   data_.flowPotential()->computeGradientField(data_.fiberDirection());
+  // note, fiberDirection is not normalized, it gets normalized in the initialize method of the finite element data class (diffusion_tensor_directional.tpp)
 
   VLOG(1) << "flow potential: " << *data_.flowPotential();
   VLOG(1) << "fiber direction: " << *data_.fiberDirection();
@@ -166,23 +171,32 @@ initialize()
 
   // set the nullspace of the matrix
   // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
-  MatNullSpace const_functions;
-  MatNullSpaceCreate(PETSC_COMM_WORLD, PETSC_TRUE, 0, nullptr, &const_functions);
-  MatSetNullSpace(systemMatrix, const_functions);
-  MatSetNearNullSpace(systemMatrix, const_functions); // for multigrid methods
-  MatNullSpaceDestroy(&const_functions);
+  MatNullSpace constantFunctions;
+  MatNullSpaceCreate(rankSubset_->mpiCommunicator(), PETSC_TRUE, 0, nullptr, &constantFunctions);
+  MatSetNullSpace(systemMatrix, constantFunctions);
+  MatSetNearNullSpace(systemMatrix, constantFunctions); // for multigrid methods
+  MatNullSpaceDestroy(&constantFunctions);
 
-  // set the outputConnectorData for the solverStructureVisualizer to appear in the solver diagram
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
-void StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::reset()
+void StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+reset()
 {
   this->initialized_ = false;
+}
+
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  this->outputWriterManager_.writeOutput(this->data_, 0, endTime_);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -211,9 +225,9 @@ solveLinearSystem()
 
   // solve the system, KSPSolve(ksp,b,x)
 #ifndef NDEBUG
-  this->linearSolver_->solve(rightHandSide, solution);
-#else
   this->linearSolver_->solve(rightHandSide, solution, "Linear system of bidomain problem solved");
+#else
+  this->linearSolver_->solve(rightHandSide, solution);
 #endif
 }
 
@@ -298,19 +312,19 @@ data()
 }
 
 //! get the data that will be transferred in the operator splitting to the other term of the splitting
-//! the transfer is done by the output_connector_data_transfer class
+//! the transfer is done by the slot_connector_data_transfer class
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
-std::shared_ptr<typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::OutputConnectorDataType>
+std::shared_ptr<typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::SlotConnectorDataType>
 StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  return this->data_.getOutputConnectorData();  // transmembranePotential
+  return this->data_.getSlotConnectorData();  // transmembranePotential
 }
 
 //! output the given data for debugging
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 std::string StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-getString(std::shared_ptr<typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::OutputConnectorDataType> data)
+getString(std::shared_ptr<typename StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::SlotConnectorDataType> data)
 {
   std::stringstream s;
   s << "<StaticBidomain:" << data << ">";

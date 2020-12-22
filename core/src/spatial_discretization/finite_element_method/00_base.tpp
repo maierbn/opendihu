@@ -26,7 +26,7 @@ namespace SpatialDiscretization
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
 FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
 FiniteElementMethodBase(DihuContext context, std::shared_ptr<FunctionSpaceType> functionSpace) :
-  context_(context["FiniteElementMethod"]), data_(context["FiniteElementMethod"]), specificSettings_(context_.getPythonConfig()), initialized_(false)
+  context_(context["FiniteElementMethod"]), data_(context_), specificSettings_(context_.getPythonConfig()), initialized_(false)
 {
   LOG(DEBUG) << "FiniteElementMethodBase constructor, context: " << this->context_.getPythonConfig();
   outputWriterManager_.initialize(context_, specificSettings_);
@@ -89,6 +89,11 @@ initialize()
 
   // assemble stiffness matrix
   Control::PerformanceMeasurement::start("durationSetStiffnessMatrix");
+
+  // initialize spatial parameter prefactor
+  prefactor_.initialize(specificSettings_, "prefactor", 1.0, this->data_.functionSpace());
+
+  // compute the stiffness matrix
   setStiffnessMatrix();
 
   // save the stiffness matrix also in the other slot, that will not be overwritten by applyBoundaryConditions
@@ -116,7 +121,7 @@ initialize()
 
   // add this solver to the solvers diagram
   DihuContext::solverStructureVisualizer()->addSolver("FiniteElementMethod");
-  DihuContext::solverStructureVisualizer()->setOutputConnectorData(getOutputConnectorData());
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
   initialized_ = true;
 }
@@ -175,6 +180,9 @@ solve()
   VLOG(1) << "rhs: " << *data_.rightHandSide();
   VLOG(1) << "stiffnessMatrix: " << *stiffnessMatrix;
 
+  // initialize coordinates for PETSc geometric multi-grid solvers
+  setInformationToPreconditioner();
+
   // non-zero initial values
 #if 0  
   PetscScalar scalar = 0.5;
@@ -197,11 +205,59 @@ solve()
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
-std::shared_ptr<typename FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::OutputConnectorDataType>
-FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
-getOutputConnectorData()
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
+setInformationToPreconditioner()
 {
-  return data_.getOutputConnectorData();
+  // get linear solver context from solver manager
+  std::shared_ptr<Solver::Linear> linearSolver = this->context_.solverManager()->template solver<Solver::Linear>(
+    this->specificSettings_, this->data_.functionSpace()->meshPartition()->mpiCommunicator());
+  std::shared_ptr<KSP> ksp = linearSolver->ksp();
+  assert(ksp != nullptr);
+  PetscErrorCode ierr;
+
+  // get preconditioner
+  PC pc;
+  ierr = KSPGetPC(*ksp, &pc); CHKERRV(ierr);
+
+
+  // check, if GAMG preconditioner is selected
+  PetscBool useGAMGPreconditioner;
+  PetscBool useHYPREPreconditioner;
+  ierr = PetscObjectTypeCompare((PetscObject)pc, PCGAMG, &useGAMGPreconditioner); CHKERRV(ierr);
+  ierr = PetscObjectTypeCompare((PetscObject)pc, PCHYPRE, &useHYPREPreconditioner); CHKERRV(ierr);
+
+  // only set coordinates ith the GAMG preconditioner is selected
+  if ((useGAMGPreconditioner && FunctionSpaceType::Mesh::dim() < 3) || useHYPREPreconditioner)
+  {
+    // set the local node positions for the preconditioner
+    int nDofsPerNode = data_.functionSpace()->nDofsPerNode();
+    int nNodesLocal = data_.functionSpace()->nNodesLocalWithoutGhosts();
+
+    std::vector<double> nodePositionCoordinatesForPreconditioner;
+    nodePositionCoordinatesForPreconditioner.reserve(3*nNodesLocal);
+
+    // loop over nodes and add their node positions
+    for (dof_no_t dofNoLocal = 0; dofNoLocal < nNodesLocal*nDofsPerNode; dofNoLocal++)
+    {
+      Vec3 nodePosition = data_.functionSpace()->getGeometry(dofNoLocal);
+
+      // add the coordinates
+      for (int i = 0; i < 3; i++)
+        nodePositionCoordinatesForPreconditioner.push_back(nodePosition[i]);
+    }
+
+
+    LOG(DEBUG) << "set coordinates to preconditioner, " << nodePositionCoordinatesForPreconditioner.size() << " node coordinates";
+    ierr = PCSetCoordinates(pc, 3, nNodesLocal, nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
+  }
+}
+
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+std::shared_ptr<typename FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::SlotConnectorDataType>
+FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
+getSlotConnectorData()
+{
+  return data_.getSlotConnectorData();
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents>

@@ -16,11 +16,11 @@
 #include <ctime>
 
 // forward declaration
-template <int nStates,int nIntermediates_,typename FunctionSpaceType>
+template <int nStates,int nAlgebraics_,typename FunctionSpaceType>
 class CellmlAdapter;
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+void RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 initializeRhsRoutine()
 {
   // if "libraryFilename" is specified: use the given library
@@ -70,15 +70,34 @@ initializeRhsRoutine()
     }
 
     // compile source file to a library
+    std::stringstream baseFilename;
+    baseFilename << StringUtility::extractBasename(this->cellmlSourceCodeGenerator_.sourceFilename())
+      << "_" << this->cellmlSourceCodeGenerator_.nParameters() << "_";
+
+    const std::vector<int> &statesForTransfer = this->data_.statesForTransfer();
+    for (int i = 0; i < statesForTransfer.size(); i++)
+      baseFilename << statesForTransfer[i];
+    baseFilename << "_";
+
+    const std::vector<int> &algebraicsForTransfer = this->data_.algebraicsForTransfer();
+    for (int i = 0; i < algebraicsForTransfer.size(); i++)
+      baseFilename << algebraicsForTransfer[i];
+    baseFilename << "_";
+
+    const std::vector<int> &parametersForTransfer = this->data_.parametersForTransfer();
+    for (int i = 0; i < parametersForTransfer.size(); i++)
+      baseFilename << parametersForTransfer[i];
+
+    baseFilename << "_" << optimizationType_
+      << "_" << this->nInstances_;
+
     std::stringstream s;
-    s << "lib/"+StringUtility::extractBasename(this->cellmlSourceCodeGenerator_.sourceFilename()) << "_" << optimizationType_
-      << "_" << this->nInstances_ << ".so";
+    s << "lib/" << baseFilename.str() << ".so";
     libraryFilename = s.str();
 
     int rankNoWorldCommunicator = DihuContext::ownRankNoCommWorld();
     s.str("");
-    s << "src/"+StringUtility::extractBasename(this->cellmlSourceCodeGenerator_.sourceFilename()) << "_" << optimizationType_
-      << "_" << this->nInstances_ << "." << rankNoWorldCommunicator << this->cellmlSourceCodeGenerator_.sourceFileSuffix();
+    s << "src/" << baseFilename.str() << "." << rankNoWorldCommunicator << this->cellmlSourceCodeGenerator_.sourceFileSuffix();
     sourceToCompileFilename_ = s.str();
 
     // create path of library filename if it does not exist
@@ -129,8 +148,8 @@ initializeRhsRoutine()
 }
 
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void *RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+void *RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 loadRhsLibraryGetHandle(std::string libraryFilename)
 {
   std::string currentWorkingDirectory = getcwd(NULL,0);
@@ -170,8 +189,8 @@ loadRhsLibraryGetHandle(std::string libraryFilename)
   return handle;
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-bool RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 loadRhsLibrary(std::string libraryFilename)
 {
   // load dynamic library
@@ -184,6 +203,7 @@ loadRhsLibrary(std::string libraryFilename)
     // try to load several routine names
     rhsRoutine_ = (void (*)(void *,double,double*,double*,double*,double*)) dlsym(handle, "computeCellMLRightHandSide");
     rhsRoutineGPU_ = (void (*)(void *,double,double*,double*,double*,double*)) dlsym(handle, "computeGPUCellMLRightHandSide");
+    rhsRoutineSingleInstance_ = (void (*)(void *,double,double*,double*,double*,double*)) dlsym(handle, "computeCellMLRightHandSideSingleInstance");
     initConstsOpenCOR_ = (void(*)(double*, double*, double*)) dlsym(handle, "initConsts");
     computeRatesOpenCOR_ = (void(*)(double, double*, double*, double*, double*)) dlsym(handle, "computeRates");
     computeVariablesOpenCOR_  = (void(*)(double, double*, double*, double*, double*)) dlsym(handle, "computeVariables");
@@ -191,6 +211,7 @@ loadRhsLibrary(std::string libraryFilename)
     LOG(DEBUG) << "Library \"" << libraryFilename << "\" loaded. "
       << "rhsRoutine_: " << (rhsRoutine_==NULL? "NULL" : "yes")
       << ", rhsRoutineGPU_: " << (rhsRoutineGPU_==NULL? "NULL" : "yes")
+      << ", rhsRoutineSingleInstance: " << (rhsRoutineSingleInstance_==NULL? "NULL" : "yes")
       << ", initConstsOpenCOR_: " << (initConstsOpenCOR_==NULL? "NULL" : "yes")
       << ", computeRatesOpenCOR_: " << (computeRatesOpenCOR_==NULL? "NULL" : "yes")
       << ", computeVariablesOpenCOR_: " << (computeVariablesOpenCOR_==NULL? "NULL" : "yes");
@@ -225,8 +246,8 @@ loadRhsLibrary(std::string libraryFilename)
   return false;
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-void RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+void RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>::
 createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nInstancesRanks)
 {
   // get the global rank no, needed for the output filenames
@@ -297,7 +318,6 @@ createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nIns
     if (ret != 0)
     {
       LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
-      libraryFilename = "";
     }
     else
     {
@@ -311,8 +331,8 @@ createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nIns
   }
 }
 
-template<int nStates, int nIntermediates_, typename FunctionSpaceType>
-bool RhsRoutineHandler<nStates,nIntermediates_,FunctionSpaceType>::approximateExponentialFunction()
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+bool RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>::approximateExponentialFunction()
 {
   return approximateExponentialFunction_;
 }

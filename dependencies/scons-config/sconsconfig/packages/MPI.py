@@ -1,8 +1,9 @@
 
 import sys, os
-from Package import Package
+from .Package import Package
 import subprocess
 import socket
+import tempfile
 
 class MPI(Package):
 
@@ -99,14 +100,29 @@ int main(int argc, char* argv[])
       try:
         # try to get compiler and linker flags from mpicc, this directly has the needed includes paths
         #ctx.Message("Checking MPI "+str(ctx.env["mpiCC"])+" --showme") 
-        cflags = subprocess.check_output("{} --showme:compile".format(ctx.env["mpiCC"]), shell=True)
-        ldflags = subprocess.check_output("{} --showme:link".format(ctx.env["mpiCC"]), shell=True)
+        tf = tempfile.NamedTemporaryFile(delete=False)
+        temporary_filename = tf.name
+        cflags_command = "echo '{check_text}' > {temporary_filename} && {mpiCC} {temporary_filename} --showme:compile; rm {temporary_filename}".format(check_text=self.check_text, mpiCC=ctx.env["mpiCC"], temporary_filename=temporary_filename)
+        ldflags_command = "echo '{check_text}' > {temporary_filename} && {mpiCC} {temporary_filename} --showme:link; rm {temporary_filename}".format(check_text=self.check_text, mpiCC=ctx.env["mpiCC"], temporary_filename=temporary_filename)
+        cflags = subprocess.check_output(cflags_command, shell=True).decode("utf-8")
+        ldflags = subprocess.check_output(ldflags_command, shell=True).decode("utf-8")
 
-        # remove trailing newline
-        if cflags[-1] == '\n':
-          cflags = cflags[:-1]
-        if ldflags[-1] == '\n':
-          ldflags = ldflags[:-1]
+        ctx.Log("cflags: {}\n".format(cflags))
+        ctx.Log("ldflags: {}\n".format(ldflags))
+
+        # remove trailing newline and leading temporary_filename
+        try:
+          if cflags[-1] == '\n':
+            cflags = cflags[:-1]
+          if cflags[:len(temporary_filename)] == temporary_filename:
+            cflags = cflags[len(temporary_filename):]
+          if ldflags[-1] == '\n':
+            ldflags = ldflags[:-1]
+          if ldflags[:len(temporary_filename)] == temporary_filename:
+            ldflags = ldflags[len(temporary_filename):]
+        except:
+          ctx.Log("A string error occured.\n")
+          raise
 
         ctx.Log("extracted cflags  from {}: \n{}\n\n".format(ctx.env["mpiCC"], cflags))
         ctx.Log("extracted ldflags from {}: \n{}\n\n".format(ctx.env["mpiCC"], ldflags))
@@ -124,7 +140,7 @@ int main(int argc, char* argv[])
         use_mpi_dir = False
         
       except Exception as e: 
-        ctx.Message("MPI "+str(ctx.env["mpiCC"])+" --showme failed: \n"+str(e)+"\nNow considering MPI_DIR\n")
+        ctx.Message("MPI "+str(ctx.env["mpiCC"])+" --showme is not available: \n"+str(e)+"\nNow considering MPI_DIR\n")
         use_mpi_dir = True
     
     if use_mpi_dir:

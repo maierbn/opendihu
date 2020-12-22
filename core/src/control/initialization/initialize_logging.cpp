@@ -2,7 +2,7 @@
 
 #include <Python.h>  // this has to be the first included header
 
-void DihuContext::initializeLogging(int argc, char *argv[])
+void DihuContext::initializeLogging(int &argc, char *argv[])
 {
   START_EASYLOGGINGPP(argc, argv);
 /*
@@ -64,6 +64,42 @@ void DihuContext::initializeLogging(int argc, char *argv[])
     s << ownRankNoCommWorld_ << "/" << nRanksCommWorld_ << " ";
     prefix = s.str();
   }
+
+  // set location of log files
+  std::string logFilesPath = "/tmp/logs/";   // must end with '/'
+
+  // if the 3rd argument starts with '--log=', interpret it as logging path under /tmp/logs/
+  if (argc >= 3)
+  {
+    std::string argument(argv[2]);
+    if (argument.substr(0,6) == "--log=")
+    {
+      // parse logging directory, ensure that last character is '/'
+      std::string logDirectory = argument.substr(6);
+      if (logDirectory[logDirectory.size()-1] != '/')
+        logDirectory += "/";
+
+      logFilesPath += logDirectory;
+
+      // remove this argument
+      argc--;
+      for (int i = 2; i < argc; i++)
+      {
+        argv[i] = argv[i+1];
+      }
+    }
+    else if (argument.substr(0,15) == "--log-no-prefix")
+    {
+      prefix = "";
+
+      // remove this argument
+      argc--;
+      for (int i = 2; i < argc; i++)
+      {
+        argv[i] = argv[i+1];
+      }
+    }
+  }
   
 #ifdef NDEBUG      // if release
   if (nRanksCommWorld_ > 1)
@@ -77,21 +113,6 @@ void DihuContext::initializeLogging(int argc, char *argv[])
 #else
   conf.setGlobally(el::ConfigurationType::Format, prefix+"INFO : %msg");
 #endif
-
-  // set location of log files
-  std::string logFilesPath = "/tmp/logs/";   // must end with '/'
-
-  if (argc >= 3)
-  {
-    std::string argument(argv[2]);
-    if (argument[0] == '/')
-    {
-      if (argument[argument.size()-1] != '/')
-        argument += "/";
-
-      logFilesPath += argument.substr(1);
-    }
-  }
 
   if (nRanksCommWorld_ > 1)
   {
@@ -151,4 +172,18 @@ void DihuContext::initializeLogging(int argc, char *argv[])
   el::Loggers::reconfigureAllLoggers(conf);
   el::Loggers::removeFlag(el::LoggingFlag::AllowVerboseIfModuleNotSpecified);
   LOG(DEBUG) << "Log to \"" << logFilesPath << "\".";
+
+#if 0
+  // configure additional special logger, enable this and enable the CLOG(INFO, "mpi") line in mpi_utility.cpp to get a log of every mpi call
+  el::Loggers::getLogger("mpi");
+
+  // configure control and numerics logger to use different log files
+  el::Configurations configuration;
+  configuration.setToDefault();
+
+  configuration.setGlobally(el::ConfigurationType::Filename, "mpi.log");
+  el::Loggers::reconfigureLogger("mpi", configuration);
+
+  CLOG(INFO, "mpi") << "starting mpi log";
+#endif
 }

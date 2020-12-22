@@ -63,7 +63,7 @@ public:
   void setFunctionSpace(std::shared_ptr<FunctionSpaceType> functionSpace);
 
   //! set the property to be geometry field to this field variable
-  void setGeometryField(bool isGeometryField=true);
+  void setIsGeometryField(bool isGeometryField=true);
 
   //! get the number of entries of the internal values_ Vector
   std::size_t nEntries() const;
@@ -175,14 +175,14 @@ protected:
   //! initialize components
   void initializeComponents(std::vector<std::string> &componentNames, std::string exfileBasisRepresentation);
 
-  int exfileNo_;    ///< number of the fieldvariable in exelem file (index starts at 1)
-  element_no_t nElements_;    ///< number of elements
-  std::array<Component<FunctionSpaceType,nComponents>,nComponents> component_;   ///< one or multiple components of which this field variable consists of. They correspond to the names in this->componentNames_ (derived from FieldVariableComponents)
-  std::shared_ptr<ExfileRepresentation> exfileRepresentation_;       ///< the indexing given in the exelem file, this is the same for all components
-  std::shared_ptr<ElementToDofMapping> elementToDofMapping_;       ///< the element to dof mapping of all components, this is the same for all components
-  std::shared_ptr<ElementToNodeMapping> elementToNodeMapping_;      ///< mapping from element-local node indices to global node numbers
-  std::shared_ptr<NodeToDofMapping> nodeToDofMapping_;       ///< the node to dof mapping of all components, this is the same for all components
-  std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents>> values_;     ///< the vector that contains all values, the entries of all components are interleaved, e.g. (val1comp1, val1comp2, val2comp1, val2comp2, ...)
+  int exfileNo_;    //< number of the fieldvariable in exelem file (index starts at 1)
+  element_no_t nElements_;    //< number of elements
+  std::array<Component<FunctionSpaceType,nComponents>,nComponents> component_;   //< one or multiple components of which this field variable consists of. They correspond to the names in this->componentNames_ (derived from FieldVariableComponents)
+  std::shared_ptr<ExfileRepresentation> exfileRepresentation_;       //< the indexing given in the exelem file, this is the same for all components
+  std::shared_ptr<ElementToDofMapping> elementToDofMapping_;       //< the element to dof mapping of all components, this is the same for all components
+  std::shared_ptr<ElementToNodeMapping> elementToNodeMapping_;      //< mapping from element-local node indices to global node numbers
+  std::shared_ptr<NodeToDofMapping> nodeToDofMapping_;       //< the node to dof mapping of all components, this is the same for all components
+  std::shared_ptr<PartitionedPetscVec<FunctionSpaceType,nComponents>> values_;     //< the vector that contains all values, the entries of all components are interleaved, e.g. (val1comp1, val1comp2, val2comp1, val2comp2, ...)
 };
 
 } // namespace

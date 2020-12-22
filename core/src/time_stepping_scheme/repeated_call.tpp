@@ -28,7 +28,7 @@ initialize()
 
 
   // add this solver to the solvers diagram
-  DihuContext::solverStructureVisualizer()->addSolver("RepeatedCall");
+  DihuContext::solverStructureVisualizer()->addSolver("RepeatedCall", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means slot connector data is shared with the first subsolver
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized
   DihuContext::solverStructureVisualizer()->beginChild();
@@ -41,7 +41,8 @@ initialize()
 }
 
 template<typename Solver>
-void RepeatedCall<Solver>::advanceTimeSpan()
+void RepeatedCall<Solver>::
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -57,7 +58,7 @@ void RepeatedCall<Solver>::advanceTimeSpan()
   double currentTime = this->startTime_;
   for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
-    if (timeStepNo % this->timeStepOutputInterval_ == 0 && timeStepNo > 0)
+    if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
     {
       LOG(INFO) << "RepeatedCall, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
@@ -66,7 +67,7 @@ void RepeatedCall<Solver>::advanceTimeSpan()
     this->solver_.setTimeSpan(currentTime, currentTime+this->timeStepWidth_);
 
     // advance solver
-    this->solver_.advanceTimeSpan();
+    this->solver_.advanceTimeSpan(withOutputWritersEnabled);
 
     // advance simulation time
     timeStepNo++;
@@ -84,6 +85,14 @@ run()
 {
   initialize();
   advanceTimeSpan();
+}
+
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+template<typename Solver>
+void RepeatedCall<Solver>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  this->solver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
 }
 
 } // namespace

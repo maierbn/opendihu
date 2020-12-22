@@ -13,7 +13,7 @@ namespace FunctionSpace
 // unstructured
 template<int D,typename BasisFunctionType>
 bool FunctionSpaceFindPosition<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType,Mesh::UnstructuredDeformableOfDimension<D>>::
-findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,D> &xi, bool startSearchInCurrentElement, double xiTolerance)
+findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<double,D> &xi, bool startSearchInCurrentElement, double &residual, bool &searchedAllElements, double xiTolerance)
 {
   const element_no_t nElements = this->nElementsLocal();
 
@@ -22,8 +22,9 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
     elementNo = 0;
 
   // check if point is already in current element
-  if (this->pointIsInElement(point, elementNo, xi, xiTolerance))
+  if (this->pointIsInElement(point, elementNo, xi, residual, xiTolerance))
   {
+    searchedAllElements = false;
     return true;
   }
 
@@ -32,6 +33,7 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
   element_no_t elementNoEnd = (elementNo - 3 + nElements) % nElements;
 
   VLOG(3) << "elementNoStart: " << elementNoStart << ", elementNoEnd: " << elementNoEnd << ", nElements: " << nElements;
+  searchedAllElements = true;
 
   // search among all elements
   for (element_no_t currentElementNo = elementNoStart; currentElementNo != elementNoEnd; currentElementNo++)
@@ -44,7 +46,7 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
         break;
     }
 
-    if (this->pointIsInElement(point, currentElementNo, xi, xiTolerance))
+    if (this->pointIsInElement(point, currentElementNo, xi, residual, xiTolerance))
     {
       elementNo = currentElementNo;
       ghostMeshNo = -1;   // not a ghost mesh
@@ -54,5 +56,12 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
   return false;
 }
 
+
+template<int D,typename BasisFunctionType>
+std::shared_ptr<FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> FunctionSpaceFindPosition<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType,Mesh::UnstructuredDeformableOfDimension<D>>::
+ghostMesh(Mesh::face_or_edge_t faceOrEdge)
+{
+  return nullptr;
+}
 
 } // namespace

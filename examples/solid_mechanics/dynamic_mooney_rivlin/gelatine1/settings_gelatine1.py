@@ -69,17 +69,22 @@ def postprocess(result):
   # parse variables
   field_variables = result["data"]
   
+  # output all field variables for debugging
+  for i,f in enumerate(field_variables):
+    print(i,field_variables[i]["name"])
+  
   # field_variables[0] is the geometry
   # field_variables[1] is the displacements u
   # field_variables[2] is the velocities v
   # field_variables[3] is the PK2-Stress (Voigt)
+  # field_variables[4] is the material traction
   
-  stress_components = field_variables[3]["components"]
+  traction_components = field_variables[3]["components"]
   
-  # stress_components contains the symmetric 3x3 material stress tensor, in this order: S_11, S_22, S_33, S_12, S_13, S_23
-  s11_values = stress_components[0]["values"]   # stress in x-direction
-  s22_values = stress_components[1]["values"]   # stress in x-direction
-  s33_values = stress_components[2]["values"]   # stress in x-direction
+  # traction values contains the traction vector in reference configuration
+  traction1_values = traction_components[0]["values"]   # traction in x-direction
+  traction2_values = traction_components[1]["values"]   # traction in y-direction
+  traction3_values = traction_components[2]["values"]   # traction in z-direction
 
   # Integrate total forces, e.g. Fx = ∫∫ S_11(x,y) • ϕ(x,y) dxdy. The integration domain is the top layer of the geometry.
   # The result corresponds to the bearing forces.
@@ -153,9 +158,9 @@ def postprocess(result):
       
       index = k*(2*nx+1)*(2*ny+1) + j*(2*nx+1) + i
       
-      total_force_x += factor * s11_values[index]
-      total_force_y += factor * s22_values[index]
-      total_force_z += factor * s33_values[index]
+      total_force_x += factor * traction1_values[index]
+      total_force_y += factor * traction2_values[index]
+      total_force_z += factor * traction3_values[index]
   
   # output values
   print("t: {}, force: {},{},{}".format(current_time, total_force_x, total_force_y, total_force_z))
@@ -168,7 +173,9 @@ neumann_bc = []
 
 config = {
   "scenarioName": "3d_box",               # specifier to find simulation run in log file
+  "logFormat":    "csv",                  # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile": "mappings_between_meshes_log.txt",    # log file for mappings 
   "DynamicHyperelasticitySolver": {
     #"numberTimeSteps": 1,
     "endTime": end_time,                  # end time of simulation
@@ -191,51 +198,74 @@ config = {
     "nElements": [nx, ny, nz],            # number of elements in x,y and z direction
     "inputMeshIsGlobal": True,            # if all indices are global (set to True)
     "physicalExtent": [nx, ny, nz],       # physical size in [m]
+    "physicalOffset": [0, 0, 0],          # bottom front left position of the mesh
     
     # nonlinear solver
-    "relativeTolerance": 1e-10,           # 1e-10 relative tolerance of the linear solver
-    "solverType": "preonly",              # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
-    "preconditionerType": "lu",           # type of the preconditioner
-    "maxIterations": 1e4,                 # maximum number of iterations in the linear solver
-    "snesMaxFunctionEvaluations": 1e8,    # maximum number of function iterations
-    "snesMaxIterations": 50,              # maximum number of iterations in the nonlinear solver
-    "snesRelativeTolerance": 1e-10,       # tolerance of the nonlinear solver
+    "relativeTolerance":          1e-10,                        # 1e-10 relative tolerance of the linear solver
+    "absoluteTolerance":          1e-10,                        # 1e-10 absolute tolerance of the residual of the linear solver       
+    "solverType":                 "preonly",                    # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
+    "preconditionerType":         "lu",                         # type of the preconditioner
+    "maxIterations":              1e4,                          # maximum number of iterations in the linear solver
+    "snesMaxFunctionEvaluations": 1e8,                          # maximum number of function iterations
+    "snesMaxIterations":          10,                           # maximum number of iterations in the nonlinear solver
+    "snesRelativeTolerance":      1e-5,                         # relative tolerance of the nonlinear solver
+    "snesLineSearchType":         "l2",                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
+    "snesAbsoluteTolerance":      1e-5,                         # absolute tolerance of the nonlinear solver
+    "snesRebuildJacobianFrequency": 10,                         # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
     
-    "dumpFilename": "",                   # filename of vector and matrix dump, "" means disabled
-    "dumpFormat": "matlab",               # format of vector and matrix dump
+    "dumpFilename": "",                                         # filename of vector and matrix dump, "" means disabled
+    "dumpFormat": "matlab",                                     # format of vector and matrix dump
+    
+    #"loadFactors":                [0.5, 1.0],                   # load factors for every timestep
+    "loadFactors":                [],                           # no load factors, solve problem directly
+    "loadFactorGiveUpThreshold": 0.1,                           # if the adaptive time stepping produces a load factor smaller than this value, the solution will be accepted for the current timestep, even if it did not converge fully to the tolerance
+    "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
     
     # boundary and initial conditions
-    "dirichletBoundaryConditions": dirichlet_bc,      # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
-    "neumannBoundaryConditions": neumann_bc,          # Neumann boundary conditions that define traction forces on surfaces of elements
-    "updateDirichletBoundaryConditionsFunction": update_dirichlet_boundary_conditions,      # function that updates the dirichlet BCs while the simulation is running
-    "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
+    "dirichletBoundaryConditions": dirichlet_bc,                        # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
+    "neumannBoundaryConditions":   neumann_bc,                          # Neumann boundary conditions that define traction forces on surfaces of elements
+    "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+    
+    "updateDirichletBoundaryConditionsFunction":  update_dirichlet_boundary_conditions,  # function that updates the Dirichlet BCs while the simulation is running
+    "updateDirichletBoundaryConditionsFunctionCallInterval": 1,                          # every which step the update function should be called, 1 means every time step
+    "updateNeumannBoundaryConditionsFunction":    None,                                  # function that updates the Neumann BCs while the simulation is running
+    "updateNeumannBoundaryConditionsFunctionCallInterval": 1,                            # every which step the update function should be called, 1 means every time step
     
     "initialValuesDisplacements": [[0.0,0.0,0.0] for _ in range((2*nx+1) * (2*ny+1) * (2*nz+1))],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
     "initialValuesVelocities":    [[0.0,0.0,0.0] for _ in range((2*nx+1) * (2*ny+1) * (2*nz+1))],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+    "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
     "constantBodyForce": (0,0,-1e-1),                 # a constant force that acts on the whole body, e.g. for gravity
+    
+    "dirichletOutputFilename":     "out/dirichlet_boundary_conditions",                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     
     # define which file formats should be written
     # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
     "OutputWriter" : [
       
       # Paraview files
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       
       # Python callback function "postprocess" (at the top of this scritpt)
-      {"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
+      {"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": "", "fileNumbering": "incremental"},
     ],
     # 2. additional output writer that writes also the hydrostatic pressure
     "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
       "OutputWriter" : [
-        #{"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+        #{"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       ]
     },
     # 3. additional output writer that writes virtual work terms
     "dynamic": {    # output of the dynamic solver, has additional virtual work values 
       "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-        #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-        #{"format": "Paraview", "outputInterval": 1, "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
+        #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+        #{"format": "Paraview", "outputInterval": 1, "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       ],
-    }
+    },
+    # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
+    "LoadIncrements": {   
+      "OutputWriter" : [
+        #{"format": "Paraview", "outputInterval": 1, "filename": "out/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+      ]
+    },
   }
 }

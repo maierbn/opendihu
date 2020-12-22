@@ -7,6 +7,7 @@
 #include "control/types.h"
 #include "output_writer/generic.h"
 #include "output_writer/paraview/poly_data_properties_for_mesh.h"
+#include "output_writer/paraview/series_writer.h"
 
 namespace OutputWriter
 {
@@ -77,17 +78,21 @@ public:
   static std::string convertToAscii(const std::vector<int> &vector, bool humanReadable);
 #endif
 
+  //! return a reference to the series writer
+  static SeriesWriter &seriesWriter();
+
 protected:
 
   /** one VTKPiece is the XML element that will be output as <Piece></Piece>. It is created from one or multiple opendihu meshes
    */
   struct VTKPiece
   {
-    std::set<std::string> meshNamesCombinedMeshes;   ///< the meshNames of the combined meshes, or only one meshName if it is not a merged mesh
-    PolyDataPropertiesForMesh properties;   ///< the properties of the merged mesh
+    std::set<std::string> meshNamesCombinedMeshes;   //< the meshNames of the combined meshes, or only one meshName if it is not a merged mesh
+    std::vector<std::string> meshNamesCombinedMeshesVector;   //< the same as meshNamesCombinedMeshes, but as vector that preserves the order, this is important for the output file
+    PolyDataPropertiesForMesh properties;   //< the properties of the merged mesh
 
-    std::string firstScalarName;   ///< name of the first scalar field variable of the mesh
-    std::string firstVectorName;   ///< name of the first non-scalar field variable of the mesh
+    std::string firstScalarName;   //< name of the first scalar field variable of the mesh (this is for Paraview such that it selects this as the default scalar field)
+    std::string firstVectorName;   //< name of the first vector field variable with 3 components of the mesh (this is for Paraview such that it selects this as the default vector field)
 
     //! constructor, initialize nPoints and nCells to 0
     VTKPiece();
@@ -106,29 +111,42 @@ protected:
   //! write a vector containing nValues "12" (if output3DMeshes) or "9" (if !output3DMeshes) values for the types for an unstructured grid
   void writeCombinedTypesVector(MPI_File fileHandle, int ownRankNo, int nValues, bool output3DMeshes, int identifier);
 
-  bool binaryOutput_;  ///< if the data output should be binary encoded using base64
-  bool fixedFormat_;   ///< if non-binary output is selected, if the ascii values should be written with a fixed precision, like 1.000000e5
+  //! helper method that writes the unstructured grid file
+  template<typename FieldVariablesForOutputWriterType>
+  void writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWriterType &fieldVariables, PolyDataPropertiesForMesh &polyDataPropertiesForMesh,
+                                         const std::map<std::string, PolyDataPropertiesForMesh> &meshPropertiesUnstructuredGridFile,
+                                         std::vector<std::string> meshNames,
+                                         bool meshPropertiesInitialized, int &callIdentifier, std::string filename);
 
-  bool combineFiles_;   ///< if the output data should be combined for 1D meshes into a single PolyData output file (*.vtp) and for 2D and 3D meshes to normal *.vtu,*.vts or *.vtr files. This is needed when the number of output files should be reduced.
+  bool binaryOutput_;   //< if the data output should be binary encoded using base64
+  bool fixedFormat_;    //< if non-binary output is selected, if the ascii values should be written with a fixed precision, like 1.000000e5
 
-  std::vector<int> globalValuesSize_;   ///< cached values used in writeCombinedValuesVector
-  std::vector<int> nPreviousValues_;    ///< cached values used in writeCombinedValuesVector
+  bool combineFiles_;   //< if the output data should be combined for 1D meshes into a single PolyData output file (*.vtp) and for 2D and 3D meshes to normal *.vtu,*.vts or *.vtr files. This is needed when the number of output files should be reduced.
 
-  std::map<std::string, PolyDataPropertiesForMesh> meshPropertiesUnstructuredGridFile2D_;    ///< mesh information for a combined unstructured grid file (*.vtu), for 2D data
-  std::map<std::string, PolyDataPropertiesForMesh> meshPropertiesUnstructuredGridFile3D_;    ///< mesh information for a combined unstructured grid file (*.vtu), for 3D data
-  std::map<std::string, PolyDataPropertiesForMesh> meshPropertiesPolyDataFile_;    ///< mesh information for a poly data file (*.vtp), for 1D data
-  VTKPiece vtkPiece_;   ///< the VTKPiece data structure used for PolyDataFile
+  std::vector<int> globalValuesSize_;   //< cached values used in writeCombinedValuesVector
+  std::vector<int> nPreviousValues_;    //< cached values used in writeCombinedValuesVector
 
-  int nCellsPreviousRanks1D_ = 0;   ///< sum of number of cells on other processes with lower rank no., for vtp file
-  int nPointsPreviousRanks1D_ = 0;  ///< sum of number of points on other processes with lower rank no., for vtp file
-  int nPointsGlobal1D_ = 0;       ///< total number of points on all ranks, for vtp file
-  int nLinesGlobal1D_ = 0;       ///< total number of lines on all ranks, for vtp file
-  int nCellsPreviousRanks3D_ = 0;   ///< sum of number of cells on other processes with lower rank no., for vtu file
-  int nPointsPreviousRanks3D_ = 0;  ///< sum of number of points on other processes with lower rank no., for vtu file
-  int nPointsGlobal3D_ = 0;       ///< total number of points on all ranks, for vtu file
+  std::map<std::string, PolyDataPropertiesForMesh> meshPropertiesUnstructuredGridFile2D_;    //< mesh information for a combined unstructured grid file (*.vtu), for 2D data
+  std::map<std::string, PolyDataPropertiesForMesh> meshPropertiesUnstructuredGridFile3D_;    //< mesh information for a combined unstructured grid file (*.vtu), for 3D data
+  std::map<std::string, PolyDataPropertiesForMesh> meshPropertiesPolyDataFile_;    //< mesh information for a poly data file (*.vtp), for 1D data
+  VTKPiece vtkPiece1D_;             //< the VTKPiece data structure used for PolyDataFile, 1D
+  VTKPiece vtkPiece3D_;             //< the VTKPiece data structure used for
+
+  int nCellsPreviousRanks1D_ = 0;   //< sum of number of cells on other processes with lower rank no., for vtp file
+  int nPointsPreviousRanks1D_ = 0;  //< sum of number of points on other processes with lower rank no., for vtp file
+  int nPointsGlobal1D_ = 0;         //< total number of points on all ranks, for vtp file
+  int nLinesGlobal1D_ = 0;          //< total number of lines on all ranks, for vtp file
+
+  std::map<std::string, int> nCellsPreviousRanks3D_;   //< sum of number of cells on other processes with lower rank no., for vtu file
+  std::map<std::string, int> nPointsPreviousRanks3D_;  //< sum of number of points on other processes with lower rank no., for vtu file
+  std::map<int,int> nPointsGlobal3D_ ;                 //< total number of points on all ranks, for vtu file, key is the callIdentifier
+  
+  static SeriesWriter seriesWriter_;                   //< the global SeriesWriter object that writes "*.vtk.series" file which contain all written filenames and times
 };
 
 } // namespace
 
 #include "output_writer/paraview/paraview.tpp"
-#include "output_writer/paraview/paraview_write_combined_file.tpp"
+#include "output_writer/paraview/paraview_write_combined_values.tpp"
+#include "output_writer/paraview/paraview_write_combined_file_1D.tpp"
+#include "output_writer/paraview/paraview_write_combined_file_2D3D.tpp"

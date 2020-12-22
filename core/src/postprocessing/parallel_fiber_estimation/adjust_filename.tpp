@@ -33,10 +33,18 @@ adjustFilename(std::string &filename, int nFibersX)
   // check if filename contains x
   bool xFound = false;
   bool filenameHasXFormat = false;
-  int suffixPos = 0;
+  int suffixPos = 0;  // character position of the suffix
+  int xNumbersBeginPos = 0;
+  int firstDigitPos = -1;
+
   for(int i = 0; i < fileBase.size(); i++)
   {
-    if (!isdigit(fileBase[i]))
+    if (isdigit(fileBase[i]))
+    {
+      if (firstDigitPos == -1)
+        firstDigitPos = i;
+    }
+    else
     {
       if (xFound)
       {
@@ -47,7 +55,9 @@ adjustFilename(std::string &filename, int nFibersX)
       if (fileBase[i] == 'x')
       {
         xFound = true;
+        xNumbersBeginPos = firstDigitPos;
       }
+      firstDigitPos = -1;
     }
   }
 
@@ -56,7 +66,7 @@ adjustFilename(std::string &filename, int nFibersX)
   if (filenameHasXFormat)
   {
     std::stringstream newFilename;
-    newFilename << path << nFibersX << "x" << nFibersX  << fileBase.substr(suffixPos);
+    newFilename << path << fileBase.substr(0,xNumbersBeginPos) << nFibersX << "x" << nFibersX  << fileBase.substr(suffixPos);
     filename = newFilename.str();
     LOG(DEBUG) << "newFilename: [" << filename << "]";
     return true;

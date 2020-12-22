@@ -10,7 +10,7 @@
 #include "../utility.h"
 #include "partition/partitioned_petsc_vec/01_partitioned_petsc_vec_with_dirichlet_bc.h"
 #include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity.h"
-#include "spatial_discretization/boundary_conditions/dirichlet_boundary_conditions.h"
+#include "spatial_discretization/dirichlet_boundary_conditions/01_dirichlet_boundary_conditions.h"
 
 TEST(PartitionedPetscVecTest, TwoElementsBCGlobal)
 {
@@ -365,8 +365,9 @@ config = {
 
   dirichletBoundaryConditions->initialize(settings.getPythonConfig(), displacementsFunctionSpace, "dirichletBoundaryConditions");
 
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>> vec0
-    = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>>(
+  using Term = Equation::SolidMechanics::MooneyRivlinIncompressible3D;
+  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term>> vec0
+    = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term>>(
     displacementsFunctionSpace->meshPartition(), pressureFunctionSpace->meshPartition(), dirichletBoundaryConditions, "up");
 
   vec0->zeroEntries();
@@ -520,8 +521,9 @@ config = {
 
   dirichletBoundaryConditions->initialize(settings.getPythonConfig(), displacementsFunctionSpace, "dirichletBoundaryConditions");
 
-  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>> vec0
-    = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType>>(
+  using Term = Equation::SolidMechanics::MooneyRivlinIncompressible3D;
+  std::shared_ptr<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term>> vec0
+    = std::make_shared<PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term>>(
     displacementsFunctionSpace->meshPartition(), pressureFunctionSpace->meshPartition(), dirichletBoundaryConditions, "up");
 
   vec0->zeroEntries();

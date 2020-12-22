@@ -28,10 +28,10 @@ public:
   typedef FieldVariable::FieldVariable<FunctionSpaceType,6> StressFieldVariableType;     // stress tensor in Voigt notation
 
   //! define the type of output connection variables, i.e. the values that will be transferred if the solver is part of a splitting or coupling scheme
-  //! Two different field variables can be used: they must have the same function space but can have a different number of components. For example, for the CellMLAdapter, there are the "states" and the "intermediates" field variables.
-  //! In this example, we use twice "1" as number of components, but you could, e.g. have OutputConnectorData<FunctionSpaceType,3,4>, etc.
+  //! Two different field variables can be used: they must have the same function space but can have a different number of components. For example, for the CellMLAdapter, there are the "states" and the "algebraics" field variables.
+  //! In this example, we use twice "1" as number of components, but you could, e.g. have SlotConnectorData<FunctionSpaceType,3,4>, etc.
   //! For each field variable you can transfer an abritrary subset of their components.
-  typedef OutputConnectorData<FunctionSpaceType,1,1> OutputConnectorDataType;
+  typedef SlotConnectorData<FunctionSpaceType,1,3> SlotConnectorDataType;
 
   //! constructor
   MuscleContractionSolver(DihuContext context);
@@ -51,8 +51,17 @@ public:
   //! return a reference to lambdaDot
   std::shared_ptr<ScalarFieldVariableType> gamma();
 
+  //! return a reference to materialTraction_
+  std::shared_ptr<VectorFieldVariableType> materialTraction();
+
+  //! return a reference to displacements_
+  std::shared_ptr<VectorFieldVariableType> displacements();
+
+  //! return a reference to velocities_
+  std::shared_ptr<VectorFieldVariableType> velocities();
+
   //! return the object that will be used to transfer values between solvers, in this case this includes only Vm
-  std::shared_ptr<OutputConnectorDataType> getOutputConnectorData();
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -64,18 +73,22 @@ public:
     std::shared_ptr<VectorFieldVariableType>,     // velocities
     std::shared_ptr<StressFieldVariableType>,     // pK2Stress_
     std::shared_ptr<StressFieldVariableType>,     // activePK2Stress_
-    std::shared_ptr<VectorFieldVariableType>      // fiber direction
+    std::shared_ptr<VectorFieldVariableType>,     // fiber direction
+    std::shared_ptr<VectorFieldVariableType>      // material traction
   > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
   FieldVariablesForOutputWriter getFieldVariablesForOutputWriter();
 
-  //! set field variables from that were created outside
+  //! set field variables that were created outside of this object
+  //! @param setGeometryFieldForTransfer: if the geometry field should be transferred via the connector slots
   void setFieldVariables(std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> displacements,
                   std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> velocities,
                   std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::StressFieldVariableType> activePK2Stress,
                   std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::StressFieldVariableType> pK2Stress,
-                  std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> fiberDirection);
+                  std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> fiberDirection,
+                  std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::VectorFieldVariableType> materialTraction,
+                  bool setGeometryFieldForTransfer);
 
 private:
 
@@ -91,8 +104,9 @@ private:
   std::shared_ptr<StressFieldVariableType> activePK2Stress_;  //< the symmetric PK2 stress tensor of the active contribution in Voigt notation
   std::shared_ptr<StressFieldVariableType> pK2Stress_;        //< the symmetric PK2 stress tensor in Voigt notation
   std::shared_ptr<VectorFieldVariableType> fiberDirection_;   //< direction of fibers at current point
+  std::shared_ptr<VectorFieldVariableType> materialTraction_; //< traction in reference configuration for top and bottom faces (z-, z+)
 
-  std::shared_ptr<OutputConnectorDataType> outputConnectorData_;    //< the object that stores all components of field variables that will be transferred to other solvers
+  std::shared_ptr<SlotConnectorDataType> slotConnectorData_;    //< the object that stores all components of field variables that will be transferred to other solvers
 
   // define all needed field variables or other data
 };

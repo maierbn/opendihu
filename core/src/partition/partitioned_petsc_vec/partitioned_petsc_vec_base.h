@@ -1,7 +1,9 @@
 #pragma once
 
 #include <memory>
-#include "partition/mesh_partition/01_mesh_partition.h"
+#include "partition/mesh_partition/01_mesh_partition_structured.h"
+#include "partition/mesh_partition/01_mesh_partition_unstructured.h"
+#include "partition/mesh_partition/01_mesh_partition_composite.h"
 #include "partition/partitioned_petsc_vec/values_representation.h"
 
 /** Base class for partitioned petsc vectors, this just holds a pointer to the meshPartion object and stores the data representation.
@@ -36,12 +38,12 @@ public:
 
 protected:
   
-  std::string name_;   ///< name of the vector
-  std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition_;  ///< the mesh partition object which stores how the mesh is decomposed and what is the local portion
+  std::string name_;   //< name of the vector
+  std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> meshPartition_;  //< the mesh partition object which stores how the mesh is decomposed and what is the local portion
 
-  Partition::values_representation_t currentRepresentation_;  ///< which vector holds the current values, valuesLocal, valuesGlobal or valuesContiguous
+  Partition::values_representation_t currentRepresentation_;  //< which vector holds the current values, valuesLocal, valuesGlobal or valuesContiguous
 
-  static int vectorNo_;   ///< a contiguous number of the vector which is added to the vector name
+  static int vectorNo_;   //< a contiguous number of the vector which is added to the vector name
 };
 
 

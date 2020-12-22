@@ -6,8 +6,9 @@
 
 #include <omp.h>
 #include <sstream>
+#include <string>
 
-#include "data_management/multiple_instances.h"
+#include "data_management/control/multiple_instances.h"
 #include "partition/partition_manager.h"
 #include "utility/mpi_utility.h"
 #include "control/diagnostic_tool/performance_measurement.h"
@@ -212,11 +213,16 @@ MultipleInstances(DihuContext context) :
     this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubset);
 
     VLOG(1) << "create sub context for instance no " << instanceConfigNo << ", rankSubset: " << *rankSubset;
+    VLOG(1) << "this rankSubset is also set via setRankSubsetForNextCreatedPartitioning";
+
+    // add this instance to the instances that are computed locally
     instancesLocal_.emplace_back(context_.createSubContext(*instanceConfig, rankSubset));
+    rankSubsetsLocal_.push_back(rankSubset);
   }
 
   nInstancesLocal_ = instancesLocal_.size();
 
+  // store the number of local instances to be included in the log file
   if (this->logKey_ != "")
   {
     std::stringstream logKey;
@@ -225,12 +231,13 @@ MultipleInstances(DihuContext context) :
   }
 
   // clear rank subset for next created partitioning
+  VLOG(1) << "clear rank subset for next created partitioning";
   this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(nullptr);
 }
 
 template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement
   if (this->logKey_ != "")
@@ -239,17 +246,19 @@ advanceTimeSpan()
   // This method advances the simulation by the specified time span. It will be needed when this MultipleInstances object is part of a parent control element, like a coupling to 3D model.
   for (int i = 0; i < nInstancesLocal_; i++)
   {
-    instancesLocal_[i].advanceTimeSpan();
+    instancesLocal_[i].advanceTimeSpan(withOutputWritersEnabled);
   }
 
   // stop duration measurement
   if (this->logKey_ != "")
     Control::PerformanceMeasurement::stop(this->logKey_);
 
-
   LOG(DEBUG) << "multipleInstances::advanceTimeSpan() complete, now call writeOutput, hasOutputWriters: " << this->outputWriterManager_.hasOutputWriters();
 
-  writeOutput(instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
+  if (nInstancesLocal_ > 0)
+  {
+    writeOwnOutput(instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
+  }
 }
 
 template<typename TimeSteppingScheme>
@@ -275,19 +284,21 @@ initialize()
 
   LOG(TRACE) << "MultipleInstances::initialize()";
 
-  // initialize output of progress in %, it is only output for once instance and then only for rank 0
+  // initialize output of progress in %, it is only output for one instance and then only for rank 0
   if (outputInitialize_)
   {
     outputInitializeThisInstance_ = true;
     outputInitialize_ = false;
+    el::Loggers::removeFlag(el::LoggingFlag::NewLineForContainer);
     LOG(INFO) << "Initialize " << nInstancesComputedGlobally_ << " global instances (" << nInstancesLocal_ << " local).";
   }
 
   // add this solver to the solvers diagram
-  DihuContext::solverStructureVisualizer()->addSolver("MultipleInstances");
+  DihuContext::solverStructureVisualizer()->addSolver("MultipleInstances", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means slot connector data is shared with the first subsolver
   DihuContext::solverStructureVisualizer()->beginChild();
 
   double progress = 0;
+  // loop over all instances
   for (int i = 0; i < nInstancesLocal_; i++)
   {
     // output progress
@@ -301,6 +312,13 @@ initialize()
     }
     progress = newProgress;
 
+    // get the rank subset for the current instance
+    std::shared_ptr<Partition::RankSubset> rankSubset = rankSubsetsLocal_[i];
+
+    // store the rank subset containing only the own rank for the mesh of the current instance
+    this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubset);
+
+    // call initialize on the current instance
     LOG(DEBUG) << "instance " << i << " initialize";
     instancesLocal_[i].initialize();
 
@@ -312,6 +330,11 @@ initialize()
       DihuContext::solverStructureVisualizer()->disable();
     }
   }
+
+  // clear rank subset for next created partitioning
+  VLOG(1) << "clear rank subset for next created partitioning";
+  this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(nullptr);
+
   DihuContext::solverStructureVisualizer()->enable();
 
   // end output of progress
@@ -319,21 +342,22 @@ initialize()
   {
     std::cout << "\b\b\b\bdone." << std::endl;
   }
+  el::Loggers::addFlag(el::LoggingFlag::NewLineForContainer);
 
-  
+  // initialize data object with all instances
   data_.setInstancesData(instancesLocal_);
 
-  // initialize output connector data
-  outputConnectorData_ = std::make_shared<OutputConnectorDataType>();
-  outputConnectorData_->reserve(nInstancesLocal_);
+  // initialize slot connector data
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
+  slotConnectorData_->reserve(nInstancesLocal_);
   for (int i = 0; i < nInstancesLocal_; i++)
   {
-    VLOG(1) << "MultipleInstances::getOutputConnectorData";
-    outputConnectorData_->push_back(instancesLocal_[i].getOutputConnectorData());
+    VLOG(1) << "MultipleInstances::getSlotConnectorData";
+    slotConnectorData_->push_back(instancesLocal_[i].getSlotConnectorData());
 
     if (VLOG_IS_ON(1))
     {
-      VLOG(1) << "instance " << i << "/" << nInstancesLocal_ << " is " << (*outputConnectorData_)[i];
+      VLOG(1) << "instance " << i << "/" << nInstancesLocal_ << " is " << (*slotConnectorData_)[i];
     }
   }
 
@@ -375,6 +399,12 @@ run()
       LOG(DEBUG) << msg.str();
     }
     
+    // get the rank subset for the current instance
+    std::shared_ptr<Partition::RankSubset> rankSubset = rankSubsetsLocal_[i];
+
+    // store the rank subset containing only the own rank for the mesh of the current instance
+    this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubset);
+
     //instancesLocal_[i].reset();
     instancesLocal_[i].run();
 
@@ -384,6 +414,11 @@ run()
       DihuContext::solverStructureVisualizer()->disable();
     }
   }
+
+  // clear rank subset for next created partitioning
+  VLOG(1) << "clear rank subset for next created partitioning";
+  this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(nullptr);
+
   DihuContext::solverStructureVisualizer()->enable();
   
 #ifdef HAVE_PAT
@@ -396,9 +431,10 @@ run()
 
   assert(nInstancesLocal_ == instancesLocal_.size());
 
+  // call the output writer
   if (nInstancesLocal_ > 0)
   {
-    this->outputWriterManager_.writeOutput(this->data_, instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
+    writeOwnOutput(instancesLocal_[0].numberTimeSteps(), instancesLocal_[0].endTime());
   }
   LOG(DEBUG) << "end of multiple_instances run";
 }
@@ -422,20 +458,19 @@ reset()
 }
 
 template<typename TimeSteppingScheme>
-std::shared_ptr<typename MultipleInstances<TimeSteppingScheme>::OutputConnectorDataType>
+std::shared_ptr<typename MultipleInstances<TimeSteppingScheme>::SlotConnectorDataType>
 MultipleInstances<TimeSteppingScheme>::
-getOutputConnectorData()
+getSlotConnectorData()
 {
-  // call getOutputConnectorData on all instances such that they can prepare themselves
-  // (e.g. timestepping schemes call prepareForGetOutputConnectorData)
+  // call getSlotConnectorData on all instances such that they can prepare themselves
+  // (e.g. timestepping schemes call prepareForGetSlotConnectorData)
   for (int i = 0; i < nInstancesLocal_; i++)
   {
-    instancesLocal_[i].getOutputConnectorData();
+    instancesLocal_[i].getSlotConnectorData();
   }
 
-  return outputConnectorData_;
+  return slotConnectorData_;
 }
-
 
 template<typename TimeSteppingScheme>
 std::vector<TimeSteppingScheme> &MultipleInstances<TimeSteppingScheme>::
@@ -444,22 +479,54 @@ instancesLocal()
   return instancesLocal_;
 }
 
+//! time of simulation
+template<typename TimeSteppingScheme>
+double MultipleInstances<TimeSteppingScheme>::
+endTime()
+{
+  if (nInstancesLocal_ > 0)
+    return instancesLocal_[0].endTime();
+  return 0;
+}
+
+//! number of time steps in simulation time
+template<typename TimeSteppingScheme>
+int MultipleInstances<TimeSteppingScheme>::
+numberTimeSteps()
+{
+  if (nInstancesLocal_ > 0)
+    return instancesLocal_[0].numberTimeSteps();
+  return -1;
+}
 
 template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
-writeOutput(int timeStepNo, double currentTime, int callCountIncrement)
+writeOwnOutput(int timeStepNo, double currentTime, int callCountIncrement)
 {
   if (nInstancesLocal_ > 0)
   {
     LOG(DEBUG) << "MultipleInstances::writeOutput, timeStepNo: " << timeStepNo << ", currentTime: " << currentTime;
     this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime, callCountIncrement);
-  }  
+  }
 }
 
+template<typename TimeSteppingScheme>
+void MultipleInstances<TimeSteppingScheme>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  // call the output writer of the MultipleInstances class
+  writeOwnOutput(timeStepNo, currentTime, callCountIncrement);
+
+  // call the output writers of the nested solvers
+  for (int i = 0; i < nInstancesLocal_; i++)
+  {
+    instancesLocal_[i].callOutputWriter(timeStepNo, currentTime, callCountIncrement);
+  }
+}
 
 template<typename TimeSteppingScheme>
 std::string MultipleInstances<TimeSteppingScheme>::
-getString(std::shared_ptr<typename MultipleInstances<TimeSteppingScheme>::OutputConnectorDataType> data)
+getString(std::shared_ptr<typename MultipleInstances<TimeSteppingScheme>::SlotConnectorDataType> data)
 {
   std::stringstream s;
   s << "<MultipleInstances(" << nInstancesLocal_ << "):";

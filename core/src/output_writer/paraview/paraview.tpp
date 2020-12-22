@@ -35,6 +35,8 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime, int cal
   {
     Control::PerformanceMeasurement::start("durationParaview1D");
 
+    LOG(DEBUG) << "FieldVariablesForOutputWriter: " << StringUtility::demangle(typeid(typename DataType::FieldVariablesForOutputWriter).name());
+
     // create a PolyData file that combines all 1D meshes into one file
     writePolyDataFile<typename DataType::FieldVariablesForOutputWriter>(data.getFieldVariablesForOutputWriter(), combined1DMeshes);
 
@@ -85,7 +87,7 @@ void Paraview::write(DataType& data, int timeStepNo, double currentTime, int cal
       filenameStart << this->filename_ << "_" << meshName;
 
     // loop over all field variables and output those that are associated with the mesh given by meshName
-    ParaviewLoopOverTuple::loopOutput(data.getFieldVariablesForOutputWriter(), data.getFieldVariablesForOutputWriter(), meshName, filenameStart.str(), specificSettings_);
+    ParaviewLoopOverTuple::loopOutput(data.getFieldVariablesForOutputWriter(), data.getFieldVariablesForOutputWriter(), meshName, filenameStart.str(), specificSettings_, currentTime);
   }
 
   Control::PerformanceMeasurement::stop("durationParaviewOutput");
@@ -137,9 +139,6 @@ void Paraview::writeParaviewFieldVariable(FieldVariableType &fieldVariable,
 
     std::vector<double> values;
     std::array<std::vector<double>, nComponents> componentValues;
-
-    // initialize the dofNosLocalNaturalOrdering vector of the meshPartition to be able to get the values in the natural ordering
-    fieldVariable.functionSpace()->meshPartition()->initializeDofNosLocalNaturalOrdering(fieldVariable.functionSpace());
 
     // ensure that ghost values are in place
     fieldVariable.zeroGhostBuffer();

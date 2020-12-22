@@ -7,7 +7,7 @@ def generate(env):
     env.SetDefault(LLVMCC='llvm-gcc')
     env.SetDefault(LLVMLINK='llvm-ld')
     if not exists(env):
-        print 'Error: Could not find either or both of %s and %s.'%(repr(env['LLVMCC']), repr(env['LLVMLINK']))
+        print('Error: Could not find either or both of %s and %s.'%(repr(env['LLVMCC']), repr(env['LLVMLINK'])))
         env.Exit(1)
         return
 

@@ -20,74 +20,148 @@ typedef std::function<void(std::string)> stderr_write_type;
 
 PyObject* Stderr_write(PyObject* self, PyObject* args)
 {
-    std::size_t written(0);
-    Stderr* selfimpl = reinterpret_cast<Stderr*>(self);
-    if (selfimpl->write)
-    {
-        char* data;
-        if (!PyArg_ParseTuple(args, "s", &data))
-            return 0;
+  std::size_t written(0);
+  Stderr* selfimpl = reinterpret_cast<Stderr*>(self);
+  if (selfimpl->write)
+  {
+    char* data;
+    if (!PyArg_ParseTuple(args, "s", &data))
+        return 0;
 
-        std::string str(data);
-        selfimpl->write(str);
-        written = str.size();
-    }
-    return PyLong_FromSize_t(written);
+    std::string str(data);
+    selfimpl->write(str);
+    written = str.size();
+  }
+  return PyLong_FromSize_t(written);
 }
 
 PyObject* Stderr_flush(PyObject* self, PyObject* args)
 {
-    // no-op
-    return Py_BuildValue("");
+  // no-op
+  return Py_BuildValue("");
 }
 
 PyMethodDef Stderr_methods[] =
 {
-    {"write", Stderr_write, METH_VARARGS, "sys.stderr.write"},
-    {"flush", Stderr_flush, METH_VARARGS, "sys.stderr.write"},
-    {0, 0, 0, 0} // sentinel
+  {"write", Stderr_write, METH_VARARGS, "sys.stderr.write"},
+  {"flush", Stderr_flush, METH_VARARGS, "sys.stderr.write"},
+  {0, 0, 0, 0} // sentinel
 };
 
 PyTypeObject StderrType =
 {
-    PyVarObject_HEAD_INIT(0, 0)
-    "emb.StderrType",     /* tp_name */
-    sizeof(Stderr),       /* tp_basicsize */
-    0,                    /* tp_itemsize */
-    0,                    /* tp_dealloc */
-    0,                    /* tp_print */
-    0,                    /* tp_getattr */
-    0,                    /* tp_setattr */
-    0,                    /* tp_reserved */
-    0,                    /* tp_repr */
-    0,                    /* tp_as_number */
-    0,                    /* tp_as_sequence */
-    0,                    /* tp_as_mapping */
-    0,                    /* tp_hash  */
-    0,                    /* tp_call */
-    0,                    /* tp_str */
-    0,                    /* tp_getattro */
-    0,                    /* tp_setattro */
-    0,                    /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,   /* tp_flags */
-    "emb.Stderr objects", /* tp_doc */
-    0,                    /* tp_traverse */
-    0,                    /* tp_clear */
-    0,                    /* tp_richcompare */
-    0,                    /* tp_weaklistoffset */
-    0,                    /* tp_iter */
-    0,                    /* tp_iternext */
-    Stderr_methods,       /* tp_methods */
-    0,                    /* tp_members */
-    0,                    /* tp_getset */
-    0,                    /* tp_base */
-    0,                    /* tp_dict */
-    0,                    /* tp_descr_get */
-    0,                    /* tp_descr_set */
-    0,                    /* tp_dictoffset */
-    0,                    /* tp_init */
-    0,                    /* tp_alloc */
-    0,                    /* tp_new */
+  PyVarObject_HEAD_INIT(0, 0)
+  "emb.StderrType",     /* tp_name */
+  sizeof(Stderr),       /* tp_basicsize */
+  0,                    /* tp_itemsize */
+  0,                    /* tp_dealloc */
+  0,                    /* tp_print */
+  0,                    /* tp_getattr */
+  0,                    /* tp_setattr */
+  0,                    /* tp_reserved */
+  0,                    /* tp_repr */
+  0,                    /* tp_as_number */
+  0,                    /* tp_as_sequence */
+  0,                    /* tp_as_mapping */
+  0,                    /* tp_hash  */
+  0,                    /* tp_call */
+  0,                    /* tp_str */
+  0,                    /* tp_getattro */
+  0,                    /* tp_setattro */
+  0,                    /* tp_as_buffer */
+  Py_TPFLAGS_DEFAULT,   /* tp_flags */
+  "emb.Stderr objects", /* tp_doc */
+  0,                    /* tp_traverse */
+  0,                    /* tp_clear */
+  0,                    /* tp_richcompare */
+  0,                    /* tp_weaklistoffset */
+  0,                    /* tp_iter */
+  0,                    /* tp_iternext */
+  Stderr_methods,       /* tp_methods */
+  0,                    /* tp_members */
+  0,                    /* tp_getset */
+  0,                    /* tp_base */
+  0,                    /* tp_dict */
+  0,                    /* tp_descr_get */
+  0,                    /* tp_descr_set */
+  0,                    /* tp_dictoffset */
+  0,                    /* tp_init */
+  0,                    /* tp_alloc */
+  0,                    /* tp_new */
+};
+
+typedef std::function<void(std::string)> stdout_write_type;
+
+PyObject* Stdout_write(PyObject* self, PyObject* args)
+{
+  std::size_t written(0);
+  Stdout* selfimpl = reinterpret_cast<Stdout*>(self);
+  if (selfimpl->write)
+  {
+      char* data;
+      if (!PyArg_ParseTuple(args, "s", &data))
+          return 0;
+
+      std::string str(data);
+      selfimpl->write(str);
+      written = str.size();
+  }
+  return PyLong_FromSize_t(written);
+}
+
+PyObject* Stdout_flush(PyObject* self, PyObject* args)
+{
+  // no-op
+  return Py_BuildValue("");
+}
+
+PyMethodDef Stdout_methods[] =
+{
+  {"write", Stdout_write, METH_VARARGS, "sys.stdout.write"},
+  {"flush", Stdout_flush, METH_VARARGS, "sys.stdout.write"},
+  {0, 0, 0, 0} // sentinel
+};
+
+PyTypeObject StdoutType =
+{
+  PyVarObject_HEAD_INIT(0, 0)
+  "emb.StdoutType",     /* tp_name */
+  sizeof(Stdout),       /* tp_basicsize */
+  0,                    /* tp_itemsize */
+  0,                    /* tp_dealloc */
+  0,                    /* tp_print */
+  0,                    /* tp_getattr */
+  0,                    /* tp_setattr */
+  0,                    /* tp_reserved */
+  0,                    /* tp_repr */
+  0,                    /* tp_as_number */
+  0,                    /* tp_as_sequence */
+  0,                    /* tp_as_mapping */
+  0,                    /* tp_hash  */
+  0,                    /* tp_call */
+  0,                    /* tp_str */
+  0,                    /* tp_getattro */
+  0,                    /* tp_setattro */
+  0,                    /* tp_as_buffer */
+  Py_TPFLAGS_DEFAULT,   /* tp_flags */
+  "emb.Stdout objects", /* tp_doc */
+  0,                    /* tp_traverse */
+  0,                    /* tp_clear */
+  0,                    /* tp_richcompare */
+  0,                    /* tp_weaklistoffset */
+  0,                    /* tp_iter */
+  0,                    /* tp_iternext */
+  Stdout_methods,       /* tp_methods */
+  0,                    /* tp_members */
+  0,                    /* tp_getset */
+  0,                    /* tp_base */
+  0,                    /* tp_dict */
+  0,                    /* tp_descr_get */
+  0,                    /* tp_descr_set */
+  0,                    /* tp_dictoffset */
+  0,                    /* tp_init */
+  0,                    /* tp_alloc */
+  0,                    /* tp_new */
 };
 
 PyModuleDef embmodule =
@@ -100,45 +174,78 @@ PyModuleDef embmodule =
 PyObject* g_stderr;
 PyObject* g_stderr_saved;
 
+PyObject* g_stdout;
+PyObject* g_stdout_saved;
+
 PyMODINIT_FUNC PyInit_emb(void)
 {
-    g_stderr = 0;
-    g_stderr_saved = 0;
+  g_stderr = 0;
+  g_stderr_saved = 0;
+  g_stdout = 0;
+  g_stdout_saved = 0;
 
-    StderrType.tp_new = PyType_GenericNew;
-    if (PyType_Ready(&StderrType) < 0)
-        return 0;
+  StderrType.tp_new = PyType_GenericNew;
+  if (PyType_Ready(&StderrType) < 0)
+    return 0;
 
-    PyObject* m = PyModule_Create(&embmodule);
-    if (m)
-    {
-        Py_INCREF(&StderrType);
-        PyModule_AddObject(m, "Stderr", reinterpret_cast<PyObject*>(&StderrType));
-    }
-    return m;
+  StdoutType.tp_new = PyType_GenericNew;
+  if (PyType_Ready(&StdoutType) < 0)
+    return 0;
+
+  PyObject* m = PyModule_Create(&embmodule);
+  if (m)
+  {
+    Py_INCREF(&StdoutType);
+    PyModule_AddObject(m, "Stdout", reinterpret_cast<PyObject*>(&StdoutType));
+
+    Py_INCREF(&StderrType);
+    PyModule_AddObject(m, "Stderr", reinterpret_cast<PyObject*>(&StderrType));
+  }
+  return m;
 }
 
 void set_stderr(stderr_write_type write)
 {
-    if (!g_stderr)
-    {
-        g_stderr_saved = PySys_GetObject("stderr"); // borrowed
-        g_stderr = StderrType.tp_new(&StderrType, 0, 0);
-    }
+  if (!g_stderr)
+  {
+      g_stderr_saved = PySys_GetObject("stderr"); // borrowed
+      g_stderr = StderrType.tp_new(&StderrType, 0, 0);
+  }
 
-    Stderr* impl = reinterpret_cast<Stderr*>(g_stderr);
-    impl->write = write;
-    PySys_SetObject("stderr", g_stderr);
+  Stderr* impl = reinterpret_cast<Stderr*>(g_stderr);
+  impl->write = write;
+  PySys_SetObject("stderr", g_stderr);
 }
 
 void reset_stderr()
 {
-    if (g_stderr_saved)
-        PySys_SetObject("stderr", g_stderr_saved);
+  if (g_stderr_saved)
+      PySys_SetObject("stderr", g_stderr_saved);
 
-    Py_XDECREF(g_stderr);
-    g_stderr = 0;
+  Py_XDECREF(g_stderr);
+  g_stderr = 0;
 }
 
+void set_stdout(stdout_write_type write)
+{
+  if (!g_stdout)
+  {
+      g_stdout_saved = PySys_GetObject("stdout"); // borrowed
+      g_stdout = StdoutType.tp_new(&StdoutType, 0, 0);
+  }
+
+  Stdout* impl = reinterpret_cast<Stdout*>(g_stdout);
+  impl->write = write;
+  PySys_SetObject("stdout", g_stdout);
+}
+
+void reset_stdout()
+{
+  if (g_stdout_saved)
+      PySys_SetObject("stdout", g_stdout_saved);
+
+  Py_XDECREF(g_stdout);
+  g_stdout = 0;
+}
 } // namespace emb
 

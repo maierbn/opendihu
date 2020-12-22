@@ -109,9 +109,9 @@ createNeumannBoundaryConditions(std::shared_ptr<SpatialDiscretization::NeumannBo
   double surfaceBottomGlobal = 0;
 
   MPIUtility::handleReturnValue(MPI_Allreduce(&surfaceBottomLocal, &surfaceBottomGlobal, 1, MPI_DOUBLE,
-                                              MPI_SUM, this->currentRankSubset_->mpiCommunicator()));
+                                              MPI_SUM, this->currentRankSubset_->mpiCommunicator()), "MPI_Allreduce (1)");
   MPIUtility::handleReturnValue(MPI_Allreduce(&surfaceTopLocal, &surfaceTopGlobal, 1, MPI_DOUBLE,
-                                              MPI_SUM, this->currentRankSubset_->mpiCommunicator()));
+                                              MPI_SUM, this->currentRankSubset_->mpiCommunicator()), "MPI_Allreduce (2)");
 
   // compute flux values that will be set as Neumann BC values
   double fluxTop = 1./surfaceTopGlobal;
@@ -160,11 +160,11 @@ createNeumannBoundaryConditions(std::shared_ptr<SpatialDiscretization::NeumannBo
         // get dofs indices within the numbering of the volume element that correspond to the selected face
         const int D = FunctionSpaceType::dim();
         const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
-        const int nVolumeDofsBorder = FunctionSpace::FunctionSpaceBaseDim<D-1,typename FunctionSpaceType::BasisFunction>::nNodesPerElement() * nDofsPerNode;
-        std::array<dof_no_t,nVolumeDofsBorder> dofIndices;
+        const int nVolumeDofsBoundary = FunctionSpace::FunctionSpaceBaseDim<D-1,typename FunctionSpaceType::BasisFunction>::nNodesPerElement() * nDofsPerNode;
+        std::array<dof_no_t,nVolumeDofsBoundary> dofIndices;
         FunctionSpaceType::getFaceDofs(elementWithFaces.face, dofIndices);
 
-        for (int i = 0; i < nVolumeDofsBorder; i++)
+        for (int i = 0; i < nVolumeDofsBoundary; i++)
         {
           elementWithFaces.surfaceDofs.push_back(dofIndices[i]);
         }
@@ -199,11 +199,11 @@ createNeumannBoundaryConditions(std::shared_ptr<SpatialDiscretization::NeumannBo
         // get dofs indices within the numbering of the volume element that correspond to the selected face
         const int D = FunctionSpaceType::dim();
         const int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
-        const int nVolumeDofsBorder = FunctionSpace::FunctionSpaceBaseDim<D-1,typename FunctionSpaceType::BasisFunction>::nNodesPerElement() * nDofsPerNode;
-        std::array<dof_no_t,nVolumeDofsBorder> dofIndices;
+        const int nVolumeDofsBoundary = FunctionSpace::FunctionSpaceBaseDim<D-1,typename FunctionSpaceType::BasisFunction>::nNodesPerElement() * nDofsPerNode;
+        std::array<dof_no_t,nVolumeDofsBoundary> dofIndices;
         FunctionSpaceType::getFaceDofs(elementWithFaces.face, dofIndices);
 
-        for (int i = 0; i < nVolumeDofsBorder; i++)
+        for (int i = 0; i < nVolumeDofsBoundary; i++)
         {
           elementWithFaces.surfaceDofs.push_back(dofIndices[i]);
         }

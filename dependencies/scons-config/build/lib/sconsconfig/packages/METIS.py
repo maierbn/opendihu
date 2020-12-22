@@ -1,6 +1,6 @@
 import sys, os
-import Package
-from Package import have_any_opts, try_link
+from . import Package
+from .Package import have_any_opts, try_link
 
 metis_text = r'''
 #include <stdlib.h>

@@ -45,6 +45,7 @@ config = {
     "dirichletBoundaryCondition": dirichletBC,  # displacement Dirichlet bc
     "tractionReferenceConfiguration": traction,
     "relativeTolerance": 1e-15,
+    "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    
     "materialParameters": material_parameters,  # c0, c1, kappa
     "analyticJacobian": True,
     "numericJacobian": True,

@@ -25,8 +25,8 @@ with open(filename, 'rb') as f:
   print(data)
   print("len: ",len(data))
 
-border_points_faces = data
-stl_create_mesh.create_3d_mesh_from_border_points_faces(border_points_faces)
+boundary_points_faces = data
+stl_create_mesh.create_3d_mesh_from_boundary_points_faces(boundary_points_faces)
 
 sys.exit(0)
 
@@ -44,17 +44,17 @@ sys.exit(0)
 debugging_stl_output = True
 if debugging_stl_output:
   out_triangulation_world_space = []
-  markers_border_points_world_space = []
+  markers_boundary_points_world_space = []
   out_triangulation_parametric_space = []
   grid_triangles_world_space = []
   grid_triangles_parametric_space = []
   markers_grid_points_parametric_space = []
   markers_grid_points_world_space = []
-  debugging_output_lists = [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
+  debugging_output_lists = [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,markers_grid_points_parametric_space, markers_grid_points_world_space]
 else:
   debugging_output_lists = []
     
-# create_planar_mesh(border_points, loop_no, n_points, n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, show_plot, debugging_stl_output, debugging_output_lists)
+# create_planar_mesh(boundary_points, loop_no, n_points, n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, show_plot, debugging_stl_output, debugging_output_lists)
 triangulation_type = data[5]
 parametric_space_shape = data[6]
 max_area_factor = data[7]

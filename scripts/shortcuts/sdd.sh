@@ -1,1 +1,1 @@
-cd .. && time scons BUILD_TYPE=debug -j 4 && (cd - && echo debug build succeeded) || (echo debug build failed && cd - && exit -1)
+cd .. && time $OPENDIHU_HOME/dependencies/scons/scons.py BUILD_TYPE=debug -j 4 $* && (cd - && echo debug build succeeded) || (echo debug build failed && cd - && exit -1)

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utility/type_utility.h"
+#include "mesh/type_traits.h"
 
 #include <cstdlib>
 
@@ -25,7 +26,7 @@ namespace ParaviewLoopOverTuple
 template<typename FieldVariablesForOutputWriterType, int i=0>
 inline typename std::enable_if<i == std::tuple_size<FieldVariablesForOutputWriterType>::value, void>::type
 loopGetGeometryFieldNodalValues(const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
-                   std::vector<double> &values
+                                std::vector<double> &values
 )
 {}
 
@@ -35,28 +36,36 @@ loopGetGeometryFieldNodalValues(const FieldVariablesForOutputWriterType &fieldVa
 template<typename FieldVariablesForOutputWriterType, int i=0>
 inline typename std::enable_if<i < std::tuple_size<FieldVariablesForOutputWriterType>::value, void>::type
 loopGetGeometryFieldNodalValues(const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
-                   std::vector<double> &values);
+                                std::vector<double> &values);
 
 /** Loop body for a vector element
  */
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-getGeometryFieldNodalValues(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
-               std::vector<double> &values);
+getGeometryFieldNodalValues(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
+                            std::vector<double> &values);
 
 /** Loop body for a tuple element
  */
 template<typename VectorType, typename FieldVariablesForOutputWriterType>
 typename std::enable_if<TypeUtility::isTuple<VectorType>::value, bool>::type
-getGeometryFieldNodalValues(VectorType currentFieldVariableVector, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
-               std::vector<double> &values);
+getGeometryFieldNodalValues(VectorType currentFieldVariableGradient, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
+                            std::vector<double> &values);
 
- /**  Loop body for a pointer element
+/**  Loop body for a pointer element
  */
 template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
+  && !Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
 getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
-               std::vector<double> &values);
+                            std::vector<double> &values);
+
+/** Loop body for a field variables with Mesh::CompositeOfDimension<D>
+ */
+template<typename CurrentFieldVariableType, typename FieldVariablesForOutputWriterType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
+getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const FieldVariablesForOutputWriterType &fieldVariables, std::set<std::string> meshNames,
+                            std::vector<double> &values);
 
 }  // namespace ParaviewLoopOverTuple
 

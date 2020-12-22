@@ -1,6 +1,7 @@
 #include "output_writer/megamol/loop_collect_field_variables.h"
 
 #include <cstdlib>
+#include "field_variable/field_variable.h"
 
 namespace OutputWriter
 {
@@ -27,8 +28,9 @@ loopCollectFieldVariables(const FieldVariablesForOutputWriterType &fieldVariable
  
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType, typename FunctionSpaceType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
-                        && CurrentFieldVariableType::element_type::nComponents() == 1, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value && !Mesh::isComposite<CurrentFieldVariableType>::value
+                        && CurrentFieldVariableType::element_type::nComponents() == 1 
+                        && std::is_same<typename CurrentFieldVariableType::element_type::FunctionSpace, FunctionSpaceType>::value, bool>::type
 collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables)
@@ -49,8 +51,9 @@ collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string
 
 // current element is of pointer type (not vector)
 template<typename CurrentFieldVariableType, typename FunctionSpaceType>
-typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value
-                        && CurrentFieldVariableType::element_type::nComponents() != 1, bool>::type
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value && !Mesh::isComposite<CurrentFieldVariableType>::value
+                        && CurrentFieldVariableType::element_type::nComponents() != 1
+                        && std::is_same<typename CurrentFieldVariableType::element_type::FunctionSpace, FunctionSpaceType>::value, bool>::type
 collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string meshName,
                       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables)
@@ -66,6 +69,17 @@ collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string
   return false;  // do not break iteration
 }
 
+// current element is of pointer type (not vector)
+template<typename CurrentFieldVariableType, typename FunctionSpaceType>
+typename std::enable_if<!TypeUtility::isTuple<CurrentFieldVariableType>::value && !TypeUtility::isVector<CurrentFieldVariableType>::value && !Mesh::isComposite<CurrentFieldVariableType>::value
+                        && !std::is_same<typename CurrentFieldVariableType::element_type::FunctionSpace, FunctionSpaceType>::value, bool>::type
+collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string meshName,
+                      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
+                      std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables)
+{
+  // FunctionSpaceType is different from the function space that is used in the currentFieldVariable, therefore, the geometry field cannot be extracted here
+  return false;  // do not break iteration
+}
 
 // element i is of tuple type
 template<typename TupleType, typename FunctionSpaceType>
@@ -83,11 +97,11 @@ collectFieldVariables(TupleType currentFieldVariableTuple, std::string meshName,
 // element i is of vector type
 template<typename VectorType, typename FunctionSpaceType>
 typename std::enable_if<TypeUtility::isVector<VectorType>::value, bool>::type
-collectFieldVariables(VectorType currentFieldVariableVector, std::string meshName,
+collectFieldVariables(VectorType currentFieldVariableGradient, std::string meshName,
                       std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
                       std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables)
 {
-  for (auto& currentFieldVariable : currentFieldVariableVector)
+  for (auto& currentFieldVariable : currentFieldVariableGradient)
   {
     // call function on all vector entries
     if (collectFieldVariables<typename VectorType::value_type>(
@@ -97,5 +111,31 @@ collectFieldVariables(VectorType currentFieldVariableVector, std::string meshNam
   return false;  // do not break iteration
 }
 
+// element i is a field variables with Mesh::CompositeOfDimension<D>
+template<typename CurrentFieldVariableType, typename FunctionSpaceType>
+typename std::enable_if<Mesh::isComposite<CurrentFieldVariableType>::value, bool>::type
+collectFieldVariables(CurrentFieldVariableType currentFieldVariable, std::string meshName,
+                      std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> &geometryField,
+                      std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>> &scalarFieldVariables)
+{
+  const int D = CurrentFieldVariableType::element_type::FunctionSpace::dim();
+  typedef typename CurrentFieldVariableType::element_type::FunctionSpace::BasisFunction BasisFunctionType;
+  typedef FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<D>, BasisFunctionType> SubFunctionSpaceType;
+  const int nComponents = CurrentFieldVariableType::element_type::nComponents();
+
+  typedef FieldVariable::FieldVariable<SubFunctionSpaceType, nComponents> SubFieldVariableType;
+
+  std::vector<std::shared_ptr<SubFieldVariableType>> subFieldVariables;
+  currentFieldVariable->getSubFieldVariables(subFieldVariables);
+
+  for (auto& currentSubFieldVariable : subFieldVariables)
+  {
+    // call function on all vector entries
+    if (collectFieldVariables<std::shared_ptr<SubFieldVariableType>,FunctionSpaceType>(currentSubFieldVariable, meshName, geometryField, scalarFieldVariables))
+      return true;
+  }
+
+  return false;  // do not break iteration
+}
 }  // namespace MegaMolLoopOverTuple
 }  // namespace OutputWriter

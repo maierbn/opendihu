@@ -12,7 +12,7 @@ import copy
 import scipy.spatial
 import os
 import pickle
-import stl_create_mesh   # for standardize_loop and rings_to_border_points
+import stl_create_mesh   # for standardize_loop and rings_to_boundary_points
 import stl_debug_output
 import spline_surface
 
@@ -22,7 +22,9 @@ from svg.path import parse_path
 from svg.path import Path, Line, Arc, CubicBezier, QuadraticBezier
 
 def get_intersecting_line_segment(triangle, z_value):
-  """ return the line segment [pa, pb] of the triangle with z_value"""
+  """ Intersect a triangle with a z plane. 
+      For a triangle T given by points p1,p2,p3 ∈ ℝ^3 and a value z, determine the the set of points P = T ∩ {p | p_z=z},
+      i.e., the line segment [pa, pb] that lies in the triangle T and on the z plane z=z_value """
 
   # barycentric coordinates
   # x(xi1,xi2) = (1-xi1-xi2)*x^{1} + xi1*x^{2} + xi2*x^{3},  xi1+xi2 <= 1, 0 <= xi1,xi2 <= 1
@@ -39,6 +41,14 @@ def get_intersecting_line_segment(triangle, z_value):
   p1z = p1[2]
   p2z = p2[2]
   p3z = p3[2]
+  
+  # if one corner point lies on the z plane
+  if abs(p1z-z_value) < 1e-12:
+    return [p1,p1]
+  if abs(p2z-z_value) < 1e-12:
+    return [p2,p2]
+  if abs(p3z-z_value) < 1e-12:
+    return [p3,p3]
 
   # if p2z == p1z swap p1 and p3 
   if p2z == p1z:
@@ -50,6 +60,8 @@ def get_intersecting_line_segment(triangle, z_value):
     p3z = p3[2]
   
   debug = False
+  
+  # for debugging, determine if the triangle has to intersect the plane, i.e. there has to be an intersection point
   has_to_intersect = False
   l = sorted([p1z, p2z, p3z, z_value])
   if l[0] != z_value and l[-1] != z_value:
@@ -79,7 +91,7 @@ def get_intersecting_line_segment(triangle, z_value):
   if debug:
     print("xi1 = m*xi2 + c with m={}, c={}".format(m,c))
   
-  # check which borders of the triangle in parameter space the line segment intersects
+  # check which of the boundarys of the triangle in parameter space are intersected by the line segment intersects
   intersects_xi2_equals_0 = (0 <= c <= 1)        # xi1 = c
 
   if abs(m) < 1e-12:
@@ -129,9 +141,12 @@ def create_loop(z_value, stl_mesh, loop):
   The output loop is a list of edges.
   :param z_value: z level of all extracted points
   :param stl_mesh: the mesh as stl.mesh object
-  :param loop: this is the output, this list will contain edges [p0,1]
+  :param loop: this is the output, this list will contain edges [p0,p1]
   """
   debug = False
+
+  if debug:
+    print(" z_value: {}, n points: {}: {}".format(z_value, len(stl_mesh.points), stl_mesh.points))
 
   # loop over all triangles in mesh
   for (no,p) in enumerate(stl_mesh.points):
@@ -166,7 +181,7 @@ def create_loop(z_value, stl_mesh, loop):
       # append edge to loop
       if not edge_is_already_in_loop:
         if debug:
-          print(" add edge ",edge," to loop no ", loop_no)
+          print(" add edge ",edge," to loop")
         #print(", prev: ", loop, "->", 
         loop.append(edge)
         #print(loop
@@ -189,19 +204,23 @@ def order_loop(loop, first_point):
   
   if debug:
     print("")
-    print("order_loop(loop={},first_point={})".format(loop,first_point))
+    #print("order_loop(loop={},first_point={})".format(loop,first_point))
     print("first point: ", first_point)
+  
+  points_with_single_adjacent_edge = []
   
   previous_end_point = first_point
   current_end_point = first_point
   
-  while len(new_loop) < len(loop)+1:
+  while len(new_loop) < len(loop)+2:
       
     next_point_found = False
       
     # iterate over points in old loop
     for edge in loop:
+      
       if np.allclose(current_end_point, edge[0]) and not np.allclose(previous_end_point, edge[1]):
+        # add edge p0->p1 to new_loop
         new_loop.append(edge[1])
         previous_end_point = current_end_point
         current_end_point = edge[1]
@@ -211,6 +230,7 @@ def order_loop(loop, first_point):
           print("add point ",edge[1],", new length of loop: ",len(new_loop),", expected final length: ",len(loop)+1)
           
       elif np.allclose(current_end_point, edge[1]) and not np.allclose(previous_end_point, edge[0]):
+        # add edge p1->p0 to new_loop
         new_loop.append(edge[0])
         previous_end_point = current_end_point
         current_end_point = edge[0]
@@ -219,37 +239,53 @@ def order_loop(loop, first_point):
         if debug:
           print("add point ",edge[0],", new length of loop: ",len(new_loop),", expected final length: ",len(loop)+1)
         
-    # if the end point is again the start point, finish the loop. Note if by now still len(new_loop) < len(loop)+1 holds, there might be a different (distinct) loop for this z position which is discarded.
-    if np.allclose(current_end_point, first_point):
-      if debug:
-        print("start point reached")
-      break
-      
     if not next_point_found:
       if debug: 
         print("no point found that continues loop")
       
-      # look for closest point and use that as next one
+      # detect points that have only one adjacent edge, if not already done
+      if len(points_with_single_adjacent_edge) == 0:
+        
+        # iterate over points in old loop
+        for edge in loop:
+          for p in edge:
+            n_adjacent_edges = 0
+            # iterate over all edges
+            for edge2 in loop:
+              if np.allclose(p, edge2[0]) or np.allclose(p, edge2[1]):
+                n_adjacent_edges += 1
+              if n_adjacent_edges >= 2:
+                break
+            if n_adjacent_edges == 1:
+              points_with_single_adjacent_edge.append(p)
+      
+      # now, points_with_single_adjacent_edge contains all points that have only a single adjacent edge
+      
+      # look for closest such point and use that as next one
       minimum_distance = None
       
       closest_point = None
-      # iterate over points in old loop
-      for edge in loop:
-        # consider both points of current edge
-        for point in [edge[0], edge[1]]:
-          # do not allow last edge to be selected again
-          if not np.allclose(current_end_point, point) and not np.allclose(previous_end_point, point) :
-            distance = np.linalg.norm(point - current_end_point)
-            if minimum_distance is None or distance < minimum_distance:
-              minimum_distance = distance
-              closest_point = point
+      # iterate over points in points_with_single_adjacent_edge
+      for point in points_with_single_adjacent_edge:
+        # do not allow last edge to be selected again
+        if not np.allclose(current_end_point, point) and not np.allclose(previous_end_point, point) :
+          distance = np.linalg.norm(point - current_end_point)
+          if minimum_distance is None or distance < minimum_distance:
+            minimum_distance = distance
+            closest_point = point
           
       new_loop.append(closest_point)
       previous_end_point = current_end_point
       current_end_point = closest_point
       if debug: 
         print("use closest point {} with a distance of {} to the current point".format(closest_point, minimum_distance))
-        
+       
+    # if the end point is again the start point, finish the loop. Note if by now still len(new_loop) < len(loop)+1 holds, there might be a different (distinct) loop for this z position which is discarded.
+    if np.allclose(current_end_point, first_point):
+      if debug:
+        print("start point reached")
+      break
+       
       #print("Error: Loop for z={} could not be closed. Maybe there are triangles missing?".format(loop[0][0][2]))
       #break
   return new_loop
@@ -274,9 +310,30 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
 
   n_triangles = len(stl_mesh.points)
   
+  # determine bounding box of mesh
+  bounding_box_zmin = np.inf
+  bounding_box_zmax = -np.inf
+  # loop over triangles in mesh
+  for p in stl_mesh.points:
+    # p contains the 9 entries [p1x p1y p1z p2x p2y p2z p3x p3y p3z] of the triangle with corner points (p1,p2,p3)
+
+    p1 = np.array(p[0:3])
+    p2 = np.array(p[3:6])
+    p3 = np.array(p[6:9])
+    
+    bounding_box_zmin = min(bounding_box_zmin,p1[2],p2[2],p3[2])
+    bounding_box_zmax = max(bounding_box_zmax,p1[2],p2[2],p3[2])
+  
+  if bottom_clip < bounding_box_zmin:
+    print("Adjusting bottom_clip from {} to {} to match the mesh.".format(bottom_clip,bounding_box_zmin))
+    bottom_clip = bounding_box_zmin
+  if top_clip > bounding_box_zmax:
+    print("Adjusting top_clip from {} to {} to match the mesh.".format(top_clip,bounding_box_zmax))
+    top_clip = bounding_box_zmax
+  
   # disturb values a tiny bit to avoid singularities
-  eps1 = 1.234e-2
-  eps2 = 5.432e-2
+  eps1 = 1e-10  # 1.234e-2
+  eps2 = 1e-10  # 5.432e-2
   bottom_clip += eps1
   top_clip -= eps2
 
@@ -341,6 +398,10 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
             
     # store new loop 
     loops[loop_no] = list(new_loop)
+    
+    # adjust z value to undo artificial distortion
+    for i in range(len(loops[loop_no])):
+      loops[loop_no][i][2] = z_samples[loop_no]
         
   if debug:
     print("----------------")
@@ -398,9 +459,9 @@ def create_rings(input_filename, bottom_clip, top_clip, n_loops, write_output_me
   
   return loops
 
-def create_border_points(input_filename, bottom_clip, top_clip, n_loops, n_points):
+def create_boundary_points(input_filename, bottom_clip, top_clip, n_loops, n_points):
   """ 
-  This is a top-level function that performs all the steps to create the initial border points of the whole mesh. 
+  This is a top-level function that performs all the steps to create the initial boundary points of the whole mesh. 
   It is called by the C++ implementation.
   :param input_filename: filenamem of either an STL mesh or a geomdl B-spline Surface stored as pickle
   :param bottom_clip:
@@ -408,27 +469,27 @@ def create_border_points(input_filename, bottom_clip, top_clip, n_loops, n_point
   """
   
   # if the file contains a spline curve, try to load it and call the function from spline_surface
-  if "surface.pickle" in input_filename:
+  if ".pickle" in input_filename:
+    print("Interpreting \"{}\" as pickle file containing a NURBS surface.".format(input_filename))
     try:
       # check if file exists
-      if os.path.exists(input_filename):
-        print("File \"{}\" exists.".format(input_filename))
-      else:
+      if not os.path.exists(input_filename):
         print("File \"{}\" does not exist".format(input_filename))
         
       f = open(input_filename,"rb")
       surface = pickle.load(f)
-      return spline_surface.create_border_points(surface, bottom_clip, top_clip, n_loops, n_points)
+      return spline_surface.create_boundary_points(surface, bottom_clip, top_clip, n_loops, n_points)
     except:
-      print("Error! Could not create border points from file \"{}\".".format(input_filename))
+      print("Error! Could not create boundary points from file \"{}\".".format(input_filename))
       quit()
   
   # algorithm for STL mesh
-  loops = create_rings(input_filename, bottom_clip, top_clip, n_loops, False)
-  border_points, lengths = stl_create_mesh.rings_to_border_points(loops, n_points)
-  border_points = stl_create_mesh.border_point_loops_to_list(border_points)
+  print("Interpreting \"{}\" as STL file containing the surface.".format(input_filename))
+  loops = create_rings(input_filename, bottom_clip, top_clip, n_loops, False)   # last argument is if debugging output should be written, set to False
+  boundary_points, lengths = stl_create_mesh.rings_to_boundary_points(loops, n_points)
+  boundary_points = stl_create_mesh.boundary_point_loops_to_list(boundary_points)
   
-  return border_points
+  return boundary_points
 
 def create_point_marker(point, markers, size=None):
   if size is None:
@@ -460,16 +521,16 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
   """
   Create a curve on the intersection of a horizontal plane given by z_value and the surface from the stl file.
   From nearest point to start_point to nearest point to end_point, the direction is such that the length of the curve is minimal (there are 2 possible orientations cw/ccw)
-  :param input_filename: file name of an stl file that contains the closed surface mesh of the muscle, aligned with the z-axis
+  :param input_filename: file name of an stl file that contains the closed surface mesh of the muscle, aligned with the z-axis, or alternatively a pickle file of the surface
   :param start_point: the line starts at the point on the surface with given z_value, that is the nearest to start_point
   :param end_point: the line ends at the point on the surface with given z_value, that is the nearest to end_point
   :param z_value: the z level of the line on the surface
-  :param n_points: number of points on the border
+  :param n_points: number of points on the boundary
   :return: list of points
   """
   
-  # if the file contains a spline curve, try to load it and call the function from spline_surface
-  if "surface.pickle" in input_filename:
+  # if the file contains a NURBS surface, try to load it and call the function from spline_surface
+  if ".pickle" in input_filename:
     try:
       f = open(input_filename,"rb")
       surface = pickle.load(f)
@@ -479,21 +540,24 @@ def create_ring_section(input_filename, start_point, end_point, z_value, n_point
     debugging_points = []
     result = spline_surface.create_ring_section(surface, start_point, end_point, z_value, n_points, debugging_points)
     
-    level = 0
-    rank_no = z_value
-    filename = "00_{}_pass".format(start_point)
-    if len(debugging_points) != 0:
-      stl_debug_output.output_points(filename, rank_no, level, debugging_points, 0.02)
+    # debugging output
+    if False:
+      level = 0
+      rank_no = z_value
+      filename = "00_{}_pass".format(start_point)
+      if len(debugging_points) != 0:
+        stl_debug_output.output_points(filename, rank_no, level, debugging_points, 0.02)
 
-    filename = "00_{}_start_end".format(start_point)
-    stl_debug_output.output_points(filename, rank_no, level, [start_point, end_point], 0.1)
+      filename = "00_{}_start_end".format(start_point)
+      stl_debug_output.output_points(filename, rank_no, level, [start_point, end_point], 0.1)
 
-    filename = "00_{}_points".format(start_point)
-    stl_debug_output.output_points(filename, rank_no, level, result, 0.05)
+      filename = "00_{}_points".format(start_point)
+      stl_debug_output.output_points(filename, rank_no, level, result, 0.05)
 
     return result
     
   # else interpret the file as stl mesh and use the stl mesh algorithm
+  print("Interpreting \"{}\" as STL file containing the surface.".format(input_filename))
   stl_mesh = get_stl_mesh(input_filename)
   return create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points)
       
@@ -505,7 +569,7 @@ def create_ring_section_mesh(stl_mesh, start_point, end_point, z_value, n_points
   :param start_point: the line starts at the point on the surface with given z_value, that is the nearest to start_point
   :param end_point: the line ends at the point on the surface with given z_value, that is the nearest to end_point
   :param z_value: the z level of the line on the surface
-  :param n_points: number of points on the border
+  :param n_points: number of points on the boundary
   :return: list of points
   """
   

@@ -36,10 +36,10 @@ variables.constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant f
 variables.force = 1.0       # [N]
 
 variables.dt_elasticity = 1      # [ms] time step width for elasticity
-variables.end_time      = 10     # [ms] simulation time
+variables.end_time      = 20000     # [ms] simulation time
 variables.scenario_name = "tendon_top_a"
 variables.is_bottom_tendon = False        # whether the tendon is at the bottom (negative z-direction), this is important for the boundary conditions
-variables.output_timestep_3D = 10  # [ms] output timestep
+variables.output_timestep_3D = 50  # [ms] output timestep
 
 # input mesh file
 #fiber_file = "../../../../input/left_biceps_brachii_tendon1.bin"        # bottom tendon

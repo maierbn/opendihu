@@ -3,7 +3,7 @@
 <precice-configuration>
   <!-- format for console output of precice -->
   <log>
-    <sink type="stream" output="stdout"  filter='(%Severity% >= debug) and (not (%Function% = "advance"))' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />
+    <sink type="stream" output="stdout"  filter='(%Severity% >= debug) and (%Rank% = 0) and (not (%Function% = "advance"))' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />
     <!--<sink type="stream" output="stdout"  filter='%Severity% >= debug' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />-->
     <!--<sink type="file" output="debug.log" filter= "(%Severity% >= debug)" format="%Message%" enabled="true" />	-->
   </log>
@@ -233,8 +233,10 @@
       <participant name="TendonSolverTopA"/>
       <participant name="TendonSolverTopB"/>
       
-      <max-time value="1000.0"/>           <!-- end time of the whole simulation -->
+      <max-time value="20000.0"/>           <!-- end time of the whole simulation -->
       <time-window-size value="1.0"/>   <!-- timestep width for coupling -->
+      <max-iterations value="1000" />
+      <extrapolation-order value="1"/>
       
       <absolute-convergence-measure limit="0.1" data="Displacement" mesh="TendonMeshTop" />
       <absolute-convergence-measure limit="0.1" data="Displacement" mesh="TendonMeshBottomA" />

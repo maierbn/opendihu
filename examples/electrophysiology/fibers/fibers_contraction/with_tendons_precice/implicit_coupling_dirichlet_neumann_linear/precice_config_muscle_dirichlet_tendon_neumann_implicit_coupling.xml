@@ -168,6 +168,8 @@ Result:
       <participants first="TendonSolver" second="MuscleSolver"/>
       <max-time value="1000.0"/>           <!-- end time of the whole simulation -->
       <time-window-size value="1"/>   <!-- timestep width for coupling -->
+      <max-iterations value="1000" />
+      <extrapolation-order value="1"/>
       
       <!--<absolute-convergence-measure limit="0.1" data="Displacement" mesh="TendonMeshTop" />-->
       <relative-convergence-measure limit="0.01" data="Displacement" mesh="TendonMeshTop" />

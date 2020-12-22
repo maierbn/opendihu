@@ -39,10 +39,10 @@ variables.constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant f
 variables.force = 100.0           # [N] pulling force to the bottom 
 
 variables.dt_elasticity = 1      # [ms] time step width for elasticity
-variables.end_time      = 1000   # [ms] simulation time
+variables.end_time      = 20000   # [ms] simulation time
 variables.scenario_name = "tendon_bottom"
 variables.is_bottom_tendon = True        # whether the tendon is at the bottom (negative z-direction), this is important for the boundary conditions
-variables.output_timestep_3D = 1  # [ms] output timestep
+variables.output_timestep_3D = 50  # [ms] output timestep
 
 # input mesh file
 fiber_file = "../../../../input/left_biceps_brachii_tendon1.bin"        # bottom tendon
@@ -229,7 +229,7 @@ def store_rotated_ulna(t):
 
   # store rotated ulna
   call_count += 1
-  output_interval = 10
+  output_interval = 50    # [ms] (because coupling timestep is 1ms)
   if call_count % output_interval == 0:
     out_triangles = []
 

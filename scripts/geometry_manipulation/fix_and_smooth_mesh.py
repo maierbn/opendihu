@@ -810,7 +810,7 @@ def fix_and_smooth_mesh(grid_points_world_space, n_grid_points_x, n_grid_points_
     # --------------------------------------------------
     any_point_was_changed = resolve_small_angles(grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, point_indices_list, triangle_list, extent_x, extent_y, loop_no)
     
-    #resolve_self_intersections(grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, extent_x, extent_y, debugging_stl_output)
+    resolve_self_intersections(grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, extent_x, extent_y, debugging_stl_output)
   
     # if there was no change, do not do smoothing again
     if not any_point_was_changed:

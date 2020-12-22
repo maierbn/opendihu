@@ -86,6 +86,7 @@ echo "--- Create a spline surface of the geometry"
 # compute bottom and top limits in mm
 bottom_z_clip_mm=`python -c "print(${bottom_z_clip}*10)"`
 top_z_clip_mm=`python -c "print(${top_z_clip}*10)"`
+element_length_mm=`python -c "print(${element_length}*10)"`
 
 bottom_z_clip_mm_extended=`python -c "print(${bottom_z_clip_mm}-2)"`
 top_z_clip_mm_extended=`python -c "print(${top_z_clip_mm}+2)"`
@@ -176,7 +177,7 @@ for i in ${!array_l[@]}; do
       --output_filename ${current_directory}/processed_meshes/${basename}_05_0x0fibers_mm.bin \
       --bottom_z_clip $bottom_z_clip_mm \
       --top_z_clip $top_z_clip_mm \
-      --element_size $element_length \
+      --element_size $element_length_mm \
       -l=${l} -m=${m} --n_elements_x_per_subdomain=${n} \
       --max_area_factor 
       --program_name=${program_name}"
@@ -186,7 +187,7 @@ for i in ${!array_l[@]}; do
       --output_filename ${current_directory}/processed_meshes/${basename}_05_0x0fibers_mm.bin \
       --bottom_z_clip $bottom_z_clip_mm \
       --top_z_clip $top_z_clip_mm \
-      --element_size $element_length \
+      --element_size $element_length_mm \
       -l=${l} -m=${m} --n_elements_x_per_subdomain=${n} \
       --program_name=${program_name}
 
@@ -237,8 +238,8 @@ for i in ${!array_l[@]}; do
     # rename the fibers to their final name
     mv ${current_directory}/processed_meshes/${basename}_08_${number_fibers1}x${number_fibers1}fibers_xy_swapped.bin ${current_directory}/processed_meshes/${basename}_${number_fibers1}x${number_fibers1}fibers.bin
     mv ${current_directory}/processed_meshes/${basename}_08_${number_fibers2}x${number_fibers2}fibers_xy_swapped.bin ${current_directory}/processed_meshes/${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin
-    echo "final result: " ${basename}_${number_fibers1}x${number_fibers1}fibers.bin
-    echo "final result: " ${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin
+    echo -e "\033[0;32mcreated final result: " ${basename}_${number_fibers1}x${number_fibers1}fibers.bin "\033[0m"
+    echo -e "\033[0;32mcreated final result: " ${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin "\033[0m"
   else
     echo "File processed_meshes/${basename}_${number_fibers1}x${number_fibers1}fibers.bin already exists, do not create again."
   fi
@@ -268,7 +269,6 @@ for i in ${!array_l[@]}; do
   else   
     echo ""
     echo "--- Do not create a fat layer mesh for ${number_fibers1}x${number_fibers1} and ${number_fibers2}x${number_fibers2} fibers because the file would be very large."
-    break
   fi
 
   cd $current_directory

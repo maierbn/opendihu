@@ -28,7 +28,10 @@ void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFi
   // initialize python
   Py_Initialize();
 
+  // only python <= 3.6 needs to additionally call PyEval_InitThreads
+#if PY_MINOR_VERSION <= 6
   PyEval_InitThreads();
+#endif
 
   //VLOG(4) << "PyEval_ReleaseLock()";
   //PyEval_ReleaseLock();
@@ -219,19 +222,28 @@ void DihuContext::loadPythonScript(std::string text)
       // get standard python path
       wchar_t *standardPythonPathWChar = Py_GetPath();
       std::wstring standardPythonPath(standardPythonPathWChar);
-      LOG(ERROR) << "Failed to import numpy. \n Python home directory: \"" << PYTHON_HOME_DIRECTORY
-        << "\", Standard python path: " << standardPythonPath;
 
       wchar_t *homeWChar = Py_GetPythonHome();
       char *home = Py_EncodeLocale(homeWChar, NULL);
-      LOG(ERROR) << "python home: " << home;
 
       wchar_t *pathWChar = Py_GetPath();
       char *path = Py_EncodeLocale(pathWChar, NULL);
-      LOG(ERROR) << "python path: " << path;
 
       const char *version = Py_GetVersion();
-      LOG(ERROR) << "python version: " << version;
+      LOG(ERROR) << "Failed to import numpy. \n" 
+        << " - Python home directory: \"" << PYTHON_HOME_DIRECTORY << "\",\n"
+        << " - Standard python path: " << standardPythonPath << "\n"
+        << " - Python home: " << home << "\n"
+        << " - Python path: " << path << "\n"
+        << " - Python version: " << version << "\n\n"
+        << "The python packages were obviously not installed properly.\n"
+        << "Try the following:\n"
+        << "  scons PYTHONPACKAGES_REBUILD=True\n"
+        << "\n"
+        << "If this fails, try the commands by hand or do the following:\n"
+        << "  cd " << PYTHON_HOME_DIRECTORY << "\n"
+        << "  python3 -m pip install numpy matplotlib scipy numpy-stl svg.path triangle geomdl vtk\n"
+        << "Try to omit all packages that fail.";
     }
 
     // add callback function to capture stderr buffer

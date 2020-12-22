@@ -6,22 +6,17 @@
 Link to Documentation: https://opendihu.readthedocs.io/en/latest/
 
 # Overview
-Opendihu is a software framework to solve static and dynamic multi-physics problems spatially discretized in 1D, 2D and 3D by the Finite Element Method. 
-Applications are in the domain of skeletal muscle simulations: electrophysiology, contraction, neuro-chemo-electro-mechanics.
-Core design goals are usability, performance and extensibility. 
+OpenDiHu is a software framework to solve 1D, 2D, and 3D multi-physics problems in parallel with the Finite Element Method.
+It is used in the domain of skeletal muscle simulations: Electrophysiology, contraction, neuro-chemo-electro-mechanics.
+Design goals are usability, performance and extensibility.
 
-It is developed at [SGS](https://www.ipvs.uni-stuttgart.de/abteilungen/sgs/index.html?__locale=en) and [IANS](https://www.ians.uni-stuttgart.de/institute/) at [University of Stuttgart](https://www.uni-stuttgart.de/en/index.html)
-and was funded by the [DFG](https://www.dfg.de/en/funded_projects/current_projects_programmes/list/projectdetails/index.jsp?id=277536708) as part of the IRTG ["Soft Tissue Robotics"](https://www.irtg.auckland.ac.nz/)
-and the [BW-Stiftung](https://www.bwstiftung.de/) under the [HPC 2](https://www.bwstiftung.de/hpcii/#c15824) call.
+The software is developed at [SGS](https://www.ipvs.uni-stuttgart.de/abteilungen/sgs/index.html?__locale=en) and [IANS](https://www.ians.uni-stuttgart.de/institute/) at the [University of Stuttgart](https://www.uni-stuttgart.de/en/index.html).
 
 # Installation
-Documentation including detailed [installation instructions](https://opendihu.readthedocs.io/en/latest/user/installation.html) can be found at [opendihu.readthedocs.io](https://opendihu.readthedocs.io/en/latest/).
+Refer to the documentation for detailed [installation instructions](https://opendihu.readthedocs.io/en/latest/user/installation.html) can be found at [opendihu.readthedocs.io](https://opendihu.readthedocs.io/en/latest/).
 
-If you usually skip instructions, try the following:
+However, if you usually skip instructions, do the following:
 ```
-git clone https://github.com/maierbn/opendihu.git && cd opendihu
-sudo apt-get update && \
-  sudo apt-get install -y gfortran libopenmpi-dev libx11-* git apt-utils make software-properties-common zlib1g-dev cmake libssl-dev bison flex
-make
+git clone https://github.com/maierbn/opendihu.git && cd opendihu && make
 ```
-and see what happens. You need at least GCC 7! If there are error messages, look into the log file `config.log`.
+If there are error messages, have a look at the log file `config.log`.

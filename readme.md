@@ -13,7 +13,7 @@ Design goals are usability, performance and extensibility.
 The software is developed at [SGS](https://www.ipvs.uni-stuttgart.de/abteilungen/sgs/index.html?__locale=en) and [IANS](https://www.ians.uni-stuttgart.de/institute/) at the [University of Stuttgart](https://www.uni-stuttgart.de/en/index.html).
 
 # Installation
-Refer to the documentation for detailed [installation instructions](https://opendihu.readthedocs.io/en/latest/user/installation.html) can be found at [opendihu.readthedocs.io](https://opendihu.readthedocs.io/en/latest/).
+Refer to the documentation for detailed [installation instructions](https://opendihu.readthedocs.io/en/latest/user/installation.html).
 
 However, if you usually skip instructions, do the following:
 ```

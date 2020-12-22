@@ -70,125 +70,226 @@ $pyod ${stl_utility_directory}/translate_stl.py \
   processed_meshes/${basename}_03_bottom_at_zero.stl \
   0 0 ${translate_value}
 
-
 # now ${basename}_03_bottom_at_zero.stl is the same as "biceps_full.stl"
+
+# scale back to mm, because the `parallel_fiber_estimation` step has been fine-tuned for the mm mesh (sorry for that)
+echo ""
+echo "--- Scale back to mm"
+$pyod ${stl_utility_directory}/scale_stl.py \
+  processed_meshes/${basename}_03_bottom_at_zero.stl \
+  processed_meshes/${basename}_03_bottom_at_zero_mm.stl \
+  10 10 10
 
 echo ""
 echo "--- Create a spline surface of the geometry"
 
+# compute bottom and top limits in mm
+bottom_z_clip_mm=`python -c "print(${bottom_z_clip}*10)"`
+top_z_clip_mm=`python -c "print(${top_z_clip}*10)"`
+element_length_mm=`python -c "print(${element_length}*10)"`
+
+bottom_z_clip_mm_extended=`python -c "print(${bottom_z_clip_mm}-2)"`
+top_z_clip_mm_extended=`python -c "print(${top_z_clip_mm}+2)"`
+
 # create spline surface
-cd $opendihu_directory/scripts/geometry_manipulation
-if [[ ! -f "${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle" ]]; then
+"cd" $opendihu_directory/scripts/geometry_manipulation
+if [[ ! -f "${current_directory}/processed_meshes/${basename}_04_spline_surface_mm.pickle" ]]; then
   $pyod ./create_spline_surface.py \
-    ${current_directory}/processed_meshes/${basename}_03_bottom_at_zero.stl \
-    ${current_directory}/processed_meshes/${basename}_04_spline_surface.stl \
-    ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
-    $bottom_z_clip $top_z_clip
+    ${current_directory}/processed_meshes/${basename}_03_bottom_at_zero_mm.stl \
+    ${current_directory}/processed_meshes/${basename}_04_spline_surface_mm.stl \
+    ${current_directory}/processed_meshes/${basename}_04_spline_surface_mm.pickle \
+    $bottom_z_clip_mm_extended $top_z_clip_mm_extended
 else
-  echo "file processed_meshes/${basename}_04_spline_surface.pickle already exists"
+  echo "file processed_meshes/${basename}_04_spline_surface_mm.pickle already exists"
 fi
 
 echo ""
 echo "--- Compile opendihu"
-cd $opendihu_directory
+"cd" $opendihu_directory
 $scons no_tests=TRUE
 
 echo ""
 echo "--- Compile parallel fiber estimation"
-cd $parallel_fiber_estimation_directory
+"cd" $parallel_fiber_estimation_directory
 $scons
 
-cd build_release
+"cd" build_release
 
 echo ""
-echo "--- Generate 7x7 and 9x9 fibers.bin file"
+echo "--- Generate actual fiber meshes in different sizes using the parallel_fiber_estimation example"
 #read -p "Press enter to continue"
 
+# parameters for files with different numbers of fibers
+# number of fibers (number without boundary): 9(7),   11(9),   13(11),   25(23),   37(35),     65(63),     129(127),     257(255),     513(511)
+# total number of fibers:                     81(49), 121(81), 169(121), 625(529), 1369(1225), 4225(3969), 16641(16129), 66049(65025), 263139(261121)
+# m = number of fine grid fibers
+# l = maximum recursion level
+# n = number of elements in x and y coordinate directions
+array_m=(0 0 0 0 2 2)
+array_l=(0 0 1 2 1 1)
+array_n=(4 6 6 4 4 6)
+array_number_fibers1=(9 13 25 33 49 73)
+array_number_fibers2=(7 11 23 31 47 71)
 
-if [[ ! -f "${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin" ]]; then
-  echo "./generate ../settings_generate.py \
-    --input_filename_or_splines_or_stl ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
-    --output_filename ${current_directory}/processed_meshes/${basename}_05_0x0fibers.bin \
-    --bottom_z_clip $bottom_z_clip \
-    --top_z_clip $top_z_clip \
-    --element_size $element_length \
-    --n_elements_z_per_subdomain 10"
-  ./generate ../settings_generate.py \
-    --input_filename_or_splines_or_stl ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
-    --output_filename ${current_directory}/processed_meshes/${basename}_05_0x0fibers.bin \
-    --bottom_z_clip $bottom_z_clip \
-    --top_z_clip $top_z_clip \
-    --element_size $element_length \
-    --n_elements_z_per_subdomain 10
-else
-  echo "file processed_meshes/${basename}_05_7x7fibers.bin already exists"
-fi
+#array_m=(0 0 0 0 2 2 4 15)
+#array_l=(0 0 1 2 1 1 2 2)
+#array_n=(4 6 6 4 4 6 4 4)
+#array_number_fibers1=(9 13 25 33 49 73 161 353 513)
+#array_number_fibers2=(7 11 23 31 47 71 159 351 511)
 
-cp ${current_directory}/processed_meshes/${basename}_05_7x7fibers.no_boundary.bin ${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin
+# loop over parameter combinations
+for i in ${!array_l[@]}; do
 
-echo ""
-echo "--- Move the fibers file back to original position"
-# move the fibers in the fibers.bin file back to their original position
-$pyod $opendihu_directory/scripts/file_manipulation/translate_bin_fibers.py \
-  ${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin \
-  ${current_directory}/processed_meshes/${basename}_06_7x7fibers_original_position.bin \
-  0 0 ${bottom_bounding_box_value}
+  # get parameters
+  l=${array_l[i]}
+  m=${array_m[i]}
+  n=${array_n[i]}
+  number_fibers1=${array_number_fibers1[i]}
+  number_fibers2=${array_number_fibers2[i]}
+
+  # use the appropriate number of processes
+  if [[ "$l" -eq "0" ]]; then
+    mpi_command="mpirun -n 1"
+  elif [[ "$l" -eq "1" ]]; then
+    mpi_command="mpirun -n 8"
+  elif [[ "$l" -eq "2" ]]; then
+    mpi_command="mpirun -n 64"
+  fi
+
+  # for even number of elements use quadratic formulation
+  if [[ "$n" -eq "5" || "$n" -eq "9" ]]; then
+    program_name="generate"
+  else
+    program_name="generate_quadratic"
+  fi
+
+  echo ""
+  echo "--- Generate fiber mesh files with ${number_fibers1}x${number_fibers1} and ${number_fibers2}x${number_fibers2} fibers"
+  "cd" $parallel_fiber_estimation_directory/build_release
+
+  # max_area_factor: 100 for mm meshes
+  # computation: max_area = extent_x * extent_y / max_area_factor
+
+  # create file, if does not yet exist
+  if [[ ! -f "${current_directory}/processed_meshes/${basename}_${number_fibers1}x${number_fibers1}fibers.bin" ]]; then
+    echo "${mpi_command} ./${program_name} ../settings_generate.py \
+      --input_filename_or_splines_or_stl ${current_directory}/processed_meshes/${basename}_04_spline_surface_mm.pickle \
+      --output_filename ${current_directory}/processed_meshes/${basename}_05_0x0fibers_mm.bin \
+      --bottom_z_clip $bottom_z_clip_mm \
+      --top_z_clip $top_z_clip_mm \
+      --element_size $element_length_mm \
+      -l=${l} -m=${m} --n_elements_x_per_subdomain=${n} \
+      --max_area_factor 
+      --program_name=${program_name}"
+
+    ${mpi_command} ./${program_name} ../settings_generate.py \
+      --input_filename_or_splines_or_stl ${current_directory}/processed_meshes/${basename}_04_spline_surface_mm.pickle \
+      --output_filename ${current_directory}/processed_meshes/${basename}_05_0x0fibers_mm.bin \
+      --bottom_z_clip $bottom_z_clip_mm \
+      --top_z_clip $top_z_clip_mm \
+      --element_size $element_length_mm \
+      -l=${l} -m=${m} --n_elements_x_per_subdomain=${n} \
+      --program_name=${program_name}
+
+    # scale from mm to cm
+    echo ""
+    echo "--- Scale from mm to cm"
+    $parallel_fiber_estimation_directory/build_release/scale \
+      ${current_directory}/processed_meshes/${basename}_05_${number_fibers1}x${number_fibers1}fibers_mm.bin \
+      ${current_directory}/processed_meshes/${basename}_05_${number_fibers1}x${number_fibers1}fibers.bin \
+      0.1
+      
+    $parallel_fiber_estimation_directory/build_release/scale \
+      ${current_directory}/processed_meshes/${basename}_05_${number_fibers2}x${number_fibers2}fibers_mm.no_boundary.bin \
+      ${current_directory}/processed_meshes/${basename}_05_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin \
+      0.1
+
+    # move the fibers in the fibers.bin file back to their original position
+    echo ""
+    echo "--- Move the fibers file back to original position"
+    $pyod $opendihu_directory/scripts/file_manipulation/translate_bin_fibers.py \
+      ${current_directory}/processed_meshes/${basename}_05_${number_fibers1}x${number_fibers1}fibers.bin \
+      ${current_directory}/processed_meshes/${basename}_06_${number_fibers1}x${number_fibers1}fibers_original_position.bin \
+      0 0 ${bottom_bounding_box_value}
+      
+    $pyod $opendihu_directory/scripts/file_manipulation/translate_bin_fibers.py \
+      ${current_directory}/processed_meshes/${basename}_05_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin \
+      ${current_directory}/processed_meshes/${basename}_06_${number_fibers2}x${number_fibers2}fibers_original_position.bin \
+      0 0 ${bottom_bounding_box_value}
+
+    echo ""
+    echo "--- Reverse the numbering in y direction"
+    $pyod $opendihu_directory/scripts/file_manipulation/reverse_x_order_bin_fibers.py \
+      ${current_directory}/processed_meshes/${basename}_06_${number_fibers1}x${number_fibers1}fibers_original_position.bin \
+      ${current_directory}/processed_meshes/${basename}_07_${number_fibers1}x${number_fibers1}fibers_y_reversed.bin 
+
+    $pyod $opendihu_directory/scripts/file_manipulation/swap_xy_bin_fibers.py \
+      ${current_directory}/processed_meshes/${basename}_07_${number_fibers1}x${number_fibers1}fibers_y_reversed.bin \
+      ${current_directory}/processed_meshes/${basename}_08_${number_fibers1}x${number_fibers1}fibers_xy_swapped.bin 
+
+    $pyod $opendihu_directory/scripts/file_manipulation/reverse_y_order_bin_fibers.py \
+      ${current_directory}/processed_meshes/${basename}_06_${number_fibers2}x${number_fibers2}fibers_original_position.bin \
+      ${current_directory}/processed_meshes/${basename}_07_${number_fibers2}x${number_fibers2}fibers_y_reversed.bin 
+
+    $pyod $opendihu_directory/scripts/file_manipulation/swap_xy_bin_fibers.py \
+      ${current_directory}/processed_meshes/${basename}_07_${number_fibers2}x${number_fibers2}fibers_y_reversed.bin \
+      ${current_directory}/processed_meshes/${basename}_08_${number_fibers2}x${number_fibers2}fibers_xy_swapped.bin 
+
+    # rename the fibers to their final name
+    mv ${current_directory}/processed_meshes/${basename}_08_${number_fibers1}x${number_fibers1}fibers_xy_swapped.bin ${current_directory}/processed_meshes/${basename}_${number_fibers1}x${number_fibers1}fibers.bin
+    mv ${current_directory}/processed_meshes/${basename}_08_${number_fibers2}x${number_fibers2}fibers_xy_swapped.bin ${current_directory}/processed_meshes/${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin
+    echo -e "\033[0;32mcreated final result: " ${basename}_${number_fibers1}x${number_fibers1}fibers.bin "\033[0m"
+    echo -e "\033[0;32mcreated final result: " ${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin "\033[0m"
+  else
+    echo "File processed_meshes/${basename}_${number_fibers1}x${number_fibers1}fibers.bin already exists, do not create again."
+  fi
   
-$pyod $opendihu_directory/scripts/file_manipulation/translate_bin_fibers.py \
-  ${current_directory}/processed_meshes/${basename}_05_9x9fibers.bin \
-  ${current_directory}/processed_meshes/${basename}_06_9x9fibers_original_position.bin \
-  0 0 ${bottom_bounding_box_value}
-
-echo ""
-echo "--- Reverse the numbering in y direction"
-$pyod $opendihu_directory/scripts/file_manipulation/reverse_y_order_bin_fibers.py \
-  ${current_directory}/processed_meshes/${basename}_06_7x7fibers_original_position.bin \
-  ${current_directory}/processed_meshes/${basename}_07_7x7fibers_y_reversed.bin 
+  # create fat layer meshes for the smaller files
+  if [[ "${number_fibers1}" -le "100" ]]; then
   
-$pyod $opendihu_directory/scripts/file_manipulation/swap_xy_bin_fibers.py \
-  ${current_directory}/processed_meshes/${basename}_07_7x7fibers_y_reversed.bin \
-  ${current_directory}/processed_meshes/${basename}_08_7x7fibers_xy_swapped.bin 
+    echo ""
+    echo "--- Create fat layer meshes for ${number_fibers1}x${number_fibers1} and ${number_fibers2}x${number_fibers2} fibers"
+    cd $current_directory/processed_meshes
+    
+    echo ""
+    echo "Create ${basename}_${number_fibers1}x${number_fibers1}fibers.bin_fat.bin if does not exist"
+    if [[ ! -f "${basename}_${number_fibers1}x${number_fibers1}fibers.bin_fat.bin" ]]; then
+      $pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_${number_fibers1}x${number_fibers1}fibers.bin
+    else
+      echo "File ${basename}_${number_fibers1}x${number_fibers1}fibers.bin_fat.bin already exists, do not create again."
+    fi
+    
+    echo ""
+    echo "Create ${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin_fat.bin if does not exist"
+    if [[ ! -f "${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin_fat.bin" ]]; then
+      $pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin
+    else
+      echo "File ${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin_fat.bin already exists, do not create again."
+    fi
+  else   
+    echo ""
+    echo "--- Do not create a fat layer mesh for ${number_fibers1}x${number_fibers1} and ${number_fibers2}x${number_fibers2} fibers because the file would be very large."
+  fi
 
-$pyod $opendihu_directory/scripts/file_manipulation/reverse_y_order_bin_fibers.py \
-  ${current_directory}/processed_meshes/${basename}_06_9x9fibers_original_position.bin \
-  ${current_directory}/processed_meshes/${basename}_07_9x9fibers_y_reversed.bin 
-  
-$pyod $opendihu_directory/scripts/file_manipulation/swap_xy_bin_fibers.py \
-  ${current_directory}/processed_meshes/${basename}_07_9x9fibers_y_reversed.bin \
-  ${current_directory}/processed_meshes/${basename}_08_9x9fibers_xy_swapped.bin 
+  cd $current_directory
 
-# rename the fibers to their final name
-cp ${current_directory}/processed_meshes/${basename}_08_7x7fibers_xy_swapped.bin ${current_directory}/processed_meshes/${basename}_7x7fibers.bin
-cp ${current_directory}/processed_meshes/${basename}_08_9x9fibers_xy_swapped.bin ${current_directory}/processed_meshes/${basename}_9x9fibers.bin
+done
 
-cd $current_directory
-# refine the given, serially created file with 7x7 fibers
+# refine mesh with parameters m=0 lmax=2 nel=4 with 33(31):
+# for m=4: 353 fibers
+# for m=15: 513 fibers
 
-echo ""
-echo "--- Refine fibers file to create more dense fibers"
-
+echo "--- Refine file with 33x33 and 31x31 fibers to yield 353x353 and 351x351 fibers"
 # input fiber
-input=${current_directory}/processed_meshes/${basename}_7x7fibers.bin
+input1=${current_directory}/processed_meshes/${basename}_33x33fibers.bin
+input2=${current_directory}/processed_meshes/${basename}_31x31fibers.no_boundary.bin
 
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 1 $input $bottom_z_clip $top_z_clip $element_length    # 13
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 3 $input $bottom_z_clip $top_z_clip $element_length     # 25
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 5 $input $bottom_z_clip $top_z_clip $element_length     # 37
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 10 $input $bottom_z_clip $top_z_clip $element_length     # 67
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 17 $input $bottom_z_clip $top_z_clip $element_length     # 109
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 30 $input $bottom_z_clip $top_z_clip $element_length     # 187
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 45 $input $bottom_z_clip $top_z_clip $element_length     # 277
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 70 $input $bottom_z_clip $top_z_clip $element_length     # 427
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 86 $input $bottom_z_clip $top_z_clip $element_length     # 523
+${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 4 $input1 $bottom_z_clip $top_z_clip $element_length     # 353
+${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 4 $input2 $bottom_z_clip $top_z_clip $element_length     # 351
 
-# create fat layer meshes
-cd $current_directory/processed_meshes
-$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_7x7fibers.bin
-$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_9x9fibers.bin
-$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_13x13fibers.bin
-$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_25x25fibers.bin
-$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_37x37fibers.bin
-$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_67x67fibers.bin
-$pyod $opendihu_directory/scripts/create_fat_layer.py ${basename}_109x109fibers.bin
+echo "--- Refine file with 33x33 and 31x31 fibers to yield 513x513 and 511x511 fibers"
+${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 15 $input1 $bottom_z_clip $top_z_clip $element_length     # 513
+${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 15 $input2 $bottom_z_clip $top_z_clip $element_length     # 511
 
 cd $current_directory
 

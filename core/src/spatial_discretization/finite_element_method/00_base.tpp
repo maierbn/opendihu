@@ -143,7 +143,14 @@ run()
   solve();
   data_.print();
 
-  outputWriterManager_.writeOutput(data_);
+  callOutputWriter(-1, 0.0);
+}
+
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>
+void FiniteElementMethodBase<FunctionSpaceType,QuadratureType,nComponents,Term>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  outputWriterManager_.writeOutput(data_, timeStepNo, currentTime, callCountIncrement);
 }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents,typename Term>

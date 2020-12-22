@@ -2,7 +2,7 @@
 
 Installation
 =================
-Opendihu uses existing open-source projects, like PETSc, Python, Easylogging++, etc. The installation of opendihu has to provide all these packages, too. 
+OpenDiHu uses existing open-source projects, like PETSc, Python, Easylogging++, etc. The installation of opendihu has to provide all these packages, too. 
 A `scons <https://scons.org/>`_ based build system is included that automatically downloads and builds all needed dependencies. 
 It was successfully tested on Ubuntu 16.04, 18.04 and 20.04 (also on the Windows subsystem for linux, WSL) and on Debian as well as on the supercomputers `Hazel Hen` and `Hawk`. 
 It should work on other Linux distributions as well. If something fails, usually minor adjustments in the configuration solve the problem.
@@ -41,17 +41,23 @@ From time to time there are `releases <https://github.com/maierbn/opendihu/relea
 Prerequisites
 ^^^^^^^^^^^^^^
 
-On a blank machine with Ubuntu (tested on 16.04 and 18.04) you need to install the following packages.
+On a blank computer, the following packages should be installed.
+On all servers of SGS, these packages are already available and no further steps are required.
 
 .. code-block:: bash
 
-  # Install prerequisites
+  # Packages needed on Ubuntu 16.04 and 18.04
   sudo apt-get update && \
   sudo apt-get install -y libopenmpi-dev libx11-* git apt-utils make software-properties-common zlib1g-dev cmake libssl-dev bison flex
 
+  # (Additional) packages needed on Ubuntu 20.04
+  sudo apt install python-is-python3      # This makes `python` equal to `python3` and is only needed for the installation of PETSc.
+  sudo apt install python3-pip            # This 
+
 Because we use C++14, the GCC compiler **version 7 or higher** is required. This includes the Fortran compiler, ``gfortran``.
-The default GCC version on Ubuntu 16.04 was GCC 4, so it was needed to update. From Ubuntu 18.04 on, the default version is at least version 7, so no step are required there.
-Please check your current version by running
+The default GCC version on Ubuntu 16.04 was GCC 4 and updating was required. From Ubuntu 18.04 on, the default version is at least version 7.
+
+Please check your current version by running:
 
 .. code-block:: bash
 
@@ -75,9 +81,10 @@ Make sure that the `gfortran` compiler is installed as well:
   sudo apt-get install gfortran
 
 All other needed dependencies will be handled by the `scons` build system. 
-For each dependency you can either specify the path of its installation, if the dependency package is already installed on your system.
-Or, you if you don't do anything special, the build system downloads, builds and installs the dependencies on its own. This is the recommended way.
-Note that `python3` with `numpy`, `scipy` and `matplotlib` is such a dependency. Opendihu will download and install `python3` including these packages.
+For each dependency you can either specify the path of its installation if the dependency package is already installed on your system.
+Or, if you don't do anything special, the build system downloads, builds and installs the dependencies on its own. This is the recommended way.
+
+Note that one of these dependencies is a development version of `python3` with `numpy`, `scipy` and `matplotlib`. OpenDiHu will download and install `python3` including these packages regardless of an already existing python3 installation on your system.
 
 Build 
 ^^^^^^^^^^^
@@ -87,7 +94,9 @@ The recommended way for the first installation is to change into the opendihu di
 
   make
 
-and let it install and build everything for long time.
+Then, scons will download and install everything for a while. It runs the unit tests using 1, 2 and 6 processes. Then, it compiles all examples. As soon as the unit tests are being compiled, the installation has finished and you can abort the process. Or, you can wait for it to finish.
+
+If some of the dependencies were not found this is not a problem, e.g. if precice fails, you'll not be able to use precice but everything else still works.
 
 You can also execute `make release` to only build the release target. This is enough if you don't aim at developing the C++ code.
 
@@ -114,15 +123,16 @@ This can be done by adding the following lines to your `~/.bashrc` script or `~/
 .. code-block:: bash
 
   # set environment variables and PATH
-  export OPENDIHU_HOME=/store/software/opendihu         # replace this by the location for your installation
+  export OPENDIHU_HOME=~/opendihu         # replace this by the location for your installation
   export PATH=$PATH:$OPENDIHU_HOME/scripts
   export PATH=$PATH:$OPENDIHU_HOME/scripts/geometry_manipulation
   export PATH=$PATH:$OPENDIHU_HOME/scripts/file_manipulation
 
-(Replace the first line with your path).
+(Replace the `~/opendihu` with your own path).
 Setting these variables is recommended but not required.
-This `~/.bashrc` or `~/.bash_aliases` file will be executed whenever you start a new `bash` instance. 
-In order for the variable assignments to take effect either close and reopen the console window or source the file yourself, by executing ``. ~/.bashrc``.
+
+The `~/.bashrc` or `~/.bash_aliases` file will be executed whenever you start a new `bash` instance. 
+In order for the variable assignments to take effect, either close and reopen the console window or source the file yourself, by executing ``. ~/.bashrc``.
 
 Building with scons
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -316,6 +326,12 @@ To restart with downloading the package and then installing it again, use the `.
 
 Sometimes it also helps to delete the whole folder of a package in the `dependencies` subdirectory 
 and retry the installation. 
+
+If during execution of an example an error occurs that says numpy could not be imported, try to install the python packages of the python3 installation within opendihu yourself:
+
+.. code-block:: bash
+
+  opendihu/dependencies/python/install/bin/python3 -m pip install numpy matplotlib scipy svg.path geomdl
 
 If a dependency fails to install, you can try to install it manually on your own. 
 The commands that are used by the `scons` build system are printed to the console and additionally logged in the `config.log` file.

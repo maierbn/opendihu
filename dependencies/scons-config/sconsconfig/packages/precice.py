@@ -102,6 +102,8 @@ class precice(Package):
         -DPRECICE_ENABLE_FORTRAN=OFF \
         -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR \
         -DEigen3_ROOT=${SOURCE_DIR}/eigen-3.3.8 \
+        -DLIBXML2_DIR=${LIBXML2_DIR} \
+        -DLibXml2_ROOT=${LIBXML2_DIR} \
         ..',
       'cd ${SOURCE_DIR}/build && CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:${PREFIX}/include/libxml2 make precice install -j 16'
     ])
@@ -127,12 +129,12 @@ class precice(Package):
           cd ${SOURCE_DIR} && [ ! -f ${SOURCE_DIR}/boost_1_65_1.tar.gz ] && \
           ( wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz && tar xf boost_1_65_1.tar.gz ); \
           cd boost_1_65_1 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test --prefix=${PREFIX} && \
-          ./b2 install; \
+          ./b2 -j12 install; \
         fi',
 
         # libxml2
         'cd ${SOURCE_DIR} && if [ ! -f ${SOURCE_DIR}/libxml2-2.9.9.tar.gz ]; then wget ftp://xmlsoft.org/libxml2/libxml2-2.9.9.tar.gz; fi; \
-         tar xf libxml2-2.9.9.tar.gz; cd libxml2-2.9.9; ./configure --prefix=${PREFIX} && make install -j 16',
+         tar xf libxml2-2.9.9.tar.gz; cd libxml2-2.9.9; ./configure --prefix=${PREFIX} --without-python && make install -j 16',
 
         # precice
         'cd ${SOURCE_DIR} && mkdir -p build && cd build && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} \
@@ -146,6 +148,7 @@ class precice(Package):
         -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR \
         -DEigen3_ROOT=${SOURCE_DIR}/eigen-3.3.8 \
         -DBOOST_ROOT=${PREFIX} \
+        -DBoost_DIR=${PREFIX} \
         ..',
         'cd ${SOURCE_DIR}/build && make precice install -j 16'
       ])  

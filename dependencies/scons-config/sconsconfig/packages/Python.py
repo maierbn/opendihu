@@ -40,7 +40,7 @@ class Python(Package):
 
   def check(self, ctx):
     env = ctx.env
-    ctx.Message('Checking for Python 3.9 ...   ')
+    ctx.Message('Checking for Python 3.9 ...    ')
     
     # python 3.9
     self.libs = ["python3.9"]

@@ -43,7 +43,7 @@ class Python(Package):
     ctx.Message('Checking for Python 3.9 ...   ')
     
     # python 3.9
-    self.libs = ["python3.9m"]
+    self.libs = ["python3.9"]
     self.headers = ["Python.h"]
  
     self.set_build_handler([

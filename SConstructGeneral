@@ -53,7 +53,7 @@ sconsconfig.select(
     #packages.libcellml(required=True),# relies on libxml2 and SWIG
     packages.SEMT(required=False),     # This is a small C++ symbolic differentiation toolbox that is used for solid mechanics.
     packages.ADIOS(required=False),    # ADIOS, a library that handles efficient and parallel data output
-    packages.MegaMol(required=False),  # Adds the MegaMol visualization framework
+    #packages.MegaMol(required=False),  # Adds the MegaMol visualization framework
     #packages.VTK(required=False),     # VTK, needed only for chaste
     #packages.HDF5(required=False),    # The parallel output library HDF5, compiled with --enable-parallel as needed for chaste, the version that Petsc can download does not have this feature
     #packages.XercesC(required=False), # XML-parser, needed for chaste

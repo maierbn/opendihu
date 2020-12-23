@@ -84,7 +84,7 @@ class precice(Package):
     ctx.Message('Checking for preCICE ...       ')
     self.check_options(env)
 
-    if False:
+    if True:
       # first try is using a system boost
       self.set_build_handler([
         'mkdir -p ${PREFIX}/include',
@@ -112,8 +112,7 @@ class precice(Package):
       res = super(precice, self).check(ctx)
     
     # if installation of precice failed with the current command, retry with different options 
-    #if not res[0]:
-    if True:
+    if not res[0]:
       ctx.Log('Retry (1) with manually building boost and libxml2\n')
       ctx.Message('Retry (1) with manually building boost and libxml2.')
 

@@ -74,8 +74,9 @@ class precice(Package):
     self.number_output_lines = 15536
       
     self.libs = ['precice']
-    self.extra_libs = [[], ['boost_filesystem', 'boost_log', 'boost_log_setup', 'boost_program_options', 'boost_system', 'boost_thread', 'boost_unit_test_framework', 'dl'],
-    									 ['boost_atomic', 'boost_chrono', 'boost_date_time', 'boost_filesystem', 'boost_log', 'boost_log_setup', 'boost_prg_exec_monitor', 'boost_program_options', 'boost_regex', 'boost_system', 'boost_test_exec_monitor', 'boost_thread', 'boost_timer', 'boost_unit_test_framework', 'dl']]
+    self.extra_libs = [[],
+                       ['boost_filesystem', 'boost_log', 'boost_log_setup', 'boost_program_options', 'boost_system', 'boost_thread', 'boost_unit_test_framework', 'dl', 'boost_regex'],
+    									 ['boost_atomic', 'boost_chrono', 'boost_date_time', 'boost_filesystem', 'boost_log', 'boost_log_setup', 'boost_prg_exec_monitor', 'boost_program_options', 'boost_system', 'boost_test_exec_monitor', 'boost_thread', 'boost_timer', 'boost_unit_test_framework', 'dl', 'boost_regex']]
     self.headers = ["precice/SolverInterface.hpp"]
 
   def check(self, ctx):
@@ -83,35 +84,36 @@ class precice(Package):
     ctx.Message('Checking for preCICE ...       ')
     self.check_options(env)
 
-    # first try is using a system boost
-    self.set_build_handler([
-      'mkdir -p ${PREFIX}/include',
+    if False:
+      # first try is using a system boost
+      self.set_build_handler([
+        'mkdir -p ${PREFIX}/include',
 
-      # Eigen
-      'cd ${SOURCE_DIR} && if [ ! -f eigen-3.3.8.tar.gz ]; then \
-        wget https://gitlab.com/libeigen/eigen/-/archive/3.3.8/eigen-3.3.8.tar.gz && tar xf eigen-3.3.8.tar.gz; fi && \
-        ln -s ${SOURCE_DIR}/eigen-3.3.8/Eigen ${PREFIX}/include/Eigen',   # eigen
+        # Eigen
+        'cd ${SOURCE_DIR} && if [ ! -f eigen-3.3.8.tar.gz ]; then \
+          wget https://gitlab.com/libeigen/eigen/-/archive/3.3.8/eigen-3.3.8.tar.gz && tar xf eigen-3.3.8.tar.gz; fi && \
+          ln -s ${SOURCE_DIR}/eigen-3.3.8/Eigen ${PREFIX}/include/Eigen',   # eigen
 
-      # precice
-      'cd ${SOURCE_DIR} && mkdir -p build && cd build && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} \
-        -DCMAKE_BUILD_TYPE=RELEASE \
-        -DPYTHON_EXECUTABLE=/lustre/cray/ws9/2/ws/icbbnmai-opendihu1/opendihu-hawk-gnu/dependencies/python/install/bin/python3 \
-        -DPRECICE_PythonActions=OFF \
-        -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=${DEPENDENCIES_DIR}/python/install/bin/python3 \
-        -DPETSC_DIR=${PETSC_DIR} -DPETSC_EXECUTABLE_RUNS=TRUE \
-        -DPRECICE_ENABLE_FORTRAN=OFF \
-        -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR \
-        -DEigen3_ROOT=${SOURCE_DIR}/eigen-3.3.8 \
-        -DLIBXML2_DIR=${LIBXML2_DIR} \
-        -DLibXml2_ROOT=${LIBXML2_DIR} \
-        ..',
-      'cd ${SOURCE_DIR}/build && CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:${PREFIX}/include/libxml2 make precice install -j 16'
-    ])
+        # precice
+        'cd ${SOURCE_DIR} && mkdir -p build && cd build && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+          -DCMAKE_BUILD_TYPE=RELEASE \
+          -DPRECICE_PythonActions=OFF \
+          -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=${DEPENDENCIES_DIR}/python/install/bin/python3 \
+          -DPETSC_DIR=${PETSC_DIR} -DPETSC_EXECUTABLE_RUNS=TRUE \
+          -DPRECICE_ENABLE_FORTRAN=OFF \
+          -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR \
+          -DEigen3_ROOT=${SOURCE_DIR}/eigen-3.3.8 \
+          -DLIBXML2_DIR=${LIBXML2_DIR} \
+          -DLibXml2_ROOT=${LIBXML2_DIR} \
+          ..',
+        'cd ${SOURCE_DIR}/build && CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:${PREFIX}/include/libxml2 make precice install -j 16'
+      ])
+      
+      res = super(precice, self).check(ctx)
     
-    res = super(precice, self).check(ctx)
-  
     # if installation of precice failed with the current command, retry with different options 
-    if not res[0]:
+    #if not res[0]:
+    if True:
       ctx.Log('Retry (1) with manually building boost and libxml2\n')
       ctx.Message('Retry (1) with manually building boost and libxml2.')
 
@@ -128,7 +130,7 @@ class precice(Package):
         'if [ ! -d ${PREFIX}/include/boost ]; then \
           cd ${SOURCE_DIR} && [ ! -f ${SOURCE_DIR}/boost_1_65_1.tar.gz ] && \
           ( wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz && tar xf boost_1_65_1.tar.gz ); \
-          cd boost_1_65_1 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test --prefix=${PREFIX} && \
+          cd boost_1_65_1 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test,regex --prefix=${PREFIX} && \
           ./b2 -j12 install; \
         fi',
 
@@ -139,7 +141,6 @@ class precice(Package):
         # precice
         'cd ${SOURCE_DIR} && mkdir -p build && cd build && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} \
         -DCMAKE_BUILD_TYPE=RELEASE \
-        -DPYTHON_EXECUTABLE=${DEPENDENCIES_DIR}/python/install/bin/python3 \
         -DPRECICE_PythonActions=OFF \
         -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=${DEPENDENCIES_DIR}/python/install/bin/python3 \
         -DPETSC_DIR=${PETSC_DIR} -DPETSC_EXECUTABLE_RUNS=TRUE \

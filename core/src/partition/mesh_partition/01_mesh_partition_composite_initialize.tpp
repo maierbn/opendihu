@@ -284,12 +284,8 @@ checkIfSharedNodesAreOnSameSubdomain()
     VLOG(3) << "nodeNoLocal: " << nodeNoLocal << ", position: (" << localMemory[3*nodeNoLocal + 0] << "," << localMemory[3*nodeNoLocal + 1] << "," << localMemory[3*nodeNoLocal + 2] << ")";
   }
 
-  std::vector<double> remoteAccessibleMemory(nNodesGlobal_*3, 0);
-  // put local node positions to remote memory of rank 0
-  if (ownRankNo == 0)
-  {
-    std::copy(localMemory.begin(),localMemory.end(),remoteAccessibleMemory.begin());
-  }
+  //std::vector<double> remoteAccessibleMemory(nNodesGlobal_*3, 0);
+  double *remoteAccessibleMemory = nullptr;
 
   // create remote accessible memory
   int nBytes = nNodesGlobal_*3 * sizeof(double);
@@ -303,8 +299,18 @@ checkIfSharedNodesAreOnSameSubdomain()
   }
 
   VLOG(2) << "rank " << ownRankNo << ", create window";
-  MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, this->mpiCommunicator(), &mpiMemoryWindow), "MPI_Win_create");
+  //MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, this->mpiCommunicator(), &mpiMemoryWindow), "MPI_Win_create");
+  MPIUtility::handleReturnValue(MPI_Win_allocate(nBytes, displacementUnit, MPI_INFO_NULL, this->mpiCommunicator(), (void *)&remoteAccessibleMemory, &mpiMemoryWindow), "MPI_Win_allocate");
 
+  // clear buffer
+  memset(remoteAccessibleMemory, 0, nBytes);
+  
+  // put local node positions to remote memory of rank 0
+  if (ownRankNo == 0)
+  {
+    std::copy(localMemory.begin(), localMemory.end(), remoteAccessibleMemory);
+  }
+  
   if (ownRankNo != 0)
   {
     const int foreignRankNo = 0;
@@ -825,12 +831,17 @@ initializeGhostNodeNos()
   int ownRankNo = this->ownRankNo();
 
   // create remote accessible memory
-  std::vector<int> remoteAccessibleMemory(nRanks*nSubMeshes_, 0);
+  //std::vector<int> remoteAccessibleMemory(nRanks*nSubMeshes_, 0);
+  int *remoteAccessibleMemory = nullptr;
   int nBytes = nRanks * nSubMeshes_ * sizeof(int);
   int displacementUnit = sizeof(int);
   MPI_Win mpiMemoryWindow;
-  MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, this->mpiCommunicator(), &mpiMemoryWindow), "MPI_Win_create");
+  //MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, this->mpiCommunicator(), &mpiMemoryWindow), "MPI_Win_create");
+  MPIUtility::handleReturnValue(MPI_Win_allocate(nBytes, displacementUnit, MPI_INFO_NULL, this->mpiCommunicator(), (void *)&remoteAccessibleMemory, &mpiMemoryWindow), "MPI_Win_allocate");
 
+  // clear buffer
+  memset(remoteAccessibleMemory, 0, nBytes);
+  
   std::vector<int> localMemory(nRanks * nSubMeshes_);
 
   // output requestNodesFromRanks_

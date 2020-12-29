@@ -151,12 +151,17 @@ initialize(int offsetInGlobalNumberingPerRank)
   int ownRankNo = this->meshPartition_->ownRankNo();
 
   // create remote accessible memory
-  std::vector<int> remoteAccessibleMemory(nRanks, 0);
+  // std::vector<int> remoteAccessibleMemory(nRanks, 0);
+  int *remoteAccessibleMemory = nullptr;
   int nBytes = nRanks * sizeof(int);
   int displacementUnit = sizeof(int);
   MPI_Win mpiMemoryWindow;
-  MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, this->meshPartition_->mpiCommunicator(), &mpiMemoryWindow), "MPI_Win_create");
+  // MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, this->meshPartition_->mpiCommunicator(), &mpiMemoryWindow), "MPI_Win_create");
+  MPIUtility::handleReturnValue(MPI_Win_allocate(nBytes, displacementUnit, MPI_INFO_NULL, this->meshPartition_->mpiCommunicator(), (void *)&remoteAccessibleMemory, &mpiMemoryWindow), "MPI_Win_allocate");
 
+  // clear buffer
+  memset(remoteAccessibleMemory, 0, nBytes);
+  
   std::vector<int> localMemory(nRanks);
 
   // put number of requested ghost dofs to the corresponding processes

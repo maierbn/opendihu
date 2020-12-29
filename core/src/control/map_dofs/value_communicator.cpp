@@ -19,12 +19,17 @@ initialize(const std::map<int,std::vector<int>> remoteDofNosAtRanks, std::vector
   int ownRankNo = rankSubset_->ownRankNo();
 
   // create remote accessible memory
-  std::vector<int> remoteAccessibleMemory(nRanks, 0);     // local memory where the other ranks can write to
+  //std::vector<int> remoteAccessibleMemory(nRanks, 0);     // local memory where the other ranks can write to
+  int *remoteAccessibleMemory = nullptr;     // local memory where the other ranks can write to
   int nBytes = nRanks * sizeof(int);
   int displacementUnit = sizeof(int);
   MPI_Win mpiMemoryWindow;
-  MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, mpiCommunicator, &mpiMemoryWindow), "MPI_Win_create");
+  //MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, mpiCommunicator, &mpiMemoryWindow), "MPI_Win_create");
+  MPIUtility::handleReturnValue(MPI_Win_allocate(nBytes, displacementUnit, MPI_INFO_NULL, mpiCommunicator, (void *)&remoteAccessibleMemory, &mpiMemoryWindow), "MPI_Win_allocate");
 
+  // clear buffer
+  memset(remoteAccessibleMemory, 0, nBytes);
+  
   std::vector<int> nNodesToSendToRanks(nRanks);       // temporary buffer
 
   // output remoteDofNosAtRanks

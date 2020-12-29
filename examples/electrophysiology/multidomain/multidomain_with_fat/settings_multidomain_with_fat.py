@@ -36,7 +36,7 @@ if ".py" in sys.argv[0]:
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
   if rank_no == 0:
-    print("Warning: There is no variables file, e.g:\n ./multidomain_with_fat ../settings_multidomain_with_fat.py debug.py\n")
+    print("Warning: There is no variables file, e.g:\n ./multidomain_with_fat ../settings_multidomain_with_fat.py ramp_emg.py\n")
   exit(0)
   
 # -------------------------------------------------------- begin parameters ---------------------------------------------------------
@@ -343,6 +343,9 @@ config = {
         "samplingPoints":           variables.hdemg_electrode_positions,    # the electrode positions, they are created in the helper.py script
         "updatePointPositions":     False,               # the electrode points should be initialize in every timestep (set to False for the static case). This makes a difference if the muscle contracts, then True=fixed electrodes, False=electrodes moving with muscle.
         "filename":                 "out/{}/electrodes.csv".format(variables.scenario_name),
+        "enableCsvFile":            False,                # if the values at the sampling points should be written to csv files
+        "enableVtpFile":            True,               # if the values at the sampling points should be written to vtp files
+        "enableGeometryInCsvFile":  False,               # if the csv output file should contain geometry of the electrodes in every time step. This increases the file size and only makes sense if the geometry changed throughout time, i.e. when computing with contraction
         "xiTolerance":              0.3,                 # tolerance for element-local coordinates xi, for finding electrode positions inside the elements. Increase or decrease this numbers if not all electrode points are found.
         "MultidomainSolver":        multidomain_solver,
       }

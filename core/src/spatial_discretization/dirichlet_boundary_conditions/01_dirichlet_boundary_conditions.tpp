@@ -134,12 +134,17 @@ initializeGhostElements()
 
 
   LOG(DEBUG) << "rankSubset " << *this->functionSpace_->meshPartition()->rankSubset() << ", create new window";
-  std::vector<int> remoteAccessibleMemory(nRanks, 0);
+  //std::vector<int> remoteAccessibleMemory(nRanks, 0);
+  int *remoteAccessibleMemory = nullptr;
   int nBytes = nRanks*sizeof(int);
   int displacementUnit = sizeof(int);
   MPI_Win mpiMemoryWindow;
-  MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, communicator, &mpiMemoryWindow), "MPI_Win_create");
+  //MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, communicator, &mpiMemoryWindow), "MPI_Win_create");
+  MPIUtility::handleReturnValue(MPI_Win_allocate(nBytes, displacementUnit, MPI_INFO_NULL, communicator, (void *)&remoteAccessibleMemory, &mpiMemoryWindow), "MPI_Win_allocate");
 
+  // clear buffer
+  memset(remoteAccessibleMemory, 0, nBytes);
+  
   std::vector<int> localMemory(nRanks);
 
   // put number of ghost elements to the corresponding processes

@@ -29,7 +29,7 @@ if env["BUILD_TYPE"] == "debug":
   
   # debug build
   variant_dir = os.path.join(path_where_to_call_sconscript,"build_debug")           # folder of build
-  env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -fopenmp -std=c++14 -Werror -Wunused-variable -DELPP_FEATURE_CRASH_LOG -ftemplate-backtrace-limit=0 -fstack-check')   # gcc flags, will be sorted automatically into linker and compiler flags
+  env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og -fopenmp -std=c++14 -Werror -Wunused-variable -DELPP_FEATURE_CRASH_LOG -ftemplate-backtrace-limit=0')   # gcc flags, will be sorted automatically into linker and compiler flags
   
   
 else:

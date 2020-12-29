@@ -33,7 +33,7 @@ check_example(){
   START=$(date +%s.%N)
     
   # compile example
-  python2.7 $OPENDIHU_HOME/dependencies/scons/scons.py BUILD_TYPE=r
+  python3 $OPENDIHU_HOME/dependencies/scons/scons.py BUILD_TYPE=r
   RESULT=$?
     
   # measured duration
@@ -59,7 +59,7 @@ i_end=$(python -c "print($N-1)")    # i_end = N-1
 echo "Compile all examples in $EXAMPLE_PATH, using N=$N processes" | tee -a $WORKDIR/compile_examples_log.txt
 
 # loop over all subdirectories of examples
-for directory in $EXAMPLE_PATH/**/*; do
+for directory in `find $EXAMPLE_PATH -type d`; do
   if [ -d "$directory" ]; then
     if [ -f "$directory/SConstruct" ]; then
 

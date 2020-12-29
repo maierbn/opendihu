@@ -24,8 +24,8 @@ cmake="cmake"      # cmake command
 # PETSc, this also downloads and installs MUMPS (direct solver package) and its dependencies PT-Scotch, SCAlapack, ParMETIS, METIS
 PETSC_DOWNLOAD = True
 
-# Python 3.9
-PYTHON_DOWNLOAD = True    # This downloads and uses Python, use it to be independent of an eventual system python
+# Python 3.9, note that this also builds the C-API which is usually not included in the normal python3 installation of your system, therefore it is recommended that you leave it at 'True'
+PYTHON_DOWNLOAD = True
 
 # Python packages - they are now all combined with the option PYTHONPACKAGES_DOWNLOAD
 PYTHONPACKAGES_DOWNLOAD = True
@@ -57,9 +57,9 @@ XBRAID_DOWNLOAD = True
 # OpenCOR, utility to view CellML models and to convert them from xml format to c code
 OPENCOR_DOWNLOAD = True
 
-# preCICE coupling library, you can set both to False if you don't use precice
-LIBXML2_DOWNLOAD = True
-PRECICE_DOWNLOAD = True
+# preCICE coupling library, set both to True in order to use precice
+LIBXML2_DOWNLOAD = False
+PRECICE_DOWNLOAD = False
 
 # MPI
 # MPI is normally detected by running the mpicc command. If this is not available, you can provide the MPI_DIR manually.
@@ -68,9 +68,9 @@ MPI_DIR = "/usr/lib/x86_64-linux-gnu/openmpi"    # standard path for openmpi on 
 
 # Vectorized code for matrix assembly
 # Set to True for fastest code, set to False for faster compilation
-USE_VECTORIZED_FE_MATRIX_ASSEMBLY = True
+USE_VECTORIZED_FE_MATRIX_ASSEMBLY = False
 if USE_VECTORIZED_FE_MATRIX_ASSEMBLY:
-  print("\nNote, USE_VECTORIZED_FE_MATRIX_ASSEMBLY is True in user-variables.scons.py, this means faster programs but longer compilation times.\n")
+  print("Note, USE_VECTORIZED_FE_MATRIX_ASSEMBLY is True in user-variables.scons.py, this means faster programs but longer compilation times.\n")
 
 # -------------------------------------------------------------------------
 # automatically set MPI_DIR for other systems, like ubuntu 16.04 and Debian

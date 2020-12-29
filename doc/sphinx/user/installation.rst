@@ -41,20 +41,27 @@ From time to time there are `releases <https://github.com/maierbn/opendihu/relea
 Prerequisites
 ^^^^^^^^^^^^^^
 
-On a blank computer, the following packages should be installed.
+On a blank computer with Ubuntu, the following packages should be installed.
 On all servers of SGS, these packages are already available and no further steps are required.
 
 .. code-block:: bash
 
-  # Packages needed on Ubuntu 16.04 and 18.04
+  # Packages needed on Ubuntu 16.04 and above
   sudo apt-get update && \
-  sudo apt-get install -y libopenmpi-dev libx11-* git apt-utils make software-properties-common zlib1g-dev cmake libssl-dev bison flex
+  sudo apt-get install -y git make cmake apt-utils software-properties-common libopenmpi-dev libx11-* zlib1g-dev libssl-dev libffi-dev bison flex
 
-  # (Additional) packages needed on Ubuntu 20.04
+  # Additional packages needed on Ubuntu 20.04
   sudo apt install python-is-python3      # This makes `python` equal to `python3` and is only needed for the installation of PETSc.
-  sudo apt install python3-pip            # This 
+  sudo apt install python3-pip
+  
+  # (optional) If you want to use precice, install the following (requires ~300 MB):
+  sudo apt install libboost-filesystem-dev libboost-log-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libboost-test-dev
+  
+  # (optional) To be able to build this documentation, install
+  sudo pip3 install sphinx recommonmark sphinx_rtd_theme
 
-Because we use C++14, the GCC compiler **version 7 or higher** is required. This includes the Fortran compiler, ``gfortran``.
+
+Because we use C++14, the GCC compiler **version 7 or higher** is required, including the Fortran compiler, ``gfortran``.
 The default GCC version on Ubuntu 16.04 was GCC 4 and updating was required. From Ubuntu 18.04 on, the default version is at least version 7.
 
 Please check your current version by running:
@@ -64,7 +71,7 @@ Please check your current version by running:
   gcc --version
   gfortran --version
 
-If the version is GCC 6 or lower, you need to update your GCC. This can be done as follows.
+Only if the version is GCC 6 or lower, you need to update your GCC. This can be done as follows.
 
 .. code-block:: bash
 
@@ -88,7 +95,7 @@ Note that one of these dependencies is a development version of `python3` with `
 
 Build 
 ^^^^^^^^^^^
-The recommended way for the first installation is to change into the opendihu directory and simply execute
+The recommended way for the first installation is to change into the `opendihu` directory and simply execute
 
 .. code-block:: bash
 
@@ -226,22 +233,17 @@ There are required dependencies, which need to be present in order for opendihu 
                                                                           | processes. This should be your system MPI. If you let 
                                                                           | opendihu install it for you, `OpenMPI <https://www.open-mpi.org/>`_ 
                                                                           | will be chosen.
-`LAPACK`, `BLAS`                                                   no     | Parallel linear algebra functions, this is used by 
-                                                                          | *PETSc* and by some model order reduction functionality. 
-                                                                          | Opendihu will install `OpenBLAS <https://github.com/xianyi/OpenBLAS/wiki>`_.
-                                                                          | Currently this is not included because probably no longer needed.
 `PETSc <https://www.mcs.anl.gov/petsc/>`_                         yes     | Low-level data structures and solvers, see their `website <https://www.mcs.anl.gov/petsc/>`_
                                                                           | for more details.
-`Python3`                                                         yes     | The `python interpreter <https://www.python.org/>`_, 
-                                                                          | version 3.6.5. We need the development header and source 
-                                                                          | files, therefore it is recommended to let opendihu build 
-                                                                          | python for you, even if your system has python installed.
+`Python3`                                                         yes     | The `Python3 interpreter <https://www.python.org/>`_, 
+                                                                          | version 3.9 or 3.6.5 for legacy. We need the development 
+                                                                          | header and source files, therefore it is recommended to 
+                                                                          | let opendihu build python for you, even if your system 
+                                                                          | has python installed.
 `pythonPackages`                                                  yes     | This is a custom collection of python packages for the
-                                                                          | python 3 interpreter, which is later available in the
+                                                                          | python 3 interpreter and are available in the
                                                                           | python configuration scripts. It consists of 
-                                                                          | `numpy matplotlib scipy numpy-stl svg.path triangle`.
-`Easylogging++ <https://github.com/zuhd-org/easyloggingpp>`_      yes     | The used logging library. By default, logs are created 
-                                                                          | in `/tmp/logs/` and output to the standard output.
+                                                                          | `numpy matplotlib scipy numpy-stl svg.path triangle geomdl vtk`.
 `Base64 <https://github.com/tkislan/base64>`_                     yes     | An encoding standard and library that is used to create
                                                                           | binary VTK output files that can be viewed in Paraview.
                                                                           | Base64 encoded data is ASCII characters, the size is 4/3
@@ -250,20 +252,15 @@ There are required dependencies, which need to be present in order for opendihu 
                                                                           | files, which is the concept of VTK files.
 `googletest <https://github.com/google/googletest>`_              no      | A testing framework, used for unit tests. Opendihu
                                                                           | compiles also without unit tests, but it is recommended 
-                                                                          | to have them, especially when developing within the core.
+                                                                          | to have them, especially for development of the core.
 `SEMT <https://github.com/maierbn/semt>`_                         no      | This is a small C++ symbolic differentiation toolbox 
                                                                           | that will be used for nonlinear solid mechanics, to 
                                                                           | derive material laws.
 `ADIOS2 <https://adios2.readthedocs.io/en/latest>`_               no      | Binary output file format and library, parallely 
-                                                                          | efficient and self-descriptive. This only installs, 
-                                                                          | if you have a very recent version of `cmake`. It is no
-                                                                          | problem, if this fails to install as most users won't 
+                                                                          | efficient and self-descriptive. This is only installed, 
+                                                                          | if you have a very recent version of `cmake`. If this
+                                                                          | fails to install it is no problem as most users won't 
                                                                           | need it. It is needed for interfacing `MegaMol`.
-`MegaMol <https://megamol.org/>`_                                 no      | The parallel visualization framework developed at VISUS,
-                                                                          | Uni Stuttgart. This installs the official version. To 
-                                                                          | interface with opendihu, you would need a version that 
-                                                                          | is not yet released. Therefore it is fine, if this is
-                                                                          | not installed.
 `Vc <https://vcdevel.github.io/Vc-1.4.1/index.html>`_            yes      | A vectorization library that produces `simd` code 
                                                                           | depending on the hardware capabilities.
                                                                           |
@@ -274,6 +271,12 @@ There are required dependencies, which need to be present in order for opendihu 
                                                                           | installed, the conversion of cellml input files is 
                                                                           | done automatically. If not, you can only input 
                                                                           | C files of the cellml models.
+`libxml <http://xmlsoft.org/>`_                                    no     | A XML C parser, only needed for the installation of preCICE.
+`preCICE <https://www.precice.org/>`_                              no     | Numerical coupling library, required, e.g., for the 
+                                                                          | simulation of a muscle-tendon complex. This requires
+                                                                          | a `boost <https://www.boost.org/>`_ installation as an additional prerequisite.
+`Easylogging++ <https://github.com/zuhd-org/easyloggingpp>`_      yes     | This is the logging library. By default, logs are created 
+                                                                          | in `/tmp/logs/` and output is written to the standard output.
 ============================================================  ========  =================================================================================== 
 
 It is recommended to not let the build system download and build `MPI`, 
@@ -353,4 +356,3 @@ If you change something here, you need to rebuild the python `egg` file of `scon
 Then, rerun the installation from the `opendihu` directory with `scons`.
 
 If you don't succeed, ask for help and send us the `config.log` file.
-

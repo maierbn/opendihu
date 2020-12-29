@@ -71,7 +71,7 @@ class precice(Package):
     }
 '''
 
-    self.number_output_lines = 15536
+    self.number_output_lines = 15536*1.5
       
     self.libs = ['precice']
     self.extra_libs = [[],
@@ -155,7 +155,11 @@ class precice(Package):
   
     self.check_options(env)
     res = super(precice, self).check(ctx)
-
+  
+    if not res[0]:
+      ctx.Log('\n\nInstallation of preCICE failed. Often, the problem is that boost is not installed. Install boost with\n  sudo apt install libboost-all-dev\nThen rebuild with\n  make clean; scons PRECICE_REBUILD=True\n\n')
+      ctx.Message('\n\nInstallation of preCICE failed. Often, the problem is that boost is not installed. Install boost with\n  sudo apt install libboost-all-dev\nThen rebuild with\n  make clean; scons PRECICE_REBUILD=True\n\n')
+      
     self.check_required(res[0], ctx)
     ctx.Result(res[0])
     return res[0]

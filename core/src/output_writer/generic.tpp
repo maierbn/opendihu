@@ -60,7 +60,7 @@ bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime, i
   If the call is not made, the remaining table does not change.
   '-' means no output written
   'w' means output written
-  'W' menas forced output for initial values
+  'W' means forced output for initial values
 
   */
 

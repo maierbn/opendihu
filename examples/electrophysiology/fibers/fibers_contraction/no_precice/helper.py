@@ -125,7 +125,26 @@ if variables.exfile_output:
   variables.output_writer_fibers.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "fileNumbering": "incremental"})
 
 # set variable mappings for cellml model
-if "hodgkin_huxley" in variables.cellml_file:
+if "hodgkin-huxley_shorten_ocallaghan_davidson_soboleva_2007.cellml" in variables.cellml_file:   # hodgkin huxley membrane with fatigue from shorten
+  # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is I_stim
+    ("parameter", 1):           ("constant", "razumova/l_hs"),        # parameter 1 is fiber stretch λ
+    ("parameter", 2):           ("constant", "razumova/velocity"),    # parameter 2 is fiber contraction velocity \dot{λ}
+    ("connectorSlot", "vm"):    ("state",    "membrane/V"),           # expose state Vm to the operator splitting
+    ("connectorSlot", "stress"):("algebraic", "razumova/activestress"), # expose algebraic γ to the operator splitting
+    ("connectorSlot", "alpha"): ("algebraic", "razumova/activation"), # expose algebraic α to the operator splitting
+    
+    ("connectorSlot", "lambda"):"razumova/l_hs",                      # connect output "lamda" of mechanics solver to parameter 1 (l_hs)
+    ("connectorSlot", "ldot"):  "razumova/velocity",                  # connect output "ldot"  of mechanics solver to parameter 2 (rel_velo)
+  }
+  variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
+  variables.enable_force_length_relation = False                      # disable computation of force-length relation in opendihu, as it is carried out in CellML model
+  variables.lambda_dot_scaling_factor = 7.815e-05                     # scaling factor to convert dimensionless contraction velocity to shortening velocity, velocity = factor*\dot{lambda}
+
+elif "hodgkin_huxley" in variables.cellml_file:
   # parameters: I_stim
   variables.mappings = {
     ("parameter", 0):            ("constant", "membrane/i_Stim"),     # parameter 0 is constant 2 = I_stim
@@ -184,7 +203,6 @@ elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "
   variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
   variables.nodal_stimulation_current = 40.                           # not used
   variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
-
 
 # callback functions
 # --------------------------

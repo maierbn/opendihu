@@ -1,6 +1,6 @@
 
 # scenario name for log file
-scenario_name = "muscle"
+scenario_name = "ramp_Fv"
 
 # Fixed units in cellMl models:
 # These define the unit system.
@@ -57,11 +57,8 @@ c2 = 1.813                  # [N/cm^2]
 b  = 1.075e-2               # [N/cm^2] anisotropy parameter
 d  = 9.1733                 # [-] anisotropy parameter
 
-# for debugging, b = 0 leads to normal Mooney-Rivlin
-b = 0
-
 material_parameters = [c1, c2, b, d]   # material parameters
-pmax = 7.3                  # [N/cm^2] maximum isometric active stress (30-40)
+pmax = 7.3                  # [N/cm^2] maximum isometric active stress
 
 # load
 constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
@@ -70,8 +67,13 @@ bottom_traction = [0.0,0.0,0.0]        # [N]
 # Monodomain parameters
 # --------------------
 # quantities in CellML unit system
+sigma_f = 8.93              # [mS/cm] conductivity in fiber direction (f)
+sigma_xf = 0                # [mS/cm] conductivity in cross-fiber direction (xf)
+sigma_e_f = 6.7             # [mS/cm] conductivity in extracellular space, fiber direction (f)
+sigma_e_xf = 3.35           # [mS/cm] conductivity in extracellular space, cross-fiber direction (xf) / transverse
+
 Conductivity = 3.828      # [mS/cm] sigma, conductivity
-Am = 500.0                  # [cm^-1] surface area to volume ratio (this is not used, instead values of motor_units are used)
+Am = 500.0                  # [cm^-1] surface area to volume ratio
 Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch)
 # diffusion prefactor = Conductivity/(Am*Cm)
 
@@ -99,12 +101,12 @@ motor_units = [
 end_time = 4000.0                      # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
-dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
-dt_1D = 1e-3                        # [ms] timestep width of diffusion (1e-3)
-dt_splitting = 1e-3                 # [ms] overall timestep width of strang splitting (1e-3)
+dt_0D = 2e-4                        # [ms] timestep width of ODEs (1e-3)
+dt_1D = 2e-4                        # [ms] timestep width of diffusion (1e-3)
+dt_splitting = 2e-4                 # [ms] overall timestep width of strang splitting (1e-3)
 dt_3D = 1                           # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep_fibers = 4e0       # [ms] timestep for fiber output, 0.5
-output_timestep_3D = dt_3D              # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
+output_timestep_3D = 4e0              # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
 
 
 # input files
@@ -113,7 +115,7 @@ fiber_file = "../../../../input/left_biceps_brachii_9x9fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../../../input/MU_fibre_distribution_10MUs.txt"
-cellml_file             = "../../../../input/new_slow_TK_2014_12_08.c"
+cellml_file             = "../../../../input/2020_06_03_hodgkin-huxley_shorten_ocallaghan_davidson_soboleva_2007.cellml"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
@@ -132,6 +134,9 @@ adios_output = False
 exfile_output = False
 python_output = False
 disable_firing_output = False
+fast_monodomain_solver_optimizations = True # enable the optimizations in the fast multidomain solver
+use_analytic_jacobian = True        # If the analytic jacobian should be used for the mechanics problem.
+use_vc = True                       # If the vc optimization type should be used for CellmlAdapter
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):

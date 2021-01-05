@@ -137,14 +137,17 @@ env['CC'] = env['cc']
 if not 'cmake' in env:
   env['cmake'] = 'cmake'
 
-# Create configuration environment, passing the set of custom tests.
-sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
+if not env.GetOption('clean'):
+    # avoid Configure if we only clean targets
 
-# Run custom tests with any options needed.
-sconsconfig.check(sconf)
+    # Create configuration environment, passing the set of custom tests.
+    sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
 
-# Finish the configuration and save it to file.
-sconf.Finish()
+    # Run custom tests with any options needed.
+    sconsconfig.check(sconf)
+
+    # Finish the configuration and save it to file.
+    sconf.Finish()
 
 # disable unit tests on hazel hen
 if os.environ.get("PE_ENV") is not None:  # if on hazelhen

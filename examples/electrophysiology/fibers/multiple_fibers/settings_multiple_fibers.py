@@ -78,7 +78,7 @@ variables = Variables()
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
 
-parser = argparse.ArgumentParser(description='fibers_emg')
+parser = argparse.ArgumentParser(description='fibers_emg, All times are in 1ms.')
 parser.add_argument('--scenario_name',                       help='The name to identify this run in the log.',   default=variables.scenario_name)
 parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',    type=int)
 parser.add_argument('--n_subdomains_z', '-z',                help='Number of subdomains in z direction.',        type=int, default=variables.n_subdomains_z)

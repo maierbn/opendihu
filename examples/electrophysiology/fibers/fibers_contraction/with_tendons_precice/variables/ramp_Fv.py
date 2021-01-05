@@ -57,11 +57,9 @@ c2 = 1.813                  # [N/cm^2]
 b  = 1.075e-2               # [N/cm^2] anisotropy parameter
 d  = 9.1733                 # [-] anisotropy parameter
 
-# for debugging, b = 0 leads to normal Mooney-Rivlin
-b = 0
-
 material_parameters = [c1, c2, b, d]   # material parameters
 pmax = 7.3                  # [N/cm^2] maximum isometric active stress (30-40)
+#pmax = 0.73
 
 # load
 constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
@@ -96,12 +94,12 @@ motor_units = [
 
 # timing parameters
 # -----------------
-end_time = 4000.0                      # [ms] end time of the simulation
+end_time = 20000.0                      # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
-dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
-dt_1D = 1e-3                        # [ms] timestep width of diffusion (1e-3)
-dt_splitting = 1e-3                 # [ms] overall timestep width of strang splitting (1e-3)
+dt_0D = 2e-4                        # [ms] timestep width of ODEs (1e-3)
+dt_1D = 2e-4                        # [ms] timestep width of diffusion (1e-3)
+dt_splitting = 2e-4                 # [ms] overall timestep width of strang splitting (1e-3)
 dt_3D = 1                           # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep_fibers = 4e0       # [ms] timestep for fiber output, 0.5
 output_timestep_3D = dt_3D              # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
@@ -109,11 +107,11 @@ output_timestep_3D = dt_3D              # [ms] timestep for output of fibers and
 
 # input files
 fiber_file = "../../../../input/left_biceps_brachii_9x9fibers.bin"
-#fiber_file = "../../../../input/left_biceps_brachii_13x13fibers.bin"
+#fiber_file = "../../../../input/left_biceps_brachii_31x31fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../../../input/MU_fibre_distribution_10MUs.txt"
-cellml_file             = "../../../../input/new_slow_TK_2014_12_08.c"
+cellml_file             = "../../../../input/2020_06_03_hodgkin-huxley_shorten_ocallaghan_davidson_soboleva_2007.cellml"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements

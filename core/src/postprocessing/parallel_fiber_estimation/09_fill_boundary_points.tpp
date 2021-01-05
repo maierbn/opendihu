@@ -224,7 +224,6 @@ fillBoundaryPoints(std::array<std::vector<std::vector<Vec3>>,4> &boundaryPoints,
 
         PyObject *startPointPy = PythonUtility::convertToPython<Vec3>::get(startPoint);
         PyObject *endPointPy = PythonUtility::convertToPython<Vec3>::get(endPoint);
-        //PyObject *loopSectionPy = PyObject_CallFunction(functionCreateRingSectionMesh_, "O O O f i", stlMeshPy, startPointPy, endPointPy, currentZ, nBoundaryPointsXNew_);
         PyObject *loopSectionPy = PyObject_CallFunction(functionCreateRingSection_, "s O O f i", inputMeshFilename_.c_str(), startPointPy, endPointPy, currentZ, nBoundaryPointsXNew_);
         PythonUtility::checkForError();
         //  create_ring_section(input_filename, start_point, end_point, z_value, n_points)

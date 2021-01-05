@@ -155,5 +155,7 @@ pmax = None
 bottom_traction = None
 cellml_file = ""
 states_initial_values = []
+enable_force_length_relation = True
+lambda_dot_scaling_factor = 1
 
 

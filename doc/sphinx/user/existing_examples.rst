@@ -938,6 +938,84 @@ All model equations are listed in the following.
   `Tendon Material <https://www.sciencedirect.com/science/article/abs/pii/S0021929017300726>`_
     
     
+Subcellular models
+^^^^^^^^^^^^^^^^^^^^^^
+
+The following subcellular models ("yellow equations", see above) are available in the ``$OPENDIHU_HOME/examples/electrophysiology/input`` directory.
+
+Models already used in OpenCMISS:
+
+* ``new_slow_TK_2014_12_08.cellml``
+
+  * Used by Thomas Heidlauf with OpenCMISS (scenario 3a, "MultiPhysStrain", old tomo mechanics)
+  * contained environments: ``sternrios``, ``wal_environment``, ``razumova``, i.e., this is based on the Shorten model
+  * couples ``wal_environment/I_HH`` and ``razumova/L_S``, so there is no shortening velocity feedback
+  * computes active stress: ``razumova/stress``
+  * 57 states and 71 algebraics
+  
+* ``Aliev_Panfilov_Razumova_2016_08_22.cellml`` 
+
+  * Used by Thomas Heidlauf with OpenCMISS (scenario 3, "MultiPhysStrain", numerically more stable)
+  * contained environments: ``Aliev_Panfilov``, ``Razumova``
+  * couples ``Aliev_Panfilov/I_HH`` and ``Razumova/velo`` (``Razumova/l_hs`` is available but not used internally)
+  * computes no active stress
+  * 7 states and 12 algebraics
+  
+* ``Aliev_Panfilov_Razumova_Titin_2016_10_10_noFv.cellml``
+
+  * Used by Thomas Heidlauf with OpenCMISS (scenario 4, "Titin") and in the paper Heidlauf (2016) "A multi-scale continuum model of skeletal muscle mechanics predicting force enhancement based on actin–titin interaction"
+  * contained environments: ``Aliev_Panfilov``, ``Razumova``
+  * couples ``Aliev_Panfilov/I_HH``, ``Razumova/l_hs`` and ``Razumova/rel_velo``
+  * computes active stress: ``Razumova/ActiveStress``, the active stress is already multiplied by a force-velocity relation function :math:`f_\ell(l_\text{hs}) = f_\ell(\lambda_f)`. 
+  * 9 states and 8 algebraics
+
+Other models:
+
+* ``hodgkin_huxley_1952.cellml``
+
+  * The classical hodgkin huxley model with potassium channel and 2 sodium channels. This is sufficient for action potential propagation.
+  * 4 states and 9 algebraics
+  
+* ``shorten_ocallaghan_davidson_soboleva_2007_no_stim.cellml``
+
+  * contained environments: ``razumova``, ``sternrios``, ``wal_environment``, i.e. the Shorten model
+  * computes ``razumova/activation`` and ``razumova/active_stress``, the active stress is already multiplied by a force-velocity relation function :math:`f_\ell(l_\text{hs}) = f_\ell(\lambda_f)`. 
+  * Has inputs ``razumova/l_hs`` (fiber stretch) and ``razumova/velocity`` (contraction velocity).
+  * 58 states 77 algebraics
+  
+* ``Shorten_Titin_w_Fv_2016_08_23.cellml``
+
+  * model cannot be viewed in OpenCOR
+  * 60 states and 72 algebraics
+  
+* ``2020_06_03_hodgkin-huxley_shorten_ocallaghan_davidson_soboleva_2007.cellml``
+
+  * This is a combination of the membrane model of Hodgkin-Huxley and the rest from Shorten. The rational is to have fatigue of Shorten but to make it faster using the simple Hodgkin-Huxley model for the membrane.
+  * There are earlier versions that only differ in the initial values. This file has the correct initial values that are close to the equilibrium state.
+  * contained environments: ( ``leakage_current``, ``membrane``, ``potassium_channel``, ``sodium_channel`` = Hodgkin Huxley), ``razumova``, ``sternrios``
+  * computes ``razumova/activation`` and ``razumova/active_stress``, the active stress is already multiplied by a force-velocity relation function :math:`f_\ell(l_\text{hs}) = f_\ell(\lambda_f)`. 
+  * Has inputs ``razumova/l_hs`` (fiber stretch) and ``razumova/velocity`` (contraction velocity).
+  * 44 states and 19 algebraics
+  
+* ``hodgkin_huxley-razumova.cellml``
+
+  * This is a CellML model that computes activation and active stress values with only 9 states and 19 algebraics.
+  * contained environments: (``leakage_current``, ``membrane``, ``potassium_channel``, ``sodium_channel`` = Hodgkin Huxley), ``razumova``
+  * computes ``Razumova/activation`` and ``Razumova/active_stress``, the active stress is already multiplied by a force-velocity relation function :math:`f_\ell(l_\text{hs}) = f_\ell(\lambda_f)`. 
+  * Has input ``Razumova/l_hs`` (fiber stretch) and ``Razumova/rel_velo`` (contraction velocity).
+  * 9 states and 19 algebraics
+
+Notes for the connections with the continuum mechanical model:
+
+* Most CellML models compute an active stress that already has been multiplied by a force-velocity relation function :math:`f_\ell(l_\text{hs}) = f_\ell(\lambda_f)`. This is done using the variable ``l_hs`` which is an input to the model. However, the structure as described in `Heidlauf2013 <https://www.hindawi.com/journals/cmmm/2013/517287/>`_ is such that the CellML outputs the factor :math:`\gamma \in [0,1]` which gets multiplied by :math:`f_\ell(\lambda_f)` in the mechanics solver. 
+
+  In OpenCMISS, there was no scaling in the mechanics solver and, therefore, it had to be in the CellML model. With OpenDiHu, both ways are possible: 
+  
+  * If the force-length relation should be considered in OpenDiHu and the mechanics solver, set `"enableForceLengthRelation": True` and do not connect ``l_hs`` in the CellML model. Then, :math:`l_{hs}=1 \Rightarrow f_\ell(l_\text{hs})=1`. OpenDiHu implements the quadratic equation of `Heidlauf2013 <https://www.hindawi.com/journals/cmmm/2013/517287/>`_.
+  * If the force-length relation should be considered in the CellML model, set `"enableForceLengthRelation": False` and connect the ``l_hs`` slot to the ``lambda`` output of the mechanics solver. This might be less efficient, because now lambda has to be transferred from opendihu to cellml, however it gives more flexibility because the force-length relation can be specified in the CellML model.
+
+* The reverse connection from the mechanics solver to the subcellular model usually includes the contraction velocity or shortening velocity. Opendihu computes the derivative of the fiber stretch, :math:`\dot{\lambda}_f`. This is a unit-less quantity. The CellML models need a value in micrometers per millisecond. The output of Opendihu can be scaled by the factor in option "lambdaDotScalingFactor" which is 1 by default. Some CellML models already do this scaling (those with `rel_velo`), then no rescaling is needed in opendihu.
+
 
 CellML
 ^^^^^^^^^

@@ -372,7 +372,7 @@ def output_debugging_files(grid_points_parametric_space, grid_points_world_space
   ax[1,2].set_title('after improving')
   ax[1,2].set_aspect('equal')
   
-  filename = "out/loop_{:03}_p{}_harmonic_map.pdf".format(loop_no, os.getpid())
+  filename = "out/loop_{:03}_p{}_harmonic_map.png".format(loop_no, os.getpid())
   dirname = os.path.dirname(filename)
   if not os.path.exists(dirname):
     print("Create directory \"{}\".".format(dirname))

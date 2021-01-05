@@ -767,11 +767,13 @@ def create_3d_mesh_simple(n_points_x, loops):
   data = stl_create_mesh.create_3d_mesh(loop_grid_points, n_grid_points_x, n_grid_points_y, debugging_stl_output, [])
   return data
 
-def create_3d_mesh_from_boundary_points_faces(boundary_points_faces, improve_mesh, level_no):
+def create_3d_mesh_from_boundary_points_faces(boundary_points_faces, improve_mesh, max_area_factor, level_no):
   """
   Create the 3D mesh from boundary points which are organised as faces.
   :param boundary_points_faces: [boundary_points_0minus, boundary_points_0plus, boundary_points_1minus, boundary_points_1plus]
   :param improve_mesh: if the 2D meshes should be smoothed, this takes a lot of time but improves the result
+  :param max_area_factor: only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
+  :param level_no: only for debugging output
   """
   
   if False:
@@ -783,7 +785,7 @@ def create_3d_mesh_from_boundary_points_faces(boundary_points_faces, improve_mes
   # constant parameters
   triangulation_type = 2  # 0 = scipy, 1 = triangle, 2 = center pie (2 is best), 3 = minimized distance
   parametric_space_shape = 3   # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid
-  max_area_factor = 100.    # only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
+  #max_area_factor = 100.    # only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
   show_plot = False               # set this to true such that the plots will be opened instead of written to a file
   debugging_stl_output = False       # set this value to true to enable the matplotlib output during the parallel_fiber_estimation runs
   #improve_mesh = True    # post-smooth mesh

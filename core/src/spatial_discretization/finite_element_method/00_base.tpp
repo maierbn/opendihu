@@ -202,11 +202,13 @@ solve()
   // solve the system
   linearSolver->solve(data_.rightHandSide()->valuesGlobal(), data_.solution()->valuesGlobal(), "Solution obtained");
 
+  // interpolate values in triangles for dofs that are no real dofs
+  this->data_.functionSpace()->interpolateNonDofValuesInFieldVariable(data_.solution());
+
   data_.solution()->setRepresentationGlobal();
   data_.solution()->startGhostManipulation();
   data_.solution()->zeroGhostBuffer();
   data_.solution()->finishGhostManipulation();
-  
   
   VLOG(1) << "solution: " << *data_.solution();
 }

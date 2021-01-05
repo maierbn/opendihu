@@ -15,7 +15,8 @@ template<typename double_v_t>
 Tensor2<3,double_v_t> HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computeDeformationGradient(const std::array<VecD<3,double_v_t>,DisplacementsFunctionSpace::nDofsPerElement()> &displacements,
                            const Tensor2<3,double_v_t> &inverseJacobianMaterial,
-                           const std::array<double, 3> xi
+                           const std::array<double, 3> xi,
+                           element_no_t elementNoLocal
                           )
 {
   // compute the deformation gradient x_i,j = δ_ij + u_i,j
@@ -47,7 +48,7 @@ computeDeformationGradient(const std::array<VecD<3,double_v_t>,DisplacementsFunc
       for (int l = 0; l < 3; l++)
       {
         VLOG(3) << "   l = " << l;
-        double_v_t dphi_dxil = DisplacementsFunctionSpace::dphi_dxi(dofIndex, l, xi);
+        double_v_t dphi_dxil = this->displacementsFunctionSpace_->dphi_dxi(dofIndex, l, xi, elementNoLocal);
         double_v_t dxil_dX = inverseJacobianMaterial[dimensionColumn][l];     // inverseJacobianMaterial[j][l] = J_lj = dxi_l/dX_j
 
         VLOG(3) << "     dphi_dxil = " << dphi_dxil << ", dxil_dX = " << dxil_dX;
@@ -77,7 +78,8 @@ template<typename double_v_t>
 Tensor2<3,double_v_t> HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 computeDeformationGradientTimeDerivative(const std::array<VecD<3,double_v_t>,DisplacementsFunctionSpace::nDofsPerElement()> &velocities,
                                          const Tensor2<3,double_v_t> &inverseJacobianMaterial,
-                                         const std::array<double, 3> xi
+                                         const std::array<double, 3> xi,
+                                         element_no_t elementNoLocal
                                         )
 {
   // compute the time derivative of the deformation gradient d(x_i,j)/dt = d/dt(δ_ij + u_i,j) = v_i,j
@@ -109,7 +111,7 @@ computeDeformationGradientTimeDerivative(const std::array<VecD<3,double_v_t>,Dis
       for (int l = 0; l < 3; l++)
       {
         VLOG(3) << "   l = " << l;
-        double_v_t dphi_dxil = DisplacementsFunctionSpace::dphi_dxi(dofIndex, l, xi);
+        double_v_t dphi_dxil = this->displacementsFunctionSpace_->dphi_dxi(dofIndex, l, xi, elementNoLocal);
         double_v_t dxil_dX = inverseJacobianMaterial[dimensionColumn][l];     // inverseJacobianMaterial[j][l] = J_lj = dxi_l/dX_j
 
         VLOG(3) << "     dphi_dxil = " << dphi_dxil << ", dxil_dX = " << dxil_dX;

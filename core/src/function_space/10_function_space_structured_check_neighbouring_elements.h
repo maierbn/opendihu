@@ -2,8 +2,8 @@
 
 #include <Python.h>  // has to be the first included header
 
-#include "function_space/09_function_space_find_position_base.h"
-#include "function_space/09_function_space_find_position_base_composite.h"
+#include "function_space/10_function_space_find_position_base.h"
+#include "function_space/10_function_space_find_position_base_composite.h"
 
 namespace FunctionSpace
 {
@@ -74,4 +74,4 @@ protected:
 
 }  // namespace
 
-#include "function_space/09_function_space_structured_check_neighbouring_elements.tpp"
+#include "function_space/10_function_space_structured_check_neighbouring_elements.tpp"

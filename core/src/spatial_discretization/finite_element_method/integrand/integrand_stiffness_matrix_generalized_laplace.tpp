@@ -20,7 +20,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
   double_v_t diffusionTensor = data.diffusionTensor(elementNoLocal, xi)[0];
 
   // initialize gradient vectors of ansatz function phi_i, for node i of current element
-  std::array<std::array<double,1>,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi);
+  std::array<std::array<double,1>,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi, elementNoLocal);
 
   // loop over pairs of basis functions and evaluation integrand at xi
   for (int i = 0; i < FunctionSpaceType::nDofsPerElement(); i++)
@@ -87,7 +87,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
 #endif
 
   // initialize gradient vectors of ansatz function phi_i, for node i of current element
-  std::array<Vec2,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi);
+  std::array<Vec2,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi, elementNoLocal);
 
   // loop over pairs of basis functions and evaluation integrand at xi
   for (int i = 0; i < FunctionSpaceType::nDofsPerElement(); i++)
@@ -136,7 +136,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
   LOG(DEBUG) << std::endl << s.str();
 #endif
 
-  std::array<Vec3,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi);
+  std::array<Vec3,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi, elementNoLocal);
 
   // loop over pairs of basis functions and evaluation integrand at xi
   for (int i = 0; i<FunctionSpaceType::nDofsPerElement(); i++)

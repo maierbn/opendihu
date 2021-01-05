@@ -19,7 +19,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,D,Term> &data, co
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
 
   // compute gradient values in parameter space
-  std::array<VecD<D>,nDofsPerElement> gradPhi = data.functionSpace()->getGradPhi(xi);
+  std::array<VecD<D>,nDofsPerElement> gradPhi = data.functionSpace()->getGradPhi(xi, elementNoLocal);
 
   // compute inverse jacobian
   std::array<VecD<3,double_v_t>,nDofsPerElement> geometryValues;

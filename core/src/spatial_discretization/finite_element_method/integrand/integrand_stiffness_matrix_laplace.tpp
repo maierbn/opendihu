@@ -19,7 +19,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
   double_v_t integralFactor = 1. / s;
 
   // initialize gradient vectors of ansatz function phi_i, for node i of current element
-  std::array<std::array<double,1>,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi);
+  std::array<std::array<double,1>,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi, elementNoLocal);
 
   // loop over pairs of basis functions and evaluation integrand at xi
   for (int i = 0; i < FunctionSpaceType::nDofsPerElement(); i++)
@@ -83,7 +83,7 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
 #endif
 
   // initialize gradient vectors of ansatz function phi_i, for node i of current element
-  std::array<Vec2,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi);
+  std::array<Vec2,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi, elementNoLocal);
 
   // loop over pairs of basis functions and evaluation integrand at xi
   for (int i = 0; i < FunctionSpaceType::nDofsPerElement(); i++)
@@ -124,17 +124,19 @@ evaluateIntegrand(const Data::FiniteElements<FunctionSpaceType,1,Term> &data, co
   VLOG(3) << s.str();
 #endif
 
-  const std::array<Vec3,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi);
+  const std::array<Vec3,FunctionSpaceType::nDofsPerElement()> gradPhi = data.functionSpace()->getGradPhi(xi, elementNoLocal);
 
   // loop over pairs of basis functions and evaluation integrand at xi
   for (int i = 0; i < FunctionSpaceType::nDofsPerElement(); i++)
   {
     for (int j = 0; j < FunctionSpaceType::nDofsPerElement(); j++)
     {
-
       //! computes gradPhi[i]^T * T * gradPhi[j] where T is the symmetric transformation matrix
       double_v_t integrand = MathUtility::applyTransformation(transformationMatrix, gradPhi[i], gradPhi[j]) * MathUtility::abs(determinant);
       evaluations(i,j) = integrand;
+
+      //LOG(DEBUG) << "  (" << i << "," << j << "), xi=" << xi << ": grad_phi_i: " << gradPhi[i] << ", grad_phi_j: " << gradPhi[j]
+      //  << " jacobian: " << jacobian << ", transf: " << transformationMatrix << ", det: " << determinant << ", integrand: " << integrand;
     }
   }
 

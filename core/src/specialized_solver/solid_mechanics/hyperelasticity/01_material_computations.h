@@ -99,14 +99,14 @@ protected:
   template<typename double_v_t>
   Tensor2<3,double_v_t> computeDeformationGradient(const std::array<VecD<3,double_v_t>,DisplacementsFunctionSpace::nDofsPerElement()> &displacements,
                                                  const Tensor2<3,double_v_t> &inverseJacobianMaterial,
-                                                 const std::array<double,3> xi);
+                                                 const std::array<double,3> xi, element_no_t elementNoLocal);
 
   //! compute the time velocity of the deformation gradient, Fdot inside the current element at position xi, the value of F is still with respect to the reference configuration,
   //! the formula is Fdot_ij = d/dt x_i,j = v_i,j
   template<typename double_v_t>
   Tensor2<3,double_v_t> computeDeformationGradientTimeDerivative(const std::array<VecD<3,double_v_t>,DisplacementsFunctionSpace::nDofsPerElement()> &velocities,
                                                  const Tensor2<3,double_v_t> &inverseJacobianMaterial,
-                                                 const std::array<double,3> xi);
+                                                 const std::array<double,3> xi, element_no_t elementNoLocal);
 
   //! compute the right Cauchy Green tensor, C = F^T*F. This is simply a matrix matrix multiplication
   template<typename double_v_t>

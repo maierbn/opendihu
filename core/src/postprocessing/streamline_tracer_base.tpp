@@ -115,14 +115,14 @@ traceStreamline(Vec3 startingPoint, double direction, std::vector<Vec3> &points)
     Vec3 gradient;
     if (useGradientField_)
     {
-      gradient = functionSpace->template interpolateValueInElement<3>(elementalGradientValues, xi);
+      gradient = functionSpace->template interpolateValueInElement<3>(elementalGradientValues, xi, elementNo);
       VLOG(2) << "use gradient field";
     }
     else
     {
       // compute the gradient value in the current value
       Tensor2<D> inverseJacobian = functionSpace->getInverseJacobian(geometryValues, elementNo, xi);
-      gradient = functionSpace->interpolateGradientInElement(elementalSolutionValues, inverseJacobian, xi);
+      gradient = functionSpace->interpolateGradientInElement(elementalSolutionValues, inverseJacobian, xi, elementNo);
 
       VLOG(2) << "use direct gradient";
     }

@@ -40,6 +40,9 @@ public:
   //! initialize the mesh after creation
   virtual void initialize() = 0;
 
+  //! if the mesh is a 3D structured deformable mesh with triangular prism elements at the corners of each x-y plane
+  virtual bool hasTriangleCorners();
+
   //! get if initialize was called previously and, thus, initialized_ is set to true
   bool initialized();
   

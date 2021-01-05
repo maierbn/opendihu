@@ -125,6 +125,9 @@ public:
   //! @param onlyNodalValues: if this is true, for Hermite only the non-derivative values are retrieved
   virtual void getValuesWithoutGhosts(int componentNo, std::vector<double> &values, bool onlyNodalValues=false) const = 0;
 
+  //! set values for the specified component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes
+  virtual void setValuesWithoutGhosts(int componentNo, const std::vector<double> &values, InsertMode petscInsertMode=INSERT_VALUES) = 0;
+
 protected:
  
   bool isGeometryField_;     //< if the type of this FieldVariable is a coordinate, i.e. geometric information

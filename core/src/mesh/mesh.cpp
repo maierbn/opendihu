@@ -26,4 +26,9 @@ bool Mesh::initialized()
   return initialized_;
 }
 
+bool Mesh::hasTriangleCorners()
+{
+  return false;
+}
+
 }

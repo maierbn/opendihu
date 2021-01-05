@@ -7,6 +7,7 @@
 #include <array>
 
 #include "quadrature/tensor_product.h"
+#include "quadrature/triangular_prism.h"
 #include "function_space/function_space.h"
 #include "spatial_discretization/finite_element_method/integrand/integrand_stiffness_matrix_laplace.h"
 #include "spatial_discretization/finite_element_method/integrand/integrand_stiffness_matrix_linear_elasticity.h"
@@ -26,6 +27,8 @@ setStiffnessMatrix()
 
   // define shortcuts for integrator and basis
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
+  typedef Quadrature::TriangularPrism<QuadratureType> QuadraturePrism;   // corner elements with triangles
+
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
   const int nUnknownsPerElement = nDofsPerElement*nComponents;
   typedef MathUtility::Matrix<nUnknownsPerElement,nUnknownsPerElement,double_v_t> EvaluationsType;
@@ -35,7 +38,8 @@ setStiffnessMatrix()
           > EvaluationsArrayType;     // evaluations[nGP^D][nDofs][nDofs]
 
   // setup arrays used for integration
-  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPointsHex = QuadratureDD::samplingPoints();
+  std::array<Vec3, QuadraturePrism::numberEvaluations()> samplingPointsPrism = QuadraturePrism::samplingPoints();
   EvaluationsArrayType evaluationsArray{};
 
   LOG(DEBUG) << "1D integration with " << QuadratureType::numberEvaluations() << " evaluations";
@@ -152,16 +156,41 @@ setStiffnessMatrix()
     std::array<Vec3_v_t,FunctionSpaceType::nDofsPerElement()> geometry;
     functionSpace->getElementGeometry(elementNoLocalv, geometry);
 
-    // compute integral
-    for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
+    // determine if the element is a triangular prism at the corners or if it is a normal hex element
+    ::Mesh::face_or_edge_t edge;
+    bool isElementPrism = functionSpace->hasTriangleCorners()
+      && functionSpace->meshPartition()->elementIsAtCorner(elementNoLocal, edge);
+
+    // get number of sampling points
+    int nSamplingPoints = samplingPointsHex.size();
+
+    if (isElementPrism)
     {
+      nSamplingPoints = samplingPointsPrism.size();
+      //LOG(DEBUG) << "sampling points for element " << elementNoLocal << "," << ::Mesh::getString(edge) << ": " << samplingPointsPrism;
+    }
+
+    // compute integral
+    for (unsigned int samplingPointIndex = 0; samplingPointIndex < nSamplingPoints; samplingPointIndex++)
+    {
+      // depending on the element type (hex or prism), get the sampling points
+      std::array<double,D> xi;
+      if (isElementPrism)
+      {
+        xi = samplingPointsPrism[samplingPointIndex];
+      }
+      else
+      {
+        xi = samplingPointsHex[samplingPointIndex];
+      }
+
       // evaluate function to integrate at samplingPoint
-      std::array<double,D> xi = samplingPoints[samplingPointIndex];
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      std::array<Vec3_v_t,D> jacobian = FunctionSpaceType::computeJacobian(geometry, xi);
+      std::array<Vec3_v_t,D> jacobian = functionSpace->computeJacobian(geometry, xi, elementNoLocalv);
 
-      VLOG(2) << "samplingPointIndex=" << samplingPointIndex<< ", xi=" <<xi<< ", geometry: " <<geometry<< ", jac: " <<jacobian;
+      if (VLOG_IS_ON(1))
+        VLOG(1) << "samplingPointIndex=" << samplingPointIndex<< ", xi=" <<xi<< ", geometry: " <<geometry<< ", jac: " <<jacobian;
 
       const double_v_t prefactor = this->prefactor_.value(elementNoLocalv);
 
@@ -174,7 +203,22 @@ setStiffnessMatrix()
     }  // function evaluations
 
     // integrate all values for the (i,j) dof pairs at once
-    EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
+
+    // depending on element type (triangular prism at the corners or normal hexahedral), use different quadrature
+    EvaluationsType integratedValues;
+    if (isElementPrism)
+    {
+      integratedValues = QuadraturePrism::computeIntegral(evaluationsArray);
+
+      // set entries that are no real dofs in triangular prisms to zero
+      const bool isQuadraticElement0 = FunctionSpaceType::BasisFunction::getBasisOrder() == 2;
+      const bool isQuadraticElement1 = FunctionSpaceType::BasisFunction::getBasisOrder() == 2;
+      QuadraturePrism::adjustEntriesforPrism(integratedValues, edge, isQuadraticElement0, nComponents, isQuadraticElement1, nComponents);
+    }
+    else
+    {
+      integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
+    }
 
     // perform integration and add to entry of stiffness matrix
     for (int i = 0; i < nDofsPerElement; i++)
@@ -191,9 +235,11 @@ setStiffnessMatrix()
             double_v_t value = -integratedValue;
             int componentNo = rowComponentNo*nComponents + columnComponentNo;
 
-            VLOG(2) << "  dof pair (" << i<< "," <<j<< ") dofs (" << dofNosLocal[i]<< "," << dofNosLocal[j]<< "), "
-              << "component (" << rowComponentNo << "," << columnComponentNo << "), " << componentNo
-              << ", integrated value: " <<integratedValue;
+            //VLOG(2) << "  dof pair (" << i<< "," <<j<< ") dofs (" << dofNosLocal[i]<< "," << dofNosLocal[j]<< "), "
+            if (VLOG_IS_ON(2))
+              VLOG(2) << "  add to dof pair (" << i<< "," <<j<< ") dofs (" << dofNosLocal[i]<< "," << dofNosLocal[j]<< "), "
+                << "component (" << rowComponentNo << "," << columnComponentNo << "), " << componentNo
+                << ", integrated value: " <<integratedValue;
 
             // get local dof no
             dof_no_v_t dofINoLocal = dofNosLocal[i];

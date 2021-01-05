@@ -16,4 +16,4 @@ if not env['no_examples']:
   env.Program(target = 'laplace_regular_fixed', source = "src/laplace_regular_fixed.cpp")
   env.Program(target = 'laplace_unstructured', source = "src/laplace_unstructured.cpp")
   env.Program(target = 'laplace_hermite', source = "src/laplace_hermite.cpp")
-  env.Program(target = 'petsc_test', source = "src/petsc_test.cpp")
+#  env.Program(target = 'petsc_test', source = "src/petsc_test.cpp")

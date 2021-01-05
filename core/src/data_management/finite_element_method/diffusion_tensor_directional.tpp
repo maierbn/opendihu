@@ -85,7 +85,7 @@ diffusionTensor(element_no_v_t elementNoLocal, const std::array<double,FunctionS
   std::shared_ptr<FunctionSpaceType> functionSpace = direction_->functionSpace();
 
   // get the interpolated value at xi coordinates inside the element
-  VecD<3,double_v_t> directionVector = functionSpace->template interpolateValueInElement<3>(elementalValues, xi);
+  VecD<3,double_v_t> directionVector = functionSpace->template interpolateValueInElement<3>(elementalValues, xi, elementNoLocal);
 
   if (!MathUtility::isFinite(directionVector[0]) || !MathUtility::isFinite(directionVector[1]) || !MathUtility::isFinite(directionVector[2]))
   {
@@ -117,7 +117,7 @@ diffusionTensor(element_no_v_t elementNoLocal, const std::array<double,FunctionS
   {
     std::array<double_v_t,FunctionSpaceType::nDofsPerElement()> spatiallyVaryingPrefactorElementalValues;
     spatiallyVaryingPrefactor_->getElementValues(elementNoLocal, spatiallyVaryingPrefactorElementalValues);
-    spatiallyVaryingPrefactor = functionSpace->interpolateValueInElement(spatiallyVaryingPrefactorElementalValues, xi);
+    spatiallyVaryingPrefactor = functionSpace->interpolateValueInElement(spatiallyVaryingPrefactorElementalValues, xi, elementNoLocal);
 
     diffusionTensor = diffusionTensor * spatiallyVaryingPrefactor;
     if (VLOG_IS_ON(1))

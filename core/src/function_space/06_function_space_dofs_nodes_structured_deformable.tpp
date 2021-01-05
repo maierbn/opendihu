@@ -42,7 +42,8 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std
 template<int D,typename BasisFunctionType>
 FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &localNodePositions,
-                       const std::array<element_no_t,D> nElementsPerCoordinateDirectionLocal, const std::array<int,D> nRanksPerCoordinateDirection) :
+                       const std::array<element_no_t,D> nElementsPerCoordinateDirectionLocal,
+                       const std::array<int,D> nRanksPerCoordinateDirection, bool hasTriangleCorners) :
   FunctionSpaceDofsNodesStructured<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>(partitionManager, NULL)
 {
   LOG(DEBUG) << "constructor FunctionSpaceDofsNodes StructuredDeformable, from " << localNodePositions.size() << " localNodePositions";
@@ -51,6 +52,7 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, con
   this->nElementsPerCoordinateDirectionLocal_ = nElementsPerCoordinateDirectionLocal;
   this->nRanks_ = nRanksPerCoordinateDirection;
   this->forcePartitioningCreationFromLocalNumberOfElements_ = true;     // this is defined in 03_function_space_partition.h
+  this->hasTriangleCorners_ = hasTriangleCorners;
 
   // forcePartitioningCreationFromLocalNumberOfElements_ is set to true, this means that the partitioning is created considering
   // this->nElementsPerCoordinateDirectionLocal_ and not depending on values of inputMeshIsGlobal
@@ -71,9 +73,10 @@ FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, con
 template<int D,typename BasisFunctionType>
 FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::
 FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<double> &nodePositionsFromBinaryFile, const std::vector<Vec3> &localNodePositions,
-                       const std::array<element_no_t,D> nElementsPerCoordinateDirectionLocal, const std::array<int,D> nRanksPerCoordinateDirection) :
+                       const std::array<element_no_t,D> nElementsPerCoordinateDirectionLocal,
+                       const std::array<int,D> nRanksPerCoordinateDirection, bool hasTriangleCorners) :
   FunctionSpaceDofsNodes<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>::FunctionSpaceDofsNodes(
-    partitionManager, localNodePositions, nElementsPerCoordinateDirectionLocal, nRanksPerCoordinateDirection)
+    partitionManager, localNodePositions, nElementsPerCoordinateDirectionLocal, nRanksPerCoordinateDirection, hasTriangleCorners)
 {
 }
 
@@ -422,6 +425,15 @@ setGeometryFieldValues()
   {
     this->setHermiteDerivatives();
   }
+
+  LOG(DEBUG) << "set geometry field values: " << *this->geometryField_;
+
+  // for 3D meshes with triangles at the corners, overwrite implicit values
+  this->interpolateNonDofValuesInFieldVariable(this->geometryField_, 0);
+  this->interpolateNonDofValuesInFieldVariable(this->geometryField_, 1);
+  this->interpolateNonDofValuesInFieldVariable(this->geometryField_, 2);
+
+  LOG(DEBUG) << "result: " << *this->geometryField_;
 
   //this->geometryField_->finishGhostManipulation();      // reduce ghost values, not necessary
   this->geometryField_->setRepresentationGlobal();

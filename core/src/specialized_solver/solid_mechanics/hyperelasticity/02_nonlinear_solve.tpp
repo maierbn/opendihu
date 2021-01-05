@@ -180,6 +180,13 @@ postprocessSolution()
   // copy the solution values back to this->data_.displacements() and this->data.pressure() (and this->data_.velocities() for the dynamic case)
   this->setUVP(this->combinedVecSolution_->valuesGlobal());
 
+  // if there are triangles at the corners of the mesh, interpolate the non-dof values
+  this->displacementsFunctionSpace_->interpolateNonDofValuesInFieldVariable(this->data_.displacements());
+  this->pressureFunctionSpace_->interpolateNonDofValuesInFieldVariable(this->data_.pressure());
+
+  if (nDisplacementComponents == 6)
+    this->displacementsFunctionSpace_->interpolateNonDofValuesInFieldVariable(this->data_.velocities());
+
   // compute the PK2 stress at every node
   this->computePK2StressField();
 

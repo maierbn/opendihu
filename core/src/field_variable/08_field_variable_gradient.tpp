@@ -113,7 +113,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       //VLOG(2) << "element " << elementNoLocal << " dofIndex " << dofIndex << ", xi " << xi << " g:" << geometryValues;
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(FunctionSpaceType::computeJacobian(geometryValues, xi));
+      Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(FunctionSpaceType::computeJacobian(geometryValues, xi, elementNoLocal));
       double jacobianDeterminant;
       Tensor2<D> inverseJacobianParameterSpace = MathUtility::template computeInverse<double>(jacobianParameterSpace, approximateMeshWidth, jacobianDeterminant);
 
@@ -128,7 +128,8 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       //VLOG(1) << "conditionNumber: " << conditionNumber;
 
       // get gradient at dof
-      std::array<double,D> gradPhiWorldSpace = this->functionSpace_->interpolateGradientInElement(solutionValues, inverseJacobianParameterSpace, xi);
+      std::array<double,D> gradPhiWorldSpace
+        = this->functionSpace_->interpolateGradientInElement(solutionValues, inverseJacobianParameterSpace, xi, elementNoLocal);
 
       //LOG(DEBUG) << "   dof " << dofIndex << ", dofNo " << dofNo << ", nAdjacentElements: " << nAdjacentElements[dofNo] << ", gradPhiWorldSpace: " << gradPhiWorldSpace << ", inverseJacobianParameterSpace: " << inverseJacobianParameterSpace;
 
@@ -342,7 +343,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       //VLOG(2) << "element " << elementNoLocal << " dofIndex " << dofIndex << ", xi " << xi << " g:" << geometryValues;
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(FunctionSpaceType::computeJacobian(geometryValues, xi));
+      Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(FunctionSpaceType::computeJacobian(geometryValues, xi, elementNoLocal));
       double jacobianDeterminant;
       Tensor2<D> inverseJacobianParameterSpace = MathUtility::template computeInverse<double>(jacobianParameterSpace, approximateMeshWidth, jacobianDeterminant);
 
@@ -356,7 +357,8 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       //VLOG(1) << "conditionNumber: " << conditionNumber;
 
       // get gradient at dof
-      std::array<double,D> gradPhiWorldSpace = this->functionSpace_->interpolateGradientInElement(solutionValues, inverseJacobianParameterSpace, xi);
+      std::array<double,D> gradPhiWorldSpace
+        = this->functionSpace_->interpolateGradientInElement(solutionValues, inverseJacobianParameterSpace, xi, elementNoLocal);
 
       // scale value
       gradPhiWorldSpace /= nAdjacentElements[dofNo];

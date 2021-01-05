@@ -225,6 +225,9 @@ public:
   //! get the partitioning index in the coordinate direction, i.e. the no. of this rank in this direction, the total number of ranks in each direction can be retrieved by nRanks
   int ownRankPartitioningIndex(int coordinateDirection);
 
+  //! check if the element is at an outer corner in the x-y plane of the domain, then return true and set edge to which corner (one of edge0Minus1Minus, edge0Plus1Minus, edge0Minus1Plus,  edge0Plus1Plus), only for 3D meshes!
+  bool elementIsAtCorner(element_no_t elementNoLocal, Mesh::face_or_edge_t &edge);
+
   //! refine the partitioning by multiplying the number of elements by refinementFactor
   void refine(std::array<int,MeshType::dim()> refinementFactor);
 

@@ -6,6 +6,7 @@
 #include <petscsys.h>
 
 #include "quadrature/tensor_product.h"
+#include "quadrature/triangular_prism.h"
 #include "spatial_discretization/finite_element_method/integrand/integrand_mass_matrix.h"
 
 namespace SpatialDiscretization
@@ -31,16 +32,20 @@ setMassMatrix()
 
   // define shortcuts for integrator and basis
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
+  typedef Quadrature::TriangularPrism<QuadratureType> QuadraturePrism;   // corner elements with triangles
+
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
-  const int nUnknowsPerElement = nDofsPerElement*nComponents;
-  typedef MathUtility::Matrix<nUnknowsPerElement,nUnknowsPerElement,double_v_t> EvaluationsType;
+  const int nUnknownsPerElement = nDofsPerElement*nComponents;
+  typedef MathUtility::Matrix<nUnknownsPerElement,nUnknownsPerElement,double_v_t> EvaluationsType;
   typedef std::array<
             EvaluationsType,
             QuadratureDD::numberEvaluations()
           > EvaluationsArrayType;     // evaluations[nGP^D][nDofs][nDofs]
 
   // setup arrays used for integration
-  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPointsHex = QuadratureDD::samplingPoints();
+  std::array<Vec3, QuadraturePrism::numberEvaluations()> samplingPointsPrism = QuadraturePrism::samplingPoints();
+
   EvaluationsArrayType evaluationsArray{};
 
   LOG(DEBUG) << "1D integration with " << QuadratureType::numberEvaluations() << " evaluations";
@@ -53,7 +58,7 @@ setMassMatrix()
   functionSpace->geometryField().setRepresentationGlobal();
   functionSpace->geometryField().startGhostManipulation();   // ensure that local ghost values of geometry field are set
 
-  element_no_t nElementsLocal = functionSpace->nElementsLocal();
+  const element_no_t nElementsLocal = functionSpace->nElementsLocal();
 
   // initialize values to zero
   // loop over elements, always 4 elements at once using the vectorized functions
@@ -96,9 +101,11 @@ setMassMatrix()
       }
     }
   }
+
+  // allow switching between massMatrix->setValue(... INSERT_VALUES) and ADD_VALUES
   massMatrix->assembly(MAT_FLUSH_ASSEMBLY);
 
-  // set entries in massMatrix
+  // set entries in mass matrix
   // loop over elements, always 4 elements at once using the vectorized functions
   for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal += nVcComponents)
   {
@@ -126,24 +133,63 @@ setMassMatrix()
     std::array<Vec3_v_t,FunctionSpaceType::nDofsPerElement()> geometry;
     functionSpace->getElementGeometry(elementNoLocalv, geometry);
 
-    // compute integral
-    for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
+    // determine if the element is a triangular prism at the corners or if it is a normal hex element
+    ::Mesh::face_or_edge_t edge;
+    bool isElementPrism = functionSpace->hasTriangleCorners()
+      && functionSpace->meshPartition()->elementIsAtCorner(elementNoLocal, edge);
+
+    // get number of sampling points
+    int nSamplingPoints = samplingPointsHex.size();
+
+    if (isElementPrism)
     {
+      nSamplingPoints = samplingPointsPrism.size();
+    }
+
+    // compute integral
+    for (unsigned int samplingPointIndex = 0; samplingPointIndex < nSamplingPoints; samplingPointIndex++)
+    {
+      // depending on the element type (hex or prism), get the sampling points
+      std::array<double,D> xi;
+      if (isElementPrism)
+      {
+        xi = samplingPointsPrism[samplingPointIndex];
+      }
+      else
+      {
+        xi = samplingPointsHex[samplingPointIndex];
+      }
+
       // evaluate function to integrate at samplingPoints[i*2], write value to evaluations[i]
-      std::array<double,D> xi = samplingPoints[samplingPointIndex];
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      auto jacobian = FunctionSpaceType::computeJacobian(geometry, xi);
+      std::array<Vec3_v_t,D> jacobian = functionSpace->computeJacobian(geometry, xi, elementNoLocalv);
 
       // get evaluations of integrand which is defined in another class
-      evaluationsArray[samplingPointIndex] = IntegrandMassMatrix<D,EvaluationsType,FunctionSpaceType,nComponents,double_v_t,dof_no_v_t,Term>::evaluateIntegrand(jacobian,xi);
+      evaluationsArray[samplingPointIndex] = IntegrandMassMatrix<D,EvaluationsType,FunctionSpaceType,nComponents,double_v_t,dof_no_v_t,Term>::
+        evaluateIntegrand(jacobian, xi, functionSpace, elementNoLocal);
 
     }  // function evaluations
 
     // integrate all values for the (i,j) dof pairs at once
-    EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
-    // perform integration and add to entry in rhs vector
+    // depending on element type (triangular prism at the corners or normal hexahedral), use different quadrature
+    EvaluationsType integratedValues;
+    if (isElementPrism)
+    {
+      integratedValues = QuadraturePrism::computeIntegral(evaluationsArray);
+
+      // set entries that are no real dofs in triangular prisms to zero
+      const bool isQuadraticElement0 = FunctionSpaceType::BasisFunction::getBasisOrder() == 2;
+      const bool isQuadraticElement1 = FunctionSpaceType::BasisFunction::getBasisOrder() == 2;
+      QuadraturePrism::adjustEntriesforPrism(integratedValues, edge, isQuadraticElement0, nComponents, isQuadraticElement1, nComponents);
+    }
+    else
+    {
+      integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
+    }
+
+    // perform integration and add to entry of mass matrix
     for (int i = 0; i < nDofsPerElement; i++)
     {
       for (int j = 0; j < nDofsPerElement; j++)

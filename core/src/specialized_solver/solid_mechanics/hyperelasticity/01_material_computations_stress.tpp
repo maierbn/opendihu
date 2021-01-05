@@ -502,14 +502,14 @@ computePK2StressField()
       for (int nTries = 0; nTries < 3; nTries++)
       {
         // compute the 3x3 jacobian of the parameter space to world space mapping
-        jacobianMaterial = DisplacementsFunctionSpace::computeJacobian(geometryReferenceValues, xi);
+        jacobianMaterial = this->displacementsFunctionSpace_->computeJacobian(geometryReferenceValues, xi, elementNoLocalv);
         inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, approximateMeshWidth, jacobianDeterminant);
 
         // jacobianMaterial[columnIdx][rowIdx] = dX_rowIdx/dxi_columnIdx
         // inverseJacobianMaterial[columnIdx][rowIdx] = dxi_rowIdx/dX_columnIdx because of inverse function theorem
 
         // F
-        deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);
+        deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi, elementNoLocal);
         deformationGradientDeterminant = MathUtility::computeDeterminant(deformationGradient);  // J
 
         if (Vc::all_of(deformationGradientDeterminant > 0.2))
@@ -540,7 +540,7 @@ computePK2StressField()
       }
 
       // compute Fdot values
-      Tensor2_v_t<D> Fdot = computeDeformationGradientTimeDerivative(velocitiesValues, inverseJacobianMaterial, xi);
+      Tensor2_v_t<D> Fdot = computeDeformationGradientTimeDerivative(velocitiesValues, inverseJacobianMaterial, xi, elementNoLocal);
 
       // store F values
       std::array<double_v_t,9> deformationGradientValues;
@@ -564,7 +564,7 @@ computePK2StressField()
       Tensor2_v_t<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse(rightCauchyGreen, approximateMeshWidth, rightCauchyGreenDeterminant);  // C^-1
 
       // fiber direction
-      Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
+      Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi, elementNoLocalv);
 
       // fiberDirection is not automatically normalized because of the interpolation inside the element, normalize again
       if (Term::usesFiberDirection)
@@ -586,7 +586,7 @@ computePK2StressField()
       std::array<double_v_t,5> reducedInvariants = this->computeReducedInvariants(invariants, deformationGradientDeterminant); // Ibar_1, Ibar_2, Ibar_4, Ibar_5
 
       // pressure is the separately interpolated pressure for mixed formulation
-      double_v_t pressure = pressureFunctionSpace->interpolateValueInElement(pressureValuesCurrentElement, xi);
+      double_v_t pressure = pressureFunctionSpace->interpolateValueInElement(pressureValuesCurrentElement, xi, elementNoLocalv);
 
       // checking for nans in debug mode
 #ifndef NDEBUG
@@ -647,7 +647,7 @@ computePK2StressField()
       }
 
       // bottom node, get normal in reference configuration
-      Vec3_v_t materialNormal = displacementsFunctionSpace->getNormal(outwardsFace, geometryReferenceValues, xi);
+      Vec3_v_t materialNormal = displacementsFunctionSpace->getNormal(outwardsFace, geometryReferenceValues, xi, elementNoLocal);
 
       // get normal in current configuration
       //Vec3_v_t normal = displacementsFunctionSpace->getNormal(outwardsFace, elementNoLocalv, xi);
@@ -746,13 +746,13 @@ computeBearingForceAndMoment(const std::vector<std::tuple<element_no_t,bool>> &e
       std::array<double,D> xi{xiSurface[0], xiSurface[1], xi2};
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      std::array<Vec3,D> jacobianMaterial = this->displacementsFunctionSpace_->computeJacobian(geometryReferenceValues, xi);
+      std::array<Vec3,D> jacobianMaterial = this->displacementsFunctionSpace_->computeJacobian(geometryReferenceValues, xi, elementNoLocal);
 
       // compute the traction value at the current sampling point xi
-      Vec3 traction = this->displacementsFunctionSpace_->interpolateValueInElement(tractionValues, xi);
+      Vec3 traction = this->displacementsFunctionSpace_->interpolateValueInElement(tractionValues, xi, elementNoLocal);
 
       // compute the position in reference configuration of the current sampling point
-      Vec3 point = this->displacementsFunctionSpace_->interpolateValueInElement(geometryReferenceValues, xi);
+      Vec3 point = this->displacementsFunctionSpace_->interpolateValueInElement(geometryReferenceValues, xi, elementNoLocal);
 
       double integrationFactor = MathUtility::computeIntegrationFactor(jacobianMaterial);
       evaluationsArrayForce[samplingPointIndex] = traction * integrationFactor;

@@ -277,7 +277,7 @@ createGenericFieldVariable(int nEntries, std::string name)
   LOG(DEBUG) << "create generic field variable with " << nEntries << " entries.";
   std::shared_ptr<FunctionSpace::Generic> functionSpace = createGenericFunctionSpace(nEntries, meshName.str());
 
-  // createFieldVariable is declared in function_space/10_function_space_field_variable.h
+  // createFieldVariable is declared in function_space/11_function_space_field_variable.h
   //template <int nComponents>
   //std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace<MeshType,BasisFunctionType>,nComponents>> createFieldVariable(std::string name);
   return functionSpace->template createFieldVariable<1>(name);

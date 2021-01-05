@@ -13,7 +13,6 @@ namespace FunctionSpace
 {
 
 /** Class with general algorithm to compute jacobian from basis functions.
- *  Note that this makes no sense for complete polynomials because these are not used to describe geometry.
  */
 template<typename MeshType,typename BasisFunctionType,typename dummy = MeshType>
 class FunctionSpaceJacobian :
@@ -25,12 +24,17 @@ public:
 
   //! compute the (geometry) jacobian matrix, geometryField is the node positions for Lagrange basis, node positions and derivatives for Hermite basis
   template<typename Vec3>
-  static std::array<Vec3,MeshType::dim()> computeJacobian(const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryField,
-                                                          const std::array<double,MeshType::dim()> xi);
+  std::array<Vec3,MeshType::dim()> computeJacobian(const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryField,
+                                                   const std::array<double,MeshType::dim()> xi, element_no_t elementNoLocal);
+
+  static std::array<Vec3,MeshType::dim()> computeJacobianHexahedralMesh(const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryField,
+                                                                        const std::array<double,MeshType::dim()> xi);
 };
+
 
 /** partial specialization for linear Lagrange, D=1
  */
+/*
 template<typename MeshType>
 class FunctionSpaceJacobian<MeshType,BasisFunction::LagrangeOfOrder<1>,Mesh::isDim<1,MeshType>> :
   public FunctionSpaceFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>
@@ -41,8 +45,8 @@ public:
 
   //! compute the jacobian matrix, geometryField is the node positions for Lagrange basis, node positions and derivatives for Hermite basis
   template<typename Vec3>
-  static std::array<Vec3,1> computeJacobian(const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement()> &geometryField,
-                                            const std::array<double,1> xi);
+  std::array<Vec3,1> computeJacobian(const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement()> &geometryField,
+                                     const std::array<double,1> xi, element_no_t elementNoLocal);
 
 };
 
@@ -57,8 +61,8 @@ public:
 
   //! compute the jacobian matrix, geometryField is the node positions for Lagrange basis, node positions and derivatives for Hermite basis
   template<typename Vec3>
-  static std::array<Vec3,2> computeJacobian(const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement()> &geometryField,
-                                            const std::array<double,2> xi);
+  std::array<Vec3,2> computeJacobian(const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement()> &geometryField,
+                                     const std::array<double,2> xi, element_no_t elementNoLocal);
 
 };
 
@@ -73,10 +77,10 @@ public:
 
   //! compute the jacobian matrix, geometryField is the node positions for Lagrange basis, node positions and derivatives for Hermite basis
   template<typename Vec3>
-  static std::array<Vec3,3> computeJacobian(const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement()> &geometryField,
-                                            const std::array<double,3> xi);
+  std::array<Vec3,3> computeJacobian(const std::array<Vec3,FunctionSpaceFunction<MeshType,BasisFunction::LagrangeOfOrder<1>>::nDofsPerElement()> &geometryField,
+                                     const std::array<double,3> xi, element_no_t elementNoLocal);
 
-};
+};*/
 
 }  // namespace
 

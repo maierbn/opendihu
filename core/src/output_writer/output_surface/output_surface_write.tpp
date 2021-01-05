@@ -63,7 +63,7 @@ writeSampledPointValues()
       std::shared_ptr<typename ::Data::OutputSurface<Data>::FunctionSpaceFirstFieldVariable> functionSpace = functionSpaces_[functionSpaceNo];
 
       // interpolate value
-      double value = functionSpace->interpolateValueInElement(elementalValues, xi);
+      double value = functionSpace->interpolateValueInElement(elementalValues, xi, elementNoLocal);
       sampledValuesLocal.push_back(value);
 
       // get geometry values
@@ -71,7 +71,7 @@ writeSampledPointValues()
       functionSpace->geometryField().getElementValues(elementNoLocal, elementalGeometryValues);
 
       // interpolate value
-      Vec3 actualPosition = functionSpace->template interpolateValueInElement<3>(elementalGeometryValues, xi);
+      Vec3 actualPosition = functionSpace->template interpolateValueInElement<3>(elementalGeometryValues, xi, elementNoLocal);
 
       for (int componentNo = 0; componentNo < 3; componentNo++)
       {

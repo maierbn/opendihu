@@ -48,7 +48,10 @@ createPressureFunctionSpace(std::shared_ptr<Mesh::Manager> meshManager, std::sha
 
   std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace;
   pressureFunctionSpace = meshManager->createFunctionSpace<PressureFunctionSpace>(
-    name.str(), nodePositionsLinearMesh, nElementsPerCoordinateDirection, nRanksPerCoordinateDirection);
+    name.str(), nodePositionsLinearMesh, nElementsPerCoordinateDirection,
+    nRanksPerCoordinateDirection, displacementsFunctionSpace->hasTriangleCorners());
+
+
 
   return pressureFunctionSpace;
 }

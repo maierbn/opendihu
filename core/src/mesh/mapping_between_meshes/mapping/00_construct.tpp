@@ -167,7 +167,7 @@ MappingBetweenMeshesConstruct(std::shared_ptr<FunctionSpaceSourceType> functionS
         else
         {
           // for linear elements
-          phiContribution = functionSpaceTarget->phi(targetDofIndex, xi);
+          phiContribution = functionSpaceTarget->phi(targetDofIndex, xi, elementNo);
         }
 
         // if phi is close to zero, set to 1e-14, this is practically zero, but it is still possible to divide by it in case the dof does not get any other contribution
@@ -336,7 +336,7 @@ quadraticElementComputePhiContribution(std::array<double,FunctionSpaceTargetType
     }
   }
 
-  double phiContribution = FunctionSpace::FunctionSpaceFunction<typename FunctionSpaceTargetType::Mesh, BasisFunction::LagrangeOfOrder<1>>::phi(targetDofIndexSubElement, xiSubElement);
+  double phiContribution = FunctionSpace::FunctionSpaceFunction<typename FunctionSpaceTargetType::Mesh, BasisFunction::LagrangeOfOrder<1>>::phiHexahedralMesh(targetDofIndexSubElement, xiSubElement);
 
   if (sourceDofHasContributionToTargetDof)
     LOG(INFO) << "dof: " << targetDofIndex << " -> " << targetDofIndexSubElement << ", xi: " << xi << " -> " << xiSubElement << " phiContribution: " << phiContribution;
@@ -464,7 +464,7 @@ fixUnmappedDofs(std::shared_ptr<FunctionSpaceSourceType> functionSpaceSource,
                 targetElement.scalingFactors[i] = 0;
               }
 
-              double phiContribution = functionSpaceSource->phi(sourceDofIndex, xiSource);
+              double phiContribution = functionSpaceSource->phi(sourceDofIndex, xiSource, sourceElementNo);
               targetElement.scalingFactors[targetDofIndex] = phiContribution;
 
               try

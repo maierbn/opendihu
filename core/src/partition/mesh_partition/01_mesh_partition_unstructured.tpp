@@ -281,4 +281,12 @@ getDofNoGlobalPetsc(dof_no_t dofNoLocal) const
   return (global_no_t)dofNoLocal;
 }
 
+template<int D, typename BasisFunctionType>
+bool MeshPartition<FunctionSpace::FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>, BasisFunctionType>, Mesh::UnstructuredDeformableOfDimension<D>>::
+elementIsAtCorner(element_no_t elementNoLocal, Mesh::face_or_edge_t &edge)
+{
+  return false;
+}
+
+
 }  // namespace

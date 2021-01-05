@@ -2,6 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 #include <array>
+#include "quadrature/triangular_prism.h"
 
 namespace SpatialDiscretization
 {
@@ -19,6 +20,8 @@ setRightHandSide()
 
   // define shortcuts for quadrature and basis
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
+  typedef Quadrature::TriangularPrism<QuadratureType> QuadraturePrism;   // corner elements with triangles
+
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
   const int nUnknownsPerElement = nDofsPerElement*nComponents;
   typedef std::array<double,nUnknownsPerElement> EvaluationsType;
@@ -50,7 +53,9 @@ setRightHandSide()
   }
 
   // setup arrays used for integration
-  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+  std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPointsHex = QuadratureDD::samplingPoints();
+  std::array<Vec3, QuadraturePrism::numberEvaluations()> samplingPointsPrism = QuadraturePrism::samplingPoints();
+
   EvaluationsArrayType evaluationsArray{};
 
   // set entries in rhs vector
@@ -67,19 +72,41 @@ setRightHandSide()
     std::array<VecD<nComponents*nComponents>,nDofsPerElement> activeStressValues;
     activeStress->getElementValues(elementNoLocal, activeStressValues);
 
-    // compute integral
-    for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
+    // determine if the element is a triangular prism at the corners or if it is a normal hex element
+    ::Mesh::face_or_edge_t edge;
+    bool isElementPrism = functionSpace->hasTriangleCorners()
+      && functionSpace->meshPartition()->elementIsAtCorner(elementNoLocal, edge);
+
+    // get number of sampling points
+    int nSamplingPoints = samplingPointsHex.size();
+
+    if (isElementPrism)
     {
+      nSamplingPoints = samplingPointsPrism.size();
+    }
+
+    // compute integral
+    for (unsigned int samplingPointIndex = 0; samplingPointIndex < nSamplingPoints; samplingPointIndex++)
+    {
+      // depending on the element type (hex or prism), get the sampling points
+      std::array<double,D> xi;
+      if (isElementPrism)
+      {
+        xi = samplingPointsPrism[samplingPointIndex];
+      }
+      else
+      {
+        xi = samplingPointsHex[samplingPointIndex];
+      }
       // evaluate function to integrate at samplingPoints[i], write value to evaluations[i]
-      std::array<double,D> xi = samplingPoints[samplingPointIndex];
 
       // compute integration factor
-      const std::array<Vec3,D> jacobian = FunctionSpaceType::computeJacobian(geometryValues, xi);
+      const std::array<Vec3,D> jacobian = functionSpace->computeJacobian(geometryValues, xi, elementNoLocal);
       double integrationFactor = MathUtility::computeIntegrationFactor(jacobian);
 
       Tensor2<D> inverseJacobian = functionSpace->getInverseJacobian(geometryValues, elementNoLocal, xi);
 
-      std::array<VecD<D>,nDofsPerElement> gradPhiParameterSpace = functionSpace->getGradPhi(xi);
+      std::array<VecD<D>,nDofsPerElement> gradPhiParameterSpace = functionSpace->getGradPhi(xi, elementNoLocal);
 
       // loop over dofs of element (index L in formula)
       for (int dofIndexL = 0; dofIndexL < nDofsPerElement; dofIndexL++)
@@ -112,8 +139,22 @@ setRightHandSide()
     }  // function evaluations
 
     // integrate all values at once
-    EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
 
+    // depending on element type (triangular prism at the corners or normal hexahedral), use different quadrature
+    EvaluationsType integratedValues;
+    if (isElementPrism)
+    {
+      integratedValues = QuadraturePrism::computeIntegral(evaluationsArray);
+
+      // set entries that are no real dofs in triangular prisms to zero
+      const bool isQuadraticElement0 = FunctionSpaceType::BasisFunction::getBasisOrder() == 2;
+      const bool isQuadraticElement1 = FunctionSpaceType::BasisFunction::getBasisOrder() == 2;
+      QuadraturePrism::adjustEntriesforPrism(integratedValues, edge, isQuadraticElement0, nComponents, isQuadraticElement1, nComponents);
+    }
+    else
+    {
+      integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
+    }
 
     VLOG(1) << "         evaluationsArray: " << evaluationsArray;
     VLOG(1) << "         integratedValues: " << integratedValues;

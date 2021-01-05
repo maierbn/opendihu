@@ -125,11 +125,11 @@ initializeRhs()
       VecD<D> xi = Mesh::getXiOnFace(elementIter->face, xiSurface);
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      std::array<Vec3,D-1> jacobian = FunctionSpaceSurface::computeJacobian(geometrySurface, xiSurface);
+      std::array<Vec3,D-1> jacobian = FunctionSpaceSurface::computeJacobianHexahedralMesh(geometrySurface, xiSurface);
       double integrationFactor = MathUtility::computeIntegrationFactor(jacobian);
 
       // interpolate the deformation gradient at the current point
-      VecD<9> deformationGradientAtXi = functionSpace->template interpolateValueInElement<9>(deformationGradientValues, xi);
+      VecD<9> deformationGradientAtXi = functionSpace->template interpolateValueInElement<9>(deformationGradientValues, xi, elementNoLocal);
 
       // set all entries to 0
       evaluationsArraySurface[samplingPointIndex] = {0.0};
@@ -178,7 +178,7 @@ initializeRhs()
           //  << ", F: " << deformationGradient << ", F^-1: " << deformationGradientInverse << ", traction t: " << oldNeumannValue << " -> T: " << neumannValue;
         }
 
-        boundaryConditionValueAtXi += neumannValue * FunctionSpaceSurface::phi(dofIndex, xiSurface);
+        boundaryConditionValueAtXi += neumannValue * FunctionSpaceSurface::phiHexahedralMesh(dofIndex, xiSurface);    // no need for elementNo on a non-3D mesh
       }
 
       // now add contribution of phi_i(xi) * f(xi)
@@ -190,7 +190,7 @@ initializeRhs()
       {
         int surfaceDofIndex = *surfaceDofIter;
 
-        VecD<nComponents> dofIntegrand = boundaryConditionValueAtXi * functionSpace->phi(surfaceDofIndex, xi) * integrationFactor;
+        VecD<nComponents> dofIntegrand = boundaryConditionValueAtXi * functionSpace->phi(surfaceDofIndex, xi, elementNoLocal) * integrationFactor;
 
         //VLOG(1) << "  surfaceDofIndex " << surfaceDofIndex << ", xi=" << xi << ", BC value: " << boundaryConditionValueAtXi
         //  << " phi = " << functionSpace->phi(surfaceDofIndex, xi) << ", integrationFactor: " << integrationFactor << ", dofIntegrand: " << dofIntegrand;
@@ -202,7 +202,7 @@ initializeRhs()
         }
 
         // integrate constant 1 over area to get surface area
-        evaluationsArraySurfaceArea[samplingPointIndex][surfaceDofIndex] = 1.0 * functionSpace->phi(surfaceDofIndex, xi) * integrationFactor;
+        evaluationsArraySurfaceArea[samplingPointIndex][surfaceDofIndex] = 1.0 * functionSpace->phi(surfaceDofIndex, xi, elementNoLocal) * integrationFactor;
 
       }  // surfaceDofIndex
 

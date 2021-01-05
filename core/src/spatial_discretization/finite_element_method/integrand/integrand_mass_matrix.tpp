@@ -9,7 +9,8 @@ namespace SpatialDiscretization
 
 template<int D,typename EvaluationsType,typename FunctionSpaceType,int nComponents,typename double_v_t,typename Term,typename Dummy>
 EvaluationsType IntegrandMassMatrix<D,EvaluationsType,FunctionSpaceType,nComponents,double_v_t,Term,Dummy>::
-evaluateIntegrand(const std::array<VecD<3,double_v_t>,D> &jacobian, const std::array<double,D> xi)
+evaluateIntegrand(const std::array<VecD<3,double_v_t>,D> &jacobian, const std::array<double,D> xi,
+                  std::shared_ptr<FunctionSpaceType> functionSpace, element_no_t elementNoLocal)
 {
   EvaluationsType evaluations;
 
@@ -24,7 +25,7 @@ evaluateIntegrand(const std::array<VecD<3,double_v_t>,D> &jacobian, const std::a
       // loop over components, for not solid mechanics, nComponents is 1
       for (int componentNo = 0; componentNo < nComponents; componentNo++)
       {
-        double_v_t integrand = FunctionSpaceType::phi(i,xi) * FunctionSpaceType::phi(j,xi) * integrationFactor;
+        double_v_t integrand = functionSpace->phi(i,xi,elementNoLocal) * functionSpace->phi(j,xi,elementNoLocal) * integrationFactor;
         
         VLOG(1) << "    integrationFactor " << integrationFactor << ", jacobian: " << jacobian << ", integrationFactor: " << integrationFactor << " -> " << integrand;
         evaluations(i*nComponents + componentNo, j*nComponents + componentNo) = integrand;

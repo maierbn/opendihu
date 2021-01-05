@@ -1,4 +1,4 @@
-#include "function_space/11_function_space_xi.h"
+#include "function_space/12_function_space_xi.h"
 
 #include <Python.h>  // has to be the first included header
 #include <array>
@@ -75,7 +75,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
   std::array<double,MeshType::dim()> xiPrevious = xi;
 
   // compute initial residuum
-  Vec3 residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
+  Vec3 residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi, elementNo);
   double residuumNormSquared = MathUtility::normSquared<3>(residuum);
   double residuumNormSquaredPrevious = residuumNormSquared;
   
@@ -129,7 +129,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
     xi += inverseJacobian * MathUtility::transformToD<D,3>(residuum);
     
     // compute residuum
-    residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
+    residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi, elementNo);
     residuumNormSquared = MathUtility::normSquared<3>(residuum);
     
     // if the residuum value jumped more than 1000 in one step, discard current step and restart with a slightly different xi value
@@ -138,7 +138,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
       VLOG(2) << "jump in norm " << residuumNormSquaredPrevious << " -> " << residuumNormSquared << ", xi: " << xi;
 
       xi = xiPrevious + xiStep[iterationNo%6];
-      residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
+      residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi, elementNo);
       residuumNormSquared = MathUtility::normSquared<3>(residuum);
 
       VLOG(2) << "reset to xi=" << xi << ", norm: " << residuumNormSquared;
@@ -194,7 +194,7 @@ pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,MeshType:
       {
         xi[i] = currentPoint->x[i];
       }
-      Vec3 residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi);
+      Vec3 residuum = point - this->template interpolateValueInElement<3>(geometryValues, xi, elementNo);
       double residuumNormSquared = MathUtility::normSquared<3>(residuum);
       currentPoint->fx = residuumNormSquared;
     };

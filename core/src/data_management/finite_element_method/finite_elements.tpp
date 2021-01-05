@@ -145,7 +145,7 @@ computeStrain(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nCo
       }
 
       // compute gradient values in parameter space
-      std::array<VecD<D>,nDofsPerElement> gradPhi = this->functionSpace_->getGradPhi(xi);
+      std::array<VecD<D>,nDofsPerElement> gradPhi = this->functionSpace_->getGradPhi(xi, elementNoLocal);
 
       // compute inverse jacobian
       Tensor2<D> inverseJacobian = this->functionSpace_->getInverseJacobian(geometryValues, elementNoLocal, xi);

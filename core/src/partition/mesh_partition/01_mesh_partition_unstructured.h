@@ -129,6 +129,10 @@ public:
   //! transfer the local nos in global dof nos, using the PETSc localToGlobal mapping for the dofs
   void getDofNoGlobalPetsc(const std::vector<dof_no_t> &dofNosLocal, std::vector<PetscInt> &dofNosGlobalPetsc) const;
 
+  //! check if the element is at an outer corner in the x-y plane of the domain, then return true and set edge to which corner (one of edge0Minus1Minus, edge0Plus1Minus, edge0Minus1Plus,  edge0Plus1Plus), only for 3D meshes!
+  //! this is not implemented for unstructured meshes
+  bool elementIsAtCorner(element_no_t elementNoLocal, Mesh::face_or_edge_t &edge);
+
 protected:
  
   global_no_t nElements_;   //< the global size, i.e. number of elements of the whole problem

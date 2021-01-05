@@ -662,7 +662,7 @@ communicateElementValues(std::vector<double> &activationValuesGlobal, std::vecto
     LOG(DEBUG) << "element " << elementNoLocal << ", activationElementalValues: " << activationElementalValues;
 
     Vec3 xi({0.5,0.5,0.5});
-    double activationValue = this->data().functionSpace()->interpolateValueInElement(activationElementalValues, xi);
+    double activationValue = this->data().functionSpace()->interpolateValueInElement(activationElementalValues, xi, elementNoLocal);
 
     activationValuesLocal[elementNoLocal] = activationValue;
 

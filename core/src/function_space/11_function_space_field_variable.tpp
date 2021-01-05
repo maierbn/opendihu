@@ -1,4 +1,4 @@
-#include "function_space/10_function_space_field_variable.h"
+#include "function_space/11_function_space_field_variable.h"
 
 #include <cmath>
 #include <array>
@@ -96,13 +96,13 @@ getNumberScaleFactors(element_no_t elementGlobalNo)
   
 template<typename MeshType, typename BasisFunctionType>
 std::array<std::array<double,MeshType::dim()>,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
-getGradPhi(std::array<double,MeshType::dim()> xi) const
+getGradPhi(std::array<double,MeshType::dim()> xi, element_no_t elementNoLocal) const
 {
   // column-major storage, gradPhi[column][row] = gradPhi[dofIndex][i] = dphi_dofIndex/dxi_i, columnIdx = dofIndex, rowIdx = which direction
   std::array<std::array<double,MeshType::dim()>,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> gradPhi;
   for (int dofIndex = 0; dofIndex < FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
   {
-    gradPhi[dofIndex] = this->gradPhi(dofIndex, xi);
+    gradPhi[dofIndex] = this->gradPhi(dofIndex, xi, elementNoLocal);
   }
   return gradPhi;
 }
@@ -111,12 +111,12 @@ template<typename MeshType, typename BasisFunctionType>
 template <int nComponents, typename double_v_t>
 std::array<double_v_t,nComponents> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
 interpolateValueInElement(std::array<std::array<double_v_t,nComponents>,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
-                          std::array<double,MeshType::dim()> xi) const
+                          std::array<double,MeshType::dim()> xi, element_no_t elementNoLocal) const
 {
   std::array<double_v_t,nComponents> result({0.0});
   for (int dofIndex = 0; dofIndex < FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
   {
-    result += elementalDofValues[dofIndex]*this->phi(dofIndex,xi);
+    result += elementalDofValues[dofIndex]*this->phi(dofIndex, xi, elementNoLocal);
   }
   return result;
 }
@@ -125,12 +125,12 @@ template<typename MeshType, typename BasisFunctionType>
 template <typename double_v_t>
 double_v_t FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
 interpolateValueInElement(std::array<double_v_t,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
-                          std::array<double,MeshType::dim()> xi) const
+                          std::array<double,MeshType::dim()> xi, element_no_t elementNoLocal) const
 {
   double_v_t result{};
   for (int dofIndex = 0; dofIndex < FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
   {
-    result += elementalDofValues[dofIndex]*this->phi(dofIndex,xi);
+    result += elementalDofValues[dofIndex]*this->phi(dofIndex, xi, elementNoLocal);
   }
   return result;
 }
@@ -138,7 +138,7 @@ interpolateValueInElement(std::array<double_v_t,FunctionSpaceFunction<MeshType,B
 template<typename MeshType, typename BasisFunctionType>
 std::array<double,MeshType::dim()> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
 interpolateGradientInElement(std::array<double,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
-                             Tensor2<MeshType::dim()> inverseJacobianParameterSpace, std::array<double,MeshType::dim()> xi) const
+                             Tensor2<MeshType::dim()> inverseJacobianParameterSpace, std::array<double,MeshType::dim()> xi, element_no_t elementNoLocal) const
 {
   const int D = MeshType::dim();
   const int nDofsPerElement = FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement();
@@ -149,7 +149,7 @@ interpolateGradientInElement(std::array<double,FunctionSpaceFunction<MeshType,Ba
   for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
   {
     // get gradient at dof
-    std::array<double,D> gradPhiParameterSpace = this->gradPhi(dofIndex, xi);
+    std::array<double,D> gradPhiParameterSpace = this->gradPhi(dofIndex, xi, elementNoLocal);
 
     //VLOG(2) << "  dofIndex2=" << dofIndex << ", xi=" << xi << ", gradPhiParameterSpace: " << gradPhiParameterSpace;
 
@@ -192,7 +192,7 @@ template<typename MeshType, typename BasisFunctionType>
 template<typename double_v_t>
 VecD<3,double_v_t> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
 getNormal(Mesh::face_t face, std::array<VecD<3,double_v_t>,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> geometryValues,
-          std::array<double,MeshType::dim()> xi)
+          std::array<double,MeshType::dim()> xi, element_no_t elementNoLocal)
 {
   // compute normal analog to nansons formula
   // Nansons formula: ds = J F^-T dS (ds, dS are normal vectors, here ds is in world space, dS is in index space)
@@ -200,7 +200,7 @@ getNormal(Mesh::face_t face, std::array<VecD<3,double_v_t>,FunctionSpaceFunction
   const int D = MeshType::dim();
 
   // compute the 3xD jacobian of the parameter space to world space mapping
-  std::array<Vec3v,D> jacobian = this->computeJacobian(geometryValues, xi);
+  std::array<Vec3v,D> jacobian = this->computeJacobian(geometryValues, xi, elementNoLocal);
   std::array<Vec3v,3> jacobian3x3 = MathUtility::transformToDxD<3,D>(jacobian);
 
   // compute J F^-T, J = det F, F = jacobian
@@ -230,7 +230,7 @@ getNormal(Mesh::face_t face, element_no_t elementNoLocal, std::array<double,Mesh
   this->getElementGeometry(elementNoLocal, geometryValues);
 
   //LOG(DEBUG) << "elementNoLocal: " << elementNoLocal << ", geometryValues: " << geometryValues;
-  return getNormal(face, geometryValues, xi);
+  return getNormal(face, geometryValues, xi, elementNoLocal);
 }
 
 template<typename MeshType, typename BasisFunctionType>
@@ -245,19 +245,20 @@ getNormal(Mesh::face_t face, Vc::int_v elementNoLocal, std::array<double,MeshTyp
   this->getElementGeometry(elementNoLocal, geometryValues);
 
   //LOG(DEBUG) << "elementNoLocal: " << elementNoLocal << ", geometryValues: " << geometryValues;
-  return getNormal(face, geometryValues, xi);
+  return getNormal(face, geometryValues, xi, elementNoLocal);
 }
 
 template<typename MeshType, typename BasisFunctionType>
 template<typename double_v_t, typename element_no_v_t>
 Tensor2<MeshType::dim(),double_v_t> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
-getInverseJacobian(std::array<VecD<3,double_v_t>,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryValues, element_no_v_t elementNo, std::array<double,MeshType::dim()> xi)
+getInverseJacobian(std::array<VecD<3,double_v_t>,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &geometryValues,
+                   element_no_v_t elementNoLocal, std::array<double,MeshType::dim()> xi)
 {
   // define constants
   const int D = MeshType::dim();
 
   // compute the 3xD jacobian of the parameter space to world space mapping
-  Tensor2<D,double_v_t> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(this->computeJacobian(geometryValues, xi));
+  Tensor2<D,double_v_t> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(this->computeJacobian(geometryValues, xi, elementNoLocal));
   double_v_t jacobianDeterminant;
   double_v_t approximateMeshWidth = MathUtility::computeApproximateMeshWidth<double_v_t,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()>(geometryValues);
   Tensor2<D,double_v_t> inverseJacobianParameterSpace = MathUtility::computeInverse(jacobianParameterSpace, approximateMeshWidth, jacobianDeterminant);
@@ -267,15 +268,15 @@ getInverseJacobian(std::array<VecD<3,double_v_t>,FunctionSpaceFunction<MeshType,
 
 template<typename MeshType, typename BasisFunctionType>
 Tensor2<MeshType::dim()> FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
-getInverseJacobian(element_no_t elementNo, std::array<double,MeshType::dim()> xi)
+getInverseJacobian(element_no_t elementNoLocal, std::array<double,MeshType::dim()> xi)
 {
   const int nDofsPerElement = FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement();
   
   // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
   std::array<Vec3,nDofsPerElement> geometryValues;
-  this->mesh_->getElementGeometry(elementNo, geometryValues);
+  this->mesh_->getElementGeometry(elementNoLocal, geometryValues);
 
-  return getInverseJacobian(geometryValues, elementNo, xi);
+  return getInverseJacobian(geometryValues, elementNoLocal, xi);
 }
 
 } // namespace

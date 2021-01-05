@@ -56,7 +56,7 @@ public:
 
 };
 
-/** base class for all meshes, not complete polynomials as basis functions
+/** base class for all meshes
  */
 template<typename MeshType,typename BasisFunctionType,typename DummyForTraits=MeshType>
 class FunctionSpaceGeometry :

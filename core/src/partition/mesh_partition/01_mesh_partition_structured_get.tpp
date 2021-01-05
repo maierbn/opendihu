@@ -778,5 +778,46 @@ ownRankPartitioningIndex(int coordinateDirection)
   return ownRankPartitioningIndex_[coordinateDirection];
 }
 
+//! check if the element is at an outer corner in the x-y plane of the domain, then set isAtCorner to true and return which corner (one of edge0Minus1Minus, edge0Plus1Minus, edge0Minus1Plus,  edge0Plus1Plus), only for 3D meshes!
+template<typename MeshType,typename BasisFunctionType>
+bool MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
+elementIsAtCorner(element_no_t elementNoLocal, Mesh::face_or_edge_t &edge)
+{
+  element_no_t elementX = elementNoLocal % nElementsLocal(0);
+  element_no_t elementY = element_no_t((elementNoLocal % (nElementsLocal(0) * nElementsLocal(1))) / nElementsLocal(0));
+
+  if (ownRankPartitioningIndex_[0] == 0 && elementX == 0)   // left
+  {
+    if (ownRankPartitioningIndex_[1] == 0 && elementY == 0) // front
+    {
+      // left front
+      edge = Mesh::face_or_edge_t::edge0Minus1Minus;
+      return true;
+    }
+    else if (ownRankPartitioningIndex_[1] == nRanks_[1]-1 && elementY == nElementsGlobal_[1]-1)  // back
+    {
+      // left back
+      edge = Mesh::face_or_edge_t::edge0Minus1Plus;
+      return true;
+    }
+  }
+  else if (ownRankPartitioningIndex_[0] == nRanks_[0]-1 && elementX == nElementsGlobal_[0]-1)   // right
+  {
+    if (ownRankPartitioningIndex_[1] == 0 && elementY == 0)
+    {
+      // right front
+      edge = Mesh::face_or_edge_t::edge0Plus1Minus;
+      return true;
+    }
+    else if (ownRankPartitioningIndex_[1] == nRanks_[1]-1 && elementY == nElementsGlobal_[1]-1)   // back
+    {
+      // right back
+      edge = Mesh::face_or_edge_t::edge0Plus1Plus;
+      return true;
+    }
+  }
+  return false;
+}
+
 
 }  // namespace

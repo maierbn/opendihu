@@ -18,12 +18,21 @@ namespace Mesh
  * The node positions can be changed by computation, e.g. for computational mechanics.
  */
 template<int D>
-class StructuredDeformableOfDimension : public Structured<D>, public Deformable
+class StructuredDeformableOfDimension :
+  public Structured<D>, public Deformable
 {
 public:
-  //! constructor of base class
-  using Structured<D>::Structured;
+  //! constructor from python settings
+  StructuredDeformableOfDimension(PythonConfig specificSettings);
 
+  //! if the mesh has triangles at its corners in each x-y plane, only possible if 3D
+  bool hasTriangleCorners();
+
+protected:
+
+  bool hasTriangleCorners_;    //< if the corners in each x-y plane are triangles instead of quadrilaterals, only in 3D and used for the muscle geometry
 };
 
 }  // namespace
+
+#include "mesh/structured_deformable.tpp"

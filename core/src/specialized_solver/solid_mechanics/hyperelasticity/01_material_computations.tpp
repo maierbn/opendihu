@@ -5,6 +5,7 @@
 #include <Vc/Vc>
 
 #include "equation/mooney_rivlin_incompressible.h"
+#include "quadrature/triangular_prism.h"
 
 namespace SpatialDiscretization
 {
@@ -52,6 +53,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
 
   // define shortcuts for quadrature
   typedef Quadrature::TensorProduct<D,Quadrature::Gauss<3>> QuadratureDD;   // quadratic*quadratic = 4th order polynomial, 3 gauss points = 2*3-1 = 5th order exact
+  typedef Quadrature::TriangularPrism<Quadrature::Gauss<3>> QuadraturePrism;   // corner elements with triangles
 
   // define type to hold evaluations of integrand
   typedef std::array<double_v_t, nUnknowsPerElement> EvaluationsDisplacementsType;
@@ -61,7 +63,8 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
   std::array<EvaluationsPressureType, QuadratureDD::numberEvaluations()> evaluationsArrayPressure{};
 
   // setup arrays used for integration
-  std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+  std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPointsHex = QuadratureDD::samplingPoints();
+  std::array<Vec3, QuadraturePrism::numberEvaluations()> samplingPointsPrism = QuadraturePrism::samplingPoints();
 
   // set values to zero
   if (communicateGhosts)
@@ -104,6 +107,19 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
     int elementNoLocalv = elementNoLocal;
 #endif
 
+    // determine if the element is a triangular prism at the corners or if it is a normal hex element
+    ::Mesh::face_or_edge_t edge;
+    bool isElementPrism = displacementsFunctionSpace_->hasTriangleCorners()
+      && displacementsFunctionSpace_->meshPartition()->elementIsAtCorner(elementNoLocal, edge);
+
+    // get sampling points
+    int nSamplingPoints = samplingPointsHex.size();
+
+    if (isElementPrism)
+    {
+      nSamplingPoints = samplingPointsPrism.size();
+    }
+
     // get geometry field of reference configuration
     std::array<Vec3_v_t,nDisplacementsDofsPerElement> geometryReferenceValues;
     this->data_.geometryReference()->getElementValues(elementNoLocalv, geometryReferenceValues);
@@ -133,13 +149,23 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
     }
 
     // loop over integration points (e.g. gauss points) for displacements field
-    for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
+    for (unsigned int samplingPointIndex = 0; samplingPointIndex < nSamplingPoints; samplingPointIndex++)
     {
+      // depending on the element type (hex or prism), get the sampling points
+      Vec3 xi;
+      if (isElementPrism)
+      {
+        xi = samplingPointsPrism[samplingPointIndex];
+      }
+      else
+      {
+        xi = samplingPointsHex[samplingPointIndex];
+      }
+
       // get parameter values of current sampling point
-      Vec3 xi = samplingPoints[samplingPointIndex];
 
       // compute the 3x3 jacobian of the parameter space to world space mapping
-      Tensor2_v_t<D> jacobianMaterial = DisplacementsFunctionSpace::computeJacobian(geometryReferenceValues, xi);
+      Tensor2_v_t<D> jacobianMaterial = this->displacementsFunctionSpace_->computeJacobian(geometryReferenceValues, xi, elementNoLocalv);
       double_v_t jacobianDeterminant;
       Tensor2_v_t<D> inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, approximateMeshWidth, jacobianDeterminant);
 
@@ -150,7 +176,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       double_v_t integrationFactor = MathUtility::abs(jacobianDeterminant); // MathUtility::computeIntegrationFactor(jacobianMaterial);
 
       // F
-      Tensor2_v_t<D> deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);
+      Tensor2_v_t<D> deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi, elementNoLocal);
       double_v_t deformationGradientDeterminant = MathUtility::computeDeterminant(deformationGradient);  // J
 
       Tensor2_v_t<D> rightCauchyGreen = this->computeRightCauchyGreenTensor(deformationGradient);  // C = F^T*F
@@ -159,7 +185,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       Tensor2_v_t<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse(rightCauchyGreen, approximateMeshWidth, rightCauchyGreenDeterminant);  // C^-1
 
       // fiber direction
-      Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
+      Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi, elementNoLocalv);
 
       // fiberDirection is not automatically normalized because of the interpolation inside the element, normalize again
       if (Term::usesFiberDirection)
@@ -181,7 +207,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       std::array<double_v_t,5> reducedInvariants = this->computeReducedInvariants(invariants, deformationGradientDeterminant); // Ibar_1, Ibar_2, Ibar_4, Ibar_5
 
       // pressure is the separately interpolated pressure for mixed formulation
-      double_v_t pressure = pressureFunctionSpace->interpolateValueInElement(pressureValuesCurrentElement, xi);
+      double_v_t pressure = pressureFunctionSpace->interpolateValueInElement(pressureValuesCurrentElement, xi, elementNoLocal);
 
       // Pk2 stress tensor S = S_vol + S_iso (p.234)
       //! compute 2nd Piola-Kirchhoff stress tensor S = 2*dPsi/dC and the fictitious PK2 Stress Sbar
@@ -194,7 +220,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       // add active stress contribution if this material has this
       if (Term::usesActiveStress)
       {
-        VecD_v_t<6> activePK2StressInVoigtNotation = displacementsFunctionSpace->template interpolateValueInElement<6>(activePK2StressValues, xi);
+        VecD_v_t<6> activePK2StressInVoigtNotation = displacementsFunctionSpace->template interpolateValueInElement<6>(activePK2StressValues, xi, elementNoLocal);
 
         pK2Stress[0][0] += activePK2StressInVoigtNotation[0];
         pK2Stress[1][1] += activePK2StressInVoigtNotation[1];
@@ -212,7 +238,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
         fictitiousPK2Stress, pk2StressIsochoric
       );
 
-      std::array<Vec3,nDisplacementsDofsPerElement> gradPhi = displacementsFunctionSpace->getGradPhi(xi);
+      std::array<Vec3,nDisplacementsDofsPerElement> gradPhi = displacementsFunctionSpace->getGradPhi(xi, elementNoLocalv);
       // (column-major storage) gradPhi[L][a] = dphi_L / dxi_a
       // gradPhi[column][row] = gradPhi[dofIndex][i] = dphi_dofIndex/dxi_i, columnIdx = dofIndex, rowIdx = which direction
 
@@ -240,7 +266,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
         VLOG(2) << "  gradPhi: " << gradPhi;
       }
 
-      VLOG(1) << "  sampling point " << samplingPointIndex << "/" << samplingPoints.size() << ", xi: " << xi << ", J: " << deformationGradientDeterminant << ", p: " << pressure << ", S11: " << pK2Stress[0][0];
+      VLOG(1) << "  sampling point " << samplingPointIndex << "/" << nSamplingPoints << ", xi: " << xi << ", J: " << deformationGradientDeterminant << ", p: " << pressure << ", S11: " << pK2Stress[0][0];
 
       if (samplingPointIndex == 0 && D == 3)
         VLOG(1) << " F11: " << deformationGradient[0][0] << ", F22,F33: " << deformationGradient[1][1] << "," << deformationGradient[2][2]
@@ -318,7 +344,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
         // loop over basis functions and evaluate integrand at xi for pressure part ((J-1)*psi)
         for (int dofIndex = 0; dofIndex < nPressureDofsPerElement; dofIndex++)           // index over dofs in element, L in derivation
         {
-          const double phiL = pressureFunctionSpace->phi(dofIndex, xi);
+          const double phiL = pressureFunctionSpace->phi(dofIndex, xi, elementNoLocalv);
           const double_v_t integrand = (deformationGradientDeterminant - 1.0) * phiL;     // (J-1) * phi_L
 
           // store integrand in evaluations array
@@ -329,12 +355,37 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
     }  // function evaluations
 
     // integrate all values for result vector entries at once
-    EvaluationsDisplacementsType integratedValuesDisplacements = QuadratureDD::computeIntegral(evaluationsArrayDisplacements);
+    EvaluationsDisplacementsType integratedValuesDisplacements;
+    if (isElementPrism)
+    {
+      integratedValuesDisplacements = QuadraturePrism::computeIntegral(evaluationsArrayDisplacements);
+
+      // set entries that are no real dofs in triangular prisms to zero
+      const bool isQuadraticElement0 = true;
+      const bool isQuadraticElement1 = true;
+      QuadraturePrism::adjustEntriesforPrism(integratedValuesDisplacements, edge, isQuadraticElement0, D, isQuadraticElement1, 0);
+    }
+    else
+    {
+      integratedValuesDisplacements = QuadratureDD::computeIntegral(evaluationsArrayDisplacements);
+    }
 
     EvaluationsPressureType integratedValuesPressure;
     if (Term::isIncompressible)
     {
-      integratedValuesPressure = QuadratureDD::computeIntegral(evaluationsArrayPressure);
+      if (isElementPrism)
+      {
+        integratedValuesPressure = QuadraturePrism::computeIntegral(evaluationsArrayPressure);
+
+        // set entries that are no real dofs in triangular prisms to zero
+        const bool isQuadraticElement0 = false;
+        const bool isQuadraticElement1 = false;
+        QuadraturePrism::adjustEntriesforPrism(integratedValuesPressure, edge, isQuadraticElement0, D, isQuadraticElement1, 0);
+      }
+      else
+      {
+        integratedValuesPressure = QuadratureDD::computeIntegral(evaluationsArrayPressure);
+      }
     }
 
     // get indices of element-local dofs
@@ -586,13 +637,15 @@ materialComputeExternalVirtualWorkDead()
 
     // define shortcuts for quadrature
     typedef Quadrature::TensorProduct<D,Quadrature::Gauss<3>> QuadratureDD;   // quadratic*quadratic = 4th order polynomial, 3 gauss points = 2*3-1 = 5th order exact
+    typedef Quadrature::TriangularPrism<Quadrature::Gauss<3>> QuadraturePrism;   // corner elements with triangles
 
     // define type to hold evaluations of integrand
     typedef std::array<double, 3*nUnknowsPerElement> EvaluationsType;
     std::array<EvaluationsType, QuadratureDD::numberEvaluations()> evaluationsArray{};
 
     // setup arrays used for integration
-    std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+    std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPointsHex = QuadratureDD::samplingPoints();
+    std::array<Vec3, QuadraturePrism::numberEvaluations()> samplingPointsPrism = QuadraturePrism::samplingPoints();
 
     // initialize variables
     functionSpace->geometryField().setRepresentationGlobal();
@@ -609,14 +662,37 @@ materialComputeExternalVirtualWorkDead()
       //std::array<Vec3,nDisplacementsDofsPerElement> displacementsValues;
       //this->data_.bodyForce()->getElementValues(elementNoLocal, bodyForceValues);
 
+      // determine if the element is a triangular prism at the corners or if it is a normal hex element
+      ::Mesh::face_or_edge_t edge;
+      bool isElementPrism = displacementsFunctionSpace_->hasTriangleCorners()
+        && displacementsFunctionSpace_->meshPartition()->elementIsAtCorner(elementNoLocal, edge);
+
+      // get sampling points
+      int nSamplingPoints = samplingPointsHex.size();
+
+      if (isElementPrism)
+      {
+        nSamplingPoints = samplingPointsPrism.size();
+      }
+
       // evaluate integrand at sampling points
-      for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
+      for (unsigned int samplingPointIndex = 0; samplingPointIndex < nSamplingPoints; samplingPointIndex++)
       {
         // evaluate function to integrate at samplingPoints[i*2], write value to evaluations[i]
-        std::array<double,D> xi = samplingPoints[samplingPointIndex];
+
+        // depending on the element type (hex or prism), get the sampling points
+        std::array<double,D> xi;
+        if (isElementPrism)
+        {
+          xi = samplingPointsPrism[samplingPointIndex];
+        }
+        else
+        {
+          xi = samplingPointsHex[samplingPointIndex];
+        }
 
         // compute the 3xD jacobian of the parameter space to world space mapping
-        auto jacobian = DisplacementsFunctionSpace::computeJacobian(geometry, xi);
+        auto jacobian = this->displacementsFunctionSpace_->computeJacobian(geometry, xi, elementNoLocal);
         double integrationFactor = MathUtility::computeIntegrationFactor(jacobian);
 
         for (unsigned int elementalDofNoM = 0; elementalDofNoM < nDofsPerElement; elementalDofNoM++)   // dof index M
@@ -627,7 +703,7 @@ materialComputeExternalVirtualWorkDead()
 
             for (unsigned int elementalDofNoL = 0; elementalDofNoL < nDofsPerElement; elementalDofNoL++)   // dof index L
             {
-              integrand += DisplacementsFunctionSpace::phi(elementalDofNoL,xi) * DisplacementsFunctionSpace::phi(elementalDofNoM,xi)
+              integrand += functionSpace->phi(elementalDofNoL, xi, elementNoLocal) * functionSpace->phi(elementalDofNoM, xi, elementNoLocal)
                 * this->constantBodyForce_[dimensionNo];
             }
 
@@ -637,7 +713,22 @@ materialComputeExternalVirtualWorkDead()
       }  // function evaluations
 
       // integrate all values for the (M,d) dofs at once
-      EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
+      EvaluationsType integratedValues;
+
+      // depending on element type (triangular prism at the corners or normal hexahedral), use different quadrature
+      if (isElementPrism)
+      {
+        integratedValues = QuadraturePrism::computeIntegral(evaluationsArray);
+
+        // set entries that are no real dofs in triangular prisms to zero
+        const bool isQuadraticElement0 = true;
+        const bool isQuadraticElement1 = true;
+        QuadraturePrism::adjustEntriesforPrism(integratedValuesDisplacements, edge, isQuadraticElement0, 3*D, isQuadraticElement1, 0);
+      }
+      else
+      {
+        integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
+      }
 
       std::array<dof_no_t,nDisplacementsDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNoLocal);
 
@@ -695,13 +786,15 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
 
   // define shortcuts for quadrature
   typedef Quadrature::TensorProduct<D,Quadrature::Gauss<3>> QuadratureDD;   // quadratic*quadratic = 4th order polynomial, 3 gauss points = 2*3-1 = 5th order exact
+  typedef Quadrature::TriangularPrism<Quadrature::Gauss<3>> QuadraturePrism;   // corner elements with triangles
 
   // define type to hold evaluations of integrand
   typedef std::array<double_v_t, 3*nUnknowsPerElement> EvaluationsType;
   std::array<EvaluationsType, QuadratureDD::numberEvaluations()> evaluationsArray{};
 
   // setup arrays used for integration
-  std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+  std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPointsHex = QuadratureDD::samplingPoints();
+  std::array<Vec3, QuadraturePrism::numberEvaluations()> samplingPointsPrism = QuadraturePrism::samplingPoints();
 
   const int nElementsLocal = functionSpace->nElementsLocal();
 
@@ -725,6 +818,19 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
 #else
     int elementNoLocalv = elementNoLocal;
 #endif
+
+    // determine if the element is a triangular prism at the corners or if it is a normal hex element
+    ::Mesh::face_or_edge_t edge;
+    bool isElementPrism = displacementsFunctionSpace_->hasTriangleCorners()
+      && displacementsFunctionSpace_->meshPartition()->elementIsAtCorner(elementNoLocal, edge);
+
+    // get sampling points
+    int nSamplingPoints = samplingPointsHex.size();
+
+    if (isElementPrism)
+    {
+      nSamplingPoints = samplingPointsPrism.size();
+    }
 
     std::array<dof_no_v_t,nDisplacementsDofsPerElement> dofNosLocal = functionSpace->getElementDofNosLocal(elementNoLocalv);
 
@@ -789,13 +895,23 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
 #endif
 
     // evaluate integrand at sampling points
-    for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
+    for (unsigned int samplingPointIndex = 0; samplingPointIndex < nSamplingPoints; samplingPointIndex++)
     {
       // evaluate function to integrate at samplingPoints[i*2], write value to evaluations[i]
-      std::array<double,D> xi = samplingPoints[samplingPointIndex];
+
+      // depending on the element type (hex or prism), get the sampling points
+      std::array<double,D> xi;
+      if (isElementPrism)
+      {
+        xi = samplingPointsPrism[samplingPointIndex];
+      }
+      else
+      {
+        xi = samplingPointsHex[samplingPointIndex];
+      }
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      auto jacobian = DisplacementsFunctionSpace::computeJacobian(geometry, xi);
+      auto jacobian = this->displacementsFunctionSpace_->computeJacobian(geometry, xi, elementNoLocalv);
       double_v_t integrationFactor = MathUtility::computeIntegrationFactor(jacobian);
 
       // loop over elemantal dofs, M
@@ -812,8 +928,9 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
             const double_v_t oldVelocity = oldVelocityValues[elementalDofNoL][dimensionNo];
             const double_v_t newVelocity = newVelocityValues[elementalDofNoL][dimensionNo];
 
-            integrand += this->density_ * (newVelocity - oldVelocity) / this->timeStepWidth_ * DisplacementsFunctionSpace::phi(elementalDofNoL,xi)
-              * DisplacementsFunctionSpace::phi(elementalDofNoM,xi);
+            integrand += this->density_ * (newVelocity - oldVelocity) / this->timeStepWidth_
+              * this->displacementsFunctionSpace_->phi(elementalDofNoL, xi, elementNoLocalv)
+              * this->displacementsFunctionSpace_->phi(elementalDofNoM, xi, elementNoLocalv);
 
             evaluationsArray[samplingPointIndex][elementalDofNoM*3 + dimensionNo] = integrand * integrationFactor;
           }
@@ -824,7 +941,17 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
     }  // function evaluations
 
     // integrate all values for the (M,d) dofs at once
-    EvaluationsType integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
+    EvaluationsType integratedValues;
+
+    // depending on element type (triangular prism at the corners or normal hexahedral), use different quadrature
+    if (isElementPrism)
+    {
+      integratedValues = QuadraturePrism::computeIntegral(evaluationsArray);
+    }
+    else
+    {
+      integratedValues = QuadratureDD::computeIntegral(evaluationsArray);
+    }
 
     for (unsigned int elementalDofNoM = 0; elementalDofNoM < nDofsPerElement; elementalDofNoM++)   // dof index M
     {
@@ -915,6 +1042,7 @@ materialComputeJacobian()
 
   // define shortcuts for quadrature
   typedef Quadrature::TensorProduct<D,Quadrature::Gauss<3>> QuadratureDD;   // quadratic*quadratic = 4th order polynomial, 3 gauss points = 2*3-1 = 5th order exact
+  typedef Quadrature::TriangularPrism<Quadrature::Gauss<3>> QuadraturePrism;   // corner elements with triangles
 
   // define types to hold evaluations of integrand
   typedef std::array<double_v_t, nUnknowsPerElement*nUnknowsPerElement> EvaluationsDisplacementsType;
@@ -927,7 +1055,8 @@ materialComputeJacobian()
   std::array<EvaluationsUVType, QuadratureDD::numberEvaluations()> evaluationsArrayUV{};
 
   // setup arrays used for integration
-  std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPoints = QuadratureDD::samplingPoints();
+  std::array<Vec3, QuadratureDD::numberEvaluations()> samplingPointsHex = QuadratureDD::samplingPoints();
+  std::array<Vec3, QuadraturePrism::numberEvaluations()> samplingPointsPrism = QuadraturePrism::samplingPoints();
 
   // loop over elements, always 4 elements at once using the vectorized functions
   for (int elementNoLocal = 0; elementNoLocal < nElementsLocal; elementNoLocal += nVcComponents)
@@ -1091,14 +1220,36 @@ materialComputeJacobian()
     std::array<Vec3_v_t,nDisplacementsDofsPerElement> elementalDirectionValues;
     this->data_.fiberDirection()->getElementValues(elementNoLocalv, elementalDirectionValues);
 
-    // loop over integration points (e.g. gauss points) for displacements field
-    for (unsigned int samplingPointIndex = 0; samplingPointIndex < samplingPoints.size(); samplingPointIndex++)
+    // determine if the element is a triangular prism at the corners or if it is a normal hex element
+    ::Mesh::face_or_edge_t edge;
+    bool isElementPrism = displacementsFunctionSpace_->hasTriangleCorners()
+      && displacementsFunctionSpace_->meshPartition()->elementIsAtCorner(elementNoLocal, edge);
+
+    // get sampling points
+    int nSamplingPoints = samplingPointsHex.size();
+
+    if (isElementPrism)
     {
+      nSamplingPoints = samplingPointsPrism.size();
+    }
+
+    // loop over integration points (e.g. gauss points) for displacements field
+    for (unsigned int samplingPointIndex = 0; samplingPointIndex < nSamplingPoints; samplingPointIndex++)
+    {
+      // depending on the element type (hex or prism), get the sampling points
+      Vec3 xi;
+      if (isElementPrism)
+      {
+        xi = samplingPointsPrism[samplingPointIndex];
+      }
+      else
+      {
+        xi = samplingPointsHex[samplingPointIndex];
+      }
       // get parameter values of current sampling point
-      Vec3 xi = samplingPoints[samplingPointIndex];
 
       // compute the 3x3 jacobian of the parameter space to world space mapping
-      Tensor2_v_t<D> jacobianMaterial = DisplacementsFunctionSpace::computeJacobian(geometryReferenceValues, xi);
+      Tensor2_v_t<D> jacobianMaterial = this->displacementsFunctionSpace_->computeJacobian(geometryReferenceValues, xi, elementNoLocalv);
       double_v_t jacobianDeterminant;
       Tensor2_v_t<D> inverseJacobianMaterial = MathUtility::computeInverse(jacobianMaterial, approximateMeshWidth, jacobianDeterminant);
 
@@ -1108,7 +1259,7 @@ materialComputeJacobian()
       // get the factor in the integral that arises from the change in integration domain from world to parameter space
       double_v_t integrationFactor = MathUtility::abs(jacobianDeterminant);   //MathUtility::computeIntegrationFactor(jacobianMaterial);
 
-      Tensor2_v_t<D> deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);    // F
+      Tensor2_v_t<D> deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi, elementNoLocal);    // F
       double_v_t deformationGradientDeterminant;    // J
       Tensor2_v_t<D> inverseDeformationGradient = MathUtility::computeInverse(deformationGradient, approximateMeshWidth, deformationGradientDeterminant);  // F^-1
 
@@ -1118,7 +1269,7 @@ materialComputeJacobian()
       Tensor2_v_t<D> inverseRightCauchyGreen = MathUtility::computeSymmetricInverse(rightCauchyGreen, approximateMeshWidth, rightCauchyGreenDeterminant);  // C^-1
 
       // fiber direction
-      Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi);
+      Vec3_v_t fiberDirection = displacementsFunctionSpace->template interpolateValueInElement<3>(elementalDirectionValues, xi, elementNoLocalv);
 
       // fiberDirection is not automatically normalized because of the interpolation inside the element, normalize again
       if (Term::usesFiberDirection)
@@ -1142,7 +1293,7 @@ materialComputeJacobian()
       // pressure is the separately interpolated pressure for mixed formulation
       double_v_t pressure = 0;
       if (Term::isIncompressible)
-        pressure = pressureFunctionSpace->interpolateValueInElement(pressureValuesCurrentElement, xi);
+        pressure = pressureFunctionSpace->interpolateValueInElement(pressureValuesCurrentElement, xi, elementNoLocalv);
 
       // Pk2 stress tensor S = S_vol + S_iso (p.234)
       //! compute 2nd Piola-Kirchhoff stress tensor S = 2*dPsi/dC and the fictitious PK2 Stress Sbar
@@ -1152,7 +1303,7 @@ materialComputeJacobian()
                                                         deformationGradientDeterminant, fiberDirection,
                                                         fictitiousPK2Stress, pk2StressIsochoric);
 
-      std::array<Vec3,nDisplacementsDofsPerElement> gradPhi = displacementsFunctionSpace->getGradPhi(xi);
+      std::array<Vec3,nDisplacementsDofsPerElement> gradPhi = displacementsFunctionSpace->getGradPhi(xi, elementNoLocalv);
       // (column-major storage) gradPhi[L][a] = dphi_L / dxi_a
       // gradPhi[column][row] = gradPhi[dofIndex][i] = dphi_dofIndex/dxi_i, columnIdx = dofIndex, rowIdx = which direction
 
@@ -1185,7 +1336,7 @@ materialComputeJacobian()
       VLOG(2) << "  pK2Stress: S=" << pK2Stress;
       VLOG(2) << "  gradPhi: " << gradPhi;
 
-      VLOG(1) << "  sampling point " << samplingPointIndex << "/" << samplingPoints.size() << ", xi: " << xi << ", J: " << deformationGradientDeterminant << ", p: " << pressure << ", S11: " << pK2Stress[0][0];
+      VLOG(1) << "  sampling point " << samplingPointIndex << "/" << nSamplingPoints << ", xi: " << xi << ", J: " << deformationGradientDeterminant << ", p: " << pressure << ", S11: " << pK2Stress[0][0];
 
       if (Vc::any_of(deformationGradientDeterminant < 1e-12))   // if any entry of the deformation gradient is negative
       {
@@ -1315,7 +1466,7 @@ materialComputeJacobian()
 
               // compute integrand J * psi_L * (F^-1)_Ba * phi_Ma,B
 
-              const double_v_t psiL = pressureFunctionSpace->phi(lDof,xi);
+              const double_v_t psiL = pressureFunctionSpace->phi(lDof, xi, elementNoLocalv);
               const double_v_t integrand = deformationGradientDeterminant * psiL * fInv_Ba_dphiM_dXB;
 
               // compute index of degree of freedom and component (result vector index)
@@ -1339,7 +1490,9 @@ materialComputeJacobian()
           for (int mDof = 0; mDof < nDisplacementsDofsPerElement; mDof++)  // index over dofs, each dof has D components, M in derivation
           {
             // integrate ∫_Ω ρ0 ϕ^L ϕ^M dV, the actual needed value is 1/dt δ_ab ∫_Ω ρ0 ϕ^L ϕ^M dV, but this will be computed later
-            const double integrand = this->density_ * displacementsFunctionSpace->phi(lDof, xi) * displacementsFunctionSpace->phi(mDof, xi);
+            const double integrand = this->density_
+              * displacementsFunctionSpace->phi(lDof, xi, elementNoLocalv)
+              * displacementsFunctionSpace->phi(mDof, xi, elementNoLocalv);
 
             // compute index of degree of freedom and component (result vector index)
             const int index = lDof*nDisplacementsDofsPerElement + mDof;
@@ -1353,18 +1506,57 @@ materialComputeJacobian()
     }   // sampling points
 
     // integrate all values for result vector entries at once
-    EvaluationsDisplacementsType integratedValuesDisplacements = QuadratureDD::computeIntegral(evaluationsArrayDisplacements);
+    EvaluationsDisplacementsType integratedValuesDisplacements;
+
+    // depending on element type (triangular prism at the corners or normal hexahedral), use different quadrature
+    if (isElementPrism)
+    {
+      integratedValuesDisplacements = QuadraturePrism::computeIntegral(evaluationsArrayDisplacements);
+
+      // the following does nothing
+      const bool isQuadraticElement0 = true;
+      const bool isQuadraticElement1 = true;
+      QuadraturePrism::adjustEntriesforPrism(integratedValuesDisplacements, isQuadraticElement0, D, isQuadraticElement1, D);
+    }
+    else
+    {
+      integratedValuesDisplacements = QuadratureDD::computeIntegral(evaluationsArrayDisplacements);
+    }
 
     EvaluationsPressureType integratedValuesPressure;
     if (Term::isIncompressible)
     {
-      integratedValuesPressure = QuadratureDD::computeIntegral(evaluationsArrayPressure);
+      if (isElementPrism)
+      {
+        integratedValuesPressure = QuadraturePrism::computeIntegral(evaluationsArrayPressure);
+
+        // the following does nothing
+        const bool isQuadraticElement0 = true;
+        const bool isQuadraticElement1 = false;
+        QuadraturePrism::adjustEntriesforPrism(integratedValuesPressure, isQuadraticElement0, D, isQuadraticElement1, 1);
+      }
+      else
+      {
+        integratedValuesPressure = QuadratureDD::computeIntegral(evaluationsArrayPressure);
+      }
     }
 
     EvaluationsUVType integratedValuesUV;
     if (nDisplacementComponents == 6)
     {
-      integratedValuesUV = QuadratureDD::computeIntegral(evaluationsArrayUV);
+      if (isElementPrism)
+      {
+        integratedValuesUV = QuadraturePrism::computeIntegral(evaluationsArrayUV);
+
+        // the following does nothing
+        const bool isQuadraticElement0 = true;
+        const bool isQuadraticElement1 = true;
+        QuadraturePrism::adjustEntriesforPrism(integratedValuesUV, isQuadraticElement0, 1, isQuadraticElement1, 1);
+      }
+      else
+      {
+        integratedValuesUV = QuadratureDD::computeIntegral(evaluationsArrayUV);
+      }
     }
 
     // get indices of element-local dofs

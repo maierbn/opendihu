@@ -72,4 +72,5 @@
 #include "quadrature/gauss.h"
 #include "quadrature/clenshaw_curtis.h"
 #include "quadrature/newton_cotes.h"
+#include "quadrature/triangular_prism.h"
 #include "quadrature/mixed.h"

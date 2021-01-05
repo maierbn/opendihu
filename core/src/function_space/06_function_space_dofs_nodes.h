@@ -3,10 +3,12 @@
 #include <Python.h>  // has to be the first included header
 
 #include <array>
+#include <memory>
 #include "control/types.h"
 
 #include "function_space/05_function_space_geometry.h"
 #include "function_space/06_function_space_dofs_nodes_structured.h"
+#include "field_variable/00_field_variable_base.h"
 #include "mesh/type_traits.h"
 
 namespace FunctionSpace
@@ -76,15 +78,18 @@ public:
   FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, PythonConfig specificSettings, bool noGeometryField=false);
 
   //! constructor from python settings with additionally given node positions
-  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &nodePositions, PythonConfig specificSettings, bool noGeometryField=false);
+  FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::vector<double> &nodePositions, PythonConfig specificSettings,
+                         bool noGeometryField=false);
 
   //! constructor from node positions, nElementsPerCoordinateDirection are the local elements
   FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<Vec3> &nodePositions,
-                         const std::array<element_no_t,D> nElementsPerCoordinateDirection, const std::array<int,D> nRanksPerCoordinateDirection);
+                         const std::array<element_no_t,D> nElementsPerCoordinateDirection,
+                         const std::array<int,D> nRanksPerCoordinateDirection, bool hasTriangleCorners);
 
   //! constructor from node positions (dummy, needed for creation from node positions from file)
   FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, const std::vector<double> &nodePositionsFromBinaryFile, const std::vector<Vec3> &nodePositions,
-                         const std::array<element_no_t,D> nElementsPerCoordinateDirection, const std::array<int,D> nRanksPerCoordinateDirection);
+                         const std::array<element_no_t,D> nElementsPerCoordinateDirection,
+                         const std::array<int,D> nRanksPerCoordinateDirection, bool hasTriangleCorners);
 
   typedef FieldVariable::FieldVariable<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>,3> GeometryFieldType;  //< the class typename of the geometry field variable
 
@@ -93,7 +98,12 @@ public:
 
   //! refine the mesh by given factor, create new node positions
   void refineMesh(std::array<int,D> refinementFactors);
-  
+
+  //! set the dependent dofs in the given field variable by interpolating the independent dofs of the triangle basis, this implementation does nothing
+  virtual void interpolateNonDofValuesInFieldVariable(
+    std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<Mesh::StructuredDeformableOfDimension<D>,BasisFunctionType>>> fieldVariable,
+    int componentNo) const = 0;
+
 protected:
 
   //! parse the node from python config into a vector

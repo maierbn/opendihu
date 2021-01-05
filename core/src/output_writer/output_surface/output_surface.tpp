@@ -123,7 +123,7 @@ initializeSampledPoints()
         // determine actual position on the mesh
         std::array<Vec3,nDofsPerElement> elementalGeometryValues;
         functionSpace->geometryField().getElementValues(elementNoLocal, elementalGeometryValues);
-        foundSampledPoint.position = functionSpace->template interpolateValueInElement<3>(elementalGeometryValues, xi);
+        foundSampledPoint.position = functionSpace->template interpolateValueInElement<3>(elementalGeometryValues, xi, elementNoLocal);
 
         //foundSampledPoint.requestedPosition = foundSampledPoint.position ;
 

@@ -87,7 +87,7 @@ multiple_fibers_cubes_partitioning:
 	cd examples/electrophysiology/multiple_fibers_cubes_partitioning && $(python) ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 	
 fibers_emg:
-	cd examples/electrophysiology/fibers_emg && $(python) ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	cd examples/electrophysiology/fibers/fibers_emg && $(python) ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 laplace2d:
 	cd examples/laplace/laplace2d && $(python) ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
@@ -102,7 +102,7 @@ linear_elasticity:
 	cd examples/solid_mechanics/linear_elasticity && $(python) ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 fibers_linear_elasticity:
-	cd examples/electrophysiology/fibers_emg && $(python) ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+	cd examples/electrophysiology/fibers/fibers_emg && $(python) ../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
 
 mooney_rivlin_transiso:
 	cd examples/solid_mechanics/mooney_rivlin_transiso  && $(python) ../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

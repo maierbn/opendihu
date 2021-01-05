@@ -53,7 +53,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
 
   // define shortcuts for quadrature
   typedef Quadrature::TensorProduct<D,Quadrature::Gauss<3>> QuadratureDD;   // quadratic*quadratic = 4th order polynomial, 3 gauss points = 2*3-1 = 5th order exact
-  typedef Quadrature::TriangularPrism<Quadrature::Gauss<3>> QuadraturePrism;   // corner elements with triangles
+  typedef Quadrature::TriangularPrism<D,Quadrature::Gauss<3>> QuadraturePrism;   // corner elements with triangles
 
   // define type to hold evaluations of integrand
   typedef std::array<double_v_t, nUnknowsPerElement> EvaluationsDisplacementsType;
@@ -361,9 +361,10 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       integratedValuesDisplacements = QuadraturePrism::computeIntegral(evaluationsArrayDisplacements);
 
       // set entries that are no real dofs in triangular prisms to zero
+      const bool usesDofPairs = false;
       const bool isQuadraticElement0 = true;
-      const bool isQuadraticElement1 = true;
-      QuadraturePrism::adjustEntriesforPrism(integratedValuesDisplacements, edge, isQuadraticElement0, D, isQuadraticElement1, 0);
+      QuadraturePrism::adjustEntriesforPrism(integratedValuesDisplacements, edge, usesDofPairs,
+                                             isQuadraticElement0, D);
     }
     else
     {
@@ -378,9 +379,10 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
         integratedValuesPressure = QuadraturePrism::computeIntegral(evaluationsArrayPressure);
 
         // set entries that are no real dofs in triangular prisms to zero
+        const bool usesDofPairs = false;
         const bool isQuadraticElement0 = false;
-        const bool isQuadraticElement1 = false;
-        QuadraturePrism::adjustEntriesforPrism(integratedValuesPressure, edge, isQuadraticElement0, D, isQuadraticElement1, 0);
+        QuadraturePrism::adjustEntriesforPrism(integratedValuesPressure, edge, usesDofPairs,
+                                               isQuadraticElement0, 1);
       }
       else
       {
@@ -637,7 +639,7 @@ materialComputeExternalVirtualWorkDead()
 
     // define shortcuts for quadrature
     typedef Quadrature::TensorProduct<D,Quadrature::Gauss<3>> QuadratureDD;   // quadratic*quadratic = 4th order polynomial, 3 gauss points = 2*3-1 = 5th order exact
-    typedef Quadrature::TriangularPrism<Quadrature::Gauss<3>> QuadraturePrism;   // corner elements with triangles
+    typedef Quadrature::TriangularPrism<D,Quadrature::Gauss<3>> QuadraturePrism;   // corner elements with triangles
 
     // define type to hold evaluations of integrand
     typedef std::array<double, 3*nUnknowsPerElement> EvaluationsType;
@@ -721,9 +723,10 @@ materialComputeExternalVirtualWorkDead()
         integratedValues = QuadraturePrism::computeIntegral(evaluationsArray);
 
         // set entries that are no real dofs in triangular prisms to zero
+        const bool usesDofPairs = false;
         const bool isQuadraticElement0 = true;
-        const bool isQuadraticElement1 = true;
-        QuadraturePrism::adjustEntriesforPrism(integratedValuesDisplacements, edge, isQuadraticElement0, 3*D, isQuadraticElement1, 0);
+        QuadraturePrism::adjustEntriesforPrism(integratedValues, edge, usesDofPairs,
+                                               isQuadraticElement0, 3*D);
       }
       else
       {
@@ -786,7 +789,7 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
 
   // define shortcuts for quadrature
   typedef Quadrature::TensorProduct<D,Quadrature::Gauss<3>> QuadratureDD;   // quadratic*quadratic = 4th order polynomial, 3 gauss points = 2*3-1 = 5th order exact
-  typedef Quadrature::TriangularPrism<Quadrature::Gauss<3>> QuadraturePrism;   // corner elements with triangles
+  typedef Quadrature::TriangularPrism<D,Quadrature::Gauss<3>> QuadraturePrism;   // corner elements with triangles
 
   // define type to hold evaluations of integrand
   typedef std::array<double_v_t, 3*nUnknowsPerElement> EvaluationsType;
@@ -947,6 +950,12 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
     if (isElementPrism)
     {
       integratedValues = QuadraturePrism::computeIntegral(evaluationsArray);
+
+      // set entries that are no real dofs in triangular prisms to zero
+      const bool usesDofPairs = false;
+      const bool isQuadraticElement0 = true;
+      QuadraturePrism::adjustEntriesforPrism(integratedValues, edge,
+                                             usesDofPairs, isQuadraticElement0, 3*D);
     }
     else
     {
@@ -1042,7 +1051,7 @@ materialComputeJacobian()
 
   // define shortcuts for quadrature
   typedef Quadrature::TensorProduct<D,Quadrature::Gauss<3>> QuadratureDD;   // quadratic*quadratic = 4th order polynomial, 3 gauss points = 2*3-1 = 5th order exact
-  typedef Quadrature::TriangularPrism<Quadrature::Gauss<3>> QuadraturePrism;   // corner elements with triangles
+  typedef Quadrature::TriangularPrism<D,Quadrature::Gauss<3>> QuadraturePrism;   // corner elements with triangles
 
   // define types to hold evaluations of integrand
   typedef std::array<double_v_t, nUnknowsPerElement*nUnknowsPerElement> EvaluationsDisplacementsType;
@@ -1514,9 +1523,11 @@ materialComputeJacobian()
       integratedValuesDisplacements = QuadraturePrism::computeIntegral(evaluationsArrayDisplacements);
 
       // the following does nothing
+      const bool usesDofPairs = true;
       const bool isQuadraticElement0 = true;
       const bool isQuadraticElement1 = true;
-      QuadraturePrism::adjustEntriesforPrism(integratedValuesDisplacements, isQuadraticElement0, D, isQuadraticElement1, D);
+      QuadraturePrism::adjustEntriesforPrism(integratedValuesDisplacements, edge, usesDofPairs,
+                                             isQuadraticElement0, D, isQuadraticElement1, D);
     }
     else
     {
@@ -1531,9 +1542,11 @@ materialComputeJacobian()
         integratedValuesPressure = QuadraturePrism::computeIntegral(evaluationsArrayPressure);
 
         // the following does nothing
+        const bool usesDofPairs = true;
         const bool isQuadraticElement0 = true;
         const bool isQuadraticElement1 = false;
-        QuadraturePrism::adjustEntriesforPrism(integratedValuesPressure, isQuadraticElement0, D, isQuadraticElement1, 1);
+        QuadraturePrism::adjustEntriesforPrism(integratedValuesPressure, edge, usesDofPairs,
+                                               isQuadraticElement0, D, isQuadraticElement1, 1);
       }
       else
       {
@@ -1549,9 +1562,11 @@ materialComputeJacobian()
         integratedValuesUV = QuadraturePrism::computeIntegral(evaluationsArrayUV);
 
         // the following does nothing
+        const bool usesDofPairs = true;
         const bool isQuadraticElement0 = true;
         const bool isQuadraticElement1 = true;
-        QuadraturePrism::adjustEntriesforPrism(integratedValuesUV, isQuadraticElement0, 1, isQuadraticElement1, 1);
+        QuadraturePrism::adjustEntriesforPrism(integratedValuesUV, edge, usesDofPairs,
+                                               isQuadraticElement0, 1, isQuadraticElement1, 1);
       }
       else
       {

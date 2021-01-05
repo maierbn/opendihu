@@ -873,7 +873,7 @@ rebalance()
   this->context_.partitionManager()->setRankSubsetForNextCreatedPartitioning(rankSubsetFiber);
 
   std::shared_ptr<FiberFunctionSpaceType> functionSpaceNew = this->context_.meshManager()->template createFunctionSpaceWithGivenMeshPartition<FiberFunctionSpaceType>(
-    meshName.str(), meshPartition, nodePositionsWithoutGhosts, nElementsPerDimensionLocal, nRanks);
+    meshName.str(), meshPartition, nodePositionsWithoutGhosts, nElementsPerDimensionLocal, nRanks, false);
 
   LOG(DEBUG) << "create FiniteElementMethod object";
 

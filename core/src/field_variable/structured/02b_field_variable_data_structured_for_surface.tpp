@@ -105,7 +105,7 @@ FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace
   else
   {
     this->functionSpace_ = DihuContext::meshManager()->createFunctionSpaceWithGivenMeshPartition<FunctionSpace2D>(
-      functionSpaceName.str(), meshPartition, localNodePositions2D, nElementsLocal, nRanks);
+      functionSpaceName.str(), meshPartition, localNodePositions2D, nElementsLocal, nRanks, false);
   }
 
   assert(this->functionSpace_);

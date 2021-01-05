@@ -34,7 +34,7 @@ public:
   //! set the dependent dofs in the given field variable by interpolating the independent dofs of the triangle basis
   template<int nComponents>
   void interpolateNonDofValuesInFieldVariable(
-    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace<::Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>, nComponents>> fieldVariable) const{}
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace<MeshType,BasisFunctionType>, nComponents>> fieldVariable) const{}
 };
 
 /** This class adds tetahedral elements in the corners to avoid near-singular elements in the muscle geometry

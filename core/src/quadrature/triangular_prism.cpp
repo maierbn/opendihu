@@ -12,7 +12,7 @@ namespace Quadrature
 // sampling points
 // 1 point in the triangle, 1 point in z direction
 template<>
-std::array<Vec3,1> TriangularPrism<Gauss<1>>::
+std::array<Vec3,1> TriangularPrism<3,Gauss<1>>::
 samplingPoints()
 {
   return std::array<Vec3,1>{
@@ -22,7 +22,7 @@ samplingPoints()
 
 // 3 points in the triangle, 2 points in z direction
 template<>
-std::array<Vec3,6> TriangularPrism<Gauss<2>>::
+std::array<Vec3,6> TriangularPrism<3,Gauss<2>>::
 samplingPoints()
 {
   return std::array<Vec3,6>{
@@ -37,7 +37,7 @@ samplingPoints()
 
 // 3 points in the triangle, 2 points in z direction
 template<>
-std::array<Vec3,12> TriangularPrism<Gauss<3>>::
+std::array<Vec3,12> TriangularPrism<3,Gauss<3>>::
 samplingPoints()
 {
   return std::array<Vec3,12>{
@@ -61,7 +61,7 @@ samplingPoints()
 
 // 1 point in the triangle, 1 point in z direction
 template<>
-const std::array<double,1> TriangularPrism<Gauss<1>>::
+const std::array<double,1> TriangularPrism<3,Gauss<1>>::
 quadratureWeights()
 {
   return std::array<double,1>{
@@ -71,7 +71,7 @@ quadratureWeights()
 
 // 3 points in the triangle, 2 points in z direction
 template<>
-const std::array<double,6> TriangularPrism<Gauss<2>>::
+const std::array<double,6> TriangularPrism<3,Gauss<2>>::
 quadratureWeights()
 {
   return std::array<double,6>{
@@ -86,7 +86,7 @@ quadratureWeights()
 
 // 3 points in the triangle, 2 points in z direction
 template<>
-const std::array<double,12> TriangularPrism<Gauss<3>>::
+const std::array<double,12> TriangularPrism<3,Gauss<3>>::
 quadratureWeights()
 {
   return std::array<double,12>{

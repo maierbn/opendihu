@@ -6,16 +6,50 @@
 namespace Quadrature
 {
 
+// stubs for D != 3
+template<int D, typename GaussQuadrature>
+std::array<std::array<double,D>,TriangularPrismBase<GaussQuadrature>::numberEvaluations()> TriangularPrism<D,GaussQuadrature>::
+samplingPoints()
+{
+  return std::array<std::array<double,D>,TriangularPrismBase<GaussQuadrature>::numberEvaluations()>{};
+}
+
+template<int D, typename GaussQuadrature>
+const std::array<double,TriangularPrismBase<GaussQuadrature>::numberEvaluations()> TriangularPrism<D,GaussQuadrature>::
+quadratureWeights()
+{
+  return std::array<double,TriangularPrismBase<GaussQuadrature>::numberEvaluations()>{};
+}
+
+template<int D, typename GaussQuadrature>
+template<typename ValueType, long unsigned int nEntriesEvaluationArray>
+ValueType TriangularPrism<D,GaussQuadrature>::
+computeIntegral(const typename std::array<ValueType,nEntriesEvaluationArray> &evaluations)
+{
+  ValueType result{};
+  return result;
+}
+
+template<int D, typename GaussQuadrature>
+template<typename ValueType, long unsigned int nEntriesEvaluationArray>
+void TriangularPrism<D,GaussQuadrature>::
+adjustEntriesforPrism(typename std::array<ValueType,nEntriesEvaluationArray> &evaluations,
+                      Mesh::face_or_edge_t edge, bool usesDofPairs, bool isQuadraticElement0, int nEntriesPerDof0,
+                      bool isQuadraticElement1, int nEntriesPerDof1)
+{
+}
+
+// actual implementations
 
 // 3D tensor product integration
 template<typename GaussQuadrature>
 template<typename ValueType, long unsigned int nEntriesEvaluationArray>
-ValueType TriangularPrism<GaussQuadrature>::
+ValueType TriangularPrism<3,GaussQuadrature>::
 computeIntegral(const typename std::array<ValueType,nEntriesEvaluationArray> &evaluations)
 {
-  const int numberEvaluations = TriangularPrism<GaussQuadrature>::numberEvaluations();
+  const int numberEvaluations = TriangularPrism<3,GaussQuadrature>::numberEvaluations();
   assert(numberEvaluations <= nEntriesEvaluationArray);
-  const std::array<double,numberEvaluations> weights = TriangularPrism<GaussQuadrature>::quadratureWeights();
+  const std::array<double,numberEvaluations> weights = TriangularPrism<3,GaussQuadrature>::quadratureWeights();
 
   ValueType result{};
   for (int i = 0; i < numberEvaluations; i++)
@@ -30,12 +64,12 @@ computeIntegral(const typename std::array<ValueType,nEntriesEvaluationArray> &ev
 // reorder entries
 template<typename GaussQuadrature>
 template<typename ValueType, long unsigned int nEntriesEvaluationArray>
-void TriangularPrism<GaussQuadrature>::
+void TriangularPrism<3,GaussQuadrature>::
 adjustEntriesforPrism(typename std::array<ValueType,nEntriesEvaluationArray> &evaluations,
-                      Mesh::face_or_edge_t edge, bool isQuadraticElement0, int nEntriesPerDof0,
+                      Mesh::face_or_edge_t edge, bool usesDofPairs, bool isQuadraticElement0, int nEntriesPerDof0,
                       bool isQuadraticElement1, int nEntriesPerDof1)
 {
-  //typename std::array<ValueType,TriangularPrism<GaussQuadrature>::numberEvaluations()> &evaluations
+  //typename std::array<ValueType,TriangularPrism<3,GaussQuadrature>::numberEvaluations()> &evaluations
   int interpolatedDofLinear = -1;
   std::set<int> interpolatedDofsQuadratic;
 
@@ -75,6 +109,13 @@ adjustEntriesforPrism(typename std::array<ValueType,nEntriesEvaluationArray> &ev
     nDofsXY1 = 9;
     nDofsZ1 = 3;
   }
+
+  if (!usesDofPairs)
+  {
+    nDofsXY1 = 1;
+    nDofsZ1 = 1;
+  }
+
   int nDofs0 = nDofsXY0 * nDofsZ0;
   int nDofs1 = nDofsXY1 * nDofsZ1;
 
@@ -92,8 +133,9 @@ adjustEntriesforPrism(typename std::array<ValueType,nEntriesEvaluationArray> &ev
       bool dofIsInterpolated1 = false;
 
       // if the first dof is an interpolated dof in the prism
-      if ((isQuadraticElement1 && interpolatedDofsQuadratic.find(dofNoXY1) != interpolatedDofsQuadratic.end())
-          || (!isQuadraticElement1 && dofNoXY1 == interpolatedDofLinear))
+      if (usesDofPairs &&
+          ((isQuadraticElement1 && interpolatedDofsQuadratic.find(dofNoXY1) != interpolatedDofsQuadratic.end())
+          || (!isQuadraticElement1 && dofNoXY1 == interpolatedDofLinear)))
       {
         dofIsInterpolated1 = true;
       }

@@ -32,7 +32,7 @@ setMassMatrix()
 
   // define shortcuts for integrator and basis
   typedef Quadrature::TensorProduct<D,QuadratureType> QuadratureDD;
-  typedef Quadrature::TriangularPrism<QuadratureType> QuadraturePrism;   // corner elements with triangles
+  typedef Quadrature::TriangularPrism<D,QuadratureType> QuadraturePrism;   // corner elements with triangles
 
   const int nDofsPerElement = FunctionSpaceType::nDofsPerElement();
   const int nUnknownsPerElement = nDofsPerElement*nComponents;
@@ -44,7 +44,7 @@ setMassMatrix()
 
   // setup arrays used for integration
   std::array<std::array<double,D>, QuadratureDD::numberEvaluations()> samplingPointsHex = QuadratureDD::samplingPoints();
-  std::array<Vec3, QuadraturePrism::numberEvaluations()> samplingPointsPrism = QuadraturePrism::samplingPoints();
+  std::array<std::array<double,D>, QuadraturePrism::numberEvaluations()> samplingPointsPrism = QuadraturePrism::samplingPoints();
 
   EvaluationsArrayType evaluationsArray{};
 
@@ -180,9 +180,11 @@ setMassMatrix()
       integratedValues = QuadraturePrism::computeIntegral(evaluationsArray);
 
       // set entries that are no real dofs in triangular prisms to zero
+      const bool usesDofPairs = true;
       const bool isQuadraticElement0 = FunctionSpaceType::BasisFunction::getBasisOrder() == 2;
       const bool isQuadraticElement1 = FunctionSpaceType::BasisFunction::getBasisOrder() == 2;
-      QuadraturePrism::adjustEntriesforPrism(integratedValues, edge, isQuadraticElement0, nComponents, isQuadraticElement1, nComponents);
+      QuadraturePrism::adjustEntriesforPrism(integratedValues, edge, usesDofPairs,
+                                             isQuadraticElement0, nComponents, isQuadraticElement1, nComponents);
     }
     else
     {

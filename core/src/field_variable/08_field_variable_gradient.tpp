@@ -113,7 +113,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       //VLOG(2) << "element " << elementNoLocal << " dofIndex " << dofIndex << ", xi " << xi << " g:" << geometryValues;
 
       // compute the 3xD jacobian of the parameter space to world space mapping
-      Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(FunctionSpaceType::computeJacobian(geometryValues, xi, elementNoLocal));
+      Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(this->functionSpace_->computeJacobian(geometryValues, xi, elementNoLocal));
       double jacobianDeterminant;
       Tensor2<D> inverseJacobianParameterSpace = MathUtility::template computeInverse<double>(jacobianParameterSpace, approximateMeshWidth, jacobianDeterminant);
 

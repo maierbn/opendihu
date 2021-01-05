@@ -676,9 +676,17 @@ We first compute element-wise stencils that state the contribution of a single e
 In the following, the FEM formulation for quadratic triangles in 2D are derived.
 \begin{figure}
   \centering
-  \def\svgwidth{5cm}
-  \input{images/triangle_ansatz.pdf_tex}
-  \caption{Nodes of a triangle for quadratic ansatz functions}
+  \begin{subfigure}{0.4\textwidth}
+    \def\svgwidth{5cm}
+    \input{images/triangle_ansatz_linear.pdf_tex}
+    \caption{Nodes of a triangle for linear ansatz functions}
+  \end{subfigure}
+  \quad
+  \begin{subfigure}{0.4\textwidth}
+    \def\svgwidth{5cm}
+    \input{images/triangle_ansatz.pdf_tex}
+    \caption{Nodes of a triangle for quadratic ansatz functions}
+  \end{subfigure}
   \label{fig:triangle_ansatz}
 \end{figure}
 %
@@ -712,8 +720,42 @@ Integration of the element stiffness and mass matrices according to \eqref{eq:m_
     \ds\int\limits_{\xi_2=0}^1 \int\limits_{\xi_1=0}^{1-\xi_2} \phi_i(\bfxi)\,\phi_j(\bfxi)\,\mathcal{J}_d\,\d\xi_1\,\d\xi_2
   \end{array}
 \end{equation*}
-For the quadrature see \cite{zienkiewicz2005finite}
+For the quadrature see \cite{zienkiewicz2005finite}.
 
+Analogous for linear ansatz functions:
+\begin{equation*}
+  \begin{array}{lll}
+    \Phi(\bfxi) = \sum\limits_{i\in\{0,1,2\}} \phi_i(\bfx)\,\bfx^i\\[4mm]
+    \phi_0(\bfx) = (1-\xi_1-\xi_2)   \\[4mm]
+    \phi_1(\bfx) = \xi_1 \\[4mm]
+    \phi_2(\bfx) = \xi_2
+  \end{array}
+\end{equation*}
+The Jacobian is given by
+\begin{equation*}
+  \begin{array}{lll}
+    J_\Phi(\bfxi) = \mat{J_{1} & J_{2}}\quad \text{with}\\[4mm]
+    J_{1} = -\bfx^0 + \bfx^1,\\[4mm]
+    J_{2} = -\bfx^0 + \bfx^2
+  \end{array}
+\end{equation*}
+
+\begin{figure}
+  \centering
+  \begin{subfigure}{0.45\textwidth}
+    \def\svgwidth{\textwidth}
+    \input{images/triangle_ansatz_linear4.pdf_tex}
+    \caption{Nodes of a triangle for linear ansatz functions}
+  \end{subfigure}
+  \quad
+  \begin{subfigure}{0.45\textwidth}
+    \def\svgwidth{\textwidth}
+    \input{images/triangle_ansatz4.pdf_tex}
+    \caption{Nodes of a triangle for quadratic ansatz functions}
+  \end{subfigure}
+  \label{fig:triangle_ansatz}
+  \caption{The red circle is the origin of the coordinate frame for every triangle.}
+\end{figure}
 %
 \subsection{Boundary Conditions}
 \label{sec:bc}

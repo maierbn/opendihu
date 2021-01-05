@@ -110,11 +110,11 @@ echo "--- Generate actual fiber meshes in different sizes using the parallel_fib
 # m = number of fine grid fibers
 # l = maximum recursion level
 # n = number of elements in x and y coordinate directions
-array_m=(0 0 0 0 0 1 1 3 7)
-array_l=(0 0 0 1 1 1 2 2 2)
-array_n=(4 5 6 6 9 8 8 8 8)
-array_number_fibers1=(9 11 13 25 37 65 129 257 513)
-array_number_fibers2=(7 9  11 23 35 63 127 255 511)
+array_m=(0 0 0 0  1 1 3 7)
+array_l=(0 0 1 1  1 2 2 2)
+array_n=(4 6 6 10 8 8 8 8)
+array_number_fibers1=(9 13 25 41 65 129 257 513)
+array_number_fibers2=(7 11 23 39 63 127 255 511)
 
 # loop over parameter combinations
 for i in ${!array_l[@]}; do
@@ -154,7 +154,7 @@ for i in ${!array_l[@]}; do
       --bottom_z_clip $bottom_z_clip \
       --top_z_clip $top_z_clip \
       --element_size $element_length \
-      --n_elements_z_per_subdomain 30 \
+      --n_elements_z_per_subdomain 300 \
       --use_neumann_bc=False \
       -l=${l} -m=${m} --n_elements_x_per_subdomain=${n} \
       --program_name=${program_name}"
@@ -165,7 +165,7 @@ for i in ${!array_l[@]}; do
       --bottom_z_clip $bottom_z_clip \
       --top_z_clip $top_z_clip \
       --element_size $element_length \
-      --n_elements_z_per_subdomain 30 \
+      --n_elements_z_per_subdomain 300 \
       --use_neumann_bc=False \
       -l=${l} -m=${m} --n_elements_x_per_subdomain=${n} \
       --program_name=${program_name}

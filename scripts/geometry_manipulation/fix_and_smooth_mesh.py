@@ -443,6 +443,7 @@ def resolve_small_angles(grid_points_world_space_improved, n_grid_points_x, n_gr
 def resolve_self_intersections(grid_points_world_space_improved, n_grid_points_x, n_grid_points_y, extent_x, extent_y, debugging_stl_output):
   
   factor = (extent_x*extent_y)/2 * 5e-3
+  output_fix = False
   
   # try to resolve self-intersecting quadrilaterals
   # --------------------------------------------------

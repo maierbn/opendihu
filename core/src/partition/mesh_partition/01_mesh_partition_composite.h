@@ -170,6 +170,10 @@ public:
   //! from the submesh no and the local element no in the submesh numbering get the local element no in the composite numbering
   element_no_t getElementNoLocalFromSubmesh(int subMeshNo, element_no_t elementNoLocalOnSubMesh);
 
+  //! check if the element is at an outer corner in the x-y plane of the domain, then return true and set edge to which corner (one of edge0Minus1Minus, edge0Plus1Minus, edge0Minus1Plus,  edge0Plus1Plus), only for 3D meshes!
+  //! this is not implemented for unstructured meshes
+  bool elementIsAtCorner(element_no_t elementNoLocal, Mesh::face_or_edge_t &edge);
+
   //! get a string with all information, this is used in the regression tests (unit test) to compare it to a reference string
   std::string getString();
 

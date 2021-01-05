@@ -658,5 +658,13 @@ getNodeNoLocalFromSubmesh(int subMeshNo, node_no_t nodeNoDuplicateOnSubmesh, boo
   return meshAndNodeNoLocalToNodeNoNonDuplicateLocal_[subMeshNo][nodeNoDuplicateOnSubmesh];
 }
 
+template<int D, typename BasisFunctionType>
+bool MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,BasisFunctionType>,Mesh::CompositeOfDimension<D>>::
+elementIsAtCorner(element_no_t elementNoLocal, Mesh::face_or_edge_t &edge)
+{
+  return false;
+}
+
+
 }  // namespace
 

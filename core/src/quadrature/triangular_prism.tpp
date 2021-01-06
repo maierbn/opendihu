@@ -119,6 +119,14 @@ adjustEntriesforPrism(typename std::array<ValueType,nEntriesEvaluationArray> &ev
   int nDofs0 = nDofsXY0 * nDofsZ0;
   int nDofs1 = nDofsXY1 * nDofsZ1;
 
+  if (nEntriesEvaluationArray != nDofs0 * nEntriesPerDof0 * nDofs1 * nEntriesPerDof1)
+  {
+    LOG(FATAL) << "edge: " << Mesh::getString(edge) << ", isQuadratic: " << isQuadraticElement0 << "," << isQuadraticElement1
+      << ", nEntriesEvaluationArray: " << nEntriesEvaluationArray
+      << ", nDofs0: " << nDofs0 << ", nEntriesPerDof0: " << nEntriesPerDof0
+      << ", nDofs1: " << nDofs1 << ", nEntriesPerDof1: " << nEntriesPerDof1;
+  }
+
   VLOG(1) << "edge " << Mesh::getString(edge) << ", isQuadratic: " << isQuadraticElement0 << "," << isQuadraticElement1
     << ", nEntriesPerDof: " << nEntriesPerDof0 << "," << nEntriesPerDof1 << ", nDofs: " << nDofs0 << "," << nDofs1;
 

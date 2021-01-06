@@ -42,6 +42,7 @@ result = create_partitioned_meshes_for_settings(
 
 node_positions = variables.meshes["3Dmesh_quadratic"]["nodePositions"]
 #node_positions = variables.meshes["3Dmesh"]["nodePositions"]
+variables.meshes["3Dmesh_quadratic"]["hasTriangleCorners"] = True
 
 # material parameters
 # --------------------

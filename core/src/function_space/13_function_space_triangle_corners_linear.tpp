@@ -377,6 +377,8 @@ template<typename Dummy>
 void FunctionSpaceTriangleCorners<Mesh::StructuredDeformableOfDimension<3>, BasisFunction::LagrangeOfOrder<1>,Dummy>::
 interpolateNonDofValuesInFieldVariable(std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<::Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<1>>>> fieldVariable, int componentNo) const
 {
+  LOG(INFO) << "interpolateNonDofValuesInFieldVariable linear \"" << fieldVariable->name() << "\", hasTriangleCorners_=" << this->hasTriangleCorners_;
+
   if (!fieldVariable || !this->hasTriangleCorners_)
     return;
 

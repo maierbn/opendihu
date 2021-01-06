@@ -1,6 +1,7 @@
 # isotropic Mooney Rivlin
 import numpy as np
 import sys, os
+import plot_quadrangulation_schemes
 
 # number of elements
 nx = 2    # 2
@@ -58,6 +59,21 @@ neumann_bc = [{"element": (nz-1)*nx*ny + j*nx + i, "constantVector": [0,1e-1,1],
 #dirichlet_bc = {}
 #neumann_bc = []
 
+# node positions
+node_positions = []
+
+for k in range(mz):
+  z = k/2
+
+  n_grid_points_x = mx
+  n_grid_points_y = my
+  parametric_space_shape = 3
+  node_positions_z_plane = plot_quadrangulation_schemes.create_reference_domain_quadrangulation(n_grid_points_x, n_grid_points_y, parametric_space_shape)
+
+  alpha = np.pi/4
+  r = 3
+  node_positions += [[r*(np.sin(alpha)*p[0] + np.cos(alpha)*p[1]), r*(-np.cos(alpha)*p[0] + np.sin(alpha)*p[1]), z] for p in node_positions_z_plane]
+
 config = {
   "scenarioName": "3d_box",
   "logFormat":    "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
@@ -83,6 +99,8 @@ config = {
     "inputMeshIsGlobal": True,
     "physicalExtent": [2.0, 2.0, 5.0],
     "physicalOffset": [0, 0, 0],        # offset/translation where the whole mesh begins
+    "nodePositions": node_positions,
+    "hasTriangleCorners": True,
     
     # nonlinear solver
     "relativeTolerance": 1e-5,         # 1e-10 relative tolerance of the linear solver

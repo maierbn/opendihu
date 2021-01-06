@@ -703,6 +703,10 @@ setDisplacementsAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsF
 
     u->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
   }
+
+  // prepare input when there are triangular prism elements at the corners
+  displacementsFunctionSpace_->interpolateNonDofValuesInFieldVariable(u);
+
   u->finishGhostManipulation();
   u->startGhostManipulation();
 
@@ -715,6 +719,10 @@ setDisplacementsAndPressureFromCombinedVec(Vec x, std::shared_ptr<DisplacementsF
     const int pressureComponent = nDisplacementComponents;
     combinedVecSolution_->getValues(pressureComponent, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
     p->setValues(0, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+
+    // prepare input when there are triangular prism elements at the corners
+    pressureFunctionSpace_->interpolateNonDofValuesInFieldVariable(p);
+
     p->finishGhostManipulation();
     p->startGhostManipulation();
   }
@@ -782,6 +790,9 @@ setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
 
     u->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
   }
+  // prepare input when there are triangular prism elements at the corners
+  displacementsFunctionSpace_->interpolateNonDofValuesInFieldVariable(u);
+
   u->finishGhostManipulation();
   u->startGhostManipulation();
 
@@ -800,6 +811,10 @@ setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
 
       v->setValues(componentNo, nEntries, displacementsFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
     }
+
+    // prepare input when there are triangular prism elements at the corners
+    displacementsFunctionSpace_->interpolateNonDofValuesInFieldVariable(v);
+
     v->finishGhostManipulation();
     v->startGhostManipulation();
   }
@@ -817,6 +832,10 @@ setDisplacementsVelocitiesAndPressureFromCombinedVec(Vec x,
       VLOG(1) << "setDisplacementsVelocitiesAndPressureFromCombinedVec, " << nEntries << " p values: " << values;
 
     p->setValues(0, nEntries, pressureFunctionSpace_->meshPartition()->dofNosLocal().data(), values.data());
+
+    // prepare input when there are triangular prism elements at the corners
+    pressureFunctionSpace_->interpolateNonDofValuesInFieldVariable(p);
+
     p->finishGhostManipulation();
     p->startGhostManipulation();
   }

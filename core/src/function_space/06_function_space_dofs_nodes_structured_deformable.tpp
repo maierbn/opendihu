@@ -429,6 +429,7 @@ setGeometryFieldValues()
   LOG(DEBUG) << "set geometry field values: " << *this->geometryField_;
 
   // for 3D meshes with triangles at the corners, overwrite implicit values
+  // (the other function that does this for all components at once cannot be called here, because it is defined in a child class and with templates and there are no virtual templates)
   this->interpolateNonDofValuesInFieldVariable(this->geometryField_, 0);
   this->interpolateNonDofValuesInFieldVariable(this->geometryField_, 1);
   this->interpolateNonDofValuesInFieldVariable(this->geometryField_, 2);

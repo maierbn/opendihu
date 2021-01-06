@@ -744,8 +744,11 @@ template<typename Dummy>
 void FunctionSpaceTriangleCorners<Mesh::StructuredDeformableOfDimension<3>, BasisFunction::LagrangeOfOrder<2>,Dummy>::
 interpolateNonDofValuesInFieldVariable(std::shared_ptr<FieldVariable::FieldVariableBaseFunctionSpace<FunctionSpace<::Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>>> fieldVariable, int componentNo) const
 {
+  LOG(INFO) << "interpolateNonDofValuesInFieldVariable quadratic \"" << fieldVariable->name() << "\", hasTriangleCorners_=" << this->hasTriangleCorners_;
   if (!fieldVariable || !this->hasTriangleCorners_)
     return;
+
+  const bool useRealTriangleShapes = false;   // if real triangles should be used instead of the "deformed" quadratic 6-node-triangles
 
   const int nDofsPerElement = 27;
   ::Mesh::face_or_edge_t edge;
@@ -792,8 +795,11 @@ interpolateNonDofValuesInFieldVariable(std::shared_ptr<FieldVariable::FieldVaria
         {
         // 0-1-
         case ::Mesh::face_or_edge_t::edge0Minus1Minus:
-
-          //valuesLocalNew[dofNosLocal[i*9 + 0]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 2]] + valuesLocal[dofNosLocal[i*9 + 6]]);
+          if (useRealTriangleShapes)
+          {
+            valuesLocal[dofNosLocal[i*9 + 0]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 2]] + valuesLocal[dofNosLocal[i*9 + 6]]);
+            valuesLocalNew[dofNosLocal[i*9 + 0]] = valuesLocal[dofNosLocal[i*9 + 0]];
+          }
 
           valuesLocalNew[dofNosLocal[i*9 + 1]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 0]] + valuesLocal[dofNosLocal[i*9 + 2]]);
           valuesLocalNew[dofNosLocal[i*9 + 3]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 0]] + valuesLocal[dofNosLocal[i*9 + 6]]);
@@ -802,7 +808,11 @@ interpolateNonDofValuesInFieldVariable(std::shared_ptr<FieldVariable::FieldVaria
 
         // 0+1-
         case ::Mesh::face_or_edge_t::edge0Plus1Minus:
-          //valuesLocalNew[dofNosLocal[i*9 + 2]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 0]] + valuesLocal[dofNosLocal[i*9 + 8]]);
+          if (useRealTriangleShapes)
+          {
+            valuesLocal[dofNosLocal[i*9 + 2]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 0]] + valuesLocal[dofNosLocal[i*9 + 8]]);
+            valuesLocalNew[dofNosLocal[i*9 + 2]] = valuesLocal[dofNosLocal[i*9 + 2]];
+          }
 
           valuesLocalNew[dofNosLocal[i*9 + 1]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 0]] + valuesLocal[dofNosLocal[i*9 + 2]]);
           valuesLocalNew[dofNosLocal[i*9 + 4]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 2]] + valuesLocal[dofNosLocal[i*9 + 6]]);
@@ -811,7 +821,11 @@ interpolateNonDofValuesInFieldVariable(std::shared_ptr<FieldVariable::FieldVaria
 
         // 0-1+
         case ::Mesh::face_or_edge_t::edge0Minus1Plus:
-          //valuesLocalNew[dofNosLocal[i*9 + 6]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 0]] + valuesLocal[dofNosLocal[i*9 + 8]]);
+          if (useRealTriangleShapes)
+          {
+            valuesLocal[dofNosLocal[i*9 + 6]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 0]] + valuesLocal[dofNosLocal[i*9 + 8]]);
+            valuesLocalNew[dofNosLocal[i*9 + 6]] = valuesLocal[dofNosLocal[i*9 + 6]];
+          }
 
           valuesLocalNew[dofNosLocal[i*9 + 3]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 0]] + valuesLocal[dofNosLocal[i*9 + 6]]);
           valuesLocalNew[dofNosLocal[i*9 + 4]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 2]] + valuesLocal[dofNosLocal[i*9 + 6]]);
@@ -820,7 +834,11 @@ interpolateNonDofValuesInFieldVariable(std::shared_ptr<FieldVariable::FieldVaria
 
         // 0+1+
         case ::Mesh::face_or_edge_t::edge0Plus1Plus:
-          //valuesLocalNew[dofNosLocal[i*9 + 8]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 2]] + valuesLocal[dofNosLocal[i*9 + 6]]);
+          if (useRealTriangleShapes)
+          {
+            valuesLocal[dofNosLocal[i*9 + 8]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 2]] + valuesLocal[dofNosLocal[i*9 + 6]]);
+            valuesLocalNew[dofNosLocal[i*9 + 8]] = valuesLocal[dofNosLocal[i*9 + 8]];
+          }
 
           valuesLocalNew[dofNosLocal[i*9 + 4]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 0]] + valuesLocal[dofNosLocal[i*9 + 8]]);
           valuesLocalNew[dofNosLocal[i*9 + 5]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 2]] + valuesLocal[dofNosLocal[i*9 + 8]]);

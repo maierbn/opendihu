@@ -67,6 +67,7 @@ config = {
     "neumannBoundaryConditions":    neumann_bc,     # neumann boundary conditions
     "divideNeumannBoundaryConditionValuesByTotalArea": False,  # if the neumann boundary condition vectors should be divided by the total surface area where surface loads are applied, this allows to specify the total force that acts on the surface. If set to False (default), the given traction is a per-surface quantity.
     "slotName":           "",                       # slot name of the solution variable
+    "hasTriangleCorners": True,
     
     # solver
     "relativeTolerance":  1e-15,                    # relative tolerance for the solver, this relates to the current residual norm divided by the norm of the rhs

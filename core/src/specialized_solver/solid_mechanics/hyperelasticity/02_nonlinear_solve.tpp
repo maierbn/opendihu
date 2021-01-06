@@ -526,6 +526,9 @@ evaluateNonlinearFunction(Vec x, Vec f)
   // compute the actual output of the nonlinear function
   bool successful = this->materialComputeResidual(currentLoadFactor_);
 
+  // prepare output when there are triangular prism elements at the corners, interpolate values in triangles for dofs that are no real dofs
+  combinedVecResidual_->interpolateNonDofValues(this->displacementsFunctionSpace_, this->pressureFunctionSpace_);
+
   //VLOG(1) << "solverVariableResidual_: " << combinedVecResidual_->getString();
 
   // restore the values of solverVariableSolution_ and solverVariableResidual_ to their original pointer

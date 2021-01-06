@@ -368,3 +368,134 @@ containsNanOrInf()
   }
   return false;
 }
+
+template<typename DisplacementsFunctionSpaceType, typename PressureFunctionSpaceType, typename Term, int nComponents>
+void PartitionedPetscVecForHyperelasticity<DisplacementsFunctionSpaceType,PressureFunctionSpaceType,Term,nComponents,std::enable_if_t<!Term::isIncompressible,Term>>::
+interpolateNonDofValues(std::shared_ptr<DisplacementsFunctionSpaceType> displacementsFunctionSpace, std::shared_ptr<PressureFunctionSpaceType> pressureFunctionSpace)
+{
+  if (!displacementsFunctionSpace->hasTriangleCorners())
+    return;
+
+  const bool useRealTriangleShapes = false;   // if real triangles should be used instead of the "deformed" quadratic 6-node-triangles
+
+  this->startGhostManipulation();
+  this->zeroGhostBuffer();
+
+  // get all local values
+  std::vector<double> valuesLocal;
+
+  // for displacement and velocity components
+  for (int componentNo = 0; componentNo < nComponents; componentNo++)
+  {
+    const int nDofsPerElement = 27;
+    ::Mesh::face_or_edge_t edge;
+
+    valuesLocal.resize(this->meshPartition_->nDofsLocalWithoutGhosts());
+
+    // get local values
+    // void getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) const;
+    this->getValues(componentNo, this->meshPartition_->nDofsLocalWithoutGhosts(), this->meshPartition_->dofNosLocal().data(), valuesLocal.data());
+
+    std::vector<double> valuesLocalNew = valuesLocal;
+
+    dof_no_t nDofsLocalWithoutGhosts = displacementsFunctionSpace->nDofsLocalWithoutGhosts();
+
+    // iterate over elements
+    for (element_no_t elementNoLocal = 0; elementNoLocal < displacementsFunctionSpace->nElementsLocal(); elementNoLocal++)
+    {
+      // if the element is a triangle at the corner
+      if (this->meshPartition_->elementIsAtCorner(elementNoLocal, edge))
+      {
+        std::array<dof_no_t,nDofsPerElement> dofNosLocal = displacementsFunctionSpace->getElementDofNosLocal(elementNoLocal);
+
+        if (VLOG_IS_ON(1))
+          VLOG(1) << "quadratic element " << elementNoLocal << ", dofNosLocal: " << dofNosLocal;
+
+        int maxZLevel = 3;
+        if (dofNosLocal[18] >= nDofsLocalWithoutGhosts)
+          maxZLevel = 2;
+
+        // iterate over z levels
+        for (int i = 0; i < maxZLevel; i++)
+        {
+          std::stringstream message;
+          if (VLOG_IS_ON(1))
+          {
+            message << "el " << elementNoLocal << " " << ::Mesh::getString(edge) << " "
+              << "(" << valuesLocal[dofNosLocal[i*9 + 1]] << "," << valuesLocal[dofNosLocal[i*9 + 3]]
+              << "," << valuesLocal[dofNosLocal[i*9 + 4]] << "," << valuesLocal[dofNosLocal[i*9 + 5]]
+              << "," << valuesLocal[dofNosLocal[i*9 + 7]] << ")";
+          }
+
+          // depending on the orientation of the triangle
+          switch(edge)
+          {
+          // 0-1-
+          case ::Mesh::face_or_edge_t::edge0Minus1Minus:
+            if (useRealTriangleShapes)
+            {
+              valuesLocal[dofNosLocal[i*9 + 0]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 2]] + valuesLocal[dofNosLocal[i*9 + 6]]);
+              valuesLocalNew[dofNosLocal[i*9 + 0]] = valuesLocal[dofNosLocal[i*9 + 0]];
+            }
+
+            valuesLocalNew[dofNosLocal[i*9 + 1]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 0]] + valuesLocal[dofNosLocal[i*9 + 2]]);
+            valuesLocalNew[dofNosLocal[i*9 + 3]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 0]] + valuesLocal[dofNosLocal[i*9 + 6]]);
+            valuesLocalNew[dofNosLocal[i*9 + 4]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 0]] + valuesLocal[dofNosLocal[i*9 + 8]]);
+            break;
+
+          // 0+1-
+          case ::Mesh::face_or_edge_t::edge0Plus1Minus:
+            if (useRealTriangleShapes)
+            {
+              valuesLocal[dofNosLocal[i*9 + 2]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 0]] + valuesLocal[dofNosLocal[i*9 + 8]]);
+              valuesLocalNew[dofNosLocal[i*9 + 2]] = valuesLocal[dofNosLocal[i*9 + 2]];
+            }
+            valuesLocalNew[dofNosLocal[i*9 + 1]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 0]] + valuesLocal[dofNosLocal[i*9 + 2]]);
+            valuesLocalNew[dofNosLocal[i*9 + 4]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 2]] + valuesLocal[dofNosLocal[i*9 + 6]]);
+            valuesLocalNew[dofNosLocal[i*9 + 5]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 2]] + valuesLocal[dofNosLocal[i*9 + 8]]);
+            break;
+
+          // 0-1+
+          case ::Mesh::face_or_edge_t::edge0Minus1Plus:
+            if (useRealTriangleShapes)
+            {
+              valuesLocal[dofNosLocal[i*9 + 6]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 0]] + valuesLocal[dofNosLocal[i*9 + 8]]);
+              valuesLocalNew[dofNosLocal[i*9 + 6]] = valuesLocal[dofNosLocal[i*9 + 6]];
+            }
+            valuesLocalNew[dofNosLocal[i*9 + 3]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 0]] + valuesLocal[dofNosLocal[i*9 + 6]]);
+            valuesLocalNew[dofNosLocal[i*9 + 4]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 2]] + valuesLocal[dofNosLocal[i*9 + 6]]);
+            valuesLocalNew[dofNosLocal[i*9 + 7]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 6]] + valuesLocal[dofNosLocal[i*9 + 8]]);
+            break;
+
+          // 0+1+
+          case ::Mesh::face_or_edge_t::edge0Plus1Plus:
+            if (useRealTriangleShapes)
+            {
+              valuesLocal[dofNosLocal[i*9 + 8]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 2]] + valuesLocal[dofNosLocal[i*9 + 6]]);
+              valuesLocalNew[dofNosLocal[i*9 + 8]] = valuesLocal[dofNosLocal[i*9 + 8]];
+            }
+            valuesLocalNew[dofNosLocal[i*9 + 4]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 0]] + valuesLocal[dofNosLocal[i*9 + 8]]);
+            valuesLocalNew[dofNosLocal[i*9 + 5]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 2]] + valuesLocal[dofNosLocal[i*9 + 8]]);
+            valuesLocalNew[dofNosLocal[i*9 + 7]] = 0.5*(valuesLocal[dofNosLocal[i*9 + 6]] + valuesLocal[dofNosLocal[i*9 + 8]]);
+            break;
+
+          default:
+            break;
+          }
+
+          if (VLOG_IS_ON(1))
+          {
+            message << " -> "
+              << "(" << valuesLocalNew[dofNosLocal[i*9 + 1]] << "," << valuesLocalNew[dofNosLocal[i*9 + 3]]
+              << "," << valuesLocalNew[dofNosLocal[i*9 + 4]] << "," << valuesLocalNew[dofNosLocal[i*9 + 5]]
+              << "," << valuesLocalNew[dofNosLocal[i*9 + 7]] << ")";
+            VLOG(1) << message.str();
+          }
+        }
+      }
+    }
+    this->setValues(componentNo, this->meshPartition_->nDofsLocalWithoutGhosts(), this->meshPartition_->dofNosLocal().data(), valuesLocalNew.data());
+  }
+
+  this->finishGhostManipulation();     // communicate and add up values in ghost buffers
+}

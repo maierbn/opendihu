@@ -59,6 +59,9 @@ public:
   //! write the vector values to a file in natural ordering, such that the output for different numbers of ranks can be compared
   void dumpGlobalNatural(std::string filename);
 
+  //! set the dependent dofs in the field variable if there are triangular prism elements at the corners, by interpolating the independent dofs of the triangle basis
+  void interpolateNonDofValues(std::shared_ptr<DisplacementsFunctionSpaceType> displacementsFunctionSpace, std::shared_ptr<PressureFunctionSpaceType> pressureFunctionSpace);
+
   //! the meshPartition of the pressure function space, the other meshPartition, the one of the displacements function space can be obtained by meshPartition()
   std::shared_ptr<Partition::MeshPartition<PressureFunctionSpaceType>> meshPartitionPressure();
 
@@ -112,6 +115,9 @@ public:
 
   //! write the vector values to a file in natural ordering, such that the output for different numbers of ranks can be compared
   void dumpGlobalNatural(std::string filename);
+
+  //! set the dependent dofs in the field variable if there are triangular prism elements at the corners, by interpolating the independent dofs of the triangle basis
+  void interpolateNonDofValues(std::shared_ptr<DisplacementsFunctionSpaceType> displacementsFunctionSpace, std::shared_ptr<PressureFunctionSpaceType> pressureFunctionSpace);
 
   //! the meshPartition of the pressure function space, the other meshPartition, the one of the displacements function space can be obtained by meshPartition()
   std::shared_ptr<Partition::MeshPartition<PressureFunctionSpaceType>> meshPartitionPressure();

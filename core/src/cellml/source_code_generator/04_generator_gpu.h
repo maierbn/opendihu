@@ -11,5 +11,8 @@ public:
   //! constructor of parent class
   using CellmlSourceCodeGeneratorVc::CellmlSourceCodeGeneratorVc;
 
-  // to be defined
+protected:
+
+  //! write the source file with openmp support
+  void generateSourceFileGpu(std::string outputFilename);
 };

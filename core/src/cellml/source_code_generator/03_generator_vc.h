@@ -17,7 +17,7 @@ public:
 
   //! write the source file with explicit vectorization using Vc
   //! The file contains the source for the total solve the rhs computation
-  void generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateExponentialFunction);
+  void generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExponentialFunction, bool useVc);
 
 protected:
 

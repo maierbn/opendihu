@@ -9,7 +9,7 @@ template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 FastMonodomainSolverBase(const DihuContext &context) :
   specificSettings_(context.getPythonConfig()), nestedSolvers_(context),
-  initialized_(false)
+  useVc_(true), initialized_(false)
 {
   // initialize output writers
   this->outputWriterManager_.initialize(context, specificSettings_);
@@ -60,7 +60,7 @@ initialize()
       << "This may be slow! Maybe you do not want to have this because the 1D fiber output writers can also be called.";
   }
 
-  initializeCellMLSourceFile();
+  initializeCellMLSourceFileVc();
   std::shared_ptr<Partition::RankSubset> rankSubset = nestedSolvers_.data().functionSpace()->meshPartition()->rankSubset();
 
   LOG(DEBUG) << "config: " << specificSettings_;
@@ -286,7 +286,6 @@ initialize()
   statesForTransfer_ = cellmlAdapter.statesForTransfer();
   algebraicsForTransfer_ = cellmlAdapter.algebraicsForTransfer();
 
-
   int nInstancesLocalCellml;
   int nAlgebraicsLocalCellml;
   int nParametersPerInstance;
@@ -410,12 +409,14 @@ initialize()
     }
   }
 
+  initializeCellMLSourceFileGpu();
+
   initialized_ = true;
 }
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
-initializeCellMLSourceFile()
+initializeCellMLSourceFileVc()
 {
   // parse options
   CellmlAdapterType &cellmlAdapter = nestedSolvers_.instancesLocal()[0].timeStepping1().instancesLocal()[0].discretizableInTime();
@@ -423,6 +424,24 @@ initializeCellMLSourceFile()
 
   PythonConfig specificSettingsCellML = cellmlAdapter.specificSettings();
   CellmlSourceCodeGenerator &cellmlSourceCodeGenerator = cellmlAdapter.cellmlSourceCodeGenerator();
+
+  // only continue if optimization type is not gpu
+  std::string optimizationType = cellmlAdapter.optimizationType();
+  if (optimizationType == "gpu")
+  {
+    useVc_ = false;
+    return;
+  }
+  else if (optimizationType == "vc")
+  {
+    useVc_ = true;
+  }
+  else
+  {
+    LOG(ERROR) << "FastMonodomainSolver is used with invalid \"optimizationType\": \"" << optimizationType
+      << "\". Valid options are \"vc\" or \"gpu\". Now using \"vc\".";
+    useVc_ = true;
+  }
 
   // determine filename of library
   std::stringstream s;
@@ -465,7 +484,8 @@ initializeCellMLSourceFile()
     LOG(DEBUG) << "generate source file \"" << sourceToCompileFilename << "\".";
 
     // create source file
-    cellmlSourceCodeGenerator.generateSourceFileVcFastMonodomain(sourceToCompileFilename, approximateExponentialFunction);
+    const bool useVc = true;
+    cellmlSourceCodeGenerator.generateSourceFileFastMonodomain(sourceToCompileFilename, approximateExponentialFunction, useVc);
 
     // create path for library file
     if (libraryFilename.find("/") != std::string::npos)

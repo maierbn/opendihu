@@ -109,8 +109,11 @@ public:
 
 protected:
 
-  //! create a source file with compute0D function from the CellML model
-  void initializeCellMLSourceFile();
+  //! create a source file with compute0D function from the CellML model, using the vc optimization type
+  void initializeCellMLSourceFileVc();
+
+  //! create a source file with compute0D function from the CellML model, using the gpu optimization type
+  void initializeCellMLSourceFileGpu();
 
   //! get element lengths and vmValues from the other ranks
   void fetchFiberData();
@@ -144,6 +147,12 @@ protected:
 
   //! set the initial values for all states
   virtual void initializeStates(Vc::double_v states[]){};
+
+  //! generate source code to solve the monodomain equation with offloading to gpu
+  void addMonodomainSolverGpuSource(std::string filename);
+
+  //! call the GPU code to compute the monodomain equation for advanceTimestep
+  void computeMonodomainGpu();
 
   PythonConfig specificSettings_;    //< config for this object
 
@@ -217,6 +226,7 @@ protected:
   void (*compute0DInstance_)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &, double);   //< runtime-created and loaded function to compute one Heun step of the 0D problem
   void (*initializeStates_)(Vc::double_v states[]);  //< runtime-created and loaded function to set all initial values for the states
 
+  bool useVc_;                                       //< if the Vc library is used, if not, code for the GPU is generated
   bool initialized_;                                 //< if initialize was already called
 };
 

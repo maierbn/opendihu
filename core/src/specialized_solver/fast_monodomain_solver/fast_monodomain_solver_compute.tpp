@@ -47,6 +47,12 @@ template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 computeMonodomain()
 {
+  if (!useVc_)
+  {
+    computeMonodomainGpu();
+    return;
+  }
+  
   LOG(TRACE) << "computeMonodomain";
 
   // initialize data vector

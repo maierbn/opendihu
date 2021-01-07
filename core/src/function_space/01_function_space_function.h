@@ -7,7 +7,6 @@
 
 #include "function_space/00_function_space_base_dim.h"
 #include "mesh/mesh.h"
-#include "basis_function/complete_polynomial.h"
 
 namespace FunctionSpace
 {

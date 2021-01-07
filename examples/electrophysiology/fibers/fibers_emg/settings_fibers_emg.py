@@ -266,7 +266,7 @@ config = {
                       "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
                       
                       # optimization parameters
-                      "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
+                      "optimizationType":                       "gpu",                                           # "vc", "simd", "openmp" type of generated optimizated source file
                       "approximateExponentialFunction":         False,                                          # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
                       "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
                       "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.

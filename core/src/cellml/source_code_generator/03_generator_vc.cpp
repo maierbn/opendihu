@@ -729,7 +729,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
 }
 
 void CellmlSourceCodeGeneratorVc::
-generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateExponentialFunction)
+generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExponentialFunction, bool useVc)
 {
   std::set<std::string> helperFunctions;   //< functions found in the CellML code that need to be provided, usually the pow2, pow3, etc. helper functions for pow(..., 2), pow(...,3) etc.
 
@@ -737,11 +737,24 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
   preprocessCode(helperFunctions);
 
   std::stringstream sourceCode;
-  sourceCode << "#include <math.h>" << std::endl
-    << "#include <Vc/Vc>" << std::endl
-    << "#include <iostream> " << std::endl
-    << cellMLCode_.header << std::endl
-    << "using Vc::double_v; " << std::endl;
+  std::string doubleType = "double";
+  sourceCode << "#include <math.h>" << std::endl;
+  if (useVc)
+  {
+    doubleType = "Vc::double_v";
+    sourceCode << "#include <Vc/Vc>" << std::endl;
+  }
+  else
+  {
+    sourceCode << "#include <omp.h>" << std::endl;
+  }
+  sourceCode << "#include <iostream> " << std::endl
+    << cellMLCode_.header << std::endl;
+    
+  if (useVc)
+  {
+    sourceCode << "using Vc::double_v; " << std::endl;
+  }
 
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
@@ -758,7 +771,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
   sourceCode
     << "// set initial values for all states\n"
     << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif\n" << std::endl
-    << "void initializeStates(Vc::double_v states[]) \n"
+    << "void initializeStates(" << doubleType << " states[]) \n"
     << "{\n";
 
   for (int stateNo = 0; stateNo < this->nStates_; stateNo++)
@@ -771,18 +784,22 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
   sourceCode
     << "// compute one Heun step\n"
     << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif\n" << std::endl
-    << "void compute0DInstance(Vc::double_v states[], std::vector<Vc::double_v> &parameters, double currentTime, double timeStepWidth, bool stimulate,\n"
-    << "                       bool storeAlgebraicsForTransfer, std::vector<Vc::double_v> &algebraicsForTransfer, const std::vector<int> &algebraicsForTransferIndices, double valueForStimulatedPoint) \n"
-    << "{\n"
-    << "  // assert that Vc::double_v::Size is the same as in opendihu, otherwise there will be problems\n"
-    << "  if (Vc::double_v::Size != " << Vc::double_v::Size << ")\n"
-    << "  {\n"
-    << "    std::cout << \"Fatal error in compiled library of source file \\\"" << outputFilename << "\\\", size of SIMD register in "
-    << "compiled code (\" << Vc::double_v::Size << \") does not match opendihu code (" << Vc::double_v::Size << ").\" << std::endl;\n"
-    << "    std::cout << \"Delete library such that it will be regenerated with the correct compile options!\" << std::endl;\n"
-    << "    exit(1);\n"
-    << "  }\n\n"
-    << "  // define constants\n";
+    << "void compute0DInstance(" << doubleType << " states[], std::vector<" << doubleType << "> &parameters, double currentTime, double timeStepWidth, bool stimulate,\n"
+    << "                       bool storeAlgebraicsForTransfer, std::vector<" << doubleType << "> &algebraicsForTransfer, const std::vector<int> &algebraicsForTransferIndices, double valueForStimulatedPoint) \n"
+    << "{\n";
+    
+  if (useVc)
+  {
+    sourceCode << "  // assert that Vc::double_v::Size is the same as in opendihu, otherwise there will be problems\n"
+      << "  if (Vc::double_v::Size != " << Vc::double_v::Size << ")\n"
+      << "  {\n"
+      << "    std::cout << \"Fatal error in compiled library of source file \\\"" << outputFilename << "\\\", size of SIMD register in "
+      << "compiled code (\" << Vc::double_v::Size << \") does not match opendihu code (" << Vc::double_v::Size << ").\" << std::endl;\n"
+      << "    std::cout << \"Delete library such that it will be regenerated with the correct compile options!\" << std::endl;\n"
+      << "    exit(1);\n"
+      << "  }\n\n";
+  }
+  sourceCode << "  // define constants\n";
     
 /*    << R"(  std::cout << "currentTime=" << currentTime << ", timeStepWidth=" << timeStepWidth << ", stimulate=" << stimulate << std::endl;)" << "\n" */
 /*    << R"(  std::cout << "states[0]=" << states[0][0] << "," << states[0][1] << "," << states[0][2] << "," << states[0][3] << "," << std::endl;)" << "\n"
@@ -868,7 +885,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
       }
       else
       {
-        sourceCode << "  const double_v " << sourceCodeLine.str() << std::endl;
+        sourceCode << "  const " << doubleType << " " << sourceCodeLine.str() << std::endl;
       }
     }
   }
@@ -882,10 +899,13 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
     if (stateNo != 0)
       sourceCode << "const ";
 
-    sourceCode << "double_v algebraicState" << stateNo << " = states[" << stateNo << "] + timeStepWidth*rate" << stateNo << ";\n";
+    sourceCode << doubleType << " algebraicState" << stateNo << " = states[" << stateNo << "] + timeStepWidth*rate" << stateNo << ";\n";
   }
-  sourceCode << "\n\n"
-    << R"(
+  
+  if (useVc)
+  {
+    sourceCode << "\n\n"
+      << R"(
   // if stimulation, set value of Vm (state0)
   if (stimulate)
   {
@@ -893,8 +913,22 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
     {
       algebraicState0[i] = valueForStimulatedPoint;
     }
+  })";
   }
-
+  else
+  {
+    sourceCode << "\n\n"
+      << R"(
+  // if stimulation, set value of Vm (state0)
+  if (stimulate)
+  {
+    for (int i = 0; i < 3; i++)
+    {
+      algebraicState0[i] = valueForStimulatedPoint;
+    }
+  })";
+  }
+  sourceCode << R"(
   // compute new rates, rhs(y*)
 )";
 
@@ -963,7 +997,7 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
       }
       else
       {
-        sourceCode << "  const double_v " << sourceCodeLine.str() << std::endl;
+        sourceCode << "  const " << doubleType << " " << sourceCodeLine.str() << std::endl;
       }
     }
   }
@@ -979,7 +1013,9 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
     sourceCode << "  states[" << stateNo << "] += 0.5*timeStepWidth*(rate" << stateNo << " + algebraicRate" << stateNo << ");\n";
   }
 
-  sourceCode << R"(
+  if (useVc)
+  {
+    sourceCode << R"(
 
   if (stimulate)
   {
@@ -988,6 +1024,24 @@ generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateE
       states[0][i] = valueForStimulatedPoint;
     }
   }
+  
+  )";
+  }
+  else
+  {
+    sourceCode << R"(
+
+  if (stimulate)
+  {
+    for (int i = 0; i < 3; i++)
+    {
+      states[0][i] = valueForStimulatedPoint;
+    }
+  }
+  
+  )";
+  }
+  sourceCode << R"(
 
   // store algebraics for transfer
   if (storeAlgebraicsForTransfer)

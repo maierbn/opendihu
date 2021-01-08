@@ -30,22 +30,6 @@ public:
   Mesh::face_t getFaceFromElementalDofNos(std::array<int,FunctionSpaceBaseDim<MeshType::dim()-1,BasisFunctionType>::nDofsPerElement()> elementalDofNos);
 };
 
-/** Partial specialization for CompletePolynomials which do not need nodes and thus have no nodes functionality.
- */
-template<typename MeshType,int D,int order>
-class FunctionSpaceNodes<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>> :
-  public FunctionSpaceFunction<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>
-{
-public:
-
-  //! constructor, with second bool argument, inherits from FunctionSpaceFunction
-  FunctionSpaceNodes(PythonConfig specificSettings, bool noGeometryField=false);
-
-  //! get the number of dofs
-  dof_no_t nDofsLocal() const;
-
-};
-
 }  // namespace
 
 #include "function_space/08_function_space_nodes.tpp"

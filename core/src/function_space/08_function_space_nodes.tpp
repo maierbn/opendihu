@@ -122,17 +122,4 @@ getFaceFromElementalDofNos(std::array<int,FunctionSpaceBaseDim<MeshType::dim()-1
   }
 }
 
-template<typename MeshType,int D,int order>
-dof_no_t FunctionSpaceNodes<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>>::
-nDofsLocal() const
-{
-  return this->nElementsLocal() * this->nDofsPerElement();
-}
-
-template<typename MeshType,int D,int order>
-FunctionSpaceNodes<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<D,order>>::
-FunctionSpaceNodes(PythonConfig specificSettings, bool noGeometryField) :
-  FunctionSpaceFunction<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>::FunctionSpaceFunction(specificSettings)
-{
-}
 } // namespace

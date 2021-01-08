@@ -1,7 +1,6 @@
 #pragma once
 
 #include "control/types.h"
-#include "basis_function/complete_polynomial.h"
 
 namespace FunctionSpace
 {

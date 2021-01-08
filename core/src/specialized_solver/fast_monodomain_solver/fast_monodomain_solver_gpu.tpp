@@ -40,7 +40,7 @@ initializeCellMLSourceFileGpu()
   const bool useVc = false;
   cellmlSourceCodeGenerator.generateSourceFileFastMonodomain(sourceToCompileFilename, approximateExponentialFunction, useVc);
 
-  addMonodomainSolverSource(sourceToCompileFilename);
+  addMonodomainSolverGpuSource(sourceToCompileFilename);
 
   // create path for library file
   if (libraryFilename.find("/") != std::string::npos)
@@ -71,7 +71,7 @@ initializeCellMLSourceFileGpu()
 #endif
 
   // compose compile command
-  std::stringstream s;
+  s.str("");
   s << cellmlSourceCodeGenerator.compilerCommand() << " " << sourceToCompileFilename << " "
     << compilerFlags << " " << cellmlSourceCodeGenerator.additionalCompileFlags() << " ";
 
@@ -97,7 +97,7 @@ initializeCellMLSourceFileGpu()
   // load the rhs library
   void *handle = CellmlAdapterType::loadRhsLibraryGetHandle(libraryFilename);
 
-  computeMonodomain_ = (void (*)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &, double)) dlsym(handle, "computeMonodomain");
+  computeMonodomain_ = (void (*)(double [], std::vector<double> &, double, double)) dlsym(handle, "computeMonodomain");
 
   LOG(DEBUG) << "computeMonodomain_: " << (computeMonodomain_==nullptr? "no" : "yes");
 

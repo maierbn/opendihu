@@ -224,6 +224,7 @@ protected:
   std::vector<std::vector<Vc::double_v>> fiberPointBuffersAlgebraicsForTransfer_;   //<  [fiberPointNo][algebraicToTransferNo], algebraic values to use for slot connector data
 
   void (*compute0DInstance_)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &, double);   //< runtime-created and loaded function to compute one Heun step of the 0D problem
+  void (*computeMonodomain_)(double [], std::vector<double> &, double, double);   //< runtime-created and loaded function to compute monodomain equation
   void (*initializeStates_)(Vc::double_v states[]);  //< runtime-created and loaded function to set all initial values for the states
 
   bool useVc_;                                       //< if the Vc library is used, if not, code for the GPU is generated
@@ -234,3 +235,4 @@ protected:
 #include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_communication.tpp"
 #include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_compute.tpp"
 #include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_initialization.tpp"
+#include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_gpu.tpp"

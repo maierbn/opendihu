@@ -266,7 +266,7 @@ config = {
                       "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
                       
                       # optimization parameters
-                      "optimizationType":                       "gpu",                                           # "vc", "simd", "openmp" type of generated optimizated source file
+                      "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
                       "approximateExponentialFunction":         False,                                          # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
                       "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
                       "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
@@ -354,6 +354,7 @@ config = {
       "onlyComputeIfHasBeenStimulated": True if not variables.enable_weak_scaling else False,                          # only compute fibers after they have been stimulated for the first time
       "disableComputationWhenStatesAreCloseToEquilibrium": True if not variables.enable_weak_scaling else False,       # optimization where states that are close to their equilibrium will not be computed again
       "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set
+      "neuromuscularJunctionRelativeSize": 0.1,                          # range where the neuromuscular junction is located around the center, relative to fiber length. The actual position is draws randomly from the interval [0.5-s/2, 0.5+s/2) with s being this option. 0 means sharply at the center, 0.1 means located approximately at the center, but it can vary 10% in total between all fibers.
     },
     "Term2": {        # Bidomain, EMG
       "StaticBidomainSolver": {       # version for fibers_emg
@@ -402,9 +403,14 @@ config = {
       },
       "OutputSurface": {        # version for fibers_emg_2d_output
         "OutputWriter": [
-          {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True},
+          {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental",},
         ] if variables.enable_surface_emg else [],
-        "face": "0+",
+        "face":                     ["1+"],              # which faces of the 3D mesh should be written into the 2D mesh
+        "samplingPoints":           None,                # the electrode positions, they are created in the helper.py script
+        "enableCsvFile":            False,               # if the values at the sampling points should be written to csv files
+        "enableVtpFile":            False,               # if the values at the sampling points should be written to vtp files
+        "enableGeometryInCsvFile":  False,               # if the csv output file should contain geometry of the electrodes in every time step. This increases the file size and only makes sense if the geometry changed throughout time, i.e. when computing with contraction
+        
         "StaticBidomainSolver": {
           "timeStepWidth":          variables.dt_3D,
           "timeStepOutputInterval": 50,

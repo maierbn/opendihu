@@ -157,7 +157,7 @@ advanceTimeSpan(bool withOutputWritersEnabled)
   {
     // write 2D surface files
     if (withOutputWritersEnabled)
-      outputWriterManager_.writeOutput(data_, timeStepNo_++);
+      outputWriterManager_.writeOutput(data_, timeStepNo_++, currentTime_);
 
     // write out values at points
     writeSampledPointValues();
@@ -212,7 +212,7 @@ callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
   // call own output writers
   if (ownRankInvolvedInOutput_)
   {
-    outputWriterManager_.writeOutput(data_);
+    outputWriterManager_.writeOutput(data_, timeStepNo, currentTime, callCountIncrement);
   }
 }
 

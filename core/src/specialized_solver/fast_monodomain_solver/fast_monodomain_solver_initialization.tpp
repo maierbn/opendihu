@@ -9,7 +9,7 @@ template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 FastMonodomainSolverBase(const DihuContext &context) :
   specificSettings_(context.getPythonConfig()), nestedSolvers_(context),
-  useVc_(true), initialized_(false)
+  compute0DInstance_(nullptr), computeMonodomain_(nullptr), initializeStates_(nullptr), useVc_(true), initialized_(false)
 {
   // initialize output writers
   this->outputWriterManager_.initialize(context, specificSettings_);
@@ -60,7 +60,29 @@ initialize()
       << "This may be slow! Maybe you do not want to have this because the 1D fiber output writers can also be called.";
   }
 
-  initializeCellMLSourceFileVc();
+  // determine optimization type and if the code should use Vc or GPU code
+  CellmlAdapterType &cellmlAdapter = nestedSolvers_.instancesLocal()[0].timeStepping1().instancesLocal()[0].discretizableInTime();
+  optimizationType_ = cellmlAdapter.optimizationType();
+  LOG(DEBUG) << "optimizationType: \"" << optimizationType_ << "\".";
+
+  if (optimizationType_ == "gpu")
+    useVc_ = false;
+  else if (optimizationType_ == "openmp")
+    useVc_ = false;
+  else if (optimizationType_ == "vc")
+    useVc_ = true;
+  else
+  {
+    LOG(ERROR) << "FastMonodomainSolver is used with invalid \"optimizationType\": \"" << optimizationType_
+      << "\". Valid options are \"vc\", \"openmp\" or \"gpu\". Now using \"vc\".";
+    useVc_ = true;
+    optimizationType_ = "vc";
+  }
+
+  if (useVc_)
+  {
+    initializeCellMLSourceFileVc();
+  }
   std::shared_ptr<Partition::RankSubset> rankSubset = nestedSolvers_.data().functionSpace()->meshPartition()->rankSubset();
 
   LOG(DEBUG) << "config: " << specificSettings_;
@@ -200,7 +222,8 @@ initialize()
         LOG(DEBUG) << "compute (i,j)=(" << i << "," << j << "), computingRank " << computingRank
           << ", fiberNo: " << fiberNo << ", fiberDataNo: " << fiberDataNo 
           << ", rankSubset->size(): " << rankSubset->size() << ", own: " << rankSubset->ownRankNo();
-        nInstancesToCompute_ += fiberFunctionSpace->nDofsGlobal();
+        nInstancesToComputePerFiber_ = fiberFunctionSpace->nDofsGlobal();
+        nInstancesToCompute_ += nInstancesToComputePerFiber_;
 
         assert(fiberDataNo < fiberData_.size());
         assert(fiberFunctionSpace);
@@ -208,7 +231,7 @@ initialize()
         
         LOG(DEBUG) << "Fiber " << fiberNoGlobal << " (i,j)=(" << i << "," << j << ") is MU " << motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
 
-        fiberData_.at(fiberDataNo).valuesLength = fiberFunctionSpace->nDofsGlobal();
+        fiberData_.at(fiberDataNo).valuesLength = nInstancesToComputePerFiber_;
         fiberData_.at(fiberDataNo).fiberNoGlobal = fiberNoGlobal;
         fiberData_.at(fiberDataNo).motorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
         
@@ -282,14 +305,12 @@ initialize()
   LOG(INFO) << "Time of first stimulation: " << firstStimulationTime << ", motor unit " << firstStimulationMotorUnitNo;
 
   // get the states and algebraics no.s to be transferred as slot connector data
-  CellmlAdapterType &cellmlAdapter = instances[0].timeStepping1().instancesLocal()[0].discretizableInTime();
-  statesForTransfer_ = cellmlAdapter.statesForTransfer();
-  algebraicsForTransfer_ = cellmlAdapter.algebraicsForTransfer();
+  statesForTransferIndices_ = cellmlAdapter.statesForTransfer();
+  algebraicsForTransferIndices_ = cellmlAdapter.algebraicsForTransfer();
 
   int nInstancesLocalCellml;
   int nAlgebraicsLocalCellml;
-  int nParametersPerInstance;
-  cellmlAdapter.getNumbers(nInstancesLocalCellml, nAlgebraicsLocalCellml, nParametersPerInstance);
+  cellmlAdapter.getNumbers(nInstancesLocalCellml, nAlgebraicsLocalCellml, nParametersPerInstance_);
 
   // make parameterValues() of cellmlAdapter.data() available
   cellmlAdapter.data().prepareParameterValues();
@@ -297,22 +318,39 @@ initialize()
 
   int nVcVectors = (nInstancesToCompute_ + Vc::double_v::Size - 1) / Vc::double_v::Size;
 
-  fiberPointBuffers_.resize(nVcVectors);
-  fiberPointBuffersAlgebraicsForTransfer_.resize(nVcVectors);
-  fiberPointBuffersParameters_.resize(nVcVectors);
-  fiberPointBuffersStatesAreCloseToEquilibrium_.resize(nVcVectors, not_constant);
-  nFiberPointBufferStatesCloseToEquilibrium_ = 0;
-
-  for (int i = 0; i < nVcVectors; i++)
+  if (useVc_)
   {
-    fiberPointBuffersAlgebraicsForTransfer_[i].resize(algebraicsForTransfer_.size());
-    fiberPointBuffersParameters_[i].resize(nParametersPerInstance);
+    fiberPointBuffers_.resize(nVcVectors);
+    fiberPointBuffersAlgebraicsForTransfer_.resize(nVcVectors);
+    fiberPointBuffersParameters_.resize(nVcVectors);
+    fiberPointBuffersStatesAreCloseToEquilibrium_.resize(nVcVectors, not_constant);
+    nFiberPointBufferStatesCloseToEquilibrium_ = 0;
 
-    for (int j=0; j<nParametersPerInstance; j++)
+    for (int i = 0; i < nVcVectors; i++)
     {
-      fiberPointBuffersParameters_[i][j] = parameterValues[j*nAlgebraicsLocalCellml];    // note, the stride in parameterValues is "nAlgebraicsLocalCellml", not "nParametersPerInstance"
+      fiberPointBuffersAlgebraicsForTransfer_[i].resize(algebraicsForTransferIndices_.size());
+      fiberPointBuffersParameters_[i].resize(nParametersPerInstance_);
 
-      VLOG(1) << "fiberPointBuffersParameters_ buffer no " << i << ", parameter no " << j << ", value: " <<  fiberPointBuffersParameters_[i][j];
+      for (int parameterNo = 0; parameterNo < nParametersPerInstance_; parameterNo++)
+      {
+        fiberPointBuffersParameters_[i][parameterNo] = parameterValues[parameterNo*nAlgebraicsLocalCellml];    // note, the stride in parameterValues is "nAlgebraicsLocalCellml", not "nParametersPerInstance_"
+
+        VLOG(1) << "fiberPointBuffersParameters_ buffer no " << i << ", parameter no " << parameterNo
+          << ", value: " <<  fiberPointBuffersParameters_[i][parameterNo];
+      }
+    }
+  }
+  else
+  {
+    gpuParameters_.resize(nInstancesToCompute_*nParametersPerInstance_);
+    gpuAlgebraicsForTransfer_.resize(nInstancesToCompute_*algebraicsForTransferIndices_.size());
+
+    for (int parameterNo = 0; parameterNo < nParametersPerInstance_; parameterNo++)
+    {
+      for (int instanceNo = 0; instanceNo < nInstancesToCompute_; instanceNo++)
+      {
+        gpuParameters_[parameterNo*nInstancesToCompute_ + instanceNo] = parameterValues[parameterNo*nAlgebraicsLocalCellml];    // note, the stride in parameterValues is "nAlgebraicsLocalCellml", not "nParametersPerInstance_"
+      }
     }
   }
 
@@ -321,8 +359,8 @@ initialize()
 
   LOG(DEBUG) << nInstancesToCompute_ << " instances to compute, " << nVcVectors
     << " Vc vectors, size of double_v: " << Vc::double_v::Size << ", "
-    << statesForTransfer_.size()-1 << " additional states for transfer, "
-    << algebraicsForTransfer_.size() << " algebraics for transfer";
+    << statesForTransferIndices_.size()-1 << " additional states for transfer, "
+    << algebraicsForTransferIndices_.size() << " algebraics for transfer";
 
   // initialize state values
   for (int i = 0; i < fiberPointBuffers_.size(); i++)
@@ -350,9 +388,9 @@ initialize()
 
       // loop over further states to transfer
       int furtherDataIndex = 0;
-      for (int stateIndex = 1; stateIndex < statesForTransfer_.size(); stateIndex++, furtherDataIndex++)
+      for (int stateIndex = 1; stateIndex < statesForTransferIndices_.size(); stateIndex++, furtherDataIndex++)
       {
-        std::string name = cellmlAdapter.data().states()->componentName(statesForTransfer_[stateIndex]);
+        std::string name = cellmlAdapter.data().states()->componentName(statesForTransferIndices_[stateIndex]);
 
         // get field variable
         std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable1
@@ -360,9 +398,9 @@ initialize()
 
         if (stateIndex >= variable1.size())
         {
-          LOG(WARNING) << "There are " << statesForTransfer_.size() << " statesForTransfer specified in StrangSplitting, "
+          LOG(WARNING) << "There are " << statesForTransferIndices_.size() << " statesForTransfer specified in StrangSplitting, "
             << " but the diffusion solver has only " << variable1.size() << " slots to get these states. "
-            << "This means that state no. " << statesForTransfer_[stateIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
+            << "This means that state no. " << statesForTransferIndices_[stateIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
             << "Maybe you need to increase \"nAdditionalFieldVariables\" in the diffusion solver (\"ImplicitEuler\" or \"CrankNicolson\") "
             << "or reduce the number of entries in \"statesForTransfer\".";
         }
@@ -376,11 +414,11 @@ initialize()
       }
 
       // loop over algebraics to transfer
-      for (int algebraicIndex = 0; algebraicIndex < algebraicsForTransfer_.size(); algebraicIndex++, furtherDataIndex++)
+      for (int algebraicIndex = 0; algebraicIndex < algebraicsForTransferIndices_.size(); algebraicIndex++, furtherDataIndex++)
       {
-        std::string name = cellmlAdapter.data().algebraics()->componentName(algebraicsForTransfer_[algebraicIndex]);
+        std::string name = cellmlAdapter.data().algebraics()->componentName(algebraicsForTransferIndices_[algebraicIndex]);
 
-        LOG(DEBUG) << "algebraicIndex " << algebraicIndex << ", algebraic " << algebraicsForTransfer_[algebraicIndex] << ", name: \"" << name << "\".";
+        LOG(DEBUG) << "algebraicIndex " << algebraicIndex << ", algebraic " << algebraicsForTransferIndices_[algebraicIndex] << ", name: \"" << name << "\".";
 
         assert (i < instances.size());
         assert (j < instances[i].timeStepping2().instancesLocal().size());
@@ -391,9 +429,9 @@ initialize()
 
         if (algebraicIndex >= variable2.size())
         {
-          LOG(WARNING) << "There are " << algebraicsForTransfer_.size() << " algebraicsForTransfer specified in StrangSplitting, "
+          LOG(WARNING) << "There are " << algebraicsForTransferIndices_.size() << " algebraicsForTransfer specified in StrangSplitting, "
             << " but the diffusion solver has only " << variable2.size() << " slots to get these algebraics. "
-            << "This means that algebraic no. " << algebraicsForTransfer_[algebraicIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
+            << "This means that algebraic no. " << algebraicsForTransferIndices_[algebraicIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
             << "Maybe you need to increase \"nAdditionalFieldVariables\" in  the diffusion solver (\"ImplicitEuler\" or \"CrankNicolson\") "
             << "or reduce the number of entries in \"algebraicsForTransfer\".";
 
@@ -409,9 +447,34 @@ initialize()
     }
   }
 
-  initializeCellMLSourceFileGpu();
+  if (!useVc_)
+  {
+    initializeGpuStates();
+    initializeCellMLSourceFileGpu();
+  }
 
   initialized_ = true;
+}
+
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
+initializeGpuStates()
+{
+  CellmlAdapterType &cellmlAdapter = nestedSolvers_.instancesLocal()[0].timeStepping1().instancesLocal()[0].discretizableInTime();
+  CellmlSourceCodeGenerator &cellmlSourceCodeGenerator = cellmlAdapter.cellmlSourceCodeGenerator();
+
+  // allocate total state vector
+  gpuStates_.resize(nInstancesToCompute_*nStates);
+
+  // initialize state vector for all instances
+  const std::vector<double> &statesInitialValues = cellmlSourceCodeGenerator.statesInitialValues();
+  for (int stateNo = 0; stateNo < nStates; stateNo++)
+  {
+    for (int instanceNo = 0; instanceNo < nInstancesToCompute_; instanceNo++)
+    {
+      gpuStates_[stateNo*nInstancesToCompute_ + instanceNo] = statesInitialValues[stateNo];
+    }
+  }
 }
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
@@ -424,24 +487,6 @@ initializeCellMLSourceFileVc()
 
   PythonConfig specificSettingsCellML = cellmlAdapter.specificSettings();
   CellmlSourceCodeGenerator &cellmlSourceCodeGenerator = cellmlAdapter.cellmlSourceCodeGenerator();
-
-  // only continue if optimization type is not gpu
-  std::string optimizationType = cellmlAdapter.optimizationType();
-  if (optimizationType == "gpu")
-  {
-    useVc_ = false;
-    return;
-  }
-  else if (optimizationType == "vc")
-  {
-    useVc_ = true;
-  }
-  else
-  {
-    LOG(ERROR) << "FastMonodomainSolver is used with invalid \"optimizationType\": \"" << optimizationType
-      << "\". Valid options are \"vc\" or \"gpu\". Now using \"vc\".";
-    useVc_ = true;
-  }
 
   // determine filename of library
   std::stringstream s;
@@ -484,8 +529,7 @@ initializeCellMLSourceFileVc()
     LOG(DEBUG) << "generate source file \"" << sourceToCompileFilename << "\".";
 
     // create source file
-    const bool useVc = true;
-    cellmlSourceCodeGenerator.generateSourceFileFastMonodomain(sourceToCompileFilename, approximateExponentialFunction, useVc);
+    cellmlSourceCodeGenerator.generateSourceFileFastMonodomain(sourceToCompileFilename, approximateExponentialFunction);
 
     // create path for library file
     if (libraryFilename.find("/") != std::string::npos)

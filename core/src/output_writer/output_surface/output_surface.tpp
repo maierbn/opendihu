@@ -9,7 +9,8 @@ template<typename Solver>
 OutputSurface<Solver>::
 OutputSurface(DihuContext context) :
   context_(context["OutputSurface"]), solver_(context_),
-  data_(context_), ownRankInvolvedInOutput_(true), timeStepNo_(0), currentTime_(0.0), updatePointPositions_(false)
+  data_(context_), ownRankInvolvedInOutput_(true), timeStepNo_(0), currentTime_(0.0), updatePointPositions_(false),
+  enableCsvFile_(false), enableVtpFile_(false), enableGeometryInCsvFile_(false)
 {
 
 }
@@ -52,9 +53,13 @@ initialize()
   {
     rankSubset_ = data_.functionSpace()->meshPartition()->rankSubset();
     outputWriterManager_.initialize(context_, specificSettings, rankSubset_);
-    std::ofstream file;
-    Generic::openFile(file, filename_);  // recreate and truncate file
-    file.close();
+
+    if (filename_ != "")
+    {
+      std::ofstream file;
+      Generic::openFile(file, filename_);  // recreate and truncate file
+      file.close();
+    }
 
     initializeSampledPoints();
 

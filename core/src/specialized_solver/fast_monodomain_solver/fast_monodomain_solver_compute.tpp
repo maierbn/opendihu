@@ -155,7 +155,7 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlge
 
     // determine if current point is at center of fiber
     int fiberCenterIndex = fiberData_[fiberDataNo].fiberStimulationPointIndex;
-    bool currentPointIsInCenter = ((fiberCenterIndex - indexInFiber) < Vc::double_v::Size);
+    bool currentPointIsInCenter = (fabs(fiberCenterIndex - indexInFiber) < Vc::double_v::Size);
     VLOG(3) << "currentPointIsInCenter: " << currentPointIsInCenter << ", pointBuffersNo: " << pointBuffersNo << ", fiberDataNo: " << fiberDataNo << ", indexInFiber:" << indexInFiber << ", fiberCenterIndex: " << fiberCenterIndex << ", " << (indexInFiber - fiberCenterIndex) << " < " << Vc::double_v::Size;
 
     VLOG(3) << "pointBuffersNo: " << pointBuffersNo << ", fiberDataNo: " << fiberDataNo << ", indexInFiber: " << indexInFiber;
@@ -200,7 +200,7 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlge
       compute0DInstance_(fiberPointBuffers_[pointBuffersNo].states, fiberPointBuffersParameters_[pointBuffersNo],
                          currentTime, timeStepWidth, stimulateCurrentPoint,
                          argumentStoreAlgebraics, fiberPointBuffersAlgebraicsForTransfer_[pointBuffersNo],
-                         algebraicsForTransfer_, valueForStimulatedPoint_);
+                         algebraicsForTransferIndices_, valueForStimulatedPoint_);
     }  // loop over timesteps
 
     equilibriumAccelerationUpdate(statesPreviousValues, pointBuffersNo);

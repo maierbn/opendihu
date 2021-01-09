@@ -22,7 +22,7 @@ generateSourceFileOpenMP(std::string outputFilename, int maximumNumberOfThreads)
   auto tm = *std::localtime(&t);
   sourceCode << std::endl << "/* This function was created by opendihu at " << StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
     << ".\n * It is designed for " << this->nInstances_ << " instances of the CellML problem.\n "
-    << " * The \"optimizationType\" is \"openmp\". (Other options are \"vc\" and \"simd\".) */" << std::endl
+    << " * The \"optimizationType\" is \"openmp\". (Other options are \"vc\", \"simd\" and \"gpu\".) */" << std::endl
     << "void computeCellMLRightHandSide("
     << "void *context, double t, double *states, double *rates, double *algebraics, double *parameters)" << std::endl << "{" << std::endl;
 

@@ -17,7 +17,7 @@ public:
 
   //! write the source file with explicit vectorization using Vc
   //! The file contains the source for the total solve the rhs computation
-  void generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExponentialFunction, bool useVc);
+  void generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExponentialFunction);
 
 protected:
 
@@ -25,7 +25,7 @@ protected:
   void preprocessCode(std::set<std::string> &helperFunctions);
 
   //! define "pow" and "exponential" helper functions
-  std::string defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateExponentialFunction);
+  std::string defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateExponentialFunction, bool useVc);
 
   //! Write the source file with explicit vectorization using Vc
   //! The file contains the source for only the rhs computation

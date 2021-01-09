@@ -292,11 +292,18 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
   preprocessingDone_ = true;
 }
 
-std::string CellmlSourceCodeGeneratorVc::defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateExponentialFunction)
+std::string CellmlSourceCodeGeneratorVc::
+defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateExponentialFunction, bool useVc)
 {
   if (!helperFunctionsCode_.empty())
     return helperFunctionsCode_;
 
+  std::string doubleType = "double";
+  if (useVc)
+  {
+    doubleType = "Vc::double_v";
+  }
+  
   std::stringstream sourceCode;
 
   // add helper functions for helper functions (e.g. pow4 needs pow2)
@@ -346,22 +353,23 @@ std::string CellmlSourceCodeGeneratorVc::defineHelperFunctions(std::set<std::str
     std::string functionName = *iter;
     if (functionName == "pow")
     {
-      sourceCode << "Vc::double_v pow(Vc::double_v basis, Vc::double_v exponent);" << std::endl;
-      sourceCode << "Vc::double_v pow(Vc::double_v basis, double exponent);" << std::endl;
+      sourceCode << doubleType << " pow(" << doubleType << " basis, " << doubleType << " exponent);" << std::endl;
+      if (useVc)
+        sourceCode << doubleType << " pow(" << doubleType << " basis, double exponent);" << std::endl;
     }
     else
     {
-      sourceCode << "Vc::double_v " << functionName << "(Vc::double_v x);" << std::endl;
+      sourceCode << "" << doubleType << " " << functionName << "(" << doubleType << " x);" << std::endl;
     }
   }
 
   // define exp function if needed
   if (helperFunctions.find("exponential") != helperFunctions.end())
   {
+    sourceCode << "\n" << doubleType << " exponential(" << doubleType << " x)";
     if (approximateExponentialFunction)
     {
       sourceCode << R"(
-Vc::double_v exponential(Vc::double_v x)
 {
   //return Vc::exp(x);
   // it was determined the x is always in the range [-12,+12]
@@ -387,17 +395,27 @@ Vc::double_v exponential(Vc::double_v x)
     }
     else
     {
-      sourceCode << R"(
-Vc::double_v exponential(Vc::double_v x)
+      if (useVc)
+      {
+        sourceCode << R"(
 {
   return Vc::exp(x);
 }
 )";
+      }
+      else
+      {
+        sourceCode << R"(
+{
+  return exp(x);
+}
+)";     
+      }
     }
   }
   
   // define pow function if needed
-  if (helperFunctions.find("pow") != helperFunctions.end())
+  if (helperFunctions.find("pow") != helperFunctions.end() && useVc)
   {
     sourceCode << R"(
 Vc::double_v pow(Vc::double_v basis, Vc::double_v exponent)
@@ -455,19 +473,14 @@ Vc::double_v pow(Vc::double_v basis, double exponent)
         // special implementation for exponent 2 (square function)
         if (exponent == 2)
         {
-        sourceCode << R"(
-Vc::double_v pow2(Vc::double_v x)
-{
-  return x*x;
-}
-)";
+          sourceCode << "\n" << doubleType << " pow2(" << doubleType << " x)\n{\n  return x*x;\n}\n";
         }
         else
         {
           int exponent0 = int(fabs(exponent)/2);
           int otherExponent = fabs(exponent) - exponent0;
-          sourceCode << "Vc::double_v pow" << (exponent < 0? "Reciprocal" : "")
-            << fabs(exponent) << "(Vc::double_v x)" << std::endl
+          sourceCode << doubleType << " pow" << (exponent < 0? "Reciprocal" : "")
+            << fabs(exponent) << "(" << doubleType << " x)" << std::endl
             << "{" << std::endl
             << "  return ";
           if (exponent < 0)
@@ -524,13 +537,13 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
     << "using Vc::double_v; " << std::endl;
 
   // define helper functions
-  sourceCode << defineHelperFunctions(helperFunctions, approximateExponentialFunction);
+  sourceCode << defineHelperFunctions(helperFunctions, approximateExponentialFunction, true);
 
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
   sourceCode << std::endl << "// This function was created by opendihu at " << StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")
     << ".\n// It is designed for " << this->nInstances_ << " instances of the CellML problem.\n"
-    << "// The \"optimizationType\" is \"vc\". (Other options are \"simd\" and \"openmp\".)" << std::endl;
+    << "// The \"optimizationType\" is \"vc\". (Other options are \"simd\", \"openmp\" and \"gpu\".)" << std::endl;
     
   if (!parametersUsedAsAlgebraic_.empty())
   {
@@ -729,7 +742,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
 }
 
 void CellmlSourceCodeGeneratorVc::
-generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExponentialFunction, bool useVc)
+generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExponentialFunction)
 {
   std::set<std::string> helperFunctions;   //< functions found in the CellML code that need to be provided, usually the pow2, pow3, etc. helper functions for pow(..., 2), pow(...,3) etc.
 
@@ -737,24 +750,11 @@ generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExp
   preprocessCode(helperFunctions);
 
   std::stringstream sourceCode;
-  std::string doubleType = "double";
-  sourceCode << "#include <math.h>" << std::endl;
-  if (useVc)
-  {
-    doubleType = "Vc::double_v";
-    sourceCode << "#include <Vc/Vc>" << std::endl;
-  }
-  else
-  {
-    sourceCode << "#include <omp.h>" << std::endl;
-  }
-  sourceCode << "#include <iostream> " << std::endl
-    << cellMLCode_.header << std::endl;
-    
-  if (useVc)
-  {
-    sourceCode << "using Vc::double_v; " << std::endl;
-  }
+  sourceCode << "#include <math.h>" << std::endl
+    << "#include <Vc/Vc>" << std::endl
+    << "#include <iostream> " << std::endl
+    << cellMLCode_.header << std::endl
+    << "using Vc::double_v; " << std::endl;
 
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
@@ -765,13 +765,13 @@ generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExp
   VLOG(1) << "call defineHelperFunctions with helperFunctions: " << helperFunctions;
 
   // define helper functions
-  sourceCode << defineHelperFunctions(helperFunctions, approximateExponentialFunction);
+  sourceCode << defineHelperFunctions(helperFunctions, approximateExponentialFunction, true);
 
   // define initializeStates function
   sourceCode
     << "// set initial values for all states\n"
     << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif\n" << std::endl
-    << "void initializeStates(" << doubleType << " states[]) \n"
+    << "void initializeStates(Vc::double_v states[]) \n"
     << "{\n";
 
   for (int stateNo = 0; stateNo < this->nStates_; stateNo++)
@@ -784,22 +784,18 @@ generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExp
   sourceCode
     << "// compute one Heun step\n"
     << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif\n" << std::endl
-    << "void compute0DInstance(" << doubleType << " states[], std::vector<" << doubleType << "> &parameters, double currentTime, double timeStepWidth, bool stimulate,\n"
-    << "                       bool storeAlgebraicsForTransfer, std::vector<" << doubleType << "> &algebraicsForTransfer, const std::vector<int> &algebraicsForTransferIndices, double valueForStimulatedPoint) \n"
-    << "{\n";
-    
-  if (useVc)
-  {
-    sourceCode << "  // assert that Vc::double_v::Size is the same as in opendihu, otherwise there will be problems\n"
-      << "  if (Vc::double_v::Size != " << Vc::double_v::Size << ")\n"
-      << "  {\n"
-      << "    std::cout << \"Fatal error in compiled library of source file \\\"" << outputFilename << "\\\", size of SIMD register in "
-      << "compiled code (\" << Vc::double_v::Size << \") does not match opendihu code (" << Vc::double_v::Size << ").\" << std::endl;\n"
-      << "    std::cout << \"Delete library such that it will be regenerated with the correct compile options!\" << std::endl;\n"
-      << "    exit(1);\n"
-      << "  }\n\n";
-  }
-  sourceCode << "  // define constants\n";
+    << "void compute0DInstance(Vc::double_v states[], std::vector<Vc::double_v> &parameters, double currentTime, double timeStepWidth, bool stimulate,\n"
+    << "                       bool storeAlgebraicsForTransfer, std::vector<Vc::double_v> &algebraicsForTransfer, const std::vector<int> &algebraicsForTransferIndices, double valueForStimulatedPoint) \n"
+    << "{\n"
+    << "  // assert that Vc::double_v::Size is the same as in opendihu, otherwise there will be problems\n"
+    << "  if (Vc::double_v::Size != " << Vc::double_v::Size << ")\n"
+    << "  {\n"
+    << "    std::cout << \"Fatal error in compiled library of source file \\\"" << outputFilename << "\\\", size of SIMD register in "
+    << "compiled code (\" << Vc::double_v::Size << \") does not match opendihu code (" << Vc::double_v::Size << ").\" << std::endl;\n"
+    << "    std::cout << \"Delete library such that it will be regenerated with the correct compile options!\" << std::endl;\n"
+    << "    exit(1);\n"
+    << "  }\n\n"
+    << "  // define constants\n";
     
 /*    << R"(  std::cout << "currentTime=" << currentTime << ", timeStepWidth=" << timeStepWidth << ", stimulate=" << stimulate << std::endl;)" << "\n" */
 /*    << R"(  std::cout << "states[0]=" << states[0][0] << "," << states[0][1] << "," << states[0][2] << "," << states[0][3] << "," << std::endl;)" << "\n"
@@ -885,7 +881,7 @@ generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExp
       }
       else
       {
-        sourceCode << "  const " << doubleType << " " << sourceCodeLine.str() << std::endl;
+        sourceCode << "  const double_v " << sourceCodeLine.str() << std::endl;
       }
     }
   }
@@ -899,13 +895,10 @@ generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExp
     if (stateNo != 0)
       sourceCode << "const ";
 
-    sourceCode << doubleType << " algebraicState" << stateNo << " = states[" << stateNo << "] + timeStepWidth*rate" << stateNo << ";\n";
+    sourceCode << "double_v algebraicState" << stateNo << " = states[" << stateNo << "] + timeStepWidth*rate" << stateNo << ";\n";
   }
-  
-  if (useVc)
-  {
-    sourceCode << "\n\n"
-      << R"(
+  sourceCode << "\n\n"
+    << R"(
   // if stimulation, set value of Vm (state0)
   if (stimulate)
   {
@@ -913,22 +906,7 @@ generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExp
     {
       algebraicState0[i] = valueForStimulatedPoint;
     }
-  })";
   }
-  else
-  {
-    sourceCode << "\n\n"
-      << R"(
-  // if stimulation, set value of Vm (state0)
-  if (stimulate)
-  {
-    for (int i = 0; i < 3; i++)
-    {
-      algebraicState0[i] = valueForStimulatedPoint;
-    }
-  })";
-  }
-  sourceCode << R"(
   // compute new rates, rhs(y*)
 )";
 
@@ -997,7 +975,7 @@ generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExp
       }
       else
       {
-        sourceCode << "  const " << doubleType << " " << sourceCodeLine.str() << std::endl;
+        sourceCode << "  const double_v " << sourceCodeLine.str() << std::endl;
       }
     }
   }
@@ -1013,10 +991,7 @@ generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExp
     sourceCode << "  states[" << stateNo << "] += 0.5*timeStepWidth*(rate" << stateNo << " + algebraicRate" << stateNo << ");\n";
   }
 
-  if (useVc)
-  {
-    sourceCode << R"(
-
+  sourceCode << R"(
   if (stimulate)
   {
     for (int i = 0; i < std::min(3,(int)Vc::double_v::Size); i++)
@@ -1024,32 +999,12 @@ generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExp
       states[0][i] = valueForStimulatedPoint;
     }
   }
-  
-  )";
-  }
-  else
-  {
-    sourceCode << R"(
-
-  if (stimulate)
-  {
-    for (int i = 0; i < 3; i++)
-    {
-      states[0][i] = valueForStimulatedPoint;
-    }
-  }
-  
-  )";
-  }
-  sourceCode << R"(
-
   // store algebraics for transfer
   if (storeAlgebraicsForTransfer)
   {
     for (int i = 0; i < algebraicsForTransferIndices.size(); i++)
     {
       const int algebraic = algebraicsForTransferIndices[i];
-
       switch (algebraic)
       {
 )";

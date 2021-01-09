@@ -148,8 +148,11 @@ protected:
   //! set the initial values for all states
   virtual void initializeStates(Vc::double_v states[]){};
 
+  //! initialize the states vector that is used for GPU computation
+  void initializeGpuStates();
+
   //! generate source code to solve the monodomain equation with offloading to gpu
-  void addMonodomainSolverGpuSource(std::string filename);
+  void generateMonodomainSolverGpuSource(std::string filename, std::string headerCode, std::string mainCode);
 
   //! call the GPU code to compute the monodomain equation for advanceTimestep
   void computeMonodomainGpu();
@@ -165,7 +168,7 @@ protected:
   {
     std::vector<double> elementLengths;   //< lengths of the 1D elements
     std::vector<double> vmValues;         //< values of Vm
-    std::vector<double> furtherStatesAndAlgebraicsValues;    //< all data to be transferred back to the fibers, apart from vmValues, corresponding to statesForTransfer_ and algebraicsForTransfer_ (array of struct memory layout)
+    std::vector<double> furtherStatesAndAlgebraicsValues;    //< all data to be transferred back to the fibers, apart from vmValues, corresponding to statesForTransferIndices_ and algebraicsForTransferIndices_ (array of struct memory layout)
     int valuesLength;                     //< number of vmValues
     global_no_t valuesOffset;             //< number of vmValues in previous entries in fiberData_
 
@@ -184,12 +187,13 @@ protected:
     bool currentlyStimulating;                    //< if a stimulation is in progress at the current time
   };
 
-  std::vector<FiberPointBuffers<nStates>> fiberPointBuffers_;    //< computation buffers for the 0D problem
+  std::vector<FiberPointBuffers<nStates>> fiberPointBuffers_;    //< computation buffers for the 0D problem, the states vector used when optimizationType == "vc"
+  std::vector<double> gpuStates_;          //< the states vector used when optimizationType == "gpu", in struct of array memory layout: statesGpu_[stateNo*nInstances + instanceNo]
 
   std::string fiberDistributionFilename_;  //< filename of the fiberDistributionFile, which contains motor unit numbers for fiber numbers
   std::string firingTimesFilename_;        //< filename of the firingTimesFile, which contains points in time of stimulation for each motor unit
 
-  std::vector<std::vector<bool>> firingEvents_;   //< if a motor unit firingEvents_[timeStepNo][motorUnitNo]
+  std::vector<std::vector<bool>> firingEvents_;   //< if a motor unit fires, firingEvents_[timeStepNo][motorUnitNo]
   std::vector<int> motorUnitNo_;                  //< number of motor unit for given fiber no motorUnitNo_[fiberNo]
   std::string durationLogKey0D_;                  //< duration log key for the 0D problem
   std::string durationLogKey1D_;                  //< duration log key for the 1D problem
@@ -199,6 +203,8 @@ protected:
   std::vector<FiberData> fiberData_;  //< vector of fibers, the number of entries is the number of fibers to be computed by the own rank (nFibersToCompute_)
   int nFibersToCompute_;              //< number of fibers where own rank is involved (>= n.fibers that are computed by own rank)
   int nInstancesToCompute_;           //< number of instances of the Hodgkin-Huxley problem to compute on this rank
+  int nInstancesToComputePerFiber_;   //< number of instances to compute per fiber, i.e., global number of instances of a fiber
+  int nParametersPerInstance_;        //< number of parameters per instance
   double currentTime_;                //< the current time used for the output writer
   int nTimeStepsSplitting_;           //< number of times to repeat the Strang splitting for one advanceTimeSpan() call of FastMonodomainSolver
 
@@ -214,20 +220,27 @@ protected:
   std::vector<state_t> fiberPointBuffersStatesAreCloseToEquilibrium_;       //< for every entry in fiberPointBuffers_, constant if the states didn't change too much in the last compute0D, neighbour_not_constant if the state of the neighbouring pointBuffer changes
   int nFiberPointBufferStatesCloseToEquilibrium_;                           //< number of "constant" entries in fiberPointBuffersStatesAreCloseToEquilibrium_
 
-  std::vector<int> statesForTransfer_;          //< state no.s to transfer to other solvers within slot connector data
-  std::vector<int> algebraicsForTransfer_;      //< which algebraics should be transferred to other solvers as part of slot connector data
-  std::vector<double> parameters_;              //< parameters vector
+  std::vector<int> statesForTransferIndices_;          //< state no.s to transfer to other solvers within slot connector data
+  std::vector<int> algebraicsForTransferIndices_;      //< which algebraics should be transferred to other solvers as part of slot connector data
   double valueForStimulatedPoint_;              //< value to which the first state will be set if stimulated
   double neuromuscularJunctionRelativeSize_;    //< relative size of the range where the neuromuscular junction is located
 
   std::vector<std::vector<Vc::double_v>> fiberPointBuffersParameters_;        //< constant parameter values, changing parameters is not implemented
   std::vector<std::vector<Vc::double_v>> fiberPointBuffersAlgebraicsForTransfer_;   //<  [fiberPointNo][algebraicToTransferNo], algebraic values to use for slot connector data
 
+  std::vector<double> gpuParameters_;              //< for "gpu": constant parameter values, in struct of array memory layout: gpuParameters_[parameterNo*nInstances + instanceNo]
+  std::vector<double> gpuAlgebraicsForTransfer_;   //< for "gpu": algebraic values to use for slot connector data, in struct of array memory layout: gpuAlgebraicsForTransfer_[algebraicNo*nInstances + instanceNo]
+
   void (*compute0DInstance_)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &, double);   //< runtime-created and loaded function to compute one Heun step of the 0D problem
-  void (*computeMonodomain_)(double [], std::vector<double> &, double, double);   //< runtime-created and loaded function to compute monodomain equation
+  void (*computeMonodomain_)(std::vector<FiberData> &fiberData, std::vector<double> &states, const std::vector<double> &parameters,
+                              std::vector<double> &algebraicsForTransfer, const std::vector<int> &algebraicsForTransferIndices,
+                              const std::vector<std::vector<bool>> &firingEvents,
+                              double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
+                              double prefactor, double valueForStimulatedPoint);   //< runtime-created and loaded function to compute monodomain equation
   void (*initializeStates_)(Vc::double_v states[]);  //< runtime-created and loaded function to set all initial values for the states
 
-  bool useVc_;                                       //< if the Vc library is used, if not, code for the GPU is generated
+  bool useVc_;                                       //< if the Vc library is used, if not, code for the GPU or OpenMP is generated
+  std::string optimizationType_;                     //< the optimization type as given in the settings, one of "vc", "openmp", "gpu"
   bool initialized_;                                 //< if initialize was already called
 };
 

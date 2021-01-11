@@ -19,6 +19,8 @@ template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 initialize()
 {
+  LOG(DEBUG) << "initialize FastMonodomainSolverBase";
+  
   // only initialize once
   if (initialized_)
     return;

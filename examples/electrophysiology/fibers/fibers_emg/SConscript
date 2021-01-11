@@ -13,3 +13,4 @@ Import('env')     # import Environment object from calling SConstruct
 #env.Program(target = "fibers_febio", source = "src/fibers_febio.cpp")
 env.Program(target = "fast_fibers_emg", source = "src/fast_fibers_emg.cpp")
 env.Program(target = "fast_fibers_shorten_emg", source = "src/fast_fibers_shorten_emg.cpp")
+env.Program(target = "fast_fibers_shorten_emg_crank_nicolson", source = "src/fast_fibers_shorten_emg_crank_nicolson.cpp")

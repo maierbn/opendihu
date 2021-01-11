@@ -267,6 +267,7 @@ void computeMonodomain(double *states, const double *parameters,
   const int nElementsOnFiber = )" << nInstancesToComputePerFiber_-1 << R"(;
   const int nFibersToCompute = )" << nFibersToCompute_ << R"(;
   const long long nInstancesToCompute = )" << nFibersToCompute_*nInstancesToComputePerFiber_ << R"(;  // = nInstancesPerFiber*nFibersToCompute
+  const int nStates = )" << nStates << R"(;
   const int nStatesTotal = nInstancesToCompute*nStates;
   const int nParametersTotal = nInstancesToCompute*)" << nParametersPerInstance_<< R"(;
   const int nElementLengths = nElementsOnFiber*nFibersToCompute;

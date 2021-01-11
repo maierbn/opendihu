@@ -100,7 +100,7 @@ initializeCellMLSourceFileGpu()
   computeMonodomain_ = (void (*)(FiberData *fiberData, double *states, const double *parameters,
                              double *algebraicsForTransfer, const int *algebraicsForTransferIndices, int nAlgebraicsForTransferIndices,
                              const double *elementLengths, char *firingEvents, int firingEventsNRows, int firingEventsNColumns,
-                             double *setSpecificStatesFrequencyJitter, int frequencyJitterNColumns,
+                             double *setSpecificStatesFrequencyJitter, int frequencyJitterNColumns, char *fiberIsCurrentlyStimulated,
                              double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
                              double prefactor, double valueForStimulatedPoint)) dlsym(handle, "computeMonodomain");
 
@@ -162,7 +162,7 @@ struct FiberData
     << "// determine if an instance is stimulated on a fiber at the current point in time\n"
     << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif" << std::endl
     << R"(bool isCurrentPointStimulated(FiberData *fiberData, char *firingEvents, int firingEventsNRows, int firingEventsNColumns,
-                              double *setSpecificStatesFrequencyJitter, int frequencyJitterNColumns,
+                              double *setSpecificStatesFrequencyJitter, int frequencyJitterNColumns, char *fiberIsCurrentlyStimulated,
                               int fiberDataNo, double currentTime, bool currentPointIsInCenter)
 {
   FiberData &fiberDataCurrentPoint = fiberData[fiberDataNo];
@@ -217,15 +217,15 @@ struct FiberData
   if (stimulate && currentPointIsInCenter)
   {
     // if this is the first point in time of the current stimulation, log stimulation time
-    if (!fiberDataCurrentPoint.currentlyStimulating)
+    if (!fiberIsCurrentlyStimulated[fiberDataNo])
     {
-      fiberDataCurrentPoint.currentlyStimulating = true;
+      fiberIsCurrentlyStimulated[fiberDataNo] = 1;
     }
   }
 
   if (!stimulate)
   {
-    fiberDataCurrentPoint.currentlyStimulating = false;
+    fiberIsCurrentlyStimulated[fiberDataNo] = 0;
   }
 
   bool stimulateCurrentPoint = stimulate && currentPointIsInCenter;
@@ -244,7 +244,7 @@ struct FiberData
 void computeMonodomain(FiberData *fiberData, double *states, const double *parameters,
                        double *algebraicsForTransfer, const int *algebraicsForTransferIndices, int nAlgebraicsForTransferIndices,
                        const double *elementLengths, char *firingEvents, int firingEventsNRows, int firingEventsNColumns,
-                       double *setSpecificStatesFrequencyJitter, int frequencyJitterNColumns,
+                       double *setSpecificStatesFrequencyJitter, int frequencyJitterNColumns, char *fiberIsCurrentlyStimulated,
                        double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
                        double prefactor, double valueForStimulatedPoint)
 {
@@ -310,7 +310,7 @@ void computeMonodomain(FiberData *fiberData, double *states, const double *param
           if (currentPointIsInCenter)
             stimulateCurrentPoint = isCurrentPointStimulated(
               fiberData, firingEvents, firingEventsNRows, firingEventsNColumns,
-              setSpecificStatesFrequencyJitter, frequencyJitterNColumns,
+              setSpecificStatesFrequencyJitter, frequencyJitterNColumns, fiberIsCurrentlyStimulated,
               fiberNo, currentTime, currentPointIsInCenter);
           const bool storeAlgebraicsForTransfer = false;
 
@@ -562,7 +562,7 @@ void computeMonodomain(FiberData *fiberData, double *states, const double *param
           if (currentPointIsInCenter)
             stimulateCurrentPoint = isCurrentPointStimulated(
               fiberData, firingEvents, firingEventsNRows, firingEventsNColumns,
-              setSpecificStatesFrequencyJitter, frequencyJitterNColumns,
+              setSpecificStatesFrequencyJitter, frequencyJitterNColumns, fiberIsCurrentlyStimulated,
               fiberNo, currentTime, currentPointIsInCenter);
           const bool storeAlgebraicsForTransfer = storeAlgebraicsForTransferSplitting && timeStepNo == nTimeSteps0D-1;
 
@@ -673,7 +673,7 @@ computeMonodomainGpu()
   computeMonodomain_(fiberData_.data(), gpuStates_.data(), gpuParameters_.data(),
                      gpuAlgebraicsForTransfer_.data(), algebraicsForTransferIndices_.data(), algebraicsForTransferIndices_.size(),
                      gpuElementLengths_.data(), gpuFiringEvents_.data(), gpuFiringEventsNRows_, gpuFiringEventsNColumns_,
-                     gpuSetSpecificStatesFrequencyJitter_.data(), gpuFrequencyJitterNColumns_,
+                     gpuSetSpecificStatesFrequencyJitter_.data(), gpuFrequencyJitterNColumns_, gpuFiberIsCurrentlyStimulated_.data(),
                      startTime, timeStepWidthSplitting, nTimeStepsSplitting_, dt0D, nTimeSteps0D, dt1D, nTimeSteps1D,
                      prefactor, valueForStimulatedPoint_);
 

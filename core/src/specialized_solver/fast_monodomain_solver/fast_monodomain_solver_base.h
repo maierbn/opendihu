@@ -236,12 +236,13 @@ protected:
   int gpuFiringEventsNRows_;                       //< for "gpu": number of rows in the firing events file
   int gpuFiringEventsNColumns_;                    //< for "gpu": number of columns in the firing events file
   int gpuFrequencyJitterNColumns_;                 //< for "gpu": number of columns in the gpuSetSpecificStatesFrequencyJitter_ array
+  std::vector<char> gpuFiberIsCurrentlyStimulated_; //< for "gpu": the value of fiberData_[].currentlyStimulating
 
   void (*compute0DInstance_)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &, double);   //< runtime-created and loaded function to compute one Heun step of the 0D problem
   void (*computeMonodomain_)(FiberData *fiberData, double *states, const double *parameters,
                              double *algebraicsForTransfer, const int *algebraicsForTransferIndices, int nAlgebraicsForTransferIndices,
                              const double *elementLengths, char *firingEvents, int firingEventsNRows, int firingEventsNColumns,
-                             double *setSpecificStatesFrequencyJitter, int frequencyJitterNColumns,
+                             double *setSpecificStatesFrequencyJitter, int frequencyJitterNColumns, char *fiberIsCurrentlyStimulated,
                              double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
                              double prefactor, double valueForStimulatedPoint);   //< runtime-created and loaded function to compute monodomain equation
   void (*initializeStates_)(Vc::double_v states[]);  //< runtime-created and loaded function to set all initial values for the states

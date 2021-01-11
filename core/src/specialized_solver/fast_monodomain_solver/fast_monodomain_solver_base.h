@@ -237,14 +237,27 @@ protected:
   int gpuFiringEventsNColumns_;                    //< for "gpu": number of columns in the firing events file
   int gpuFrequencyJitterNColumns_;                 //< for "gpu": number of columns in the gpuSetSpecificStatesFrequencyJitter_ array
   std::vector<char> gpuFiberIsCurrentlyStimulated_; //< for "gpu": the value of fiberData_[].currentlyStimulating
+  std::vector<int> gpuMotorUnitNo_;                      //< motor unit no.
+  std::vector<int> gpuFiberStimulationPointIndex_;       //< index of the point on the fiber where to stimulate, i.e. position of the neuromuscular junction, if at center, it is equal to (int)(fiberData_[fiberDataNo].valuesLength / 2)
+  std::vector<double> gpuLastStimulationCheckTime_;      //< last time the fiber was checked for stimulation
+  std::vector<double> gpuSetSpecificStatesCallFrequency_;        //< value of option with the same name in the python settings
+  std::vector<double> gpuSetSpecificStatesRepeatAfterFirstCall_; //< how long in ms the prescribed value should be set
+  std::vector<double> gpuSetSpecificStatesCallEnableBegin_;      //< value of option with the same name in the python settings
+  std::vector<double> gpuCurrentJitter_;                         //< current absolute value of jitter to add to setSpecificStatesCallFrequency
+  std::vector<int> gpuJitterIndex_;                              //< index of the vector in setSpecificStatesFrequencyJitter which is the current value to use
 
   void (*compute0DInstance_)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &, double);   //< runtime-created and loaded function to compute one Heun step of the 0D problem
-  void (*computeMonodomain_)(FiberData *fiberData, double *states, const double *parameters,
-                             double *algebraicsForTransfer, const int *algebraicsForTransferIndices, int nAlgebraicsForTransferIndices,
-                             const double *elementLengths, char *firingEvents, int firingEventsNRows, int firingEventsNColumns,
-                             double *setSpecificStatesFrequencyJitter, int frequencyJitterNColumns, char *fiberIsCurrentlyStimulated,
-                             double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
-                             double prefactor, double valueForStimulatedPoint);   //< runtime-created and loaded function to compute monodomain equation
+  void (*computeMonodomain_)(double *states, const double *parameters,
+                            double *algebraicsForTransfer, const int *algebraicsForTransferIndices, int nAlgebraicsForTransferIndices,
+                            const double *elementLengths, const char *firingEvents, int firingEventsNRows, int firingEventsNColumns,
+                            const double *setSpecificStatesFrequencyJitter, int frequencyJitterNColumns, char *fiberIsCurrentlyStimulated,
+                            double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
+                            double prefactor, double valueForStimulatedPoint,
+                            const int *motorUnitNo, const int *fiberStimulationPointIndex, double *lastStimulationCheckTime,
+                            const double *setSpecificStatesCallFrequency, const double *setSpecificStatesRepeatAfterFirstCall,
+                            const double *setSpecificStatesCallEnableBegin,
+                            double *currentJitter, int *jitterIndex
+                            );   //< runtime-created and loaded function to compute monodomain equation
   void (*initializeStates_)(Vc::double_v states[]);  //< runtime-created and loaded function to set all initial values for the states
 
   bool useVc_;                                       //< if the Vc library is used, if not, code for the GPU or OpenMP is generated

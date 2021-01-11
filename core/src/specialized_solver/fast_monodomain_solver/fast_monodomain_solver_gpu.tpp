@@ -262,19 +262,30 @@ void computeMonodomain(double *states, const double *parameters,
 
   if (optimizationType_ == "gpu")
     sourceCode << R"(
-  #pragma omp target map(tofrom: states, fiberIsCurrentlyStimulated, lastStimulationCheckTime, currentJitter, jitterIndex) \
-      map(to: parameters, algebraicsForTransferIndices, elementLengths, firingEvents, setSpecificStatesFrequencyJitter, motorUnitNo, \
-          fiberStimulationPointIndex, setSpecificStatesCallFrequency, setSpecificStatesRepeatAfterFirstCall, setSpecificStatesCallEnableBegin) \
-      map(from: algebraicsForTransfer)
-  {
-)";
-   sourceCode << R"(
   // size constants
   const int nInstancesPerFiber = )" << nInstancesToComputePerFiber_ << R"(;
   const int nElementsOnFiber = )" << nInstancesToComputePerFiber_-1 << R"(;
   const int nFibersToCompute = )" << nFibersToCompute_ << R"(;
   const long long nInstancesToCompute = )" << nFibersToCompute_*nInstancesToComputePerFiber_ << R"(;  // = nInstancesPerFiber*nFibersToCompute
-  //const int nStates = )" << nStates << R"(;
+  const int nStatesTotal = nInstancesToCompute*nStates;
+  const int nParametersTotal = nInstancesToCompute*)" << nParametersPerInstance_<< R"(;
+  const int nElementLengths = nElementsOnFiber*nFibersToCompute;
+  const int nFiringEvents = firingEventsNRows*firingEventsNColumns;
+  const int nFrequencyJitter = nFibersToCompute*frequencyJitterNColumns;
+  const int nAlgebraicsForTransfer = nInstancesToCompute*nAlgebraicsForTransferIndices;
+
+  #pragma omp target \
+      map(tofrom: states[:nStatesTotal], fiberIsCurrentlyStimulated[:nFibersToCompute], \
+          lastStimulationCheckTime[:nFibersToCompute], currentJitter[:nFibersToCompute], jitterIndex[:nFibersToCompute]) \
+      map(to: parameters[:nParametersTotal], algebraicsForTransferIndices[:nAlgebraicsForTransferIndices], \
+          elementLengths[:nElementLengths], firingEvents[:nFiringEvents], setSpecificStatesFrequencyJitter[:nFrequencyJitter], \
+          motorUnitNo[:nFibersToCompute], fiberStimulationPointIndex[:nFibersToCompute], \
+          setSpecificStatesCallFrequency[:nFibersToCompute], setSpecificStatesRepeatAfterFirstCall[:nFibersToCompute], \
+          setSpecificStatesCallEnableBegin[:nFibersToCompute]) \
+      map(from: algebraicsForTransfer[:nAlgebraicsForTransfer])
+  {
+)";
+   sourceCode << R"(
   //const int nAlgebraics = )" << nAlgebraics << R"(;
 
   // loop over splitting time steps
@@ -739,6 +750,18 @@ computeMonodomainGpu()
       // set state 0
       gpuStates_[0*nInstancesToCompute + instanceNoTotal] = fiberData_[fiberDataNo].vmValues[instanceNo];
     }
+  }
+
+  if (gpuFiringEventsNRows_*gpuFiringEventsNColumns_ != gpuFiringEvents_.size())
+  {
+    LOG(FATAL) << "number of firing events (" << gpuFiringEvents_.size() << ") does not match determined size "
+      << gpuFiringEventsNRows_ << "x" << gpuFiringEventsNColumns_ << "=" << gpuFiringEventsNRows_*gpuFiringEventsNColumns_;
+  }
+
+  if (nFibersToCompute_*gpuFrequencyJitterNColumns_ != gpuSetSpecificStatesFrequencyJitter_.size())
+  {
+    LOG(FATAL) << "number of frequency jitter entries (" << gpuSetSpecificStatesFrequencyJitter_.size() << ") does not match determined size "
+      << nFibersToCompute_ << "x" << gpuFrequencyJitterNColumns_ << "=" << nFibersToCompute_*gpuFrequencyJitterNColumns_;
   }
 
   // call the compiled function

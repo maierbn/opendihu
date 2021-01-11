@@ -94,8 +94,9 @@ initialize()
   // parse firingTimesFilename_
   std::string firingTimesFileContents = MPIUtility::loadFile(firingTimesFilename_, rankSubset->mpiCommunicator());
   gpuFiringEventsNColumns_ = 0;
+  gpuFiringEventsNRows_ = 0;
 
-  // parse file contents of firing times file
+  // parse file contents of firing times file, loop over rows
   while (!firingTimesFileContents.empty())
   {
     // extract line
@@ -137,6 +138,7 @@ initialize()
       gpuFiringEventsNColumns_ = columnNo;
       LOG(DEBUG) << "firing events file contains " << gpuFiringEventsNColumns_ << " columns.";
     }
+    gpuFiringEventsNRows_++;
   }
 
   // parse fiberDistributionFile

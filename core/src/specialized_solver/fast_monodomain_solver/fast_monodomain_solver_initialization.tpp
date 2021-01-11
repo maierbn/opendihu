@@ -91,6 +91,7 @@ initialize()
 
   // parse firingTimesFilename_
   std::string firingTimesFileContents = MPIUtility::loadFile(firingTimesFilename_, rankSubset->mpiCommunicator());
+  gpuFiringEventsNColumns_ = 0;
 
   // parse file contents of firing times file
   while (!firingTimesFileContents.empty())
@@ -103,14 +104,23 @@ initialize()
     std::string line = firingTimesFileContents.substr(0, lineEndPos);
     firingTimesFileContents.erase(0, lineEndPos+1);
 
+    //variable has the following layout: firingEvents_[timeStepNo][motorUnitNo]
     firingEvents_.push_back(std::vector<bool>());
 
-    // parse line
-    while (!line.empty())
+    // parse line, loop over columns
+    int columnNo = 0;
+    for (; !line.empty(); columnNo++)
     {
       int entry = atoi(line.c_str());
 
+      // the variable firingEvents_ is for normal execution
       firingEvents_.back().push_back((bool)(entry));
+
+      // the variable gpuFiringEvents_ is to be send to gpu
+      if (gpuFiringEventsNColumns_ == 0 || columnNo < gpuFiringEventsNColumns_)
+      {
+        gpuFiringEvents_.push_back(entry? 1 : 0);
+      }
 
       std::size_t pos = line.find_first_of("\t ");
       if (pos == std::string::npos)
@@ -119,6 +129,11 @@ initialize()
 
       while (!isdigit(line[0]) && !line.empty())
         line.erase(0,1);
+    }
+    if (gpuFiringEventsNColumns_ == 0)
+    {
+      gpuFiringEventsNColumns_ = columnNo;
+      LOG(DEBUG) << "firing events file contains " << gpuFiringEventsNColumns_ << " columns.";
     }
   }
 
@@ -296,6 +311,12 @@ initialize()
           }
         }
 
+        // add values to gpuSetSpecificStatesFrequencyJitter_
+        gpuSetSpecificStatesFrequencyJitter_.insert(gpuSetSpecificStatesFrequencyJitter_.end(),
+                                                    cellmlAdapter.setSpecificStatesFrequencyJitter_.begin(),
+                                                    cellmlAdapter.setSpecificStatesFrequencyJitter_.end());
+        gpuFrequencyJitterNColumns_ = cellmlAdapter.setSpecificStatesFrequencyJitter_.size();
+
         // increase index for fiberData_ struct
         fiberDataNo++;
       }
@@ -345,11 +366,14 @@ initialize()
     gpuParameters_.resize(nInstancesToCompute_*nParametersPerInstance_);
     gpuAlgebraicsForTransfer_.resize(nInstancesToCompute_*algebraicsForTransferIndices_.size());
 
+    int nElementsOnFiber = nInstancesToComputePerFiber_-1;
+    gpuElementLengths_.resize(nElementsOnFiber*nFibersToCompute_);
+
     for (int parameterNo = 0; parameterNo < nParametersPerInstance_; parameterNo++)
     {
-      for (int instanceNo = 0; instanceNo < nInstancesToCompute_; instanceNo++)
+      for (int instanceNoToCompute = 0; instanceNoToCompute < nInstancesToCompute_; instanceNoToCompute++)
       {
-        gpuParameters_[parameterNo*nInstancesToCompute_ + instanceNo] = parameterValues[parameterNo*nAlgebraicsLocalCellml];    // note, the stride in parameterValues is "nAlgebraicsLocalCellml", not "nParametersPerInstance_"
+        gpuParameters_[parameterNo*nInstancesToCompute_ + instanceNoToCompute] = parameterValues[parameterNo*nAlgebraicsLocalCellml];    // note, the stride in parameterValues is "nAlgebraicsLocalCellml", not "nParametersPerInstance_"
       }
     }
   }

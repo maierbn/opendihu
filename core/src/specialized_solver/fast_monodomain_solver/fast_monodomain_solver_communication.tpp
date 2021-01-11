@@ -174,11 +174,23 @@ fetchFiberData()
           }
           else
           {
+            int instanceNoToCompute = fiberDataNo*nInstancesOnFiber + instanceNo;
+
             // set all received parameter values for the current instance in the correct slot in the vc vector of the current pointBuffer compute buffer
             for (int parameterNo = 0; parameterNo < nParametersPerInstance; parameterNo++)
             {
-              gpuParameters_[parameterNo*nInstancesToCompute_ + instanceNo] = parametersReceiveBuffer[instanceNo*nParametersPerInstance + parameterNo];
+              // gpuParameters_[parameterNo*nInstances + instanceNo]
+              gpuParameters_[parameterNo*nInstancesToCompute_ + instanceNoToCompute] = parametersReceiveBuffer[instanceNo*nParametersPerInstance + parameterNo];
             }
+          }
+        }
+
+        if (!useVc_)
+        {
+          int nElementsOnFiber = fiberFunctionSpace->nElementsGlobal();
+          for (int elementNo = 0; elementNo < nElementsOnFiber; elementNo++)
+          {
+            gpuElementLengths_[fiberDataNo*nElementsOnFiber + elementNo] = elementLengthsReceiveBuffer[elementNo];
           }
         }
       }

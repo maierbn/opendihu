@@ -213,7 +213,7 @@ struct FiberData
   }
 
   // instead of calling setSpecificStates, directly determine whether to stimulate from the firingEvents file
-  int firingEventsTimeStepNo = round(currentTime * setSpecificStatesCallFrequency);
+  int firingEventsTimeStepNo = int(currentTime * setSpecificStatesCallFrequency + 0.5);
   int firingEventsIndex = (firingEventsTimeStepNo % firingEventsNRows)*firingEventsNColumns + (motorUnitNo % firingEventsNColumns);
   // firingEvents_[timeStepNo*nMotorUnits + motorUnitNo]
 
@@ -350,7 +350,7 @@ void computeMonodomain(double *states, const double *parameters,
             }
 
             // instead of calling setSpecificStates, directly determine whether to stimulate from the firingEvents file
-            int firingEventsTimeStepNo = round(currentTime * setSpecificStatesCallFrequency[fiberNo]);
+            int firingEventsTimeStepNo = int(currentTime * setSpecificStatesCallFrequency[fiberNo] + 0.5);
             int firingEventsIndex = (firingEventsTimeStepNo % firingEventsNRows)*firingEventsNColumns + (motorUnitNo[fiberNo] % firingEventsNColumns);
             // firingEvents_[timeStepNo*nMotorUnits + motorUnitNo[fiberNo]]
 
@@ -629,7 +629,7 @@ void computeMonodomain(double *states, const double *parameters,
             }
 
             // instead of calling setSpecificStates, directly determine whether to stimulate from the firingEvents file
-            int firingEventsTimeStepNo = round(currentTime * setSpecificStatesCallFrequency[fiberNo]);
+            int firingEventsTimeStepNo = int(currentTime * setSpecificStatesCallFrequency[fiberNo] + 0.5);
             int firingEventsIndex = (firingEventsTimeStepNo % firingEventsNRows)*firingEventsNColumns + (motorUnitNo[fiberNo] % firingEventsNColumns);
             // firingEvents_[timeStepNo*nMotorUnits + motorUnitNo[fiberNo]]
 

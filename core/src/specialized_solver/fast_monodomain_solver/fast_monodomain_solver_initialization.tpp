@@ -367,6 +367,7 @@ initialize()
   {
     gpuParameters_.resize(nInstancesToCompute_*nParametersPerInstance_);
     gpuAlgebraicsForTransfer_.resize(nInstancesToCompute_*algebraicsForTransferIndices_.size());
+    gpuFiberIsCurrentlyStimulated_.resize(nFibersToCompute_, 0);
 
     int nElementsOnFiber = nInstancesToComputePerFiber_-1;
     gpuElementLengths_.resize(nElementsOnFiber*nFibersToCompute_);

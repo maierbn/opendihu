@@ -21,13 +21,15 @@ from create_partitioned_meshes_for_settings import *   # file create_partitioned
 
 # if first argument contains "*.py", it is a custom variable definition file, load these values
 if ".py" in sys.argv[0]:
-  variables_file = sys.argv[0]
-  variables_module = variables_file[0:variables_file.find(".py")]
+  variables_path_and_filename = sys.argv[0]
+  variables_path,variables_filename = os.path.split(variables_path_and_filename)  # get path and filename 
+  sys.path.insert(0, os.path.join(script_path,variables_path))                    # add the directory of the variables file to python path
+  variables_module,_ = os.path.splitext(variables_filename)                       # remove the ".py" extension to get the name of the module
   
   if rank_no == 0:
-    print("Loading variables from {}.".format(variables_file))
+    print("Loading variables from \"{}\".".format(variables_path_and_filename))
     
-  custom_variables = importlib.import_module(variables_module)
+  custom_variables = importlib.import_module(variables_module, package=variables_filename)    # import variables module
   variables.__dict__.update(custom_variables.__dict__)
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:

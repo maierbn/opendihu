@@ -97,12 +97,16 @@ initializeCellMLSourceFileGpu()
   // load the rhs library
   void *handle = CellmlAdapterType::loadRhsLibraryGetHandle(libraryFilename);
 
-  computeMonodomain_ = (void (*)(FiberData *fiberData, double *states, const double *parameters,
-                             double *algebraicsForTransfer, const int *algebraicsForTransferIndices, int nAlgebraicsForTransferIndices,
-                             const double *elementLengths, char *firingEvents, int firingEventsNRows, int firingEventsNColumns,
-                             double *setSpecificStatesFrequencyJitter, int frequencyJitterNColumns, char *fiberIsCurrentlyStimulated,
-                             double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
-                             double prefactor, double valueForStimulatedPoint)) dlsym(handle, "computeMonodomain");
+  computeMonodomain_ = (void (*)(double *states, const double *parameters,
+                                double *algebraicsForTransfer, const int *algebraicsForTransferIndices, int nAlgebraicsForTransferIndices,
+                                const double *elementLengths, const char *firingEvents, int firingEventsNRows, int firingEventsNColumns,
+                                const double *setSpecificStatesFrequencyJitter, int frequencyJitterNColumns, char *fiberIsCurrentlyStimulated,
+                                double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
+                                double prefactor, double valueForStimulatedPoint,
+                                const int *motorUnitNo, const int *fiberStimulationPointIndex, double *lastStimulationCheckTime,
+                                const double *setSpecificStatesCallFrequency, const double *setSpecificStatesRepeatAfterFirstCall,
+                                const double *setSpecificStatesCallEnableBegin,
+                                double *currentJitter, int *jitterIndex)) dlsym(handle, "computeMonodomain");
 
   LOG(DEBUG) << "computeMonodomain: " << (computeMonodomain_==nullptr? "no" : "yes");
 
@@ -129,6 +133,7 @@ generateMonodomainSolverGpuSource(std::string outputFilename, std::string header
 
   // define the struct
   sourceCode << R"(
+    /*
 typedef unsigned long long global_no_t;
 
 // struct with which data is transferred from the calling code
@@ -154,13 +159,13 @@ struct FiberData
   int jitterIndex;                              //< index of the vector in setSpecificStatesFrequencyJitter which is the current value to use
   bool currentlyStimulating;                    //< if a stimulation is in progress at the current time
 };
-
+*/
 )";
 
   // define compute0D which computes one Heun step
   sourceCode
     << "// determine if an instance is stimulated on a fiber at the current point in time\n"
-    << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif" << std::endl
+    << "/*\n#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif" << std::endl
     << R"(bool isCurrentPointStimulated(FiberData *fiberData, char *firingEvents, int firingEventsNRows, int firingEventsNColumns,
                               double *setSpecificStatesFrequencyJitter, int frequencyJitterNColumns, char *fiberIsCurrentlyStimulated,
                               int fiberDataNo, double currentTime, bool currentPointIsInCenter)
@@ -231,6 +236,7 @@ struct FiberData
   bool stimulateCurrentPoint = stimulate && currentPointIsInCenter;
   return stimulateCurrentPoint;
 }
+*/
 
 )";
 
@@ -241,18 +247,25 @@ struct FiberData
     << "// compute the total monodomain equation\n"
     << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif"
     << R"(
-void computeMonodomain(FiberData *fiberData, double *states, const double *parameters,
+void computeMonodomain(double *states, const double *parameters,
                        double *algebraicsForTransfer, const int *algebraicsForTransferIndices, int nAlgebraicsForTransferIndices,
-                       const double *elementLengths, char *firingEvents, int firingEventsNRows, int firingEventsNColumns,
-                       double *setSpecificStatesFrequencyJitter, int frequencyJitterNColumns, char *fiberIsCurrentlyStimulated,
+                       const double *elementLengths, const char *firingEvents, int firingEventsNRows, int firingEventsNColumns,
+                       const double *setSpecificStatesFrequencyJitter, int frequencyJitterNColumns, char *fiberIsCurrentlyStimulated,
                        double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
-                       double prefactor, double valueForStimulatedPoint)
+                       double prefactor, double valueForStimulatedPoint,
+                       const int *motorUnitNo, const int *fiberStimulationPointIndex, double *lastStimulationCheckTime,
+                       const double *setSpecificStatesCallFrequency, const double *setSpecificStatesRepeatAfterFirstCall,
+                       const double *setSpecificStatesCallEnableBegin,
+                       double *currentJitter, int *jitterIndex)
 {
 )";
 
   if (optimizationType_ == "gpu")
     sourceCode << R"(
-  #pragma omp target map(tofrom: fiberData, states) map(to: parameters, algebraicsForTransferIndices, elementLengths, firingEvents, setSpecificStatesFrequencyJitter) map(from: algebraicsForTransfer)
+  #pragma omp target map(tofrom: states, fiberIsCurrentlyStimulated, lastStimulationCheckTime, currentJitter, jitterIndex) \
+      map(to: parameters, algebraicsForTransferIndices, elementLengths, firingEvents, setSpecificStatesFrequencyJitter, motorUnitNo, \
+          fiberStimulationPointIndex, setSpecificStatesCallFrequency, setSpecificStatesRepeatAfterFirstCall, setSpecificStatesCallEnableBegin) \
+      map(from: algebraicsForTransfer)
   {
 )";
    sourceCode << R"(
@@ -296,7 +309,7 @@ void computeMonodomain(FiberData *fiberData, double *states, const double *param
         int instanceToComputeNo = fiberNo*nInstancesPerFiber + instanceNo;    // index of instance over all fibers
 
         // determine if current point is at center of fiber
-        int fiberCenterIndex = fiberData[fiberNo].fiberStimulationPointIndex;
+        int fiberCenterIndex = fiberStimulationPointIndex[fiberNo];
         bool currentPointIsInCenter = fabs(fiberCenterIndex - instanceNo) < 4;
 
         // loop over 0D timesteps
@@ -308,17 +321,44 @@ void computeMonodomain(FiberData *fiberData, double *states, const double *param
           // check if current point will be stimulated
           bool stimulateCurrentPoint = false;
           if (currentPointIsInCenter)
-            stimulateCurrentPoint = isCurrentPointStimulated(
-              fiberData, firingEvents, firingEventsNRows, firingEventsNColumns,
-              setSpecificStatesFrequencyJitter, frequencyJitterNColumns, fiberIsCurrentlyStimulated,
-              fiberNo, currentTime, currentPointIsInCenter);
+          {
+            // check if time has come to call setSpecificStates
+            bool checkStimulation = false;
+
+            if (currentTime >= lastStimulationCheckTime[fiberNo] + 1./(setSpecificStatesCallFrequency[fiberNo]+currentJitter[fiberNo])
+                && currentTime >= setSpecificStatesCallEnableBegin[fiberNo]-1e-13)
+            {
+              checkStimulation = true;
+
+              // if current stimulation is over
+              if (setSpecificStatesRepeatAfterFirstCall[fiberNo] != 0
+                  && currentTime - (lastStimulationCheckTime[fiberNo] + 1./(setSpecificStatesCallFrequency[fiberNo] + currentJitter[fiberNo])) > setSpecificStatesRepeatAfterFirstCall[fiberNo])
+              {
+                // advance time of last call to specificStates
+                lastStimulationCheckTime[fiberNo] += 1./(setSpecificStatesCallFrequency[fiberNo] + currentJitter[fiberNo]);
+
+                // compute new jitter value
+                double jitterFactor = 0.0;
+                if (frequencyJitterNColumns > 0)
+                  jitterFactor = setSpecificStatesFrequencyJitter[fiberNo*frequencyJitterNColumns + jitterIndex[fiberNo] % frequencyJitterNColumns];
+                currentJitter[fiberNo] = jitterFactor * setSpecificStatesCallFrequency[fiberNo];
+
+                jitterIndex[fiberNo]++;
+
+                checkStimulation = false;
+              }
+            }
+
+            // instead of calling setSpecificStates, directly determine whether to stimulate from the firingEvents file
+            int firingEventsTimeStepNo = round(currentTime * setSpecificStatesCallFrequency[fiberNo]);
+            int firingEventsIndex = (firingEventsTimeStepNo % firingEventsNRows)*firingEventsNColumns + (motorUnitNo[fiberNo] % firingEventsNColumns);
+            // firingEvents_[timeStepNo*nMotorUnits + motorUnitNo[fiberNo]]
+
+            stimulateCurrentPoint = checkStimulation && firingEvents[firingEventsIndex];
+            fiberIsCurrentlyStimulated[fiberNo] = stimulateCurrentPoint? 1: 0;
+          }
           const bool storeAlgebraicsForTransfer = false;
 
-          // call method to compute 0D problem
-          // compute0DInstance_(fiberPointBuffers_[pointBuffersNo].states, fiberPointBuffersParameters_[pointBuffersNo],
-          //                  currentTime, timeStepWidth, stimulateCurrentPoint,
-          //                  argumentStoreAlgebraics, fiberPointBuffersAlgebraicsForTransfer_[pointBuffersNo],
-          //                  algebraicsForTransferIndices_, valueForStimulatedPoint_);
           )" << mainCode << R"(        }  // loop over 0D timesteps
       }  // loop over instances)";
 
@@ -548,7 +588,7 @@ void computeMonodomain(FiberData *fiberData, double *states, const double *param
         int instanceToComputeNo = fiberNo*nInstancesPerFiber + instanceNo;    // index of instance over all fibers
 
         // determine if current point is at center of fiber
-        int fiberCenterIndex = fiberData[fiberNo].fiberStimulationPointIndex;
+        int fiberCenterIndex = fiberStimulationPointIndex[fiberNo];
         bool currentPointIsInCenter = fabs(fiberCenterIndex - instanceNo) < 4;
 
         // loop over 0D timesteps
@@ -560,10 +600,42 @@ void computeMonodomain(FiberData *fiberData, double *states, const double *param
           // check if current point will be stimulated
           bool stimulateCurrentPoint = false;
           if (currentPointIsInCenter)
-            stimulateCurrentPoint = isCurrentPointStimulated(
-              fiberData, firingEvents, firingEventsNRows, firingEventsNColumns,
-              setSpecificStatesFrequencyJitter, frequencyJitterNColumns, fiberIsCurrentlyStimulated,
-              fiberNo, currentTime, currentPointIsInCenter);
+          {
+            // check if time has come to call setSpecificStates
+            bool checkStimulation = false;
+
+            if (currentTime >= lastStimulationCheckTime[fiberNo] + 1./(setSpecificStatesCallFrequency[fiberNo]+currentJitter[fiberNo])
+                && currentTime >= setSpecificStatesCallEnableBegin[fiberNo]-1e-13)
+            {
+              checkStimulation = true;
+
+              // if current stimulation is over
+              if (setSpecificStatesRepeatAfterFirstCall[fiberNo] != 0
+                  && currentTime - (lastStimulationCheckTime[fiberNo] + 1./(setSpecificStatesCallFrequency[fiberNo] + currentJitter[fiberNo])) > setSpecificStatesRepeatAfterFirstCall[fiberNo])
+              {
+                // advance time of last call to specificStates
+                lastStimulationCheckTime[fiberNo] += 1./(setSpecificStatesCallFrequency[fiberNo] + currentJitter[fiberNo]);
+
+                // compute new jitter value
+                double jitterFactor = 0.0;
+                if (frequencyJitterNColumns > 0)
+                  jitterFactor = setSpecificStatesFrequencyJitter[fiberNo*frequencyJitterNColumns + jitterIndex[fiberNo] % frequencyJitterNColumns];
+                currentJitter[fiberNo] = jitterFactor * setSpecificStatesCallFrequency[fiberNo];
+
+                jitterIndex[fiberNo]++;
+
+                checkStimulation = false;
+              }
+            }
+
+            // instead of calling setSpecificStates, directly determine whether to stimulate from the firingEvents file
+            int firingEventsTimeStepNo = round(currentTime * setSpecificStatesCallFrequency[fiberNo]);
+            int firingEventsIndex = (firingEventsTimeStepNo % firingEventsNRows)*firingEventsNColumns + (motorUnitNo[fiberNo] % firingEventsNColumns);
+            // firingEvents_[timeStepNo*nMotorUnits + motorUnitNo[fiberNo]]
+
+            stimulateCurrentPoint = checkStimulation && firingEvents[firingEventsIndex];
+            fiberIsCurrentlyStimulated[fiberNo] = stimulateCurrentPoint? 1: 0;
+          }
           const bool storeAlgebraicsForTransfer = storeAlgebraicsForTransferSplitting && timeStepNo == nTimeSteps0D-1;
 
           // call method to compute 0D problem
@@ -670,12 +742,15 @@ computeMonodomainGpu()
   }
 
   // call the compiled function
-  computeMonodomain_(fiberData_.data(), gpuStates_.data(), gpuParameters_.data(),
+  computeMonodomain_(gpuStates_.data(), gpuParameters_.data(),
                      gpuAlgebraicsForTransfer_.data(), algebraicsForTransferIndices_.data(), algebraicsForTransferIndices_.size(),
                      gpuElementLengths_.data(), gpuFiringEvents_.data(), gpuFiringEventsNRows_, gpuFiringEventsNColumns_,
                      gpuSetSpecificStatesFrequencyJitter_.data(), gpuFrequencyJitterNColumns_, gpuFiberIsCurrentlyStimulated_.data(),
                      startTime, timeStepWidthSplitting, nTimeStepsSplitting_, dt0D, nTimeSteps0D, dt1D, nTimeSteps1D,
-                     prefactor, valueForStimulatedPoint_);
+                     prefactor, valueForStimulatedPoint_,
+                     gpuMotorUnitNo_.data(), gpuFiberStimulationPointIndex_.data(), gpuLastStimulationCheckTime_.data(),
+                     gpuSetSpecificStatesCallFrequency_.data(), gpuSetSpecificStatesRepeatAfterFirstCall_.data(), gpuSetSpecificStatesCallEnableBegin_.data(),
+                     gpuCurrentJitter_.data(), gpuJitterIndex_.data());
 
   // copy the resulting values back to fiberData_
   for (int fiberDataNo = 0; fiberDataNo < nFibersToCompute_; fiberDataNo++)

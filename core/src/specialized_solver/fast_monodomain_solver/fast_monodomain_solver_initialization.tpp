@@ -379,6 +379,25 @@ initialize()
         gpuParameters_[parameterNo*nInstancesToCompute_ + instanceNoToCompute] = parameterValues[parameterNo*nAlgebraicsLocalCellml];    // note, the stride in parameterValues is "nAlgebraicsLocalCellml", not "nParametersPerInstance_"
       }
     }
+
+    gpuMotorUnitNo_.resize(nFibersToCompute_);
+    gpuFiberStimulationPointIndex_.resize(nFibersToCompute_);
+    gpuLastStimulationCheckTime_.resize(nFibersToCompute_);
+    gpuSetSpecificStatesCallFrequency_.resize(nFibersToCompute_);
+    gpuSetSpecificStatesRepeatAfterFirstCall_.resize(nFibersToCompute_);
+    gpuSetSpecificStatesCallEnableBegin_.resize(nFibersToCompute_);
+    gpuCurrentJitter_.resize(nFibersToCompute_, 0.0);
+    gpuJitterIndex_.resize(nFibersToCompute_, 0);
+
+    for (int fiberDataNo = 0; fiberDataNo < nFibersToCompute_; fiberDataNo++)
+    {
+      gpuMotorUnitNo_[fiberDataNo]                           = fiberData_.at(fiberDataNo).motorUnitNo;
+      gpuFiberStimulationPointIndex_[fiberDataNo]            = fiberData_.at(fiberDataNo).fiberStimulationPointIndex;
+      gpuLastStimulationCheckTime_[fiberDataNo]              = fiberData_.at(fiberDataNo).lastStimulationCheckTime;
+      gpuSetSpecificStatesCallFrequency_[fiberDataNo]        = fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency;
+      gpuSetSpecificStatesRepeatAfterFirstCall_[fiberDataNo] = fiberData_.at(fiberDataNo).setSpecificStatesRepeatAfterFirstCall;
+      gpuSetSpecificStatesCallEnableBegin_[fiberDataNo]      = fiberData_.at(fiberDataNo).setSpecificStatesCallEnableBegin;
+    }
   }
 
   // close raw array representation of parameterValues() of cellmlAdapter.data()

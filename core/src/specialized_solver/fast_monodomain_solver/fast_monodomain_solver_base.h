@@ -230,13 +230,20 @@ protected:
 
   std::vector<double> gpuParameters_;              //< for "gpu": constant parameter values, in struct of array memory layout: gpuParameters_[parameterNo*nInstances + instanceNo]
   std::vector<double> gpuAlgebraicsForTransfer_;   //< for "gpu": algebraic values to use for slot connector data, in struct of array memory layout: gpuAlgebraicsForTransfer_[algebraicNo*nInstances + instanceNo]
+  std::vector<double> gpuElementLengths_;          //< for "gpu": the lengths of the 1D elements, in struct of array memory layout: gpuElementLengths_[fiberDataNo*nElementsOnFiber + elementNo]
+  std::vector<char> gpuFiringEvents_;              //< for "gpu": if a motor unit fires at a specified time, 1=yes, 0=no, gpuFiringEvents_[timeStepNo*nMotorUnits + motorUnitNo]
+  std::vector<double> gpuSetSpecificStatesFrequencyJitter_;  //< for "gpu", value of option with the same name in the python settings: gpuSetSpecificStatesFrequencyJitter_[fiberNo*nColumns + columnNo]
+  int gpuFiringEventsNRows_;                       //< for "gpu": number of rows in the firing events file
+  int gpuFiringEventsNColumns_;                    //< for "gpu": number of columns in the firing events file
+  int gpuFrequencyJitterNColumns_;                 //< for "gpu": number of columns in the gpuSetSpecificStatesFrequencyJitter_ array
 
   void (*compute0DInstance_)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &, double);   //< runtime-created and loaded function to compute one Heun step of the 0D problem
-  void (*computeMonodomain_)(std::vector<FiberData> &fiberData, std::vector<double> &states, const std::vector<double> &parameters,
-                              std::vector<double> &algebraicsForTransfer, const std::vector<int> &algebraicsForTransferIndices,
-                              const std::vector<std::vector<bool>> &firingEvents,
-                              double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
-                              double prefactor, double valueForStimulatedPoint);   //< runtime-created and loaded function to compute monodomain equation
+  void (*computeMonodomain_)(FiberData *fiberData, double *states, const double *parameters,
+                             double *algebraicsForTransfer, const int *algebraicsForTransferIndices, int nAlgebraicsForTransferIndices,
+                             const double *elementLengths, char *firingEvents, int firingEventsNRows, int firingEventsNColumns,
+                             double *setSpecificStatesFrequencyJitter, int frequencyJitterNColumns,
+                             double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
+                             double prefactor, double valueForStimulatedPoint);   //< runtime-created and loaded function to compute monodomain equation
   void (*initializeStates_)(Vc::double_v states[]);  //< runtime-created and loaded function to set all initial values for the states
 
   bool useVc_;                                       //< if the Vc library is used, if not, code for the GPU or OpenMP is generated

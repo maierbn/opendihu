@@ -129,6 +129,7 @@ generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibers
     << "#include <omp.h>\n"
     << "#include <iostream>\n"
     << "#include <vector>\n"
+    << "#pragma omp declare target\n\n"
     << cellMLCode_.header << std::endl;
     
   auto t = std::time(nullptr);
@@ -354,7 +355,7 @@ generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibers
           // store algebraics for transfer
           if (storeAlgebraicsForTransfer)
           {
-            for (int i = 0; i < algebraicsForTransferIndices.size(); i++)
+            for (int i = 0; i < nAlgebraicsForTransferIndices; i++)
             {
               const int algebraicIndex = algebraicsForTransferIndices[i];
 

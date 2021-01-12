@@ -278,7 +278,7 @@ void computeMonodomain(double *states, const double *parameters,
             fiberIsCurrentlyStimulated[fiberNo] = stimulateCurrentPoint? 1: 0;
 
             // output to console
-            if (stimulateCurrentPoint)
+            if (stimulateCurrentPoint && fiberCenterIndex == instanceNo)
             {
               if (omp_is_initial_device())
                 printf("t: %f, stimulate fiber %d (local no.), MU %d (computation on CPU)\n", currentTime, fiberNo, motorUnitNo[fiberNo]);

@@ -148,8 +148,8 @@ protected:
   //! set the initial values for all states
   virtual void initializeStates(Vc::double_v states[]){};
 
-  //! initialize the states vector that is used for GPU computation
-  void initializeGpuStates();
+  //! initialize the states vector and other static data that is used for GPU computation
+  void initializeValuesOnGpu();
 
   //! generate source code to solve the monodomain equation with offloading to gpu
   void generateMonodomainSolverGpuSource(std::string filename, std::string headerCode, std::string mainCode);
@@ -188,7 +188,6 @@ protected:
   };
 
   std::vector<FiberPointBuffers<nStates>> fiberPointBuffers_;    //< computation buffers for the 0D problem, the states vector used when optimizationType == "vc"
-  std::vector<double> gpuStates_;          //< the states vector used when optimizationType == "gpu", in struct of array memory layout: statesGpu_[stateNo*nInstances + instanceNo]
 
   std::string fiberDistributionFilename_;  //< filename of the fiberDistributionFile, which contains motor unit numbers for fiber numbers
   std::string firingTimesFilename_;        //< filename of the firingTimesFile, which contains points in time of stimulation for each motor unit
@@ -202,7 +201,7 @@ protected:
 
   std::vector<FiberData> fiberData_;  //< vector of fibers, the number of entries is the number of fibers to be computed by the own rank (nFibersToCompute_)
   int nFibersToCompute_;              //< number of fibers where own rank is involved (>= n.fibers that are computed by own rank)
-  int nInstancesToCompute_;           //< number of instances of the Hodgkin-Huxley problem to compute on this rank
+  int nInstancesToCompute_;           //< number of instances of the Hodgkin-Huxley (or other CellML) problem to compute on this rank
   int nInstancesToComputePerFiber_;   //< number of instances to compute per fiber, i.e., global number of instances of a fiber
   int nParametersPerInstance_;        //< number of parameters per instance
   double currentTime_;                //< the current time used for the output writer
@@ -230,6 +229,7 @@ protected:
 
   std::vector<double> gpuParameters_;              //< for "gpu": constant parameter values, in struct of array memory layout: gpuParameters_[parameterNo*nInstances + instanceNo]
   std::vector<double> gpuAlgebraicsForTransfer_;   //< for "gpu": algebraic values to use for slot connector data, in struct of array memory layout: gpuAlgebraicsForTransfer_[algebraicNo*nInstances + instanceNo]
+  std::vector<double> gpuStatesForTransfer_;       //< for "gpu": state values to use for slot connector data, in struct of array memory layout: gpuStatesForTransfer_[stateInThisListIndex*nInstances + instanceNo]
   std::vector<double> gpuElementLengths_;          //< for "gpu": the lengths of the 1D elements, in struct of array memory layout: gpuElementLengths_[fiberDataNo*nElementsOnFiber + elementNo]
   std::vector<char> gpuFiringEvents_;              //< for "gpu": if a motor unit fires at a specified time, 1=yes, 0=no, gpuFiringEvents_[timeStepNo*nMotorUnits + motorUnitNo]
   std::vector<double> gpuSetSpecificStatesFrequencyJitter_;  //< for "gpu", value of option with the same name in the python settings: gpuSetSpecificStatesFrequencyJitter_[fiberNo*nColumns + columnNo]
@@ -245,20 +245,19 @@ protected:
   std::vector<double> gpuSetSpecificStatesCallEnableBegin_;      //< value of option with the same name in the python settings
   std::vector<double> gpuCurrentJitter_;                         //< current absolute value of jitter to add to setSpecificStatesCallFrequency
   std::vector<int> gpuJitterIndex_;                              //< index of the vector in setSpecificStatesFrequencyJitter which is the current value to use
+  std::vector<double> gpuVmValues_;                      //< for "gpu": values of the first state, gpuVmValues_[instanceToComputeNo]
   bool generateGpuSource_;                               //< if the GPU source code should be generated, if not it reuses the existing file, this is for debugging
 
   void (*compute0DInstance_)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &, double);   //< runtime-created and loaded function to compute one Heun step of the 0D problem
-  void (*computeMonodomain_)(double *states, const double *parameters,
-                            double *algebraicsForTransfer, const int *algebraicsForTransferIndices, int nAlgebraicsForTransferIndices,
-                            const double *elementLengths, const char *firingEvents, int firingEventsNRows, int firingEventsNColumns,
-                            const double *setSpecificStatesFrequencyJitter, int frequencyJitterNColumns, char *fiberIsCurrentlyStimulated,
-                            double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
-                            double prefactor, double valueForStimulatedPoint,
-                            const int *motorUnitNo, const int *fiberStimulationPointIndex, double *lastStimulationCheckTime,
-                            const double *setSpecificStatesCallFrequency, const double *setSpecificStatesRepeatAfterFirstCall,
-                            const double *setSpecificStatesCallEnableBegin,
-                            double *currentJitter, int *jitterIndex
-                            );   //< runtime-created and loaded function to compute monodomain equation
+  void (*computeMonodomain_)(double *vmvalues, const double *parameters,
+                              double *algebraicsForTransfer, double *statesForTransfer, const double *elementLengths,
+                              double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
+                              double prefactor, double valueForStimulatedPoint);   //< runtime-created and loaded function to compute monodomain equation
+  void (*initializeArrays_)(const double *statesOneInstance, const int *algebraicsForTransferIndicesParameter, const int *statesForTransferIndicesParameter,
+                            const char *firingEventsParameter, const double *setSpecificStatesFrequencyJitterParameter, const int *motorUnitNoParameter,
+                            const int *fiberStimulationPointIndexParameter, const double *lastStimulationCheckTimeParameter,
+                            const double *setSpecificStatesCallFrequencyParameter, const double *setSpecificStatesRepeatAfterFirstCallParameter,
+                            const double *setSpecificStatesCallEnableBeginParameter);   //< function that initializes all data on the target device (GPU)
   void (*initializeStates_)(Vc::double_v states[]);  //< runtime-created and loaded function to set all initial values for the states
 
   bool useVc_;                                       //< if the Vc library is used, if not, code for the GPU or OpenMP is generated

@@ -196,7 +196,14 @@ generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibers
               // all other variables (states, rates, algebraics, parameters) exist for every instance
               if (expression.code == "states")
               {
-                sourceCodeLine << "states[" << expression.arrayIndex*nInstancesToCompute << "+instanceToComputeNo]";
+                if (expression.arrayIndex == 0)
+                {
+                  sourceCodeLine << "vmValues[instanceToComputeNo]";
+                }
+                else
+                {
+                  sourceCodeLine << "states[" << expression.arrayIndex*nInstancesToCompute << "+instanceToComputeNo]";
+                }
               }
               else if (expression.code == "rates")
               {
@@ -245,13 +252,12 @@ generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibers
     << "          // algebraic step\n"
     << "          // compute y* = y_n + dt*rhs(y_n), y_n = state, rhs(y_n) = rate, y* = intermediateState\n";
 
-  for (int stateNo = 0; stateNo < this->nStates_; stateNo++)
-  {
-    sourceCodeMain << indent;
-    if (stateNo != 0)
-      sourceCodeMain << "const ";
+  sourceCodeMain << indent << "double intermediateState0 = vmValues[instanceToComputeNo] + dt0D*rate0;\n";
 
-    sourceCodeMain << "double intermediateState" << stateNo << " = states[" << stateNo*nInstancesToCompute << "+instanceToComputeNo] + dt0D*rate" << stateNo << ";\n";
+  for (int stateNo = 1; stateNo < this->nStates_; stateNo++)
+  {
+    sourceCodeMain << indent
+       << "const double intermediateState" << stateNo << " = states[" << stateNo*nInstancesToCompute << "+instanceToComputeNo] + dt0D*rate" << stateNo << ";\n";
   }
   
   sourceCodeMain << "\n"
@@ -341,7 +347,9 @@ generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibers
           // y_n+1 = y_n + 0.5*[rhs(y_n) + rhs(y*)]
 )";
 
-  for (int stateNo = 0; stateNo < this->nStates_; stateNo++)
+  sourceCodeMain << indent << "vmValues[instanceToComputeNo] += 0.5*dt0D*(rate0 + intermediateRate0);\n";
+  
+  for (int stateNo = 1; stateNo < this->nStates_; stateNo++)
   {
     sourceCodeMain << indent << "states[" << stateNo*nInstancesToCompute << "+instanceToComputeNo] += 0.5*dt0D*(rate" << stateNo << " + intermediateRate" << stateNo << ");\n";
   }
@@ -349,7 +357,7 @@ generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibers
   sourceCodeMain << R"(
           if (stimulateCurrentPoint)
           {
-            states[0+instanceToComputeNo] = valueForStimulatedPoint;
+            vmValues[instanceToComputeNo] = valueForStimulatedPoint;
           }  
   )";
   sourceCodeMain << R"(
@@ -384,6 +392,27 @@ generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibers
   sourceCodeMain << R"(
               }
             }
+            
+            // first state is always state 0 which is stored in vm values
+            for (int i = 1; i < nStatesForTransferIndices; i++)
+            {
+              const int stateIndex = statesForTransferIndices[i];
+
+              switch (stateIndex)
+              {
+)";
+
+  // loop over states and generate code to copy the updated state values to the statesForTransfer
+  for (int stateNo = 0; stateNo < this->nStates_; stateNo++)
+  {
+    // only of the algebraic was computed and not replaced by a parameter
+    sourceCodeMain << indent << "      case " << stateNo << ":\n"
+      << indent << "        statesForTransfer[i*nInstancesToCompute + instanceToComputeNo] = intermediateState" << stateNo << ";\n"
+      << indent << "        break;\n";
+  }
+  sourceCodeMain << R"(
+              }
+            }              
           }
 )";
 

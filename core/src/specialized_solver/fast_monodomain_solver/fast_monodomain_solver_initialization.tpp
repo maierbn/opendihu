@@ -377,6 +377,7 @@ initialize()
   {
     gpuParameters_.resize(nInstancesToCompute_*nParametersPerInstance_);
     gpuAlgebraicsForTransfer_.resize(nInstancesToCompute_*algebraicsForTransferIndices_.size());
+    gpuStatesForTransfer_.resize(nInstancesToCompute_*statesForTransferIndices_.size());
     gpuFiberIsCurrentlyStimulated_.resize(nFibersToCompute_, 0);
 
     int nElementsOnFiber = nInstancesToComputePerFiber_-1;
@@ -390,6 +391,7 @@ initialize()
       }
     }
 
+    gpuVmValues_.resize(nInstancesToCompute_);
     gpuMotorUnitNo_.resize(nFibersToCompute_);
     gpuFiberStimulationPointIndex_.resize(nFibersToCompute_);
     gpuLastStimulationCheckTime_.resize(nFibersToCompute_);
@@ -505,32 +507,11 @@ initialize()
 
   if (!useVc_)
   {
-    initializeGpuStates();
     initializeCellMLSourceFileGpu();
+    initializeValuesOnGpu();
   }
 
   initialized_ = true;
-}
-
-template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
-void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
-initializeGpuStates()
-{
-  CellmlAdapterType &cellmlAdapter = nestedSolvers_.instancesLocal()[0].timeStepping1().instancesLocal()[0].discretizableInTime();
-  CellmlSourceCodeGenerator &cellmlSourceCodeGenerator = cellmlAdapter.cellmlSourceCodeGenerator();
-
-  // allocate total state vector
-  gpuStates_.resize(nInstancesToCompute_*nStates);
-
-  // initialize state vector for all instances
-  const std::vector<double> &statesInitialValues = cellmlSourceCodeGenerator.statesInitialValues();
-  for (int stateNo = 0; stateNo < nStates; stateNo++)
-  {
-    for (int instanceNo = 0; instanceNo < nInstancesToCompute_; instanceNo++)
-    {
-      gpuStates_[stateNo*nInstancesToCompute_ + instanceNo] = statesInitialValues[stateNo];
-    }
-  }
 }
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>

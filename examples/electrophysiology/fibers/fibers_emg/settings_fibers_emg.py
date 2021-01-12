@@ -86,7 +86,7 @@ parser.add_argument('--dt_0D',                               help='The timestep 
 parser.add_argument('--dt_1D',                               help='The timestep for the 1D model.',                       type=float, default=variables.dt_1D)
 parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',                      type=float, default=variables.dt_splitting)
 parser.add_argument('--dt_3D',                               help='The timestep for the 3D model, either bidomain or mechanics.', type=float, default=variables.dt_3D)
-parser.add_argument('--optimization_type',                   help='The optimization_type in the cellml adapter.',         default=variables.optimization_type, choices=["vc", "simd", "openmp"])
+parser.add_argument('--optimization_type',                   help='The optimization_type in the cellml adapter.',         default=variables.optimization_type, choices=["vc", "simd", "openmp", "gpu"])
 parser.add_argument('--disable_firing_output',               help='Disables the initial list of fiber firings.',          default=variables.disable_firing_output, action='store_true')
 parser.add_argument('--enable_surface_emg',                  help='Enable the surface emg output writer.',                default=variables.enable_surface_emg, action='store_true')
 parser.add_argument('--enable_weak_scaling',                 help='Disable optimization for not stimulated fibers.',      default=variables.enable_weak_scaling, action='store_true')

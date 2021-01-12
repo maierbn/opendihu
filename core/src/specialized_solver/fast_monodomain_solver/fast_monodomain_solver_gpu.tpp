@@ -39,7 +39,7 @@ initializeCellMLSourceFileGpu()
   // generate library
   LOG(DEBUG) << "initializeCellMLSourceFileGpu: generate source file \"" << sourceToCompileFilename << "\".";
 
-  //LOG(ERROR) << "generateMonodomainSolverGpuSource commented out";
+  //LOG(ERROR) << "generateMonodomainSolverGpuSource commented out, existing source will be compiled";
   generateMonodomainSolverGpuSource(sourceToCompileFilename, headerCode, mainCode);
 
   // create path for library file
@@ -290,6 +290,7 @@ void computeMonodomain(double *states, const double *parameters,
   //const int nAlgebraics = )" << nAlgebraics << R"(;
 
   // loop over splitting time steps
+  #pragma omp target teams distribute
   for (int timeStepNo = 0; timeStepNo < nTimeStepsSplitting; timeStepNo++)
   {
     // perform Strang splitting
@@ -311,7 +312,7 @@ void computeMonodomain(double *states, const double *parameters,
   if (optimizationType_ == "openmp")
     sourceCode << "\n    #pragma omp parallel for";
   else if (optimizationType_ == "gpu")
-    sourceCode << "\n    #pragma omp target parallel for collapse(2)";  // teams distribute
+    sourceCode << "\n    #pragma omp parallel for simd collapse(2)";  // teams distribute
   sourceCode << R"(
     for (int fiberNo = 0; fiberNo < nFibersToCompute; fiberNo++)
     {
@@ -320,13 +321,13 @@ void computeMonodomain(double *states, const double *parameters,
       {
         int instanceToComputeNo = fiberNo*nInstancesPerFiber + instanceNo;    // index of instance over all fibers
 
-        if (timeStepNo <= 1 && instanceNo == 0)
+        /*if (timeStepNo <= 1 && instanceNo == 0)
         {
           if (omp_is_initial_device())
             printf("(fiber %d is on host) ",fiberNo);
           else
             printf("(fiber %d is on target device) ",fiberNo);
-        }
+        }*/
 
         // determine if current point is at center of fiber
         int fiberCenterIndex = fiberStimulationPointIndex[fiberNo];
@@ -408,7 +409,7 @@ void computeMonodomain(double *states, const double *parameters,
   if (optimizationType_ == "gpu")
     sourceCode << R"(
     // loop over fibers
-    #pragma omp target parallel for
+    #pragma omp parallel for 
     for (int fiberNo = 0; fiberNo < nFibersToCompute; fiberNo++)
     {
 )";
@@ -598,7 +599,7 @@ void computeMonodomain(double *states, const double *parameters,
     sourceCode << R"(
     // loop over fibers that will be computed on this rank
 
-    #pragma omp target parallel for collapse(2)
+    #pragma omp parallel for simd collapse(2)
     for (int fiberNo = 0; fiberNo < nFibersToCompute; fiberNo++)
     {)";
   sourceCode << R"(

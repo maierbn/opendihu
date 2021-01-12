@@ -127,7 +127,11 @@ initialize()
       // remove separator, either space or tab
       std::size_t pos = line.find_first_of("\t ");
       if (pos == std::string::npos)
+      {
+        if (gpuFiringEventsNColumns_ == 0)
+          gpuFiringEventsNColumns_ = columnNo+1;
         break;
+      }
       line.erase(0, pos+1);
 
       // remove all following non-digit characters

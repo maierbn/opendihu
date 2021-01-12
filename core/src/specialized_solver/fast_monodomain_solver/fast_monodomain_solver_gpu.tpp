@@ -275,7 +275,7 @@ void computeMonodomain(double *states, const double *parameters,
   const int nFrequencyJitter = nFibersToCompute*frequencyJitterNColumns;
   const int nAlgebraicsForTransfer = nInstancesToCompute*nAlgebraicsForTransferIndices;
 
-  #pragma omp target \
+  #pragma omp target data \
       map(tofrom: states[:nStatesTotal], fiberIsCurrentlyStimulated[:nFibersToCompute], \
           lastStimulationCheckTime[:nFibersToCompute], currentJitter[:nFibersToCompute], jitterIndex[:nFibersToCompute]) \
       map(to: parameters[:nParametersTotal], algebraicsForTransferIndices[:nAlgebraicsForTransferIndices], \
@@ -311,7 +311,7 @@ void computeMonodomain(double *states, const double *parameters,
   if (optimizationType_ == "openmp")
     sourceCode << "\n    #pragma omp parallel for";
   else if (optimizationType_ == "gpu")
-    sourceCode << "\n    #pragma omp teams distribute parallel for collapse(2)";
+    sourceCode << "\n    #pragma omp parallel for collapse(2)";  // teams distribute
   sourceCode << R"(
     for (int fiberNo = 0; fiberNo < nFibersToCompute; fiberNo++)
     {
@@ -323,9 +323,9 @@ void computeMonodomain(double *states, const double *parameters,
         if (timeStepNo <= 1 && instanceNo == 0)
         {
           if (omp_is_initial_device())
-            printf("fiber %d is on host\n",fiberNo);
+            printf("(fiber %d is on host) ",fiberNo);
           else
-            printf("fiber %d is on target device\n",fiberNo);
+            printf("(fiber %d is on target device) ",fiberNo);
         }
 
         // determine if current point is at center of fiber
@@ -408,7 +408,7 @@ void computeMonodomain(double *states, const double *parameters,
   if (optimizationType_ == "gpu")
     sourceCode << R"(
     // loop over fibers
-    #pragma omp teams distribute parallel for
+    #pragma omp parallel for
     for (int fiberNo = 0; fiberNo < nFibersToCompute; fiberNo++)
     {
 )";
@@ -598,7 +598,7 @@ void computeMonodomain(double *states, const double *parameters,
     sourceCode << R"(
     // loop over fibers that will be computed on this rank
 
-    #pragma omp teams distribute parallel for collapse(2)
+    #pragma omp parallel for collapse(2)
     for (int fiberNo = 0; fiberNo < nFibersToCompute; fiberNo++)
     {)";
   sourceCode << R"(

@@ -128,8 +128,9 @@ initialize()
 
       // remove separator, either space or tab
       std::size_t pos = line.find_first_of("\t ");
-      if (pos != std::string::npos)
-        line.erase(0, pos+1);
+      if (pos == std::string::npos)
+        break;
+      line.erase(0, pos+1);
 
       // remove all following non-digit characters
       while (!isdigit(line[0]) && !line.empty())

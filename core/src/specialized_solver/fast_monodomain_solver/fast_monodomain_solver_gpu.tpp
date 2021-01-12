@@ -753,17 +753,55 @@ computeMonodomainGpu()
     }
   }
 
-  if (gpuFiringEventsNRows_*gpuFiringEventsNColumns_ != gpuFiringEvents_.size())
-  {
-    LOG(FATAL) << "number of firing events (" << gpuFiringEvents_.size() << ") does not match determined size "
-      << gpuFiringEventsNRows_ << "x" << gpuFiringEventsNColumns_ << "=" << gpuFiringEventsNRows_*gpuFiringEventsNColumns_;
-  }
+  // check that arrays have the correct sizes
+  // size constants
+  const int nElementsOnFiber = nInstancesToComputePerFiber_-1;
+  const int nFibersToCompute = nFibersToCompute_;
+  const int nStatesTotal = nInstancesToCompute*nStates;
+  const int nParametersTotal = nInstancesToCompute*nParametersPerInstance_;
+  const int nElementLengths = nElementsOnFiber*nFibersToCompute;
+  const int nFiringEvents = gpuFiringEventsNRows_*gpuFiringEventsNColumns_;
+  const int nFrequencyJitter = nFibersToCompute*gpuFrequencyJitterNColumns_;
+  const int nAlgebraicsForTransferIndices = algebraicsForTransferIndices_.size();
+  const int nAlgebraicsForTransfer = nInstancesToCompute*nAlgebraicsForTransferIndices;
 
-  if (nFibersToCompute_*gpuFrequencyJitterNColumns_ != gpuSetSpecificStatesFrequencyJitter_.size())
-  {
-    LOG(FATAL) << "number of frequency jitter entries (" << gpuSetSpecificStatesFrequencyJitter_.size() << ") does not match determined size "
-      << nFibersToCompute_ << "x" << gpuFrequencyJitterNColumns_ << "=" << nFibersToCompute_*gpuFrequencyJitterNColumns_;
-  }
+  if (gpuStates_.size() != nStatesTotal)
+    LOG(FATAL) << "gpuStates_.size() = " << gpuStates_.size() << " does not match assumed size " << nStatesTotal << "=" << nInstancesToCompute << "x" << nStates;
+  if (gpuFiberIsCurrentlyStimulated_.size() != nFibersToCompute)
+    LOG(FATAL) << "gpuFiberIsCurrentlyStimulated_.size() = " << gpuFiberIsCurrentlyStimulated_.size() << " does not match assumed size " << nFibersToCompute;
+  if (gpuLastStimulationCheckTime_.size() != nFibersToCompute)
+    LOG(FATAL) << "gpuLastStimulationCheckTime_.size() = " << gpuLastStimulationCheckTime_.size() << " does not match assumed size " << nFibersToCompute;
+  if (gpuCurrentJitter_.size() != nFibersToCompute)
+    LOG(FATAL) << "gpuCurrentJitter_.size() = " << gpuCurrentJitter_.size() << " does not match assumed size " << nFibersToCompute;
+  if (gpuJitterIndex_.size() != nFibersToCompute)
+    LOG(FATAL) << "gpuJitterIndex_.size() = " << gpuJitterIndex_.size() << " does not match assumed size " << nFibersToCompute;
+
+  if (gpuParameters_.size() != nParametersTotal)
+    LOG(FATAL) << "gpuParameters_.size() = " << gpuParameters_.size() << " does not match assumed size " << nParametersTotal << "x" << nInstancesToCompute << "x" << nParametersPerInstance_;
+  if (algebraicsForTransferIndices_.size() != nAlgebraicsForTransferIndices)
+    LOG(FATAL) << "algebraicsForTransferIndices_.size() = " << algebraicsForTransferIndices_.size() << " does not match assumed size " << nAlgebraicsForTransferIndices;
+  if (gpuElementLengths_.size() != nElementLengths)
+    LOG(FATAL) << "gpuElementLengths_.size() = " << gpuElementLengths_.size() << " does not match assumed size " << nElementLengths << "=" << nElementsOnFiber << "x" << nFibersToCompute;
+  if (gpuFiringEvents_.size() != nFiringEvents)
+    LOG(FATAL) << "gpuFiringEvents_.size() = " << gpuFiringEvents_.size() << " does not match assumed size " << nFiringEvents << "=" << gpuFiringEventsNRows_ << "x" << gpuFiringEventsNColumns_;
+  if (gpuSetSpecificStatesFrequencyJitter_.size() != nFrequencyJitter)
+    LOG(FATAL) << "gpuSetSpecificStatesFrequencyJitter_.size() = " << gpuSetSpecificStatesFrequencyJitter_.size() << " does not match assumed size " << nFrequencyJitter << "=" << nFibersToCompute_ << "x" << gpuFrequencyJitterNColumns_;
+  if (gpuMotorUnitNo_.size() != nFibersToCompute)
+    LOG(FATAL) << "gpuMotorUnitNo_.size() = " << gpuMotorUnitNo_.size() << " does not match assumed size " << nFibersToCompute;
+
+  if (gpuMotorUnitNo_.size() != nFibersToCompute)
+    LOG(FATAL) << "gpuMotorUnitNo_.size() = " << gpuMotorUnitNo_.size() << " does not match assumed size " << nFibersToCompute;
+  if (gpuFiberStimulationPointIndex_.size() != nFibersToCompute)
+    LOG(FATAL) << "gpuFiberStimulationPointIndex_.size() = " << gpuFiberStimulationPointIndex_.size() << " does not match assumed size " << nFibersToCompute;
+  if (gpuSetSpecificStatesCallFrequency_.size() != nFibersToCompute)
+    LOG(FATAL) << "gpuSetSpecificStatesCallFrequency_.size() = " << gpuSetSpecificStatesCallFrequency_.size() << " does not match assumed size " << nFibersToCompute;
+  if (gpuSetSpecificStatesRepeatAfterFirstCall_.size() != nFibersToCompute)
+    LOG(FATAL) << "gpuSetSpecificStatesRepeatAfterFirstCall_.size() = " << gpuSetSpecificStatesRepeatAfterFirstCall_.size() << " does not match assumed size " << nFibersToCompute;
+  if (gpuSetSpecificStatesCallEnableBegin_.size() != nFibersToCompute)
+    LOG(FATAL) << "gpuSetSpecificStatesCallEnableBegin_.size() = " << gpuSetSpecificStatesCallEnableBegin_.size() << " does not match assumed size " << nFibersToCompute;
+
+  if (gpuAlgebraicsForTransfer_.size() != nAlgebraicsForTransfer)
+    LOG(FATAL) << "gpuAlgebraicsForTransfer_.size() = " << gpuAlgebraicsForTransfer_.size() << " does not match assumed size " << nAlgebraicsForTransfer << "=" << nInstancesToCompute << "x" << nAlgebraicsForTransferIndices;
 
   // call the compiled function
   computeMonodomain_(gpuStates_.data(), gpuParameters_.data(),

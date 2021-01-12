@@ -99,11 +99,12 @@ initialize()
   // parse file contents of firing times file, loop over rows
   while (!firingTimesFileContents.empty())
   {
-    // extract line
+    // determine end of file
     std::size_t lineEndPos = firingTimesFileContents.find("\n");
     if (lineEndPos == std::string::npos)
       break;
 
+    // extract line from file contents
     std::string line = firingTimesFileContents.substr(0, lineEndPos);
     firingTimesFileContents.erase(0, lineEndPos+1);
 
@@ -125,11 +126,12 @@ initialize()
         gpuFiringEvents_.push_back(entry? 1 : 0);
       }
 
+      // remove separator, either space or tab
       std::size_t pos = line.find_first_of("\t ");
-      if (pos == std::string::npos)
-        break;
-      line.erase(0, pos+1);
+      if (pos != std::string::npos)
+        line.erase(0, pos+1);
 
+      // remove all following non-digit characters
       while (!isdigit(line[0]) && !line.empty())
         line.erase(0,1);
     }

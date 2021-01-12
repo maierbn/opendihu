@@ -54,6 +54,7 @@ initialize()
   disableComputationWhenStatesAreCloseToEquilibrium_ = specificSettings_.getOptionBool("disableComputationWhenStatesAreCloseToEquilibrium", true);
   valueForStimulatedPoint_ = specificSettings_.getOptionDouble("valueForStimulatedPoint", 20.0);
   neuromuscularJunctionRelativeSize_ = specificSettings_.getOptionDouble("neuromuscularJunctionRelativeSize", 0.0);
+  generateGpuSource_ = specificSettings_.getOptionBool("generateGPUSource", true);
 
   // output warning if there are output writers
   if (this->outputWriterManager_.hasOutputWriters())

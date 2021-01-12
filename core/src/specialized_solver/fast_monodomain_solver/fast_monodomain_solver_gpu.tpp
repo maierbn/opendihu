@@ -39,11 +39,7 @@ initializeCellMLSourceFileGpu()
   // generate library
   LOG(DEBUG) << "initializeCellMLSourceFileGpu: generate source file \"" << sourceToCompileFilename << "\".";
 
-  bool generateSource = true;
-  if (specificSettings_.hasKey("generateSource"))
-    generateSource = specificSettings_.getOptionBool("generateSource", true);
-
-  if (generateSource)
+  if (generate)
   {
     generateMonodomainSolverGpuSource(sourceToCompileFilename, headerCode, mainCode);
   }

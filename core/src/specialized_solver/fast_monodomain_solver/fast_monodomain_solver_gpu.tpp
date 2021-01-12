@@ -311,7 +311,7 @@ void computeMonodomain(double *states, const double *parameters,
   if (optimizationType_ == "openmp")
     sourceCode << "\n    #pragma omp parallel for";
   else if (optimizationType_ == "gpu")
-    sourceCode << "\n    #pragma omp parallel for collapse(2)";  // teams distribute
+    sourceCode << "\n    #pragma omp target parallel for collapse(2)";  // teams distribute
   sourceCode << R"(
     for (int fiberNo = 0; fiberNo < nFibersToCompute; fiberNo++)
     {
@@ -408,7 +408,7 @@ void computeMonodomain(double *states, const double *parameters,
   if (optimizationType_ == "gpu")
     sourceCode << R"(
     // loop over fibers
-    #pragma omp parallel for
+    #pragma omp target parallel for
     for (int fiberNo = 0; fiberNo < nFibersToCompute; fiberNo++)
     {
 )";
@@ -598,7 +598,7 @@ void computeMonodomain(double *states, const double *parameters,
     sourceCode << R"(
     // loop over fibers that will be computed on this rank
 
-    #pragma omp parallel for collapse(2)
+    #pragma omp target parallel for collapse(2)
     for (int fiberNo = 0; fiberNo < nFibersToCompute; fiberNo++)
     {)";
   sourceCode << R"(

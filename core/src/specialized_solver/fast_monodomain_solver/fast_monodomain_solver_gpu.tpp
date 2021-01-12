@@ -39,7 +39,7 @@ initializeCellMLSourceFileGpu()
   // generate library
   LOG(DEBUG) << "initializeCellMLSourceFileGpu: generate source file \"" << sourceToCompileFilename << "\".";
 
-  if (generate)
+  if (generateGpuSource_)
   {
     generateMonodomainSolverGpuSource(sourceToCompileFilename, headerCode, mainCode);
   }

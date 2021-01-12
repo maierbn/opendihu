@@ -315,18 +315,18 @@ void computeMonodomain(double *states, const double *parameters,
   sourceCode << R"(
     for (int fiberNo = 0; fiberNo < nFibersToCompute; fiberNo++)
     {
-      if (timeStepNo <= 1)
-      {
-        if (omp_is_initial_device())
-          printf("fiber %d is on host\n",fiberNo);
-        else
-          printf("fiber %d is on target device\n",fiberNo);
-      }
-
       // loop over instances to compute here
       for (int instanceNo = 0; instanceNo < nInstancesPerFiber; instanceNo++)
       {
         int instanceToComputeNo = fiberNo*nInstancesPerFiber + instanceNo;    // index of instance over all fibers
+
+        if (timeStepNo <= 1 && instanceNo == 0)
+        {
+          if (omp_is_initial_device())
+            printf("fiber %d is on host\n",fiberNo);
+          else
+            printf("fiber %d is on target device\n",fiberNo);
+        }
 
         // determine if current point is at center of fiber
         int fiberCenterIndex = fiberStimulationPointIndex[fiberNo];

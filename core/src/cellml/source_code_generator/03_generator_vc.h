@@ -22,7 +22,8 @@ public:
 protected:
 
   //! create Vc constructs for scalar functions (ternary operator) and pow/exp functions
-  void preprocessCode(std::set<std::string> &helperFunctions);
+  //! if useVc is false, no Vc:: constructs will be employed
+  void preprocessCode(std::set<std::string> &helperFunctions, bool useVc = true);
 
   //! define "pow" and "exponential" helper functions
   std::string defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateExponentialFunction, bool useVc);

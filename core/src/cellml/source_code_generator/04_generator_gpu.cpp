@@ -123,7 +123,8 @@ generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibers
   std::set<std::string> helperFunctions;   //< functions found in the CellML code that need to be provided, usually the pow2, pow3, etc. helper functions for pow(..., 2), pow(...,3) etc.
 
   // replace pow and ?: functions
-  preprocessCode(helperFunctions);
+  const bool useVc = false;
+  preprocessCode(helperFunctions, useVc);
 
   sourceCodeHeader << "#include <cmath>\n"
     << "#include <omp.h>\n"

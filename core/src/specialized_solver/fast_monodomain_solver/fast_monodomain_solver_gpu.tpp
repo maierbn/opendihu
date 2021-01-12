@@ -39,8 +39,19 @@ initializeCellMLSourceFileGpu()
   // generate library
   LOG(DEBUG) << "initializeCellMLSourceFileGpu: generate source file \"" << sourceToCompileFilename << "\".";
 
-  //LOG(ERROR) << "generateMonodomainSolverGpuSource commented out, existing source will be compiled";
-  generateMonodomainSolverGpuSource(sourceToCompileFilename, headerCode, mainCode);
+  bool generateSource = true;
+  if (specificSettings_.hasKey("generateSource"))
+    generateSource = specificSettings_.getOptionBool("generateSource", true);
+
+  if (generateSource)
+  {
+    generateMonodomainSolverGpuSource(sourceToCompileFilename, headerCode, mainCode);
+  }
+  else
+  {
+    LOG(WARNING) << "In FastMonodomainSolver for GPU: \"generateSource\" is set to False, i.e. no code will be generated."
+      << " Instead, the existing source \"" << sourceToCompileFilename << "\" will be compiled";
+  }
 
   // create path for library file
   if (libraryFilename.find("/") != std::string::npos)

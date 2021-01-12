@@ -10,7 +10,7 @@
 #include <Vc/Vc>
 #include "easylogging++.h"
 
-void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFunctions)
+void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFunctions, bool useVc)
 {
   if (preprocessingDone_)
     return;
@@ -23,7 +23,7 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
     if (codeExpression.type != code_expression_t::commented_out)
     {
       // loop over all nodes in the syntax tree of this line
-      codeExpression.visitNodes([&helperFunctions](CellmlSourceCodeGeneratorVc::code_expression_t &expression)
+      codeExpression.visitNodes([&helperFunctions,useVc](CellmlSourceCodeGeneratorVc::code_expression_t &expression)
       {
         // we look for occurences of functions and ternary operators, these can be detected in a tree node
         if (expression.type == code_expression_t::tree)
@@ -142,8 +142,9 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                   helperFunctions.insert("pow");
                 }
               }
-              else if (innerExpression.code == "?")
+              else if (innerExpression.code == "?" && useVc)
               {
+                // replace ternary operator "condition ? value1 : value2" by Vc::iif, using double_v(Vc::One) and double_v(Vc::Zero) for 1 and 0
                 assert(expression.treeChildren.size() == 5);  //<condition> "?" <branch0> ":" <branch1>
 
                 code_expression_t iifFunction;
@@ -268,7 +269,7 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                 expression = iifFunction;
                 break;
               }
-              else if (innerExpression.code == "fabs")
+              else if (innerExpression.code == "fabs" && useVc)   // replace fabs by Vc::abs
               {
                 innerExpression.code = "Vc::abs";
               }

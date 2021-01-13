@@ -271,7 +271,7 @@ void initializeArrays(const double *statesOneInstance, const int *algebraicsForT
     motorUnitNo[:nFibersToCompute], fiberStimulationPointIndex[:nFibersToCompute], \
     lastStimulationCheckTime[:nFibersToCompute], setSpecificStatesCallFrequency[:nFibersToCompute], \
     setSpecificStatesRepeatAfterFirstCall[:nFibersToCompute], setSpecificStatesCallEnableBegin[:nFibersToCompute], \
-    currentJitter[:nFibersToCompute], jitterIndex[:nFibersToCompute], vmValues[:nInstancesToCompute])";
+    currentJitter[:nFibersToCompute], jitterIndex[:nFibersToCompute], vmValues[:nInstancesToCompute]))";
   }
   else
   {
@@ -282,7 +282,7 @@ void initializeArrays(const double *statesOneInstance, const int *algebraicsForT
     motorUnitNo[:nFibersToCompute], fiberStimulationPointIndex[:nFibersToCompute], \
     lastStimulationCheckTime[:nFibersToCompute], setSpecificStatesCallFrequency[:nFibersToCompute], \
     setSpecificStatesRepeatAfterFirstCall[:nFibersToCompute], setSpecificStatesCallEnableBegin[:nFibersToCompute], \
-    currentJitter[:nFibersToCompute], jitterIndex[:nFibersToCompute], vmValues[:nInstancesToCompute])";
+    currentJitter[:nFibersToCompute], jitterIndex[:nFibersToCompute], vmValues[:nInstancesToCompute]))";
   }
   sourceCode << R"(
 }

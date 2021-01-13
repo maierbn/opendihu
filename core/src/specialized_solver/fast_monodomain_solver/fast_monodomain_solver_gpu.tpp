@@ -306,7 +306,13 @@ void computeMonodomain(const double *parameters,
     sourceCode << R"(
 
   // map data to and from GPU
-  #pragma omp target data map(to: parameters[:nParametersTotal], elementLengths[:nElementLengths]) map(from: statesForTransfer[:nStatesForTransfer])
+  #pragma omp target data map(to: parameters[:nParametersTotal], elementLengths[:nElementLengths]) \
+       map(from: )";
+  if (!algebraicsForTransferIndices_.empty())
+  {
+    sourceCode << R"(algebraicsForTransfer[:nAlgebraicsForTransfer], )";
+  }
+  sourceCode << R"(statesForTransfer[:nStatesForTransfer])statesForTransfer[:nStatesForTransfer])
   {
 )";
    sourceCode << R"(
@@ -692,11 +698,11 @@ void computeMonodomain(const double *parameters,
 )";
   if (optimizationType_ == "gpu")
     sourceCode << R"(
-  //} // end pragma omp target
+  } // end pragma omp target
 )";
   sourceCode << R"(
   // map back from GPU to host
-  #pragma omp target update from()";
+  //#pragma omp target update from()";
   if (!algebraicsForTransferIndices_.empty())
   {
     sourceCode << R"(algebraicsForTransfer[:nAlgebraicsForTransfer], )";

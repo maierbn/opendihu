@@ -312,7 +312,7 @@ void computeMonodomain(const double *parameters,
   {
     sourceCode << R"(algebraicsForTransfer[:nAlgebraicsForTransfer], )";
   }
-  sourceCode << R"(statesForTransfer[:nStatesForTransfer])statesForTransfer[:nStatesForTransfer])
+  sourceCode << R"(statesForTransfer[:nStatesForTransfer])
   {
 )";
    sourceCode << R"(

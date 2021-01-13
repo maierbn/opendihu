@@ -397,21 +397,23 @@ generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibers
   }
   sourceCodeMain << R"(
             
-            // first state is always state 0 which is stored in vm values
-            for (int i = 1; i < nStatesForTransferIndices; i++)
+            for (int i = 0; i < nStatesForTransferIndices; i++)
             {
               const int stateIndex = statesForTransferIndices[i];
 
               switch (stateIndex)
               {
+                case 0:
+                  statesForTransfer[i*nInstancesToCompute + instanceToComputeNo] = vmValues[instanceToComputeNo];
+                  break;
 )";
 
   // loop over states and generate code to copy the updated state values to the statesForTransfer
-  for (int stateNo = 0; stateNo < this->nStates_; stateNo++)
+  for (int stateNo = 1; stateNo < this->nStates_; stateNo++)
   {
     // only of the algebraic was computed and not replaced by a parameter
     sourceCodeMain << indent << "      case " << stateNo << ":\n"
-      << indent << "        statesForTransfer[i*nInstancesToCompute + instanceToComputeNo] = intermediateState" << stateNo << ";\n"
+      << indent << "        statesForTransfer[i*nInstancesToCompute + instanceToComputeNo] = states[" << stateNo*nInstancesToCompute << "+instanceToComputeNo];\n"
       << indent << "        break;\n";
   }
   sourceCodeMain << R"(

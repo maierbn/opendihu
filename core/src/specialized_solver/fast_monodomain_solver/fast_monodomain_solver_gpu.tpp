@@ -193,9 +193,6 @@ double currentJitter[nFibersToCompute];
 int jitterIndex[nFibersToCompute];
 
 double vmValues[nInstancesToCompute];
-double parameters[nParametersTotal];
-double elementLengths[nElementLengths];
-double statesForTransfer[nStatesForTransfer];
 #pragma omp end declare target
 
 #ifdef __cplusplus
@@ -214,7 +211,6 @@ void initializeArrays(const double *statesOneInstance, const int *algebraicsForT
     {
       int instanceToComputeNo = fiberNo*nInstancesPerFiber + instanceNo;
 
-      vmValues[instanceToComputeNo] = statesOneInstance[0];
       for (int stateNo = 1; stateNo < nStates; stateNo++)
       {
         states[stateNo*nInstancesToCompute + instanceToComputeNo] = statesOneInstance[stateNo];
@@ -258,26 +254,35 @@ void initializeArrays(const double *statesOneInstance, const int *algebraicsForT
     jitterIndex[fiberNo] = 0;
   }
 
+  // initialize vmValues
+  const double state0 = statesOneInstance[0];
+  for (int instanceToComputeNo = 0; instanceToComputeNo < nInstancesToCompute; instanceToComputeNo++)
+  {
+    vmValues[instanceToComputeNo] = state0;
+  }
+
 )";
   if (!algebraicsForTransferIndices_.empty())
   {
     sourceCode << R"(
   // map values to target
-  #pragma omp target update to(vmValues[:nInstancesToCompute], states[:nStatesTotal], algebraicsForTransferIndices[:nAlgebraicsForTransferIndices], statesForTransferIndices[:nStatesForTransferIndices], \
+  #pragma omp target update to(states[:nStatesTotal], algebraicsForTransferIndices[:nAlgebraicsForTransferIndices], statesForTransferIndices[:nStatesForTransferIndices], \
     firingEvents[:nFiringEvents], setSpecificStatesFrequencyJitter[:nFrequencyJitter], \
     motorUnitNo[:nFibersToCompute], fiberStimulationPointIndex[:nFibersToCompute], \
     lastStimulationCheckTime[:nFibersToCompute], setSpecificStatesCallFrequency[:nFibersToCompute], \
-    setSpecificStatesRepeatAfterFirstCall[:nFibersToCompute], setSpecificStatesCallEnableBegin[:nFibersToCompute]))";
+    setSpecificStatesRepeatAfterFirstCall[:nFibersToCompute], setSpecificStatesCallEnableBegin[:nFibersToCompute], \
+    currentJitter[:nFibersToCompute], jitterIndex[:nFibersToCompute], vmValues[:nInstancesToCompute])";
   }
   else
   {
     sourceCode << R"(
   // map values to target
-  #pragma omp target update to(vmValues[:nInstancesToCompute], states[:nStatesTotal], statesForTransferIndices[:nStatesForTransferIndices], \
+  #pragma omp target update to(states[:nStatesTotal], statesForTransferIndices[:nStatesForTransferIndices], \
     firingEvents[:nFiringEvents], setSpecificStatesFrequencyJitter[:nFrequencyJitter], \
     motorUnitNo[:nFibersToCompute], fiberStimulationPointIndex[:nFibersToCompute], \
     lastStimulationCheckTime[:nFibersToCompute], setSpecificStatesCallFrequency[:nFibersToCompute], \
-    setSpecificStatesRepeatAfterFirstCall[:nFibersToCompute], setSpecificStatesCallEnableBegin[:nFibersToCompute]))";
+    setSpecificStatesRepeatAfterFirstCall[:nFibersToCompute], setSpecificStatesCallEnableBegin[:nFibersToCompute], \
+    currentJitter[:nFibersToCompute], jitterIndex[:nFibersToCompute], vmValues[:nInstancesToCompute])";
   }
   sourceCode << R"(
 }
@@ -300,12 +305,9 @@ void computeMonodomain(const double *parameters,
   if (optimizationType_ == "gpu")
     sourceCode << R"(
 
-  // map data to GPU
-  #pragma omp target update to(parameters[:nParametersTotal], elementLengths[:nElementLengths])
-
-  // share vmValues array with GPU (it does not work to include the above pragma in this one, apparently)
-  //#pragma omp target data map(tofrom: vmValues[:nStatesTotal])
-  //{
+  // map data to and from GPU
+  #pragma omp target data map(to: parameters[:nParametersTotal], elementLengths[:nElementLengths]) map(from: statesForTransfer[:nStatesForTransfer])
+  {
 )";
    sourceCode << R"(
   //const int nAlgebraics = )" << nAlgebraics << R"(;
@@ -870,20 +872,18 @@ computeMonodomainGpu()
     {
       const int instanceNoTotal = fiberDataNo*nInstancesToComputePerFiber_ + instanceNo;
 
-      assert(statesForTransferIndices_.size() > 0);
-      if (statesForTransferIndices_[0] != 0)
-        LOG(FATAL) << "The implementation of the FastMonodomainSolver assumes that state 0 is the transmembrane potential "
-          << "and is transferred between 0D-1D Monodomain and 3D EMG computations. However, your current settings would "
-          << "transfer state " << statesForTransferIndices_[0];
+      if (statesForTransferIndices_.size() == 0)
+        LOG(FATAL) << "The implementation of the FastMonodomainSolver needs the transmembrane potential to be transferred.";
 
-      fiberData_[fiberDataNo].vmValues[instanceNo] = gpuVmValues_[0*nInstancesToCompute_ + instanceNoTotal];
+      // the first state to transfer is the Vm value
+      fiberData_[fiberDataNo].vmValues[instanceNo] = gpuStatesForTransfer_[0*nInstancesToCompute_ + instanceNoTotal];
 
       // loop over further states to transfer
       int furtherDataIndex = 0;
       for (int i = 1; i < statesForTransferIndices_.size(); i++, furtherDataIndex++)
       {
         fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues[furtherDataIndex*nInstancesToComputePerFiber_ + instanceNo]
-          = gpuStatesForTransfer_[(i-1)*nInstancesToCompute_ + instanceNoTotal];
+          = gpuStatesForTransfer_[i*nInstancesToCompute_ + instanceNoTotal];
       }
 
       // loop over algebraics to transfer

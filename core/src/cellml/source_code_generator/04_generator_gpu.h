@@ -13,7 +13,7 @@ public:
 
   //! generate source code for use in the GPU fast monodomain solver
   void generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibersToCompute, int nInstancesToComputePerFiber,
-                                       int nParametersPerInstance,
+                                       int nParametersPerInstance, bool hasAlgebraicsForTransfer,
                                        std::string &headerCode, std::string &mainCode);
 
 protected:

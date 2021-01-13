@@ -114,7 +114,7 @@ generateSourceFileGpu(std::string outputFilename)
 
 void CellmlSourceCodeGeneratorGpu::
 generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibersToCompute, int nInstancesToComputePerFiber, 
-                                int nParametersPerInstance,
+                                int nParametersPerInstance, bool hasAlgebraicsForTransfer,
                                 std::string &headerCode, std::string &mainCode)
 {
   std::stringstream sourceCodeHeader;
@@ -363,7 +363,10 @@ generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibers
   sourceCodeMain << R"(
           // store algebraics for transfer
           if (storeAlgebraicsForTransfer)
-          {
+          {)";
+  if (hasAlgebraicsForTransfer)
+  {
+    sourceCodeMain << R"(
             for (int i = 0; i < nAlgebraicsForTransferIndices; i++)
             {
               const int algebraicIndex = algebraicsForTransferIndices[i];
@@ -372,26 +375,27 @@ generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibers
               {
 )";
 
-  // loop over algebraics and generate code to copy the updated algebraic values to the algebraics
-  for (int algebraicNo = 0; algebraicNo < this->nAlgebraics_; algebraicNo++)
-  {
-    // only of the algebraic was computed and not replaced by a parameter
-    if (std::find(this->parametersUsedAsAlgebraic_.begin(), this->parametersUsedAsAlgebraic_.end(), algebraicNo)
-       != this->parametersUsedAsAlgebraic_.end())
+    // loop over algebraics and generate code to copy the updated algebraic values to the algebraics
+    for (int algebraicNo = 0; algebraicNo < this->nAlgebraics_; algebraicNo++)
     {
-      sourceCodeMain << indent << "      // case " << algebraicNo << ": is a parameter\n";
+      // only of the algebraic was computed and not replaced by a parameter
+      if (std::find(this->parametersUsedAsAlgebraic_.begin(), this->parametersUsedAsAlgebraic_.end(), algebraicNo)
+         != this->parametersUsedAsAlgebraic_.end())
+      {
+        sourceCodeMain << indent << "      // case " << algebraicNo << ": is a parameter\n";
+      }
+      else
+      {
+        sourceCodeMain << indent << "      case " << algebraicNo << ":\n"
+          << indent << "        algebraicsForTransfer[i*nInstancesToCompute + instanceToComputeNo] = intermediateAlgebraic" << algebraicNo << ";\n"
+          << indent << "        break;\n";
+      }
     }
-    else
-    {
-      sourceCodeMain << indent << "      case " << algebraicNo << ":\n"
-        << indent << "        algebraicsForTransfer[i*nInstancesToCompute + instanceToComputeNo] = intermediateAlgebraic" << algebraicNo << ";\n"
-        << indent << "        break;\n";
-    }
-  }
-
-  sourceCodeMain << R"(
+    sourceCodeMain << R"(
               }
-            }
+            })";
+  }
+  sourceCodeMain << R"(
             
             // first state is always state 0 which is stored in vm values
             for (int i = 1; i < nStatesForTransferIndices; i++)

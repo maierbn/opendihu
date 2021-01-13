@@ -19,8 +19,10 @@ initializeCellMLSourceFileGpu()
   // create source code for the rhs part
   std::string headerCode;
   std::string mainCode;
+  const bool hasAlgebraicsForTransfer = !algebraicsForTransferIndices_.empty();
   cellmlSourceCodeGenerator.generateSourceFastMonodomainGpu(approximateExponentialFunction,
                                                             nFibersToCompute_, nInstancesToComputePerFiber_, nParametersPerInstance_,
+                                                            hasAlgebraicsForTransfer,
                                                             headerCode, mainCode);
 
   int ownRankNoCommWorld = DihuContext::ownRankNoCommWorld();

@@ -169,8 +169,14 @@ const int nStatesForTransfer = nInstancesToCompute*nStatesForTransferIndices;
 
 // global variables to be stored on the target device
 #pragma omp declare target
-double states[nStatesTotal];             // including state 0 which is stored in vmValues
+double states[nStatesTotal];             // including state 0 which is stored in vmValues)";
+  if (!algebraicsForTransferIndices_.empty())
+  {
+    sourceCode << R"(
 int algebraicsForTransferIndices[nAlgebraicsForTransferIndices];
+)";
+  }
+  sourceCode << R"(
 int statesForTransferIndices[nStatesForTransferIndices];
 char firingEvents[nFiringEvents];
 double setSpecificStatesFrequencyJitter[nFrequencyJitter];
@@ -208,9 +214,15 @@ void initializeArrays(const double *statesOneInstance, const int *algebraicsForT
       }
     }
   }
-
+)";
+  if (!algebraicsForTransferIndices_.empty())
+  {
+    sourceCode << R"(
   for (int i = 0; i < nAlgebraicsForTransferIndices; i++)
     algebraicsForTransferIndices[i] = algebraicsForTransferIndicesParameter[i];
+)";
+  }
+  sourceCode << R"(
 
   for (int i = 0; i < nStatesForTransferIndices; i++)
     statesForTransferIndices[i] = statesForTransferIndicesParameter[i];
@@ -239,12 +251,28 @@ void initializeArrays(const double *statesOneInstance, const int *algebraicsForT
     jitterIndex[fiberNo] = 0;
   }
 
+)";
+  if (!algebraicsForTransferIndices_.empty())
+  {
+    sourceCode << R"(
   // map values to target
-  #pragma omp target update to(states, algebraicsForTransferIndices, statesForTransferIndices, \
-    firingEvents, setSpecificStatesFrequencyJitter, \
-    fiberIsCurrentlyStimulated, motorUnitNo, fiberStimulationPointIndex, \
-    lastStimulationCheckTime, setSpecificStatesCallFrequency, \
-    setSpecificStatesRepeatAfterFirstCall, setSpecificStatesCallEnableBegin, currentJitter, jitterIndex)
+  #pragma omp target update to(states[:nStatesTotal], algebraicsForTransferIndices[:nAlgebraicsForTransferIndices], statesForTransferIndices[:nStatesForTransferIndices], \
+    firingEvents[:nFiringEvents], setSpecificStatesFrequencyJitter[:nFrequencyJitter], \
+    motorUnitNo[:nFibersToCompute], fiberStimulationPointIndex[:nFibersToCompute], \
+    lastStimulationCheckTime[:nFibersToCompute], setSpecificStatesCallFrequency[:nFibersToCompute], \
+    setSpecificStatesRepeatAfterFirstCall[:nFibersToCompute], setSpecificStatesCallEnableBegin[:nFibersToCompute]))";
+  }
+  else
+  {
+    sourceCode << R"(
+  // map values to target
+  #pragma omp target update to(states[:nStatesTotal], statesForTransferIndices[:nStatesForTransferIndices], \
+    firingEvents[:nFiringEvents], setSpecificStatesFrequencyJitter[:nFrequencyJitter], \
+    motorUnitNo[:nFibersToCompute], fiberStimulationPointIndex[:nFibersToCompute], \
+    lastStimulationCheckTime[:nFibersToCompute], setSpecificStatesCallFrequency[:nFibersToCompute], \
+    setSpecificStatesRepeatAfterFirstCall[:nFibersToCompute], setSpecificStatesCallEnableBegin[:nFibersToCompute]))";
+  }
+  sourceCode << R"(
 }
 
 )";
@@ -268,7 +296,12 @@ void computeMonodomain(double *vmValues, const double *parameters,
   #pragma omp target data \
       map(tofrom: vmValues[:nStatesTotal]) \
       map(to: parameters[:nParametersTotal], elementLengths[:nElementLengths]) \
-      map(from: algebraicsForTransfer[:nAlgebraicsForTransfer], statesForTransfer[:nStatesForTransfer])
+      map(from: )";
+  if (!algebraicsForTransferIndices_.empty())
+  {
+    sourceCode << R"(algebraicsForTransfer[:nAlgebraicsForTransfer], )";
+  }
+  sourceCode << R"(statesForTransfer[:nStatesForTransfer])
   {
 )";
    sourceCode << R"(
@@ -305,14 +338,6 @@ void computeMonodomain(double *vmValues, const double *parameters,
       for (int instanceNo = 0; instanceNo < nInstancesPerFiber; instanceNo++)
       {
         int instanceToComputeNo = fiberNo*nInstancesPerFiber + instanceNo;    // index of instance over all fibers
-
-        /*if (timeStepNo <= 1 && instanceNo == 0)
-        {
-          if (omp_is_initial_device())
-            printf("(fiber %d is on host) ",fiberNo);
-          else
-            printf("(fiber %d is on target device) ",fiberNo);
-        }*/
 
         // determine if current point is at center of fiber
         int fiberCenterIndex = fiberStimulationPointIndex[fiberNo];

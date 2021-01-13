@@ -249,7 +249,7 @@ protected:
   bool generateGpuSource_;                               //< if the GPU source code should be generated, if not it reuses the existing file, this is for debugging
 
   void (*compute0DInstance_)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &, double);   //< runtime-created and loaded function to compute one Heun step of the 0D problem
-  void (*computeMonodomain_)(double *vmvalues, const double *parameters,
+  void (*computeMonodomain_)(const double *parameters,
                               double *algebraicsForTransfer, double *statesForTransfer, const double *elementLengths,
                               double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
                               double prefactor, double valueForStimulatedPoint);   //< runtime-created and loaded function to compute monodomain equation

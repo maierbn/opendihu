@@ -106,7 +106,7 @@ initializeCellMLSourceFileGpu()
   // load the rhs library
   void *handle = CellmlAdapterType::loadRhsLibraryGetHandle(libraryFilename);
 
-  computeMonodomain_ = (void (*)(double *vmValues, const double *parameters,
+  computeMonodomain_ = (void (*)(const double *parameters,
                                 double *algebraicsForTransfer, double *statesForTransfer, const double *elementLengths,
                                 double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
                                 double prefactor, double valueForStimulatedPoint)) dlsym(handle, "computeMonodomain");
@@ -192,6 +192,7 @@ double setSpecificStatesCallEnableBegin[nFibersToCompute];
 double currentJitter[nFibersToCompute];
 int jitterIndex[nFibersToCompute];
 
+double vmValues[nInstancesToCompute];
 double parameters[nParametersTotal];
 double elementLengths[nElementLengths];
 double statesForTransfer[nStatesForTransfer];
@@ -213,7 +214,7 @@ void initializeArrays(const double *statesOneInstance, const int *algebraicsForT
     {
       int instanceToComputeNo = fiberNo*nInstancesPerFiber + instanceNo;
 
-      //vmValues[instanceToComputeNo] = statesOneInstance[0];
+      vmValues[instanceToComputeNo] = statesOneInstance[0];
       for (int stateNo = 1; stateNo < nStates; stateNo++)
       {
         states[stateNo*nInstancesToCompute + instanceToComputeNo] = statesOneInstance[stateNo];
@@ -262,7 +263,7 @@ void initializeArrays(const double *statesOneInstance, const int *algebraicsForT
   {
     sourceCode << R"(
   // map values to target
-  #pragma omp target update to(states[:nStatesTotal], algebraicsForTransferIndices[:nAlgebraicsForTransferIndices], statesForTransferIndices[:nStatesForTransferIndices], \
+  #pragma omp target update to(vmValues[:nInstancesToCompute], states[:nStatesTotal], algebraicsForTransferIndices[:nAlgebraicsForTransferIndices], statesForTransferIndices[:nStatesForTransferIndices], \
     firingEvents[:nFiringEvents], setSpecificStatesFrequencyJitter[:nFrequencyJitter], \
     motorUnitNo[:nFibersToCompute], fiberStimulationPointIndex[:nFibersToCompute], \
     lastStimulationCheckTime[:nFibersToCompute], setSpecificStatesCallFrequency[:nFibersToCompute], \
@@ -272,7 +273,7 @@ void initializeArrays(const double *statesOneInstance, const int *algebraicsForT
   {
     sourceCode << R"(
   // map values to target
-  #pragma omp target update to(states[:nStatesTotal], statesForTransferIndices[:nStatesForTransferIndices], \
+  #pragma omp target update to(vmValues[:nInstancesToCompute], states[:nStatesTotal], statesForTransferIndices[:nStatesForTransferIndices], \
     firingEvents[:nFiringEvents], setSpecificStatesFrequencyJitter[:nFrequencyJitter], \
     motorUnitNo[:nFibersToCompute], fiberStimulationPointIndex[:nFibersToCompute], \
     lastStimulationCheckTime[:nFibersToCompute], setSpecificStatesCallFrequency[:nFibersToCompute], \
@@ -289,7 +290,7 @@ void initializeArrays(const double *statesOneInstance, const int *algebraicsForT
     << "// compute the total monodomain equation\n"
     << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif"
     << R"(
-void computeMonodomain(double *vmValues, const double *parameters,
+void computeMonodomain(const double *parameters,
                        double *algebraicsForTransfer, double *statesForTransfer, const double *elementLengths,
                        double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
                        double prefactor, double valueForStimulatedPoint)
@@ -303,8 +304,8 @@ void computeMonodomain(double *vmValues, const double *parameters,
   #pragma omp target update to(parameters[:nParametersTotal], elementLengths[:nElementLengths])
 
   // share vmValues array with GPU (it does not work to include the above pragma in this one, apparently)
-  #pragma omp target data map(tofrom: vmValues[:nStatesTotal])
-  {
+  //#pragma omp target data map(tofrom: vmValues[:nStatesTotal])
+  //{
 )";
    sourceCode << R"(
   //const int nAlgebraics = )" << nAlgebraics << R"(;
@@ -689,7 +690,7 @@ void computeMonodomain(double *vmValues, const double *parameters,
 )";
   if (optimizationType_ == "gpu")
     sourceCode << R"(
-  } // end pragma omp target
+  //} // end pragma omp target
 )";
   sourceCode << R"(
   // map back from GPU to host
@@ -857,7 +858,7 @@ computeMonodomainGpu()
   }
 
   // call the compiled function
-  computeMonodomain_(gpuVmValues_.data(), gpuParameters_.data(),
+  computeMonodomain_(gpuParameters_.data(),
                      gpuAlgebraicsForTransfer_.data(), gpuStatesForTransfer_.data(), gpuElementLengths_.data(),
                      startTime, timeStepWidthSplitting, nTimeStepsSplitting_, dt0D, nTimeSteps0D, dt1D, nTimeSteps1D,
                      prefactor, valueForStimulatedPoint_);

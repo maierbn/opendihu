@@ -191,6 +191,10 @@ double setSpecificStatesRepeatAfterFirstCall[nFibersToCompute];
 double setSpecificStatesCallEnableBegin[nFibersToCompute];
 double currentJitter[nFibersToCompute];
 int jitterIndex[nFibersToCompute];
+
+double parameters[nParametersTotal];
+double elementLengths[nElementLengths];
+double statesForTransfer[nStatesForTransfer];
 #pragma omp end declare target
 
 #ifdef __cplusplus
@@ -295,15 +299,11 @@ void computeMonodomain(double *vmValues, const double *parameters,
   if (optimizationType_ == "gpu")
     sourceCode << R"(
 
-  #pragma omp target data \
-      map(tofrom: vmValues[:nStatesTotal]) \
-      map(to: parameters[:nParametersTotal], elementLengths[:nElementLengths]) \
-      map(from: )";
-  if (!algebraicsForTransferIndices_.empty())
-  {
-    sourceCode << R"(algebraicsForTransfer[:nAlgebraicsForTransfer], )";
-  }
-  sourceCode << R"(statesForTransfer[:nStatesForTransfer])
+  // map data to GPU
+  #pragma omp target update to(parameters[:nParametersTotal], elementLengths[:nElementLengths])
+
+  // share vmValues array with GPU (it does not work to include the above pragma in this one, apparently)
+  #pragma omp target data map(tofrom: vmValues[:nStatesTotal])
   {
 )";
    sourceCode << R"(
@@ -691,8 +691,15 @@ void computeMonodomain(double *vmValues, const double *parameters,
     sourceCode << R"(
   } // end pragma omp target
 )";
+  sourceCode << R"(
+  // map back from GPU to host
+  #pragma omp target update from()";
+  if (!algebraicsForTransferIndices_.empty())
+  {
+    sourceCode << R"(algebraicsForTransfer[:nAlgebraicsForTransfer], )";
+  }
+  sourceCode << R"(statesForTransfer[:nStatesForTransfer])
 
-sourceCode << R"(
 }
 )";
     

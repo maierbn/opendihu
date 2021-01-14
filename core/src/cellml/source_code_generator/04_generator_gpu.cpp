@@ -250,14 +250,7 @@ double log(double x)
         first = false;
       });
       
-      if (isCommentedOut)
-      {
-        sourceCodeMain << indent << sourceCodeLine.str() << std::endl;
-      }
-      else
-      {
-        sourceCodeMain << indent << "const double " << sourceCodeLine.str() << std::endl;
-      }
+      sourceCodeMain << indent << sourceCodeLine.str() << std::endl;
     }
   }
   sourceCodeMain << "\n"

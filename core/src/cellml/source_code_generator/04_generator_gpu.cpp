@@ -264,7 +264,7 @@ double log(double x)
   {
     sourceCodeMain << indent
        //<< "const double intermediateState" << stateNo << " = states[" << stateNo*nInstancesToCompute << "+instanceToComputeNo] + dt0D*rate" << stateNo << ";\n";
-       << "states[" << stateNo*nInstancesToCompute << "+instanceToComputeNo] = states[" << stateNo*nInstancesToCompute << "+instanceToComputeNo] + dt0D*rates[" << stateNo*nInstancesToCompute << "+instanceToComputeNo]\n";
+       << "states[" << stateNo*nInstancesToCompute << "+instanceToComputeNo] += dt0D*rates[" << stateNo*nInstancesToCompute << "+instanceToComputeNo];\n";
   }
   
   sourceCodeMain << "\n"

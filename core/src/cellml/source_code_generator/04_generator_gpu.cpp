@@ -131,8 +131,13 @@ generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibers
     << "#include <iostream>\n"
     << "#include <vector>\n"
     << "#pragma omp declare target\n\n"
-    << cellMLCode_.header << std::endl;
-    
+    << cellMLCode_.header << std::endl
+    << R"(
+double log(double x)
+{
+  return std::log(x);
+}
+)";
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
   sourceCodeHeader << std::endl << "/* This file was created by opendihu at " << StringUtility::timeToString(&tm)  //std::put_time(&tm, "%d/%m/%Y %H:%M:%S")

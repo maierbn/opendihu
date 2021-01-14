@@ -431,7 +431,7 @@ double log(double x)
   headerCode = sourceCodeHeader.str();
   mainCode = sourceCodeMain.str();
   
-  additionalCompileFlags_ = "-fopenmp -foffload=\"-O3 -v -lm\"";
+  additionalCompileFlags_ = "-fopenmp -foffload=\"-O0 -g -v -lm\"";
   compilerCommand_ = CXX_COMPILER_COMMAND;
   sourceFileSuffix_ = ".cpp";
 }

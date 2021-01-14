@@ -246,11 +246,14 @@ nFibersToCompute_=1;
 
       if (computingRank == rankSubset->ownRankNo())
       {
+        if (fiberDataNo >= fiberData_.size())
+          break;
         LOG(DEBUG) << "compute (i,j)=(" << i << "," << j << "), computingRank " << computingRank
           << ", fiberNo: " << fiberNo << ", fiberDataNo: " << fiberDataNo 
           << ", rankSubset->size(): " << rankSubset->size() << ", own: " << rankSubset->ownRankNo();
         nInstancesToComputePerFiber_ = fiberFunctionSpace->nDofsGlobal();
         nInstancesToCompute_ += nInstancesToComputePerFiber_;
+
 
         assert(fiberDataNo < fiberData_.size());
         assert(fiberFunctionSpace);

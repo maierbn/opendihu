@@ -209,7 +209,7 @@ initialize()
       }
     }
   }
-
+nFibersToCompute_=1;
   fiberData_.resize(nFibersToCompute_);
   fiberHasBeenStimulated_.resize(nFibersToCompute_, false);
   LOG(DEBUG) << "nFibers: " << nFibers << ", nFibersToCompute_: " << nFibersToCompute_;

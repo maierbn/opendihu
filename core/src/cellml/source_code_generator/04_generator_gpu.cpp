@@ -207,6 +207,8 @@ double log(double x)
       }
     }
     while (replacementOccured);
+    
+    constantValue = StringUtility::replaceAll(constantValue, "pow((0.5), 2.00000)", "0.25");
     constants[constantName] = constantValue;
 
     sourceCodeMain << indent << "// const double " << constantName << " = " << constantValue << ";\n";

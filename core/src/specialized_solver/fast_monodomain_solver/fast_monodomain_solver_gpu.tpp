@@ -791,11 +791,11 @@ initializeValuesOnGpu()
     LOG(FATAL) << "gpuAlgebraicsForTransfer_.size() = " << gpuAlgebraicsForTransfer_.size() << " does not match assumed size " << nAlgebraicsForTransfer << "=" << nInstancesToCompute_ << "x" << nAlgebraicsForTransferIndices;
   if (gpuStatesForTransfer_.size() != nStatesForTransfer)
     LOG(FATAL) << "gpuStatesForTransfer_.size() = " << gpuStatesForTransfer_.size() << " does not match assumed size " << nStatesForTransfer << "=" << nInstancesToCompute_ << "x" << nStatesForTransferIndices;
-
+*/
   CellmlAdapterType &cellmlAdapter = nestedSolvers_.instancesLocal()[0].timeStepping1().instancesLocal()[0].discretizableInTime();
   CellmlSourceCodeGenerator &cellmlSourceCodeGenerator = cellmlAdapter.cellmlSourceCodeGenerator();
   const std::vector<double> &statesInitialValues = cellmlSourceCodeGenerator.statesInitialValues();
-*/
+
   // upload all values to GPU
   initializeArrays_(statesInitialValues.data(), algebraicsForTransferIndices_.data(), statesForTransferIndices_.data(),
                    gpuFiringEvents_.data(), gpuSetSpecificStatesFrequencyJitter_.data(), gpuMotorUnitNo_.data(),

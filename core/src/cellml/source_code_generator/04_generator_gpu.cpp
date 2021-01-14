@@ -187,7 +187,7 @@ double log(double x)
     {
       std::stringstream sourceCodeLine;
       bool isCommentedOut = false;
-      bool isFirst = false;
+      bool isFirst = true;
       
       codeExpression.visitLeafs([&sourceCodeLine,&isCommentedOut,nInstancesToCompute,&isFirst,this](
         CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
@@ -289,7 +289,7 @@ double log(double x)
     {
       std::stringstream sourceCodeLine;
       bool isCommentedOut = false;
-      bool isFirst = false;
+      bool isFirst = true;
       
       codeExpression.visitLeafs([&sourceCodeLine,&isCommentedOut,nInstancesToCompute,&isFirst,this](
         CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)

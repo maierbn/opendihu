@@ -139,27 +139,30 @@ generateMonodomainSolverGpuSource(std::string outputFilename, std::string header
   std::stringstream sourceCode;
   sourceCode << headerCode;
   
+  int nFibersToCompute = 1;  // nFibersToCompute_
+  int nInstancesToCompute = nFibersToCompute*nInstancesToComputePerFiber_;
+
   sourceCode << R"(
 #pragma omp end declare target
 
 // global size constants
 const int nInstancesPerFiber = )" << nInstancesToComputePerFiber_ << R"(;
 const int nElementsOnFiber = )" << nInstancesToComputePerFiber_-1 << R"(;
-const int nFibersToCompute = )" << 1 << R"(;
-const long long nInstancesToCompute = )" << 1*nInstancesToComputePerFiber_ << R"(;  // = nInstancesPerFiber*nFibersToCompute
+const int nFibersToCompute = )" << nFibersToCompute << R"(;
+const long long nInstancesToCompute = )" << nInstancesToCompute << R"(;  // = nInstancesPerFiber*nFibersToCompute;
 const int nStates = )" << nStates << R"(;
 const int firingEventsNRows = )" << gpuFiringEventsNRows_ << R"(;
 const int firingEventsNColumns = )" << gpuFiringEventsNColumns_ << R"(;
 const int frequencyJitterNColumns = )" << gpuFrequencyJitterNColumns_ << R"(;
-const int nStatesTotal = nInstancesToCompute*nStates;
-const int nParametersTotal = nInstancesToCompute*)" << nParametersPerInstance_<< R"(;
-const int nElementLengths = nElementsOnFiber*nFibersToCompute;
-const int nFiringEvents = firingEventsNRows*firingEventsNColumns;
-const int nFrequencyJitter = nFibersToCompute*frequencyJitterNColumns;
+const int nStatesTotal = )" << nInstancesToCompute*nStates << R"(;  // = nInstancesToCompute*nStates;
+const int nParametersTotal = )" << nInstancesToCompute*nParametersPerInstance_ << R"(;  // = nInstancesToCompute*)" << nParametersPerInstance_<< R"(;
+const int nElementLengths = )" << (nInstancesToComputePerFiber_-1)*nFibersToCompute << R"(;  // = nElementsOnFiber*nFibersToCompute;
+const int nFiringEvents = )" << gpuFiringEventsNRows_*gpuFiringEventsNColumns_ << R"(;  // = firingEventsNRows*firingEventsNColumns;
+const int nFrequencyJitter = )" << nFibersToCompute*gpuFrequencyJitterNColumns_ << R"(;  // = nFibersToCompute*frequencyJitterNColumns;
 const int nAlgebraicsForTransferIndices = )" << algebraicsForTransferIndices_.size() << R"(;
-const int nAlgebraicsForTransfer = nInstancesToCompute*nAlgebraicsForTransferIndices;
+const int nAlgebraicsForTransfer = )" << nInstancesToCompute*algebraicsForTransferIndices_.size() << R"(;  // = nInstancesToCompute*nAlgebraicsForTransferIndices;
 const int nStatesForTransferIndices = )" << statesForTransferIndices_.size() << R"(;
-const int nStatesForTransfer = nInstancesToCompute*nStatesForTransferIndices;
+const int nStatesForTransfer = )" << nInstancesToCompute*statesForTransferIndices_.size() << R"(;  // = nInstancesToCompute*nStatesForTransferIndices;
 )";
 
   if (optimizationType_ == "gpu")
@@ -734,6 +737,7 @@ void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 initializeValuesOnGpu()
 {
   // check that arrays have the correct sizes
+  /*
   // size constants
   const int nElementsOnFiber = nInstancesToComputePerFiber_-1;
   const int nFibersToCompute = 1;
@@ -791,7 +795,7 @@ initializeValuesOnGpu()
   CellmlAdapterType &cellmlAdapter = nestedSolvers_.instancesLocal()[0].timeStepping1().instancesLocal()[0].discretizableInTime();
   CellmlSourceCodeGenerator &cellmlSourceCodeGenerator = cellmlAdapter.cellmlSourceCodeGenerator();
   const std::vector<double> &statesInitialValues = cellmlSourceCodeGenerator.statesInitialValues();
-
+*/
   // upload all values to GPU
   initializeArrays_(statesInitialValues.data(), algebraicsForTransferIndices_.data(), statesForTransferIndices_.data(),
                    gpuFiringEvents_.data(), gpuSetSpecificStatesFrequencyJitter_.data(), gpuMotorUnitNo_.data(),

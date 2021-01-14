@@ -135,7 +135,9 @@ generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibers
     << R"(
 double log(double x)
 {
-  return std::log(x);
+  double t = x-1;
+  double t2 = t*t;
+  return t - 0.5*t2 + 1./3*t2*t - 0.25*t2*t2;
 }
 )";
   auto t = std::time(nullptr);

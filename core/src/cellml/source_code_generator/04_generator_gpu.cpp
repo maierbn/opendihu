@@ -175,22 +175,22 @@ double log(double x)
 
     std::size_t pos = constantAssignmentsLine.find("=");
     std::string constantName = constantAssignmentsLine.substr(0,pos);
-    std::string constantValue = constantAssignmentsLine.substr(pos+1, constantAssignmentsLine.find(";"));
+    std::string constantValue = constantAssignmentsLine.substr(pos+1, constantAssignmentsLine.find(";")-(pos+1));
     StringUtility::trim(constantName);
     StringUtility::trim(constantValue);
 
     // replace constants that are part of previous constants
     // get sorted list
-    std::vector<pair<int, int>> sortedConstants;
+    std::vector<std::pair<std::string,std::string>> sortedConstants;
     std::copy(constants.begin(),
          constants.end(),
-         std::back_inserter<vector<pair<int, int>>>(sortedConstants));
+         std::back_inserter<std::vector<std::pair<std::string,std::string>>>(sortedConstants));
     
     //for (std::pair<std::string,std::string> pair : constants)
     bool replacementOccured = false;
     do
     {
-      for (std::vector<pair<int, int>>::reverse_iterator iter = sortedConstants.rbegin(); iter != sortedConstants.rbegin(); iter++)
+      for (std::vector<std::pair<std::string,std::string>>::reverse_iterator iter = sortedConstants.rbegin(); iter != sortedConstants.rbegin(); iter++)
       {
         if (constantValue.find(iter->first) != std::string::npos)
         {
@@ -199,6 +199,7 @@ double log(double x)
           break;
         }
       }
+    }
     while (replacementOccured);
     constants[constantName] = constantValue;
 

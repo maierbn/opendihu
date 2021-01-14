@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <iostream>
+#include <map>
 #include <Vc/Vc>
 #include "easylogging++.h"
 
@@ -168,13 +169,32 @@ double log(double x)
 /*    << R"(  std::cout << "parameters[0]=" << parameters[0][0] << "," << parameters[0][1] << "," << parameters[0][2] << "," << parameters[0][3] << "," << std::endl;)" << "\n"
     << R"(  std::cout << "parameters[1]=" << parameters[1][0] << "," << parameters[1][1] << "," << parameters[1][2] << "," << parameters[1][3] << "," << std::endl;)" << "\n";*/
 
+  std::map<std::string,std::string> constants;
+
   // add assignments of constant values
   for (std::string constantAssignmentsLine : constantAssignments_)
   {
     constantAssignmentsLine = StringUtility::replaceAll(constantAssignmentsLine, "CONSTANTS[", "constant");
     constantAssignmentsLine = StringUtility::replaceAll(constantAssignmentsLine, "]", "");
 
-    sourceCodeMain << indent << "const double " << constantAssignmentsLine << std::endl;
+    std::size_t pos = constantAssignmentsLine.find("=");
+    std::string constantName = constantAssignmentsLine.substr(0,pos);
+    std::string constantValue = constantAssignmentsLine.substr(pos+1);
+    StringUtility::trim(constantName);
+    StringUtility::trim(constantValue);
+
+    // replace constants that are part of previous constants
+    for (std::pair<std::string,std::string> pair : constants)
+    {
+      if (constantValue.find(pair.first) != std::string::npos)
+      {
+        constantValue = StringUtility::replaceAll(constantValue, pair.first, "("+pair.second+")");
+      }
+    }
+    constants[constantName] = constantValue;
+
+    sourceCodeMain << indent << "// const double " << constantName << " = " << constantValue << ";\n";
+    //sourceCodeMain << indent << "const double " << constantAssignmentsLine << std::endl;
   }
   
   // loop over instances on the current fiber  
@@ -189,7 +209,7 @@ double log(double x)
       bool isCommentedOut = false;
       bool isFirst = true;
       
-      codeExpression.visitLeafs([&sourceCodeLine,&isCommentedOut,nInstancesToCompute,&isFirst,this](
+      codeExpression.visitLeafs([&sourceCodeLine,&isCommentedOut,nInstancesToCompute,&isFirst,&constants,this](
         CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
       {
         switch(expression.type)
@@ -198,10 +218,10 @@ double log(double x)
 
             if (expression.code == "CONSTANTS")
             {
-              // constants only exist once for all instances
-              if (isFirst)
-                sourceCodeLine << "const double ";
-              sourceCodeLine << "constant" << expression.arrayIndex;
+              // constants only exist once for all instances 
+              std::stringstream constantName;
+              constantName << "constant" << expression.arrayIndex;
+              sourceCodeLine << constants[constantName.str()];
             }
             else
             {
@@ -292,7 +312,7 @@ double log(double x)
       bool isCommentedOut = false;
       bool isFirst = true;
       
-      codeExpression.visitLeafs([&sourceCodeLine,&isCommentedOut,nInstancesToCompute,&isFirst,this](
+      codeExpression.visitLeafs([&sourceCodeLine,&isCommentedOut,nInstancesToCompute,&isFirst,&constants,this](
         CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
       {
         switch(expression.type)
@@ -302,9 +322,9 @@ double log(double x)
             if (expression.code == "CONSTANTS")
             {
               // constants only exist once for all instances
-              if (isFirst)
-                sourceCodeLine << "const double ";
-              sourceCodeLine << "constant" << expression.arrayIndex;
+              std::stringstream constantName;
+              constantName << "constant" << expression.arrayIndex;
+              sourceCodeLine << constants[constantName.str()];
             }
             else
             {

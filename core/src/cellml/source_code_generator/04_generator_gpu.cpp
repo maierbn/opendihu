@@ -186,15 +186,21 @@ double log(double x)
          constants.end(),
          std::back_inserter<std::vector<std::pair<std::string,std::string>>>(sortedConstants));
     
+    std::cout << sortedConstants << std::endl;
+    std::cout << "check if [" << constantValue << "] contains any of " << sortedConstants << std::endl;
+    
     //for (std::pair<std::string,std::string> pair : constants)
     bool replacementOccured = false;
     do
     {
+      replacementOccured = false;
       for (std::vector<std::pair<std::string,std::string>>::reverse_iterator iter = sortedConstants.rbegin(); iter != sortedConstants.rend(); iter++)
       {
         if (constantValue.find(iter->first) != std::string::npos)
         {
+          std::cout << "  yes, " << iter->first << " found, replace by " << iter->second << ":";
           constantValue = StringUtility::replaceAll(constantValue, iter->first, "("+iter->second+")");
+          std::cout << " [" << constantValue << "]" << std::endl;
           replacementOccured = true;
           break;
         }

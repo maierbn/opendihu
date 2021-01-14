@@ -156,6 +156,7 @@ const int firingEventsNRows = )" << gpuFiringEventsNRows_ << R"(;
 const int firingEventsNColumns = )" << gpuFiringEventsNColumns_ << R"(;
 const int frequencyJitterNColumns = )" << gpuFrequencyJitterNColumns_ << R"(;
 const int nStatesTotal = )" << nInstancesToCompute*nStates << R"(;  // = nInstancesToCompute*nStates;
+const int nAlgebraicsTotal = )" << nInstancesToCompute*nAlgebraics << R"(;  // = nInstancesToCompute*nAlgebraics;
 const int nParametersTotal = )" << nInstancesToCompute*nParametersPerInstance_ << R"(;  // = nInstancesToCompute*)" << nParametersPerInstance_<< R"(;
 const int nElementLengths = )" << (nInstancesToComputePerFiber_-1)*nFibersToCompute << R"(;  // = nElementsOnFiber*nFibersToCompute;
 const int nFiringEvents = )" << gpuFiringEventsNRows_*gpuFiringEventsNColumns_ << R"(;  // = firingEventsNRows*firingEventsNColumns;
@@ -199,6 +200,8 @@ int jitterIndex[nFibersToCompute];
 double vmValues[nInstancesToCompute];
 double rates[nStatesTotal];
 double intermediateRates[nStatesTotal];
+double algebraics[nAlgebraicsTotal];
+double intermediateAlgebraics[nAlgebraicsTotal];
 #pragma omp end declare target
 
 #ifdef __cplusplus

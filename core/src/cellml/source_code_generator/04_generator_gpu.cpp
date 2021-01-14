@@ -265,9 +265,7 @@ double log(double x)
               }
               else if (expression.code == "algebraics")
               {
-                if (isFirst)
-                  sourceCodeLine << "const double ";
-                sourceCodeLine << "algebraic" << expression.arrayIndex;
+                sourceCodeLine << "algebraics[" << expression.arrayIndex*nInstancesToCompute << " + instanceToComputeNo]";
               }
               else if (expression.code == "parameters")
               {
@@ -362,9 +360,7 @@ double log(double x)
               }
               else if (expression.code == "algebraics")
               {
-                if (isFirst)
-                  sourceCodeLine << "const double ";
-                sourceCodeLine << "intermediateAlgebraic" << expression.arrayIndex;
+                sourceCodeLine << "intermediateAlgebraics[" << expression.arrayIndex*nInstancesToCompute << " + instanceToComputeNo]";
               }
               else if (expression.code == "parameters")
               {
@@ -445,7 +441,7 @@ double log(double x)
       else
       {
         sourceCodeMain << indent << "      case " << algebraicNo << ":\n"
-          << indent << "        algebraicsForTransfer[i*nInstancesToCompute + instanceToComputeNo] = intermediateAlgebraic" << algebraicNo << ";\n"
+          << indent << "        algebraicsForTransfer[i*nInstancesToCompute + instanceToComputeNo] = intermediateAlgebraics[" << algebraicNo << "*nInstancesToCompute + instanceToComputeNo];\n"
           << indent << "        break;\n";
       }
     }

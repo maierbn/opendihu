@@ -211,6 +211,8 @@ void initializeArrays(const double *statesOneInstance, const int *algebraicsForT
     {
       int instanceToComputeNo = fiberNo*nInstancesPerFiber + instanceNo;
 
+      // The entries in states[0] to states[1*nInstancesToCompute - 1] are not used.
+      // State zero is stored in vmValues instead.
       for (int stateNo = 1; stateNo < nStates; stateNo++)
       {
         states[stateNo*nInstancesToCompute + instanceToComputeNo] = statesOneInstance[stateNo];
@@ -482,12 +484,12 @@ void computeMonodomain(const double *parameters,
         double u_center = 0;
         double u_next = 0;
 
-        u_center = states[0 + instanceToComputeNo];  // state 0 of the current instance
+        u_center = vmValues[instanceToComputeNo];  // state 0 of the current instance
 
         // contribution from left element
         if (valueNo > 0)
         {
-          u_previous = states[0 + instanceToComputeNo - 1];  // state 0 of the left instance
+          u_previous = vmValues[instanceToComputeNo - 1];  // state 0 of the left instance
 
           // stencil K: 1/h*[1   _-1_ ]*prefactor
           // stencil M:   h*[1/6 _1/3_]
@@ -533,7 +535,7 @@ void computeMonodomain(const double *parameters,
         // contribution from right element
         if (valueNo < nValues-1)
         {
-          u_next = states[0 + instanceToComputeNo + 1];  // state 0 of the right instance
+          u_next = vmValues[instanceToComputeNo + 1];  // state 0 of the right instance
 
           // stencil K: 1/h*[_-1_  1  ]*prefactor
           // stencil M:   h*[_1/3_ 1/6]
@@ -600,7 +602,7 @@ void computeMonodomain(const double *parameters,
 
       // perform backward substitution
       // x_n = d'_n
-      states[0+nValues-1] = dIntermediate[nValues-1];  // state 0 of the point (nValues-1)
+      vmValues[nValues-1] = dIntermediate[nValues-1];  // state 0 of the point (nValues-1)
 
       double previousValue = dIntermediate[nValues-1];
 
@@ -611,7 +613,7 @@ void computeMonodomain(const double *parameters,
 
         // x_i = d'_i - c'_i * x_{i+1}
         double resultValue = dIntermediate[valueNo] - cIntermediate[valueNo] * previousValue;
-        states[0+instanceToComputeNo] = resultValue;
+        vmValues[instanceToComputeNo] = resultValue;
 
         previousValue = resultValue;
       }

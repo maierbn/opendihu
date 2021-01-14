@@ -359,7 +359,9 @@ double log(double x)
           // y_n+1 = y_n + 0.5*[rhs(y_n) + rhs(y*)]
 )";
 
-  sourceCodeMain << indent << "vmValues[instanceToComputeNo] += 0.5*dt0D*(rate0 + intermediateRate0);\n";
+  sourceCodeMain << indent << "vmValues[instanceToComputeNo] += 0.5*dt0D*("
+    << "rates[0+instanceToComputeNo] " 
+      << "+ intermediateRates[0+instanceToComputeNo]);\n";
   
   for (int stateNo = 1; stateNo < this->nStates_; stateNo++)
   {

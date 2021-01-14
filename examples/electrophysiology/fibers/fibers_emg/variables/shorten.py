@@ -69,12 +69,12 @@ motor_units = [
 end_time = 4000.0                      # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
-dt_0D = 3e-3                        # [ms] timestep width of ODEs (2e-3)
-dt_1D = 1e-3                        # [ms] timestep width of diffusion (4e-3)
-dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting (4e-3)
-dt_3D = 4e-1                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
+dt_0D = 1e-4                        # [ms] timestep width of ODEs (2e-3)
+dt_1D = 1e-4                        # [ms] timestep width of diffusion (4e-3)
+dt_splitting = 1e-4                 # [ms] overall timestep width of strang splitting (4e-3)
+dt_3D = 4e-4                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep = 4e-1              # [ms] timestep for output surface EMG, 0.5
-output_timestep_fibers = 4e-1       # [ms] timestep for fiber output, 0.5
+output_timestep_fibers = 1.2e-3       # [ms] timestep for fiber output, 0.5
 output_timestep_big = 25            # [ms] timestep for output big files of 3D EMG, 100
 
 # simulation time:  4s
@@ -94,11 +94,11 @@ enable_surface_emg = True
 optimization_type = "gpu"
 
 #fiber_file=input_directory+"/left_biceps_brachii_37x37fibers.bin"
-fiber_file              = input_directory+"/left_biceps_brachii_13x13fibers.bin"
+fiber_file              = input_directory+"/left_biceps_brachii_7x7fibers.bin"
 firing_times_file       = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = input_directory+"/MU_fibre_distribution_10MUs.txt"
-cellml_file             = input_directory+"/hodgkin_huxley_1952.c"
-#cellml_file             = input_directory+"/new_slow_TK_2014_12_08.cellml"
+#cellml_file             = input_directory+"/hodgkin_huxley_1952.c"
+cellml_file             = input_directory+"/new_slow_TK_2014_12_08.cellml"
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):

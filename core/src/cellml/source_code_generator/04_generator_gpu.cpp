@@ -183,8 +183,9 @@ double log(double x)
     {
       std::stringstream sourceCodeLine;
       bool isCommentedOut = false;
+      bool first = true;
       
-      codeExpression.visitLeafs([&sourceCodeLine,&isCommentedOut,nInstancesToCompute,this](
+      codeExpression.visitLeafs([&sourceCodeLine,&isCommentedOut,nInstancesToCompute,this,&first](
         CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
       {
         switch(expression.type)
@@ -193,7 +194,9 @@ double log(double x)
 
             if (expression.code == "CONSTANTS")
             {
-              // constants only exist once for all instances
+              // constants only exist once for all instances              
+              if (first)
+                sourceCodeLine << "const double ";
               sourceCodeLine << "constant" << expression.arrayIndex;
             }
             else
@@ -212,10 +215,13 @@ double log(double x)
               }
               else if (expression.code == "rates")
               {
-                sourceCodeLine << "rate" << expression.arrayIndex;
+                //sourceCodeLine << "rate" << expression.arrayIndex;
+                sourceCodeLine << "rates[" << expression.arrayIndex*nInstancesToCompute << "+instanceToComputeNo]";
               }
               else if (expression.code == "algebraics")
               {
+                if (first)
+                  sourceCodeLine << "const double ";
                 sourceCodeLine << "algebraic" << expression.arrayIndex;
               }
               else if (expression.code == "parameters")
@@ -241,6 +247,7 @@ double log(double x)
           default:
             break;
         }
+        first = false;
       });
       
       if (isCommentedOut)
@@ -257,12 +264,14 @@ double log(double x)
     << "          // algebraic step\n"
     << "          // compute y* = y_n + dt*rhs(y_n), y_n = state, rhs(y_n) = rate, y* = intermediateState\n";
 
-  sourceCodeMain << indent << "double intermediateState0 = vmValues[instanceToComputeNo] + dt0D*rate0;\n";
+  //sourceCodeMain << indent << "double intermediateState0 = vmValues[instanceToComputeNo] + dt0D*rate0;\n";
+  sourceCodeMain << indent << "states[0+instanceToComputeNo] = vmValues[instanceToComputeNo] + dt0D*rates[0+instanceToComputeNo];\n";
 
   for (int stateNo = 1; stateNo < this->nStates_; stateNo++)
   {
     sourceCodeMain << indent
-       << "const double intermediateState" << stateNo << " = states[" << stateNo*nInstancesToCompute << "+instanceToComputeNo] + dt0D*rate" << stateNo << ";\n";
+       //<< "const double intermediateState" << stateNo << " = states[" << stateNo*nInstancesToCompute << "+instanceToComputeNo] + dt0D*rate" << stateNo << ";\n";
+       << "states[" << stateNo*nInstancesToCompute << "+instanceToComputeNo] = states[" << stateNo*nInstancesToCompute << "+instanceToComputeNo] + dt0D*rates[" << stateNo*nInstancesToCompute << "+instanceToComputeNo]\n";
   }
   
   sourceCodeMain << "\n"
@@ -270,7 +279,8 @@ double log(double x)
           // if stimulation, set value of Vm (state0)
           if (stimulateCurrentPoint)
           {
-            intermediateState0 = valueForStimulatedPoint;
+            //intermediateState0 = valueForStimulatedPoint;
+             states[instanceToComputeNo] = valueForStimulatedPoint;
           })";
   
   sourceCodeMain << R"(
@@ -284,8 +294,9 @@ double log(double x)
     {
       std::stringstream sourceCodeLine;
       bool isCommentedOut = false;
+      bool first = true;
       
-      codeExpression.visitLeafs([&sourceCodeLine,&isCommentedOut,nInstancesToCompute,this](CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
+      codeExpression.visitLeafs([&sourceCodeLine,&isCommentedOut,nInstancesToCompute,&first,this](CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
       {
         switch(expression.type)
         {
@@ -294,6 +305,8 @@ double log(double x)
             if (expression.code == "CONSTANTS")
             {
               // constants only exist once for all instances
+              if (first)
+                sourceCodeLine << "const double ";
               sourceCodeLine << "constant" << expression.arrayIndex;
             }
             else
@@ -301,14 +314,18 @@ double log(double x)
               // all other variables (states, rates, algebraics, parameters) exist for every instance
               if (expression.code == "states")
               {
-                sourceCodeLine << "intermediateState" << expression.arrayIndex;
+                //sourceCodeLine << "intermediateState" << expression.arrayIndex;
+                sourceCodeLine << "states[" << expression.arrayIndex*nInstancesToCompute << "+instanceToComputeNo]";
               }
               else if (expression.code == "rates")
               {
-                sourceCodeLine << "intermediateRate" << expression.arrayIndex;
+                //sourceCodeLine << "intermediateRate" << expression.arrayIndex;
+                sourceCodeLine << "intermediateRates[" << expression.arrayIndex*nInstancesToCompute << "+instanceToComputeNo]";
               }
               else if (expression.code == "algebraics")
               {
+                if (first)
+                  sourceCodeLine << "const double ";
                 sourceCodeLine << "intermediateAlgebraic" << expression.arrayIndex;
               }
               else if (expression.code == "parameters")
@@ -334,16 +351,9 @@ double log(double x)
           default:
             break;
         }
+        first = false;
       });
-      
-      if (isCommentedOut)
-      {
-        sourceCodeMain << indent << sourceCodeLine.str() << std::endl;
-      }
-      else
-      {
-        sourceCodeMain << indent << "const double " << sourceCodeLine.str() << std::endl;
-      }
+      sourceCodeMain << indent << sourceCodeLine.str() << std::endl;
     }
   }
 
@@ -356,7 +366,9 @@ double log(double x)
   
   for (int stateNo = 1; stateNo < this->nStates_; stateNo++)
   {
-    sourceCodeMain << indent << "states[" << stateNo*nInstancesToCompute << "+instanceToComputeNo] += 0.5*dt0D*(rate" << stateNo << " + intermediateRate" << stateNo << ");\n";
+    sourceCodeMain << indent << "states[" << stateNo*nInstancesToCompute << "+instanceToComputeNo] += 0.5*dt0D*(" 
+      << "rates[" << stateNo*nInstancesToCompute << "+instanceToComputeNo] " 
+      << "+ intermediateRates[" << stateNo*nInstancesToCompute << "+instanceToComputeNo]);\n";
   }
 
   sourceCodeMain << R"(

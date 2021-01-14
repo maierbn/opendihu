@@ -194,7 +194,7 @@ double log(double x)
     bool replacementOccured = false;
     do
     {
-      for (std::vector<std::pair<std::string,std::string>>::reverse_iterator iter = sortedConstants.rbegin(); iter != sortedConstants.rbegin(); iter++)
+      for (std::vector<std::pair<std::string,std::string>>::reverse_iterator iter = sortedConstants.rbegin(); iter != sortedConstants.rend(); iter++)
       {
         if (constantValue.find(iter->first) != std::string::npos)
         {

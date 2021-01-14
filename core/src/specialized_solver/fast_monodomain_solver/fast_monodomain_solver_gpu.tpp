@@ -151,6 +151,7 @@ const int nElementsOnFiber = )" << nInstancesToComputePerFiber_-1 << R"(;
 const int nFibersToCompute = )" << nFibersToCompute << R"(;
 const long long nInstancesToCompute = )" << nInstancesToCompute << R"(;  // = nInstancesPerFiber*nFibersToCompute;
 const int nStates = )" << nStates << R"(;
+const int nAlgebraics = )" << nAlgebraics << R"(;
 const int firingEventsNRows = )" << gpuFiringEventsNRows_ << R"(;
 const int firingEventsNColumns = )" << gpuFiringEventsNColumns_ << R"(;
 const int frequencyJitterNColumns = )" << gpuFrequencyJitterNColumns_ << R"(;
@@ -196,6 +197,8 @@ double currentJitter[nFibersToCompute];
 int jitterIndex[nFibersToCompute];
 
 double vmValues[nInstancesToCompute];
+double rates[nStatesTotal];
+double intermediateRates[nStatesTotal];
 #pragma omp end declare target
 
 #ifdef __cplusplus
@@ -216,9 +219,11 @@ void initializeArrays(const double *statesOneInstance, const int *algebraicsForT
 
       // The entries in states[0] to states[1*nInstancesToCompute - 1] are not used.
       // State zero is stored in vmValues instead.
-      for (int stateNo = 1; stateNo < nStates; stateNo++)
+      for (int stateNo = 0; stateNo < nStates; stateNo++)
       {
         states[stateNo*nInstancesToCompute + instanceToComputeNo] = statesOneInstance[stateNo];
+        rates[stateNo*nInstancesToCompute + instanceToComputeNo] = 0;
+        intermediateRates[stateNo*nInstancesToCompute + instanceToComputeNo] = 0;
       }
     }
   }

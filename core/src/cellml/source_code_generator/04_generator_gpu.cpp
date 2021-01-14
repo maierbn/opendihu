@@ -135,6 +135,8 @@ generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibers
     << R"(
 double log(double x)
 {
+  // Taylor expansion of the log function around x=1
+  // note: std::log does not work on GPU!
   double t = x-1;
   double t2 = t*t;
   return t - 0.5*t2 + 1./3*t2*t - 0.25*t2*t2;
@@ -185,8 +187,9 @@ double log(double x)
     {
       std::stringstream sourceCodeLine;
       bool isCommentedOut = false;
+      bool isFirst = false;
       
-      codeExpression.visitLeafs([&sourceCodeLine,&isCommentedOut,nInstancesToCompute,this](
+      codeExpression.visitLeafs([&sourceCodeLine,&isCommentedOut,nInstancesToCompute,&isFirst,this](
         CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
       {
         switch(expression.type)
@@ -196,6 +199,8 @@ double log(double x)
             if (expression.code == "CONSTANTS")
             {
               // constants only exist once for all instances
+              if (isFirst)
+                sourceCodeLine << "const double ";
               sourceCodeLine << "constant" << expression.arrayIndex;
             }
             else
@@ -214,10 +219,14 @@ double log(double x)
               }
               else if (expression.code == "rates")
               {
+                if (isFirst)
+                  sourceCodeLine << "const double ";
                 sourceCodeLine << "rate" << expression.arrayIndex;
               }
               else if (expression.code == "algebraics")
               {
+                if (isFirst)
+                  sourceCodeLine << "const double ";
                 sourceCodeLine << "algebraic" << expression.arrayIndex;
               }
               else if (expression.code == "parameters")
@@ -243,16 +252,10 @@ double log(double x)
           default:
             break;
         }
+        isFirst = false;
       });
       
-      if (isCommentedOut)
-      {
-        sourceCodeMain << indent << sourceCodeLine.str() << std::endl;
-      }
-      else
-      {
-        sourceCodeMain << indent << "const double " << sourceCodeLine.str() << std::endl;
-      }
+      sourceCodeMain << indent << sourceCodeLine.str() << std::endl;
     }
   }
   sourceCodeMain << "\n"
@@ -286,8 +289,10 @@ double log(double x)
     {
       std::stringstream sourceCodeLine;
       bool isCommentedOut = false;
+      bool isFirst = false;
       
-      codeExpression.visitLeafs([&sourceCodeLine,&isCommentedOut,nInstancesToCompute,this](CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
+      codeExpression.visitLeafs([&sourceCodeLine,&isCommentedOut,nInstancesToCompute,&isFirst,this](
+        CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
       {
         switch(expression.type)
         {
@@ -296,6 +301,8 @@ double log(double x)
             if (expression.code == "CONSTANTS")
             {
               // constants only exist once for all instances
+              if (isFirst)
+                sourceCodeLine << "const double ";
               sourceCodeLine << "constant" << expression.arrayIndex;
             }
             else
@@ -303,14 +310,20 @@ double log(double x)
               // all other variables (states, rates, algebraics, parameters) exist for every instance
               if (expression.code == "states")
               {
+                if (isFirst)
+                  sourceCodeLine << "const double ";
                 sourceCodeLine << "intermediateState" << expression.arrayIndex;
               }
               else if (expression.code == "rates")
               {
+                if (isFirst)
+                  sourceCodeLine << "const double ";
                 sourceCodeLine << "intermediateRate" << expression.arrayIndex;
               }
               else if (expression.code == "algebraics")
               {
+                if (isFirst)
+                  sourceCodeLine << "const double ";
                 sourceCodeLine << "intermediateAlgebraic" << expression.arrayIndex;
               }
               else if (expression.code == "parameters")
@@ -336,16 +349,10 @@ double log(double x)
           default:
             break;
         }
+        isFirst = false;
       });
       
-      if (isCommentedOut)
-      {
-        sourceCodeMain << indent << sourceCodeLine.str() << std::endl;
-      }
-      else
-      {
-        sourceCodeMain << indent << "const double " << sourceCodeLine.str() << std::endl;
-      }
+      sourceCodeMain << indent << sourceCodeLine.str() << std::endl;
     }
   }
 

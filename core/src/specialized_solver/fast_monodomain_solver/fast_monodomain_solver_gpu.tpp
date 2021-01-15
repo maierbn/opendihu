@@ -80,6 +80,19 @@ initializeCellMLSourceFileGpu()
   }
 #endif
 
+  // load pre and post compile commands
+  std::string preCompileCommand;
+  std::string postCompileCommand;
+  if (specificSettings_.hasKey("preCompileCommand"))
+  {
+    preCompileCommand = specificSettings_.getOptionString("preCompileCommand", "");
+    preCompileCommand += std::string("; ");
+  }
+  if (specificSettings_.hasKey("postCompileCommand"))
+  {
+    postCompileCommand = std::string("; ") + specificSettings_.getOptionString("postCompileCommand", "");
+  }
+  
   // compose compile command
   s.str("");
   s << cellmlSourceCodeGenerator.compilerCommand() << " " << sourceToCompileFilename << " "
@@ -88,8 +101,11 @@ initializeCellMLSourceFileGpu()
   std::string compileCommandOptions = s.str();
 
   std::stringstream compileCommand;
-  compileCommand << compileCommandOptions
-    << " -o " << libraryFilename;
+  compileCommand << preCompileCommand 
+    << compileCommandOptions
+    << " -o " << libraryFilename
+    << postCompileCommand;
+
 
   // check compiler and version
   std::string gccVersion = checkGccVersion();
@@ -115,6 +131,7 @@ initializeCellMLSourceFileGpu()
   // wait on all ranks until compilation is finished
   MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");
 
+  
   // load the rhs library
   void *handle = CellmlAdapterType::loadRhsLibraryGetHandle(libraryFilename);
 

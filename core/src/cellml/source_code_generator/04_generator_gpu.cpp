@@ -160,14 +160,6 @@ double log(double x)
   
   sourceCodeMain << "\n" << indent << "// CellML define constants\n";
     
-/*    << R"(  std::cout << "currentTime=" << currentTime << ", dt0D=" << dt0D << ", stimulate=" << stimulate << std::endl;)" << "\n" */
-/*    << R"(  std::cout << "states[0]=" << states[0][0] << "," << states[0][1] << "," << states[0][2] << "," << states[0][3] << "," << std::endl;)" << "\n"
-    << R"(  std::cout << "states[1]=" << states[1][0] << "," << states[1][1] << "," << states[1][2] << "," << states[1][3] << "," << std::endl;)" << "\n"
-    << R"(  std::cout << "states[2]=" << states[2][0] << "," << states[2][1] << "," << states[2][2] << "," << states[2][3] << "," << std::endl;)" << "\n"
-    << R"(  std::cout << "states[3]=" << states[3][0] << "," << states[3][1] << "," << states[3][2] << "," << states[3][3] << "," << std::endl;)" << "\n"*/
-/*    << R"(  std::cout << "parameters[0]=" << parameters[0][0] << "," << parameters[0][1] << "," << parameters[0][2] << "," << parameters[0][3] << "," << std::endl;)" << "\n"
-    << R"(  std::cout << "parameters[1]=" << parameters[1][0] << "," << parameters[1][1] << "," << parameters[1][2] << "," << parameters[1][3] << "," << std::endl;)" << "\n";*/
-
   // add assignments of constant values
   for (std::string constantAssignmentsLine : constantAssignments_)
   {
@@ -262,12 +254,12 @@ double log(double x)
     << "          // algebraic step\n"
     << "          // compute y* = y_n + dt*rhs(y_n), y_n = state, rhs(y_n) = rate, y* = intermediateState\n";
 
-  sourceCodeMain << indent << "double intermediateState0 = vmValues[instanceToComputeNo] + dt0D*rate0;\n";
+  sourceCodeMain << indent << "states[0+instanceToComputeNo] = vmValues[instanceToComputeNo] + dt0D*rate0;\n";
 
   for (int stateNo = 1; stateNo < this->nStates_; stateNo++)
   {
     sourceCodeMain << indent
-       << "const double intermediateState" << stateNo << " = states[" << stateNo*nInstancesToCompute << "+instanceToComputeNo] + dt0D*rate" << stateNo << ";\n";
+       << "states[" << stateNo*nInstancesToCompute << "+instanceToComputeNo] = states[" << stateNo*nInstancesToCompute << "+instanceToComputeNo] + dt0D*rate" << stateNo << ";\n";
   }
   
   sourceCodeMain << "\n"
@@ -275,7 +267,7 @@ double log(double x)
           // if stimulation, set value of Vm (state0)
           if (stimulateCurrentPoint)
           {
-            intermediateState0 = valueForStimulatedPoint;
+            states[0+instanceToComputeNo] = valueForStimulatedPoint;
           })";
   
   sourceCodeMain << R"(
@@ -310,9 +302,7 @@ double log(double x)
               // all other variables (states, rates, algebraics, parameters) exist for every instance
               if (expression.code == "states")
               {
-                if (isFirst)
-                  sourceCodeLine << "const double ";
-                sourceCodeLine << "intermediateState" << expression.arrayIndex;
+                sourceCodeLine << "states[" << expression.arrayIndex*nInstancesToCompute << "+instanceToComputeNo]";
               }
               else if (expression.code == "rates")
               {

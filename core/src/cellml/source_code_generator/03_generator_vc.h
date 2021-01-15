@@ -26,7 +26,7 @@ protected:
   void preprocessCode(std::set<std::string> &helperFunctions, bool useVc = true);
 
   //! define "pow" and "exponential" helper functions
-  std::string defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateExponentialFunction, bool useVc);
+  std::string defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateExponentialFunction, bool useVc, bool useReal = true);
 
   //! Write the source file with explicit vectorization using Vc
   //! The file contains the source for only the rhs computation

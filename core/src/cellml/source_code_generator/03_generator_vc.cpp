@@ -294,12 +294,16 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
 }
 
 std::string CellmlSourceCodeGeneratorVc::
-defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateExponentialFunction, bool useVc)
+defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateExponentialFunction, bool useVc, bool useReal)
 {
   if (!helperFunctionsCode_.empty())
     return helperFunctionsCode_;
 
   std::string doubleType = "double";
+  if (useReal)
+  {
+    doubleType = "real";
+  }
   if (useVc)
   {
     doubleType = "Vc::double_v";

@@ -133,12 +133,12 @@ generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibers
     << "#pragma omp declare target\n\n"
     << cellMLCode_.header << std::endl
     << R"(
-double log(double x)
+real log(real x)
 {
   // Taylor expansion of the log function around x=1
   // note: std::log does not work on GPU!
-  double t = x-1;
-  double t2 = t*t;
+  real t = x-1;
+  real t2 = t*t;
   return t - 0.5*t2 + 1./3*t2*t - 0.25*t2*t2;
 }
 )";
@@ -151,7 +151,8 @@ double log(double x)
   VLOG(1) << "call defineHelperFunctions with helperFunctions: " << helperFunctions;
 
   // define helper functions
-  sourceCodeHeader << defineHelperFunctions(helperFunctions, approximateExponentialFunction, false);
+  const bool useReal = true;
+  sourceCodeHeader << defineHelperFunctions(helperFunctions, approximateExponentialFunction, false, useReal);
     
   // define main code that computes the rhs
   
@@ -166,7 +167,7 @@ double log(double x)
     constantAssignmentsLine = StringUtility::replaceAll(constantAssignmentsLine, "CONSTANTS[", "constant");
     constantAssignmentsLine = StringUtility::replaceAll(constantAssignmentsLine, "]", "");
 
-    sourceCodeMain << indent << "const double " << constantAssignmentsLine << std::endl;
+    sourceCodeMain << indent << "const real " << constantAssignmentsLine << std::endl;
   }
   
   // loop over instances on the current fiber  
@@ -192,7 +193,7 @@ double log(double x)
             {
               // constants only exist once for all instances
               if (isFirst)
-                sourceCodeLine << "const double ";
+                sourceCodeLine << "const real ";
               sourceCodeLine << "constant" << expression.arrayIndex;
             }
             else
@@ -212,13 +213,13 @@ double log(double x)
               else if (expression.code == "rates")
               {
                 if (isFirst)
-                  sourceCodeLine << "const double ";
+                  sourceCodeLine << "const real ";
                 sourceCodeLine << "rate" << expression.arrayIndex;
               }
               else if (expression.code == "algebraics")
               {
                 if (isFirst)
-                  sourceCodeLine << "const double ";
+                  sourceCodeLine << "const real ";
                 sourceCodeLine << "algebraic" << expression.arrayIndex;
               }
               else if (expression.code == "parameters")
@@ -294,7 +295,7 @@ double log(double x)
             {
               // constants only exist once for all instances
               if (isFirst)
-                sourceCodeLine << "const double ";
+                sourceCodeLine << "const real ";
               sourceCodeLine << "constant" << expression.arrayIndex;
             }
             else
@@ -307,13 +308,13 @@ double log(double x)
               else if (expression.code == "rates")
               {
                 if (isFirst)
-                  sourceCodeLine << "const double ";
+                  sourceCodeLine << "const real ";
                 sourceCodeLine << "intermediateRate" << expression.arrayIndex;
               }
               else if (expression.code == "algebraics")
               {
                 if (isFirst)
-                  sourceCodeLine << "const double ";
+                  sourceCodeLine << "const real ";
                 sourceCodeLine << "intermediateAlgebraic" << expression.arrayIndex;
               }
               else if (expression.code == "parameters")

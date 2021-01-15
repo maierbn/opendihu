@@ -156,6 +156,9 @@ protected:
 
   //! call the GPU code to compute the monodomain equation for advanceTimestep
   void computeMonodomainGpu();
+  
+  //! find out the currently used version of GCC, return as a string in the format, e.g., "10.2.0"
+  std::string checkGccVersion();
 
   PythonConfig specificSettings_;    //< config for this object
 
@@ -227,10 +230,10 @@ protected:
   std::vector<std::vector<Vc::double_v>> fiberPointBuffersParameters_;        //< constant parameter values, changing parameters is not implemented
   std::vector<std::vector<Vc::double_v>> fiberPointBuffersAlgebraicsForTransfer_;   //<  [fiberPointNo][algebraicToTransferNo], algebraic values to use for slot connector data
 
-  std::vector<double> gpuParameters_;              //< for "gpu": constant parameter values, in struct of array memory layout: gpuParameters_[parameterNo*nInstances + instanceNo]
+  std::vector<float> gpuParameters_;              //< for "gpu": constant parameter values, in struct of array memory layout: gpuParameters_[parameterNo*nInstances + instanceNo]
   std::vector<double> gpuAlgebraicsForTransfer_;   //< for "gpu": algebraic values to use for slot connector data, in struct of array memory layout: gpuAlgebraicsForTransfer_[algebraicNo*nInstances + instanceNo]
   std::vector<double> gpuStatesForTransfer_;       //< for "gpu": state values to use for slot connector data, in struct of array memory layout: gpuStatesForTransfer_[stateInThisListIndex*nInstances + instanceNo]
-  std::vector<double> gpuElementLengths_;          //< for "gpu": the lengths of the 1D elements, in struct of array memory layout: gpuElementLengths_[fiberDataNo*nElementsOnFiber + elementNo]
+  std::vector<float> gpuElementLengths_;          //< for "gpu": the lengths of the 1D elements, in struct of array memory layout: gpuElementLengths_[fiberDataNo*nElementsOnFiber + elementNo]
   std::vector<char> gpuFiringEvents_;              //< for "gpu": if a motor unit fires at a specified time, 1=yes, 0=no, gpuFiringEvents_[timeStepNo*nMotorUnits + motorUnitNo]
   std::vector<double> gpuSetSpecificStatesFrequencyJitter_;  //< for "gpu", value of option with the same name in the python settings: gpuSetSpecificStatesFrequencyJitter_[fiberNo*nColumns + columnNo]
   int gpuFiringEventsNRows_;                       //< for "gpu": number of rows in the firing events file
@@ -249,8 +252,8 @@ protected:
   bool generateGpuSource_;                               //< if the GPU source code should be generated, if not it reuses the existing file, this is for debugging
 
   void (*compute0DInstance_)(Vc::double_v [], std::vector<Vc::double_v> &, double, double, bool, bool, std::vector<Vc::double_v> &, const std::vector<int> &, double);   //< runtime-created and loaded function to compute one Heun step of the 0D problem
-  void (*computeMonodomain_)(const double *parameters,
-                              double *algebraicsForTransfer, double *statesForTransfer, const double *elementLengths,
+  void (*computeMonodomain_)(const float *parameters,
+                              double *algebraicsForTransfer, double *statesForTransfer, const float *elementLengths,
                               double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
                               double prefactor, double valueForStimulatedPoint);   //< runtime-created and loaded function to compute monodomain equation
   void (*initializeArrays_)(const double *statesOneInstance, const int *algebraicsForTransferIndicesParameter, const int *statesForTransferIndicesParameter,

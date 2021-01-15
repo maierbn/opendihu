@@ -4,6 +4,7 @@
 #include "control/diagnostic_tool/stimulation_logging.h"
 #include <Vc/Vc>
 #include <random>
+#include <fstream>
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
@@ -21,7 +22,7 @@ initializeCellMLSourceFileGpu()
   std::string mainCode;
   const bool hasAlgebraicsForTransfer = !algebraicsForTransferIndices_.empty();
   cellmlSourceCodeGenerator.generateSourceFastMonodomainGpu(approximateExponentialFunction,
-                                                            1, nInstancesToComputePerFiber_, nParametersPerInstance_,
+                                                            nFibersToCompute_, nInstancesToComputePerFiber_, nParametersPerInstance_,
                                                             hasAlgebraicsForTransfer,
                                                             headerCode, mainCode);
 
@@ -90,6 +91,17 @@ initializeCellMLSourceFileGpu()
   compileCommand << compileCommandOptions
     << " -o " << libraryFilename;
 
+  // check compiler and version
+  std::string gccVersion = checkGccVersion();
+  if (atoi(gccVersion.c_str()) < 11)
+  {
+    LOG(ERROR) << "OpenMP offloading (to the extent needed here) is only supported with GCC 11 or later. Your current GCC version: " << gccVersion 
+      << ".\n       Consider upgrading gcc or download the latest snapshot and build GCC yourself or try" << std::endl
+      << "          module load argon-tesla/gcc/11-20210110-openmp     " 
+      << "(Note, this module's gcc is experimental and unfortunatelly does not work to compile opendihu, so you have to switch between compile and run.)";
+  }
+
+  // execute compilation command
   int ret = system(compileCommand.str().c_str());
   if (ret != 0)
   {
@@ -106,8 +118,8 @@ initializeCellMLSourceFileGpu()
   // load the rhs library
   void *handle = CellmlAdapterType::loadRhsLibraryGetHandle(libraryFilename);
 
-  computeMonodomain_ = (void (*)(const double *parameters,
-                                double *algebraicsForTransfer, double *statesForTransfer, const double *elementLengths,
+  computeMonodomain_ = (void (*)(const float *parameters,
+                                double *algebraicsForTransfer, double *statesForTransfer, const float *elementLengths,
                                 double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
                                 double prefactor, double valueForStimulatedPoint)) dlsym(handle, "computeMonodomain");
 
@@ -128,6 +140,39 @@ initializeCellMLSourceFileGpu()
 }
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+std::string FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
+checkGccVersion()
+{
+  std::string compilerVersion;
+  std::string getCompilerVersionCommand = "gcc --version | head -n 1 | awk '{print $3}' > .gcc_version";
+  bool checkCompilerVersionFailed = false;
+  int ret = system(getCompilerVersionCommand.c_str());
+  if (ret != 0)
+  {
+    checkCompilerVersionFailed = true;
+  }
+  else
+  {
+    std::ifstream file(".gcc_version");
+    if (!file.is_open())
+    {
+      checkCompilerVersionFailed = true;
+    }
+    else
+    {
+      std::getline(file, compilerVersion);
+      file.close();
+      ret = system("rm .gcc_version");
+    }
+  }
+  
+  if (checkCompilerVersionFailed)
+    compilerVersion = "(gcc version could not be determined)";
+  
+  return compilerVersion;
+}
+
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 generateMonodomainSolverGpuSource(std::string outputFilename, std::string headerCode, std::string mainCode)
 {
@@ -137,9 +182,20 @@ generateMonodomainSolverGpuSource(std::string outputFilename, std::string header
   // we now add code to solve the whole monodomain equation
 
   std::stringstream sourceCode;
+  
+  bool useSinglePrecision = this->specificSettings_.getOptionBool("useSinglePrecision", false);
+  if (useSinglePrecision)
+  {
+    sourceCode << "typedef float real;\n";
+  }
+  else
+  {
+    sourceCode << "typedef double real;\n";
+  }
   sourceCode << headerCode;
   
-  int nFibersToCompute = 1;  // nFibersToCompute_
+  //int nFibersToCompute = 1;  // nFibersToCompute_
+  int nFibersToCompute = nFibersToCompute_;
   int nInstancesToCompute = nFibersToCompute*nInstancesToComputePerFiber_;
 
   sourceCode << R"(
@@ -174,7 +230,9 @@ const int nStatesForTransfer = )" << nInstancesToCompute*statesForTransferIndice
 
 // global variables to be stored on the target device
 #pragma omp declare target
-double states[nStatesTotal];             // including state 0 which is stored in vmValues)";
+real states[nStatesTotal];             // including state 0 which is stored in vmValues
+real statesOneInstance[nStates];)";
+
   if (!algebraicsForTransferIndices_.empty())
   {
     sourceCode << R"(
@@ -184,44 +242,32 @@ int algebraicsForTransferIndices[nAlgebraicsForTransferIndices];
   sourceCode << R"(
 int statesForTransferIndices[nStatesForTransferIndices];
 char firingEvents[nFiringEvents];
-double setSpecificStatesFrequencyJitter[nFrequencyJitter];
+real setSpecificStatesFrequencyJitter[nFrequencyJitter];
 char fiberIsCurrentlyStimulated[nFibersToCompute];
 int motorUnitNo[nFibersToCompute];
 int fiberStimulationPointIndex[nFibersToCompute];
-double lastStimulationCheckTime[nFibersToCompute];
-double setSpecificStatesCallFrequency[nFibersToCompute];
-double setSpecificStatesRepeatAfterFirstCall[nFibersToCompute];
-double setSpecificStatesCallEnableBegin[nFibersToCompute];
-double currentJitter[nFibersToCompute];
+real lastStimulationCheckTime[nFibersToCompute];
+real setSpecificStatesCallFrequency[nFibersToCompute];
+real setSpecificStatesRepeatAfterFirstCall[nFibersToCompute];
+real setSpecificStatesCallEnableBegin[nFibersToCompute];
+real currentJitter[nFibersToCompute];
 int jitterIndex[nFibersToCompute];
 
-double vmValues[nInstancesToCompute];
+real vmValues[nInstancesToCompute];
 #pragma omp end declare target
 
 #ifdef __cplusplus
 extern "C"
 #endif
-void initializeArrays(const double *statesOneInstance, const int *algebraicsForTransferIndicesParameter, const int *statesForTransferIndicesParameter,
+void initializeArrays(const double *statesOneInstanceParameter, const int *algebraicsForTransferIndicesParameter, const int *statesForTransferIndicesParameter,
                       const char *firingEventsParameter, const double *setSpecificStatesFrequencyJitterParameter, const int *motorUnitNoParameter,
                       const int *fiberStimulationPointIndexParameter, const double *lastStimulationCheckTimeParameter,
                       const double *setSpecificStatesCallFrequencyParameter, const double *setSpecificStatesRepeatAfterFirstCallParameter,
                       const double *setSpecificStatesCallEnableBeginParameter)
 {
-  // copy given values to variables on target
-  for (int fiberNo = 0; fiberNo < nFibersToCompute; fiberNo++)
-  {
-    for (int instanceNo = 0; instanceNo < nInstancesPerFiber; instanceNo++)
-    {
-      int instanceToComputeNo = fiberNo*nInstancesPerFiber + instanceNo;
+  for (int i = 0; i < nStates; i++)
+    statesOneInstance[i] = statesOneInstanceParameter[i];
 
-      // The entries in states[0] to states[1*nInstancesToCompute - 1] are not used.
-      // State zero is stored in vmValues instead.
-      for (int stateNo = 1; stateNo < nStates; stateNo++)
-      {
-        states[stateNo*nInstancesToCompute + instanceToComputeNo] = statesOneInstance[stateNo];
-      }
-    }
-  }
 )";
   if (!algebraicsForTransferIndices_.empty())
   {
@@ -271,7 +317,8 @@ void initializeArrays(const double *statesOneInstance, const int *algebraicsForT
   {
     sourceCode << R"(
   // map values to target
-  #pragma omp target update to(states[:nStatesTotal], algebraicsForTransferIndices[:nAlgebraicsForTransferIndices], statesForTransferIndices[:nStatesForTransferIndices], \
+  #pragma omp target update to(states[:nStatesTotal], statesOneInstance[:nStates], \
+    algebraicsForTransferIndices[:nAlgebraicsForTransferIndices], statesForTransferIndices[:nStatesForTransferIndices], \
     firingEvents[:nFiringEvents], setSpecificStatesFrequencyJitter[:nFrequencyJitter], \
     motorUnitNo[:nFibersToCompute], fiberStimulationPointIndex[:nFibersToCompute], \
     lastStimulationCheckTime[:nFibersToCompute], setSpecificStatesCallFrequency[:nFibersToCompute], \
@@ -282,7 +329,8 @@ void initializeArrays(const double *statesOneInstance, const int *algebraicsForT
   {
     sourceCode << R"(
   // map values to target
-  #pragma omp target update to(states[:nStatesTotal], statesForTransferIndices[:nStatesForTransferIndices], \
+  #pragma omp target update to(states[:nStatesTotal], statesOneInstance[:nStates], \
+    statesForTransferIndices[:nStatesForTransferIndices], \
     firingEvents[:nFiringEvents], setSpecificStatesFrequencyJitter[:nFrequencyJitter], \
     motorUnitNo[:nFibersToCompute], fiberStimulationPointIndex[:nFibersToCompute], \
     lastStimulationCheckTime[:nFibersToCompute], setSpecificStatesCallFrequency[:nFibersToCompute], \
@@ -290,6 +338,26 @@ void initializeArrays(const double *statesOneInstance, const int *algebraicsForT
     currentJitter[:nFibersToCompute], jitterIndex[:nFibersToCompute], vmValues[:nInstancesToCompute]))";
   }
   sourceCode << R"(
+  
+  // initialize states
+  #pragma omp target
+  {
+    // copy given values to variables on target
+    for (int fiberNo = 0; fiberNo < nFibersToCompute; fiberNo++)
+    {
+      for (int instanceNo = 0; instanceNo < nInstancesPerFiber; instanceNo++)
+      {
+        int instanceToComputeNo = fiberNo*nInstancesPerFiber + instanceNo;
+
+        // The entries in states[0] to states[1*nInstancesToCompute - 1] are not used.
+        // State zero is stored in vmValues instead.
+        for (int stateNo = 1; stateNo < nStates; stateNo++)
+        {
+          states[stateNo*nInstancesToCompute + instanceToComputeNo] = statesOneInstance[stateNo];
+        }
+      }
+    }
+  }
 }
 
 )";
@@ -300,8 +368,8 @@ void initializeArrays(const double *statesOneInstance, const int *algebraicsForT
     << "// compute the total monodomain equation\n"
     << "#ifdef __cplusplus\n" << "extern \"C\"\n" << "#endif"
     << R"(
-void computeMonodomain(const double *parameters,
-                       double *algebraicsForTransfer, double *statesForTransfer, const double *elementLengths,
+void computeMonodomain(const float *parameters,
+                       double *algebraicsForTransfer, double *statesForTransfer, const float *elementLengths,
                        double startTime, double timeStepWidthSplitting, int nTimeStepsSplitting, double dt0D, int nTimeSteps0D, double dt1D, int nTimeSteps1D,
                        double prefactor, double valueForStimulatedPoint)
 {
@@ -328,10 +396,10 @@ void computeMonodomain(const double *parameters,
   for (int timeStepNo = 0; timeStepNo < nTimeStepsSplitting; timeStepNo++)
   {
     // perform Strang splitting
-    double currentTimeSplitting = startTime + timeStepNo * timeStepWidthSplitting;
+    real currentTimeSplitting = startTime + timeStepNo * timeStepWidthSplitting;
 
     // compute midTimeSplitting once per step to reuse it. [currentTime, midTimeSplitting=currentTime+0.5*timeStepWidth, currentTime+timeStepWidth]
-    double midTimeSplitting = currentTimeSplitting + 0.5 * timeStepWidthSplitting;
+    real midTimeSplitting = currentTimeSplitting + 0.5 * timeStepWidthSplitting;
     bool storeAlgebraicsForTransferSplitting = false;   // do not store the computed algebraics values in the algebraicsForTransfer vector for communication, because this is the first 0D computation and they will be changed in the second 0D computation
 
     // perform Strang splitting:
@@ -362,7 +430,7 @@ void computeMonodomain(const double *parameters,
         // loop over 0D timesteps
         for (int timeStepNo = 0; timeStepNo < nTimeSteps0D; timeStepNo++)
         {
-          double currentTime = currentTimeSplitting + timeStepNo * dt0D;
+          real currentTime = currentTimeSplitting + timeStepNo * dt0D;
 
           // determine if fiber gets stimulated
           // check if current point will be stimulated
@@ -385,7 +453,7 @@ void computeMonodomain(const double *parameters,
                 lastStimulationCheckTime[fiberNo] += 1./(setSpecificStatesCallFrequency[fiberNo] + currentJitter[fiberNo]);
 
                 // compute new jitter value
-                double jitterFactor = 0.0;
+                real jitterFactor = 0.0;
                 if (frequencyJitterNColumns > 0)
                   jitterFactor = setSpecificStatesFrequencyJitter[fiberNo*frequencyJitterNColumns + jitterIndex[fiberNo] % frequencyJitterNColumns];
                 currentJitter[fiberNo] = jitterFactor * setSpecificStatesCallFrequency[fiberNo];
@@ -439,7 +507,7 @@ void computeMonodomain(const double *parameters,
 
     // stencil K: 1/h*[_-1_  1  ]*prefactor
     // stencil M:   h*[_1/3_ 1/6]
-    const double dt = dt1D;
+    const real dt = dt1D;
 )";
   if (optimizationType_ == "gpu")
     sourceCode << R"(
@@ -469,8 +537,8 @@ void computeMonodomain(const double *parameters,
       // x_i = d'_i - c'_i * x_{i+1}
 
       // helper buffers c', d' for Thomas algorithm
-      double cIntermediate[nInstancesPerFiber-1];
-      double dIntermediate[nInstancesPerFiber];
+      real cIntermediate[nInstancesPerFiber-1];
+      real dIntermediate[nInstancesPerFiber];
 
       // perform forward substitution
       // loop over entries / rows of matrices, this is equal to the instances of the current fiber
@@ -478,14 +546,14 @@ void computeMonodomain(const double *parameters,
       {
         int instanceToComputeNo = fiberNo*nInstancesPerFiber + valueNo;
 
-        double a = 0;
-        double b = 0;
-        double c = 0;
-        double d = 0;
+        real a = 0;
+        real b = 0;
+        real c = 0;
+        real d = 0;
 
-        double u_previous = 0;
-        double u_center = 0;
-        double u_next = 0;
+        real u_previous = 0;
+        real u_center = 0;
+        real u_next = 0;
 
         u_center = vmValues[instanceToComputeNo];  // state 0 of the current instance
 
@@ -497,9 +565,9 @@ void computeMonodomain(const double *parameters,
           // stencil K: 1/h*[1   _-1_ ]*prefactor
           // stencil M:   h*[1/6 _1/3_]
 
-          double h_left = elementLengths[fiberNo*nElementsOnFiber + valueNo-1];
-          double k_left = 1./h_left*(1) * prefactor;
-          double m_left = h_left*1./6;
+          real h_left = elementLengths[fiberNo*nElementsOnFiber + valueNo-1];
+          real k_left = 1./h_left*(1) * prefactor;
+          real m_left = h_left*1./6;
 )";
   if (useImplicitEuler)
   {
@@ -515,8 +583,8 @@ void computeMonodomain(const double *parameters,
   }
 
   sourceCode << R"(
-          double k_right = 1./h_left*(-1) * prefactor;
-          double m_right = h_left*1./3;
+          real k_right = 1./h_left*(-1) * prefactor;
+          real m_right = h_left*1./3;
 )";
   if (useImplicitEuler)
   {
@@ -543,9 +611,9 @@ void computeMonodomain(const double *parameters,
           // stencil K: 1/h*[_-1_  1  ]*prefactor
           // stencil M:   h*[_1/3_ 1/6]
 
-          double h_right = elementLengths[fiberNo*nElementsOnFiber + valueNo];
-          double k_right = 1./h_right*(1) * prefactor;
-          double m_right = h_right*1./6;
+          real h_right = elementLengths[fiberNo*nElementsOnFiber + valueNo];
+          real k_right = 1./h_right*(1) * prefactor;
+          real m_right = h_right*1./6;
 )";
   if (useImplicitEuler)
   {
@@ -561,8 +629,8 @@ void computeMonodomain(const double *parameters,
   }
   sourceCode << R"(
 
-          double k_left = 1./h_right*(-1) * prefactor;
-          double m_left = h_right*1./3;
+          real k_left = 1./h_right*(-1) * prefactor;
+          real m_left = h_right*1./3;
 )";
 
   if (useImplicitEuler)
@@ -607,7 +675,7 @@ void computeMonodomain(const double *parameters,
       // x_n = d'_n
       vmValues[nValues-1] = dIntermediate[nValues-1];  // state 0 of the point (nValues-1)
 
-      double previousValue = dIntermediate[nValues-1];
+      real previousValue = dIntermediate[nValues-1];
 
       // loop over entries / rows of matrices
       for (int valueNo = nValues-2; valueNo >= 0; valueNo--)
@@ -615,7 +683,7 @@ void computeMonodomain(const double *parameters,
         int instanceToComputeNo = fiberNo*nInstancesPerFiber + valueNo;
 
         // x_i = d'_i - c'_i * x_{i+1}
-        double resultValue = dIntermediate[valueNo] - cIntermediate[valueNo] * previousValue;
+        real resultValue = dIntermediate[valueNo] - cIntermediate[valueNo] * previousValue;
         vmValues[instanceToComputeNo] = resultValue;
 
         previousValue = resultValue;
@@ -650,7 +718,7 @@ void computeMonodomain(const double *parameters,
         // loop over 0D timesteps
         for (int timeStepNo = 0; timeStepNo < nTimeSteps0D; timeStepNo++)
         {
-          double currentTime = midTimeSplitting + timeStepNo * dt0D;
+          real currentTime = midTimeSplitting + timeStepNo * dt0D;
 
           // determine if fiber gets stimulated
           // check if current point will be stimulated
@@ -673,7 +741,7 @@ void computeMonodomain(const double *parameters,
                 lastStimulationCheckTime[fiberNo] += 1./(setSpecificStatesCallFrequency[fiberNo] + currentJitter[fiberNo]);
 
                 // compute new jitter value
-                double jitterFactor = 0.0;
+                real jitterFactor = 0.0;
                 if (frequencyJitterNColumns > 0)
                   jitterFactor = setSpecificStatesFrequencyJitter[fiberNo*frequencyJitterNColumns + jitterIndex[fiberNo] % frequencyJitterNColumns];
                 currentJitter[fiberNo] = jitterFactor * setSpecificStatesCallFrequency[fiberNo];
@@ -878,7 +946,7 @@ computeMonodomainGpu()
                      prefactor, valueForStimulatedPoint_);
 
   // copy the resulting values back to fiberData_
-  for (int fiberDataNo = 0; fiberDataNo < 1; fiberDataNo++)
+  for (int fiberDataNo = 0; fiberDataNo < nFibersToCompute_; fiberDataNo++)
   {
     for (int instanceNo = 0; instanceNo < nInstancesToComputePerFiber_; instanceNo++)
     {

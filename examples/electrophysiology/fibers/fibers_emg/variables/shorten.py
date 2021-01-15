@@ -69,12 +69,12 @@ motor_units = [
 end_time = 4000.0                      # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
-dt_0D = 1e-4                        # [ms] timestep width of ODEs (2e-3)
-dt_1D = 1e-4                        # [ms] timestep width of diffusion (4e-3)
-dt_splitting = 1e-4                 # [ms] overall timestep width of strang splitting (4e-3)
-dt_3D = 4e-4                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep = 4e-1              # [ms] timestep for output surface EMG, 0.5
-output_timestep_fibers = 1.2e-3       # [ms] timestep for fiber output, 0.5
+dt_0D = 2.5e-5                        # [ms] timestep width of ODEs (2e-3)
+dt_1D = 2.5e-5                        # [ms] timestep width of diffusion (4e-3)
+dt_splitting = 2.5e-5                 # [ms] overall timestep width of strang splitting (4e-3)
+dt_3D = 1e-1                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
+output_timestep = 1e-1              # [ms] timestep for output surface EMG, 0.5
+output_timestep_fibers = 1e-2       # [ms] timestep for fiber output, 0.5
 output_timestep_big = 25            # [ms] timestep for output big files of 3D EMG, 100
 
 # simulation time:  4s
@@ -123,5 +123,5 @@ def get_specific_states_frequency_jitter(fiber_no, mu_no):
   return motor_units[mu_no % len(motor_units)]["jitter"]
 
 def get_specific_states_call_enable_begin(fiber_no, mu_no):
-  return 1
+  return 10
   return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3

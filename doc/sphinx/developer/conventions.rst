@@ -257,6 +257,31 @@ In order to use `pat_run` with GCC do the following:
   at least: -gmpi -r -m lite-events. for more, see man pat_run) example_name (example options)
   for example: ´aprun -n8 pat_run -m lite-events -gmpi -r ./shorten_implicit ../settings.py´
 
+Work with large simulation output on servers
+----------------------------------------------
+
+Assume you have a long simulation on a compute server that produced a lot of output files. 
+Now you want to download them to your laptop and visualize them, but the total filesize is too high.
+
+- One solution is to use start the render server of paraview on the compute server and then connect from the local system with the Paraview client. 
+  This requires a good internet connection, otherwise the interactivity is reduced. 
+  
+  Download and build paraview yourself, e.g., on neon. On your laptop, add a server launch configuration (Server Type `Client / Server`, Host `localhost`, Port `11116`, configure Startup Type `Command` and insert a command like the following (adjust to your path):
+  
+  .. code-block:: bash
+  
+    ssh -X maierbn@neon /home/maierbn/software/ParaView-5.6.0-RC1-Qt5-MPI-Linux-64bit/bin/pvserver --server-port=11116
+    
+  Then you just need to click on `Connect` in ParaView on your laptop. This will automatically run the server on neon. (You need to be in the network or VPN).
+   
+- Or you only select a subset of the files on the server to download them. Selecting every `nth` file can be done in bash:
+
+  .. code-block:: bash
+  
+    tar czf ramp.tgz fibers_0000*{000..286..8}.vtp
+    
+  This selects every 8th file out of the files from `fibers_0000286.vtp` to `fibers_0000286.vtp` and puts them in a compressed archive, which can then be downloaded.
+
 
 Building the  sphinx doc (what you are reading)
 -------------------------------------------------

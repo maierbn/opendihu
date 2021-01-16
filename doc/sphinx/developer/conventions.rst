@@ -280,7 +280,7 @@ Now you want to download them to your laptop and visualize them, but the total f
   
     tar czf ramp.tgz fibers_0000*{000..286..8}.vtp
     
-  This selects every 8th file out of the files from `fibers_0000286.vtp` to `fibers_0000286.vtp` and puts them in a compressed archive, which can then be downloaded.
+  This selects every 8th file out of the files from `fibers_0000000.vtp` to `fibers_0000286.vtp` and puts them in a compressed archive, which can then be downloaded.
 
 
 Building the  sphinx doc (what you are reading)

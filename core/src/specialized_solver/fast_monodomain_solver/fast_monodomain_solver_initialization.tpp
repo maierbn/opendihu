@@ -70,14 +70,14 @@ initialize()
 
   if (optimizationType_ == "gpu")
     useVc_ = false;
-  else if (optimizationType_ == "openmp")
+  else if (optimizationType_ == "simd")
     useVc_ = false;
   else if (optimizationType_ == "vc")
     useVc_ = true;
   else
   {
     LOG(ERROR) << "FastMonodomainSolver is used with invalid \"optimizationType\": \"" << optimizationType_
-      << "\". Valid options are \"vc\", \"openmp\" or \"gpu\". Now using \"vc\".";
+      << "\". Valid options are \"vc\", \"simd\" or \"gpu\". Now using \"vc\".";
     useVc_ = true;
     optimizationType_ = "vc";
   }

@@ -107,7 +107,7 @@ generateSourceFileGpu(std::string outputFilename)
     sourceCodeFile.close();
   }
 
-  additionalCompileFlags_ = "-fopenmp -foffload=\"-O3 -v -lm\"";
+  additionalCompileFlags_ = "-fopenmp -foffload=\"-O3 -lm\"";
   compilerCommand_ = C_COMPILER_COMMAND;
   sourceFileSuffix_ = ".c";
 }
@@ -431,7 +431,7 @@ real log(real x)
   headerCode = sourceCodeHeader.str();
   mainCode = sourceCodeMain.str();
   
-  additionalCompileFlags_ = "-fopenmp -foffload=\"-O3 -v -lm\"";
+  additionalCompileFlags_ = "-fopenmp -foffload=\"-O3 -lm\"";  // -v
   compilerCommand_ = CXX_COMPILER_COMMAND;
   sourceFileSuffix_ = ".cpp";
 }

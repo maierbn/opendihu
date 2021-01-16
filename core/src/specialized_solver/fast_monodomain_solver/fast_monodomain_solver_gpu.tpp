@@ -17,12 +17,15 @@ initializeCellMLSourceFileGpu()
   PythonConfig specificSettingsCellML = cellmlAdapter.specificSettings();
   CellmlSourceCodeGenerator &cellmlSourceCodeGenerator = cellmlAdapter.cellmlSourceCodeGenerator();
 
+  int nFibersToCompute = 1;  // nFibersToCompute_
+  //int nFibersToCompute = nFibersToCompute_;
+  
   // create source code for the rhs part
   std::string headerCode;
   std::string mainCode;
   const bool hasAlgebraicsForTransfer = !algebraicsForTransferIndices_.empty();
   cellmlSourceCodeGenerator.generateSourceFastMonodomainGpu(approximateExponentialFunction,
-                                                            nFibersToCompute_, nInstancesToComputePerFiber_, nParametersPerInstance_,
+                                                            nFibersToCompute, nInstancesToComputePerFiber_, nParametersPerInstance_,
                                                             hasAlgebraicsForTransfer,
                                                             headerCode, mainCode);
 
@@ -223,8 +226,8 @@ generateMonodomainSolverGpuSource(std::string outputFilename, std::string header
     sourceCode << headerCode;
   }
   
-  //int nFibersToCompute = 1;  // nFibersToCompute_
-  int nFibersToCompute = nFibersToCompute_;
+  int nFibersToCompute = 1;  // nFibersToCompute_
+  //int nFibersToCompute = nFibersToCompute_;
   int nInstancesToCompute = nFibersToCompute*nInstancesToComputePerFiber_;
 
   if (optimizationType_ == "gpu")
@@ -1008,8 +1011,11 @@ computeMonodomainGpu()
                      startTime, timeStepWidthSplitting, nTimeStepsSplitting_, dt0D, nTimeSteps0D, dt1D, nTimeSteps1D,
                      prefactor, valueForStimulatedPoint_);
 
+  int nFibersToCompute = 1;  // nFibersToCompute_
+  //int nFibersToCompute = nFibersToCompute_;
+  
   // copy the resulting values back to fiberData_
-  for (int fiberDataNo = 0; fiberDataNo < nFibersToCompute_; fiberDataNo++)
+  for (int fiberDataNo = 0; fiberDataNo < nFibersToCompute; fiberDataNo++)
   {
     for (int instanceNo = 0; instanceNo < nInstancesToComputePerFiber_; instanceNo++)
     {

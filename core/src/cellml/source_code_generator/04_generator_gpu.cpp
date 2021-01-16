@@ -129,8 +129,7 @@ generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibers
   sourceCodeHeader << "#include <cmath>\n"
     << "#include <omp.h>\n"
     << "#include <iostream>\n"
-    << "#include <vector>\n"
-    << "#pragma omp declare target\n\n"
+    << "#include <vector>\n\n"
     << cellMLCode_.header << std::endl
     << R"(
 real log(real x)

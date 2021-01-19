@@ -133,10 +133,6 @@ initializeCellMLSourceFileGpu()
   {
     LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
   }
-
-  // wait on all ranks until compilation is finished
-  MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");
-
   
   // load the rhs library
   void *handle = CellmlAdapterType::loadRhsLibraryGetHandle(libraryFilename);
@@ -166,8 +162,10 @@ template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 std::string FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 checkGccVersion()
 {
+  std::stringstream temporaryFilename;
+  temporaryFilename << ".gcc_version." << DihuContext::ownRankNoCommWorld();
   std::string compilerVersion;
-  std::string getCompilerVersionCommand = "gcc --version | head -n 1 | awk '{print $3}' > .gcc_version";
+  std::string getCompilerVersionCommand = std::string("gcc --version | head -n 1 | awk '{print $3}' > ") + temporaryFilename.str();
   bool checkCompilerVersionFailed = false;
   int ret = system(getCompilerVersionCommand.c_str());
   if (ret != 0)
@@ -176,7 +174,7 @@ checkGccVersion()
   }
   else
   {
-    std::ifstream file(".gcc_version");
+    std::ifstream file(temporaryFilename.str());
     if (!file.is_open())
     {
       checkCompilerVersionFailed = true;
@@ -185,7 +183,7 @@ checkGccVersion()
     {
       std::getline(file, compilerVersion);
       file.close();
-      ret = system("rm .gcc_version");
+      ret = system(std::string("rm ") + temporaryFilename.str());
     }
   }
   

@@ -82,10 +82,6 @@ initialize()
     optimizationType_ = "vc";
   }
 
-  if (useVc_)
-  {
-    initializeCellMLSourceFileVc();
-  }
   std::shared_ptr<Partition::RankSubset> rankSubset = nestedSolvers_.data().functionSpace()->meshPartition()->rankSubset();
 
   LOG(DEBUG) << "config: " << specificSettings_;
@@ -420,6 +416,16 @@ initialize()
     << statesForTransferIndices_.size()-1 << " additional states for transfer, "
     << algebraicsForTransferIndices_.size() << " algebraics for transfer";
 
+  if (useVc_)
+  {
+    initializeCellMLSourceFileVc();
+  }
+  else
+  {
+    initializeCellMLSourceFileGpu();
+    initializeValuesOnGpu();
+  }
+
   // initialize state values
   for (int i = 0; i < fiberPointBuffers_.size(); i++)
   {
@@ -505,11 +511,6 @@ initialize()
     }
   }
 
-  if (!useVc_)
-  {
-    initializeCellMLSourceFileGpu();
-    initializeValuesOnGpu();
-  }
 
   initialized_ = true;
 }
@@ -531,9 +532,9 @@ initializeCellMLSourceFileVc()
   std::string libraryFilename = s.str();
 
   //std::shared_ptr<Partition::RankSubset> rankSubset = nestedSolvers_.data().functionSpace()->meshPartition()->rankSubset();
-  int ownRankNoCommWorld = DihuContext::ownRankNoCommWorld();
+  int ownRankNo = DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->ownRankNo();
 
-  if (ownRankNoCommWorld == 0)
+  if (ownRankNo == 0)
   {
     // initialize generated source code of cellml model
 

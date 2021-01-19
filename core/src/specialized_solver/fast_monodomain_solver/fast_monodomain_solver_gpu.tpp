@@ -134,6 +134,9 @@ initializeCellMLSourceFileGpu()
     LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
   }
   
+  // wait on all ranks until conversion is finished
+  MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");
+
   // load the rhs library
   void *handle = CellmlAdapterType::loadRhsLibraryGetHandle(libraryFilename);
 

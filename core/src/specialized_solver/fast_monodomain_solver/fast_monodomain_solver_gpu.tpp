@@ -162,11 +162,16 @@ template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 std::string FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 checkGccVersion()
 {
+  // determine temporary file that will contain gcc version
   std::stringstream temporaryFilename;
   temporaryFilename << ".gcc_version." << DihuContext::ownRankNoCommWorld();
   std::string compilerVersion;
+
+  // compose shell command to get GCC version
   std::string getCompilerVersionCommand = std::string("gcc --version | head -n 1 | awk '{print $3}' > ") + temporaryFilename.str();
   bool checkCompilerVersionFailed = false;
+
+  // execute command
   int ret = system(getCompilerVersionCommand.c_str());
   if (ret != 0)
   {
@@ -174,6 +179,7 @@ checkGccVersion()
   }
   else
   {
+    // open temporary file and parse version string
     std::ifstream file(temporaryFilename.str());
     if (!file.is_open())
     {
@@ -183,7 +189,11 @@ checkGccVersion()
     {
       std::getline(file, compilerVersion);
       file.close();
-      ret = system(std::string("rm ") + temporaryFilename.str());
+
+      // remove temporary file
+      std::stringstream command;
+      command << "rm " << temporaryFilename.str();
+      ret = system(command.str().c_str());
     }
   }
   

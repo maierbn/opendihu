@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import csv
+import os.path
 
 path1 = "build_release/out/biceps"
 path2 = "build_release/out"

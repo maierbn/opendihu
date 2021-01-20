@@ -51,9 +51,9 @@ initializeRhsRoutine()
     // load type
     optimizationType_ = this->specificSettings_.getOptionString("optimizationType", "vc");
 
-    if (optimizationType_ != "simd" && optimizationType_ != "vc" && optimizationType_ != "openmp")
+    if (optimizationType_ != "simd" && optimizationType_ != "vc" && optimizationType_ != "openmp" && optimizationType_ != "gpu")
     {
-      LOG(ERROR) << "Option \"optimizationType\" is \"" << optimizationType_ << "\" but valid values are \"simd\", \"vc\" or \"openmp\"."
+      LOG(ERROR) << "Option \"optimizationType\" is \"" << optimizationType_ << "\" but valid values are \"simd\", \"vc\", \"openmp\" or \"gpu\"."
        << " Now setting to \"vc\".";
       optimizationType_ = "vc";
     }
@@ -335,4 +335,10 @@ template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
 bool RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>::approximateExponentialFunction()
 {
   return approximateExponentialFunction_;
+}
+
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+std::string RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>::optimizationType()
+{
+  return optimizationType_;
 }

@@ -62,7 +62,7 @@ adios_output = False                # If the MegaMol/ADIOS output writer should 
 python_output = False               # If the Python output writer should be enabled
 exfile_output = False               # If the Exfile output writer should be enabled
 enable_surface_emg = False          # Enables the surface emg output writer
-
+optimization_type = "vc"            # the optimization_type used in the cellml adapter, "vc" uses explicit vectorization
 
 # motor unit stimulation times
 fiber_distribution_file = "../../../input/MU_fibre_distribution_3780.txt"

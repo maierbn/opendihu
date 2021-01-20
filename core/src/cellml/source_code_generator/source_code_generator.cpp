@@ -16,4 +16,8 @@ void CellmlSourceCodeGenerator::generateSourceFile(std::string outputFilename, s
   {
     generateSourceFileOpenMP(outputFilename, maximumNumberOfThreads);
   }
+  else if (optimizationType == "gpu")
+  {
+    generateSourceFileGpu(outputFilename);
+  }
 }

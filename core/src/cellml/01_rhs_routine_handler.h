@@ -32,6 +32,9 @@ public:
 
   //! if when using "vc" as optimizationType_, the exp() function should be approximated, this is faster
   bool approximateExponentialFunction();
+  
+  //! get the optimization type as it was specified in the settings
+  std::string optimizationType();
 
   //! load a given shared object library (<file>.so) and return the handle
   static void *loadRhsLibraryGetHandle(std::string libraryFilename);

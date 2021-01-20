@@ -23,6 +23,7 @@ class std_simd(Package):
     #self.extra_libs = ['lapack', 'blas']
     #self.set_rpath = False    # do not use dynamic linkage
     self.compatibility_code = r'''
+#pragma once
 // This header files either includes <Vc/Vc> or it includes <experimental/simd> and defines a compatibility namespace Vc.
 // In either way, the including code can access Vc functions.
 

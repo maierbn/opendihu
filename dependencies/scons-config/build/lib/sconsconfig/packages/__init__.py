@@ -57,3 +57,4 @@ from .vc import Vc
 from .xbraid import xbraid
 from .opencor import OpenCOR
 from .precice import precice
+#from .std_simd import std_simd

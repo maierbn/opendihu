@@ -72,6 +72,11 @@ USE_VECTORIZED_FE_MATRIX_ASSEMBLY = False
 if USE_VECTORIZED_FE_MATRIX_ASSEMBLY:
   print("Note, USE_VECTORIZED_FE_MATRIX_ASSEMBLY is True in user-variables.scons.py, this means faster programs but longer compilation times.\n")
 
+# Use the implementation of std::simd instead of Vc to support AVX-512. This automatically sets the C++ standard from C++14 to C++17
+USE_STDSIMD = True
+if USE_STDSIMD:
+  print("Note, USE_STDSIMD is True and, thus, c++17 will be used.");
+
 # -------------------------------------------------------------------------
 # automatically set MPI_DIR for other systems, like ubuntu 16.04 and Debian
 try:

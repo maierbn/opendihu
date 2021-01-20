@@ -61,6 +61,7 @@ sconsconfig.select(
     #packages.boost(required=False),   # boost C++ library, needed for chaste
     #packages.Chaste(required=False),  # The Chaste framework, only the nonlinear mechanics solver is used
     packages.Vc(required=True),        # The Vc types for explicit vectorization
+    packages.std_simd(required=True),  # std::simd vectorization library that needs C++17
     packages.xbraid(required=False),   # framework for multigrid in time methods 
     packages.OpenCOR(required=False),  # binary that converts CellML files from xml to c
     packages.libxml2(required=False),  # parser for xml files, needed for precice
@@ -94,6 +95,7 @@ vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the
 vars.Add(BoolVariable('VERBOSE', 'Output raw shell commands for compilation.', False))
 vars.Add(BoolVariable('ph', 'Build precompiled headers.', False))
 vars.Add(BoolVariable('USE_VECTORIZED_FE_MATRIX_ASSEMBLY', 'Enable code that matrix assembly for FEM matrices uses the Vc library.', False))
+vars.Add(BoolVariable('USE_STDSIMD', 'Use the std::experimental::simd library which supports AVX-512, instead of Vc. This automatically changes c++14 to c++17.', False))
 vars.Add('mpicc', help='The mpicc compiler wrapper', default='mpicc')
 vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
 vars.Add('cc', help='The c compiler', default='gcc')
@@ -295,7 +297,11 @@ else:
 # flags to always include, except with cray compiler
 if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:
   env.MergeFlags('-Wunused-variable')   # always warn about unused variables
-  env.MergeFlags('-std=c++14 -fopenmp')
+  env.MergeFlags('-fopenmp')
+  if env["USE_STDSIMD"]:
+    env.MergeFlags('-std=c++17')
+  else:
+    env.MergeFlags('-std=c++14')
   if "ppc" in platform.processor():
     env.MergeFlags('-mcpu=native -mtune=native')
   else:

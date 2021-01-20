@@ -6,6 +6,9 @@
 #include <random>
 #include <fstream>
 
+//#define NFIBERS_TO_COMPUTE 1
+#define NFIBERS_TO_COMPUTE nFibersToCompute_
+
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 initializeCellMLSourceFileGpu()
@@ -17,8 +20,7 @@ initializeCellMLSourceFileGpu()
   PythonConfig specificSettingsCellML = cellmlAdapter.specificSettings();
   CellmlSourceCodeGenerator &cellmlSourceCodeGenerator = cellmlAdapter.cellmlSourceCodeGenerator();
 
-  int nFibersToCompute = 1;  // nFibersToCompute_
-  //int nFibersToCompute = nFibersToCompute_;
+  int nFibersToCompute = NFIBERS_TO_COMPUTE;  // nFibersToCompute_
   
   // create source code for the rhs part
   std::string headerCode;
@@ -134,6 +136,9 @@ initializeCellMLSourceFileGpu()
     LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
   }
   
+
+  LOG(ERROR) << "GPU barrier: " << *DihuContext::partitionManager()->rankSubsetForCollectiveOperations();
+
   // wait on all ranks until conversion is finished
   MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");
 
@@ -237,8 +242,7 @@ generateMonodomainSolverGpuSource(std::string outputFilename, std::string header
     sourceCode << headerCode;
   }
   
-  int nFibersToCompute = 1;  // nFibersToCompute_
-  //int nFibersToCompute = nFibersToCompute_;
+  int nFibersToCompute = NFIBERS_TO_COMPUTE;  // nFibersToCompute_
   int nInstancesToCompute = nFibersToCompute*nInstancesToComputePerFiber_;
 
   if (optimizationType_ == "gpu")
@@ -885,7 +889,7 @@ initializeValuesOnGpu()
   /*
   // size constants
   const int nElementsOnFiber = nInstancesToComputePerFiber_-1;
-  const int nFibersToCompute = 1;
+  const int nFibersToCompute = NFIBERS_TO_COMPUTE;
   const int nParametersTotal = nInstancesToCompute_*nParametersPerInstance_;
   const int nElementLengths = nElementsOnFiber*nFibersToCompute;
   const int nFiringEvents = gpuFiringEventsNRows_*gpuFiringEventsNColumns_;
@@ -1022,8 +1026,7 @@ computeMonodomainGpu()
                      startTime, timeStepWidthSplitting, nTimeStepsSplitting_, dt0D, nTimeSteps0D, dt1D, nTimeSteps1D,
                      prefactor, valueForStimulatedPoint_);
 
-  int nFibersToCompute = 1;  // nFibersToCompute_
-  //int nFibersToCompute = nFibersToCompute_;
+  int nFibersToCompute = NFIBERS_TO_COMPUTE;  // nFibersToCompute_
   
   // copy the resulting values back to fiberData_
   for (int fiberDataNo = 0; fiberDataNo < nFibersToCompute; fiberDataNo++)

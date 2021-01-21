@@ -137,7 +137,7 @@ initializeCellMLSourceFileGpu()
   }
   
 
-  LOG(ERROR) << "GPU barrier: " << *DihuContext::partitionManager()->rankSubsetForCollectiveOperations();
+  //LOG(ERROR) << "GPU barrier: " << *DihuContext::partitionManager()->rankSubsetForCollectiveOperations();
 
   // wait on all ranks until conversion is finished
   MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");

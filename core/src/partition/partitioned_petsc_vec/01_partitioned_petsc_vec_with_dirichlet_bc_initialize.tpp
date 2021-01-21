@@ -290,13 +290,13 @@ initialize(int offsetInGlobalNumberingPerRank)
     }
   }
 
-  LOG(ERROR) << "MPI_Waitall (1), " << sendRequests.size() << " sendRequests, " << *this->meshPartition_->rankSubset();
+  VLOG(1) << "MPI_Waitall (1), " << sendRequests.size() << " sendRequests, " << *this->meshPartition_->rankSubset();
 
   // wait for communication to finish
   if (!sendRequests.empty())
     MPIUtility::handleReturnValue(MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
 
-  LOG(ERROR) << "MPI_Waitall (1), " << receiveRequests.size() << " receiveRequests, " << *this->meshPartition_->rankSubset();
+  VLOG(1) << "MPI_Waitall (1), " << receiveRequests.size() << " receiveRequests, " << *this->meshPartition_->rankSubset();
 
   if (!receiveRequests.empty())
     MPIUtility::handleReturnValue(MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
@@ -395,13 +395,13 @@ initialize(int offsetInGlobalNumberingPerRank)
     i++;
   }
 
-  LOG(ERROR) << "MPI_Waitall (2), " << sendRequests.size() << " sendRequests, " << *this->meshPartition_->rankSubset();
+  VLOG(1) << "MPI_Waitall (2), " << sendRequests.size() << " sendRequests, " << *this->meshPartition_->rankSubset();
 
   // wait for communication to finish
   if (!sendRequests.empty())
     MPIUtility::handleReturnValue(MPI_Waitall(sendRequests.size(), sendRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
 
-  LOG(ERROR) << "MPI_Waitall (2), " << receiveRequests.size() << " receiveRequests, " << *this->meshPartition_->rankSubset();
+  VLOG(1) << "MPI_Waitall (2), " << receiveRequests.size() << " receiveRequests, " << *this->meshPartition_->rankSubset();
 
   if (!receiveRequests.empty())
     MPIUtility::handleReturnValue(MPI_Waitall(receiveRequests.size(), receiveRequests.data(), MPI_STATUSES_IGNORE), "MPI_Waitall");
@@ -519,7 +519,7 @@ communicateBoundaryConditionGhostValues()
     i++;
   }
 
-  LOG(ERROR) << "MPI_Waitall (3), " << sendRequests.size() << "+" << receiveRequests.size() << " requests, " << *this->meshPartition_->rankSubset();
+  VLOG(1) << "MPI_Waitall (3), " << sendRequests.size() << "+" << receiveRequests.size() << " requests, " << *this->meshPartition_->rankSubset();
 
   // wait for communication to finish
   if (!sendRequests.empty())

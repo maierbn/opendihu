@@ -22,81 +22,6 @@ class std_simd(Package):
     self.libs = []
     #self.extra_libs = ['lapack', 'blas']
     #self.set_rpath = False    # do not use dynamic linkage
-    self.compatibility_code = r'''
-#pragma once
-// This header files either includes <Vc/Vc> or it includes <experimental/simd> and defines a compatibility namespace Vc.
-// In either way, the including code can access Vc functions.
-
-#if __cplusplus >= 201703L
-#define HAVE_STDSIMD
-#endif
-
-#ifdef HAVE_STDSIMD
-
-#include <experimental/simd>
-// define compatibility layer such that std::simd appears like Vc
-namespace Vc
-{
-  // define types
-  template<typename T,int n>
-  using array = std::experimental::fixed_size_simd<T,n>;
-  using double_v = std::experimental::native_simd<double>;
-  using int_v = std::experimental::native_simd<int>;
-  
-  // import math functions
-  using std::experimental::abs;
-  using std::experimental::exp;
-  using std::experimental::log;
-  
-  // define constants
-  double_v One = 1;
-  double_v Zero = 0;
-  
-  // define inline if functions
-  template<typename T>
-  constexpr T iif(const typename T::mask_type& mask, const T& trueValue, const T& falseValue)
-  {
-    T result(falseValue);
-    where(mask, result) = trueValue;
-    return result;
-  }
-  
-  template<typename T> 
-  constexpr T iif (bool condition, const T &trueValue, const T &falseValue)
-  {
-    return condition ? trueValue : falseValue;
-  }
-
-  template<typename T>
-  typename T::mask_type isnegative(T x)
-  {
-    return x < 0;
-  }
-  
-  template<typename Mask>
-  int count(const Mask &mask)
-  {
-    int result(0);
-    for (int i = 0; i < Mask::size(); i++)
-      result += (int)(mask[i]);
-    return result;
-  }
-}
-#else
-
-#include <Vc/Vc>
-
-namespace Vc_1
-{
-  template<typename Mask>
-  int count(const Mask &mask)
-  {
-    return mask.count();
-  }
-}
-#endif
-
-''' 
   
     self.check_text = r'''
 // g++ -std=c++14 std-simd.cpp -I $OPENDIHU_HOME/dependencies/vc/install/include/ -L$OPENDIHU_HOME/dependencies/vc/install/lib -lVc -I/store/software/std-simd && ./a.out
@@ -166,9 +91,9 @@ int main(int argc, char *argv[])
     self.set_build_handler([
       "mkdir -p ${PREFIX}",
       "cd ${PREFIX} && ln -s ${SOURCE_DIR} include",
-      "cd ${PREFIX}/include && cat > \"vc_or_std_simd.h\" << EOF \n"+self.compatibility_code+"EOF"
+      "cd ${PREFIX}/include && wget https://github.com/maierbn/std_simd_vc_wrapper/archive/main.zip && unzip main.zip && mv std_simd_vc_wrapper-main/* ."
     ])
-    self.number_output_lines = 1
+    self.number_output_lines = 10
     
     env = ctx.env
     ctx.Message('Checking for std_simd ...      ')

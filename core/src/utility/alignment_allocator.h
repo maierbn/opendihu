@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdlib>
-#include <cmalloc>
 
 // CC-BY-SA by user1071136, source: https://stackoverflow.com/a/8545389/10290071
 template <typename T, std::size_t N = 16>
@@ -38,12 +37,12 @@ public:
 
   inline pointer allocate(size_type n)
   {
-     return (pointer)_aligned_malloc(n*sizeof(value_type), N);
+     return (pointer)aligned_alloc(N, n*sizeof(value_type));
   }
 
   inline void deallocate(pointer p, size_type)
   {
-    _aligned_free(p);
+    free(p);
   }
 
   inline void construct(pointer p, const value_type & wert)

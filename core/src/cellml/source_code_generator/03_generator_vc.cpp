@@ -139,6 +139,7 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
                 }
                 else 
                 {
+                  //LOG(INFO) << "no integer exponent: " << innerExpression.code;
                   helperFunctions.insert("pow");
                 }
               }
@@ -285,6 +286,13 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
             expression.code = StringUtility::replace(expression.code, "exp", "exponential");
             helperFunctions.insert("exponential");
           }
+          else if (expression.code.find("log") != std::string::npos
+              && expression.code.find("log") == expression.code.length()-3)
+          {
+            // replace "log(" by "logarithmic("
+            expression.code = StringUtility::replace(expression.code, "log", "logarithmic");
+            helperFunctions.insert("logarithmic");
+          }
         }
       });
     }
@@ -419,6 +427,65 @@ defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateEx
     }
   }
   
+  // define log function if needed
+  if (helperFunctions.find("logarithmic") != helperFunctions.end())
+  {
+    sourceCode << "\n" << doubleType << " logarithmic(" << doubleType << " x)";
+    if (approximateExponentialFunction)
+    {
+      sourceCode << R"(
+{
+  )" << doubleType << R"( t = x-1;
+  )" << doubleType << R"( t2 = t*t;
+  )" << doubleType << R"( t4 = t2*t2;
+  
+  // Taylor approximation around 1, 3 or 9
+  )" << doubleType << R"( t1 = x-1;
+  )" << doubleType << R"( t1_2 = t1*t1;
+  )" << doubleType << R"( t1_4 = t1_2*t1_2;
+  )" << doubleType << R"( t1_6 = t1_4*t1_2;
+  )" << doubleType << R"( result1 = t1 - 0.5*t1_2 + 1./3*t1_2*t1 - 0.25*t1_4 + 0.2*t1_4*t1 - 1./6*t1_6;
+    
+  )" << doubleType << R"( t3 = x-3;
+  )" << doubleType << R"( t3_2 = t3*t3;
+  )" << doubleType << R"( t3_4 = t3_2*t3_2;
+  )" << doubleType << R"( result3 = 1.0986122886681098 + 1./3*t3 - 0.05555555555555555*t3_2 + 0.012345679012345678*t3_2*t3 - 0.0030864197530864196*t3_4;
+
+  )" << doubleType << R"( t9 = x-9;
+  )" << doubleType << R"( t9_2 = t9*t9;
+  )" << doubleType << R"( t9_4 = t9_2*t9_2;
+  )" << doubleType << R"( result9 = 2.1972245773362196 + 1./9*t9 - 0.006172839506172839*t9_2 + 0.0004572473708276177*t9_2*t9 - 3.8103947568968146e-05*t9_4;
+
+  )" << doubleType << R"( result = result1;
+  Vc::where(x >= 2 && x < 6, result) = result3;
+  Vc::where(x >= 6, result) = result9;
+  
+  // The relative error of this implementation is below 0.04614465854334056 for x in [0.2,19].
+  return result;
+}
+)";
+    }
+    else
+    {
+      if (useVc)
+      {
+        sourceCode << R"(
+{
+  return Vc::log(x);
+}
+)";
+      }
+      else
+      {
+        sourceCode << R"(
+{
+  return log(x);
+}
+)";     
+      }
+    }
+  }
+  
   // define pow function if needed
   if (helperFunctions.find("pow") != helperFunctions.end() && useVc)
   {
@@ -452,7 +519,7 @@ Vc::double_v pow(Vc::double_v basis, double exponent)
     std::string functionName = *iter;
 
     // exp function is already handled
-    if (functionName == "exponential")
+    if (functionName == "exponential" || functionName == "logarithmic")
       continue;
 
     // generate pow functions with integer exponents

@@ -24,7 +24,8 @@ struct FiberPointBuffers
   Vc::double_v states[nStates];
 };
 
-#ifndef HAVE_STDSIMD      // only if we are using Vc, it is not necessary for std::simd
+#ifndef HAVE_STDSIMD
+// only if we are using Vc, it is not necessary for std::simd
 
 /** Specialize the default allocator for the FiberPointBuffers struct to use the aligned allocated provided by Vc.
  *  This could also be done by Vc_DECLARE_ALLOCATOR(<class>), but not here because of the template parameter nStates.

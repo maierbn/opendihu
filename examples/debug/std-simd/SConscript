@@ -11,5 +11,5 @@ Import('env')     # import Environment object from calling SConstruct
 if not env['no_examples']:
     
   # create the main executable
-  env.Program(target = 'vc', source = "vc.cpp")
+  #env.Program(target = 'vc', source = "vc.cpp")
   env.Program(target = 'std-simd', source = "std-simd.cpp")

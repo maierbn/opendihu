@@ -99,11 +99,12 @@ initialize(const std::map<int,std::vector<int>> remoteDofNosAtRanks, std::vector
 
     assert(sendBuffer[i].size() == nValuesToSendTo);
 
+    int tag = foreignRankNo*10000+nValuesToSendTo;
     MPI_Request sendRequest;
-    MPIUtility::handleReturnValue(MPI_Isend(sendBuffer[i].data(), nValuesToSendTo, MPI_INT, foreignRankNo, 0,
+    MPIUtility::handleReturnValue(MPI_Isend(sendBuffer[i].data(), nValuesToSendTo, MPI_INT, foreignRankNo, tag,
                                             mpiCommunicator, &sendRequest), "MPI_Isend");
 
-    VLOG(1) << "to rank " << foreignRankNo << " send " << nValuesToSendTo << " dof nos: " << sendBuffer[i];
+    VLOG(1) << "to rank " << foreignRankNo << " send " << nValuesToSendTo << " dof nos: " << sendBuffer[i] << ", tag=" << tag;
 
     sendRequests.push_back(sendRequest);
   }
@@ -122,11 +123,12 @@ initialize(const std::map<int,std::vector<int>> remoteDofNosAtRanks, std::vector
 
     if (nFromRank != 0)
     {
-      VLOG(1) << "i=" << i << ", from rank " << foreignRankNo << " receive " << nFromRank << " requests";
+      int tag = ownRankNo*10000+nFromRank;
+      VLOG(1) << "i=" << i << ", from rank " << foreignRankNo << " receive " << nFromRank << " requests, tag=" << tag;
 
       dofNosFromRanks[i].resize(nFromRank);
       MPI_Request receiveRequest;
-      MPIUtility::handleReturnValue(MPI_Irecv(dofNosFromRanks[i].data(), nFromRank, MPI_INT, foreignRankNo, 0,
+      MPIUtility::handleReturnValue(MPI_Irecv(dofNosFromRanks[i].data(), nFromRank, MPI_INT, foreignRankNo, tag,
                                               mpiCommunicator, &receiveRequest), "MPI_Irecv");
       receiveRequests.push_back(receiveRequest);
       nValuesToReceive_ += nFromRank;

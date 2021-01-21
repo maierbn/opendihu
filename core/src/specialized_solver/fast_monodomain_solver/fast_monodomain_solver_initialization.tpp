@@ -1,8 +1,8 @@
 #include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_base.h"
 
+#include <vc_or_std_simd.h>  // this includes <Vc/Vc> or a Vc-emulating wrapper of <experimental/simd> if available
 #include "partition/rank_subset.h"
 #include "control/diagnostic_tool/stimulation_logging.h"
-#include <vc_or_std_simd.h>  // this includes <Vc/Vc> or a Vc-emulating wrapper of <experimental/simd> if available
 #include <random>
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>

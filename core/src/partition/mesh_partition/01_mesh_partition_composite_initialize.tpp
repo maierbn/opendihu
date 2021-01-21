@@ -924,11 +924,12 @@ initializeGhostNodeNos()
 
     assert(sendBuffer[i].size() == nRequestedNodes);
 
+    int tag = foreignRankNo*10000+nRequestedNodes;
     MPI_Request sendRequest;
-    MPIUtility::handleReturnValue(MPI_Isend(sendBuffer[i].data(), nRequestedNodes, MPI_INT, foreignRankNo, 0,
+    MPIUtility::handleReturnValue(MPI_Isend(sendBuffer[i].data(), nRequestedNodes, MPI_INT, foreignRankNo, tag,
                                             this->mpiCommunicator(), &sendRequest), "MPI_Isend");
 
-    VLOG(1) << "to rank " << foreignRankNo << " send " << nRequestedNodes << " requests: " << sendBuffer[i];
+    VLOG(1) << "to rank " << foreignRankNo << " send " << nRequestedNodes << " requests: " << sendBuffer[i] << ", tag=" << tag;
 
     sendRequests.push_back(sendRequest);
   }
@@ -948,11 +949,12 @@ initializeGhostNodeNos()
 
     if (nFromRank != 0)
     {
-      VLOG(1) << "i=" << i << ", from rank " << foreignRankNo << " receive " << nFromRank << " requests";
+      int tag = ownRankNo*10000+nFromRank;
+      VLOG(1) << "i=" << i << ", from rank " << foreignRankNo << " receive " << nFromRank << " requests, tag=" << tag;
 
       requestedNodesGlobalPetsc[i].resize(nFromRank);
       MPI_Request receiveRequest;
-      MPIUtility::handleReturnValue(MPI_Irecv(requestedNodesGlobalPetsc[i].data(), nFromRank, MPI_INT, foreignRankNo, 0,
+      MPIUtility::handleReturnValue(MPI_Irecv(requestedNodesGlobalPetsc[i].data(), nFromRank, MPI_INT, foreignRankNo, tag,
                                               this->mpiCommunicator(), &receiveRequest), "MPI_Irecv");
       receiveRequests.push_back(receiveRequest);
     }

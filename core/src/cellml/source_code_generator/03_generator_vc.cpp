@@ -7,7 +7,7 @@
 
 #include <vector>
 #include <iostream>
-#include <Vc/Vc>
+#include <vc_or_std_simd.h>  // this includes <Vc/Vc> or a Vc-emulating wrapper of <experimental/simd> if available
 #include "easylogging++.h"
 
 void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFunctions, bool useVc)
@@ -537,7 +537,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
 
   std::stringstream sourceCode;
   sourceCode << "#include <math.h>" << std::endl
-    << "#include <Vc/Vc>" << std::endl
+    << "#include <vc_or_std_simd.h>  // this includes <Vc/Vc> or a Vc-emulating wrapper of <experimental/simd> if available" << std::endl
     << cellMLCode_.header << std::endl
     << "using Vc::double_v; " << std::endl;
 
@@ -584,11 +584,11 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
     << "void computeCellMLRightHandSide("
     << "void *context, double t, double *states, double *rates, double *algebraics, double *parameters)" << std::endl 
     << "{" << std::endl
-    << "  // assert that Vc::double_v::Size is the same as in opendihu, otherwise there will be problems\n"
-    << "  if (Vc::double_v::Size != " << Vc::double_v::Size << ")\n"
+    << "  // assert that Vc::double_v::size() is the same as in opendihu, otherwise there will be problems\n"
+    << "  if (Vc::double_v::size() != " << Vc::double_v::size() << ")\n"
     << "  {\n"
     << "    std::cout << \"Fatal error in compiled library of source file \\\"" << outputFilename << "\\\", size of SIMD register in "
-    << "compiled code (\" << Vc::double_v::Size << \") does not match opendihu code (" << Vc::double_v::Size << ").\" << std::endl;\n"
+    << "compiled code (\" << Vc::double_v::size() << \") does not match opendihu code (" << Vc::double_v::size() << ").\" << std::endl;\n"
     << "    std::cout << \"Delete library such that it will be regenerated with the correct compile options!\" << std::endl;\n"
     << "    exit(1);\n"
     << "  }\n\n";
@@ -605,7 +605,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
 
   // add declaration of algebraic variables
   sourceCode << std::endl;
-  const int nVcVectors = (int)(ceil((double)this->nInstances_ / Vc::double_v::Size));
+  const int nVcVectors = (int)(ceil((double)this->nInstances_ / Vc::double_v::size()));
   const int nParametersPerInstance = this->nAlgebraics_;
 
   sourceCode << std::endl
@@ -613,7 +613,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
     << "  const int nStates = " << this->nStates_ << ";\n"
     << "  const int nAlgebraics = " << this->nAlgebraics_ << ";\n"
     << "  const int nParametersPerInstance = " << nParametersPerInstance << ";\n"
-    << "  const int nVcVectors = " << nVcVectors << ";  // ceil(" << this->nInstances_ << " instances / VcSize " << Vc::double_v::Size << ")" << std::endl
+    << "  const int nVcVectors = " << nVcVectors << ";  // ceil(" << this->nInstances_ << " instances / VcSize " << Vc::double_v::size() << ")" << std::endl
     << "  Vc::double_v statesVc[nStates*nVcVectors];  // " << this->nStates_ << " states * " << nVcVectors << " vectors" << std::endl
     << "  Vc::double_v ratesVc[nStates*nVcVectors];   // " << this->nStates_ << " rates  * " << nVcVectors << " vectors" << std::endl
     << "  Vc::double_v algebraicsVc[nAlgebraics*nVcVectors];  // " << this->nAlgebraics_ << " algebraics  * " << nVcVectors << " vectors" << std::endl
@@ -622,13 +622,13 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
     << "  // fill input vectors of states and parameters\n"
     << "  for (int stateNo = 0; stateNo < nStates; stateNo++)\n"
     << "    for (int i = 0; i < nVcVectors; i++)  // Vc vector no\n"
-    << "      for (int k = 0; k < Vc::double_v::Size; k++)  // entry no in Vc vector \n"
-    << "        statesVc[stateNo*nVcVectors + i][k] = states[std::min(stateNo*nInstances + i*(int)Vc::double_v::Size+k, nStates*nInstances-1)];\n"
+    << "      for (int k = 0; k < Vc::double_v::size(); k++)  // entry no in Vc vector \n"
+    << "        statesVc[stateNo*nVcVectors + i][k] = states[std::min(stateNo*nInstances + i*(int)Vc::double_v::size()+k, nStates*nInstances-1)];\n"
     << "\n"
     << "  for (int parameterNo = 0; parameterNo < nParametersPerInstance; parameterNo++)\n"
     << "    for (int i = 0; i < nVcVectors; i++)  // Vc vector no\n"
-    << "      for (int k = 0; k < Vc::double_v::Size; k++)  // entry no in Vc vector \n"
-    << "        parametersVc[parameterNo*nVcVectors + i][k] = parameters[std::min(parameterNo*nInstances + i*(int)Vc::double_v::Size+k, nParametersPerInstance*nInstances-1)];\n"
+    << "      for (int k = 0; k < Vc::double_v::size(); k++)  // entry no in Vc vector \n"
+    << "        parametersVc[parameterNo*nVcVectors + i][k] = parameters[std::min(parameterNo*nInstances + i*(int)Vc::double_v::size()+k, nParametersPerInstance*nInstances-1)];\n"
     << std::endl
     << "  for (int i = 0; i < nVcVectors; i++)" << std::endl
     << "  {" << std::endl;
@@ -698,20 +698,20 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
     << "  // store computed values back to pointers\n"
     << "  for (int rateNo = 0; rateNo < nStates; rateNo++)\n"
     << "    for (int i = 0; i < nVcVectors; i++)  // Vc vector no\n"
-    << "      for (int k = 0; k < Vc::double_v::Size; k++)  // entry no in Vc vector \n"
+    << "      for (int k = 0; k < Vc::double_v::size(); k++)  // entry no in Vc vector \n"
     << "      {\n"
-    << "        if (rateNo*nInstances + i*Vc::double_v::Size+k >= nStates*nInstances)\n"
+    << "        if (rateNo*nInstances + i*Vc::double_v::size()+k >= nStates*nInstances)\n"
     << "          continue;\n"
-    << "        rates[rateNo*nInstances + i*Vc::double_v::Size+k] = ratesVc[rateNo*nVcVectors + i][k];\n"
+    << "        rates[rateNo*nInstances + i*Vc::double_v::size()+k] = ratesVc[rateNo*nVcVectors + i][k];\n"
     << "      }\n"
     << "\n"
     << "  for (int algebraicNo = 0; algebraicNo < nAlgebraics; algebraicNo++)\n"
     << "    for (int i = 0; i < nVcVectors; i++)  // Vc vector no\n"
-    << "      for (int k = 0; k < Vc::double_v::Size; k++)  // entry no in Vc vector \n"
+    << "      for (int k = 0; k < Vc::double_v::size(); k++)  // entry no in Vc vector \n"
     << "      {\n"
-    << "        if (algebraicNo*nInstances + i*Vc::double_v::Size+k >= nAlgebraics*nInstances)\n"
+    << "        if (algebraicNo*nInstances + i*Vc::double_v::size()+k >= nAlgebraics*nInstances)\n"
     << "          continue;\n"
-    << "        algebraics[algebraicNo*nInstances + i*Vc::double_v::Size+k] = algebraicsVc[algebraicNo*nVcVectors + i][k];\n"
+    << "        algebraics[algebraicNo*nInstances + i*Vc::double_v::size()+k] = algebraicsVc[algebraicNo*nVcVectors + i][k];\n"
     << "      }\n"
     << "\n";
 
@@ -756,7 +756,7 @@ generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExp
 
   std::stringstream sourceCode;
   sourceCode << "#include <math.h>" << std::endl
-    << "#include <Vc/Vc>" << std::endl
+    << "#include <vc_or_std_simd.h>  // this includes <Vc/Vc> or a Vc-emulating wrapper of <experimental/simd> if available" << std::endl
     << "#include <iostream> " << std::endl
     << cellMLCode_.header << std::endl
     << "using Vc::double_v; " << std::endl;
@@ -792,11 +792,11 @@ generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExp
     << "void compute0DInstance(Vc::double_v states[], std::vector<Vc::double_v> &parameters, double currentTime, double timeStepWidth, bool stimulate,\n"
     << "                       bool storeAlgebraicsForTransfer, std::vector<Vc::double_v> &algebraicsForTransfer, const std::vector<int> &algebraicsForTransferIndices, double valueForStimulatedPoint) \n"
     << "{\n"
-    << "  // assert that Vc::double_v::Size is the same as in opendihu, otherwise there will be problems\n"
-    << "  if (Vc::double_v::Size != " << Vc::double_v::Size << ")\n"
+    << "  // assert that Vc::double_v::size() is the same as in opendihu, otherwise there will be problems\n"
+    << "  if (Vc::double_v::size() != " << Vc::double_v::size() << ")\n"
     << "  {\n"
     << "    std::cout << \"Fatal error in compiled library of source file \\\"" << outputFilename << "\\\", size of SIMD register in "
-    << "compiled code (\" << Vc::double_v::Size << \") does not match opendihu code (" << Vc::double_v::Size << ").\" << std::endl;\n"
+    << "compiled code (\" << Vc::double_v::size() << \") does not match opendihu code (" << Vc::double_v::size() << ").\" << std::endl;\n"
     << "    std::cout << \"Delete library such that it will be regenerated with the correct compile options!\" << std::endl;\n"
     << "    exit(1);\n"
     << "  }\n\n"
@@ -907,7 +907,7 @@ generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExp
   // if stimulation, set value of Vm (state0)
   if (stimulate)
   {
-    for (int i = 0; i < std::min(3,(int)Vc::double_v::Size); i++)
+    for (int i = 0; i < std::min(3,(int)Vc::double_v::size()); i++)
     {
       algebraicState0[i] = valueForStimulatedPoint;
     }
@@ -999,7 +999,7 @@ generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExp
   sourceCode << R"(
   if (stimulate)
   {
-    for (int i = 0; i < std::min(3,(int)Vc::double_v::Size); i++)
+    for (int i = 0; i < std::min(3,(int)Vc::double_v::size()); i++)
     {
       states[0][i] = valueForStimulatedPoint;
     }

@@ -2,7 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 #include <array>
-#include <Vc/Vc>
+#include <vc_or_std_simd.h>  // this includes <Vc/Vc> or a Vc-emulating wrapper of <experimental/simd> if available
 
 #include "control/multiple_instances.h"
 #include "operator_splitting/strang.h"
@@ -24,6 +24,8 @@ struct FiberPointBuffers
   Vc::double_v states[nStates];
 };
 
+#ifndef HAVE_STDSIMD      // only if we are using Vc, it is not necessary for std::simd
+
 /** Specialize the default allocator for the FiberPointBuffers struct to use the aligned allocated provided by Vc.
  *  This could also be done by Vc_DECLARE_ALLOCATOR(<class>), but not here because of the template parameter nStates.
  */
@@ -41,6 +43,7 @@ public:
   };
 };
 }
+#endif
 
 /** The implementation of a monodomain solver as used in the fibers_emg example, number of states and algebraics is templated.
  *  This class contains all functionality except the reaction term. Deriving classes only need to implement compute0D.

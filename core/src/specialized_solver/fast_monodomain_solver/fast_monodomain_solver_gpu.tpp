@@ -2,7 +2,7 @@
 
 #include "partition/rank_subset.h"
 #include "control/diagnostic_tool/stimulation_logging.h"
-#include <Vc/Vc>
+#include <vc_or_std_simd.h>  // this includes <Vc/Vc> or a Vc-emulating wrapper of <experimental/simd> if available
 #include <random>
 #include <fstream>
 

@@ -153,8 +153,8 @@ fetchFiberData()
 
           if (useVc_)
           {
-            global_no_t pointBuffersNo = valueIndexAllFibers / Vc::double_v::Size;
-            int entryNo = valueIndexAllFibers % Vc::double_v::Size;
+            global_no_t pointBuffersNo = valueIndexAllFibers / Vc::double_v::size();
+            int entryNo = valueIndexAllFibers % Vc::double_v::size();
 
             //LOG(DEBUG) << "valueIndexAllFibers: " << valueIndexAllFibers << ", (" << pointBuffersNo << "," << entryNo << ")";
 
@@ -166,7 +166,7 @@ fetchFiberData()
 
             if (VLOG_IS_ON(1))
             {
-              if (entryNo == Vc::double_v::Size-1)
+              if (entryNo == Vc::double_v::size()-1)
               {
                 VLOG(1) << "stored " << nParametersPerInstance << " parameters in buffer no " << pointBuffersNo << ": " << fiberPointBuffersParameters_[pointBuffersNo];
               }
@@ -215,8 +215,8 @@ fetchFiberData()
       {
         global_no_t valueIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo;
 
-        global_no_t pointBuffersNo = valueIndexAllFibers / Vc::double_v::Size;
-        int entryNo = valueIndexAllFibers % Vc::double_v::Size;
+        global_no_t pointBuffersNo = valueIndexAllFibers / Vc::double_v::size();
+        int entryNo = valueIndexAllFibers % Vc::double_v::size();
 
         fiberPointBuffers_[pointBuffersNo].states[0][entryNo] = fiberData_[fiberDataNo].vmValues[valueNo];
       }
@@ -240,8 +240,8 @@ updateFiberData()
       {
         global_no_t valueIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo;
 
-        global_no_t pointBuffersNo = valueIndexAllFibers / Vc::double_v::Size;
-        int entryNo = valueIndexAllFibers % Vc::double_v::Size;
+        global_no_t pointBuffersNo = valueIndexAllFibers / Vc::double_v::size();
+        int entryNo = valueIndexAllFibers % Vc::double_v::size();
 
         assert(statesForTransferIndices_.size() > 0);
         const int stateToTransfer = statesForTransferIndices_[0];  // transfer the first state value

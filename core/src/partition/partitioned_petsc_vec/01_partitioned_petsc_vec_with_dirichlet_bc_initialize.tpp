@@ -3,6 +3,8 @@
 #include "utility/mpi_utility.h"
 #include "spatial_discretization/dirichlet_boundary_conditions/00_dirichlet_boundary_conditions_base.h"
 
+#define USE_MPI_ALLOC
+
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::
 initialize(int offsetInGlobalNumberingPerRank)
@@ -151,17 +153,25 @@ initialize(int offsetInGlobalNumberingPerRank)
   int ownRankNo = this->meshPartition_->ownRankNo();
 
   // create remote accessible memory
-  // std::vector<int> remoteAccessibleMemory(nRanks, 0);
-  int *remoteAccessibleMemory = nullptr;
   int nBytes = nRanks * sizeof(int);
   int displacementUnit = sizeof(int);
   MPI_Win mpiMemoryWindow;
-  // MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, this->meshPartition_->mpiCommunicator(), &mpiMemoryWindow), "MPI_Win_create");
+
+#ifdef USE_MPI_ALLOC
+
+  // let MPI allocate the memory
+  int *remoteAccessibleMemory = nullptr;
   MPIUtility::handleReturnValue(MPI_Win_allocate(nBytes, displacementUnit, MPI_INFO_NULL, this->meshPartition_->mpiCommunicator(), (void *)&remoteAccessibleMemory, &mpiMemoryWindow), "MPI_Win_allocate");
 
   // clear buffer
   memset(remoteAccessibleMemory, 0, nBytes);
-  
+#else
+
+  // allocate the memory ourselves
+  std::vector<int> remoteAccessibleMemory(nRanks, 0);
+  MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, this->meshPartition_->mpiCommunicator(), &mpiMemoryWindow), "MPI_Win_create");
+#endif
+
   std::vector<int> localMemory(nRanks);
 
   // put number of requested ghost dofs to the corresponding processes
@@ -194,8 +204,10 @@ initialize(int offsetInGlobalNumberingPerRank)
     }
   }
 
+#ifdef USE_MPI_ALLOC
   // deallocate mpi memory
   MPIUtility::handleReturnValue(MPI_Win_free(&mpiMemoryWindow), "MPI_Win_free");
+#endif
 
   VLOG(1) << "after fence, nDofRequestedFromRanks_: " << nDofRequestedFromRanks_;
 
@@ -244,6 +256,8 @@ initialize(int offsetInGlobalNumberingPerRank)
       receiveRequests.push_back(receiveRequest);
     }
   }
+
+  LOG(ERROR) << "MPI_Waitall (1), " << sendRequests.size() << "+" << receiveRequests.size() << " requests, " << *this->meshPartition_->rankSubset();
 
   // wait for communication to finish
   if (!sendRequests.empty())
@@ -343,6 +357,8 @@ initialize(int offsetInGlobalNumberingPerRank)
     receiveRequests.push_back(receiveRequestValues);
     i++;
   }
+
+  LOG(ERROR) << "MPI_Waitall (2), " << sendRequests.size() << "+" << receiveRequests.size() << " requests, " << *this->meshPartition_->rankSubset();
 
   // wait for communication to finish
   if (!sendRequests.empty())
@@ -463,6 +479,8 @@ communicateBoundaryConditionGhostValues()
     receiveRequests.push_back(receiveRequestValues);
     i++;
   }
+
+  LOG(ERROR) << "MPI_Waitall (3), " << sendRequests.size() << "+" << receiveRequests.size() << " requests, " << *this->meshPartition_->rankSubset();
 
   // wait for communication to finish
   if (!sendRequests.empty())

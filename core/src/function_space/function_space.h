@@ -10,7 +10,7 @@
 #include "mesh/surface_mesh.h"
 #include "basis_function/lagrange.h"
 #include "function_space/function_space_generic.h"
-#include <Vc/Vc>
+#include <vc_or_std_simd.h>  // this includes <Vc/Vc> or a Vc-emulating wrapper of <experimental/simd> if available
 
 namespace FunctionSpace
 {

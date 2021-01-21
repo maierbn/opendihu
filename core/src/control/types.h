@@ -3,7 +3,7 @@
 #include <Python.h>  // has to be the first included header
 #include <array>
 #include <petscmat.h>
-#include <Vc/Vc>
+#include <vc_or_std_simd.h>  // this includes <Vc/Vc> or a Vc-emulating wrapper of <experimental/simd> if available
 
 //#define USE_VECTORIZED_FE_MATRIX_ASSEMBLY     // if the vectorized implementation of integrating the stiffness and mass matrices should be used
 // This options reduces the runtime significantly, theoretically by a factor of 4 for matrix assembly. However, the compile time increases by a factor of circa 4 to 5.

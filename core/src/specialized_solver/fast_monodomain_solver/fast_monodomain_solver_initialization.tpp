@@ -2,7 +2,7 @@
 
 #include "partition/rank_subset.h"
 #include "control/diagnostic_tool/stimulation_logging.h"
-#include <Vc/Vc>
+#include <vc_or_std_simd.h>  // this includes <Vc/Vc> or a Vc-emulating wrapper of <experimental/simd> if available
 #include <random>
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
@@ -345,7 +345,7 @@ initialize()
   cellmlAdapter.data().prepareParameterValues();
   double *parameterValues = cellmlAdapter.data().parameterValues();   //< contains nAlgebraics parameters for all instances, in struct of array ordering (p0inst0, p0inst1, p0inst2,...)
 
-  int nVcVectors = (nInstancesToCompute_ + Vc::double_v::Size - 1) / Vc::double_v::Size;
+  int nVcVectors = (nInstancesToCompute_ + Vc::double_v::size() - 1) / Vc::double_v::size();
 
   if (useVc_)
   {
@@ -412,7 +412,7 @@ initialize()
   cellmlAdapter.data().restoreParameterValues();
 
   LOG(DEBUG) << nInstancesToCompute_ << " instances to compute, " << nVcVectors
-    << " Vc vectors, size of double_v: " << Vc::double_v::Size << ", "
+    << " Vc vectors, size of double_v: " << Vc::double_v::size() << ", "
     << statesForTransferIndices_.size()-1 << " additional states for transfer, "
     << algebraicsForTransferIndices_.size() << " algebraics for transfer";
 

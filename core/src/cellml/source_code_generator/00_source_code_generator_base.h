@@ -7,7 +7,11 @@
 #include <sstream>
 #include <list>
 #include <functional>
+#include <vc_or_std_simd.h>
+
+#ifndef HAVE_STDSIMD      // only if we are using Vc, it is not necessary for std::simd
 #include <Vc/Allocator>
+#endif
 
 class CellmlSourceCodeGeneratorBase
 {

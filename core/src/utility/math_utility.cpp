@@ -18,10 +18,16 @@ int sqr(int v)
 template<>
 Vc::double_v pow(Vc::double_v base, double exponent)
 {
+
+#ifdef HAVE_STDSIMD
+  return std::experimental::pow(base, exponent);
+#else
   return base.apply([exponent](double d)
   {
     return std::pow(d, exponent);
   });
+#endif
+
 }
 
 template<>
@@ -70,7 +76,7 @@ double normSquared<1>(const VecD<1,Vc::double_v> node)
   double result = 0;
   for (int vcComponent = 0; vcComponent < Vc::double_v::size(); vcComponent++)
   {
-    result += sqr(vcResult[vcComponent]);
+    result += sqr((double)(vcResult[vcComponent]));
   }
   return result;
 }
@@ -82,7 +88,7 @@ double normSquared<2>(const VecD<2,Vc::double_v> node)
   double result = 0;
   for (int vcComponent = 0; vcComponent < Vc::double_v::size(); vcComponent++)
   {
-    result += sqr(vcResult[vcComponent]);
+    result += sqr((double)(vcResult[vcComponent]));
   }
   return result;
 }
@@ -94,7 +100,7 @@ double normSquared<3>(const Vec3_v node)
   double result = 0;
   for (int vcComponent = 0; vcComponent < Vc::double_v::size(); vcComponent++)
   {
-    result += sqr(vcResult[vcComponent]);
+    result += sqr((double)(vcResult[vcComponent]));
   }
   return result;
 }
@@ -109,7 +115,11 @@ double acos<double>(double value)
 template<>
 Vc::double_v acos<Vc::double_v>(Vc::double_v value)
 {
+#ifdef HAVE_STDSIMD
+  return std::experimental::acos(value);
+#else
   return value.apply([](double v){return std::acos(v);});
+#endif
 }
 
 template<>
@@ -170,7 +180,7 @@ std::array<Vec3_v,3> transformToDxD<3,2>(const std::array<Vec3_v,2> &matrix)
   return std::array<Vec3_v,3>({
     matrix[0],
     matrix[1],
-    Vec3_v({Vc::double_v::Zero(), Vc::double_v::Zero(), Vc::double_v::One()})
+    Vec3_v({Vc::double_v(Vc::Zero), Vc::double_v(Vc::Zero), Vc::double_v(Vc::One)})
   });
 }
 
@@ -188,8 +198,8 @@ std::array<Vec3_v,3> transformToDxD<3,1>(const std::array<Vec3_v,1> &matrix)
 {
   return std::array<Vec3_v,3>({
     matrix[0],
-    Vec3_v({Vc::double_v::Zero(), Vc::double_v::One(), Vc::double_v::Zero()}),
-    Vec3_v({Vc::double_v::Zero(), Vc::double_v::Zero(), Vc::double_v::One()})}
+    Vec3_v({Vc::double_v(Vc::Zero), Vc::double_v(Vc::One), Vc::double_v(Vc::Zero)}),
+    Vec3_v({Vc::double_v(Vc::Zero), Vc::double_v(Vc::Zero), Vc::double_v(Vc::One)})}
   );
 }
 

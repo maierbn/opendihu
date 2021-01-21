@@ -147,16 +147,16 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlge
     return;
   }
 
-  const double factorForForDataNo = (double)Vc::double_v::Size / fiberData_[0].valuesLength;
+  const double factorForForDataNo = (double)Vc::double_v::size() / fiberData_[0].valuesLength;
   for (global_no_t pointBuffersNo = 0; pointBuffersNo < nPointBuffers; pointBuffersNo++)
   {
     int fiberDataNo = pointBuffersNo * factorForForDataNo;
-    int indexInFiber = pointBuffersNo * Vc::double_v::Size - fiberData_[fiberDataNo].valuesOffset;
+    int indexInFiber = pointBuffersNo * Vc::double_v::size() - fiberData_[fiberDataNo].valuesOffset;
 
     // determine if current point is at center of fiber
     int fiberCenterIndex = fiberData_[fiberDataNo].fiberStimulationPointIndex;
-    bool currentPointIsInCenter = (fabs(fiberCenterIndex - indexInFiber) < Vc::double_v::Size);
-    VLOG(3) << "currentPointIsInCenter: " << currentPointIsInCenter << ", pointBuffersNo: " << pointBuffersNo << ", fiberDataNo: " << fiberDataNo << ", indexInFiber:" << indexInFiber << ", fiberCenterIndex: " << fiberCenterIndex << ", " << (indexInFiber - fiberCenterIndex) << " < " << Vc::double_v::Size;
+    bool currentPointIsInCenter = (fabs(fiberCenterIndex - indexInFiber) < Vc::double_v::size());
+    VLOG(3) << "currentPointIsInCenter: " << currentPointIsInCenter << ", pointBuffersNo: " << pointBuffersNo << ", fiberDataNo: " << fiberDataNo << ", indexInFiber:" << indexInFiber << ", fiberCenterIndex: " << fiberCenterIndex << ", " << (indexInFiber - fiberCenterIndex) << " < " << Vc::double_v::size();
 
     VLOG(3) << "pointBuffersNo: " << pointBuffersNo << ", fiberDataNo: " << fiberDataNo << ", indexInFiber: " << indexInFiber;
 
@@ -216,7 +216,7 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlge
     int fiberDataNoPrevious = -1;
     for (global_no_t pointBuffersNo = 0; pointBuffersNo < nPointBuffers; pointBuffersNo++)
     {
-      int fiberDataNo = pointBuffersNo * Vc::double_v::Size / fiberData_[0].valuesLength;
+      int fiberDataNo = pointBuffersNo * Vc::double_v::size() / fiberData_[0].valuesLength;
       if (fiberDataNoPrevious != fiberDataNo)
       {
         s << std::endl << fiberDataNo;
@@ -287,8 +287,8 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
     for (int valueNo = 0; valueNo < nValues; valueNo++)
     {
       global_no_t valuesIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo;
-      global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::Size;
-      int entryNo = valuesIndexAllFibers % Vc::double_v::Size;
+      global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::size();
+      int entryNo = valuesIndexAllFibers % Vc::double_v::size();
       double u = fiberPointBuffers_[pointBuffersNo].states[0][entryNo];
       if (valueNo != 0)
       {
@@ -337,16 +337,16 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
       double u_next = 0;
 
       global_no_t valuesIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo;
-      global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::Size;
-      int entryNo = valuesIndexAllFibers % Vc::double_v::Size;
+      global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::size();
+      int entryNo = valuesIndexAllFibers % Vc::double_v::size();
       u_center = fiberPointBuffers_[pointBuffersNo].states[0][entryNo];
 
       // contribution from left element
       if (valueNo > 0)
       {
         global_no_t valuesIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo - 1;
-        global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::Size;
-        int entryNo = valuesIndexAllFibers % Vc::double_v::Size;
+        global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::size();
+        int entryNo = valuesIndexAllFibers % Vc::double_v::size();
         u_previous = fiberPointBuffers_[pointBuffersNo].states[0][entryNo];
 
         // stencil K: 1/h*[1   _-1_ ]*prefactor
@@ -384,8 +384,8 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
       if (valueNo < nValues-1)
       {
         global_no_t valuesIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo + 1;
-        global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::Size;
-        int entryNo = valuesIndexAllFibers % Vc::double_v::Size;
+        global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::size();
+        int entryNo = valuesIndexAllFibers % Vc::double_v::size();
         u_next = fiberPointBuffers_[pointBuffersNo].states[0][entryNo];
 
         // stencil K: 1/h*[_-1_  1  ]*prefactor
@@ -455,8 +455,8 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
     // perform backward substitution
     // x_n = d'_n
     global_no_t valuesIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + nValues-1;
-    global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::Size;
-    int entryNo = valuesIndexAllFibers % Vc::double_v::Size;
+    global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::size();
+    int entryNo = valuesIndexAllFibers % Vc::double_v::size();
     fiberPointBuffers_[pointBuffersNo].states[0][entryNo] = dAlgebraic[nValues-1];
     //LOG(DEBUG) << "set entry (" << pointBuffersNo << "," << entryNo << ") to " << dAlgebraic[nValues-1];
 
@@ -467,8 +467,8 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
     {
       // x_i = d'_i - c'_i * x_{i+1}
       global_no_t valuesIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo;
-      global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::Size;
-      int entryNo = valuesIndexAllFibers % Vc::double_v::Size;
+      global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::size();
+      int entryNo = valuesIndexAllFibers % Vc::double_v::size();
 
       double resultValue = dAlgebraic[valueNo] - cAlgebraic[valueNo] * previousValue;
       fiberPointBuffers_[pointBuffersNo].states[0][entryNo] = resultValue;
@@ -484,8 +484,8 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
     for (int valueNo = 0; valueNo < nValues; valueNo++)
     {
       global_no_t valuesIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo;
-      global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::Size;
-      int entryNo = valuesIndexAllFibers % Vc::double_v::Size;
+      global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::size();
+      int entryNo = valuesIndexAllFibers % Vc::double_v::size();
       double u = fiberPointBuffers_[pointBuffersNo].states[0][entryNo];
       if (valueNo != 0)
         s << ", ";
@@ -640,7 +640,7 @@ equilibriumAccelerationUpdate(const Vc::double_v statesPreviousValues[], int poi
 
         Vc::double_v relativeChange;
         // if any value is 0, use absolute error
-        if (fabs(newValue.min()) < 1e-11)
+        if (fabs(Vc::min(newValue)) < 1e-11)
         {
           relativeChange = Vc::abs(newValue - oldValue);
         }
@@ -649,7 +649,7 @@ equilibriumAccelerationUpdate(const Vc::double_v statesPreviousValues[], int poi
           // values are not zero, use relative error
           relativeChange = Vc::abs((newValue - oldValue) / newValue);
         }
-        double changeValue = relativeChange.max();
+        double changeValue = Vc::max(relativeChange);
 
 
         // if change is higher than tolerance

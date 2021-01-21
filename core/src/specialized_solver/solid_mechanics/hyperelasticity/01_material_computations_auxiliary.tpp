@@ -2,7 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 #include <array>
-#include <Vc/Vc>
+#include <vc_or_std_simd.h>  // this includes <Vc/Vc> or a Vc-emulating wrapper of <experimental/simd> if available
 
 #include "equation/mooney_rivlin_incompressible.h"
 #include "utility/math_utility.h"
@@ -279,10 +279,10 @@ computeReducedInvariants(const std::array<double_v_t,5> invariants, const double
     LOG(ERROR) << "J=det F is negative: " << deformationGradientDeterminant << ". Result will be unphysical.\n"
       << "For dynamic problems, reduce time step width, for static problems, add smaller \"loadFactors\" or reduce load.";
 
-    Vc::where(deformationGradientDeterminant <= 0) | reducedInvariants[0] = 3;
-    Vc::where(deformationGradientDeterminant <= 0) | reducedInvariants[1] = 0;
-    Vc::where(deformationGradientDeterminant <= 0) | reducedInvariants[3] = 3;
-    Vc::where(deformationGradientDeterminant <= 0) | reducedInvariants[4] = 0;
+    Vc::where(deformationGradientDeterminant <= 0, reducedInvariants[0]) = 3;
+    Vc::where(deformationGradientDeterminant <= 0, reducedInvariants[1]) = 0;
+    Vc::where(deformationGradientDeterminant <= 0, reducedInvariants[3]) = 3;
+    Vc::where(deformationGradientDeterminant <= 0, reducedInvariants[4]) = 0;
   }
 
   return reducedInvariants;

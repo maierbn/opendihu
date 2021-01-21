@@ -5,8 +5,12 @@
 #include "cellml/source_code_generator/02_generator_openmp.h"
 
 #include <functional>
-#include <Vc/Allocator>
 #include <set>
+#include <vc_or_std_simd.h>
+
+#ifndef HAVE_STDSIMD      // only if we are using Vc, it is not necessary for std::simd
+#include <Vc/Allocator>
+#endif
 
 class CellmlSourceCodeGeneratorVc :
   public CellmlSourceCodeGeneratorOpenMp

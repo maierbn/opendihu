@@ -121,7 +121,7 @@ initializeCellMLSourceFileGpu()
       LOG(ERROR) << "OpenMP offloading (to the extent needed here) is only supported with GCC 11 or later. Your current GCC version: " << gccVersion
         << ".\n       Consider upgrading gcc or download the latest snapshot and build GCC yourself or try" << std::endl
         << "          module load argon-tesla/gcc/11-20210110-openmp     "
-        << "(Note, this module's gcc is experimental and unfortunatelly does not work to compile opendihu, so you have to switch between compile and run.)";
+        << "(Note, this module's gcc is experimental and unfortunately does not work to compile opendihu, so you have to switch between compile and run.)";
     }
   }
 
@@ -498,7 +498,7 @@ void computeMonodomain(const float *parameters,
 
         // determine if current point is at center of fiber
         int fiberCenterIndex = fiberStimulationPointIndex[fiberNo];
-        bool currentPointIsInCenter = fabs(fiberCenterIndex - instanceNo) < 4;
+        bool currentPointIsInCenter = (unsigned long)(fiberCenterIndex - instanceNo) < 4;
 
         // loop over 0D timesteps
         for (int timeStepNo = 0; timeStepNo < nTimeSteps0D; timeStepNo++)
@@ -794,7 +794,7 @@ void computeMonodomain(const float *parameters,
 
         // determine if current point is at center of fiber
         int fiberCenterIndex = fiberStimulationPointIndex[fiberNo];
-        bool currentPointIsInCenter = fabs(fiberCenterIndex - instanceNo) < 4;
+        bool currentPointIsInCenter = (unsigned long)(fiberCenterIndex - instanceNo) < 4;
 
         // loop over 0D timesteps
         for (int timeStepNo = 0; timeStepNo < nTimeSteps0D; timeStepNo++)

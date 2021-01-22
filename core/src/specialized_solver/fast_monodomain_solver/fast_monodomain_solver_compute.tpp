@@ -155,7 +155,8 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlge
 
     // determine if current point is at center of fiber
     int fiberCenterIndex = fiberData_[fiberDataNo].fiberStimulationPointIndex;
-    bool currentPointIsInCenter = (fabs(fiberCenterIndex - indexInFiber) < Vc::double_v::size());
+    bool currentPointIsInCenter = (unsigned long)(fiberCenterIndex - indexInFiber) < Vc::double_v::size();  // note that this is different from abs(...)
+
     VLOG(3) << "currentPointIsInCenter: " << currentPointIsInCenter << ", pointBuffersNo: " << pointBuffersNo << ", fiberDataNo: " << fiberDataNo << ", indexInFiber:" << indexInFiber << ", fiberCenterIndex: " << fiberCenterIndex << ", " << (indexInFiber - fiberCenterIndex) << " < " << Vc::double_v::size();
 
     VLOG(3) << "pointBuffersNo: " << pointBuffersNo << ", fiberDataNo: " << fiberDataNo << ", indexInFiber: " << indexInFiber;

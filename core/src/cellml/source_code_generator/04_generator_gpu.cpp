@@ -140,6 +140,7 @@ real log(real x)
 #pragma omp \
 #ifndef GPU  
   return std::log(x);
+#pragma omp \
 #endif
   
   // Taylor approximation around 1, 3 or 9

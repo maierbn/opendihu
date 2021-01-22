@@ -498,7 +498,7 @@ void computeMonodomain(const float *parameters,
 
         // determine if current point is at center of fiber
         int fiberCenterIndex = fiberStimulationPointIndex[fiberNo];
-        bool currentPointIsInCenter = (unsigned long)(fiberCenterIndex - instanceNo) < 4;
+        bool currentPointIsInCenter = (unsigned long)(fiberCenterIndex+1 - instanceNo) < 3;
 
         // loop over 0D timesteps
         for (int timeStepNo = 0; timeStepNo < nTimeSteps0D; timeStepNo++)
@@ -555,6 +555,9 @@ void computeMonodomain(const float *parameters,
             }
           }
           const bool storeAlgebraicsForTransfer = false;
+
+          //if (stimulateCurrentPoint)
+          //  printf("stimulate fiberNo: %d, indexInFiber: %d (center: %d) \n", fiberNo, instanceNo, fiberCenterIndex);
 
           )" << mainCode << R"(        }  // loop over 0D timesteps
       }  // loop over instances
@@ -794,7 +797,7 @@ void computeMonodomain(const float *parameters,
 
         // determine if current point is at center of fiber
         int fiberCenterIndex = fiberStimulationPointIndex[fiberNo];
-        bool currentPointIsInCenter = (unsigned long)(fiberCenterIndex - instanceNo) < 4;
+        bool currentPointIsInCenter = (unsigned long)(fiberCenterIndex+1 - instanceNo) < 3;
 
         // loop over 0D timesteps
         for (int timeStepNo = 0; timeStepNo < nTimeSteps0D; timeStepNo++)
@@ -840,8 +843,20 @@ void computeMonodomain(const float *parameters,
 
             stimulateCurrentPoint = checkStimulation && firingEvents[firingEventsIndex];
             fiberIsCurrentlyStimulated[fiberNo] = stimulateCurrentPoint? 1: 0;
+
+            // output to console
+            if (stimulateCurrentPoint && fiberCenterIndex == instanceNo)
+            {
+              if (omp_is_initial_device())
+                printf("t: %f, stimulate fiber %d (local no.), MU %d (computation on CPU)\n", currentTime, fiberNo, motorUnitNo[fiberNo]);
+              else
+                printf("t: %f, stimulate fiber %d (local no.), MU %d (computation on GPU)\n", currentTime, fiberNo, motorUnitNo[fiberNo]);
+            }
           }
           const bool storeAlgebraicsForTransfer = storeAlgebraicsForTransferSplitting && timeStepNo == nTimeSteps0D-1;
+
+          //if (stimulateCurrentPoint)
+          //  printf("stimulate fiberNo: %d, indexInFiber: %d (center: %d) \n", fiberNo, instanceNo, fiberCenterIndex);
 
           )" << mainCode << R"(
 

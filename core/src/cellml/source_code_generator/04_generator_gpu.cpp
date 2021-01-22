@@ -135,7 +135,12 @@ generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibers
 real log(real x)
 {
   // Taylor expansion of the log function around x=1
-  // note: std::log does not work on GPU!
+  // Note: std::log does not work on GPU,
+  // however, if this code runs on CPU, it is fine
+#pragma omp \
+#ifndef GPU  
+  return std::log(x);
+#endif
   
   // Taylor approximation around 1, 3 or 9
   if (x < 2)

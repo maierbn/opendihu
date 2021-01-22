@@ -121,7 +121,7 @@ initializeCellMLSourceFileGpu()
       LOG(ERROR) << "OpenMP offloading (to the extent needed here) is only supported with GCC 11 or later. Your current GCC version: " << gccVersion
         << ".\n       Consider upgrading gcc or download the latest snapshot and build GCC yourself or try" << std::endl
         << "          module load argon-tesla/gcc/11-20210110-openmp     "
-        << "(Note, this module's gcc is experimental and unfortunatelly does not work to compile opendihu, so you have to switch between compile and run.)";
+        << "(Note, this module's gcc is experimental and unfortunately does not work to compile opendihu, so you have to switch between compile and run.)";
     }
   }
 
@@ -137,7 +137,7 @@ initializeCellMLSourceFileGpu()
   }
   
 
-  LOG(ERROR) << "GPU barrier: " << *DihuContext::partitionManager()->rankSubsetForCollectiveOperations();
+  //LOG(ERROR) << "GPU barrier: " << *DihuContext::partitionManager()->rankSubsetForCollectiveOperations();
 
   // wait on all ranks until conversion is finished
   MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");
@@ -498,7 +498,7 @@ void computeMonodomain(const float *parameters,
 
         // determine if current point is at center of fiber
         int fiberCenterIndex = fiberStimulationPointIndex[fiberNo];
-        bool currentPointIsInCenter = fabs(fiberCenterIndex - instanceNo) < 4;
+        bool currentPointIsInCenter = (unsigned long)(fiberCenterIndex+1 - instanceNo) < 3;
 
         // loop over 0D timesteps
         for (int timeStepNo = 0; timeStepNo < nTimeSteps0D; timeStepNo++)
@@ -555,6 +555,9 @@ void computeMonodomain(const float *parameters,
             }
           }
           const bool storeAlgebraicsForTransfer = false;
+
+          //if (stimulateCurrentPoint)
+          //  printf("stimulate fiberNo: %d, indexInFiber: %d (center: %d) \n", fiberNo, instanceNo, fiberCenterIndex);
 
           )" << mainCode << R"(        }  // loop over 0D timesteps
       }  // loop over instances
@@ -794,7 +797,7 @@ void computeMonodomain(const float *parameters,
 
         // determine if current point is at center of fiber
         int fiberCenterIndex = fiberStimulationPointIndex[fiberNo];
-        bool currentPointIsInCenter = fabs(fiberCenterIndex - instanceNo) < 4;
+        bool currentPointIsInCenter = (unsigned long)(fiberCenterIndex+1 - instanceNo) < 3;
 
         // loop over 0D timesteps
         for (int timeStepNo = 0; timeStepNo < nTimeSteps0D; timeStepNo++)
@@ -840,8 +843,20 @@ void computeMonodomain(const float *parameters,
 
             stimulateCurrentPoint = checkStimulation && firingEvents[firingEventsIndex];
             fiberIsCurrentlyStimulated[fiberNo] = stimulateCurrentPoint? 1: 0;
+
+            // output to console
+            if (stimulateCurrentPoint && fiberCenterIndex == instanceNo)
+            {
+              if (omp_is_initial_device())
+                printf("t: %f, stimulate fiber %d (local no.), MU %d (computation on CPU)\n", currentTime, fiberNo, motorUnitNo[fiberNo]);
+              else
+                printf("t: %f, stimulate fiber %d (local no.), MU %d (computation on GPU)\n", currentTime, fiberNo, motorUnitNo[fiberNo]);
+            }
           }
           const bool storeAlgebraicsForTransfer = storeAlgebraicsForTransferSplitting && timeStepNo == nTimeSteps0D-1;
+
+          //if (stimulateCurrentPoint)
+          //  printf("stimulate fiberNo: %d, indexInFiber: %d (center: %d) \n", fiberNo, instanceNo, fiberCenterIndex);
 
           )" << mainCode << R"(
 

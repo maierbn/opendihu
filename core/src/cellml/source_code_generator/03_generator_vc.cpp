@@ -457,9 +457,26 @@ defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateEx
   )" << doubleType << R"( result9 = 2.1972245773362196 + 1./9*t9 - 0.006172839506172839*t9_2 + 0.0004572473708276177*t9_2*t9 - 3.8103947568968146e-05*t9_4;
 
   )" << doubleType << R"( result = result1;
+)";
+
+  if (useVc)
+  {
+    sourceCode << R"(
   Vc::where(x >= 2 && x < 6, result) = result3;
   Vc::where(x >= 6, result) = result9;
+)";
+  }
+  else
+  {
+    sourceCode << R"(
+    if (x >= 2 && x < 6)
+      result = result3;
+    else if (x >= 6)
+      result = result9;
+)";      
+  }
   
+  sourceCode << R"(
   // The relative error of this implementation is below 0.04614465854334056 for x in [0.2,19].
   return result;
 }
@@ -604,6 +621,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
 
   std::stringstream sourceCode;
   sourceCode << "#include <math.h>" << std::endl
+    << "#include <iostream>" << std::endl
     << "#include <vc_or_std_simd.h>  // this includes <Vc/Vc> or a Vc-emulating wrapper of <experimental/simd> if available" << std::endl
     << cellMLCode_.header << std::endl
     << "using Vc::double_v; " << std::endl;

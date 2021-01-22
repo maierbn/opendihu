@@ -318,6 +318,30 @@ createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nIns
     if (ret != 0)
     {
       LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
+
+      // remove "-fopenmp" in the compile command
+      std::string newCompileCommand = compileCommand.str();
+      std::string strToReplace = "-fopenmp";
+      std::size_t pos = newCompileCommand.find(strToReplace);
+      newCompileCommand.replace(pos, strToReplace.length(), "");
+
+      // remove -foffload="..."strToReplace = "-fopenmp";
+      pos = newCompileCommand.find("-foffload=\"");
+      std::size_t pos2 = newCompileCommand.find(pos+11);
+      newCompileCommand.replace(pos, pos2-pos, "");
+
+      LOG(INFO) << "Retry without offloading, command: \n" << newCompileCommand;
+
+      // execute new compilation command
+      int ret = system(newCompileCommand.c_str());
+      if (ret != 0)
+      {
+        LOG(ERROR) << "Compilation failed again.";
+      }
+      else
+      {
+        LOG(DEBUG) << "Compilation successful.";
+      }
     }
     else
     {

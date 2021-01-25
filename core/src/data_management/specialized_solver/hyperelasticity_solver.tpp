@@ -18,6 +18,12 @@ initialize()
 {
   // call initialize of base class, this calls createPetscObjects
   Data<DisplacementsFunctionSpace>::initialize();
+
+  // create the slot connector data object
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
+
+  // add all needed field variables to be transferred
+  slotConnectorData_->addFieldVariable(this->displacements_);
 }
 
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term, bool withLargeOutput>
@@ -130,6 +136,14 @@ std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,Di
 materialTraction()
 {
   return this->materialTraction_;
+}
+
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term, bool withLargeOutput>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term,withLargeOutput>::SlotConnectorDataType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term,withLargeOutput>::
+getSlotConnectorData()
+{
+  // return the slot connector data object
+  return this->slotConnectorData_;
 }
 
 //! field variable displacements u but on the linear mesh

@@ -175,7 +175,8 @@ void HyperelasticitySolver<Term,withLargeOutput,MeshType,nDisplacementComponents
 postprocessSolution()
 {
   // close log file
-  this->residualNormLogFile_.close();
+  if (this->residualNormLogFile_)
+    this->residualNormLogFile_->close();
 
   // copy the solution values back to this->data_.displacements() and this->data.pressure() (and this->data_.velocities() for the dynamic case)
   this->setUVP(this->combinedVecSolution_->valuesGlobal());
@@ -251,10 +252,11 @@ monitorSolvingIteration(SNES snes, PetscInt its, PetscReal currentNorm)
   evaluationNo++;
 
   // if log file was given, write residual norm to log file
-  if (this->residualNormLogFile_.is_open())
-  {
-    this->residualNormLogFile_ << its << ";" << currentNorm << std::endl;
-  }
+  if (this->residualNormLogFile_)
+    if (this->residualNormLogFile_->is_open())
+    {
+      (*this->residualNormLogFile_) << its << ";" << currentNorm << std::endl;
+    }
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
@@ -309,9 +311,9 @@ initializePetscCallbackFunctions()
   {
     std::string logFileName = this->specificSettings_.getOptionString("residualNormLogFilename", "residual_norm.txt");
 
-    this->residualNormLogFile_ = std::ofstream(logFileName, std::ios::out | std::ios::binary | std::ios::trunc);
+    this->residualNormLogFile_ = std::make_shared<std::ofstream>(logFileName, std::ios::out | std::ios::binary | std::ios::trunc);
 
-    if (!this->residualNormLogFile_.is_open())
+    if (!this->residualNormLogFile_->is_open())
     {
       LOG(WARNING) << "Could not open log file for residual norm, \"" << logFileName << "\".";
     }

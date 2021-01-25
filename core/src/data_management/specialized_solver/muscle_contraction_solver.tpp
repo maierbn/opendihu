@@ -30,7 +30,7 @@ initialize()
   // call initialize of base class
   Data<FunctionSpaceType>::initialize();
 
-  // create th slot connector data object
+  // create the slot connector data object
   slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
 
   // add all needed field variables to be transferred

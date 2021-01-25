@@ -27,6 +27,9 @@ public:
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,6> StressFieldVariableType;     // Voigt notation
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,9> DeformationGradientFieldVariableType;  // row-major
 
+  //! define the type of output connection variables, i.e. the values that will be transferred if the solver is part of a splitting or coupling scheme
+  typedef SlotConnectorData<DisplacementsFunctionSpace,3> SlotConnectorDataType;
+
   //! constructor
   QuasiStaticHyperelasticityBase(DihuContext context);
 
@@ -77,6 +80,9 @@ public:
 
   //! traction in reference configuration, for z- and z+ surfaces
   std::shared_ptr<DisplacementsFieldVariableType> materialTraction();
+
+  //! return the object that will be used to transfer values between solvers, in this case this includes only Vm
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 
   //! initialize
   void initialize();
@@ -134,6 +140,8 @@ protected:
   std::shared_ptr<DeformationGradientFieldVariableType> pK1Stress_;               //< the unsymmetric PK1 stress tensor P=FS, this variable is only used internally for the output files
   std::shared_ptr<DeformationGradientFieldVariableType> cauchyStress_;               //< the unsymmetric Cauchy stress tensor σ=J^-1 P F^T, this variable is only used internally for the output files
   std::shared_ptr<FieldVariable::FieldVariable<DisplacementsFunctionSpace,1>> deformationGradientDeterminant_;  //< the determinant of the deformation gradient, J=det F
+
+  std::shared_ptr<SlotConnectorDataType> slotConnectorData_;    //< the object that stores all components of field variables that will be transferred to other solvers
 };
 
 /** Helper class that outputs the field variables for the output writer.

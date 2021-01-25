@@ -150,6 +150,9 @@ initialize()
   // add this solver to the solvers diagram
   DihuContext::solverStructureVisualizer()->addSolver("HyperelasticitySolver");
 
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
+
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
 }
@@ -1124,6 +1127,15 @@ getString(Vec x)
     LOG(FATAL) << "this should not be called";
   }
   return std::string("no getString representation");
+}
+
+//! get the data that will be transferred in the operator splitting to the other term of the splitting
+//! the transfer is done by the slot_connector_data_transfer class
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+std::shared_ptr<typename HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::SlotConnectorDataType> HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+getSlotConnectorData()
+{
+  return data_.getSlotConnectorData();
 }
 
 

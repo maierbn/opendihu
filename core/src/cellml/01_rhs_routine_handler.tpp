@@ -327,8 +327,8 @@ createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nIns
 
       // remove -foffload="..."strToReplace = "-fopenmp";
       pos = newCompileCommand.find("-foffload=\"");
-      std::size_t pos2 = newCompileCommand.find(pos+11);
-      newCompileCommand.replace(pos, pos2-pos, "");
+      std::size_t pos2 = newCompileCommand.find("\"", pos+11);
+      newCompileCommand.replace(pos, pos2-pos+1, "");
 
       LOG(INFO) << "Retry without offloading, command: \n" << newCompileCommand;
 

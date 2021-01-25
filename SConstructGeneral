@@ -83,6 +83,7 @@ vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different
                       allowed_values=('debug', 'release', 'releasewithdebuginfo', 'preprocess', 'assembly'), ignorecase = 2, 
                       map={'d':'debug', 'r':'release', 'rd':'releasewithdebuginfo', 'dr':'releasewithdebuginfo', 'p':'preprocess'}))
 vars.Add(BoolVariable('travis_ci', 'Do not compile and run tests, but compile all examples.', 0))
+vars.Add(BoolVariable('circle_ci', 'Subset of unit tests for circle ci (has limited parallel capabilities.)', 0))
 vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
 vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
 vars.Add(BoolVariable('gprof', 'Include flags for gprof profiling.', False))
@@ -140,16 +141,16 @@ if not 'cmake' in env:
   env['cmake'] = 'cmake'
 
 if not env.GetOption('clean'):
-    # avoid Configure if we only clean targets
+  # avoid Configure if we only clean targets
 
-    # Create configuration environment, passing the set of custom tests.
-    sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
+  # Create configuration environment, passing the set of custom tests.
+  sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
 
-    # Run custom tests with any options needed.
-    sconsconfig.check(sconf)
+  # Run custom tests with any options needed.
+  sconsconfig.check(sconf)
 
-    # Finish the configuration and save it to file.
-    sconf.Finish()
+  # Finish the configuration and save it to file.
+  sconf.Finish()
 
 # disable unit tests on hazel hen
 if os.environ.get("PE_ENV") is not None:  # if on hazelhen
@@ -293,6 +294,8 @@ else:
     if "ZLIB_ROOT" not in os.environ:
       print("ERROR: $ZLIB_ROOT is not set. Did you forget to `module load zlib`?")
     env["CXX"] = os.path.join(opendihu_home, "scripts/fake-scorep.sh")
+  if env["circle_ci"]:
+    env.MergeFlags('-DHAVE_CIRCLE_CI')
 
 # flags to always include, except with cray compiler
 if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:

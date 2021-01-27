@@ -201,6 +201,7 @@ protected:
   bool useAnalyticJacobian_;                                //< if the analytically computed Jacobian of the Newton scheme should be used. Theoretically if it is correct, this is the fastest option.
   bool useNumericJacobian_;                                 //< if a numerically computed Jacobian should be used, approximated by finite differences
   bool extrapolateInitialGuess_;                            //< if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
+  bool scaleInitialGuess_;                                  //< when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a
 };
 
 }  // namespace

@@ -29,7 +29,7 @@ sampling_stride_z = 500
 
 sampling_stride_x = 1
 sampling_stride_y = 1
-sampling_stride_z = 100
+sampling_stride_z = 95
 
 # create the partitioning using the script in create_partitioned_meshes_for_settings.py
 result = create_partitioned_meshes_for_settings(

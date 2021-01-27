@@ -708,6 +708,9 @@ template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValuesWithGhosts(const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
+  if (values.size() != this->functionSpace_->meshPartition()->nDofsLocalWithGhosts())
+    LOG(ERROR) << "setValuesWithGhosts, values.size(): " << values.size() << ", function space \"" << this->functionSpace_->meshName() << "\" has "
+      << this->functionSpace_->meshPartition()->nDofsLocalWithGhosts() << " dofs local with ghosts.";
   assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithGhosts());
   
   this->setValues(this->functionSpace_->meshPartition()->dofNosLocal(), values, petscInsertMode);

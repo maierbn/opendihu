@@ -49,7 +49,7 @@ nonlinearSolve()
     }
     if (currentLoadFactor_ < loadFactorGiveUpThreshold_)
     {
-      LOG(WARNING) << "Nonlinear solver reached load factor " << currentLoadFactor_ << ", (no. " << loadFactorIndex << ") which "
+      LOG(WARNING) << "Nonlinear solver reached load factor " << currentLoadFactor_ << " (no. " << loadFactorIndex << "), which "
         << "is below give-up threshold of " << loadFactorGiveUpThreshold_ << ". "
         << "Now abort, use best found solution with residual norm " << bestResidualNorm_;
 
@@ -69,6 +69,17 @@ nonlinearSolve()
       PetscErrorCode ierr;
       ierr = VecCopy(bestSolution_, solverVariableSolution_); CHKERRV(ierr);
       break;
+    }
+    else
+    {
+      // scale initial solution by increased load factor
+      if (loadFactorIndex > 0 && this->scaleInitialGuess_)
+      {
+        double scalingFactor = sqrt(currentLoadFactor_*previousLoadFactor_) / previousLoadFactor_;
+        LOG(INFO) << "Scale initial guess by factor " << scalingFactor << ".";
+        PetscErrorCode ierr;
+        ierr = VecScale(solverVariableSolution_, scalingFactor); CHKERRV(ierr);
+      }
     }
 
     // try as many times to solve the nonlinear problem as given in the option nNonlinearSolveCalls
@@ -142,6 +153,7 @@ nonlinearSolve()
       }
       else
       {
+        // if the solution converged normally
         LOG(INFO) << "Solution done in " << numberOfIterations << " iterations, residual norm " << residualNorm
           << ": " << PetscUtility::getStringNonlinearConvergedReason(convergedReason) << ", "
           << PetscUtility::getStringLinearConvergedReason(kspConvergedReason);

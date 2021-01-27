@@ -309,7 +309,9 @@ The following shows all possible options. The meaning can be learned from the co
     
     #"loadFactors":                [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
     #"loadFactors":                [0.5, 1.0],                   # load factors for every timestep
+    #"loadFactors":                list(np.logspace(-3,0,4)),    # load factors, equally spaced in log space: (1e-3, 1e-2, 1e-1, 1)
     "loadFactors":                [],                           # no load factors, solve problem directly
+    "scaleInitialGuess":          True,                         # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
     "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
     
     # boundary and initial conditions
@@ -430,6 +432,17 @@ Examples for load factors:
   [0.5, 1.0],
   [],                           # no load factors, solve problem directly
   
+scaleInitialGuess
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(default: False) After a load step has been computed, scale the resulting solution that is used as the initial guess for the next load step.
+If the previous load factor is :math:`b` and the next load factor is :math:`b`, the naive way would be to scale by the factor :math:`b/a` (divide by old factor, multiply by new factor).
+However, this would lead to an overshoot, as the material is approximated linearly but the real model is nonlinear. 
+Instead, we scale scale by :math:`\sqrt{ab}/a`. This corresponds to the geometric mean between the old load factor and the new load factor.
+
+This scaling usually reduces the initial residual. Nevertheless, the number of iterations is sometimes higher, maybe because the prediction led to a worse area in the definition space of the model.
+  
+Note, this option is different from `extrapolateInitialGuess`, which only applies to dynamic problems and uses information from the last timestep. The option `scaleInitialGuess` uses information from the previous load step and is indepent of whether the problem is static or dynamic.
+  
 nNonlinearSolveCalls
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -453,7 +466,8 @@ The initial values are given by ``initialValuesDisplacements`` and ``initialValu
 
 extrapolateInitialGuess
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-If the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities. This is faster and should be set to ``True``.
+If the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities (from the previous timestep). 
+This is faster and should be set to ``True``.
 
 constantBodyForce
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -124,7 +124,7 @@ if variables.own_subdomain_coordinate_z == variables.n_subdomains_z - 1:
   n_points_3D_z += 1
 
 if False:
-  print("{}: 3Dmesh has {} local node positions ({} x {} x {} = {}), nElements: {}".format(rank_no, len(variables.meshes["3Dmesh"]["nodePositions"]), n_points_3D_x, n_points_3D_y, n_points_3D_z, n_points_3D_x*n_points_3D_y*n_points_3D_z, n_elements_3D_mesh_linear))
+  print("{}: 3Dmesh has {} local node positions ({} x {} x {} = {}), nElements: {}".format(rank_no, len(variables.meshes["3Dmesh"]["nodePositions"][1]), n_points_3D_x, n_points_3D_y, n_points_3D_z, n_points_3D_x*n_points_3D_y*n_points_3D_z, n_elements_3D_mesh_linear))
 
 # determine nodes of the fat layer mesh
 fat_mesh_node_indices = []
@@ -895,9 +895,18 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
   
 # set boundary conditions for the elasticity
 # Note, we have a composite mesh, consisting of 3Dmesh_elasticity_quadratic and 3DFatMesh_elasticity_quadratic and this composite mesh has a numbering that goes over all dofs.
-# The following works because we index the first sub mesh and the first mesh of a composite mesh always has all own dofs with their normal no.s. (The 2nd mesh has the shared dofs to the first mesh removed in the numbering, i.e. they are not counted twice).
+# The following works because we index the first sub mesh and the first mesh of a composite mesh always has all own dofs with their normal no.s.
+# The 2nd mesh has the shared dofs to the first mesh removed in the internal numbering, i.e. internally, they are not counted twice. 
+# However, here in the settings, the numbering is concatenated from both meshes, i.e., first all nodes of mesh 0, then all nodes of mesh 1, etc.
+
 [mx, my, mz] = variables.meshes["3Dmesh_elasticity_quadratic"]["nPointsGlobal"]
 [nx, ny, nz] = variables.meshes["3Dmesh_elasticity_quadratic"]["nElementsGlobal"]
+[m2x, m2y, m2z] = variables.meshes["3DFatMesh_elasticity_quadratic"]["nPointsGlobal"]
+[n2x, n2y, n2z] = variables.meshes["3DFatMesh_elasticity_quadratic"]["nElementsGlobal"]
+n_nodes_shared_and_removed = (mx+my-1)*mz
+#print("{} = {}".format(n_nodes_shared_and_removed, m2x*m2z))
+offset = mx*my*mz
+variables.n_points_global_composite_mesh = mx*my*mz + m2x*m2y*m2z - n_nodes_shared_and_removed
 
 # print all mesh information
 if False:
@@ -912,21 +921,46 @@ if False:
     print("    nRanks: {}".format(variables.meshes[mesh_name]["nRanks"]))
     print("    len(nodePositions): {}".format(len(variables.meshes[mesh_name]["nodePositions"][1])))
 
+
 # set Dirichlet BC at top nodes for linear elasticity problem, fix muscle at top
 variables.elasticity_dirichlet_bc = {}
+# muscle mesh
 for j in range(my):
   for i in range(mx):
     variables.elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
-  
-# fix edge
+
+# fat mesh
+for j in range(m2y):
+  for i in range(m2x):
+    variables.elasticity_dirichlet_bc[offset + (m2z-1)*m2x*m2y + j*m2x + i] = [None,None,0.0,None,None,None]
+
+# fix edge, note: the prestretch simulation does not work without this (linear solver finds no solution)
 for i in range(mx):
-  variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
+  variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,0.0,0.0,None,None,None]
   
 # fix corner completely
 variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
 
+# guide lower end of muscle along z axis
+# muscle mesh
+for j in range(my):
+  for i in range(mx):
+    variables.elasticity_dirichlet_bc[0*mx*my + j*mx + i] = [0.0,0.0,None,None,None,None]
+
+# fat mesh
+for j in range(m2y):
+  for i in range(m2x):
+    variables.elasticity_dirichlet_bc[offset + 0*m2x*m2y + j*m2x + i] = [0.0,0.0,None,None,None,None]
+
+
 # Neumann BC at bottom nodes, traction downwards
+# muscle mesh
 variables.elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
+
+# fat mesh
+variables.elasticity_neumann_bc += [{"element": nx*ny*nz + 0*n2x*n2y + j*n2x + i, "constantVector": variables.bottom_traction, "face": "2-"} for j in range(n2y) for i in range(n2x)]
+
+
 #variables.elasticity_neumann_bc = []
 
 ####################################
@@ -1073,49 +1107,4 @@ if rank_no == 0 and not variables.disable_firing_output:
   for i,factors_list in enumerate(variables.relative_factors.tolist()):
     print("MU {}, maximum fr: {}".format(i,max(factors_list)))
 
-#######################################
-# prepare dofs mapping for motor units
-
-n_motor_units = len(variables.motor_units)
-
-# set the motoneuron mesh, which is a Mesh::StructuredRegularFixed<1>, i.e. it has no physical locations but is only logical
-# on every rank there are as many nodes as global motor units
-variables.meshes["motoneuronMesh"] = {
-  "nElements":              n_motor_units,        # local number nodes (elements) equals number of motor units (there is one extra node at the last rank that is not used)
-  "physicalExtent":         0,                    # this mesh has no physical representation so this value is irrelevant
-  "physicalOffset":         [0,0,0],              # this mesh has no physical representation so this value is irrelevant
-  "nRanks":                 n_ranks,
-  "inputMeshIsGlobal":      False,
-  "setHermiteDerivatives":  False,
-  "logKey":                 "motoneuronMesh",
-}
-
-# determine global node nos of nodes that are at the center and will get stimulated
-n_nodes_x = variables.n_points_3D_mesh_global_x
-n_nodes_y = variables.n_points_3D_mesh_global_y
-n_nodes_z = variables.n_points_3D_mesh_global_z
-z_index_center = (int)(n_nodes_z/2)
-y_index_center = (int)(n_nodes_y/2)
-x_index_center = (int)(n_nodes_x/2)
-
-junction_nodes_global_nos = []
-
-for j in range(n_nodes_y):
-  for i in range(n_nodes_x):
-    global_no = z_index_center*n_nodes_x*n_nodes_y + j*n_nodes_x + i
-    junction_nodes_global_nos.append(global_no)
-
-# specify positions of contraction and velocity "sensors", Golgi tendon organs, muscle spindles
-golgi_tendon_organ_nodes_global_nos = []
-
-# loop over all nodes, select 3x3x2 nodes
-for j in range((int)(n_nodes_y/6),n_nodes_y,(int)(n_nodes_x/3)):
-  for i in range((int)(n_nodes_x/6),n_nodes_x,(int)(n_nodes_x/3)):
-  
-    k = (int)(0.1*n_nodes_z)
-    global_no = k*n_nodes_x*n_nodes_y + j*n_nodes_x + i
-    golgi_tendon_organ_nodes_global_nos.append(global_no)
-
-    k = (int)(0.9*n_nodes_z)
-    global_no = k*n_nodes_x*n_nodes_y + j*n_nodes_x + i
-    golgi_tendon_organ_nodes_global_nos.append(global_no)
+    

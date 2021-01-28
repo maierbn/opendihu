@@ -231,9 +231,9 @@ def postprocess(result):
 # define the config dict
 config = {
   "scenarioName":                  variables.scenario_name,
-  "mappingsBetweenMeshesLogFile":  "out/mappings_between_meshes.txt",
+  "mappingsBetweenMeshesLogFile":  "out/"+variables.scenario_name+"/mappings_between_meshes.txt",
   "logFormat":                     "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
-  "solverStructureDiagramFile":    "out/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "solverStructureDiagramFile":    "out/"+variables.scenario_name+"/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "meta": {                 # additional fields that will appear in the log
     "partitioning": [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
@@ -345,7 +345,7 @@ config = {
                       "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                       
                       "meshName":                               "MeshFiber_{}".format(fiber_no),                # reference to the fiber mesh
-                      "stimulationLogFilename":                 "out/stimulation.log",                          # a file that will contain the times of stimulations
+                      "stimulationLogFilename":                 "out/"+variables.scenario_name+"/stimulation.log",                          # a file that will contain the times of stimulations
                     },      
                     "OutputWriter" : [
                       {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/0D_states({},{})".format(fiber_in_subdomain_coordinate_x,fiber_in_subdomain_coordinate_y), "binary": True, "fixedFormat": False, "combineFiles": True}

@@ -275,6 +275,7 @@ The following shows all possible options. The meaning can be learned from the co
     "materialParameters":         material_parameters,          # material parameters of the Mooney-Rivlin material
     "displacementsScalingFactor": 1.0,                          # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
     "residualNormLogFilename":    "log_residual_norm.txt",      # log file where residual norm values of the nonlinear solver will be written
+    "slotNames":                  ["ux", "uy", "uz"],           # (optional) slot names of the data connector slots, there are three slots, namely the displacement components ux, uy, uz
     "useAnalyticJacobian":        True,                         # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
     "useNumericJacobian":         False,                        # whether to use the numerically computed jacobian matrix in the nonlinear solver (slow), only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
       
@@ -288,7 +289,6 @@ The following shows all possible options. The meaning can be learned from the co
     "fiberMeshNames":             [],                           # fiber meshes that will be used to determine the fiber direction
     "fiberDirection":             [],                           # if fiberMeshNames is empty, directly set the constant fiber direction, in global coordinate system
     "fiberDirectionInElement":    [0,0,1],                      # if fiberMeshNames and fiberDirections are empty, directly set the constant fiber direction, in element coordinate system
-    
     
     # nonlinear solver
     "relativeTolerance":          1e-5,                         # 1e-10 relative tolerance of the linear solver
@@ -369,6 +369,13 @@ residualNormLogFilename
 A txt log file where the residual norm values of the nonlinear solver will be written to. 
 
 The progression of the residual norm over number of iterations can be visualized using ``plot_residual_norm.py``.
+
+slotNames
+^^^^^^^^^^^^
+(optional) A list of names for the data connector slots. The slot names are used for connecting the slots to other solvers, i.e., when the displacement results should be reused by another solver. 
+Each slot name should have <= 6 characters. See :doc:`output_connector_slots` for more details.
+
+The key `slotNames` can also be omitted if the slots should not be reused. Note that these slotNames are not needed if the Hyperelasticity solver is contained in a :doc:`muscle_contraction_solver`.
 
 `useAnalyticJacobian` and `useNumericJacobian`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

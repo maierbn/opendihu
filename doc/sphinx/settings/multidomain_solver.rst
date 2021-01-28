@@ -116,20 +116,73 @@ The options below can be used for both `MultidomainSolver` and `MultidomainWithF
     "gamgType":                         "classical",                          # one of agg, geo, or classical 
     "cycleType":                        "cycleV",                             # either cycleV or cycleW
     "nLevels":                          25,
-    
     "hypreOptions":                     "-pc_hypre_boomeramg_strong_threshold 0.7",       # additional options if a hypre preconditioner is selected
+    
     "theta":                            variables.theta,                      # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
     "useLumpedMassMatrix":              variables.use_lumped_mass_matrix,     # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
     "useSymmetricPreconditionerMatrix": variables.use_symmetric_preconditioner_matrix,    # if the diagonal blocks of the system matrix should be used as preconditioner matrix
     "initialGuessNonzero":              variables.initial_guess_nonzero,      # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
     "enableFatComputation":             True,                                 # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
     "showLinearSolverOutput":           variables.show_linear_solver_output,  # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
-    "updateSystemMatrixEveryTimestep":  False,                                # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
+    "updateSystemMatrixEveryTimestep":  False,                                # if this multidomain solver will update the system matrix in every first timestep, use this only if the geometry changes, e.g. by contraction
     "recreateLinearSolverInterval":     0,                                    # how often the Petsc KSP object (linear solver) should be deleted and recreated. This is to remedy memory leaks in Petsc's implementation of some solvers. 0 means disabled.
+    "setDirichletBoundaryCondition":    True,                                 # if the last dof of the fat layer (MultidomainWithFatSolver) or the extracellular space (MultidomainSolver) should have a 0 Dirichlet boundary condition
   }
   
 The list of values for `compartmentRelativeFactors` is for the symbol :math:`f_r^k` in the equations. The values should be the same on every rank. 
 It is beneficial to compute the values once and store them in a cache file. Note that the number of nodes in total can be different if the same settings are used for different numbers of ranks. Therefore it is not easily possible to run the program serially, compute the cache of `compartmentRelativeFactors` and reuse it for all ranks.
 Instead, the cache has to be created by a parallel run, but then only rank 0 should compute the values. This is done in the `helper.py` script of the examples `examples/electrophysiology/multidomain/multidomain_no_fat` and `examples/electrophysiology/multidomain/multidomain_with_fat`.
 
-This means that using the MultidomainSolver is not so trivial. Therefore, the two given examples should be reused or copied if any new example is to be created. Therefore, not all options will be explained here again, as they are already given above.
+This means that using the MultidomainSolver is not so trivial. Therefore, the two given examples should be reused or copied if any new example is to be created. 
+Not all settings will be explained again in the following as they are already given above.
+
+
+`solverName` and `alternativeSolverName`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+There is th problem with the `HYPRE` AMG solver that is sometimes converges very fast and sometimes diverges. To be able to use it nevertheless, the `alternativeSolverName` solver is automatically used after the main solver `solverName` diverged.
+
+theta
+^^^^^^^^^
+Weighting factor of the implicit term in the Crank-Nicolson scheme:
+
+.. math::
+
+  \dfrac{u^{(t+1)} - u^{(t)}}{dt} = \theta \cdot rhs(u^{(t+1)},t+1) + (1-\theta) \cdot rhs(u^{(t)},t)
+
+:math:`\theta=0.5` gives the classic, 2nd-order Crank-Nicolson scheme, :math:`\theta=1` leads to implicit euler. The fully implicit schemes was found to be more robust and should be used, i.e. ``theta=1``.
+
+useLumpedMassMatrix
+^^^^^^^^^^^^^^^^^^^^^^^^^
+Which formulation to use, the formulation with lumped mass matrix (`True`) is more stable but approximative, the other formulation (`False`) is exact but needs more iterations. Usually, this option can be set to `True`.
+
+useSymmetricPreconditionerMatrix
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If the diagonal blocks of the system matrix should be used as preconditioner matrix. If set to false, the whole matrix is used for preconditioning.
+
+initialGuessNonzero
+^^^^^^^^^^^^^^^^^^^^^^^^^
+If the initial guess for the 3D system is given by the solution of the previous timestep. This only makes sense for iterative solvers. A direct solver ``"lu"`` requires that this option is set to ``False``.
+
+enableFatComputation
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+This is a switch to disable the fat layer in the multidomain formulation. Disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity.
+
+
+showLinearSolverOutput
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If convergence information of the linear solver should be printedin every timestep. As this involves a lot of output for small and fast computations, it should be disabled. It can be useful for large and slow computations to see the, e.g., the number of iterations of the linear solver.
+
+
+updateSystemMatrixEveryTimestep
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This option allows to create a new system matrix before every new solve. This is only required if the geometry changes, e.g., if a solid mechanics solver is deforming the domain.
+
+recreateLinearSolverInterval
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+There appears to be a memory leak in some implementation of a PETSc solver that is visible during long runs. Using this option, it is possible to recreate the PETSc KSP object after the given number of time steps to free the memory. Apparently, the memory is still not freed despite deleting and recreating the PETSc solver.
+
+
+setDirichletBoundaryCondition
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If the last dof of the fat layer (`MultidomainWithFatSolver`) or the extracellular space (`MultidomainSolver`) should have a :math:`0` Dirichlet boundary condition. 
+This can be used to ensure that the system matrix is regular.

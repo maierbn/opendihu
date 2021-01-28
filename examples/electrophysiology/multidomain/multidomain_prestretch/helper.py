@@ -124,7 +124,7 @@ if variables.own_subdomain_coordinate_z == variables.n_subdomains_z - 1:
   n_points_3D_z += 1
 
 if False:
-  print("{}: 3Dmesh has {} local node positions ({} x {} x {} = {}), nElements: {}".format(rank_no, len(variables.meshes["3Dmesh"]["nodePositions"]), n_points_3D_x, n_points_3D_y, n_points_3D_z, n_points_3D_x*n_points_3D_y*n_points_3D_z, n_elements_3D_mesh_linear))
+  print("{}: 3Dmesh has {} local node positions ({} x {} x {} = {}), nElements: {}".format(rank_no, len(variables.meshes["3Dmesh"]["nodePositions"][1]), n_points_3D_x, n_points_3D_y, n_points_3D_z, n_points_3D_x*n_points_3D_y*n_points_3D_z, n_elements_3D_mesh_linear))
 
 # determine nodes of the fat layer mesh
 fat_mesh_node_indices = []
@@ -346,7 +346,9 @@ if False:
 
 # 3Dmesh_quadratic
 # ----------------
-n_elements_original_quadratic_mesh = variables.meshes["3Dmesh_quadratic"]["nElements"]
+n_elements_original_quadratic_mesh = variables.meshes["3Dmesh_quadratic"]["nElements"]    # local number of elements
+
+import itertools
 
 # determine number of elements
 n_elements_aim_x = int(np.round(n_elements_original_quadratic_mesh[0] * (float)(variables.sampling_factor_elasticity_x)))
@@ -358,7 +360,6 @@ n_elements_aim_x = min(n_elements_original_quadratic_mesh[0], max(1, n_elements_
 n_elements_aim_y = min(n_elements_original_quadratic_mesh[1], max(1, n_elements_aim_y))
 n_elements_aim_z = min(n_elements_original_quadratic_mesh[2], max(1, n_elements_aim_z))
 
-import itertools
 # select nodes such that `n_elements_aim` quadratic 1D elements will be produced and they have their center point in the middle, e.g. not nodes [0,2,3,  5,6] (because element [0,2,3] is not good) but [0,2,4,  5,6] (element [0,2,4] is better)
 node_indices_to_use_x = [int(np.round(x))*2 for x in np.linspace(0, n_elements_original_quadratic_mesh[0], n_elements_aim_x+1)]
 node_indices_to_use_x = [(node_indices_to_use_x[i], int(0.5*(node_indices_to_use_x[i]+node_indices_to_use_x[i+1]))) for i in range(len(node_indices_to_use_x)-1)] + [(n_elements_original_quadratic_mesh[0]*2,)]
@@ -377,24 +378,18 @@ node_indices_to_use_z = list(itertools.chain(*node_indices_to_use_z))
 n_points_local_original_quadratic_mesh_x = 2*n_elements_original_quadratic_mesh[0]
 n_points_local_original_quadratic_mesh_y = 2*n_elements_original_quadratic_mesh[1]
 n_points_local_original_quadratic_mesh_z = 2*n_elements_original_quadratic_mesh[2]
-n_points_local_new_quadratic_mesh_x = n_elements_aim_x
-n_points_local_new_quadratic_mesh_y = n_elements_aim_y
-n_points_local_new_quadratic_mesh_z = n_elements_aim_z
 
 # if the own subdomain is at the (x+) boundary
 if variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
   n_points_local_original_quadratic_mesh_x += 1
-  n_points_local_new_quadratic_mesh_x += 1
 
 # if the own subdomain is at the (y+) boundary
 if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
   n_points_local_original_quadratic_mesh_y += 1
-  n_points_local_new_quadratic_mesh_y += 1
   
 # if the own subdomain is at the (z+) boundary
 if variables.own_subdomain_coordinate_z == variables.n_subdomains_z - 1:
   n_points_local_original_quadratic_mesh_z += 1
-  n_points_local_new_quadratic_mesh_z += 1
 
 # remove lasts indices if they are not part of the local nodes (ghost nodes)
 if node_indices_to_use_x[-1] >= n_points_local_original_quadratic_mesh_x:
@@ -406,8 +401,7 @@ if node_indices_to_use_y[-1] >= n_points_local_original_quadratic_mesh_y:
 if node_indices_to_use_z[-1] >= n_points_local_original_quadratic_mesh_z:
   node_indices_to_use_z = node_indices_to_use_z[:-1]
 
-# collect new node positions from old node positions
-# the indices of the nodes that should be used are in node_indices_to_use_{x,y,z}
+# get the node positions of the fine mesh
 mesh_quadratic_node_positions_local = variables.meshes["3Dmesh_quadratic"]["nodePositions"]
 
 if debug:
@@ -417,9 +411,11 @@ if debug:
   print("{}: n points old: {} x {} x {} = {}".format(rank_no, n_points_local_original_quadratic_mesh_x, n_points_local_original_quadratic_mesh_y, n_points_local_original_quadratic_mesh_z, n_points_local_original_quadratic_mesh_x*n_points_local_original_quadratic_mesh_y*n_points_local_original_quadratic_mesh_z))
   
   print("{}: n node positions old: {}".format(rank_no, len(mesh_quadratic_node_positions_local[1])))
-
+  
 node_positions_are_as_file_and_offset = isinstance(mesh_quadratic_node_positions_local[0], str)
 
+# collect new node positions from fine node positions
+# the indices of the nodes that should be used are in node_indices_to_use_{x,y,z}, given by the function `get_node_indices_to_use`
 points_local_new_quadratic_mesh = []
 for node_index_z in node_indices_to_use_z:
   for node_index_y in node_indices_to_use_y:
@@ -443,7 +439,7 @@ if debug:
 if node_positions_are_as_file_and_offset:
   points_local_new_quadratic_mesh = [mesh_quadratic_node_positions_local[0], points_local_new_quadratic_mesh]
 
-# determine global number of nodes and elements, this is only exact for the 3Dmesh_quadratic
+# determine global number of nodes and elements for the "nPointsLocal", "nPointsGlobal" and "nElementsGlobal" options of the mesh
 n_points_global_new_quadratic_mesh_x = 0
 n_points_global_new_quadratic_mesh_y = 0
 n_points_global_new_quadratic_mesh_z = 0
@@ -453,52 +449,64 @@ n_elements_global_new_quadratic_mesh_z = 0
 
 # loop over subdomains in x direction
 for subdomain_coordinate_x in range(variables.n_subdomains_x):
-  n_elements_x = n_sampled_points_in_subdomain_x(subdomain_coordinate_x)
+  n_elements_linear_x = n_sampled_points_in_subdomain_x(subdomain_coordinate_x)
   if subdomain_coordinate_x == variables.n_subdomains_x-1:
-    n_elements_x -= 1
-  n_elements_global_new_quadratic_mesh_x += n_elements_x//2
-
-  # determine number of elements
-  n_elements_new_x = int(np.round(n_elements_x * float(variables.sampling_factor_elasticity_x)))
-  n_elements_new_x = min(n_elements_x, max(1, n_elements_new_x))
+    n_elements_linear_x -= 1
+  n_elements_quadratic_x = n_elements_linear_x // 2
   
-  n_points_new_x = n_elements_new_x
+  # determine n_elements_aim for the current subdomain in x direction
+  n_quadratic_elements_aim_x = int(np.round(n_elements_quadratic_x * (float)(variables.sampling_factor_elasticity_x)))
+  n_quadratic_elements_aim_x = min(n_elements_quadratic_x, max(1, n_quadratic_elements_aim_x))
+  
+  # determine number of nodes in the current subdomain
+  n_nodes_x = 2*n_quadratic_elements_aim_x
   if subdomain_coordinate_x == variables.n_subdomains_x-1:
-    n_points_new_x += 1
-  n_points_global_new_quadratic_mesh_x += n_points_new_x
+    n_nodes_x += 1
+    
+  # sum up global number of elements and nodes
+  n_points_global_new_quadratic_mesh_x += n_nodes_x
+  n_elements_global_new_quadratic_mesh_x += n_nodes_x//2
     
 # loop over subdomains in y direction
 for subdomain_coordinate_y in range(variables.n_subdomains_y):
-  n_elements_y = n_sampled_points_in_subdomain_y(subdomain_coordinate_y)
+  n_elements_linear_y = n_sampled_points_in_subdomain_y(subdomain_coordinate_y)
   if subdomain_coordinate_y == variables.n_subdomains_y-1:
-    n_elements_y -= 1
-  n_elements_global_new_quadratic_mesh_y += n_elements_y//2
-
-  # determine number of elements
-  n_elements_new_y = int(np.round(n_elements_y * float(variables.sampling_factor_elasticity_y)))
-  n_elements_new_y = min(n_elements_y, max(1, n_elements_new_y))
+    n_elements_linear_y -= 1
+  n_elements_quadratic_y = n_elements_linear_y // 2
   
-  n_points_new_y = n_elements_new_y
+  # determine n_elements_aim for the current subdomain in y direction
+  n_quadratic_elements_aim_y = int(np.round(n_elements_quadratic_y * (float)(variables.sampling_factor_elasticity_y)))
+  n_quadratic_elements_aim_y = min(n_elements_quadratic_y, max(1, n_quadratic_elements_aim_y))
+  
+  # determine number of nodes in the current subdomain
+  n_nodes_y = 2*n_quadratic_elements_aim_y
   if subdomain_coordinate_y == variables.n_subdomains_y-1:
-    n_points_new_y += 1
-  n_points_global_new_quadratic_mesh_y += n_points_new_y
+    n_nodes_y += 1
+    
+  # sum up global number of elements and nodes
+  n_points_global_new_quadratic_mesh_y += n_nodes_y
+  n_elements_global_new_quadratic_mesh_y += n_nodes_y//2
     
 # loop over subdomains in z direction
 for subdomain_coordinate_z in range(variables.n_subdomains_z):
-  n_elements_z = n_sampled_points_in_subdomain_z(subdomain_coordinate_z)
+  n_elements_linear_z = n_sampled_points_in_subdomain_z(subdomain_coordinate_z)
   if subdomain_coordinate_z == variables.n_subdomains_z-1:
-    n_elements_z -= 1
-  n_elements_global_new_quadratic_mesh_z += n_elements_z//2
-
-  # determine number of elements
-  n_elements_new_z = int(np.round(n_elements_z * float(variables.sampling_factor_elasticity_z)))
-  n_elements_new_z = min(n_elements_z, max(1, n_elements_new_z))
+    n_elements_linear_z -= 1
+  n_elements_quadratic_z = n_elements_linear_z // 2
   
-  n_points_new_z = n_elements_new_z
+  # determine n_elements_aim for the current subdomain in z direction
+  n_quadratic_elements_aim_z = int(np.round(n_elements_quadratic_z * (float)(variables.sampling_factor_elasticity_z)))
+  n_quadratic_elements_aim_z = min(n_elements_quadratic_z, max(1, n_quadratic_elements_aim_z))
+  
+  # determine number of nodes in the current subdomain
+  n_nodes_z = 2*n_quadratic_elements_aim_z
   if subdomain_coordinate_z == variables.n_subdomains_z-1:
-    n_points_new_z += 1
-  n_points_global_new_quadratic_mesh_z += n_points_new_z
-
+    n_nodes_z += 1
+    
+  # sum up global number of elements and nodes
+  n_points_global_new_quadratic_mesh_z += n_nodes_z
+  n_elements_global_new_quadratic_mesh_z += n_nodes_z//2
+  
 # set name of new mesh
 elasticity_mesh_name = "3Dmesh_elasticity_quadratic"
 
@@ -511,7 +519,7 @@ variables.meshes[elasticity_mesh_name] = {
   "logKey":                 elasticity_mesh_name,
   
   # set information on how many nodes there are in the 3D mesh, this is not needed for the opendihu core but might be useful in some settings script or for debugging
-  "nPointsLocal":           [n_points_local_new_quadratic_mesh_x, n_points_local_new_quadratic_mesh_y, n_points_local_new_quadratic_mesh_z],
+  "nPointsLocal":           [len(node_indices_to_use_x), len(node_indices_to_use_y), len(node_indices_to_use_z)],
   "nPointsGlobal":          [n_points_global_new_quadratic_mesh_x, n_points_global_new_quadratic_mesh_y, n_points_global_new_quadratic_mesh_z],
   "nElementsGlobal":        [n_elements_global_new_quadratic_mesh_x, n_elements_global_new_quadratic_mesh_y, n_elements_global_new_quadratic_mesh_z]
 }
@@ -591,13 +599,13 @@ variables.meshes["3DFatMesh_elasticity_quadratic"] = {
   
   # set information on how many nodes there are in the 3D mesh, this is not needed for the opendihu core but might be useful in some settings script or for debugging
   "nPointsLocal":           [len(node_indices_to_use_fat_x), len(node_indices_to_use_fat_y), len(node_indices_to_use_z)],
-  "nPointsGlobal":          [n_points_global_new_quadratic_mesh_x+n_points_global_new_quadratic_mesh_y-1, n_elements_elasticity_fat_mesh_y+1, n_points_global_new_quadratic_mesh_z],
+  "nPointsGlobal":          [n_points_global_new_quadratic_mesh_x+n_points_global_new_quadratic_mesh_y-1, 2*n_elements_elasticity_fat_mesh_y+1, n_points_global_new_quadratic_mesh_z],
   "nElementsGlobal":        [n_elements_global_new_quadratic_mesh_x+n_elements_global_new_quadratic_mesh_y, n_elements_elasticity_fat_mesh_y, n_elements_global_new_quadratic_mesh_z]
 }
 
 # output information about partitioning on rank 0
 if rank_no == 0:      
-  print("{}  sub-sampling 3D elasticity mesh with factors {}, {}, {} ".format(rank_no, variables.sampling_factor_elasticity_x, variables.sampling_factor_elasticity_y, variables.sampling_factor_elasticity_z))
+  print("   sub-sampling 3D elasticity mesh with factors {}, {}, {} ".format(variables.sampling_factor_elasticity_x, variables.sampling_factor_elasticity_y, variables.sampling_factor_elasticity_z))
   
   n_points_global_elasticity_mesh = variables.meshes["3Dmesh_elasticity_quadratic"]["nPointsGlobal"]
   n_points_local_elasticity_mesh = variables.meshes["3Dmesh_elasticity_quadratic"]["nPointsLocal"]
@@ -608,16 +616,16 @@ if rank_no == 0:
   n_elements_global_elasticity_fat_mesh = variables.meshes["3DFatMesh_elasticity_quadratic"]["nElementsGlobal"]
   n_elements_local_elasticity_fat_mesh = variables.meshes["3DFatMesh_elasticity_quadratic"]["nElements"]
   print("   elasticity quadratic 3D meshes:")
-  print("{}  muscle:             nodes global: {} x {} x {} = {}, local: {} x {} x {} = {}".format(rank_no, 
+  print("   muscle:             nodes global: {} x {} x {} = {}, local: {} x {} x {} = {}".format(
     n_points_global_elasticity_mesh[0], n_points_global_elasticity_mesh[1], n_points_global_elasticity_mesh[2], n_points_global_elasticity_mesh[0]*n_points_global_elasticity_mesh[1]*n_points_global_elasticity_mesh[2],
     n_points_local_elasticity_mesh[0], n_points_local_elasticity_mesh[1], n_points_local_elasticity_mesh[2], n_points_local_elasticity_mesh[0]*n_points_local_elasticity_mesh[1]*n_points_local_elasticity_mesh[2]))
-  print("{}         quadratic elements global: {} x {} x {} = {}, local: {} x {} x {} = {}".format(rank_no, 
+  print("          quadratic elements global: {} x {} x {} = {}, local: {} x {} x {} = {}".format(
     n_elements_global_elasticity_mesh[0], n_elements_global_elasticity_mesh[1], n_elements_global_elasticity_mesh[2], n_elements_global_elasticity_mesh[0]*n_elements_global_elasticity_mesh[1]*n_elements_global_elasticity_mesh[2],
     n_elements_local_elasticity_fat_mesh[0], n_elements_local_elasticity_fat_mesh[1], n_elements_local_elasticity_fat_mesh[2], n_elements_local_elasticity_fat_mesh[0]*n_elements_local_elasticity_fat_mesh[1]*n_elements_local_elasticity_fat_mesh[2]))
-  print("{}  fat and skin layer: nodes global: {} x {} x {} = {}, local: {} x {} x {} = {}".format(rank_no, 
+  print("   fat and skin layer: nodes global: {} x {} x {} = {}, local: {} x {} x {} = {}".format(
     n_points_global_elasticity_fat_mesh[0], n_points_global_elasticity_fat_mesh[1], n_points_global_elasticity_fat_mesh[2], n_points_global_elasticity_fat_mesh[0]*n_points_global_elasticity_fat_mesh[1]*n_points_global_elasticity_fat_mesh[2],
     n_points_local_elasticity_fat_mesh[0], n_points_local_elasticity_fat_mesh[1], n_points_local_elasticity_fat_mesh[2], n_points_local_elasticity_fat_mesh[0]*n_points_local_elasticity_fat_mesh[1]*n_points_local_elasticity_fat_mesh[2]))
-  print("{}         quadratic elements global: {} x {} x {} = {}, local: {} x {} x {} = {}".format(rank_no, 
+  print("          quadratic elements global: {} x {} x {} = {}, local: {} x {} x {} = {}".format( 
     n_elements_global_elasticity_fat_mesh[0], n_elements_global_elasticity_fat_mesh[1], n_elements_global_elasticity_fat_mesh[2], n_elements_global_elasticity_fat_mesh[0]*n_elements_global_elasticity_fat_mesh[1]*n_elements_global_elasticity_fat_mesh[2],
     n_elements_local_elasticity_fat_mesh[0], n_elements_local_elasticity_fat_mesh[1], n_elements_local_elasticity_fat_mesh[2], n_elements_local_elasticity_fat_mesh[0]*n_elements_local_elasticity_fat_mesh[1]*n_elements_local_elasticity_fat_mesh[2]))
 
@@ -690,8 +698,8 @@ elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain"
   variables.mappings = {
     ("parameter", 0):           ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
     ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
-    ("connectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
-    ("connectorSlot", 1): ("algebraic", "razumova/stress"),  # expose algebraic 12 = γ to the operator splitting
+    ("connectorSlot","vm"):     "wal_environment/vS",                 # expose state 0 = Vm to the operator splitting
+    ("connectorSlot", "stress"):"razumova/stress",                    # expose algebraic 12 = γ to the operator splitting
   }
   variables.parameters_initial_values = [0.0, 1.0]                    # wal_environment/I_HH = I_stim, razumova/L_S = λ
   variables.nodal_stimulation_current = 40.                           # not used
@@ -729,9 +737,9 @@ elif "hodgkin_huxley-razumova" in variables.cellml_file:   # this is (4, "Titin"
   variables.mappings = {
     ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
     ("parameter", 1):           "Razumova/l_hs",            # parameter 1 is fiber stretch λ
-    ("connectorSlot", 0): "membrane/V",               # expose Vm to the operator splitting
-    ("connectorSlot", 2): "Razumova/activation",      # expose activation .
-    ("connectorSlot", 1): "Razumova/activestress",
+    ("connectorSlot", "vm"):    "membrane/V",               # expose Vm to the operator splitting
+    ("connectorSlot", "stress"):"Razumova/activestress",
+    ("connectorSlot", "alpha"): "Razumova/activation",      # expose activation .
   }
   variables.parameters_initial_values = [0, 1]
   variables.nodal_stimulation_current = 40.                           # not used
@@ -800,46 +808,8 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
     #print("n_nodes_global: {}, time_step_no: {}, current_time: {}, compartment_no: {}".format(n_nodes_global, time_step_no, current_time, compartment_no))
     #wait = input("Press any key to continue...")
 
-# callback function for artifical stress values, instead of multidomain
-def set_stress_values(n_dofs_global, n_nodes_global_per_coordinate_direction, time_step_no, current_time, values, global_natural_dofs, compartment_no):
-    # n_dofs_global:       (int) global number of dofs in the mesh where to set the values
-    # n_nodes_global_per_coordinate_direction (list of ints)   [mx, my, mz] number of global nodes in each coordinate direction. 
-    #                       For composite meshes, the values are only for the first submesh, for other meshes sum(...) equals n_dofs_global
-    # time_step_no:        (int)   current time step number
-    # current_time:        (float) the current simulation time
-    # values:              (list of floats) all current local values of the field variable, if there are multiple components, they are stored in struct-of-array memory layout 
-    #                       i.e. [point0_component0, point0_component1, ... point0_componentN, point1_component0, point1_component1, ...]
-    #                       After the call, these values will be assigned to the field variable.
-    # global_natural_dofs  (list of ints) for every local dof no. the dof no. in global natural ordering
-    # additional_argument: The value of the option "additionalArgument", can be any Python object.
-    
-    #print("compartment {}, n_nodes_global_per_coordinate_direction: {}, len(global_natural_dofs): {}, len(values): {}".format(compartment_no, n_nodes_global_per_coordinate_direction, len(global_natural_dofs), len(values)))
-     
-    mx = n_nodes_global_per_coordinate_direction[0]
-    my = n_nodes_global_per_coordinate_direction[1]
-    mz = n_nodes_global_per_coordinate_direction[2]
-    n_nodes = mx*my*mz
-    
-    # loop over nodes in compartment
-    for local_dof_no in range(n_nodes):
-      # get the global no. of the current dof
-      global_dof_no = global_natural_dofs[local_dof_no]
-        
-      i = global_dof_no % mx                    # index in x direction
-      j = int((global_dof_no % (mx*my)) / mx)   # index in y direction
-      k = int(global_dof_no / (mx*my))          # index in z direction
-
-      # now we know that values[local_dof_no] is the value at node (i,j,k) in the global mesh
-      if k > mz/2:
-        k = mz/2 - k
-      else:
-        k = k - mz/2
-      
-      amplitude = min(1.0, current_time/1000)   # linear ramp to 1 after 1 s
-      minimum_value = min(0.5, 0.5*current_time/1000)
-      
-      values[local_dof_no] = (amplitude-minimum_value) * np.sin((current_time/100 + 0.2*k/mz + 0.1*i/mx) * 2*np.pi) ** 2 + minimum_value
-      
+def set_dummy_stress(n_dofs_global, time_step_no, current_time, values, global_natural_dofs, compartment_no):
+  pass
   
 # for debugging output show when the first 20 fibers will fire
 if rank_no == 0 and not variables.disable_firing_output:
@@ -925,26 +895,162 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
   
 # set boundary conditions for the elasticity
 # Note, we have a composite mesh, consisting of 3Dmesh_elasticity_quadratic and 3DFatMesh_elasticity_quadratic and this composite mesh has a numbering that goes over all dofs.
-# The following works because we index the first sub mesh and there first mesh of a composite mesh always has all own dofs with their normal no.s. (The 2nd mesh has the shared dofs to the first mesh removed in the numbering, i.e. they are not counted twice).
+# The following works because we index the first sub mesh and the first mesh of a composite mesh always has all own dofs with their normal no.s.
+# The 2nd mesh has the shared dofs to the first mesh removed in the internal numbering, i.e. internally, they are not counted twice. 
+# However, here in the settings, the numbering is concatenated from both meshes, i.e., first all nodes of mesh 0, then all nodes of mesh 1, etc.
+
 [mx, my, mz] = variables.meshes["3Dmesh_elasticity_quadratic"]["nPointsGlobal"]
 [nx, ny, nz] = variables.meshes["3Dmesh_elasticity_quadratic"]["nElementsGlobal"]
+[m2x, m2y, m2z] = variables.meshes["3DFatMesh_elasticity_quadratic"]["nPointsGlobal"]
+[n2x, n2y, n2z] = variables.meshes["3DFatMesh_elasticity_quadratic"]["nElementsGlobal"]
+
+n_nodes_shared_and_removed = (mx+my-1)*mz
+#print("{} = {}".format(n_nodes_shared_and_removed, m2x*m2z))
+offset = mx*my*mz
+variables.n_points_global_composite_mesh = mx*my*mz + m2x*m2y*m2z - n_nodes_shared_and_removed
+
+# copy meshes
+import copy
+variables.meshes["3Dmesh_elasticity_quadratic_precontraction"] = copy.deepcopy(variables.meshes["3Dmesh_elasticity_quadratic"])
+variables.meshes["3DFatMesh_elasticity_quadratic_precontraction"] = copy.deepcopy(variables.meshes["3DFatMesh_elasticity_quadratic"])
+
+
+# print all mesh information
+if False:
+  for mesh_name in ["3Dmesh_elasticity_quadratic","3DFatMesh_elasticity_quadratic"]:
+    print("")
+    print("{}: mesh {}".format(rank_no, mesh_name))
+    print("    nPointsLocal: {}".format(variables.meshes[mesh_name]["nPointsLocal"]))
+    print("    nPointsGlobal: {}".format(variables.meshes[mesh_name]["nPointsGlobal"]))
+    print("    nElementsGlobal: {}".format(variables.meshes[mesh_name]["nElementsGlobal"]))
+    print("    inputMeshIsGlobal: {}".format(variables.meshes[mesh_name]["inputMeshIsGlobal"]))
+    print("    nElements: {}".format(variables.meshes[mesh_name]["nElements"]))
+    print("    nRanks: {}".format(variables.meshes[mesh_name]["nRanks"]))
+    print("    len(nodePositions): {}".format(len(variables.meshes[mesh_name]["nodePositions"][1])))
+
 
 # set Dirichlet BC at top nodes for linear elasticity problem, fix muscle at top
-variables.elasticity_dirichlet_bc = {}
+
+# parameters for precontraction
+# -----------------------------
+variables.precontraction_elasticity_dirichlet_bc = {}
+# muscle mesh
 for j in range(my):
   for i in range(mx):
-    variables.elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
-  
+    variables.precontraction_elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
+
+# fat mesh
+for j in range(m2y):
+  for i in range(m2x):
+    variables.precontraction_elasticity_dirichlet_bc[offset + (m2z-1)*m2x*m2y + j*m2x + i] = [None,None,0.0,None,None,None]
+
 # fix edge
 for i in range(mx):
-  variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
+  variables.precontraction_elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,0.0,0.0,None,None,None]
   
 # fix corner completely
-variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
+variables.precontraction_elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
+
+# guide lower end of muscle along z axis
+# muscle mesh
+for j in range(my):
+  for i in range(mx):
+    variables.precontraction_elasticity_dirichlet_bc[0*mx*my + j*mx + i] = [0.0,0.0,None,None,None,None]
+
+# fat mesh
+for j in range(m2y):
+  for i in range(m2x):
+    variables.precontraction_elasticity_dirichlet_bc[offset + 0*m2x*m2y + j*m2x + i] = [0.0,0.0,None,None,None,None]
 
 # Neumann BC at bottom nodes, traction downwards
-variables.elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
-#variables.elasticity_neumann_bc = []
+# muscle mesh
+variables.precontraction_elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.precontraction_bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
+
+# fat mesh
+variables.precontraction_elasticity_neumann_bc += [{"element": nx*ny*nz + 0*n2x*n2y + j*n2x + i, "constantVector": variables.precontraction_bottom_traction, "face": "2-"} for j in range(n2y) for i in range(n2x)]
+
+# parameters for prestretch
+# -----------------------------
+if hasattr(variables, "prestretch_bottom_traction"):
+  variables.prestretch_elasticity_dirichlet_bc = {}
+  # muscle mesh
+  for j in range(my):
+    for i in range(mx):
+      variables.prestretch_elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
+
+  # fat mesh
+  for j in range(m2y):
+    for i in range(m2x):
+      variables.prestretch_elasticity_dirichlet_bc[offset + (m2z-1)*m2x*m2y + j*m2x + i] = [None,None,0.0,None,None,None]
+
+  # fix edge, note: the prestretch simulation does not work without this (linear solver finds no solution)
+  for i in range(mx):
+    variables.prestretch_elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,0.0,0.0,None,None,None]
+    
+  # fix corner completely
+  variables.prestretch_elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
+
+  # guide lower end of muscle along z axis
+  # muscle mesh
+  for j in range(my):
+    for i in range(mx):
+      variables.prestretch_elasticity_dirichlet_bc[0*mx*my + j*mx + i] = [0.0,0.0,None,None,None,None]
+
+  # fat mesh
+  for j in range(m2y):
+    for i in range(m2x):
+      variables.prestretch_elasticity_dirichlet_bc[offset + 0*m2x*m2y + j*m2x + i] = [0.0,0.0,None,None,None,None]
+
+  # Neumann BC at bottom nodes, traction downwards
+  # muscle mesh
+  variables.prestretch_elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.prestretch_bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
+
+  # fat mesh
+  variables.prestretch_elasticity_neumann_bc += [{"element": nx*ny*nz + 0*n2x*n2y + j*n2x + i, "constantVector": variables.prestretch_bottom_traction, "face": "2-"} for j in range(n2y) for i in range(n2x)]
+
+  #variables.elasticity_neumann_bc = []
+
+# parameters for the multidomain simulation
+# ---------------------------------------------
+if hasattr(variables, "multidomain_bottom_traction"):
+  variables.multidomain_elasticity_dirichlet_bc = {}
+  # muscle mesh
+  for j in range(my):
+    for i in range(mx):
+      variables.multidomain_elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
+
+  # fat mesh
+  for j in range(m2y):
+    for i in range(m2x):
+      variables.multidomain_elasticity_dirichlet_bc[offset + (m2z-1)*m2x*m2y + j*m2x + i] = [None,None,0.0,None,None,None]
+
+  # fix edge, note: the multidomain simulation does not work without this (linear solver finds no solution)
+  for i in range(mx):
+    variables.multidomain_elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,0.0,0.0,None,None,None]
+    
+  # fix corner completely
+  variables.multidomain_elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
+
+  # guide lower end of muscle along z axis
+  # muscle mesh
+  for j in range(my):
+    for i in range(mx):
+      variables.multidomain_elasticity_dirichlet_bc[0*mx*my + j*mx + i] = [0.0,0.0,None,None,None,None]
+
+  # fat mesh
+  for j in range(m2y):
+    for i in range(m2x):
+      variables.multidomain_elasticity_dirichlet_bc[offset + 0*m2x*m2y + j*m2x + i] = [0.0,0.0,None,None,None,None]
+
+  # Neumann BC at bottom nodes, traction downwards
+  # muscle mesh
+  variables.multidomain_elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.multidomain_bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
+
+  # fat mesh
+  variables.multidomain_elasticity_neumann_bc += [{"element": nx*ny*nz + 0*n2x*n2y + j*n2x + i, "constantVector": variables.multidomain_bottom_traction, "face": "2-"} for j in range(n2y) for i in range(n2x)]
+
+  #variables.elasticity_neumann_bc = []
+
 
 ####################################
 # compute relative factors fr for compartments
@@ -1088,51 +1194,6 @@ else:
 # debugging output
 if rank_no == 0 and not variables.disable_firing_output:
   for i,factors_list in enumerate(variables.relative_factors.tolist()):
-    print("{}: MU {}, maximum fr: {}".format(rank_no, i,max(factors_list)))
+    print("MU {}, maximum fr: {}".format(i,max(factors_list)))
 
-#######################################
-# prepare dofs mapping for motor units
-
-n_motor_units = len(variables.motor_units)
-
-# set the motoneuron mesh, which is a Mesh::StructuredRegularFixed<1>, i.e. it has no physical locations but is only logical
-# on every rank there are as many nodes as global motor units
-variables.meshes["motoneuronMesh"] = {
-  "nElements":              n_motor_units-1,
-  "physicalExtent":         n_motor_units,        # this mesh has no physical representation so this value is irrelevant
-  "physicalOffset":         [0,0,0],              # this mesh has no physical representation so this value is irrelevant
-  "nRanks":                 n_ranks,
-  "inputMeshIsGlobal":      False,
-  "setHermiteDerivatives":  False,
-  "logKey":                 "motoneuronMesh",
-}
-
-# determine global node nos of nodes that are at the center and will get stimulated
-n_nodes_x = variables.n_points_3D_mesh_global_x
-n_nodes_y = variables.n_points_3D_mesh_global_y
-n_nodes_z = variables.n_points_3D_mesh_global_z
-z_index_center = (int)(n_nodes_z/2)
-y_index_center = (int)(n_nodes_y/2)
-x_index_center = (int)(n_nodes_x/2)
-
-junction_nodes_global_nos = []
-
-for j in range(n_nodes_y):
-  for i in range(n_nodes_x):
-    global_no = z_index_center*n_nodes_x*n_nodes_y + j*n_nodes_x + i
-    junction_nodes_global_nos.append(global_no)
-
-# specify positions of contraction and velocity "sensors", Golgi tendon organs, muscle spindles
-golgi_tendon_organ_nodes_global_nos = []
-
-# loop over all nodes, select 3x3x2 nodes
-for j in range((int)(n_nodes_y/6),n_nodes_y,(int)(n_nodes_x/3)):
-  for i in range((int)(n_nodes_x/6),n_nodes_x,(int)(n_nodes_x/3)):
-  
-    k = (int)(0.1*n_nodes_z)
-    global_no = k*n_nodes_x*n_nodes_y + j*n_nodes_x + i
-    golgi_tendon_organ_nodes_global_nos.append(global_no)
-
-    k = (int)(0.9*n_nodes_z)
-    global_no = k*n_nodes_x*n_nodes_y + j*n_nodes_x + i
-    golgi_tendon_organ_nodes_global_nos.append(global_no)
+    

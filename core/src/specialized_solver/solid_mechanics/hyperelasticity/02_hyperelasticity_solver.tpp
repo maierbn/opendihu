@@ -79,5 +79,4 @@ callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
   this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 1, endTime_);
 }
 
-
 } // namespace SpatialDiscretization

@@ -275,6 +275,7 @@ The following shows all possible options. The meaning can be learned from the co
     "materialParameters":         material_parameters,          # material parameters of the Mooney-Rivlin material
     "displacementsScalingFactor": 1.0,                          # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
     "residualNormLogFilename":    "log_residual_norm.txt",      # log file where residual norm values of the nonlinear solver will be written
+    "slotNames":                  ["ux", "uy", "uz"],           # (optional) slot names of the data connector slots, there are three slots, namely the displacement components ux, uy, uz
     "useAnalyticJacobian":        True,                         # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
     "useNumericJacobian":         False,                        # whether to use the numerically computed jacobian matrix in the nonlinear solver (slow), only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
       
@@ -288,7 +289,6 @@ The following shows all possible options. The meaning can be learned from the co
     "fiberMeshNames":             [],                           # fiber meshes that will be used to determine the fiber direction
     "fiberDirection":             [],                           # if fiberMeshNames is empty, directly set the constant fiber direction, in global coordinate system
     "fiberDirectionInElement":    [0,0,1],                      # if fiberMeshNames and fiberDirections are empty, directly set the constant fiber direction, in element coordinate system
-    
     
     # nonlinear solver
     "relativeTolerance":          1e-5,                         # 1e-10 relative tolerance of the linear solver
@@ -309,7 +309,9 @@ The following shows all possible options. The meaning can be learned from the co
     
     #"loadFactors":                [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
     #"loadFactors":                [0.5, 1.0],                   # load factors for every timestep
+    #"loadFactors":                list(np.logspace(-3,0,4)),    # load factors, equally spaced in log space: (1e-3, 1e-2, 1e-1, 1)
     "loadFactors":                [],                           # no load factors, solve problem directly
+    "scaleInitialGuess":          True,                         # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
     "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
     
     # boundary and initial conditions
@@ -367,6 +369,13 @@ residualNormLogFilename
 A txt log file where the residual norm values of the nonlinear solver will be written to. 
 
 The progression of the residual norm over number of iterations can be visualized using ``plot_residual_norm.py``.
+
+slotNames
+^^^^^^^^^^^^
+(optional) A list of names for the data connector slots. The slot names are used for connecting the slots to other solvers, i.e., when the displacement results should be reused by another solver. 
+Each slot name should have <= 6 characters. See :doc:`output_connector_slots` for more details.
+
+The key `slotNames` can also be omitted if the slots should not be reused. Note that these slotNames are not needed if the Hyperelasticity solver is contained in a :doc:`muscle_contraction_solver`.
 
 `useAnalyticJacobian` and `useNumericJacobian`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -430,6 +439,17 @@ Examples for load factors:
   [0.5, 1.0],
   [],                           # no load factors, solve problem directly
   
+scaleInitialGuess
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+(default: False) After a load step has been computed, scale the resulting solution that is used as the initial guess for the next load step.
+If the previous load factor is :math:`b` and the next load factor is :math:`b`, the naive way would be to scale by the factor :math:`b/a` (divide by old factor, multiply by new factor).
+However, this would lead to an overshoot, as the material is approximated linearly but the real model is nonlinear. 
+Instead, we scale scale by :math:`\sqrt{ab}/a`. This corresponds to the geometric mean between the old load factor and the new load factor.
+
+This scaling usually reduces the initial residual. Nevertheless, the number of iterations is sometimes higher, maybe because the prediction led to a worse area in the definition space of the model.
+  
+Note, this option is different from `extrapolateInitialGuess`, which only applies to dynamic problems and uses information from the last timestep. The option `scaleInitialGuess` uses information from the previous load step and is indepent of whether the problem is static or dynamic.
+  
 nNonlinearSolveCalls
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -453,7 +473,8 @@ The initial values are given by ``initialValuesDisplacements`` and ``initialValu
 
 extrapolateInitialGuess
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-If the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities. This is faster and should be set to ``True``.
+If the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities (from the previous timestep). 
+This is faster and should be set to ``True``.
 
 constantBodyForce
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

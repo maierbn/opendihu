@@ -30,7 +30,7 @@ initialize()
   // call initialize of base class
   Data<FunctionSpaceType>::initialize();
 
-  // create th slot connector data object
+  // create the slot connector data object
   slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
 
   // add all needed field variables to be transferred
@@ -87,6 +87,20 @@ setFieldVariables(std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::Ve
   {
     slotConnectorData_->addGeometryField(std::make_shared<typename FunctionSpaceType::GeometryFieldType>(this->displacements_->functionSpace()->geometryField()));
   }
+
+  // add displacements in x,y and z directions
+  slotConnectorData_->addFieldVariable2(this->displacements_, 0);
+  slotConnectorData_->addFieldVariable2(this->displacements_, 1);
+  slotConnectorData_->addFieldVariable2(this->displacements_, 2);
+
+  // There is addFieldVariable(...) and addFieldVariable2(...) for the two different field variable types,
+  // Refer to "slot_connection/slot_connector_data.h" for details.
+
+  // parse slot names of the field variables
+  this->context_.getPythonConfig().getOptionVector("slotNames", slotConnectorData_->slotNames);
+
+  // make sure that there are as many slot names as slots
+  slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
 }
 
 template<typename FunctionSpaceType>

@@ -18,6 +18,26 @@ initialize()
 {
   // call initialize of base class, this calls createPetscObjects
   Data<DisplacementsFunctionSpace>::initialize();
+
+  // create the slot connector data object
+  slotConnectorData_ = std::make_shared<SlotConnectorDataType>();
+
+  // add all needed field variables to be transferred, here the displacements
+  slotConnectorData_->addFieldVariable(this->displacements_, 0);
+  slotConnectorData_->addFieldVariable(this->displacements_, 1);
+  slotConnectorData_->addFieldVariable(this->displacements_, 2);
+
+  // There is addFieldVariable(...) and addFieldVariable2(...) for the two different field variable types,
+  // Refer to "slot_connection/slot_connector_data.h" for details.
+
+  // parse slot names of the field variables, if given
+  if (this->context_.getPythonConfig().hasKey("slotNames"))
+  {
+    this->context_.getPythonConfig().getOptionVector("slotNames", slotConnectorData_->slotNames);
+
+    // make sure that there are as many slot names as slots
+    slotConnectorData_->slotNames.resize(slotConnectorData_->nSlots());
+  }
 }
 
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term, bool withLargeOutput>
@@ -130,6 +150,14 @@ std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,Di
 materialTraction()
 {
   return this->materialTraction_;
+}
+
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term, bool withLargeOutput>
+std::shared_ptr<typename QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term,withLargeOutput>::SlotConnectorDataType> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term,withLargeOutput>::
+getSlotConnectorData()
+{
+  // return the slot connector data object
+  return this->slotConnectorData_;
 }
 
 //! field variable displacements u but on the linear mesh
@@ -274,6 +302,17 @@ setDisplacementsFunctionSpace(std::shared_ptr<DisplacementsFunctionSpace> displa
 
   // set the geometry field of the reference configuration as copy of the geometry field of the function space
   geometryReference_ = std::make_shared<DisplacementsFieldVariableType>(displacementsFunctionSpace_->geometryField(), "geometryReference");
+  geometryReference_->setValues(displacementsFunctionSpace_->geometryField());
+}
+
+//! update the copy of the reference geometry field from the current geometry field of the displacementsFunctionSpace
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term, bool withLargeOutput>
+void QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term,withLargeOutput>::
+updateReferenceGeometry()
+{
+  assert(geometryReference_);
+  assert(displacementsFunctionSpace_);
+  assert(displacementsFunctionSpace_->geometryField());
   geometryReference_->setValues(displacementsFunctionSpace_->geometryField());
 }
 

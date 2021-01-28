@@ -107,6 +107,7 @@ private:
   std::vector<std::tuple<element_no_t,bool>> bottomTopElements_;  //< (elementNoLocal,isAtTopOfDomain) elements that are used to integrate total forces and moments
   std::string totalForceLogFilename_;                             //< filename of the log file that will contain the total bearing forces at top and bottom elements
   bool isTractionInCurrentConfiguration_;                         //< if traction is given in current configuration, then it has to be transformed to reference configuration in every timestep
+  bool isReferenceGeometryInitialized_;                           //< if the copy of the reference geometry in the hyperelasticitySolver_ has already been set in the first timestep
 };
 
 }  // namespace

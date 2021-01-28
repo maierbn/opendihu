@@ -34,6 +34,7 @@ HyperelasticityInitialize(DihuContext context, std::string settingsKey) :
   useNumericJacobian_   = this->specificSettings_.getOptionBool("useNumericJacobian", true);
   nNonlinearSolveCalls_ = this->specificSettings_.getOptionInt("nNonlinearSolveCalls", 1, PythonUtility::Positive);
   loadFactorGiveUpThreshold_ = this->specificSettings_.getOptionDouble("loadFactorGiveUpThreshold", 1e-5, PythonUtility::Positive);
+  scaleInitialGuess_ = this->specificSettings_.getOptionBool("scaleInitialGuess", false);
 
   // parse constant body force, a value of "None" yields the default value, (0,0,0)
   constantBodyForce_ = this->specificSettings_.template getOptionArray<double,3>("constantBodyForce", Vec3{0.0,0.0,0.0});
@@ -84,7 +85,9 @@ initialize()
   if (this->initialized_)
     return;
 
-  LOG(DEBUG) << "initialize HyperelasticitySolver";
+  LOG(DEBUG) << "initialize HyperelasticitySolver with " << nDisplacementComponents
+    << " displacement components, mesh type " << StringUtility::demangle(typeid(MeshType).name())
+    << ", term " << StringUtility::demangle(typeid(Term).name());
   assert(this->specificSettings_.pyObject());
 
   // create function space / mesh, the geometry is from the settings
@@ -149,6 +152,9 @@ initialize()
 
   // add this solver to the solvers diagram
   DihuContext::solverStructureVisualizer()->addSolver("HyperelasticitySolver");
+
+  // set the slotConnectorData for the solverStructureVisualizer to appear in the solver diagram
+  DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
@@ -1124,6 +1130,15 @@ getString(Vec x)
     LOG(FATAL) << "this should not be called";
   }
   return std::string("no getString representation");
+}
+
+//! get the data that will be transferred in the operator splitting to the other term of the splitting
+//! the transfer is done by the slot_connector_data_transfer class
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+std::shared_ptr<typename HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::SlotConnectorDataType> HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+getSlotConnectorData()
+{
+  return data_.getSlotConnectorData();
 }
 
 

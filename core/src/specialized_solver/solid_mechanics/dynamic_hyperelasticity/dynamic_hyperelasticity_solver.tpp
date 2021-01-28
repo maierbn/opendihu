@@ -22,6 +22,7 @@ DynamicHyperelasticitySolver(DihuContext context) :
 
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_["dynamic"], this->context_["dynamic"].getPythonConfig());
+  isReferenceGeometryInitialized_ = false;
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType>
@@ -354,6 +355,13 @@ advanceTimeSpan(bool withOutputWritersEnabled)
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::start(this->durationLogKey_);
+
+  // update the reference geometry to use the current value, in the first time step
+  if (!isReferenceGeometryInitialized_)
+  {
+    this->hyperelasticitySolver_.data().updateReferenceGeometry();
+    isReferenceGeometryInitialized_ = true;
+  }
 
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;

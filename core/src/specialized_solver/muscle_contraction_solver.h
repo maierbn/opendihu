@@ -72,6 +72,9 @@ protected:
   //! update the geometry at the given meshes, map the own geometry field to the meshes
   void mapGeometryToGivenMeshes();
 
+  //! create the mappings for the geometry field mapping between meshes
+  void initializeMappingBetweenMeshes();
+
   std::shared_ptr<DynamicHyperelasticitySolverType> dynamicHyperelasticitySolver_;   //< the dynamic hyperelasticity solver that solves for the dynamic contraction
   std::shared_ptr<StaticHyperelasticitySolverType> staticHyperelasticitySolver_;     //< the static hyperelasticity solver that can be used for quasi-static solution
 
@@ -88,3 +91,4 @@ protected:
 };
 
 #include "specialized_solver/muscle_contraction_solver.tpp"
+#include "specialized_solver/muscle_contraction_solver_compute.tpp"

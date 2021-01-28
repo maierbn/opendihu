@@ -5,19 +5,25 @@
 
 int main(int argc, char *argv[])
 {
-  // 3D multidomain coupled with contraction
-  
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
-  
-  typedef Mesh::StructuredDeformableOfDimension<3> MeshType;
 
-  Control::Coupling<
-    // prestretch, static trans-iso
+  Control::MultipleCoupling<
+    // prescribed activation
+    PrescribedValues<
+      FunctionSpace::FunctionSpace<
+        Mesh::CompositeOfDimension<3>,
+        BasisFunction::LagrangeOfOrder<1>
+      >
+    >,
+    // quasi-static mechanics solver for "precontraction"
+    MuscleContractionSolver<
+      Mesh::CompositeOfDimension<3>
+    >,
+    // static trans-iso material for "prestretch"
     SpatialDiscretization::HyperelasticitySolver<
       Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressible3D, true, Mesh::CompositeOfDimension<3>
-    >,
-    Dummy
+    >
   > problem(settings);
   
   problem.run();

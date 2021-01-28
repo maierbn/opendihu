@@ -1,6 +1,6 @@
 
 # scenario name for log file
-scenario_name = "shortened"
+scenario_name = "precontraction_prestretch"
 
 # Fixed units in cellMl models:
 # These define the unit system.
@@ -46,12 +46,27 @@ scenario_name = "shortened"
 # material parameters
 # --------------------
 # quantities in mechanics unit system
+
+# parameters for precontraction
+# -----------------------------
+# load
+precontraction_constant_body_force = (0,0,20*9.81e-4)   # [cm/ms^2], gravity constant for the body force
+precontraction_bottom_traction = [0,0,0]        # [N]
+constant_gamma = 0.3    # 0.3 works, the active stress will be pmax*constant_gamma
+
+# parameters for prestretch
+# -----------------------------
+# load
+prestretch_constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
+prestretch_bottom_traction = [0,0,-10]        # [N]  (-30 works)
+
+# general parameters
+# -----------------------------
 rho = 10                    # [1e-4 kg/cm^3] density of the muscle (density of water)
 
 # Mooney-Rivlin parameters [c1,c2,b,d] of c1*(Ibar1 - 3) + c2*(Ibar2 - 3) + b/d (λ - 1) - b*ln(λ)
 # Heidlauf13: [6.352e-10 kPa, 3.627 kPa, 2.756e-5 kPa, 43.373] = [6.352e-11 N/cm^2, 3.627e-1 N/cm^2, 2.756e-6 N/cm^2, 43.373], pmax = 73 kPa = 7.3 N/cm^2
 # Heidlauf16: [3.176e-10 N/cm^2, 1.813 N/cm^2, 1.075e-2 N/cm^2, 9.1733], pmax = 7.3 N/cm^2
-
 c1 = 3.176e-10              # [N/cm^2]
 c2 = 1.813                  # [N/cm^2]
 b  = 1.075e-2               # [N/cm^2] anisotropy parameter
@@ -62,10 +77,6 @@ d  = 9.1733                 # [-] anisotropy parameter
 
 material_parameters = [c1, c2, b, d]   # material parameters
 pmax = 7.3                  # [N/cm^2] maximum isometric active stress
-
-# load
-constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
-bottom_traction = [0,0,-30]        # [N]
 
 # Monodomain parameters
 # --------------------
@@ -156,8 +167,8 @@ example_directory = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrop
 #cellml_file       = input_directory+"/new_slow_TK_2014_12_08.c"
 cellml_file       = input_directory+"/hodgkin_huxley-razumova.cellml"
 
-#fiber_file        = input_directory+"/left_biceps_brachii_9x9fibers.bin"
-fiber_file        = example_directory+"/left_biceps_brachii_9x9fibers_shortened.bin"
+fiber_file        = input_directory+"/left_biceps_brachii_9x9fibers.bin"
+#fiber_file        = example_directory+"/left_biceps_brachii_9x9fibers_shortened.bin"
 #fiber_file        = input_directory+"/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file     = fiber_file + "_fat.bin"
 firing_times_file = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
@@ -210,3 +221,25 @@ def get_specific_states_frequency_jitter(mu_no):
 def get_specific_states_call_enable_begin(mu_no):
   return 0  # start directly
   #return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3
+
+# callback function for artifical stress values, instead of multidomain
+def set_gamma_values(n_dofs_global, n_nodes_global_per_coordinate_direction, time_step_no, current_time, values, global_natural_dofs, custom_argument):
+    # n_dofs_global:       (int) global number of dofs in the mesh where to set the values
+    # n_nodes_global_per_coordinate_direction (list of ints)   [mx, my, mz] number of global nodes in each coordinate direction. 
+    #                       For composite meshes, the values are only for the first submesh, for other meshes sum(...) equals n_dofs_global
+    # time_step_no:        (int)   current time step number
+    # current_time:        (float) the current simulation time
+    # values:              (list of floats) all current local values of the field variable, if there are multiple components, they are stored in struct-of-array memory layout 
+    #                       i.e. [point0_component0, point0_component1, ... point0_componentN, point1_component0, point1_component1, ...]
+    #                       After the call, these values will be assigned to the field variable.
+    # global_natural_dofs  (list of ints) for every local dof no. the dof no. in global natural ordering
+    # additional_argument: The value of the option "additionalArgument", can be any Python object.
+    
+    # set all values to 1
+    for i in range(len(values)):
+      values[i] = constant_gamma
+
+def set_lambda_values(n_dofs_global, n_nodes_global_per_coordinate_direction, time_step_no, current_time, values, global_natural_dofs, custom_argument):
+    # set all values to 1
+    for i in range(len(values)):
+      values[i] = 1.0

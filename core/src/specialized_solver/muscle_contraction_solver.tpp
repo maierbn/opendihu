@@ -48,6 +48,9 @@ advanceTimeSpan(bool withOutputWritersEnabled)
   // This method computes some time steps of the simulation by running a for loop over the time steps.
   // The number of steps, timestep width and current time are all set by the parent class, TimeSteppingScheme.
 
+  // create mapping between meshes for the geometry field mapping, do this here already at the beginning where the meshes are not yet deformed
+  initializeMappingBetweenMeshes();
+
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::start(this->durationLogKey_);
@@ -124,6 +127,8 @@ initialize()
   // only initialize once
   if (initialized_)
     return;
+
+  LOG(DEBUG) << "MuscleContractionSolver::initialize";
 
   // initialize() will be called before the simulation starts.
 
@@ -241,178 +246,101 @@ callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
 
 template<typename MeshType,typename Term,bool withLargeOutputFiles>
 void MuscleContractionSolver<MeshType,Term,withLargeOutputFiles>::
-computeLambda()
+initializeMappingBetweenMeshes()
 {
-  typedef typename DynamicHyperelasticitySolverType::HyperelasticitySolverType::DisplacementsFieldVariableType DisplacementsFieldVariableType;
-  typedef typename DynamicHyperelasticitySolverType::HyperelasticitySolverType::Data::DeformationGradientFieldVariableType DeformationGradientFieldVariableType;
-  typedef typename Data::ScalarFieldVariableType FieldVariableType;
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_map_geometry"));
 
-  std::shared_ptr<DisplacementsFieldVariableType> fiberDirectionVariable;
-  std::shared_ptr<DeformationGradientFieldVariableType> deformationGradientVariable;
-  std::shared_ptr<DeformationGradientFieldVariableType> fDotVariable;
-  std::shared_ptr<DisplacementsFieldVariableType> velocitiesVariable;
+  LOG(INFO) << "initializeMappingBetweenMeshes, meshNamesOfGeometryToMapTo_=" << meshNamesOfGeometryToMapTo_;
 
-  if (isDynamic_)
+  if (!meshNamesOfGeometryToMapTo_.empty())
   {
-    fiberDirectionVariable = dynamicHyperelasticitySolver_->hyperelasticitySolver().data().fiberDirection();
-    deformationGradientVariable = dynamicHyperelasticitySolver_->hyperelasticitySolver().data().deformationGradient();
-    fDotVariable = dynamicHyperelasticitySolver_->hyperelasticitySolver().data().deformationGradientTimeDerivative();
-    velocitiesVariable = dynamicHyperelasticitySolver_->data().velocities();
-  }
-  else
-  {
-    fiberDirectionVariable = staticHyperelasticitySolver_->data().fiberDirection();
-    deformationGradientVariable = staticHyperelasticitySolver_->data().deformationGradient();
-    fDotVariable = staticHyperelasticitySolver_->data().deformationGradientTimeDerivative();
-    velocitiesVariable = staticHyperelasticitySolver_->data().velocities();
-  }
+    using SourceFunctionSpaceType = typename StaticHyperelasticitySolverType::DisplacementsFunctionSpace;
+    //using SourceFieldVariableType = FieldVariable::FieldVariable<SourceFunctionSpaceType,3>;
 
-  // compute lambda and \dot{lambda} (contraction velocity)
-  //std::shared_ptr<DisplacementsFieldVariableType> displacementsVariable = dynamicHyperelasticitySolver_->data().displacements();
+    assert(data_.functionSpace());
 
-  std::shared_ptr<FieldVariableType> lambdaVariable = data_.lambda();
-  std::shared_ptr<FieldVariableType> lambdaDotVariable = data_.lambdaDot();
+    // get source function space
+    std::shared_ptr<SourceFunctionSpaceType> functionSpaceSource = data_.functionSpace();
 
-  // loop over local degrees of freedom
-  for (dof_no_t dofNoLocal = 0; dofNoLocal < data_.functionSpace()->nDofsLocalWithoutGhosts(); dofNoLocal++)
-  {
-    const Vec3 fiberDirection = fiberDirectionVariable->getValue(dofNoLocal);
-    //const Vec3 displacement = displacementsVariable->getValue(dofNoLocal);
-    const VecD<9> deformationGradientValues = deformationGradientVariable->getValue(dofNoLocal);
-    const VecD<9> fDotValues = fDotVariable->getValue(dofNoLocal);
-
-    // create matrix, deformationGradientValues are in row-major order
-    MathUtility::Matrix<3,3> deformationGradient(deformationGradientValues);
-    MathUtility::Matrix<3,3> fDot(fDotValues);
-
-    // fiberDirection is normalized
-    assert (MathUtility::norm<3>(fiberDirection) - 1.0 < 1e-10);
-
-    // get deformation gradient, project lambda and lambda dot
-    // dx = F dX, dx^2 = C dX^2
-    // λ = ||dx•a0||
-    // project displacements on normalized fiberDirection a0
-    //const double lambda = displacement[0] * fiberDirection[0] + displacement[1] * fiberDirection[1] + displacement[2] * fiberDirection[2];
-
-    // convert fiber direction from reference configuration into current configuration
-    Vec3 fiberDirectionCurrentConfiguration = deformationGradient * fiberDirection;   // F a0
-    // λ = ||F a0||
-    const double lambda = MathUtility::norm<3>(fiberDirectionCurrentConfiguration);   // stretch in current configuration
-
-    // exemplary derivative of λ for dim=2:
-    //  λ = ||F a0|| = sqrt[(F11*a1 + F12*a2)^2 + (F21*a1 + F22*a2)^2]
-    // d/dt ||F a0|| = 1/(2*sqrt[(F11*a1 + F12*a2)^2 + (F21*a1 + F22*a2)^2])
-    //                 * (2*(F11*a1 + F12*a2)*(F11'*a1 + F12'*a2) + 2*(F21*a1 + F22*a2)*(F21'*a1 + F22'*a2))
-    //               = (F a0) • (F' a0) / ||F a0||
-
-    // compute lambda dot
-    // d/dt λ = d/dt ||F a0|| = (F a0) • (Fdot a0) / ||F a0||   (where Fdot = d/dt F)
-    // d/dt dx = d/dt F
-    // d/dt lambda = d/dt ||dx•a0|| = 1 / ||Fa|| (F a0 • Fdot a0) = 1/lambda (Fa • Fdot a0)
-    Vec3 FdotA0 = fDot * fiberDirection;
-    const double lambdaDot = 1 / lambda * MathUtility::dot(fiberDirectionCurrentConfiguration, FdotA0) * lambdaDotScalingFactor_;
-
-    lambdaVariable->setValue(dofNoLocal, lambda);
-    lambdaDotVariable->setValue(dofNoLocal, lambdaDot);
-  }
-
-  lambdaVariable->zeroGhostBuffer();
-  lambdaVariable->finishGhostManipulation();
-  lambdaVariable->startGhostManipulation();
-
-  lambdaDotVariable->zeroGhostBuffer();
-  lambdaDotVariable->finishGhostManipulation();
-  lambdaDotVariable->startGhostManipulation();
-}
-
-template<typename MeshType,typename Term,bool withLargeOutputFiles>
-void MuscleContractionSolver<MeshType,Term,withLargeOutputFiles>::
-computeActiveStress()
-{
-  LOG(DEBUG) << "computeActiveStress";
-
-  typedef typename DynamicHyperelasticitySolverType::HyperelasticitySolverType::StressFieldVariableType StressFieldVariableType;
-  typedef typename DynamicHyperelasticitySolverType::HyperelasticitySolverType::DisplacementsFieldVariableType DisplacementsFieldVariableType;
-  typedef typename Data::ScalarFieldVariableType FieldVariableType;
-
-  std::shared_ptr<StressFieldVariableType> activePK2StressVariable;
-  std::shared_ptr<DisplacementsFieldVariableType> fiberDirectionVariable;
-
-  if (isDynamic_)
-  {
-    activePK2StressVariable = dynamicHyperelasticitySolver_->hyperelasticitySolver().data().activePK2Stress();
-    fiberDirectionVariable = dynamicHyperelasticitySolver_->hyperelasticitySolver().data().fiberDirection();
-  }
-  else
-  {
-    activePK2StressVariable = staticHyperelasticitySolver_->data().activePK2Stress();
-    fiberDirectionVariable = staticHyperelasticitySolver_->data().fiberDirection();
-  }
-
-  std::shared_ptr<FieldVariableType> lambdaVariable = data_.lambda();
-  std::shared_ptr<FieldVariableType> gammaVariable = data_.gamma();
-
-  // Heidlauf 2013: "Modeling the Chemoelectromechanical Behavior of Skeletal Muscle Using the Parallel Open-Source Software Library OpenCMISS", p.4, Eq. (11)
-
-  const double lambdaOpt = 1.2;
-
-  // loop over local degrees of freedom
-  for (dof_no_t dofNoLocal = 0; dofNoLocal < data_.functionSpace()->nDofsLocalWithoutGhosts(); dofNoLocal++)
-  {
-    const Vec3 fiberDirection = fiberDirectionVariable->getValue(dofNoLocal);
-
-    const double lambda = lambdaVariable->getValue(dofNoLocal);
-    const double gamma = gammaVariable->getValue(dofNoLocal);
-    const double lambdaRelative = lambda / lambdaOpt;
-
-    // compute f function
-    double f = 1.0;
-
-    if (enableForceLengthRelation_)
+    // loop over all given mesh names to which we should transfer the geometry
+    for (std::string meshName : meshNamesOfGeometryToMapTo_)
     {
-      if (0.6 <= lambdaRelative && lambdaRelative <= 1.4)
+
+      // for first order meshes
+      using TargetFunctionSpaceType1 = ::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<1>>;
+      LOG(DEBUG) << "mesh \"" << meshName << "\", test if " << StringUtility::demangle(typeid(TargetFunctionSpaceType1).name());
+
+      // if the mesh name corresponds to a linear mesh
+      if (this->context_.meshManager()->hasFunctionSpaceOfType<TargetFunctionSpaceType1>(meshName))
       {
-        f = -25./4 * lambdaRelative*lambdaRelative + 25./2 * lambdaRelative - 5.25;
+        // get target function space
+        std::shared_ptr<TargetFunctionSpaceType1> functionSpaceTarget = this->context_.meshManager()->functionSpace<TargetFunctionSpaceType1>(meshName);
+
+        LOG(DEBUG) << "** create mapping " << functionSpaceSource->meshName() << " -> " << functionSpaceTarget->meshName();
+
+        // create mapping between functionSpaceSource and functionSpaceTarget
+        DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<SourceFunctionSpaceType,TargetFunctionSpaceType1>(functionSpaceSource, functionSpaceTarget);
       }
+      else LOG(DEBUG) << "no";
+
+      // for second order meshes
+      using TargetFunctionSpaceType2 = ::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>;
+      LOG(DEBUG) << "mesh \"" << meshName << "\", test if " << StringUtility::demangle(typeid(TargetFunctionSpaceType2).name());
+
+      // if the mesh name corresponds to a quadratic mesh
+      if (this->context_.meshManager()->hasFunctionSpaceOfType<TargetFunctionSpaceType2>(meshName))
+      {
+        // get target function space
+        std::shared_ptr<TargetFunctionSpaceType2> functionSpaceTarget = this->context_.meshManager()->functionSpace<TargetFunctionSpaceType2>(meshName);
+
+        LOG(DEBUG) << "** create mapping " << functionSpaceSource->meshName() << " -> " << functionSpaceTarget->meshName();
+
+        // create mapping between functionSpaceSource and functionSpaceTarget
+        DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<SourceFunctionSpaceType,TargetFunctionSpaceType2>(functionSpaceSource, functionSpaceTarget);
+      }
+      else LOG(DEBUG) << "no";
+
+      // for first order composite meshes
+      using TargetFunctionSpaceType3 = ::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>,BasisFunction::LagrangeOfOrder<1>>;
+      LOG(DEBUG) << "mesh \"" << meshName << "\", test if " << StringUtility::demangle(typeid(TargetFunctionSpaceType3).name());
+
+      // if the mesh name corresponds to a linear mesh
+      if (this->context_.meshManager()->hasFunctionSpaceOfType<TargetFunctionSpaceType3>(meshName))
+      {
+        // get target function space
+        std::shared_ptr<TargetFunctionSpaceType3> functionSpaceTarget = this->context_.meshManager()->functionSpace<TargetFunctionSpaceType3>(meshName);
+
+        LOG(DEBUG) << "** create mapping " << functionSpaceSource->meshName() << " -> " << functionSpaceTarget->meshName();
+
+        // create mapping between functionSpaceSource and functionSpaceTarget
+        //DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<SourceFunctionSpaceType,TargetFunctionSpaceType3>(functionSpaceSource, functionSpaceTarget);
+        DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<TargetFunctionSpaceType3,SourceFunctionSpaceType>(functionSpaceTarget, functionSpaceSource);
+      }
+      else LOG(DEBUG) << "no";
+
+      // for second order composite meshes
+      using TargetFunctionSpaceType4 = ::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>;
+      LOG(DEBUG) << "mesh \"" << meshName << "\", test if " << StringUtility::demangle(typeid(TargetFunctionSpaceType4).name());
+
+      // if the mesh name corresponds to a quadratic mesh
+      if (this->context_.meshManager()->hasFunctionSpaceOfType<TargetFunctionSpaceType4>(meshName))
+      {
+        // get target function space
+        std::shared_ptr<TargetFunctionSpaceType4> functionSpaceTarget = this->context_.meshManager()->functionSpace<TargetFunctionSpaceType4>(meshName);
+
+        LOG(DEBUG) << "** create mapping " << functionSpaceSource->meshName() << " -> " << functionSpaceTarget->meshName();
+
+        // create mapping between functionSpaceSource and functionSpaceTarget
+        //DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<SourceFunctionSpaceType,TargetFunctionSpaceType4>(functionSpaceSource, functionSpaceTarget);
+        DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<TargetFunctionSpaceType4,SourceFunctionSpaceType>(functionSpaceTarget, functionSpaceSource);
+      }
+      else LOG(DEBUG) << "no";
     }
-
-    const double factor = 1./lambda * pmax_ * f * gamma;
-
-    // Voigt notation:
-    // [0][0] -> [0];
-    // [1][1] -> [1];
-    // [2][2] -> [2];
-    // [0][1] -> [3];
-    // [1][0] -> [3];
-    // [1][2] -> [4];
-    // [2][1] -> [4];
-    // [0][2] -> [5];
-    // [2][0] -> [5];
-
-    VecD<6> activeStress;
-    activeStress[0] = factor * fiberDirection[0] * fiberDirection[0];
-    activeStress[1] = factor * fiberDirection[1] * fiberDirection[1];
-    activeStress[2] = factor * fiberDirection[2] * fiberDirection[2];
-    activeStress[3] = factor * fiberDirection[0] * fiberDirection[1];
-    activeStress[4] = factor * fiberDirection[1] * fiberDirection[2];
-    activeStress[5] = factor * fiberDirection[0] * fiberDirection[2];
-
-    LOG(DEBUG) << "dof " << dofNoLocal << ", lambda: " << lambda << ", lambdaRelative: " << lambdaRelative
-      << ", pmax_: " << pmax_ << ", f: " << f << ", gamma: " << gamma << ", => factor: " << factor << ", fiberDirection: " << fiberDirection;
-
-    // if lambda is not yet computed (before first computation), set active stress to zero
-    if (fabs(lambda)  < 1e-12)
-    {
-      activeStress = VecD<6>{0.0};
-    }
-
-    LOG(DEBUG) << "set active stress to " << activeStress;
-    activePK2StressVariable->setValue(dofNoLocal, activeStress, INSERT_VALUES);
   }
 
-  activePK2StressVariable->zeroGhostBuffer();
-  activePK2StressVariable->finishGhostManipulation();
-  activePK2StressVariable->startGhostManipulation();
+  if (this->durationLogKey_ != "")
+    Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_map_geometry"));
 }
 
 template<typename MeshType,typename Term,bool withLargeOutputFiles>
@@ -444,7 +372,7 @@ mapGeometryToGivenMeshes()
       // for first order meshes
       using TargetFunctionSpaceType1 = ::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<1>>;
       using TargetFieldVariableType1 = FieldVariable::FieldVariable<TargetFunctionSpaceType1,3>;
-      
+
       // if the mesh name corresponds to a linear mesh
       if (this->context_.meshManager()->hasFunctionSpaceOfType<TargetFunctionSpaceType1>(meshName))
       {
@@ -467,7 +395,7 @@ mapGeometryToGivenMeshes()
       // for second order meshes
       using TargetFunctionSpaceType2 = ::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>;
       using TargetFieldVariableType2 = FieldVariable::FieldVariable<TargetFunctionSpaceType2,3>;
-      
+
       // if the mesh name corresponds to a quadratic mesh
       if (this->context_.meshManager()->hasFunctionSpaceOfType<TargetFunctionSpaceType2>(meshName))
       {
@@ -485,6 +413,52 @@ mapGeometryToGivenMeshes()
         // map the whole geometry field (all components), do not avoid copy
         DihuContext::mappingBetweenMeshesManager()->template map<SourceFieldVariableType,TargetFieldVariableType2>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
         DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<SourceFieldVariableType,TargetFieldVariableType2>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
+      }
+
+      // for first order composite meshes
+      using TargetFunctionSpaceType3 = ::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>,BasisFunction::LagrangeOfOrder<1>>;
+      using TargetFieldVariableType3 = FieldVariable::FieldVariable<TargetFunctionSpaceType3,3>;
+
+      // if the mesh name corresponds to a linear mesh
+      if (this->context_.meshManager()->hasFunctionSpaceOfType<TargetFunctionSpaceType3>(meshName))
+      {
+        // get target geometry field variable
+        std::shared_ptr<TargetFieldVariableType3> geometryFieldTarget = std::make_shared<TargetFieldVariableType3>(
+          this->context_.meshManager()->functionSpace<TargetFunctionSpaceType3>(meshName)->geometryField());
+
+        LOG(DEBUG) << "transfer geometry field to linear mesh, " << geometryFieldSource->functionSpace()->meshName() << " -> "
+          << geometryFieldTarget->functionSpace()->meshName();
+        LOG(DEBUG) << StringUtility::demangle(typeid(SourceFunctionSpaceType).name()) << " -> " << StringUtility::demangle(typeid(TargetFunctionSpaceType3).name());
+
+        // perform the mapping
+        DihuContext::mappingBetweenMeshesManager()->template prepareMapping<SourceFieldVariableType,TargetFieldVariableType3>(geometryFieldSource, geometryFieldTarget, -1);
+
+        // map the whole geometry field (all components), do not avoid copy
+        DihuContext::mappingBetweenMeshesManager()->template map<SourceFieldVariableType,TargetFieldVariableType3>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
+        DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<SourceFieldVariableType,TargetFieldVariableType3>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
+      }
+
+      // for second order composite meshes
+      using TargetFunctionSpaceType4 = ::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>;
+      using TargetFieldVariableType4 = FieldVariable::FieldVariable<TargetFunctionSpaceType4,3>;
+
+      // if the mesh name corresponds to a quadratic mesh
+      if (this->context_.meshManager()->hasFunctionSpaceOfType<TargetFunctionSpaceType4>(meshName))
+      {
+        // get target geometry field variable
+        std::shared_ptr<TargetFieldVariableType4> geometryFieldTarget = std::make_shared<TargetFieldVariableType4>(
+          this->context_.meshManager()->functionSpace<TargetFunctionSpaceType4>(meshName)->geometryField());
+
+        LOG(DEBUG) << "transfer geometry field to quadratic mesh, " << geometryFieldSource->functionSpace()->meshName() << " -> "
+          << geometryFieldTarget->functionSpace()->meshName();
+        LOG(DEBUG) << StringUtility::demangle(typeid(SourceFunctionSpaceType).name()) << " -> " << StringUtility::demangle(typeid(TargetFunctionSpaceType4).name());
+
+        // perform the mapping
+        DihuContext::mappingBetweenMeshesManager()->template prepareMapping<SourceFieldVariableType,TargetFieldVariableType4>(geometryFieldSource, geometryFieldTarget, -1);
+
+        // map the whole geometry field (all components), do not avoid copy
+        DihuContext::mappingBetweenMeshesManager()->template map<SourceFieldVariableType,TargetFieldVariableType4>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
+        DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<SourceFieldVariableType,TargetFieldVariableType4>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
       }
     }
   }

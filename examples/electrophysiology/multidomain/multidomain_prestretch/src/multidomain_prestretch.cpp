@@ -3,17 +3,26 @@
 
 #include "opendihu.h"
 
+typedef Mesh::StructuredDeformableOfDimension<3> MeshType;
+
 int main(int argc, char *argv[])
 {
-  // 3D multidomain coupled with contraction
-  
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
-  
-  typedef Mesh::StructuredDeformableOfDimension<3> MeshType;
 
-  Control::Coupling<
-    // prestretch, static trans-iso
+  Control::MultipleCoupling<
+    // prescribed activation
+    PrescribedValues<
+      FunctionSpace::FunctionSpace<
+        Mesh::CompositeOfDimension<3>,
+        BasisFunction::LagrangeOfOrder<1>
+      >
+    >,
+    // quasi-static mechanics solver for "precontraction"
+    MuscleContractionSolver<
+      Mesh::CompositeOfDimension<3>
+    >,
+    // static trans-iso material for "prestretch"
     SpatialDiscretization::HyperelasticitySolver<
       Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressible3D, true, Mesh::CompositeOfDimension<3>
     >,
@@ -29,24 +38,26 @@ int main(int argc, char *argv[])
             >  
           >
         >,
-        TimeSteppingScheme::MultidomainWithFatSolver<       // multidomain
-          SpatialDiscretization::FiniteElementMethod<       //FEM for initial potential flow, fibre directions
-            MeshType,
-            BasisFunction::LagrangeOfOrder<1>,
-            Quadrature::Gauss<3>,
-            Equation::Static::Laplace
-          >,
-          SpatialDiscretization::FiniteElementMethod<       // anisotropic diffusion
-            MeshType,
-            BasisFunction::LagrangeOfOrder<1>,
-            Quadrature::Gauss<3>,
-            Equation::Dynamic::DirectionalDiffusion
-          >,
-          SpatialDiscretization::FiniteElementMethod<       // isotropic diffusion in fat layer
-            MeshType,
-            BasisFunction::LagrangeOfOrder<1>,
-            Quadrature::Gauss<3>,
-            Equation::Dynamic::IsotropicDiffusion
+        OutputWriter::OutputSurface<
+          TimeSteppingScheme::MultidomainWithFatSolver<       // multidomain
+            SpatialDiscretization::FiniteElementMethod<       //FEM for initial potential flow, fibre directions
+              MeshType,
+              BasisFunction::LagrangeOfOrder<1>,
+              Quadrature::Gauss<3>,
+              Equation::Static::Laplace
+            >,
+            SpatialDiscretization::FiniteElementMethod<       // anisotropic diffusion
+              MeshType,
+              BasisFunction::LagrangeOfOrder<1>,
+              Quadrature::Gauss<3>,
+              Equation::Dynamic::DirectionalDiffusion
+            >,
+            SpatialDiscretization::FiniteElementMethod<       // isotropic diffusion in fat layer
+              MeshType,
+              BasisFunction::LagrangeOfOrder<1>,
+              Quadrature::Gauss<3>,
+              Equation::Dynamic::IsotropicDiffusion
+            >
           >
         >
       >,

@@ -163,7 +163,7 @@ for k in range(n_sampled_points_3D_in_own_subdomain_z):
   z_point_index = (variables.z_point_index_start + k*variables.local_sampling_stride_z) * variables.sampling_stride_z
   
   if variables.own_subdomain_coordinate_z == variables.n_subdomains_z-1 and k == n_sampled_points_3D_in_own_subdomain_z-1:
-    z_point_index = (variables.z_point_index_end-1) * variables.local_sampling_stride_z
+    z_point_index = (variables.z_point_index_end-1) * variables.sampling_stride_z
     
   #print("{}: sampling_stride_z: {}, k: {}, z: {}/{}".format(rank_no, variables.sampling_stride_z, k, z_point_index, variables.z_point_index_end))
   

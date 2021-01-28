@@ -33,6 +33,8 @@ createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpac
   std::string sourceMeshName = functionSpaceSource->meshName();
   std::string targetMeshName = functionSpaceTarget->meshName();
 
+  bool mappingFound = true;
+
   if (!hasMappingBetweenMeshes(functionSpaceSource, functionSpaceTarget))
   {
     this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].xiTolerance = 0.1;
@@ -40,6 +42,7 @@ createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpac
     this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].compositeUseOnlyInitializedMappings = false;
     this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].isEnabledFixUnmappedDofs = false;
     this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].defaultValue = 0;
+    mappingFound = false;
   }
   else if (this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].mapping)
   {
@@ -54,8 +57,20 @@ createMappingBetweenMeshes(std::shared_ptr<FunctionSpaceSourceType> functionSpac
   bool isEnabledFixUnmappedDofs = this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].isEnabledFixUnmappedDofs;
   double defaultValue = this->mappingsBetweenMeshes_[sourceMeshName][targetMeshName].defaultValue;
 
-  LOG(INFO) << "create MappingBetweenMeshes \"" << sourceMeshName << "\" (" << FunctionSpaceSourceType::dim() << "D, " << functionSpaceSource->nNodesGlobal() << " nodes) -> \""
-     << targetMeshName << "\" (" << FunctionSpaceTargetType::dim() << "D, " << functionSpaceTarget->nNodesGlobal() << " nodes), xiTolerance: " << xiTolerance << ", defaultValue: " << defaultValue;
+  std::stringstream s;
+  s << "Create MappingBetweenMeshes \"" << sourceMeshName << "\" (" << FunctionSpaceSourceType::dim() << "D, "
+    << functionSpaceSource->nNodesGlobal() << " nodes) -> \"" << targetMeshName << "\" ("
+    << FunctionSpaceTargetType::dim() << "D, " << functionSpaceTarget->nNodesGlobal() << " nodes), xiTolerance: "
+    << xiTolerance << ", defaultValue: " << defaultValue << ", ";
+  if (mappingFound)
+  {
+    s << "mapping initialized in config.";
+  }
+  else
+  {
+    s << "mapping not defined in config.\n"
+      << "Specify MappingsBetweenMeshes { \"" << sourceMeshName << "\" : \"" << targetMeshName << "\" } as top level object of the python config.";
+  }
 
   // log event, to be included in the log file
   addLogEntryMapping(functionSpaceSource, functionSpaceTarget, mappingLogEntry_t::logEvent_t::eventCreateMapping);

@@ -226,10 +226,10 @@ config = {
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": {
     "3Dmesh": [
-       {"name": "3Dmesh_elasticity_quadratic",                                 "xiTolerance": 0.5, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True, "defaultValue": 0},
+       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic", "xiTolerance": 0.1, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True, "defaultValue": 0},
     ],
     "3DFatMesh":  [
-       {"name": "3DFatMesh_elasticity_quadratic",                              "xiTolerance": 0.5, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True, "defaultValue": 0},
+       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic", "xiTolerance": 0.2, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True, "defaultValue": 0},
     ],
   },
   "Solvers": {
@@ -360,6 +360,7 @@ config = {
           {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/1_precontraction_mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
         ],
         "mapGeometryToMeshes":          ["3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic"],    # the mesh names of the meshes that will get the geometry transferred
+        "reverseMappingOrder":          True,                      # if the mapping target->own mesh should be used instead of own->target mesh. This gives better results in some cases.
         "dynamic":                      False,                     # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
         
         # the actual solid mechanics solver, this is either "DynamicHyperelasticitySolver" or "HyperelasticitySolver", depending on the value of "dynamic"
@@ -607,6 +608,7 @@ config = {
               {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/4_mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
             ],
             "mapGeometryToMeshes":          ["3Dmesh","3DFatMesh"],    # the mesh names of the meshes that will get the geometry transferred
+            "reverseMappingOrder":          True,                      # if the mapping target->own mesh should be used instead of own->target mesh. This gives better results in some cases.
             "dynamic":                      True,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
             
             # the actual solid mechanics solver, this is either "DynamicHyperelasticitySolver" or "HyperelasticitySolver", depending on the value of "dynamic"

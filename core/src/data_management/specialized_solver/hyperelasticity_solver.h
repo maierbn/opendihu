@@ -107,6 +107,8 @@ public:
   //! \param updateLinearVariables if the variables of the linear discretized mesh should be update from the quadratic mesh, this is only needed if the pressure output writer is used
   void updateGeometry(double scalingFactor = 1.0, bool updateLinearVariables = true);
 
+  //! update the copy of the reference geometry field from the current geometry field of the displacementsFunctionSpace
+  void updateReferenceGeometry();
 
 protected:
 

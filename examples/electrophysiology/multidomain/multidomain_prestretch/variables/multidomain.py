@@ -98,27 +98,63 @@ Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 
 
 # timing and activation parameters
 # -----------------
-# motor units from paper Klotz2019 "Modelling the electrical activity of skeletal muscle tissue using a multi‐domain approach"
+# motor unit parameters similar to paper Klotz2019 "Modelling the electrical activity of skeletal muscle tissue using a multi‐domain approach"
+# however, values from paper fail for mu >= 6, then stimulus gets reflected at the ends of the muscle, therefore fiber radius is set to <= 55
+
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
-#   fiber_no: center MU around this fiber
-#   standard_deviation [-]: relative to muscle diameter, 
-#   maximum [-]: create f_r as gaussian with standard_deviation and maximum around the fiber given in fiber_no
-#   radius: [μm], activation_start_time: [s], stimulation frequency [Hz], jitter [-]
-# exponential distribution: low number of fibers per MU, slow twitch (type I), activated first --> high number of fibers per MU, fast twitch (type II), activated last -->
-motor_units = [
-  {"fiber_no": 10, "standard_deviation": 0.2, "maximum": 0.2, "radius": 40.00, "cm": 0.58, "activation_start_time": 0.0, "stimulation_frequency": 23.92, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # low number of fibers
-  {"fiber_no": 20, "standard_deviation": 0.2, "maximum": 0.2, "radius": 42.35, "cm": 0.58, "activation_start_time": 0.2, "stimulation_frequency": 23.36, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"fiber_no": 30, "standard_deviation": 0.2, "maximum": 0.2, "radius": 45.00, "cm": 0.58, "activation_start_time": 0.4, "stimulation_frequency": 23.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"fiber_no": 40, "standard_deviation": 0.2, "maximum": 0.2, "radius": 48.00, "cm": 0.58, "activation_start_time": 0.6, "stimulation_frequency": 22.46, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"fiber_no": 55, "standard_deviation": 0.2, "maximum": 0.2, "radius": 51.42, "cm": 0.58, "activation_start_time": 0.8, "stimulation_frequency": 20.28, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"fiber_no": 60, "standard_deviation": 0.2, "maximum": 0.2, "radius": 55.38, "cm": 0.58, "activation_start_time": 1.0, "stimulation_frequency": 16.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"fiber_no": 70, "standard_deviation": 0.2, "maximum": 0.2, "radius": 60.00, "cm": 0.58, "activation_start_time": 1.2, "stimulation_frequency": 12.05, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"fiber_no": 80, "standard_deviation": 0.2, "maximum": 0.2, "radius": 65.45, "cm": 1.00, "activation_start_time": 1.4, "stimulation_frequency": 10.03, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"fiber_no": 50, "standard_deviation": 0.2, "maximum": 0.2, "radius": 72.00, "cm": 1.00, "activation_start_time": 1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"fiber_no": 25, "standard_deviation": 0.2, "maximum": 0.2, "radius": 80.00, "cm": 1.00, "activation_start_time": 1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # high number of fibers
-]
-motor_units=motor_units[0:1]
+import numpy as np
+
+n_fibers_in_fiber_file = 81
+n_motor_units = 20   # number of motor units
+
+motor_units = []
+for mu_no in range(n_motor_units):
+
+  # capacitance of the membrane
+  if mu_no <= 0.7*n_motor_units:
+    cm = 0.58    # slow twitch (type I)
+  else:
+    cm = 1.0     # fast twitch (type II)
+
+  # fiber radius between 40 and 55 [μm]
+  min_value = 40
+  max_value = 55
+
+  # ansatz value(i) = c1 + c2*exp(i),
+  # value(0) = min = c1 + c2  =>  c1 = min - c2
+  # value(n-1) = max = min - c2 + c2*exp(n-1)  =>  max = min + c2*(exp(n-1) - 1)  =>  c2 = (max - min) / (exp(n-1) - 1)
+  c2 = (max_value - min_value) / (1.02**(n_motor_units-1) - 1)
+  c1 = min_value - c2
+  radius = c1 + c2*1.02**(mu_no)
+
+  # standard_deviation
+  min_value = 0.1
+  max_value = 0.6
+  c2 = (max_value - min_value) / (1.02**(n_motor_units-1) - 1)
+  c1 = min_value - c2
+  standard_deviation = c1 + c2*1.02**mu_no
+  maximum = 10.0/n_motor_units*standard_deviation
+
+  # stimulation frequency [Hz] between 24 and 7
+  min_value = 7
+  max_value = 24
+  c2 = (max_value - min_value) / (1.02**(n_motor_units-1) - 1)
+  c1 = min_value - c2
+  stimulation_frequency = c1 + c2*1.02**(n_motor_units-1-mu_no)
+
+  # exponential distribution: low number of fibers per MU, slow twitch (type I), activated first --> high number of fibers per MU, fast twitch (type II), activated last
+  motor_units.append(
+  {
+    "fiber_no":              random.randint(0,n_fibers_in_fiber_file),  # [-] fiber from input files that is the center of the motor unit domain
+    "maximum":               maximum,                # [-] maximum value of f_r, create f_r as gaussian with standard_deviation and maximum around the fiber g
+    "standard_deviation":    standard_deviation,     # [-] standard deviation of f_r
+    "radius":                radius,                 # [μm] parameter for motor unit: radius of the fiber, used to compute Am
+    "cm":                    cm,                     # [uF/cm^2] parameter Cm
+    "activation_start_time": 0.1*mu_no,              # [s] when to start activating this motor unit, here it is a ramp
+    "stimulation_frequency": stimulation_frequency,  # [Hz] stimulation frequency for activation
+    "jitter": [0.1*random.uniform(-1,1) for i in range(100)]     # [-] random jitter values that will be added to the intervals to simulate jitter
+  })
 
 # solvers
 # -------
@@ -169,6 +205,9 @@ dt_elasticity = 1e-1                # [ms] time step width of elasticity solver
 dt_elasticity = 1e-2                # [ms] time step width of elasticity solver
 output_timestep_multidomain = 0.5  # [ms] timestep for fiber output, 0.5
 output_timestep_elasticity = 0.5      # [ms] timestep for elasticity output files
+
+output_timestep_multidomain = dt_elasticity
+output_timestep_elasticity = dt_elasticity
 
 # input files
 import os

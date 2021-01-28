@@ -255,6 +255,8 @@ initializeMappingBetweenMeshes()
 
   if (!meshNamesOfGeometryToMapTo_.empty())
   {
+    bool reverseMappingOrder = this->specificSettings_.getOptionBool("reverseMappingOrder", true);
+
     using SourceFunctionSpaceType = typename StaticHyperelasticitySolverType::DisplacementsFunctionSpace;
     //using SourceFieldVariableType = FieldVariable::FieldVariable<SourceFunctionSpaceType,3>;
 
@@ -280,7 +282,10 @@ initializeMappingBetweenMeshes()
         LOG(DEBUG) << "** create mapping " << functionSpaceSource->meshName() << " -> " << functionSpaceTarget->meshName();
 
         // create mapping between functionSpaceSource and functionSpaceTarget
-        DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<SourceFunctionSpaceType,TargetFunctionSpaceType1>(functionSpaceSource, functionSpaceTarget);
+        if (reverseMappingOrder)
+          DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<TargetFunctionSpaceType1,SourceFunctionSpaceType>(functionSpaceTarget,functionSpaceSource);
+        else
+          DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<SourceFunctionSpaceType,TargetFunctionSpaceType1>(functionSpaceSource, functionSpaceTarget);
       }
       else LOG(DEBUG) << "no";
 
@@ -297,7 +302,11 @@ initializeMappingBetweenMeshes()
         LOG(DEBUG) << "** create mapping " << functionSpaceSource->meshName() << " -> " << functionSpaceTarget->meshName();
 
         // create mapping between functionSpaceSource and functionSpaceTarget
-        DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<SourceFunctionSpaceType,TargetFunctionSpaceType2>(functionSpaceSource, functionSpaceTarget);
+        if (reverseMappingOrder)
+          DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<TargetFunctionSpaceType2,SourceFunctionSpaceType>(functionSpaceTarget,functionSpaceSource);
+        else
+          DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<SourceFunctionSpaceType,TargetFunctionSpaceType2>(functionSpaceSource, functionSpaceTarget);
+
       }
       else LOG(DEBUG) << "no";
 
@@ -314,8 +323,10 @@ initializeMappingBetweenMeshes()
         LOG(DEBUG) << "** create mapping " << functionSpaceSource->meshName() << " -> " << functionSpaceTarget->meshName();
 
         // create mapping between functionSpaceSource and functionSpaceTarget
-        //DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<SourceFunctionSpaceType,TargetFunctionSpaceType3>(functionSpaceSource, functionSpaceTarget);
-        DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<TargetFunctionSpaceType3,SourceFunctionSpaceType>(functionSpaceTarget, functionSpaceSource);
+        if (reverseMappingOrder)
+          DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<TargetFunctionSpaceType3,SourceFunctionSpaceType>(functionSpaceTarget, functionSpaceSource);
+        else
+          DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<SourceFunctionSpaceType,TargetFunctionSpaceType3>(functionSpaceSource, functionSpaceTarget);
       }
       else LOG(DEBUG) << "no";
 
@@ -332,8 +343,10 @@ initializeMappingBetweenMeshes()
         LOG(DEBUG) << "** create mapping " << functionSpaceSource->meshName() << " -> " << functionSpaceTarget->meshName();
 
         // create mapping between functionSpaceSource and functionSpaceTarget
-        //DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<SourceFunctionSpaceType,TargetFunctionSpaceType4>(functionSpaceSource, functionSpaceTarget);
-        DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<TargetFunctionSpaceType4,SourceFunctionSpaceType>(functionSpaceTarget, functionSpaceSource);
+        if (reverseMappingOrder)
+          DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<TargetFunctionSpaceType4,SourceFunctionSpaceType>(functionSpaceTarget, functionSpaceSource);
+        else
+          DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<SourceFunctionSpaceType,TargetFunctionSpaceType4>(functionSpaceSource, functionSpaceTarget);
       }
       else LOG(DEBUG) << "no";
     }

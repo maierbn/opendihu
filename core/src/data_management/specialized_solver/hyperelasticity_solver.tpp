@@ -305,6 +305,17 @@ setDisplacementsFunctionSpace(std::shared_ptr<DisplacementsFunctionSpace> displa
   geometryReference_->setValues(displacementsFunctionSpace_->geometryField());
 }
 
+//! update the copy of the reference geometry field from the current geometry field of the displacementsFunctionSpace
+template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term, bool withLargeOutput>
+void QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term,withLargeOutput>::
+updateReferenceGeometry()
+{
+  assert(geometryReference_);
+  assert(displacementsFunctionSpace_);
+  assert(displacementsFunctionSpace_->geometryField());
+  geometryReference_->setValues(displacementsFunctionSpace_->geometryField());
+}
+
 //! get the displacements function space
 template<typename PressureFunctionSpace, typename DisplacementsFunctionSpace, typename Term, bool withLargeOutput>
 std::shared_ptr<DisplacementsFunctionSpace> QuasiStaticHyperelasticityBase<PressureFunctionSpace,DisplacementsFunctionSpace,Term,withLargeOutput>::

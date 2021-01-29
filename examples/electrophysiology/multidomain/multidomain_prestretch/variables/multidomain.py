@@ -155,6 +155,8 @@ for mu_no in range(n_motor_units):
     "stimulation_frequency": stimulation_frequency,  # [Hz] stimulation frequency for activation
     "jitter": [0.1*random.uniform(-1,1) for i in range(100)]     # [-] random jitter values that will be added to the intervals to simulate jitter
   })
+  
+motor_units = motor_units[0:1]  # for debugging only 1 motor unit
 
 # solvers
 # -------

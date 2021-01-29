@@ -312,7 +312,6 @@ updateReferenceGeometry()
 {
   assert(geometryReference_);
   assert(displacementsFunctionSpace_);
-  assert(displacementsFunctionSpace_->geometryField());
   geometryReference_->setValues(displacementsFunctionSpace_->geometryField());
 }
 

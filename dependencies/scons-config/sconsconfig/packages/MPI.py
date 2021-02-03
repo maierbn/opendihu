@@ -3,6 +3,7 @@ import sys, os
 from .Package import Package
 import subprocess
 import socket
+import tempfile
 
 class MPI(Package):
 
@@ -99,24 +100,26 @@ int main(int argc, char* argv[])
       try:
         # try to get compiler and linker flags from mpicc, this directly has the needed includes paths
         #ctx.Message("Checking MPI "+str(ctx.env["mpiCC"])+" --showme") 
-        cflags_command = "echo '{}' > .a && {} .a --showme:compile; rm .a".format(self.check_text, ctx.env["mpiCC"])
-        ldflags_command = "echo '{}' > .a && {} .a --showme:link; rm .a".format(self.check_text, ctx.env["mpiCC"])
+        tf = tempfile.NamedTemporaryFile(delete=False)
+        temporary_filename = tf.name
+        cflags_command = "echo '{check_text}' > {temporary_filename} && {mpiCC} {temporary_filename} --showme:compile; rm {temporary_filename}".format(check_text=self.check_text, mpiCC=ctx.env["mpiCC"], temporary_filename=temporary_filename)
+        ldflags_command = "echo '{check_text}' > {temporary_filename} && {mpiCC} {temporary_filename} --showme:link; rm {temporary_filename}".format(check_text=self.check_text, mpiCC=ctx.env["mpiCC"], temporary_filename=temporary_filename)
         cflags = subprocess.check_output(cflags_command, shell=True).decode("utf-8")
         ldflags = subprocess.check_output(ldflags_command, shell=True).decode("utf-8")
 
         ctx.Log("cflags: {}\n".format(cflags))
         ctx.Log("ldflags: {}\n".format(ldflags))
 
-        # remove trailing newline and leading .a
+        # remove trailing newline and leading temporary_filename
         try:
           if cflags[-1] == '\n':
             cflags = cflags[:-1]
-          if cflags[:2] == ".a":
-            cflags = cflags[2:]
+          if cflags[:len(temporary_filename)] == temporary_filename:
+            cflags = cflags[len(temporary_filename):]
           if ldflags[-1] == '\n':
             ldflags = ldflags[:-1]
-          if ldflags[:2] == ".a":
-            ldflags = ldflags[2:]
+          if ldflags[:len(temporary_filename)] == temporary_filename:
+            ldflags = ldflags[len(temporary_filename):]
         except:
           ctx.Log("A string error occured.\n")
           raise

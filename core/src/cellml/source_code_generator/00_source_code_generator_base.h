@@ -7,7 +7,11 @@
 #include <sstream>
 #include <list>
 #include <functional>
+#include <vc_or_std_simd.h>
+
+#ifndef HAVE_STDSIMD      // only if we are using Vc, it is not necessary for std::simd
 #include <Vc/Allocator>
+#endif
 
 class CellmlSourceCodeGeneratorBase
 {
@@ -128,7 +132,7 @@ protected:
   std::string sourceFilename_;                 //< file name of provided CellML source file
   std::string singleInstanceCode_;             //< c++ code that computes the rhs for a single instance, as in the original source file. This is needed to compute the equilibrium of states.
 
-  std::vector<double> statesInitialValues_;    //< initial values of the states for one instances, as parsed from source file
+  std::vector<double> statesInitialValues_;    //< initial values of the states for one instance, as parsed from source file
 
   std::vector<std::string> constantAssignments_;  //< source code lines where constant variables are assigned
 

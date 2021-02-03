@@ -1,4 +1,4 @@
-#i Configuration for scons build system
+# Configuration for scons build system
 #
 # For each package the following variables are available:
 # <PACKAGE>_DIR         Location of the package, must contain subfolders "include" and "lib" or "lib64" with header and library files.
@@ -16,20 +16,16 @@
 # 4. Set <PACKAGE>_DOWNLOAD=True or additionally <PACKAGE>_REDOWNLOAD=True to let the build system download and install everything on their own.
 
 # set compiler to use
-cc = "gcc"   # c compiler
-CC = "g++"   # c++ compiler
-mpiCC = "mpic++"
+cc = "gcc"         # C compiler
+CC = "g++"         # C++ compiler
+mpiCC = "mpic++"   # MPI C++ wrapper
+cmake="cmake"      # cmake command
 
-cmake="cmake"
-
-# LAPACK, includes also BLAS, OpenBLAS is used
-LAPACK_DOWNLOAD = True
-
-# PETSc, this downloads and installs MUMPS (direct solver package) and its dependencies PT-Scotch, SCAlapack, ParMETIS, METIS
+# PETSc, this also downloads and installs MUMPS (direct solver package) and its dependencies PT-Scotch, SCAlapack, ParMETIS, METIS
 PETSC_DOWNLOAD = True
 
-# Python 3.6
-PYTHON_DOWNLOAD = True    # This downloads and uses Python, use it to be independent of an eventual system python
+# Python 3.9, note that this also builds the C-API which is usually not included in the normal python3 installation of your system, therefore it is recommended that you leave it at 'True'
+PYTHON_DOWNLOAD = True
 
 # Python packages - they are now all combined with the option PYTHONPACKAGES_DOWNLOAD
 PYTHONPACKAGES_DOWNLOAD = True
@@ -50,40 +46,40 @@ EASYLOGGINGPP_DOWNLOAD = True
 ADIOS_DOWNLOAD = False
 
 # MegaMol, visualization framework of VISUS, optional, needs ADIOS2
-MEGAMOL_DOWNLOAD = False    # install MegaMol from official git repo, but needed is the private repo, ask for access to use MegaMol with opendihu
+MEGAMOL_DOWNLOAD = False    # install MegaMol from official git repo, but needed is the private repo, ask Tobias Rau for access to use MegaMol with opendihu
 
-# Vc, vectorization types and C++ utility to produce vectorized code
+# Vc, vectorization types and C++ utility to produce vectorized code (but does not support AVX-512)
+# std::experimental::simd supports AVX-512, but requires C++17. Therefore the package std_simd includes a compatibility script that falls back to Vc, if C++17 is not available.
 VC_DOWNLOAD = True
+STD_SIMD_DOWNLOAD = True
 
-# xbraid, used for parallel-in time methods
+# xbraid, used for parallel-in time methods (currently only on branch `xbraid`)
 XBRAID_DOWNLOAD = True
 
-# OpenCOR, utility view CellML models and to convert them from xml format to c code
+# OpenCOR, utility to view CellML models and to convert them from xml format to c code
 OPENCOR_DOWNLOAD = True
 
-# preCICE coupling library
-LIBXML2_DOWNLOAD = True
-PRECICE_DOWNLOAD = True
+# preCICE coupling library, set both to True in order to use precice
+LIBXML2_DOWNLOAD = False
+PRECICE_DOWNLOAD = False
 
 # MPI
-# MPI is normally detected by runnig the mpicc command. If this is not available, you can provide the MPI_DIR as usual.
+# MPI is normally detected by running the mpicc command. If this is not available, you can provide the MPI_DIR manually.
 #MPI_DIR = "/usr/lib/openmpi"    # standard path for openmpi on ubuntu 16.04
-MPI_DIR = "/usr/lib/x86_64-linux-gnu/openmpi"    # standard path for openmpi on ubuntu >18.04
+MPI_DIR = "/usr/lib/x86_64-linux-gnu/openmpi"    # standard path for openmpi on ubuntu >= 18.04
 
 # Vectorized code for matrix assembly
 # Set to True for fastest code, set to False for faster compilation
 USE_VECTORIZED_FE_MATRIX_ASSEMBLY = False
+if USE_VECTORIZED_FE_MATRIX_ASSEMBLY:
+  print("Note, USE_VECTORIZED_FE_MATRIX_ASSEMBLY is True in user-variables.scons.py, this means faster programs but longer compilation times.\n")
 
-# chaste and dependencies
-have_chaste = False
-VTK_DOWNLOAD = have_chaste
-HDF5_DOWNLOAD = have_chaste
-XERCESC_DOWNLOAD = have_chaste
-XSD_DOWNLOAD = have_chaste
-#BOOST_DOWNLOAD = have_chaste
-BOOST_DOWNLOAD = False
-CHASTE_DOWNLOAD = have_chaste
+# Use the implementation of std::simd instead of Vc to support AVX-512. This automatically sets the C++ standard from C++14 to C++17
+USE_STDSIMD = False
+if USE_STDSIMD:
+  print("Note, USE_STDSIMD is True and, thus, c++17 will be used.");
 
+# -------------------------------------------------------------------------
 # automatically set MPI_DIR for other systems, like ubuntu 16.04 and Debian
 try:
   import lsb_release
@@ -113,20 +109,14 @@ try:
     del MPI_DIR
     MPI_DOWNLOAD=True
   
-  # on neon use custom cmake
   import socket
-  if socket.gethostname() == "neon" or socket.gethostname() == "helium" or "argon" in socket.gethostname():
-    if os.path.isfile("/home/maierbn/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"):
-      cmake="/home/maierbn/software/cmake/cmake-3.13.3-Linux-x86_64/bin/cmake"
 
-  if "sgscl" in socket.gethostname():
-    MPI_DIR="/scratch-nfs/maierbn/openmpi/install-3.1"
-  
-  elif "lead" in socket.gethostname():
+  # special settings on cluster "lead"
+  if "lead" in socket.gethostname():
     MPI_DIR = os.environ["MPI_HOME"]
-  
+ 
+  # special settings on supercomputer Hawk 
   elif "hawk" in os.environ["SITE_PLATFORM_NAME"]:
-    print("on hawk load the following modules: \"module load adios2/2.5.0 cmake python mkl petsc/3.12.2-int32-shared\"")
     if "MPT_ROOT" in os.environ:
       MPI_DIR = os.environ["MPT_ROOT"]
     else:
@@ -141,13 +131,6 @@ try:
     XBRAID_DOWNLOAD = True
     ADIOS_DOWNLOAD = False
     ADIOS_DIR = os.environ["ADIOS2_ROOT"]
-#    cc = "mpicc -cc="+os.environ["CC"]
-#    CC = "mpicxx -cxx=g++ -ftemplate-backtrace-limit=0"   
-#    CC = "mpicxx -cxx="+os.environ["CXX"]+" -ftemplate-backtrace-limit=0"   
-#    cc = "icc"
-#    CC = "icpc "  
-#    cc = "clang"
-#    CC = "clang++"
 except:
   pass
 
@@ -159,7 +142,7 @@ if False:
 
 #PETSC_DEBUG = True            # this enables debugging flags such that valgrind memcheck can track MPI errors
 
-# specialized settings for supercomputer (HazelHen)
+# specialized settings for supercomputer HazelHen, this is left here in case there will be another Cray supercomputer
 import os
 if os.environ.get("PE_ENV") is not None:  # if on hazelhen
   cc = "cc"   # C compiler wrapper
@@ -178,18 +161,11 @@ if os.environ.get("PE_ENV") is not None:  # if on hazelhen
 
   # do not use buggy python packages
   PYTHONPACKAGES_DOWNLOAD = False
-
-  #MPI_DIR = os.environ.get("CRAY_MPICH_DIR")
-  #LAPACK_DOWNLOAD = False
-  #LAPACK_DIR = os.environ.get("CRAY_LIBSCI_PREFIX_DIR")
-  #PETSC_DOWNLOAD = False
-  #PETSC_DIR = os.environ.get("PETSC_DIR")
-#else:
-#  print("...no more changes.")
-#Steps for getting started on HazelHen
-#   module swap PrgEnv-cray/6.0.4 PrgEnv-gnu  # to switch to GNU programming environment, however also Intel and Cray environments work
-#   module load cray-libsci
-#   module load cray-petsc  (or cray-petsc-64 for big data)
+  
+  # steps for getting started on HazelHen:
+  #   module swap PrgEnv-cray/6.0.4 PrgEnv-gnu  # to switch to GNU programming environment, however also Intel and Cray environments work
+  #   module load cray-libsci
+  #   module load cray-petsc  (or cray-petsc-64 for big data)
 
 
 

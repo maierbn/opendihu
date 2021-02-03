@@ -19,13 +19,15 @@ from create_partitioned_meshes_for_settings import *   # file create_partitioned
 
 # if first argument contains "*.py", it is a custom variable definition file, load these values
 if ".py" in sys.argv[0]:
-  variables_file = sys.argv[0]
-  variables_module = variables_file[0:variables_file.find(".py")]
+  variables_path_and_filename = sys.argv[0]
+  variables_path,variables_filename = os.path.split(variables_path_and_filename)  # get path and filename 
+  sys.path.insert(0, os.path.join(script_path,variables_path))                    # add the directory of the variables file to python path
+  variables_module,_ = os.path.splitext(variables_filename)                       # remove the ".py" extension to get the name of the module
   
   if rank_no == 0:
-    print("Loading variables from {}.".format(variables_file))
+    print("Loading variables from \"{}\".".format(variables_path_and_filename))
     
-  custom_variables = importlib.import_module(variables_module)
+  custom_variables = importlib.import_module(variables_module, package=variables_filename)    # import variables module
   variables.__dict__.update(custom_variables.__dict__)
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
@@ -229,9 +231,9 @@ def postprocess(result):
 # define the config dict
 config = {
   "scenarioName":                  variables.scenario_name,
-  "mappingsBetweenMeshesLogFile":  "out/mappings_between_meshes.txt",
+  "mappingsBetweenMeshesLogFile":  "out/" + variables.scenario_name + "/mappings_between_meshes.txt",
   "logFormat":                     "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
-  "solverStructureDiagramFile":    "out/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "solverStructureDiagramFile":    "out/" + variables.scenario_name + "/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "meta": {                 # additional fields that will appear in the log
     "partitioning": [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
@@ -343,7 +345,7 @@ config = {
                       "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                       
                       "meshName":                               "MeshFiber_{}".format(fiber_no),                # reference to the fiber mesh
-                      "stimulationLogFilename":                 "out/stimulation.log",                          # a file that will contain the times of stimulations
+                      "stimulationLogFilename":                 "out/" + variables.scenario_name + "/stimulation.log",                          # a file that will contain the times of stimulations
                     },      
                     "OutputWriter" : [
                       {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/0D_states({},{})".format(fiber_in_subdomain_coordinate_x,fiber_in_subdomain_coordinate_y), "binary": True, "fixedFormat": False, "combineFiles": True}

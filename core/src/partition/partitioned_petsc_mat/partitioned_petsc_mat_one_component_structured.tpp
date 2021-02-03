@@ -224,7 +224,12 @@ void PartitionedPetscMatOneComponent<FunctionSpace::FunctionSpace<MeshType,Basis
 setValue(Vc::int_v rows, Vc::int_v columns, Vc::double_v values, InsertMode mode)
 {
   std::array<double,Vc::double_v::size()> data;
+
+#ifdef HAVE_STDSIMD
+  values.copy_to(data.data(), std::experimental::vector_aligned);
+#else
   values.store(data.data());
+#endif
 
   // this wraps the standard PETSc MatSetValue on the local matrix
   PetscErrorCode ierr;

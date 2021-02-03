@@ -70,36 +70,6 @@ The default FunctionSpace is `FunctionSpace::Generic` which is the following typ
 
 .. code-block:: python
 
-  "CellML" : {
-    "modelFilename":                          "../../input/hodgkin_huxley_1952.c",    # input C++ source file or cellml XML file
-    #"statesInitialValues":                   [],                                             # if given, the initial values for the the states of one instance
-    "initializeStatesToEquilibrium":          False,                                          # if the equilibrium values of the states should be computed before the simulation starts
-    "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
-    
-    # optimization parameters
-    "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
-    "approximateExponentialFunction":         True,                                          # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
-    "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
-    "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
-    
-    # stimulation callbacks
-    #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current
-    #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_specific_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-    "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setSpecificParameters
-    #"setSpecificStatesCallInterval":         2*int(1./variables.stimulation_frequency/variables.dt_0D),       # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
-    "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
-    "setSpecificStatesCallFrequency":         variables.get_specific_states_call_frequency(fiber_no, motor_unit_no),   # set_specific_states should be called variables.stimulation_frequency times per ms
-    "setSpecificStatesFrequencyJitter":       variables.get_specific_states_frequency_jitter(fiber_no, motor_unit_no), # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
-    "setSpecificStatesRepeatAfterFirstCall":  0.01,                                                            # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
-    "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),# [ms] first time when to call setSpecificStates
-    "additionalArgument":                     fiber_no,
-    
-    "mappings":                               mappings,                             # mappings between parameters and algebraics/constants and between connectorSlots and states, algebraics or parameters, they are defined in helper.py
-    "parametersInitialValues":                parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-    
-    "meshName":                               "MeshFiber_{}".format(fiber_no),
-    "stimulationLogFilename":                 "out/stimulation.log",
-  }  
   "CellML": {
     "modelFilename":                          "../../input/hodgkin_huxley_1952.c",    # CellML file (xml) or C++ source file
     #"libraryFilename":                       "cellml_simd_lib.so",                   # (optional) filename of a compiled library, overrides modelFilename
@@ -108,8 +78,8 @@ The default FunctionSpace is `FunctionSpace::Generic` which is the following typ
     "initializeStatesToEquilibriumTimestepWidth": 1e-4,                               # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
    
     # optimization parameters
-    "optimizationType":                       "simd",                                 # "vc", "simd", "openmp": type of generated optimizated source file
-    "approximateExponentialFunction":         True,                                   # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+    "optimizationType":                       "simd",                                 # "vc", "simd", "openmp" or "gpu": type of generated optimizated source file
+    "approximateExponentialFunction":         True,                                   # if optimizationType is "vc" or "gpu", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
     "compilerFlags":                          "-fPIC -O3 -march=native -shared ",     # compiler flags used to compile the optimized model code
     "maximumNumberOfThreads":                 0,                                      # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
     
@@ -128,12 +98,12 @@ The default FunctionSpace is `FunctionSpace::Generic` which is the following typ
     
     "mappings": {                                                                     # mappings between parameters and algebraics/constants and between connectorSlots and states, algebraics or parameters
       ("parameter", 0):           ("constant", "membrane/i_Stim"),                    # parameter 0 is mapped to constant with name "membrane/i_Stim"
-      ("connectorSlot", 0): ("state", "membrane/V"),                            # as output connector slot 0 expose state with name "membrane/V"
+      ("connectorSlot", 0):       ("state", "membrane/V"),                            # as output connector slot 0 expose state with name "membrane/V"
     },
     
-    #"algebraicsForTransfer":              [],                                    # alternative way of specifying "mappings": which algebraic values to use in further computation
+    #"algebraicsForTransfer":                 [],                                    # alternative way of specifying "mappings": which algebraic values to use in further computation
     #"statesForTransfer":                     [0],                                   # alternative way of specifying "mappings": which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
-    #"parametersUsedAsAlgebraic":          [32],                                  # alternative way of specifying "mappings": list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+    #"parametersUsedAsAlgebraic":             [32],                                  # alternative way of specifying "mappings": list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
     #"parametersUsedAsConstant":              [65],                                  # alternative way of specifying "mappings": list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
     "parametersInitialValues":                [0.0, 1.0],                            # initial values for the parameters, e.g. I_Stim, l_hs
     "meshName":                               "MeshFiber_{}".format(fiber_no),
@@ -500,7 +470,9 @@ A file name of an output file that will contain all firing times.
 
 optimizationType
 --------------------
-Possible values: ``simd``, ``vc``, ``openmp``. Which type of code to generate. ``openmp`` produces code for shared-memory parallelization, using OpenMP. ``simd`` produces auto-vectorizable code. ``vc`` produces explicitly vectorized code (fastest).
+Possible values: ``simd``, ``vc``, ``openmp`` or ``gpu``. Which type of code to generate. ``openmp`` produces code for shared-memory parallelization, using OpenMP. ``simd`` produces auto-vectorizable code. ``vc`` produces explicitly vectorized code (fastest). ``gpu`` is only available if the :doc:`fast_monodomain_solver` is used.
+
+See also the notes on ``vc`` about AVX-512 on the page of :doc:`fast_monodomain_solver`.
 
 compilerFlags
 -----------------

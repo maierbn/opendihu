@@ -50,7 +50,8 @@ void scaleFibersInFile(std::string inputFilename, std::string outputFilename, do
   fileOld.read(headerBuffer.data(), 32+headerLength);
 
   // set first 32 bytes
-  strncpy(headerBuffer.data(), "opendihu fibers file            ", 32);
+  const char headerText[] = "opendihu fibers file            ";
+  std::memcpy(headerBuffer.data(), headerText, 32);
   fileNew.write(headerBuffer.data(), 32+headerLength);
 
   // write new date

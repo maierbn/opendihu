@@ -599,20 +599,7 @@ setValue(int componentNo, Vc::int_v dofLocalNo, Vc::double_v value, InsertMode p
   assert(this->values_);
 
   // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
-  int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
-/*
-  // store Vc vectors in order to get the raw memory
-  std::array<double,Vc::double_v::size()> data;
-//  for (int i = 0; i < Vc::double_v::size(); i++)
-//    data[i] = value[i];
-  
-  value.store(data.data(),Vc::Aligned);
-
-  std::array<int,Vc::int_v::size()> indices;
-  dofLocalNo.store(indices.data());
-  VLOG(1) << "setValue(componentNo=" << componentNo << ", dofLocalNo=" << dofLocalNo << ", value=" << value << ")";
-  VLOG(1) << "indices: " << indices << ", data: " << data;
-*/
+  int nEntries = Vc::double_v::size() - Vc::count(Vc::isnegative(dofLocalNo));
   this->values_->setValues(componentNo, nEntries, (PetscInt *)&dofLocalNo, (double *)&value, petscInsertMode);
 }
 
@@ -627,10 +614,15 @@ setValue(int componentNo, Vc::int_v dofLocalNo, double value, InsertMode petscIn
 
   // store Vc vectors in order to get the raw memory
   std::array<int,Vc::int_v::size()> indices;
+
+#ifdef HAVE_STDSIMD
+  dofLocalNo.copy_to(indices.data(), std::experimental::vector_aligned);
+#else
   dofLocalNo.store(indices.data());
+#endif
 
   // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
-  int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
+  int nEntries = Vc::double_v::size() - Vc::count(Vc::isnegative(dofLocalNo));
 
   this->values_->setValues(componentNo, nEntries, indices.data(), data.data(), petscInsertMode);
 }
@@ -716,6 +708,9 @@ template<typename FunctionSpaceType, int nComponents>
 void FieldVariableSetGetStructured<FunctionSpaceType,nComponents>::
 setValuesWithGhosts(const std::vector<std::array<double,nComponents>> &values, InsertMode petscInsertMode)
 {
+  if (values.size() != this->functionSpace_->meshPartition()->nDofsLocalWithGhosts())
+    LOG(ERROR) << "setValuesWithGhosts, values.size(): " << values.size() << ", function space \"" << this->functionSpace_->meshName() << "\" has "
+      << this->functionSpace_->meshPartition()->nDofsLocalWithGhosts() << " dofs local with ghosts.";
   assert(values.size() == this->functionSpace_->meshPartition()->nDofsLocalWithGhosts());
   
   this->setValues(this->functionSpace_->meshPartition()->dofNosLocal(), values, petscInsertMode);

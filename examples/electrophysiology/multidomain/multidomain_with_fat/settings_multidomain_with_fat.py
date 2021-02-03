@@ -25,18 +25,20 @@ from create_partitioned_meshes_for_settings import *   # file create_partitioned
 
 # if first argument contains "*.py", it is a custom variable definition file, load these values
 if ".py" in sys.argv[0]:
-  variables_file = sys.argv[0]
-  variables_module = variables_file[0:variables_file.find(".py")]
+  variables_path_and_filename = sys.argv[0]
+  variables_path,variables_filename = os.path.split(variables_path_and_filename)  # get path and filename 
+  sys.path.insert(0, os.path.join(script_path,variables_path))                    # add the directory of the variables file to python path
+  variables_module,_ = os.path.splitext(variables_filename)                       # remove the ".py" extension to get the name of the module
   
   if rank_no == 0:
-    print("Loading variables from {}.".format(variables_file))
+    print("Loading variables from \"{}\".".format(variables_path_and_filename))
     
-  custom_variables = importlib.import_module(variables_module)
+  custom_variables = importlib.import_module(variables_module, package=variables_filename)    # import variables module
   variables.__dict__.update(custom_variables.__dict__)
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
   if rank_no == 0:
-    print("Warning: There is no variables file, e.g:\n ./multidomain_with_fat ../settings_multidomain_with_fat.py debug.py\n")
+    print("Warning: There is no variables file, e.g:\n ./multidomain_with_fat ../settings_multidomain_with_fat.py ramp_emg.py\n")
   exit(0)
   
 # -------------------------------------------------------- begin parameters ---------------------------------------------------------
@@ -176,7 +178,7 @@ multidomain_solver = {
       "solverName":                   "potentialFlowSolver",
       "prefactor":                    1.0,
       "dirichletBoundaryConditions":  variables.potential_flow_dirichlet_bc,
-      "dirichletOutputFilename":      "out/dirichlet_potential_flow",               # output filename for the dirichlet boundary conditions, set to "" to have no output
+      "dirichletOutputFilename":      "out/" + variables.scenario_name + "/dirichlet_potential_flow",               # output filename for the dirichlet boundary conditions, set to "" to have no output
       "neumannBoundaryConditions":    [],
       "inputMeshIsGlobal":            True,
       "slotName":                     "",
@@ -218,7 +220,7 @@ multidomain_solver = {
   },
   
   "OutputWriter" : [
-    {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep_multidomain), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
+    {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep_multidomain), "filename": "out/" + variables.scenario_name + "/output", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
     #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02", "fileNumbering": "incremental"},
     #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True, "fileNumbering": "incremental"},
   ]
@@ -323,7 +325,7 @@ config = {
               "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
               
               "meshName":                               "3Dmesh",
-              "stimulationLogFilename":                 "out/stimulation.log",
+              "stimulationLogFilename":                 "out/" + variables.scenario_name + "/stimulation.log",
             },
 						"OutputWriter" : [
               {"format": "Paraview", "outputInterval": (int)(1./variables.dt_0D*variables.output_timestep_0D_states), "filename": "out/" + variables.scenario_name + "/0D_states_compartment_{}".format(compartment_no), "binary": False, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
@@ -336,13 +338,16 @@ config = {
       "MultidomainSolver" : multidomain_solver,
       "OutputSurface": {        # version for fibers_emg_2d_output
         "OutputWriter": [
-          {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep_multidomain), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
+          {"format": "Paraview", "outputInterval": int(1./variables.dt_multidomain*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
         ],
         #"face":                    ["1+","0+"],         # which faces of the 3D mesh should be written into the 2D mesh
         "face":                     ["1+"],              # which faces of the 3D mesh should be written into the 2D mesh
         "samplingPoints":           variables.hdemg_electrode_positions,    # the electrode positions, they are created in the helper.py script
         "updatePointPositions":     False,               # the electrode points should be initialize in every timestep (set to False for the static case). This makes a difference if the muscle contracts, then True=fixed electrodes, False=electrodes moving with muscle.
         "filename":                 "out/{}/electrodes.csv".format(variables.scenario_name),
+        "enableCsvFile":            True,                # if the values at the sampling points should be written to csv files
+        "enableVtpFile":            False,               # if the values at the sampling points should be written to vtp files
+        "enableGeometryInCsvFile":  False,               # if the csv output file should contain geometry of the electrodes in every time step. This increases the file size and only makes sense if the geometry changed throughout time, i.e. when computing with contraction
         "xiTolerance":              0.3,                 # tolerance for element-local coordinates xi, for finding electrode positions inside the elements. Increase or decrease this numbers if not all electrode points are found.
         "MultidomainSolver":        multidomain_solver,
       }

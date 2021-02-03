@@ -52,8 +52,8 @@ sconsconfig.select(
     #packages.Sphinx(required=True),
     #packages.libcellml(required=True),# relies on libxml2 and SWIG
     packages.SEMT(required=False),     # This is a small C++ symbolic differentiation toolbox that is used for solid mechanics.
-    packages.MegaMol(required=False),  # Adds the MegaMol visualization framework
     packages.ADIOS(required=False),    # ADIOS, a library that handles efficient and parallel data output
+    #packages.MegaMol(required=False),  # Adds the MegaMol visualization framework
     #packages.VTK(required=False),     # VTK, needed only for chaste
     #packages.HDF5(required=False),    # The parallel output library HDF5, compiled with --enable-parallel as needed for chaste, the version that Petsc can download does not have this feature
     #packages.XercesC(required=False), # XML-parser, needed for chaste
@@ -61,6 +61,7 @@ sconsconfig.select(
     #packages.boost(required=False),   # boost C++ library, needed for chaste
     #packages.Chaste(required=False),  # The Chaste framework, only the nonlinear mechanics solver is used
     packages.Vc(required=True),        # The Vc types for explicit vectorization
+    packages.std_simd(required=True),  # std::simd vectorization library that needs C++17
     packages.xbraid(required=False),   # framework for multigrid in time methods 
     packages.OpenCOR(required=False),  # binary that converts CellML files from xml to c
     packages.libxml2(required=False),  # parser for xml files, needed for precice
@@ -82,6 +83,7 @@ vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different
                       allowed_values=('debug', 'release', 'releasewithdebuginfo', 'preprocess', 'assembly'), ignorecase = 2, 
                       map={'d':'debug', 'r':'release', 'rd':'releasewithdebuginfo', 'dr':'releasewithdebuginfo', 'p':'preprocess'}))
 vars.Add(BoolVariable('travis_ci', 'Do not compile and run tests, but compile all examples.', 0))
+vars.Add(BoolVariable('circle_ci', 'Subset of unit tests for circle ci (has limited parallel capabilities.)', 0))
 vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
 vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
 vars.Add(BoolVariable('gprof', 'Include flags for gprof profiling.', False))
@@ -94,6 +96,7 @@ vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the
 vars.Add(BoolVariable('VERBOSE', 'Output raw shell commands for compilation.', False))
 vars.Add(BoolVariable('ph', 'Build precompiled headers.', False))
 vars.Add(BoolVariable('USE_VECTORIZED_FE_MATRIX_ASSEMBLY', 'Enable code that matrix assembly for FEM matrices uses the Vc library.', False))
+vars.Add(BoolVariable('USE_STDSIMD', 'Use the std::experimental::simd library which supports AVX-512, instead of Vc. This automatically changes c++14 to c++17.', False))
 vars.Add('mpicc', help='The mpicc compiler wrapper', default='mpicc')
 vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
 vars.Add('cc', help='The c compiler', default='gcc')
@@ -137,14 +140,17 @@ env['CC'] = env['cc']
 if not 'cmake' in env:
   env['cmake'] = 'cmake'
 
-# Create configuration environment, passing the set of custom tests.
-sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
+if not env.GetOption('clean'):
+  # avoid Configure if we only clean targets
 
-# Run custom tests with any options needed.
-sconsconfig.check(sconf)
+  # Create configuration environment, passing the set of custom tests.
+  sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
 
-# Finish the configuration and save it to file.
-sconf.Finish()
+  # Run custom tests with any options needed.
+  sconsconfig.check(sconf)
+
+  # Finish the configuration and save it to file.
+  sconf.Finish()
 
 # disable unit tests on hazel hen
 if os.environ.get("PE_ENV") is not None:  # if on hazelhen
@@ -288,11 +294,17 @@ else:
     if "ZLIB_ROOT" not in os.environ:
       print("ERROR: $ZLIB_ROOT is not set. Did you forget to `module load zlib`?")
     env["CXX"] = os.path.join(opendihu_home, "scripts/fake-scorep.sh")
+  if env["circle_ci"]:
+    env.MergeFlags('-DHAVE_CIRCLE_CI')
 
 # flags to always include, except with cray compiler
 if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:
   env.MergeFlags('-Wunused-variable')   # always warn about unused variables
-  env.MergeFlags('-std=c++14 -fopenmp')
+  env.MergeFlags('-fopenmp')
+  if env["USE_STDSIMD"]:
+    env.MergeFlags('-std=c++17')
+  else:
+    env.MergeFlags('-std=c++14')
   if "ppc" in platform.processor():
     env.MergeFlags('-mcpu=native -mtune=native')
   else:

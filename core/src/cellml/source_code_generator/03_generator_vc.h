@@ -5,8 +5,12 @@
 #include "cellml/source_code_generator/02_generator_openmp.h"
 
 #include <functional>
-#include <Vc/Allocator>
 #include <set>
+#include <vc_or_std_simd.h>
+
+#ifndef HAVE_STDSIMD      // only if we are using Vc, it is not necessary for std::simd
+#include <Vc/Allocator>
+#endif
 
 class CellmlSourceCodeGeneratorVc :
   public CellmlSourceCodeGeneratorOpenMp
@@ -17,15 +21,16 @@ public:
 
   //! write the source file with explicit vectorization using Vc
   //! The file contains the source for the total solve the rhs computation
-  void generateSourceFileVcFastMonodomain(std::string outputFilename, bool approximateExponentialFunction);
+  void generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExponentialFunction);
 
 protected:
 
   //! create Vc constructs for scalar functions (ternary operator) and pow/exp functions
-  void preprocessCode(std::set<std::string> &helperFunctions);
+  //! if useVc is false, no Vc:: constructs will be employed
+  void preprocessCode(std::set<std::string> &helperFunctions, bool useVc = true);
 
   //! define "pow" and "exponential" helper functions
-  std::string defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateExponentialFunction);
+  std::string defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateExponentialFunction, bool useVc, bool useReal = true);
 
   //! Write the source file with explicit vectorization using Vc
   //! The file contains the source for only the rhs computation

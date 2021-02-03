@@ -506,15 +506,9 @@ void FieldVariableSetGetUnstructured<FunctionSpaceType,nComponents>::
 setValue(int componentNo, Vc::int_v dofLocalNo, Vc::double_v value, InsertMode petscInsertMode)
 {
   assert(this->values_);
-  /*std::array<double,Vc::double_v::size()> data;
-  value.store(data.data());
 
-  // store Vc vectors in order to get the raw memory
-  std::array<int,Vc::double_v::size()> indices;
-  dofLocalNo.store(indices.data());
-*/
   // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
-  int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
+  int nEntries = Vc::double_v::size() - Vc::count(Vc::isnegative(dofLocalNo));
 
   this->values_->setValues(componentNo, nEntries, (PetscInt *)&dofLocalNo, (double *)&value, petscInsertMode);
 }
@@ -533,7 +527,7 @@ setValue(int componentNo, Vc::int_v dofLocalNo, double value, InsertMode petscIn
   dofLocalNo.store(indices.data());
 */
   // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
-  int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
+  int nEntries = Vc::double_v::size() - Vc::count(Vc::isnegative(dofLocalNo));
 
   this->values_->setValues(componentNo, nEntries, (PetscInt *)&dofLocalNo, (double *)&value, petscInsertMode);
 }

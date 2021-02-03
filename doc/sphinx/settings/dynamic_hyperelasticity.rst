@@ -71,6 +71,8 @@ Most of them are also present in the :doc:`HyperelasticitySolver <hyperelasticit
     #"loadFactors":                [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
     #"loadFactors":                [0.5, 1.0],                   # load factors for every timestep
     "loadFactors":                [],                           # no load factors, solve problem directly
+    "loadFactorGiveUpThreshold":  4e-2,                         # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the progression between two subsequent load factors gets smaller than this value, the solution is aborted.
+    "scaleInitialGuess":          False,                        # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
     "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
     
     # boundary and initial conditions
@@ -88,6 +90,11 @@ Most of them are also present in the :doc:`HyperelasticitySolver <hyperelasticit
     "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
     
     "dirichletOutputFilename":     "out/"+scenario_name+"/dirichlet_boundary_conditions_tendon",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+    "totalForceLogFilename":       "out/muscle_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
+    "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
+    "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
+    "totalForceTopElementNosGlobal":     [(nz-1)*ny*nx + j*nx + i for j in range(ny) for i in range(nx)],   # global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal
+
     
     # define which file formats should be written
     # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.

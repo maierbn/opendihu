@@ -1,4 +1,4 @@
-#include "control/precice/volume_coupling/partitioned_fibers.h"
+#include "control/precice/old/partitioned_fibers.h"
 
 #include <sstream>
 

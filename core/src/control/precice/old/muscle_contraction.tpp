@@ -1,4 +1,4 @@
-#include "control/precice/volume_coupling/muscle_contraction.h"
+#include "control/precice/old/muscle_contraction.h"
 
 #include <sstream>
 

@@ -1,12 +1,10 @@
-#include "control/precice/surface_coupling/precice_adapter.h"
-
-#include <sstream>
+#include "control/precice/volume_coupling/precice_adapter_volume_coupling.h"
 
 namespace Control
 {
 
 template<typename NestedSolver>
-void PreciceAdapter<NestedSolver>::
+void PreciceAdapterVolumeCoupling<NestedSolver>::
 run()
 {
 #ifdef HAVE_PRECICE
@@ -44,9 +42,11 @@ run()
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
     {
-      LOG(INFO) << "PreCICE surface coupling, timestep " << timeStepNo << ", t=" << currentTime;
+      LOG(INFO) << "PreCICE volume coupling, timestep " << timeStepNo << ", t=" << currentTime;
     }
 
+    // checkpointing is not implemented in the volume coupling adapter
+#if 0
     // determine if checkpoint needs to be written
     if (this->preciceSolverInterface_->isActionRequired(precice::constants::actionWriteIterationCheckpoint()))
     {
@@ -54,6 +54,7 @@ run()
       this->saveCheckpoint(currentTime);
       this->preciceSolverInterface_->markActionFulfilled(precice::constants::actionWriteIterationCheckpoint());
     }
+#endif
 
     // read incoming values
     this->preciceReadData();
@@ -80,12 +81,15 @@ run()
     LOG(DEBUG) << "precice::advance(" << timeStepWidth << "), maximumPreciceTimestepSize_: " << this->maximumPreciceTimestepSize_;
 
     // if coupling did not converge, reset to previously stored checkpoint
+    // checkpointing is not implemented in the volume coupling adapter
+#if 0
     if (this->preciceSolverInterface_->isActionRequired(precice::constants::actionReadIterationCheckpoint()))
     {
       // set variables back to last checkpoint
       currentTime = this->loadCheckpoint();
       this->preciceSolverInterface_->markActionFulfilled(precice::constants::actionReadIterationCheckpoint());
     }
+#endif
 
     // if the current time step did converge and subcycling is complete
     if (this->preciceSolverInterface_->isTimeWindowComplete())
@@ -108,7 +112,7 @@ run()
 }
 
 template<typename NestedSolver>
-void PreciceAdapter<NestedSolver>::
+void PreciceAdapterVolumeCoupling<NestedSolver>::
 reset()
 {
   this->nestedSolver_.reset();
@@ -118,7 +122,7 @@ reset()
 }
 
 template<typename NestedSolver>
-typename PreciceAdapter<NestedSolver>::Data &PreciceAdapter<NestedSolver>::
+typename PreciceAdapterVolumeCoupling<NestedSolver>::Data &PreciceAdapterVolumeCoupling<NestedSolver>::
 data()
 {
   // get a reference to the data object

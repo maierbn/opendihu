@@ -107,4 +107,4 @@ protected:
 
 }  // namespace
 
-#include "control/precice/contraction_dirichlet_boundary_conditions.tpp"
+#include "control/precice/old/contraction_dirichlet_boundary_conditions.tpp"

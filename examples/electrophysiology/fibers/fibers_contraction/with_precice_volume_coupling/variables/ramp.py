@@ -120,16 +120,22 @@ sampling_stride_x = 4
 sampling_stride_y = 4
 sampling_stride_z = 200
 
+# input files
+import os
+input_directory   = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
+
+#fiber_file        = input_directory + "/2x2fibers.bin"
+#fiber_file        = input_directory + "/7x7fibers.bin"
+fiber_file        = input_directory + "/left_biceps_brachii_7x7fibers.bin"
+firing_times_file = input_directory + "/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs.txt"
+cellml_file       = input_directory + "/new_slow_TK_2014_12_08.cellml"
+
 # other options
 paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-fiber_file = "../../../../input/2x2fibers.bin"
-fiber_file = "../../../../input/7x7fibers.bin"
-firing_times_file = "../../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-fiber_distribution_file = "../../../../input/MU_fibre_distribution_10MUs.txt"
-cellml_file = "../../../../input/new_slow_TK_2014_12_08.cellml"
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):

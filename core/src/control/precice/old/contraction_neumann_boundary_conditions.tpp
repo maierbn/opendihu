@@ -1,4 +1,4 @@
-#include "control/precice/contraction_neumann_boundary_conditions.h"
+#include "control/precice/old/contraction_neumann_boundary_conditions.h"
 
 #include "spatial_discretization/neumann_boundary_conditions/01_neumann_boundary_conditions.h"
 

@@ -145,3 +145,6 @@ only_neurons:
 
 contraction_no_precice:
 	cd examples/electrophysiology/fibers/fibers_contraction/no_precice && $(python) ../../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG
+
+with_precice_volume_coupling:
+	cd examples/electrophysiology/fibers/fibers_contraction/with_precice_volume_coupling && $(python) ../../../../../dependencies/scons/scons.py BUILD_TYPE=DEBUG

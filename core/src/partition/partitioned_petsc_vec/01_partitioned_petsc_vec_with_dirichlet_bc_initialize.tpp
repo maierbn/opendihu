@@ -4,7 +4,6 @@
 #include "spatial_discretization/dirichlet_boundary_conditions/00_dirichlet_boundary_conditions_base.h"
 
 #define USE_MPI_RMA       // whether to use MPI rma, if not, use MPI_Alltoall
-#define USE_MPI_ALLOC       // only effective if USE_MPI_RMA is set, whether to use MPI_Alloc, otherwise uses MPI_Create
 
 template<typename FunctionSpaceType, int nComponents, int nComponentsDirichletBc>
 void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nComponentsDirichletBc>::

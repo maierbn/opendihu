@@ -240,7 +240,7 @@ getString(bool horizontal, std::string vectorName) const
       {
         if (i != 0)
           result << separator;
-        result << (fabs(displacementEntries[i].second[componentNo]) < 1e-14? 0 : displacementEntries[i].second[componentNo]);
+        result << displacementEntries[i].first << ":" << (fabs(displacementEntries[i].second[componentNo]) < 1e-13? 0 : displacementEntries[i].second[componentNo]);
       }
 
       // end of component
@@ -267,7 +267,7 @@ getString(bool horizontal, std::string vectorName) const
     {
       if (i != 0)
         result << separator;
-      result << (fabs(pressureEntries[i].second) < 1e-14? 0 : pressureEntries[i].second);
+      result << pressureEntries[i].first << ":" << (fabs(pressureEntries[i].second) < 1e-13? 0 : pressureEntries[i].second);
     }
 
     if (horizontal)

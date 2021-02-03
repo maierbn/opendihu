@@ -288,6 +288,7 @@ setPressureFunctionSpace(std::shared_ptr<PressureFunctionSpace> pressureFunction
   geometryReferenceLinearMesh_->setValues(pressureFunctionSpace_->geometryField());
 
   // communicate ghost values
+  geometryReferenceLinearMesh_->setRepresentationGlobal();
   geometryReferenceLinearMesh_->startGhostManipulation();
   geometryReferenceLinearMesh_->setRepresentationGlobal();
 }
@@ -309,6 +310,7 @@ setDisplacementsFunctionSpace(std::shared_ptr<DisplacementsFunctionSpace> displa
   geometryReference_->setValues(displacementsFunctionSpace_->geometryField());
 
   // communicate ghost values
+  geometryReference_->setRepresentationGlobal();
   geometryReference_->startGhostManipulation();
   geometryReference_->setRepresentationGlobal();
 }
@@ -327,9 +329,11 @@ updateReferenceGeometry()
   geometryReferenceLinearMesh_->setValues(pressureFunctionSpace_->geometryField());
 
   // communicate ghost values
+  geometryReference_->setRepresentationGlobal();
   geometryReference_->startGhostManipulation();
   geometryReference_->setRepresentationGlobal();
 
+  geometryReferenceLinearMesh_->setRepresentationGlobal();
   geometryReferenceLinearMesh_->startGhostManipulation();
   geometryReferenceLinearMesh_->setRepresentationGlobal();
 }

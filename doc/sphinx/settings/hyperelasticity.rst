@@ -311,7 +311,8 @@ The following shows all possible options. The meaning can be learned from the co
     #"loadFactors":                [0.5, 1.0],                   # load factors for every timestep
     #"loadFactors":                list(np.logspace(-3,0,4)),    # load factors, equally spaced in log space: (1e-3, 1e-2, 1e-1, 1)
     "loadFactors":                [],                           # no load factors, solve problem directly
-    "scaleInitialGuess":          True,                         # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
+    "loadFactorGiveUpThreshold":  4e-2,                         # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the progression between two subsequent load factors gets smaller than this value, the solution is aborted.
+    "scaleInitialGuess":          False,                        # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
     "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
     
     # boundary and initial conditions
@@ -438,7 +439,14 @@ Examples for load factors:
   list(np.logspace(-2,0,10)),   # use 10 equidistant load factors in [0,1] in log space
   [0.5, 1.0],
   [],                           # no load factors, solve problem directly
-  
+
+loadFactorGiveUpThreshold
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When a computation diverges, it is automatically retried with a load factor that is half as large as the failed load step. 
+This can lead to the load factors getting smaller and smaller without any successfull solution. In such a case it is desirable to abort the computation.
+If the progression between two subsequent load factors gets smaller than this threshold value, the solution is finally considered diverged and the computation continues with the next solver.
+    
 scaleInitialGuess
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 (default: False) After a load step has been computed, scale the resulting solution that is used as the initial guess for the next load step.

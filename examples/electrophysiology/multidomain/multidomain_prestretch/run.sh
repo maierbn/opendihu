@@ -24,3 +24,6 @@ example_dir=$OPENDIHU_HOME/examples/electrophysiology/multidomain/multidomain_pr
 $example_dir/build_release/multidomain_prestretch_dummy \
   $example_dir/settings_prestretch.py $dir/shortened.py
 
+mpirun -n 4 ./precontraction ../settings_precontraction.py precontraction.py 
+mpirun -n 2 ./precontraction_prestretch ../settings_precontraction_prestretch.py precontraction_prestretch.py
+mpirun -n 2 ./multidomain_prestretch ../settings_multidomain_prestretch.py multidomain.py

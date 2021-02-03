@@ -172,10 +172,10 @@ fiber_distribution_file = input_directory+"/MU_fibre_distribution_10MUs.txt"
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
-sampling_stride_x = 1
-sampling_stride_y = 1
-sampling_stride_z = 50
-sampling_stride_fat = 1
+sampling_stride_x = 1     # 3
+sampling_stride_y = 1     # 3
+sampling_stride_z = 50    # 86
+sampling_stride_fat = 1   # 1
 
 # how much of the multidomain mesh is used for elasticity
 sampling_factor_elasticity_x = 0.7   

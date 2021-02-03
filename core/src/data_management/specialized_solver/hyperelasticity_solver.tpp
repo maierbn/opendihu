@@ -286,6 +286,11 @@ setPressureFunctionSpace(std::shared_ptr<PressureFunctionSpace> pressureFunction
   // set the geometry field of the reference configuration as copy of the geometry field of the function space
   geometryReferenceLinearMesh_ = std::make_shared<DisplacementsLinearFieldVariableType>(pressureFunctionSpace_->geometryField(), "geometryReferenceLinearMesh");
   geometryReferenceLinearMesh_->setValues(pressureFunctionSpace_->geometryField());
+
+  // communicate ghost values
+  geometryReferenceLinearMesh_->setRepresentationGlobal();
+  geometryReferenceLinearMesh_->startGhostManipulation();
+  geometryReferenceLinearMesh_->setRepresentationGlobal();
 }
 
 //! set the function space object that discretizes the displacements field variable
@@ -303,6 +308,11 @@ setDisplacementsFunctionSpace(std::shared_ptr<DisplacementsFunctionSpace> displa
   // set the geometry field of the reference configuration as copy of the geometry field of the function space
   geometryReference_ = std::make_shared<DisplacementsFieldVariableType>(displacementsFunctionSpace_->geometryField(), "geometryReference");
   geometryReference_->setValues(displacementsFunctionSpace_->geometryField());
+
+  // communicate ghost values
+  geometryReference_->setRepresentationGlobal();
+  geometryReference_->startGhostManipulation();
+  geometryReference_->setRepresentationGlobal();
 }
 
 //! update the copy of the reference geometry field from the current geometry field of the displacementsFunctionSpace
@@ -312,7 +322,19 @@ updateReferenceGeometry()
 {
   assert(geometryReference_);
   assert(displacementsFunctionSpace_);
+
+  // assign the reference values
   geometryReference_->setValues(displacementsFunctionSpace_->geometryField());
+  geometryReferenceLinearMesh_->setValues(pressureFunctionSpace_->geometryField());
+
+  // communicate ghost values
+  geometryReference_->setRepresentationGlobal();
+  geometryReference_->startGhostManipulation();
+  geometryReference_->setRepresentationGlobal();
+
+  geometryReferenceLinearMesh_->setRepresentationGlobal();
+  geometryReferenceLinearMesh_->startGhostManipulation();
+  geometryReferenceLinearMesh_->setRepresentationGlobal();
 }
 
 //! get the displacements function space

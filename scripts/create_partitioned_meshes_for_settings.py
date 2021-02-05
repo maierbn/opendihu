@@ -546,8 +546,9 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
       [n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(variables.n_subdomains_z)]))
       
     print("{}: own subdomain coordinates: ({},{},{})/({},{},{})".format(rank_no, own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z))
-    print("{}: 3Dmesh           nElements: {} nRanks: {} len(nodePositions): {} ".format(rank_no, variables.n_elements_3D_mesh_linear, meshes["3Dmesh_quadratic"]["nRanks"], len(node_positions_3d_mesh)))
-    print("{}: 3Dmesh_quadratic nElements: {} nRanks: {}".format(rank_no, meshes["3Dmesh_quadratic"]["nElements"], meshes["3Dmesh_quadratic"]["nRanks"]))
+    print("{}: 3Dmesh           nElements: {} nRanks: {} len(nodePositions): {} ".format(rank_no, variables.n_elements_3D_mesh_linear, meshes["3Dmesh"]["nRanks"], len(node_positions_3d_mesh)))
+    if "3Dmesh_quadratic" in meshes:
+      print("{}: 3Dmesh_quadratic nElements: {} nRanks: {}".format(rank_no, meshes["3Dmesh_quadratic"]["nElements"], meshes["3Dmesh_quadratic"]["nRanks"]))
     
 
   # compute helper variables for output and checking if partitioning is valid
@@ -578,7 +579,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
         print("{} x {} = {} fibers, per partition: {} x {} = {}".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_fibers_total, variables.n_fibers_per_subdomain_x, variables.n_fibers_per_subdomain_y, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y))
       else:
         print("{} x {} = {} fibers".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_fibers_total))
-      print("per fiber: 1D mesh    nodes global: {}, local: {}".format(variables.n_points_whole_fiber, n_points_in_subdomain_z(own_subdomain_coordinate_z)))
+      print("per fiber: 1D mesh    nodes global: {}, local: {}".format(variables.n_points_whole_fiber, n_points_in_subdomain_z(own_subdomain_coordinate_z) * variables.sampling_stride_z))
     
     print("  sampling 3D mesh with stride {} x {} x {} (local_sampling_stride_z: {})".format(variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.local_sampling_stride_z))
     if generate_linear_3d_mesh:
@@ -598,11 +599,11 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
         
     if have_fibers:
       print("number of degrees of freedom:")
-      print("                    1D fiber: {:10d}  (per process: {})".format(variables.n_points_whole_fiber, n_points_in_subdomain_z(own_subdomain_coordinate_z)))
-      print("            0D-1D monodomain: {:10d}  (per process: {})".format(variables.n_points_whole_fiber*n_states_cellml, n_points_in_subdomain_z(own_subdomain_coordinate_z)*n_states_cellml))
-      print(" all fibers 0D-1D monodomain: {:10d}  (per process: {})".format(variables.n_fibers_total*variables.n_points_whole_fiber*n_states_cellml, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y*n_points_in_subdomain_z(own_subdomain_coordinate_z)*n_states_cellml))
+      print("                    1D fiber: {:10d}  (per process: {})".format(variables.n_points_whole_fiber, n_points_in_subdomain_z(own_subdomain_coordinate_z) * variables.sampling_stride_z))
+      print("            0D-1D monodomain: {:10d}  (per process: {})".format(variables.n_points_whole_fiber*n_states_cellml, n_points_in_subdomain_z(own_subdomain_coordinate_z) * variables.sampling_stride_z*n_states_cellml))
+      print(" all fibers 0D-1D monodomain: {:10d}  (per process: {})".format(variables.n_fibers_total*variables.n_points_whole_fiber*n_states_cellml, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y*n_points_in_subdomain_z(own_subdomain_coordinate_z) * variables.sampling_stride_z*n_states_cellml))
       print("                 3D bidomain: {:10d}  (per process: {})".format(n_points_3D_mesh_global, n_sampled_points_in_own_subdomain_x*n_sampled_points_in_own_subdomain_y*n_sampled_points_in_own_subdomain_z))
-      print("                       total: {:10d}  (per process: {})".format(variables.n_fibers_total*variables.n_points_whole_fiber*n_states_cellml+n_points_3D_mesh_global, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y*n_points_in_subdomain_z(own_subdomain_coordinate_z)*n_states_cellml+n_sampled_points_in_own_subdomain_x*n_sampled_points_in_own_subdomain_y*n_sampled_points_in_own_subdomain_z))
+      print("                       total: {:10d}  (per process: {})".format(variables.n_fibers_total*variables.n_points_whole_fiber*n_states_cellml+n_points_3D_mesh_global, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y*n_points_in_subdomain_z(own_subdomain_coordinate_z) * variables.sampling_stride_z*n_states_cellml+n_sampled_points_in_own_subdomain_x*n_sampled_points_in_own_subdomain_y*n_sampled_points_in_own_subdomain_z))
 
   # exit if number of elements is <= 0 on any rank
   if generate_quadratic_3d_mesh:
@@ -636,12 +637,12 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
       print("{}:    fibers x: [{}, {}]".format(rank_no, 0, n_fibers_in_subdomain_x(own_subdomain_coordinate_x)))
       print("{}:    fibers y: [{}, {}]".format(rank_no, 0, n_fibers_in_subdomain_y(own_subdomain_coordinate_y)))
       print("{}:       ({})".format(rank_no, variables.fibers_on_own_rank))
-      print("{}:    points z: [{}, {}] ({})".format(rank_no, variables.z_point_index_start, variables.z_point_index_end, n_points_in_subdomain_z(own_subdomain_coordinate_z)))
+      print("{}:    points z: [{}, {}] ({})".format(rank_no, variables.z_point_index_start * variables.sampling_stride_z, variables.z_point_index_end * variables.sampling_stride_z, n_points_in_subdomain_z(own_subdomain_coordinate_z) * variables.sampling_stride_z))
         
     # determine number of nodes and elements of the local part of a fiber  
-    variables.n_fiber_nodes_on_subdomain = n_points_in_subdomain_z(own_subdomain_coordinate_z)   # number of nodes without ghosts
+    variables.n_fiber_nodes_on_subdomain = n_points_in_subdomain_z(own_subdomain_coordinate_z) * variables.sampling_stride_z   # number of nodes without ghosts
 
-    variables.fiber_start_node_no = n_points_in_previous_subdomains_z(own_subdomain_coordinate_z)
+    variables.fiber_start_node_no = n_points_in_previous_subdomains_z(own_subdomain_coordinate_z) * variables.sampling_stride_z
 
     # loop over all fibers
     for i in range(variables.n_fibers_total):

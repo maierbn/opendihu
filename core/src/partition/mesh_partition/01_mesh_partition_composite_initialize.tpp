@@ -284,9 +284,6 @@ checkIfSharedNodesAreOnSameSubdomain()
     VLOG(3) << "nodeNoLocal: " << nodeNoLocal << ", position: (" << localMemory[3*nodeNoLocal + 0] << "," << localMemory[3*nodeNoLocal + 1] << "," << localMemory[3*nodeNoLocal + 2] << ")";
   }
 
-  //std::vector<double> remoteAccessibleMemory(nNodesGlobal_*3, 0);
-  double *remoteAccessibleMemory = nullptr;
-
   // create remote accessible memory
   int nBytes = nNodesGlobal_*3 * sizeof(double);
   int displacementUnit = sizeof(double);
@@ -299,18 +296,33 @@ checkIfSharedNodesAreOnSameSubdomain()
   }
 
   VLOG(2) << "rank " << ownRankNo << ", create window";
-  //MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, this->mpiCommunicator(), &mpiMemoryWindow), "MPI_Win_create");
+
+#ifdef USE_MPI_ALLOC
+  double *remoteAccessibleMemory = nullptr;
   MPIUtility::handleReturnValue(MPI_Win_allocate(nBytes, displacementUnit, MPI_INFO_NULL, this->mpiCommunicator(), (void *)&remoteAccessibleMemory, &mpiMemoryWindow), "MPI_Win_allocate");
 
   // clear buffer
   memset(remoteAccessibleMemory, 0, nBytes);
-  
+
   // put local node positions to remote memory of rank 0
   if (ownRankNo == 0)
   {
     std::copy(localMemory.begin(), localMemory.end(), remoteAccessibleMemory);
   }
-  
+
+#else
+
+  std::vector<double> remoteAccessibleMemory(nNodesGlobal_*3, 0);
+  MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, this->mpiCommunicator(), &mpiMemoryWindow), "MPI_Win_create");
+
+  // put local node positions to remote memory of rank 0
+  if (ownRankNo == 0)
+  {
+    std::copy(localMemory.begin(), localMemory.end(), remoteAccessibleMemory.begin());
+  }
+
+#endif
+
   if (ownRankNo != 0)
   {
     const int foreignRankNo = 0;
@@ -831,16 +843,21 @@ initializeGhostNodeNos()
   int ownRankNo = this->ownRankNo();
 
   // create remote accessible memory
-  //std::vector<int> remoteAccessibleMemory(nRanks*nSubMeshes_, 0);
-  int *remoteAccessibleMemory = nullptr;
   int nBytes = nRanks * nSubMeshes_ * sizeof(int);
   int displacementUnit = sizeof(int);
   MPI_Win mpiMemoryWindow;
-  //MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, this->mpiCommunicator(), &mpiMemoryWindow), "MPI_Win_create");
+
+#ifdef USE_MPI_ALLOC
+  int *remoteAccessibleMemory = nullptr;
   MPIUtility::handleReturnValue(MPI_Win_allocate(nBytes, displacementUnit, MPI_INFO_NULL, this->mpiCommunicator(), (void *)&remoteAccessibleMemory, &mpiMemoryWindow), "MPI_Win_allocate");
 
   // clear buffer
   memset(remoteAccessibleMemory, 0, nBytes);
+#else
+
+  std::vector<int> remoteAccessibleMemory(nRanks*nSubMeshes_, 0);
+  MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, this->mpiCommunicator(), &mpiMemoryWindow), "MPI_Win_create");
+#endif
   
   std::vector<int> localMemory(nRanks * nSubMeshes_);
 
@@ -1027,8 +1044,9 @@ initializeGhostNodeNos()
       }
       assert(requestedNodeIndex == nFromRank);
 
+      int tag = foreignRankNo*10000+nFromRank;
       MPI_Request sendRequestNodes;
-      MPIUtility::handleReturnValue(MPI_Isend(requestedNodesGlobalPetscSendBuffer[i].data(), nFromRank, MPI_INT, foreignRankNo, 0,
+      MPIUtility::handleReturnValue(MPI_Isend(requestedNodesGlobalPetscSendBuffer[i].data(), nFromRank, MPI_INT, foreignRankNo, tag,
                                               this->mpiCommunicator(), &sendRequestNodes), "MPI_Isend");
       sendRequests.push_back(sendRequestNodes);
     }
@@ -1048,8 +1066,9 @@ initializeGhostNodeNos()
 
     requestedNodesGlobalPetscReceiveBuffer[i].resize(nRequestedNodes);
 
+    int tag = ownRankNo*10000+nRequestedNodes;
     MPI_Request receiveRequestNodes;
-    MPIUtility::handleReturnValue(MPI_Irecv(requestedNodesGlobalPetscReceiveBuffer[i].data(), nRequestedNodes, MPI_INT, foreignRankNo, 0,
+    MPIUtility::handleReturnValue(MPI_Irecv(requestedNodesGlobalPetscReceiveBuffer[i].data(), nRequestedNodes, MPI_INT, foreignRankNo, tag,
                                             this->mpiCommunicator(), &receiveRequestNodes), "MPI_Irecv");
     receiveRequests.push_back(receiveRequestNodes);
     i++;

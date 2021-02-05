@@ -97,6 +97,7 @@ vars.Add(BoolVariable('VERBOSE', 'Output raw shell commands for compilation.', F
 vars.Add(BoolVariable('ph', 'Build precompiled headers.', False))
 vars.Add(BoolVariable('USE_VECTORIZED_FE_MATRIX_ASSEMBLY', 'Enable code that matrix assembly for FEM matrices uses the Vc library.', False))
 vars.Add(BoolVariable('USE_STDSIMD', 'Use the std::experimental::simd library which supports AVX-512, instead of Vc. This automatically changes c++14 to c++17.', False))
+vars.Add(BoolVariable('USE_MPI_ALLOC', 'Use calls to MPI_Win_allocate instead of MPI_Win_create.', False))
 vars.Add('mpicc', help='The mpicc compiler wrapper', default='mpicc')
 vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
 vars.Add('cc', help='The c compiler', default='gcc')
@@ -305,6 +306,8 @@ if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:
     env.MergeFlags('-std=c++17')
   else:
     env.MergeFlags('-std=c++14')
+  if env["USE_MPI_ALLOC"]:
+    env.MergeFlags('-DUSE_MPI_ALLOC')
   if "ppc" in platform.processor():
     env.MergeFlags('-mcpu=native -mtune=native')
   else:

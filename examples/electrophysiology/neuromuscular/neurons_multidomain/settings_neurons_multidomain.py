@@ -889,13 +889,13 @@ config = {
         "Term5": {
           # map from λ in the 3D mesh to muscle spindles input
           "MapDofs": {
-            "description":                "muscle_spindles_input", # description that will be shown in solver structure visualization
+            "description":                "muscle_spindles_input",        # description that will be shown in solver structure visualization
             "nAdditionalFieldVariables":  5,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
             "additionalSlotNames":        ["ms0","ms1","ms2","ms3","ms4"],
             "meshName":                   "muscleSpindleMesh",            # the mesh on which the additional field variables will be defined
             "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
               {                                                 
-                "fromConnectorSlot":                0,
+                "fromConnectorSlot":                "m_lda",
                 "toConnectorSlots":                 ["ms0","ms1","ms2","ms3","ms4"],
                 "fromSlotConnectorArrayIndex":      0,                    # which fiber/compartment, this does not matter here because all compartment meshes have the same displacements
                 "toSlotConnectorArrayIndex":        0,
@@ -921,7 +921,7 @@ config = {
               "beforeComputation":          None, 
               "afterComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
                 {                                                 
-                  "fromConnectorSlot":                0,
+                  "fromConnectorSlot":                "m_lda",
                   "toConnectorSlots":                 "gt",
                   "fromSlotConnectorArrayIndex":      0,                   # which fiber/compartment, this does not matter here because all compartment meshes have the same displacements
                   "toSlotConnectorArrayIndex":        0,

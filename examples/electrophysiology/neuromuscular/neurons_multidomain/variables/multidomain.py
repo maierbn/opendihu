@@ -176,7 +176,8 @@ dt_muscle_spindles     = 1e-3       # [ms] timestep width of cellml solver of mu
 dt_interneuron         = dt_neurons # [ms] timestep width of the cellml solver for interneurons
 dt_motoneuron          = dt_neurons # [ms] timestep width of the cellml solver for motoneurons
 
-dt_neuron_transfer     = 10*dt_neurons  # [ms] interval when to call callback functions and transfer values between CellML models, increase this to speed up the simulation
+#dt_neuron_transfer     = 10*dt_neurons  # [ms] interval when to call callback functions and transfer values between CellML models, increase this to speed up the simulation
+dt_neuron_transfer     = dt_neurons  # [ms] interval when to call callback functions and transfer values between CellML models, increase this to speed up the simulation
 
 output_timestep_multidomain = 0.5   # [ms] timestep for multidomain solver output
 output_timestep_elasticity = 0.5    # [ms] timestep for elasticity output files
@@ -321,8 +322,8 @@ adios_output = False
 exfile_output = False
 python_output = False
 states_output = True    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
-show_linear_solver_output = True    # if every solve of multidomain diffusion should be printed
-disable_firing_output = False   # if information about firing of MUs should be printed
+show_linear_solver_output = False    # if every solve of multidomain diffusion should be printed
+disable_firing_output = True   # if information about firing of MUs should be printed
 
 
 # neuron and mapping callbacks
@@ -374,6 +375,7 @@ def callback_muscle_spindles_input(input_values, output_values, current_time, sl
     buffer["stretch"][i] = stretch
     buffer["velocity"][i] = velocity
     buffer["acceleration"][i] = acceleration
+    print("i: {}, stretch: {}, v: {}, a: {}".format(i, stretch, velocity, acceleration))
       
     # scale value for muscle spindle model 
     output_values[0][i] = abs(stretch-1) * 150    # fiber stretch  

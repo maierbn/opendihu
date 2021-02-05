@@ -193,7 +193,7 @@ input_directory   = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrop
 #cellml_file       = input_directory+"/new_slow_TK_2014_12_08.c"
 cellml_file       = input_directory+"/hodgkin_huxley-razumova.cellml"
 
-fiber_file        = input_directory+"/left_biceps_brachii_9x9fibers.bin"
+fiber_file        = input_directory+"/left_biceps_brachii_9x9fibers_b.bin"  # this is a variant of 9x9fibers with a slightly different mesh that somehow works better
 #fiber_file        = input_directory+"/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file     = fiber_file + "_fat.bin"
 firing_times_file = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency

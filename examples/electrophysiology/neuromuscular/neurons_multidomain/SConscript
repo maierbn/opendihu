@@ -8,6 +8,4 @@
 Import('env')     # import Environment object from calling SConstruct
 
 # create the main executable
-env.Program(target = 'precontraction', source = "src/precontraction.cpp")
-env.Program(target = 'precontraction_prestretch', source = "src/precontraction_prestretch.cpp")
-env.Program(target = 'multidomain_prestretch', source = "src/multidomain_prestretch.cpp")
+env.Program(target = 'neurons_multidomain', source = "src/neurons_multidomain.cpp")

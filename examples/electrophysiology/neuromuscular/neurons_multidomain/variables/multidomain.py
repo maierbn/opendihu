@@ -352,7 +352,7 @@ def callback_muscle_spindles_input(input_values, output_values, current_time, sl
   
   # initialize buffer
   if "stretch" not in buffer:
-    buffer["stretch"] = [1 for _ in n_input_values]
+    buffer["stretch"] = [1 for _ in range(n_input_values)]
     buffer["acceleration"] = [0 for _ in range(n_input_values)]
     buffer["velocity"] = [0 for _ in range(n_input_values)]
     buffer["current_time"] = 0

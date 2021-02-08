@@ -72,12 +72,12 @@ for mu_no in range(n_motor_units):
 # solvers
 # -------
 # multidomain
-#multidomain_solver_type = "gmres"          # solver for the multidomain problem
-multidomain_solver_type = "lu"          # solver for the multidomain problem
+multidomain_solver_type = "gmres"          # solver for the multidomain problem
+#multidomain_solver_type = "lu"          # solver for the multidomain problem
 #multidomain_preconditioner_type = "bjacobi"   # preconditioner
 #multidomain_preconditioner_type = "boomeramg"   # preconditioner
-#multidomain_preconditioner_type = "euclid"   # euclid ilu preconditioner, has a memory leak
-multidomain_preconditioner_type = "none"   # sor
+multidomain_preconditioner_type = "euclid"   # euclid ilu preconditioner, has a memory leak
+#multidomain_preconditioner_type = "none"   # sor
 #multidomain_preconditioner_type = "sor"   # sor
 
 multidomain_alternative_solver_type = "gmres"            # alternative solver, used when normal solver diverges

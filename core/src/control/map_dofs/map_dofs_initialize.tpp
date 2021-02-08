@@ -413,7 +413,7 @@ slotGetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLoc
     // get the actual values
     fieldVariable->getValues(componentNo, dofNosLocal, values);
 
-    LOG(DEBUG) << "*slot " << slotNo << ": from fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
+    LOG(INFO) << "*slot " << slotNo << ": from fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
       << ", at dofs " << dofNosLocal << " get values " << values;
   }
 }

@@ -363,6 +363,19 @@ advanceTimeSpan(bool withOutputWritersEnabled)
     isReferenceGeometryInitialized_ = true;
   }
 
+  // in case there have been new displacement values set by the data connector slots, update the uvp_ variable
+  static std::vector<double> values;
+  for (int i = 0; i < 3; i++)
+  {
+    values.clear();
+    this->data_.displacements()->getValuesWithoutGhosts(i, values);
+    LOG(INFO) << i << " initialize displacement values: " << values;
+    uvp_->setValues(i, data_.functionSpace()->meshPartition()->nDofsLocalWithoutGhosts(),
+                    data_.functionSpace()->meshPartition()->dofNosLocal().data(), values.data(), INSERT_VALUES);
+  }
+  uvp_->zeroGhostBuffer();
+  uvp_->finishGhostManipulation();
+
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;
 

@@ -170,7 +170,7 @@ multidomain_solver = {
   "showLinearSolverOutput":           variables.show_linear_solver_output,  # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "updateSystemMatrixEveryTimestep":  False,                                # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
   "recreateLinearSolverInterval":     0,                                    # how often the Petsc KSP object (linear solver) should be deleted and recreated. This is to remedy memory leaks in Petsc's implementation of some solvers. 0 means disabled.
-  "setDirichletBoundaryCondition":    True,                                 # if the last dof of the fat layer (MultidomainWithFatSolver) or the extracellular space (MultidomainSolver) should have a 0 Dirichlet boundary condition
+  "setDirichletBoundaryCondition":    False,                                 # if the last dof of the fat layer (MultidomainWithFatSolver) or the extracellular space (MultidomainSolver) should have a 0 Dirichlet boundary condition
   
   "PotentialFlow": {
     "FiniteElementMethod" : {  
@@ -339,6 +339,7 @@ config = {
       "OutputSurface": {        # version for fibers_emg_2d_output
         "OutputWriter": [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_multidomain*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
+          {"format": "PythonFile", "outputInterval": int(1./variables.dt_multidomain*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
         ],
         #"face":                    ["1+","0+"],         # which faces of the 3D mesh should be written into the 2D mesh
         "face":                     ["1+"],              # which faces of the 3D mesh should be written into the 2D mesh
@@ -348,6 +349,7 @@ config = {
         "enableCsvFile":            True,                # if the values at the sampling points should be written to csv files
         "enableVtpFile":            False,               # if the values at the sampling points should be written to vtp files
         "enableGeometryInCsvFile":  False,               # if the csv output file should contain geometry of the electrodes in every time step. This increases the file size and only makes sense if the geometry changed throughout time, i.e. when computing with contraction
+        "enableGeometryFiles":      False,               # if there should be extra files of the locations of the electrodes on every rank
         "xiTolerance":              0.3,                 # tolerance for element-local coordinates xi, for finding electrode positions inside the elements. Increase or decrease this numbers if not all electrode points are found.
         "MultidomainSolver":        multidomain_solver,
       }

@@ -96,6 +96,7 @@ protected:
   bool enableCsvFile_;                //< if the csv file should be written
   bool enableVtpFile_;                //< if the vtp file should be written
   bool enableGeometryInCsvFile_;      //< if the csv file should contain geometry data
+  bool enableGeometryFiles_;          //< if the found and not found electrodes should be written
 
   SeriesWriter seriesWriter_;         //< the series writer object that collects all VTK filenames and creates a collection file that can be loaded by ParaView, for the files that have the EMG values
   SeriesWriter seriesWriterFoundPoints_;      //< the series writer object that collects all VTK filenames and creates a collection file that can be loaded by ParaView, for the files that have the found electrode points

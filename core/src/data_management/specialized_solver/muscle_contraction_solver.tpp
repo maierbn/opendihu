@@ -40,8 +40,6 @@ initialize()
   slotConnectorData_->addFieldVariable(this->lambdaDot_);
   slotConnectorData_->addFieldVariable(this->gamma_);
 
-  slotConnectorData_->addFieldVariable2(this->materialTraction_);
-
   // There is addFieldVariable(...) and addFieldVariable2(...) for the two different field variable types,
   // Refer to "slot_connection/slot_connector_data.h" for details.
 
@@ -63,7 +61,6 @@ createPetscObjects()
   this->gamma_     = this->functionSpace_->template createFieldVariable<1>("γ");
   this->lambda_    = this->functionSpace_->template createFieldVariable<1>("λ");
   this->lambdaDot_ = this->functionSpace_->template createFieldVariable<1>("λdot");
-  this->materialTraction_ = this->functionSpace_->template createFieldVariable<3>("T");
 }
 
 template<typename FunctionSpaceType>
@@ -88,6 +85,9 @@ setFieldVariables(std::shared_ptr<MuscleContractionSolver<FunctionSpaceType>::Ve
     slotConnectorData_->addGeometryField(std::make_shared<typename FunctionSpaceType::GeometryFieldType>(this->displacements_->functionSpace()->geometryField()));
   }
 
+  // add material traction field variable (is stored in hyperelasticity solver)
+  slotConnectorData_->addFieldVariable2(this->materialTraction_);
+  
   // add displacements in x,y and z directions
   slotConnectorData_->addFieldVariable2(this->displacements_, 0);
   slotConnectorData_->addFieldVariable2(this->displacements_, 1);

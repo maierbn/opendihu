@@ -170,6 +170,11 @@ neuron_meshes = {
 }
 variables.meshes.update(neuron_meshes)
 
+print("stimulation_node_nos: {}".format(stimulation_node_nos))
+print("golgi_tendon_organ_node_nos: {}".format(golgi_tendon_organ_node_nos))
+print("muscle_spindle_node_nos: {}".format(muscle_spindle_node_nos))
+print("updateSystemMatrixInterval: {}".format(int(variables.dt_elasticity/variables.dt_splitting)))
+
 # settings for the multidomain solver
 multidomain_solver = {
   "timeStepWidth":                    variables.dt_multidomain,             # time step width of the subcellular problem
@@ -198,9 +203,10 @@ multidomain_solver = {
   "initialGuessNonzero":              variables.initial_guess_nonzero,      # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
   "enableFatComputation":             True,                                 # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
   "showLinearSolverOutput":           variables.show_linear_solver_output,  # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
-  "updateSystemMatrixEveryTimestep":  False,                                # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
+  "updateSystemMatrixEveryTimestep":  True,                                 # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
+  "updateSystemMatrixInterval":       int(variables.dt_elasticity/variables.dt_splitting),   # if updateSystemMatrixEveryTimestep is True, how often the system matrix should be rebuild, in terms of calls to the solver. (E.g., 2 means every second time the solver is called)
   "recreateLinearSolverInterval":     0,                                    # how often the Petsc KSP object (linear solver) should be deleted and recreated. This is to remedy memory leaks in Petsc's implementation of some solvers. 0 means disabled.
-  "setDirichletBoundaryCondition":    True,                                 # if the last dof of the fat layer (MultidomainWithFatSolver) or the extracellular space (MultidomainSolver) should have a 0 Dirichlet boundary condition
+  "setDirichletBoundaryCondition":    True,                                # if the last dof of the fat layer (MultidomainWithFatSolver) or the extracellular space (MultidomainSolver) should have a 0 Dirichlet boundary condition
 
   "PotentialFlow": {
     "FiniteElementMethod" : {  
@@ -912,7 +918,7 @@ config = {
             ],
             "afterComputation":  None,
               
-            # map from λ in the 3D mesh to golgi tendon organs
+            # map from T in the 3D mesh to golgi tendon organs
             "MapDofs": {
               "description":                "golgi_tendon_organs_input",      # description that will be shown in solver structure visualization
               "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
@@ -921,7 +927,7 @@ config = {
               "beforeComputation":          None, 
               "afterComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
                 {                                                 
-                  "fromConnectorSlot":                "m_lda",
+                  "fromConnectorSlot":                "m_T",
                   "toConnectorSlots":                 "gt",
                   "fromSlotConnectorArrayIndex":      0,                   # which fiber/compartment, this does not matter here because all compartment meshes have the same displacements
                   "toSlotConnectorArrayIndex":        0,
@@ -1133,7 +1139,7 @@ config = {
                         "OutputWriter" : [
                           
                           # Paraview files
-                          {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/4_displacements", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                          {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/4_displacements", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
                           
                           # Python callback function "postprocess"
                           #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
@@ -1141,20 +1147,20 @@ config = {
                         # 2. additional output writer that writes also the hydrostatic pressure
                         "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
                           "OutputWriter" : [
-                            {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/4_pressure", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                            #{"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/4_pressure", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
                           ]
                         },
                         # 3. additional output writer that writes virtual work terms
                         "dynamic": {    # output of the dynamic solver, has additional virtual work values 
                           "OutputWriter" : [   # output files for displacements function space (quadratic elements)
                             #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-                            {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/4_virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                            #{"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/4_virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
                           ],
                         },
                         # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
                         "LoadIncrements": {   
                           "OutputWriter" : [
-                            {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/4_load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                            #{"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/4_load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
                           ]
                         },
                       }

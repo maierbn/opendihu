@@ -109,7 +109,7 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
       break;
     }
 
-    LOG(DEBUG) << "MapDofs::perform mapping slots " << mapping.connectorSlotNoFrom << " -> " << mapping.connectorSlotNosTo << ", " << modeString;
+    LOG(DEBUG) << "-> MapDofs::perform mapping slots " << mapping.connectorSlotNoFrom << " -> " << mapping.connectorSlotNosTo << ", " << modeString;
 
     // static variables for input and output of values
     static std::map<int,std::vector<double>> valuesToSendToRanks;
@@ -179,8 +179,10 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
           }
         }
 
-        LOG(DEBUG) << "slot " << mapping.connectorSlotNosTo[toSlotIndex] << " (index " << toSlotIndex << "/" << mapping.connectorSlotNosTo.size() << ")"
+#ifndef NDEBUG
+        LOG(DEBUG) << "   slot " << mapping.connectorSlotNosTo[toSlotIndex] << " (index " << toSlotIndex << "/" << mapping.connectorSlotNosTo.size() << ")"
           << ", set values from callback: " << valuesToSet << " at dofs: " << mapping.dofNosToSetLocal;
+#endif
 
         // set values in target field variable
         slotSetValues(mapping.connectorSlotNosTo[toSlotIndex], mapping.slotConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
@@ -193,7 +195,7 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
       Py_CLEAR(inputValuesPy);
     }
     else
-    {
+    { 
       // get input values from the selected slot
       // loop over the ranks and the dofs that have to be send to them
       for (std::pair<int,std::vector<dof_no_t>> rankNoAndDofNosLocal : mapping.dofNosLocalOfValuesToSendToRanks)
@@ -206,8 +208,6 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
         valuesToSendToRanks[rankNo].clear();
         slotGetValues(mapping.connectorSlotNoFrom, mapping.slotConnectorArrayIndexFrom, dofNosLocal, valuesToSendToRanks[rankNo]);
       }
-
-      LOG(DEBUG) << "get values " << valuesToSendToRanks;
 
       // if communication is involved
       if (mapping.mode == DofsMappingType::modeCommunicate)
@@ -267,8 +267,12 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
           }
         }
 
-        LOG(DEBUG) << "values: " << inputValues << ", dofs that are above threshold " << mapping.thresholdValue
+#ifndef NDEBUG
+        LOG(DEBUG) << "   mapping.dofNosLocalOfValuesToSendToRanks: " << mapping.dofNosLocalOfValuesToSendToRanks;
+        LOG(DEBUG) << "   values: " << inputValues << ", dofs that are above threshold " << mapping.thresholdValue
+          << ": " << mapping.dofNosToSetLocal
           << ", values to be set: " << valuesToSet;
+#endif
 
         // set values
         slotSetValues(mapping.connectorSlotNosTo[0], mapping.slotConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);

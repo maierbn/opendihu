@@ -107,7 +107,8 @@ slotGetValues(
     // get the actual values
     fieldVariable->getValues(componentNo, dofNosLocal, values);
 
-    LOG(DEBUG) << "slot " << slotNo << ": from fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
+    LOG(DEBUG) << "   slotGetValues: slot " << slotNo << ": from fieldVariable \"" << fieldVariable->name() << "\" (" 
+      << fieldVariable << "), variable1[" << slotNo << "], component " << componentNo
       << ", at dofs " << dofNosLocal << " get values " << values;
   }
   else
@@ -122,7 +123,8 @@ slotGetValues(
     // get the actual values
     fieldVariable->getValues(componentNo, dofNosLocal, values);
 
-    LOG(DEBUG) << "slot " << slotNo << ": from fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
+    LOG(DEBUG) << "   slotGetValues: slot " << slotNo << ": from fieldVariable \"" << fieldVariable->name() << "\" (" 
+      << fieldVariable << "), variable2[" << index << "], component " << componentNo
       << ", at dofs " << dofNosLocal << " get values " << values;
   }
 }

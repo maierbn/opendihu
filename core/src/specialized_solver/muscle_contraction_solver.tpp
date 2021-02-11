@@ -118,6 +118,16 @@ advanceTimeSpan(bool withOutputWritersEnabled)
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
   mapGeometryToGivenMeshes();
+  
+  // for debugging, output T
+#if 0
+  std::vector<Vec3> materialTractionValues;
+  dynamicHyperelasticitySolver_->hyperelasticitySolver()->data().materialTraction()->getValuesWithoutGhosts(materialTractionValues);
+  
+  LOG(INFO) << "end of muscle contraction solver, materialTraction \"" 
+    << dynamicHyperelasticitySolver_->hyperelasticitySolver()->data().materialTraction()->name() << "\" (" 
+    << dynamicHyperelasticitySolver_->hyperelasticitySolver()->data().materialTraction() << ") Values: " << materialTractionValues;
+#endif
 }
 
 template<typename MeshType,typename Term,bool withLargeOutputFiles>

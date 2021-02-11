@@ -552,6 +552,36 @@ updateSystemMatrix()
   // create the system matrix again
   this->createSystemMatrixFromSubmatrices();
 
+  // set additional dirichlet boundary conditions
+  if (this->useSymmetricPreconditionerMatrix_)
+  {
+    global_no_t nDofsGlobalMuscle = this->dataMultidomain_.functionSpace()->nDofsGlobal();
+    global_no_t nDofsGlobalFat = this->dataFat_.functionSpace()->nDofsGlobal();
+
+    // set last dof of phi_e
+    // nColumnSubmatricesSystemMatrix_ is the number of submatrix rows/columns
+    // and there are two rows corresponding to the fat layer (for phi_e and phi_b)
+    PetscInt rowNoGlobal = nDofsGlobalMuscle * (this->nColumnSubmatricesSystemMatrix_-2) + nDofsGlobalFat - 1;
+    PetscErrorCode ierr;
+    ierr = MatZeroRowsColumns(this->singleSystemMatrix_, 1, &rowNoGlobal, 1.0, NULL, NULL); CHKERRV(ierr);
+
+    // set also in preconditioner matrix
+    ierr = MatZeroRowsColumns(this->singlePreconditionerMatrix_, 1, &rowNoGlobal, 1.0, NULL, NULL); CHKERRV(ierr);
+
+    // debugging check
+    // get global size of single system matrix
+    PetscInt nRowsGlobal = 0;
+    PetscInt nColumnsGlobal = 0;
+    ierr = MatGetSize(singleSystemMatrix_, &nRowsGlobal, &nColumnsGlobal); CHKERRV(ierr);
+    if (nRowsGlobal != nDofsGlobalMuscle * (this->nColumnSubmatricesSystemMatrix_-2) + nDofsGlobalFat * 2)
+    {
+      LOG(FATAL) << "size mismatch, nRowsGlobal=" << nRowsGlobal << ", nColumnsGlobal=" << nColumnsGlobal
+        << ", nDofsGlobalMuscle=" << nDofsGlobalMuscle << ", nDofsGlobalFat= " << nDofsGlobalFat << ", nColumnSubmatricesSystemMatrix_="
+        << this->nColumnSubmatricesSystemMatrix_;
+    }
+  }
+
+
 #ifdef DUMP_REBUILT_SYSTEM_MATRIX
 
   for (int i = 0; i < this->submatricesSystemMatrix_.size(); i++)

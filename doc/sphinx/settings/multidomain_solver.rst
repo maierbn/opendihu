@@ -125,6 +125,7 @@ The options below can be used for both `MultidomainSolver` and `MultidomainWithF
     "enableFatComputation":             True,                                 # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
     "showLinearSolverOutput":           variables.show_linear_solver_output,  # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
     "updateSystemMatrixEveryTimestep":  False,                                # if this multidomain solver will update the system matrix in every first timestep, use this only if the geometry changes, e.g. by contraction
+    "updateSystemMatrixInterval":       1,                                    # if updateSystemMatrixEveryTimestep is True, how often the system matrix should be rebuild, in terms of calls to the solver. (E.g., 2 means every second time the solver is called)
     "recreateLinearSolverInterval":     0,                                    # how often the Petsc KSP object (linear solver) should be deleted and recreated. This is to remedy memory leaks in Petsc's implementation of some solvers. 0 means disabled.
     "setDirichletBoundaryCondition":    True,                                 # if the last dof of the fat layer (MultidomainWithFatSolver) or the extracellular space (MultidomainSolver) should have a 0 Dirichlet boundary condition
   }
@@ -173,9 +174,11 @@ showLinearSolverOutput
 If convergence information of the linear solver should be printedin every timestep. As this involves a lot of output for small and fast computations, it should be disabled. It can be useful for large and slow computations to see the, e.g., the number of iterations of the linear solver.
 
 
-updateSystemMatrixEveryTimestep
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+updateSystemMatrixEveryTimestep and updateSystemMatrixInterval
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 This option allows to create a new system matrix before every new solve. This is only required if the geometry changes, e.g., if a solid mechanics solver is deforming the domain.
+
+If ``updateSystemMatrixEveryTimestep`` is set to `True`, the option ``updateSystemMatrixInterval`` determines, how frequently the system matrix will be rebuild. A value of 1 means in every first timestep of the multidomain solver, a higher value specifies every which call to the solver will compute a new system matrix. This is needed, e.g., if the multidomain solver and a muscle contraction solver are coupled and the multidomain solver is called more often than the muscle contraction solver.
 
 recreateLinearSolverInterval
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

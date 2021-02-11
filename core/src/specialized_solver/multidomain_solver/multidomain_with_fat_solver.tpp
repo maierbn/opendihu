@@ -553,7 +553,7 @@ updateSystemMatrix()
   this->createSystemMatrixFromSubmatrices();
 
   // set additional dirichlet boundary conditions
-  if (this->useSymmetricPreconditionerMatrix_)
+  if (this->setDirichletBoundaryCondition_)
   {
     global_no_t nDofsGlobalMuscle = this->dataMultidomain_.functionSpace()->nDofsGlobal();
     global_no_t nDofsGlobalFat = this->dataFat_.functionSpace()->nDofsGlobal();
@@ -607,6 +607,13 @@ updateSystemMatrix()
   }
 }
 
+/*
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
+void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
+setAdditionalDirichletBoundaryConditions()
+{
+}*/
+
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
 solveLinearSystem()
@@ -640,6 +647,27 @@ solveLinearSystem()
 
   // copy the values from the nested Petsc Vec nestedRightHandSide_ to the single Vec, singleRightHandSide_, that contains all entries
   NestedMatVecUtility::createVecFromNestedVec(this->nestedRightHandSide_, this->singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
+
+  // set rhs to zero for dirichlet boundary conditions
+  if (this->setDirichletBoundaryCondition_)
+  {
+    global_no_t nDofsGlobalMuscle = this->dataMultidomain_.functionSpace()->nDofsGlobal();
+    global_no_t nDofsGlobalFat = this->dataFat_.functionSpace()->nDofsGlobal();
+
+    // set last dof of phi_e
+    // nColumnSubmatricesSystemMatrix_ is the number of submatrix rows/columns
+    // and there are two rows corresponding to the fat layer (for phi_e and phi_b)
+    PetscInt rowNoGlobal = nDofsGlobalMuscle * (this->nColumnSubmatricesSystemMatrix_-2) + nDofsGlobalFat - 1;
+    PetscErrorCode ierr;
+    ierr = VecSetValue(this->singleRightHandSide_, rowNoGlobal, 0.0, INSERT_VALUES); CHKERRV(ierr);
+
+    // set last dof of phi_b
+    rowNoGlobal = nDofsGlobalMuscle * (this->nColumnSubmatricesSystemMatrix_-2) + nDofsGlobalFat*2 - 1;
+    ierr = VecSetValue(this->singleRightHandSide_, rowNoGlobal, 0.0, INSERT_VALUES); CHKERRV(ierr);
+
+    ierr = VecAssemblyBegin(this->singleRightHandSide_); CHKERRV(ierr);
+    ierr = VecAssemblyEnd(this->singleRightHandSide_); CHKERRV(ierr);
+  }
 
   if (VLOG_IS_ON(1))
   {

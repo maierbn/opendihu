@@ -572,7 +572,7 @@ updateSystemMatrix()
     // get global size of single system matrix
     PetscInt nRowsGlobal = 0;
     PetscInt nColumnsGlobal = 0;
-    ierr = MatGetSize(singleSystemMatrix_, &nRowsGlobal, &nColumnsGlobal); CHKERRV(ierr);
+    ierr = MatGetSize(this->singleSystemMatrix_, &nRowsGlobal, &nColumnsGlobal); CHKERRV(ierr);
     if (nRowsGlobal != nDofsGlobalMuscle * (this->nColumnSubmatricesSystemMatrix_-2) + nDofsGlobalFat * 2)
     {
       LOG(FATAL) << "size mismatch, nRowsGlobal=" << nRowsGlobal << ", nColumnsGlobal=" << nColumnsGlobal

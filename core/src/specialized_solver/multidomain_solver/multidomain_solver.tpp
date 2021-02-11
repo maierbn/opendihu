@@ -33,6 +33,7 @@ MultidomainSolver(DihuContext context) :
   initialGuessNonzero_ = this->specificSettings_.getOptionBool("initialGuessNonzero", true);
   showLinearSolverOutput_ = this->specificSettings_.getOptionBool("showLinearSolverOutput", true);
   updateSystemMatrixEveryTimestep_ = this->specificSettings_.getOptionBool("updateSystemMatrixEveryTimestep", false);
+  updateSystemMatrixInterval_ = 1;
   if (updateSystemMatrixEveryTimestep_)
   {
     updateSystemMatrixInterval_ = this->specificSettings_.getOptionInt("updateSystemMatrixInterval", 1);

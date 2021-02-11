@@ -58,19 +58,6 @@ d  = 9.1733                 # [-] anisotropy parameter
 material_parameters = [c1, c2, b, d]   # material parameters
 pmax = 7.3                  # [N/cm^2] maximum isometric active stress
 
-# Monodomain parameters
-# --------------------
-# quantities in CellML unit system
-sigma_f = 8.93              # [mS/cm] conductivity in fiber direction (f)
-sigma_xf = 0                # [mS/cm] conductivity in cross-fiber direction (xf)
-sigma_e_f = 6.7             # [mS/cm] conductivity in extracellular space, fiber direction (f)
-sigma_e_xf = 3.35           # [mS/cm] conductivity in extracellular space, cross-fiber direction (xf) / transverse
-
-Am = 500.0                  # [cm^-1] surface area to volume ratio, actual values will be set by motor_units, not by this variable
-Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch), actual values will be set by motor_units, not by this variable
-
-# diffusion prefactor = Conductivity/(Am*Cm)
-
 # timing and activation parameters
 # -----------------
 # motor unit parameters similar to paper Klotz2019 "Modelling the electrical activity of skeletal muscle tissue using a multi‐domain approach"
@@ -151,7 +138,7 @@ use_lumped_mass_matrix = False            # which formulation to use, the formul
 elasticity_solver_type = "lu"
 elasticity_preconditioner_type = "none"
 snes_max_iterations = 34                  # maximum number of iterations in the nonlinear solver
-snes_rebuild_jacobian_frequency = 2       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+snes_rebuild_jacobian_frequency = 1       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
 snes_relative_tolerance = 1e-5      # relative tolerance of the nonlinear solver
 snes_absolute_tolerance = 1e-4      # absolute tolerance of the nonlinear solver
 relative_tolerance = 1e-10           # relative tolerance of the residual of the linear solver
@@ -184,8 +171,8 @@ output_timestep_elasticity = 1      # [ms] timestep for elasticity output files
 output_timestep_neurons = 1         # [ms] timestep for output of files for all sensor organs and neurons
 output_timestep_motoneuron = 1      # [ms] timestep for output of files for motoneuron
 
-output_timestep_multidomain = dt_elasticity
-output_timestep_elasticity = dt_elasticity
+#output_timestep_multidomain = dt_elasticity
+#output_timestep_elasticity = dt_elasticity
 
 # input files
 # -----------
@@ -201,7 +188,36 @@ firing_times_file = input_directory+"/MU_firing_times_always.txt"    # use setSp
 firing_times_file = input_directory+"/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = input_directory+"/MU_fibre_distribution_10MUs.txt"
 
+# stride for meshes
+# -----------------
+
+# stride for sampling the 3D elements from the fiber data
+# a higher number leads to less 3D elements
+# If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
+sampling_stride_x = 1 
+sampling_stride_y = 1 
+sampling_stride_z = 50
+local_sampling_stride_z = 1 
+sampling_stride_fat = 1 
+
+# how much of the multidomain mesh is used for elasticity
+sampling_factor_elasticity_x = 0.7 
+sampling_factor_elasticity_y = 0.7 
+sampling_factor_elasticity_z = 0.3 
+sampling_factor_elasticity_fat_y = 0.5 
+
+# other options
+paraview_output = True
+adios_output = False
+exfile_output = False
+python_output = False
+states_output = False    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
+show_linear_solver_output = False    # if every solve of multidomain diffusion should be printed
+disable_firing_output = True   # if information about firing of MUs should be printed
+
 # neurons and sensors
+# -------------------
+
 # muscle spindles
 n_muscle_spindles = 3
 muscle_spindle_cellml_file = input_directory+"/mileusenic_muscle_spindle_equilibrium.cellml"
@@ -298,34 +314,6 @@ for mu_idx in range(n_motoneurons):
                                           R_md[0]+factor*(R_md[1]-R_md[0]), R_ms[0]+factor*(R_ms[1]-R_ms[0]), 
                                           l_d[0]+factor*(l_d[1]-l_d[0]), l_s[0]+factor*(l_s[1]-l_s[0]), 
                                           r_d[0]+factor*(r_d[1]-r_d[0]), r_s[0]+factor*(r_s[1]-r_s[0])]
-
-# stride for meshes
-# -----------------
-
-# stride for sampling the 3D elements from the fiber data
-# a higher number leads to less 3D elements
-# If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
-sampling_stride_x = 1
-sampling_stride_y = 1
-sampling_stride_z = 50
-local_sampling_stride_z = 1
-sampling_stride_fat = 1
-
-# how much of the multidomain mesh is used for elasticity
-sampling_factor_elasticity_x = 0.7 
-sampling_factor_elasticity_y = 0.7
-sampling_factor_elasticity_z = 0.3
-sampling_factor_elasticity_fat_y = 0.5
-
-# other options
-paraview_output = True
-adios_output = False
-exfile_output = False
-python_output = False
-states_output = False    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
-show_linear_solver_output = True #False    # if every solve of multidomain diffusion should be printed
-disable_firing_output = True   # if information about firing of MUs should be printed
-
 
 # neuron and mapping callbacks
 # ------------------------------

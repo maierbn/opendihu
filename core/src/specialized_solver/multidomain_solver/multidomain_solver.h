@@ -126,6 +126,7 @@ protected:
   int updateSystemMatrixInterval_;            //< interval when the system matrix should be rebuild, counting only calls to advanceTimeStep
   int recreateLinearSolverInterval_;          //< interval when linearSolver_ object gets deleted and recreated, to remedy memory leaks of the PETSc implementation of some solvers
   bool setDirichletBoundaryCondition_;        //< if the last dof of the fat layer (MultidomainWithFatSolver) or the extracellular space (MultidomainSolver) should have a 0 Dirichlet boundary condition
+  bool setDirichletBoundaryConditionPhiE_;    //< if the last dof of the extracellular space should have a 0 Dirichlet boundary condition
 };
 
 }  // namespace

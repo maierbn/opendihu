@@ -40,6 +40,7 @@ MultidomainSolver(DihuContext context) :
   }
   recreateLinearSolverInterval_ = this->specificSettings_.getOptionInt("recreateLinearSolverInterval", 0, PythonUtility::NonNegative);
   setDirichletBoundaryCondition_ = this->specificSettings_.getOptionBool("setDirichletBoundaryCondition", false);
+  setDirichletBoundaryConditionPhiE_ = this->specificSettings_.getOptionBool("setDirichletBoundaryConditionPhiE", false);
 
   if (this->specificSettings_.hasKey("constructPreconditionerMatrix"))
   {

@@ -33,8 +33,14 @@ MultidomainSolver(DihuContext context) :
   initialGuessNonzero_ = this->specificSettings_.getOptionBool("initialGuessNonzero", true);
   showLinearSolverOutput_ = this->specificSettings_.getOptionBool("showLinearSolverOutput", true);
   updateSystemMatrixEveryTimestep_ = this->specificSettings_.getOptionBool("updateSystemMatrixEveryTimestep", false);
+  updateSystemMatrixInterval_ = 1;
+  if (updateSystemMatrixEveryTimestep_)
+  {
+    updateSystemMatrixInterval_ = this->specificSettings_.getOptionInt("updateSystemMatrixInterval", 1);
+  }
   recreateLinearSolverInterval_ = this->specificSettings_.getOptionInt("recreateLinearSolverInterval", 0, PythonUtility::NonNegative);
   setDirichletBoundaryCondition_ = this->specificSettings_.getOptionBool("setDirichletBoundaryCondition", false);
+  setDirichletBoundaryConditionPhiE_ = this->specificSettings_.getOptionBool("setDirichletBoundaryConditionPhiE", false);
 
   if (this->specificSettings_.hasKey("constructPreconditionerMatrix"))
   {
@@ -126,7 +132,13 @@ advanceTimeSpan(bool withOutputWritersEnabled)
     }
     else if (this->updateSystemMatrixEveryTimestep_ && timeStepNo == 0)
     {
-      updateSystemMatrix();
+      // update the system matrix every updateSystemMatrixInterval_ calls to advance
+      static int timeStepCounter = 0;
+      if (timeStepCounter % updateSystemMatrixInterval_ == 0)
+      {
+        updateSystemMatrix();
+      }
+      timeStepCounter++;
     }
     
     // advance simulation time

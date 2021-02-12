@@ -94,7 +94,7 @@ if not env['no_tests']:
     AlwaysBuild(test)
 
   # ---- test compilation of examples ----
-  if True:
+  if True and not env["circle_ci"]:
     # only in release mode
     if env["BUILD_TYPE"] == "release":
       test = env.Command(target = 'test_examples', source = None, action = 'cd scripts && ./check_if_examples_compile.sh')
@@ -107,7 +107,7 @@ if not env['no_tests']:
     [ -f "SUCCESS6" ] && (echo unit tests on 6 ranks SUCCEDED) || (echo unit tests on 6 ranks FAILED) && \
     (([ ! -f "SUCCESS1" ] || [ ! -f "SUCCESS2" ] || [ ! -f "SUCCESS6" ]) && exit 1) || exit 0')
 
-  if env["BUILD_TYPE"] == "release":
+  if env["BUILD_TYPE"] == "release" and not env["circle_ci"]:
     Depends(test, ['test_examples', 'test1', 'test2', 'test6'])
   else:
     Depends(test, ['test1', 'test2', 'test6'])

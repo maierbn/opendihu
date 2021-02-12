@@ -155,7 +155,7 @@ dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
 dt_elasticity = 1e-1                # [ms] time step width of elasticity solver
-dt_elasticity = 1e-2                # [ms] time step width of elasticity solver
+#dt_elasticity = 1e-2                # [ms] time step width of elasticity solver
 
 dt_neurons = 1e-2                   # [ms] same timestep width for all neuron solvers
 dt_golgi_tendon_organs = dt_neurons # [ms] timestep width of cellml solver of golgi tendon organs
@@ -163,13 +163,13 @@ dt_muscle_spindles     = 1e-3       # [ms] timestep width of cellml solver of mu
 dt_interneuron         = dt_neurons # [ms] timestep width of the cellml solver for interneurons
 dt_motoneuron          = dt_neurons # [ms] timestep width of the cellml solver for motoneurons
 
-#dt_neuron_transfer     = 10*dt_neurons  # [ms] interval when to call callback functions and transfer values between CellML models, increase this to speed up the simulation
-dt_neuron_transfer     = dt_neurons  # [ms] interval when to call callback functions and transfer values between CellML models, increase this to speed up the simulation
+dt_neuron_transfer     = dt_elasticity  # [ms] interval when to call callback functions and transfer values between CellML models, increase this to speed up the simulation
+#dt_neuron_transfer     = dt_neurons  # [ms] interval when to call callback functions and transfer values between CellML models, increase this to speed up the simulation
 
-output_timestep_multidomain = 1     # [ms] timestep for multidomain solver output
+output_timestep_multidomain = 2     # [ms] timestep for multidomain solver output
 output_timestep_elasticity = 1      # [ms] timestep for elasticity output files
 output_timestep_neurons = 1         # [ms] timestep for output of files for all sensor organs and neurons
-output_timestep_motoneuron = 1      # [ms] timestep for output of files for motoneuron
+output_timestep_motoneuron = 0.2    # [ms] timestep for output of files for motoneuron
 
 #output_timestep_multidomain = dt_elasticity
 #output_timestep_elasticity = dt_elasticity

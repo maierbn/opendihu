@@ -122,12 +122,12 @@ multidomain_solver_type = "gmres"          # solver for the multidomain problem
 multidomain_preconditioner_type = "euclid"   # preconditioner
 multidomain_max_iterations = 1e3                         # maximum number of iterations
 
-multidomain_alternative_solver_type = "gmres"            # alternative solver, used when normal solver diverges
-multidomain_alternative_preconditioner_type = "euclid"    # preconditioner of the alternative solver
+multidomain_alternative_solver_type = "lu"            # alternative solver, used when normal solver diverges
+multidomain_alternative_preconditioner_type = "none"    # preconditioner of the alternative solver
 multidomain_alternative_solver_max_iterations = 1e4      # maximum number of iterations of the alternative solver
 
-multidomain_absolute_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
-multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
+multidomain_absolute_tolerance = 1e-10 # absolute residual tolerance for the multidomain solver
+multidomain_relative_tolerance = 1e-10 # absolute residual tolerance for the multidomain solver
 
 initial_guess_nonzero = "lu" not in multidomain_solver_type   # set initial guess to zero for direct solver
 theta = 1.0                               # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
@@ -196,7 +196,7 @@ fiber_distribution_file = input_directory+"/MU_fibre_distribution_10MUs.txt"
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1 
 sampling_stride_y = 1 
-sampling_stride_z = 30
+sampling_stride_z = 50
 local_sampling_stride_z = 1 
 sampling_stride_fat = 1 
 

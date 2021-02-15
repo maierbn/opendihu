@@ -196,7 +196,7 @@ fiber_distribution_file = input_directory+"/MU_fibre_distribution_10MUs.txt"
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1 
 sampling_stride_y = 1 
-sampling_stride_z = 50
+sampling_stride_z = 30
 local_sampling_stride_z = 1 
 sampling_stride_fat = 1 
 
@@ -470,7 +470,7 @@ def callback_golgi_tendon_organs_input(input_values, output_values, current_time
   for i in range(n_input_values):
     stress = input_values[i]
     
-    output_values[0][i] = abs(stress)
+    output_values[0][i] = abs(stress) * 10
     
   # artifical muscle spindle input for debugging
   if False:

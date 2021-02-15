@@ -11,5 +11,5 @@ jobs:
     steps:
       - checkout 				# pull the current branch from origin
       #- run: make release
-      - run: dependencies/scons/scons.py BUILD_TYPE=RELEASE -j1
+      - run: python3 dependencies/scons/scons.py BUILD_TYPE=RELEASE -j1
 

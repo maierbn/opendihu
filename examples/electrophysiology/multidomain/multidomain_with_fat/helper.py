@@ -433,7 +433,7 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
                 
                 key = ((i,j,k),0,0)        # key: ((x,y,z),nodal_dof_index,state_no)
                 states[key] = variables.vm_value_stimulated
-                #print("set states at ({},{},{}) to 40".format(i,j,k))
+                #print("set states at ({},{},{}) to {}".format(i,j,k,variables.vm_value_stimulated))
 
     #print("states: {}".format(states))
     #print("n_nodes: ({},{},{})".format(n_nodes_x, n_nodes_y, n_nodes_z))

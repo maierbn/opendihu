@@ -43,6 +43,7 @@ initialize()
     enableCsvFile_ = specificSettings.getOptionBool("enableCsvFile", true);
     enableVtpFile_ = specificSettings.getOptionBool("enableVtpFile", true);
     enableGeometryInCsvFile_ = specificSettings.getOptionBool("enableGeometryInCsvFile", true);
+    enableGeometryFiles_ = specificSettings.getOptionBool("enableGeometryFiles", true);
   }
 
   LOG(DEBUG) << "OutputSurface: initialize output writers";
@@ -64,7 +65,7 @@ initialize()
     initializeSampledPoints();
 
     // write positions of found sampling points
-    if (!sampledPointsRequestedPositions_.empty())
+    if (!sampledPointsRequestedPositions_.empty() && enableGeometryFiles_)
       writeFoundAndNotFoundPointGeometry();
   }
 

@@ -51,7 +51,7 @@ public:
   template<typename MeshType, typename BasisFunctionType, typename QuadratureType, typename EquationType>
   static void compareSolution(
     FiniteElementMethod<MeshType, BasisFunctionType, QuadratureType, EquationType> &finiteElementMethod,
-    std::vector<double> &referenceSolution, double tolerance=1e-14)
+    std::vector<double> &referenceSolution, double tolerance=2e-14)
   {
     ASSERT_TRUE(finiteElementMethod.data_.solution() != nullptr) << "Solution vector is not set in finite element method.";
     Vec &solutionVector = finiteElementMethod.data_.solution()->valuesLocal();

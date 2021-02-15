@@ -88,6 +88,12 @@ protected:
   my_App       *app_;
   int print_level_   = 2;
   int max_levels_    = 10;
+  int nrelax_ = 1;
+  double tol_ = 1.0e-10;
+  int fmg_ = 0;
+  int cfactor_ = 2;
+  int cfactor_first_ = -1;
+  int nrelax_first_ = -1;
 
   int nRanksInSpace;
 

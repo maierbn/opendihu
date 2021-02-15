@@ -266,6 +266,7 @@ run()
      //braid_SetCFactor(core_, 0, 8);
      braid_SetMaxIter(core_, max_iter);
      braid_SetSeqSoln(core_, use_sequential);
+     braid_SetTemporalNorm (core_, 2);
      if (fmg)
      {
         braid_SetFMG(core_);

@@ -229,8 +229,25 @@ int my_Step(braid_App        app,
    braid_StepStatusGetTstartTstop(status, &tstart, &tstop);
 
    // determine, which solver is needed (depends on size)
-   VecGetSize(u->values, &size);
-   solver=log2(size - 1);
+   //VecGetSize(u->values, &size);
+   //solver=log2(size - 1);
+   if(fabs((tstop-tstart)-((app->tstop - app->tstart)/app->ntime))<1e-8)
+   {
+      solver = 0;
+   }
+   else if (fabs((tstop-tstart)-(2*(app->tstop - app->tstart)/app->ntime))<1e-8)
+   {
+      solver=1;
+   }
+   else if (fabs((tstop-tstart)-(4*(app->tstop - app->tstart)/app->ntime))<1e-8)
+   {
+      solver=2;
+   }
+   else
+   {
+      solver=3;
+   }
+   //std::cout << solver << "solver";
    assert(solver < (*app->implicitEulerSolvers).size());
 
    /* XBraid forcing */

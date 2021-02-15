@@ -79,6 +79,13 @@ int my_Step_MD(braid_App        app,
    //VecGetOwnershipRange(solution->valuesGlobal(),&istart,&iend);
    assert(u->size == MultiDomainSolver->nSolutionValuesLocal());
 
+  //int pageSize;
+  //long long virtualMemorySize;
+  //long long residentSetSize;
+  //long long dataSize;
+  //double totalUserTime;
+  //Control::PerformanceMeasurement::getMemoryConsumption(pageSize, virtualMemorySize, residentSetSize, dataSize, totalUserTime);
+  //std::cout << "vor setsolution: residentSetSize " << residentSetSize << "virtualMemorySize" << virtualMemorySize << "dataSize" << dataSize << "\n";
    // Set the initial guess for the solver
    // PetscErrorCode ierr;
    // ierr = VecSetValues(solution->valuesGlobal(), u->size, solution->functionSpace()->meshPartition()->dofNosLocal().data(), u->values, INSERT_VALUES); CHKERRQ(ierr);
@@ -86,10 +93,19 @@ int my_Step_MD(braid_App        app,
    // VecAssemblyEnd(solution->valuesGlobal());
    MultiDomainSolver->setSolution(u->values);
 
+  //Control::PerformanceMeasurement::getMemoryConsumption(pageSize, virtualMemorySize, residentSetSize, dataSize, totalUserTime);
+  //std::cout << "nach setsolution: residentSetSize " << residentSetSize << "virtualMemorySize" << virtualMemorySize << "dataSize" << dataSize << "\n";
+  
+
    // set time span for the solver, which is calculated by braid status
    MultiDomainSolver->setTimeSpan(tstart, tstop);
    MultiDomainSolver->setNumberTimeSteps(1);
    MultiDomainSolver->setSystemMatrix((tstop-tstart)/1);
+
+
+  //Control::PerformanceMeasurement::getMemoryConsumption(pageSize, virtualMemorySize, residentSetSize, dataSize, totalUserTime);
+  //std::cout << "vor advancesolution: residentSetSize " << residentSetSize << "virtualMemorySize" << virtualMemorySize << "dataSize" << dataSize << "\n";
+  
 
    // Debug Options
    LOG(DEBUG) << "--------------------------------------------------------------";
@@ -122,7 +138,16 @@ int my_Step_MD(braid_App        app,
 //    LOG(DEBUG)<<"test2";
 //    ierr = VecRestoreArray(solution->valuesGlobal(), val); CHKERRQ(ierr);
 // LOG(DEBUG)<<"test3";
+
+  //Control::PerformanceMeasurement::getMemoryConsumption(pageSize, virtualMemorySize, residentSetSize, dataSize, totalUserTime);
+  //std::cout << "vor getsolution: residentSetSize " << residentSetSize << "virtualMemorySize" << virtualMemorySize << "dataSize" << dataSize << "\n";
+  
    MultiDomainSolver->getSolution(u->values);
+
+
+  //Control::PerformanceMeasurement::getMemoryConsumption(pageSize, virtualMemorySize, residentSetSize, dataSize, totalUserTime);
+  //std::cout << "nach getsolution: residentSetSize " << residentSetSize << "virtualMemorySize" << virtualMemorySize << "dataSize" << dataSize << "\n";
+  
 
    deltaT = tstop - tstart;
    deltaX = (app->xstop - app->xstart) / (ustop->size - 1.0);

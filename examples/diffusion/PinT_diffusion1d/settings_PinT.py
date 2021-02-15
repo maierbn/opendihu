@@ -3,6 +3,8 @@
 
 import numpy as np
 
+points=6174
+randnums=np.random.randint(0,10,points)
 n = 11   # number of elements
 
 config = {
@@ -26,20 +28,27 @@ config = {
           #  "inputMeshIsGlobal": True,      # boundary conditions are given as global indices
           #},
            "mesh_{}".format(k): {
-              "nElements": [(2 ** (k))] if k > 0 else [2],                 # number of elements
-              # "nElements": 32,                 # number of elements
+              #"nElements": [(2 ** (k))] if k > 0 else [2],                 # number of elements
+              "nElements": 500,                 # number of elements
               "physicalExtent": 4.0,          # the physical size of the domain
               "inputMeshIsGlobal": True,      # boundary conditions are given as global indices
             } for k in range(n)
         },
   "PinTIE": {        # this is the name of the solver, as given in the constructor to the timestepping object
     "tstart": 0,                    # Start time
-    "tstop": 10,                     # End time
-    "ntime": 50,                      # number of time steps
-    "nspace":   256,
+    "tstop": 3,                     # End time
+    "ntime": 1000,                      # number of time steps
+    "nspace":   500,
     "Initial Guess": [2,2,4,5,2,2,2,0, 2,2,4,5,2,2,2,0,2,2,4,5,2,2,2,0,2,2,4,5,2,2,2,0],
+    "PinT_tol": 1.0e-6,
+    "cfactor": 2,
+    #"cfactor_first": 2,
+    "fmg": 0,
+    "nrelax": 1,
+    #"nrelax_first": 0,
+    "max_levels": 4,
     "option1": "blabla",              # another example option that is parsed in the data object
-    "nRanksInSpace": 2,            # number of processes that compute the spatial domain in parallel
+    "nRanksInSpace": 1,            # number of processes that compute the spatial domain in parallel
     "TimeSteppingScheme": [
     {
       "ImplicitEuler": {

@@ -17,9 +17,9 @@ Cm = 0.58               # membrane capacitance [uF/cm^2]
 # timing parameters
 end_time = 4000.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
-dt_0D = 3e-3                        # [ms] timestep width of ODEs (1e-3)
-dt_multidomain = 3e-3               # [ms] timestep width of multidomain solver
-dt_splitting = 3e-3                 # [ms] timestep width of splitting
+dt_0D = 6/2000 #3e-3 #3e-3                        # [ms] timestep width of ODEs (1e-3)
+dt_multidomain = 6/2000 #3e-3 #3e-3               # [ms] timestep width of multidomain solver
+dt_splitting = 6/2000 #3e-3 #3e-3                 # [ms] timestep width of splitting
 output_timestep = 1e-1              # [ms] timestep for output files
 
 solver_tolerance = 1e-10
@@ -54,9 +54,10 @@ motor_units = [
 
 
 # for debugging use the following, non-physiological values. This produces a fast simulation
-Am = 1.0
-sampling_stride_z = 74
-motor_units = motor_units[0:2]    # only 2 motor units
+end_time = 3 #???
+#Am = 1.0
+sampling_stride_z = 20 #74 200
+motor_units = motor_units #[0:2]    # only 2 motor units motor_units = motor_units[0:2]
 solver_tolerance = 1e-10
 
 
@@ -261,9 +262,10 @@ multidomain_solver = {
   },
   
   "OutputWriter" : [
-    {"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
-    #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
-    #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": int(1./dt_1D*output_timestep), "binary":True, "onlyNodalValues":True},
+    {"format": "Paraview", "outputInterval": 10, "filename": "out/outputmd", "binary": False, "fixedFormat": False, "combineFiles": True},
+    #{"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
+    #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_multidomain*output_timestep, "sphereSize": "0.02*0.02*0.02"},
+    #{"format": "PythonFile", "filename": "out/fiber", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
   ]
 }
   
@@ -305,10 +307,16 @@ config = {
     "timeStepWidth":          dt_splitting,  # 1e-1
     "logTimeStepWidthAsKey":  "dt_splitting",
     "durationLogKey":         "duration_total",
-    "timeStepOutputInterval": 100,
+    "timeStepOutputInterval": 1,
     "endTime":                end_time,
     "connectedSlotsTerm1To2": [0],          # CellML V_mk (0) <=> Multidomain V_mk^(i) (0)
     "connectedSlotsTerm2To1": [None, 0],    # Multidomain V_mk^(i+1) (1) -> CellML V_mk (0)
+    "OutputWriter" : [
+    {"format": "Paraview", "outputInterval": 10, "filename": "out/outputstrang", "binary": False, "fixedFormat": False, "combineFiles": True},
+    #{"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
+    #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_multidomain*output_timestep, "sphereSize": "0.02*0.02*0.02"},
+    #{"format": "PythonFile", "filename": "out/strang", "outputInterval": 500, "binary":False, "onlyNodalValues":True},
+    ], 
 
     "Term1": {      # CellML
       "MultipleInstances": {
@@ -321,11 +329,16 @@ config = {
             "logTimeStepWidthAsKey":        "dt_0D",
             "durationLogKey":               "duration_0D",
             "initialValues":                [],
-            "timeStepOutputInterval":       1e4,
+            "timeStepOutputInterval":       1000,
             "inputMeshIsGlobal":            True,
             "dirichletBoundaryConditions":  {},
             "nAdditionalFieldVariables":    0,
-            "checkForNanInf":               True,
+            "OutputWriter" : [
+              {"format": "Paraview", "outputInterval": 10, "filename": "out/outputh", "binary": False, "fixedFormat": False, "combineFiles": True},
+              #{"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
+              #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_multidomain*output_timestep, "sphereSize": "0.02*0.02*0.02"},
+              #{"format": "PythonFile", "filename": "out/heun", "outputInterval": 1, "binary":False, "onlyNodalValues":True},
+             ], 
                 
             "CellML" : {
               "modelFilename":                          cellml_file,                            # input C++ source file or cellml XML file
@@ -357,6 +370,12 @@ config = {
               
               "meshName": "mesh",
               "stimulationLogFilename": "out/stimulation.log",
+              "OutputWriter" : [
+                #{"format": "Paraview", "outputInterval": 1, "filename": "out/output", "binary": False, "fixedFormat": False, "combineFiles": True},
+                #{"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
+                #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_multidomain*output_timestep, "sphereSize": "0.02*0.02*0.02"},
+                #{"format": "PythonFile", "filename": "out/cell", "outputInterval": 2, "binary":False, "onlyNodalValues":True},
+              ]
             }
           }
         } for compartment_no in range(n_compartments)]
@@ -366,7 +385,7 @@ config = {
       "MultidomainSolver" : multidomain_solver,
       "OutputSurface": {        # version for fibers_emg_2d_output
         "OutputWriter": [
-          {"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
+          {"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/surface", "binary": True, "fixedFormat": False, "combineFiles": True},
         ],
         "face": "1-",
         "MultidomainSolver" : multidomain_solver,

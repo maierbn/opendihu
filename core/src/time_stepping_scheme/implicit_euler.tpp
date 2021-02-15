@@ -29,7 +29,7 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
 
   LOG(DEBUG) << "ImplicitEuler::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_ << ", time span: [" << this->startTime_ << "," << this->endTime_ << "]";
-
+  //std::cout << "timespan " << timeSpan << " numbertimesteps " << this->numberTimeSteps_ << "\n";
   Vec solution = this->data_->solution()->valuesGlobal();
 
   // loop over time steps
@@ -94,12 +94,14 @@ setSystemMatrix(double timeStepWidth)
   // Only setSystemMatrix for new timeStepWidth; double comparison
   if ( fabs(timeStepWidth - initialTimeStepWidth_) < 0.0001 )
     {
+    //std::cout << "nope \n";
     return;
   }
   if (this->linearSolver_ != nullptr)
   {
     this->context_.solverManager()->deleteSolver(this->linearSolver_->name());
   }
+  //std::cout << "shiat \n";
   this->linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
     this->specificSettings_, this->data_->functionSpace()->meshPartition()->mpiCommunicator());
   this->ksp_ = this->linearSolver_->ksp();

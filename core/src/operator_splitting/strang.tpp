@@ -28,6 +28,9 @@ advanceTimeSpan()
   LOG(DEBUG) << "  Strang::advanceTimeSpan: timeSpan=[" << this->startTime_<< "," << this->endTime_<< "]"
     << ", n steps: " << this->numberTimeSteps_<< ", timeStepWidth=" << this->timeStepWidth_;
 
+  //std::cout << "strang: " << timeSpan / this->numberTimeSteps_ << " timeStepWidth" << this->timeStepWidth_ << ", n steps: " << this->numberTimeSteps_ << " start " << this->startTime_ << "end" << this->endTime_ <<  "timeSpan" << timeSpan << " \n";
+
+
   // picture for strang splitting:
   // ===== t ==>
   // -1->

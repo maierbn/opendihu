@@ -57,8 +57,11 @@ motor_units = [
 # for debugging use the following, non-physiological values. This produces a fast simulation
 #if True:
 #end_time = 0.1
-end_time = 5
-ntime = 60 #1337
+end_time = 6
+ntime = 2000 #1337
+dt_0D = (end_time / ntime)                        # [ms] timestep width of ODEs (1e-3)
+dt_multidomain = end_time / ntime               # [ms] timestep width of multidomain solver
+dt_splitting = end_time / ntime 
 #Am = 1.0
 sampling_stride_z = 200 #muscle 74 200
 motor_units = motor_units[0:2]    # only 2 motor units [0:2] [0:1]
@@ -69,7 +72,7 @@ n_compartments = len(motor_units)
 # own MPI rank no and number of MPI ranks
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
-n_ranks_space = 2
+n_ranks_space = 1
 
 # load MU distribution and firing times
 fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
@@ -132,7 +135,7 @@ def PinT_stimulation(current_time):
   #print("test {}".format(current_time % (3333 * timestep_width)))
   #return current_time % (int(1./stimulation_frequency/dt_0D) * timestep_width) == 0 
   #bool = current_time % 2.5 > 2.4995 or current_time == 0.0
-  bool =current_time % 2.5 > (2.5 - (0.8*timestep_width)) or current_time == 0.0
+  bool =current_time % 2.5 > (2.5 - (0.5*timestep_width)) or current_time == 0.0
   #bool = 1==1
   return bool
 
@@ -204,7 +207,7 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
 
       #print("states: {}".format(states))
       #print("n_nodes: ({},{},{})".format(n_nodes_x, n_nodes_y, n_nodes_z))
-      #print("n_nodes_global: {}, time_step_no: {}, current_time: {}, compartment_no: {}".format(n_nodes_global, time_step_no, current_time, compartment_no))
+      print("n_nodes_global: {}, time_step_no: {}, current_time: {}, compartment_no: {}".format(n_nodes_global, time_step_no, current_time, compartment_no))
       #wait = input("Press any key to continue...")
     
 # boundary conditions for potential flow
@@ -220,11 +223,11 @@ multidomain_solver = {
   "nCompartments":                    n_compartments,                     # number of compartments
   "am":                               Am,                                 # Am parameter (ration of surface to volume of fibers)
   "cm":                               Cm,                                 # Cm parameter (capacitance of the cellular membrane)
-  "timeStepWidth":                    100, #dt_multidomain,                     # time step width of the diffusion, i.e. the global linear system in the multidomain solver
+  "timeStepWidth":                    dt_multidomain,                     # time step width of the diffusion, i.e. the global linear system in the multidomain solver
   "endTime":                          end_time,                           # end time, this is not relevant because it will be overridden by the splitting scheme
-  "timeStepOutputInterval":           100,                                # how often the output timestep should be printed
+  #"timeStepOutputInterval":           1,                                # how often the output timestep should be printed
   "solverName":                       "activationSolver",                 # reference to the solver used for the global linear system of the multidomain eq.
-  "initialGuessNonzero":              True,                               # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
+  "initialGuessNonzero":              False,                               # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
   "inputIsGlobal":                    True,                               # if values and dofs correspond to the global numbering
   "showLinearSolverOutput":           False,                              # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "compartmentRelativeFactors":       relative_factors.tolist(),          # list of lists of the factors for every dof, because "inputIsGlobal": True, this contains the global dofs
@@ -295,7 +298,7 @@ config = {
       "absoluteTolerance":  solver_tolerance,         # 1e-10 absolute tolerance of the residual          
       "maxIterations":      1e3,
       "solverType":         "gmres",
-      "preconditionerType": "none",
+      "preconditionerType": "euclid",
       "dumpFormat":         "matlab",
       "dumpFilename":       "",
     }
@@ -306,12 +309,12 @@ config = {
     "ntime": ntime,                      # number of time steps
     "nspace":   1567,#8235, #3135,
     "Initial Guess": [2,2,4,5,2,2,2,0],
-    "PinT_tol": 1.0e-6,
+    "PinT_tol": 1.0e-9,
     "cfactor": 5,
-    "cfactor_first": 2,
+    "cfactor_first": 4,
     "fmg": 0,
-    "nrelax": 0,
-    #"nrelax_first": 0,
+    "nrelax": 1,
+    #"nrelax_first": 1,
     "max_levels": 2,
     "option1": "blabla",              # another example option that is parsed in the data object  
     "nRanksInSpace": n_ranks_space,            # number of processes that compute the spatial domain in parallel
@@ -322,11 +325,11 @@ config = {
     "TimeSteppingScheme": [
     {
       "StrangSplitting": {
-        #"timeStepWidth":          dt_splitting,  # 1e-1
-        "timeStepWidth": 100,
+        "timeStepWidth":          dt_splitting,  # 1e-1
+        #"timeStepWidth": 100,
         "logTimeStepWidthAsKey":  "dt_splitting",
         "durationLogKey":         "duration_total",
-        "timeStepOutputInterval": 100,
+        #"timeStepOutputInterval": 1,
         "endTime":                end_time,
         "connectedSlotsTerm1To2": [0],          # CellML V_mk (0) <=> Multidomain V_mk^(i) (0)
         "connectedSlotsTerm2To1": [None, 0],    # Multidomain V_mk^(i+1) (1) -> CellML V_mk (0)
@@ -338,11 +341,11 @@ config = {
             {
               "ranks": list(range(n_ranks_space)),
               "Heun" : {
-                "timeStepWidth": 1, #dt_0D,  # 5e-5
+                "timeStepWidth": dt_0D,  # 5e-5
                 "logTimeStepWidthAsKey":        "dt_0D",
                 "durationLogKey":               "duration_0D",
                 "initialValues":                [],
-                "timeStepOutputInterval":       1e4,
+                #"timeStepOutputInterval":       1,
                 "inputMeshIsGlobal":            True,
                 "dirichletBoundaryConditions":  {},
                 "nAdditionalFieldVariables":    0,
@@ -396,7 +399,7 @@ config = {
       },
       "OutputWriter": [
         #{"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": False, "fixedFormat": False, "combineFiles": False, "fileNumbering": "timeStepIndex"},
-        #{"format": "PythonFile", "filename": "out/debug2", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "timeStepIndex"},
+        {"format": "PythonFile", "filename": "out/hoffnung4", "outputInterval": 100, "binary":False, "onlyNodalValues":True, "fileNumbering": "timeStepIndex"},
       ],
     }]
   }

@@ -70,6 +70,9 @@ advanceTimeSpan()
   // loop over time steps
   double currentTime = this->startTime_;
 
+  this->numberTimeSteps_=1;
+  this->timeStepWidth_=timeSpan;
+  //std::cout << "multidomain: " << timeSpan / this->numberTimeSteps_ << " timeStepWidth" << this->timeStepWidth_ << ", n steps: " << this->numberTimeSteps_ << " start " << this->startTime_ << "end" << this->endTime_ <<  "timeSpan" << timeSpan << " \n";
   // loop over time steps
   for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
@@ -79,24 +82,32 @@ advanceTimeSpan()
         << " (linear solver iterations: " << lastNumberOfIterations_ << ")";
     }
 
+    //int pageSize;
+    //long long virtualMemorySize;
+    //long long residentSetSize;
+    //long long dataSize;
+    //double totalUserTime;
+    //Control::PerformanceMeasurement::getMemoryConsumption(pageSize, virtualMemorySize, residentSetSize, dataSize, totalUserTime);
+    //std::cout << "vor ssystemmatrix: residentSetSize " << residentSetSize << "virtualMemorySize" << virtualMemorySize << "dataSize" << dataSize << "\n";
+
     LOG(DEBUG) << " Vm: ";
     //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
     LOG(DEBUG) << *dataMultidomain_.transmembranePotential(0);
 
-    if (fabs(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ > 1e-4)
-    {
-      LOG(WARNING) << "In multidomain solver, timestep width changed from " << this->timeStepWidthOfSystemMatrix_ << " to " << timeStepWidth_
-        << " (relative: " << std::showpos << 100*(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ << std::noshowpos << "%), need to recreate system matrix.";
-      
-      this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
-      setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
-      createSystemMatrixFromSubmatrices();
-    }
-    else if (this->updateSystemMatrixEveryTimestep_ && timeStepNo == 0)
-    {
-      updateSystemMatrix();
-    }
-    
+    //if (fabs(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ > 1e-4)
+    //{
+    //  //LOG(WARNING) << "In multidomain solver, timestep width changed from " << this->timeStepWidthOfSystemMatrix_ << " to " << timeStepWidth_
+    //  //  << " (relative: " << std::showpos << 100*(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ << std::noshowpos << "%), need to recreate system matrix.";
+    //
+    //  this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
+    //  setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
+    //  createSystemMatrixFromSubmatrices();
+    //}
+    //else if (this->updateSystemMatrixEveryTimestep_ && timeStepNo == 0)
+    //{
+    //  updateSystemMatrix();
+    //}
+
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
@@ -104,8 +115,14 @@ advanceTimeSpan()
     // advance diffusion
     VLOG(1) << "---- diffusion term";
 
+    //Control::PerformanceMeasurement::getMemoryConsumption(pageSize, virtualMemorySize, residentSetSize, dataSize, totalUserTime);
+    //std::cout << "vor solvelinear: residentSetSize " << residentSetSize << "virtualMemorySize" << virtualMemorySize << "dataSize" << dataSize << "\n";
+
     // solve A*u^{t+1} = u^{t} for u^{t+1} where A is the system matrix, solveLinearSystem(b,x)
     this->solveLinearSystem();
+
+    //Control::PerformanceMeasurement::getMemoryConsumption(pageSize, virtualMemorySize, residentSetSize, dataSize, totalUserTime);
+    //std::cout << "nach solvelinear: residentSetSize " << residentSetSize << "virtualMemorySize" << virtualMemorySize << "dataSize" << dataSize << "\n";
 
     LOG(DEBUG) << " Vm[k=0]: ";
     //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
@@ -723,6 +740,30 @@ updateSystemMatrix()
   // stop duration measurement
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_reassemble"));
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+updateSystemMatrix(double timeStepWidth, bool enableWarning)
+{
+  //std::cout << timeStepWidth << "abfrage" << (fabs(this->timeStepWidthOfSystemMatrix_ - timeStepWidth) / timeStepWidth) << "\n";
+  if (fabs(this->timeStepWidthOfSystemMatrix_ - timeStepWidth) / timeStepWidth > 1e-10)
+  {
+    if (enableWarning)
+    {
+      //LOG(WARNING) << "In multidomain solver, timestep width changed from " << this->timeStepWidthOfSystemMatrix_ << " to " << timeStepWidth_
+      //  << " (relative: " << std::showpos << 100*(this->timeStepWidthOfSystemMatrix_ - timeStepWidth) / timeStepWidth << std::noshowpos << "%), need to recreate system matrix.";
+    }
+    std::cout<<this->timeStepWidthOfSystemMatrix_ << " zu " << timeStepWidth <<"drinnen \n";
+    // store time step width of current system matrix
+    this->timeStepWidthOfSystemMatrix_ = timeStepWidth;
+
+    // initialize the sub matrices of the nested system matrix
+    setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
+
+    // create the nested and the single system matrix
+    createSystemMatrixFromSubmatrices();
+  }
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>

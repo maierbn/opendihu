@@ -48,7 +48,7 @@ void Heun<DiscretizableInTime>::advanceTimeSpan()
   Vec &increment = this->data_->increment()->getValuesContiguous();
   Vec &algebraicIncrement = dataHeun->algebraicIncrement()->getValuesContiguous();
 
-  // loop over time steps
+//std::cout << "heun: " << timeSpan / this->numberTimeSteps_ << " timeStepWidth" << this->timeStepWidth_ << ", n steps: " << this->numberTimeSteps_ <<" start " << this->startTime_ << "end" << this->endTime_ <<  "timeSpan" << timeSpan << " \n";  // loop over time steps
   double currentTime = this->startTime_;
   for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {

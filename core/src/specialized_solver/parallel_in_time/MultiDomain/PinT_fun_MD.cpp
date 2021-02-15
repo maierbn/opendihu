@@ -45,7 +45,6 @@ my_Free_MD(braid_App    app,
 {
    free(u->values);
    free(u);
-
    return 0;
 }
 
@@ -83,6 +82,16 @@ my_SpatialNorm_MD(braid_App     app,
    }
    *norm_ptr = sqrt(dot);
 
+   //int largest, first;
+   //first=0;
+   //largest = first;
+   //++first;
+   //for (; first != (u->size); ++first) {
+   //   if (std::abs((u->values)[largest]) < std::abs((u->values)[first])) {
+   //      largest = first;
+   //   }
+   //}
+   //*norm_ptr = std::abs((u->values)[largest]);
    return 0;
 }
 

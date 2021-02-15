@@ -175,21 +175,39 @@ run()
 
   // Define XBraid parameters
 
+  // // int       max_levels    = 3;
+  // int       nrelax        = 1;
+  // int       skip          = 0;
+  // double    tol           = 1.0e-07;
+  // int       cfactor       = 2;
+  // int       max_iter      = 50;
+  // int       min_coarse    = 3;
+  // int       fmg           = 0;
+  // int       scoarsen      = 1;
+  // int       res           = 0;
+  // int       wrapper_tests = 0;
+  // // int       print_level   = 2;
+  // int       access_level  = 1;
+  // int       use_sequential= 0;
+  
   // int       max_levels    = 3;
-  int       nrelax        = 1;
+  //int       nrelax        = 0;
+  int nrelax = nrelax_;
   int       skip          = 0;
-  double    tol           = 1.0e-07;
-  int       cfactor       = 2;
-  int       max_iter      = 50;
+  //double    tol           = 1.0e-10;
+  double    tol           = tol_;
+  //int       cfactor       = 4;
+  int cfactor = cfactor_;
+  int       max_iter      = 100;
   int       min_coarse    = 3;
-  int       fmg           = 0;
-  int       scoarsen      = 1;
+  //int       fmg           = 0;
+  int fmg = fmg_;
+  int       scoarsen      = 0;
   int       res           = 0;
   int       wrapper_tests = 0;
   // int       print_level   = 2;
   int       access_level  = 1;
   int       use_sequential= 0;
-
   // communicatorTotal   = MPI_COMM_WORLD;
   MPI_Comm_rank(communicatorTotal_, &rank);
 
@@ -206,7 +224,7 @@ run()
   }
   else
   {
-     /* Scale tol by domain */
+         /* Scale tol by domain */
      tol = tol/( sqrt((tstop_ - tstart_)/(ntime_-1))*sqrt((xstop_ - xstart_)/(nspace-1)) );
 
      /* Set Braid options */
@@ -216,18 +234,25 @@ run()
      braid_SetMinCoarse( core_, min_coarse );
      braid_SetSkip(core_, skip);
      braid_SetNRelax(core_, -1, nrelax);
+     if (nrelax_first_ != -1){
+      braid_SetNRelax(core_, 0, nrelax_first_);
+     }
      braid_SetAbsTol(core_, tol);
      braid_SetCFactor(core_, -1, cfactor);
+     if (cfactor_first_ != -1){
+      braid_SetCFactor(core_, 0, cfactor_first_);
+     }
+     //braid_SetCFactor(core_, 0, 8);
      braid_SetMaxIter(core_, max_iter);
      braid_SetSeqSoln(core_, use_sequential);
      if (fmg)
      {
         braid_SetFMG(core_);
      }
-     if (res)
-     {
-        //braid_SetResidual(core_, my_Residual);
-     }
+     //if (res)
+     //{
+     //   braid_SetResidual(core_, my_Residual);
+     //}
      loglevels = log2(nspace - 1.0);
      if ( scoarsen && ( fabs(loglevels - round(loglevels)) > 1e-10 ))
      {
@@ -329,6 +354,20 @@ PinT_initialize()
     ntime_ = specificSettings_.getOptionDouble("ntime", 1.0, PythonUtility::Positive);
   if (specificSettings_.hasKey("nspace"))
     nspace_ = specificSettings_.getOptionDouble("nspace", 1.0, PythonUtility::Positive);
+  if (specificSettings_.hasKey("PinT_tol"))
+    tol_ = specificSettings_.getOptionDouble("PinT_tol", 1.0, PythonUtility::Positive);
+  if (specificSettings_.hasKey("nrelax"))
+    nrelax_ = specificSettings_.getOptionInt("nrelax", 1.0);
+  if (specificSettings_.hasKey("nrelax_first"))
+    nrelax_first_ = specificSettings_.getOptionInt("nrelax_first", 1.0);
+  if (specificSettings_.hasKey("fmg"))
+    fmg_ = specificSettings_.getOptionInt("fmg", 1.0);
+  if (specificSettings_.hasKey("cfactor"))
+    cfactor_ = specificSettings_.getOptionInt("cfactor", 1.0, PythonUtility::Positive);
+  if (specificSettings_.hasKey("cfactor_first"))
+    cfactor_first_ = specificSettings_.getOptionInt("cfactor_first", 1.0, PythonUtility::Positive);
+  if (specificSettings_.hasKey("max_levels"))
+    max_levels_ = specificSettings_.getOptionInt("max_levels", 1.0, PythonUtility::Positive);
 
   int       nspace        = this->nspace_+1;
   PetscInt solver;

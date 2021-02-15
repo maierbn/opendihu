@@ -272,7 +272,7 @@ void
 create_vector(my_Vector **u,
               int size, braid_App app)
 {
- (*u) = (my_Vector *) malloc(sizeof(my_Vector));
+   (*u) = (my_Vector *) malloc(sizeof(my_Vector));
  
    VecCreate(app->comm,&(*u)->values);
    VecSetSizes((*u)->values, size, PETSC_DECIDE);

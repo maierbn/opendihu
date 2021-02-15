@@ -39,8 +39,20 @@ MultidomainSolver(DihuContext context) :
     updateSystemMatrixInterval_ = this->specificSettings_.getOptionInt("updateSystemMatrixInterval", 1);
   }
   recreateLinearSolverInterval_ = this->specificSettings_.getOptionInt("recreateLinearSolverInterval", 0, PythonUtility::NonNegative);
-  setDirichletBoundaryCondition_ = this->specificSettings_.getOptionBool("setDirichletBoundaryCondition", false);
+  
+  // parse option about dirichlet boundary conditions
+  if (this->specificSettings_.hasKey("setDirichletBoundaryCondition"))
+  {
+    setDirichletBoundaryConditionPhiB_ = this->specificSettings_.getOptionBool("setDirichletBoundaryCondition", false);
+    LOG(WARNING) << this->specificSettings_ << "[\"setDirichletBoundaryCondition\"] has been renamed to \"setDirichletBoundaryConditionPhiB\" and \"setDirichletBoundaryConditionPhiE\".";
+  }
+  else
+  {
+    setDirichletBoundaryConditionPhiB_ = this->specificSettings_.getOptionBool("setDirichletBoundaryConditionPhiB", false);
+  }
   setDirichletBoundaryConditionPhiE_ = this->specificSettings_.getOptionBool("setDirichletBoundaryConditionPhiE", false);
+  resetToAverageZeroPhiB_ = this->specificSettings_.getOptionBool("resetToAverageZeroPhiB", false);
+  resetToAverageZeroPhiE_ = this->specificSettings_.getOptionBool("resetToAverageZeroPhiE", false);
 
   if (this->specificSettings_.hasKey("constructPreconditionerMatrix"))
   {
@@ -703,17 +715,6 @@ createSystemMatrixFromSubmatrices()
   // create a single Mat object from the nested Mat
   NestedMatVecUtility::createMatFromNestedMat(nestedSystemMatrix_, singleSystemMatrix_, data().functionSpace()->meshPartition()->rankSubset());
 
-  if (setDirichletBoundaryCondition_)
-  {
-    // get global size of single system matrix
-    PetscInt nRowsGlobal = 0;
-    PetscInt nColumnsGlobal = 0;
-    ierr = MatGetSize(singleSystemMatrix_, &nRowsGlobal, &nColumnsGlobal); CHKERRV(ierr);
-
-    PetscInt lastRowNoGlobal = nRowsGlobal - 1;
-    ierr = MatZeroRowsColumns(singleSystemMatrix_, 1, &lastRowNoGlobal, 1.0, NULL, NULL); CHKERRV(ierr);
-  }
-
   if (useSymmetricPreconditionerMatrix_)
   {
     this->submatricesPreconditionerMatrix_ = submatricesSystemMatrix_;
@@ -771,17 +772,6 @@ createSystemMatrixFromSubmatrices()
 
     // create a single Mat object from the nested Mat
     NestedMatVecUtility::createMatFromNestedMat(nestedPreconditionerMatrix, singlePreconditionerMatrix_, data().functionSpace()->meshPartition()->rankSubset());
-
-    if (setDirichletBoundaryCondition_)
-    {
-      // get global size of single system matrix
-      PetscInt nRowsGlobal = 0;
-      PetscInt nColumnsGlobal = 0;
-      ierr = MatGetSize(singlePreconditionerMatrix_, &nRowsGlobal, &nColumnsGlobal); CHKERRV(ierr);
-
-      PetscInt lastRowNoGlobal = nRowsGlobal - 1;
-      ierr = MatZeroRowsColumns(singlePreconditionerMatrix_, 1, &lastRowNoGlobal, 1.0, NULL, NULL); CHKERRV(ierr);
-    }
   }
   else 
   {

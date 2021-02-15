@@ -70,6 +70,15 @@ protected:
   //! set in the Petsc preconditioner object the information about matrix blocks for block jacobi and the node positions (PCSetCoordinates)
   virtual void setInformationToPreconditioner() override;
 
+  //! substract the average value of phi_e and phi_b, respectively, if enabled by resetToAverageZeroPhiE and resetToAverageZeroPhiB
+  void resetToAverageZero();
+  
+  //! set the zero Dirichlet BCs for phi_e and phi_b in the system matrix, if enabled by setDirichletBoundaryConditionPhiE_ and setDirichletBoundaryConditionPhiB_
+  void setDirichletBoundaryConditionsInSystemMatrix();
+  
+  //! set the zero Dirichlet BCs for phi_e and phi_b in the rhs, if enabled by setDirichletBoundaryConditionPhiE_ and setDirichletBoundaryConditionPhiB_
+  void setDirichletBoundaryConditionsInRightHandSide();
+
   // ! copy the incoming data in the phiB field variable from the dataFat_ object to the nested Vec solution which only contains not-shared dofs
   void copyPhiBToSolution();
 

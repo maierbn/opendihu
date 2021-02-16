@@ -21,7 +21,11 @@ nArrayItems(std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>
 {
   if (!slotConnectorData)
     return 0;
-  return slotConnectorData->size();
+  if (slotConnectorData->empty())
+    return 0;
+
+  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0]);
+  return slotConnectorData->size() * nArrayItemsPerItem;
 }
 
 //! get the mesh partition of the field variable at the slot
@@ -34,9 +38,16 @@ getMeshPartitionBase(
 {
   if (!slotConnectorData)
     return nullptr;
-  if (slotConnectorData->size() <= arrayIndex)
+  if (slotConnectorData->empty())
     return nullptr;
 
+  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0]);
+  int itemNo = arrayIndex / nArrayItemsPerItem;
+  int arrayIndexInItem = arrayIndex % nArrayItemsPerItem;
+
+  return SlotConnectorDataHelper<SlotConnectorDataType>::getMeshPartitionBase((*slotConnectorData)[itemNo], slotNo, arrayIndexInItem);
+
+/*
   int nSlotsVariable1 = (*slotConnectorData)[arrayIndex]->variable1.size();
 
   // if the slot no corresponds to a field variables stored under variable1
@@ -56,6 +67,7 @@ getMeshPartitionBase(
 
     return fieldVariable->functionSpace()->meshPartitionBase();
   }
+  */
 }
 
 //! set the values at given dofs at the field variable given by slotNo
@@ -67,10 +79,23 @@ slotSetValues(
 )
 {
   if (!slotConnectorData)
+  {
+    LOG(DEBUG) << "slotSetValues (vector), slotConnectorData is not set";
     return;
-  if (slotConnectorData->size() <= arrayIndex)
+  }
+  if (slotConnectorData->empty())
+  {
+    LOG(DEBUG) << "slotSetValues (vector), slotConnectorData is empty";
     return;
+  }
 
+  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0]);
+  int itemNo = arrayIndex / nArrayItemsPerItem;
+  int arrayIndexInItem = arrayIndex % nArrayItemsPerItem;
+
+  SlotConnectorDataHelper<SlotConnectorDataType>::slotSetValues((*slotConnectorData)[itemNo], slotNo, arrayIndexInItem,
+                                                                dofNosLocal, values, petscInsertMode);
+/*
   int nSlotsVariable1 = (*slotConnectorData)[arrayIndex]->variable1.size();
 
   // if the slot no corresponds to a field variables stored under variable1
@@ -103,7 +128,7 @@ slotSetValues(
       << ", set dofs " << dofNosLocal << " to values " << values;
     fieldVariable->setValues(componentNo, dofNosLocal, values, petscInsertMode);
     LOG(DEBUG) << "fieldVariable: " << *fieldVariable;
-  }
+  }*/
 }
 
 //! get the values at given dofs at the field variable given by slotNo
@@ -115,10 +140,23 @@ slotGetValues(
 )
 {
   if (!slotConnectorData)
+  {
+    LOG(DEBUG) << "slotGetValues (vector), slotConnectorData is not set";
     return;
-  if (slotConnectorData->size() <= arrayIndex)
+  }
+  if (slotConnectorData->empty())
+  {
+    LOG(DEBUG) << "slotGetValues (vector), slotConnectorData is empty";
     return;
+  }
 
+  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0]);
+  int itemNo = arrayIndex / nArrayItemsPerItem;
+  int arrayIndexInItem = arrayIndex % nArrayItemsPerItem;
+
+  SlotConnectorDataHelper<SlotConnectorDataType>::slotGetValues((*slotConnectorData)[itemNo], slotNo, arrayIndexInItem, dofNosLocal, values);
+
+/*
   int nSlotsVariable1 = (*slotConnectorData)[arrayIndex]->variable1.size();
 
   // if the slot no corresponds to a field variables stored under variable1
@@ -151,7 +189,7 @@ slotGetValues(
     LOG(DEBUG) << "slot " << slotNo << ", array index " << arrayIndex << ": "
       << "from fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
       << ", at dofs " << dofNosLocal << " get values " << values;
-  }
+  }*/
 }
 
 //! set the geometry values at given dofs of the function space of the field variable given by slotNo
@@ -163,10 +201,24 @@ slotSetGeometryValues(
 )
 {
   if (!slotConnectorData)
+  {
+    LOG(DEBUG) << "slotSetGeometryValues (vector), slotConnectorData is not set";
     return;
-  if (slotConnectorData->size() <= arrayIndex)
+  }
+  if (slotConnectorData->empty())
+  {
+    LOG(DEBUG) << "slotSetGeometryValues (vector), slotConnectorData is empty";
     return;
+  }
 
+  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0]);
+  int itemNo = arrayIndex / nArrayItemsPerItem;
+  int arrayIndexInItem = arrayIndex % nArrayItemsPerItem;
+
+  SlotConnectorDataHelper<SlotConnectorDataType>::slotSetGeometryValues((*slotConnectorData)[itemNo], slotNo, arrayIndexInItem,
+                                                                        dofNosLocal, values);
+
+/*
   int nSlotsVariable1 = (*slotConnectorData)[arrayIndex]->variable1.size();
 
   // if the slot no corresponds to a field variables stored under variable1
@@ -193,7 +245,7 @@ slotSetGeometryValues(
       << "in fieldVariable \"" << fieldVariable->name() << "\", function space \"" << fieldVariable->functionSpace()->meshName() << "\""
       << ", set dofs " << dofNosLocal << " of geometry field to values " << values;
     fieldVariable->functionSpace()->geometryField().setValues(dofNosLocal, values);
-  }
+  }*/
 }
 
 //! get the geometry values at given dofs of the function space of the field variable given by slotNo
@@ -205,10 +257,24 @@ slotGetGeometryValues(
 )
 {
   if (!slotConnectorData)
+  {
+    LOG(DEBUG) << "slotGetGeometryValues (vector), slotConnectorData is not set";
     return;
-  if (slotConnectorData->size() <= arrayIndex)
+  }
+  if (slotConnectorData->empty())
+  {
+    LOG(DEBUG) << "slotGetGeometryValues (vector), slotConnectorData is empty";
     return;
+  }
 
+  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0]);
+  int itemNo = arrayIndex / nArrayItemsPerItem;
+  int arrayIndexInItem = arrayIndex % nArrayItemsPerItem;
+
+  LOG(DEBUG) << "slotGetGeometryValues on item " << arrayIndex << " -> " << arrayIndexInItem << "(" << nArrayItemsPerItem << ")";
+  SlotConnectorDataHelper<SlotConnectorDataType>::slotGetGeometryValues((*slotConnectorData)[itemNo], slotNo, arrayIndexInItem,
+                                                                        dofNosLocal, values);
+/*
   int nSlotsVariable1 = (*slotConnectorData)[arrayIndex]->variable1.size();
 
   // if the slot no corresponds to a field variables stored under variable1
@@ -237,7 +303,7 @@ slotGetGeometryValues(
     LOG(DEBUG) << "slot " << slotNo << ", array index " << arrayIndex << ": "
       << "from fieldVariable \"" << fieldVariable->name() << "\", function space \"" << fieldVariable->functionSpace()->meshName() << "\""
       << ", at dofs " << dofNosLocal << " get values " << values;
-  }
+  }*/
 }
 
 //! get the values at given dofs at the field variable given by slotNo
@@ -250,9 +316,15 @@ slotSetRepresentationGlobal(
 {
   if (!slotConnectorData)
     return;
-  if (slotConnectorData->size() <= arrayIndex)
+  if (slotConnectorData->empty())
     return;
 
+  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0]);
+  int itemNo = arrayIndex / nArrayItemsPerItem;
+  int arrayIndexInItem = arrayIndex % nArrayItemsPerItem;
+
+  SlotConnectorDataHelper<SlotConnectorDataType>::slotSetRepresentationGlobal((*slotConnectorData)[itemNo], slotNo, arrayIndexInItem);
+/*
   int nSlotsVariable1 = (*slotConnectorData)[arrayIndex]->variable1.size();
 
   // if the slot no corresponds to a field variables stored under variable1
@@ -271,7 +343,7 @@ slotSetRepresentationGlobal(
       = (*slotConnectorData)[arrayIndex]->variable2[index].values;
 
     fieldVariable->setRepresentationGlobal();
-  }
+  }*/
 }
 
 //! collect all slot names

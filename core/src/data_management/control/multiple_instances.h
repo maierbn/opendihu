@@ -20,6 +20,7 @@ class MultipleInstances :
 {
 public:
   typedef typename BaseTimesteppingType::Data BaseDataType;
+  typedef std::vector<std::shared_ptr<typename BaseDataType::SlotConnectorDataType>> SlotConnectorDataType;
 
   //! constructor
   MultipleInstances(DihuContext context);

@@ -194,15 +194,25 @@ slotSetGeometryValues(
 )
 {
   if (!slotConnectorData)
+  {
+    LOG(DEBUG) << "slotSetGeometryValues (vector2), slotConnectorData is not set";
     return;
+  }
   if (slotConnectorData->empty())
+  {
+    LOG(DEBUG) << "slotSetGeometryValues (vector2), slotConnectorData is empty";
     return;
+  }
 
   int sizeFirstVector = slotConnectorData->size();
   int sizeSecondVector = (*slotConnectorData)[0]->size();
 
   if (arrayIndex >= sizeFirstVector*sizeSecondVector)
+  {
+    LOG(DEBUG) << "slotSetGeometryValues (vector2), size: " << sizeFirstVector << "*" << sizeSecondVector << " = "
+      << sizeFirstVector*sizeSecondVector << " <= arrayIndex " <<  arrayIndex;
     return;
+  }
 
   int arrayIndex1 = arrayIndex / sizeSecondVector;
   int arrayIndex2 = arrayIndex % sizeSecondVector;
@@ -245,15 +255,25 @@ slotGetGeometryValues(
 )
 {
   if (!slotConnectorData)
+  {
+    LOG(DEBUG) << "slotGetGeometryValues (vector2), slotConnectorData is not set";
     return;
+  }
   if (slotConnectorData->empty())
+  {
+    LOG(DEBUG) << "slotGetGeometryValues (vector2), slotConnectorData is empty";
     return;
+  }
 
   int sizeFirstVector = slotConnectorData->size();
   int sizeSecondVector = (*slotConnectorData)[0]->size();
 
   if (arrayIndex >= sizeFirstVector*sizeSecondVector)
+  {
+    LOG(DEBUG) << "slotGetGeometryValues (vector2), size: " << sizeFirstVector << "*" << sizeSecondVector << " = "
+      << sizeFirstVector*sizeSecondVector << " <= arrayIndex " <<  arrayIndex;
     return;
+  }
 
   int arrayIndex1 = arrayIndex / sizeSecondVector;
   int arrayIndex2 = arrayIndex % sizeSecondVector;

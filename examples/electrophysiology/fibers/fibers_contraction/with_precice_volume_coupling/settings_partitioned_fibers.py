@@ -205,7 +205,7 @@ config = {
     "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
     "timestepWidth":            1,                          # coupling time step width, must match the value in the precice config
     "couplingEnabled":          True,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
-    "preciceConfigFilename":    "precice_config.xml",       # the preCICE configuration file
+    "preciceConfigFilename":    "../precice_config.xml",    # the preCICE configuration file
     "preciceParticipantName":   "PartitionedFibers",        # name of the own precice participant, has to match the name given in the precice xml config file
     "scalingFactor":            1,                          # a factor to scale the exchanged data, prior to communication
     "outputOnlyConvergedTimeSteps": True,                   # if the output writers should be called only after a time window of precice is complete, this means the timestep has converged
@@ -213,7 +213,7 @@ config = {
     "preciceData": [
       {
         "mode":                 "read",                     # mode is one of "read" or "write"
-        "variableName":         "Geometry",                 # name of the vector or scalar to transfer, as given in the precice xml settings file
+        "preciceDataName":      "Geometry",                 # name of the vector or scalar to transfer, as given in the precice xml settings file
         "preciceMeshName":      "PartitionedFibersMesh",    # name of the precice coupling mesh, as given in the precice xml settings file
         "opendihuMeshName":     None,                       # extra specification of the opendihu mesh that is used for the initialization of the precice mapping. If None or "", the mesh of the field variable is used.
         "slotName":             None,                       # name of the existing slot of the opendihu data connector to which this variable is associated to (only relevant if not isGeometryField)
@@ -221,7 +221,7 @@ config = {
       },
       {
         "mode":                 "write",                    # mode is one of "read" or "write"
-        "variableName":         "Gamma",                    # name of the vector or scalar to transfer, as given in the precice xml settings file
+        "preciceDataName":      "Gamma",                    # name of the vector or scalar to transfer, as given in the precice xml settings file
         "preciceMeshName":      "PartitionedFibersMesh",    # name of the precice coupling mesh, as given in the precice xml settings file
         "opendihuMeshName":     None,                       # extra specification of the opendihu mesh that is used for the initialization of the precice mapping. If None or "", the mesh of the field variable is used.
         "slotName":             "gamma",                    # name of the existing slot of the opendihu data connector to which this variable is associated to (only relevant if not isGeometryField)
@@ -329,7 +329,7 @@ config = {
                   "inputMeshIsGlobal":           True,
                   "solverName":                  "diffusionTermSolver",
                   "nAdditionalFieldVariables":   1,
-                  "additionalSlotNames":         ["stress"],
+                  "additionalSlotNames":         ["gamma"],
                   "checkForNanInf":              False,
                   
                   "FiniteElementMethod" : {

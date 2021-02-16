@@ -18,8 +18,8 @@ preciceReadData()
 
   LOG(DEBUG) << "read data from precice";
 
-  using SlotConnectorDataType = typename NestedSolver::Data::SlotConnectorDataType;
-  std::shared_ptr<SlotConnectorDataType> slotConnectorData = this->nestedSolver_.data().getSlotConnectorData();
+  using SlotConnectorDataType = typename NestedSolver::SlotConnectorDataType;
+  std::shared_ptr<SlotConnectorDataType> slotConnectorData = this->nestedSolver_.getSlotConnectorData();
 
   int nArrayItems = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems(slotConnectorData);   // number of fibers if there are fibers
 
@@ -39,8 +39,16 @@ preciceReadData()
       scalarValues_.resize(nEntries);
 
       // get all data at once
-      this->preciceSolverInterface_->readBlockVectorData(preciceData.preciceDataId, preciceData.preciceMesh->nNodesLocal,
-                                                         preciceData.preciceMesh->preciceVertexIds.data(), scalarValues_.data());
+      if (preciceData.isGeometryField)
+      {
+        this->preciceSolverInterface_->readBlockVectorData(preciceData.preciceDataId, preciceData.preciceMesh->nNodesLocal,
+                                                           preciceData.preciceMesh->preciceVertexIds.data(), scalarValues_.data());
+      }
+      else
+      {
+        this->preciceSolverInterface_->readBlockScalarData(preciceData.preciceDataId, preciceData.preciceMesh->nNodesLocal,
+                                                           preciceData.preciceMesh->preciceVertexIds.data(), scalarValues_.data());
+      }
 
       // get the mesh partition
       std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBase
@@ -99,8 +107,8 @@ preciceWriteData()
   // write data to precice
   LOG(DEBUG) << "write data to precice";
 
-  using SlotConnectorDataType = typename NestedSolver::Data::SlotConnectorDataType;
-  std::shared_ptr<SlotConnectorDataType> slotConnectorData = this->nestedSolver_.data().getSlotConnectorData();
+  using SlotConnectorDataType = typename NestedSolver::SlotConnectorDataType;
+  std::shared_ptr<SlotConnectorDataType> slotConnectorData = this->nestedSolver_.getSlotConnectorData();
 
   int nArrayItems = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems(slotConnectorData);   // number of fibers if there are fibers
 
@@ -129,8 +137,12 @@ preciceWriteData()
         // loop over fibers if there are any
         for (int arrayIndex = 0; arrayIndex < nArrayItems; arrayIndex++)
         {
+          static std::vector<Vec3> geometryValuesFiber;
+          geometryValuesFiber.clear();
           SlotConnectorDataHelper<SlotConnectorDataType>::slotGetGeometryValues(slotConnectorData, preciceData.slotNo, arrayIndex,
-                                                                                dofNosLocalWithoutGhosts, geometryValues_);
+                                                                                dofNosLocalWithoutGhosts, geometryValuesFiber);
+
+          geometryValues_.insert(geometryValues_.end(), geometryValuesFiber.begin(), geometryValuesFiber.end());
         }
         LOG(DEBUG) << "Using geometry field of opendihu meshes of " << nArrayItems << " array items (e.g., fibers).";
 
@@ -149,23 +161,47 @@ preciceWriteData()
         // loop over fibers if there are any
         for (int arrayIndex = 0; arrayIndex < nArrayItems; arrayIndex++)
         {
+          static std::vector<double> values;
+          values.clear();
           // static void slotGetValues(std::shared_ptr<SlotConnectorDataType> slotConnectorData,
           //   int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values);
           SlotConnectorDataHelper<SlotConnectorDataType>::slotGetValues(slotConnectorData, preciceData.slotNo, arrayIndex,
-                                                                        dofNosLocalWithoutGhosts, scalarValues_);
+                                                                        dofNosLocalWithoutGhosts, values);
+          scalarValues_.insert(scalarValues_.end(), values.begin(), values.end());
+
+          LOG(DEBUG) << "arrayIndex " << arrayIndex << ", add " << values.size() << " values, now number: " << scalarValues_.size();
+
         }
       }
 
 #ifndef NDEBUG
       LOG(DEBUG) << "write data to precice: " << scalarValues_;
 #endif
+
       // scale the values by a factor given in the config
       for (double &value : scalarValues_)
         value *= this->scalingFactor_;
 
       // write values in precice
-      this->preciceSolverInterface_->writeBlockVectorData(preciceData.preciceDataIdDisplacements, preciceData.preciceMesh->nNodesLocal,
-                                                          preciceData.preciceMesh->preciceVertexIds.data(), scalarValues_.data());
+
+      if (preciceData.isGeometryField)
+      {
+        if (scalarValues_.size() != 3*preciceData.preciceMesh->nNodesLocal)
+          LOG(FATAL) << "Wrong number of scalar values (isGeometryField): " << scalarValues_.size() << " != " << preciceData.preciceMesh->nNodesLocal
+            << ", nArrayItems: " << nArrayItems;
+
+        this->preciceSolverInterface_->writeBlockVectorData(preciceData.preciceDataId, preciceData.preciceMesh->nNodesLocal,
+                                                            preciceData.preciceMesh->preciceVertexIds.data(), scalarValues_.data());
+      }
+      else
+      {
+        if (scalarValues_.size() != preciceData.preciceMesh->nNodesLocal)
+          LOG(FATAL) << "Wrong number of scalar values: " << scalarValues_.size() << " != " << preciceData.preciceMesh->nNodesLocal
+            << ", nArrayItems: " << nArrayItems;
+
+        this->preciceSolverInterface_->writeBlockScalarData(preciceData.preciceDataId, preciceData.preciceMesh->nNodesLocal,
+                                                            preciceData.preciceMesh->preciceVertexIds.data(), scalarValues_.data());
+      }
     }
   }
 

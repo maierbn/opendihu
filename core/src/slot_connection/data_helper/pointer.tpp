@@ -186,7 +186,10 @@ slotGetGeometryValues(
 )
 {
   if (!slotConnectorData)
+  {
+    LOG(DEBUG) << "slotGetGeometryValues, slotConnectorData is not set";
     return;
+  }
 
   int nSlotsVariable1 = slotConnectorData->variable1.size();
 

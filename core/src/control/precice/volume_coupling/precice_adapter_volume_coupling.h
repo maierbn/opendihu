@@ -12,7 +12,6 @@ namespace Control
  */
 template<typename NestedSolver>
 class PreciceAdapterVolumeCoupling :
-  public Runnable,
   public PreciceAdapterVolumeCouplingReadWrite<NestedSolver>
 {
 public:

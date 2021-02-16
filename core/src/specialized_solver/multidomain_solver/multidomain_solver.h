@@ -125,6 +125,7 @@ protected:
   bool updateSystemMatrixEveryTimestep_;      //< if the system matrix will be rebuild every first time step, this is needed if the geometry changes
   int updateSystemMatrixInterval_;            //< interval when the system matrix should be rebuild, counting only calls to advanceTimeStep
   int recreateLinearSolverInterval_;          //< interval when linearSolver_ object gets deleted and recreated, to remedy memory leaks of the PETSc implementation of some solvers
+  bool rescaleRelativeFactors_;               //< if all relative factors should be rescaled such that max Σf_r = 1
   bool setDirichletBoundaryConditionPhiB_;    //< if the last dof of the fat layer (MultidomainWithFatSolver) or the extracellular space (MultidomainSolver) should have a 0 Dirichlet boundary condition
   bool setDirichletBoundaryConditionPhiE_;    //< if the last dof of the extracellular space should have a 0 Dirichlet boundary condition
   bool resetToAverageZeroPhiB_;               //< if a constant should be added to the phi_b part of the solution vector after every solve, such that the average is zero

@@ -23,7 +23,7 @@ struct SlotConnectorDataHelper
   );
 
   //! set the values at given dofs at the field variable given by slotNo
-  static void slotSetValues(
+  static bool slotSetValues(
     std::shared_ptr<SlotConnectorDataType> slotConnectorData,
     int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode = INSERT_VALUES
   );
@@ -74,7 +74,7 @@ struct SlotConnectorDataHelper<std::vector<std::shared_ptr<SlotConnectorDataType
   );
 
   //! set the values at given dofs at the field variable given by slotNo
-  static void slotSetValues(
+  static bool slotSetValues(
     std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>> slotConnectorData,
     int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode = INSERT_VALUES
   );
@@ -129,7 +129,7 @@ struct SlotConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::shar
   );
 
   //! set the values at given dofs at the field variable given by slotNo
-  static void slotSetValues(
+  static bool slotSetValues(
     std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>> slotConnectorData,
     int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode = INSERT_VALUES
   );
@@ -184,7 +184,7 @@ struct SlotConnectorDataHelper<std::tuple<std::shared_ptr<SlotConnectorDataType1
   );
 
   //! set the values at given dofs at the field variable given by slotNo
-  static void slotSetValues(
+  static bool slotSetValues(
     std::shared_ptr<std::tuple<std::shared_ptr<SlotConnectorDataType1>,std::shared_ptr<SlotConnectorDataType2>>> slotConnectorData,
     int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode = INSERT_VALUES
   );

@@ -69,7 +69,7 @@ import scipy
 import numpy as np
 
 n_fibers_in_fiber_file = 81
-n_motor_units = 3   # number of motor units
+n_motor_units = 10   # number of motor units
 
 motor_units = []
 for mu_no in range(n_motor_units):
@@ -97,7 +97,7 @@ for mu_no in range(n_motor_units):
   c2 = (max_value - min_value) / (1.02**(n_motor_units-1) - 1)
   c1 = min_value - c2
   standard_deviation = c1 + c2*1.02**mu_no
-  maximum = 10.0/n_motor_units*standard_deviation
+  maximum = 2.0/n_motor_units*standard_deviation
 
   # exponential distribution: low number of fibers per MU, slow twitch (type I), activated first --> high number of fibers per MU, fast twitch (type II), activated last
   motor_units.append(
@@ -163,13 +163,14 @@ dt_muscle_spindles     = 1e-3       # [ms] timestep width of cellml solver of mu
 dt_interneuron         = dt_neurons # [ms] timestep width of the cellml solver for interneurons
 dt_motoneuron          = dt_neurons # [ms] timestep width of the cellml solver for motoneurons
 
-#dt_neuron_transfer     = dt_elasticity  # [ms] interval when to call callback functions and transfer values between CellML models, increase this to speed up the simulation
-dt_neuron_transfer     = dt_neurons  # [ms] interval when to call callback functions and transfer values between CellML models, increase this to speed up the simulation
+dt_neuron_transfer     = dt_elasticity  # [ms] interval when to call callback functions and transfer values between CellML models, increase this to speed up the simulation
+#dt_neuron_transfer     = dt_neurons  # [ms] interval when to call callback functions and transfer values between CellML models, increase this to speed up the simulation
 
 output_timestep_multidomain = 2     # [ms] timestep for multidomain solver output
 output_timestep_elasticity = 1      # [ms] timestep for elasticity output files
 output_timestep_neurons = 1         # [ms] timestep for output of files for all sensor organs and neurons
 output_timestep_motoneuron = 0.2    # [ms] timestep for output of files for motoneuron
+output_timestep_0D_states = 2       # [ms] timestep for output of all states within multidomain, produces large files, enabled only if states_output = True
 
 #output_timestep_multidomain = dt_elasticity
 #output_timestep_elasticity = dt_elasticity
@@ -211,7 +212,7 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-states_output = False    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
+states_output = True    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
 show_linear_solver_output = False    # if every solve of multidomain diffusion should be printed
 disable_firing_output = True   # if information about firing of MUs should be printed
 
@@ -238,7 +239,7 @@ muscle_spindle_parameters_initial_values = [0, 0, 0, 0, 0]    # [L, L_dot, L_ddo
 muscle_spindle_delay = 30             # [ms] signal delay between muscle spindle model and motoneuron model
 
 # motor neurons
-n_motoneurons = 3
+n_motoneurons = 10
 motoneuron_cellml_file = input_directory+"/WSBM_1457_MN_Cisi_Kohn_2008.cellml"
 motoneuron_mappings = {
   ("parameter", 0):            "motor_neuron/drive",   # stimulation

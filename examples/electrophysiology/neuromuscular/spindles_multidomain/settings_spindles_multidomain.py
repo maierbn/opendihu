@@ -261,6 +261,7 @@ config = {
   
   # connections of the slots, identified by slot name
   "connectedSlots": [
+    ("mn",     "mn_out"),
     ("mn_out", "mn"),
     ("ms0",    "ms_in0"),
     ("ms1",    "ms_in1"),
@@ -568,7 +569,7 @@ config = {
                 "toDofNosNumbering":                "local",
                 "dofsMapping":                      None,
                 "inputDofs":                        list(range(variables.n_muscle_spindles)),   # [0,1,...,n_muscle_spindles], this is for mesh "muscleSpindleMesh"
-                "outputDofs":                       [list(range(variables.n_muscle_spindles))],   # [0,1,...,n_muscle_spindles], this is for mesh "muscleSpindleAndInterneuronMesh"
+                "outputDofs":                       [list(range(variables.n_motoneurons))],   # [0,1,...,n_motor_neurons], this is for mesh "motoneuronMesh"
                 "callback":                         variables.callback_muscle_spindles_to_motoneurons,
                 #"thresholdValue":                   20,                  # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
                 #"valueToSet":                       20,                  # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
@@ -640,7 +641,7 @@ config = {
             "logTimeStepWidthAsKey":        "dt_motoneuron",
             "durationLogKey":               "duration_motoneuron",
             "initialValues":                [],
-            "timeStepOutputInterval":       1e4,
+            "timeStepOutputInterval":       1,
             "inputMeshIsGlobal":            True,
             "dirichletBoundaryConditions":  {},
             "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
@@ -791,7 +792,7 @@ config = {
                             "timeStepWidth":                variables.dt_0D,  # 5e-5
                             "logTimeStepWidthAsKey":        "dt_0D",
                             "durationLogKey":               "duration_0D",
-                            "initialValues":                [],
+                            "initialValues":                -75,
                             "timeStepOutputInterval":       1e4,
                             "inputMeshIsGlobal":            True,
                             "dirichletBoundaryConditions":  {},

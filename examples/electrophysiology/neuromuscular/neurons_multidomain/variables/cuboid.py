@@ -25,9 +25,9 @@ scenario_name = "neurons_multidomain"
 # parameters for precontraction
 # -----------------------------
 # load
-precontraction_constant_body_force = (0,0,20*9.81e-4)   # [cm/ms^2], gravity constant for the body force
+precontraction_constant_body_force = (0,0,2*9.81e-4)   # [cm/ms^2], gravity constant for the body force
 precontraction_bottom_traction = [0,0,0]        # [N]
-constant_gamma = 0.3    # 0.3 works, the active stress will be pmax*constant_gamma
+constant_gamma = 0.1    # 0.3 works, the active stress will be pmax*constant_gamma
 
 # parameters for prestretch
 # -----------------------------
@@ -183,9 +183,9 @@ input_directory   = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrop
 #cellml_file       = input_directory+"/hodgkin_huxley-razumova.cellml"
 cellml_file       = input_directory+"/hodgkin_huxley-razumova_equilibrium.cellml"
 
-fiber_file        = input_directory+"/left_biceps_brachii_9x9fibers_b.bin"  # this is a variant of 9x9fibers with a slightly different mesh that somehow works better
+#fiber_file        = input_directory+"/left_biceps_brachii_9x9fibers_b.bin"  # this is a variant of 9x9fibers with a slightly different mesh that somehow works better
 #fiber_file        = input_directory+"/left_biceps_brachii_13x13fibers.bin"
-#fiber_file        = input_directory+"/cuboid_9x9fibers.bin"
+fiber_file        = input_directory+"/cuboid_9x9fibers.bin"
 fat_mesh_file     = fiber_file + "_fat.bin"
 firing_times_file = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 firing_times_file = input_directory+"/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency

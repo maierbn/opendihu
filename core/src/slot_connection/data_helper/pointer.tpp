@@ -51,14 +51,14 @@ getMeshPartitionBase(std::shared_ptr<SlotConnectorDataType> slotConnectorData, i
 
 //! set the values at given dofs at the field variable given by slotNo
 template<typename SlotConnectorDataType>
-void SlotConnectorDataHelper<SlotConnectorDataType>::
+bool SlotConnectorDataHelper<SlotConnectorDataType>::
 slotSetValues(
   std::shared_ptr<SlotConnectorDataType> slotConnectorData,
   int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode
 )
 {
   if (!slotConnectorData)
-    return;
+    return false;
 
   int nSlotsVariable1 = slotConnectorData->variable1.size();
 
@@ -91,6 +91,7 @@ slotSetValues(
     fieldVariable->setValues(componentNo, dofNosLocal, values, petscInsertMode);
     LOG(DEBUG) << "fieldVariable: " << *fieldVariable;
   }
+  return true;
 }
 
 //! get the values at given dofs at the field variable given by slotNo

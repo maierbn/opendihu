@@ -49,27 +49,28 @@ getMeshPartitionBase(
 
 //! set the values at given dofs at the field variable given by slotNo
 template<typename SlotConnectorDataType1, typename SlotConnectorDataType2>
-void SlotConnectorDataHelper<std::tuple<std::shared_ptr<SlotConnectorDataType1>,std::shared_ptr<SlotConnectorDataType2>>>::
+bool SlotConnectorDataHelper<std::tuple<std::shared_ptr<SlotConnectorDataType1>,std::shared_ptr<SlotConnectorDataType2>>>::
 slotSetValues(
   std::shared_ptr<std::tuple<std::shared_ptr<SlotConnectorDataType1>,std::shared_ptr<SlotConnectorDataType2>>> slotConnectorData,
   int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode
 )
 {
   if (!slotConnectorData)
-    return;
+    return false;
 
   int nSlotsFirstTuple = SlotConnectorDataHelper<SlotConnectorDataType1>::nSlots(std::get<0>(*slotConnectorData));
   int nSlotsSecondTuple = SlotConnectorDataHelper<SlotConnectorDataType2>::nSlots(std::get<1>(*slotConnectorData));
 
   if (slotNo < nSlotsFirstTuple)
   {
-    SlotConnectorDataHelper<SlotConnectorDataType1>::slotSetValues(std::get<0>(*slotConnectorData), slotNo, arrayIndex, dofNosLocal, values, petscInsertMode);
+    return SlotConnectorDataHelper<SlotConnectorDataType1>::slotSetValues(std::get<0>(*slotConnectorData), slotNo, arrayIndex, dofNosLocal, values, petscInsertMode);
   }
   else if (slotNo < nSlotsFirstTuple + nSlotsSecondTuple)
   {
     int offsetSlotNo = slotNo - nSlotsFirstTuple;
-    SlotConnectorDataHelper<SlotConnectorDataType2>::slotSetValues(std::get<1>(*slotConnectorData), offsetSlotNo, arrayIndex, dofNosLocal, values, petscInsertMode);
+    return SlotConnectorDataHelper<SlotConnectorDataType2>::slotSetValues(std::get<1>(*slotConnectorData), offsetSlotNo, arrayIndex, dofNosLocal, values, petscInsertMode);
   }
+  return true;
 }
 
 //! get the values at given dofs at the field variable given by slotNo

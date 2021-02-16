@@ -72,7 +72,7 @@ getMeshPartitionBase(
 
 //! set the values at given dofs at the field variable given by slotNo
 template<typename SlotConnectorDataType>
-void SlotConnectorDataHelper<std::vector<std::shared_ptr<SlotConnectorDataType>>>::
+bool SlotConnectorDataHelper<std::vector<std::shared_ptr<SlotConnectorDataType>>>::
 slotSetValues(
   std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>> slotConnectorData,
   int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode
@@ -81,20 +81,20 @@ slotSetValues(
   if (!slotConnectorData)
   {
     LOG(DEBUG) << "slotSetValues (vector), slotConnectorData is not set";
-    return;
+    return false;
   }
   if (slotConnectorData->empty())
   {
     LOG(DEBUG) << "slotSetValues (vector), slotConnectorData is empty";
-    return;
+    return false;
   }
 
   int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0]);
   int itemNo = arrayIndex / nArrayItemsPerItem;
   int arrayIndexInItem = arrayIndex % nArrayItemsPerItem;
 
-  SlotConnectorDataHelper<SlotConnectorDataType>::slotSetValues((*slotConnectorData)[itemNo], slotNo, arrayIndexInItem,
-                                                                dofNosLocal, values, petscInsertMode);
+  return SlotConnectorDataHelper<SlotConnectorDataType>::slotSetValues((*slotConnectorData)[itemNo], slotNo, arrayIndexInItem,
+                                                                       dofNosLocal, values, petscInsertMode);
 /*
   int nSlotsVariable1 = (*slotConnectorData)[arrayIndex]->variable1.size();
 

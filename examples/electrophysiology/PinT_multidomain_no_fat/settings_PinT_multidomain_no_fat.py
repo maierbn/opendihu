@@ -4,7 +4,7 @@
 import numpy as np
 import scipy.stats
 import pickle
-import sys,os 
+import sys,os
 import struct
 sys.path.insert(0, "..")
 
@@ -61,7 +61,7 @@ end_time = 6
 ntime = 2000 #1337
 dt_0D = (end_time / ntime)                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = end_time / ntime               # [ms] timestep width of multidomain solver
-dt_splitting = end_time / ntime 
+dt_splitting = end_time / ntime
 #Am = 1.0
 sampling_stride_z = 200 #muscle 74 200
 motor_units = motor_units[0:2]    # only 2 motor units [0:2] [0:1]
@@ -77,7 +77,7 @@ n_ranks_space = 1
 # load MU distribution and firing times
 fiber_distribution = np.genfromtxt(fiber_distribution_file, delimiter=" ")
 firing_times = np.genfromtxt(firing_times_file)
-  
+
 # load mesh
 import helper
 (mesh_node_positions,fiber_data,bottom_node_indices,top_node_indices,n_linear_elements_per_coordinate_direction) = helper.load_mesh(fiber_file, sampling_stride_z, rank_no)
@@ -105,7 +105,7 @@ if "hodgkin_huxley" in cellml_file:
   # parameters: I_stim
   mappings = {
     ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
-    ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+    ("connectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
   }
   parameters_initial_values = [0.0]                         # initial value for stimulation current
   nodal_stimulation_current = 40.                           # not used
@@ -124,7 +124,7 @@ def get_motor_unit_no(fiber_no):
 def compartment_gets_stimulated(compartment_no, current_time):
   # determine motor unit
   mu_no = (int)(get_motor_unit_no(compartment_no)*0.8)
-  
+
   # determine if MU fires now
   index = int(current_time * stimulation_frequency)
   n_firing_times = np.size(firing_times,0)
@@ -133,26 +133,26 @@ def compartment_gets_stimulated(compartment_no, current_time):
 def PinT_stimulation(current_time):
   timestep_width = end_time/ntime
   #print("test {}".format(current_time % (3333 * timestep_width)))
-  #return current_time % (int(1./stimulation_frequency/dt_0D) * timestep_width) == 0 
+  #return current_time % (int(1./stimulation_frequency/dt_0D) * timestep_width) == 0
   #bool = current_time % 2.5 > 2.4995 or current_time == 0.0
   bool =current_time % 2.5 > (2.5 - (0.5*timestep_width)) or current_time == 0.0
   #bool = 1==1
   return bool
 
 def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, compartment_no):
-  
+
   # determine if fiber gets stimulated at the current time
   is_compartment_gets_stimulated = compartment_gets_stimulated(compartment_no, current_time)
-  
+
   # determine nodes to stimulate (center node, left and right neighbour)
-  
+
   n_nodes_x = n_linear_elements_per_coordinate_direction[0]+1
   n_nodes_y = n_linear_elements_per_coordinate_direction[1]+1
   n_nodes_z = n_linear_elements_per_coordinate_direction[2]+1
   z_index_center = (int)(n_nodes_z/2)
   y_index_center = (int)(n_nodes_y/2)
   x_index_center = (int)(n_nodes_x/2)
-  
+
   #nodes_to_stimulate_global = [k*n_nodes_y*n_nodes_x + j*n_nodes_y + i for i in range(n_nodes_x) for j in range(n_nodes_y) for k in [z_index_center-1, z_index_center, z_index_center+1]]
 
   # stimulation value
@@ -160,41 +160,41 @@ def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_n
     stimulation_current = 400.
   else:
     stimulation_current = 0.
-  
+
   for dof_no_local,dof_no_global in enumerate(dof_nos_global):
     k = (int)(dof_no_global / (n_nodes_x*n_nodes_y))
     j = (int)((dof_no_global % (n_nodes_x*n_nodes_y)) / n_nodes_x)
     i = (int)(dof_no_global % n_nodes_x)
-  
+
     if z_index_center-1 <= k <= z_index_center+1:
       if y_index_center-1 <= j <= y_index_center+1:
         if x_index_center-1 <= i <= x_index_center+1:
-      
+
           parameters[dof_no_local] = stimulation_current
-  
+
           if is_compartment_gets_stimulated:
             print("       {}: set stimulation for local dof {}".format(rank_no, dof_no_local))
-  
+
   #print("       {}: setParameters at timestep {}, t={}, n_nodes_global={}, range: [{},{}], fiber no {}, MU {}, stimulated: {}".\
         #format(rank_no, time_step_no, current_time, n_nodes_global, first_dof_global, last_dof_global, fiber_no, get_motor_unit_no(fiber_no), compartment_gets_stimulated))
-    
+
   #wait = input("Press any key to continue...")
 
 # callback function that can set states, i.e. prescribed values for stimulation
 def set_specific_states(n_nodes_global, time_step_no, current_time, states, compartment_no):
-  
+
   PinT = PinT_stimulation(current_time)
   if PinT:
     # determine if fiber gets stimulated at the current time
     is_compartment_gets_stimulated = compartment_gets_stimulated(compartment_no, current_time)
-    if is_compartment_gets_stimulated:  
+    if is_compartment_gets_stimulated:
       n_nodes_x = n_linear_elements_per_coordinate_direction[0]+1
       n_nodes_y = n_linear_elements_per_coordinate_direction[1]+1
       n_nodes_z = n_linear_elements_per_coordinate_direction[2]+1
       z_index_center = (int)(n_nodes_z/2)
       y_index_center = (int)(n_nodes_y/2)
       x_index_center = (int)(n_nodes_x/2)
-      
+
       for k in range(n_nodes_z):
         if z_index_center-1 <= k <= z_index_center+1:
           for j in range(n_nodes_y):
@@ -209,15 +209,15 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
       #print("n_nodes: ({},{},{})".format(n_nodes_x, n_nodes_y, n_nodes_z))
       print("n_nodes_global: {}, time_step_no: {}, current_time: {}, compartment_no: {}".format(n_nodes_global, time_step_no, current_time, compartment_no))
       #wait = input("Press any key to continue...")
-    
+
 # boundary conditions for potential flow
 potential_flow_bc = {}
 for bottom_node_index in bottom_node_indices:
   potential_flow_bc[bottom_node_index] = 0.0
-  
+
 for top_node_index in top_node_indices:
   potential_flow_bc[top_node_index] = 1.0
-  
+
 # settings for the multidomain solver
 multidomain_solver = {
   "nCompartments":                    n_compartments,                     # number of compartments
@@ -234,7 +234,7 @@ multidomain_solver = {
   "updateSystemMatrixEveryTimestep":  False,
   "useSymmetricPreconditionerMatrix": True,
   "PotentialFlow": {
-    "FiniteElementMethod" : {  
+    "FiniteElementMethod" : {
       "meshName":                     "mesh",
       "solverName":                   "potentialFlowSolver",
       "prefactor":                    1.0,
@@ -244,7 +244,7 @@ multidomain_solver = {
     }
   },
   "Activation": {
-    "FiniteElementMethod" : {  
+    "FiniteElementMethod" : {
       "meshName":                     "mesh",
       "solverName":                   "activationSolver",
       "prefactor":                    1.0,
@@ -255,7 +255,7 @@ multidomain_solver = {
         8.93, 0, 0,
         0, 0.0, 0,
         0, 0, 0.0
-      ]], 
+      ]],
       "extracellularDiffusionTensor": [[      # sigma_e
         6.7, 0, 0,
         0, 6.7, 0,
@@ -263,7 +263,7 @@ multidomain_solver = {
       ]],
     }
   },
-  
+
   "OutputWriter" : [
     #{"format": "Paraview", "outputInterval": (int)(1./dt_multidomain*output_timestep), "filename": "out/output", "binary": True, "fixedFormat": False, "combineFiles": True},
     #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./dt_1D*output_timestep, "sphereSize": "0.02*0.02*0.02"},
@@ -286,7 +286,7 @@ config = {
   "Solvers": {
     "potentialFlowSolver": {
       "relativeTolerance":  1e-10,
-      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual
       "maxIterations":      1e5,
       "solverType":         "gmres",
       "preconditionerType": "none",
@@ -295,7 +295,7 @@ config = {
     },
     "activationSolver": {
       "relativeTolerance":  1e-15,
-      "absoluteTolerance":  solver_tolerance,         # 1e-10 absolute tolerance of the residual          
+      "absoluteTolerance":  solver_tolerance,         # 1e-10 absolute tolerance of the residual
       "maxIterations":      1e3,
       "solverType":         "gmres",
       "preconditionerType": "euclid",
@@ -316,7 +316,7 @@ config = {
     "nrelax": 1,
     #"nrelax_first": 1,
     "max_levels": 2,
-    "option1": "blabla",              # another example option that is parsed in the data object  
+    "option1": "blabla",              # another example option that is parsed in the data object
     "nRanksInSpace": n_ranks_space,            # number of processes that compute the spatial domain in parallel
     "OutputWriter": [
       #{"format": "Paraview", "outputInterval": 1, "filename": "out/pint", "binary": False, "fixedFormat": False, "combineFiles": False, "fileNumbering": "timeStepIndex"},
@@ -336,7 +336,7 @@ config = {
 
         "Term1": {      # CellML
           "MultipleInstances": {
-            "nInstances": n_compartments,  
+            "nInstances": n_compartments,
             "instances": [        # settings for each motor unit, `i` is the index of the motor unit
             {
               "ranks": list(range(n_ranks_space)),
@@ -350,18 +350,18 @@ config = {
                 "dirichletBoundaryConditions":  {},
                 "nAdditionalFieldVariables":    0,
                 "checkForNanInf":               True,
-                    
+
                 "CellML" : {
                   "modelFilename":                          cellml_file,                            # input C++ source file or cellml XML file
                   "initializeStatesToEquilibrium":          False,                                  # if the equilibrium values of the states should be computed before the simulation starts
                   "initializeStatesToEquilibriumTimestepWidth": 1e-4,                               # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
-                  
+
                   # optimization parameters
                   "optimizationType":                       "vc",                                   # "vc", "simd", "openmp" type of generated optimizated source file
                   "approximateExponentialFunction":         True,                                   # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
                   "compilerFlags":                          "-fPIC -O3 -march=native -shared ",     # compiler flags used to compile the optimized model code
                   "maximumNumberOfThreads":                 0,                                      # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
-                  
+
                   # stimulation callbacks
                   #"statesInitialValues": [],
                   "setSpecificStatesFunction":              set_specific_states,                    # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
@@ -378,7 +378,7 @@ config = {
                   # parameters to the cellml model
                   "mappings":                               mappings,
                   "parametersInitialValues":                parameters_initial_values,              #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-                  
+
                   "meshName": "mesh",
                   "stimulationLogFilename": "out/stimulation.log",
                 }

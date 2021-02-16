@@ -78,10 +78,10 @@ parser.add_argument('-v',                                    help='Enable verbos
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
 # parameter for the 3D mesh generation
-parser.add_argument('--mesh3D_sampling_stride', nargs=3,     help='', type=int, default=None)
-parser.add_argument('--mesh3D_sampling_stride_x',            help='', type=int, default=variables.sampling_stride_x)
-parser.add_argument('--mesh3D_sampling_stride_y',            help='', type=int, default=variables.sampling_stride_y)
-parser.add_argument('--mesh3D_sampling_stride_z',            help='', type=int, default=variables.sampling_stride_z)
+parser.add_argument('--mesh3D_sampling_stride', nargs=3,     help='Stride to select the mesh points in x, y and z direction.', type=int, default=None)
+parser.add_argument('--mesh3D_sampling_stride_x',            help='Stride to select the mesh points in x direction.', type=int, default=variables.sampling_stride_x)
+parser.add_argument('--mesh3D_sampling_stride_y',            help='Stride to select the mesh points in y direction.', type=int, default=variables.sampling_stride_y)
+parser.add_argument('--mesh3D_sampling_stride_z',            help='Stride to select the mesh points in z direction.', type=int, default=variables.sampling_stride_z)
 
 # parse command line arguments and assign values to variables module
 args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)

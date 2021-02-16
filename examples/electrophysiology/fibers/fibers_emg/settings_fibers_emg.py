@@ -100,10 +100,10 @@ parser.add_argument('--rank_reordering',                     help='Enable rank r
 parser.add_argument('--use_elasticity',                      help='Enable linear elasticity',                             action="store_true")
 parser.add_argument('--approximate_exponential_function',    help='Approximate the exp function by a Taylor series',      default=variables.approximate_exponential_function, action="store_true")
 # parameter for the 3D mesh generation
-parser.add_argument('--mesh3D_sampling_stride', nargs=3,     help='', type=int, default=None)
-parser.add_argument('--mesh3D_sampling_stride_x',            help='', type=int, default=variables.sampling_stride_x)
-parser.add_argument('--mesh3D_sampling_stride_y',            help='', type=int, default=variables.sampling_stride_y)
-parser.add_argument('--mesh3D_sampling_stride_z',            help='', type=int, default=variables.sampling_stride_z)
+parser.add_argument('--mesh3D_sampling_stride', nargs=3,     help='Stride to select the mesh points in x, y and z direction.', type=int, default=None)
+parser.add_argument('--mesh3D_sampling_stride_x',            help='Stride to select the mesh points in x direction.',     type=int, default=variables.sampling_stride_x)
+parser.add_argument('--mesh3D_sampling_stride_y',            help='Stride to select the mesh points in y direction.',     type=int, default=variables.sampling_stride_y)
+parser.add_argument('--mesh3D_sampling_stride_z',            help='Stride to select the mesh points in z direction.',     type=int, default=variables.sampling_stride_z)
 
 # parse command line arguments and assign values to variables module
 args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)

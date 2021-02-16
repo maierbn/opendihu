@@ -43,6 +43,9 @@ public:
   //! reset to pre-initialized state, this deallocates all data and sets initialized_ to false such that a new call to initialize() is necessary
   virtual void reset();
 
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped 
+  void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
+
   //! set the subset of ranks that will compute the work
   void setRankSubset(Partition::RankSubset rankSubset);
   
@@ -58,6 +61,9 @@ public:
 
   friend class StiffnessMatrixTester;    //< a class used for testing
 protected:
+
+  //! initialize the coordinates in PETSc that are needed for AMG solvers
+  void setInformationToPreconditioner();
 
   //! read in rhs values from config and creates a FE rhs vector out of it
   virtual void setRightHandSide() = 0;

@@ -64,7 +64,7 @@ QuasiStaticNonlinearElasticitySolverChaste(DihuContext context) :
 
 template<int D>
 void QuasiStaticNonlinearElasticitySolverChaste<D>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -380,7 +380,8 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
   // write current output values
-  this->outputWriterManager_.writeOutput(this->data_, 0, endTime_);
+  if (withOutputWritersEnabled)
+    this->outputWriterManager_.writeOutput(this->data_, 0, endTime_);
 }
 
 template<int D>

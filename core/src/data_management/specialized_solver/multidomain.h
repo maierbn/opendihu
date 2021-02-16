@@ -22,7 +22,10 @@ public:
 
   typedef FieldVariable::FieldVariable<FunctionSpaceType,1> FieldVariableType;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,3> GradientFieldVariableType;
-  typedef std::vector<std::shared_ptr<SlotConnectorData<FunctionSpaceType,1>>> SlotConnectorDataType;   // contains V_mk^(i), V_mk^(i+1) for every compartment k, activeStress_k, activeStressTotal_
+  typedef std::tuple<
+    std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorData<FunctionSpaceType,1>>>>,
+    std::shared_ptr<SlotConnectorData<FunctionSpaceType,1>>
+  > SlotConnectorDataType;   // contains (V_mk^(i), V_mk^(i+1), activeStress_k for every compartment k), activeStressTotal_
 
   //! constructor
   Multidomain(DihuContext context);

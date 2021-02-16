@@ -22,6 +22,9 @@ public:
   //! constructor
   CellmlAdapter(DihuContext context);
 
+  //! constructor as a copy
+  CellmlAdapter(DihuContext context, const CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType> &rhs);
+
   //! return a reference to the algebraics field variable
   std::shared_ptr<FieldVariableAlgebraics> algebraics();
 

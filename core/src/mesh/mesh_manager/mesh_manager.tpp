@@ -233,7 +233,7 @@ std::shared_ptr<FunctionSpaceType> ManagerCompositeMesh<FunctionSpaceType>::
 createCompositeMesh(std::shared_ptr<Partition::Manager> partitionManager,
                     std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<::Mesh::StructuredDeformableOfDimension<FunctionSpaceType::dim()>,typename FunctionSpaceType::BasisFunction>>> subFunctionSpaces)
 {
-  LOG(FATAL) << "Trying to create a composite function space from the Python Confing but the C++ mesh type is not Mesh::CompositeOfDimension<D> "
+  LOG(FATAL) << "Trying to create a composite function space from the Python Config but the C++ mesh type is not Mesh::CompositeOfDimension<D> "
     << "but " << StringUtility::demangle(typeid(typename FunctionSpaceType::Mesh).name());
   return nullptr;
 }
@@ -308,7 +308,7 @@ createGenericFunctionSpace(int nEntries, std::shared_ptr<Partition::MeshPartitio
 
   if (meshPartition->ownRankNo() == meshPartition->nRanks()-1)
   {
-    // on the right border, have one element less than nodes, because nodes are left and right of the 1D element
+    // on the right boundary, have one element less than nodes, because nodes are left and right of the 1D element
     nElements[0] = nEntries-1;
   }
   else
@@ -321,9 +321,16 @@ createGenericFunctionSpace(int nEntries, std::shared_ptr<Partition::MeshPartitio
   // << ", hasFullNumberOfNodes: "
   //  << "["  << meshPartition->hasFullNumberOfNodes(0) << ", "  << meshPartition->hasFullNumberOfNodes(1) << ", "  << meshPartition->hasFullNumberOfNodes(2) << "], nElements: " << nElements;
 
+  // adjust name as long as a function space under this name already exists
+  std::stringstream meshName;
+  meshName << name;
+  while (hasFunctionSpaceOfType<FunctionSpace::Generic>(meshName.str()))
+    meshName << "_";
+
   std::array<double, 1> physicalExtent({0.0});
   std::array<int, 1> nRanksPerCoordinateDirection({meshPartition->nRanks()});
-  std::shared_ptr<Mesh> mesh = createFunctionSpace<FunctionSpace::Generic>(name, nElements, physicalExtent, nRanksPerCoordinateDirection, false);   // last parameter is that nElements is local number
+  std::shared_ptr<Mesh> mesh = createFunctionSpace<FunctionSpace::Generic>(
+    meshName.str(), nElements, physicalExtent, nRanksPerCoordinateDirection, false);   // last parameter is that nElements is local number
 
   return std::static_pointer_cast<FunctionSpace::Generic>(mesh);
 }

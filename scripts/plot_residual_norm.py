@@ -53,7 +53,9 @@ for filename in filenames:
   if not parsing_failed:
     plt.plot(xlist, ylist, 'o-', label=os.path.splitext(filename)[0])
 
-plt.gca().set_ylim(bottom=0)
+ax = plt.gca()
+#ax.set_ylim(bottom=0)
+ax.set_yscale('log', basey=10)
 
 plt.grid(which='major')
 plt.legend(loc='best')

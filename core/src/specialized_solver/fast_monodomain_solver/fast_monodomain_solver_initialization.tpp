@@ -1,14 +1,15 @@
 #include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_base.h"
 
+#include <vc_or_std_simd.h>  // this includes <Vc/Vc> or a Vc-emulating wrapper of <experimental/simd> if available
 #include "partition/rank_subset.h"
 #include "control/diagnostic_tool/stimulation_logging.h"
-#include <Vc/Vc>
+#include <random>
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 FastMonodomainSolverBase(const DihuContext &context) :
   specificSettings_(context.getPythonConfig()), nestedSolvers_(context),
-  initialized_(false)
+  compute0DInstance_(nullptr), computeMonodomain_(nullptr), initializeStates_(nullptr), useVc_(true), initialized_(false)
 {
   // initialize output writers
   this->outputWriterManager_.initialize(context, specificSettings_);
@@ -18,6 +19,8 @@ template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 initialize()
 {
+  LOG(DEBUG) << "initialize FastMonodomainSolverBase";
+  
   // only initialize once
   if (initialized_)
     return;
@@ -50,6 +53,8 @@ initialize()
   onlyComputeIfHasBeenStimulated_ = specificSettings_.getOptionBool("onlyComputeIfHasBeenStimulated", true);
   disableComputationWhenStatesAreCloseToEquilibrium_ = specificSettings_.getOptionBool("disableComputationWhenStatesAreCloseToEquilibrium", true);
   valueForStimulatedPoint_ = specificSettings_.getOptionDouble("valueForStimulatedPoint", 20.0);
+  neuromuscularJunctionRelativeSize_ = specificSettings_.getOptionDouble("neuromuscularJunctionRelativeSize", 0.0);
+  generateGpuSource_ = specificSettings_.getOptionBool("generateGPUSource", true);
 
   // output warning if there are output writers
   if (this->outputWriterManager_.hasOutputWriters())
@@ -58,7 +63,25 @@ initialize()
       << "This may be slow! Maybe you do not want to have this because the 1D fiber output writers can also be called.";
   }
 
-  initializeCellMLSourceFile();
+  // determine optimization type and if the code should use Vc or GPU code
+  CellmlAdapterType &cellmlAdapter = nestedSolvers_.instancesLocal()[0].timeStepping1().instancesLocal()[0].discretizableInTime();
+  optimizationType_ = cellmlAdapter.optimizationType();
+  LOG(DEBUG) << "optimizationType: \"" << optimizationType_ << "\".";
+
+  if (optimizationType_ == "gpu")
+    useVc_ = false;
+  else if (optimizationType_ == "simd")
+    useVc_ = false;
+  else if (optimizationType_ == "vc")
+    useVc_ = true;
+  else
+  {
+    LOG(ERROR) << "FastMonodomainSolver is used with invalid \"optimizationType\": \"" << optimizationType_
+      << "\". Valid options are \"vc\", \"simd\" or \"gpu\". Now using \"vc\".";
+    useVc_ = true;
+    optimizationType_ = "vc";
+  }
+
   std::shared_ptr<Partition::RankSubset> rankSubset = nestedSolvers_.data().functionSpace()->meshPartition()->rankSubset();
 
   LOG(DEBUG) << "config: " << specificSettings_;
@@ -67,35 +90,59 @@ initialize()
 
   // parse firingTimesFilename_
   std::string firingTimesFileContents = MPIUtility::loadFile(firingTimesFilename_, rankSubset->mpiCommunicator());
+  gpuFiringEventsNColumns_ = 0;
+  gpuFiringEventsNRows_ = 0;
 
-  // parse file contents of firing times file
+  // parse file contents of firing times file, loop over rows
   while (!firingTimesFileContents.empty())
   {
-    // extract line
+    // determine end of file
     std::size_t lineEndPos = firingTimesFileContents.find("\n");
     if (lineEndPos == std::string::npos)
       break;
 
+    // extract line from file contents
     std::string line = firingTimesFileContents.substr(0, lineEndPos);
     firingTimesFileContents.erase(0, lineEndPos+1);
 
+    //variable has the following layout: firingEvents_[timeStepNo][motorUnitNo]
     firingEvents_.push_back(std::vector<bool>());
 
-    // parse line
-    while (!line.empty())
+    // parse line, loop over columns
+    int columnNo = 0;
+    for (; !line.empty(); columnNo++)
     {
       int entry = atoi(line.c_str());
 
+      // the variable firingEvents_ is for normal execution
       firingEvents_.back().push_back((bool)(entry));
 
+      // the variable gpuFiringEvents_ is to be send to gpu
+      if (gpuFiringEventsNColumns_ == 0 || columnNo < gpuFiringEventsNColumns_)
+      {
+        gpuFiringEvents_.push_back(entry? 1 : 0);
+      }
+
+      // remove separator, either space or tab
       std::size_t pos = line.find_first_of("\t ");
       if (pos == std::string::npos)
+      {
+        if (gpuFiringEventsNColumns_ == 0)
+          gpuFiringEventsNColumns_ = columnNo+1;
         break;
+      }
       line.erase(0, pos+1);
 
+      // remove all following non-digit characters
       while (!isdigit(line[0]) && !line.empty())
         line.erase(0,1);
     }
+    if (gpuFiringEventsNColumns_ == 0)
+    {
+      gpuFiringEventsNColumns_ = columnNo;
+      LOG(DEBUG) << "firing events file contains " << gpuFiringEventsNColumns_ << " columns.";
+    }
+    gpuFiringEventsNRows_++;
   }
 
   // parse fiberDistributionFile
@@ -132,6 +179,9 @@ initialize()
   int nFibers = 0;
   int fiberNo = 0;
   nFibersToCompute_ = 0;
+
+  LOG(DEBUG) << "initialize " << instances.size() << " outer instances";
+
   for (int i = 0; i < instances.size(); i++)
   {
     std::vector<TimeSteppingScheme::Heun<CellmlAdapterType>> &innerInstances
@@ -143,6 +193,9 @@ initialize()
       std::shared_ptr<FiberFunctionSpace> fiberFunctionSpace = innerInstances[j].data().functionSpace();
       std::shared_ptr<Partition::RankSubset> rankSubset = fiberFunctionSpace->meshPartition()->rankSubset();
       int computingRank = fiberNo % rankSubset->size();
+
+      LOG(DEBUG) << "instance (inner,outer)=(i,j)=(" << i << "," << j << ")/(" << instances.size() << "," << innerInstances.size() << ")"
+        << ", fiberNo " << fiberNo << ", rankSubset: " << *rankSubset << ", mesh" << fiberFunctionSpace->meshName() << ", computingRank " << computingRank << ", own rank: " << rankSubset->ownRankNo() << "/" << rankSubset->size();
 
       if (computingRank == rankSubset->ownRankNo())
       {
@@ -156,6 +209,12 @@ initialize()
   fiberData_.resize(nFibersToCompute_);
   fiberHasBeenStimulated_.resize(nFibersToCompute_, false);
   LOG(DEBUG) << "nFibers: " << nFibers << ", nFibersToCompute_: " << nFibersToCompute_;
+
+  // initialize random generator that is used to determine the stimulation point of the fiber
+  std::random_device randomDevice;              // Will be used to obtain a seed for the random number engine
+  std::mt19937 randomGenerator(randomDevice()); // Standard mersenne_twister_engine seeded with randomDevice()
+  std::uniform_real_distribution<> randomDistribution(0.5-neuromuscularJunctionRelativeSize_/2., 0.5+neuromuscularJunctionRelativeSize_/2.);
+  // now, a call to randomDistribution(randomGenerator)) will produce a uniformly distributed value between 0.5-a and 0.5+a. 0.5 corresponds to the center of the fiber.
 
   // determine total number of CellML instances to compute on this rank
   double firstStimulationTime = -1;
@@ -186,7 +245,8 @@ initialize()
         LOG(DEBUG) << "compute (i,j)=(" << i << "," << j << "), computingRank " << computingRank
           << ", fiberNo: " << fiberNo << ", fiberDataNo: " << fiberDataNo 
           << ", rankSubset->size(): " << rankSubset->size() << ", own: " << rankSubset->ownRankNo();
-        nInstancesToCompute_ += fiberFunctionSpace->nDofsGlobal();
+        nInstancesToComputePerFiber_ = fiberFunctionSpace->nDofsGlobal();
+        nInstancesToCompute_ += nInstancesToComputePerFiber_;
 
         assert(fiberDataNo < fiberData_.size());
         assert(fiberFunctionSpace);
@@ -194,10 +254,20 @@ initialize()
         
         LOG(DEBUG) << "Fiber " << fiberNoGlobal << " (i,j)=(" << i << "," << j << ") is MU " << motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
 
-        fiberData_.at(fiberDataNo).valuesLength = fiberFunctionSpace->nDofsGlobal();
+        fiberData_.at(fiberDataNo).valuesLength = nInstancesToComputePerFiber_;
         fiberData_.at(fiberDataNo).fiberNoGlobal = fiberNoGlobal;
         fiberData_.at(fiberDataNo).motorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
         
+        // determine neuromuscular junction position, it is offset by a random value from the center
+        if (neuromuscularJunctionRelativeSize_ <= 0.0)
+        {
+          fiberData_.at(fiberDataNo).fiberStimulationPointIndex = (int)(fiberData_.at(fiberDataNo).valuesLength / 2);
+        }
+        else
+        {
+          fiberData_.at(fiberDataNo).fiberStimulationPointIndex = (int)(fiberData_.at(fiberDataNo).valuesLength * randomDistribution(randomGenerator));
+        }
+
         // copy settings
         fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency = cellmlAdapter.setSpecificStatesCallFrequency_;
         fiberData_.at(fiberDataNo).setSpecificStatesFrequencyJitter = cellmlAdapter.setSpecificStatesFrequencyJitter_;
@@ -249,6 +319,12 @@ initialize()
           }
         }
 
+        // add values to gpuSetSpecificStatesFrequencyJitter_
+        gpuSetSpecificStatesFrequencyJitter_.insert(gpuSetSpecificStatesFrequencyJitter_.end(),
+                                                    cellmlAdapter.setSpecificStatesFrequencyJitter_.begin(),
+                                                    cellmlAdapter.setSpecificStatesFrequencyJitter_.end());
+        gpuFrequencyJitterNColumns_ = cellmlAdapter.setSpecificStatesFrequencyJitter_.size();
+
         // increase index for fiberData_ struct
         fiberDataNo++;
       }
@@ -258,38 +334,77 @@ initialize()
   LOG(INFO) << "Time of first stimulation: " << firstStimulationTime << ", motor unit " << firstStimulationMotorUnitNo;
 
   // get the states and algebraics no.s to be transferred as slot connector data
-  CellmlAdapterType &cellmlAdapter = instances[0].timeStepping1().instancesLocal()[0].discretizableInTime();
-  statesForTransfer_ = cellmlAdapter.statesForTransfer();
-  algebraicsForTransfer_ = cellmlAdapter.algebraicsForTransfer();
-
+  statesForTransferIndices_ = cellmlAdapter.statesForTransfer();
+  algebraicsForTransferIndices_ = cellmlAdapter.algebraicsForTransfer();
 
   int nInstancesLocalCellml;
   int nAlgebraicsLocalCellml;
-  int nParametersPerInstance;
-  cellmlAdapter.getNumbers(nInstancesLocalCellml, nAlgebraicsLocalCellml, nParametersPerInstance);
+  cellmlAdapter.getNumbers(nInstancesLocalCellml, nAlgebraicsLocalCellml, nParametersPerInstance_);
 
   // make parameterValues() of cellmlAdapter.data() available
   cellmlAdapter.data().prepareParameterValues();
   double *parameterValues = cellmlAdapter.data().parameterValues();   //< contains nAlgebraics parameters for all instances, in struct of array ordering (p0inst0, p0inst1, p0inst2,...)
 
-  int nVcVectors = (nInstancesToCompute_ + Vc::double_v::Size - 1) / Vc::double_v::Size;
+  int nVcVectors = (nInstancesToCompute_ + Vc::double_v::size() - 1) / Vc::double_v::size();
 
-  fiberPointBuffers_.resize(nVcVectors);
-  fiberPointBuffersAlgebraicsForTransfer_.resize(nVcVectors);
-  fiberPointBuffersParameters_.resize(nVcVectors);
-  fiberPointBuffersStatesAreCloseToEquilibrium_.resize(nVcVectors, not_constant);
-  nFiberPointBufferStatesCloseToEquilibrium_ = 0;
-
-  for (int i = 0; i < nVcVectors; i++)
+  if (useVc_)
   {
-    fiberPointBuffersAlgebraicsForTransfer_[i].resize(algebraicsForTransfer_.size());
-    fiberPointBuffersParameters_[i].resize(nParametersPerInstance);
+    fiberPointBuffers_.resize(nVcVectors);
+    fiberPointBuffersAlgebraicsForTransfer_.resize(nVcVectors);
+    fiberPointBuffersParameters_.resize(nVcVectors);
+    fiberPointBuffersStatesAreCloseToEquilibrium_.resize(nVcVectors, not_constant);
+    nFiberPointBufferStatesCloseToEquilibrium_ = 0;
 
-    for (int j=0; j<nParametersPerInstance; j++)
+    for (int i = 0; i < nVcVectors; i++)
     {
-      fiberPointBuffersParameters_[i][j] = parameterValues[j*nAlgebraicsLocalCellml];    // note, the stride in parameterValues is "nAlgebraicsLocalCellml", not "nParametersPerInstance"
+      fiberPointBuffersAlgebraicsForTransfer_[i].resize(algebraicsForTransferIndices_.size());
+      fiberPointBuffersParameters_[i].resize(nParametersPerInstance_);
 
-      VLOG(1) << "fiberPointBuffersParameters_ buffer no " << i << ", parameter no " << j << ", value: " <<  fiberPointBuffersParameters_[i][j];
+      for (int parameterNo = 0; parameterNo < nParametersPerInstance_; parameterNo++)
+      {
+        fiberPointBuffersParameters_[i][parameterNo] = parameterValues[parameterNo*nAlgebraicsLocalCellml];    // note, the stride in parameterValues is "nAlgebraicsLocalCellml", not "nParametersPerInstance_"
+
+        VLOG(1) << "fiberPointBuffersParameters_ buffer no " << i << ", parameter no " << parameterNo
+          << ", value: " <<  fiberPointBuffersParameters_[i][parameterNo];
+      }
+    }
+  }
+  else
+  {
+    gpuParameters_.resize(nInstancesToCompute_*nParametersPerInstance_);
+    gpuAlgebraicsForTransfer_.resize(nInstancesToCompute_*algebraicsForTransferIndices_.size());
+    gpuStatesForTransfer_.resize(nInstancesToCompute_*statesForTransferIndices_.size());
+    gpuFiberIsCurrentlyStimulated_.resize(nFibersToCompute_, 0);
+
+    int nElementsOnFiber = nInstancesToComputePerFiber_-1;
+    gpuElementLengths_.resize(nElementsOnFiber*nFibersToCompute_);
+
+    for (int parameterNo = 0; parameterNo < nParametersPerInstance_; parameterNo++)
+    {
+      for (int instanceNoToCompute = 0; instanceNoToCompute < nInstancesToCompute_; instanceNoToCompute++)
+      {
+        gpuParameters_[parameterNo*nInstancesToCompute_ + instanceNoToCompute] = parameterValues[parameterNo*nAlgebraicsLocalCellml];    // note, the stride in parameterValues is "nAlgebraicsLocalCellml", not "nParametersPerInstance_"
+      }
+    }
+
+    gpuVmValues_.resize(nInstancesToCompute_);
+    gpuMotorUnitNo_.resize(nFibersToCompute_);
+    gpuFiberStimulationPointIndex_.resize(nFibersToCompute_);
+    gpuLastStimulationCheckTime_.resize(nFibersToCompute_);
+    gpuSetSpecificStatesCallFrequency_.resize(nFibersToCompute_);
+    gpuSetSpecificStatesRepeatAfterFirstCall_.resize(nFibersToCompute_);
+    gpuSetSpecificStatesCallEnableBegin_.resize(nFibersToCompute_);
+    gpuCurrentJitter_.resize(nFibersToCompute_, 0.0);
+    gpuJitterIndex_.resize(nFibersToCompute_, 0);
+
+    for (int fiberDataNo = 0; fiberDataNo < nFibersToCompute_; fiberDataNo++)
+    {
+      gpuMotorUnitNo_[fiberDataNo]                           = fiberData_.at(fiberDataNo).motorUnitNo;
+      gpuFiberStimulationPointIndex_[fiberDataNo]            = fiberData_.at(fiberDataNo).fiberStimulationPointIndex;
+      gpuLastStimulationCheckTime_[fiberDataNo]              = fiberData_.at(fiberDataNo).lastStimulationCheckTime;
+      gpuSetSpecificStatesCallFrequency_[fiberDataNo]        = fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency;
+      gpuSetSpecificStatesRepeatAfterFirstCall_[fiberDataNo] = fiberData_.at(fiberDataNo).setSpecificStatesRepeatAfterFirstCall;
+      gpuSetSpecificStatesCallEnableBegin_[fiberDataNo]      = fiberData_.at(fiberDataNo).setSpecificStatesCallEnableBegin;
     }
   }
 
@@ -297,9 +412,19 @@ initialize()
   cellmlAdapter.data().restoreParameterValues();
 
   LOG(DEBUG) << nInstancesToCompute_ << " instances to compute, " << nVcVectors
-    << " Vc vectors, size of double_v: " << Vc::double_v::Size << ", "
-    << statesForTransfer_.size()-1 << " additional states for transfer, "
-    << algebraicsForTransfer_.size() << " algebraics for transfer";
+    << " Vc vectors, size of double_v: " << Vc::double_v::size() << ", "
+    << statesForTransferIndices_.size()-1 << " additional states for transfer, "
+    << algebraicsForTransferIndices_.size() << " algebraics for transfer";
+
+  if (useVc_)
+  {
+    initializeCellMLSourceFileVc();
+  }
+  else
+  {
+    initializeCellMLSourceFileGpu();
+    initializeValuesOnGpu();
+  }
 
   // initialize state values
   for (int i = 0; i < fiberPointBuffers_.size(); i++)
@@ -327,9 +452,9 @@ initialize()
 
       // loop over further states to transfer
       int furtherDataIndex = 0;
-      for (int stateIndex = 1; stateIndex < statesForTransfer_.size(); stateIndex++, furtherDataIndex++)
+      for (int stateIndex = 1; stateIndex < statesForTransferIndices_.size(); stateIndex++, furtherDataIndex++)
       {
-        std::string name = cellmlAdapter.data().states()->componentName(statesForTransfer_[stateIndex]);
+        std::string name = cellmlAdapter.data().states()->componentName(statesForTransferIndices_[stateIndex]);
 
         // get field variable
         std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable1
@@ -337,9 +462,9 @@ initialize()
 
         if (stateIndex >= variable1.size())
         {
-          LOG(WARNING) << "There are " << statesForTransfer_.size() << " statesForTransfer specified in StrangSplitting, "
+          LOG(WARNING) << "There are " << statesForTransferIndices_.size() << " statesForTransfer specified in StrangSplitting, "
             << " but the diffusion solver has only " << variable1.size() << " slots to get these states. "
-            << "This means that state no. " << statesForTransfer_[stateIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
+            << "This means that state no. " << statesForTransferIndices_[stateIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
             << "Maybe you need to increase \"nAdditionalFieldVariables\" in the diffusion solver (\"ImplicitEuler\" or \"CrankNicolson\") "
             << "or reduce the number of entries in \"statesForTransfer\".";
         }
@@ -353,11 +478,11 @@ initialize()
       }
 
       // loop over algebraics to transfer
-      for (int algebraicIndex = 0; algebraicIndex < algebraicsForTransfer_.size(); algebraicIndex++, furtherDataIndex++)
+      for (int algebraicIndex = 0; algebraicIndex < algebraicsForTransferIndices_.size(); algebraicIndex++, furtherDataIndex++)
       {
-        std::string name = cellmlAdapter.data().algebraics()->componentName(algebraicsForTransfer_[algebraicIndex]);
+        std::string name = cellmlAdapter.data().algebraics()->componentName(algebraicsForTransferIndices_[algebraicIndex]);
 
-        LOG(DEBUG) << "algebraicIndex " << algebraicIndex << ", algebraic " << algebraicsForTransfer_[algebraicIndex] << ", name: \"" << name << "\".";
+        LOG(DEBUG) << "algebraicIndex " << algebraicIndex << ", algebraic " << algebraicsForTransferIndices_[algebraicIndex] << ", name: \"" << name << "\".";
 
         assert (i < instances.size());
         assert (j < instances[i].timeStepping2().instancesLocal().size());
@@ -368,9 +493,9 @@ initialize()
 
         if (algebraicIndex >= variable2.size())
         {
-          LOG(WARNING) << "There are " << algebraicsForTransfer_.size() << " algebraicsForTransfer specified in StrangSplitting, "
+          LOG(WARNING) << "There are " << algebraicsForTransferIndices_.size() << " algebraicsForTransfer specified in StrangSplitting, "
             << " but the diffusion solver has only " << variable2.size() << " slots to get these algebraics. "
-            << "This means that algebraic no. " << algebraicsForTransfer_[algebraicIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
+            << "This means that algebraic no. " << algebraicsForTransferIndices_[algebraicIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
             << "Maybe you need to increase \"nAdditionalFieldVariables\" in  the diffusion solver (\"ImplicitEuler\" or \"CrankNicolson\") "
             << "or reduce the number of entries in \"algebraicsForTransfer\".";
 
@@ -386,12 +511,13 @@ initialize()
     }
   }
 
+
   initialized_ = true;
 }
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
-initializeCellMLSourceFile()
+initializeCellMLSourceFileVc()
 {
   // parse options
   CellmlAdapterType &cellmlAdapter = nestedSolvers_.instancesLocal()[0].timeStepping1().instancesLocal()[0].discretizableInTime();
@@ -406,9 +532,9 @@ initializeCellMLSourceFile()
   std::string libraryFilename = s.str();
 
   //std::shared_ptr<Partition::RankSubset> rankSubset = nestedSolvers_.data().functionSpace()->meshPartition()->rankSubset();
-  int ownRankNoCommWorld = DihuContext::ownRankNoCommWorld();
+  int ownRankNo = DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->ownRankNo();
 
-  if (ownRankNoCommWorld == 0)
+  if (ownRankNo == 0)
   {
     // initialize generated source code of cellml model
 
@@ -441,7 +567,7 @@ initializeCellMLSourceFile()
     LOG(DEBUG) << "generate source file \"" << sourceToCompileFilename << "\".";
 
     // create source file
-    cellmlSourceCodeGenerator.generateSourceFileVcFastMonodomain(sourceToCompileFilename, approximateExponentialFunction);
+    cellmlSourceCodeGenerator.generateSourceFileFastMonodomain(sourceToCompileFilename, approximateExponentialFunction);
 
     // create path for library file
     if (libraryFilename.find("/") != std::string::npos)
@@ -488,7 +614,30 @@ initializeCellMLSourceFile()
     if (ret != 0)
     {
       LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
-      libraryFilename = "";
+
+      // remove "-fopenmp" in the compile command
+      std::string newCompileCommand = compileCommand.str();
+      std::string strToReplace = "-fopenmp";
+      std::size_t pos = newCompileCommand.find(strToReplace);
+      newCompileCommand.replace(pos, strToReplace.length(), "");
+
+      // remove -foffload="..."strToReplace = "-fopenmp";
+      pos = newCompileCommand.find("-foffload=\"");
+      std::size_t pos2 = newCompileCommand.find("\"", pos+11);
+      newCompileCommand.replace(pos, pos2-pos+1, "");
+
+      LOG(INFO) << "Retry without offloading, command: \n" << newCompileCommand;
+
+      // execute new compilation command
+      int ret = system(newCompileCommand.c_str());
+      if (ret != 0)
+      {
+        LOG(ERROR) << "Compilation failed again.";
+      }
+      else
+      {
+        LOG(DEBUG) << "Compilation successful.";
+      }
     }
     else
     {

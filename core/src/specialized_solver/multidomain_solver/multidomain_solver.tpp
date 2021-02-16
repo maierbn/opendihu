@@ -7,6 +7,7 @@
 #include "utility/petsc_utility.h"
 #include "data_management/specialized_solver/multidomain.h"
 #include "specialized_solver/multidomain_solver/nested_mat_vec_utility.h"
+#include "control/diagnostic_tool/memory_leak_finder.h"
 
 //#define MONODOMAIN
 
@@ -32,6 +33,26 @@ MultidomainSolver(DihuContext context) :
   initialGuessNonzero_ = this->specificSettings_.getOptionBool("initialGuessNonzero", true);
   showLinearSolverOutput_ = this->specificSettings_.getOptionBool("showLinearSolverOutput", true);
   updateSystemMatrixEveryTimestep_ = this->specificSettings_.getOptionBool("updateSystemMatrixEveryTimestep", false);
+  updateSystemMatrixInterval_ = 1;
+  if (updateSystemMatrixEveryTimestep_)
+  {
+    updateSystemMatrixInterval_ = this->specificSettings_.getOptionInt("updateSystemMatrixInterval", 1);
+  }
+  recreateLinearSolverInterval_ = this->specificSettings_.getOptionInt("recreateLinearSolverInterval", 0, PythonUtility::NonNegative);
+  
+  // parse option about dirichlet boundary conditions
+  if (this->specificSettings_.hasKey("setDirichletBoundaryCondition"))
+  {
+    setDirichletBoundaryConditionPhiB_ = this->specificSettings_.getOptionBool("setDirichletBoundaryCondition", false);
+    LOG(WARNING) << this->specificSettings_ << "[\"setDirichletBoundaryCondition\"] has been renamed to \"setDirichletBoundaryConditionPhiB\" and \"setDirichletBoundaryConditionPhiE\".";
+  }
+  else
+  {
+    setDirichletBoundaryConditionPhiB_ = this->specificSettings_.getOptionBool("setDirichletBoundaryConditionPhiB", false);
+  }
+  setDirichletBoundaryConditionPhiE_ = this->specificSettings_.getOptionBool("setDirichletBoundaryConditionPhiE", false);
+  resetToAverageZeroPhiB_ = this->specificSettings_.getOptionBool("resetToAverageZeroPhiB", false);
+  resetToAverageZeroPhiE_ = this->specificSettings_.getOptionBool("resetToAverageZeroPhiE", false);
 
   if (this->specificSettings_.hasKey("constructPreconditionerMatrix"))
   {
@@ -55,7 +76,7 @@ MultidomainSolver(DihuContext context) :
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -73,6 +94,8 @@ advanceTimeSpan()
   this->numberTimeSteps_=1;
   this->timeStepWidth_=timeSpan;
   //std::cout << "multidomain: " << timeSpan / this->numberTimeSteps_ << " timeStepWidth" << this->timeStepWidth_ << ", n steps: " << this->numberTimeSteps_ << " start " << this->startTime_ << "end" << this->endTime_ <<  "timeSpan" << timeSpan << " \n";
+  static int globalTimeStepCounter = 0;
+
   // loop over time steps
   for (int timeStepNo = 0; timeStepNo < this->numberTimeSteps_;)
   {
@@ -82,32 +105,57 @@ advanceTimeSpan()
         << " (linear solver iterations: " << lastNumberOfIterations_ << ")";
     }
 
-    //int pageSize;
-    //long long virtualMemorySize;
-    //long long residentSetSize;
-    //long long dataSize;
-    //double totalUserTime;
-    //Control::PerformanceMeasurement::getMemoryConsumption(pageSize, virtualMemorySize, residentSetSize, dataSize, totalUserTime);
-    //std::cout << "vor ssystemmatrix: residentSetSize " << residentSetSize << "virtualMemorySize" << virtualMemorySize << "dataSize" << dataSize << "\n";
+    globalTimeStepCounter++;
+
+    if (globalTimeStepCounter % this->recreateLinearSolverInterval_ == 0 && this->recreateLinearSolverInterval_ > 0 && globalTimeStepCounter > 0)
+    {
+      long long int memorySize0 = Control::MemoryLeakFinder::currentMemoryConsumptionKiloBytes();
+
+      // delete existing linear solver object
+      this->linearSolver_ = nullptr;
+      this->context_.solverManager()->template deleteSolver<Solver::Linear>(this->specificSettings_, this->rankSubset_->mpiCommunicator());
+
+      // delete the alternative linear solver that is used when thet linearSolver_ diverges
+      if (this->specificSettings_.hasKey("alternativeSolverName"))
+      {
+        this->alternativeLinearSolver_ = nullptr;
+        this->context_.solverManager()->template deleteSolver<Solver::Linear>(
+          this->specificSettings_, this->rankSubset_->mpiCommunicator(), "alternativeSolverName");
+      }
+
+      long long int memorySize1 = Control::MemoryLeakFinder::currentMemoryConsumptionKiloBytes();
+
+      // create new linear solver object
+      this->initializeLinearSolver();
+
+      long long int memorySize2 = Control::MemoryLeakFinder::currentMemoryConsumptionKiloBytes();
+      LOG(INFO) << "Recreated linear solver, memory: " << memorySize0 << " kB -> " << memorySize1 << " kB -> " << memorySize2 << " kB";
+    }
 
     LOG(DEBUG) << " Vm: ";
     //dataMultidomain_.subcellularStates(0)->extractComponent(0, dataMultidomain_.transmembranePotential(0));
     LOG(DEBUG) << *dataMultidomain_.transmembranePotential(0);
 
-    //if (fabs(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ > 1e-4)
-    //{
-    //  //LOG(WARNING) << "In multidomain solver, timestep width changed from " << this->timeStepWidthOfSystemMatrix_ << " to " << timeStepWidth_
-    //  //  << " (relative: " << std::showpos << 100*(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ << std::noshowpos << "%), need to recreate system matrix.";
-    //
-    //  this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
-    //  setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
-    //  createSystemMatrixFromSubmatrices();
-    //}
-    //else if (this->updateSystemMatrixEveryTimestep_ && timeStepNo == 0)
-    //{
-    //  updateSystemMatrix();
-    //}
-
+    if (fabs(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ > 1e-4)
+    {
+      LOG(WARNING) << "In multidomain solver, timestep width changed from " << this->timeStepWidthOfSystemMatrix_ << " to " << timeStepWidth_
+        << " (relative: " << std::showpos << 100*(this->timeStepWidthOfSystemMatrix_ - this->timeStepWidth_) / this->timeStepWidth_ << std::noshowpos << "%), need to recreate system matrix.";
+      
+      this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
+      setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
+      createSystemMatrixFromSubmatrices();
+    }
+    else if (this->updateSystemMatrixEveryTimestep_ && timeStepNo == 0)
+    {
+      // update the system matrix every updateSystemMatrixInterval_ calls to advance
+      static int timeStepCounter = 0;
+      if (timeStepCounter % updateSystemMatrixInterval_ == 0)
+      {
+        updateSystemMatrix();
+      }
+      timeStepCounter++;
+    }
+    
     // advance simulation time
     timeStepNo++;
     currentTime = this->startTime_ + double(timeStepNo) / this->numberTimeSteps_ * timeSpan;
@@ -136,8 +184,9 @@ advanceTimeSpan()
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
     // write current output values
-    callOutputWriter(timeStepNo, currentTime);
-
+    if (withOutputWritersEnabled)
+      callOutputWriter(timeStepNo, currentTime);
+    
     // start duration measurement
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::start(this->durationLogKey_);
@@ -164,10 +213,10 @@ run()
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
-callOutputWriter(int timeStepNo, double currentTime)
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
 {
   // write current output values
-  this->outputWriterManager_.writeOutput(this->dataMultidomain_, timeStepNo, currentTime);
+  this->outputWriterManager_.writeOutput(this->dataMultidomain_, timeStepNo, currentTime, callCountIncrement);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -181,7 +230,7 @@ initialize()
   initializeMatricesAndVectors();   // this is not called by MultidomainWithFatSolver
 
   // write initial meshes
-  callOutputWriter(0, 0.0);
+  callOutputWriter(0, 0.0, 0);
 
   LOG(DEBUG) << "initialization done";
   this->initialized_ = true;
@@ -267,23 +316,6 @@ initializeObjects()
   this->specificSettings_.getOptionVector("am", nCompartments_, am_);
   this->specificSettings_.getOptionVector("cm", nCompartments_, cm_);
   LOG(DEBUG) << "Am: " << am_ << ", Cm: " << cm_;
-
-  // initialize linear solver
-  LOG(DEBUG) << "initialize linear solver";
-
-  if (this->linearSolver_ == nullptr)
-  {
-    // create or get linear solver object
-    this->linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
-      this->specificSettings_, this->rankSubset_->mpiCommunicator());
-
-    // initialize the alternative linear solver that is used when thet linearSolver_ diverges
-    if (this->specificSettings_.hasKey("alternativeSolverName"))
-    {
-      this->alternativeLinearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
-        this->specificSettings_, this->rankSubset_->mpiCommunicator(), "alternativeSolverName");
-    }
-  }
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -301,56 +333,19 @@ initializeMatricesAndVectors()
 
   LOG(DEBUG) << "set system matrix to linear solver";
 
-  // set matrix used for linear solver and preconditioner to ksp context
-  assert(this->linearSolver_->ksp());
-  PetscErrorCode ierr;
-
-  PC pc;
-  ierr = KSPGetPC(*linearSolver_->ksp(), &pc); CHKERRV(ierr);
-  
-  // set block information for block jacobi preconditioner
-  // check, if block jacobi preconditioner is selected
-  PetscBool useBlockJacobiPreconditioner;
-  PetscObjectTypeCompare((PetscObject)pc, PCBJACOBI, &useBlockJacobiPreconditioner);
-  if (useBlockJacobiPreconditioner)
-  {
-    // PCBJacobiSetTotalBlocks(PC pc, PetscInt nBlocks, const PetscInt lengthsOfBlocks[])
-    PetscInt nBlocks = nColumnSubmatricesSystemMatrix_;
-
-    // set sizes of all blocks to the number of dofs in the muscle domain
-    std::vector<PetscInt> lengthsOfBlocks(nBlocks, dataMultidomain_.functionSpace()->nDofsGlobal());
-    ierr = PCBJacobiSetTotalBlocks(pc, nColumnSubmatricesSystemMatrix_, lengthsOfBlocks.data()); CHKERRV(ierr);
-  }
-
-  // set the local node positions for the preconditioner
-  int nDofsPerNode = dataMultidomain_.functionSpace()->nDofsPerNode();
-  int nNodesLocal = dataMultidomain_.functionSpace()->nNodesLocalWithoutGhosts();
-  
-  std::vector<double> nodePositionCoordinatesForPreconditioner;
-  nodePositionCoordinatesForPreconditioner.reserve(3*nNodesLocal);
-
-  // loop over muscle nodes and add their node positions
-  for (dof_no_t dofNoLocal = 0; dofNoLocal < nNodesLocal*nDofsPerNode; dofNoLocal++)
-  {
-    Vec3 nodePosition = dataMultidomain_.functionSpace()->getGeometry(dofNoLocal);
-
-    // add the coordinates
-    for (int i = 0; i < 3; i++)
-      nodePositionCoordinatesForPreconditioner.push_back(nodePosition[i]);
-  }
-
-  LOG(DEBUG) << "set coordinates to preconditioner, " << nodePositionCoordinatesForPreconditioner.size() << " node coordinates";
-  ierr = PCSetCoordinates(pc, 3, nodePositionCoordinatesForPreconditioner.size(), nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
-
   // set the nullspace of the matrix
   // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
   MatNullSpace nullSpace;
+  PetscErrorCode ierr;
   ierr = MatNullSpaceCreate(data().functionSpace()->meshPartition()->mpiCommunicator(), PETSC_TRUE, 0, PETSC_NULL, &nullSpace); CHKERRV(ierr);
   ierr = MatSetNullSpace(singleSystemMatrix_, nullSpace); CHKERRV(ierr);
   ierr = MatSetNearNullSpace(singleSystemMatrix_, nullSpace); CHKERRV(ierr); // for multigrid methods
   //ierr = MatNullSpaceDestroy(&nullSpace); CHKERRV(ierr);
 
   ierr = KSPSetOperators(*this->linearSolver_->ksp(), singleSystemMatrix_, singlePreconditionerMatrix_); CHKERRV(ierr);
+
+  // initialize linear solver and preconditioner
+  this->initializeLinearSolver();
 
   // initialize rhs and solution vector
   subvectorsRightHandSide_.resize(nCompartments_+1);
@@ -375,7 +370,85 @@ initializeMatricesAndVectors()
 
   // copy the values from a nested Petsc Vec to a single Vec that contains all entries
   NestedMatVecUtility::createVecFromNestedVec(nestedRightHandSide_, singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
+}
 
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+initializeLinearSolver()
+{
+  // initialize linear solver
+  LOG(DEBUG) << "initialize linear solver";
+
+  if (this->linearSolver_ == nullptr)
+  {
+    // create or get linear solver object
+    this->linearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
+      this->specificSettings_, this->rankSubset_->mpiCommunicator());
+
+    // initialize the alternative linear solver that is used when thet linearSolver_ diverges
+    if (this->specificSettings_.hasKey("alternativeSolverName"))
+    {
+      this->alternativeLinearSolver_ = this->context_.solverManager()->template solver<Solver::Linear>(
+        this->specificSettings_, this->rankSubset_->mpiCommunicator(), "alternativeSolverName");
+    }
+  }
+
+  // set matrix used for linear solver and preconditioner to ksp context
+  assert(this->linearSolver_->ksp());
+  PetscErrorCode ierr;
+  ierr = KSPSetOperators(*this->linearSolver_->ksp(), this->singleSystemMatrix_, this->singlePreconditionerMatrix_); CHKERRV(ierr);
+
+  if (this->alternativeLinearSolver_)
+    ierr = KSPSetOperators(*this->alternativeLinearSolver_->ksp(), this->singleSystemMatrix_, this->singlePreconditionerMatrix_); CHKERRV(ierr);
+
+  // set block information in preconditioner for block jacobi and node positions for MG preconditioners
+  setInformationToPreconditioner();
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+void MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+setInformationToPreconditioner()
+{
+  // set matrix used for linear solver and preconditioner to ksp context
+  assert(this->linearSolver_->ksp());
+  PetscErrorCode ierr;
+
+  PC pc;
+  ierr = KSPGetPC(*linearSolver_->ksp(), &pc); CHKERRV(ierr);
+
+  // set block information for block jacobi preconditioner
+  // check, if block jacobi preconditioner is selected
+  PetscBool useBlockJacobiPreconditioner;
+  PetscObjectTypeCompare((PetscObject)pc, PCBJACOBI, &useBlockJacobiPreconditioner);
+  if (useBlockJacobiPreconditioner)
+  {
+    // PCBJacobiSetTotalBlocks(PC pc, PetscInt nBlocks, const PetscInt lengthsOfBlocks[])
+    PetscInt nBlocks = nColumnSubmatricesSystemMatrix_;
+
+    // set sizes of all blocks to the number of dofs in the muscle domain
+    std::vector<PetscInt> lengthsOfBlocks(nBlocks, dataMultidomain_.functionSpace()->nDofsGlobal());
+    ierr = PCBJacobiSetTotalBlocks(pc, nColumnSubmatricesSystemMatrix_, lengthsOfBlocks.data()); CHKERRV(ierr);
+  }
+
+  // set the local node positions for the preconditioner
+  int nDofsPerNode = dataMultidomain_.functionSpace()->nDofsPerNode();
+  int nNodesLocal = dataMultidomain_.functionSpace()->nNodesLocalWithoutGhosts();
+
+  std::vector<double> nodePositionCoordinatesForPreconditioner;
+  nodePositionCoordinatesForPreconditioner.reserve(3*nNodesLocal);
+
+  // loop over muscle nodes and add their node positions
+  for (dof_no_t dofNoLocal = 0; dofNoLocal < nNodesLocal*nDofsPerNode; dofNoLocal++)
+  {
+    Vec3 nodePosition = dataMultidomain_.functionSpace()->getGeometry(dofNoLocal);
+
+    // add the coordinates
+    for (int i = 0; i < 3; i++)
+      nodePositionCoordinatesForPreconditioner.push_back(nodePosition[i]);
+  }
+
+  LOG(DEBUG) << "set coordinates to preconditioner, " << nodePositionCoordinatesForPreconditioner.size() << " node coordinates";
+  ierr = PCSetCoordinates(pc, 3, nNodesLocal, nodePositionCoordinatesForPreconditioner.data()); CHKERRV(ierr);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
@@ -672,34 +745,33 @@ createSystemMatrixFromSubmatrices()
       }
     }
 #ifndef NDEBUG
-  LOG(DEBUG) << "preconditioner: nested matrix with " << nColumnSubmatricesSystemMatrix_ << "x" << nColumnSubmatricesSystemMatrix_ << " submatrices, nCompartments_=" << nCompartments_;
+    LOG(DEBUG) << "preconditioner: nested matrix with " << nColumnSubmatricesSystemMatrix_ << "x" << nColumnSubmatricesSystemMatrix_ << " submatrices, nCompartments_=" << nCompartments_;
 
-  // output dimensions of submatrices for debugging
-  for (int rowNo = 0; rowNo < nColumnSubmatricesSystemMatrix_; rowNo++)
-  {
-    for (int columnNo = 0; columnNo < nColumnSubmatricesSystemMatrix_; columnNo++)
+    // output dimensions of submatrices for debugging
+    for (int rowNo = 0; rowNo < nColumnSubmatricesSystemMatrix_; rowNo++)
     {
-      Mat subMatrix = submatricesPreconditionerMatrix_[rowNo*nColumnSubmatricesSystemMatrix_ + columnNo];
-      
-      if (!subMatrix)
+      for (int columnNo = 0; columnNo < nColumnSubmatricesSystemMatrix_; columnNo++)
       {
-        LOG(DEBUG) << "preconditioner submatrix (" << rowNo << "," << columnNo << ") is empty (NULL)";
-      }
-      else
-      {
-        PetscInt nRows, nColumns;
-        ierr = MatGetSize(subMatrix, &nRows, &nColumns); CHKERRV(ierr);
-        std::string name;
-        char *cName;
-        ierr = PetscObjectGetName((PetscObject)subMatrix, (const char **)&cName); CHKERRV(ierr);
-        name = cName;
-        
-        LOG(DEBUG) << "preconditioner submatrix (" << rowNo << "," << columnNo << ") is \"" << name << "\" (" << nRows << "x" << nColumns << ")";
+        Mat subMatrix = submatricesPreconditionerMatrix_[rowNo*nColumnSubmatricesSystemMatrix_ + columnNo];
+
+        if (!subMatrix)
+        {
+          LOG(DEBUG) << "preconditioner submatrix (" << rowNo << "," << columnNo << ") is empty (NULL)";
+        }
+        else
+        {
+          PetscInt nRows, nColumns;
+          ierr = MatGetSize(subMatrix, &nRows, &nColumns); CHKERRV(ierr);
+          std::string name;
+          char *cName;
+          ierr = PetscObjectGetName((PetscObject)subMatrix, (const char **)&cName); CHKERRV(ierr);
+          name = cName;
+
+          LOG(DEBUG) << "preconditioner submatrix (" << rowNo << "," << columnNo << ") is \"" << name << "\" (" << nRows << "x" << nColumns << ")";
+        }
       }
     }
-  }
 #endif
-
 
     Mat nestedPreconditionerMatrix;
 

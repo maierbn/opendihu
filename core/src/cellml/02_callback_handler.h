@@ -28,10 +28,10 @@ class CallbackHandler :
 public:
 
   //! constructor
-  CallbackHandler(DihuContext context, bool initializeOutputWriter);
+  CallbackHandler(DihuContext context);
 
   //! constructor
-  CallbackHandler(DihuContext context);
+  CallbackHandler(DihuContext context, const typename CellmlAdapterBase<nStates,nAlgebraics_,FunctionSpaceType>::Data &rhsData);
 
   //! destructor
   virtual ~CallbackHandler();

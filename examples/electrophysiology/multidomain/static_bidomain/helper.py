@@ -40,8 +40,8 @@ if "cuboid.bin" in variables.fiber_file:
       outfile.write(struct.pack('i', 40))  # header length
       outfile.write(struct.pack('i', variables.n_fibers_x*variables.n_fibers_y))   # n_fibers
       outfile.write(struct.pack('i', variables.n_points_whole_fiber))   # variables.n_points_whole_fiber
-      outfile.write(struct.pack('i', 0))   # nBorderPointsXNew
-      outfile.write(struct.pack('i', 0))   # nBorderPointsZNew
+      outfile.write(struct.pack('i', 0))   # nBoundaryPointsXNew
+      outfile.write(struct.pack('i', 0))   # nBoundaryPointsZNew
       outfile.write(struct.pack('i', 0))   # nFineGridFibers_
       outfile.write(struct.pack('i', 1))   # nRanks
       outfile.write(struct.pack('i', 1))   # nRanksZ
@@ -148,15 +148,15 @@ n_points_3D_x = n_elements_3D_mesh_linear[0]
 n_points_3D_y = n_elements_3D_mesh_linear[1]
 n_points_3D_z = n_elements_3D_mesh_linear[2]
 
-# if the own subdomain is at the (x+) border
+# if the own subdomain is at the (x+) boundary
 if variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
   n_points_3D_x += 1
 
-# if the own subdomain is at the (y+) border
+# if the own subdomain is at the (y+) boundary
 if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
   n_points_3D_y += 1
   
-# if the own subdomain is at the (z+) border
+# if the own subdomain is at the (z+) boundary
 if variables.own_subdomain_coordinate_z == variables.n_subdomains_z - 1:
   n_points_3D_z += 1
 
@@ -197,10 +197,10 @@ n_points_on_previous_ranks_sampled_z = sum([n_sampled_points_in_subdomain_z(subd
 
 # loop over z point indices of the 3D mesh
 for k in range(n_sampled_points_3D_in_own_subdomain_z):
-  z_point_index = variables.z_point_index_start + k*variables.sampling_stride_z
+  z_point_index = (variables.z_point_index_start + k*variables.local_sampling_stride_z) * variables.sampling_stride_z
   
   if variables.own_subdomain_coordinate_z == variables.n_subdomains_z-1 and k == n_sampled_points_3D_in_own_subdomain_z-1:
-    z_point_index = variables.z_point_index_end-1
+    z_point_index = (variables.z_point_index_end-1) * variables.sampling_stride_z
     
   #print("{}: sampling_stride_z: {}, k: {}, z: {}/{}".format(rank_no, variables.sampling_stride_z, k, z_point_index, variables.z_point_index_end))
   
@@ -219,7 +219,7 @@ for k in range(n_sampled_points_3D_in_own_subdomain_z):
       for i_3D in range(n_sampled_points_3D_in_own_subdomain_x):
         x_point_index = n_points_on_previous_ranks_all_x + i_3D*variables.sampling_stride_x
         
-        # on border rank set last node positions to be the border nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
+        # on boundary rank set last node positions to be the boundary nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
         if variables.own_subdomain_coordinate_x == variables.n_subdomains_x-1 and i_3D == n_sampled_points_3D_in_own_subdomain_x-1:
           x_point_index = n_points_on_previous_ranks_all_x + n_fibers_in_subdomain_x(variables.own_subdomain_coordinate_x)-1
             
@@ -238,7 +238,7 @@ for k in range(n_sampled_points_3D_in_own_subdomain_z):
       for j_3D in reversed(range(n_sampled_points_3D_in_own_subdomain_y)):
         y_index_3D_mesh = j_3D*variables.sampling_stride_y
         
-        # on top border rank do not use the top node again, it was already visited within the x traversal
+        # on top boundary rank do not use the top node again, it was already visited within the x traversal
         if variables.own_subdomain_coordinate_y == variables.n_subdomains_y-1 and j_3D == n_sampled_points_3D_in_own_subdomain_y-1:
           continue
         
@@ -289,7 +289,7 @@ variables.fat_mesh_index_offset = [n_points_on_previous_ranks_sampled_x, 0, n_po
 
 # debugging output
 if False:
-  # if the own subdomain is at the (y+) border
+  # if the own subdomain is at the (y+) boundary
   if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
     # output top row node positions of 3D mesh
     for i in range(n_points_3D_x):
@@ -297,7 +297,7 @@ if False:
       
       print("{}: 3Dmesh top node i={}, {}".format(rank_no, i, point))
     
-  # if the own subdomain is at the (x+) border
+  # if the own subdomain is at the (x+) boundary
   if variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
     # output top row node positions of 3D mesh
     for j in reversed(range(n_points_3D_y)):
@@ -356,6 +356,7 @@ variables.mappings_between_meshes = {
     "enableWarnings": True,
     "compositeUseOnlyInitializedMappings": False,
     "fixUnmappedDofs": False,
+    "defaultValue": 0,
   }
 }
 # only include overlapping elements

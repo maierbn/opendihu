@@ -40,8 +40,8 @@ if "cuboid.bin" in variables.fiber_file:
       outfile.write(struct.pack('i', 40))  # header length
       outfile.write(struct.pack('i', variables.n_fibers_x*variables.n_fibers_y))   # n_fibers
       outfile.write(struct.pack('i', variables.n_points_whole_fiber))   # variables.n_points_whole_fiber
-      outfile.write(struct.pack('i', 0))   # nBorderPointsXNew
-      outfile.write(struct.pack('i', 0))   # nBorderPointsZNew
+      outfile.write(struct.pack('i', 0))   # nBoundaryPointsXNew
+      outfile.write(struct.pack('i', 0))   # nBoundaryPointsZNew
       outfile.write(struct.pack('i', 0))   # nFineGridFibers_
       outfile.write(struct.pack('i', 1))   # nRanks
       outfile.write(struct.pack('i', 1))   # nRanksZ
@@ -137,7 +137,7 @@ elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain"
     ("parameter", 0):           ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
     ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
     ("connectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
-    ("connectorSlot", 1): ("algebraic", "razumova/stress"),  # expose algebraic 12 = γ to the operator splitting
+    #("connectorSlot", 1): ("algebraic", "razumova/stress"),  # expose algebraic 12 = γ to the operator splitting
   }
   variables.parameters_initial_values = [0.0, 1.0]                    # wal_environment/I_HH = I_stim, razumova/L_S = λ
   variables.nodal_stimulation_current = 40.                           # not used
@@ -169,6 +169,7 @@ elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "
   variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
   variables.nodal_stimulation_current = 40.                           # not used
   variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
+
 
 # callback functions
 # --------------------------

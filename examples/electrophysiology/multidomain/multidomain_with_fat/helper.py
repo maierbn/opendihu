@@ -111,15 +111,15 @@ n_points_3D_x = n_elements_3D_mesh_linear[0]
 n_points_3D_y = n_elements_3D_mesh_linear[1]
 n_points_3D_z = n_elements_3D_mesh_linear[2]
 
-# if the own subdomain is at the (x+) border
+# if the own subdomain is at the (x+) boundary
 if variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
   n_points_3D_x += 1
 
-# if the own subdomain is at the (y+) border
+# if the own subdomain is at the (y+) boundary
 if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
   n_points_3D_y += 1
   
-# if the own subdomain is at the (z+) border
+# if the own subdomain is at the (z+) boundary
 if variables.own_subdomain_coordinate_z == variables.n_subdomains_z - 1:
   n_points_3D_z += 1
 
@@ -160,10 +160,10 @@ n_points_on_previous_ranks_sampled_z = sum([n_sampled_points_in_subdomain_z(subd
 
 # loop over z point indices of the 3D mesh
 for k in range(n_sampled_points_3D_in_own_subdomain_z):
-  z_point_index = variables.z_point_index_start + k*variables.sampling_stride_z
+  z_point_index = (variables.z_point_index_start + k*variables.local_sampling_stride_z) * variables.sampling_stride_z
   
   if variables.own_subdomain_coordinate_z == variables.n_subdomains_z-1 and k == n_sampled_points_3D_in_own_subdomain_z-1:
-    z_point_index = variables.z_point_index_end-1
+    z_point_index = (variables.z_point_index_end-1) * variables.sampling_stride_z
     
   #print("{}: sampling_stride_z: {}, k: {}, z: {}/{}".format(rank_no, variables.sampling_stride_z, k, z_point_index, variables.z_point_index_end))
   
@@ -182,7 +182,7 @@ for k in range(n_sampled_points_3D_in_own_subdomain_z):
       for i_3D in range(n_sampled_points_3D_in_own_subdomain_x):
         x_point_index = n_points_on_previous_ranks_all_x + i_3D*variables.sampling_stride_x
         
-        # on border rank set last node positions to be the border nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
+        # on boundary rank set last node positions to be the boundary nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
         if variables.own_subdomain_coordinate_x == variables.n_subdomains_x-1 and i_3D == n_sampled_points_3D_in_own_subdomain_x-1:
           x_point_index = n_points_on_previous_ranks_all_x + n_fibers_in_subdomain_x(variables.own_subdomain_coordinate_x)-1
             
@@ -201,7 +201,7 @@ for k in range(n_sampled_points_3D_in_own_subdomain_z):
       for j_3D in reversed(range(n_sampled_points_3D_in_own_subdomain_y)):
         y_index_3D_mesh = j_3D*variables.sampling_stride_y
         
-        # on top border rank do not use the top node again, it was already visited within the x traversal
+        # on top boundary rank do not use the top node again, it was already visited within the x traversal
         if variables.own_subdomain_coordinate_y == variables.n_subdomains_y-1 and j_3D == n_sampled_points_3D_in_own_subdomain_y-1:
           continue
         
@@ -252,7 +252,7 @@ variables.fat_mesh_index_offset = [n_points_on_previous_ranks_sampled_x, 0, n_po
 
 # debugging output
 if False:
-  # if the own subdomain is at the (y+) border
+  # if the own subdomain is at the (y+) boundary
   if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
     # output top row node positions of 3D mesh
     for i in range(n_points_3D_x):
@@ -260,7 +260,7 @@ if False:
       
       print("{}: 3Dmesh top node i={}, {}".format(rank_no, i, point))
     
-  # if the own subdomain is at the (x+) border
+  # if the own subdomain is at the (x+) boundary
   if variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
     # output top row node positions of 3D mesh
     for j in reversed(range(n_points_3D_y)):
@@ -318,7 +318,7 @@ if False:
 
 # create mappings between meshes, currently none
 variables.mappings_between_meshes = {}
-#variables.mappings_between_meshes.update({"3Dmesh": {"name": "3DFatMesh", "xiTolerance": 1e-2}})    # only include overlapping elements
+#variables.mappings_between_meshes.update({"3Dmesh": {"name": "3DFatMesh", "xiTolerance": 1e-2, "defaultValue": 0}})    # only include overlapping elements
 
 # set variable mappings for cellml model
 if "hodgkin_huxley" in variables.cellml_file:
@@ -433,7 +433,7 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
                 
                 key = ((i,j,k),0,0)        # key: ((x,y,z),nodal_dof_index,state_no)
                 states[key] = variables.vm_value_stimulated
-                #print("set states at ({},{},{}) to 40".format(i,j,k))
+                #print("set states at ({},{},{}) to {}".format(i,j,k,variables.vm_value_stimulated))
 
     #print("states: {}".format(states))
     #print("n_nodes: ({},{},{})".format(n_nodes_x, n_nodes_y, n_nodes_z))
@@ -662,4 +662,191 @@ if rank_no == 0 and not variables.disable_firing_output:
   for i,factors_list in enumerate(variables.relative_factors.tolist()):
     print("MU {}, maximum fr: {}".format(i,max(factors_list)))
 
+   
+####################################
+# determine positions of the hd-emg electrodes
+
+if variables.hdemg_electrode_faces and variables.hdemg_n_electrodes_xy*variables.hdemg_n_electrodes_z > 0:
+
+  # load whole file of node positions
+  # the node positions are organized in fibers
+  input_filename = variables.fiber_file_for_hdemg_surface
+  with open(input_filename, "rb") as infile:
     
+    # parse header
+    bytes_raw = infile.read(32)
+    header_str = struct.unpack('32s', bytes_raw)[0]
+    header_length_raw = infile.read(4)
+    header_length = struct.unpack('i', header_length_raw)[0]
+    #header_length = 32+8
+    parameters = []
+    for i in range(int(header_length/4) - 1):
+      int_raw = infile.read(4)
+      value = struct.unpack('i', int_raw)[0]
+      parameters.append(value)
+      
+    n_fibers_total = parameters[0]
+    n_points_whole_fiber = parameters[1]
+    n_fibers_x = (int)(np.sqrt(parameters[0]))
+    n_fibers_y = n_fibers_x
+    
+    if "version 2" in header_str.decode("utf-8") :   # the version 2 has number of fibers explicitly stored and thus also allows non-square dimension of fibers
+      n_fibers_x = parameters[2]
+      n_fibers_y = parameters[3]
+    fibers = []
+    
+    # loop over fibers
+    for fiber_no in range(n_fibers_total):
+      fiber = []
+      
+      # loop over points of fiber
+      for point_no in range(n_points_whole_fiber):
+        point = []
+        
+        # parse point
+        for i in range(3):
+          double_raw = infile.read(8)
+          value = struct.unpack('d', double_raw)[0]
+          point.append(value)
+        fiber.append(point)
+      fibers.append(fiber)
+
+  # here, we have a list of fibers where each fiber is a list of points and each point is a list [x,y,z]
+
+  # collect the indices of the boundary points in one cross-section of the muscle
+  boundary_indices_1minus = list(range(n_fibers_x))           # 1-
+  boundary_indices_0plus = [j*n_fibers_x + (n_fibers_x-1) for j in range(n_fibers_y)]
+  boundary_indices_1plus = list(reversed(range((n_fibers_y-1)*n_fibers_x, n_fibers_y*n_fibers_x)))
+  boundary_indices_0minus = [j*n_fibers_x + 0 for j in range(n_fibers_y)]
+
+  # assemble those boundary points that are at the faces that belong to the HD-EMG electrode array
+  boundary_indices = []
+  for face in variables.hdemg_electrode_faces:
+    if face == "0+":
+      boundary_indices += boundary_indices_0plus
+    elif face == "0-":
+      boundary_indices += boundary_indices_0minus
+    if face == "1+":
+      boundary_indices += boundary_indices_1plus
+    elif face == "1-":
+      boundary_indices += boundary_indices_1minus
+    
+  if False:
+    print("file: {}, n electrodes requested: {} x {} = {}".format(input_filename, variables.hdemg_n_electrodes_xy,variables.hdemg_n_electrodes_z, variables.hdemg_n_electrodes_xy*variables.hdemg_n_electrodes_z))
+    print("faces: {}, boundary_indices: {}".format(variables.hdemg_electrode_faces, boundary_indices))
+    
+  # determine z indices of the electrodes
+  center_fiber = fibers[(n_fibers_y//2) * n_fibers_x + n_fibers_x//2]               # the fiber that is at the center of the muscle
+  total_fiber_length = np.linalg.norm(np.array(center_fiber[0]) - np.array(center_fiber[-1]))   # length of that fiber
+    
+  # length along muscle where electrodes are placed
+  length_electrodes = variables.hdemg_inter_electrode_distance_z * (variables.hdemg_n_electrodes_z-1)     
+  offset = (total_fiber_length - length_electrodes)/2                               # total length along muscle at bottom and top where no electrodes are placed
+  dz = total_fiber_length / (n_points_whole_fiber-1)                                # length of one element of the center fiber
+
+  z_begin = (int)(offset/dz)                                # first z index where to place electrodes
+  z_stride = (int)(length_electrodes/dz/variables.hdemg_n_electrodes_z)                    # stride in z direction, every which node is used for electrodes
+  z_end = z_begin + z_stride*variables.hdemg_n_electrodes_z # one after last z index where to place electrodes
+    
+  if False:
+    print("total_fiber_length: {}".format(total_fiber_length))
+    print("length_electrodes: {}".format(length_electrodes))
+    print("offset: {}".format(offset))
+    print("dz: {}".format(dz))
+    print("z_begin: {}".format(z_begin))
+    print("z_stride: {}".format(z_stride))
+    print("z_end: {}".format(z_end))
+    
+  offset_factor = None
+  electrode_positions = []
+    
+  # determine offset_factor
+  z_index = (z_end-z_begin)//2
+  # determine length across muscle
+  last_boundary_point = fibers[boundary_indices[0]][z_index]
+  length_xy = 0
+  for xy_index in boundary_indices[1:]:
+    boundary_point = fibers[xy_index][z_index]
+    
+    length_xy += np.linalg.norm(np.array(boundary_point) - np.array(last_boundary_point))
+    last_boundary_point = boundary_point
+    
+  non_electrode_margin_size = max(0,length_xy - variables.hdemg_inter_electrode_distance_xy*(variables.hdemg_n_electrodes_xy-1))
+  if non_electrode_margin_size == 0:
+    offset_factor = 1
+  else:
+    offset_factor = min(1,variables.hdemg_electrode_offset_xy / non_electrode_margin_size)
+  
+  # loop over z positions where electrodes will be placed, the range is from z_begin to before z_end with stride z_stride
+  for z_index in range(z_begin, z_end, z_stride):
+    #print("{} fibers, z_index {}".format(len(fibers), z_index))
+    
+    # adjust the offset where the electrode array starts, such that it is placed not curved
+    # determine length across muscle
+    last_boundary_point = fibers[boundary_indices[0]][z_index]
+    length_xy = 0
+    for xy_index in boundary_indices[1:]:
+      boundary_point = fibers[xy_index][z_index]
+      
+      length_xy += np.linalg.norm(np.array(boundary_point) - np.array(last_boundary_point))
+      last_boundary_point = boundary_point
+      
+    non_electrode_margin_size = max(0,length_xy - variables.hdemg_inter_electrode_distance_xy*(variables.hdemg_n_electrodes_xy-1))
+    #print("z: {}, non_electrode_margin_size: {}, offset_factor: {}".format(z_index, non_electrode_margin_size, offset_factor))
+      
+    offset_xy = max(0, offset_factor * non_electrode_margin_size)
+    
+    # loop over xy-direction across muscle and place variables.hdemg_n_electrodes_xy electrodes
+    last_boundary_point = fibers[boundary_indices[0]][z_index]
+    
+    current_distance = 0
+    n_electrodes_at_this_z_position = 0
+    
+    # move across the muscle from node to node and measure distance
+    for xy_index in boundary_indices[1:]:
+      boundary_point = fibers[xy_index][z_index]
+      
+      while True:
+        # compute distance between last and current boundary point
+        d = np.linalg.norm(np.array(boundary_point) - np.array(last_boundary_point))
+        
+        # add to current measured distance
+        current_distance += d
+        
+        # if the current distance is higher than the ied, there must have been an electrode position between last_boundary_point and boundary_point
+        if (n_electrodes_at_this_z_position == 0 and current_distance > offset_xy) \
+          or (n_electrodes_at_this_z_position > 0 and current_distance > variables.hdemg_inter_electrode_distance_xy):
+        
+          # compute electrode position between last_boundary_point and boundary_point such that ied is satisfied
+          if n_electrodes_at_this_z_position == 0:
+            target_distance = offset_xy
+          else:
+            target_distance = variables.hdemg_inter_electrode_distance_z
+          
+          alpha = (target_distance - (current_distance-d)) / d
+          point = (1-alpha) * np.array(last_boundary_point) + alpha * np.array(boundary_point)
+          electrode_positions.append(list(point))
+          n_electrodes_at_this_z_position += 1
+          
+          if n_electrodes_at_this_z_position == variables.hdemg_n_electrodes_xy:
+            break
+          
+          # reset measurement
+          current_distance = 0
+          last_boundary_point = point
+          
+        else:
+          last_boundary_point = boundary_point
+          break
+      
+      if n_electrodes_at_this_z_position == variables.hdemg_n_electrodes_xy:
+        break
+    if rank_no == 0:
+      if n_electrodes_at_this_z_position < variables.hdemg_n_electrodes_xy:
+        print("Warning: {} electrodes were requested across muscle but only {} electrodes could be placed in the given faces ({}), offset is {} cm, IED is {} cm.".\
+          format(variables.hdemg_n_electrodes_xy, n_electrodes_at_this_z_position, variables.hdemg_electrode_faces, variables.hdemg_electrode_offset_xy, variables.hdemg_inter_electrode_distance_xy))
+        
+  variables.hdemg_electrode_positions = electrode_positions
+
+
+ 

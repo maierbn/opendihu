@@ -67,7 +67,8 @@ PartitionedPetscVecNComponentsStructured(PartitionedPetscVec<FunctionSpace::Func
     // create new Petsc Vec's
     createVector();
 
-    LOG(DEBUG) << "\"" << this->name_ << "\" contruct empty vector from rhs \"" << rhs.name() << "\", representation: "
+    LOG(DEBUG) << "\"" << this->name_ << "\" contruct empty vector (local size: " << this->meshPartition_->nNodesLocalWithoutGhosts()
+      << ") from rhs \"" << rhs.name() << "\", representation: "
       << Partition::valuesRepresentationString[rhs.currentRepresentation()];
 
     // copy the values of rhs
@@ -1293,7 +1294,7 @@ output(std::ostream &stream)
       dof_no_t dofNoLocalEnd = this->meshPartition_->nDofsLocalWithoutGhosts();
       if (!VLOG_IS_ON(1))
       {
-        dofNoLocalEnd = std::min((int)100, (int)dofNoLocalEnd);
+        dofNoLocalEnd = std::min((int)300, (int)dofNoLocalEnd);
       }
       for (dof_no_t dofNoLocal = 0; dofNoLocal < dofNoLocalEnd; dofNoLocal++)
       {
@@ -1304,9 +1305,9 @@ output(std::ostream &stream)
         global_no_t dofNoGlobal = this->meshPartition_->getDofNoGlobalPetsc(dofNoLocal);
 
         stream << dofNoGlobal << ":" << value;
-        if (dofNoLocal == 99 && !VLOG_IS_ON(1))
+        if (dofNoLocal == 299 && !VLOG_IS_ON(1))
         {
-          stream << " (" << this->meshPartition_->nDofsLocalWithoutGhosts() << " entries total, only showing the first 100)";
+          stream << " (" << this->meshPartition_->nDofsLocalWithoutGhosts() << " entries total, only showing the first 300 (call with -vmodule=partitioned_petsc_vec_n*=1 to show all))";
         }
       }
 

@@ -23,6 +23,7 @@ config = {
      "endTime": 0.1,
      "initialValues": [2,2,4,5,2,2],    # the initial values
      "dirichletBoundaryConditions": {}, # Dirichlet boundary conditions as dict
+     "dirichletOutputFilename": None,   # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
      "inputMeshIsGlobal": True,         # initial values and BC's are given for all dofs, even if executed in parallel
      "timeStepOutputInterval": 1,       # how often to print the current timestep to console 
      "nAdditionalFieldVariables": 0,    # for more complex nested solvers, the number of additional field variables that will be transferred without being touched

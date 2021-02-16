@@ -54,7 +54,7 @@ interpolateFineFibersFromFile()
   // copy header
   std::vector<char> headerBuffer(32+headerLength);
   fileOld.read(headerBuffer.data(), 32+headerLength);
-  strncpy(headerBuffer.data(), "opendihu fibers file            ", 32);
+  memcpy(headerBuffer.data(), "opendihu fibers file            ", 32);
 
   int nFibersNewX = (nFibersOldX-1) * nFineGridFibers_ + nFibersOldX;
   int nFibersNew = MathUtility::sqr(nFibersNewX);
@@ -96,7 +96,7 @@ interpolateFineFibersFromFile()
 
   if (int((fileOldSize-(32+headerLength)) / fiberDataSize) != nFibersOld)
   {
-    LOG(ERROR) << "File \"" << resultFilename_ << "\" states to have " << nFibersOld << " fibers in header, but actually has "
+    LOG(DEBUG) << "File \"" << resultFilename_ << "\" states to have " << nFibersOld << " fibers in header, but actually has "
       << int((fileOldSize-(32+headerLength)) / fiberDataSize) << " fibers!";
   }
 
@@ -112,7 +112,7 @@ interpolateFineFibersFromFile()
   parameter = nFibersNew;
   fileNew.write(c, 4);
 
-  // nBorderPointsXNew
+  // nBoundaryPointsXNew
   fileNew.seekp(32+3*4);
   parameter = nFibersOldX;
   fileNew.write(c, 4);

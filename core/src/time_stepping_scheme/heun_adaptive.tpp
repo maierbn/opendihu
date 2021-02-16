@@ -14,8 +14,16 @@ template<typename DiscretizableInTime>
 HeunAdaptive<DiscretizableInTime>::HeunAdaptive(DihuContext context) :
   TimeSteppingExplicit<DiscretizableInTime>(context, "HeunAdaptive")
 {
+}
+
+template<typename DiscretizableInTime>
+void HeunAdaptive<DiscretizableInTime>::initialize()
+{
   // create data object for heun
-  this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(context);
+  this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->context_);
+
+  // initialize already writes the first output file
+  TimeSteppingSchemeOde<DiscretizableInTime>::initialize();
 
   // read tolerance from settings
   tolerance_ = this->specificSettings_.getOptionDouble("tolerance", 0.1, PythonUtility::Positive);
@@ -52,11 +60,35 @@ HeunAdaptive<DiscretizableInTime>::HeunAdaptive(DihuContext context) :
 
   // initialize multiplicator for the modified method
   multiplicator_ = 0;
+
+  // get the filename of the log file for timestep widths
+  timeStepWidthsLogFilename_ = this->specificSettings_.getOptionString("timeStepWidthsLogFilename", "dt_log.csv");
 }
 
+//! destructor to write log file
+template<typename DiscretizableInTime>
+HeunAdaptive<DiscretizableInTime>::
+~HeunAdaptive()
+{
+  // output log file
+  if (!timeStepWidthsLogFilename_.empty() && !timeStepWidths_.empty())
+  {
+    // write log file
+    LOG(INFO) << "Create log file \"" << timeStepWidthsLogFilename_ << "\" with " << timeStepWidths_.size() << " timestep widths.";
+
+    std::ofstream logFile;
+    OutputWriter::Generic::openFile(logFile, timeStepWidthsLogFilename_);
+    for (int i = 0; i < timeStepWidths_.size(); i++)
+    {
+      logFile << times_[i] << ";" << timeStepWidths_[i] << ";\n";
+    }
+    logFile.close();
+  }
+}
 
 template<typename DiscretizableInTime>
-void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
+void HeunAdaptive<DiscretizableInTime>::
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
 
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
@@ -65,6 +97,10 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
 
   // compute timeSpan of current step
   double timeSpan = this->endTime_ - this->startTime_;
+
+  // pre-allocate buffer for logging out timestep widths
+  if (timeStepWidths_.empty())
+    timeStepWidths_.reserve(1e5);
 
   // log info
   LOG(DEBUG) << "HeunAdaptive::advanceTimeSpan, timeSpan=" << timeSpan<< ", initial timeStepWidth=" << this->timeStepWidth_;
@@ -110,7 +146,7 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
   currentTimeHeun_ = currentTimeHeun_ + timeSpan;
 
   // regular method chosen in config
-  if (timeStepAdaptOption_.compare("regular") == 0)
+  if (timeStepAdaptOption_ == "regular")
   {
 
     // log info
@@ -119,21 +155,24 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
     // loop over time steps
     for(double time = 0.0; time < timeSpan;)
     {
-      // log info of current progress in timeSpan
-      LOG(DEBUG) << "timeSpan progress: " << time << "/"<<timeSpan<<", current timeStepWidth: " << this->timeStepWidth_ << ", time remaining: " << timeSpan - time;
+      if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
+      {
+        // log info of current progress in timeSpan
+        LOG(INFO) << "HeunAdaptive (regular), time " << time << "/" << timeSpan << ", current timeStepWidth: " << this->timeStepWidth_ << ", time remaining: " << timeSpan - time;
+      }
 
       //loop until next solution is found
       while(true)
       {
         // reset vecNorm
-        vecnorm = 0.0;
+        vecnorm_ = 0.0;
 
         // copy current solution in temporal vectors
         VecCopy(solution, temp_solution_normal);
         VecCopy(solution, temp_solution_tilde);
         VecCopy(solution, temp_solution_tilde_algebraic);
 
-        VLOG(1) << "starting from solution: " << *this->data_->solution();
+        LOG(DEBUG) << "starting from solution: " << *this->data_->solution();
 
         // calculate solution with current timeStepWidth. Use modified calculation already used in Heun
         this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
@@ -145,7 +184,6 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
         temp_solution_normal, temp_increment_2, timeStepNo + 1, (currentTime + this->timeStepWidth_));
 
         VecAXPY(temp_increment_2, -1.0, temp_increment_1);
-
         VecAXPY(temp_solution_normal, 0.5 * this->timeStepWidth_, temp_increment_2);
 
         // now calculate reference solution consisting of 2 steps with timeStepWidth/2
@@ -159,7 +197,6 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
         temp_solution_tilde_algebraic, temp_increment_2, timeStepNo + 1, (currentTime + 0.5*this->timeStepWidth_));
 
         VecAXPY(temp_increment_2, 1.0, temp_increment_1);
-
         VecAXPY(temp_solution_tilde, 0.25*this->timeStepWidth_, temp_increment_2);
 
         // second step
@@ -178,15 +215,37 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
         VecAXPY(temp_solution_tilde, 0.25*this->timeStepWidth_, temp_increment_2);
 
         // check, if solutions are equal
-        PetscBool flag;
-        VecEqual(temp_solution_tilde,temp_solution_normal, &flag);
+        PetscBool flag = PETSC_FALSE;
+        //VecEqual(temp_solution_tilde,temp_solution_normal, &flag);
 
         // calculate estimator
         if (!flag)
         {
           VecAXPY(temp_solution_tilde, -1.0, temp_solution_normal);
-          VecNorm(temp_solution_tilde, NORM_2, &vecnorm);
-          estimator_ = (double)vecnorm / ((1 - pow(0.5, 2))*this->timeStepWidth_);
+          VecNorm(temp_solution_tilde, NORM_2, &vecnorm_);
+
+          PetscReal vecnorm_Combined = 0;
+          MPI_Allreduce(&vecnorm_, &vecnorm_Combined, 1, MPIU_REAL, MPIU_MAX, this->data_->solution()->functionSpace()->meshPartition()->rankSubset()->mpiCommunicator());
+
+          LOG(DEBUG) << "own vecnorm: " << vecnorm_;
+          LOG(DEBUG) << ", sum of vecnorms: " << vecnorm_Combined;
+
+          // prevent that the estimator gets nan, if the divisor is 0
+          if (fabs(this->timeStepWidth_) < 1e-12)
+          {
+            estimator_ = 1e-10;
+            LOG(DEBUG) << "estimator would be nan, set to 1e-10.";
+          }
+          else if (fabs(vecnorm_Combined) > 1e+75 || !std::isfinite(vecnorm_Combined))
+          {
+            LOG(DEBUG) << "vecnorm_Combined (" << vecnorm_Combined << ") is inf, set estimator to 1.2*tolerance_=" << tolerance_*1.2;
+            estimator_ = tolerance_ * 1.2;
+          }
+          else
+          {
+            estimator_ = (double)vecnorm_Combined / ((1.0 - pow(0.5, 2))*this->timeStepWidth_);
+            LOG(DEBUG) << "compute estimator = " << vecnorm_Combined << "/" << ((1.0 - pow(0.5, 2))*this->timeStepWidth_) << " = " << estimator_;
+          }
         }
         else
         {
@@ -199,7 +258,7 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
         alpha_ = pow((tolerance_/estimator_), (1.0/3.0));
 
         // lof info about calculated values
-        LOG(DEBUG) << "With timeStepWidth: " << this->timeStepWidth_ << "and estimator: " << estimator_ << "calculated alpha: " << alpha_;
+        LOG(DEBUG) << "With timeStepWidth: " << this->timeStepWidth_ << ", and estimator: " << estimator_ << ", calculated alpha: " << alpha_;
 
         // bypass calculation and accept step, when one check is set
         if ((minimum_check_ == true) || (ten_percent_check_ == true))
@@ -338,15 +397,23 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
       if (this->durationLogKey_ != "")
         Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
+      // log timestep width
+      if (!timeStepWidthsLogFilename_.empty())
+      {
+        timeStepWidths_.push_back(this->timeStepWidth_);
+        times_.push_back(currentTime);
+      }
+
       // write current output values
-      this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
+      if (withOutputWritersEnabled)
+        this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
 
       // start duration measurement
       if (this->durationLogKey_ != "")
         Control::PerformanceMeasurement::start(this->durationLogKey_);
     }
   }
-  else if (timeStepAdaptOption_.compare("modified") == 0) // modified option was chosen
+  else if (timeStepAdaptOption_ == "modified") // modified option was chosen
   {
 
     // log info
@@ -356,7 +423,7 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
     multiplicator_ = floor(timeSpan/this->timeStepWidth_);
 
     // reset vecNorm
-    vecnorm = 0.0;
+    vecnorm_ = 0.0;
 
     // copy current solution in temporal vectors
     VecCopy(solution, temp_solution_normal);
@@ -408,15 +475,37 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
     VecAXPY(temp_solution_tilde, 0.25*this->timeStepWidth_, temp_increment_2);
 
     // check, if solutions are equal
-    PetscBool flag;
-    VecEqual(temp_solution_tilde,temp_solution_normal, &flag);
+    PetscBool flag = PETSC_FALSE;
+    //VecEqual(temp_solution_tilde,temp_solution_normal, &flag);
 
     // calculate estimator based on current values
     if (!flag)
     {
       VecAXPY(temp_solution_tilde, -1.0, temp_solution_normal);
-      VecNorm(temp_solution_tilde, NORM_2, &vecnorm);
-      estimator_ = (double)vecnorm / ((1 - pow(0.5, 2))*this->timeStepWidth_);
+      VecNorm(temp_solution_tilde, NORM_2, &vecnorm_);
+
+      PetscReal vecnorm_Combined = 0;
+      MPI_Allreduce(&vecnorm_, &vecnorm_Combined, 1, MPIU_REAL, MPIU_MAX, this->data_->solution()->functionSpace()->meshPartition()->rankSubset()->mpiCommunicator());
+
+      LOG(DEBUG) << "own vecnorm: " << vecnorm_;
+      LOG(DEBUG) << ", sum of vecnorms: " << vecnorm_Combined;
+
+      // prevent that the estimator gets nan, if the divisor is 0
+      if (fabs(this->timeStepWidth_) < 1e-12)
+      {
+        estimator_ = 1e-10;
+        LOG(DEBUG) << "estimator would be nan, set to 1e-10.";
+      }
+      else if (fabs(vecnorm_Combined) > 1e+75 || !std::isfinite(vecnorm_Combined))
+      {
+        LOG(DEBUG) << "vecnorm_Combined (" << vecnorm_Combined << ") is inf, set estimator to 1.2*tolerance_=" << tolerance_*1.2;
+        estimator_ = tolerance_ * 1.2;
+      }
+      else
+      {
+        estimator_ = (double)vecnorm_ / ((1.0 - pow(0.5, 2))*this->timeStepWidth_);
+        LOG(DEBUG) << "compute estimator = " << vecnorm_ << "/" << ((1.0 - pow(0.5, 2))*this->timeStepWidth_) << " = " << estimator_;
+      }
     }
     else
     {
@@ -452,8 +541,11 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
     // loop over timeSpan
     for(double time = 0.0; time < timeSpan;)
     {
-      // log info of current progress in timeSpan
-      LOG(DEBUG) << "timeSpan progress: " << time << "/"<<timeSpan<<", current timeStepWidth: " << this->timeStepWidth_ << ", time remaining: " << timeSpan - time;
+      if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
+      {
+        // log info of current progress in timeSpan
+        LOG(INFO) << "HeunAdaptive (modified), time " << time << "/" << timeSpan << ", current timeStepWidth: " << this->timeStepWidth_ << ", time remaining: " << timeSpan - time;
+      }
 
       // calculate next solution
       this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
@@ -488,8 +580,16 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
       if (this->durationLogKey_ != "")
         Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
+      if (!timeStepWidthsLogFilename_.empty())
+      {
+        // log timestep width
+        timeStepWidths_.push_back(this->timeStepWidth_);
+        times_.push_back(currentTime);
+      }
+
       // write current output values
-      this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
+      if (withOutputWritersEnabled)
+        this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
 
       // start duration measurement
       if (this->durationLogKey_ != "")
@@ -501,7 +601,8 @@ void HeunAdaptive<DiscretizableInTime>::advanceTimeSpan()
   LOG(DEBUG) << "Exiting Loop";
 
   // log step info
-  if (timeStepAdaptOption_.compare("modified") == 0){
+  if (timeStepAdaptOption_ == "modified")
+  {
     LOG(DEBUG) << "Step info. Successful steps: " << stepCounterSuccess_ << ", Failed steps: " << stepCounterFail_;
   }
 

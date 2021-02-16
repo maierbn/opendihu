@@ -28,7 +28,7 @@ The following is an example how to initialize mappings between meshes:
     
     "MappingsBetweenMeshes": {
       "meshA": "meshB",
-      "meshC": {"name": "meshD", "xiTolerance": 0.01, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True},
+      "meshC": {"name": "meshD", "xiTolerance": 0.01, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "defaultValue": 0.0},
       
       # the following is from the multidomain_contraction example
       "3Dmesh": [
@@ -72,10 +72,10 @@ The element coordinates are called xi, e.g. for a 3D element :math:`\xi_1, \xi_2
 
 A point is also inside the element for (:math:`xi` < 0 but :math:`xi` > -xiTolerance) or, analogously, (:math:`xi` > 1 but :math:`xi` < 1+xiTolerance), if the respective element is the best fit among all elements.
 This means, if the point is outside of the actual mesh, then it is treated (in the construction of the mapping between meshes) as if it were inside the nearest element.
-Thus, with this tolerance, also nodes of the source mesh that are slightly outside the target mesh get a value mapped. This is useful for fiber mesh that lie exactly on the outer border of the 3D muscle mesh.
+Thus, with this tolerance, also nodes of the source mesh that are slightly outside the target mesh get a value mapped. This is useful for fiber mesh that lie exactly on the outer boundary of the 3D muscle mesh.
 
 This tolerance only applies to the decision if the point is considered inside the element, not to the actual computation of the xi coordinates of the point inside the element.
-Inside the mesh (not at the border) multiple adjacent elements may claim ownership of a point because of that tolerance. Then they will be all considered and the actual xi coordinates for the point will be computed from which the element where the point is really inside will be detected.
+Inside the mesh (not at the boundary) multiple adjacent elements may claim ownership of a point because of that tolerance. Then they will be all considered and the actual xi coordinates for the point will be computed from which the element where the point is really inside will be detected.
 This means the tolerance has no effect on the error of the mapping.
 
 enableWarnings
@@ -99,6 +99,17 @@ Consider the following use case: In the examples where we consider a fat layer (
 There is a composite mesh ``"3Dmesh+3DFatMesh"``.
 The extra-cellular potential :math:`phi_e` in the muscle domain on mesh ``3Dmesh`` should be mapped to the composite mesh ``3Dmesh+3DFatMesh``. Normally the setup of the mapping ``3Dmesh -> 3Dmesh+3DFatMesh`` would be inefficient, 
 because the ``3DFatMesh`` part of the composite mesh get no values mapped but during the setup the mapping class searches for parts of the other mesh there. Instead, we can use this option and initialize the mappings ``3Dmesh -> 3Dmesh`` and ``3DFatMesh->3DFatMesh`` or similar when the single meshes are not identical (as is the case in multidomain_contraction where the elasticity mesh is coarser).
+
+defaultValue
+^^^^^^^^^^^^^^^^^
+(default: 0.0)
+
+When mapping from a lower dimensional to a higher dimensional mesh, e.g. from a 1D fiber mesh to a 3D muscle volume, there can be some degrees of freedom in the higher dimensional mesh that have no nearby degrees of freedom of the lower dimensional mesh.
+E.g., there might be regions of the 3D muscle volume where there is no fiber nearby. By default, these dofs will get the value 0.0 when mapping from the 1D to the 3D mesh.
+
+This default value can be changed by this option. A use case is where the transmembrane potential :math:`V_m` is mapped from fibers to the muscle. Then set `defaultValue` to the equilibrium value, to have this value set where no fiber is.
+An example that uses this option is ``examples/electrophysiology/fibers/analytical_fibers_emg``.
+
 
 Mapping 
 -----------

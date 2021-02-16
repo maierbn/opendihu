@@ -11,6 +11,16 @@ std::shared_ptr<typename PressureFunctionSpaceCreator<Mesh::StructuredDeformable
 PressureFunctionSpaceCreator<Mesh::StructuredDeformableOfDimension<3>>::
 createPressureFunctionSpace(std::shared_ptr<Mesh::Manager> meshManager, std::shared_ptr<typename PressureFunctionSpaceCreator<Mesh::StructuredDeformableOfDimension<3>>::DisplacementsFunctionSpace> displacementsFunctionSpace)
 {
+  // compose name of pressure function space
+  std::stringstream name;
+  name << displacementsFunctionSpace->meshName() << "_pressure";
+
+  // if a function space with this name and type already exists, return the existing function space
+  if (meshManager->hasFunctionSpaceOfType<PressureFunctionSpace>(name.str()))
+  {
+    return meshManager->functionSpace<PressureFunctionSpace>(name.str());
+  }
+
   // create 3D function space with linear basis functions
   std::vector<Vec3> nodePositionsLinearMesh;
 
@@ -43,9 +53,7 @@ createPressureFunctionSpace(std::shared_ptr<Mesh::Manager> meshManager, std::sha
     nRanksPerCoordinateDirection[i] = displacementsFunctionSpace->meshPartition()->nRanks(i);
   }
 
-  std::stringstream name;
-  name << displacementsFunctionSpace->meshName() << "_pressure";
-
+  // call mesh manager to create the new function space
   std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace;
   pressureFunctionSpace = meshManager->createFunctionSpace<PressureFunctionSpace>(
     name.str(), nodePositionsLinearMesh, nElementsPerCoordinateDirection, nRanksPerCoordinateDirection);
@@ -58,6 +66,13 @@ std::shared_ptr<typename PressureFunctionSpaceCreator<Mesh::CompositeOfDimension
 PressureFunctionSpaceCreator<Mesh::CompositeOfDimension<3>>::
 createPressureFunctionSpace(std::shared_ptr<Mesh::Manager> meshManager, std::shared_ptr<typename PressureFunctionSpaceCreator<Mesh::CompositeOfDimension<3>>::DisplacementsFunctionSpace> displacementsFunctionSpace)
 {
+  std::string name = "pressureFunctionSpace";
+
+  // if a function space with this name and type already exists, return the existing function space
+  if (meshManager->hasFunctionSpaceOfType<PressureFunctionSpace>(name))
+  {
+    return meshManager->functionSpace<PressureFunctionSpace>(name);
+  }
   
   // get the sub function spaces of the composite displacements function space
   const std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>> >> &displacementsSubFunctionSpaces
@@ -74,8 +89,7 @@ createPressureFunctionSpace(std::shared_ptr<Mesh::Manager> meshManager, std::sha
 
   // create composite pressure function space
   std::shared_ptr<PressureFunctionSpace> pressureFunctionSpace;
-  pressureFunctionSpace = meshManager->createFunctionSpace<PressureFunctionSpace>(
-    "pressureFunctionSpace", pressureSubFunctionSpaces);
+  pressureFunctionSpace = meshManager->createFunctionSpace<PressureFunctionSpace>(name, pressureSubFunctionSpaces);
 
   return pressureFunctionSpace;
 }

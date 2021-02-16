@@ -54,6 +54,12 @@ public:
   //! return a reference to materialTraction_
   std::shared_ptr<VectorFieldVariableType> materialTraction();
 
+  //! return a reference to displacements_
+  std::shared_ptr<VectorFieldVariableType> displacements();
+
+  //! return a reference to velocities_
+  std::shared_ptr<VectorFieldVariableType> velocities();
+
   //! return the object that will be used to transfer values between solvers, in this case this includes only Vm
   std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 

@@ -22,7 +22,7 @@ template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 CellmlAdapterBase(DihuContext context) :
   context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML")),
-  data_(context_), cellmlSourceCodeGenerator_()
+  data_(context_), cellmlSourceCodeGenerator_(), initialized_(false)
 {
   outputWriterManager_.initialize(this->context_, specificSettings_);
   LOG(TRACE) << "CellmlAdapterBase constructor";
@@ -30,9 +30,9 @@ CellmlAdapterBase(DihuContext context) :
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
-CellmlAdapterBase(DihuContext context, bool initializeOutputWriter) :
+CellmlAdapterBase(DihuContext context, const CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::Data &rhsData) :
   context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML")),
-  data_(context_), cellmlSourceCodeGenerator_()
+  data_(rhsData), cellmlSourceCodeGenerator_(), initialized_(false)
 {
 }
 
@@ -158,6 +158,7 @@ template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 initialize()
 {
+
   LOG(TRACE) << "CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::initialize";
 
   if (VLOG_IS_ON(1))
@@ -707,20 +708,12 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,
 
   if (!statesInitialValuesInitialized_)
   {
-    // initialize states
-    if (this->specificSettings_.hasKey("statesInitialValues") && !this->specificSettings_.isEmpty("statesInitialValues"))
+    if (!this->specificSettings_.hasKey("statesInitialValues")
+      || this->specificSettings_.isEmpty("statesInitialValues")
+      || this->specificSettings_.getOptionString("statesInitialValues", "") == "CellML")
     {
-      LOG(DEBUG) << "set initial values from config";
-
-      // statesInitialValues gives the initial state values for one instance of the problem. it is used for all instances.
-      std::array<double,nStates_> statesInitialValuesFromConfig = this->specificSettings_.template getOptionArray<double,nStates_>("statesInitialValues", 0);
-
-      // store initial values to statesInitialValues_
-      std::copy(statesInitialValuesFromConfig.begin(), statesInitialValuesFromConfig.end(), statesInitialValues_.begin());
-    }
-    else
-    {
-      LOG(DEBUG) << "set initial values from source file";
+      // Default if unspecified
+      LOG(DEBUG) << "set initial values from CellML source file";
 
       // parsing the source file was already done
       // get initial values from source code generator
@@ -728,6 +721,25 @@ setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,
       assert(statesInitialValuesGenerator.size() == nStates_);
 
       std::copy(statesInitialValuesGenerator.begin(), statesInitialValuesGenerator.end(), statesInitialValues_.begin());
+    }
+    else if (this->specificSettings_.isTypeList("statesInitialValues"))
+    {
+      LOG(DEBUG) << "set initial values from Python config";
+
+      // statesInitialValues gives the initial state values for one instance of the problem. it is used for all instances.
+      std::array<double,nStates_> statesInitialValuesFromConfig = this->specificSettings_.template getOptionArray<double,nStates_>("statesInitialValues", 0);
+
+      // store initial values to statesInitialValues_
+      std::copy(statesInitialValuesFromConfig.begin(), statesInitialValuesFromConfig.end(), statesInitialValues_.begin());
+    }
+    else if (this->specificSettings_.getOptionString("statesInitialValues", "") == "undefined")
+    {
+      LOG(DEBUG) << "don't set initial values";
+      return false;
+    }
+    else
+    {
+      LOG(FATAL) << "Unknown value for `statesInitialValues`. Choose 'CellML', 'undefined' or specify the values.";
     }
 
     if (initializeStatesToEquilibrium_)

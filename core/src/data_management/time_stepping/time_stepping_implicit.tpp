@@ -50,12 +50,6 @@ template<typename FunctionSpaceType,int nComponents>
 void TimeSteppingImplicit<FunctionSpaceType,nComponents>::
 initializeSystemMatrix(Mat &systemMatrix)
 {
-  // if the systemMatrix_ is already initialized do not initialize again
-  //if (this->systemMatrix_)
-  //{
-  //  LOG(WARNING) << "Initialize system matrix again. Previous system matrix: " << *this->systemMatrix_;
-  //}
-
   // the PETSc matrix object is created outside by MatMatMult
 
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
@@ -66,10 +60,6 @@ template<typename FunctionSpaceType,int nComponents>
 void TimeSteppingImplicit<FunctionSpaceType,nComponents>::
 initializeIntegrationMatrixRightHandSide(Mat &integrationMatrix)
 {
-  // if the integrationMatrix_ is already initialized do not initialize again
-  if (this->integrationMatrixRightHandSide_)
-    return;
-
   // the PETSc matrix object is created outside by MatMatMult
   std::shared_ptr<Partition::MeshPartition<FunctionSpaceType>> partition = this->functionSpace_->meshPartition();
   this->integrationMatrixRightHandSide_ = std::make_shared<PartitionedPetscMat<FunctionSpaceType>>(partition, integrationMatrix, "integrationMatrixRightHandSide");

@@ -25,6 +25,7 @@ opendihu_directory=$(pwd)/../../..
 parallel_fiber_estimation_directory=${opendihu_directory}/examples/fiber_tracing/parallel_fiber_estimation
 stl_utility_directory=${opendihu_directory}/scripts/stl_utility
 pyod=${opendihu_directory}/dependencies/python/install/bin/python3
+scons=${opendihu_directory}/dependencies/scons/scons.py
 
 mkdir -p processed_meshes
 
@@ -90,12 +91,12 @@ fi
 echo ""
 echo "--- Compile opendihu"
 cd $opendihu_directory
-scons no_tests=TRUE
+$scons no_tests=TRUE
 
 echo ""
 echo "--- Compile parallel fiber estimation"
 cd $parallel_fiber_estimation_directory
-scons
+$scons
 
 cd build_release
 
@@ -105,11 +106,20 @@ echo "--- Generate 7x7 and 9x9 fibers.bin file"
 
 
 if [[ ! -f "${current_directory}/processed_meshes/${basename}_05_7x7fibers.bin" ]]; then
-  echo "./generate ../settings_generate_7x7.py ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle ${current_directory}/processed_meshes/${basename}_05_0x0fibers.bin 7.2 22 0.01"
-  ./generate ../settings_generate_7x7.py \
-    ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
-    ${current_directory}/processed_meshes/${basename}_05_0x0fibers.bin \
-    $bottom_z_clip $top_z_clip $element_length
+  echo "./generate ../settings_generate.py \
+    --input_filename_or_splines_or_stl ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
+    --output_filename ${current_directory}/processed_meshes/${basename}_05_0x0fibers.bin \
+    --bottom_z_clip $bottom_z_clip \
+    --top_z_clip $top_z_clip \
+    --element_size $element_length \
+    --n_elements_z_per_subdomain 10"
+  ./generate ../settings_generate.py \
+    --input_filename_or_splines_or_stl ${current_directory}/processed_meshes/${basename}_04_spline_surface.pickle \
+    --output_filename ${current_directory}/processed_meshes/${basename}_05_0x0fibers.bin \
+    --bottom_z_clip $bottom_z_clip \
+    --top_z_clip $top_z_clip \
+    --element_size $element_length \
+    --n_elements_z_per_subdomain 10
 else
   echo "file processed_meshes/${basename}_05_7x7fibers.bin already exists"
 fi

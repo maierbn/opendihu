@@ -1,9 +1,9 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # This script creates a fat and skin layer on top of a muscle mesh.
 #
-# usage: ./create_fat_layer.py [<fibers input file> [<output file of fat tissue>]]
+# usage: ./create_fat_layer.py [<fibers input file> [<output file of fat tissue> [<thickness in cm> [<y_size>]]]]
 
 import sys, os
 import numpy as np
@@ -16,16 +16,29 @@ import time
 
 input_filename = "../examples/electrophysiology/input/13x13fibers.bin"
 
+if len(sys.argv) == 1:
+  print("usage: create_fat_layer.py [<fibers input file> [<output file of fat tissue> [<thickness in cm> [<y_size>]]]]\n default values: thickness = 1cm, y_size = 5\n")
+
 if len(sys.argv) >= 2:
   input_filename = sys.argv[1]
 
 output_filename = "{}_fat.bin".format(input_filename)
+y_size = 5
+thickness = 1.0  #[cm]
   
 if len(sys.argv) >= 3:
   output_filename = sys.argv[2]
 
-print("input filename: {}".format(input_filename))
+if len(sys.argv) >= 4:
+  thickness = (float)(sys.argv[3])
+
+if len(sys.argv) >= 5:
+  y_size = (int)(sys.argv[4])
+
+print("input filename:  {}".format(input_filename))
 print("output filename: {}".format(output_filename))
+print("thickness:       {} cm".format(thickness))
+print("y_size:          {}".format(y_size))
 
 # parse input file and save all streamlines
 with open(input_filename, "rb") as infile:
@@ -56,8 +69,8 @@ with open(input_filename, "rb") as infile:
   print("nFibersTotal:      {n_fibers} = {n_fibers_x} x {n_fibers_y}".format(n_fibers=parameters[0], n_fibers_x=n_fibers_x, n_fibers_y=n_fibers_y))
   print("nPointsWholeFiber: {}".format(parameters[1]))
   if "version 2" not in str(header_str):
-    print("nBorderPointsXNew: {}".format(parameters[2]))
-    print("nBorderPointsZNew: {}".format(parameters[3]))
+    print("nBoundaryPointsXNew: {}".format(parameters[2]))
+    print("nBoundaryPointsZNew: {}".format(parameters[3]))
   print("nFineGridFibers_:  {}".format(parameters[4]))
   print("nRanks:            {}".format(parameters[5]))
   print("nRanksZ:           {}".format(parameters[6]))
@@ -107,8 +120,6 @@ with open(input_filename, "rb") as infile:
   # set the sampling stride to 1, the mesh will be sampled by the script that does the partitioning in the simulation
   x_stride = 1
   z_stride = 1
-  y_size = 5
-  thickness = 1.0  #[cm]
   
   result_n_points_x = len(range(0, n_fibers_x+n_fibers_y-1, x_stride))
   result_n_points_y = y_size

@@ -7,8 +7,9 @@
 #include "control/multiple_instances.h"
 #include "control/load_balancing/load_balancing.h"
 #include "control/map_dofs/map_dofs.h"
-#include "control/precice/partitioned_fibers.h"
-#include "control/precice/muscle_contraction.h"
+#include "control/precice/volume_coupling/partitioned_fibers.h"
+#include "control/precice/volume_coupling/muscle_contraction.h"
+#include "control/precice/surface_coupling/precice_adapter.h"
 #include "control/precice/contraction_dirichlet_boundary_conditions.h"
 #include "control/precice/contraction_neumann_boundary_conditions.h"
 
@@ -42,7 +43,7 @@
 #include "specialized_solver/solid_mechanics/quasi_static/quasi_static_nonlinear_elasticity_solver_chaste.h"
 #include "specialized_solver/solid_mechanics/quasi_static/febio/quasi_static_nonlinear_elasticity_solver_febio.h"
 #include "specialized_solver/solid_mechanics/quasi_static/quasi_static_linear_elasticity_solver.h"
-#include "specialized_solver/solid_mechanics/hyperelasticity/hyperelasticity_solver.h"
+#include "specialized_solver/solid_mechanics/hyperelasticity/02_hyperelasticity_solver.h"
 #include "specialized_solver/solid_mechanics/dynamic_hyperelasticity/dynamic_hyperelasticity_solver.h"
 #include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver.h"
 #include "specialized_solver/prescribed_values.h"
@@ -65,6 +66,7 @@
 
 #include "postprocessing/streamline_tracer.h"
 #include "postprocessing/parallel_fiber_estimation/parallel_fiber_estimation.h"
+#include "postprocessing/scale_fibers_in_file.h"
 
 #include "cellml/03_cellml_adapter.h"
 

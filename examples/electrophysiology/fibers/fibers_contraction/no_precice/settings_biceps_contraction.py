@@ -19,17 +19,20 @@ from create_partitioned_meshes_for_settings import *   # file create_partitioned
 
 # if first argument contains "*.py", it is a custom variable definition file, load these values
 if ".py" in sys.argv[0]:
-  variables_file = sys.argv[0]
-  variables_module = variables_file[0:variables_file.find(".py")]
+  variables_path_and_filename = sys.argv[0]
+  variables_path,variables_filename = os.path.split(variables_path_and_filename)  # get path and filename 
+  sys.path.insert(0, os.path.join(script_path,variables_path))                    # add the directory of the variables file to python path
+  variables_module,_ = os.path.splitext(variables_filename)                       # remove the ".py" extension to get the name of the module
   
   if rank_no == 0:
-    print("Loading variables from {}.".format(variables_file))
+    print("Loading variables from \"{}\".".format(variables_path_and_filename))
     
-  custom_variables = importlib.import_module(variables_module)
+  custom_variables = importlib.import_module(variables_module, package=variables_filename)    # import variables module
   variables.__dict__.update(custom_variables.__dict__)
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
-  print("Error: no variables file was specified, e.g:\n ./biceps_contraction ../settings_biceps_contraction.py ramp.py")
+  if rank_no == 0:
+    print("Error: no variables file was specified, e.g:\n ./biceps_contraction ../settings_biceps_contraction.py ramp.py")
   exit(0)
 
 # -------------- begin user parameters ----------------
@@ -69,9 +72,9 @@ parser.add_argument('-pause',                                help='Stop at paral
 variables.use_analytic_jacobian = True  # force analytic jacobian, otherwise it will take too long
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
-
-print(variables.use_analytic_jacobian)
+args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+if len(other_args) != 0 and rank_no == 0:
+    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:
@@ -119,6 +122,7 @@ if rank_no == 0:
   print("output_timestep: {:0.0e}  stimulation_frequency: {} 1/ms = {} Hz".format(variables.output_timestep, variables.stimulation_frequency, variables.stimulation_frequency*1e3))
   print("fast_monodomain_solver_optimizations: {}, use_analytic_jacobian: {}, use_vc: {}".format(variables.fast_monodomain_solver_optimizations, variables.use_analytic_jacobian, variables.use_vc))
   print("fiber_file:              {}".format(variables.fiber_file))
+  print("fat_mesh_file:           {}".format(variables.fat_mesh_file))
   print("cellml_file:             {}".format(variables.cellml_file))
   print("fiber_distribution_file: {}".format(variables.fiber_distribution_file))
   print("firing_times_file:       {}".format(variables.firing_times_file))
@@ -148,21 +152,22 @@ if False:
           print("({},{}) n instances: {}".format(fiber_in_subdomain_coordinate_x,fiber_in_subdomain_coordinate_y,
               n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y)))
 
-print("vm_stim: {}".format(variables.vm_value_stimulated))
-
 # define the config dict
 config = {
-  "scenarioName":          variables.scenario_name,
-  "logFormat":             "csv",
-  "solverStructureDiagramFile":     "out/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
-  "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",  # log file of when mappings between meshes occur
+  "scenarioName":                  variables.scenario_name,
+  "mappingsBetweenMeshesLogFile":  "out/mappings_between_meshes.txt",
+  "logFormat":                     "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
+  "solverStructureDiagramFile":    "out/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "meta": {                 # additional fields that will appear in the log
+    "partitioning": [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
+  },
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": variables.mappings_between_meshes,
   "Solvers": {
     "diffusionTermSolver": {# solver for the implicit timestepping scheme of the diffusion time step
       "maxIterations":      1e4,
       "relativeTolerance":  1e-10,
-      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "solverType":         variables.diffusion_solver_type,
       "preconditionerType": variables.diffusion_preconditioner_type,
       "dumpFilename":       "",   # "out/dump_"
@@ -170,7 +175,7 @@ config = {
     },
     "potentialFlowSolver": {# solver for the initial potential flow, that is needed to estimate fiber directions for the bidomain equation
       "relativeTolerance":  1e-10,
-      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
+      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "maxIterations":      1e4,
       "solverType":         variables.potential_flow_solver_type,
       "preconditionerType": variables.potential_flow_preconditioner_type,
@@ -180,7 +185,7 @@ config = {
     "mechanicsSolver": {   # solver for the dynamic mechanics problem
       "relativeTolerance":  1e-5,           # 1e-10 relative tolerance of the linear solver
       "absoluteTolerance":  1e-10,          # 1e-10 absolute tolerance of the residual of the linear solver
-      "solverType":         "lu",      # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
+      "solverType":         "lu",  #"lu" if installed    # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
       "preconditionerType": "none",           # type of the preconditioner
       "maxIterations":       1e4,           # maximum number of iterations in the linear solver
       "snesMaxFunctionEvaluations": 1e8,    # maximum number of function iterations
@@ -218,8 +223,8 @@ config = {
             "durationLogKey":         "duration_monodomain",
             "timeStepOutputInterval": 100,
             "endTime":                variables.dt_splitting,
-            "connectedSlotsTerm1To2": [0,1,2],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
-            "connectedSlotsTerm2To1": [0,None,2],   # transfer the same back, this avoids data copy
+            "connectedSlotsTerm1To2": None, #[0,1,2],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
+            "connectedSlotsTerm2To1": None, #[0,None,2],   # transfer the same back, this avoids data copy
 
             "Term1": {      # CellML, i.e. reaction term of Monodomain equation
               "MultipleInstances": {
@@ -235,9 +240,12 @@ config = {
                     "timeStepOutputInterval":       1e4,                                     # how often to print the current timestep
                     "initialValues":                [],                                      # no initial values are specified
                     "dirichletBoundaryConditions":  {},                                      # no Dirichlet boundary conditions are specified
+                    "dirichletOutputFilename":      None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+                    
                     "inputMeshIsGlobal":            True,                                    # the boundary conditions and initial values would be given as global numbers
                     "checkForNanInf":               True,                                    # abort execution if the solution contains nan or inf values
                     "nAdditionalFieldVariables":    0,                                       # number of additional field variables
+                    "additionalSlotNames":          [],                                      # names for the additional slots
                       
                     "CellML" : {
                       "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
@@ -249,7 +257,7 @@ config = {
                       # optimization parameters
                       "optimizationType":                       "vc" if variables.use_vc else "simd",           # "vc", "simd", "openmp" type of generated optimizated source file
                       "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
-                      "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
+                      "compilerFlags":                          "-fPIC -O3 -march=native -Wno-deprecated-declarations -shared ",             # compiler flags used to compile the optimized model code
                       "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
                       
                       # stimulation callbacks
@@ -294,13 +302,16 @@ config = {
                     "initialValues":               [],                                      # no initial values are given
                     #"numberTimeSteps":            1,
                     "timeStepWidth":               variables.dt_1D,                         # timestep width for the diffusion problem
+                    "timeStepWidthRelativeTolerance": 1e-10,
                     "logTimeStepWidthAsKey":       "dt_1D",                                 # key under which the time step width will be written to the log file
                     "durationLogKey":              "duration_1D",                           # log key of duration for this solver
                     "timeStepOutputInterval":      1e4,                                     # how often to print the current timestep
                     "dirichletBoundaryConditions": {},                                      # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
+                    "dirichletOutputFilename":     None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                     "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
                     "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
-                    "nAdditionalFieldVariables":   2,                                       # number of additional field variables that will be written to the output file, here for stress
+                    "nAdditionalFieldVariables":   4,                                       # number of additional field variables that will be written to the output file, here for stress
+                    "additionalSlotNames":         ["stress", "alpha", "lambda", "ldot"],   # names for the additional slots, maximum length is 6 characters per slot name
                     "checkForNanInf":              True,                                    # abort execution if the solution contains nan or inf values
                     
                     "FiniteElementMethod" : {
@@ -308,6 +319,7 @@ config = {
                       "meshName":                  "MeshFiber_{}".format(fiber_no),
                       "solverName":                "diffusionTermSolver",
                       "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
+                      "slotName":                  "vm",
                     },
                     "OutputWriter" : [
                       #{"format": "Paraview", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles": True},
@@ -346,6 +358,7 @@ config = {
                     "meshName":               "MeshFiber_{}".format(fiber_no),               # reference to the fiber mesh
                     "numberTimeSteps":        1,             # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step
                     "timeStepOutputInterval": 20,            # if the time step should be written to console, a value > 10 produces no output
+                    "slotNames": [],
                     
                     # a list of field variables that will get values assigned in every timestep, by the provided callback function
                     "fieldVariables1": [
@@ -384,12 +397,16 @@ config = {
       "onlyComputeIfHasBeenStimulated": variables.fast_monodomain_solver_optimizations,                          # only compute fibers after they have been stimulated for the first time
       "disableComputationWhenStatesAreCloseToEquilibrium": variables.fast_monodomain_solver_optimizations,       # optimization where states that are close to their equilibrium will not be computed again      
       "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set      
+      "neuromuscularJunctionRelativeSize": 0.1,                        # range where the neuromuscular junction is located around the center, relative to fiber length. The actual position is draws randomly from the interval [0.5-s/2, 0.5+s/2) with s being this option. 0 means sharply at the center, 0.1 means located approximately at the center, but it can vary 10% in total between all fibers.
     },
     "Term2": {        # solid mechanics
       "MuscleContractionSolver": {
         "numberTimeSteps":              1,                         # only use 1 timestep per interval
         "timeStepOutputInterval":       100,                       # do not output time steps
         "Pmax":                         variables.pmax,            # maximum PK2 active stress
+        "enableForceLengthRelation":    variables.enable_force_length_relation,  # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
+        "lambdaDotScalingFactor":       variables.lambda_dot_scaling_factor,     # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
+        "slotNames":                    ["lambda", "ldot", "gamma", "T"],   # names of the data slots (lamdba, lambdaDot, gamma, traction), maximum 6 characters per slot name
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
         ],
@@ -437,6 +454,9 @@ config = {
           "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
           "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
           
+          "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions",                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+          "totalForceLogFilename":       "out/"+variables.scenario_name+"/total_force.txt",                              # filename for a log file with the total force
+          
           # define which file formats should be written
           # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
           "OutputWriter" : [
@@ -471,9 +491,6 @@ config = {
     }
   }
 }
-
-print("analytic jacobian: ",config["Coupling"]["Term2"]["MuscleContractionSolver"]["DynamicHyperelasticitySolver"]["useAnalyticJacobian"])
-print("numeric jacobian: ",config["Coupling"]["Term2"]["MuscleContractionSolver"]["DynamicHyperelasticitySolver"]["useNumericJacobian"])
 
 # stop timer and calculate how long parsing lasted
 if rank_no == 0:

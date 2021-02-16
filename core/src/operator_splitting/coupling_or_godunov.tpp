@@ -9,7 +9,7 @@ namespace OperatorSplitting
 
 template<typename TimeStepping1, typename TimeStepping2>
 void CouplingOrGodunov<TimeStepping1,TimeStepping2>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -45,7 +45,7 @@ advanceTimeSpan()
     }
 
     // advance simulation by time span
-    this->timeStepping1_.advanceTimeSpan();
+    this->timeStepping1_.advanceTimeSpan(withOutputWritersEnabled);
     
     if (this->durationLogKey_ != "")
     {
@@ -82,7 +82,7 @@ advanceTimeSpan()
 
     LOG(DEBUG) << "  CouplingOrGodunov(\"" << this->description_ << "\"): timeStepping2 advanceTimeSpan";
     // advance simulation by time span
-    this->timeStepping2_.advanceTimeSpan();
+    this->timeStepping2_.advanceTimeSpan(withOutputWritersEnabled);
 
     if (this->durationLogKey_ != "")
     {

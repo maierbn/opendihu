@@ -230,6 +230,8 @@ config = {
           "prefactor":            1.0,                    # prefactor c of the equation c*Δu = f
           "inputMeshIsGlobal":    True,                   # if boundary conditions are specified in global numbering
           "dirichletBoundaryConditions":  dirichlet_bc,   # dirichlet boundary conditions
+          "dirichletOutputFilename":      None,           # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+      
           "neumannBoundaryConditions":    neumann_bc,     # neumann boundary conditions
           "divideNeumannBoundaryConditionValuesByTotalArea": False,  # if the neumann boundary condition vectors should be divided by the total surface area where surface loads are applied, this allows to specify the total force that acts on the surface. If set to False (default), the given traction is a per-surface quantity.
           "slotName":             "",                     # name of the connector slot of the solution field variable, needed if the global option "connectedSlots" is used

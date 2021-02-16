@@ -25,9 +25,7 @@ class NeumannBoundaryConditionsInitializeRhs :
 public:
   using NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::NeumannBoundaryConditionsBase;
 
-protected:
-
-  // initialize the rhs in data, this is called by initialize()
+  // initialize the rhs in data, this is called by initialize() or can be called manually to update the rhs
   virtual void initializeRhs();
 };
 
@@ -43,6 +41,9 @@ public:
   using NeumannBoundaryConditionsInitializeRhs<FunctionSpaceType,QuadratureType,nComponents>::NeumannBoundaryConditionsInitializeRhs;
 
   typedef typename NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces ElementWithFaces;
+
+  //! assign the deformation gradient field variable to the data object. It is needed for converting traction bc in current configuration to reference configuration
+  void setDeformationGradientField(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,9>> deformationGradientField);
 
 protected:
 
@@ -88,10 +89,10 @@ public:
 
   typedef typename NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces ElementWithFaces;
 
-protected:
-
   // initialize the rhs in data, this is called by initialize()
   virtual void initializeRhs();
+
+protected:
 
   //! parse an object of type ElementWithFaces from python config,
   //! example values:  {"element": 1, "face": "0+", "dofVectors:", {0: [tmax,0,0], 1: [tmax,0,0], 2: [tmax,0,0], 3: [tmax,0,0]}}
@@ -100,7 +101,8 @@ protected:
 
 };
 
-
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents, typename DummyForTraits>
+std::ostream &operator<<(std::ostream &stream, const NeumannBoundaryConditions<FunctionSpaceType,QuadratureType,nComponents,DummyForTraits> &rhs);
 
 } // namespace
 

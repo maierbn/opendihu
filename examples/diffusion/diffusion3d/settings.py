@@ -29,6 +29,7 @@ config = {
     "endTime": 10.0,
     "timeStepOutputInterval": 10,
     "dirichletBoundaryConditions": {},
+    "dirichletOutputFilename": None,   # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     "inputMeshIsGlobal": True,
     "checkForNanInf": False,
     "nAdditionalFieldVariables": 0,

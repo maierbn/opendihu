@@ -1,3 +1,4 @@
+import os
 
 # scenario name for log file
 scenario_name = "ramp_emg"
@@ -80,17 +81,24 @@ output_timestep_big = 25            # [ms] timestep for output big files of 3D E
 # final video time: 40s
 # 40 frames/s => output every 4s / (40s * 40fr/s) = 4000ms/1600 = 2.5
 
+input_directory = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
+#print("  input directory:   \"{}\"".format(input_directory))  # too much output when run with numerous ranks
+#print("  current directory: \"{}\"".format(os.getcwd()))
+
 # other options
 paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-#fiber_file="../../../input/13x13fibers.bin"
-#fiber_file="../../../input/37x37fibers.bin"
-#fiber_file="../../../input/left_biceps_brachii_37x37fibers.bin"
-fiber_file = "../../../input/left_biceps_brachii_13x13fibers.bin"
-firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"
+enable_surface_emg = True
+optimization_type = "gpu"
+
+#fiber_file=input_directory+"/left_biceps_brachii_37x37fibers.bin"
+fiber_file              = input_directory+"/left_biceps_brachii_13x13fibers.bin"
+firing_times_file       = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+fiber_distribution_file = input_directory+"/MU_fibre_distribution_10MUs.txt"
+cellml_file             = input_directory+"/hodgkin_huxley_1952.c"
+#cellml_file             = input_directory+"/new_slow_TK_2014_12_08.cellml"
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):
@@ -115,4 +123,5 @@ def get_specific_states_frequency_jitter(fiber_no, mu_no):
   return motor_units[mu_no % len(motor_units)]["jitter"]
 
 def get_specific_states_call_enable_begin(fiber_no, mu_no):
+  return 1
   return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3

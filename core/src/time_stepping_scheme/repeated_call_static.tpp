@@ -40,7 +40,8 @@ initialize()
 }
 
 template<typename Solver>
-void RepeatedCallStatic<Solver>::advanceTimeSpan()
+void RepeatedCallStatic<Solver>::
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // avoid that solver structure file is created, this should only be done after the whole simulation has finished
   DihuContext::solverStructureVisualizer()->disable();
@@ -58,6 +59,13 @@ run()
 {
   initialize();
   advanceTimeSpan();
+}
+
+template<typename Solver>
+void RepeatedCallStatic<Solver>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  this->solver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
 }
 
 template<typename Solver>

@@ -89,7 +89,7 @@ valuesGlobal()
 
   VLOG(2) << "\"" << this->name_ << "\" valuesGlobal()";
 
-  LOG(DEBUG) << "valuesGlobal, return vectorCombinedWithoutDirichletDofsGlobal_";
+  //LOG(DEBUG) << "valuesGlobal, return vectorCombinedWithoutDirichletDofsGlobal_";
 
   return vectorCombinedWithoutDirichletDofsGlobal_;
 }
@@ -384,6 +384,10 @@ void PartitionedPetscVecWithDirichletBc<FunctionSpaceType, nComponents, nCompone
 getValues(int componentNo, PetscInt ni, const PetscInt ix[], PetscScalar y[]) const
 {
   VLOG(1) << "\"" << this->name_ << "\" getValues, representation: " << this->getCurrentRepresentationString();
+
+  if (componentNo >= nComponents)
+    LOG(FATAL) << "\"" << this->name_ << "\" getValues, representation: " << this->getCurrentRepresentationString()
+      << ", componentNo is invalid, componentNo " << componentNo << ", nComponents: " << nComponents;
 
   assert(componentNo >= 0 && componentNo < nComponents);
 

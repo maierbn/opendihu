@@ -112,7 +112,7 @@ config = {
   
 
   // define problem
-  SpatialDiscretization::HyperelasticitySolver<Equation::SolidMechanics::MooneyRivlinIncompressible3D> problem(settings);
+  SpatialDiscretization::HyperelasticitySolver<Equation::SolidMechanics::MooneyRivlinIncompressible3D,false> problem(settings);
 
   // run problem
   problem.run();

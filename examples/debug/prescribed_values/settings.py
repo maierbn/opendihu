@@ -77,6 +77,7 @@ config = {
         "checkForNanInf":     False,          # if the solution should be checked for nan and inf values, after each iteration.
         "timeStepOutputInterval": 1,          # how often to print information about iteration to the console
         "dirichletBoundaryConditions": {},    # dirichlet boundary conditions
+        "dirichletOutputFilename":  None,     # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
         "nAdditionalFieldVariables":  0,      # how many additional field variables there should be that can be connected to output slots and that will be written to the output file
         
         "FiniteElementMethod" : {

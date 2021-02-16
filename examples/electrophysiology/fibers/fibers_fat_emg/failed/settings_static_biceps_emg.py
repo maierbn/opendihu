@@ -19,13 +19,15 @@ from create_partitioned_meshes_for_settings import *   # file create_partitioned
 
 # if first argument contains "*.py", it is a custom variable definition file, load these values
 if ".py" in sys.argv[0]:
-  variables_file = sys.argv[0]
-  variables_module = variables_file[0:variables_file.find(".py")]
+  variables_path_and_filename = sys.argv[0]
+  variables_path,variables_filename = os.path.split(variables_path_and_filename)  # get path and filename 
+  sys.path.insert(0, os.path.join(script_path,variables_path))                    # add the directory of the variables file to python path
+  variables_module,_ = os.path.splitext(variables_filename)                       # remove the ".py" extension to get the name of the module
   
   if rank_no == 0:
-    print("Loading variables from {}.".format(variables_file))
+    print("Loading variables from \"{}\".".format(variables_path_and_filename))
     
-  custom_variables = importlib.import_module(variables_module)
+  custom_variables = importlib.import_module(variables_module, package=variables_filename)    # import variables module
   variables.__dict__.update(custom_variables.__dict__)
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
@@ -65,7 +67,9 @@ parser.add_argument('-vmodule',                              help='Enable verbos
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+if len(other_args) != 0 and rank_no == 0:
+    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:
@@ -186,6 +190,7 @@ config = {
                     "timeStepOutputInterval":       1e4,
                     "inputMeshIsGlobal":            True,
                     "dirichletBoundaryConditions":  {},
+                    "dirichletOutputFilename":      None,             # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                     "nAdditionalFieldVariables":    0,
                       
                     "CellML" : {
@@ -235,17 +240,16 @@ config = {
                     "initialValues":               [],
                     #"numberTimeSteps":            1,
                     "timeStepWidth":               variables.dt_1D,  # 1e-5
+                    "timeStepWidthRelativeTolerance": 1e-10,
                     "logTimeStepWidthAsKey":       "dt_1D",
                     "durationLogKey":              "duration_1D",
                     "timeStepOutputInterval":      1e4,
-                    "dirichletBoundaryConditions": {},                                       # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
+                    "dirichletBoundaryConditions": {},            # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
+                    "dirichletOutputFilename":     None,          # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                     "inputMeshIsGlobal":           True,
                     "solverName":                  "diffusionTermSolver",
                     "nAdditionalFieldVariables":   0,
                     "FiniteElementMethod" : {
-                      "maxIterations":             1e4,
-                      "relativeTolerance":         1e-10,
-                      "absoluteTolerance":         1e-10,         # 1e-10 absolute tolerance of the residual    
                       "inputMeshIsGlobal":         True,
                       "meshName":                  "MeshFiber_{}".format(fiber_no),
                       "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
@@ -300,6 +304,7 @@ config = {
                   "solverName":         "potentialFlowSolver",
                   "prefactor":          1.0,
                   "dirichletBoundaryConditions": variables.potential_flow_dirichlet_bc,
+                  "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "neumannBoundaryConditions":   [],
                   "inputMeshIsGlobal":  True,
                 },
@@ -311,6 +316,7 @@ config = {
                   "prefactor":          1.0,
                   "inputMeshIsGlobal":  True,
                   "dirichletBoundaryConditions": {},
+                  "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "neumannBoundaryConditions":   [],
                   "diffusionTensor": [      # sigma_i           # fiber direction is (1,0,0)
                     8.93, 0, 0,
@@ -344,6 +350,7 @@ config = {
                   "solverName":           "fatEMGSolver",
                   "prefactor":            0.4,
                   "dirichletBoundaryConditions": variables.fat_dirichlet_bc,
+                  "dirichletOutputFilename":     None,            # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "updatePrescribedValuesFromSolution": True,     # update the prescribed Dirichlet boundary condition values at the beginning of each timestep by the values that got transferred from the intra-muscular domain by the coupling.
                   "neumannBoundaryConditions": [],
                   "inputMeshIsGlobal":  False,

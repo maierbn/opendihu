@@ -38,7 +38,7 @@ public:
   QuasiStaticLinearElasticitySolver(DihuContext context);
 
   //! advance simulation by the given time span, data in solution is used, afterwards new data is in solution
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
   //! initialize components of the simulation
   void initialize();
@@ -51,6 +51,9 @@ public:
 
   //! reset state
   void reset();
+
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
   //! return the data object
   Data &data();

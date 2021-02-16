@@ -4,6 +4,8 @@
 #include <vector>
 #include <memory>
 
+#include "output_writer/output_surface/output_points.h"
+
 namespace SpatialDiscretization
 {
 
@@ -19,7 +21,7 @@ public:
   struct ElementWithNodes
   {
     element_no_t elementNoLocal;   //< local element no
-    std::vector<std::pair<int,ValueType>> elementalDofIndex;   //< the element-local dof index and the value of the boundary condition on this dof
+    std::map<int,ValueType> elementalDofIndex;   //< the element-local dof index and the value of the boundary condition on this dof
   };
 
   struct BoundaryConditionsForComponent
@@ -70,8 +72,12 @@ protected:
   //! create the boundaryConditionsByComponent_ data structure from boundaryConditionNonGhostDofLocalNos_ and boundaryConditionValues_
   void generateBoundaryConditionsByComponent();
 
+  //! write the constraint dofs and the prescribed values as points in a vtk file
+  void writeOutput();
+
   PythonConfig specificSettings_;                               //< the python config that contains the boundary conditions
   std::shared_ptr<FunctionSpaceType> functionSpace_;            //< function space for which boundary conditions are specified
+  OutputWriter::OutputPoints outputPoints_;                     //< output writer that writes points of the Dirichlet BCs
 
   std::vector<ElementWithNodes> boundaryConditionElements_;     //< nodes grouped by elements on which boundary conditions are specified, this includes ghost nodes
   std::vector<dof_no_t> boundaryConditionNonGhostDofLocalNos_;  //< vector of all local (non-ghost) boundary condition dofs, sorted
@@ -79,6 +85,7 @@ protected:
 
   std::array<BoundaryConditionsForComponent, nComponents> boundaryConditionsByComponent_;   //< the local boundary condition data organized by component, entries are sorted by dofNoLocal, without ghost dofs
 
+  std::string filenameOutput_;                                  //< output filename for the vtk file that will contain all Dirichlet boundary conditions for visualization
 };
 
 template<typename FunctionSpaceType, int nComponents>

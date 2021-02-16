@@ -57,4 +57,11 @@ findPosition(Vec3 point, element_no_t &elementNo, int &ghostMeshNo, std::array<d
 }
 
 
+template<int D,typename BasisFunctionType>
+std::shared_ptr<FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> FunctionSpaceFindPosition<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType,Mesh::UnstructuredDeformableOfDimension<D>>::
+ghostMesh(Mesh::face_or_edge_t faceOrEdge)
+{
+  return nullptr;
+}
+
 } // namespace

@@ -258,10 +258,17 @@ createGenericFunctionSpace(int nEntries, std::string name)
   // constructor is declared in function_space/06_function_space_dofs_nodes.h
   // FunctionSpaceDofsNodes(std::shared_ptr<Partition::Manager> partitionManager, std::array<element_no_t, D> nElements, std::array<double, D> physicalExtent, int inputMeshIsGlobal);
 
+  // adjust name as long as a function space under this name already exists
+  std::stringstream meshName;
+  meshName << name;
+  while (hasFunctionSpaceOfType<FunctionSpace::Generic>(meshName.str()))
+    meshName << "_";
+
   std::array<element_no_t, 1> nElements({nEntries - 1});
   std::array<double, 1> physicalExtent({0.0});
   std::array<int, 1> nRanksPerCoordinateDirection({1});
-  std::shared_ptr<Mesh> mesh = createFunctionSpace<FunctionSpace::Generic>(name, nElements, physicalExtent, nRanksPerCoordinateDirection, false);   // last parameter is that nElements is local number
+  std::shared_ptr<Mesh> mesh = createFunctionSpace<FunctionSpace::Generic>(
+    meshName.str(), nElements, physicalExtent, nRanksPerCoordinateDirection, false);   // last parameter is that nElements is local number
 
   return std::static_pointer_cast<FunctionSpace::Generic>(mesh);
 }

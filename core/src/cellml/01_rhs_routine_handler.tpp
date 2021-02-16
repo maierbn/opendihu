@@ -51,9 +51,9 @@ initializeRhsRoutine()
     // load type
     optimizationType_ = this->specificSettings_.getOptionString("optimizationType", "vc");
 
-    if (optimizationType_ != "simd" && optimizationType_ != "vc" && optimizationType_ != "openmp")
+    if (optimizationType_ != "simd" && optimizationType_ != "vc" && optimizationType_ != "openmp" && optimizationType_ != "gpu")
     {
-      LOG(ERROR) << "Option \"optimizationType\" is \"" << optimizationType_ << "\" but valid values are \"simd\", \"vc\" or \"openmp\"."
+      LOG(ERROR) << "Option \"optimizationType\" is \"" << optimizationType_ << "\" but valid values are \"simd\", \"vc\", \"openmp\" or \"gpu\"."
        << " Now setting to \"vc\".";
       optimizationType_ = "vc";
     }
@@ -318,7 +318,30 @@ createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nIns
     if (ret != 0)
     {
       LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
-      libraryFilename = "";
+
+      // remove "-fopenmp" in the compile command
+      std::string newCompileCommand = compileCommand.str();
+      std::string strToReplace = "-fopenmp";
+      std::size_t pos = newCompileCommand.find(strToReplace);
+      newCompileCommand.replace(pos, strToReplace.length(), "");
+
+      // remove -foffload="..."strToReplace = "-fopenmp";
+      pos = newCompileCommand.find("-foffload=\"");
+      std::size_t pos2 = newCompileCommand.find("\"", pos+11);
+      newCompileCommand.replace(pos, pos2-pos+1, "");
+
+      LOG(INFO) << "Retry without offloading, command: \n" << newCompileCommand;
+
+      // execute new compilation command
+      int ret = system(newCompileCommand.c_str());
+      if (ret != 0)
+      {
+        LOG(ERROR) << "Compilation failed again.";
+      }
+      else
+      {
+        LOG(DEBUG) << "Compilation successful.";
+      }
     }
     else
     {
@@ -336,4 +359,10 @@ template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
 bool RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>::approximateExponentialFunction()
 {
   return approximateExponentialFunction_;
+}
+
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+std::string RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>::optimizationType()
+{
+  return optimizationType_;
 }

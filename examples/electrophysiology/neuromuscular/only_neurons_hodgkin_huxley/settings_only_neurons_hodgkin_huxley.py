@@ -27,13 +27,15 @@ from create_partitioned_meshes_for_settings import *   # file create_partitioned
 
 # if first argument contains "*.py", it is a custom variable definition file, load these values
 if ".py" in sys.argv[0]:
-  variables_file = sys.argv[0]
-  variables_module = variables_file[0:variables_file.find(".py")]
+  variables_path_and_filename = sys.argv[0]
+  variables_path,variables_filename = os.path.split(variables_path_and_filename)  # get path and filename 
+  sys.path.insert(0, os.path.join(script_path,variables_path))                    # add the directory of the variables file to python path
+  variables_module,_ = os.path.splitext(variables_filename)                       # remove the ".py" extension to get the name of the module
   
   if rank_no == 0:
-    print("Loading variables from {}.".format(variables_file))
+    print("Loading variables from \"{}\".".format(variables_path_and_filename))
     
-  custom_variables = importlib.import_module(variables_module)
+  custom_variables = importlib.import_module(variables_module, package=variables_filename)    # import variables module
   variables.__dict__.update(custom_variables.__dict__)
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
@@ -48,7 +50,9 @@ parser.add_argument('--scenario_name',                       help='The name to i
 parser.add_argument('--end_time', '--tend', '-t',            help='The end simulation time.',                    type=float, default=variables.end_time)
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+if len(other_args) != 0 and rank_no == 0:
+    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
 
 # output information of run
 if rank_no == 0:
@@ -166,6 +170,7 @@ config = {
           "timeStepOutputInterval":       1e4,
           "inputMeshIsGlobal":            True,
           "dirichletBoundaryConditions":  {},
+          "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
           "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
           "nAdditionalFieldVariables":    0,
           "additionalSlotNames":          [],
@@ -246,6 +251,7 @@ config = {
           "timeStepOutputInterval":       1e4,
           "inputMeshIsGlobal":            True,
           "dirichletBoundaryConditions":  {},
+          "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
           "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
           "nAdditionalFieldVariables":    0,
           "additionalSlotNames":          [],
@@ -323,6 +329,7 @@ config = {
           "timeStepOutputInterval":       1e4,
           "inputMeshIsGlobal":            True,
           "dirichletBoundaryConditions":  {},
+          "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
           "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
           "nAdditionalFieldVariables":    0,
           "additionalSlotNames":          [],
@@ -400,6 +407,7 @@ config = {
           "timeStepOutputInterval":       1e4,
           "inputMeshIsGlobal":            True,
           "dirichletBoundaryConditions":  {},
+          "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
           "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
           "nAdditionalFieldVariables":    0,
           "additionalSlotNames":          [],

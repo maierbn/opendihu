@@ -1,6 +1,8 @@
 #!/bin/bash
 #
 # This scripts tests the different algorithms for create_mesh.py
+# Input is an STL file of a triangulation of the biceps surface. 
+# Output is a *.bin file which contains the points of the 3D mesh or 1D fiber meshes.
 
 # directories
 basedir=$(pwd)/..
@@ -51,20 +53,29 @@ $pyod ${basedir}/scripts/utility/create_rings.py $input_file $n_rings $min_z $ma
 mv rings_created rings      
 #mv rings_extracted rings
 
+# set debugging_stl_output = False or True in utility/create_mesh.py to disable or enable output of png pictures for debugging
+
 #######################################################################################################
 # loop over triangulation type
-for triangulation_type in 2; do  # triangulation_type:  0 = scipy, 1 = triangle, 2 = custom (1 is best)
+for triangulation_type in 0 1 2; do  # triangulation_type:  0 = scipy, 1 = triangle, 2 = custom (1 is best)
 
   # loop over parametric space shape
-  for parametric_space_shape in 4; do   # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid
+  for parametric_space_shape in 0 1 2 3; do   # parametric_space_shape: 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid
 
-    # create a mesh, reads input from `rings`, write output to `mesh`, debugging output to out/mesh_02* - out/mesh_09* (takes ~2min)
-    # usage: ./create_mesh.py [<triangulation_type> [<parametric_space_shape> [<n_points_x> [<n_grid_points_x>]]]]"
+    #for improve_mesh in 0 1; do
+    for improve_mesh in 0; do
 
-    $pyod ${basedir}/scripts/utility/create_mesh.py $triangulation_type $parametric_space_shape $n_points_x
+      # create a mesh, reads input from `rings`, write output to `mesh`, debugging output to out/mesh_02* - out/mesh_09* (takes ~2min)
+      # usage: ./create_mesh.py [<triangulation_type> [<parametric_space_shape> [<n_points_x> [<n_grid_points_x (-1=auto)> [<improve_mesh> [<pickle output filename> <bin output filename>]]]]]]"
 
-    cp -r out out_$triangulation_type_$parametric_space_shape
+      echo 
+      echo =============================
+      echo $pyod ${basedir}/scripts/utility/create_mesh.py $triangulation_type $parametric_space_shape $n_points_x -1 $improve_mesh
+      $pyod ${basedir}/scripts/utility/create_mesh.py $triangulation_type $parametric_space_shape $n_points_x -1 $improve_mesh
 
+      mv out out_${triangulation_type}_${parametric_space_shape}_${improve_mesh}
+    done
   done
 
 done
+cd ${basedir}/scripts

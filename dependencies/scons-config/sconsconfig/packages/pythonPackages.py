@@ -52,16 +52,21 @@ class pythonPackages(Package):
         self.libs = []
         self.check_text = check_text
         self.static = False
-        
+       
+        # on hazel hen 
         if os.environ.get("PE_ENV") is not None:
           # Setup the build handler.
           self.set_build_handler([
+              '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install --upgrade pip',
               '$${DEPENDENCIES_DIR}/python/install/bin/python3 -m pip install ${DEPENDENCIES_DIR}/pythonpackages/*.whl --prefix=${DEPENDENCIES_DIR}/python/install'
           ])
         else :
           # Setup the build handler.
+          # With python 3.9, there no vtk module yet, therefore try again without vtk if it fails
           self.set_build_handler([
-              '$${DEPENDENCIES_DIR}/python/install/bin/python3 -m pip install numpy matplotlib scipy numpy-stl svg.path triangle geomdl pymp --prefix=${DEPENDENCIES_DIR}/python/install'
+              '$${DEPENDENCIES_DIR}/python/install/bin/pip3 install --upgrade pip',
+              '$${DEPENDENCIES_DIR}/python/install/bin/python3 -m pip install numpy matplotlib scipy numpy-stl svg.path triangle geomdl vtk --prefix=${DEPENDENCIES_DIR}/python/install || \
+               ${DEPENDENCIES_DIR}/python/install/bin/python3 -m pip install numpy matplotlib scipy numpy-stl svg.path triangle geomdl'
           ])
         
         self.number_output_lines = 13780

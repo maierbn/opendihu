@@ -132,7 +132,7 @@ setValue(const Vc::int_v &dofLocalNo, const Vc::double_v &value, InsertMode pets
   assert(this->values_);
   
   // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
-  int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
+  int nEntries = Vc::double_v::size() - Vc::count(Vc::isnegative(dofLocalNo));
 
   //this->values_->setValues(0, nEntries, indices.data(), data.data(), petscInsertMode);
 
@@ -151,7 +151,7 @@ setValue(const Vc::int_v &dofLocalNo, double value, InsertMode petscInsertMode)
   data.fill(value);
   
   // count number of non-negative indices in dofLocalNo, it is assumed that they occur all before the negative indices
-  int nEntries = Vc::double_v::size() - Vc::isnegative(dofLocalNo).count();
+  int nEntries = Vc::double_v::size() - Vc::count(Vc::isnegative(dofLocalNo));
 
   this->values_->setValues(0, nEntries, (PetscInt *)&dofLocalNo, data.data(), petscInsertMode);
 }

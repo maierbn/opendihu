@@ -99,6 +99,8 @@ public:
                   std::vector<ValueType> &values, std::vector<int> &valueIndices);
 };
 
+#ifndef HAVE_STDSIMD      // only if we are using Vc, it is not necessary for std::simd
+
 /** Specialize the default allocator for the SpatialParameter struct to use the aligned allocated provided by Vc.
  *  This could also be done by Vc_DECLARE_ALLOCATOR(<class>), but not here because of the template parameters.
  */
@@ -152,8 +154,9 @@ public:
   };
 };
 
+}   // namespace std
 
-}
+#endif
 
 
 #include "control/python_config/spatial_parameter.tpp"

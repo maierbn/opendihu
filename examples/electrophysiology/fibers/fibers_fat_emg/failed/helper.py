@@ -40,8 +40,8 @@ if "cuboid.bin" in variables.fiber_file:
       outfile.write(struct.pack('i', 40))  # header length
       outfile.write(struct.pack('i', variables.n_fibers_x*variables.n_fibers_y))   # n_fibers
       outfile.write(struct.pack('i', variables.n_points_whole_fiber))   # variables.n_points_whole_fiber
-      outfile.write(struct.pack('i', 0))   # nBorderPointsXNew
-      outfile.write(struct.pack('i', 0))   # nBorderPointsZNew
+      outfile.write(struct.pack('i', 0))   # nBoundaryPointsXNew
+      outfile.write(struct.pack('i', 0))   # nBoundaryPointsZNew
       outfile.write(struct.pack('i', 0))   # nFineGridFibers_
       outfile.write(struct.pack('i', 1))   # nRanks
       outfile.write(struct.pack('i', 1))   # nRanksZ
@@ -168,7 +168,7 @@ for k in range(n_points_z):
 index_i_start = None
 index_i_end = None
     
-# if the own subdomain is at the (y+) border (top in sketch)
+# if the own subdomain is at the (y+) boundary (top in sketch)
 if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
   
   px0 = variables.meshes["3Dmesh"]["nodePositions"][(n_points_3D_y-1)*n_points_3D_x + 0]
@@ -194,7 +194,7 @@ if variables.own_subdomain_coordinate_y == variables.n_subdomains_y - 1:
       min_distance_end = distance_px1
       index_i_end = i
 
-# if the own subdomain is at the (x+) border (right in sketch)
+# if the own subdomain is at the (x+) boundary (right in sketch)
 if variables.own_subdomain_coordinate_x == variables.n_subdomains_x - 1:
   
   py0 = variables.meshes["3Dmesh"]["nodePositions"][(n_points_3D_y-1)*n_points_3D_x + n_points_3D_x-1]
@@ -224,14 +224,14 @@ previous_point = None
 previous_info = None
 for k in range(index_k_start,index_k_end+1):
   
-  # do not include ghost nodes (if not at z+ border)
+  # do not include ghost nodes (if not at z+ boundary)
   if k == index_k_end and index_k_end != n_points_z-1:
     continue
   
   for j in range(n_points_y):
     for i in range(index_i_start,index_i_end+1):
           
-      # do not include ghost nodes (if not at x+ border)
+      # do not include ghost nodes (if not at x+ boundary)
       if i == index_i_end and index_i_end != n_points_x-1:
         continue
         
@@ -302,7 +302,7 @@ if False:
 
 # create mappings between meshes
 variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(variables.n_fibers_total)}
-variables.mappings_between_meshes.update({"3Dmesh": {"name": "3DFatMesh", "xiTolerance": 1e-2}})    # only include overlapping elements
+variables.mappings_between_meshes.update({"3Dmesh": {"name": "3DFatMesh", "xiTolerance": 1e-2, "defaultValue": 0}})    # only include overlapping elements
 
 # set output writer    
 variables.output_writer_fibers = []

@@ -40,7 +40,7 @@ public:
   MultidomainSolver(DihuContext context);
 
   //! advance simulation by the given time span, data in solution is used, afterwards new data is in solution
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
   //! initialize components of the simulation
   void initialize();
@@ -50,6 +50,9 @@ public:
 
   //! run the simulation
   void run();
+
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  virtual void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
   //! return the data object
   Data &data();
@@ -62,9 +65,6 @@ protected:
 
   //! update the system matrix after the geometry has changed, this is done in advanceTimeSpan, if the option "updateSystemMatrixEveryTimestep" is True
   virtual void updateSystemMatrix();
-
-  //! call the output writer on the data object
-  virtual void callOutputWriter(int timeStepNo, double currentTime);
 
   //! initialize everything except the matrices and vectors, this will also be called by the inherited class
   void initializeObjects();
@@ -86,6 +86,12 @@ protected:
 
   //! from the compartments active stress values compute the total active stress
   void computeTotalActiveStress();
+
+  //! set in the Petsc preconditioner object the information about matrix blocks for block jacobi and the node positions (PCSetCoordinates)
+  virtual void setInformationToPreconditioner();
+
+  //! initialize all information for the linearSolver_ object, also set information to preconditioner
+  virtual void initializeLinearSolver();
 
   Data dataMultidomain_;  //< the data object of the multidomain solver which stores all field variables and matrices
 
@@ -120,6 +126,12 @@ protected:
   double timeStepWidthOfSystemMatrix_;        //< the timestep width that was used to setup the system matrix
   bool useSymmetricPreconditionerMatrix_;     //< if the symmetric preconditioner matrix should be set up
   bool updateSystemMatrixEveryTimestep_;      //< if the system matrix will be rebuild every first time step, this is needed if the geometry changes
+  int updateSystemMatrixInterval_;            //< interval when the system matrix should be rebuild, counting only calls to advanceTimeStep
+  int recreateLinearSolverInterval_;          //< interval when linearSolver_ object gets deleted and recreated, to remedy memory leaks of the PETSc implementation of some solvers
+  bool setDirichletBoundaryConditionPhiB_;    //< if the last dof of the fat layer (MultidomainWithFatSolver) or the extracellular space (MultidomainSolver) should have a 0 Dirichlet boundary condition
+  bool setDirichletBoundaryConditionPhiE_;    //< if the last dof of the extracellular space should have a 0 Dirichlet boundary condition
+  bool resetToAverageZeroPhiB_;               //< if a constant should be added to the phi_b part of the solution vector after every solve, such that the average is zero
+  bool resetToAverageZeroPhiE_;               //< if a constant should be added to the phi_e part of the solution vector after every solve, such that the average is zero
 };
 
 }  // namespace

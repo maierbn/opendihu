@@ -27,13 +27,15 @@ from create_partitioned_meshes_for_settings import *   # file create_partitioned
 
 # if first argument contains "*.py", it is a custom variable definition file, load these values
 if ".py" in sys.argv[0]:
-  variables_file = sys.argv[0]
-  variables_module = variables_file[0:variables_file.find(".py")]
+  variables_path_and_filename = sys.argv[0]
+  variables_path,variables_filename = os.path.split(variables_path_and_filename)  # get path and filename 
+  sys.path.insert(0, os.path.join(script_path,variables_path))                    # add the directory of the variables file to python path
+  variables_module,_ = os.path.splitext(variables_filename)                       # remove the ".py" extension to get the name of the module
   
   if rank_no == 0:
-    print("Loading variables from {}.".format(variables_file))
+    print("Loading variables from \"{}\".".format(variables_path_and_filename))
     
-  custom_variables = importlib.import_module(variables_module)
+  custom_variables = importlib.import_module(variables_module, package=variables_filename)    # import variables module
   variables.__dict__.update(custom_variables.__dict__)
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
@@ -67,7 +69,9 @@ parser.add_argument('--use_symmetric_preconditioner_matrix', help='If the precon
 parser.add_argument('--initial_guess_nonzero',               help='If the initial guess to the linear solver should be the last solution.',  default=variables.initial_guess_nonzero, action='store_true')
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+if len(other_args) != 0 and rank_no == 0:
+    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:
@@ -167,6 +171,7 @@ if False:
         "solverName":                   "potentialFlowSolver",
         "prefactor":                    1.0,
         "dirichletBoundaryConditions":  variables.potential_flow_dirichlet_bc,
+        "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
         "neumannBoundaryConditions":    [],
         "inputMeshIsGlobal":            True,
       },
@@ -178,6 +183,7 @@ if False:
         "prefactor":                    1.0,
         "inputMeshIsGlobal":            True,
         "dirichletBoundaryConditions":  {},
+        "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
         "neumannBoundaryConditions":    [],
         "diffusionTensor": [[      # sigma_i           # fiber direction is (1,0,0)
           8.93, 0, 0,
@@ -198,6 +204,7 @@ if False:
         "prefactor":                    0.4,
         "inputMeshIsGlobal":            True,
         "dirichletBoundaryConditions":  {},
+        "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
         "neumannBoundaryConditions":    [],
       },
     },
@@ -341,14 +348,15 @@ config = {
           "MapDofs": {
             "description":                "muscle_spindles_to_motoneurons",   # description that will be shown in solver structure visualization
             "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
+            "additionalSlotNames":        [],
             "meshName":                   "muscleSpindleAndInterneuronMesh",  # the mesh on which the additional field variables will be defined
             "beforeComputation": None,
             "afterComputation": [                                         # transfer/mapping of dofs that will be performed after the computation of the nested solver
               {                                                 
-                "fromConnectorSlotNo":        0,
-                "toConnectorSlotNo":          2,
-                "fromOutputConnectorArrayIndex":    0,                    # which fiber/compartment
-                "toOutputConnectorArrayIndex":      0,
+                "fromConnectorSlot":        0,
+                "toConnectorSlots":         2,
+                "fromSlotConnectorArrayIndex":    0,                    # which fiber/compartment
+                "toSlotConnectorArrayIndex":      0,
                 "mode":                             "callback",           # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
                 "fromDofNosNumbering":              "local",
                 "toDofNosNumbering":                "local",
@@ -371,8 +379,10 @@ config = {
               "timeStepOutputInterval":       1e4,
               "inputMeshIsGlobal":            True,
               "dirichletBoundaryConditions":  {},
+              "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
               "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
               "nAdditionalFieldVariables":    0,
+              "additionalSlotNames":          [],
                   
               # cellml model of muscle spindle
               "CellML" : {
@@ -431,14 +441,15 @@ config = {
               "MapDofs": {
                 "description":                "golgi_tendon_organs_to_interneurons",       # description that will be shown in solver structure visualization
                 "nAdditionalFieldVariables":  1,                             # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
+                "additionalSlotNames":        [],
                 "meshName":                   "interneuronMesh",             # the mesh on which the additional field variables will be defined
                 "beforeComputation": None,
                 "afterComputation": [                                        # transfer/mapping of dofs that will be performed after the computation of the nested solver
                   {                                                 
-                    "fromConnectorSlotNo":        0,
-                    "toConnectorSlotNo":          2,
-                    "fromOutputConnectorArrayIndex":    0,                   # which fiber/compartment
-                    "toOutputConnectorArrayIndex":      0,
+                    "fromConnectorSlot":        0,
+                    "toConnectorSlots":         2,
+                    "fromSlotConnectorArrayIndex":    0,                   # which fiber/compartment
+                    "toSlotConnectorArrayIndex":      0,
                     "mode":                             "callback",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
                     "fromDofNosNumbering":              "local",
                     "toDofNosNumbering":                "local",
@@ -460,8 +471,10 @@ config = {
                   "timeStepOutputInterval":       1e4,
                   "inputMeshIsGlobal":            True,
                   "dirichletBoundaryConditions":  {},
+                  "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
                   "nAdditionalFieldVariables":    0,
+                  "additionalSlotNames":          [],
                       
                   # cellml model of golgi tendon organs
                   "CellML" : {
@@ -504,14 +517,15 @@ config = {
               "MapDofs": {
                 "description":                "interneurons_to_motoneurons",  # description that will be shown in solver structure visualization
                 "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
+                "additionalSlotNames":        [],
                 "meshName":                   "muscleSpindleAndInterneuronMesh", # the mesh on which the additional field variables will be defined
                 "beforeComputation": None,                                    # transfer/mapping of dofs that will be performed before the computation of the nested solver
                 "afterComputation": [                                         # transfer/mapping of dofs that will be performed after the computation of the nested solver
                   {                                                 
-                    "fromConnectorSlotNo":        0,
-                    "toConnectorSlotNo":          2,
-                    "fromOutputConnectorArrayIndex":    0,                    # which fiber/compartment
-                    "toOutputConnectorArrayIndex":      0,
+                    "fromConnectorSlot":        0,
+                    "toConnectorSlots":         2,
+                    "fromSlotConnectorArrayIndex":    0,                    # which fiber/compartment
+                    "toSlotConnectorArrayIndex":      0,
                     "mode":                             "callback",           # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
                     "fromDofNosNumbering":              "local",
                     "toDofNosNumbering":                "local",
@@ -534,8 +548,10 @@ config = {
                   "timeStepOutputInterval":       1e4,
                   "inputMeshIsGlobal":            True,
                   "dirichletBoundaryConditions":  {},
+                  "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
                   "nAdditionalFieldVariables":    0,
+                  "additionalSlotNames":          [],
                       
                   # cellml model of interneurons
                   "CellML" : {
@@ -598,13 +614,14 @@ config = {
           "MapDofs": {
             "description":                "motoneurons_input",   # description that will be shown in solver structure visualization
             "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
+            "additionalSlotNames":        [],
             "meshName":                   "muscleSpindleAndInterneuronMesh",               # the mesh on which the additional field variables will be defined
             "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
               {                                                 
-                "fromConnectorSlotNo":        2,
-                "toConnectorSlotNo":          1,
-                "fromOutputConnectorArrayIndex":    0,
-                "toOutputConnectorArrayIndex":      0,
+                "fromConnectorSlot":        2,
+                "toConnectorSlots":         1,
+                "fromSlotConnectorArrayIndex":    0,
+                "toSlotConnectorArrayIndex":      0,
                 "mode":                             "callback",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
                 "fromDofNosNumbering":              "local",
                 "toDofNosNumbering":                "local",
@@ -628,8 +645,10 @@ config = {
               "timeStepOutputInterval":       1e4,
               "inputMeshIsGlobal":            True,
               "dirichletBoundaryConditions":  {},
+              "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
               "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
               "nAdditionalFieldVariables":    0,
+              "additionalSlotNames":          [],
                   
               # cellml model of motorneuron
               "CellML" : {
@@ -672,15 +691,16 @@ config = {
         "Term2": {
           # map from λ in the 3D mesh to muscle spindles input
           "MapDofs": {
-            "description":                "muscle_spindles_input", # description that will be shown in solver structure visualization
+            "description":                "muscle_spindles_input",        # description that will be shown in solver structure visualization
             "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
+            "additionalSlotNames":        [],
             "meshName":                   "muscleSpindleMesh",            # the mesh on which the additional field variables will be defined
             "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
               {                                                 
-                "fromConnectorSlotNo":        2,
-                "toConnectorSlotNo":          8,
-                "fromOutputConnectorArrayIndex":    0,                    # which fiber/compartment, this does not matter here because all compartment meshes have the same displacements
-                "toOutputConnectorArrayIndex":      0,
+                "fromConnectorSlot":              2,
+                "toConnectorSlots":               8,
+                "fromSlotConnectorArrayIndex":    0,                    # which fiber/compartment, this does not matter here because all compartment meshes have the same displacements
+                "toSlotConnectorArrayIndex":      0,
                 "mode":                             "callback",           # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
                 "fromDofNosNumbering":              "global",
                 "toDofNosNumbering":                "local",
@@ -698,14 +718,15 @@ config = {
             "MapDofs": {
               "description":                "golgi_tendon_organs_input",      # description that will be shown in solver structure visualization
               "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
+              "additionalSlotNames":        [],
               "meshName":                   "golgiTendonOrganMesh",               # the mesh on which the additional field variables will be defined
               "beforeComputation":          None, 
               "afterComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
                 {                                                 
-                  "fromConnectorSlotNo":        2,
-                  "toConnectorSlotNo":          7,
-                  "fromOutputConnectorArrayIndex":    0,                   # which fiber/compartment, this does not matter here because all compartment meshes have the same displacements
-                  "toOutputConnectorArrayIndex":      0,
+                  "fromConnectorSlot":              2,
+                  "toConnectorSlots":               7,
+                  "fromSlotConnectorArrayIndex":    0,                   # which fiber/compartment, this does not matter here because all compartment meshes have the same displacements
+                  "toSlotConnectorArrayIndex":      0,
                   "mode":                             "callback",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
                   "fromDofNosNumbering":              "global",
                   "toDofNosNumbering":                "local",
@@ -722,14 +743,15 @@ config = {
               "MapDofs": {
                 "description":                "motoneurons->stimulated nodes",  # description that will be shown in solver structure visualization
                 "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
+                "additionalSlotNames":        [],
                 "meshName":                   "motoneuronMesh",               # the mesh on which the additional field variables will be defined
                 "beforeComputation":          None, 
                 "afterComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
                   {
-                    "fromConnectorSlotNo":        6,
-                    "toConnectorSlotNo":          0,
-                    "fromOutputConnectorArrayIndex":    0,
-                    "toOutputConnectorArrayIndex":      compartment_no,      # which motor unit
+                    "fromConnectorSlot":        6,
+                    "toConnectorSlots":         0,
+                    "fromSlotConnectorArrayIndex":    0,
+                    "toSlotConnectorArrayIndex":      compartment_no,      # which motor unit
                     "mode":                             "localSetIfAboveThreshold",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
                     "fromDofNosNumbering":              "local",
                     "toDofNosNumbering":                "global",
@@ -764,6 +786,7 @@ config = {
                           "meshName":               "3Dmesh",      # reference to the multidomain mesh
                           "numberTimeSteps":        1,             # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step
                           "timeStepOutputInterval": 20,            # if the time step should be written to console, a value > 10 produces no output
+                          "slotNames":              [],
                           
                           # a list of field variables that will get values assigned in every timestep, by the provided callback function
                           "fieldVariables1": [
@@ -785,6 +808,7 @@ config = {
                       "numberTimeSteps":              1,                         # only use 1 timestep per interval
                       "timeStepOutputInterval":       100,                       # do not output time steps
                       "Pmax":                         variables.pmax,            # maximum PK2 active stress
+                      "slotNames":                    [],
                       "OutputWriter" : [
                         {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
                       ],
@@ -817,6 +841,7 @@ config = {
                         "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
                         #"loadFactors":                [0.5, 1.0],                # load factors for every timestep
                         "loadFactors":                [],                        # no load factors, solve problem directly
+                        "loadFactorGiveUpThreshold":   1,                        # when to abort the solve
                         "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
                         
                         # boundary and initial conditions
@@ -830,6 +855,8 @@ config = {
                         "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
                         "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
                         "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
+                        
+                        "dirichletOutputFilename":     "out/dirichlet_boundary_conditions",             # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                         
                         # define which file formats should be written
                         # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.

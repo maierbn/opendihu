@@ -127,7 +127,7 @@ double_v_t FunctionSpaceFieldVariable<MeshType,BasisFunctionType>::
 interpolateValueInElement(std::array<double_v_t,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()> &elementalDofValues,
                           std::array<double,MeshType::dim()> xi) const
 {
-  double_v_t result = 0;
+  double_v_t result{};
   for (int dofIndex = 0; dofIndex < FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement(); dofIndex++)
   {
     result += elementalDofValues[dofIndex]*this->phi(dofIndex,xi);
@@ -259,7 +259,8 @@ getInverseJacobian(std::array<VecD<3,double_v_t>,FunctionSpaceFunction<MeshType,
   // compute the 3xD jacobian of the parameter space to world space mapping
   Tensor2<D,double_v_t> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(this->computeJacobian(geometryValues, xi));
   double_v_t jacobianDeterminant;
-  Tensor2<D,double_v_t> inverseJacobianParameterSpace = MathUtility::computeInverse(jacobianParameterSpace, jacobianDeterminant);
+  double_v_t approximateMeshWidth = MathUtility::computeApproximateMeshWidth<double_v_t,FunctionSpaceFunction<MeshType,BasisFunctionType>::nDofsPerElement()>(geometryValues);
+  Tensor2<D,double_v_t> inverseJacobianParameterSpace = MathUtility::computeInverse(jacobianParameterSpace, approximateMeshWidth, jacobianDeterminant);
 
   return inverseJacobianParameterSpace;
 }

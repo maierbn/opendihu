@@ -296,6 +296,8 @@ getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const
   dofNosGlobalNatural.resize(this->nDofsLocalWithoutGhosts());
   int nDofsPerNode = FunctionSpaceType::nDofsPerNode();
 
+  global_no_t offset = 0;
+
   // loop over submeshes
   for (int subMeshNo = 0; subMeshNo < nSubMeshes_; subMeshNo++)
   {
@@ -316,10 +318,11 @@ getDofNosGlobalNatural(std::vector<global_no_t> &dofNosGlobalNatural) const
         for (int nodalDofIndex = 0; nodalDofIndex < nDofsPerNode; nodalDofIndex++)
         {
           dof_no_t dofNoNonDuplicateLocal = nodeNoNonDuplicateLocal*nDofsPerNode + nodalDofIndex;
-          dofNosGlobalNatural[dofNoNonDuplicateLocal] = dofNosGlobalNaturalSubMesh[nodeNoLocal*nDofsPerNode + nodalDofIndex];
+          dofNosGlobalNatural[dofNoNonDuplicateLocal] = offset + dofNosGlobalNaturalSubMesh[nodeNoLocal*nDofsPerNode + nodalDofIndex];
         }
       }
     }
+    offset += subFunctionSpaces_[subMeshNo]->meshPartition()->nDofsGlobal();
   }
 }
 
@@ -510,7 +513,7 @@ int MeshPartition<FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<D>,Bas
 neighbourRank(Mesh::face_t face)
 {
   // This method is only needed for parallel fiber estimation
-  LOG(FATAL) << "\"getBoundaryElements\" is not implemented for composite mesh.";
+  LOG(FATAL) << "\"neighbourRank\" is not implemented for composite mesh.";
   return 0;
 }
 

@@ -121,12 +121,13 @@ initialize()
   }
   else
   {
+    // the "CellML" section already specified initial values. Keep them.
     LOG(DEBUG) << "initial values were set by DiscretizableInTime";
   }
   VLOG(1) << "initial solution vector: " << *this->data_->solution();
   
-  //output initial values
-  this->outputWriterManager_.writeOutput(*this->data_, 0, 0);
+  // output initial values but don't increment counter
+  this->outputWriterManager_.writeOutput(*this->data_, 0, 0.0, 0);
   
   this->data_->print();
 

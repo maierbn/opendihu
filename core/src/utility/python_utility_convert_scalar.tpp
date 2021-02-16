@@ -187,7 +187,7 @@ struct PythonUtility::convertFromPython<double>
 template<>
 struct PythonUtility::convertFromPython<std::string>
 {
-  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue
+  //! convert a python object to its corresponding c type, with type checking, if conversion is not possible, use defaultValue, None equals the empty string
   static std::string get(PyObject *object, std::string defaultValue)
   {
     if (object == NULL)
@@ -198,11 +198,18 @@ struct PythonUtility::convertFromPython<std::string>
 
     if (PyUnicode_Check(object))
     {
+      // if it is a string, directly use it
       std::string valueString = pyUnicodeToString(object);
       return valueString;
     }
+    else if (object == Py_None)
+    {
+      // None translates to "" (empty string)
+      return std::string();
+    }
     else
     {
+      // use the python str() function to convert the value to string
       PyObject *unicode = PyObject_Str(object);
 
       if (unicode != NULL)

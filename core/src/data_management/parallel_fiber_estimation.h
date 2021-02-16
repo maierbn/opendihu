@@ -61,7 +61,7 @@ public:
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,   // rhs neumann bc
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>>,  // gradient field
     std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>,  // dirichlet values
-    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>  // dirichlet values
+    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>  // jacobianConditionNumber
   > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers

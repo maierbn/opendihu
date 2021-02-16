@@ -49,7 +49,7 @@ initialize()
     LOG(WARNING) << this->specificSettings_ << "[\"enableFatComputation\"] is set to false. This will disable the fat layer computation.";
   }
 
-  // initialize sharedNodes_ i.e. the border nodes that are shared between muscle and fat mesh
+  // initialize sharedNodes_ i.e. the boundary nodes that are shared between muscle and fat mesh
   findSharedNodesBetweenMuscleAndFat();
 
   // system to be solved (here for nCompartments_=3):
@@ -73,13 +73,16 @@ initialize()
   this->timeStepWidthOfSystemMatrix_ = this->timeStepWidth_;
   setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
 
-  // initialize matices B,C,D,E in submatrices for system matrix,
+  // initialize matrices B,C,D,E in submatrices for system matrix,
   // also set the last zero entry of the rhs and the entry for phi_b^(i+1) in the solution vector
-  initializeBorderVariables();
+  initializeBoundaryVariables();
 
   // from the initialize submatrices create the actual system matrix, this->nestedSystemMatrix_ 
   // as nested Petsc Mat and also the single Mat, this->singleSystemMatrix_ 
   this->createSystemMatrixFromSubmatrices();
+  
+  // zero rows and colums of the additional dirichlet BC's for phi_e and phi_b
+  this->setDirichletBoundaryConditionsInSystemMatrix();
 
   // set the nullspace of the matrix
   // as we have Neumann boundary conditions, constant functions are in the nullspace of the matrix
@@ -90,21 +93,13 @@ initialize()
   ierr = MatSetNearNullSpace(this->singleSystemMatrix_, nullSpace); CHKERRV(ierr); // for multigrid methods
   //ierr = MatNullSpaceDestroy(&nullSpace); CHKERRV(ierr);
 
-  // set matrix used for linear solver and preconditioner to ksp context
-  assert(this->linearSolver_->ksp());
-  ierr = KSPSetOperators(*this->linearSolver_->ksp(), this->singleSystemMatrix_, this->singlePreconditionerMatrix_); CHKERRV(ierr);
-
-  if (this->alternativeLinearSolver_)
-    ierr = KSPSetOperators(*this->alternativeLinearSolver_->ksp(), this->singleSystemMatrix_, this->singlePreconditionerMatrix_); CHKERRV(ierr);
-
-  // set block information in preconditioner for block jacobi and node positions for MG preconditioners
-  setInformationToPreconditioner();
+  this->initializeLinearSolver();
 
   // create temporary vector which is needed in computation of rhs, b1_ was created by setSystemMatrixSubmatrices()
   ierr = MatCreateVecs(b1_[0], &temporary_, NULL); CHKERRV(ierr);
 
   // initialize subvectors for rhs
-  // entry nCompartments was already set to zero by MultidomainSolver, entry nCompartments+1 was already set by initializeBorderVariables()
+  // entry nCompartments was already set to zero by MultidomainSolver, entry nCompartments+1 was already set by initializeBoundaryVariables()
   for (int k = 0; k < this->nCompartments_; k++)
   {    
     // initialize top part of rhs
@@ -113,7 +108,7 @@ initialize()
 
   // set values for phi_e
   this->subvectorsRightHandSide_[this->nCompartments_] = this->dataMultidomain_.zero()->valuesGlobal();
-  // subvectorsRightHandSide_[nCompartments_+1] has been set by initializeBorderVariables()
+  // subvectorsRightHandSide_[nCompartments_+1] has been set by initializeBoundaryVariables()
 
   // set vectors of Vm in compartments in subvectorsSolution_
   for (int k = 0; k < this->nCompartments_; k++)
@@ -126,7 +121,7 @@ initialize()
   // set values for phi_e
   this->subvectorsSolution_[this->nCompartments_] = this->dataMultidomain_.extraCellularPotential()->valuesGlobal();
   ierr = VecZeroEntries(this->subvectorsSolution_[this->nCompartments_]); CHKERRV(ierr);
-  // subvectorsSolution_[nCompartments_+1] has been set by initializeBorderVariables()
+  // subvectorsSolution_[nCompartments_+1] has been set by initializeBoundaryVariables()
 
   // create the nested Petsc Vec's
   LOG(DEBUG) << "create nested vector";
@@ -137,7 +132,7 @@ initialize()
                        this->subvectorsSolution_.data(), &this->nestedSolution_); CHKERRV(ierr);
 
   // write initial meshes
-  callOutputWriter(0, 0.0);
+  callOutputWriter(0, 0.0, 0);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
@@ -431,7 +426,7 @@ setInformationToPreconditioner()
   for (dof_no_t dofNoLocalFat = 0; dofNoLocalFat < this->dataFat_.functionSpace()->nDofsLocalWithoutGhosts(); dofNoLocalFat++)
   {
     // if current fat dof is not shared
-    if (borderDofsFat_.find(dofNoLocalFat) == borderDofsFat_.end())
+    if (boundaryDofsFat_.find(dofNoLocalFat) == boundaryDofsFat_.end())
     {
       Vec3 nodePosition = this->dataFat_.functionSpace()->getGeometry(dofNoLocalFat);
       
@@ -555,10 +550,13 @@ updateSystemMatrix()
   setSystemMatrixSubmatrices(this->timeStepWidthOfSystemMatrix_);
   
   // also compute new entries for the matrices B, C, D and E
-  updateBorderMatrices();
+  updateBoundaryMatrices();
 
   // create the system matrix again
   this->createSystemMatrixFromSubmatrices();
+
+  // zero rows and columns for additional Dirichlet boundary conditions
+  setDirichletBoundaryConditionsInSystemMatrix();
 
 #ifdef DUMP_REBUILT_SYSTEM_MATRIX
 
@@ -582,6 +580,140 @@ updateSystemMatrix()
     Control::PerformanceMeasurement::stop(this->durationLogKey_+std::string("_reassemble"));
 
     LOG(INFO) << "Rebuilt multidomain system matrix in " << Control::PerformanceMeasurement::getDuration(this->durationLogKey_+std::string("_reassemble"), false) << "s.";
+  }
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
+void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
+resetToAverageZero()
+{
+  PetscErrorCode ierr;
+    
+  // set values for phi_e
+  if (this->resetToAverageZeroPhiE_)
+  {
+    double sum = 0;
+    ierr = VecSum(this->subvectorsSolution_[this->nCompartments_], &sum); CHKERRV(ierr);
+    
+    global_no_t nDofsGlobalMuscle = this->dataMultidomain_.functionSpace()->nDofsGlobal();
+  
+    // compute average of phi_e
+    double average = sum / nDofsGlobalMuscle;
+    ierr = VecShift(this->subvectorsSolution_[this->nCompartments_], -average); CHKERRV(ierr);
+  }  
+  
+  // set values for phi_b
+  if (this->resetToAverageZeroPhiB_)
+  {
+    double sum = 0;
+    ierr = VecSum(this->subvectorsSolution_[this->nCompartments_+1], &sum); CHKERRV(ierr);
+    
+    global_no_t nDofsGlobalFat = this->dataFat_.functionSpace()->nDofsGlobal();
+    
+    // compute average of phi_b
+    double average = sum / nDofsGlobalFat;
+    ierr = VecShift(this->subvectorsSolution_[this->nCompartments_+1], -average); CHKERRV(ierr);
+  }
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
+void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
+setDirichletBoundaryConditionsInSystemMatrix()
+{
+  global_no_t nDofsGlobalMuscle = this->dataMultidomain_.functionSpace()->nDofsGlobal();
+  global_no_t nDofsGlobalFat = this->dataFat_.functionSpace()->nDofsGlobal() - boundaryDofsGlobalFat_.size();
+    
+  // set additional dirichlet boundary conditions in phi_e
+  if (this->setDirichletBoundaryConditionPhiE_)
+  {
+    // set last dof of phi_e
+    // nColumnSubmatricesSystemMatrix_ is the number of submatrix rows/columns
+    // and there are two rows corresponding to the fat layer (for phi_e and phi_b)
+    PetscInt rowNoGlobal = nDofsGlobalMuscle * (this->nColumnSubmatricesSystemMatrix_-1) - 1;
+    PetscErrorCode ierr;
+    ierr = MatZeroRows(this->singleSystemMatrix_, 1, &rowNoGlobal, 1.0, NULL, NULL); CHKERRV(ierr);
+
+    // set also in preconditioner matrix
+    if (this->useSymmetricPreconditionerMatrix_)
+    {
+      ierr = MatZeroRowsColumns(this->singlePreconditionerMatrix_, 1, &rowNoGlobal, 1.0, NULL, NULL); CHKERRV(ierr);
+    }
+    else
+    {
+      ierr = MatZeroRows(this->singlePreconditionerMatrix_, 1, &rowNoGlobal, 1.0, NULL, NULL); CHKERRV(ierr);
+    }
+  }
+  
+  // set additional dirichlet boundary conditions in phi_b
+  if (this->setDirichletBoundaryConditionPhiB_)
+  {
+    // set last dof of phi_b
+    // nColumnSubmatricesSystemMatrix_ is the number of submatrix rows/columns
+    // and there are two rows corresponding to the fat layer (for phi_e and phi_b)
+    PetscInt rowNoGlobal = nDofsGlobalMuscle * (this->nColumnSubmatricesSystemMatrix_-1) + nDofsGlobalFat - 1;
+    PetscErrorCode ierr;
+    ierr = MatZeroRows(this->singleSystemMatrix_, 1, &rowNoGlobal, 1.0, NULL, NULL); CHKERRV(ierr);
+
+    // set also in preconditioner matrix
+    if (this->useSymmetricPreconditionerMatrix_)
+    {
+      ierr = MatZeroRowsColumns(this->singlePreconditionerMatrix_, 1, &rowNoGlobal, 1.0, NULL, NULL); CHKERRV(ierr);
+    }
+    else
+    {
+      ierr = MatZeroRows(this->singlePreconditionerMatrix_, 1, &rowNoGlobal, 1.0, NULL, NULL); CHKERRV(ierr);
+    }
+  }
+  
+  // debugging check
+  // get global size of single system matrix
+  PetscInt nRowsGlobal = 0;
+  PetscInt nColumnsGlobal = 0;
+  PetscErrorCode ierr;
+  ierr = MatGetSize(this->singleSystemMatrix_, &nRowsGlobal, &nColumnsGlobal); CHKERRV(ierr);
+  if (nRowsGlobal != nDofsGlobalMuscle * (this->nColumnSubmatricesSystemMatrix_-1) + nDofsGlobalFat)
+  {
+    LOG(FATAL) << "size mismatch, nRowsGlobal=" << nRowsGlobal << ", nColumnsGlobal=" << nColumnsGlobal
+      << ", nDofsGlobalMuscle=" << nDofsGlobalMuscle << ", nDofsGlobalFat= " 
+      << this->dataFat_.functionSpace()->nDofsGlobal() << "-" << boundaryDofsGlobalFat_.size() << " = " 
+      << nDofsGlobalFat << ", nColumnSubmatricesSystemMatrix_=" << this->nColumnSubmatricesSystemMatrix_;
+  }
+}
+
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
+void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
+setDirichletBoundaryConditionsInRightHandSide()
+{
+  // set rhs to zero for dirichlet boundary conditions
+  if (this->setDirichletBoundaryConditionPhiE_)
+  {
+    global_no_t nDofsGlobalMuscle = this->dataMultidomain_.functionSpace()->nDofsGlobal();
+    global_no_t nDofsGlobalFat = this->dataFat_.functionSpace()->nDofsGlobal() - boundaryDofsGlobalFat_.size();
+
+    // set last dof of phi_e
+    // nColumnSubmatricesSystemMatrix_ is the number of submatrix rows/columns
+    // and there are two rows corresponding to the fat layer (for phi_e and phi_b)
+    PetscInt rowNoGlobal = nDofsGlobalMuscle * (this->nColumnSubmatricesSystemMatrix_-2) + nDofsGlobalFat - 1;
+    PetscErrorCode ierr;
+    ierr = VecSetValue(this->singleRightHandSide_, rowNoGlobal, 0.0, INSERT_VALUES); CHKERRV(ierr);
+  }
+  
+  if (this->setDirichletBoundaryConditionPhiB_)
+  {
+    global_no_t nDofsGlobalMuscle = this->dataMultidomain_.functionSpace()->nDofsGlobal();
+    global_no_t nDofsGlobalFat = this->dataFat_.functionSpace()->nDofsGlobal() - boundaryDofsGlobalFat_.size();
+
+    // set last dof of phi_b
+    PetscInt rowNoGlobal = nDofsGlobalMuscle * (this->nColumnSubmatricesSystemMatrix_-2) + nDofsGlobalFat*2 - 1;
+    PetscErrorCode ierr;
+    ierr = VecSetValue(this->singleRightHandSide_, rowNoGlobal, 0.0, INSERT_VALUES); CHKERRV(ierr);
+  }
+
+  if (this->setDirichletBoundaryConditionPhiE_ || this->setDirichletBoundaryConditionPhiB_)
+  {
+    PetscErrorCode ierr;
+    ierr = VecAssemblyBegin(this->singleRightHandSide_); CHKERRV(ierr);
+    ierr = VecAssemblyEnd(this->singleRightHandSide_); CHKERRV(ierr);
   }
 }
 
@@ -618,6 +750,9 @@ solveLinearSystem()
 
   // copy the values from the nested Petsc Vec nestedRightHandSide_ to the single Vec, singleRightHandSide_, that contains all entries
   NestedMatVecUtility::createVecFromNestedVec(this->nestedRightHandSide_, this->singleRightHandSide_, data().functionSpace()->meshPartition()->rankSubset());
+
+  // set the rhs to 0 in phi_e and phi_b, if enabled
+  setDirichletBoundaryConditionsInRightHandSide();
 
   if (VLOG_IS_ON(1))
   {
@@ -675,8 +810,11 @@ solveLinearSystem()
   // to the nested Petsc Vec, nestedSolution_ which contains the components in subvectorsSolution_
   NestedMatVecUtility::fillNestedVec(this->singleSolution_, this->nestedSolution_);
 
-  // the vector for phi_b in nestedSolution_ contains only entries for non-border dofs, 
-  // copy all values and the border dof values to the proper phi_b which is dataFat_.extraCellularPotentialFat()->valuesGlobal()
+  // add a constant to phi_e and phi_b such that the average is zero, if enabled
+  resetToAverageZero();
+
+  // the vector for phi_b in nestedSolution_ contains only entries for non-boundary dofs, 
+  // copy all values and the boundary dof values to the proper phi_b which is dataFat_.extraCellularPotentialFat()->valuesGlobal()
   copySolutionToPhiB();
 
   LOG(DEBUG) << "after linear solver:";
@@ -687,10 +825,10 @@ solveLinearSystem()
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
-callOutputWriter(int timeStepNo, double currentTime)
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
 {
   // write current output values
-  this->outputWriterManager_.writeOutput(this->dataFat_, timeStepNo, currentTime);
+  this->outputWriterManager_.writeOutput(this->dataFat_, timeStepNo, currentTime, callCountIncrement);
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>

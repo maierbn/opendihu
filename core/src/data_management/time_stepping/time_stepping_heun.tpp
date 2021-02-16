@@ -42,6 +42,7 @@ createPetscObjects()
   TimeStepping<FunctionSpaceType,nComponents>::createPetscObjects();
 
   LOG(DEBUG) << "TimeSteppingHeun<FunctionSpaceType,nComponents>::createPetscObjects(" << nComponents << ")";
+  LOG(DEBUG) << "functionSpace has " << this->functionSpace_->nDofsLocalWithoutGhosts() << " local without ghost dofs";
   
   this->algebraicIncrement_ = this->functionSpace_->template createFieldVariable<nComponents>("algebraicIncrement");
 }

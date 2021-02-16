@@ -18,7 +18,8 @@ TimeSteppingImplicit<DiscretizableInTimeType>(context, "ImplicitEuler")
 }
 
 template<typename DiscretizableInTimeType>
-void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
+void ImplicitEuler<DiscretizableInTimeType>::
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -29,7 +30,10 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
 
   LOG(DEBUG) << "ImplicitEuler::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_ << ", time span: [" << this->startTime_ << "," << this->endTime_ << "]";
-  //std::cout << "timespan " << timeSpan << " numbertimesteps " << this->numberTimeSteps_ << "\n";
+
+  // recompute the system matrix and rhs if the step width changed
+  this->initializeWithTimeStepWidth(this->timeStepWidth());
+
   Vec solution = this->data_->solution()->valuesGlobal();
 
   // loop over time steps
@@ -71,8 +75,9 @@ void ImplicitEuler<DiscretizableInTimeType>::advanceTimeSpan()
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
     // write current output values
-    this->outputWriterManager_.writeOutput(*this->dataImplicit_, timeStepNo, currentTime);
-
+    if (withOutputWritersEnabled)
+      this->outputWriterManager_.writeOutput(*this->dataImplicit_, timeStepNo, currentTime);
+    
     // start duration measurement
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::start(this->durationLogKey_);
@@ -111,25 +116,48 @@ setSystemMatrix(double timeStepWidth)
   initialTimeStepWidth_=timeStepWidth;
   Mat &inverseLumpedMassMatrix = this->discretizableInTime_.data().inverseLumpedMassMatrix()->valuesGlobal();
   Mat &stiffnessMatrix = this->discretizableInTime_.data().stiffnessMatrix()->valuesGlobal();
-  Mat systemMatrix;
 
   PetscErrorCode ierr;
 
   // compute systemMatrix = M^{-1}K
-  // the result matrix is created by MatMatMult
-  ierr = MatMatMult(inverseLumpedMassMatrix, stiffnessMatrix, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &systemMatrix);
-  this->dataImplicit_->initializeSystemMatrix(systemMatrix);
+  if (!this->dataImplicit_->systemMatrix())
+  {
+    Mat systemMatrix;
+
+    // the result matrix is created by MatMatMult
+    ierr = MatMatMult(inverseLumpedMassMatrix, stiffnessMatrix, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &systemMatrix);
+
+    this->dataImplicit_->initializeSystemMatrix(systemMatrix);
+  }
+  else
+  {
+    // the matrix already exists. As changes to the time step width do not change the nonzero pattern, we can reuse the matrix
+    Mat& systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
+
+    // reuse existing matrix
+    ierr = MatMatMult(inverseLumpedMassMatrix, stiffnessMatrix, MAT_REUSE_MATRIX, PETSC_DEFAULT, &systemMatrix);
+  }
+
+  Mat& systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
 
   // scale systemMatrix by -dt, systemMatrix = -dt*M^{-1}K
-  ierr = MatScale(this->dataImplicit_->systemMatrix()->valuesGlobal(), -timeStepWidth); CHKERRV(ierr);
-
+  ierr = MatScale(systemMatrix, -timeStepWidth); CHKERRV(ierr);
+  
   // add 1 on the diagonal: systemMatrix = I - dt*M^{-1}K
-  ierr = MatShift(this->dataImplicit_->systemMatrix()->valuesGlobal(), 1.0); CHKERRV(ierr);
-
+  ierr = MatShift(systemMatrix, 1.0); CHKERRV(ierr);
+  
   this->dataImplicit_->systemMatrix()->assembly(MAT_FINAL_ASSEMBLY);
+  
+  VLOG(1) << *this->dataImplicit_->systemMatrix();
+}
 
-  // PinT needs to SetOperators for each grid: improvement: try to do that in initialize
-  ierr = KSPSetOperators(*(this->linearSolver_->ksp()), systemMatrix, systemMatrix); CHKERRV(ierr);
+
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+template<typename DiscretizableInTimeType>
+void ImplicitEuler<DiscretizableInTimeType>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  this->outputWriterManager_.writeOutput(*this->dataImplicit_, timeStepNo, currentTime, callCountIncrement);
 }
 
 } // namespace TimeSteppingScheme

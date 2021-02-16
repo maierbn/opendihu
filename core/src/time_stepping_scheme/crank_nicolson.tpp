@@ -18,7 +18,8 @@ TimeSteppingImplicit<DiscretizableInTimeType>(context, "CrankNicolson")
 }
 
 template<typename DiscretizableInTimeType>
-void CrankNicolson<DiscretizableInTimeType>::advanceTimeSpan()
+void CrankNicolson<DiscretizableInTimeType>::
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -29,6 +30,9 @@ void CrankNicolson<DiscretizableInTimeType>::advanceTimeSpan()
   
   LOG(DEBUG) << "CrankNicolson::advanceTimeSpan, timeSpan=" << timeSpan<< ", timeStepWidth=" << this->timeStepWidth_
     << " n steps: " << this->numberTimeSteps_;
+
+  // recompute the system matrix and rhs if the step width changed
+  this->initializeWithTimeStepWidth(this->timeStepWidth());
 
   Vec solution = this->data_->solution()->valuesGlobal();
   Vec systemRightHandSide = this->dataImplicit_->systemRightHandSide()->valuesGlobal();
@@ -67,7 +71,8 @@ void CrankNicolson<DiscretizableInTimeType>::advanceTimeSpan()
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
     // write current output values
-    this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
+    if (withOutputWritersEnabled)
+      this->outputWriterManager_.writeOutput(*this->data_, timeStepNo, currentTime);
     
     // start duration measurement
     if (this->durationLogKey_ != "")
@@ -91,10 +96,18 @@ initialize()
     return;
   
   TimeSteppingImplicit<DiscretizableInTimeType>::initialize();
-  LOG(TRACE) << "setIntegrationMatrixRightHandSide()";
-  this->setIntegrationMatrixRightHandSide();
   
   this->initialized_ = true;
+}
+
+template<typename DiscretizableInTimeType>
+void CrankNicolson<DiscretizableInTimeType>::
+initializeWithTimeStepWidth_impl(double timeStepWidth)
+{
+  TimeSteppingImplicit<DiscretizableInTimeType>::initializeWithTimeStepWidth_impl(timeStepWidth); // calls setSystemMatrix
+
+  LOG(TRACE) << "setIntegrationMatrixRightHandSide()";
+  this->setIntegrationMatrixRightHandSide(); // depends on system matrix
 }
 
 template<typename DiscretizableInTimeType>
@@ -107,20 +120,35 @@ setSystemMatrix(double timeStepWidth)
   
   Mat &inverseLumpedMassMatrix = this->discretizableInTime_.data().inverseLumpedMassMatrix()->valuesGlobal();
   Mat &stiffnessMatrix = this->discretizableInTime_.data().stiffnessMatrix()->valuesGlobal();
-  Mat systemMatrix;
-  
+
   PetscErrorCode ierr;
-  
+
   // compute systemMatrix = M^{-1}K
-  // the result matrix is created by MatMatMult
-  ierr = MatMatMult(inverseLumpedMassMatrix, stiffnessMatrix, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &systemMatrix);
-  this->dataImplicit_->initializeSystemMatrix(systemMatrix);
-  
+  if (!this->dataImplicit_->systemMatrix())
+  {
+    Mat systemMatrix;
+
+    // the system matrix is created by MatMatMult
+    ierr = MatMatMult(inverseLumpedMassMatrix, stiffnessMatrix, MAT_INITIAL_MATRIX, PETSC_DEFAULT, &systemMatrix);
+
+    this->dataImplicit_->initializeSystemMatrix(systemMatrix);
+  }
+  else
+  {
+    // the matrix already exists. As changes to the time step width do not change the nonzero pattern, we can reuse the matrix
+    Mat& systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
+
+    // reuse existing matrix
+    ierr = MatMatMult(inverseLumpedMassMatrix, stiffnessMatrix, MAT_REUSE_MATRIX, PETSC_DEFAULT, &systemMatrix);
+  }
+
+  Mat& systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
+
   // scale systemMatrix by -dt, systemMatrix = -dt/2 *M^{-1}K
-  ierr = MatScale(this->dataImplicit_->systemMatrix()->valuesGlobal(), -0.5*timeStepWidth); CHKERRV(ierr);
+  ierr = MatScale(systemMatrix, -0.5*timeStepWidth); CHKERRV(ierr);
   
   // add 1 on the diagonal: systemMatrix = I - dt/2 *M^{-1}K
-  ierr = MatShift(this->dataImplicit_->systemMatrix()->valuesGlobal(), 1.0); CHKERRV(ierr);
+  ierr = MatShift(systemMatrix, 1.0); CHKERRV(ierr);
   
   this->dataImplicit_->systemMatrix()->assembly(MAT_FINAL_ASSEMBLY);
   
@@ -133,25 +161,35 @@ setIntegrationMatrixRightHandSide()
 {
   LOG(TRACE) << "setIntegrationMatrixRightHandSide()";
 
+  // systemMatrix = I - dt/2 *M^{-1}K
   Mat &systemMatrix = this->dataImplicit_->systemMatrix()->valuesGlobal();
-  Mat integrationMatrix; 
   
   PetscErrorCode ierr;
   
   // copy integration matrix from the system matrix
-  ierr = MatConvert(systemMatrix, MATSAME, MAT_INITIAL_MATRIX, &integrationMatrix); CHKERRV(ierr); //it creates the new matrix
+  if (!this->dataImplicit_->integrationMatrixRightHandSide())
+  {
+    Mat integrationMatrix;
+
+    ierr = MatConvert(systemMatrix, MATSAME, MAT_INITIAL_MATRIX, &integrationMatrix); CHKERRV(ierr); // creates the new matrix
+
+    this->dataImplicit_->initializeIntegrationMatrixRightHandSide(integrationMatrix);
+  }
+  else
+  {
+    // the matrix already exists. As changes to the time step width did not change the nonzero pattern of the systemMatrix, we can reuse the matrix
+    Mat& integrationMatrix = this->dataImplicit_->integrationMatrixRightHandSide()->valuesGlobal();
+
+    ierr = MatCopy(systemMatrix, integrationMatrix, SAME_NONZERO_PATTERN); CHKERRV(ierr);
+  }
+
+  Mat& integrationMatrix = this->dataImplicit_->integrationMatrixRightHandSide()->valuesGlobal();
   
-  // scale systemMatrix by -dt, systemMatrix = dt/2*M^{-1}K
+  // negate systemMatrix: integrationMatrix = dt/2 *M^{-1}K - I
   ierr = MatScale(integrationMatrix, -1.0); CHKERRV(ierr);
   
-  // add 1 on the diagonal: systemMatrix = I + dt/2*M^{-1}K
+  // add 1 on the diagonal: integrationMatrix = dt/2 *M^{-1}K + I
   ierr = MatShift(integrationMatrix, 2.0); CHKERRV(ierr);
-  
-  this->dataImplicit_->initializeIntegrationMatrixRightHandSide(integrationMatrix);
-  
-  //this->dataImplicit_->initializeMatrix(integrationMatrix, this->dataImplicit_->integrationMatrixRightHandSide(), "integrationMatrixRightHandSide");
-  
-  //qierr=MatView(this->dataImplicit_->integrationMatrixRightHandSide()->valuesGlobal(), PETSC_VIEWER_STDOUT_WORLD);
   
   this->dataImplicit_->integrationMatrixRightHandSide()->assembly(MAT_FINAL_ASSEMBLY);
   

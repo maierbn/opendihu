@@ -29,7 +29,10 @@ fetchFiberData()
     for (int j = 0; j < innerInstances.size(); j++, fiberNo++)
     {
       std::shared_ptr<FiberFunctionSpace> fiberFunctionSpace = innerInstances[j].data().functionSpace();
-      LOG(DEBUG) << "(" << i << "," << j << ") functionSpace " << fiberFunctionSpace->meshName();
+      LOG(DEBUG) << "instance (inner,outer)=(" << i << "," << j << "), fiberNo: " << fiberNo
+        << ", functionSpace " << fiberFunctionSpace->meshName()
+        << "," << fiberFunctionSpace->meshPartition()->rankSubset()->size() << " ranks (" << *fiberFunctionSpace->meshPartition()->rankSubset() << ")"
+        << ", " << innerInstances.size() << " inner instances";
 
       // communicate element lengths
       std::vector<double> localLengths(fiberFunctionSpace->nElementsLocal());
@@ -64,7 +67,7 @@ fetchFiberData()
         fiberData_[fiberDataNo].vmValues.resize(fiberFunctionSpace->nDofsGlobal());
 
         // resize buffer of further data that will be transferred back in updateFiberData()
-        int nStatesAndAlgebraicsValues = statesForTransfer_.size() + algebraicsForTransfer_.size() - 1;
+        int nStatesAndAlgebraicsValues = statesForTransferIndices_.size() + algebraicsForTransferIndices_.size() - 1;
         fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues.resize(fiberFunctionSpace->nDofsGlobal() * nStatesAndAlgebraicsValues);
         
         elementLengthsReceiveBuffer = fiberData_[fiberDataNo].elementLengths.data();
@@ -148,24 +151,46 @@ fetchFiberData()
           // compute indices for fiberPointBuffersParameters_
           global_no_t valueIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + instanceNo;
 
-
-          global_no_t pointBuffersNo = valueIndexAllFibers / Vc::double_v::Size;
-          int entryNo = valueIndexAllFibers % Vc::double_v::Size;
-
-          //LOG(DEBUG) << "valueIndexAllFibers: " << valueIndexAllFibers << ", (" << pointBuffersNo << "," << entryNo << ")";
-
-          // set all received parameter values for the current instance in the correct slot in the vc vector of the current pointBuffer compute buffer
-          for (int parameterNo = 0; parameterNo < nParametersPerInstance; parameterNo++)
+          if (useVc_)
           {
-            fiberPointBuffersParameters_[pointBuffersNo][parameterNo][entryNo] = parametersReceiveBuffer[instanceNo*nParametersPerInstance + parameterNo];
-          }
+            global_no_t pointBuffersNo = valueIndexAllFibers / Vc::double_v::size();
+            int entryNo = valueIndexAllFibers % Vc::double_v::size();
 
-          if (VLOG_IS_ON(1))
-          {
-            if (entryNo == Vc::double_v::Size-1)
+            //LOG(DEBUG) << "valueIndexAllFibers: " << valueIndexAllFibers << ", (" << pointBuffersNo << "," << entryNo << ")";
+
+            // set all received parameter values for the current instance in the correct slot in the vc vector of the current pointBuffer compute buffer
+            for (int parameterNo = 0; parameterNo < nParametersPerInstance; parameterNo++)
             {
-              VLOG(1) << "stored " << nParametersPerInstance << " parameters in buffer no " << pointBuffersNo << ": " << fiberPointBuffersParameters_[pointBuffersNo];
+              fiberPointBuffersParameters_[pointBuffersNo][parameterNo][entryNo] = parametersReceiveBuffer[instanceNo*nParametersPerInstance + parameterNo];
             }
+
+            if (VLOG_IS_ON(1))
+            {
+              if (entryNo == Vc::double_v::size()-1)
+              {
+                VLOG(1) << "stored " << nParametersPerInstance << " parameters in buffer no " << pointBuffersNo << ": " << fiberPointBuffersParameters_[pointBuffersNo];
+              }
+            }
+          }
+          else
+          {
+            int instanceNoToCompute = fiberDataNo*nInstancesOnFiber + instanceNo;
+
+            // set all received parameter values for the current instance in the correct slot in the vc vector of the current pointBuffer compute buffer
+            for (int parameterNo = 0; parameterNo < nParametersPerInstance; parameterNo++)
+            {
+              // gpuParameters_[parameterNo*nInstances + instanceNo]
+              gpuParameters_[parameterNo*nInstancesToCompute_ + instanceNoToCompute] = parametersReceiveBuffer[instanceNo*nParametersPerInstance + parameterNo];
+            }
+          }
+        }
+
+        if (!useVc_)
+        {
+          int nElementsOnFiber = fiberFunctionSpace->nElementsGlobal();
+          for (int elementNo = 0; elementNo < nElementsOnFiber; elementNo++)
+          {
+            gpuElementLengths_[fiberDataNo*nElementsOnFiber + elementNo] = elementLengthsReceiveBuffer[elementNo];
           }
         }
       }
@@ -179,19 +204,22 @@ fetchFiberData()
     }
   }
 
-  // copy Vm values to compute buffers
-  for (int fiberDataNo = 0; fiberDataNo < fiberData_.size(); fiberDataNo++)
+  if (useVc_)
   {
-    int nValues = fiberData_[fiberDataNo].vmValues.size();
-
-    for (int valueNo = 0; valueNo < nValues; valueNo++)
+    // copy Vm values to compute buffers
+    for (int fiberDataNo = 0; fiberDataNo < fiberData_.size(); fiberDataNo++)
     {
-      global_no_t valueIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo;
+      int nValues = fiberData_[fiberDataNo].vmValues.size();
 
-      global_no_t pointBuffersNo = valueIndexAllFibers / Vc::double_v::Size;
-      int entryNo = valueIndexAllFibers % Vc::double_v::Size;
+      for (int valueNo = 0; valueNo < nValues; valueNo++)
+      {
+        global_no_t valueIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo;
 
-      fiberPointBuffers_[pointBuffersNo].states[0][entryNo] = fiberData_[fiberDataNo].vmValues[valueNo];
+        global_no_t pointBuffersNo = valueIndexAllFibers / Vc::double_v::size();
+        int entryNo = valueIndexAllFibers % Vc::double_v::size();
+
+        fiberPointBuffers_[pointBuffersNo].states[0][entryNo] = fiberData_[fiberDataNo].vmValues[valueNo];
+      }
     }
   }
 }
@@ -202,40 +230,43 @@ void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 updateFiberData()
 {
   // copy Vm and other states/algebraics from compute buffers to fiberData_
-  for (int fiberDataNo = 0; fiberDataNo < fiberData_.size(); fiberDataNo++)
+  if (useVc_)
   {
-    int nValues = fiberData_[fiberDataNo].vmValues.size();
-
-    for (int valueNo = 0; valueNo < nValues; valueNo++)
+    for (int fiberDataNo = 0; fiberDataNo < fiberData_.size(); fiberDataNo++)
     {
-      global_no_t valueIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo;
+      int nValues = fiberData_[fiberDataNo].vmValues.size();
 
-      global_no_t pointBuffersNo = valueIndexAllFibers / Vc::double_v::Size;
-      int entryNo = valueIndexAllFibers % Vc::double_v::Size;
-
-      assert(statesForTransfer_.size() > 0);
-      const int stateToTransfer = statesForTransfer_[0];  // transfer the first state value
-      fiberData_[fiberDataNo].vmValues[valueNo] = fiberPointBuffers_[pointBuffersNo].states[stateToTransfer][entryNo];
-
-      // loop over further states to transfer
-      int furtherDataIndex = 0;
-      for (int i = 1; i < statesForTransfer_.size(); i++, furtherDataIndex++)
+      for (int valueNo = 0; valueNo < nValues; valueNo++)
       {
-        const int stateToTransfer = statesForTransfer_[i];
+        global_no_t valueIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo;
 
-        fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues[furtherDataIndex*nValues + valueNo]
-          = fiberPointBuffers_[pointBuffersNo].states[stateToTransfer][entryNo];
-      }
+        global_no_t pointBuffersNo = valueIndexAllFibers / Vc::double_v::size();
+        int entryNo = valueIndexAllFibers % Vc::double_v::size();
 
-      // loop over algebraics to transfer
-      for (int i = 0; i < algebraicsForTransfer_.size(); i++, furtherDataIndex++)
-      {
-        fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues[furtherDataIndex*nValues + valueNo]
-          = fiberPointBuffersAlgebraicsForTransfer_[pointBuffersNo][i][entryNo];
+        assert(statesForTransferIndices_.size() > 0);
+        const int stateToTransfer = statesForTransferIndices_[0];  // transfer the first state value
+        fiberData_[fiberDataNo].vmValues[valueNo] = fiberPointBuffers_[pointBuffersNo].states[stateToTransfer][entryNo];
+
+        // loop over further states to transfer
+        int furtherDataIndex = 0;
+        for (int i = 1; i < statesForTransferIndices_.size(); i++, furtherDataIndex++)
+        {
+          const int stateToTransfer = statesForTransferIndices_[i];
+
+          fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues[furtherDataIndex*nValues + valueNo]
+            = fiberPointBuffers_[pointBuffersNo].states[stateToTransfer][entryNo];
+        }
+
+        // loop over algebraics to transfer
+        for (int i = 0; i < algebraicsForTransferIndices_.size(); i++, furtherDataIndex++)
+        {
+          fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues[furtherDataIndex*nValues + valueNo]
+            = fiberPointBuffersAlgebraicsForTransfer_[pointBuffersNo][i][entryNo];
+        }
       }
+      LOG(DEBUG) << "states and algebraics for transfer at fiberDataNo=" << fiberDataNo << ": " << fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues;
+      LOG(DEBUG) << "size: " << fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues.size() << ", nValues: " << nValues;
     }
-    LOG(DEBUG) << "states and algebraics for transfer at fiberDataNo=" << fiberDataNo << ": " << fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues;
-    LOG(DEBUG) << "size: " << fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues.size() << ", nValues: " << nValues;
   }
 
   LOG(TRACE) << "updateFiberData";
@@ -294,7 +325,7 @@ updateFiberData()
       // communicate further states and algebraics that are selected by the options "statesForTransfer" and "algebraicsForTransfer"
 
       std::vector<int> nValuesOnRanks(rankSubset->size());
-      int nStatesAndAlgebraicsValues = statesForTransfer_.size() + algebraicsForTransfer_.size() - 1;
+      int nStatesAndAlgebraicsValues = statesForTransferIndices_.size() + algebraicsForTransferIndices_.size() - 1;
 
       for (int rankNo = 0; rankNo < rankSubset->size(); rankNo++)
       {
@@ -319,7 +350,7 @@ updateFiberData()
       // store received states and algebraics values in diffusion slotConnectorData
       // loop over further states to transfer
       int furtherDataIndex = 0;
-      for (int stateIndex = 1; stateIndex < statesForTransfer_.size(); stateIndex++, furtherDataIndex++)
+      for (int stateIndex = 1; stateIndex < statesForTransferIndices_.size(); stateIndex++, furtherDataIndex++)
       {
         // store in diffusion
 
@@ -344,16 +375,16 @@ updateFiberData()
         std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,nStates>> fieldVariableStatesCellML
           = instances[i].timeStepping1().instancesLocal()[j].getSlotConnectorData()->variable1[stateIndex].values;
 
-        const int componentNo = statesForTransfer_[stateIndex];
+        const int componentNo = statesForTransferIndices_[stateIndex];
 
         // int componentNo, int nValues, const dof_no_t *dofNosLocal, const double *values
         fieldVariableStatesCellML->setValues(componentNo, nValues, fiberFunctionSpace->meshPartition()->dofNosLocal().data(), values);
 
-        VLOG(1) << "store " << nValues << " values for additional state " << statesForTransfer_[stateIndex];
+        VLOG(1) << "store " << nValues << " values for additional state " << statesForTransferIndices_[stateIndex];
       }
 
       // loop over algebraics to transfer
-      for (int algebraicIndex = 0; algebraicIndex < algebraicsForTransfer_.size(); algebraicIndex++, furtherDataIndex++)
+      for (int algebraicIndex = 0; algebraicIndex < algebraicsForTransferIndices_.size(); algebraicIndex++, furtherDataIndex++)
       {
         // store in diffusion
 
@@ -379,12 +410,12 @@ updateFiberData()
         std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableAlgebraicsCellML
           = instances[i].timeStepping1().instancesLocal()[j].getSlotConnectorData()->variable2[algebraicIndex].values;
 
-        //const int componentNo = algebraicsForTransfer_[algebraicIndex];
+        //const int componentNo = algebraicsForTransferIndices_[algebraicIndex];
 
         // int componentNo, int nValues, const dof_no_t *dofNosLocal, const double *values
         fieldVariableAlgebraicsCellML->setValues(0, nValues, fiberFunctionSpace->meshPartition()->dofNosLocal().data(), values);
 
-        LOG(DEBUG) << "store " << nValues << " values for algebraic " << algebraicsForTransfer_[algebraicIndex];
+        LOG(DEBUG) << "store " << nValues << " values for algebraic " << algebraicsForTransferIndices_[algebraicIndex];
         LOG(DEBUG) << *fieldVariableAlgebraics;
       }
 

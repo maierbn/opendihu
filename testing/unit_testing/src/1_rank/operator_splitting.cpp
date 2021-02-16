@@ -67,7 +67,7 @@ config = {
           "outputStateIndex": 0,     # state 0 = Vm, rate 28 = gamma
           "mappings": {
             ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
-            ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+            ("connectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
           },
           "parametersInitialValues": [0.0],
           "meshName": "MeshFibre",
@@ -177,7 +177,7 @@ config = {
           
           #"mappings": {
           #  ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
-          #  ("outputConnectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+          #  ("connectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
           #},
           #"parametersInitialValues": [0.0],
           "compilerFlags": "-O3 -march=native -fPIC -g -shared ",

@@ -24,7 +24,7 @@ public:
   OutputSurface(DihuContext context);
 
   //! advance simulation by the given time span [startTime_, endTime_]
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
   //! initialize time span from specificSettings_
   void initialize();
@@ -37,6 +37,9 @@ public:
 
   //! set a new time interval
   void setTimeSpan(double startTime, double endTime);
+
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
   //! return the data object of the timestepping scheme
   Data &data();
@@ -51,7 +54,10 @@ protected:
   void initializeSampledPoints();
 
   //! output the actual sampling points to the file
-  void writeSampledPoints();
+  void writeSampledPointValues();
+
+  //! write positions of found sampling points
+  void writeFoundAndNotFoundPointGeometry();
 
   DihuContext context_;               //< object that contains the python config for the current context and the global singletons meshManager and solverManager
   Solver solver_;                     //< the contained solver object
@@ -62,12 +68,39 @@ protected:
   std::shared_ptr<Partition::RankSubset> rankSubset_;  //< the ranks that are involved in computing the surface
   int timeStepNo_;                    //< time step no for output writer
   double currentTime_;                //< current simulation time for output writer
+  double xiTolerance_;                //< tolerance for the xi coordinate used when finding the samplingPoints in the elements of the mesh
+  int writeCallCount_ = 0;            //< a counter that increases with the output files
 
   std::vector<std::shared_ptr<typename ::Data::OutputSurface<Data>::FunctionSpaceFirstFieldVariable>> functionSpaces_;    //< the 2D function spaces for the faces
-  std::vector<Vec3> sampledPoints_;   //< if set, the point coordinates where to sample the 2D surface mesh
-  std::vector<int> foundPointNos_;    //< the point nos of the found points
-  std::map<int,std::tuple<int,element_no_t,Vec2>> elementXis_;   //< the function space no (which face), element no and xi value for each sampling point on the local domain
+
+  struct FoundSampledPoint
+  {
+    int samplingPointNo;              //< number of the sampling point in the option "sampledPoints"
+    Vec3 requestedPosition;           //< the requested position as given in the option "sampledPoints"
+    Vec3 position;                    //< the actual position of the point on the mesh
+    int functionSpaceNo;              //< no of the function space (which face)
+    element_no_t elementNoLocal;      //< element no in the function space that has the point
+    Vec2 xi;                          //< xi value within the element where the point is
+    double score;                        //< the residual of the point finding algorithm, lower is a better score
+  };
+
+  std::map<int,FoundSampledPoint> foundSampledPoints_;    //< all sampled points that have been found locally, key is the samplingPointNo
+
+  std::vector<Vec3> sampledPointsRequestedPositions_;   //< the requested sampling points, as given by the "samplingPoints" option
+  std::vector<double> sampledPointsPositionGlobal_;  //< on rank 0, buffer for all geometry of all sampled points
+  std::vector<double> valuesGlobal_;  //< on rank 0, buffer for all values
+  std::vector<int> partitioningGlobal_; //< on rank 0, buffer for the partitioning values
+
   std::string filename_;              //< filename of the file to write the sampled points to
+  bool updatePointPositions_;         //< if the positions of the sampled points should be updated in every call, this leads to approximately the same global point positions even if the geometry changes
+  bool enableCsvFile_;                //< if the csv file should be written
+  bool enableVtpFile_;                //< if the vtp file should be written
+  bool enableGeometryInCsvFile_;      //< if the csv file should contain geometry data
+  bool enableGeometryFiles_;          //< if the found and not found electrodes should be written
+
+  SeriesWriter seriesWriter_;         //< the series writer object that collects all VTK filenames and creates a collection file that can be loaded by ParaView, for the files that have the EMG values
+  SeriesWriter seriesWriterFoundPoints_;      //< the series writer object that collects all VTK filenames and creates a collection file that can be loaded by ParaView, for the files that have the found electrode points
+  SeriesWriter seriesWriterNotFoundPoints_;   //< the series writer object that collects all VTK filenames and creates a collection file that can be loaded by ParaView, for the files that have the not found electrode points
 
   Manager outputWriterManager_;       //< manager object holding all output writers
 
@@ -76,3 +109,4 @@ protected:
 }  // namespace OutputWriter
 
 #include "output_writer/output_surface/output_surface.tpp"
+#include "output_writer/output_surface/output_surface_write.tpp"

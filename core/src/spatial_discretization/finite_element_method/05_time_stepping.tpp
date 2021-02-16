@@ -155,6 +155,8 @@ setSlotConnectorData(std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType,n
   std::vector<std::string> &slotNames = slotConnectorDataTimeStepping->slotNames;
   std::string ownSolutionVariableSlotName = getSlotConnectorData()->slotNames.front();
 
+  LOG(DEBUG) << "slotNames of timestepping initially: " << slotNames << " own slot names: " << getSlotConnectorData()->slotNames;
+
   // remove the first slot name which is always the one for the solution variable
   slotNames.erase(slotNames.begin());
 
@@ -171,7 +173,6 @@ FiniteElementMethodTimeStepping<FunctionSpaceType, QuadratureType, nComponents_,
 getSlotConnectorData()
 {
   // check for nans or infs
-  //this->data_.solution()->checkNanInf();
   return this->data_.getSlotConnectorData();
 }
 

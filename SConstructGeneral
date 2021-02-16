@@ -44,15 +44,16 @@ sconsconfig.select(
     #packages.flex(required=False),    # "Fast Lexical Analyzer" needed by PTScotch which is needed by MUMPS which is needed by Petsc
     packages.PETSc(required=True),     # Petsc depends on LAPACK/BLAS and bison
     #packages.bzip2(required=False),
-    packages.Python(required=True),    # This compiles python 3.6 from source to be able to embedd the python interpreter in opendihu. All further python packages are installed in this installation tree under dependencies/python/install
+    #packages.zlib(required=False),     # zlib is needed to build python on hawk
+    packages.Python(required=True),    # This compiles python 3.9 or python 3.6 from source to be able to embedd the python interpreter in opendihu. All further python packages are installed in this installation tree under dependencies/python/install
     packages.pythonPackages(required=False),   # all further python utils that can be installed via pip
     packages.Base64(required=True),    # Base64 is an encoding library that is needed for binary VTK output.
     packages.googletest(required=False),   # This is the testing framework.
     #packages.Sphinx(required=True),
     #packages.libcellml(required=True),# relies on libxml2 and SWIG
     packages.SEMT(required=False),     # This is a small C++ symbolic differentiation toolbox that is used for solid mechanics.
-    packages.MegaMol(required=False),  # Adds the MegaMol visualization framework
     packages.ADIOS(required=False),    # ADIOS, a library that handles efficient and parallel data output
+    #packages.MegaMol(required=False),  # Adds the MegaMol visualization framework
     #packages.VTK(required=False),     # VTK, needed only for chaste
     #packages.HDF5(required=False),    # The parallel output library HDF5, compiled with --enable-parallel as needed for chaste, the version that Petsc can download does not have this feature
     #packages.XercesC(required=False), # XML-parser, needed for chaste
@@ -60,6 +61,7 @@ sconsconfig.select(
     #packages.boost(required=False),   # boost C++ library, needed for chaste
     #packages.Chaste(required=False),  # The Chaste framework, only the nonlinear mechanics solver is used
     packages.Vc(required=True),        # The Vc types for explicit vectorization
+    packages.std_simd(required=True),  # std::simd vectorization library that needs C++17
     packages.xbraid(required=False),   # framework for multigrid in time methods 
     packages.OpenCOR(required=False),  # binary that converts CellML files from xml to c
     packages.libxml2(required=False),  # parser for xml files, needed for precice
@@ -81,16 +83,21 @@ vars.Add(EnumVariable('BUILD_TYPE', 'The build type, according to that different
                       allowed_values=('debug', 'release', 'releasewithdebuginfo', 'preprocess', 'assembly'), ignorecase = 2, 
                       map={'d':'debug', 'r':'release', 'rd':'releasewithdebuginfo', 'dr':'releasewithdebuginfo', 'p':'preprocess'}))
 vars.Add(BoolVariable('travis_ci', 'Do not compile and run tests, but compile all examples.', 0))
+vars.Add(BoolVariable('circle_ci', 'Subset of unit tests for circle ci (has limited parallel capabilities.)', 0))
 vars.Add(BoolVariable('no_tests', 'Do not compile and run tests.', 0))
 vars.Add(BoolVariable('no_examples', 'Do not compile examples.', 0))
 vars.Add(BoolVariable('gprof', 'Include flags for gprof profiling.', False))
 vars.Add(BoolVariable('no_vectorization', 'Turn off SEE and AVX commands.', False))
 vars.Add(BoolVariable('USE_CRAY_PAT', 'Compile with craypat regions.', False))
+vars.Add(BoolVariable('USE_EXTRAE', 'Compile with extrae support. Not needed if you don\'t want to use `#include "extrae.h"` in the code.', False))
+vars.Add(BoolVariable('USE_SCOREP', 'Compile with scorep compiler wrapper.', False))
 vars.Add(BoolVariable('USE_HPL', 'Compile with -hpl option.', False))
 vars.Add(BoolVariable('USE_MEGAMOL', 'Use additional linker flags to link to the megamol source file.', False))
 vars.Add(BoolVariable('VERBOSE', 'Output raw shell commands for compilation.', False))
 vars.Add(BoolVariable('ph', 'Build precompiled headers.', False))
 vars.Add(BoolVariable('USE_VECTORIZED_FE_MATRIX_ASSEMBLY', 'Enable code that matrix assembly for FEM matrices uses the Vc library.', False))
+vars.Add(BoolVariable('USE_STDSIMD', 'Use the std::experimental::simd library which supports AVX-512, instead of Vc. This automatically changes c++14 to c++17.', False))
+vars.Add(BoolVariable('USE_MPI_ALLOC', 'Use calls to MPI_Win_allocate instead of MPI_Win_create.', False))
 vars.Add('mpicc', help='The mpicc compiler wrapper', default='mpicc')
 vars.Add('mpiCC', help='The mpic++ compiler wrapper', default='mpic++')
 vars.Add('cc', help='The c compiler', default='gcc')
@@ -134,14 +141,17 @@ env['CC'] = env['cc']
 if not 'cmake' in env:
   env['cmake'] = 'cmake'
 
-# Create configuration environment, passing the set of custom tests.
-sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
+if not env.GetOption('clean'):
+  # avoid Configure if we only clean targets
 
-# Run custom tests with any options needed.
-sconsconfig.check(sconf)
+  # Create configuration environment, passing the set of custom tests.
+  sconf = env.Configure(custom_tests=sconsconfig.custom_tests)
 
-# Finish the configuration and save it to file.
-sconf.Finish()
+  # Run custom tests with any options needed.
+  sconsconfig.check(sconf)
+
+  # Finish the configuration and save it to file.
+  sconf.Finish()
 
 # disable unit tests on hazel hen
 if os.environ.get("PE_ENV") is not None:  # if on hazelhen
@@ -258,19 +268,46 @@ else:
     if env["gprof"]:
       print("Adding flags for gprof.")
       env.Append(LINKFLAGS = "-pg")   # add gprof flags for linker
-      env.MergeFlags('-pg -g')
-    #env.MergeFlags('')
+      env.MergeFlags('-pg')
+    if env["USE_SCOREP"] or env["USE_EXTRAE"]:
+      env.MergeFlags('-g')
   
   if env["USE_CRAY_PAT"]:
     print("USE_CRAY_PAT=True: Compiling with -DHAVE_PAT (uses PAT_region_begin())\n")
     env.Append(CPPDEFINES = "-DHAVE_PAT")
     if os.environ.get("PE_ENV") != "CRAY":
       env.MergeFlags('-finstrument-functions')   # instrument functions for pat_run,  works with GNU and Intel
+  if env["USE_EXTRAE"]:
+    if 'EXTRAE_HOME' not in os.environ:
+      print("ERROR: $EXTRAE_HOME is not set. Did you forget to `module load extrae`?")
+    else:
+      print("USE_EXTRAE=True: Compiling with -DHAVE_EXTRAE\n")
+      env.Append(CPPDEFINES = "-DHAVE_EXTRAE")
+      env.MergeFlags('-I{EXTRAE_HOME}/include -L{EXTRAE_HOME}/lib -lmpitrace'.format(EXTRAE_HOME=os.environ['EXTRAE_HOME']))
+  if env["USE_SCOREP"]:
+    print("Using scorep compiler wrapper, this only works on hawk.")
+    if 'SCOREP_ROOT' not in os.environ:
+      print("ERROR: $SCOREP_ROOT is not set. Did you forget to `module load scorep`?")
+    if 'SCOREP_WRAPPER_INSTRUMENTER_FLAGS' not in os.environ:
+      # --nomemory to reduce scons memory requirements
+      # --thread=none to avoid eror about confliciting Opari2 and pthreads adapter.
+      print("ERROR: $SCOREP_WRAPPER_INSTRUMENTER_FLAGS is not set. Did you forget to `export SCOREP_WRAPPER_INSTRUMENTER_FLAGS='--nomemory --thread=none'`?")
+    if "ZLIB_ROOT" not in os.environ:
+      print("ERROR: $ZLIB_ROOT is not set. Did you forget to `module load zlib`?")
+    env["CXX"] = os.path.join(opendihu_home, "scripts/fake-scorep.sh")
+  if env["circle_ci"]:
+    env.MergeFlags('-DHAVE_CIRCLE_CI')
 
 # flags to always include, except with cray compiler
 if os.environ.get("PE_ENV") != "CRAY" and "pg" not in env["cc"]:
   env.MergeFlags('-Wunused-variable')   # always warn about unused variables
-  env.MergeFlags('-std=c++14 -fopenmp')
+  env.MergeFlags('-fopenmp')
+  if env["USE_STDSIMD"]:
+    env.MergeFlags('-std=c++17')
+  else:
+    env.MergeFlags('-std=c++14')
+  if env["USE_MPI_ALLOC"]:
+    env.MergeFlags('-DUSE_MPI_ALLOC')
   if "ppc" in platform.processor():
     env.MergeFlags('-mcpu=native -mtune=native')
   else:

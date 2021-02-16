@@ -31,6 +31,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
   std::array<double,MeshType::dim()> xiBest;
   double excessivityScoreBest = std::numeric_limits<double>::max();
   double residualBest = 0;
+  int ghostMeshNoBest = 0;
   bool elementFound = false;
 
   if (startSearchInCurrentElement)
@@ -118,6 +119,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
           xiBest = xi;
           residualBest = residual;
           excessivityScoreBest = excessivityScore;
+          ghostMeshNoBest = ghostMeshNo;
           VLOG(1) << "findPosition: stored element " << elementNoBest << ", xi " << xiBest << ", residual: " << residualBest << ", score: " << excessivityScoreBest;
         }
       }
@@ -156,6 +158,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
         xi = xiBest;
         residual = residualBest;
         elementNoLocal = elementNoBest;
+        ghostMeshNo = ghostMeshNoBest;
         return true;
       }
     }
@@ -170,6 +173,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
     elementNoLocal = elementNoBest;
     xi = xiBest;
     residual = residualBest;
+    ghostMeshNo = ghostMeshNoBest;
     
     VLOG(1) << "findPosition: element was found earlier with xi=" << xi << ", elementNo: " << elementNoLocal << ", excessivityScore=" << excessivityScoreBest << ", use it.";
 
@@ -216,7 +220,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
           << " in neighbourhood of element " << elementNoLocal
           << (ghostMeshNo != -1? std::string(" in ghost mesh ")+Mesh::getString((Mesh::face_t)ghostMeshNo) : "")
           << ", tested all elements (no ghost elements) and found element " << currentElementNo << ". "
-          << "This can happen if the elements lies on the border of the higher dimensional element, e.g. if a fiber lies on the outer border of the 3D muscle mesh.";
+          << "This can happen if the elements lies on the boundary of the higher dimensional element, e.g. if a fiber lies on the outer boundary of the 3D muscle mesh.";
 #endif
       }
 
@@ -245,7 +249,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
           xiBest = xi;
           residualBest = residual;
           excessivityScoreBest = excessivityScore;
-          ghostMeshNo = -1;   // not a ghost mesh
+          ghostMeshNoBest = -1;   // not a ghost mesh
           VLOG(1) << "findPosition, checking all elements: stored element " << elementNoBest << ", xi " << xiBest << ", residual: " << residualBest << ", score: " << excessivityScoreBest;
         }
       }
@@ -257,6 +261,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
     elementNoLocal = elementNoBest;
     xi = xiBest;
     residual = residualBest;
+    ghostMeshNo = ghostMeshNoBest;
     
     VLOG(1) << "findPosition: element was found earlier with xi=" << xi << ", elementNo: " << elementNoLocal << ", excessivityScore=" << excessivityScoreBest << ", use it.";
 
@@ -264,16 +269,16 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
   }
   
   // if point was still not found, search in ghost meshes
-  for (int face = (int)Mesh::face_t::face0Minus; face <= (int)Mesh::face_t::face2Plus; face++)
+  for (int face = (int)Mesh::face_t::face0Minus; face <= (int)Mesh::face_or_edge_t::edge0Plus1Plus; face++)
   {
-    VLOG(3) << "consider ghost mesh " << Mesh::getString((Mesh::face_t)face);
+    VLOG(3) << "consider ghost mesh " << Mesh::getString((Mesh::face_or_edge_t)face);
     if (ghostMesh_[face] != nullptr)
     {
-      VLOG(3) << "   ghost mesh " << Mesh::getString((Mesh::face_t)face) << " is set";
+      VLOG(3) << "   ghost mesh " << Mesh::getString((Mesh::face_or_edge_t)face) << " is set";
       bool ghostSearchedAllElements = false;
       if (ghostMesh_[face]->findPosition(point, elementNoLocal, ghostMeshNo, xi, false, residual, ghostSearchedAllElements))
       {
-        VLOG(3) << "   point found in ghost mesh " << Mesh::getString((Mesh::face_t)face) << ", element " << elementNoLocal << ", xi " << xi;
+        VLOG(3) << "   point found in ghost mesh " << Mesh::getString((Mesh::face_or_edge_t)face) << ", element " << elementNoLocal << ", xi " << xi;
         ghostMeshNo = face;
         return true;
       }
@@ -284,7 +289,7 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
     }
     else
     {
-      VLOG(3) << "   ghost mesh " << Mesh::getString((Mesh::face_t)face) << " is not set";
+      VLOG(3) << "   ghost mesh " << Mesh::getString((Mesh::face_or_edge_t)face) << " is not set";
     }
   }
 
@@ -294,12 +299,31 @@ findPosition(Vec3 point, element_no_t &elementNoLocal, int &ghostMeshNo, std::ar
 
 template<typename MeshType, typename BasisFunctionType>
 void FunctionSpaceStructuredFindPositionBase<MeshType,BasisFunctionType>::
-setGhostMesh(Mesh::face_t face, const std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>> ghostMesh)
+setGhostMesh(Mesh::face_or_edge_t faceOrEdge, const std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>> ghostMesh)
 {
-  assert(0 <= face);
-  assert(face < 6);
-  ghostMesh_[face] = ghostMesh;
-  VLOG(1) << "set ghost mesh for face " << Mesh::getString((Mesh::face_t)face) << " to " << (ghostMesh == nullptr? " null" : "x");
+  // values of faceOrEdge:
+  //     faceEdge0Minus=0, faceEdge0Plus=1, faceEdge1Minus=2, faceEdge1Plus=3, faceEdge2Minus=4, faceEdge2Plus=5,
+  //     edge0Minus1Minus=6, edge0Plus1Minus=7, edge0Minus1Plus=8,  edge0Plus1Plus=9
+
+  // ghost meshes:
+  //     face0Minus=0, face0Plus=1, face1Minus=2, face1Plus=3, face2Minus=4, face2Plus=5,
+  //     edge0Minus1Minus=6, edge0Plus1Minus=7, edge0Minus1Plus=8,  edge0Plus1Plus=9
+
+  assert(0 <= faceOrEdge);
+  assert(faceOrEdge < 10);
+  ghostMesh_[(int)faceOrEdge] = ghostMesh;
+
+  VLOG(1) << "set ghost mesh for face " << Mesh::getString((Mesh::face_or_edge_t)faceOrEdge) << " to " << (ghostMesh == nullptr? " null" : "x");
+}
+
+//! return a pointer to the ghost mesh indexed by faceOrEdge
+template<typename MeshType, typename BasisFunctionType>
+std::shared_ptr<FunctionSpace<MeshType,BasisFunctionType>> FunctionSpaceStructuredFindPositionBase<MeshType,BasisFunctionType>::
+ghostMesh(Mesh::face_or_edge_t faceOrEdge)
+{
+  assert(0 <= faceOrEdge);
+  assert(faceOrEdge < 10);
+  return ghostMesh_[(int)faceOrEdge];
 }
 
 template<typename MeshType, typename BasisFunctionType>
@@ -312,6 +336,11 @@ debugOutputGhostMeshSet()
   VLOG(1) << "ghost mesh 1+ is " << (ghostMesh_[(int)Mesh::face_t::face1Plus] == nullptr? "not" : "") << " set";
   VLOG(1) << "ghost mesh 2- is " << (ghostMesh_[(int)Mesh::face_t::face2Minus] == nullptr? "not" : "") << " set";
   VLOG(1) << "ghost mesh 2+ is " << (ghostMesh_[(int)Mesh::face_t::face2Plus] == nullptr? "not" : "") << " set";
+
+  VLOG(1) << "ghost mesh 0-1- is " << (ghostMesh_[(int)Mesh::face_or_edge_t::edge0Minus1Minus] == nullptr? "not" : "") << " set";
+  VLOG(1) << "ghost mesh 0+1- is " << (ghostMesh_[(int)Mesh::face_or_edge_t::edge0Plus1Minus] == nullptr? "not" : "") << " set";
+  VLOG(1) << "ghost mesh 0-1+ is " << (ghostMesh_[(int)Mesh::face_or_edge_t::edge0Minus1Plus] == nullptr? "not" : "") << " set";
+  VLOG(1) << "ghost mesh 0+1+ is " << (ghostMesh_[(int)Mesh::face_or_edge_t::edge0Plus1Plus] == nullptr? "not" : "") << " set";
 }
 
 } // namespace

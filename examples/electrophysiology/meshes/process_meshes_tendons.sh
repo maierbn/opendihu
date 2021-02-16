@@ -8,12 +8,20 @@
 input_file=original_meshes/left_biceps_brachii.stl
 # if you change the input file, you probably also have to experiment with the bottom_z and top_z clipping parameters for the muscle 
 
-# [cm] range along z-axis for which the muscle volume is extracted
-bottom_z_clip=7.2
-top_z_clip=22
+# tendon 1 (bottom)
+# number of points in x and z direction of the extracted mesh
+tendon_1_n_points_z=11    # 11
+tendon_1_n_points_x=4
 
-# [cm] length of one 1D element in z-direction, the number of elements per fiber is thus (top_z_clip-bottom_z_clip)/element_length
-element_length=0.01
+# tendon 2a (top)
+# number of points in x and z direction of the extracted mesh
+tendon_2a_n_points_z=11   # 21
+tendon_2a_n_points_x=4    # 8
+
+# tendon 2b (top)
+# number of points in x and z direction of the extracted mesh
+tendon_2b_n_points_z=11   # 21
+tendon_2b_n_points_x=4    # 8
 
 # get filename and basename
 filename=${input_file##*/}    # left_triceps_brachii.stl
@@ -25,6 +33,7 @@ opendihu_directory=$(pwd)/../../..
 parallel_fiber_estimation_directory=${opendihu_directory}/examples/fiber_tracing/parallel_fiber_estimation
 stl_utility_directory=${opendihu_directory}/scripts/stl_utility
 pyod=${opendihu_directory}/dependencies/python/install/bin/python3
+scons=${opendihu_directory}/dependencies/scons/scons.py
 
 mkdir -p processed_meshes
 
@@ -80,7 +89,7 @@ xmin=-inf
 xmax=inf
 ymin=-inf
 ymax=inf
-zmin=1.0
+zmin=1.0    # 4.0
 zmax=7.2
 
 # extract part for first tendon (bottom part of muscle-tendon mesh)
@@ -110,14 +119,13 @@ echo ""
 echo "--- Create pickle mesh"
 
 cd $opendihu_directory/examples/fiber_tracing/streamline_tracer/scripts
-n_points_z=9
 
 # arguments <input_stl_file> <output_pickle_file> <output_bin_file> <min_z> <max_z> <n_points_x> <n_points_z> [--only-stage-1]
 ./create_mesh.sh \
   ${current_directory}/processed_meshes/${basename}_04_tendon1_box.stl \
   ${current_directory}/processed_meshes/${basename}_05_tendon1_9x9.pickle \
   ${current_directory}/processed_meshes/${basename}_05_tendon1_9x9.bin \
-  $zmin $zmax 8 $n_points_z --only-stage-1
+  $zmin $zmax $tendon_1_n_points_x $tendon_1_n_points_z --only-stage-1
 
 # transform the bin file to a vts file for debugging
 echo ""
@@ -167,8 +175,8 @@ echo ""
 echo "--- for debugging, create vts file which can be viewed by ParaView"
 $pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
   ${current_directory}/processed_meshes/${basename}_08_tendon1_9x9_xy_swapped.bin
-$pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
-  ${current_directory}/processed_meshes/${basename}_09_tendon1_9x9.bin
+#$pyod ${opendihu_directory}/scripts/file_manipulation/examine_bin_fibers.py \
+#  ${current_directory}/processed_meshes/${basename}_09_tendon1_9x9.bin
   
 if false; then   # disabled because we don't do fiber tracing for now
 # ---- c++ part, streamline tracing ------
@@ -178,11 +186,11 @@ echo "--- Trace streamlines"
 
 # compile program
 cd ${opendihu_directory}
-scons no_tests=TRUE
+$scons no_tests=TRUE
 
 # change to basedir and compile example
 cd ${opendihu_directory}/examples/fiber_tracing/streamline_tracer
-scons
+$scons
 cd build_release
 
 # prefix for intermediate files
@@ -236,7 +244,7 @@ xmin=-inf
 xmax=inf
 ymin=-inf
 ymax=inf
-zmin=22.9
+zmin=22
 zmax=30
 
 # extract part for tendon 2
@@ -290,22 +298,20 @@ echo "--- Create pickle mesh"
 
 cd $opendihu_directory/examples/fiber_tracing/streamline_tracer/scripts
 
-n_points_z=9
-
 # arguments <input_stl_file> <output_pickle_file> <output_bin_file> <min_z> <max_z> <n_points_x> <n_points_z> [--only-stage-1]
 echo " --- for tendon2a"
 ./create_mesh.sh \
   ${current_directory}/processed_meshes/${basename}_06_tendon2a_box4.stl \
   ${current_directory}/processed_meshes/${basename}_07_tendon2a_9x9.pickle \
   ${current_directory}/processed_meshes/${basename}_07_tendon2a_9x9.bin \
-  $zmin $zmax 8 $n_points_z --only-stage-1
+  $zmin $zmax $tendon_2a_n_points_x $tendon_2a_n_points_z --only-stage-1
 
 echo " --- for tendon2b"  
 ./create_mesh.sh \
   ${current_directory}/processed_meshes/${basename}_06_tendon2b_box4.stl \
   ${current_directory}/processed_meshes/${basename}_07_tendon2b_9x9.pickle \
   ${current_directory}/processed_meshes/${basename}_07_tendon2b_9x9.bin \
-  $zmin $zmax 8 $n_points_z --only-stage-1
+  $zmin $zmax $tendon_2b_n_points_x $tendon_2b_n_points_z --only-stage-1
 
 # transform the bin file to a vts file for debugging
 echo ""

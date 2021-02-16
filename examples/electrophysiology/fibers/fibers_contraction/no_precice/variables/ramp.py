@@ -113,7 +113,7 @@ output_timestep_3D = 4e0              # [ms] timestep for output of fibers and m
 
 
 # input files
-fiber_file = "../../../../input/left_biceps_brachii_9x9fibers.bin.swapped"
+fiber_file = "../../../../input/left_biceps_brachii_9x9fibers.bin"
 #fiber_file = "../../../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
@@ -124,7 +124,8 @@ cellml_file             = "../../../../input/new_slow_TK_2014_12_08.c"
 # a higher number leads to less 3D elements
 sampling_stride_x = 2
 sampling_stride_y = 2
-sampling_stride_z = 74
+local_sampling_stride_z = 74
+sampling_stride_z = 1
 
 # Tolerance value in the element coordinate system of the 3D elements, [0,1]^3
 # when a fiber point is still considered part of the element.
@@ -137,6 +138,9 @@ adios_output = False
 exfile_output = False
 python_output = False
 disable_firing_output = False
+fast_monodomain_solver_optimizations = True # enable the optimizations in the fast multidomain solver
+use_analytic_jacobian = True        # If the analytic jacobian should be used for the mechanics problem.
+use_vc = True                       # If the vc optimization type should be used for CellmlAdapter
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):

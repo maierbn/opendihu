@@ -52,9 +52,8 @@ NonlinearElasticitySolverFebio(DihuContext context, std::string solverName) :
   LOG(DEBUG) << "initialized NonlinearElasticitySolverFebio";
 }
 
-
 void NonlinearElasticitySolverFebio::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
@@ -71,7 +70,8 @@ advanceTimeSpan()
     Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
   // write current output values
-  this->outputWriterManager_.writeOutput(this->data_, 1, endTime_);
+  if (withOutputWritersEnabled)
+    this->outputWriterManager_.writeOutput(this->data_, 1, endTime_);
 }
 
 bool NonlinearElasticitySolverFebio::
@@ -558,7 +558,8 @@ loadFebioOutputFile()
       Tensor2<3> cauchyStress{Vec3{sx,sxy,sxz}, Vec3{sxy, sy, syz}, Vec3{sxz, syz, sz}};
       Tensor2<3> deformationGradient{Vec3{Fxx, Fyx, Fzx}, Vec3{Fxy, Fyy, Fzy}, Vec3{Fxz, Fyz, Fzz}};
       double determinant = 0;
-      Tensor2<3> inverseDeformationGradient = MathUtility::computeInverse(deformationGradient, determinant);
+      double approximateMeshWidth = 0;
+      Tensor2<3> inverseDeformationGradient = MathUtility::computeInverse(deformationGradient, approximateMeshWidth, determinant);
 
       Tensor2<3> deformationGradientCofactor = MathUtility::computeCofactorMatrix<double>(deformationGradient);  // cof(M) = det(M) * M^{-T}
       Tensor2<3> pk2Stress = inverseDeformationGradient * cauchyStress * deformationGradientCofactor;
@@ -818,13 +819,17 @@ run()
   this->advanceTimeSpan();
 }
 
-
 void NonlinearElasticitySolverFebio::
 setTimeSpan(double startTime, double endTime)
 {
   endTime_ = endTime;
 }
 
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+void NonlinearElasticitySolverFebio::callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  this->outputWriterManager_.writeOutput(this->data_, 1, endTime_);
+}
 
 void NonlinearElasticitySolverFebio::
 initialize()
@@ -840,8 +845,8 @@ initialize()
   data_.setFunctionSpace(functionSpace);
   data_.initialize();
 
-  // write initial geometry
-  this->outputWriterManager_.writeOutput(this->data_, 0, 0);
+  // write initial geometry but don't increment counter
+  this->outputWriterManager_.writeOutput(this->data_, 0, 0.0, 0);
 
   // add this solver to the solvers diagram
   DihuContext::solverStructureVisualizer()->addSolver(solverName_);
@@ -853,12 +858,10 @@ initialize()
   this->initialized_ = true;
 }
 
-
 void NonlinearElasticitySolverFebio::reset()
 {
   this->initialized_ = false;
 }
-
 
 typename NonlinearElasticitySolverFebio::Data &NonlinearElasticitySolverFebio::
 data()

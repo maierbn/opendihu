@@ -48,7 +48,7 @@ public:
   //! constructor
   FiniteElements(DihuContext context);
 
-  // !intialize base class and diffusion tensor
+  // !initialize base class and diffusion tensor
   virtual void initialize();
 };
 
@@ -67,7 +67,7 @@ public:
   //! dummy method
   virtual void initialize(){};
 
-  // !intialize base class and diffusion tensor which needs the direction field and the number of compartments in the multidomain context
+  // !initialize base class and diffusion tensor which needs the direction field and the number of compartments in the multidomain context
   virtual void initialize(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,3>> direction,
                           std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> spatiallyVaryingPrefactor,
                           bool useAdditionalDiffusionTensor = false);

@@ -228,6 +228,8 @@ To specify properties of the mesh there are two possibilities:
   
 The first option is useful to reuse meshes that only need to be defined once. 
 
+If a ``"meshName"`` is provided, all mesh properties specified under ``"FiniteElementMethod"`` other than ``"inputMeshIsGlobal"`` will be ignored.
+
 <solver>
 ^^^^^^^^^^^^^
 The solver is the solver of the linear system 
@@ -276,6 +278,8 @@ The specification of the solver can be given directly in-place or by specifying 
     }
   
 The first option is useful when the same solver should be used for multiple classes.
+
+If a ``"solverName"`` is provided, all solver properties specified under ``"FiniteElementMethod"`` will be ignored.
 
 slotName
 ^^^^^^^^^^^^^^^^^

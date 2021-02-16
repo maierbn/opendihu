@@ -18,10 +18,16 @@ int sqr(int v)
 template<>
 Vc::double_v pow(Vc::double_v base, double exponent)
 {
+
+#ifdef HAVE_STDSIMD
+  return std::experimental::pow(base, exponent);
+#else
   return base.apply([exponent](double d)
   {
     return std::pow(d, exponent);
   });
+#endif
+
 }
 
 template<>
@@ -70,7 +76,7 @@ double normSquared<1>(const VecD<1,Vc::double_v> node)
   double result = 0;
   for (int vcComponent = 0; vcComponent < Vc::double_v::size(); vcComponent++)
   {
-    result += sqr(vcResult[vcComponent]);
+    result += sqr((double)(vcResult[vcComponent]));
   }
   return result;
 }
@@ -82,7 +88,7 @@ double normSquared<2>(const VecD<2,Vc::double_v> node)
   double result = 0;
   for (int vcComponent = 0; vcComponent < Vc::double_v::size(); vcComponent++)
   {
-    result += sqr(vcResult[vcComponent]);
+    result += sqr((double)(vcResult[vcComponent]));
   }
   return result;
 }
@@ -94,7 +100,7 @@ double normSquared<3>(const Vec3_v node)
   double result = 0;
   for (int vcComponent = 0; vcComponent < Vc::double_v::size(); vcComponent++)
   {
-    result += sqr(vcResult[vcComponent]);
+    result += sqr((double)(vcResult[vcComponent]));
   }
   return result;
 }
@@ -109,7 +115,11 @@ double acos<double>(double value)
 template<>
 Vc::double_v acos<Vc::double_v>(Vc::double_v value)
 {
+#ifdef HAVE_STDSIMD
+  return std::experimental::acos(value);
+#else
   return value.apply([](double v){return std::acos(v);});
+#endif
 }
 
 template<>
@@ -170,7 +180,7 @@ std::array<Vec3_v,3> transformToDxD<3,2>(const std::array<Vec3_v,2> &matrix)
   return std::array<Vec3_v,3>({
     matrix[0],
     matrix[1],
-    Vec3_v({Vc::double_v::Zero(), Vc::double_v::Zero(), Vc::double_v::One()})
+    Vec3_v({Vc::double_v(Vc::Zero), Vc::double_v(Vc::Zero), Vc::double_v(Vc::One)})
   });
 }
 
@@ -188,8 +198,8 @@ std::array<Vec3_v,3> transformToDxD<3,1>(const std::array<Vec3_v,1> &matrix)
 {
   return std::array<Vec3_v,3>({
     matrix[0],
-    Vec3_v({Vc::double_v::Zero(), Vc::double_v::One(), Vc::double_v::Zero()}),
-    Vec3_v({Vc::double_v::Zero(), Vc::double_v::Zero(), Vc::double_v::One()})}
+    Vec3_v({Vc::double_v(Vc::Zero), Vc::double_v(Vc::One), Vc::double_v(Vc::Zero)}),
+    Vec3_v({Vc::double_v(Vc::Zero), Vc::double_v(Vc::Zero), Vc::double_v(Vc::One)})}
   );
 }
 
@@ -310,100 +320,128 @@ int permutation(int i, int j, int k)
   return 0;
 }
 
+void quadrilateralGetPointCoordinates(double xp1, double x11, double x21, double x31, double x41,
+                                      double xp2, double x12, double x22, double x32, double x42,
+                                      double &xi1, double &xi2)
+{
+  // Find the coordinates (xi1,xi2) such that xp = (1-xi1)*(1-xi2)*x1 + xi1*(1-xi2)*x2 + (1-xi1)*xi2*x3 + xi1*xi2*x4.
+  // This formula was derived using sympy, in the file opendihu/doc/sympy/invert_mapping.py (section 2D linear quadrilateral).
+  // There are two solutions to this problem, sometimes the correct solution is the first, sometimes it is the second.
+  // Compute both and select the better one.
+
+  // 1st solution
+  const double xi1a = (1.0L/2.0L)*(2*x11*x32 - x11*x42 - 2*x12*x31 + x12*x41 - x21*x32 + x22*x31 + xp1*(x12 - x22 - x32 + x42) + xp2*(-x11 + x21 + x31 - x41) + std::sqrt(std::pow(x11, 2)*std::pow(x42, 2) - 2*std::pow(x11, 2)*x42*xp2 + std::pow(x11, 2)*std::pow(xp2, 2) - 2*x11*x12*x41*x42 + 2*x11*x12*x41*xp2 + 2*x11*x12*x42*xp1 - 2*x11*x12*xp1*xp2 - 2*x11*x21*x32*x42 + 2*x11*x21*x32*xp2 + 2*x11*x21*x42*xp2 - 2*x11*x21*std::pow(xp2, 2) - 2*x11*x22*x31*x42 + 2*x11*x22*x31*xp2 + 4*x11*x22*x32*x41 - 4*x11*x22*x32*xp1 - 4*x11*x22*x41*xp2 + 2*x11*x22*x42*xp1 + 2*x11*x22*xp1*xp2 + 2*x11*x31*x42*xp2 - 2*x11*x31*std::pow(xp2, 2) - 4*x11*x32*x41*xp2 + 2*x11*x32*x42*xp1 + 2*x11*x32*xp1*xp2 + 2*x11*x41*x42*xp2 + 2*x11*x41*std::pow(xp2, 2) - 2*x11*std::pow(x42, 2)*xp1 - 2*x11*x42*xp1*xp2 + std::pow(x12, 2)*std::pow(x41, 2) - 2*std::pow(x12, 2)*x41*xp1 + std::pow(x12, 2)*std::pow(xp1, 2) + 4*x12*x21*x31*x42 - 4*x12*x21*x31*xp2 - 2*x12*x21*x32*x41 + 2*x12*x21*x32*xp1 + 2*x12*x21*x41*xp2 - 4*x12*x21*x42*xp1 + 2*x12*x21*xp1*xp2 - 2*x12*x22*x31*x41 + 2*x12*x22*x31*xp1 + 2*x12*x22*x41*xp1 - 2*x12*x22*std::pow(xp1, 2) + 2*x12*x31*x41*xp2 - 4*x12*x31*x42*xp1 + 2*x12*x31*xp1*xp2 + 2*x12*x32*x41*xp1 - 2*x12*x32*std::pow(xp1, 2) - 2*x12*std::pow(x41, 2)*xp2 + 2*x12*x41*x42*xp1 - 2*x12*x41*xp1*xp2 + 2*x12*x42*std::pow(xp1, 2) + std::pow(x21, 2)*std::pow(x32, 2) - 2*std::pow(x21, 2)*x32*xp2 + std::pow(x21, 2)*std::pow(xp2, 2) - 2*x21*x22*x31*x32 + 2*x21*x22*x31*xp2 + 2*x21*x22*x32*xp1 - 2*x21*x22*xp1*xp2 + 2*x21*x31*x32*xp2 - 4*x21*x31*x42*xp2 + 2*x21*x31*std::pow(xp2, 2) - 2*x21*std::pow(x32, 2)*xp1 + 2*x21*x32*x41*xp2 + 2*x21*x32*x42*xp1 - 2*x21*x32*xp1*xp2 - 2*x21*x41*std::pow(xp2, 2) + 2*x21*x42*xp1*xp2 + std::pow(x22, 2)*std::pow(x31, 2) - 2*std::pow(x22, 2)*x31*xp1 + std::pow(x22, 2)*std::pow(xp1, 2) - 2*x22*std::pow(x31, 2)*xp2 + 2*x22*x31*x32*xp1 + 2*x22*x31*x41*xp2 + 2*x22*x31*x42*xp1 - 2*x22*x31*xp1*xp2 - 4*x22*x32*x41*xp1 + 2*x22*x32*std::pow(xp1, 2) + 2*x22*x41*xp1*xp2 - 2*x22*x42*std::pow(xp1, 2) + std::pow(x31, 2)*std::pow(xp2, 2) - 2*x31*x32*xp1*xp2 - 2*x31*x41*std::pow(xp2, 2) + 2*x31*x42*xp1*xp2 + std::pow(x32, 2)*std::pow(xp1, 2) + 2*x32*x41*xp1*xp2 - 2*x32*x42*std::pow(xp1, 2) + std::pow(x41, 2)*std::pow(xp2, 2) - 2*x41*x42*xp1*xp2 + std::pow(x42, 2)*std::pow(xp1, 2)))/(x11*x32 - x11*x42 - x12*x31 + x12*x41 - x21*x32 + x21*x42 + x22*x31 - x22*x41);
+  const double xi2a = (x11*xi1a - x11 - x21*xi1a + xp1)/(x11*xi1a - x11 - x21*xi1a - x31*xi1a + x31 + x41*xi1a);
+
+  // 2nd solution
+  const double xi1b = (1.0L/2.0L)*(2*x11*x32 - x11*x42 - 2*x12*x31 + x12*x41 - x21*x32 + x22*x31 + xp1*(x12 - x22 - x32 + x42) + xp2*(-x11 + x21 + x31 - x41) - std::sqrt(std::pow(x11, 2)*std::pow(x42, 2) - 2*std::pow(x11, 2)*x42*xp2 + std::pow(x11, 2)*std::pow(xp2, 2) - 2*x11*x12*x41*x42 + 2*x11*x12*x41*xp2 + 2*x11*x12*x42*xp1 - 2*x11*x12*xp1*xp2 - 2*x11*x21*x32*x42 + 2*x11*x21*x32*xp2 + 2*x11*x21*x42*xp2 - 2*x11*x21*std::pow(xp2, 2) - 2*x11*x22*x31*x42 + 2*x11*x22*x31*xp2 + 4*x11*x22*x32*x41 - 4*x11*x22*x32*xp1 - 4*x11*x22*x41*xp2 + 2*x11*x22*x42*xp1 + 2*x11*x22*xp1*xp2 + 2*x11*x31*x42*xp2 - 2*x11*x31*std::pow(xp2, 2) - 4*x11*x32*x41*xp2 + 2*x11*x32*x42*xp1 + 2*x11*x32*xp1*xp2 + 2*x11*x41*x42*xp2 + 2*x11*x41*std::pow(xp2, 2) - 2*x11*std::pow(x42, 2)*xp1 - 2*x11*x42*xp1*xp2 + std::pow(x12, 2)*std::pow(x41, 2) - 2*std::pow(x12, 2)*x41*xp1 + std::pow(x12, 2)*std::pow(xp1, 2) + 4*x12*x21*x31*x42 - 4*x12*x21*x31*xp2 - 2*x12*x21*x32*x41 + 2*x12*x21*x32*xp1 + 2*x12*x21*x41*xp2 - 4*x12*x21*x42*xp1 + 2*x12*x21*xp1*xp2 - 2*x12*x22*x31*x41 + 2*x12*x22*x31*xp1 + 2*x12*x22*x41*xp1 - 2*x12*x22*std::pow(xp1, 2) + 2*x12*x31*x41*xp2 - 4*x12*x31*x42*xp1 + 2*x12*x31*xp1*xp2 + 2*x12*x32*x41*xp1 - 2*x12*x32*std::pow(xp1, 2) - 2*x12*std::pow(x41, 2)*xp2 + 2*x12*x41*x42*xp1 - 2*x12*x41*xp1*xp2 + 2*x12*x42*std::pow(xp1, 2) + std::pow(x21, 2)*std::pow(x32, 2) - 2*std::pow(x21, 2)*x32*xp2 + std::pow(x21, 2)*std::pow(xp2, 2) - 2*x21*x22*x31*x32 + 2*x21*x22*x31*xp2 + 2*x21*x22*x32*xp1 - 2*x21*x22*xp1*xp2 + 2*x21*x31*x32*xp2 - 4*x21*x31*x42*xp2 + 2*x21*x31*std::pow(xp2, 2) - 2*x21*std::pow(x32, 2)*xp1 + 2*x21*x32*x41*xp2 + 2*x21*x32*x42*xp1 - 2*x21*x32*xp1*xp2 - 2*x21*x41*std::pow(xp2, 2) + 2*x21*x42*xp1*xp2 + std::pow(x22, 2)*std::pow(x31, 2) - 2*std::pow(x22, 2)*x31*xp1 + std::pow(x22, 2)*std::pow(xp1, 2) - 2*x22*std::pow(x31, 2)*xp2 + 2*x22*x31*x32*xp1 + 2*x22*x31*x41*xp2 + 2*x22*x31*x42*xp1 - 2*x22*x31*xp1*xp2 - 4*x22*x32*x41*xp1 + 2*x22*x32*std::pow(xp1, 2) + 2*x22*x41*xp1*xp2 - 2*x22*x42*std::pow(xp1, 2) + std::pow(x31, 2)*std::pow(xp2, 2) - 2*x31*x32*xp1*xp2 - 2*x31*x41*std::pow(xp2, 2) + 2*x31*x42*xp1*xp2 + std::pow(x32, 2)*std::pow(xp1, 2) + 2*x32*x41*xp1*xp2 - 2*x32*x42*std::pow(xp1, 2) + std::pow(x41, 2)*std::pow(xp2, 2) - 2*x41*x42*xp1*xp2 + std::pow(x42, 2)*std::pow(xp1, 2)))/(x11*x32 - x11*x42 - x12*x31 + x12*x41 - x21*x32 + x21*x42 + x22*x31 - x22*x41);
+  const double xi2b = (x11*xi1b - x11 - x21*xi1b + xp1)/(x11*xi1b - x11 - x21*xi1b - x31*xi1b + x31 + x41*xi1b);
+
+  // choose the one that is closer to the interval [0,1]
+  double scoreA = 0;
+  if (xi1a < 0)
+    scoreA = std::max(scoreA, -xi1a);
+  else if (xi1a > 1)
+    scoreA = std::max(scoreA, xi1a - 1);
+
+  if (xi2a < 0)
+    scoreA = std::max(scoreA, -xi2a);
+  else if (xi2a > 1)
+    scoreA = std::max(scoreA, xi2a - 1);
+
+  double scoreB = 0;
+  if (xi1b < 0)
+    scoreB = std::max(scoreB, -xi1b);
+  else if (xi1b > 1)
+    scoreB = std::max(scoreB, xi1b - 1);
+
+  if (xi2b < 0)
+    scoreB = std::max(scoreB, -xi2b);
+  else if (xi2b > 1)
+    scoreB = std::max(scoreB, xi2b - 1);
+
+  if (scoreA < scoreB)
+  {
+    xi1 = xi1a;
+    xi2 = xi2a;
+  }
+  else
+  {
+    xi1 = xi1b;
+    xi2 = xi2b;
+  }
+
+}
+
+
 void quadrilateralGetPointCoordinates(const std::array<Vec3,4> geometryValues, const Vec3 point, Vec2 &xi)
 {
-  // determine the two coordinates out of {x,y,z} that will be used
-  int coordinate0 = 0;
-  int coordinate1 = 1;
-
-  // determine bounding box of element
-  double xMin = geometryValues[0][0];
-  double xMax = geometryValues[0][0];
-  double yMin = geometryValues[0][1];
-  double yMax = geometryValues[0][1];
-  double zMin = geometryValues[0][2];
-  double zMax = geometryValues[0][2];
-
-  for (int i = 1; i < 4; i++)
-  {
-    xMin = std::min(xMin, geometryValues[i][0]);
-    xMax = std::max(xMax, geometryValues[i][0]);
-    yMin = std::min(yMin, geometryValues[i][1]);
-    yMax = std::max(yMax, geometryValues[i][1]);
-    zMin = std::min(zMin, geometryValues[i][2]);
-    zMax = std::max(zMax, geometryValues[i][2]);
-  }
-  double extentX = fabs(xMax - xMin);
-  double extentY = fabs(yMax - yMin);
-  double extentZ = fabs(zMax - zMin);
-
-  // the lowest extent will not be used as coordinate
-  /*if (extentX < extentY && extentX < extentZ)
-  {
-    // use y and z
-    coordinate0 = 1;
-    coordinate1 = 2;
-  }
-  else if (extentY <= extentX && extentY < extentZ)
-  {
-    // use x and z
-    coordinate0 = 0;
-    coordinate1 = 2;
-  }
-  else*/
-  {
-    // use x and y
-    coordinate0 = 0;
-    coordinate1 = 1;
-  }
-    coordinate0 = 1;
-    coordinate1 = 2;
-
   // derivation using sympy in script invert_mapping.py
-  const double xp1 = point[coordinate0];
-  const double xp2 = point[coordinate1];
 
-  double x11 = geometryValues[0][coordinate0];
-  double x12 = geometryValues[0][coordinate1];
+  // project point onto plane of triangle
+  // https://math.stackexchange.com/questions/544946/determine-if-projection-of-3d-point-onto-plane-is-within-a-triangle
 
-  const double x21 = geometryValues[1][coordinate0];
-  const double x22 = geometryValues[1][coordinate1];
+  Vec3 u = geometryValues[1] - geometryValues[0];
+  Vec3 v = geometryValues[2] - geometryValues[0];
+  Vec3 w = point - geometryValues[0];
+  Vec3 n = cross(u,v);
+  double nSquared = normSquared<3>(n);
+  double gamma = dot(cross(u,w), n) / nSquared;
+  double beta = dot(cross(w,v), n) / nSquared;
+  double alpha = 1 - gamma - beta;
 
-  const double x31 = geometryValues[2][coordinate0];
-  const double x32 = geometryValues[2][coordinate1];
+  Vec3 pointProjected = alpha * geometryValues[0] + beta * geometryValues[1] + gamma * geometryValues[2];
 
-  const double x41 = geometryValues[3][coordinate0];
-  const double x42 = geometryValues[3][coordinate1];
+  // We have 3D points but the problem whether the point is inside the quadrilateral is 2D, therefore an axis-aligned projection is performed
+  // It is not clear which two coordinates should be used. Therefore we do all three choices and use the best result.
 
-  // compute analytic solution for xi
-  // avoid division by 0
-  const double divisor = (x11*x32 - x11*x42 - x12*x31 + x12*x41 - x21*x32 + x21*x42 + x22*x31 - x22*x41);
-  const double eps = 1e-12;
-  if (fabs(divisor) < eps)
+  // loop over different choices for the two coordinates to use
+  std::array<int,3> coordinates0 = {0, 0, 1};
+  std::array<int,3> coordinates1 = {1, 2, 2};
+  std::array<int,3> coordinates2 = {2, 1, 0};
+  double bestError = -1;
+
+  for (int i = 0; i < coordinates0.size(); i++)
   {
-    x11 += eps;
-    x12 += 0.8*eps;
+    const int coordinate0 = coordinates0[i];
+    const int coordinate1 = coordinates1[i];
+    const int coordinate2 = coordinates2[i];
+
+    // rename involved points
+    const double xp1 = pointProjected[coordinate0];
+    const double xp2 = pointProjected[coordinate1];
+
+    const double x11 = geometryValues[0][coordinate0];
+    const double x12 = geometryValues[0][coordinate1];
+
+    const double x21 = geometryValues[1][coordinate0];
+    const double x22 = geometryValues[1][coordinate1];
+
+    const double x31 = geometryValues[2][coordinate0];
+    const double x32 = geometryValues[2][coordinate1];
+
+    const double x41 = geometryValues[3][coordinate0];
+    const double x42 = geometryValues[3][coordinate1];
+
+    // call formula
+    double xi1, xi2;
+    quadrilateralGetPointCoordinates(xp1, x11, x21, x31, x41,
+                                     xp2, x12, x22, x32, x42, xi1, xi2);
+
+    // validation, determine error
+    const double test = (1-xi1)*(1-xi2)*geometryValues[0][coordinate2]
+                        + xi1*(1-xi2)*geometryValues[1][coordinate2]
+                        + (1-xi1)*xi2*geometryValues[2][coordinate2]
+                        + xi1*xi2*geometryValues[3][coordinate2];
+    double error = (test-pointProjected[coordinate2]) * (test-pointProjected[coordinate2]);
+
+    if (bestError == -1 || error < bestError)
+    {
+      bestError = error;
+      xi[0] = xi1;
+      xi[1] = xi2;
+    }
   }
-
-  double xi1 = 0.5*(2*x11*x32 - x11*x42 - 2*x12*x31 + x12*x41 - x21*x32 + x22*x31 + xp1*(x12 - x22 - x32 + x42) + xp2*(-x11 + x21 + x31 - x41) + std::sqrt(std::pow(x11, 2)*std::pow(x42, 2) - 2*std::pow(x11, 2)*x42*xp2 + std::pow(x11, 2)*std::pow(xp2, 2) - 2*x11*x12*x41*x42 + 2*x11*x12*x41*xp2 + 2*x11*x12*x42*xp1 - 2*x11*x12*xp1*xp2 - 2*x11*x21*x32*x42 + 2*x11*x21*x32*xp2 + 2*x11*x21*x42*xp2 - 2*x11*x21*std::pow(xp2, 2) - 2*x11*x22*x31*x42 + 2*x11*x22*x31*xp2 + 4*x11*x22*x32*x41 - 4*x11*x22*x32*xp1 - 4*x11*x22*x41*xp2 + 2*x11*x22*x42*xp1 + 2*x11*x22*xp1*xp2 + 2*x11*x31*x42*xp2 - 2*x11*x31*std::pow(xp2, 2) - 4*x11*x32*x41*xp2 + 2*x11*x32*x42*xp1 + 2*x11*x32*xp1*xp2 + 2*x11*x41*x42*xp2 + 2*x11*x41*std::pow(xp2, 2) - 2*x11*std::pow(x42, 2)*xp1 - 2*x11*x42*xp1*xp2 + std::pow(x12, 2)*std::pow(x41, 2) - 2*std::pow(x12, 2)*x41*xp1 + std::pow(x12, 2)*std::pow(xp1, 2) + 4*x12*x21*x31*x42 - 4*x12*x21*x31*xp2 - 2*x12*x21*x32*x41 + 2*x12*x21*x32*xp1 + 2*x12*x21*x41*xp2 - 4*x12*x21*x42*xp1 + 2*x12*x21*xp1*xp2 - 2*x12*x22*x31*x41 + 2*x12*x22*x31*xp1 + 2*x12*x22*x41*xp1 - 2*x12*x22*std::pow(xp1, 2) + 2*x12*x31*x41*xp2 - 4*x12*x31*x42*xp1 + 2*x12*x31*xp1*xp2 + 2*x12*x32*x41*xp1 - 2*x12*x32*std::pow(xp1, 2) - 2*x12*std::pow(x41, 2)*xp2 + 2*x12*x41*x42*xp1 - 2*x12*x41*xp1*xp2 + 2*x12*x42*std::pow(xp1, 2) + std::pow(x21, 2)*std::pow(x32, 2) - 2*std::pow(x21, 2)*x32*xp2 + std::pow(x21, 2)*std::pow(xp2, 2) - 2*x21*x22*x31*x32 + 2*x21*x22*x31*xp2 + 2*x21*x22*x32*xp1 - 2*x21*x22*xp1*xp2 + 2*x21*x31*x32*xp2 - 4*x21*x31*x42*xp2 + 2*x21*x31*std::pow(xp2, 2) - 2*x21*std::pow(x32, 2)*xp1 + 2*x21*x32*x41*xp2 + 2*x21*x32*x42*xp1 - 2*x21*x32*xp1*xp2 - 2*x21*x41*std::pow(xp2, 2) + 2*x21*x42*xp1*xp2 + std::pow(x22, 2)*std::pow(x31, 2) - 2*std::pow(x22, 2)*x31*xp1 + std::pow(x22, 2)*std::pow(xp1, 2) - 2*x22*std::pow(x31, 2)*xp2 + 2*x22*x31*x32*xp1 + 2*x22*x31*x41*xp2 + 2*x22*x31*x42*xp1 - 2*x22*x31*xp1*xp2 - 4*x22*x32*x41*xp1 + 2*x22*x32*std::pow(xp1, 2) + 2*x22*x41*xp1*xp2 - 2*x22*x42*std::pow(xp1, 2) + std::pow(x31, 2)*std::pow(xp2, 2) - 2*x31*x32*xp1*xp2 - 2*x31*x41*std::pow(xp2, 2) + 2*x31*x42*xp1*xp2 + std::pow(x32, 2)*std::pow(xp1, 2) + 2*x32*x41*xp1*xp2 - 2*x32*x42*std::pow(xp1, 2) + std::pow(x41, 2)*std::pow(xp2, 2) - 2*x41*x42*xp1*xp2 + std::pow(x42, 2)*std::pow(xp1, 2)))/(x11*x32 - x11*x42 - x12*x31 + x12*x41 - x21*x32 + x21*x42 + x22*x31 - x22*x41);
-
-
-  // avoid division by 0
-  const double divisor2 = (x11*xi1 - x11 - x21*xi1 - x31*xi1 + x31 + x41*xi1);
-  if (fabs(divisor2) < eps)
-  {
-    x11 -= 0.6*eps;
-    xi1 += 0.8*eps;
-  }
-  const double xi2 = (x11*xi1 - x11 - x21*xi1 + xp1)/(x11*xi1 - x11 - x21*xi1 - x31*xi1 + x31 + x41*xi1);
-
-  xi[0] = xi1;
-  xi[1] = xi2;
-
-  VLOG(1) << "quadrilateralGetPointCoordinates, extents: [" << extentX << "," << extentY << "," << extentZ
-    << "], coordinates: [" << coordinate0 << "," << coordinate1 << "], element: [" << x11 << "," << x12
-    << "], [" << x21 << "," << x22 << "], [" << x31 << "," << x32 << "], [" << x41 << "," << x42 << "], p: ["
-    << xp1 << "," << xp2 << "], xi: [" << xi1 << "," << xi2 << "]";
 }
 
 double estimateMaximumEigenvalue(const Tensor2<3> &matrix)

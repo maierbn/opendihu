@@ -11,14 +11,13 @@
 #   mpirun -n 4 ./cuboid ../settings_cuboid.py 2 2 100 parallel
 
 
-end_time = 20
+end_time = 2
 
 import numpy as np
 import pickle
 import sys
 
 # global parameters
-PMax = 7.3              # maximum stress [N/cm^2]
 Conductivity = 3.828    # sigma, conductivity [mS/cm]
 Am = 500.0              # surface area to volume ratio [cm^-1]
 Cm = 0.58               # membrane capacitance [uF/cm^2]
@@ -33,9 +32,9 @@ firing_times_file = "../../../input/MU_firing_times_real.txt"
 
 # timing parameters
 stimulation_frequency = 10.0      # stimulations per ms
-dt_1D = 1e-3                      # timestep width of diffusion
-dt_0D = 1e-3                      # timestep width of ODEs
-dt_3D = 3e-3                      # overall timestep width of splitting
+dt_1D = 3e-4                      # timestep width of diffusion
+dt_0D = 3e-4                      # timestep width of ODEs
+dt_3D = 3e-4                      # overall timestep width of splitting
 output_timestep = 1e0             # timestep for output files
 n_nodes_per_fiber = 1000             # number of nodes per fiber
 n_fibers = 10
@@ -216,7 +215,9 @@ def get_instance_config(i):
           "timeStepOutputInterval":       1e4,
           "inputMeshIsGlobal":            True,
           "dirichletBoundaryConditions":  {},
+          "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
           "nAdditionalFieldVariables":    0,   
+          "additionalSlotNames":          [],
           "checkForNanInf":               True,
           
           "CellML" : {
@@ -240,11 +241,11 @@ def get_instance_config(i):
             "algebraicsForTransfer":                  [],                                              # which algebraic values to use in further computation
             "statesForTransfer":                      0,                                              # Shorten / Hodgkin Huxley: state 0 = Vm, Shorten: rate 28 = gamma, algebraic 0 = gamma (OC_WANTED[0])
             "parametersForTransfer":                  [],
-            "parametersUsedAsAlgebraic": parameters_used_as_algebraic,  #[32],       # list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
-            "parametersUsedAsConstant": parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
-            "parametersInitialValues": parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-            "meshName": "MeshFiber_{}".format(i),
-            "stimulationLogFilename": "out/stimulation.log",
+            "parametersUsedAsAlgebraic":              parameters_used_as_algebraic,  #[32],       # list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+            "parametersUsedAsConstant":               parameters_used_as_constant,          #[65],           # list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
+            "parametersInitialValues":                parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
+            "meshName":                               "MeshFiber_{}".format(i),
+            "stimulationLogFilename":                 None,
           },
         },
       },
@@ -253,19 +254,25 @@ def get_instance_config(i):
           "initialValues": [],
           #"numberTimeSteps": 1,
           "timeStepWidth":                dt_1D,  # 1e-5
+          "timeStepWidthRelativeTolerance": 1e-10,
           "logTimeStepWidthAsKey":        "dt_1D",
           "durationLogKey":               "duration_1D",
           "timeStepOutputInterval":       1e4,
+          "timeStepWidthRelativeTolerance": 1e-10,
           "dirichletBoundaryConditions":  bc,
+          "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
           "inputMeshIsGlobal":            True,
           "solverName":                   "implicitSolver",
           "nAdditionalFieldVariables":    0,
+          "additionalSlotNames":          [],
           "checkForNanInf":               True,
+          
           "FiniteElementMethod" : {
             "solverName":                 "implicitSolver",
             "inputMeshIsGlobal":          True,
             "meshName":                   "MeshFiber_{}".format(i),
             "prefactor":                  Conductivity/(Am*Cm),
+            "slotName":                   "vm",
           },
           "OutputWriter" : [
             {"format": "Paraview", "outputInterval": (int)(1./dt_1D*output_timestep), "filename": "out/fibre_"+str(i), "binary": True, "fixedFormat": False, "combineFiles":False, "fileNumbering": "incremental"},
@@ -287,7 +294,7 @@ config = {
   "Meshes": {
     "MeshFiber_{}".format(i): {
       "nElements":              n_nodes_per_fiber-1,
-      "nodePositions":          [[x,i,0] for x in np.linspace(0,(n_nodes_per_fiber-1)/100.,n_nodes_per_fiber)],
+      "nodePositions":          [[x,i*0.01,0] for x in np.linspace(0,(n_nodes_per_fiber-1)/100.,n_nodes_per_fiber)],
       "inputMeshIsGlobal":      True,
       "setHermiteDerivatives":  False,
       "logKey": "1D"

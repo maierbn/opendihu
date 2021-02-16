@@ -48,41 +48,28 @@ The two template arguments of `CellmlAdapter` are the *number of states* and the
 This has to match the actual numbers of the CellML model that is to be computed. Consequently, when a specific model should be computed, the CellmlAdapter has be adjusted.
 
 If the numbers are not correct a corresponding error will be shown from which the correct numbers can be determined.
-
+  
 Note that only explicit timestepping schemes are possible, which is current ``TimeSteppingScheme::ExplicitEuler`` or ``TimeSteppingScheme::Heun``.
+
+There is an optional third template argument which specifies the function space, on which the CellML instances will be solved. 
+
+.. code-block:: c
+
+  TimeSteppingScheme::ExplicitEuler<
+    CellmlAdapter<57,1,FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunction::LagrangeOfOrder<1>>>  // nStates,nAlgebraics: 57,71 = Shorten, 4,9 = Hodgkin Huxley
+  >
+
+This template argument is required if the mesh should be reused. 
+E.g., for Monodomain eq. there is a splitting scheme with CellML and Diffusion and both parts use the same mesh. Then you have to assert that the mesh is the same type in the diffusion and here, e.g. by setting the mesh to structured deformable, as shown above.
+
+The default FunctionSpace is `FunctionSpace::Generic` which is the following typedef:
+
+.. code-block:: c
+
+  typedef FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>,BasisFunction::LagrangeOfOrder<1>> Generic;
 
 .. code-block:: python
 
-  "CellML" : {
-    "modelFilename":                          "../../input/hodgkin_huxley_1952.c",    # input C++ source file or cellml XML file
-    #"statesInitialValues":                   [],                                             # if given, the initial values for the the states of one instance
-    "initializeStatesToEquilibrium":          False,                                          # if the equilibrium values of the states should be computed before the simulation starts
-    "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
-    
-    # optimization parameters
-    "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
-    "approximateExponentialFunction":         True,                                          # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
-    "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
-    "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
-    
-    # stimulation callbacks
-    #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current
-    #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_specific_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-    "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setSpecificParameters
-    #"setSpecificStatesCallInterval":         2*int(1./variables.stimulation_frequency/variables.dt_0D),       # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
-    "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
-    "setSpecificStatesCallFrequency":         variables.get_specific_states_call_frequency(fiber_no, motor_unit_no),   # set_specific_states should be called variables.stimulation_frequency times per ms
-    "setSpecificStatesFrequencyJitter":       variables.get_specific_states_frequency_jitter(fiber_no, motor_unit_no), # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
-    "setSpecificStatesRepeatAfterFirstCall":  0.01,                                                            # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
-    "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),# [ms] first time when to call setSpecificStates
-    "additionalArgument":                     fiber_no,
-    
-    "mappings":                               mappings,                             # mappings between parameters and algebraics/constants and between connectorSlots and states, algebraics or parameters, they are defined in helper.py
-    "parametersInitialValues":                parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-    
-    "meshName":                               "MeshFiber_{}".format(fiber_no),
-    "stimulationLogFilename":                 "out/stimulation.log",
-  }  
   "CellML": {
     "modelFilename":                          "../../input/hodgkin_huxley_1952.c",    # CellML file (xml) or C++ source file
     #"libraryFilename":                       "cellml_simd_lib.so",                   # (optional) filename of a compiled library, overrides modelFilename
@@ -91,8 +78,8 @@ Note that only explicit timestepping schemes are possible, which is current ``Ti
     "initializeStatesToEquilibriumTimestepWidth": 1e-4,                               # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
    
     # optimization parameters
-    "optimizationType":                       "simd",                                 # "vc", "simd", "openmp": type of generated optimizated source file
-    "approximateExponentialFunction":         True,                                   # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+    "optimizationType":                       "simd",                                 # "vc", "simd", "openmp" or "gpu": type of generated optimizated source file
+    "approximateExponentialFunction":         True,                                   # if optimizationType is "vc" or "gpu", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
     "compilerFlags":                          "-fPIC -O3 -march=native -shared ",     # compiler flags used to compile the optimized model code
     "maximumNumberOfThreads":                 0,                                      # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
     
@@ -111,12 +98,12 @@ Note that only explicit timestepping schemes are possible, which is current ``Ti
     
     "mappings": {                                                                     # mappings between parameters and algebraics/constants and between connectorSlots and states, algebraics or parameters
       ("parameter", 0):           ("constant", "membrane/i_Stim"),                    # parameter 0 is mapped to constant with name "membrane/i_Stim"
-      ("connectorSlot", 0): ("state", "membrane/V"),                            # as output connector slot 0 expose state with name "membrane/V"
+      ("connectorSlot", 0):       ("state", "membrane/V"),                            # as output connector slot 0 expose state with name "membrane/V"
     },
     
-    #"algebraicsForTransfer":              [],                                    # alternative way of specifying "mappings": which algebraic values to use in further computation
+    #"algebraicsForTransfer":                 [],                                    # alternative way of specifying "mappings": which algebraic values to use in further computation
     #"statesForTransfer":                     [0],                                   # alternative way of specifying "mappings": which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm
-    #"parametersUsedAsAlgebraic":          [32],                                  # alternative way of specifying "mappings": list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
+    #"parametersUsedAsAlgebraic":             [32],                                  # alternative way of specifying "mappings": list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.
     #"parametersUsedAsConstant":              [65],                                  # alternative way of specifying "mappings": list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.
     "parametersInitialValues":                [0.0, 1.0],                            # initial values for the parameters, e.g. I_Stim, l_hs
     "meshName":                               "MeshFiber_{}".format(fiber_no),
@@ -139,12 +126,14 @@ This will be used instead of the model given in *modelFilename*. Usually this is
 
 statesInitialValues
 ---------------------
-Optional, if given it should contain a list of initial values for all states. 
-If there are multiple instances (multiple nodes of a mesh where the model is computed), the list can either contain separate values for all states for all instances. Then it takes the form `[instance0state0, instance0state1, ..., instance0stateN, instance1state0, instance1state1, ..., instance1stateN, ...]`
+Optional. Default: `"CellML"`
 
-Or you only specify each state once, then all instances will be initialized by the same values.
+If *statesInitialValues* is a list, it should contain an initial value for each state of the CellML model. 
+If there are multiple instances all instances will be initialized by the same values.
 
-If *statesInitialValues* is not specified, the initial values will be taken from the CellML model file (either XML or C). Usually this is what you want.
+If *statesInitialValues* is set to *CellML*, the initial values will be taken from the CellML model file (either XML or C). Usually this is what you want.
+
+If *statesInitialValues* is set to *undefined*, no initial values will be set and the outer time stepping scheme can set initial values by giving `"initialValues"`.
 
 initializeStatesToEquilibrium and initializeStatesToEquilibriumTimestepWidth
 --------------------------------------------------------------------------------
@@ -158,9 +147,9 @@ Given the CellML model as
 the equation is solved by a 4th order Runge-Kutta timestepping scheme, until
 
 .. math::
-   \Vert\frac{\partial \textbf{u}}{\partial t}\vert < \eps
+   \Vert\frac{\partial \textbf{u}}{\partial t}\Vert < \epsilon
    
-is reached, with :math:`\eps = 1e-5`. The timestep width of the Runge-Kutta scheme can be given by `initializeStatesToEquilibriumTimestepWidth`. If an instability with this timestep width is detected (any value gets `inf` or `nan`), the timestep width will be decreased automatically and the computation will be restarted.
+is reached, with :math:`\epsilon = 1e-5`. The timestep width of the Runge-Kutta scheme can be given by `initializeStatesToEquilibriumTimestepWidth`. If an instability with this timestep width is detected (any value gets `inf` or `nan`), the timestep width will be decreased automatically and the computation will be restarted.
 
 The resulting equilibrium values and the residuals are written to a file `<modelfilename>_equilibrium_values.txt`, where `<modelfilename>` is the file name of the model. An example for such a file is given below:
 
@@ -250,6 +239,9 @@ This function can change some states and has the following signature:
     # nodal_dof_index is the dof number of the node, usually 0. Only for Hermite ansatz functions it can be higher.
     # state_no is the state number to set 
     # value is the new state value
+
+If ``setSpecificStatesFunction`` will be called, this happens during the time step update just before each evaluation of the right hand side / the CellML model.
+I.e. for Heun's method it will be called up to twice per time step (depending on the other `setSpecificStates*` settings).
     
 *setSpecificStatesCallEnableBegin*, *setSpecificStatesCallFrequency* and *setSpecificStatesFrequencyJitter*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -263,6 +255,14 @@ The callback is then called according to the frequency in *setSpecificStatesCall
 The frequency is modulated by applying a relative jitter, given in a list by *setSpecificStatesFrequencyJitter*. The jitter values are taken from the list and repeated. A value of 0 indicates no jitter, i.e. the frequency is met exactly. E.g., a value of 1.1 means a 10% longer time between subsequent calls to the function.
 
 After the callback was called it will be repeated in the next timesteps *setSpecificStatesRepeatAfterFirstCall* times. Using this setting, a "square" signal can be modelled.
+
+A visualization of the options is shown in :numref:`stimulation_times_2`.
+
+.. _stimulation_times_2:
+.. figure:: /settings/images/stimulation_times.svg
+  :width: 80%
+  
+  Options that influence the stimulation. A time line is shown from left to right. The red blocks are time spans when `setSpecificStates` will be called. Because setSpecificStates usually checks a `firing times file` whether or not to activate the fiber, it can make sense to use the file `"MU_firing_times_always.txt"`. This file always indicates stimulation. Thus, the spike trains are completely determined by the options `setSpecificStatesCallEnableBegin`, `setSpecificStatesCallFrequency` and `setSpecificStatesFrequencyJitter`.
     
 *handleResultFunction* and *handleResultCallInterval*
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -373,6 +373,7 @@ as well as the connection of `connectorSlots` to `states`, `algebraics` and `par
       ("connectorSlot", 3, "A"):  ("algebraic", "leakage_current/i_L"),
       ("connectorSlot", 3, "A"):  "leakage_current/i_L",                    # alternative
       ("connectorSlot", "slotB"): ("parameter", 0),
+      ("connectorSlot", "lambda"):("constant", "razumova/L_S"),         # expose fiber stretch to get the current fiber stretch from the mechanics solver
     }
     
 The value of `mappings` is a Python Dict. 
@@ -426,7 +427,8 @@ Typical mappings and initial values of parameters by commonly used cellml models
       ("parameter", 0):     ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
       ("parameter", 1):     ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
       ("connectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
-      ("connectorSlot", 1): ("algebraic", "razumova/stress"),  # expose algebraic 12 = γ to the operator splitting
+      ("connectorSlot", 1): ("algebraic", "razumova/stress"),     # expose algebraic 12 = γ to the operator splitting
+      ("connectorSlot", "lambda"):("constant", "razumova/L_S"),   # expose fiber stretch to get the current fiber stretch from the mechanics solver
     }
     parameters_initial_values = [0.0, 1.0]                    # wal_environment/I_HH = I_stim, razumova/L_S = λ
     
@@ -437,7 +439,7 @@ Typical mappings and initial values of parameters by commonly used cellml models
       ("parameter", 1):     ("constant", "Razumova/l_hs"),        # parameter 1 is constant 8 = fiber stretch λ
       ("parameter", 2):     ("constant", "Razumova/velo"),        # parameter 2 is constant 9 = fiber contraction velocity \dot{λ}
       ("connectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
-      ("connectorSlot", 1): ("algebraic", "Razumova/sigma"),   # expose algebraic 0 = γ to the operator splitting
+      ("connectorSlot", 1): ("algebraic", "Razumova/sigma"),      # expose algebraic 0 = γ to the operator splitting
     }
     parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
     
@@ -468,7 +470,9 @@ A file name of an output file that will contain all firing times.
 
 optimizationType
 --------------------
-Possible values: ``simd``, ``vc``, ``openmp``. Which type of code to generate. ``openmp`` produces code for shared-memory parallelization, using OpenMP. ``simd`` produces auto-vectorizable code. ``vc`` produces explicitly vectorized code (fastest).
+Possible values: ``simd``, ``vc``, ``openmp`` or ``gpu``. Which type of code to generate. ``openmp`` produces code for shared-memory parallelization, using OpenMP. ``simd`` produces auto-vectorizable code. ``vc`` produces explicitly vectorized code (fastest). ``gpu`` is only available if the :doc:`fast_monodomain_solver` is used.
+
+See also the notes on ``vc`` about AVX-512 on the page of :doc:`fast_monodomain_solver`.
 
 compilerFlags
 -----------------

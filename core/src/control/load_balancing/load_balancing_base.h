@@ -6,6 +6,7 @@
 #include "interfaces/runnable.h"
 #include "interfaces/splittable.h"
 #include "interfaces/discretizable_in_time.h"
+#include "utility/vector_operators.h"
 #include "control/dihu_context.h"
 #include "control/python_config/python_config.h"
 #include "time_stepping_scheme/00_time_stepping_scheme.h"
@@ -31,7 +32,7 @@ public:
   LoadBalancingBase(DihuContext context);
 
   //! advance simulation by the given time span [startTime_, endTime_]
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
   //! initialize time span from specificSettings_
   void initialize();
@@ -41,6 +42,9 @@ public:
 
   //! reset state
   void reset();
+
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
   //! return the data object of the timestepping scheme
   Data &data();

@@ -61,7 +61,7 @@ d  = 9.1733                 # [-] anisotropy parameter
 b = 0
 
 material_parameters = [c1, c2, b, d]   # material parameters
-pmax = 7.3                  # [N/cm^2] maximum isometric active stress
+pmax = 7.3                  # [N/cm^2] maximum isometric active stress (30-40)
 
 # load
 constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
@@ -70,13 +70,8 @@ bottom_traction = [0.0,0.0,0.0]        # [N]
 # Monodomain parameters
 # --------------------
 # quantities in CellML unit system
-sigma_f = 8.93              # [mS/cm] conductivity in fiber direction (f)
-sigma_xf = 0                # [mS/cm] conductivity in cross-fiber direction (xf)
-sigma_e_f = 6.7             # [mS/cm] conductivity in extracellular space, fiber direction (f)
-sigma_e_xf = 3.35           # [mS/cm] conductivity in extracellular space, cross-fiber direction (xf) / transverse
-
 Conductivity = 3.828      # [mS/cm] sigma, conductivity
-Am = 500.0                  # [cm^-1] surface area to volume ratio
+Am = 500.0                  # [cm^-1] surface area to volume ratio (this is not used, instead values of motor_units are used)
 Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch)
 # diffusion prefactor = Conductivity/(Am*Cm)
 
@@ -107,7 +102,7 @@ stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, ad
 dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_1D = 1e-3                        # [ms] timestep width of diffusion (1e-3)
 dt_splitting = 1e-3                 # [ms] overall timestep width of strang splitting (1e-3)
-dt_3D = 0.1                           # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
+dt_3D = 1                           # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep_fibers = 4e0       # [ms] timestep for fiber output, 0.5
 output_timestep_3D = dt_3D              # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
 

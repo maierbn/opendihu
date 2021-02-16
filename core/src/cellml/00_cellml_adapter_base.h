@@ -41,10 +41,10 @@ public:
   typedef ::Data::SlotConnectorData<FunctionSpaceType,nStates_,nAlgebraics_> SlotConnectorDataType;
 
   //! constructor from context
-  CellmlAdapterBase(DihuContext context, bool initializeOutputWriter);
-
-  //! constructor from context
   CellmlAdapterBase(DihuContext context);
+
+  //! constructor with given data
+  CellmlAdapterBase(DihuContext context, const CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::Data &rhsData);
 
   //! destructor
   ~CellmlAdapterBase();
@@ -58,9 +58,6 @@ public:
   //! load model, use settings given in context
   void initialize();
 
-  //! create generic function space with given number of instances
-  void initializeFromNInstances(int nInstances);
-  
   //! set initial values as given in python config
   bool setInitialValues(std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nStates_>> initialValues);
 
@@ -129,6 +126,7 @@ protected:
   double initializeStatesToEquilibriumTimestepWidth_;      //< timestep width for computation of equilibrium states
 
   CellmlSourceCodeGenerator cellmlSourceCodeGenerator_;    //< object that holds all source code related to the model
+  bool initialized_;                                       //< if initialize has been called
 };
 
 #include "cellml/00_cellml_adapter_base.tpp"

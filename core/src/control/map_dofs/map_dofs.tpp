@@ -8,7 +8,7 @@ namespace Control
 //! advance simulation by the given time span
 template<typename FunctionSpaceType, typename NestedSolverType>
 void MapDofs<FunctionSpaceType,NestedSolverType>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   LOG(DEBUG) << "MapDofs::advanceTimeSpan, " << mappingsBeforeComputation_.size() << " mappings before computation, "
     << mappingsAfterComputation_.size() << " mappings after computation.";
@@ -18,7 +18,7 @@ advanceTimeSpan()
   performMappings(mappingsBeforeComputation_, nestedSolver_.startTime());
 
   // compute the simulation in the current time span with the nested solver
-  nestedSolver_.advanceTimeSpan();
+  nestedSolver_.advanceTimeSpan(withOutputWritersEnabled);
 
   LOG(DEBUG) << "MapDofs::performMappings afterComputation";
   // perform mapping from settings "afterComputation"
@@ -68,6 +68,15 @@ endTime()
   return nestedSolver_.endTime();
 }
 
+//! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+template<typename FunctionSpaceType, typename NestedSolverType>
+void MapDofs<FunctionSpaceType,NestedSolverType>::
+callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
+{
+  // call the output writer of the nested solver
+  nestedSolver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
+}
+
 template<typename FunctionSpaceType, typename NestedSolverType>
 void MapDofs<FunctionSpaceType,NestedSolverType>::
 performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
@@ -100,7 +109,7 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
       break;
     }
 
-    LOG(DEBUG) << "MapDofs::perform mapping slots " << mapping.connectorSlotNoFrom << " -> " << mapping.connectorSlotNosTo << ", " << modeString;
+    LOG(DEBUG) << "-> MapDofs::perform mapping slots " << mapping.connectorSlotNoFrom << " -> " << mapping.connectorSlotNosTo << ", " << modeString;
 
     // static variables for input and output of values
     static std::map<int,std::vector<double>> valuesToSendToRanks;
@@ -170,8 +179,10 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
           }
         }
 
-        LOG(DEBUG) << "slot " << mapping.connectorSlotNosTo[toSlotIndex] << " (index " << toSlotIndex << "/" << mapping.connectorSlotNosTo.size() << ")"
+#ifndef NDEBUG
+        LOG(DEBUG) << "   slot " << mapping.connectorSlotNosTo[toSlotIndex] << " (index " << toSlotIndex << "/" << mapping.connectorSlotNosTo.size() << ")"
           << ", set values from callback: " << valuesToSet << " at dofs: " << mapping.dofNosToSetLocal;
+#endif
 
         // set values in target field variable
         slotSetValues(mapping.connectorSlotNosTo[toSlotIndex], mapping.slotConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
@@ -184,7 +195,7 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
       Py_CLEAR(inputValuesPy);
     }
     else
-    {
+    { 
       // get input values from the selected slot
       // loop over the ranks and the dofs that have to be send to them
       for (std::pair<int,std::vector<dof_no_t>> rankNoAndDofNosLocal : mapping.dofNosLocalOfValuesToSendToRanks)
@@ -197,8 +208,6 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
         valuesToSendToRanks[rankNo].clear();
         slotGetValues(mapping.connectorSlotNoFrom, mapping.slotConnectorArrayIndexFrom, dofNosLocal, valuesToSendToRanks[rankNo]);
       }
-
-      LOG(DEBUG) << "get values " << valuesToSendToRanks;
 
       // if communication is involved
       if (mapping.mode == DofsMappingType::modeCommunicate)
@@ -258,8 +267,12 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
           }
         }
 
-        LOG(DEBUG) << "values: " << inputValues << ", dofs that are above threshold " << mapping.thresholdValue
+#ifndef NDEBUG
+        LOG(DEBUG) << "   mapping.dofNosLocalOfValuesToSendToRanks: " << mapping.dofNosLocalOfValuesToSendToRanks;
+        LOG(DEBUG) << "   values: " << inputValues << ", dofs that are above threshold " << mapping.thresholdValue
+          << ": " << mapping.dofNosToSetLocal
           << ", values to be set: " << valuesToSet;
+#endif
 
         // set values
         slotSetValues(mapping.connectorSlotNosTo[0], mapping.slotConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);

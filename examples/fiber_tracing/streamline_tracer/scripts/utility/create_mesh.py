@@ -17,6 +17,9 @@
 #  The core functionality is implemented in opendihu/scripts/geometry_manipulation/stl_create_mesh.py. The main functions are 
 #  stl_create_mesh.standardize_loop, stl_create_mesh.create_planar_mesh, stl_create_mesh.create_3d_mesh
 #
+#  Note, that you need to create the pickle file `rings` first. This can be done with `scripts/utility/create_rings.py`.
+#  Instead of calling this python script, use $OPENDIHU_HOME/examples/fiber_tracing/streamline_tracer/scripts/run_evaluation.sh
+#
 # usage: ./create_mesh.py [<triangulation_type> [<parametric_space_shape> [<n_points_x> [<n_grid_points_x> [<improve_mesh> [<pickle output filename> <bin output filename>]]]]]]"
 
 import datetime
@@ -45,13 +48,17 @@ import pickle
 import timeit
 import datetime
 import time
+
+# add to python path in order to load stl_create_mesh
+if os.environ.get("OPENDIHU_HOME"):
+  sys.path.append(os.path.join(os.environ.get("OPENDIHU_HOME"), "scripts/geometry_manipulation"))
 import stl_create_mesh
 
 duration = 0
 
 # constant parameters
 triangulation_type = 1          # 0 = scipy, 1 = triangle, 2 = center pie (2 is best), 3 = minimized distance
-parametric_space_shape = 3      # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid
+parametric_space_shape = 3      # 0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid, 4 = like 3 but move grid points such that mean distance between points in world space gets optimal
 max_area_factor = 2.            # only for triangulation_type 1, approximately the minimum number of triangles that will be created because of a maximum triangle area constraint
 show_plot = False
 debug = False  
@@ -70,7 +77,7 @@ if parametric_space_shape == 0:  # for unit circle
   
   
 if len(sys.argv) < 2:
-  print("usage: ./create_mesh.py [<triangulation_type> [<parametric_space_shape> [<n_points_x> [<n_grid_points_x> [<improve_mesh> [<pickle output filename> <bin output filename>]]]]]]")
+  print("usage: ./create_mesh.py [<triangulation_type> [<parametric_space_shape> [<n_points_x> [<n_grid_points_x (-1=auto)> [<improve_mesh> [<pickle output filename> <bin output filename>]]]]]]")
   sys.exit(0)
 
 if len(sys.argv) >= 2:
@@ -85,8 +92,11 @@ if len(sys.argv) >= 4:
   n_grid_points_y = n_points_x+1
   
 if len(sys.argv) >= 5:
-  n_grid_points_x = int(sys.argv[4])
-  n_grid_points_y = n_grid_points_x
+  argument_value = int(sys.argv[4])
+  # if set to a negative value, do not use this value
+  if argument_value > 0:
+    n_grid_points_x = argument_value
+    n_grid_points_y = n_grid_points_x
   
 if len(sys.argv) >= 6:
   improve_mesh = False if int(sys.argv[5]) == 0 else True
@@ -95,8 +105,8 @@ if len(sys.argv) >= 8:
   pickle_output_filename = sys.argv[6]
   bin_output_filename = sys.argv[7]
   
-print("triangulation_type: {}".format(triangulation_type))
-print("parametric_space_shape: {}".format(parametric_space_shape))
+print("triangulation_type: {} (0 = scipy, 1 = triangle, 2 = center pie (2 is best), 3 = minimized distance)".format(triangulation_type))
+print("parametric_space_shape: {} (0 = unit circle, 1 = unit square, 2 = unit square with adjusted grid, 3 = unit circle with adjusted grid, 4 = like 3 but move grid points such that mean distance between points in world space gets optimal)".format(parametric_space_shape))
 print("n_points_x: {}".format(n_points_x))
 print("n_grid_points_x: {}".format(n_grid_points_x))
 print("n_grid_points_y: {}".format(n_grid_points_y))
@@ -113,11 +123,11 @@ print("{} loops".format(n_loops))
 
 # sample loop with 4*n_points_x equidistant points
 n_points = 4*n_points_x
-border_point_loops,lengths = stl_create_mesh.rings_to_border_points(loops, n_points)
+boundary_point_loops,lengths = stl_create_mesh.rings_to_boundary_points(loops, n_points)
 
 # triangle lists for debugging output to stl files
 out_triangulation_world_space = []
-markers_border_points_world_space = []
+markers_boundary_points_world_space = []
 out_triangulation_parametric_space = []
 grid_triangles_world_space = []
 grid_triangles_parametric_space = []
@@ -129,17 +139,17 @@ loop_grid_points = []  # list of grid point, for every slice, only contains loop
 distances_between_world_mesh_nodes_std = []   # list of distances between neighboring grid points
 relative_distances_between_world_mesh_nodes_std = []   # list of relative distances between neighbouring grid points, relative per slice
 
-# loop over all loops of border points
-for loop_no,(border_points,length) in enumerate(zip(border_point_loops,lengths)):
+# loop over all loops of boundary points
+for loop_no,(boundary_points,length) in enumerate(zip(boundary_point_loops,lengths)):
     
   print("")
-  print("Loop {}/{} with {} border points, length: {}".format(loop_no, n_loops, len(border_points), length))
+  print("Loop {}/{} with {} boundary points, length: {}".format(loop_no, n_loops, len(boundary_points), length))
   
-  # create 2D mesh with border_points
+  # create 2D mesh with boundary_points
   show_plot = False
-  grid_points_world_space,duration_1d = stl_create_mesh.create_planar_mesh(border_points, loop_no, n_points, \
+  grid_points_world_space,duration_1d = stl_create_mesh.create_planar_mesh(boundary_points, loop_no, n_points, \
     n_grid_points_x, n_grid_points_y, triangulation_type, parametric_space_shape, max_area_factor, improve_mesh, show_plot, debugging_stl_output,\
-    [out_triangulation_world_space, markers_border_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
+    [out_triangulation_world_space, markers_boundary_points_world_space, out_triangulation_parametric_space, grid_triangles_world_space, grid_triangles_parametric_space,\
       markers_grid_points_parametric_space, markers_grid_points_world_space])
 
   duration += duration_1d
@@ -160,10 +170,10 @@ standard_deviation_relative_distance_between_world_mesh_nodes = np.mean(relative
 # save mean distance and duration
 if not os.path.isfile("mesh_quality.csv"):
   with open("mesh_quality.csv", "w") as f:
-    f.write("# triangulation_type; parametric_space_shape; n_grid_points_x; n_grid_points_y; number of rings; standard deviation of distance; standard deviation of relative distances (distance/mean distance on every slice); duration\n")
+    f.write("# triangulation_type; parametric_space_shape; improve_mesh; debugging_stl_output; n_grid_points_x; n_grid_points_y; number of rings; standard deviation of distance; standard deviation of relative distances (distance/mean distance on every slice); duration\n")
 with open("mesh_quality.csv", "a") as f:
-  f.write("{};{};{};{};{};{};{};{}\n".\
-  format(triangulation_type, parametric_space_shape, n_grid_points_x, n_grid_points_y, len(loops),\
+  f.write("{};{};{};{};{};{};{};{};{};{}\n".\
+  format(triangulation_type, parametric_space_shape, improve_mesh, debugging_stl_output, n_grid_points_x, n_grid_points_y, len(loops),\
     standard_deviation_distance_between_world_mesh_nodes,\
     standard_deviation_relative_distance_between_world_mesh_nodes,duration))
 
@@ -245,7 +255,7 @@ def write_stl(triangles, outfile, description):
 
 if debugging_stl_output:
   print("current working directory: {}".format(os.getcwd()))
-  write_stl(markers_border_points_world_space,   "out/mesh_02_border_points_w.stl", "border points")
+  write_stl(markers_boundary_points_world_space,   "out/mesh_02_boundary_points_w.stl", "boundary points")
   write_stl(out_triangulation_world_space,       "out/mesh_03_triangulation_w.stl", "triangulation world space")
   write_stl(out_triangulation_parametric_space,  "out/mesh_04_triangulation_p.stl", "triangulation parametric space")
   write_stl(grid_triangles_parametric_space,     "out/mesh_05_grid_triangles_p.stl","grid parametric space")

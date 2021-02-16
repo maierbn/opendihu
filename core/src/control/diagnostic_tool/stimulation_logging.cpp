@@ -123,19 +123,20 @@ void StimulationLogging::writeLogFile()
     }
 
     // sort entries in logEntries_
+    // sort according to motor unit no
     std::sort(logEntries_.begin(), logEntries_.end(), [](const StimulationLogEntry &a, const StimulationLogEntry &b)
     {
       if (a.fiberNo == b.fiberNo && a.motorUnitNo == b.motorUnitNo)
       {
         return a.time - b.time < 0;
       }
-      else if (a.fiberNo == b.fiberNo)
+      else if (a.motorUnitNo == b.motorUnitNo)
       {
-        return a.motorUnitNo - b.motorUnitNo < 0;
+        return a.fiberNo - b.fiberNo < 0;
       }
       else
       {
-        return a.fiberNo - b.fiberNo < 0;
+        return a.motorUnitNo - b.motorUnitNo < 0;
       }
     });
 
@@ -145,7 +146,7 @@ void StimulationLogging::writeLogFile()
     OutputWriter::Generic::openFile(file, filename_);  // open file, and create directory if necessary, truncate file
 
     // output all entries in logEntries_
-    file << "# motor unit no; fiber no; stimulation times" << std::endl;
+    file << "# motor unit no; fiber no; stimulation times in ms" << std::endl;
 
     int currentFiberNo = -2;
     int currentMotorUnitNo = -2;

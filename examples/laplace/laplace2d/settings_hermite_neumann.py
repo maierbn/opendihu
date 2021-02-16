@@ -43,6 +43,7 @@ config = {
     #  30:0, 31:0.2, 32:0.4, 33:0.6, 34:0.8, 35:1
     #},
     "dirichletBoundaryConditions": {0:0},
+    "dirichletOutputFilename":     None,                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     "neumannBoundaryConditions": neumann_bc,        # Neumann BC are always interpolated using Lagrange ansatz functions with one dof per node (not Hermite), even if the solution uses Hermite ansatz functions
     "prefactor": 1,
     

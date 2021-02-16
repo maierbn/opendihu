@@ -23,7 +23,8 @@ config = {
     "outputInterval": 1.0,
     
     "dirichletBoundaryConditions": bc,
-    "neumannBoundaryConditions": [],
+    "dirichletOutputFilename":     None,                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+    "neumannBoundaryConditions":   [],
     "prefactor": 1,
     
     "solverType": "gmres",

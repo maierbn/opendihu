@@ -149,3 +149,4 @@ std::ostream &operator<<(std::ostream &stream, const PartitionedPetscVecForHyper
 
 #include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity_compressible.tpp"
 #include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity_incompressible.tpp"
+#include "partition/partitioned_petsc_vec/02_partitioned_petsc_vec_for_hyperelasticity_get_string.tpp"

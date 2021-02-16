@@ -35,8 +35,8 @@ public:
   CellmlAdapter(DihuContext context);
   
   //! constructor from other CellmlAdapter with new functionSpace (and therefore different number of instances),
-  //! preserves everything else
-  //! initialize does not need to be called afterwards
+  //! preserves everything else, initialize does not need to be called afterwards
+  //! this is needed by the LoadBalancing class
   CellmlAdapter(const CellmlAdapter &rhs, std::shared_ptr<FunctionSpace> functionSpace);
 
   //! return nStates_

@@ -27,6 +27,7 @@ reset()
 
   // deallocate Petsc vectors
   this->rhs_ = nullptr;
+  this->deformationGradient_ = nullptr;
 }
 
 template<typename FunctionSpaceType,int nComponents>
@@ -44,6 +45,13 @@ std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> Neu
 rhs()
 {
   return this->rhs_;
+}
+
+template<typename FunctionSpaceType,int nComponents>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,9>> &NeumannBoundaryConditions<FunctionSpaceType,nComponents>::
+deformationGradient()
+{
+  return this->deformationGradient_;
 }
 
 } // namespace Data

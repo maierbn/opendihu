@@ -8,7 +8,7 @@ namespace FieldVariable
 //#define USE_APPROXIMATE_GRADIENT    // if the method of approximating the gradient by difference quotients between neighouring nodes should be used (this is not so good in general)
 // the alternative is to compute the gradient from the ansatz functions (this is more accurate but bad for badly conditioned elements)
 
-const int CONDITION_TOLERANCE = 25;    // condition number value, if the condition number is higher, the dof will get the approximated gradient
+const int CONDITION_TOLERANCE = 1000;    // condition number value, if the condition number is higher, the dof will get the approximated gradient
 
 // structured mesh
 //! compute the gradient field
@@ -85,11 +85,12 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
     // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
     std::array<Vec3,nDofsPerElement> geometryValues;
     this->functionSpace_->getElementGeometry(elementNoLocal, geometryValues);
+    double approximateMeshWidth = MathUtility::computeApproximateMeshWidth<double,nDofsPerElement>(geometryValues);
 
     const int nDofsPerNode = this->functionSpace_->nDofsPerNode();
     std::array<double,D> xi;
 
-    LOG(DEBUG) << "mesh " << this->functionSpace_->meshName() << " element " << elementNoLocal << ", values: " << solutionValues;
+    //LOG(DEBUG) << "mesh " << this->functionSpace_->meshName() << " element " << elementNoLocal << ", values: " << solutionValues;
 
     // loop over dofs in element, where to compute the gradient
     for (int dofIndex = 0; dofIndex < nDofsPerElement; dofIndex++)
@@ -114,7 +115,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       // compute the 3xD jacobian of the parameter space to world space mapping
       Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(FunctionSpaceType::computeJacobian(geometryValues, xi));
       double jacobianDeterminant;
-      Tensor2<D> inverseJacobianParameterSpace = MathUtility::template computeInverse<double>(jacobianParameterSpace, jacobianDeterminant);
+      Tensor2<D> inverseJacobianParameterSpace = MathUtility::template computeInverse<double>(jacobianParameterSpace, approximateMeshWidth, jacobianDeterminant);
 
       // estimate condition value of jacobian
       if (jacobianConditionNumberField != nullptr)
@@ -129,7 +130,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       // get gradient at dof
       std::array<double,D> gradPhiWorldSpace = this->functionSpace_->interpolateGradientInElement(solutionValues, inverseJacobianParameterSpace, xi);
 
-      LOG(DEBUG) << "   dof " << dofIndex << ", dofNo " << dofNo << ", nAdjacentElements: " << nAdjacentElements[dofNo] << ", gradPhiWorldSpace: " << gradPhiWorldSpace << ", inverseJacobianParameterSpace: " << inverseJacobianParameterSpace;
+      //LOG(DEBUG) << "   dof " << dofIndex << ", dofNo " << dofNo << ", nAdjacentElements: " << nAdjacentElements[dofNo] << ", gradPhiWorldSpace: " << gradPhiWorldSpace << ", inverseJacobianParameterSpace: " << inverseJacobianParameterSpace;
 
       // scale value
       gradPhiWorldSpace /= nAdjacentElements[dofNo];
@@ -192,6 +193,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
     }  // dofIndex
   }  // elementNoLocal
 
+  gradientField->zeroGhostBuffer();
   gradientField->finishGhostManipulation();
   approximatedGradientField->finishGhostManipulation();
 
@@ -315,6 +317,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
     // get geometry field (which are the node positions for Lagrange basis and node positions and derivatives for Hermite)
     std::array<Vec3,nDofsPerElement> geometryValues;
     this->functionSpace_->getElementGeometry(elementNoLocal, geometryValues);
+    double approximateMeshWidth = MathUtility::computeApproximateMeshWidth<double,nDofsPerElement>(geometryValues);
 
     std::array<double,D> xi;
 
@@ -341,7 +344,7 @@ computeGradientField(std::shared_ptr<FieldVariable<FunctionSpaceType, FunctionSp
       // compute the 3xD jacobian of the parameter space to world space mapping
       Tensor2<D> jacobianParameterSpace = MathUtility::transformToDxD<D,D>(FunctionSpaceType::computeJacobian(geometryValues, xi));
       double jacobianDeterminant;
-      Tensor2<D> inverseJacobianParameterSpace = MathUtility::template computeInverse<double>(jacobianParameterSpace, jacobianDeterminant);
+      Tensor2<D> inverseJacobianParameterSpace = MathUtility::template computeInverse<double>(jacobianParameterSpace, approximateMeshWidth, jacobianDeterminant);
 
       // estimate condition value of jacobian
       double conditionNumber = MathUtility::estimateConditionNumber(jacobianParameterSpace, inverseJacobianParameterSpace);

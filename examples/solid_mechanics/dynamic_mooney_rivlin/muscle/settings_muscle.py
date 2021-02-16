@@ -29,7 +29,9 @@ parser.add_argument('--n_subdomains_z', '-z',                help='Number of sub
 parser.add_argument('-vmodule', help='ignore')
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+if len(other_args) != 0 and rank_no == 0:
+    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
 
 # partitioning
 # ------------
@@ -255,6 +257,8 @@ config = {
     #"initialValuesVelocities":     [[01*z,0.0,0.0] for i in range(mx*my) for z in range(mz)],
     "extrapolateInitialGuess":      True,               # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
     "constantBodyForce":            constant_body_force,     # e.g. for gravity
+    
+    "dirichletOutputFilename":     "out/dirichlet_boundary_conditions",                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     
     "OutputWriter" : [   # output files for displacements function space (quadratic elements), contains displacements, velocities and PK2 stresses
       {"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},

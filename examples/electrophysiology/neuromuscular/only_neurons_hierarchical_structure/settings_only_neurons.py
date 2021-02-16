@@ -27,13 +27,15 @@ from create_partitioned_meshes_for_settings import *   # file create_partitioned
 
 # if first argument contains "*.py", it is a custom variable definition file, load these values
 if ".py" in sys.argv[0]:
-  variables_file = sys.argv[0]
-  variables_module = variables_file[0:variables_file.find(".py")]
+  variables_path_and_filename = sys.argv[0]
+  variables_path,variables_filename = os.path.split(variables_path_and_filename)  # get path and filename 
+  sys.path.insert(0, os.path.join(script_path,variables_path))                    # add the directory of the variables file to python path
+  variables_module,_ = os.path.splitext(variables_filename)                       # remove the ".py" extension to get the name of the module
   
   if rank_no == 0:
-    print("Loading variables from {}.".format(variables_file))
+    print("Loading variables from \"{}\".".format(variables_path_and_filename))
     
-  custom_variables = importlib.import_module(variables_module)
+  custom_variables = importlib.import_module(variables_module, package=variables_filename)    # import variables module
   variables.__dict__.update(custom_variables.__dict__)
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
@@ -67,7 +69,9 @@ parser.add_argument('--use_symmetric_preconditioner_matrix', help='If the precon
 parser.add_argument('--initial_guess_nonzero',               help='If the initial guess to the linear solver should be the last solution.',  default=variables.initial_guess_nonzero, action='store_true')
 
 # parse command line arguments and assign values to variables module
-args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+if len(other_args) != 0 and rank_no == 0:
+    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:
@@ -122,8 +126,8 @@ if rank_no == 0:
   t_start_script = timeit.default_timer()
     
 # initialize all helper variables
-#from helper import *
-variables.meshes = {}
+from helper import *
+#variables.meshes = {}
 
 # callback function that receives the whole result values and produces plots while the simulation is running
 def handle_result(n_instances, time_step_no, current_time, states, algebraics, name_information, additional_argument):
@@ -159,7 +163,7 @@ if False:
     "initialGuessNonzero":              variables.initial_guess_nonzero,      # if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers
     "enableFatComputation":             True,                                 # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
     "showLinearSolverOutput":           variables.show_linear_solver_output,  # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
-    "updateSystemMatrixEveryTimestep":  False,                                 # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
+    "updateSystemMatrixEveryTimestep":  False,                                # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
     
     "PotentialFlow": {
       "FiniteElementMethod" : {  
@@ -167,6 +171,7 @@ if False:
         "solverName":                   "potentialFlowSolver",
         "prefactor":                    1.0,
         "dirichletBoundaryConditions":  variables.potential_flow_dirichlet_bc,
+        "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
         "neumannBoundaryConditions":    [],
         "inputMeshIsGlobal":            True,
       },
@@ -178,6 +183,7 @@ if False:
         "prefactor":                    1.0,
         "inputMeshIsGlobal":            True,
         "dirichletBoundaryConditions":  {},
+        "dirichletOutputFilename":      None,                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
         "neumannBoundaryConditions":    [],
         "diffusionTensor": [[      # sigma_i           # fiber direction is (1,0,0)
           8.93, 0, 0,
@@ -198,6 +204,7 @@ if False:
         "prefactor":                    0.4,
         "inputMeshIsGlobal":            True,
         "dirichletBoundaryConditions":  {},
+        "dirichletOutputFilename":      None,                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
         "neumannBoundaryConditions":    [],
       },
     },
@@ -380,6 +387,7 @@ config = {
               "timeStepOutputInterval":       1e4,
               "inputMeshIsGlobal":            True,
               "dirichletBoundaryConditions":  {},
+              "dirichletOutputFilename":      None,             # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
               "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
               "nAdditionalFieldVariables":    0,
               "additionalSlotNames":          [],
@@ -471,6 +479,7 @@ config = {
                   "timeStepOutputInterval":       1e4,
                   "inputMeshIsGlobal":            True,
                   "dirichletBoundaryConditions":  {},
+                  "dirichletOutputFilename":      None,             # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
                   "nAdditionalFieldVariables":    0,
                   "additionalSlotNames":          [],
@@ -547,6 +556,7 @@ config = {
                   "timeStepOutputInterval":       1e4,
                   "inputMeshIsGlobal":            True,
                   "dirichletBoundaryConditions":  {},
+                  "dirichletOutputFilename":      None,             # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
                   "nAdditionalFieldVariables":    0,
                   "additionalSlotNames":          [],
@@ -643,6 +653,7 @@ config = {
               "timeStepOutputInterval":       1e4,
               "inputMeshIsGlobal":            True,
               "dirichletBoundaryConditions":  {},
+              "dirichletOutputFilename":      None,             # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
               "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
               "nAdditionalFieldVariables":    0,
               "additionalSlotNames":          [],
@@ -765,6 +776,7 @@ config = {
                 "PrescribedValues": {
                   "meshName":               "3Dmesh",      # reference to the multidomain mesh
                   "numberTimeSteps":        1,             # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step
+                  "slotNames":              [],
                   "timeStepOutputInterval": 20,            # if the time step should be written to console, a value > 10 produces no output
                   
                   # a list of field variables that will get values assigned in every timestep, by the provided callback function

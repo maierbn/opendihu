@@ -10,6 +10,29 @@ CellmlAdapter(DihuContext context) :
 {
 }
 
+//! constructor as a copy
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
+CellmlAdapter(DihuContext context, const CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType> &rhs) :
+  Data<FunctionSpaceType>::Data(context), specificSettings_(rhs.specificSettings_)
+{
+  // the followign variables are not copied:
+  // std::shared_ptr<FieldVariableAlgebraics> algebraics_;   //< algebraics field variable
+  // std::shared_ptr<FieldVariableStates> states_;           //< states field variable, this is a shared pointer with the timestepping scheme, which own the actual variable (creates it)
+  // std::shared_ptr<FieldVariableAlgebraics> parameters_;   //< parameters field variable, the number of components is equal or less than the number of algebraics in order to not have to specify the number of parameters at compile time. This possibly creates a vector that is too large which is not harmful.
+  // double *parameterValues_;                               //< a pointer to the data of the parameters_ Petsc Vec of the field variable
+
+  algebraicNames_ = rhs.algebraicNames_;               //< component names of the algebraics field variable
+  parameterNames_ = rhs.parameterNames_;               //< component names of the parameter field variable
+  slotNames_ = rhs.slotNames_;                    //< names of the data slots that are used for slot connectors
+
+  slotConnectorData_ = rhs.slotConnectorData_;    //< the object that holds all components of field variables that will be transferred to other solvers
+
+  statesForTransfer_ = rhs.statesForTransfer_;                    //< state no.s to transfer to other solvers within slot connector data
+  algebraicsForTransfer_ = rhs.algebraicsForTransfer_;                //< algebraic no.s to transfer to other solvers within slot connector data
+  parametersForTransfer_ = rhs.parametersForTransfer_;                //< parameter no.s to transfer to other solvers within slot connector data
+}
+
 template <int nStates, int nAlgebraics, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
 initialize()
@@ -80,6 +103,8 @@ template <int nStates, int nAlgebraics, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
 createPetscObjects()
 {
+  LOG(DEBUG) << "CellmlAdapter::createPetscObjects";
+
   // The states field variable is allocated by the timestepping class because this is the solution vector that the timestepping scheme operates on.
   // It gets then passed to this class by the call to setStatesVariable.
   // Therefore, here we only create the algebraics and the parameters field variables.

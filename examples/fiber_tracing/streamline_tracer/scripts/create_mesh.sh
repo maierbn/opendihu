@@ -99,6 +99,7 @@ scheme_name=laplace_structured_linear
 prefix="created_"
 
 # command arguments: <input_filename> <output_filename> [<target_element_length> [<target_fiber_length>]]
+echo ./${scheme_name} ../settings_streamline_tracer.py ${pickle_output_file} ${prefix}${scheme_name} 1e-2 15
 ./${scheme_name} ../settings_streamline_tracer.py ${pickle_output_file} ${prefix}${scheme_name} 1e-2 15
 exit 1
 

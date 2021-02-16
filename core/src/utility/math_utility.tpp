@@ -5,8 +5,8 @@
 namespace MathUtility
 {
 
-const double INVERSE_REGULARIZATION_TOLERANCE = 1e-10;
-const double INVERSE_REGULARIZATION_EPSILON = 1e-10;
+const double INVERSE_REGULARIZATION_TOLERANCE = 1e-2;    // 1e-10, threshold for the absolute value of the determinant of the almost-singular matrix, when to add regularization
+const double INVERSE_REGULARIZATION_EPSILON = 1e-1;      // 1e-10, regularization value to be added to diagonal of almost-singular matrix
 
 
 template<typename double_v_t>
@@ -86,6 +86,19 @@ double distance(const VecD<D> node1, const VecD<D> node2)
     result += sqr(node1[componentNo]-node2[componentNo]);
   }
   return sqrt(result);
+}
+
+//! compute a value h that depends linearly on the mesh width, needed as factor for consistent regularization (i.e. ε→0 for h→0)
+template<typename double_v_t, int nNodes>
+double_v_t computeApproximateMeshWidth(const std::array<VecD<3,double_v_t>,nNodes> &geometryValues)
+{
+  double_v_t result = 0;
+  for (int componentNo = 0; componentNo < 3; componentNo++)
+  {
+    result += sqr(geometryValues[0][componentNo]-geometryValues[nNodes-1][componentNo]);
+  }
+  //LOG(INFO) << "h=" << result;
+  return result;
 }
 
 // 1D integration factor
@@ -220,9 +233,27 @@ Tensor2<2,double_v_t> computeCofactorMatrix(const Tensor2<2,double_v_t> &matrix)
   return result;
 }
 
+// compute transpose
+template<typename double_v_t>
+Tensor2<3,double_v_t> computeTranspose(const Tensor2<3,double_v_t> &matrix)
+{
+  // matrices are stored column-major
+  Tensor2<3,double_v_t> result;
+  result[0][0] = matrix[0][0];  // entry m11
+  result[1][0] = matrix[0][1];  // entry m12
+  result[2][0] = matrix[0][2];  // entry m13
+  result[0][1] = matrix[1][0];  // entry m21
+  result[1][1] = matrix[1][1];  // entry m22
+  result[2][1] = matrix[1][2];  // entry m23
+  result[0][2] = matrix[2][0];  // entry m31
+  result[1][2] = matrix[2][1];  // entry m32
+  result[2][2] = matrix[2][2];  // entry m33
+  return result;
+}
+
 // 3D symmetric matrix inverse
 template<typename double_v_t>
-Tensor2<3,double_v_t> computeSymmetricInverse(const Tensor2<3,double_v_t> &matrix, double_v_t &determinant)
+Tensor2<3,double_v_t> computeSymmetricInverse(const Tensor2<3,double_v_t> &matrix, const double_v_t &approximateMeshWidth, double_v_t &determinant)
 {
   // rename input values
         double_v_t m11 = matrix[0][0];
@@ -235,10 +266,10 @@ Tensor2<3,double_v_t> computeSymmetricInverse(const Tensor2<3,double_v_t> &matri
 
   determinant = m11*m22*m33 - m11*sqr(m32) - sqr(m21)*m33 + 2*m21*m31*m32 - m22*sqr(m31);
 
-  // regularize matrix if near singular, by adding ε*I (small values on diagonal)
+  // regularize matrix if near singular, by adding ε*h*I (small values on diagonal), scaling with h is for consistency
   double_v_t regularizationEpsilon = 0;
   // where operator is documented here: https://vcdevel.github.io/Vc-1.4.1/group__Utilities.html#gaa18ac68167ac7614731134de7364a1d5
-  Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE) | regularizationEpsilon = INVERSE_REGULARIZATION_EPSILON;
+  Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE, regularizationEpsilon) = INVERSE_REGULARIZATION_EPSILON * approximateMeshWidth;
   m11 += regularizationEpsilon;
   m22 += regularizationEpsilon;
   m33 += regularizationEpsilon;
@@ -263,7 +294,7 @@ Tensor2<3,double_v_t> computeSymmetricInverse(const Tensor2<3,double_v_t> &matri
 
 // 2D symmetric matrix invers
 template<typename double_v_t>
-Tensor2<2,double_v_t> computeSymmetricInverse(const Tensor2<2,double_v_t> &matrix, double_v_t &determinant)
+Tensor2<2,double_v_t> computeSymmetricInverse(const Tensor2<2,double_v_t> &matrix, const double_v_t &approximateMeshWidth, double_v_t &determinant)
 {
   // rename input values
         double_v_t m11 = matrix[0][0];
@@ -273,10 +304,10 @@ Tensor2<2,double_v_t> computeSymmetricInverse(const Tensor2<2,double_v_t> &matri
 
   determinant = m11*m22 - sqr(m21);
 
-  // regularize matrix if near singular, by adding ε*I (small values on diagonal)
+  // regularize matrix if near singular, by adding ε*h*I (small values on diagonal), scaling with h is for consistency
   double_v_t regularizationEpsilon = 0;
   // where operator is documented here: https://vcdevel.github.io/Vc-1.4.1/group__Utilities.html#gaa18ac68167ac7614731134de7364a1d5
-  Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE) | regularizationEpsilon = INVERSE_REGULARIZATION_EPSILON;
+  Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE, regularizationEpsilon) = INVERSE_REGULARIZATION_EPSILON * approximateMeshWidth;
 
   m11 += regularizationEpsilon;
   m22 += regularizationEpsilon;
@@ -296,12 +327,12 @@ Tensor2<2,double_v_t> computeSymmetricInverse(const Tensor2<2,double_v_t> &matri
 
 // 1D inverse
 template<typename double_v_t>
-Tensor2<1,double_v_t> computeInverse(const Tensor2<1,double_v_t> &matrix, double_v_t &determinant)
+Tensor2<1,double_v_t> computeInverse(const Tensor2<1,double_v_t> &matrix, const double_v_t &approximateMeshWidth, double_v_t &determinant)
 {
-  // regularize matrix if near singular, by adding ε*I (small values on diagonal)
+  // regularize matrix if near singular, by adding ε*h*I (small values on diagonal), scaling with h is for consistency
   double_v_t regularizationEpsilon = 0;
   // where operator is documented here: https://vcdevel.github.io/Vc-1.4.1/group__Utilities.html#gaa18ac68167ac7614731134de7364a1d5
-  Vc::where(abs(matrix[0][0]) < INVERSE_REGULARIZATION_TOLERANCE) | regularizationEpsilon = INVERSE_REGULARIZATION_EPSILON;
+  Vc::where(abs(matrix[0][0]) < INVERSE_REGULARIZATION_TOLERANCE, regularizationEpsilon) = INVERSE_REGULARIZATION_EPSILON * approximateMeshWidth;
 
   determinant = matrix[0][0] + regularizationEpsilon;
 
@@ -312,7 +343,7 @@ Tensor2<1,double_v_t> computeInverse(const Tensor2<1,double_v_t> &matrix, double
 
 // 2D inverse
 template<typename double_v_t>
-Tensor2<2,double_v_t> computeInverse(const Tensor2<2,double_v_t> &matrix, double_v_t &determinant)
+Tensor2<2,double_v_t> computeInverse(const Tensor2<2,double_v_t> &matrix, const double_v_t &approximateMeshWidth, double_v_t &determinant)
 {
   // matrices are stored column-major
 
@@ -324,10 +355,10 @@ Tensor2<2,double_v_t> computeInverse(const Tensor2<2,double_v_t> &matrix, double
 
   determinant =  m11*m22 - m12*m21;
 
-  // regularize matrix if near singular, by adding ε*I (small values on diagonal)
+  // regularize matrix if near singular, by adding ε*h*I (small values on diagonal), scaling with h is for consistency
   double_v_t regularizationEpsilon = 0;
   // where operator is documented here: https://vcdevel.github.io/Vc-1.4.1/group__Utilities.html#gaa18ac68167ac7614731134de7364a1d5
-  Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE) | regularizationEpsilon = INVERSE_REGULARIZATION_EPSILON;
+  Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE, regularizationEpsilon) = INVERSE_REGULARIZATION_EPSILON * approximateMeshWidth;
 
   m11 += regularizationEpsilon;
   m22 += regularizationEpsilon;
@@ -347,7 +378,7 @@ Tensor2<2,double_v_t> computeInverse(const Tensor2<2,double_v_t> &matrix, double
 
 // 3D inverse
 template<typename double_v_t>
-Tensor2<3,double_v_t> computeInverse(const Tensor2<3,double_v_t> &matrix, double_v_t &determinant)
+Tensor2<3,double_v_t> computeInverse(const Tensor2<3,double_v_t> &matrix, const double_v_t &approximateMeshWidth, double_v_t &determinant)
 {
   // rename input values
   // matrices are stored column-major
@@ -363,11 +394,11 @@ Tensor2<3,double_v_t> computeInverse(const Tensor2<3,double_v_t> &matrix, double
 
   determinant =  m11*m22*m33 - m11*m23*m32 - m12*m21*m33 + m12*m23*m31 + m13*m21*m32 - m13*m22*m31;
 
-  // regularize matrix if near singular, by adding ε*I (small values on diagonal)
+  // regularize matrix if near singular, by adding ε*h*I (small values on diagonal), scaling with h is for consistency
   double_v_t regularizationEpsilon = 0;
 
   // where operator is documented here: https://vcdevel.github.io/Vc-1.4.1/group__Utilities.html#gaa18ac68167ac7614731134de7364a1d5
-  Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE) | regularizationEpsilon = INVERSE_REGULARIZATION_EPSILON;
+  Vc::where(abs(determinant) < INVERSE_REGULARIZATION_TOLERANCE, regularizationEpsilon) = INVERSE_REGULARIZATION_EPSILON * approximateMeshWidth;
 
   m11 += regularizationEpsilon;
   m22 += regularizationEpsilon;

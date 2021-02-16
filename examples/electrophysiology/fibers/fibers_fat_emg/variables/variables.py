@@ -17,7 +17,7 @@ innervation_zone_width = 0.         # not used [cm], this will later be used to 
 diffusion_solver_type = "cg"        # solver and preconditioner for the diffusion part of the Monodomain equation
 diffusion_preconditioner_type = "none"      # preconditioner
 potential_flow_solver_type = "gmres"        # solver and preconditioner for an initial Laplace flow on the domain, from which fiber directions are determined
-potential_flow_preconditioner_type = "none" # preconditioner
+potential_flow_preconditioner_type = "gamg" # preconditioner
 emg_solver_type = "cg"              # solver and preconditioner for the 3D static Bidomain equation that solves the intra-muscular EMG signal
 emg_preconditioner_type = "none"    # preconditioner
 emg_initial_guess_nonzero = False   # If the initial guess for the emg linear system should be set to the previous solution
@@ -81,6 +81,8 @@ sampling_stride_fat = 1
 
 # scenario name for log file
 scenario_name = ""
+
+hdemg_electrode_faces = ["1+"],         # which faces of the 3D mesh should be written into the 2D mesh
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 # These functions can be redefined differently in a custom variables script
@@ -147,3 +149,6 @@ fat_mesh_n_points = None
 fat_mesh_n_points_global = None
 local_range_i = None
 local_range_k = None
+fast_monodomain_solver_optimizations = True # enable the optimizations in the fast multidomain solver
+use_vc = True                       # If the vc optimization type should be used for CellmlAdapter
+

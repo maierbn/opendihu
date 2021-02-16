@@ -12,6 +12,7 @@ The following pages contain all settings that are possible to specify for the di
    
    settings/finite_element_method
    settings/mesh
+   settings/boundary_conditions
    settings/solver
    settings/timestepping_schemes_ode
    settings/output_writer
@@ -29,7 +30,6 @@ The following pages contain all settings that are possible to specify for the di
    settings/hyperelasticity
    settings/dynamic_hyperelasticity
    settings/muscle_contraction_solver
-   settings/boundary_conditions
    settings/prescribed_values
    settings/map_dofs
   

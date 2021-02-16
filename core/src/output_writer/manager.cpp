@@ -57,8 +57,10 @@ void Manager::initialize(DihuContext context, PythonConfig settings, std::shared
     std::vector<std::string> configKeys;
     settings.getKeys(configKeys);
 
-    LOG(DEBUG) << "Config does not contain \"OutputWriter\". Keys: " << configKeys;
+#ifndef NDEBUG
+    VLOG(1) << "Config does not contain \"OutputWriter\". Keys: " << configKeys;
     //PythonUtility::printDict(settings.pyObject());
+#endif
   }
 
 

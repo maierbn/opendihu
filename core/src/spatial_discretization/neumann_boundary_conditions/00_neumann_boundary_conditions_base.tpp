@@ -11,7 +11,7 @@ namespace SpatialDiscretization
 //constructor
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
 NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::NeumannBoundaryConditionsBase(DihuContext context) :
-  data_(context)
+  divideNeumannBoundaryConditionValuesByTotalArea_(false), isTractionInCurrentConfiguration_(false), initialized_(false), data_(context)
 {
 }
 
@@ -20,6 +20,9 @@ template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
 void NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::
 initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace, std::string boundaryConditionsConfigKey)
 {
+  if (initialized_)
+    return;
+
   this->functionSpace_ = functionSpace;
   data_.setFunctionSpace(functionSpace_);
   data_.initialize();
@@ -163,6 +166,7 @@ initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> fun
       << ", dofVectors on surface: " << elementWithFaces.dofVectors << ", surfaceDofs on volume: " << elementWithFaces.surfaceDofs;
   }
 
+  initialized_ = true;
   initializeRhs();
 }
 
@@ -171,6 +175,9 @@ template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
 void NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::
 initialize(std::shared_ptr<FunctionSpaceType> functionSpace, const std::vector<typename NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces> &boundaryConditionElements)
 {
+  if (initialized_)
+    return;
+
   this->functionSpace_ = functionSpace;
   data_.setFunctionSpace(functionSpace_);
   data_.initialize();
@@ -187,6 +194,7 @@ initialize(std::shared_ptr<FunctionSpaceType> functionSpace, const std::vector<t
       << ", dofVectors on surface: " << elementWithFaces.dofVectors << ", surfaceDofs on volume: " << elementWithFaces.surfaceDofs;
   }
 
+  initialized_ = true;
   initializeRhs();
 }
 
@@ -197,4 +205,27 @@ rhs()
   return data_.rhs();
 }
 
+//! get the internal values of boundaryConditionElements_ for debugging
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
+const std::vector<typename NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces> &NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::
+boundaryConditionElements() const
+{
+  return boundaryConditionElements_;
+}
+
+//! determine whether any boundary condition was given with option "isInReferenceConfiguration": False
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
+bool NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::
+isTractionInCurrentConfiguration()
+{
+  return isTractionInCurrentConfiguration_;
+}
+
 }  // namespace
+
+template<typename FunctionSpaceType, typename QuadratureType, int nComponents>
+std::ostream &operator<<(std::ostream &stream, const typename SpatialDiscretization::NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces &rhs)
+{
+  stream << "{el. " << rhs.elementNoLocal << ", " << Mesh::getString(rhs.face) << ", dofVectors: " << rhs.dofVectors << ", surfaceDofs: " << rhs.surfaceDofs << "}";
+  return stream;
+}

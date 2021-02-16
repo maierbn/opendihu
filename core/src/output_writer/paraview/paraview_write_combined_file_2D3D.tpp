@@ -722,10 +722,16 @@ void Paraview::writeCombinedUnstructuredGridFile(const FieldVariablesForOutputWr
 
   // open file
   MPI_File fileHandle;
+
+  // set a maximum timeout of 10s if the file is not writable
+  MPI_Info info;
+  MPIUtility::handleReturnValue(MPI_Info_create(&info), "MPI_Info_create");
+  MPIUtility::handleReturnValue(MPI_Info_set(info, "shared_file_timeout", "10.0"), "MPI_Info_set");
+
   MPIUtility::handleReturnValue(MPI_File_open(this->rankSubset_->mpiCommunicator(), filenameStr.c_str(),
                                               //MPI_MODE_WRONLY | MPI_MODE_CREATE | MPI_MODE_UNIQUE_OPEN,
                                               MPI_MODE_WRONLY | MPI_MODE_CREATE,
-                                              MPI_INFO_NULL, &fileHandle), "MPI_File_open");
+                                              info, &fileHandle), "MPI_File_open");
 
   Control::PerformanceMeasurement::start("durationParaview3DWrite");
 

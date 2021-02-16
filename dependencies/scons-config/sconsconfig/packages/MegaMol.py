@@ -41,9 +41,10 @@ class MegaMol(Package):
     # download and so on
     self.set_build_handler([
       'mkdir -p ${PREFIX} && mkdir -p ${DEPENDENCIES_DIR}/megamol/ospray',  # create folders
-      'cd ${DEPENDENCIES_DIR}/megamol && wget https://datapacket.dl.sourceforge.net/project/ispcmirror/v1.11.0/ispc-v1.11.0-linux.tar.gz; tar xf ispc-v1.11.0-linux.tar.gz',
-      'export PATH=${PATH}:${DEPENDENCIES_DIR}/megamol/ispc-v1.11.0-linux/bin && cd ${DEPENDENCIES_DIR}/megamol && git clone https://github.com/embree/embree.git embree; cd embree && git checkout v3.5.2 && mkdir -p build && cd build && cmake -DCMAKE_C_COMPILER='+ctx.env["CC"]+' -DCMAKE_CXX_COMPILER='+ctx.env["CXX"]+' -DEMBREE_TUTORIALS=OFF -DCMAKE_INSTALL_PREFIX=${PREFIX} .. && make -j '+str(p)+' && make install', # build embree
-      'export PATH=${PATH}:${DEPENDENCIES_DIR}/megamol/ispc-v1.11.0-linux/bin && cd ${DEPENDENCIES_DIR}/megamol && git clone https://github.com/ospray/ospray.git ospray; cd ospray && git checkout v1.8.5 && mkdir -p build && cd build && cmake -DCMAKE_C_COMPILER='+ctx.env["CC"]+' -DCMAKE_CXX_COMPILER='+ctx.env["CXX"]+' -DEMBREE_DIR=${PREFIX} -DCMAKE_INSTALL_PREFIX=${PREFIX} .. && make -j '+str(p)+' && make install', # build ospray
+      'cd ${DEPENDENCIES_DIR}/megamol && wget https://github.com/ispc/ispc/releases/download/v1.15.0/ispc-v1.15.0-linux.tar.gz; tar xf ispc-v1.15.0-linux.tar.gz',
+      '!cd ${DEPENDENCIES_DIR}/megamol && wget https://github.com/oneapi-src/oneTBB/releases/download/v2020.2/tbb-2020.2-lin.tgz; tar xf tbb-2020.2-lin.tgz; mv tbb/* ${PREFIX}', # download TBB
+      'export PATH=${PATH}:${DEPENDENCIES_DIR}/megamol/ispc-v1.15.0-linux/bin && cd ${DEPENDENCIES_DIR}/megamol && git clone https://github.com/embree/embree.git embree; cd embree && git checkout v3.5.2 && mkdir -p build && cd build && cmake -DCMAKE_C_COMPILER='+ctx.env["CC"]+' -DCMAKE_CXX_COMPILER='+ctx.env["CXX"]+' -DEMBREE_TUTORIALS=OFF -DCMAKE_INSTALL_PREFIX=${PREFIX} -DTBB_LIBRARY=${PREFIX}/lib/ia32/gcc4.8/libtbb.so -DTBB_LIBRARY_MALLOC=${PREFIX}/lib/ia32/gcc4.8/libtbbmalloc.so -DTBB_INCLUDE_DIR=${PREFIX}/include .. && make -j '+str(p)+' && make install', # build embree
+      'export PATH=${PATH}:${DEPENDENCIES_DIR}/megamol/ispc-v1.15.0-linux/bin && cd ${DEPENDENCIES_DIR}/megamol && git clone https://github.com/ospray/ospray.git ospray; cd ospray && git checkout v1.8.5 && mkdir -p build && cd build && cmake -DCMAKE_C_COMPILER='+ctx.env["CC"]+' -DCMAKE_CXX_COMPILER='+ctx.env["CXX"]+' -DEMBREE_DIR=${PREFIX} -DCMAKE_INSTALL_PREFIX=${PREFIX} -DTBB_DIR=${PREFIX} .. && make -j '+str(p)+' && make install', # build ospray
       "sed -i 's|int megamol_main(int argc, char\* argv\[\]) {|int main(int argc, char\* argv\[\]) {|g' ${SOURCE_DIR}/console/src/Console.cpp",  # reverse eventual change to Console.cpp
       'cd ${SOURCE_DIR} && mkdir -p build && cd build && \
       '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} -DUSE_MPI=ON -DMPI_GUESS_LIBRARY_NAME= -DADIOS2_DIR=${DEPENDENCIES_DIR}/adios/install/lib/cmake/adios2 \
@@ -113,5 +114,10 @@ class MegaMol(Package):
     else:
       ctx.Log("megamol src path {} does not exist\n".format(megamol_src_path))
       
+    if not res[0]:
+      print("\nNote, installation of megamol is a bit complicated. "
+        "At first, it downloads Intel `ispc`, then `TBB`, then builds `embree`, then builds `ospray` "
+        "and then `MegaMol`. Maybe you need\n  sudo apt-get install xorg-dev libglu1-mesa-dev")
+
     ctx.Result(res[0])
     return res[0]

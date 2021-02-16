@@ -21,6 +21,9 @@ extractPressureFunctionSpaceValues(std::shared_ptr<DisplacementsFunctionSpace> d
   int linearMeshIndex = pressureFunctionSpaceValues.size();   // append to previous values in vector
   pressureFunctionSpaceValues.resize(pressureFunctionSpaceValues.size() + pressureFunctionSpace->nNodesLocalWithGhosts());
 
+  LOG(DEBUG) << "extractPressureFunctionSpaceValues, input: " << displacementsFunctionSpaceValues.size()
+    << " values, previous values in output: " << linearMeshIndex << ", new output size: " << pressureFunctionSpaceValues.size();
+
   // loop over linear nodes in the quadratic mesh
   for (int k = 0; k < nNodesLocal[2]; k += 2)
   {
@@ -49,6 +52,15 @@ extractPressureFunctionSpaceValues(std::shared_ptr<typename PressureFunctionSpac
   const std::vector<std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<1>>>> &pressureSubFunctionSpaces
      = pressureFunctionSpace->subFunctionSpaces();
 
+  LOG(DEBUG) << "extractPressureFunctionSpaceValues for composite meshes \"" << displacementsFunctionSpace->meshName() << "\" and \"" << pressureFunctionSpace->meshName() << "\", has "
+    << displacementsSubFunctionSpaces.size() << " sub meshes.";
+
+  // resize result vector
+  pressureFunctionSpaceValues.resize(pressureFunctionSpace->nNodesLocalWithGhosts());
+
+  // temporary vector for submesh values
+  std::vector<T> pressureValuesSubmesh;
+
   // loop over submeshes
   for (int subMeshNo = 0; subMeshNo < displacementsSubFunctionSpaces.size(); subMeshNo++)
   {
@@ -56,8 +68,29 @@ extractPressureFunctionSpaceValues(std::shared_ptr<typename PressureFunctionSpac
     std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>> displacementsSubFunctionSpace = displacementsSubFunctionSpaces[subMeshNo];
     std::shared_ptr<FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<1>>> pressureSubFunctionSpace = pressureSubFunctionSpaces[subMeshNo];
 
+
+    // extract the values of the current submesh and store them in pressureValuesSubmesh
+    pressureValuesSubmesh.clear();
+
     // call extractPressureFunctionSpaceValues on sub meshes
-    PressureFunctionSpaceCreator<Mesh::StructuredDeformableOfDimension<3>>::extractPressureFunctionSpaceValues(displacementsSubFunctionSpace, pressureSubFunctionSpace, displacementsFunctionSpaceValues, pressureFunctionSpaceValues);
+    PressureFunctionSpaceCreator<Mesh::StructuredDeformableOfDimension<3>>::extractPressureFunctionSpaceValues(
+      displacementsSubFunctionSpace, pressureSubFunctionSpace, displacementsFunctionSpaceValues, pressureValuesSubmesh);
+
+    // insert the values of pressureValuesSubmesh into the final result
+
+    // loop over nodes of submesh
+    for (dof_no_t dofNoLocalSubmesh = 0; dofNoLocalSubmesh < pressureSubFunctionSpace->nDofsLocalWithGhosts(); dofNoLocalSubmesh++)
+    {
+      node_no_t nodeNoDuplicateOnSubmesh = dofNoLocalSubmesh;   // assuming no Hermite
+
+      bool nodeIsSharedAndRemovedInCurrentMesh = false;
+      node_no_t nodeNoLocalComposite = pressureFunctionSpace->meshPartition()->getNodeNoLocalFromSubmesh(subMeshNo, nodeNoDuplicateOnSubmesh, nodeIsSharedAndRemovedInCurrentMesh);
+
+      if (!nodeIsSharedAndRemovedInCurrentMesh)
+      {
+        pressureFunctionSpaceValues[nodeNoLocalComposite] = pressureValuesSubmesh[dofNoLocalSubmesh];
+      }
+    }
   }
 }
 

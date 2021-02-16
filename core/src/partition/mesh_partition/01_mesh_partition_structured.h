@@ -9,6 +9,7 @@
 #include "partition/rank_subset.h"
 #include "mesh/type_traits.h"
 #include "mesh/face_t.h"
+#include "mesh/face_or_edge_t.h"
 
 // forward declaration
 namespace FunctionSpace 
@@ -108,8 +109,8 @@ public:
   //! number of nodes in total
   global_no_t nNodesGlobal(int coordinateDirection) const;
   
-  //! get if there are nodes on both borders in the given coordinate direction
-  //! this is the case if the partition touches the right/top/back border
+  //! get if there are nodes on both boundarys in the given coordinate direction
+  //! this is the case if the partition touches the right/top/back boundary
   //! Consider the partition specified by partitionIndex or the current partition if partitionIndex == -1.
   bool hasFullNumberOfNodes(int coordinateDirection, int partitionIndex = -1) const;
   
@@ -155,10 +156,10 @@ public:
   //! get the local element no. from the global no., set isOnLocalDomain to true if the node with global coordinates is in the local domain
   element_no_t getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const;
 
-  //! get the local node no for a global petsc node no, does not work for ghost nodes
+  //! get the local node no for a global petsc node no, does not work for ghost nodes (return -1 for ghost nodes)
   node_no_t getNodeNoLocal(global_no_t nodeNoGlobalPetsc, bool &isLocal) const;
 
-  //! get the local dof no for a global petsc dof no, does not work for ghost nodes
+  //! get the local dof no for a global petsc dof no, does not work for ghost nodes (return -1 for ghost nodes)
   dof_no_t getDofNoLocal(global_no_t dofNoGlobalPetsc, bool &isLocal) const;
 
   //! get the local node no for its global coordinates
@@ -214,12 +215,12 @@ public:
   //! get the rank on which the global natural node is located
   int getRankOfDofNoGlobalNatural(global_no_t dofNoGlobalNatural) const;
 
-  //! get information about neighbouring rank and boundary elements for specified face,
-  //! @param neighbourRankNo: the rank of the neighbouring process that shares the face, @param nElements: Size of one-layer mesh that contains boundary elements that touch the neighbouring process
-  void getBoundaryElements(Mesh::face_t face, int &neighbourRankNo, std::array<element_no_t,MeshType::dim()> &nBoundaryElements, std::vector<dof_no_t> &dofNos);
+  //! get information about neighbouring rank and boundary elements for specified face. A layer with given width of element inside the domain touching the specified face is determined.
+  //! @param neighbourRankNo: the rank of the neighbouring process that shares the face, @param nElements: Size of one-layer mesh that contains boundary elements that touch the neighbouring process.
+  void getBoundaryElements(Mesh::face_or_edge_t face, int boundaryLayerWidth, int &neighbourRankNo, std::array<element_no_t,MeshType::dim()> &nBoundaryElements, std::vector<dof_no_t> &dofNos);
 
   //! get the rank no of the neighbour in direction face, -1 if there is no such neighbour
-  int neighbourRank(Mesh::face_t face);
+  int neighbourRank(Mesh::face_or_edge_t face);
 
   //! get the partitioning index in the coordinate direction, i.e. the no. of this rank in this direction, the total number of ranks in each direction can be retrieved by nRanks
   int ownRankPartitioningIndex(int coordinateDirection);
@@ -277,7 +278,7 @@ protected:
 
   std::array<std::vector<element_no_t>,MeshType::dim()> localSizesOnPartitions_;  //< the sizes of different partitions in each coordinate direction, i.e. localSizesOnPartitions_[0] is (width partition #0, width partition #1, ...)
 
-  std::array<bool,MeshType::dim()> hasFullNumberOfNodes_;       //< if the own local partition has nodes on both sides of the 1D projection at the border. This is only true at the right/top/back-most partition.
+  std::array<bool,MeshType::dim()> hasFullNumberOfNodes_;       //< if the own local partition has nodes on both sides of the 1D projection at the boundary. This is only true at the right/top/back-most partition.
   
   std::vector<dof_no_t> onlyNodalDofLocalNos_;                  //< vector of local nos of the dofs, not including derivatives for Hermite
   std::vector<dof_no_t> ghostDofNosGlobalPetsc_;                //< vector of global/petsc dof nos of the ghost dofs which are stored on the local partition

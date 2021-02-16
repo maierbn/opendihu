@@ -62,11 +62,10 @@ b = 0
 
 material_parameters = [c1, c2, b, d]   # material parameters
 pmax = 7.3                  # [N/cm^2] maximum isometric active stress
-pmax = 1./1000
 
 # load
 constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
-bottom_traction = [0.0,0.0,0.0]        # [N]
+bottom_traction = [0.0,0.0,0.0]        # [N] force at bottom (negative = pointing downwards)
 
 # Monodomain parameters
 # --------------------
@@ -103,7 +102,7 @@ motor_units = [
   {"fiber_no": 50, "standard_deviation": 0.2, "maximum": 0.2, "radius": 72.00, "cm": 1.00, "activation_start_time": 1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
   {"fiber_no": 25, "standard_deviation": 0.2, "maximum": 0.2, "radius": 80.00, "cm": 1.00, "activation_start_time": 1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # high number of fibers
 ]
-motor_units=motor_units[0:1]
+motor_units=motor_units[0:2]
 
 # solvers
 # -------
@@ -124,11 +123,11 @@ multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the mul
 # elasticity
 elasticity_solver_type = "lu"
 elasticity_preconditioner_type = "none"
-snes_max_iterations = 10                  # maximum number of iterations in the nonlinear solver
-snes_rebuild_jacobian_frequency = 2       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+snes_max_iterations = 34                  # maximum number of iterations in the nonlinear solver
+snes_rebuild_jacobian_frequency = 5       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
 snes_relative_tolerance = 1e-5      # relative tolerance of the nonlinear solver
-snes_absolute_tolerance = 1e-5      # absolute tolerance of the nonlinear solver
-relative_tolerance = 1e-5           # relative tolerance of the residual of the linear solver
+snes_absolute_tolerance = 1e-4      # absolute tolerance of the nonlinear solver
+relative_tolerance = 1e-10           # relative tolerance of the residual of the linear solver
 absolute_tolerance = 1e-10          # absolute tolerance of the residual of the linear solver
 
 # set initial guess to zero for direct solver
@@ -147,8 +146,8 @@ dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver, i.e. the diffusion
 dt_splitting = dt_multidomain       # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
 dt_elasticity = 1e-1                # [ms] time step width of elasticity solver
-output_timestep_multidomain = 1e-1  # [ms] timestep for fiber output, 0.5
-output_timestep_elasticity = dt_elasticity      # [ms] timestep for elasticity output files
+output_timestep_multidomain = 5     # [ms] timestep for fiber output, 0.5
+output_timestep_elasticity = 5      # [ms] timestep for elasticity output files
 
 # input files
 #cellml_file = "../../../input/new_slow_TK_2014_12_08.c"
@@ -158,7 +157,7 @@ fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
 fiber_file = "../../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-firing_times_file = "../../../input/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+#firing_times_file = "../../../input/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../../input/MU_fibre_distribution_10MUs.txt"
 
 # stride for sampling the 3D elements from the fiber data
@@ -170,9 +169,9 @@ sampling_stride_z = 50
 sampling_stride_fat = 1
 
 # how much of the multidomain mesh is used for elasticity
-sampling_factor_elasticity_x = 0.5    
-sampling_factor_elasticity_y = 0.5
-sampling_factor_elasticity_z = 0.3
+sampling_factor_elasticity_x = 0.2    
+sampling_factor_elasticity_y = 0.2
+sampling_factor_elasticity_z = 0.7
 sampling_factor_elasticity_fat_y = 0.5
 
 # other options
@@ -180,8 +179,8 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-states_output = True    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
-show_linear_solver_output = True    # if every solve of multidomain diffusion should be printed
+states_output = False    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
+show_linear_solver_output = False    # if every solve of multidomain diffusion should be printed
 disable_firing_output = False   # if information about firing of MUs should be printed
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's

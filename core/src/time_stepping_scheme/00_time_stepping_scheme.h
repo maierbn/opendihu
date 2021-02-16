@@ -21,7 +21,7 @@ public:
   TimeSteppingScheme(DihuContext context);
 
   //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps
-  virtual void advanceTimeSpan() = 0;
+  virtual void advanceTimeSpan(bool withOutputWritersEnabled=true) = 0;
 
   //! set a new time step width, gets transferred to numberTimeSteps_
   void setTimeStepWidth(double timeStepWidth);
@@ -41,6 +41,9 @@ public:
   //! reset state such that new initialization becomes necessary
   virtual void reset();
 
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  virtual void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1) = 0;
+
   //! start time of time interval to be simulated
   double startTime();
   
@@ -53,6 +56,9 @@ public:
   //! time step for simulation
   double timeStepWidth();
   
+  //! time step for simulations as given in the settings file or 0.0 if the step size is controled by numberTimeSteps
+  double timeStepTargetWidth();
+
   //! python object containing the value of the python config dict with corresponding key
   PythonConfig specificSettings();
 
@@ -78,6 +84,7 @@ protected:
 
   bool isTimeStepWidthSignificant_; //< if time step width will be used to determine number of steps
   double timeStepWidth_;            //< a timeStepWidth value that is used to compute the number of time steps
+  double timeStepTargetWidth_;      //< original timeStepWidth as given in the settings file
   std::string durationLogKey_;      //< the key under which the duration of the time stepping is saved in the log
 
   PythonConfig specificSettings_;   //< python object containing the value of the python config dict with corresponding key

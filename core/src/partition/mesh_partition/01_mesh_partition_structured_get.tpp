@@ -237,7 +237,6 @@ global_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionTyp
 beginNodeGlobalNatural(int coordinateDirection, int partitionIndex) const
 {
   //for degenerate mesh
-	//for degenerate mesh
   if (isDegenerate_)
     return 0;
 
@@ -284,8 +283,8 @@ nNodesGlobal(int coordinateDirection) const
   return nElementsGlobal_[coordinateDirection] * FunctionSpace::FunctionSpaceBaseDim<1,BasisFunctionType>::averageNNodesPerElement() + 1;
 }
 
-//! get if there are nodes on both borders in the given coordinate direction
-//! this is the case if the local partition touches the right/top/back border
+//! get if there are nodes on both boundarys in the given coordinate direction
+//! this is the case if the local partition touches the right/top/back boundary
 template<typename MeshType,typename BasisFunctionType>
 bool MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionType>,Mesh::isStructured<MeshType>>::
 hasFullNumberOfNodes(int coordinateDirection, int partitionIndex) const
@@ -300,7 +299,7 @@ hasFullNumberOfNodes(int coordinateDirection, int partitionIndex) const
   }
   else
   {
-    // determine if the local partition is at the x+/y+/z+ border of the global domain
+    // determine if the local partition is at the x+/y+/z+ boundary of the global domain
     return (partitionIndex == nRanks_[coordinateDirection]-1);
   }
 }
@@ -669,10 +668,18 @@ element_no_t MeshPartition<FunctionSpace::FunctionSpace<MeshType,BasisFunctionTy
 getElementNoLocal(global_no_t elementNoGlobalPetsc, bool &isOnLocalDomain) const
 {
   // get global coordinates of the lower front left node of the element
-  std::array<global_no_t,3> coordinatesGlobal;
+  std::array<global_no_t,MeshType::dim()> coordinatesGlobal;
   coordinatesGlobal[0] = elementNoGlobalPetsc % nElementsGlobal(0);
-  coordinatesGlobal[1] = (elementNoGlobalPetsc % (nElementsGlobal(0)*nElementsGlobal(1))) / nElementsGlobal(0);
-  coordinatesGlobal[2] = elementNoGlobalPetsc / (nElementsGlobal(0)*nElementsGlobal(1));
+
+  if (MeshType::dim() >= 2)
+  {
+    coordinatesGlobal[1] = (elementNoGlobalPetsc % (nElementsGlobal(0)*nElementsGlobal(1))) / nElementsGlobal(0);
+  }
+
+  if (MeshType::dim() >= 3)
+  {
+    coordinatesGlobal[2] = elementNoGlobalPetsc / (nElementsGlobal(0)*nElementsGlobal(1));
+  }
 
   // get local coordinates
   std::array<int,MeshType::dim()> coordinatesLocal = getCoordinatesLocal(coordinatesGlobal, isOnLocalDomain);

@@ -41,6 +41,29 @@ C++ instantiation
     Mesh::StructuredDeformableOfDimension<3>
   >
 
+Alternatively, the `Term`, i.e. material can be specified as second template argument:
+
+.. code-block:: c
+
+  // either with composite mesh:
+  MuscleContractionSolver<
+    Mesh::CompositeOfDimension<3>,
+    Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D
+  >
+    
+The given value of `Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D` is the default but can be replaced. 
+The material has to set ``usesActiveStress=true`` in order for the active stress to work.
+
+And additionally, the parameter `withLargeOutputFiles` can be specified as the third parameter (default is true). If set to false, smaller output files that don't contain :math:`P,\dot{F}` and :math:`F` values will be created.
+
+.. code-block:: c
+
+  // either with composite mesh:
+  MuscleContractionSolver<
+    Mesh::CompositeOfDimension<3>,
+    Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D,
+    true
+  >
 
 Python settings
 -----------------
@@ -54,6 +77,8 @@ Depending on the value of ``dynamic``, either an instance of ``DynamicHyperelast
     "numberTimeSteps":              1,                         # number of timesteps to use per call
     "timeStepOutputInterval":       100,                       # How often the current timestep will be displayed, if this is >100 and numberTimeSteps is 1, nothing will be printed
     "Pmax":                         variables.pmax,            # maximum PK2 active stress
+    "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
+    "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
     "OutputWriter" : [                                         # This is an output writer that writes files with all required fields.
       {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
     ],
@@ -86,8 +111,9 @@ Depending on the value of ``dynamic``, either an instance of ``DynamicHyperelast
       # solving
       "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
       #"loadFactors":                [0.25, 0.66, 1.0],                # load factors for every timestep
-      "loadFactorGiveUpThreshold":   1,                      # when to abort the solve
       "loadFactors":                [],                        # no load factors, solve problem directly
+      "loadFactorGiveUpThreshold":   1,                      # when to abort the solve
+      "scaleInitialGuess":          False,                      # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
       "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
       
       # boundary and initial conditions
@@ -102,6 +128,13 @@ Depending on the value of ``dynamic``, either an instance of ``DynamicHyperelast
       "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
       "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
       
+      "dirichletOutputFilename":    "out/"+variables.scenario_name+"/dirichlet_boundary_conditions",     # output filename for the dirichlet boundary conditions, set to "" to have no output
+      "totalForceLogFilename":       "out/"+variables.scenario_name+"/tendon_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
+      "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
+      "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
+      "totalForceTopElementNosGlobal":     [(nz-1)*ny*nx + j*nx + i for j in range(ny) for i in range(nx)],   # global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal
+      
+          
       # define which file formats should be written
       # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
       "OutputWriter" : [

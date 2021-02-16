@@ -53,6 +53,18 @@ template<typename MeshType,typename BasisFunctionType>
 double FunctionSpaceFunction<MeshType,BasisFunctionType>::
 phi(int dofIndex, std::array<double,MeshType::dim()> xi)
 {
+  // optimization because this function gets called very often
+  int basisFunctionIndex1D = FunctionSpaceFunction<MeshType,BasisFunctionType>::getBasisFunctionIndex1D(dofIndex, 0);
+  double result = BasisFunctionType::phi(basisFunctionIndex1D,xi[0]);
+
+  for (int dimNo = 1; dimNo < MeshType::dim(); dimNo++)
+  {
+    int basisFunctionIndex1D = FunctionSpaceFunction<MeshType,BasisFunctionType>::getBasisFunctionIndex1D(dofIndex, dimNo);
+    //VLOG(3) << "       (dim " << dimNo << ", xi=" << xi[dimNo] << ", basisFunctionIndex1D: " << basisFunctionIndex1D << ", phi: "
+    //  << BasisFunctionType::phi(basisFunctionIndex1D,xi[dimNo]);
+    result *= BasisFunctionType::phi(basisFunctionIndex1D,xi[dimNo]);
+  }
+  /*
   //VLOG(3) << "  -> phi(dofIndex " << dofIndex << ", xi " << xi << "), dim: " << MeshType::dim();
   double result = 1.0;
   for (int dimNo = 0; dimNo < MeshType::dim(); dimNo++)
@@ -61,7 +73,7 @@ phi(int dofIndex, std::array<double,MeshType::dim()> xi)
     //VLOG(3) << "       (dim " << dimNo << ", xi=" << xi[dimNo] << ", basisFunctionIndex1D: " << basisFunctionIndex1D << ", phi: "
     //  << BasisFunctionType::phi(basisFunctionIndex1D,xi[dimNo]);
     result *= BasisFunctionType::phi(basisFunctionIndex1D,xi[dimNo]);
-  }
+  }*/
   return result;
 }
 
@@ -96,19 +108,6 @@ gradPhi(int dofIndex, std::array<double,MeshType::dim()> xi)
   for (int gradientEntryNo = 0; gradientEntryNo < MeshType::dim(); gradientEntryNo++)
   {
     gradient[gradientEntryNo] = FunctionSpaceFunction<MeshType,BasisFunctionType>::dphi_dxi(dofIndex, gradientEntryNo, xi);
-  }
-  return gradient;
-}
-
-// for complete polynomials
-template<typename MeshType, int order>
-std::array<double,MeshType::dim()> FunctionSpaceFunction<MeshType, BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>>::
-gradPhi(int dofIndex, std::array<double,MeshType::dim()> xi)
-{
-  std::array<double,MeshType::dim()> gradient;
-  for (int gradientEntryNo = 0; gradientEntryNo < MeshType::dim(); gradientEntryNo++)
-  {
-    gradient[gradientEntryNo] = BasisFunction::CompletePolynomialOfDimensionAndOrder<MeshType::dim(),order>::dphi_dxi(dofIndex, gradientEntryNo, xi);
   }
   return gradient;
 }

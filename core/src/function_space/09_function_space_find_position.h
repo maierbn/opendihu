@@ -53,6 +53,8 @@ public:
   //! check if the point lies inside the element, if yes, return true and set xi to the value of the point, defined in 11_function_space_xi.h
   virtual bool pointIsInElement(Vec3 point, element_no_t elementNo, std::array<double,D> &xi, double &residual, double xiTolerance) = 0;
 
+  //! return a nullptr,  for structured meshes this is a pointer to the ghost mesh indexed by faceOrEdge
+  std::shared_ptr<FunctionSpace<Mesh::UnstructuredDeformableOfDimension<D>,BasisFunctionType>> ghostMesh(Mesh::face_or_edge_t faceOrEdge);
 };
 
 /** Partial specialization for composite meshes

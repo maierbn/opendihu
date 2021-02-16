@@ -216,7 +216,7 @@ The tangent space coordinates for a particular point given by $\bfxi$ are introd
   \end{array}
 \end{equation*}
 The integral in \eqref{eq:laplace_discretized0} is then
-\begin{equation}
+\begin{equation}\label{eq:m_int}
   \begin{array}{ll}
      \ds\int_{\Omega_e} ∇\phi_i(\bfx)\cdot ∇\phi_j(\bfx)\,\d\bfx = 
      \ds\int_{\Phi([0,1]^d)} ∇_{\bfzeta(\bfxi(\bfx))}\phi_i(\bfx)\cdot ∇_{\bfzeta(\bfxi(\bfx))}\phi_j(\bfx)\,\d\bfx.
@@ -671,6 +671,92 @@ We first compute element-wise stencils that state the contribution of a single e
 \caption{Stencils of the Finite Element stiffness matrix of $-Δu$ for an equidistant mesh with uniform resolution. Note, that for 1D, 2D and 3D elements of mesh width $h$, the prefactors of the integral over the element domain are $1/h$, 1 and $h$.}
 \end{table}
 
+\subsection{Triangle ansatz functions in 2D}
+
+In the following, the FEM formulation for quadratic triangles in 2D are derived.
+\begin{figure}
+  \centering
+  \begin{subfigure}{0.4\textwidth}
+    \def\svgwidth{5cm}
+    \input{images/triangle_ansatz_linear.pdf_tex}
+    \caption{Nodes of a triangle for linear ansatz functions}
+  \end{subfigure}
+  \quad
+  \begin{subfigure}{0.4\textwidth}
+    \def\svgwidth{5cm}
+    \input{images/triangle_ansatz.pdf_tex}
+    \caption{Nodes of a triangle for quadratic ansatz functions}
+  \end{subfigure}
+  \label{fig:triangle_ansatz}
+\end{figure}
+%
+\Cref{fig:triangle_ansatz} shows a triangle for quadratic ansatz functions. The mapping from the parameter space with $\xi_1, \xi_2$ to the actual space is given by the following definition of $\bfx = \Phi(\bfxi)$:
+\begin{equation*}
+  \begin{array}{lll}
+    \Phi(\bfxi) = \sum\limits_{i\in\{0,1,2,3,6,8\}} \phi_i(\bfx)\,\bfx^i\\[4mm]
+    \phi_0(\bfx) = (\xi_1 + \xi_2 - 1)\,(2\xi_1 + 2\xi_2 - 1)   \\[4mm]  %  1.0*(1.0*xi1 + 1.0*xi2 - 1.0)*(2.0*xi1 + 2.0*xi2 - 1.0)
+    \phi_1(\bfx) = 4\,\xi_1\,(1 - \xi_1 - \xi_2)                \\[4mm]  % -4.0*xi1*(xi1 + xi2 - 1)
+    \phi_2(\bfx) = \xi_1\,(2\xi_1 - 1)                          \\[4mm]  % 1.0*xi1*(2.0*xi1 - 1.0)
+    \phi_3(\bfx) = 4\,\xi_2\,(1 - \xi_1 - \xi_2)                \\[4mm]  % -4.0*xi2*(xi1 + xi2 - 1)
+    \phi_6(\bfx) = \xi_2\,(2\xi_2 - 1)                          \\[4mm]  % 1.0*xi2*(2.0*xi2 - 1.0)
+    \phi_8(\bfx) = 4\,\xi_1\,\xi_2                              \\[4mm]  % 4.0*xi1*xi2
+  \end{array}
+\end{equation*}
+The Jacobian of this mapping is computed as:
+\begin{equation*}
+  \begin{array}{lll}
+    J_\Phi(\bfxi) = \mat{J_{1} & J_{2}}\quad \text{with}\\[4mm]
+    J_{1} = (4\,\xi_1 + 4\,\xi_2 - 3)\,\bfx^0 - (8\,\xi_1 + 4\,\xi_2 - 4)\,\bfx^1 + (4\,\xi_1 - 1)\,\bfx^2 - 4\,\xi_2\,\bfx^3 + 4\,\xi_2\,\bfx^5,\\[4mm]
+    J_{2} = (4\,\xi_1 + 4\,\xi_2 - 3)\,\bfx^0 - 4\,\xi_1\,\bfx^1 - (4\,\xi_1 + 8\,\xi_2 - 4)\,\bfx^3 + (4\,\xi_2 - 1)\,\bfx^4 + 4\,\xi_1\,\bfx^5.
+  \end{array}
+\end{equation*}
+Integration of the element stiffness and mass matrices according to \eqref{eq:m_int}:
+\begin{equation*}
+  \begin{array}{lll}
+    k_{ij}^\text{el} = \ds\int_{\Omega_e} ∇\phi_i(\bfx)\cdot ∇\phi_j(\bfx)\,\d\bfx = 
+     \ds\int\limits_{\xi_2=0}^1 \int\limits_{\xi_1=0}^{1-\xi_2} ∇_\bfx \phi_i(\bfxi)\cdot ∇_\bfx \phi_j(\bfxi)\,\mathcal{J}_d\,\d\xi_1\,\d\xi_2, \quad \text{with}\\[4mm]
+    ∇_\bfx \phi(\bfxi) = J_\Phi^{-\top}(\bfxi)\,∇_{\bfxi}\, \phi_i(\bfxi)\\[4mm]
+    m_{ij}^\text{el} = \ds\int_{\Omega_e} \phi_i(\bfx)\, \phi_j(\bfx)\,\d\bfx = 
+    \ds\int\limits_{\xi_2=0}^1 \int\limits_{\xi_1=0}^{1-\xi_2} \phi_i(\bfxi)\,\phi_j(\bfxi)\,\mathcal{J}_d\,\d\xi_1\,\d\xi_2
+  \end{array}
+\end{equation*}
+For the quadrature see \cite{zienkiewicz2005finite}.
+
+Analogous for linear ansatz functions:
+\begin{equation*}
+  \begin{array}{lll}
+    \Phi(\bfxi) = \sum\limits_{i\in\{0,1,2\}} \phi_i(\bfx)\,\bfx^i\\[4mm]
+    \phi_0(\bfx) = (1-\xi_1-\xi_2)   \\[4mm]
+    \phi_1(\bfx) = \xi_1 \\[4mm]
+    \phi_2(\bfx) = \xi_2
+  \end{array}
+\end{equation*}
+The Jacobian is given by
+\begin{equation*}
+  \begin{array}{lll}
+    J_\Phi(\bfxi) = \mat{J_{1} & J_{2}}\quad \text{with}\\[4mm]
+    J_{1} = -\bfx^0 + \bfx^1,\\[4mm]
+    J_{2} = -\bfx^0 + \bfx^2
+  \end{array}
+\end{equation*}
+
+\begin{figure}
+  \centering
+  \begin{subfigure}{0.45\textwidth}
+    \def\svgwidth{\textwidth}
+    \input{images/triangle_ansatz_linear4.pdf_tex}
+    \caption{Nodes of a triangle for linear ansatz functions}
+  \end{subfigure}
+  \quad
+  \begin{subfigure}{0.45\textwidth}
+    \def\svgwidth{\textwidth}
+    \input{images/triangle_ansatz4.pdf_tex}
+    \caption{Nodes of a triangle for quadratic ansatz functions}
+  \end{subfigure}
+  \label{fig:triangle_ansatz}
+  \caption{The red circle is the origin of the coordinate frame for every triangle.}
+\end{figure}
+%
 \subsection{Boundary Conditions}
 \label{sec:bc}
 The Neumann-type boundary condition

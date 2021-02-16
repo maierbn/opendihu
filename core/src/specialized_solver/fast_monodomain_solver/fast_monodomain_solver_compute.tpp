@@ -13,7 +13,7 @@ run()
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
-advanceTimeSpan()
+advanceTimeSpan(bool withOutputWritersEnabled)
 {
   LOG(TRACE) << "FastMonodomainSolver::advanceTimeSpan";
 
@@ -30,25 +30,29 @@ advanceTimeSpan()
   // loop over fibers and communicate resulting values back
   updateFiberData();
 
-  //nestedSolvers_.advanceTimeSpan();
-
   // call output writer of diffusion
-  std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
-
-  for (int i = 0; i < instances.size(); i++)
+  if (withOutputWritersEnabled)
   {
-    // call write output of MultipleInstances, callCountIncrement is the number of times the output writer would have been called without FastMonodomainSolver
-    instances[i].timeStepping2().writeOutput(0, currentTime_, nTimeStepsSplitting_);
-  }
+    std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
-  // call own output writers, write current 0D output values, not yet implemented
-  //this->outputWriterManager_.writeOutput(*this->data_, 0, currentTime_);
+    for (int i = 0; i < instances.size(); i++)
+    {
+      // call write output of MultipleInstances, callCountIncrement is the number of times the output writer would have been called without FastMonodomainSolver
+      instances[i].timeStepping2().writeOwnOutput(0, currentTime_, nTimeStepsSplitting_);
+    }
+  }
 }
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 computeMonodomain()
 {
+  if (!useVc_)
+  {
+    computeMonodomainGpu();
+    return;
+  }
+  
   LOG(TRACE) << "computeMonodomain";
 
   // initialize data vector
@@ -91,6 +95,14 @@ computeMonodomain()
   //        |
   //        2
 
+  if (fiberData_.empty())
+  {
+    LOG(DEBUG) << "In computeMonodomain(" << startTime << "," << timeStepWidthSplitting
+      << ") fiberData_ is empty";
+    LOG(DEBUG) << "This means there is no fiber to compute on this rank, they were all send to another rank for the computation. Skip computation.";
+    return;
+  }
+
   // loop over splitting time steps
   for (int timeStepNo = 0; timeStepNo < nTimeStepsSplitting_; timeStepNo++)
   {
@@ -127,16 +139,25 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlge
 
   // loop over point buffers, i.e., sets of 4 neighouring points of the fiber
   const int nPointBuffers = fiberPointBuffers_.size();
-  const double factorForForDataNo = (double)Vc::double_v::Size / fiberData_[0].valuesLength;
+  if (fiberData_.empty())
+  {
+    LOG(DEBUG) << "In compute0D(" << startTime << "," << timeStepWidth << "," << nTimeSteps << "," << storeAlgebraicsForTransfer
+      << "): fiberData_ is empty, nPointBuffers: " << nPointBuffers;
+    LOG(DEBUG) << "This means there is no fiber to compute on this rank, they were all send to another rank for the computation. Skip compute0D.";
+    return;
+  }
+
+  const double factorForForDataNo = (double)Vc::double_v::size() / fiberData_[0].valuesLength;
   for (global_no_t pointBuffersNo = 0; pointBuffersNo < nPointBuffers; pointBuffersNo++)
   {
     int fiberDataNo = pointBuffersNo * factorForForDataNo;
-    int indexInFiber = pointBuffersNo * Vc::double_v::Size - fiberData_[fiberDataNo].valuesOffset;
+    int indexInFiber = pointBuffersNo * Vc::double_v::size() - fiberData_[fiberDataNo].valuesOffset;
 
     // determine if current point is at center of fiber
-    int fiberCenterIndex = fiberData_[fiberDataNo].valuesLength / 2;
-    bool currentPointIsInCenter = ((fiberCenterIndex - indexInFiber) < Vc::double_v::Size);
-    VLOG(3) << "currentPointIsInCenter: " << currentPointIsInCenter << ", pointBuffersNo: " << pointBuffersNo << ", fiberDataNo: " << fiberDataNo << ", indexInFiber:" << indexInFiber << ", fiberCenterIndex: " << fiberCenterIndex << ", " << (indexInFiber - fiberCenterIndex) << " < " << Vc::double_v::Size;
+    int fiberCenterIndex = fiberData_[fiberDataNo].fiberStimulationPointIndex;
+    bool currentPointIsInCenter = (unsigned long)(fiberCenterIndex - indexInFiber) < Vc::double_v::size();  // note that this is different from abs(...)
+
+    VLOG(3) << "currentPointIsInCenter: " << currentPointIsInCenter << ", pointBuffersNo: " << pointBuffersNo << ", fiberDataNo: " << fiberDataNo << ", indexInFiber:" << indexInFiber << ", fiberCenterIndex: " << fiberCenterIndex << ", " << (indexInFiber - fiberCenterIndex) << " < " << Vc::double_v::size();
 
     VLOG(3) << "pointBuffersNo: " << pointBuffersNo << ", fiberDataNo: " << fiberDataNo << ", indexInFiber: " << indexInFiber;
 
@@ -158,7 +179,9 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlge
       double currentTime = startTime + timeStepNo * timeStepWidth;
 
       // check if current point will be stimulated
-      const bool stimulateCurrentPoint = isCurrentPointStimulated(fiberDataNo, currentTime, currentPointIsInCenter);
+      bool stimulateCurrentPoint = false;
+      if (currentPointIsInCenter)
+        stimulateCurrentPoint = isCurrentPointStimulated(fiberDataNo, currentTime, currentPointIsInCenter);
       const bool argumentStoreAlgebraics = storeAlgebraicsForTransfer && timeStepNo == nTimeSteps-1;
 
       // if the current point does not need to get computed because the value won't change
@@ -178,7 +201,7 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlge
       compute0DInstance_(fiberPointBuffers_[pointBuffersNo].states, fiberPointBuffersParameters_[pointBuffersNo],
                          currentTime, timeStepWidth, stimulateCurrentPoint,
                          argumentStoreAlgebraics, fiberPointBuffersAlgebraicsForTransfer_[pointBuffersNo],
-                         algebraicsForTransfer_, valueForStimulatedPoint_);
+                         algebraicsForTransferIndices_, valueForStimulatedPoint_);
     }  // loop over timesteps
 
     equilibriumAccelerationUpdate(statesPreviousValues, pointBuffersNo);
@@ -194,7 +217,7 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlge
     int fiberDataNoPrevious = -1;
     for (global_no_t pointBuffersNo = 0; pointBuffersNo < nPointBuffers; pointBuffersNo++)
     {
-      int fiberDataNo = pointBuffersNo * Vc::double_v::Size / fiberData_[0].valuesLength;
+      int fiberDataNo = pointBuffersNo * Vc::double_v::size() / fiberData_[0].valuesLength;
       if (fiberDataNoPrevious != fiberDataNo)
       {
         s << std::endl << fiberDataNo;
@@ -265,8 +288,8 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
     for (int valueNo = 0; valueNo < nValues; valueNo++)
     {
       global_no_t valuesIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo;
-      global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::Size;
-      int entryNo = valuesIndexAllFibers % Vc::double_v::Size;
+      global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::size();
+      int entryNo = valuesIndexAllFibers % Vc::double_v::size();
       double u = fiberPointBuffers_[pointBuffersNo].states[0][entryNo];
       if (valueNo != 0)
       {
@@ -315,16 +338,16 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
       double u_next = 0;
 
       global_no_t valuesIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo;
-      global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::Size;
-      int entryNo = valuesIndexAllFibers % Vc::double_v::Size;
+      global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::size();
+      int entryNo = valuesIndexAllFibers % Vc::double_v::size();
       u_center = fiberPointBuffers_[pointBuffersNo].states[0][entryNo];
 
       // contribution from left element
       if (valueNo > 0)
       {
         global_no_t valuesIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo - 1;
-        global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::Size;
-        int entryNo = valuesIndexAllFibers % Vc::double_v::Size;
+        global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::size();
+        int entryNo = valuesIndexAllFibers % Vc::double_v::size();
         u_previous = fiberPointBuffers_[pointBuffersNo].states[0][entryNo];
 
         // stencil K: 1/h*[1   _-1_ ]*prefactor
@@ -362,8 +385,8 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
       if (valueNo < nValues-1)
       {
         global_no_t valuesIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo + 1;
-        global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::Size;
-        int entryNo = valuesIndexAllFibers % Vc::double_v::Size;
+        global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::size();
+        int entryNo = valuesIndexAllFibers % Vc::double_v::size();
         u_next = fiberPointBuffers_[pointBuffersNo].states[0][entryNo];
 
         // stencil K: 1/h*[_-1_  1  ]*prefactor
@@ -433,8 +456,8 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
     // perform backward substitution
     // x_n = d'_n
     global_no_t valuesIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + nValues-1;
-    global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::Size;
-    int entryNo = valuesIndexAllFibers % Vc::double_v::Size;
+    global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::size();
+    int entryNo = valuesIndexAllFibers % Vc::double_v::size();
     fiberPointBuffers_[pointBuffersNo].states[0][entryNo] = dAlgebraic[nValues-1];
     //LOG(DEBUG) << "set entry (" << pointBuffersNo << "," << entryNo << ") to " << dAlgebraic[nValues-1];
 
@@ -445,8 +468,8 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
     {
       // x_i = d'_i - c'_i * x_{i+1}
       global_no_t valuesIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo;
-      global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::Size;
-      int entryNo = valuesIndexAllFibers % Vc::double_v::Size;
+      global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::size();
+      int entryNo = valuesIndexAllFibers % Vc::double_v::size();
 
       double resultValue = dAlgebraic[valueNo] - cAlgebraic[valueNo] * previousValue;
       fiberPointBuffers_[pointBuffersNo].states[0][entryNo] = resultValue;
@@ -462,8 +485,8 @@ compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefact
     for (int valueNo = 0; valueNo < nValues; valueNo++)
     {
       global_no_t valuesIndexAllFibers = fiberData_[fiberDataNo].valuesOffset + valueNo;
-      global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::Size;
-      int entryNo = valuesIndexAllFibers % Vc::double_v::Size;
+      global_no_t pointBuffersNo = valuesIndexAllFibers / Vc::double_v::size();
+      int entryNo = valuesIndexAllFibers % Vc::double_v::size();
       double u = fiberPointBuffers_[pointBuffersNo].states[0][entryNo];
       if (valueNo != 0)
         s << ", ";
@@ -521,17 +544,26 @@ isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointI
         && currentTime - (lastStimulationCheckTime + 1./(setSpecificStatesCallFrequency+currentJitter)) > setSpecificStatesRepeatAfterFirstCall)
     {
       // advance time of last call to specificStates
+#ifndef NDEBUG
       LOG(DEBUG) << " old lastStimulationCheckTime: " << fiberDataCurrentPoint.lastStimulationCheckTime << ", currentJitter: " << currentJitter << ", add " << 1./(setSpecificStatesCallFrequency+currentJitter);
+#endif
+
       fiberDataCurrentPoint.lastStimulationCheckTime += 1./(setSpecificStatesCallFrequency+currentJitter);
 
+#ifndef NDEBUG
       LOG(DEBUG) << " new lastStimulationCheckTime: " << fiberDataCurrentPoint.lastStimulationCheckTime;
+#endif
 
       // compute new jitter value
       double jitterFactor = 0.0;
       if (setSpecificStatesFrequencyJitter.size() > 0)
         jitterFactor = setSpecificStatesFrequencyJitter[jitterIndex % setSpecificStatesFrequencyJitter.size()];
       currentJitter = jitterFactor * setSpecificStatesCallFrequency;
+
+#ifndef NDEBUG
       LOG(DEBUG) << " jitterIndex: " << jitterIndex << ", new jitterFactor: " << jitterFactor << ", currentJitter: " << currentJitter;
+#endif
+
       jitterIndex++;
 
       checkStimulation = false;
@@ -566,11 +598,13 @@ isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointI
       Control::StimulationLogging::logStimulationBegin(currentTime, fiberDataCurrentPoint.motorUnitNo, fiberDataCurrentPoint.fiberNoGlobal);
     }
 
+#ifndef NDEBUG
     LOG(DEBUG) << "stimulate fiber " << fiberDataCurrentPoint.fiberNoGlobal << ", MU " << motorUnitNo << " at t=" << currentTime;
     LOG(DEBUG) << "  motorUnitNo: " << motorUnitNo << " (" << motorUnitNo % firingEvents_[firingEventsIndex % firingEvents_.size()].size() << ")";
     LOG(DEBUG) << "  firing events index: " << firingEventsIndex << " (" << firingEventsIndex % firingEvents_.size() << ")";
     LOG(DEBUG) << "  setSpecificStatesCallEnableBegin: " << setSpecificStatesCallEnableBegin << ", lastStimulationCheckTime: " << lastStimulationCheckTime
       << ", stimulation already for " << + 1./(setSpecificStatesCallFrequency+currentJitter);
+#endif
 
     LOG(INFO) << "t: " << currentTime << ", stimulate fiber " << fiberDataCurrentPoint.fiberNoGlobal << ", MU " << motorUnitNo;
   }
@@ -607,7 +641,7 @@ equilibriumAccelerationUpdate(const Vc::double_v statesPreviousValues[], int poi
 
         Vc::double_v relativeChange;
         // if any value is 0, use absolute error
-        if (fabs(newValue.min()) < 1e-11)
+        if (fabs(Vc::min(newValue)) < 1e-11)
         {
           relativeChange = Vc::abs(newValue - oldValue);
         }
@@ -616,7 +650,7 @@ equilibriumAccelerationUpdate(const Vc::double_v statesPreviousValues[], int poi
           // values are not zero, use relative error
           relativeChange = Vc::abs((newValue - oldValue) / newValue);
         }
-        double changeValue = relativeChange.max();
+        double changeValue = Vc::max(relativeChange);
 
 
         // if change is higher than tolerance

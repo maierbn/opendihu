@@ -14,15 +14,14 @@
  * This solver encapsulates the DynamicHyperelasticitySolver or HyperelasticitySolver (static). Which one to use can be chosen at runtime in the config.
  * This class adds functionality to compute and transfer active stresses, fiber stretches and contraction velocity and so on.
  */
-template<typename MeshType=Mesh::StructuredDeformableOfDimension<3>>
+template<typename MeshType=Mesh::StructuredDeformableOfDimension<3>,typename Term=Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D,bool withLargeOutputFiles=true>
 class MuscleContractionSolver :
   public Runnable,
   public TimeSteppingScheme::TimeSteppingScheme
 {
 public:
-  typedef Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D Term;
-  typedef ::TimeSteppingScheme::DynamicHyperelasticitySolver<Term,MeshType> DynamicHyperelasticitySolverType;
-  typedef ::SpatialDiscretization::HyperelasticitySolver<Term,MeshType> StaticHyperelasticitySolverType;
+  typedef ::TimeSteppingScheme::DynamicHyperelasticitySolver<Term,withLargeOutputFiles,MeshType> DynamicHyperelasticitySolverType;
+  typedef ::SpatialDiscretization::HyperelasticitySolver<Term,withLargeOutputFiles,MeshType> StaticHyperelasticitySolverType;
 
   //! make the DisplacementsFunctionSpace of the DynamicHyperelasticitySolver class available
   typedef typename DynamicHyperelasticitySolverType::DisplacementsFunctionSpace FunctionSpace;
@@ -38,7 +37,7 @@ public:
   MuscleContractionSolver(DihuContext context);
 
   //! advance simulation by the given time span [startTime_, endTime_] (set by setTimeSpan(), take a look at time_stepping_scheme/00_time_stepping_scheme.h)
-  void advanceTimeSpan();
+  void advanceTimeSpan(bool withOutputWritersEnabled = true);
 
   //! initialize time span from specificSettings_
   void initialize();
@@ -48,6 +47,9 @@ public:
 
   //! reset state of this object, such that a new initialize() is necessary ("uninitialize")
   void reset();
+
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
   //! return the data object of the timestepping scheme, with the call to this method the output writers get the data to create their output files
   Data &data();
@@ -70,17 +72,23 @@ protected:
   //! update the geometry at the given meshes, map the own geometry field to the meshes
   void mapGeometryToGivenMeshes();
 
+  //! create the mappings for the geometry field mapping between meshes
+  void initializeMappingBetweenMeshes();
+
   std::shared_ptr<DynamicHyperelasticitySolverType> dynamicHyperelasticitySolver_;   //< the dynamic hyperelasticity solver that solves for the dynamic contraction
   std::shared_ptr<StaticHyperelasticitySolverType> staticHyperelasticitySolver_;     //< the static hyperelasticity solver that can be used for quasi-static solution
 
-  Data data_;   //< the data object that holds all field variables
+  Data data_;                                   //< the data object that holds all field variables
   OutputWriter::Manager outputWriterManager_;   //< manager object holding all output writers
 
-  double pmax_;   //< settings of "Pmax" maximum active stress of the muscle
-  bool isDynamic_;  //< if the dynamic formulation or the quasi-static formulation is used
+  double pmax_;                                 //< settings of "Pmax" maximum active stress of the muscle
+  bool isDynamic_;                              //< if the dynamic formulation or the quasi-static formulation is used
+  bool enableForceLengthRelation_;              //< if the force-length relation factor f_l(λ_f) should be multiplied
+  double lambdaDotScalingFactor_;               //< scaling factor for the computation of lambdaDot
   std::vector<std::string> meshNamesOfGeometryToMapTo_;   //< a list of mesh names which will get updated with the geometry
 
-  bool initialized_;   //< if initialize was already called
+  bool initialized_;                            //< if initialize was already called
 };
 
 #include "specialized_solver/muscle_contraction_solver.tpp"
+#include "specialized_solver/muscle_contraction_solver_compute.tpp"

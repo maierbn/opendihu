@@ -132,6 +132,7 @@ config = {
                   "inputMeshIsGlobal":            True,
                   "checkForNanInf":               False,
                   "dirichletBoundaryConditions":  {},
+                  "dirichletOutputFilename":      None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "nAdditionalFieldVariables":    0,
                   "additionalSlotNames":          [],
                     
@@ -176,10 +177,12 @@ config = {
                   "initialValues":               [],
                   #"numberTimeSteps":            1,
                   "timeStepWidth":               dt_1D,  # 1e-5
+                  "timeStepWidthRelativeTolerance": 1e-10,
                   "logTimeStepWidthAsKey":       "dt_1D",
                   "durationLogKey":              "duration_1D",
                   "timeStepOutputInterval":      1e4,
                   "dirichletBoundaryConditions": {}, #{0: -75.0036, -1: -75.0036},
+                  "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "inputMeshIsGlobal":           True,
                   "checkForNanInf":              False,
                   "solverName":                  "implicitSolver",
@@ -187,9 +190,6 @@ config = {
                   "additionalSlotNames":         [],
                   
                   "FiniteElementMethod" : {
-                    "maxIterations":             1e4,
-                    "relativeTolerance":         1e-10,
-                    "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual                        
                     "inputMeshIsGlobal":         True,
                     "meshName":                  "MeshFiber_0",
                     "prefactor":                 0.03,  # resolves to Conductivity / (Am * Cm)

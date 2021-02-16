@@ -11,14 +11,14 @@
 namespace PreciceAdapter
 {
 
-/** Precice adapter for volume coupling with partitioned fibers.
+/** Precice adapter for partitioned fibers.
  *  For volume coupling, i.e. the mechanics is the first participant and the electrophysiology on all the fibers is the second partiticipant.
  *
- *  This class is for the solid mechanics.
- *  See example electrophysiology/fibers/fibers_contraction/with_precice/src/contraction.cpp
+ *  This class is for the electrophysiology.
+ *  See example electrophysiology/fibers/fibers_contraction/with_precice/src/fibers.cpp
   */
 template<typename NestedSolver>
-class MuscleContraction :
+class PartitionedFibers :
   public Runnable
 {
 public:
@@ -33,7 +33,7 @@ public:
   typedef typename NestedSolver::SlotConnectorDataType SlotConnectorDataType;
 
   //! constructor, gets the DihuContext object which contains all python settings
-  MuscleContraction(DihuContext context);
+  PartitionedFibers(DihuContext context);
 
   //! initialize the object
   void initialize();
@@ -69,11 +69,13 @@ protected:
   NestedSolver nestedSolver_;                 //< the nested solver that is controlled by this class
 
   double maximumPreciceTimestepSize_;         //< maximum timestep size that precice will allow for the current time step
-  double timeStepWidth_;                      //< timestep width of the solver
+  double currentTimeStepWidth_;               //< current time step width of the solver
+  double normalTimeStepWidth_;                //< the normal standard timestep width to use
 
-  int connectorSlotIdGamma_;                  //< the number of the connector slot that is used for gamma
+  int timeStepOutputInterval_;    //< time step number and time is output every timeStepOutputInterval_ time steps
 
   std::vector<int> preciceVertexIds_;         //< the vertex ids in precice of the geometry values
+
   int preciceMeshId_;                         //< mesh ID of precice of the mesh that contains all fiber nodes
 
   int preciceDataIdGeometry_;                 //< data ID of precice of the geometry information to be exchanged
@@ -86,4 +88,4 @@ protected:
 
 }  // namespace
 
-#include "control/precice/volume_coupling/muscle_contraction.tpp"
+#include "control/precice/old/partitioned_fibers.tpp"

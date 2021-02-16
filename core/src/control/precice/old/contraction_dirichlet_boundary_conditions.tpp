@@ -1,4 +1,4 @@
-#include "control/precice/contraction_dirichlet_boundary_conditions.h"
+#include "control/precice/old/contraction_dirichlet_boundary_conditions.h"
 
 #include <sstream>
 

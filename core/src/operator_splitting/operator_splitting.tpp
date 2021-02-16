@@ -13,7 +13,7 @@
 #include "control/diagnostic_tool/performance_measurement.h"
 #include "control/diagnostic_tool/solver_structure_visualizer.h"
 #include "mesh/mesh_manager/mesh_manager.h"
-#include "slot_connection/slot_connector_data_helper.h"
+#include "slot_connection/data_helper/slot_connector_data_helper.h"
 #include "slot_connection/global_connections_by_slot_name.h"
 
 namespace OperatorSplitting

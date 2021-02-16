@@ -1,6 +1,6 @@
 #include "control/map_dofs/map_dofs.h"
 
-#include "slot_connection/slot_connector_data_helper.h"
+#include "slot_connection/data_helper/slot_connector_data_helper.h"
 
 namespace Control
 {

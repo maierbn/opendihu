@@ -75,11 +75,8 @@ variables.bottom_traction = [0.0,0.0,0.0]        # [1 N]
 #variables.bottom_traction = [0.0,-1e-2,-5e-2]        # [N]
 
 
-# input files
-import os
-input_directory   = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
-variables.fiber_file = input_directory + "/left_biceps_brachii_7x7fibers.bin"
-#variables.fiber_file = input_directory + "/2x2fibers.bin"
+variables.fiber_file = "../../../../input/left_biceps_brachii_7x7fibers.bin"
+#variables.fiber_file = "../../../../input/2x2fibers.bin"
 
 # stride for sampling the 3D elements from the fiber data
 # here any number is possible
@@ -204,9 +201,34 @@ config = {
       "dumpFormat":          "matlab",
     }
   },
-  "PartitionedFibers": {        # monodomain, fibers
-    "preciceConfigFilename":    "../precice-config.xml",             # the preCICE configuration file
-    "timeStepOutputInterval":   100,                                 # interval in which to display current timestep and time in console
+  "PreciceAdapterVolumeCoupling": {
+    "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
+    "timestepWidth":            1,                          # coupling time step width, must match the value in the precice config
+    "couplingEnabled":          True,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
+    "preciceConfigFilename":    "../precice_config.xml",    # the preCICE configuration file
+    "preciceParticipantName":   "PartitionedFibers",        # name of the own precice participant, has to match the name given in the precice xml config file
+    "scalingFactor":            1,                          # a factor to scale the exchanged data, prior to communication
+    "outputOnlyConvergedTimeSteps": True,                   # if the output writers should be called only after a time window of precice is complete, this means the timestep has converged
+    
+    "preciceData": [
+      {
+        "mode":                 "read",                     # mode is one of "read" or "write"
+        "preciceDataName":      "Geometry",                 # name of the vector or scalar to transfer, as given in the precice xml settings file
+        "preciceMeshName":      "PartitionedFibersMesh",    # name of the precice coupling mesh, as given in the precice xml settings file
+        "opendihuMeshName":     None,                       # extra specification of the opendihu mesh that is used for the initialization of the precice mapping. If None or "", the mesh of the field variable is used.
+        "slotName":             None,                       # name of the existing slot of the opendihu data connector to which this variable is associated to (only relevant if not isGeometryField)
+        "isGeometryField":      True,                       # if this is the geometry field of the mesh
+      },
+      {
+        "mode":                 "write",                    # mode is one of "read" or "write"
+        "preciceDataName":      "Gamma",                    # name of the vector or scalar to transfer, as given in the precice xml settings file
+        "preciceMeshName":      "PartitionedFibersMesh",    # name of the precice coupling mesh, as given in the precice xml settings file
+        "opendihuMeshName":     None,                       # extra specification of the opendihu mesh that is used for the initialization of the precice mapping. If None or "", the mesh of the field variable is used.
+        "slotName":             "gamma",                    # name of the existing slot of the opendihu data connector to which this variable is associated to (only relevant if not isGeometryField)
+        "isGeometryField":      False,                      # if this is the geometry field of the mesh
+      },
+    ],
+    
     "MultipleInstances": {
       "logKey":                     "duration_subdomains_xy",
       "ranksAllComputedInstances":  list(range(n_ranks)),
@@ -307,7 +329,7 @@ config = {
                   "inputMeshIsGlobal":           True,
                   "solverName":                  "diffusionTermSolver",
                   "nAdditionalFieldVariables":   1,
-                  "additionalSlotNames":         ["stress"],
+                  "additionalSlotNames":         ["gamma"],
                   "checkForNanInf":              False,
                   
                   "FiniteElementMethod" : {
@@ -345,164 +367,6 @@ config = {
     "generateGPUSource":        True,                                # (set to True) only effective if optimizationType=="gpu", whether the source code for the GPU should be generated. If False, an existing source code file (which has to have the correct name) is used and compiled, i.e. the code generator is bypassed. This is useful for debugging, such that you can adjust the source code yourself. (You can also add "-g -save-temps " to compilerFlags under CellMLAdapter)
     "useSinglePrecision":       False,                               # only effective if optimizationType=="gpu", whether single precision computation should be used on the GPU. Some GPUs have poor double precision performance. Note, this drastically increases the error and, in consequence, the timestep widths should be reduced.
   },
-  "MuscleContraction": {        # solid mechanics
-    "preciceConfigFilename":          "../precice-config.xml",   # the preCICE configuration file
-    "timestepWidth":                  variables.dt_3D,           # timestep width to tell precice
-    "outputConnectorSlotIdGamma":     2,                         # which output slot is gamma to be transferred over the precice adapter, there are: λ, λdot, γ
-    "MuscleContractionSolver": {
-      "mapGeometryToMeshes":          [],
-      "numberTimeSteps":              1,                         # only use 1 timestep per interval
-      "timeStepOutputInterval":       100,                       # do not output time steps
-      "Pmax":                         variables.pmax,            # maximum PK2 active stress
-      "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
-      "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
-      "slotNames":                    ["lambda", "ldot", "gamma", "T"],   # names of the data connector slots
-      "dynamic":                      False,                     # if the dynamic formulation with velocity or the quasi-static formulation is computed
-      
-      "OutputWriter" : [
-        {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/mechanics", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-      ],
-      
-      "DynamicHyperelasticitySolver": {
-        "timeStepWidth":              variables.dt_3D,           # time step width 
-        "durationLogKey":             "nonlinear",               # key to find duration of this solver in the log file
-        "timeStepOutputInterval":     1,                         # how often the current time step should be printed to console
-        
-        "materialParameters":         variables.material_parameters,  # material parameters of the Mooney-Rivlin material
-        "density":                    variables.rho,             # density of the material
-        "displacementsScalingFactor": 1.0,                       # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
-        "residualNormLogFilename":    "log_residual_norm.txt",   # log file where residual norm values of the nonlinear solver will be written
-        "useAnalyticJacobian":        True,                      # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
-        "useNumericJacobian":         False,                     # whether to use the numerically computed jacobian matrix in the nonlinear solver (slow), only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
-          
-        "dumpDenseMatlabVariables":   False,                     # whether to have extra output of matlab vectors, x,r, jacobian matrix (very slow)
-        # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
-        
-        "loadFactors":                [],                        # no load factors, solve problem directly
-        "loadFactorGiveUpThreshold":  4e-2,                      # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the progression between two subsequent load factors gets smaller than this value, the solution is aborted.
-        "scaleInitialGuess":          False,                     # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
-        "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
-    
-        # mesh
-        "inputMeshIsGlobal":          False,                     # the mesh is given locally
-        "meshName":                   "3Dmesh_quadratic",        # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
-        "fiberDirection":             None,                      # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
-        "fiberDirectionInElement":    [0,0,1],                   # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
-      
-        # solver
-        "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
-        
-        # boundary and initial conditions
-        "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
-        "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
-        "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
-        "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
-        "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
-        
-        "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-        "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-        "constantBodyForce":           variables.constant_body_force,                 # a constant force that acts on the whole body, e.g. for gravity
-        
-        "dirichletOutputFilename":     None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-        
-        # define which file formats should be written
-        # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
-        "OutputWriter" : [
-          
-          # Paraview files
-          #{"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-          
-          # Python callback function "postprocess"
-          #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
-        ],
-        # 2. additional output writer that writes also the hydrostatic pressure
-        "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
-          "OutputWriter" : [
-            #{"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-          ]
-        },
-        # 3. additional output writer that writes virtual work terms
-        "dynamic": {    # output of the dynamic solver, has additional virtual work values 
-          "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-            #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-            #{"format": "Paraview", "outputInterval": 1, "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-          ],
-        }
-      },
-      "HyperelasticitySolver": {
-        "durationLogKey":             "hyperelasticity",         # key to find duration of this solver in the log file
-        "timeStepOutputInterval":     1,                         # how often the current time step should be printed to console
-        
-        "materialParameters":         variables.material_parameters,  # material parameters of the Mooney-Rivlin material
-        "density":                    variables.rho,             # density of the material
-        "displacementsScalingFactor": 1.0,                       # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
-        "residualNormLogFilename":    "log_residual_norm.txt",   # log file where residual norm values of the nonlinear solver will be written
-        "useAnalyticJacobian":        True,                      # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
-        "useNumericJacobian":         False,                     # whether to use the numerically computed jacobian matrix in the nonlinear solver (slow), only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
-          
-        "dumpDenseMatlabVariables":   False,                     # whether to have extra output of matlab vectors, x,r, jacobian matrix (very slow)
-        # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
-        
-        #"loadFactors":  [0.1, 0.2, 0.35, 0.5, 1.0],             # load factors for every timestep
-        "loadFactors":                [],                        # no load factors, solve problem directly
-        "loadFactorGiveUpThreshold":  4e-2,                      # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the progression between two subsequent load factors gets smaller than this value, the solution is aborted.
-        "scaleInitialGuess":          False,                     # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
-        "nNonlinearSolveCalls": 1,                               # how often the nonlinear solve should be repeated
-    
-        # mesh
-        "inputMeshIsGlobal":          False,                     # the mesh is given locally
-        "meshName":                   "3Dmesh_quadratic",        # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
-        "fiberMeshNames":             [],                        # fiber meshes that will be used to determine the fiber direction, for multidomain there are no fibers so this would be empty list
-        "fiberDirection":             None,                      # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
-        "fiberDirectionInElement":    [0,0,1],                   # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
-      
-        # solver
-        "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
-        
-        # boundary and initial conditions
-        "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
-        "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
-        "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
-        "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
-        "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
-        
-        "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-        "constantBodyForce":           variables.constant_body_force,                 # a constant force that acts on the whole body, e.g. for gravity
-        
-        "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-        
-        # define which file formats should be written
-        # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
-        "OutputWriter" : [
-          
-          # Paraview files
-          #{"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-          
-          # Python callback function "postprocess"
-          #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
-        ],
-        # 2. additional output writer that writes also the hydrostatic pressure
-        "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
-          "OutputWriter" : [
-            #{"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-          ]
-        },
-        # 3. additional output writer that writes virtual work terms
-        "dynamic": {    # output of the dynamic solver, has additional virtual work values 
-          "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-            #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-            #{"format": "Paraview", "outputInterval": 1, "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-          ],
-        },
-        # output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
-        "LoadIncrements": {   
-          "OutputWriter" : [
-            #{"format": "Paraview", "outputInterval": 1, "filename": "out/load_increment_", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True},
-          ]
-        },
-      }
-    }
-  }
 }
 
 # stop timer and calculate how long parsing lasted

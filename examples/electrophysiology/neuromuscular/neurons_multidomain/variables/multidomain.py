@@ -632,7 +632,7 @@ def callback_motoneurons_input(input_values, output_values, current_time, slot_n
     total_signal += input_values[input_index] * 1e-3
     
   # add cortical input
-  total_signal += 5e-3            # nA
+  total_signal += 5e-3            # [nA]
   # motor neuron fires with ~14Hz if drive(t) = 5e-3
   
   # set same value to all connected motoneurons

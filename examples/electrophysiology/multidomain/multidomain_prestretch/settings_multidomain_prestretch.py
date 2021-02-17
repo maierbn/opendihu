@@ -269,8 +269,8 @@ config = {
       "relativeTolerance":  1e-10,
       "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
       "maxIterations":      1e5,
-      "solverType":         "gmres",
-      "preconditionerType": "none",
+      "solverType":         variables.potential_flow_solver_type,
+      "preconditionerType": variables.potential_flow_preconditioner_type,
       "dumpFormat":         "default",
       "dumpFilename":       "",
     },

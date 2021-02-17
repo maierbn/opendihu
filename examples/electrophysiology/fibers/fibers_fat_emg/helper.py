@@ -371,6 +371,7 @@ variables.mappings_between_meshes.update({
 variables.output_writer_fibers = []
 variables.output_writer_elasticity = []
 variables.output_writer_emg = []
+variables.output_writer_surface = []
 variables.output_writer_0D_states = []
 
 subfolder = ""
@@ -379,6 +380,7 @@ if variables.paraview_output:
     subfolder = "paraview/"
   variables.output_writer_emg.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D_emg), "filename": "out/" + subfolder + variables.scenario_name + "/hd_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
   variables.output_writer_elasticity.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D_emg), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
+  variables.output_writer_surface.append({"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
   variables.output_writer_fibers.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
   if variables.states_output:
     variables.output_writer_0D_states.append({"format": "Paraview", "outputInterval": 1, "filename": "out/" + subfolder + variables.scenario_name + "/0D_states", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
@@ -396,6 +398,7 @@ if variables.python_output:
     subfolder = "python/"
   variables.output_writer_emg.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D_emg), "filename": "out/" + subfolder + variables.scenario_name + "/hd_emg", "binary": True, "fileNumbering": "incremental"})
   variables.output_writer_elasticity.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D_emg), "filename": "out/" + subfolder + variables.scenario_name + "/elasticity", "binary": True, "fileNumbering": "incremental"})
+  variables.output_writer_surface.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
   variables.output_writer_fibers.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "binary": True, "fileNumbering": "incremental"})
 
 if variables.exfile_output:

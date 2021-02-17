@@ -474,7 +474,7 @@ def get_motor_unit_no(fiber_no):
 def get_diffusion_prefactor(fiber_no, mu_no):
   diffusion_prefactor = variables.get_conductivity(fiber_no, mu_no) / (variables.get_am(fiber_no, mu_no) * variables.get_cm(fiber_no, mu_no))
   #print("diffusion_prefactor: {}/({}*{}) = {}".format(variables.get_conductivity(fiber_no, mu_no), variables.get_am(fiber_no, mu_no), variables.get_cm(fiber_no, mu_no), diffusion_prefactor))
-  return variables.get_conductivity(fiber_no, mu_no) / (variables.get_am(fiber_no, mu_no) * variables.get_cm(fiber_no, mu_no))
+  return diffusion_prefactor
 
 def fiber_gets_stimulated(fiber_no, frequency, current_time):
   """

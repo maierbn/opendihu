@@ -142,6 +142,8 @@ protected:
       int lineNoFrom;   //< row where the line starts
       int lineNoTo;     //< row where the line ends
       int lineColumn;   //< lineColumn is the horizontal position of the vertical data connection line
+      int slotNoFrom;   //< the slot no where the line starts, this is needed to know the number of digits of the slot no and where to put the '<' sign
+      int slotNoTo;     //< the slot no where the line ends, this is needed to know the number of digits of the slot no and where to put the '<' sign
       SolverStructureVisualizer::solver_t::SlotsConnectionRepresentation::slot_connection_t lineType;      //< type of the line if it is copy or reuse
       bool involvesMapping;   //< if the line is a mapping
     };

@@ -497,7 +497,7 @@ config = {
             "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
             #"loadFactors":                [0.25, 0.66, 1.0],                # load factors for every timestep
             "loadFactors":                [],                        # no load factors, solve problem directly
-            "loadFactorGiveUpThreshold":  4e-2,                      # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
+            "loadFactorGiveUpThreshold":  4e-2,                      # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the progression between two subsequent load factors gets smaller than this value, the solution is aborted.
             "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
             
             # boundary and initial conditions

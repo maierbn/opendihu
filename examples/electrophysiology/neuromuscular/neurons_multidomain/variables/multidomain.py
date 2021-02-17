@@ -170,6 +170,7 @@ output_timestep_multidomain = 2     # [ms] timestep for multidomain solver outpu
 output_timestep_elasticity = 1      # [ms] timestep for elasticity output files
 output_timestep_neurons = 1         # [ms] timestep for output of files for all sensor organs and neurons
 output_timestep_motoneuron = 0.2    # [ms] timestep for output of files for motoneuron
+output_timestep_0D_states = 2       # [ms] timestep for output of all states within multidomain, produces large files, enabled only if states_output = True
 
 #output_timestep_multidomain = dt_elasticity
 #output_timestep_elasticity = dt_elasticity
@@ -179,10 +180,12 @@ output_timestep_motoneuron = 0.2    # [ms] timestep for output of files for moto
 import os
 input_directory   = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
 #cellml_file       = input_directory+"/new_slow_TK_2014_12_08.c"
-cellml_file       = input_directory+"/hodgkin_huxley-razumova.cellml"
+#cellml_file       = input_directory+"/hodgkin_huxley-razumova.cellml"
+cellml_file       = input_directory+"/hodgkin_huxley-razumova_equilibrium.cellml"
 
 fiber_file        = input_directory+"/left_biceps_brachii_9x9fibers_b.bin"  # this is a variant of 9x9fibers with a slightly different mesh that somehow works better
 #fiber_file        = input_directory+"/left_biceps_brachii_13x13fibers.bin"
+#fiber_file        = input_directory+"/cuboid_9x9fibers.bin"
 fat_mesh_file     = fiber_file + "_fat.bin"
 firing_times_file = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 firing_times_file = input_directory+"/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
@@ -211,7 +214,7 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-states_output = False    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
+states_output = True    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
 show_linear_solver_output = False    # if every solve of multidomain diffusion should be printed
 disable_firing_output = True   # if information about firing of MUs should be printed
 
@@ -629,7 +632,7 @@ def callback_motoneurons_input(input_values, output_values, current_time, slot_n
     total_signal += input_values[input_index] * 1e-3
     
   # add cortical input
-  total_signal += 5e-3            # nA
+  total_signal += 5e-3            # [nA]
   # motor neuron fires with ~14Hz if drive(t) = 5e-3
   
   # set same value to all connected motoneurons

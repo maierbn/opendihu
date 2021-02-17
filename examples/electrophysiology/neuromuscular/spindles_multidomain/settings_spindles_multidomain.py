@@ -181,6 +181,7 @@ multidomain_solver = {
   "updateSystemMatrixEveryTimestep":  True,                                 # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
   "updateSystemMatrixInterval":       int(variables.dt_elasticity/variables.dt_splitting),   # if updateSystemMatrixEveryTimestep is True, how often the system matrix should be rebuild, in terms of calls to the solver. (E.g., 2 means every second time the solver is called)
   "recreateLinearSolverInterval":     0,                                    # how often the Petsc KSP object (linear solver) should be deleted and recreated. This is to remedy memory leaks in Petsc's implementation of some solvers. 0 means disabled.
+  "rescaleRelativeFactors":           True,                                 # if all relative factors should be rescaled such that max Σf_r = 1
   "setDirichletBoundaryConditionPhiE":False,                                # (set to False) if the last dof of the extracellular space (variable phi_e) should have a 0 Dirichlet boundary condition. However, this makes the solver converge slower.
   "setDirichletBoundaryConditionPhiB":False,                                # (set to False) if the last dof of the fat layer (variable phi_b) should have a 0 Dirichlet boundary condition. However, this makes the solver converge slower.
   "resetToAverageZeroPhiE":           True,                                 # if a constant should be added to the phi_e part of the solution vector after every solve, such that the average is zero
@@ -261,6 +262,7 @@ config = {
   
   # connections of the slots, identified by slot name
   "connectedSlots": [
+    ("mn",     "mn_out"),
     ("mn_out", "mn"),
     ("ms0",    "ms_in0"),
     ("ms1",    "ms_in1"),
@@ -568,7 +570,7 @@ config = {
                 "toDofNosNumbering":                "local",
                 "dofsMapping":                      None,
                 "inputDofs":                        list(range(variables.n_muscle_spindles)),   # [0,1,...,n_muscle_spindles], this is for mesh "muscleSpindleMesh"
-                "outputDofs":                       [list(range(variables.n_muscle_spindles))],   # [0,1,...,n_muscle_spindles], this is for mesh "muscleSpindleAndInterneuronMesh"
+                "outputDofs":                       [list(range(variables.n_motoneurons))],   # [0,1,...,n_motor_neurons], this is for mesh "motoneuronMesh"
                 "callback":                         variables.callback_muscle_spindles_to_motoneurons,
                 #"thresholdValue":                   20,                  # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
                 #"valueToSet":                       20,                  # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
@@ -640,7 +642,7 @@ config = {
             "logTimeStepWidthAsKey":        "dt_motoneuron",
             "durationLogKey":               "duration_motoneuron",
             "initialValues":                [],
-            "timeStepOutputInterval":       1e4,
+            "timeStepOutputInterval":       1,
             "inputMeshIsGlobal":            True,
             "dirichletBoundaryConditions":  {},
             "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
@@ -791,7 +793,7 @@ config = {
                             "timeStepWidth":                variables.dt_0D,  # 5e-5
                             "logTimeStepWidthAsKey":        "dt_0D",
                             "durationLogKey":               "duration_0D",
-                            "initialValues":                [],
+                            "initialValues":                -75,
                             "timeStepOutputInterval":       1e4,
                             "inputMeshIsGlobal":            True,
                             "dirichletBoundaryConditions":  {},

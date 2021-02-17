@@ -90,7 +90,7 @@ initialize()
   initialized_ = true;
 
 #else
-  LOG(FATAL) << "Not compiled with preCICE!";
+  LOG(FATAL) << "Failed to initialize PreciceAdapter (surface coupling) because opendihu is not compiled with preCICE.";
 #endif
 }
 
@@ -140,7 +140,6 @@ initializePreciceMeshes()
     {
       LOG(FATAL) << currentMeshConfig << "[\"face\"] is \"" << face << "\", valid values are: \"2-\", \"2+\".";
     }
-
 
     // check if there are any local nodes of the surface on the local partition
     bool localDomainHasPartOfSurface = true;
@@ -213,13 +212,13 @@ void PreciceAdapterInitialize<NestedSolver>::
 initializePreciceData()
 {
   // parse settings for coupling participants / tendons
-  // loop over items of the key "preciceCouplingParticipants"
+  // loop over items of the key "preciceData"
   std::string settingsKey("preciceData");
   PyObject *listPy = this->specificSettings_.getOptionPyObject(settingsKey);
   std::vector<PyObject *> list = PythonUtility::convertFromPython<std::vector<PyObject *>>::get(listPy);
   PythonConfig preciceDataConfig(this->specificSettings_, settingsKey);
 
-  // loop over items of the list under "preciceCouplingParticipants"
+  // loop over items of the list under "preciceData"
   for (int i = 0; i < list.size(); i++)
   {
     PythonConfig currentPreciceData(preciceDataConfig, i);

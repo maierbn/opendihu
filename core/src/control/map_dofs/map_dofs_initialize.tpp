@@ -1,6 +1,6 @@
 #include "control/map_dofs/map_dofs.h"
 
-#include "slot_connection/slot_connector_data_helper.h"
+#include "slot_connection/data_helper/slot_connector_data_helper.h"
 
 namespace Control
 {
@@ -422,10 +422,10 @@ slotGetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLoc
 }
 
 template<typename FunctionSpaceType, typename NestedSolverType>
-void MapDofs<FunctionSpaceType,NestedSolverType>::
+bool MapDofs<FunctionSpaceType,NestedSolverType>::
 slotSetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode)
 {
-  //LOG(DEBUG) << "   slotSetValues(slotNo=" << slotNo << ", arrayIndex=" << arrayIndex << ", " << dofNosLocal.size() << " dofs: " << dofNosLocal << ", values: " << values;
+  LOG(INFO) << "   slotSetValues(slotNo=" << slotNo << ", arrayIndex=" << arrayIndex << ", " << dofNosLocal.size() << " dofs: " << dofNosLocal << ", values: " << values;
   
   // need function space of affected field variables
   int nSlotsNestedSolver = SlotConnectorDataHelper<typename NestedSolverType::SlotConnectorDataType>::nSlots(
@@ -433,7 +433,7 @@ slotSetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLoc
   );
   if (slotNo < nSlotsNestedSolver)
   {
-    SlotConnectorDataHelper<typename NestedSolverType::SlotConnectorDataType>::slotSetValues(
+    return SlotConnectorDataHelper<typename NestedSolverType::SlotConnectorDataType>::slotSetValues(
       std::get<0>(*data_.getSlotConnectorData()), slotNo, arrayIndex, dofNosLocal, values, petscInsertMode
     );
     //LOG(DEBUG) << "   set values in nested solver slots";
@@ -461,12 +461,16 @@ slotSetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLoc
         << " (nested solver has " << nSlotsNestedSolver << " slots and there " << (nAdditionalSlots==1? "is ": "are ") << nAdditionalSlots << " additional slot" << (nAdditionalSlots==1? "" : "s") << ")";
     }
 
-    //LOG(DEBUG) << "   set values in additional fieldVariable no " << index << ", \"" << fieldVariable->name() << "\", component " << componentNo
-    //  << ", set dofs " << dofNosLocal << " to values " << values;
+    LOG(INFO) << "   set values in additional fieldVariable no " << index << ", \"" << fieldVariable->name() << "\", component " << componentNo
+      << " on mesh \"" << fieldVariable->functionSpace()->meshName() << "\", set dofs " << dofNosLocal << " to values " << values;
       
     fieldVariable->setValues(componentNo, dofNosLocal, values, petscInsertMode);
     
-    //LOG(DEBUG) << "fieldVariable: " << *fieldVariable;
+    LOG(DEBUG) << "fieldVariable: " << *fieldVariable;
+    std::vector<double> values;
+    fieldVariable->getValuesWithoutGhosts(componentNo, values);
+    LOG(INFO) << "fieldVariable: " << fieldVariable->name() << ", " << fieldVariable << ", all values: " << values;
+    return true;
   }
 }
 

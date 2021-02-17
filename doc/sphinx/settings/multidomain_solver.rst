@@ -127,8 +127,12 @@ The options below can be used for both `MultidomainSolver` and `MultidomainWithF
     "updateSystemMatrixEveryTimestep":  False,                                # if this multidomain solver will update the system matrix in every first timestep, use this only if the geometry changes, e.g. by contraction
     "updateSystemMatrixInterval":       1,                                    # if updateSystemMatrixEveryTimestep is True, how often the system matrix should be rebuild, in terms of calls to the solver. (E.g., 2 means every second time the solver is called)
     "recreateLinearSolverInterval":     0,                                    # how often the Petsc KSP object (linear solver) should be deleted and recreated. This is to remedy memory leaks in Petsc's implementation of some solvers. 0 means disabled.
-    "setDirichletBoundaryCondition":    True,                                 # if the last dof of the fat layer (MultidomainWithFatSolver) or the extracellular space (MultidomainSolver) should have a 0 Dirichlet boundary condition
-  }
+    "rescaleRelativeFactors":           True,                                 # if all relative factors should be rescaled such that max Σf_r = 1
+    "setDirichletBoundaryConditionPhiE":False,                                # (set to False) if the last dof of the extracellular space (variable phi_e) should have a 0 Dirichlet boundary condition. However, this makes the solver converge slower.
+    "setDirichletBoundaryConditionPhiB":False,                                # (set to False) if the last dof of the fat layer (variable phi_b) should have a 0 Dirichlet boundary condition. However, this makes the solver converge slower.
+    "resetToAverageZeroPhiE":           True,                                 # if a constant should be added to the phi_e part of the solution vector after every solve, such that the average is zero
+    "resetToAverageZeroPhiB":           True,                                 # if a constant should be added to the phi_b part of the solution vector after every solve, such that the average is zero
+    }
   
 The list of values for `compartmentRelativeFactors` is for the symbol :math:`f_r^k` in the equations. The values should be the same on every rank. 
 It is beneficial to compute the values once and store them in a cache file. Note that the number of nodes in total can be different if the same settings are used for different numbers of ranks. Therefore it is not easily possible to run the program serially, compute the cache of `compartmentRelativeFactors` and reuse it for all ranks.
@@ -184,8 +188,18 @@ recreateLinearSolverInterval
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 There appears to be a memory leak in some implementation of a PETSc solver that is visible during long runs. Using this option, it is possible to recreate the PETSc KSP object after the given number of time steps to free the memory. Apparently, the memory is still not freed despite deleting and recreating the PETSc solver.
 
+rescaleRelativeFactors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If all relative factors should be rescaled such that max Σf_r = 1. 
 
-setDirichletBoundaryCondition
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-If the last dof of the fat layer (`MultidomainWithFatSolver`) or the extracellular space (`MultidomainSolver`) should have a :math:`0` Dirichlet boundary condition. 
-This can be used to ensure that the system matrix is regular.
+
+setDirichletBoundaryConditionPhiE, setDirichletBoundaryConditionPhiB
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If the last dof of the extracellular space (variable phi_e) and the fat layer (variable phi_b) should have a 0 Dirichlet boundary condition, each.
+This remove zero eigenvalues and makes the system regular.
+However, this makes the solver converge slower. Therefore, these options are usually set to False.
+
+resetToAverageZeroPhiE, resetToAverageZeroPhiB
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If a constant should be added to the phi_e and phi_b parts of the solution vector after every solve, such that the average is zero.
+This reduces the drift of the solution of the system is not regular. (If setDirichletBoundaryConditionPhi* is False).

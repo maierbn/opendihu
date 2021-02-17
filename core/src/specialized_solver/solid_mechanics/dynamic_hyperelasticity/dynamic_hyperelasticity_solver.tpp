@@ -363,18 +363,26 @@ advanceTimeSpan(bool withOutputWritersEnabled)
     isReferenceGeometryInitialized_ = true;
   }
 
+  // only before the first timestep
   // in case there have been new displacement values set by the data connector slots, update the uvp_ variable
-  static std::vector<double> values;
-  for (int i = 0; i < 3; i++)
+  if (this->startTime_ < 1e-12)
   {
-    values.clear();
-    this->data_.displacements()->getValuesWithoutGhosts(i, values);
-    LOG(INFO) << i << " initialize displacement values: " << values;
-    uvp_->setValues(i, data_.functionSpace()->meshPartition()->nDofsLocalWithoutGhosts(),
-                    data_.functionSpace()->meshPartition()->dofNosLocal().data(), values.data(), INSERT_VALUES);
+    // loop over x,y,z components of displacements
+    static std::vector<double> values;
+    for (int i = 0; i < 3; i++)
+    {
+      values.clear();
+      this->data_.displacements()->getValuesWithoutGhosts(i, values);
+      LOG(INFO) << "component " << i << ", initialize displacement values: " << values;
+      uvp_->setValues(i, data_.functionSpace()->meshPartition()->nDofsLocalWithoutGhosts(),
+                      data_.functionSpace()->meshPartition()->dofNosLocal().data(), values.data(), INSERT_VALUES);
+    }
+    // representation is combined-global
+    // assemble vector
+    PetscErrorCode ierr;
+    ierr = VecAssemblyBegin(uvp_->valuesGlobal()); CHKERRV(ierr);
+    ierr = VecAssemblyEnd(uvp_->valuesGlobal()); CHKERRV(ierr);
   }
-  uvp_->zeroGhostBuffer();
-  uvp_->finishGhostManipulation();
 
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;

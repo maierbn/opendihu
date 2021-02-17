@@ -55,12 +55,17 @@ parser.add_argument('--emg_solver_type',                     help='The solver fo
 parser.add_argument('--emg_preconditioner_type',             help='The preconditioner for the static bidomain.', default=variables.emg_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
 parser.add_argument('--emg_initial_guess_nonzero',           help='If the initial guess for the emg linear system should be set to the previous solution.', default=variables.emg_initial_guess_nonzero, action='store_true')
 parser.add_argument('--paraview_output',                     help='Enable the paraview output writer.',          default=variables.paraview_output, action='store_true')
+parser.add_argument('--python_output',                       help='Enable the python output writer.',                     default=variables.python_output, action='store_true')
 parser.add_argument('--adios_output',                        help='Enable the MegaMol/ADIOS output writer.',          default=variables.adios_output, action='store_true')
 parser.add_argument('--fiber_file',                          help='The filename of the file that contains the fiber data.', default=variables.fiber_file)
 parser.add_argument('--fiber_distribution_file',             help='The filename of the file that contains the MU firing times.', default=variables.fiber_distribution_file)
 parser.add_argument('--firing_times_file',                   help='The filename of the file that contains the cellml model.', default=variables.firing_times_file)
 parser.add_argument('--end_time', '--tend', '-t',            help='The end simulation time.',                    type=float, default=variables.end_time)
 parser.add_argument('--output_timestep',                     help='The timestep for writing outputs.',           type=float, default=variables.output_timestep)
+parser.add_argument('--output_timestep_fibers',              help='The timestep for writing fiber outputs.',     type=float, default=variables.output_timestep_fibers)
+parser.add_argument('--output_timestep_3D_emg',              help='The timestep for writing 3D emg outputs.',    type=float, default=variables.output_timestep_3D_emg)
+parser.add_argument('--output_timestep_electrodes',          help='The timestep for writing 3D emg outputs.',    type=float, default=variables.output_timestep_electrodes)
+parser.add_argument('--output_timestep_surface',             help='The timestep for writing 3D emg surface outputs.', type=float, default=variables.output_timestep_surface)
 parser.add_argument('--dt_0D',                               help='The timestep for the 0D model.',              type=float, default=variables.dt_0D)
 parser.add_argument('--dt_1D',                               help='The timestep for the 1D model.',              type=float, default=variables.dt_1D)
 parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',             type=float, default=variables.dt_splitting)
@@ -72,11 +77,20 @@ parser.add_argument('--v',                                   help='Enable full v
 parser.add_argument('-v',                                    help='Enable verbosity level in c++ code', action="store_true")
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
+# parameter for the 3D mesh generation
+parser.add_argument('--mesh3D_sampling_stride', nargs=3,     help='Stride to select the mesh points in x, y and z direction.', type=int, default=None)
+parser.add_argument('--mesh3D_sampling_stride_x',            help='Stride to select the mesh points in x direction.', type=int, default=variables.sampling_stride_x)
+parser.add_argument('--mesh3D_sampling_stride_y',            help='Stride to select the mesh points in y direction.', type=int, default=variables.sampling_stride_y)
+parser.add_argument('--mesh3D_sampling_stride_z',            help='Stride to select the mesh points in z direction.', type=int, default=variables.sampling_stride_z)
 
 # parse command line arguments and assign values to variables module
 args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
 if len(other_args) != 0 and rank_no == 0:
     print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
+
+# derive new fat file name if the fiber file has ben changed via the command line argument
+variables.fat_mesh_file = variables.fiber_file + "_fat.bin"
+variables.fiber_file_for_hdemg_surface = variables.fat_mesh_file
 
 # initialize some dependend variables
 if variables.n_subdomains is not None:
@@ -85,6 +99,15 @@ if variables.n_subdomains is not None:
   variables.n_subdomains_z = variables.n_subdomains[2]
   
 variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
+
+# 3D mesh resolution
+if variables.mesh3D_sampling_stride is not None:
+    variables.mesh3D_sampling_stride_x = variables.mesh3D_sampling_stride[0]
+    variables.mesh3D_sampling_stride_y = variables.mesh3D_sampling_stride[1]
+    variables.mesh3D_sampling_stride_z = variables.mesh3D_sampling_stride[2]
+variables.sampling_stride_x = variables.mesh3D_sampling_stride_x
+variables.sampling_stride_y = variables.mesh3D_sampling_stride_y
+variables.sampling_stride_z = variables.mesh3D_sampling_stride_z
 
 # automatically initialize partitioning if it has not been set
 if n_ranks != variables.n_subdomains:
@@ -117,11 +140,11 @@ if n_ranks != variables.n_subdomains:
 # output information of run
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))
-  print("dt_0D:           {:0.0e}, diffusion_solver_type:      {}".format(variables.dt_0D, variables.diffusion_solver_type))
-  print("dt_1D:           {:0.0e}, potential_flow_solver_type: {}".format(variables.dt_1D, variables.potential_flow_solver_type))
-  print("dt_splitting:    {:0.0e}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(variables.dt_splitting, variables.emg_solver_type, variables.emg_initial_guess_nonzero))
-  print("dt_3D:           {:0.0e}, paraview_output: {}".format(variables.dt_3D, variables.paraview_output))
-  print("output_timestep: {:0.0e}  stimulation_frequency: {} 1/ms = {} Hz".format(variables.output_timestep, variables.stimulation_frequency, variables.stimulation_frequency*1e3))
+  print("dt_0D:           {:0.1e}, diffusion_solver_type:      {}".format(variables.dt_0D, variables.diffusion_solver_type))
+  print("dt_1D:           {:0.1e}, potential_flow_solver_type: {}".format(variables.dt_1D, variables.potential_flow_solver_type))
+  print("dt_splitting:    {:0.1e}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(variables.dt_splitting, variables.emg_solver_type, variables.emg_initial_guess_nonzero))
+  print("dt_3D:           {:0.1e}, paraview_output: {}".format(variables.dt_3D, variables.paraview_output))
+  print("output_timestep: {:0.1e}  stimulation_frequency: {} 1/ms = {} Hz".format(variables.output_timestep, variables.stimulation_frequency, variables.stimulation_frequency*1e3))
   print("fast_monodomain_solver_optimizations: {}, use_vc: {}".format(variables.fast_monodomain_solver_optimizations, variables.use_vc))
   print("fiber_file:              {}".format(variables.fiber_file))
   print("fat_mesh_file:           {}".format(variables.fat_mesh_file))
@@ -416,10 +439,7 @@ config = {
     },
     "Term2": {        # Bidomain, EMG
       "OutputSurface": {
-        "OutputWriter": [
-          {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
-          {"format": "PythonFile", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
-        ],
+        "OutputWriter": variables.output_writer_surface,
         #"face":                    ["1+","0+"],         # which faces of the 3D mesh should be written into the 2D mesh
         "face":                     ["1+"],              # which faces of the 3D mesh should be written into the 2D mesh
         "samplingPoints":           variables.hdemg_electrode_positions,    # the electrode positions, they are created in the helper.py script

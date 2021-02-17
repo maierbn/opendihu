@@ -22,8 +22,12 @@ if variables.n_subdomains != n_ranks:
   print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\033[0m\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
   quit()
 
-variables.relative_factors_file = "compartments_relative_factors.{}.{}_mus_partitioning_{}x{}x{}".\
-  format(os.path.basename(variables.fiber_file),len(variables.motor_units),variables.n_subdomains_x,variables.n_subdomains_y,variables.n_subdomains_z)
+variables.relative_factors_file = "compartments_relative_factors.{}.{}_mus_stride_{}x{}x{}_partitioning_{}x{}x{}".format(
+  os.path.basename(variables.fiber_file),
+  len(variables.motor_units),
+  variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z,
+  variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z,
+)
 
 include_global_node_positions = False
 if not os.path.exists(variables.relative_factors_file) and rank_no == 0:

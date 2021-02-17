@@ -16,7 +16,7 @@ innervation_zone_width = 0.         # not used [cm], this will later be used to 
 # -------
 # potential flow
 potential_flow_solver_type = "gmres"        # solver and preconditioner for an initial Laplace flow on the domain, from which fiber directions are determined
-potential_flow_preconditioner_type = "none" # preconditioner
+potential_flow_preconditioner_type = "gamg" # preconditioner
 
 # multidomain
 multidomain_solver_type = "gmres"          # solver for the multidomain problem

@@ -377,6 +377,8 @@ template<typename FunctionSpaceType, typename NestedSolverType>
 void MapDofs<FunctionSpaceType,NestedSolverType>::
 slotGetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values)
 {
+  //LOG(DEBUG) << "   slotGetValues(slotNo=" << slotNo << ", arrayIndex=" << arrayIndex << ", " << dofNosLocal.size() << " dofs: " << dofNosLocal;
+  
   // need function space of affected field variables
   int nSlotsNestedSolver = SlotConnectorDataHelper<typename NestedSolverType::SlotConnectorDataType>::nSlots(
     std::get<0>(*data_.getSlotConnectorData())
@@ -386,6 +388,7 @@ slotGetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLoc
     SlotConnectorDataHelper<typename NestedSolverType::SlotConnectorDataType>::slotGetValues(
       std::get<0>(*data_.getSlotConnectorData()), slotNo, arrayIndex, dofNosLocal, values
     );
+    //LOG(DEBUG) << "   got values from nested solver slots: " << values;
   }
   else
   {
@@ -413,8 +416,8 @@ slotGetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLoc
     // get the actual values
     fieldVariable->getValues(componentNo, dofNosLocal, values);
 
-    LOG(INFO) << "*slot " << slotNo << ": from fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
-      << ", at dofs " << dofNosLocal << " get values " << values;
+    //LOG(DEBUG) << "   got values from additional field variable no " << index << ", \"" << fieldVariable->name() << "\", component " << componentNo
+    //  << ", got values " << values;
   }
 }
 
@@ -422,6 +425,8 @@ template<typename FunctionSpaceType, typename NestedSolverType>
 void MapDofs<FunctionSpaceType,NestedSolverType>::
 slotSetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode)
 {
+  //LOG(DEBUG) << "   slotSetValues(slotNo=" << slotNo << ", arrayIndex=" << arrayIndex << ", " << dofNosLocal.size() << " dofs: " << dofNosLocal << ", values: " << values;
+  
   // need function space of affected field variables
   int nSlotsNestedSolver = SlotConnectorDataHelper<typename NestedSolverType::SlotConnectorDataType>::nSlots(
     std::get<0>(*data_.getSlotConnectorData())
@@ -431,6 +436,7 @@ slotSetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLoc
     SlotConnectorDataHelper<typename NestedSolverType::SlotConnectorDataType>::slotSetValues(
       std::get<0>(*data_.getSlotConnectorData()), slotNo, arrayIndex, dofNosLocal, values, petscInsertMode
     );
+    //LOG(DEBUG) << "   set values in nested solver slots";
   }
   else
   {
@@ -455,10 +461,12 @@ slotSetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLoc
         << " (nested solver has " << nSlotsNestedSolver << " slots and there " << (nAdditionalSlots==1? "is ": "are ") << nAdditionalSlots << " additional slot" << (nAdditionalSlots==1? "" : "s") << ")";
     }
 
-    LOG(DEBUG) << "*slot " << slotNo << ": in fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
-      << ", set dofs " << dofNosLocal << " to values " << values;
+    //LOG(DEBUG) << "   set values in additional fieldVariable no " << index << ", \"" << fieldVariable->name() << "\", component " << componentNo
+    //  << ", set dofs " << dofNosLocal << " to values " << values;
+      
     fieldVariable->setValues(componentNo, dofNosLocal, values, petscInsertMode);
-    LOG(DEBUG) << "fieldVariable: " << *fieldVariable;
+    
+    //LOG(DEBUG) << "fieldVariable: " << *fieldVariable;
   }
 }
 
@@ -672,7 +680,8 @@ initializeCommunication(std::vector<DofsMappingType> &mappings)
                   dof_no_t dofNoToLocal = nodeNoLocal;
 
                   // store the local dof at the local rank
-                  LOG(DEBUG) << "dofNoTo was global, add dofNoFrom local " << iter->first << " for rank " << ownRankNo << ", now all: " << mapping.dofNosLocalOfValuesToSendToRanks;
+                  LOG(DEBUG) << "dofNoTo was global, add dofNoFrom local " << iter->first << " for rank " << ownRankNo << ", now all: " 
+                    << mapping.dofNosLocalOfValuesToSendToRanks;
                   mapping.dofNosLocalOfValuesToSendToRanks[ownRankNo].push_back(iter->first);
                   mapping.allDofNosToSetLocal.push_back(dofNoToLocal);
                 }

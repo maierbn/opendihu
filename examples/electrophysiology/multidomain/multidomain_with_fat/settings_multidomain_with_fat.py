@@ -170,7 +170,10 @@ multidomain_solver = {
   "showLinearSolverOutput":           variables.show_linear_solver_output,  # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "updateSystemMatrixEveryTimestep":  False,                                # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
   "recreateLinearSolverInterval":     0,                                    # how often the Petsc KSP object (linear solver) should be deleted and recreated. This is to remedy memory leaks in Petsc's implementation of some solvers. 0 means disabled.
-  "setDirichletBoundaryCondition":    False,                                 # if the last dof of the fat layer (MultidomainWithFatSolver) or the extracellular space (MultidomainSolver) should have a 0 Dirichlet boundary condition
+  "setDirichletBoundaryConditionPhiE":False,                                # (set to False) if the last dof of the extracellular space (variable phi_e) should have a 0 Dirichlet boundary condition. However, this makes the solver converge slower.
+  "setDirichletBoundaryConditionPhiB":False,                                # (set to False) if the last dof of the fat layer (variable phi_b) should have a 0 Dirichlet boundary condition. However, this makes the solver converge slower.
+  "resetToAverageZeroPhiE":           True,                                 # if a constant should be added to the phi_e part of the solution vector after every solve, such that the average is zero
+  "resetToAverageZeroPhiB":           True,                                 # if a constant should be added to the phi_b part of the solution vector after every solve, such that the average is zero
   
   "PotentialFlow": {
     "FiniteElementMethod" : {  
@@ -241,8 +244,8 @@ config = {
       "relativeTolerance":  1e-10,
       "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
       "maxIterations":      1e5,
-      "solverType":         "gmres",
-      "preconditionerType": "none",
+      "solverType":         variables.potential_flow_solver_type,
+      "preconditionerType": variables.potential_flow_preconditioner_type,
       "dumpFormat":         "default",
       "dumpFilename":       "",
     },
@@ -338,8 +341,8 @@ config = {
       "MultidomainSolver" : multidomain_solver,
       "OutputSurface": {        # version for fibers_emg_2d_output
         "OutputWriter": [
-          {"format": "Paraview", "outputInterval": int(1./variables.dt_multidomain*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
-          {"format": "PythonFile", "outputInterval": int(1./variables.dt_multidomain*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
+          {"format": "Paraview",   "outputInterval": int(1./variables.dt_multidomain*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "onlyNodalValues": True, "combineFiles": True, "fileNumbering": "incremental"},
+          {"format": "PythonFile", "outputInterval": int(1./variables.dt_multidomain*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "onlyNodalValues": True, "combineFiles": True, "fileNumbering": "incremental"},
         ],
         #"face":                    ["1+","0+"],         # which faces of the 3D mesh should be written into the 2D mesh
         "face":                     ["1+"],              # which faces of the 3D mesh should be written into the 2D mesh

@@ -188,6 +188,7 @@ fat_mesh_file     = fiber_file + "_fat.bin"
 firing_times_file = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 firing_times_file = input_directory+"/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = input_directory+"/MU_fibre_distribution_10MUs.txt"
+cortical_input_file = input_directory+"/cortical_input.txt"
 
 # stride for meshes
 # -----------------
@@ -237,6 +238,9 @@ muscle_spindle_mappings = {
 }
 muscle_spindle_parameters_initial_values = [0, 0, 0, 0, 0]    # [L, L_dot, L_ddot, gamma_sta, gamma_dyn]
 muscle_spindle_delay = 30             # [ms] signal delay between muscle spindle model and motoneuron model
+
+# load cortical input values
+cortical_input = np.genfromtxt(cortical_input_file, delimiter=" ")
 
 # motor neurons
 n_motoneurons = 10
@@ -404,9 +408,15 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
         
       # sum up all input signals and set all outputs to this sum
       total_signal += delayed_signal * 1e-3
+      
+    # add cortical input as given in the input file
+    # [timestep, spindle_no]
+    timestep_no = (int)(current_time/1e-3)
+    total_signal += cortical_input[timestep_no % np.size(cortical_input,0), muscle_spindle_index % np.size(cortical_input,1)]
     
-  # add cortical input
-  total_signal += 5e-3
+  # compute average signal over all muscle spindles
+  total_signal /= n_input_values
+    
   # motor neuron fires with ~14Hz if drive(t) = 5e-3
 
   # set same value to all connected motoneurons

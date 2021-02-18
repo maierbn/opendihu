@@ -82,6 +82,7 @@ parser.add_argument('--firing_times_file',                   help='The filename 
 parser.add_argument('--stimulation_frequency',               help='Stimulations per ms. Each stimulation corresponds to one line in the firing_times_file.', default=variables.stimulation_frequency)
 parser.add_argument('--end_time', '--tend', '-t',            help='The end simulation time.',                             type=float, default=variables.end_time)
 parser.add_argument('--output_timestep',                     help='The timestep for writing outputs.',                    type=float, default=variables.output_timestep)
+parser.add_argument('--output_timestep_fibers',              help='The timestep for writing fiber outputs.',              type=float, default=variables.output_timestep_fibers)
 parser.add_argument('--dt_0D',                               help='The timestep for the 0D model.',                       type=float, default=variables.dt_0D)
 parser.add_argument('--dt_1D',                               help='The timestep for the 1D model.',                       type=float, default=variables.dt_1D)
 parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',                      type=float, default=variables.dt_splitting)
@@ -98,6 +99,11 @@ parser.add_argument('-pause',                                help='Stop at paral
 parser.add_argument('--rank_reordering',                     help='Enable rank reordering in the c++ code',               action="store_true")
 parser.add_argument('--use_elasticity',                      help='Enable linear elasticity',                             action="store_true")
 parser.add_argument('--approximate_exponential_function',    help='Approximate the exp function by a Taylor series',      default=variables.approximate_exponential_function, action="store_true")
+# parameter for the 3D mesh generation
+parser.add_argument('--mesh3D_sampling_stride', nargs=3,     help='Stride to select the mesh points in x, y and z direction.', type=int, default=None)
+parser.add_argument('--mesh3D_sampling_stride_x',            help='Stride to select the mesh points in x direction.',     type=int, default=variables.sampling_stride_x)
+parser.add_argument('--mesh3D_sampling_stride_y',            help='Stride to select the mesh points in y direction.',     type=int, default=variables.sampling_stride_y)
+parser.add_argument('--mesh3D_sampling_stride_z',            help='Stride to select the mesh points in z direction.',     type=int, default=variables.sampling_stride_z)
 
 # parse command line arguments and assign values to variables module
 args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
@@ -111,6 +117,15 @@ if variables.n_subdomains is not None:
   variables.n_subdomains_z = variables.n_subdomains[2]
   
 variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
+
+# 3D mesh resolution
+if variables.mesh3D_sampling_stride is not None:
+    variables.mesh3D_sampling_stride_x = variables.mesh3D_sampling_stride[0]
+    variables.mesh3D_sampling_stride_y = variables.mesh3D_sampling_stride[1]
+    variables.mesh3D_sampling_stride_z = variables.mesh3D_sampling_stride[2]
+variables.sampling_stride_x = variables.mesh3D_sampling_stride_x
+variables.sampling_stride_y = variables.mesh3D_sampling_stride_y
+variables.sampling_stride_z = variables.mesh3D_sampling_stride_z
 
 # automatically initialize partitioning if it has not been set
 if n_ranks != variables.n_subdomains:
@@ -146,11 +161,11 @@ if variables.use_elasticity:
 # output information of run
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))
-  print("dt_0D:           {:0.0e}, diffusion_solver_type:      {}".format(variables.dt_0D, variables.diffusion_solver_type))
-  print("dt_1D:           {:0.0e}, potential_flow_solver_type: {}, approx. exp.: {}".format(variables.dt_1D, variables.potential_flow_solver_type, variables.approximate_exponential_function))
-  print("dt_splitting:    {:0.0e}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(variables.dt_splitting, variables.emg_solver_type, variables.emg_initial_guess_nonzero))
-  print("dt_3D:           {:0.0e}, paraview_output: {}, optimization_type: {}, enable_weak_scaling: {}".format(variables.dt_3D, variables.paraview_output, variables.optimization_type, variables.enable_weak_scaling))
-  print("output_timestep: {:0.0e}  stimulation_frequency: {} 1/ms = {} Hz".format(variables.output_timestep, variables.stimulation_frequency, variables.stimulation_frequency*1e3))
+  print("dt_0D:           {:0.1e}, diffusion_solver_type:      {}".format(variables.dt_0D, variables.diffusion_solver_type))
+  print("dt_1D:           {:0.1e}, potential_flow_solver_type: {}, approx. exp.: {}".format(variables.dt_1D, variables.potential_flow_solver_type, variables.approximate_exponential_function))
+  print("dt_splitting:    {:0.1e}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(variables.dt_splitting, variables.emg_solver_type, variables.emg_initial_guess_nonzero))
+  print("dt_3D:           {:0.1e}, paraview_output: {}, optimization_type: {}, enable_weak_scaling: {}".format(variables.dt_3D, variables.paraview_output, variables.optimization_type, variables.enable_weak_scaling))
+  print("output_timestep: {:0.1e}  stimulation_frequency: {} 1/ms = {} Hz".format(variables.output_timestep, variables.stimulation_frequency, variables.stimulation_frequency*1e3))
   print("fiber_file:              {}".format(variables.fiber_file))
   print("cellml_file:             {}".format(variables.cellml_file))
   print("fiber_distribution_file: {}".format(variables.fiber_distribution_file))

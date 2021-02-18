@@ -1238,11 +1238,12 @@ n_points_global_y = n_points_global[1]
 n_points_global_z = n_points_global[2]
 
 stimulation_node_nos = []
+k_center = int(n_points_global_z / 2)
 for j in range(n_points_global_y):
   for i in range(n_points_global_x):
-    k = int(n_points_global_z / 2)
+    for k in range(k_center-1,k_center+2):
   
-    dof_no_global = k*n_points_global_x*n_points_global_y + j*n_points_global_x + i
-    stimulation_node_nos.append(dof_no_global)
+      dof_no_global = k*n_points_global_x*n_points_global_y + j*n_points_global_x + i
+      stimulation_node_nos.append(dof_no_global)
 
 

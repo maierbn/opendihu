@@ -194,6 +194,11 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
       }
       else
       {
+        if (fieldVariableSource == fieldVariableTarget)
+        {
+          VLOG(1) << "Mapping field variable onto itself is no operation.";
+          return;
+        }
         if (FieldVariableTargetType::nComponents() == 1)
         {
           if (avoidCopyIfPossible)

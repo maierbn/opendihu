@@ -102,6 +102,7 @@ protected:
   double theta_;                 //< θ value for Crank-Nicolson scheme
   bool useLumpedMassMatrix_;     //< if the formulation with lumped mass matrix should be used
   bool enableFatComputation_;    //< if the computation of the fat layer should be enabled, if not the values are set to 0
+  bool isFirstTimestep_;         //< if the current call to solveLinearSystem is in the first timestep
 };
 
 }  // namespace

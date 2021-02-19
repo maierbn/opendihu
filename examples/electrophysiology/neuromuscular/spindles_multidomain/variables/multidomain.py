@@ -188,7 +188,7 @@ fat_mesh_file     = fiber_file + "_fat.bin"
 firing_times_file = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 firing_times_file = input_directory+"/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = input_directory+"/MU_fibre_distribution_10MUs.txt"
-cortical_input_file = input_directory+"/cortical_input.txt"
+cortical_input_file = input_directory+"/cortical_input0.txt"
 
 # stride for meshes
 # -----------------

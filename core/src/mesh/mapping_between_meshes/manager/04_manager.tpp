@@ -194,7 +194,9 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
       }
       else
       {
-        if (fieldVariableSource == fieldVariableTarget)
+        if (std::is_same<FieldVariableSourceType,FieldVariableTargetType>::value
+          && dynamic_cast<void*>(fieldVariableSource.get()) == dynamic_cast<void*>(fieldVariableTarget.get())
+          && dynamic_cast<void*>(fieldVariableSource.get()) != nullptr)
         {
           VLOG(1) << "Mapping field variable onto itself is no operation.";
           return;

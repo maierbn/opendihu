@@ -170,7 +170,7 @@ neuron_meshes = {
 }
 variables.meshes.update(neuron_meshes)
 
-print("stimulation_node_nos: {}".format(stimulation_node_nos))
+#print("stimulation_node_nos: {}".format(stimulation_node_nos))
 print("golgi_tendon_organ_node_nos: {}".format(golgi_tendon_organ_node_nos))
 print("muscle_spindle_node_nos: {}".format(muscle_spindle_node_nos))
 print("updateSystemMatrixInterval: {}".format(int(variables.dt_elasticity/variables.dt_splitting)))

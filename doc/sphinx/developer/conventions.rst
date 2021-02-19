@@ -143,9 +143,10 @@ Using Memcheck
   
   .. code-block:: bash
   
-    valgrind --tool=memcheck ./executable
+    valgrind --tool=memcheck --log-file=valgrind-log-%p.txt --suppressions=$OPENDIHU_HOME/dependencies/python/src/Python-3.6.5/Misc/valgrind-python.supp ./executable
     
-  There are a lot of "false positives" at the beginning while the python settings script is run. This is due to the python library overloading functions of memory management. Watch out for errors after these big outputs.
+  There are a lot of "false positives" at the beginning while the python settings script is run. This is due to the python library overloading functions of memory management.
+  The suppressions file eliminates most of them, but not all.
   
 Working with parallel vectors
 ---------------------------------

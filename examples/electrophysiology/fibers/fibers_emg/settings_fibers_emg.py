@@ -71,7 +71,8 @@ parser.add_argument('--emg_solver_type',                     help='The solver fo
 #parser.add_argument('--emg_solver_type',                    help='The solver for the static bidomain.',                  default=variables.emg_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
 parser.add_argument('--emg_preconditioner_type',             help='The preconditioner for the static bidomain.',          default=variables.emg_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
 parser.add_argument('--emg_solver_maxit',                    help='Maximum number of iterations for activation solver',   type=int, default=variables.emg_solver_maxit)
-parser.add_argument('--emg_solver_reltol',                   help='Ralative tolerance for activation solver',             type=float, default=variables.diffusion_solver_reltol)
+parser.add_argument('--emg_solver_reltol',                   help='Relative tolerance for activation solver',             type=float, default=variables.diffusion_solver_reltol)
+parser.add_argument('--emg_solver_abstol',                   help='Absolute tolerance for activation solver',             type=float, default=variables.diffusion_solver_reltol)
 parser.add_argument('--emg_initial_guess_nonzero',           help='If the initial guess for the emg linear system should be set to the previous solution.', default=variables.emg_initial_guess_nonzero, action='store_true')
 parser.add_argument('--paraview_output',                     help='Enable the paraview output writer.',                   default=variables.paraview_output, action='store_true')
 parser.add_argument('--adios_output',                        help='Enable the MegaMol/ADIOS output writer.',              default=variables.adios_output, action='store_true')
@@ -103,7 +104,8 @@ parser.add_argument('--approximate_exponential_function',    help='Approximate t
 parser.add_argument('--mesh3D_sampling_stride', nargs=3,     help='Stride to select the mesh points in x, y and z direction.', type=int, default=None)
 parser.add_argument('--mesh3D_sampling_stride_x',            help='Stride to select the mesh points in x direction.',     type=int, default=variables.sampling_stride_x)
 parser.add_argument('--mesh3D_sampling_stride_y',            help='Stride to select the mesh points in y direction.',     type=int, default=variables.sampling_stride_y)
-parser.add_argument('--mesh3D_sampling_stride_z',            help='Stride to select the mesh points in z direction.',     type=int, default=variables.sampling_stride_z)
+parser.add_argument('--mesh3D_sampling_stride_z',            help='Stride to select the mesh points in z direction, produces equally sized elements but possibly shortens the volume',     type=int, default=variables.sampling_stride_z)
+parser.add_argument('--mesh3D_local_sampling_stride_z',      help='Stride to select the mesh points in z direction, may produce different sized elements.',     type=int, default=variables.local_sampling_stride_z)
 
 # parse command line arguments and assign values to variables module
 args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
@@ -122,10 +124,10 @@ variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*varia
 if variables.mesh3D_sampling_stride is not None:
     variables.mesh3D_sampling_stride_x = variables.mesh3D_sampling_stride[0]
     variables.mesh3D_sampling_stride_y = variables.mesh3D_sampling_stride[1]
-    variables.mesh3D_sampling_stride_z = variables.mesh3D_sampling_stride[2]
+    variables.mesh3D_local_sampling_stride_z = variables.mesh3D_sampling_stride[2]
 variables.sampling_stride_x = variables.mesh3D_sampling_stride_x
 variables.sampling_stride_y = variables.mesh3D_sampling_stride_y
-variables.sampling_stride_z = variables.mesh3D_sampling_stride_z
+variables.local_sampling_stride_z = variables.mesh3D_local_sampling_stride_z
 
 # automatically initialize partitioning if it has not been set
 if n_ranks != variables.n_subdomains:
@@ -215,7 +217,7 @@ config = {
     },
     "activationSolver": {   # solver for the static Bidomain equation and the EMG
       "relativeTolerance":  variables.emg_solver_reltol,
-      "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
+      "absoluteTolerance":  variables.emg_solver_abstol,    
       "maxIterations":      variables.emg_solver_maxit,
       "solverType":         variables.emg_solver_type,
       "preconditionerType": variables.emg_preconditioner_type,

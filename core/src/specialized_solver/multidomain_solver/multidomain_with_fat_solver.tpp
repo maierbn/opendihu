@@ -93,7 +93,9 @@ initialize()
   ierr = MatSetNearNullSpace(this->singleSystemMatrix_, nullSpace); CHKERRV(ierr); // for multigrid methods
   //ierr = MatNullSpaceDestroy(&nullSpace); CHKERRV(ierr);
 
+  // initialize the linear solver
   this->initializeLinearSolver();
+  isFirstTimestep_ = true;
 
   // create temporary vector which is needed in computation of rhs, b1_ was created by setSystemMatrixSubmatrices()
   ierr = MatCreateVecs(b1_[0], &temporary_, NULL); CHKERRV(ierr);
@@ -729,6 +731,21 @@ solveLinearSystem()
   {
     LOG(DEBUG) << "set initial guess nonzero";
     ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
+    
+    // at the first timestep, set the initial guess of Vm^(i+1) to Vm^(i)
+    if (isFirstTimestep_)
+    {
+      LOG(INFO) << "set the initial guess of Vm^(i+1) to Vm^(i) at the first timestep.";
+      for (int k = 0; k < this->nCompartments_; k++)
+      {
+        std::vector<double> vmValues;
+        // get values Vm^(i)
+        this->dataMultidomain_.transmembranePotential(k)->getValuesWithoutGhosts(vmValues);
+        
+        // set values in Vm^(i+1) as initial guess
+        this->dataMultidomain_.transmembranePotentialSolution(k)->setValuesWithoutGhosts(vmValues);
+      }
+    }
   }
 
   // transform input phi_b to entry in solution vector without shared dofs, this->subvectorsSolution_[this->nCompartments_+1]
@@ -817,10 +834,12 @@ solveLinearSystem()
   // copy all values and the boundary dof values to the proper phi_b which is dataFat_.extraCellularPotentialFat()->valuesGlobal()
   copySolutionToPhiB();
 
+  // the next call to solveLinearSystem is no longer the first timestep
+  isFirstTimestep_ = false;
+
   LOG(DEBUG) << "after linear solver:";
   LOG(DEBUG) << "extracellularPotentialFat: " << PetscUtility::getStringVector(dataFat_.extraCellularPotentialFat()->valuesGlobal());
   LOG(DEBUG) << *dataFat_.extraCellularPotentialFat();
-
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>

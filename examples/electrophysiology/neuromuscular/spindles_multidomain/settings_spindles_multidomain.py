@@ -793,7 +793,7 @@ config = {
                             "timeStepWidth":                variables.dt_0D,  # 5e-5
                             "logTimeStepWidthAsKey":        "dt_0D",
                             "durationLogKey":               "duration_0D",
-                            "initialValues":                -75,
+                            "initialValues":                [],
                             "timeStepOutputInterval":       1e4,
                             "inputMeshIsGlobal":            True,
                             "dirichletBoundaryConditions":  {},

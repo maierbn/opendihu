@@ -327,7 +327,7 @@ config = {
                 "instances": 
                 [{
                   "ranks":                         list(range(variables.n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
-                  "ImplicitEuler" : {
+                  "ImplicitEuler" : {       # include both CrankNicolson and ImplicitEuler in the settings such that both variants in C++ file are possible
                     "initialValues":               [],
                     #"numberTimeSteps":            1,
                     "timeStepWidth":               variables.dt_1D,  # 1e-5
@@ -356,7 +356,7 @@ config = {
                       #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./variables.dt_1D*variables.output_timestep, "binary":True, "onlyNodalValues":True},
                     ]
                   },
-                  "CrankNicolson": { 
+                  "CrankNicolson": {      # include both CrankNicolson and ImplicitEuler in the settings such that both variants in C++ file are possible
                     "initialValues":               [], 
                     #"numberTimeSteps":            1,
                     "timeStepWidth":               variables.dt_1D,  # 1e-5

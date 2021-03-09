@@ -463,10 +463,10 @@ initialize()
         if (stateIndex >= variable1.size())
         {
           LOG(WARNING) << "There are " << statesForTransferIndices_.size() << " statesForTransfer specified in StrangSplitting, "
-            << " but the diffusion solver has only " << variable1.size() << " slots to get these states. "
+            << " but the diffusion solver has only " << variable1.size() << " slots in the first variable to get these states. "
             << "This means that state no. " << statesForTransferIndices_[stateIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
-            << "Maybe you need to increase \"nAdditionalFieldVariables\" in the diffusion solver (\"ImplicitEuler\" or \"CrankNicolson\") "
-            << "or reduce the number of entries in \"statesForTransfer\".";
+            << "Maybe you need to reduce the number of entries in \"statesForTransfer\". "
+            << "(Note that the FastMonodomainSolver can only map algebraics to additionalFieldVariables, not states.)";
         }
         else
         {

@@ -1129,26 +1129,6 @@ For orders of basis greater than two suggested from Hinton et al. \cite{hinton_r
 where $S=\sum_{i=1}^{n}\sum_{j=1}^{n} m_{i,j}$ and $D=\sum_{i=1}^{n}m_{i,i}$.
 
 
-\subsection{Analytical Solution}
-The analytical solution to the diffusion equation \eqref{eq:diffusion} makes use of the fundamental solution
-\begin{equation*}
-  \begin{array}{lll}
-    H(x,t) = \dfrac1{\sqrt{4\pi\,c\,t}}\exp\left(-\dfrac{x^2}{4\,c\,t}\right) \quad \text{for 1D}\\[4mm]
-    H(\bfx,t) = \dfrac1{(4\pi\,c\,t)^{n/2}}\exp\left(-\dfrac{\Vert \bfx \Vert_2^2}{4\,c\,t}\right) \quad \text{for 2D,3D}\\[4mm]
-  \end{array}
-\end{equation*}
-For $\Omega=\R^d$ and initial condition
-\begin{equation*}
-  \begin{array}{lll}
-    u(\bfx,0) = u_0(\bfx)\qquad \bfx \in \Omega
-  \end{array}
-\end{equation*}
-the solution is
-\begin{equation*}
-  \begin{array}{lll}
-    u(\bfx,t) = \ds\int_{\R^d} H(\bfx - \bfy,t)\,u_0(\bfy)\,\d \bfy.
-  \end{array}
-\end{equation*}
 
 %------------------------------------------------------------------------------------------------
 \subsection{Derivation with boundary conditions}
@@ -1702,6 +1682,260 @@ We compute the second derivative (results from \cite{SUSSMAN1987357})
   \end{array}
 \end{equation*}
 
+\subsection{Formulation in current configuration}
+
+The following spatial quantities are defined in the current configuration.
+\begin{equation*}
+  \begin{array}{lll}
+    \bfx \quad \dots \, &\text{position}\\
+    \bfv = \dot{\bfx} \quad \dots \, &\text{velocity}\\
+    \rho \quad \dots\, & \text{density}\\
+    \bfsigma \quad \dots \, &\text{Cauchy stress}
+  \end{array}
+\end{equation*}
+
+The connection from the symmetric Cauchy stress tensor $\bfsigma$ to the 2nd Piola-Kirchhoff stress tensor $\bfS$ is given by 
+\begin{equation*}
+  \begin{array}{lll}
+    \bfsigma = J^{-1}\bfF\,\bfS\,\bfF^\top\\[4mm]
+    \bfS = J\,\bfF^{-1}\,\bfsigma\,\bfF^{-\top}\\[4mm]
+    \bfsigma = \dfrac1{J}\bfP\,\bfF^\top \quad \Rightarrow \quad \bfP = J \bfsigma\,\bfF^{-\top}\\[4mm]
+    \bfS = \bfF^{-1}\bfP\quad \Rightarrow \quad \bfP = \bfF\,\bfS
+  \end{array}
+\end{equation*}
+
+(Holzapfel \cite{holzapfel2000nonlinear} p. 135) 
+From the \emph{conservation of mass} we get the spatial equation
+\begin{equation*}
+  \begin{array}{lll}
+    \dot{\rho}(\bfx,t) + \rho(\bfx,t)\,∇\cdot \bfv(\bfx,t)  = 0
+  \end{array}
+\end{equation*}
+which for constant density, $\rho$, reduces to
+\begin{equation*}
+  \begin{array}{lll}
+    ∇\cdot \bfv(\bfx,t) = 0.
+  \end{array}
+\end{equation*}
+
+(Holzapfel \cite{holzapfel2000nonlinear} p. 145) 
+From the \emph{balance of linear momentum} the equations of motion in spatial description can be derived.
+\begin{equation}\label{eq:linmom}
+  \begin{array}{lll}
+    \div \bfsigma + \bfb = \rho\,\dot{\bfv}
+  \end{array}
+\end{equation}
+
+The \emph{balance of angular momentum} enforces the Cauchy stress tensor, $\bfsigma$ to be symmetric (Holzapfel \cite{holzapfel2000nonlinear} p. 147).
+\begin{equation*}
+  \begin{array}{lll}
+    \bfsigma = \bfsigma^\top
+  \end{array}
+\end{equation*}
+
+\Cref{eq:linmom} can be restated in terms of the displacement $\bfu$ as
+\begin{equation*}
+  \begin{array}{lll}
+    \rho\,\ddot{\bfu} - ∇_\bfx \cdot \bfsigma = 0,\\[4mm]
+    ∇_\bfx\cdot \dot{\bfu} = 0.
+  \end{array}
+\end{equation*}
+
+For the quasi-static case, $\dot{\bfu} = 0$, this reduces to
+\begin{equation*}
+  \begin{array}{lll}
+    ∇_\bfx\cdot \bfsigma = 0.
+  \end{array}
+\end{equation*}
+Substituting the Cauchy stress $\bfsigma$ for the material configuration stress, $\bfS$, yields
+\begin{equation*}
+  \begin{array}{lll}
+    ∇_\bfx\cdot (J^{-1}\,\bfF\,\bfS\,\bfF^\top) = 0
+  \end{array}
+\end{equation*}
+ 
+
+\subsubsection{Linear elasticity}
+For linear elasticity we have $\bfx \approx \bfX$ and
+\begin{equation*}
+  \begin{array}{lll}
+    \bfK \,\bfu = \bff
+  \end{array}
+\end{equation*}
+with right hand side
+\begin{equation*}
+  \begin{array}{lll}
+    \bff = \ds\int_{∂Ω}\bar{T}_a\,δu_a^L\,\phi_L\,\d s
+  \end{array}
+\end{equation*}
+and stiffness matrix
+\begin{equation*}
+  \begin{array}{lll}
+    \bfK(δ\bfu)\,\bfu = \ds\int_{Ω} \bfsigma : δ\bfeps \, \d \bfx
+  \end{array}
+\end{equation*}
+where $\bfsigma = \mathbb{C} : \bfeps$ with
+\begin{equation*}
+  \begin{array}{lll}
+    \mathbb{C}_{abcd} = K\,δ_{ab}\,δ_{cd} + μ\,(δ_{ac}\,δ_{bd} + δ_{ad}\,δ_{bc} - \dfrac23 δ_{ab}\,δ_{cd}),
+  \end{array}
+\end{equation*}
+with bulk modulus $K$ and shear modulus $μ$.
+
+The following symmetry properties hold:
+\begin{equation*}
+  \begin{array}{lll}
+    \bbC_{abcd} = \bbC_{bacd} = \bbC_{abdc} = \bbC_{badc} \quad \text{minor symmetries}\\[4mm]
+    \bbC_{abcd} = \bbC_{cdab} \quad \text{major symmetries}
+  \end{array}
+\end{equation*}
+Discretization yields:
+\begin{equation*}
+  \begin{array}{lll}
+    \bfu_{a}(\bfx) = u_a^M\,\phi^M(\bfx),\\[4mm]
+    \p{\bfu_{a}(\bfx)}{x_b} = u_a^M\,\p{\phi^M(\bfx)}{x_b}.
+  \end{array}
+\end{equation*}
+As before, $a,b=1,\dots,D$ indicate components, $L,M$ indicate nodes / dofs.
+Strain $\bfeps$ is computed linearly from displacements: 
+\begin{equation*}
+  \begin{array}{lll}
+    \bfeps_{ab}(\bfx) = \dfrac12\left(\p{\bfu_{(b)}(\bfx)}{x_{(a)}} + \p{\bfu_{(a)}(\bfx)}{x_{(b)}}\right) = \dfrac12\left(u_{(b)}^L\,\p{\phi^L(\bfx)}{x_{(a)}} + u_{(a)}^M\,\p{\phi^M(\bfx)}{x_{(b)}}\right)
+  \end{array}
+\end{equation*}
+This results in
+\begin{equation*}
+  \begin{array}{lll}
+    \bfK\,\bfu &= δ\bfeps_{ab}(\bfx)\,\mathbb{C}_{abcd}\,\bfeps_{cd}(\bfx) \\[4mm]
+    &= \mathbb{C}_{abcd}\,\dfrac12\left(δu_{(d)}^L\,\p{\phi^L(\bfx)}{x_{(c)}} + δu_{(c)}^M\,\p{\phi^M(\bfx)}{x_{(d)}}\right)\, \dfrac12\left(u_{(b)}^N\,\p{\phi^N(\bfx)}{x_{(a)}} + u_{(a)}^O\,\p{\phi^O(\bfx)}{x_{(b)}}\right)\\[4mm]
+    &= \dfrac14 \mathbb{C}_{abcd}\,\Big(
+    δu_{(d)}^L\,u_{(b)}^N\,\p{\phi^L(\bfx)}{x_{(c)}}\p{\phi^N(\bfx)}{x_{(a)}}
+    + δu_{(d)}^L\,u_{(a)}^O\,\p{\phi^L(\bfx)}{x_{(c)}}\p{\phi^O(\bfx)}{x_{(b)}}\\[4mm]
+    & + δu_{(c)}^M\,u_{(b)}^N\,\p{\phi^M(\bfx)}{x_{(d)}}\p{\phi^N(\bfx)}{x_{(a)}}
+    + δu_{(c)}^M\,u_{(a)}^O\,\p{\phi^M(\bfx)}{x_{(d)}}\p{\phi^O(\bfx)}{x_{(b)}}\Big).
+  \end{array}
+\end{equation*}
+For matrix entry $\bfK_{LaMb}$, we have
+\begin{equation*}
+  \begin{array}{lll}
+    % L -> L
+    % N -> M
+    % d -> a
+    % b -> b
+    % a -> c
+    % c -> d
+    \bfK_{LaMb} &= \dfrac14\mathbb{C}_{cbda}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}
+    % L -> L
+    % O -> M
+    % d -> a
+    % a -> b
+    % b -> c
+    % c -> d
+    + \dfrac14\mathbb{C}_{bcda}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
+    % M -> L
+    % N -> M
+    % c -> a
+    % b -> b
+    % a -> c
+    % d -> d
+    &+ \dfrac14\mathbb{C}_{cbad}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}
+    % M -> L
+    % O -> M
+    % c -> a
+    % a -> b
+    % b -> c
+    % d -> d
+    + \dfrac14\mathbb{C}_{bcad}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
+    &= \dfrac14\big(\mathbb{C}_{cbda} + \mathbb{C}_{bcda} + \mathbb{C}_{cbad} + \mathbb{C}_{bcad}\big) \p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
+    &= \mathbb{C}_{adbc}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}
+  \end{array}
+\end{equation*}
+%\begin{equation*}
+%  \begin{array}{lll}
+%    \bfK_{LM} = \ds\int_{Ω} \mathbb{C}_{abcd} \,\dfrac12\left(\p{\phi^{(M)}_{d}}{x_{c}} + \p{\phi^{(M)}_{c}}{x_{d}}\right) \dfrac12\left(\p{\phi^{(L)}_{b}}{x_{a}} + \p{\phi^{(L)}_{a}}{x_{b}}\right)  \d \bfx
+%  \end{array}
+%\end{equation*}
+
+\subsubsection{Using active stress}
+For the stress inside the muscle we have $\bfsigma = \bfsigma_\text{passive} + \bfsigma_\text{active}$. 
+\begin{equation*}
+  \begin{array}{lll}
+    \bfI(\bfu,δ\bfu) = \ds\int_{Ω} (\bfsigma_\text{passive} + \bfsigma_\text{active}) : δ\bfeps \, \d \bfx = \ds\int_{Ω} (\mathbb{C}:\bfeps + \bfsigma_\text{active}) : δ\bfeps \, \d \bfx = \bfK(δ\bfu)\,\bfu + \bff_\text{active}
+  \end{array}
+\end{equation*}
+The additional term can be computed by
+\begin{equation*}
+  \begin{array}{lll}
+    \bff_\text{active} = \ds\int_{Ω} \bfsigma^\text{active}_{ab} \, δ\bfeps_{ab} \, \d \bfx = \ds\int_{Ω}  \bfsigma^\text{active}_{ab} \dfrac12\left(δu_{b}^L\,\p{\phi^L(\bfx)}{x_{a}} + δu_{a}^M\,\p{\phi^M(\bfx)}{x_{b}}\right) \, \d \bfx.
+  \end{array}
+\end{equation*}
+The entry of $\bff$ is
+\begin{equation*}
+  \begin{array}{lll}
+    % L -> L
+    % b -> a
+    % a -> b
+    \bff^\text{active}_{La} = \ds\int_{Ω}\left(  \dfrac12 \bfsigma^\text{active}_{ba} \,\p{\phi^L(\bfx)}{x_{b}}  
+    % M -> L
+    % a -> a
+    % b -> b
+    + \dfrac12 \bfsigma^\text{active}_{ab}\,\p{\phi^L(\bfx)}{x_{b}}  \right)  \, \d \bfx.
+  \end{array}
+\end{equation*}
+Because of symmetry of $\bfsigma$, we have
+\begin{equation*}
+  \begin{array}{lll}
+    \bff^\text{active}_{La} = \ds\int_{Ω}\bfsigma^\text{active}_{ab}\,\p{\phi^L(\bfx)}{x_{b}} \,\d\bfx.
+  \end{array}
+\end{equation*}
+Care must be taken when setting up the principle of virtual work, $δW_\text{int} = δW_\text{ext}$. Normally, we would have
+
+\begin{equation*}
+  \begin{array}{lll}
+    δW_\text{int} = \bfI(\bfu,δ\bfu)
+  \end{array}
+\end{equation*}
+and 
+\begin{equation*}
+  \begin{array}{lll}
+    δW_\text{int}(\bfu,δ\bfu) = δW_\text{ext}(\bfu,δ\bfu), \quad \forall δ\bfu \in H^{1}_0(\Omega).
+  \end{array}
+\end{equation*}
+This gives one scalar equation for each basis vector of the discretized space.  
+Each equation can be thought of as equating the work that is needed externally and transferred to elastic energy internally, if one particular node is displaced along one coordinate axis by an infinitesimal amount.
+This would lead to strains around the particular node. The strain itself produce a stress response. This stress together with the strain, again, produces the work.
+
+In this formulation, the active stress term, $(\bfsigma^\text{active} : δ\bfeps)$, is part of the internal virtual work. However, this makes no sense as it is not the strain that causes the stress in this case, but the stress acts independent of the strain. This active stress actively adds virtual work to the system and should therefore be considered as external virtual work.
+
+The quantity $\bfsigma^\text{active}$ in the equation can be seen as an additive part of the stress that results not from the material response to the strain, but from an external active stress, $\bfsigma^\text{active,applied}$, which is independently magically applied everywhere in the muscle continuum.
+Therefore we have to set
+\begin{equation*}
+  \begin{array}{lll}
+    \bfsigma^\text{active} = -\bfsigma^\text{active,applied}
+  \end{array}
+\end{equation*}
+
+This leads to the following equation which has no minus signs.
+\begin{equation*}
+  \begin{array}{lll}
+    \ds\int_{Ω} \mathbb{C}:\bfeps : δ\bfeps \, \d \bfx = \ds\int_{Ω}\bfsigma^\text{active,applied} : δ\bfeps \,\d\bfx.
+  \end{array}
+\end{equation*}
+
+Furthermore, there will only be external virtual work by the active stress when the strain is negative (which means compression/contraction). Therefore, we have to use
+\begin{equation*}
+  \begin{array}{lll}
+    \ds\int_{Ω} \mathbb{C}:\bfeps : δ\bfeps \, \d \bfx = \ds\int_{Ω}\bfsigma^\text{active,applied} : \left(δ\bfeps\right)_{-} \,\d\bfx,
+  \end{array}
+\end{equation*}
+with
+\begin{equation*}
+  \begin{array}{lll}
+    (x)_{-} = \begin{cases}x & \text{if } x < 0,\\ 0 & \text{else.}\end{cases}
+  \end{array}
+\end{equation*}
+
+(Not completely sure about the argumentation, at least this gives reasonable numerical results, while other signs and omitting the $(\cdot)_{-}$ fails.)
 
 \subsection{Material modeling}
 
@@ -2009,78 +2243,6 @@ This leads to volumetric and deviatoric/isochoric contribution of stresses
   \end{array}
 \end{equation}
 
-\subsection{Formulation in current configuration}
-
-The following spatial quantities are defined in the current configuration.
-\begin{equation*}
-  \begin{array}{lll}
-    \bfx \quad \dots \, &\text{position}\\
-    \bfv = \dot{\bfx} \quad \dots \, &\text{velocity}\\
-    \rho \quad \dots\, & \text{density}\\
-    \bfsigma \quad \dots \, &\text{Cauchy stress}
-  \end{array}
-\end{equation*}
-
-The connection from the symmetric Cauchy stress tensor $\bfsigma$ to the 2nd Piola-Kirchhoff stress tensor $\bfS$ is given by 
-\begin{equation*}
-  \begin{array}{lll}
-    \bfsigma = J^{-1}\bfF\,\bfS\,\bfF^\top\\[4mm]
-    \bfS = J\,\bfF^{-1}\,\bfsigma\,\bfF^{-\top}\\[4mm]
-    \bfsigma = \dfrac1{J}\bfP\,\bfF^\top \quad \Rightarrow \quad \bfP = J \bfsigma\,\bfF^{-\top}\\[4mm]
-    \bfS = \bfF^{-1}\bfP\quad \Rightarrow \quad \bfP = \bfF\,\bfS
-  \end{array}
-\end{equation*}
-
-(Holzapfel \cite{holzapfel2000nonlinear} p. 135) 
-From the \emph{conservation of mass} we get the spatial equation
-\begin{equation*}
-  \begin{array}{lll}
-    \dot{\rho}(\bfx,t) + \rho(\bfx,t)\,∇\cdot \bfv(\bfx,t)  = 0
-  \end{array}
-\end{equation*}
-which for constant density, $\rho$, reduces to
-\begin{equation*}
-  \begin{array}{lll}
-    ∇\cdot \bfv(\bfx,t) = 0.
-  \end{array}
-\end{equation*}
-
-(Holzapfel \cite{holzapfel2000nonlinear} p. 145) 
-From the \emph{balance of linear momentum} the equations of motion in spatial description can be derived.
-\begin{equation}\label{eq:linmom}
-  \begin{array}{lll}
-    \div \bfsigma + \bfb = \rho\,\dot{\bfv}
-  \end{array}
-\end{equation}
-
-The \emph{balance of angular momentum} enforces the Cauchy stress tensor, $\bfsigma$ to be symmetric (Holzapfel \cite{holzapfel2000nonlinear} p. 147).
-\begin{equation*}
-  \begin{array}{lll}
-    \bfsigma = \bfsigma^\top
-  \end{array}
-\end{equation*}
-
-\Cref{eq:linmom} can be restated in terms of the displacement $\bfu$ as
-\begin{equation*}
-  \begin{array}{lll}
-    \rho\,\ddot{\bfu} - ∇_\bfx \cdot \bfsigma = 0,\\[4mm]
-    ∇_\bfx\cdot \dot{\bfu} = 0.
-  \end{array}
-\end{equation*}
-
-For the quasi-static case, $\dot{\bfu} = 0$, this reduces to
-\begin{equation*}
-  \begin{array}{lll}
-    ∇_\bfx\cdot \bfsigma = 0.
-  \end{array}
-\end{equation*}
-Substituting the Cauchy stress $\bfsigma$ for the material configuration stress, $\bfS$, yields
-\begin{equation*}
-  \begin{array}{lll}
-    ∇_\bfx\cdot (J^{-1}\,\bfF\,\bfS\,\bfF^\top) = 0
-  \end{array}
-\end{equation*}
- 
 \subsection{Incompressible solid mechanics}
 
 A material is incompressible if one of the following necessary and sufficient conditions are satisfied (Holzapfel \cite{holzapfel2000nonlinear} p.103):
@@ -2321,214 +2483,32 @@ According to Holzapfel \cite{holzapfel2000nonlinear} the required quantities are
   \end{array}
 \end{equation*}
 
-\subsubsection{Linear elasticity}
-For linear elasticity we have $\bfx \approx \bfX$ and
-\begin{equation*}
-  \begin{array}{lll}
-    \bfK \,\bfu = \bff
-  \end{array}
-\end{equation*}
-with right hand side
-\begin{equation*}
-  \begin{array}{lll}
-    \bff = \ds\int_{∂Ω}\bar{T}_a\,δu_a^L\,\phi_L\,\d s
-  \end{array}
-\end{equation*}
-and stiffness matrix
-\begin{equation*}
-  \begin{array}{lll}
-    \bfK(δ\bfu)\,\bfu = \ds\int_{Ω} \bfsigma : δ\bfeps \, \d \bfx
-  \end{array}
-\end{equation*}
-where $\bfsigma = \mathbb{C} : \bfeps$ with
-\begin{equation*}
-  \begin{array}{lll}
-    \mathbb{C}_{abcd} = K\,δ_{ab}\,δ_{cd} + μ\,(δ_{ac}\,δ_{bd} + δ_{ad}\,δ_{bc} - \dfrac23 δ_{ab}\,δ_{cd}),
-  \end{array}
-\end{equation*}
-with bulk modulus $K$ and shear modulus $μ$.
-
-The following symmetry properties hold:
-\begin{equation*}
-  \begin{array}{lll}
-    \bbC_{abcd} = \bbC_{bacd} = \bbC_{abdc} = \bbC_{badc} \quad \text{minor symmetries}\\[4mm]
-    \bbC_{abcd} = \bbC_{cdab} \quad \text{major symmetries}
-  \end{array}
-\end{equation*}
-Discretization yields:
-\begin{equation*}
-  \begin{array}{lll}
-    \bfu_{a}(\bfx) = u_a^M\,\phi^M(\bfx),\\[4mm]
-    \p{\bfu_{a}(\bfx)}{x_b} = u_a^M\,\p{\phi^M(\bfx)}{x_b}.
-  \end{array}
-\end{equation*}
-As before, $a,b=1,\dots,D$ indicate components, $L,M$ indicate nodes / dofs.
-Strain $\bfeps$ is computed linearly from displacements: 
-\begin{equation*}
-  \begin{array}{lll}
-    \bfeps_{ab}(\bfx) = \dfrac12\left(\p{\bfu_{(b)}(\bfx)}{x_{(a)}} + \p{\bfu_{(a)}(\bfx)}{x_{(b)}}\right) = \dfrac12\left(u_{(b)}^L\,\p{\phi^L(\bfx)}{x_{(a)}} + u_{(a)}^M\,\p{\phi^M(\bfx)}{x_{(b)}}\right)
-  \end{array}
-\end{equation*}
-This results in
-\begin{equation*}
-  \begin{array}{lll}
-    \bfK\,\bfu &= δ\bfeps_{ab}(\bfx)\,\mathbb{C}_{abcd}\,\bfeps_{cd}(\bfx) \\[4mm]
-    &= \mathbb{C}_{abcd}\,\dfrac12\left(δu_{(d)}^L\,\p{\phi^L(\bfx)}{x_{(c)}} + δu_{(c)}^M\,\p{\phi^M(\bfx)}{x_{(d)}}\right)\, \dfrac12\left(u_{(b)}^N\,\p{\phi^N(\bfx)}{x_{(a)}} + u_{(a)}^O\,\p{\phi^O(\bfx)}{x_{(b)}}\right)\\[4mm]
-    &= \dfrac14 \mathbb{C}_{abcd}\,\Big(
-    δu_{(d)}^L\,u_{(b)}^N\,\p{\phi^L(\bfx)}{x_{(c)}}\p{\phi^N(\bfx)}{x_{(a)}}
-    + δu_{(d)}^L\,u_{(a)}^O\,\p{\phi^L(\bfx)}{x_{(c)}}\p{\phi^O(\bfx)}{x_{(b)}}\\[4mm]
-    & + δu_{(c)}^M\,u_{(b)}^N\,\p{\phi^M(\bfx)}{x_{(d)}}\p{\phi^N(\bfx)}{x_{(a)}}
-    + δu_{(c)}^M\,u_{(a)}^O\,\p{\phi^M(\bfx)}{x_{(d)}}\p{\phi^O(\bfx)}{x_{(b)}}\Big).
-  \end{array}
-\end{equation*}
-For matrix entry $\bfM_{LaMb}$, we have
-\begin{equation*}
-  \begin{array}{lll}
-    % L -> L
-    % N -> M
-    % d -> a
-    % b -> b
-    % a -> c
-    % c -> d
-    \bfM_{LaMb} &= \dfrac14\mathbb{C}_{cbda}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}
-    % L -> L
-    % O -> M
-    % d -> a
-    % a -> b
-    % b -> c
-    % c -> d
-    + \dfrac14\mathbb{C}_{bcda}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
-    % M -> L
-    % N -> M
-    % c -> a
-    % b -> b
-    % a -> c
-    % d -> d
-    &+ \dfrac14\mathbb{C}_{cbad}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}
-    % M -> L
-    % O -> M
-    % c -> a
-    % a -> b
-    % b -> c
-    % d -> d
-    + \dfrac14\mathbb{C}_{bcad}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
-    &= \dfrac14\big(\mathbb{C}_{cbda} + \mathbb{C}_{bcda} + \mathbb{C}_{cbad} + \mathbb{C}_{bcad}\big) \p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
-    &= \mathbb{C}_{adbc}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
-  \end{array}
-\end{equation*}
+%\subsubsection{Handling of Dirichlet boundary conditions}
+%%
+%The Newton algorithm to solve the nonlinear equation $f(\bfx) = \bfb$ for $\bfx$ with respect to Dirichlet boundary conditions $\bfx_{i} = \bfx_{0i}$ for $i \in \mathcal{I}$ can be summarized as follows:
 %\begin{equation*}
 %  \begin{array}{lll}
-%    \bfK_{LM} = \ds\int_{Ω} \mathbb{C}_{abcd} \,\dfrac12\left(\p{\phi^{(M)}_{d}}{x_{c}} + \p{\phi^{(M)}_{c}}{x_{d}}\right) \dfrac12\left(\p{\phi^{(L)}_{b}}{x_{a}} + \p{\phi^{(L)}_{a}}{x_{b}}\right)  \d \bfx
+%    \text{set initial $\bfx_0$}\\
+%    \bfx_i := \bfx_{0i} \quad \text{(initial values satisfy boundary conditions)}\\
+%    \bff := f(\bfx_i)\\
+%    \textbf{while } \Vert \bfb - \bff \Vert \geq \text{tol}\\
+%    \quad \texttt{apply\_BC\_to\_$\bff$}\\
+%    \quad \mathbb{C}_i := J_f(\bfx_i)\\ 
+%    \quad \texttt{apply\_BC\_to\_$\mathbb{C}_i$}\\
+%    \quad \text{solve } \quad \mathbb{C}_i\,Δ\bfx_i = \bfb - \bff \quad \text{ for $Δ\bfx_i$}\\
+%    \quad \bfx_{i+1} := \bfx_i + Δ\bfx_i\\
+%    \quad \bff := f(\bfx_{i+1})
 %  \end{array}
 %\end{equation*}
-
-\subsubsection{Using active stress}
-For the stress inside the muscle we have $\bfsigma = \bfsigma_\text{passive} + \bfsigma_\text{active}$. 
-\begin{equation*}
-  \begin{array}{lll}
-    \bfI(\bfu,δ\bfu) = \ds\int_{Ω} (\bfsigma_\text{passive} + \bfsigma_\text{active}) : δ\bfeps \, \d \bfx = \ds\int_{Ω} (\mathbb{C}:\bfeps + \bfsigma_\text{active}) : δ\bfeps \, \d \bfx = \bfK(δ\bfu)\,\bfu + \bff_\text{active}
-  \end{array}
-\end{equation*}
-The additional term can be computed by
-\begin{equation*}
-  \begin{array}{lll}
-    \bff_\text{active} = \ds\int_{Ω} \bfsigma^\text{active}_{ab} \, δ\bfeps_{ab} \, \d \bfx = \ds\int_{Ω}  \bfsigma^\text{active}_{ab} \dfrac12\left(δu_{b}^L\,\p{\phi^L(\bfx)}{x_{a}} + δu_{a}^M\,\p{\phi^M(\bfx)}{x_{b}}\right) \, \d \bfx.
-  \end{array}
-\end{equation*}
-The entry of $\bff$ is
-\begin{equation*}
-  \begin{array}{lll}
-    % L -> L
-    % b -> a
-    % a -> b
-    \bff^\text{active}_{La} = \ds\int_{Ω}\left(  \dfrac12 \bfsigma^\text{active}_{ba} \,\p{\phi^L(\bfx)}{x_{b}}  
-    % M -> L
-    % a -> a
-    % b -> b
-    + \dfrac12 \bfsigma^\text{active}_{ab}\,\p{\phi^L(\bfx)}{x_{b}}  \right)  \, \d \bfx.
-  \end{array}
-\end{equation*}
-Because of symmetry of $\bfsigma$, we have
-\begin{equation*}
-  \begin{array}{lll}
-    \bff^\text{active}_{La} = \ds\int_{Ω}\bfsigma^\text{active}_{ab}\,\p{\phi^L(\bfx)}{x_{b}} \,\d\bfx.
-  \end{array}
-\end{equation*}
-Care must be taken when setting up the principle of virtual work, $δW_\text{int} = δW_\text{ext}$. Normally, we would have
-
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int} = \bfI(\bfu,δ\bfu)
-  \end{array}
-\end{equation*}
-and 
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int}(\bfu,δ\bfu) = δW_\text{ext}(\bfu,δ\bfu), \quad \forall δ\bfu \in H^{1}_0(\Omega).
-  \end{array}
-\end{equation*}
-This gives one scalar equation for each basis vector of the discretized space.  
-Each equation can be thought of as equating the work that is needed externally and transferred to elastic energy internally, if one particular node is displaced along one coordinate axis by an infinitesimal amount.
-This would lead to strains around the particular node. The strain itself produce a stress response. This stress together with the strain, again, produces the work.
-
-In this formulation, the active stress term, $(\bfsigma^\text{active} : δ\bfeps)$, is part of the internal virtual work. However, this makes no sense as it is not the strain that causes the stress in this case, but the stress acts independent of the strain. This active stress actively adds virtual work to the system and should therefore be considered as external virtual work.
-
-The quantity $\bfsigma^\text{active}$ in the equation can be seen as an additive part of the stress that results not from the material response to the strain, but from an external active stress, $\bfsigma^\text{active,applied}$, which is independently magically applied everywhere in the muscle continuum.
-Therefore we have to set
-\begin{equation*}
-  \begin{array}{lll}
-    \bfsigma^\text{active} = -\bfsigma^\text{active,applied}
-  \end{array}
-\end{equation*}
-
-This leads to the following equation which has no minus signs.
-\begin{equation*}
-  \begin{array}{lll}
-    \ds\int_{Ω} \mathbb{C}:\bfeps : δ\bfeps \, \d \bfx = \ds\int_{Ω}\bfsigma^\text{active,applied} : δ\bfeps \,\d\bfx.
-  \end{array}
-\end{equation*}
-
-Furthermore, there will only be external virtual work by the active stress when the strain is negative (which means compression/contraction). Therefore, we have to use
-\begin{equation*}
-  \begin{array}{lll}
-    \ds\int_{Ω} \mathbb{C}:\bfeps : δ\bfeps \, \d \bfx = \ds\int_{Ω}\bfsigma^\text{active,applied} : \left(δ\bfeps\right)_{-} \,\d\bfx,
-  \end{array}
-\end{equation*}
-with
-\begin{equation*}
-  \begin{array}{lll}
-    (x)_{-} = \begin{cases}x & \text{if } x < 0,\\ 0 & \text{else.}\end{cases}
-  \end{array}
-\end{equation*}
-
-(Not completely sure about the argumentation, at least this gives reasonable numerical results, while other signs and omitting the $(\cdot)_{-}$ fails.)
-
-\subsubsection{Handling of Dirichlet boundary conditions}
+%The operation \texttt{apply\_BC\_to\_$\bff$} sets values $\bff_{i} = \bfb_{i}$ for all $i \in \mathcal{I}$. The operation \texttt{apply\_BC\_to\_$\mathbb{C}_i$} sets rows and columns for which BC are specified to the identity matrix, i.e. set 
+%\begin{equation*}
+%  \begin{array}{lll}
+%    \mathbb{C}_{ii} = 1\quad \forall\,i \in \mathcal{I}\\[4mm]
+%    \mathbb{C}_{ij} = \mathbb{C}_{ji} = 0, \quad \forall j\neq i\, \forall i \in \mathcal{I}.
+%  \end{array}
+%\end{equation*}
+%By doing so the system of linear equation $\mathbb{C}_i\,Δ\bfx_i = \bfb - \bff$ contains the equations $Δx_i = b_i - f_i = 0$ for $i\in \mathcal{I}$. Therefore the variables $\bfx_i$ don't change their value in the loop and keep the initially assigned Dirichlet BC value.
 %
-The Newton algorithm to solve the nonlinear equation $f(\bfx) = \bfb$ for $\bfx$ with respect to Dirichlet boundary conditions $\bfx_{i} = \bfx_{0i}$ for $i \in \mathcal{I}$ can be summarized as follows:
-\begin{equation*}
-  \begin{array}{lll}
-    \text{set initial $\bfx_0$}\\
-    \bfx_i := \bfx_{0i} \quad \text{(initial values satisfy boundary conditions)}\\
-    \bff := f(\bfx_i)\\
-    \textbf{while } \Vert \bfb - \bff \Vert \geq \text{tol}\\
-    \quad \texttt{apply\_BC\_to\_$\bff$}\\
-    \quad \mathbb{C}_i := J_f(\bfx_i)\\ 
-    \quad \texttt{apply\_BC\_to\_$\mathbb{C}_i$}\\
-    \quad \text{solve } \quad \mathbb{C}_i\,Δ\bfx_i = \bfb - \bff \quad \text{ for $Δ\bfx_i$}\\
-    \quad \bfx_{i+1} := \bfx_i + Δ\bfx_i\\
-    \quad \bff := f(\bfx_{i+1})
-  \end{array}
-\end{equation*}
-The operation \texttt{apply\_BC\_to\_$\bff$} sets values $\bff_{i} = \bfb_{i}$ for all $i \in \mathcal{I}$. The operation \texttt{apply\_BC\_to\_$\mathbb{C}_i$} sets rows and columns for which BC are specified to the identity matrix, i.e. set 
-\begin{equation*}
-  \begin{array}{lll}
-    \mathbb{C}_{ii} = 1\quad \forall\,i \in \mathcal{I}\\[4mm]
-    \mathbb{C}_{ij} = \mathbb{C}_{ji} = 0, \quad \forall j\neq i\, \forall i \in \mathcal{I}.
-  \end{array}
-\end{equation*}
-By doing so the system of linear equation $\mathbb{C}_i\,Δ\bfx_i = \bfb - \bff$ contains the equations $Δx_i = b_i - f_i = 0$ for $i\in \mathcal{I}$. Therefore the variables $\bfx_i$ don't change their value in the loop and keep the initially assigned Dirichlet BC value.
-
 % -----------------------------
 %The following description is completely in reference configuration (material description).
 

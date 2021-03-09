@@ -233,6 +233,7 @@ which is in matrix notation,
     \big(\bfK_{\bfsigma_e + \bfsigma_i} + \bfB_{\bfsigma_e + \bfsigma_i}\big)\bfphi_{e} +  \s{k=1}{M_\text{mu}} f_r^k \big(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k}\big)\bfV_m^k = 0
   \end{array}
 \end{equation}
+
 \subsubsection{Second multidomain equation}
 The diffusion part of the second multidomain equation is given by
 \begin{equation*}
@@ -262,7 +263,7 @@ where
       \dfrac{1}{A_m^k\,C_m^k}\theta\,(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k})
     } \\[4mm]
     \bfb = \Big( \dfrac{1}{A_m^k\,C_m^k}(\theta-1)\,(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k}) - \dfrac{1}{dt}\bfM\Big) \bfV_m^{(i)} 
-      + (\theta - 1)\,(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k})\,\bfphi_e^{(i)}
+      + \dfrac{1}{A_m^k\,C_m^k}(\theta - 1)\,(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k})\,\bfphi_e^{(i)}
   \end{array}
 \end{equation}
 
@@ -479,31 +480,67 @@ Starting from \eqref{eq:matrix_equation_1} with $\bfB= \bfzero$ we have
     = 
     \matt{
       \big((\theta-1)\, \dfrac{1}{A_m^k\,C_m^k}\bfK_{\bfsigma_i^k} - \dfrac{1}{dt}\bfM\big) \bfV_m^{(i)} 
-      + (\theta - 1)\,\bfK_{\bfsigma_i^k}\,\bfphi_e^{(i)}\\[4mm]
+      + (\theta - 1)\,\dfrac{1}{A_m^k\,C_m^k}\bfK_{\bfsigma_i^k}\,\bfphi_e^{(i)}\\[4mm]
       \bfzero
     }.
   \end{array}
 \end{equation}
-Now we add the flux variables as unknowns and incorporate the boundary condition \eqref{eq:flux_bc}:
+For boundary integrals and a Neumann boundary condition $(\bfsigma ∇u \cdot \bfn) = f$ on $∂\Omega=\Gamma$, we have:
+\begin{equation*}
+  \begin{array}{lll}
+    \bfsigma ∇u\cdot\bfn = \s{j=1}{N}u_j\,(\bfsigma ∇\varphi_j\cdot \bfn) = \s{j=1}{N}f_j\,\psi_j\\[6mm]
+    \Leftrightarrow\quad \s{j=1}{N}u_j\,\ds\int_{∂\Omega} (\bfsigma ∇\varphi_j \cdot \bfn)\,\varphi_\ell\,\d \bfx 
+    = \s{j=1}{N}f_j\,\ds\int_{∂\Omega} \psi_j\,\varphi_\ell\,\d \bfx\\[8mm]
+    \Leftrightarrow\quad \bfB_{\bfsigma}\bfu = \bfB_{\Gamma}\bff
+  \end{array}
+\end{equation*}
+
+Now, we know how to incorporate the boundary condition \eqref{eq:flux_bc} by replacing $\bfB_{\bfsigma}\bfu$ by $\bfB_{\Gamma}\bff$ 
+and put the terms on the right hand side. We get \cref{eq:matrix_equation_3} with a different right hand side $\bfb$:
+%
+\begin{equation}
+  \begin{array}{ll|lll}
+    \bfb = \Big( \dfrac{1}{A_m^k\,C_m^k}(\theta-1)\,\bfK_{\bfsigma_i^k} - \dfrac{1}{dt}\bfM\Big) \bfV_m^{(i)} 
+      + \dfrac{1}{A_m^k\,C_m^k}(\theta - 1)\,\bfK_{\bfsigma_i^k}\,\bfphi_e^{(i)} \\[4mm]
+      \quad \ub{+ \dfrac{1}{A_m^k\,C_m^k}(\theta-1)\,\bfB_{\Gamma_M} \bfp^{k,(i)} - \dfrac{1}{A_m^k\,C_m^k}(\theta-1)\,\bfB_{\Gamma_M} \bfp^{k,(i)}}{=\bfzero}\\[4mm]
+      \quad \ub{- \dfrac{1}{A_m^k\,C_m^k}\theta\,\bfB_{\Gamma_M} \bfp^{k,(i+1)} + \dfrac{1}{A_m^k\,C_m^k}\theta\,\bfB_{\Gamma_M} \bfp^{k,(i+1)}}{=\bfzero}
+  \end{array}
+\end{equation}
+
+Analogously for the first monodomain equation in matrix notation, \cref{eq:multidomain1_matrix1},
+ with $\bfB_{\bfsigma}\bfu = \bfB_{\Gamma}\bff$ and $q := (\bfsigma_e ∇ \phi_e)\cdot \bfn_m$:
+\begin{equation}\label{eq:multidomain1_matrix2}
+  \begin{array}{lll}
+    &\big(\bfK_{\bfsigma_e + \bfsigma_i} + \bfB_{\bfsigma_e + \bfsigma_i}\big)\bfphi_{e} +  \s{k=1}{M_\text{mu}} f_r^k \big(\bfK_{\bfsigma_i^k} + \bfB_{\bfsigma_i^k}\big)\bfV_m^k = 0\\[4mm]
+    \Leftrightarrow \quad &\bfK_{\bfsigma_e + \bfsigma_i}\bfphi_{e} + \bfB_{\bfsigma_e}\bfphi_{e} + \ub{\bfB_{\bfsigma_i}\bfphi_{e} }{=\s{k=1}{M_\text{mu}} f_r^k\, \bfB_{\bfsigma_i^k}\,\bfphi_e}
+    +  \s{k=1}{M_\text{mu}} f_r^k \big(\bfK_{\bfsigma_i^k}\bfV_m^k + \bfB_{\bfsigma_i^k} \bfV_m^k \big) = 0\\[4mm]
+    \Leftrightarrow \quad &\bfK_{\bfsigma_e + \bfsigma_i}\bfphi_{e} + \bfB_{\bfsigma_e}\bfphi_{e} -\bfB_{\Gamma_M} \s{k=1}{M_\text{mu}} f_r^k \bfp^k 
+    +  \s{k=1}{M_\text{mu}} f_r^k \big(\bfK_{\bfsigma_i^k}\bfV_m^k + \bfB_{\Gamma_M} \bfp^k \big) = 0\\[4mm]
+    \Leftrightarrow \quad &\bfK_{\bfsigma_e + \bfsigma_i}\bfphi_{e} + \bfB_{\Gamma_M}\bfq
+    +  \s{k=1}{M_\text{mu}} f_r^k \bfK_{\bfsigma_i^k}\bfV_m^k = 0
+  \end{array}
+\end{equation}
+
+The same operations can also be done by adding the flux terms to the vector of unknowns:
 \begin{equation}\label{eq:multidomain_fe_flux}
   \begin{array}{ll|lll}
     \matt{
-      \dfrac{1}{A_m^k\,C_m^k}\theta\,\bfK_{\bfsigma_i^k} -\dfrac{1}{dt}\bfM &
-      \dfrac{1}{A_m^k\,C_m^k}\theta\,\bfK_{\bfsigma_i^k} &
-       \ub{(1-\theta)\,\bfB_{\Gamma_M}- (1-\theta)\,\bfB_{\Gamma_M}}{=\bfzero} \quad & 
-      \ub{\theta\,\bfB_{\Gamma_M} - \theta\,\bfB_{\Gamma_M}}{=\bfzero}\\[8mm]      
+      \dfrac{\theta}{A_m^k\,C_m^k}\bfK_{\bfsigma_i^k} -\dfrac{1}{dt}\bfM &
+      \dfrac{\theta}{A_m^k\,C_m^k}\bfK_{\bfsigma_i^k} &
+       \ub{\dfrac{(1-\theta)}{A_m^k\,C_m^k}\,\bfB_{\Gamma_M}- \dfrac{(1-\theta)}{A_m^k\,C_m^k}\,\bfB_{\Gamma_M}}{=\bfzero} \quad & 
+      \ub{\dfrac{\theta}{A_m^k\,C_m^k}\,\bfB_{\Gamma_M} - \dfrac{\theta}{A_m^k\,C_m^k}\,\bfB_{\Gamma_M}}{=\bfzero}\\[8mm]      
       f_r^k \,\bfK_{\bfsigma_i^k}  &
       \bfK_{\bfsigma_e + \bfsigma_i} &
-      & f_r^k \,\bfB_{\Gamma_M} &
-      \bfM_\Gamma
-    }
+      & 0 &
+      \bfB_{\Gamma_M}
+    }\\[2mm]
     \matt{
       \bfV_m^{(i+1)}\\[2mm]
        \bfphi_{e}^{(i+1)}\\[2mm]
        \bfp^{k,(i)}\\[2mm]
       \bfp^{k,(i+1)}\\[4mm]
         \bfq^{(i+1)}
-    }\\[2mm]
+    }
     = 
     \matt{
       \big((\theta-1)\, \dfrac{1}{A_m^k\,C_m^k}\bfK_{\bfsigma_i^k} - \dfrac{1}{dt}\bfM\big) \bfV_m^{(i)} 
@@ -515,10 +552,11 @@ Now we add the flux variables as unknowns and incorporate the boundary condition
 where 
 \begin{equation*}
   \begin{array}{lll}
-    p^{k,(i)} &= (\bfsigma_i^k \,∇V_m^{k,(i)})\cdot \bfn_m &= -(\bfsigma_i^k\,∇\phi_e^{(i)})\cdot \bfn_m\\[4mm]
-    q^{(i+1)} &:= \big((\bfsigma_e + \bfsigma_i)∇\,\phi_e\big)\cdot \bfn_m
+    p^{k,(i)} &= (\bfsigma_i^k \,∇V_m^{k,(i)})\cdot \bfn_m &= -(\bfsigma_i^k\,∇\phi_e^{(i)})\cdot \bfn_m
   \end{array}
 \end{equation*}
+
+
 So far we haven't specified a boundary condition for the second row. 
 
 %%

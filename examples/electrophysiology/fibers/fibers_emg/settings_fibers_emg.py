@@ -214,6 +214,9 @@ config = {
       "preconditionerType": variables.potential_flow_preconditioner_type,
       "dumpFilename":       "",
       "dumpFormat":         "matlab",
+      "cycleType":          "cycleV",     # if the preconditionerType is "gamg", which cycle to use "cycleV" or "cycleW"
+      "gamgType":           "agg",        # if the preconditionerType is "gamg", the type of the amg solver
+      "nLevels":            25,           # if the preconditionerType is "gamg", the maximum number of levels
     },
     "activationSolver": {   # solver for the static Bidomain equation and the EMG
       "relativeTolerance":  variables.emg_solver_reltol,

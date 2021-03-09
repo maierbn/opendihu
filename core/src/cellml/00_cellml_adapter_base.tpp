@@ -66,92 +66,9 @@ setSolutionVariable(std::shared_ptr<FieldVariableStates> states)
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 void CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
-setSlotConnectorData(std::shared_ptr<::Data::SlotConnectorData<FunctionSpaceType,nStates_>> slotConnectorDataTimeStepping)
+setSlotConnectorData(std::shared_ptr<::Data::SlotConnectorData<FunctionSpaceType,nStates_>> slotConnectorDataTimestepping)
 {
-  // This method is called once in initialize() of the timestepping scheme.
-  // Add all state and algebraic values for transfer (option "algebraicsForTransfer"), which are stored in this->data_.getSlotConnectorData().
-  // The states are store in variable1 of slotConnectorDataTimeStepping, the algebraics are stored in variable2 of slotConnectorDataTimeStepping,
-  // after the already present additional field variables of the timestepping scheme.
-
-  // The first "states" entry of statesToTransfer is the solution variable, component 0 (which is default) of the timestepping scheme and therefore
-  // the timestepping scheme has already added it to the slotConnectorDataTimeStepping object.
-  // Now remove it because we set all connections of the CellmlAdapter here.
-  slotConnectorDataTimeStepping->variable1.erase(slotConnectorDataTimeStepping->variable1.begin());
-
-  int slotNo = 0;
-  std::vector<std::string> &ownSlotNames = this->data_.getSlotConnectorData()->slotNames;
-  std::vector<std::string> additionalSlotNamesTimeSteppingScheme = slotConnectorDataTimeStepping->slotNames;
-  LOG(DEBUG) << "CellmlAdapterBase::setSlotConnectorData " << slotConnectorDataTimeStepping->slotNames.size()
-    << " timestepping slot names that will be cleared: " << slotConnectorDataTimeStepping->slotNames << ", " << ownSlotNames.size() << " own slot names: " << ownSlotNames;
-
-  // remove first slot name of timestepping scheme:
-  if (!additionalSlotNamesTimeSteppingScheme.empty())
-  {
-    additionalSlotNamesTimeSteppingScheme.erase(additionalSlotNamesTimeSteppingScheme.begin());
-  }
-
-  // clear all slot names of the timestepping scheme, they will be set anew in this method
-  slotConnectorDataTimeStepping->slotNames.clear();
-
-  // loop over states that should be transferred
-  for (typename std::vector<::Data::ComponentOfFieldVariable<FunctionSpaceType,nStates_>>::iterator iter
-    = this->data_.getSlotConnectorData()->variable1.begin(); iter != this->data_.getSlotConnectorData()->variable1.end(); iter++, slotNo++)
-  {
-    int componentNo = iter->componentNo;
-    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nStates_>> values = iter->values;
-
-    values->setRepresentationGlobal();
-
-    // The state field variables have 'nStates_' components and can be reused.
-    std::string name = values->componentName(componentNo);
-    LOG(DEBUG) << "CellmlAdapterBase::setSlotConnectorData add FieldVariable " << *values << " (" << values->name() << ") for state " << componentNo << "," << name;
-
-    // add this component to slotConnector of data time stepping
-    slotConnectorDataTimeStepping->addFieldVariable(values, componentNo);
-
-    // add the corresponding slot name
-    slotConnectorDataTimeStepping->slotNames.push_back(ownSlotNames[slotNo]);
-  }
-
-  // after all slots of "variable1" there will be the slots of the additional field variables of the timestepping scheme and then the normal slots of "variable2"
-
-  // add slot names for the additional slots of the timestepping scheme
-  slotConnectorDataTimeStepping->slotNames.insert(slotConnectorDataTimeStepping->slotNames.end(),
-                                                  additionalSlotNamesTimeSteppingScheme.begin(), additionalSlotNamesTimeSteppingScheme.end());
-
-  // loop over algebraics that should be transferred
-  for (typename std::vector<::Data::ComponentOfFieldVariable<FunctionSpaceType,nAlgebraics_>>::iterator iter
-    = this->data_.getSlotConnectorData()->variable2.begin(); iter != this->data_.getSlotConnectorData()->variable2.end(); iter++, slotNo++)
-  {
-    int componentNo = iter->componentNo;
-    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nAlgebraics_>> values = iter->values;
-
-    values->setRepresentationGlobal();
-
-    // The algebraic field variables have 'nAlgebraics_' components, but the field variables in the slotConnectorDataTimeStepping object
-    // have only 1 component. Therefore, we create new field variables with 1 components each that reuse the Petsc Vec's of the algebraic field variables.
-
-    // get the parameters to create the new field variable
-    std::string name = values->componentName(componentNo);
-    const std::vector<std::string> componentNames{"0"};
-    const bool reuseData = true;
-
-    // create the new field variable with only the one component, the component given by componentNo
-    std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> newFieldVariable
-      = std::make_shared<FieldVariable::FieldVariable<FunctionSpaceType,1>>(*values, name, componentNames, reuseData, componentNo);
-
-    LOG(DEBUG) << "CellmlAdapterBase::setSlotConnectorData add FieldVariable2 " << newFieldVariable << " with name " << name << " for component no " << componentNo
-      << ", this reuses the data from \"" << values->name() << "\".";
-
-    // add this component to slotConnector of data time stepping
-    slotConnectorDataTimeStepping->addFieldVariable2(newFieldVariable);
-
-    // add the corresponding slot name
-    slotConnectorDataTimeStepping->slotNames.push_back(ownSlotNames[slotNo]);
-  }
-
-  // output the slot names
-  LOG(DEBUG) << "CellmlAdapterBase::setSlotConnectorData new slot names: " << slotConnectorDataTimeStepping->slotNames;
+  this->data_.setSlotConnectorDataTimestepping(slotConnectorDataTimestepping);
 }
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
@@ -491,9 +408,22 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
           }
           else
           {
-            LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], state \"" << stateName << "\" is not valid. "
-              << "Valid state names are: " << stateNames << ".\n"
-              << "You can also specify the state no. (index of STATES[] array in C file) instead of the name.";
+            // if the state name was not found
+
+            // try if it is an algebraic name
+            std::vector<std::string>::const_iterator posAlgebraic = std::find(algebraicNames.begin(), algebraicNames.end(), stateName);
+            if (posAlgebraic != algebraicNames.end())
+            {
+              LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], state \"" << stateName << "\" is not valid. "
+                << "But it is an algebraic! Use (\"algebraic\", \"" << stateName << "\") instead or only specify the name without the tuple.\n"
+                << "In case you really wanted a state, the valid state names are: " << stateNames << ".";
+            }
+            else
+            {
+              LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], state \"" << stateName << "\" is not valid. "
+                << "Valid state names are: " << stateNames << ".\n"
+                << "You can also specify the state no. (index of STATES[] array in C file) instead of the name.";
+            }
           }
         }
       }
@@ -516,9 +446,19 @@ initializeMappings(std::vector<int> &parametersUsedAsAlgebraic, std::vector<int>
           }
           else
           {
-            LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], algebraic \"" << algebraicName << "\" is not valid. "
-              << "Valid algebraic names are: " << algebraicNames << ".\n"
-              << "You can also specify the algebraic no. (index of ALGEBRAICS[] array in C file) instead of the name.";
+            const std::vector<std::string>::const_iterator posState = std::find(stateNames.begin(), stateNames.end(), algebraicName);
+            if (posState != stateNames.end())
+            {
+              LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], algebraic \"" << algebraicName << "\" is not valid. "
+                << "But it is a state! Use (\"state\", \"" << algebraicName << "\") instead or only specify the name without the tuple.\n"
+                << "In case you really wanted an algebraic, the valid algebraic names are: " << algebraicNames << ".\n";
+            }
+            else
+            {
+              LOG(ERROR) << "In " << this->specificSettings_ << "[\"mappings\"], algebraic \"" << algebraicName << "\" is not valid. "
+                << "Valid algebraic names are: " << algebraicNames << ".\n"
+                << "You can also specify the algebraic no. (index of ALGEBRAICS[] array in C file) instead of the name.";
+            }
           }
         }
       }
@@ -825,10 +765,3 @@ nAlgebraics() const
   return nAlgebraics_;
 }
 
-template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
-std::shared_ptr<typename CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::SlotConnectorDataType>
-CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
-getSlotConnectorData()
-{
-  return this->data_.getSlotConnectorData();
-}

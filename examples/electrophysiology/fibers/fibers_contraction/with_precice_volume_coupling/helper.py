@@ -55,10 +55,6 @@ if "cuboid.bin" in variables.fiber_file:
             point = [x*(float)(size_x)/(variables.n_fibers_x), y*(float)(size_y)/(variables.n_fibers_y), z*(float)(size_z)/(variables.n_points_whole_fiber)]
             outfile.write(struct.pack('3d', point[0], point[1], point[2]))   # data point
 
-# output diffusion solver type
-if rank_no == 0:
-  print("diffusion solver type: {}".format(variables.diffusion_solver_type))
-
 variables.load_fiber_data = True   # load all local node positions from fiber_file, in order to infer partitioning for fat_layer mesh
 
 # create the partitioning using the script in create_partitioned_meshes_for_settings.py
@@ -352,8 +348,6 @@ if rank_no == 0:
 # set Dirichlet BC for the flow problem
 
 # set boundary conditions for the elasticity
-# Note, we have a composite mesh, consisting of 3Dmesh_elasticity_quadratic and 3DFatMesh_elasticity_quadratic and this composite mesh has a numbering that goes over all dofs.
-# The following works because we index the first sub mesh and there first mesh of a composite mesh always has all own dofs with their normal no.s. (The 2nd mesh has the shared dofs to the first mesh removed in the numbering, i.e. they are not counted twice).
 [mx, my, mz] = variables.meshes["3Dmesh_quadratic"]["nPointsGlobal"]
 nx = (mx-1)//2
 ny = (my-1)//2
@@ -376,7 +370,7 @@ variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,Non
 variables.elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
 #variables.elasticity_neumann_bc = []
 
-print("bottom_traction={}\n elasticity_neumann_bc={}".format(variables.bottom_traction,variables.elasticity_neumann_bc))
+#print("bottom_traction={}\n elasticity_neumann_bc={}".format(variables.bottom_traction,variables.elasticity_neumann_bc))
 
 #with open("mesh","w") as f:
 #  f.write(str(variables.meshes["3Dmesh_quadratic"]))

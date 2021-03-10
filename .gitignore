@@ -49,3 +49,4 @@ dependencies
 **/log_residual_norm*
 **/mappings_between_meshes_log.txt
 **/solver_structure.txt
+**/old*

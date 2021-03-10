@@ -4,7 +4,7 @@
 #include <tuple>
 #include "easylogging++.h"
 
-#include "slot_connection/slot_connector_data_helper.h"
+#include "slot_connection/data_helper/slot_connector_data_helper.h"
 
 /** Transfer between two vectors of any type
  */

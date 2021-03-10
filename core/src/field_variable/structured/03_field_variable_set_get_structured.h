@@ -2,7 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 #include <petscvec.h>
-#include <Vc/Vc>
+#include <vc_or_std_simd.h>  // this includes <Vc/Vc> or a Vc-emulating wrapper of <experimental/simd> if available
 
 #include "field_variable/structured/02b_field_variable_data_structured_for_surface.h"
 #include "partition/partitioned_petsc_vec/partitioned_petsc_vec.h"

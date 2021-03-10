@@ -44,7 +44,7 @@ run()
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
     {
-      LOG(INFO) << "PreCICE coupling, timestep " << timeStepNo << ", t=" << currentTime;
+      LOG(INFO) << "PreCICE surface coupling, timestep " << timeStepNo << ", t=" << currentTime;
     }
 
     // determine if checkpoint needs to be written

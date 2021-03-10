@@ -123,27 +123,22 @@ initializeGhostElements()
   MPI_Comm communicator = this->functionSpace_->meshPartition()->mpiCommunicator();
 
   // exchange number of ghost elements to send/receive, open a window for other processes to write into how many ghost elements they will send
-  // open window for MPI RMA
-  /*void *remoteAccessibleMemory = nullptr;
-  MPI_Win mpiMemoryWindow;
-  MPIUtility::handleReturnValue(MPI_Win_allocate(nRanks*sizeof(int), sizeof(int), MPI_INFO_NULL, communicator, &remoteAccessibleMemory, &mpiMemoryWindow), "MPI_Win_allocate");
-
-  // set to 0
-  memset(remoteAccessibleMemory, 0, sizeof(int)*nRanks);
-*/
-
-
   LOG(DEBUG) << "rankSubset " << *this->functionSpace_->meshPartition()->rankSubset() << ", create new window";
-  //std::vector<int> remoteAccessibleMemory(nRanks, 0);
-  int *remoteAccessibleMemory = nullptr;
   int nBytes = nRanks*sizeof(int);
   int displacementUnit = sizeof(int);
   MPI_Win mpiMemoryWindow;
-  //MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, communicator, &mpiMemoryWindow), "MPI_Win_create");
+
+#ifdef USE_MPI_ALLOC
+  int *remoteAccessibleMemory = nullptr;
   MPIUtility::handleReturnValue(MPI_Win_allocate(nBytes, displacementUnit, MPI_INFO_NULL, communicator, (void *)&remoteAccessibleMemory, &mpiMemoryWindow), "MPI_Win_allocate");
 
   // clear buffer
   memset(remoteAccessibleMemory, 0, nBytes);
+#else
+
+  std::vector<int> remoteAccessibleMemory(nRanks, 0);
+  MPIUtility::handleReturnValue(MPI_Win_create((void *)remoteAccessibleMemory.data(), nBytes, displacementUnit, MPI_INFO_NULL, communicator, &mpiMemoryWindow), "MPI_Win_create");
+#endif
   
   std::vector<int> localMemory(nRanks);
 
@@ -208,10 +203,12 @@ initializeGhostElements()
       }
 
       assert(sendBuffer[i].size() == nGhostElements*2);
+      int tag = foreignRankNo*10000+nGhostElements*2;
       MPI_Request sendRequest;
-      MPIUtility::handleReturnValue(MPI_Isend(sendBuffer[i].data(), nGhostElements*2, MPI_INT, foreignRankNo, 0, communicator, &sendRequest), "MPI_Isend");
+      MPIUtility::handleReturnValue(MPI_Isend(sendBuffer[i].data(), nGhostElements*2, MPI_INT, foreignRankNo, tag,
+                                              communicator, &sendRequest), "MPI_Isend");
       sendRequests.push_back(sendRequest);
-      LOG(DEBUG) << "send " << nGhostElements << " ghost elements to foreign rank " << foreignRankNo
+      LOG(DEBUG) << "send " << nGhostElements << " ghost elements to foreign rank " << foreignRankNo << ", tag=" << tag
         << ", now sendRequests has " << sendRequests.size() << " entries";
     }
   }
@@ -230,10 +227,13 @@ initializeGhostElements()
     if (nGhostElementsFromRank != 0)
     {
       receiveBuffer[i].resize(nGhostElementsFromRank*2);
+
+      int tag = ownRankNo*10000 + nGhostElementsFromRank*2;
       MPI_Request receiveRequest;
-      MPIUtility::handleReturnValue(MPI_Irecv(receiveBuffer[i].data(), nGhostElementsFromRank*2, MPI_INT, foreignRankNo, 0, communicator, &receiveRequest), "MPI_Irecv");
+      MPIUtility::handleReturnValue(MPI_Irecv(receiveBuffer[i].data(), nGhostElementsFromRank*2, MPI_INT, foreignRankNo, tag,
+                                              communicator, &receiveRequest), "MPI_Irecv");
       receiveRequests.push_back(receiveRequest);
-      LOG(DEBUG) << "receive " << nGhostElementsFromRank << " ghost elements from foreign Rank " << foreignRankNo
+      LOG(DEBUG) << "receive " << nGhostElementsFromRank << " ghost elements from foreign Rank " << foreignRankNo << ", tag=" << tag
         << ", now receiveRequests has " << receiveRequests.size() << " entries";
     }
   }

@@ -48,8 +48,10 @@ ADIOS_DOWNLOAD = False
 # MegaMol, visualization framework of VISUS, optional, needs ADIOS2
 MEGAMOL_DOWNLOAD = False    # install MegaMol from official git repo, but needed is the private repo, ask Tobias Rau for access to use MegaMol with opendihu
 
-# Vc, vectorization types and C++ utility to produce vectorized code
+# Vc, vectorization types and C++ utility to produce vectorized code (but does not support AVX-512)
+# std::experimental::simd supports AVX-512, but requires C++17. Therefore the package std_simd includes a compatibility script that falls back to Vc, if C++17 is not available.
 VC_DOWNLOAD = True
+STD_SIMD_DOWNLOAD = True
 
 # xbraid, used for parallel-in time methods (currently only on branch `xbraid`)
 XBRAID_DOWNLOAD = True
@@ -71,6 +73,11 @@ MPI_DIR = "/usr/lib/x86_64-linux-gnu/openmpi"    # standard path for openmpi on 
 USE_VECTORIZED_FE_MATRIX_ASSEMBLY = False
 if USE_VECTORIZED_FE_MATRIX_ASSEMBLY:
   print("Note, USE_VECTORIZED_FE_MATRIX_ASSEMBLY is True in user-variables.scons.py, this means faster programs but longer compilation times.\n")
+
+# Use the implementation of std::simd instead of Vc to support AVX-512. This automatically sets the C++ standard from C++14 to C++17
+USE_STDSIMD = False
+if USE_STDSIMD:
+  print("Note, USE_STDSIMD is True and, thus, c++17 will be used.");
 
 # -------------------------------------------------------------------------
 # automatically set MPI_DIR for other systems, like ubuntu 16.04 and Debian

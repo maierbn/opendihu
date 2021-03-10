@@ -7,19 +7,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib import collections, patches
 
-# define the number of grid points
-n_grid_points_x = 11
-n_grid_points_y = 11
-
-if len(sys.argv) > 1:
-  n_grid_points_x = (int)(sys.argv[1])
-  n_grid_points_y = n_grid_points_x
-  
-if len(sys.argv) == 1:
-  print("usage: plot_quadrangulation_schemes.py [<n_grid_points_x>]")
-
-print("Number of grid points: {} x {}".format(n_grid_points_x, n_grid_points_y))
-
 def create_reference_domain_quadrangulation(n_grid_points_x, n_grid_points_y, parametric_space_shape):
   """
   Create a quadrangulation of the reference domain, as needed in the algorithm to create 3D hex meshes. 
@@ -148,96 +135,111 @@ def create_reference_domain_quadrangulation(n_grid_points_x, n_grid_points_y, pa
       grid_points_parametric_space[j*n_grid_points_x+i] = np.array([x,y])
       
   return grid_points_parametric_space
-  
 
-# The following code will plot 2x2 subplots with all four reference domain quadrangulations
-# ------------------------------------------------------------------------------------------
+if __name__ == "__main__":
+  # execute only if run as a script
+    
+  # define the number of grid points
+  n_grid_points_x = 11
+  n_grid_points_y = 11
 
-# define the quadrangulation schemes to use
-# 0 = unit circle, 1 = square, 2 = square with adjusted grid points, 3 = unit circle with adjusted grid points
-parametric_space_shapes = [[1, 2], [0, 3]]
+  if len(sys.argv) > 1:
+    n_grid_points_x = (int)(sys.argv[1])
+    n_grid_points_y = n_grid_points_x
+    
+  if len(sys.argv) == 1:
+    print("usage: plot_quadrangulation_schemes.py [<n_grid_points_x>]")
 
-# define the titles of the four plots
-titles = [["Unit square, scheme 1", "Unit square, scheme 2"], ["Unit circle, scheme 1", "Unit circle, scheme 2"]]
+  print("Number of grid points: {} x {}".format(n_grid_points_x, n_grid_points_y))
 
-# create the subplots
-f, ax = plt.subplots(2,2,figsize=(10,10))
+  # The following code will plot 2x2 subplots with all four reference domain quadrangulations
+  # ------------------------------------------------------------------------------------------
 
-# loop over the subplots
-for axis_j in range(2):
-  for axis_i in range(2):
-    
-    # create the quadrangulation
-    parametric_space_shape = parametric_space_shapes[axis_j][axis_i]
-    grid_points_parametric_space = create_reference_domain_quadrangulation(n_grid_points_x, n_grid_points_y, parametric_space_shape)
-    
-    # create auxiliary data structures that are needed for the plots
-    patches_parametric = []
-    parametric_points = []
-    factor = 1.0
-    
-    # loop over grid points in parametric space
-    for (j,y) in enumerate(np.linspace(0.0,1.0,n_grid_points_y)):
-      phi = float(y) * (n_grid_points_y-1.0) / n_grid_points_y  * 2.*np.pi
-      for (i,x) in enumerate(np.linspace(0.0,1.0,n_grid_points_x)):
-    
-        [x,y] = grid_points_parametric_space[j*n_grid_points_x+i]
-    
-        # for debugging create markers at grid points in parametric space
+  # define the quadrangulation schemes to use
+  # 0 = unit circle, 1 = square, 2 = square with adjusted grid points, 3 = unit circle with adjusted grid points
+  parametric_space_shapes = [[1, 2], [0, 3]]
 
-        if parametric_space_shape == 1 or parametric_space_shape == 2 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square  
-          if i == n_grid_points_x-1 or j == n_grid_points_x-1:
-            continue
-        if parametric_space_shape == 0:
-          if i == n_grid_points_x-1:
-            continue
-        
-        quadrilateral = np.zeros((4,2))
-        quadrilateral[0] = grid_points_parametric_space[j*n_grid_points_x+i]
-        quadrilateral[1] = grid_points_parametric_space[j*n_grid_points_x+(i+1)%n_grid_points_x]
-        quadrilateral[2] = grid_points_parametric_space[(j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x]
-        quadrilateral[3] = grid_points_parametric_space[(j+1)%n_grid_points_y*n_grid_points_x+i]
-        parametric_points.append(quadrilateral[0])
-        parametric_points.append(quadrilateral[1])
-        parametric_points.append(quadrilateral[2])
-        parametric_points.append(quadrilateral[3])
-        #print("parametric: ",quadrilateral
-        polygon = patches.Polygon(quadrilateral, True)
-        patches_parametric.append(polygon)
+  # define the titles of the four plots
+  titles = [["Unit square, scheme 1", "Unit square, scheme 2"], ["Unit circle, scheme 1", "Unit circle, scheme 2"]]
 
-    # plot the quadrilateral elements
-    p = collections.PatchCollection(patches_parametric,edgecolors="k",facecolors="white")
-    ax[axis_j,axis_i].add_collection(p)
-    ax[axis_j,axis_i].plot([p[0] for p in parametric_points],[p[1] for p in parametric_points], 'ko')
+  # create the subplots
+  f, ax = plt.subplots(2,2,figsize=(10,10))
+
+  # loop over the subplots
+  for axis_j in range(2):
+    for axis_i in range(2):
+      
+      # create the quadrangulation
+      parametric_space_shape = parametric_space_shapes[axis_j][axis_i]
+      grid_points_parametric_space = create_reference_domain_quadrangulation(n_grid_points_x, n_grid_points_y, parametric_space_shape)
+      
+      # create auxiliary data structures that are needed for the plots
+      patches_parametric = []
+      parametric_points = []
+      factor = 1.0
+      
+      # loop over grid points in parametric space
+      for (j,y) in enumerate(np.linspace(0.0,1.0,n_grid_points_y)):
+        phi = float(y) * (n_grid_points_y-1.0) / n_grid_points_y  * 2.*np.pi
+        for (i,x) in enumerate(np.linspace(0.0,1.0,n_grid_points_x)):
+      
+          [x,y] = grid_points_parametric_space[j*n_grid_points_x+i]
+      
+          # for debugging create markers at grid points in parametric space
+
+          if parametric_space_shape == 1 or parametric_space_shape == 2 or parametric_space_shape == 3 or parametric_space_shape == 4:  # unit square  
+            if i == n_grid_points_x-1 or j == n_grid_points_x-1:
+              continue
+          if parametric_space_shape == 0:
+            if i == n_grid_points_x-1:
+              continue
+          
+          quadrilateral = np.zeros((4,2))
+          quadrilateral[0] = grid_points_parametric_space[j*n_grid_points_x+i]
+          quadrilateral[1] = grid_points_parametric_space[j*n_grid_points_x+(i+1)%n_grid_points_x]
+          quadrilateral[2] = grid_points_parametric_space[(j+1)%n_grid_points_y*n_grid_points_x+(i+1)%n_grid_points_x]
+          quadrilateral[3] = grid_points_parametric_space[(j+1)%n_grid_points_y*n_grid_points_x+i]
+          parametric_points.append(quadrilateral[0])
+          parametric_points.append(quadrilateral[1])
+          parametric_points.append(quadrilateral[2])
+          parametric_points.append(quadrilateral[3])
+          #print("parametric: ",quadrilateral
+          polygon = patches.Polygon(quadrilateral, True)
+          patches_parametric.append(polygon)
+
+      # plot the quadrilateral elements
+      p = collections.PatchCollection(patches_parametric,edgecolors="k",facecolors="white")
+      ax[axis_j,axis_i].add_collection(p)
+      ax[axis_j,axis_i].plot([p[0] for p in parametric_points],[p[1] for p in parametric_points], 'ko')
+      
+      # plot the points as markers, the boundary points are colored
+      for j in range(n_grid_points_y):
+        for i in range(n_grid_points_x):
+          p = grid_points_parametric_space[j*n_grid_points_x+i]
+          if j == 0:
+            ax[axis_j,axis_i].plot(p[0], p[1], 'ro')
+          elif j == n_grid_points_y-1:
+            ax[axis_j,axis_i].plot(p[0], p[1], 'go')
+          elif i == 0: 
+            ax[axis_j,axis_i].plot(p[0], p[1], 'bo')
+          elif i == n_grid_points_x-1: 
+            ax[axis_j,axis_i].plot(p[0], p[1], 'yo')
+          else:
+            ax[axis_j,axis_i].plot(p[0], p[1], 'ko')
+          
+      # set the title of the subplot
+      ax[axis_j,axis_i].set_title(titles[axis_j][axis_i])
+      
+      # set the x and y limits of the subplot
+      if parametric_space_shape == 1 or parametric_space_shape == 2:
+        ax[axis_j,axis_i].set_xlim(-0.1,1.1)
+        ax[axis_j,axis_i].set_ylim(-0.1,1.1)
+      else:
+        ax[axis_j,axis_i].set_xlim(-1.1,1.1)
+        ax[axis_j,axis_i].set_ylim(-1.1,1.1)
+      ax[axis_j,axis_i].axis('equal')
     
-    # plot the points as markers, the boundary points are colored
-    for j in range(n_grid_points_y):
-      for i in range(n_grid_points_x):
-        p = grid_points_parametric_space[j*n_grid_points_x+i]
-        if j == 0:
-          ax[axis_j,axis_i].plot(p[0], p[1], 'ro')
-        elif j == n_grid_points_y-1:
-          ax[axis_j,axis_i].plot(p[0], p[1], 'go')
-        elif i == 0: 
-          ax[axis_j,axis_i].plot(p[0], p[1], 'bo')
-        elif i == n_grid_points_x-1: 
-          ax[axis_j,axis_i].plot(p[0], p[1], 'yo')
-        else:
-          ax[axis_j,axis_i].plot(p[0], p[1], 'ko')
-        
-    # set the title of the subplot
-    ax[axis_j,axis_i].set_title(titles[axis_j][axis_i])
+  # show plot
+  plt.show()
+  plt.close()
     
-    # set the x and y limits of the subplot
-    if parametric_space_shape == 1 or parametric_space_shape == 2:
-      ax[axis_j,axis_i].set_xlim(-0.1,1.1)
-      ax[axis_j,axis_i].set_ylim(-0.1,1.1)
-    else:
-      ax[axis_j,axis_i].set_xlim(-1.1,1.1)
-      ax[axis_j,axis_i].set_ylim(-1.1,1.1)
-    ax[axis_j,axis_i].axis('equal')
-  
-# show plot
-plt.show()
-plt.close()
-  

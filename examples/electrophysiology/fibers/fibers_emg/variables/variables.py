@@ -19,7 +19,7 @@ diffusion_preconditioner_type = "none"      # preconditioner
 diffusion_solver_maxit = 1e4
 diffusion_solver_reltol = 1e-10
 potential_flow_solver_type = "gmres"        # solver and preconditioner for an initial Laplace flow on the domain, from which fiber directions are determined
-potential_flow_preconditioner_type = "none" # preconditioner
+potential_flow_preconditioner_type = "gamg" # preconditioner
 potential_flow_solver_maxit = 1e4
 potential_flow_solver_reltol = 1e-10
 emg_solver_type = "cg"              # solver and preconditioner for the 3D static Bidomain equation that solves the intra-muscular EMG signal
@@ -62,7 +62,8 @@ adios_output = False                # If the MegaMol/ADIOS output writer should 
 python_output = False               # If the Python output writer should be enabled
 exfile_output = False               # If the Exfile output writer should be enabled
 enable_surface_emg = False          # Enables the surface emg output writer
-
+optimization_type = "vc"            # the optimization_type used in the cellml adapter, "vc" uses explicit vectorization
+approximate_exponential_function = False   # if the exponential function should be approximated by a Taylor series with only 11 FLOPS
 
 # motor unit stimulation times
 fiber_distribution_file = "../../../input/MU_fibre_distribution_3780.txt"

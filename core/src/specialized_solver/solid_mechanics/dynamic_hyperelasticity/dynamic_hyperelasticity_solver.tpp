@@ -22,6 +22,7 @@ DynamicHyperelasticitySolver(DihuContext context) :
 
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_["dynamic"], this->context_["dynamic"].getPythonConfig());
+  isReferenceGeometryInitialized_ = false;
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType>
@@ -354,6 +355,34 @@ advanceTimeSpan(bool withOutputWritersEnabled)
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::start(this->durationLogKey_);
+
+  // update the reference geometry to use the current value, in the first time step
+  if (!isReferenceGeometryInitialized_)
+  {
+    this->hyperelasticitySolver_.data().updateReferenceGeometry();
+    isReferenceGeometryInitialized_ = true;
+  }
+
+  // only before the first timestep
+  // in case there have been new displacement values set by the data connector slots, update the uvp_ variable
+  if (this->startTime_ < 1e-12)
+  {
+    // loop over x,y,z components of displacements
+    static std::vector<double> values;
+    for (int i = 0; i < 3; i++)
+    {
+      values.clear();
+      this->data_.displacements()->getValuesWithoutGhosts(i, values);
+      LOG(INFO) << "component " << i << ", initialize displacement values: " << values;
+      uvp_->setValues(i, data_.functionSpace()->meshPartition()->nDofsLocalWithoutGhosts(),
+                      data_.functionSpace()->meshPartition()->dofNosLocal().data(), values.data(), INSERT_VALUES);
+    }
+    // representation is combined-global
+    // assemble vector
+    PetscErrorCode ierr;
+    ierr = VecAssemblyBegin(uvp_->valuesGlobal()); CHKERRV(ierr);
+    ierr = VecAssemblyEnd(uvp_->valuesGlobal()); CHKERRV(ierr);
+  }
 
   // compute timestep width
   double timeSpan = this->endTime_ - this->startTime_;

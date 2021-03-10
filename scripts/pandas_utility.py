@@ -44,6 +44,10 @@ def determine_column_names(line):
 
   while "" in column_names:
     column_names.remove("")
+  while "\n" in column_names:
+    column_names.remove('\n')
+  while "0" in column_names:
+    column_names.remove('0')
 
   # remove duplicates
   seen = set()
@@ -132,7 +136,7 @@ def load_df(input_filename):
       current_lines = []
       column_names = None
       for line in f:
-        if "~nDofs" in line:
+        if "~" in line:
           if current_lines != []:
             scenario_blocks.append(current_lines)
           current_lines = []
@@ -144,7 +148,7 @@ def load_df(input_filename):
       # loop over scenario blocks
       df_blocks = []
       for scenario_block in scenario_blocks:
-        if "~nDofs" in scenario_block[0]:
+        if "~" in scenario_block[0] or True:
           column_names = determine_column_names(scenario_block[0])
           n_columns = len(column_names)
           
@@ -167,8 +171,8 @@ def load_df(input_filename):
               print("load block of {} rows".format(df_block.shape[0]))
           
           df_blocks.append(df_block)
-        except:
-          print("could not load block")
+        except Exception as e:
+          print("could not load block: {}".format(str(e)))
       
     # concat the blocks of all scenarios
     df = pd.concat(df_blocks)

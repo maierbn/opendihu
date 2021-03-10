@@ -20,3 +20,10 @@ However, if you usually skip instructions, do the following:
 git clone https://github.com/maierbn/opendihu.git && cd opendihu && make
 ```
 If there are error messages, have a look at the log file `config.log`.
+
+# Literature / How to cite
+
+Currently, we have this conference paper:
+[Maier, B., Emamy, N., Krämer, A., & Mehl, M. (2019). Highly parallel multi-physics simulation of muscular activation and EMG. In COUPLED VIII: proceedings of the VIII International Conference on Computational Methods for Coupled Problems in Science and Engineering (pp. 610-621). CIMNE](https://upcommons.upc.edu/handle/2117/190149)
+
+More are forthcoming in 2021.

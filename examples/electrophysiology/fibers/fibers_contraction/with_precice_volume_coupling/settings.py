@@ -21,13 +21,15 @@ from create_partitioned_meshes_for_settings import *   # file create_partitioned
 
 # if first argument contains "*.py", it is a custom variable definition file, load these values
 if ".py" in sys.argv[0]:
-  variables_file = sys.argv[0]
-  variables_module = variables_file[0:variables_file.find(".py")]
+  variables_path_and_filename = sys.argv[0]
+  variables_path,variables_filename = os.path.split(variables_path_and_filename)  # get path and filename 
+  sys.path.insert(0, os.path.join(script_path,variables_path))                    # add the directory of the variables file to python path
+  variables_module,_ = os.path.splitext(variables_filename)                       # remove the ".py" extension to get the name of the module
   
   if rank_no == 0:
-    print("Loading variables from {}.".format(variables_file))
+    print("Loading variables from \"{}\".".format(variables_path_and_filename))
     
-  custom_variables = importlib.import_module(variables_module)
+  custom_variables = importlib.import_module(variables_module, package=variables_filename)    # import variables module
   variables.__dict__.update(custom_variables.__dict__)
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
@@ -73,8 +75,11 @@ variables.bottom_traction = [0.0,0.0,0.0]        # [1 N]
 #variables.bottom_traction = [0.0,-1e-2,-5e-2]        # [N]
 
 
-variables.fiber_file = "../../../../input/left_biceps_brachii_7x7fibers.bin"
-#variables.fiber_file = "../../../../input/2x2fibers.bin"
+# input files
+import os
+input_directory   = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
+variables.fiber_file = input_directory + "/left_biceps_brachii_7x7fibers.bin"
+#variables.fiber_file = input_directory + "/2x2fibers.bin"
 
 # stride for sampling the 3D elements from the fiber data
 # here any number is possible
@@ -237,6 +242,7 @@ config = {
                   "dirichletBoundaryConditions":  {},
                   "dirichletOutputFilename":      None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                   "nAdditionalFieldVariables":    0,
+                  "additionalSlotNames":          None,
                   "checkForNanInf":               False,
                     
                   "CellML" : {
@@ -301,13 +307,15 @@ config = {
                   "inputMeshIsGlobal":           True,
                   "solverName":                  "diffusionTermSolver",
                   "nAdditionalFieldVariables":   1,
-                  "checkForNanInf":               False,
+                  "additionalSlotNames":         ["stress"],
+                  "checkForNanInf":              False,
                   
                   "FiniteElementMethod" : {
                     "inputMeshIsGlobal":         True,
                     "meshName":                  "MeshFiber_{}".format(fiber_no),
                     "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
                     "solverName":                "diffusionTermSolver",
+                    "slotName":                  None,
                   },
                   "OutputWriter" : [
                     #{"format": "Paraview", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles": True},
@@ -333,20 +341,28 @@ config = {
     "onlyComputeIfHasBeenStimulated": True,                          # only compute fibers after they have been stimulated for the first time
     "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again
     "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set    
+    "neuromuscularJunctionRelativeSize": 0.1,                          # range where the neuromuscular junction is located around the center, relative to fiber length. The actual position is draws randomly from the interval [0.5-s/2, 0.5+s/2) with s being this option. 0 means sharply at the center, 0.1 means located approximately at the center, but it can vary 10% in total between all fibers.
+    "generateGPUSource":        True,                                # (set to True) only effective if optimizationType=="gpu", whether the source code for the GPU should be generated. If False, an existing source code file (which has to have the correct name) is used and compiled, i.e. the code generator is bypassed. This is useful for debugging, such that you can adjust the source code yourself. (You can also add "-g -save-temps " to compilerFlags under CellMLAdapter)
+    "useSinglePrecision":       False,                               # only effective if optimizationType=="gpu", whether single precision computation should be used on the GPU. Some GPUs have poor double precision performance. Note, this drastically increases the error and, in consequence, the timestep widths should be reduced.
   },
   "MuscleContraction": {        # solid mechanics
     "preciceConfigFilename":          "../precice-config.xml",   # the preCICE configuration file
     "timestepWidth":                  variables.dt_3D,           # timestep width to tell precice
     "outputConnectorSlotIdGamma":     2,                         # which output slot is gamma to be transferred over the precice adapter, there are: λ, λdot, γ
     "MuscleContractionSolver": {
-      "dynamic":                      False,                     # if the dynamic formulation with velocity or the quasi-static formulation is computed
       "mapGeometryToMeshes":          [],
       "numberTimeSteps":              1,                         # only use 1 timestep per interval
       "timeStepOutputInterval":       100,                       # do not output time steps
-      "Pmax": variables.pmax,                                    # maximum PK2 active stress
+      "Pmax":                         variables.pmax,            # maximum PK2 active stress
+      "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
+      "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
+      "slotNames":                    ["lambda", "ldot", "gamma", "T"],   # names of the data connector slots
+      "dynamic":                      False,                     # if the dynamic formulation with velocity or the quasi-static formulation is computed
+      
       "OutputWriter" : [
         {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep), "filename": "out/" + variables.scenario_name + "/mechanics", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       ],
+      
       "DynamicHyperelasticitySolver": {
         "timeStepWidth":              variables.dt_3D,           # time step width 
         "durationLogKey":             "nonlinear",               # key to find duration of this solver in the log file
@@ -362,9 +378,18 @@ config = {
         "dumpDenseMatlabVariables":   False,                     # whether to have extra output of matlab vectors, x,r, jacobian matrix (very slow)
         # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
         
+        "loadFactors":                [],                        # no load factors, solve problem directly
+        "loadFactorGiveUpThreshold":  4e-2,                      # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the progression between two subsequent load factors gets smaller than this value, the solution is aborted.
+        "scaleInitialGuess":          False,                     # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
+        "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
+    
         # mesh
         "inputMeshIsGlobal":          False,                     # the mesh is given locally
         "meshName":                   "3Dmesh_quadratic",        # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
+        "fiberDirection":             None,                      # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
+        "fiberDirectionInElement":    [0,0,1],                   # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
+      
+        # solver
         "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
         
         # boundary and initial conditions
@@ -418,12 +443,20 @@ config = {
         "dumpDenseMatlabVariables":   False,                     # whether to have extra output of matlab vectors, x,r, jacobian matrix (very slow)
         # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
         
-        #"loadFactors":  [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
-        "nNonlinearSolveCalls": 1,         # how often the nonlinear solve should be repeated
+        #"loadFactors":  [0.1, 0.2, 0.35, 0.5, 1.0],             # load factors for every timestep
+        "loadFactors":                [],                        # no load factors, solve problem directly
+        "loadFactorGiveUpThreshold":  4e-2,                      # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the progression between two subsequent load factors gets smaller than this value, the solution is aborted.
+        "scaleInitialGuess":          False,                     # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
+        "nNonlinearSolveCalls": 1,                               # how often the nonlinear solve should be repeated
     
         # mesh
         "inputMeshIsGlobal":          False,                     # the mesh is given locally
         "meshName":                   "3Dmesh_quadratic",        # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
+        "fiberMeshNames":             [],                        # fiber meshes that will be used to determine the fiber direction, for multidomain there are no fibers so this would be empty list
+        "fiberDirection":             None,                      # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
+        "fiberDirectionInElement":    [0,0,1],                   # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
+      
+        # solver
         "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
         
         # boundary and initial conditions

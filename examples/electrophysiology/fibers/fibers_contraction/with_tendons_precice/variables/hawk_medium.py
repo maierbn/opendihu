@@ -107,8 +107,8 @@ output_timestep_3D = dt_3D              # [ms] timestep for output of fibers and
 
 # input files
 #fiber_file = "../../../../input/left_biceps_brachii_9x9fibers.bin"
-fiber_file = "../../../../input/left_biceps_brachii_31x31fibers.no_boundary.bin"
-#fiber_file = "../../../../input/left_biceps_brachii_33x33fibers.bin"
+#fiber_file = "../../../../input/left_biceps_brachii_31x31fibers.no_boundary.bin"
+fiber_file = "../../../../input/left_biceps_brachii_33x33fibers.fine.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = "../../../../input/MU_fibre_distribution_10MUs.txt"
@@ -118,7 +118,7 @@ cellml_file             = "../../../../input/2020_06_03_hodgkin-huxley_shorten_o
 # a higher number leads to less 3D elements
 sampling_stride_x = 4   # 2,6
 sampling_stride_y = 4   # 2,6
-sampling_stride_z = 74  # 74,120, 1, 2, 4, 5, 8, 10, 20, 37, 40, 74, 148, 185, 296, 370, 740
+sampling_stride_z = 740  # 74,120, 1, 2, 4, 5, 8, 10, 20, 37, 40, 74, 148, 185, 296, 370, 740
 # 74 -> 20
 # 37 -> 40
 

@@ -8,7 +8,7 @@
 #include <functional>
 #include <petscmat.h>
 #include <limits>
-#include <Vc/Vc>
+#include <vc_or_std_simd.h>  // this includes <Vc/Vc> or a Vc-emulating wrapper of <experimental/simd> if available
 
 /** This file contains elemental operators for vectors, stored as `std::array<double,nComponents>`.
  *  The template typename double_v_t usually stands for double and Vc::double_v.

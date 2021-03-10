@@ -111,8 +111,8 @@ The following example of python options is taken from the `fibers/fibers_fat_emg
                     "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
                     
                     # optimization parameters
-                    "optimizationType":                       "vc" if variables.use_vc else "simd",           # "vc", "simd", "openmp" type of generated optimizated source file
-                    "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+                    "optimizationType":                       "vc" if variables.use_vc else "simd",           # "vc", "simd", "openmp" or "gpu", type of generated optimizated source file
+                    "approximateExponentialFunction":         True,                                           # if optimizationType is "vc" or "gpu", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
                     "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
                     "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
                     
@@ -201,6 +201,10 @@ The following example of python options is taken from the `fibers/fibers_fat_emg
     "disableComputationWhenStatesAreCloseToEquilibrium": variables.fast_monodomain_solver_optimizations,       # optimization where states that are close to their equilibrium will not be computed again      
     "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set      
     "neuromuscularJunctionRelativeSize": 0.1,                          # range where the neuromuscular junction is located around the center, relative to fiber length. The actual position is draws randomly from the interval [0.5-s/2, 0.5+s/2) with s being this option. 0 means sharply at the center, 0.1 means located approximately at the center, but it can vary 10% in total between all fibers.
+    "generateGPUSource":        True,                                # (set to True) only effective if optimizationType=="gpu", whether the source code for the GPU should be generated. If False, an existing source code file (which has to have the correct name) is used and compiled, i.e. the code generator is bypassed. This is useful for debugging, such that you can adjust the source code yourself. (You can also add "-g -save-temps " to compilerFlags under CellMLAdapter)
+    "useSinglePrecision":       False,                               # only effective if optimizationType=="gpu", whether single precision computation should be used on the GPU. Some GPUs have poor double precision performance. Note, this drastically increases the error and, in consequence, the timestep widths should be reduced.
+    #"preCompileCommand":        "bash -c 'module load argon-tesla/gcc/11-20210110-openmp; module list; gcc --version",     # only effective if optimizationType=="gpu", system command to be executed right before the compilation
+    #"postCompileCommand":       "'",   # only effective if optimizationType=="gpu", system command to be executed right after the compilation
   }
   
 Instead of the callback function `setSpecificStates` that would normally handle the stimulation, the FastMonodomainSolver does the stimulation differently. Calling the callback functions would be too slow. The same behaviour as with the standard `setSpecificStates` is implemented, respecting the options ``setSpecificStatesCallFrequency``, ``setSpecificStatesFrequencyJitter``, ``setSpecificStatesRepeatAfterFirstCall`` and ``setSpecificStatesCallEnableBegin``. Stimulation is done by setting Vm at a node to the value ``valueForStimulatedPoint``. Which node is determined by ``neuromuscularJunctionRelativeSize``.
@@ -255,6 +259,45 @@ The actual location is draws from a uniform random distribution around the cente
   
 The interval is multiplied by the number of points on the fiber, i.e. 0.5 indicates the center point. A value of 0 for `neuromuscularJunctionRelativeSize` indicates that the stimulation point is always at the center. A value of 0.1 indicates that the point is randomly at the center range of 10% of the fiber. Thus, for a lot of fibers, the position varies by maximum 10% fiber length.
 
+optimizationType
+^^^^^^^^^^^^^^^^^^^^
+Different code is generated for the ``vc``, ``simd`` and ``gpu`` values of ``optimizationType``. 
+
+* ``vc``: `Vc <https://github.com/VcDevel/Vc>`_ is a library for explicit vectorization. 
+  It is no longer actively developed, but works well up to the `AVX2` instruction set (4 double values per SIMD instruction).
+  It can be compiler with every compiler (>GCC 7). The successor of `Vc` is `std-simd <https://github.com/VcDevel/std-simd>`_. 
+  It also supports AVX-512 (8 doubles per SIMD instruction). It uses C++17 technology, therefore is has to be compiled by at least GCC 9. Normally, the C++ standard of opendihu is C++14. 
+  To use C++17, use GCC 9 or later and set ``USE_STDSIMD = True`` in ``user-variables.scons.py``. This will automatically use C++17 and select `std-simd` instead of `Vc`. Internally, this is achieved by using `this wrapper <https://github.com/maierbn/std_simd_vc_wrapper>`_.
+  
+* ``gpu``: Support for GPU is implemented using OpenMP 4.5 pragmas. At least GCC 11 is required (or a patched version of GCC 10). Because GCC 11 is not yet release (as of January 2021) this is a bit difficult. You have to download a recent snapshot and build GCC yourself, with nvptx-offloading support enabled (this includes building the CUDA compiler and tools). On the SGS servers, there are various modules available.
+  If no GPU is present, the code defaults to CPU execution. Whether the CPU or GPU is currently used can be seen from the console output whenever a fiber is stimulated:
+  
+  .. code-block:: bash
+  
+    t: 24.188000, stimulate fiber 0 (local no.), MU 8 (computation on CPU)
+    -- or --
+    t: 24.188000, stimulate fiber 0 (local no.), MU 8 (computation on GPU)
+  
+  For GPU, the code generator outputs a source file that solves the whole Monodomain equation (0D and 1D) for all local fibers, either using Implicit Euler or Crank Nicholson. This is differnt than "vc", where only the 0D CellML part of the Monodomain equation is generated by the code generator of opendihu.
+
+  One problem with the GPU code is that the available memory of most GPUs is very low such that some numbers of fibers won't work. 
+  The floating point precision (float or double) can be adjusted by the ``useSinglePrecision`` option. However, single precision is not enough (at least for Hodgkin-Huxley and Shorten based subcellular models).
+  The following has been successfully tested: 49 fibers with hodgkin-huxley, 1 fiber with shorten, both with double precision.
+  The following has been found to not converge or not compile: more than 1 fiber with shorten. 1 fibers with Hodgkin-Huxley or Shorten in single precision.
+  
+If you want to experiment with different OpenMP pragmas or try out other, custom optimizations in the code, choose ``optimizationType: "gpu"``,
+run it once with ``generateGPUSource: True`` and then set ``generateGPUSource: False``. This will at first generate the full source code with the CellML model and solver of Monodomain equation. Then, the next time, the source code will not be generated again, but every process just uses the existing code file and compiles it.
+This means, you can edit the source file as you like and it will be used like this.
+
+generateGPUSource
+^^^^^^^^^^^^^^^^^^
+Only effective if `optimizationType` is `gpu`, whether the source code file should be generated prior to compilation. If set to false, it is assumed that the file already exists. This allows to provide a custom file.
+
+useSinglePrecision
+^^^^^^^^^^^^^^^^^^^^^^
+Whether to use the ``float`` datatype instead of ``double`` for the computations. This may be faster but usually the precision is not high enough such that the model diverges.
 
 
-
+preCompileCommand, postCompileCommand
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+These are commands that are executed prior to and after the compilation command (only for GPU). Not sure if it is useful. For example, it does not work to load modules here, because the shell is different from the environment where the program is started.

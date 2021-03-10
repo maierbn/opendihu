@@ -9,7 +9,8 @@ template<typename Solver>
 OutputSurface<Solver>::
 OutputSurface(DihuContext context) :
   context_(context["OutputSurface"]), solver_(context_),
-  data_(context_), ownRankInvolvedInOutput_(true), timeStepNo_(0), currentTime_(0.0), updatePointPositions_(false)
+  data_(context_), ownRankInvolvedInOutput_(true), timeStepNo_(0), currentTime_(0.0), updatePointPositions_(false),
+  enableCsvFile_(false), enableVtpFile_(false), enableGeometryInCsvFile_(false)
 {
 
 }
@@ -42,6 +43,7 @@ initialize()
     enableCsvFile_ = specificSettings.getOptionBool("enableCsvFile", true);
     enableVtpFile_ = specificSettings.getOptionBool("enableVtpFile", true);
     enableGeometryInCsvFile_ = specificSettings.getOptionBool("enableGeometryInCsvFile", true);
+    enableGeometryFiles_ = specificSettings.getOptionBool("enableGeometryFiles", true);
   }
 
   LOG(DEBUG) << "OutputSurface: initialize output writers";
@@ -52,14 +54,18 @@ initialize()
   {
     rankSubset_ = data_.functionSpace()->meshPartition()->rankSubset();
     outputWriterManager_.initialize(context_, specificSettings, rankSubset_);
-    std::ofstream file;
-    Generic::openFile(file, filename_);  // recreate and truncate file
-    file.close();
+
+    if (filename_ != "")
+    {
+      std::ofstream file;
+      Generic::openFile(file, filename_);  // recreate and truncate file
+      file.close();
+    }
 
     initializeSampledPoints();
 
     // write positions of found sampling points
-    if (!sampledPointsRequestedPositions_.empty())
+    if (!sampledPointsRequestedPositions_.empty() && enableGeometryFiles_)
       writeFoundAndNotFoundPointGeometry();
   }
 
@@ -157,7 +163,7 @@ advanceTimeSpan(bool withOutputWritersEnabled)
   {
     // write 2D surface files
     if (withOutputWritersEnabled)
-      outputWriterManager_.writeOutput(data_, timeStepNo_++);
+      outputWriterManager_.writeOutput(data_, timeStepNo_++, currentTime_);
 
     // write out values at points
     writeSampledPointValues();
@@ -212,7 +218,7 @@ callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
   // call own output writers
   if (ownRankInvolvedInOutput_)
   {
-    outputWriterManager_.writeOutput(data_);
+    outputWriterManager_.writeOutput(data_, timeStepNo, currentTime, callCountIncrement);
   }
 }
 

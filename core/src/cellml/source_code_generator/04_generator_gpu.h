@@ -11,5 +11,13 @@ public:
   //! constructor of parent class
   using CellmlSourceCodeGeneratorVc::CellmlSourceCodeGeneratorVc;
 
-  // to be defined
+  //! generate source code for use in the GPU fast monodomain solver
+  void generateSourceFastMonodomainGpu(bool approximateExponentialFunction, int nFibersToCompute, int nInstancesToComputePerFiber,
+                                       int nParametersPerInstance, bool hasAlgebraicsForTransfer,
+                                       std::string &headerCode, std::string &mainCode);
+
+protected:
+
+  //! write the source file with openmp support
+  void generateSourceFileGpu(std::string outputFilename);
 };

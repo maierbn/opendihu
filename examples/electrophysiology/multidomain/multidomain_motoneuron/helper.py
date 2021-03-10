@@ -22,8 +22,12 @@ if variables.n_subdomains != n_ranks:
   print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\033[0m\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
   quit()
 
-variables.relative_factors_file = "compartments_relative_factors.{}.{}_mus_partitioning_{}x{}x{}".\
-  format(os.path.basename(variables.fiber_file),len(variables.motor_units),variables.n_subdomains_x,variables.n_subdomains_y,variables.n_subdomains_z)
+variables.relative_factors_file = "compartments_relative_factors.{}.{}_mus_stride_{}x{}x{}_partitioning_{}x{}x{}".format(
+  os.path.basename(variables.fiber_file),
+  len(variables.motor_units),
+  variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z,
+  variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z,
+)
 
 include_global_node_positions = False
 if not os.path.exists(variables.relative_factors_file) and rank_no == 0:
@@ -160,10 +164,10 @@ n_points_on_previous_ranks_sampled_z = sum([n_sampled_points_in_subdomain_z(subd
 
 # loop over z point indices of the 3D mesh
 for k in range(n_sampled_points_3D_in_own_subdomain_z):
-  z_point_index = variables.z_point_index_start + k*variables.sampling_stride_z
+  z_point_index = (variables.z_point_index_start + k*variables.local_sampling_stride_z) * variables.sampling_stride_z
   
   if variables.own_subdomain_coordinate_z == variables.n_subdomains_z-1 and k == n_sampled_points_3D_in_own_subdomain_z-1:
-    z_point_index = variables.z_point_index_end-1
+    z_point_index = (variables.z_point_index_end-1) * variables.sampling_stride_z
     
   #print("{}: sampling_stride_z: {}, k: {}, z: {}/{}".format(rank_no, variables.sampling_stride_z, k, z_point_index, variables.z_point_index_end))
   

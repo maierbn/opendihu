@@ -2,7 +2,7 @@
 
 #include <Python.h>  // has to be the first included header
 #include <array>
-#include <Vc/Vc>
+#include <vc_or_std_simd.h>  // this includes <Vc/Vc> or a Vc-emulating wrapper of <experimental/simd> if available
 
 #include "equation/mooney_rivlin_incompressible.h"
 #include "utility/math_utility.h"

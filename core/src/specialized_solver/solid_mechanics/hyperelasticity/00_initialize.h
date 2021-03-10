@@ -29,6 +29,10 @@ public:
   typedef Data::QuasiStaticHyperelasticity<PressureFunctionSpace,DisplacementsFunctionSpace,Term,withLargeOutput,Term> Data;
   typedef ::Data::QuasiStaticHyperelasticityPressureOutput<PressureFunctionSpace> PressureDataCopy;
 
+  //! Define the type of data that will be transferred between solvers when there is a coupling scheme.
+  //! Usually you define this type in the "Data" class and reuse it here.
+  typedef typename Data::SlotConnectorDataType SlotConnectorDataType;
+
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,3> DisplacementsFieldVariableType;
   typedef FieldVariable::FieldVariable<PressureFunctionSpace,1> PressureFieldVariableType;
   typedef FieldVariable::FieldVariable<DisplacementsFunctionSpace,6> StressFieldVariableType;
@@ -108,6 +112,10 @@ public:
   //! get the Petsc Vec of the current state (uvp vector), this is needed to save and restore checkpoints from the PreciceAdapter
   Vec currentState();
 
+  //! Get the data that will be transferred in the operator splitting or coupling to the other term of the splitting/coupling.
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
+
 protected:
 
   //! initialize all Petsc Vec's and Mat's that will be used in the computation
@@ -166,7 +174,7 @@ protected:
   bool initialized_;                                        //< if this object was already initialized
   PythonConfig specificSettings_;                           //< python object containing the value of the python config dict with corresponding key
   double endTime_;                                          //< end time of current time step
-  std::ofstream residualNormLogFile_;                       //< ofstream of a log file that will contain the residual norm for each iteration
+  std::shared_ptr<std::ofstream> residualNormLogFile_;      //< ofstream of a log file that will contain the residual norm for each iteration
 
   std::shared_ptr<DirichletBoundaryConditions<DisplacementsFunctionSpace,nDisplacementComponents>> dirichletBoundaryConditions_ = nullptr;  //< object that parses Dirichlet boundary conditions and applies them to rhs
   std::shared_ptr<NeumannBoundaryConditions<DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions_ = nullptr;  //< object that parses Neumann boundary conditions and applies them to the rhs
@@ -193,6 +201,7 @@ protected:
   bool useAnalyticJacobian_;                                //< if the analytically computed Jacobian of the Newton scheme should be used. Theoretically if it is correct, this is the fastest option.
   bool useNumericJacobian_;                                 //< if a numerically computed Jacobian should be used, approximated by finite differences
   bool extrapolateInitialGuess_;                            //< if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
+  bool scaleInitialGuess_;                                  //< when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a
 };
 
 }  // namespace

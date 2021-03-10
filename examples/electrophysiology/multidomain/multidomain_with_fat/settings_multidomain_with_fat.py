@@ -25,13 +25,15 @@ from create_partitioned_meshes_for_settings import *   # file create_partitioned
 
 # if first argument contains "*.py", it is a custom variable definition file, load these values
 if ".py" in sys.argv[0]:
-  variables_file = sys.argv[0]
-  variables_module = variables_file[0:variables_file.find(".py")]
+  variables_path_and_filename = sys.argv[0]
+  variables_path,variables_filename = os.path.split(variables_path_and_filename)  # get path and filename 
+  sys.path.insert(0, os.path.join(script_path,variables_path))                    # add the directory of the variables file to python path
+  variables_module,_ = os.path.splitext(variables_filename)                       # remove the ".py" extension to get the name of the module
   
   if rank_no == 0:
-    print("Loading variables from {}.".format(variables_file))
+    print("Loading variables from \"{}\".".format(variables_path_and_filename))
     
-  custom_variables = importlib.import_module(variables_module)
+  custom_variables = importlib.import_module(variables_module, package=variables_filename)    # import variables module
   variables.__dict__.update(custom_variables.__dict__)
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
@@ -168,7 +170,10 @@ multidomain_solver = {
   "showLinearSolverOutput":           variables.show_linear_solver_output,  # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "updateSystemMatrixEveryTimestep":  False,                                # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
   "recreateLinearSolverInterval":     0,                                    # how often the Petsc KSP object (linear solver) should be deleted and recreated. This is to remedy memory leaks in Petsc's implementation of some solvers. 0 means disabled.
-  "setDirichletBoundaryCondition":    True,                                 # if the last dof of the fat layer (MultidomainWithFatSolver) or the extracellular space (MultidomainSolver) should have a 0 Dirichlet boundary condition
+  "setDirichletBoundaryConditionPhiE":False,                                # (set to False) if the last dof of the extracellular space (variable phi_e) should have a 0 Dirichlet boundary condition. However, this makes the solver converge slower.
+  "setDirichletBoundaryConditionPhiB":False,                                # (set to False) if the last dof of the fat layer (variable phi_b) should have a 0 Dirichlet boundary condition. However, this makes the solver converge slower.
+  "resetToAverageZeroPhiE":           True,                                 # if a constant should be added to the phi_e part of the solution vector after every solve, such that the average is zero
+  "resetToAverageZeroPhiB":           True,                                 # if a constant should be added to the phi_b part of the solution vector after every solve, such that the average is zero
   
   "PotentialFlow": {
     "FiniteElementMethod" : {  
@@ -176,7 +181,7 @@ multidomain_solver = {
       "solverName":                   "potentialFlowSolver",
       "prefactor":                    1.0,
       "dirichletBoundaryConditions":  variables.potential_flow_dirichlet_bc,
-      "dirichletOutputFilename":      "out/dirichlet_potential_flow",               # output filename for the dirichlet boundary conditions, set to "" to have no output
+      "dirichletOutputFilename":      "out/" + variables.scenario_name + "/dirichlet_potential_flow",               # output filename for the dirichlet boundary conditions, set to "" to have no output
       "neumannBoundaryConditions":    [],
       "inputMeshIsGlobal":            True,
       "slotName":                     "",
@@ -227,8 +232,8 @@ multidomain_solver = {
 config = {
   "scenarioName":          variables.scenario_name,
   "logFormat":                      "csv",                                # "csv" or "json", format of the lines in the log file, csv gives smaller files
-  "solverStructureDiagramFile":     "solver_structure.txt",               # output file of a diagram that shows data connection between solvers
-  "mappingsBetweenMeshesLogFile":   "mappings_between_meshes_log.txt",    # log file for mappings 
+  "solverStructureDiagramFile":     "out/"+variables.scenario_name+"/solver_structure.txt",               # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "out/"+variables.scenario_name+"/mappings_between_meshes_log.txt",    # log file for mappings 
   "meta": {                                                               # additional fields that will appear in the log
     "partitioning":         [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
@@ -239,8 +244,8 @@ config = {
       "relativeTolerance":  1e-10,
       "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual          
       "maxIterations":      1e5,
-      "solverType":         "gmres",
-      "preconditionerType": "none",
+      "solverType":         variables.potential_flow_solver_type,
+      "preconditionerType": variables.potential_flow_preconditioner_type,
       "dumpFormat":         "default",
       "dumpFilename":       "",
     },
@@ -323,7 +328,7 @@ config = {
               "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
               
               "meshName":                               "3Dmesh",
-              "stimulationLogFilename":                 "out/stimulation.log",
+              "stimulationLogFilename":                 "out/" + variables.scenario_name + "/stimulation.log",
             },
 						"OutputWriter" : [
               {"format": "Paraview", "outputInterval": (int)(1./variables.dt_0D*variables.output_timestep_0D_states), "filename": "out/" + variables.scenario_name + "/0D_states_compartment_{}".format(compartment_no), "binary": False, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
@@ -336,16 +341,18 @@ config = {
       "MultidomainSolver" : multidomain_solver,
       "OutputSurface": {        # version for fibers_emg_2d_output
         "OutputWriter": [
-          {"format": "Paraview", "outputInterval": (int)(1./variables.dt_multidomain*variables.output_timestep_multidomain), "filename": "out/" + variables.scenario_name + "/surface", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
+          {"format": "Paraview",   "outputInterval": int(1./variables.dt_multidomain*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "onlyNodalValues": True, "combineFiles": True, "fileNumbering": "incremental"},
+          {"format": "PythonFile", "outputInterval": int(1./variables.dt_multidomain*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "onlyNodalValues": True, "combineFiles": True, "fileNumbering": "incremental"},
         ],
         #"face":                    ["1+","0+"],         # which faces of the 3D mesh should be written into the 2D mesh
         "face":                     ["1+"],              # which faces of the 3D mesh should be written into the 2D mesh
         "samplingPoints":           variables.hdemg_electrode_positions,    # the electrode positions, they are created in the helper.py script
         "updatePointPositions":     False,               # the electrode points should be initialize in every timestep (set to False for the static case). This makes a difference if the muscle contracts, then True=fixed electrodes, False=electrodes moving with muscle.
         "filename":                 "out/{}/electrodes.csv".format(variables.scenario_name),
-        "enableCsvFile":            False,                # if the values at the sampling points should be written to csv files
-        "enableVtpFile":            True,               # if the values at the sampling points should be written to vtp files
+        "enableCsvFile":            True,                # if the values at the sampling points should be written to csv files
+        "enableVtpFile":            False,               # if the values at the sampling points should be written to vtp files
         "enableGeometryInCsvFile":  False,               # if the csv output file should contain geometry of the electrodes in every time step. This increases the file size and only makes sense if the geometry changed throughout time, i.e. when computing with contraction
+        "enableGeometryFiles":      False,               # if there should be extra files of the locations of the electrodes on every rank
         "xiTolerance":              0.3,                 # tolerance for element-local coordinates xi, for finding electrode positions inside the elements. Increase or decrease this numbers if not all electrode points are found.
         "MultidomainSolver":        multidomain_solver,
       }

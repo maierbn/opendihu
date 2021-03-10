@@ -163,7 +163,8 @@ config = {
   "PreciceAdapterVolumeCoupling": {
     "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
     "timestepWidth":            1,                          # coupling time step width, must match the value in the precice config
-    "couplingEnabled":          True,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
+    "couplingEnabled":          False,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
+    "endTimeIfCouplingDisabled": variables.end_time,        # if "couplingEnabled" is set to False, use this end time for the simulation
     "preciceConfigFilename":    "../precice_config.xml",    # the preCICE configuration file
     "preciceParticipantName":   "PartitionedFibers",        # name of the own precice participant, has to match the name given in the precice xml config file
     "scalingFactor":            1,                          # a factor to scale the exchanged data, prior to communication
@@ -201,7 +202,6 @@ config = {
           "logTimeStepWidthAsKey":  "dt_splitting",
           "durationLogKey":         "duration_monodomain",
           "timeStepOutputInterval": 100,
-          "endTime":                variables.dt_splitting,
           "connectedSlotsTerm1To2": {0:0, 1:1},   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
           "connectedSlotsTerm2To1": {0:0, 1:1},   # transfer the same back, this avoids data copy
           "nAdditionalFieldVariables": 2,

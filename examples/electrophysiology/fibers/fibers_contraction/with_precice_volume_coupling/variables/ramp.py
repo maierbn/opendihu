@@ -52,15 +52,12 @@ motor_units = [
 ]
 # note: negative start time is the same as zero, it is just there for debugging. Delete the minus signs to get a ramp
 
-end_time = 0.001                      # [ms] end time of the simulation
-stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
-stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
-dt_0D = 1e-3                        # [ms] timestep width of ODEs
-dt_1D = 1.5e-3                        # [ms] timestep width of diffusion
-dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting
+end_time = 100                      # [ms] end time of the simulation
+dt_0D = 2.5e-5                      # [ms] timestep width of ODEs (2e-3)
+dt_1D = 2.5e-5                      # [ms] timestep width of diffusion (4e-3)
+dt_splitting = 2.5e-5               # [ms] overall timestep width of strang splitting (4e-3)
 dt_3D = 1e0                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep = 1.0               # [ms] timestep for large output files, 5.0
-output_timestep_smaller_files = 0.1 # [ms] timestep for small output files, 0.5
+output_timestep = 1                 # [ms] timestep for output files, 5.0
 
 # The values of dt_3D and end_time have to be also defined in "precice-config.xml" with the same value (the value is only significant in the precice-config.xml, the value here is used for output writer time intervals)
 # <max-time value="100.0"/>           <!-- end time of the whole simulation -->
@@ -84,11 +81,11 @@ fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs.txt"
 cellml_file       = input_directory + "/new_slow_TK_2014_12_08.cellml"
 
 # other options
-paraview_output = True
-adios_output = False
-exfile_output = False
-python_output = False
-disable_firing_output = False
+states_output = False           # if the 0D states should be written (this produces large output files)
+paraview_output = True         # produce output files for paraview
+adios_output = False           # produce adios output files
+exfile_output = False          # produce exfiles output files
+python_output = False          # produce python output files
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):

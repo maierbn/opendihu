@@ -175,6 +175,7 @@ config = {
       "mapGeometryToMeshes":          [],
       "numberTimeSteps":              1,                         # only use 1 timestep per interval
       "timeStepOutputInterval":       100,                       # do not output time steps
+      "endTime":                      variables.end_time,        # end time of the simulation (if precice coupling is disabled)
       "Pmax":                         variables.pmax,            # maximum PK2 active stress
       "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
       "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.

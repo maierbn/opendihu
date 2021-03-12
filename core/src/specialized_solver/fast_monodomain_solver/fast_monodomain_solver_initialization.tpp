@@ -308,7 +308,8 @@ initialize()
               LOG(DEBUG) << "  Motor unit " << motorUnitNo << " fires at " << firstStimulationTimeMotorUnit;  // this output does not get called for all motor units!
 
               // if this time is smaller than currently saved firstStimulationTime, or firstStimulationTime has not yet been initialized
-              if (firstStimulationTime == -1 || firstStimulationTimeMotorUnit < firstStimulationTime)
+              if (fiberData_.at(fiberDataNo).setSpecificStatesCallFrequency > 1e-12 &&
+                  (firstStimulationTime == -1 || firstStimulationTimeMotorUnit < firstStimulationTime))
               {
                 // store new firstStimulationTime and save motor unit no.
                 firstStimulationMotorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
@@ -331,7 +332,14 @@ initialize()
     }
   }
 
-  LOG(INFO) << "Time of first stimulation: " << firstStimulationTime << ", motor unit " << firstStimulationMotorUnitNo;
+  if (firstStimulationTime == -1)
+  {
+    LOG(INFO) << "No stimulation by setSpecificStates";
+  }
+  else
+  {
+    LOG(INFO) << "Time of first stimulation: " << firstStimulationTime << ", motor unit " << firstStimulationMotorUnitNo;
+  }
 
   // get the states and algebraics no.s to be transferred as slot connector data
   statesForTransferIndices_ = cellmlAdapter.statesForTransfer();

@@ -179,10 +179,10 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
           }
         }
 
-//#ifndef NDEBUG
-        LOG(INFO) << "   slot " << mapping.connectorSlotNosTo[toSlotIndex] << " (index " << toSlotIndex << "/" << mapping.connectorSlotNosTo.size() << ")"
+#ifndef NDEBUG
+        LOG(DEBUG) << "   slot " << mapping.connectorSlotNosTo[toSlotIndex] << " (index " << toSlotIndex << "/" << mapping.connectorSlotNosTo.size() << ")"
           << ", set values from callback: " << valuesToSet << " at dofs: " << mapping.dofNosToSetLocal;
-//#endif
+#endif
 
         // set values in target field variable
         bool slotSetValuesSucceeded = slotSetValues(mapping.connectorSlotNosTo[toSlotIndex], mapping.slotConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);

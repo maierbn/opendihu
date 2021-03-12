@@ -60,8 +60,8 @@ XBRAID_DOWNLOAD = True
 OPENCOR_DOWNLOAD = True
 
 # preCICE coupling library, set both to True in order to use precice
-LIBXML2_DOWNLOAD = False
-PRECICE_DOWNLOAD = False
+LIBXML2_DOWNLOAD = True
+PRECICE_DOWNLOAD = True
 
 # MPI
 # MPI is normally detected by running the mpicc command. If this is not available, you can provide the MPI_DIR manually.

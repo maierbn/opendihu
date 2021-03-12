@@ -172,7 +172,7 @@ config = {
   "PreciceAdapterVolumeCoupling": {
     "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
     "timestepWidth":            1,                          # coupling time step width, must match the value in the precice config
-    "couplingEnabled":          False,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
+    "couplingEnabled":          True,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
     "endTimeIfCouplingDisabled": variables.end_time,        # if "couplingEnabled" is set to False, use this end time for the simulation
     "preciceConfigFilename":    "../precice_config.xml",    # the preCICE configuration file
     "preciceParticipantName":   "PartitionedFibers",        # name of the own precice participant, has to match the name given in the precice xml config file
@@ -184,7 +184,7 @@ config = {
         "mode":                 "read",                     # mode is one of "read" or "write"
         "preciceDataName":      "Geometry",                 # name of the vector or scalar to transfer, as given in the precice xml settings file
         "preciceMeshName":      "PartitionedFibersMesh",    # name of the precice coupling mesh, as given in the precice xml settings file
-        "opendihuMeshName":     "3Dmesh",                   # extra specification of the opendihu mesh that is used for the initialization of the precice mapping. If None or "", the mesh of the field variable is used.
+        "opendihuMeshName":     None,                       # extra specification of the opendihu mesh that is used for the initialization of the precice mapping. If None or "", the mesh of the field variable is used.
         "slotName":             None,                       # name of the existing slot of the opendihu data connector to which this variable is associated to (only relevant if not isGeometryField)
         "isGeometryField":      True,                       # if this is the geometry field of the mesh
       },

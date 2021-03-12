@@ -193,7 +193,7 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
             << ") at dofs " << mapping.dofNosToSetLocal << ".";
           }
         
-        LOG(INFO) << "slotSetValues done.";
+        LOG(DEBUG) << "slotSetValues done.";
       }
 
       // decrement reference counters for python objects

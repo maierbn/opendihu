@@ -199,7 +199,7 @@ fiber_distribution_file = input_directory+"/MU_fibre_distribution_10MUs.txt"
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1 
 sampling_stride_y = 1 
-sampling_stride_z = 50
+sampling_stride_z = 20
 local_sampling_stride_z = 1 
 sampling_stride_fat = 1 
 

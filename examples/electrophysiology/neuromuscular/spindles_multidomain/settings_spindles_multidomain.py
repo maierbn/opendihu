@@ -542,6 +542,7 @@ config = {
     
       # coupling scheme of neuron solvers
       "MultipleCoupling": {
+        "description":            "spindle,mn,solver",                        # description that will be shown in solver structure visualization
         "endTime":                variables.end_time,                         # end time of the simulation
         "timeStepWidth":          variables.dt_neuron_transfer,               # time step width of the data transfer between the sub solvers
         "logTimeStepWidthAsKey":  "dt_neuron_transfer",                       # string under which the timestep width will be stored in the log file

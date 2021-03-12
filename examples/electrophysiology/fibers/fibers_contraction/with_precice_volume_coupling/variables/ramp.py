@@ -58,6 +58,10 @@ dt_1D = 2.5e-5                      # [ms] timestep width of diffusion (4e-3)
 dt_splitting = 2.5e-5               # [ms] overall timestep width of strang splitting (4e-3)
 dt_3D = 1e0                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep = 1                 # [ms] timestep for output files, 5.0
+output_timestep_fibers = output_timestep   # [ms] timestep for fiber output
+output_timestep_big = 25            # [ms] timestep for output big files of 3D EMG, 100
+
+
 
 # The values of dt_3D and end_time have to be also defined in "precice-config.xml" with the same value (the value is only significant in the precice-config.xml, the value here is used for output writer time intervals)
 # <max-time value="100.0"/>           <!-- end time of the whole simulation -->
@@ -65,11 +69,25 @@ output_timestep = 1                 # [ms] timestep for output files, 5.0
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
-sampling_stride_x = 1
-sampling_stride_y = 1
-sampling_stride_z = 1      # stride value that produces equally sized elements, but possibly discards some nodes at the end in z direction, 
-local_sampling_stride_z = 200  # stride value that works the same as the strides in x,y, produces smaller remainder elements on every rank 
-# good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
+
+import opendihu
+
+# parameters for the contraction program
+if "contraction" in opendihu.program_name:
+  sampling_stride_x = 1
+  sampling_stride_y = 1
+  sampling_stride_z = 1      # stride value that produces equally sized elements, but possibly discards some nodes at the end in z direction, 
+  local_sampling_stride_z = 200  # stride value that works the same as the strides in x,y, produces smaller remainder elements on every rank 
+  # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
+
+else:
+  # parameters for the fibers_with_3d program
+  
+  sampling_stride_x = 1
+  sampling_stride_y = 1
+  sampling_stride_z = 1      # stride value that produces equally sized elements, but possibly discards some nodes at the end in z direction, 
+  local_sampling_stride_z = 20  # stride value that works the same as the strides in x,y, produces smaller remainder elements on every rank 
+  # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
 # input files
 import os
@@ -80,12 +98,21 @@ firing_times_file = input_directory + "/MU_firing_times_always.txt"
 fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs.txt"
 cellml_file       = input_directory + "/new_slow_TK_2014_12_08.cellml"
 
+# EMG solver parameters
+emg_solver_type = "cg"              # solver and preconditioner for the 3D static Bidomain equation that solves the intra-muscular EMG signal
+emg_preconditioner_type = "none"    # preconditioner
+emg_initial_guess_nonzero = False   # If the initial guess for the emg linear system should be set to the previous solution
+emg_solver_maxit = 1e4              # maximum number of iterations for the static bidomain solver
+emg_solver_reltol = 1e-5            # relative tolerance for solver
+emg_solver_abstol = 1e-5            # absolute tolerance for solver
+
 # other options
 states_output = False           # if the 0D states should be written (this produces large output files)
 paraview_output = True         # produce output files for paraview
 adios_output = False           # produce adios output files
 exfile_output = False          # produce exfiles output files
 python_output = False          # produce python output files
+
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):

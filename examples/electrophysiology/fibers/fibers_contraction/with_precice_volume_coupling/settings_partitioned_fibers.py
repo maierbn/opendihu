@@ -1,4 +1,4 @@
-# Multiple 1D fibers (monodomain) with 3D static mooney rivlin with active contraction term, on biceps geometry.
+# Multiple 1D fibers (monodomain) with 3D static Mooney Rivlin with active contraction term, on biceps geometry.
 # This example uses precice to couple the Monodomain eq. on fibers with the 3D contraction, both inside opendihu.
 # You need to run both executables at the same time.
 
@@ -33,65 +33,11 @@ if ".py" in sys.argv[0]:
   variables.__dict__.update(custom_variables.__dict__)
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 else:
-  print("Warning: There is no variables file, e.g:\n ./biceps_contraction ../settings_biceps_contraction.py ramp.py\n")
+  print("Warning: There is no variables file, e.g:\n ./partitioned_fibers ../settings_partitioned_fibers.py ramp.py\n")
   exit(0)
 
-
 # -------------- begin user parameters ----------------
-
-# timing parameters
-# -----------------
-variables.dt_0D = 1e-3                        # [ms] timestep width of ODEs
-variables.dt_1D = 1.5e-3                      # [ms] timestep width of diffusion
-variables.dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting
-variables.dt_3D = 1e0                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-# The values of dt_3D and end_time have to be also defined in "precice-config.xml" with the same value (the value is only significant in the precice-config.xml, the value here is used for output writer time intervals)
-# <max-time value="100.0"/>           <!-- end time of the whole simulation -->
-# <time-window-size value="1e0"/>   <!-- timestep width dt_3D -->
-      
-
-# quantities in mechanics unit system
-rho = 10                    # [1e-4 kg/cm^3] density of the muscle (density of water)
-
-# Mooney-Rivlin parameters [c1,c2,b,d] of c1*(Ibar1 - 3) + c2*(Ibar2 - 3) + b/d (λ - 1) - b*ln(λ)
-# Heidlauf13: [6.352e-10 kPa, 3.627 kPa, 2.756e-5 kPa, 43.373] = [6.352e-11 N/cm^2, 3.627e-1 N/cm^2, 2.756e-6 N/cm^2, 43.373], pmax = 73 kPa = 7.3 N/cm^2
-# Heidlauf16: [3.176e-10 N/cm^2, 1.813 N/cm^2, 1.075e-2 N/cm^2, 9.1733], pmax = 7.3 N/cm^2
-
-c1 = 3.176e-10              # [N/cm^2]
-c2 = 1.813                  # [N/cm^2]
-b  = 1.075e-2               # [N/cm^2] anisotropy parameter
-d  = 9.1733                 # [-] anisotropy parameter
-variables.pmax = 7.3                  # [N/cm^2] maximum isometric active stress
-
-# for debugging, b = 0 leads to normal Mooney-Rivlin
-b = 0
-variables.material_parameters = [c1, c2, b, d]   # material parameters
-
-#variables.constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
-variables.constant_body_force = (0,0,0)
-#variables.bottom_traction = [0.0,0.0,-1e-1]        # [1 N]
-#variables.bottom_traction = [0.0,0.0,-1e-3]        # [1 N]
-variables.bottom_traction = [0.0,0.0,0.0]        # [1 N]
-#variables.bottom_traction = [0.0,-1e-2,-5e-2]        # [N]
-
-
-variables.fiber_file = "../../../../input/left_biceps_brachii_7x7fibers.bin"
-#variables.fiber_file = "../../../../input/2x2fibers.bin"
-
-# stride for sampling the 3D elements from the fiber data
-# here any number is possible
-variables.sampling_stride_x = 1
-variables.sampling_stride_y = 1
-variables.sampling_stride_z = 200
-
-# enable paraview output
-variables.paraview_output = True
-variables.output_timestep = 1e0               # [ms] timestep for output files of fibers
-variables.disable_firing_output = False
-
 # -------------- end user parameters ----------------
-
-
 
 # define command line arguments
 parser = argparse.ArgumentParser(description='static_biceps_emg')
@@ -114,7 +60,6 @@ parser.add_argument('--output_timestep',                     help='The timestep 
 parser.add_argument('--dt_0D',                               help='The timestep for the 0D model.',              type=float, default=variables.dt_0D)
 parser.add_argument('--dt_1D',                               help='The timestep for the 1D model.',              type=float, default=variables.dt_1D)
 parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',             type=float, default=variables.dt_splitting)
-parser.add_argument('--dt_3D',                               help='The timestep for the 3D model, i.e. dynamic solid mechanics.', type=float, default=variables.dt_3D)
 parser.add_argument('--disable_firing_output',               help='Disables the initial list of fiber firings.', default=variables.disable_firing_output, action='store_true')
 parser.add_argument('--v',                                   help='Enable full verbosity in c++ code')
 parser.add_argument('-v',                                    help='Enable verbosity level in c++ code', action="store_true")
@@ -132,16 +77,45 @@ if variables.n_subdomains is not None:
   variables.n_subdomains_y = variables.n_subdomains[1]
   variables.n_subdomains_z = variables.n_subdomains[2]
   
+variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
+
+# automatically initialize partitioning if it has not been set
+if n_ranks != variables.n_subdomains:
+  
+  # create all possible partitionings to the given number of ranks
+  optimal_value = n_ranks**(1/3)
+  possible_partitionings = []
+  for i in range(1,n_ranks+1):
+    for j in range(1,n_ranks+1):
+      if i*j <= n_ranks and n_ranks % (i*j) == 0:
+        k = (int)(n_ranks / (i*j))
+        performance = (k-optimal_value)**2 + (j-optimal_value)**2 + 1.1*(i-optimal_value)**2
+        possible_partitionings.append([i,j,k,performance])
+        
+  # if no possible partitioning was found
+  if len(possible_partitionings) == 0:
+    if rank_no == 0:
+      print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {} and no automatic partitioning could be done.\n\n\033[0m".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
+    quit()
+    
+  # select the partitioning with the lowest value of performance which is the best
+  lowest_performance = possible_partitionings[0][3]+1
+  for i in range(len(possible_partitionings)):
+    if possible_partitionings[i][3] < lowest_performance:
+      lowest_performance = possible_partitionings[i][3]
+      variables.n_subdomains_x = possible_partitionings[i][0]
+      variables.n_subdomains_y = possible_partitionings[i][1]
+      variables.n_subdomains_z = possible_partitionings[i][2]
+
 # output information of run
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))
   print("dt_0D:           {:0.0e}, diffusion_solver_type:      {}".format(variables.dt_0D, variables.diffusion_solver_type))
   print("dt_1D:           {:0.0e}, potential_flow_solver_type: {}".format(variables.dt_1D, variables.potential_flow_solver_type))
   print("dt_splitting:    {:0.0e}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(variables.dt_splitting, variables.emg_solver_type, variables.emg_initial_guess_nonzero))
-  print("dt_3D:           {:0.0e}, paraview_output: {}".format(variables.dt_3D, variables.paraview_output))
+  print("                        paraview_output: {}".format(variables.paraview_output))
   print("output_timestep: {:0.0e}  stimulation_frequency: {} 1/ms = {} Hz".format(variables.output_timestep, variables.stimulation_frequency, variables.stimulation_frequency*1e3))
   print("fiber_file:              {}".format(variables.fiber_file))
-  print("fat_mesh_file:           {}".format(variables.fat_mesh_file))
   print("cellml_file:             {}".format(variables.cellml_file))
   print("fiber_distribution_file: {}".format(variables.fiber_distribution_file))
   print("firing_times_file:       {}".format(variables.firing_times_file))
@@ -185,26 +159,12 @@ config = {
       "dumpFilename":       "",
       "dumpFormat":         "matlab",
     },
-    "mechanicsSolver": {   # solver for the dynamic mechanics problem
-      "relativeTolerance":  1e-10,          # 1e-10 relative tolerance of the linear solver
-      "absoluteTolerance":  1e-10,          # 1e-10 absolute tolerance of the residual of the linear solver       
-      "solverType":         "preonly",      # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
-      "preconditionerType": "lu",           # type of the preconditioner
-      "maxIterations":       1e4,           # maximum number of iterations in the linear solver
-      "snesMaxFunctionEvaluations": 1e8,    # maximum number of function iterations
-      "snesMaxIterations":   10,            # maximum number of iterations in the nonlinear solver
-      "snesRelativeTolerance": 1e-5,       # relative tolerance of the nonlinear solver
-      "snesAbsoluteTolerance": 1e-5,        # absolute tolerance of the nonlinear solver
-      "snesLineSearchType": "l2",        # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
-      "snesRebuildJacobianFrequency": 5,
-      "dumpFilename":        "",
-      "dumpFormat":          "matlab",
-    }
   },
   "PreciceAdapterVolumeCoupling": {
     "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
     "timestepWidth":            1,                          # coupling time step width, must match the value in the precice config
-    "couplingEnabled":          True,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
+    "couplingEnabled":          False,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
+    "endTimeIfCouplingDisabled": variables.end_time,        # if "couplingEnabled" is set to False, use this end time for the simulation
     "preciceConfigFilename":    "../precice_config.xml",    # the preCICE configuration file
     "preciceParticipantName":   "PartitionedFibers",        # name of the own precice participant, has to match the name given in the precice xml config file
     "scalingFactor":            1,                          # a factor to scale the exchanged data, prior to communication
@@ -242,7 +202,6 @@ config = {
           "logTimeStepWidthAsKey":  "dt_splitting",
           "durationLogKey":         "duration_monodomain",
           "timeStepOutputInterval": 100,
-          "endTime":                variables.dt_splitting,
           "connectedSlotsTerm1To2": {0:0, 1:1},   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
           "connectedSlotsTerm2To1": {0:0, 1:1},   # transfer the same back, this avoids data copy
           "nAdditionalFieldVariables": 2,

@@ -91,10 +91,11 @@ adios_output = False
 exfile_output = False
 python_output = False
 enable_surface_emg = True
-optimization_type = "gpu"
+optimization_type = "vc"
 
 #fiber_file=input_directory+"/left_biceps_brachii_37x37fibers.bin"
 fiber_file              = input_directory+"/left_biceps_brachii_13x13fibers.bin"
+fiber_file              = input_directory+"/left_biceps_brachii_7x7fibers.bin"
 firing_times_file       = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = input_directory+"/MU_fibre_distribution_10MUs.txt"
 cellml_file             = input_directory+"/hodgkin_huxley_1952.c"

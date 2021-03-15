@@ -78,10 +78,10 @@ n_subdomains_y = 1
 n_subdomains_z = 1
 
 # stride for sampling the 3D elements from the fiber data
-# here any number is possible
 sampling_stride_x = 2
 sampling_stride_y = 2
-sampling_stride_z = 50
+sampling_stride_z = 1            # stride value that produces equally sized elements, but possibly discards some nodes at the end in z direction
+local_sampling_stride_z = 50     # stride value that works the same as the strides in x,y, produces smaller remainder elements on every rank
 
 # scenario name for log file
 scenario_name = ""

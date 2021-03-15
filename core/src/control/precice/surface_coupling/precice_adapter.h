@@ -8,7 +8,7 @@
 namespace Control
 {
 
-/** Generic Precice adapter, can be configured to either prescribe Neumann or Dirichlet boundary conditions.
+/** Generic Precice adapter for surface coupling, can be configured to either prescribe Neumann or Dirichlet boundary conditions.
  */
 template<typename NestedSolver>
 class PreciceAdapter :

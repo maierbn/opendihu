@@ -355,6 +355,9 @@ if dimension == 1:
           sdata = []
           for d in data:
             solution_values = py_reader.get_values(d, field_variable_name, component_name)
+            if solution_values is None:
+              print("field_variable_name: {}, component_name: {}".format(field_variable_name, component_name))
+              print("d: {}".format(d))
             xdata.append(d['currentTime'])
             sdata.append(solution_values[0])
           

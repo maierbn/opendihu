@@ -12,6 +12,7 @@ Import('env')     # import Environment object from calling SConstruct
 #env.Program(target = "contraction", source = "src/contraction.cpp")
 
 # new programs
-env.Program(target = "partitioned_fibers", source = "src/partitioned_fibers.cpp")
 env.Program(target = "muscle_contraction", source = "src/muscle_contraction.cpp")
+env.Program(target = "partitioned_fibers", source = "src/partitioned_fibers.cpp")
+env.Program(target = "fibers_with_3d", source = "src/fibers_with_3d.cpp")
 

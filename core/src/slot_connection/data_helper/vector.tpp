@@ -10,7 +10,7 @@ nSlots(std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>> slot
   if (!slotConnectorData)
     return 0;
   if (!slotConnectorData->empty())
-    return (*slotConnectorData)[0]->nSlots();
+    return SlotConnectorDataHelper<SlotConnectorDataType>::nSlots((*slotConnectorData)[0]);
   return 0;
 }
 

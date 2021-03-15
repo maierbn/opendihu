@@ -608,19 +608,20 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
   # exit if number of elements is <= 0 on any rank
   if generate_quadratic_3d_mesh:
     if variables.n_elements_3D_mesh_quadratic[0] <= 0 or variables.n_elements_3D_mesh_quadratic[1] <= 0 or variables.n_elements_3D_mesh_quadratic[2] <= 0:
-      print("\n\033[0;31mError! When partitioning {}x{}x{} quadratic 3D elements to {}x{}x{}={} ranks, rank {} gets {}x{}x{}={} elements (subdomain coordinates (0-based): ({},{},{})/({},{},{})).\nDecrease number of processes or increase mesh size or specify different partitioning.\n\033[0m".
+      print("\n\033[0;31mError! When partitioning {}x{}x{} quadratic 3D elements to {}x{}x{}={} ranks, rank {} gets {}x{}x{}={} elements (subdomain coordinates (0-based): ({},{},{})/({},{},{})).\n (Sampling 3D mesh with stride {} x {} x {}, local_sampling_stride_z: {})\nDecrease number of processes or increase mesh size or specify different partitioning.\n\033[0m".
       format(n_elements_3D_quadratic_global_x, n_elements_3D_quadratic_global_y, n_elements_3D_quadratic_global_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains,
       rank_no, variables.n_elements_3D_mesh_quadratic[0], variables.n_elements_3D_mesh_quadratic[1], variables.n_elements_3D_mesh_quadratic[2], n_elements_3D_quadratic_local,
-      own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z))
+      own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z,
+      variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.local_sampling_stride_z))
       quit()
   if generate_linear_3d_mesh:
     if variables.n_elements_3D_mesh_linear[0] <= 0 or variables.n_elements_3D_mesh_linear[1] <= 0 or variables.n_elements_3D_mesh_linear[2] <= 0:
-      print("\n\033[0;31mError! When partitioning {}x{}x{} 3D elements to {}x{}x{}={} ranks, rank {} gets {}x{}x{}={} elements (subdomain coordinates (0-based): ({},{},{})/({},{},{})).\nDecrease number of processes or increase mesh size or specify different partitioning.\n\033[0m".
+      print("\n\033[0;31mError! When partitioning {}x{}x{} 3D elements to {}x{}x{}={} ranks, rank {} gets {}x{}x{}={} elements (subdomain coordinates (0-based): ({},{},{})/({},{},{})).\n (Sampling 3D mesh with stride {} x {} x {}, local_sampling_stride_z: {})\nDecrease number of processes or increase mesh size or specify different partitioning.\n\033[0m".
       format(n_elements_3D_linear_global_x, n_elements_3D_linear_global_y, n_elements_3D_linear_global_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains,
       rank_no, variables.n_elements_3D_mesh_linear[0], variables.n_elements_3D_mesh_linear[1], variables.n_elements_3D_mesh_linear[2], n_elements_3D_linear_local,
-      own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z))
+      own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z,
+      variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.local_sampling_stride_z))
       quit()
-    
     
   ###############################
   # determine 1D meshes of fibers

@@ -12,10 +12,28 @@ run()
   // initialize everything
   this->initialize();
 
-  // only run the solver if precice is disabled in settings
+  double currentTime = 0;
+
+  // if precice coupling is disabled in settings, run the timestep of the nested solver until endTimeIfCouplingDisabled_ is reached
   if (!this->couplingEnabled_)
   {
-    this->nestedSolver_.run();
+    const int nTimeSteps = this->endTimeIfCouplingDisabled_ / this->timeStepWidth_;
+    for (int timeStepNo = 0; timeStepNo < nTimeSteps; timeStepNo++)
+    {
+      if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
+      {
+        LOG(INFO) << "PreCICE volume coupling (disabled for debugging), timestep " << timeStepNo << "/" << nTimeSteps << ", t=" << currentTime;
+      }
+
+      // set time span in nested solver
+      this->nestedSolver_.setTimeSpan(currentTime, currentTime + this->timeStepWidth_);
+
+      // call the nested solver to proceed with the simulation for the assigned time span
+      this->nestedSolver_.advanceTimeSpan();
+
+      // increase current simulation time
+      currentTime += this->timeStepWidth_;
+    }
     return;
   }
 
@@ -35,8 +53,6 @@ run()
   }
 
   // perform the computation of this solver
-  double currentTime = 0;
-
   // main simulation loop of adapter
   for (int timeStepNo = 0; this->preciceSolverInterface_->isCouplingOngoing(); timeStepNo++)
   {
@@ -78,7 +94,7 @@ run()
     // advance timestepping in precice
     this->maximumPreciceTimestepSize_ = this->preciceSolverInterface_->advance(timeStepWidth);
 
-    LOG(DEBUG) << "precice::advance(" << timeStepWidth << "), maximumPreciceTimestepSize_: " << this->maximumPreciceTimestepSize_;
+    LOG(INFO) << "precice::advance(" << timeStepWidth << "), maximumPreciceTimestepSize_: " << this->maximumPreciceTimestepSize_;
 
     // if coupling did not converge, reset to previously stored checkpoint
     // checkpointing is not implemented in the volume coupling adapter

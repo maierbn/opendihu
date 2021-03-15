@@ -181,8 +181,8 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
 #ifndef NDEBUG
   VLOG(1) << "fictitiousPK2Stress: " << fictitiousPK2Stress << ", inverseRightCauchyGreen: " << inverseRightCauchyGreen << ", J: " << J << ", p: " << pressure;
   VLOG(1) << "decoupledFormFactors: " << decoupledFormFactor1 << ", " << decoupledFormFactor2 << ", " << decoupledFormFactor4 << ", " << decoupledFormFactor5;
-  VLOG(1) << "fiberDirection: " << fiberDirection << ", C: " << rightCauchyGreen;
   VLOG(1) << "elementNoLocalv: " << elementNoLocalv << ", parameterVector: " << parameterVector << std::endl;
+  VLOG(1) << "fiberDirection: " << fiberDirection << ", C: " << rightCauchyGreen << ", J: " << J << ", factorJ23: " << factorJ23;
 #endif
 
   // decoupled form of strain energy function

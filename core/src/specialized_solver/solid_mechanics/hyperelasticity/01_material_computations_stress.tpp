@@ -21,6 +21,7 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
                  const std::array<double_v_t,5> reducedInvariants,      //< [in] the reduced invariants Ibar_1, ..., Ibar_5
                  const double_v_t deformationGradientDeterminant,       //< [in] J = det(F)
                  VecD<3,double_v_t> fiberDirection,                     //< [in] a0, direction of fibers
+                 dof_no_v_t elementNoLocalv,                            //< [in] the current element nos (simd vector) with unused entries set to -1, needed only as mask which entries to discard
                  Tensor2<3,double_v_t> &fictitiousPK2Stress,            //< [out] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
                  Tensor2<3,double_v_t> &pk2StressIsochoric              //< [out] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
                 )
@@ -181,6 +182,7 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
   VLOG(1) << "fictitiousPK2Stress: " << fictitiousPK2Stress << ", inverseRightCauchyGreen: " << inverseRightCauchyGreen << ", J: " << J << ", p: " << pressure;
   VLOG(1) << "decoupledFormFactors: " << decoupledFormFactor1 << ", " << decoupledFormFactor2 << ", " << decoupledFormFactor4 << ", " << decoupledFormFactor5;
   VLOG(1) << "fiberDirection: " << fiberDirection << ", C: " << rightCauchyGreen;
+  VLOG(1) << "elementNoLocalv: " << elementNoLocalv << ", parameterVector: " << parameterVector << std::endl;
 #endif
 
   // decoupled form of strain energy function
@@ -356,9 +358,9 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
   }
 
 #ifndef NDEBUG
-  if (MathUtility::containsNanOrInf(pK2Stress))
+  if (MathUtility::containsNanOrInf(pK2Stress, elementNoLocalv))
   {
-    if (MathUtility::containsNanOrInf(fictitiousPK2Stress))
+    if (MathUtility::containsNanOrInf(fictitiousPK2Stress, elementNoLocalv))
     {
       LOG(ERROR) << "fictitiousPK2Stress contains nan: " << fictitiousPK2Stress << ", J=" << J;
     }

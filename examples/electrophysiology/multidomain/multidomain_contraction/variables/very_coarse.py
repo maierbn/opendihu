@@ -138,6 +138,9 @@ theta = 1.0                               # weighting factor of implicit term in
 use_symmetric_preconditioner_matrix = True   # if the diagonal blocks of the system matrix should be used as preconditioner matrix
 use_lumped_mass_matrix = False            # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
 
+import opendihu
+print(opendihu.program_name)
+
 # timing parameters
 # -----------------
 end_time = 4000.0                   # [ms] end time of the simulation
@@ -152,7 +155,10 @@ output_timestep_elasticity = dt_elasticity      # [ms] timestep for elasticity o
 
 # input files
 #cellml_file = "../../../input/new_slow_TK_2014_12_08.c"
-cellml_file = "../../../input/hodgkin_huxley-razumova.cellml"
+if "multidomain_contraction_hodgkin_huxley_razumova" in opendihu.program_name:
+  cellml_file = "../../../input/hodgkin_huxley-razumova.cellml"
+else:
+  cellml_file = "../../../input/new_slow_TK_2014_12_08.c"
 
 fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
 #fiber_file = "../../../input/left_biceps_brachii_13x13fibers.bin"

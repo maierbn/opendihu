@@ -119,7 +119,8 @@ cellml_file             = "../../../../input/new_slow_TK_2014_12_08.c"
 # a higher number leads to less 3D elements
 sampling_stride_x = 2
 sampling_stride_y = 2
-sampling_stride_z = 74
+sampling_stride_z = 1
+local_sampling_stride_z = 74
 
 # Tolerance value in the element coordinate system of the 3D elements, [0,1]^3
 # when a fiber point is still considered part of the element.

@@ -17,46 +17,45 @@ import variables    # file variables.py
 
 # number of fibers that are handled inside the subdomain x
 def n_fibers_in_subdomain_x(subdomain_coordinate_x):
-  a1 = (int)((variables.n_fibers_x - variables.n_subdomains_x*variables.n_fibers_per_subdomain_x) / variables.granularity)     # number of subdomains with high number of fibers
+  a1 = (int)((variables.n_fibers_x - variables.n_subdomains_x*variables.n_fibers_per_subdomain_x) / variables.granularity_x)     # number of subdomains with high number of fibers
   a2 = variables.n_subdomains_x - a1                                      # number of subdomains with low number of fibers
   if subdomain_coordinate_x < a1:
-    return variables.n_fibers_per_subdomain_x + variables.granularity     # high number of fibers
+    return variables.n_fibers_per_subdomain_x + variables.granularity_x   # high number of fibers
   elif subdomain_coordinate_x < variables.n_subdomains_x-1:
     return variables.n_fibers_per_subdomain_x                             # low number of fibers
   else:
-    #print("case c: {} + {}-1={}".format(variables.n_fibers_per_subdomain_x,variables.granularity,variables.n_fibers_per_subdomain_x + variables.granularity - 1))
-    return variables.n_fibers_per_subdomain_x + variables.granularity - 1 # last subdomain has low number of fibers + 1 (only for granularity==2)
-  
+    return variables.n_fibers_per_subdomain_x + variables.n_fibers_x % variables.granularity_x   # last subdomain has low number of fibers + granularity remainder
+    
 # number of fibers that are handled inside the subdomain y
 def n_fibers_in_subdomain_y(subdomain_coordinate_y):
-  a1 = (int)((variables.n_fibers_y - variables.n_subdomains_y*variables.n_fibers_per_subdomain_y) / variables.granularity)    # number of subdomains with high number of fibers
+  a1 = (int)((variables.n_fibers_y - variables.n_subdomains_y*variables.n_fibers_per_subdomain_y) / variables.granularity_y)    # number of subdomains with high number of fibers
   a2 = variables.n_subdomains_y - a1                                      # number of subdomains with low number of fibers
   if subdomain_coordinate_y < a1:
-    return variables.n_fibers_per_subdomain_y + variables.granularity     # high number of fibers
+    return variables.n_fibers_per_subdomain_y + variables.granularity_y   # high number of fibers
   elif subdomain_coordinate_y < variables.n_subdomains_y-1:
     return variables.n_fibers_per_subdomain_y                             # low number of fibers
   else:
-    return variables.n_fibers_per_subdomain_y + variables.granularity - 1 # last subdomain has low number of fibers + 1 (only for granularity==2)
+    return variables.n_fibers_per_subdomain_y + variables.n_fibers_y % variables.granularity_y  # last subdomain has low number of fibers + 1 (only for granularity_y==2)
 
 def n_fibers_in_previous_subdomains_x(subdomain_coordinate_x):
   # number of fibers handled in previous subdomains in x direction
-  a1 = (int)((variables.n_fibers_x - variables.n_subdomains_x*variables.n_fibers_per_subdomain_x) / variables.granularity)     # number of subdomains with high number of fibers
+  a1 = (int)((variables.n_fibers_x - variables.n_subdomains_x*variables.n_fibers_per_subdomain_x) / variables.granularity_x)     # number of subdomains with high number of fibers
   a2 = variables.n_subdomains_x - a1                                               # number of subdomains with low number of fibers
   
   if subdomain_coordinate_x < a1:
-    return subdomain_coordinate_x * (variables.n_fibers_per_subdomain_x+variables.granularity)
+    return subdomain_coordinate_x * (variables.n_fibers_per_subdomain_x+variables.granularity_x)
   else:
-    return a1 * (variables.n_fibers_per_subdomain_x+variables.granularity) + (subdomain_coordinate_x-a1) * variables.n_fibers_per_subdomain_x
+    return a1 * (variables.n_fibers_per_subdomain_x+variables.granularity_x) + (subdomain_coordinate_x-a1) * variables.n_fibers_per_subdomain_x
 
 def n_fibers_in_previous_subdomains_y(subdomain_coordinate_y):
   # number of fibers handled in previous subdomains in y direction
-  a1 = (int)((variables.n_fibers_y - variables.n_subdomains_y*variables.n_fibers_per_subdomain_y) / variables.granularity)    # number of subdomains with high number of fibers
+  a1 = (int)((variables.n_fibers_y - variables.n_subdomains_y*variables.n_fibers_per_subdomain_y) / variables.granularity_y)    # number of subdomains with high number of fibers
   a2 = variables.n_subdomains_y - a1                                               # number of subdomains with low number of fibers
   
   if subdomain_coordinate_y < a1:
-    return subdomain_coordinate_y * (variables.n_fibers_per_subdomain_y+variables.granularity)
+    return subdomain_coordinate_y * (variables.n_fibers_per_subdomain_y+variables.granularity_y)
   else:
-    return a1 * (variables.n_fibers_per_subdomain_y+variables.granularity) + (subdomain_coordinate_y-a1) * variables.n_fibers_per_subdomain_y
+    return a1 * (variables.n_fibers_per_subdomain_y+variables.granularity_y) + (subdomain_coordinate_y-a1) * variables.n_fibers_per_subdomain_y
     
 # global fiber no, from subdomain coordinate and coordinate inside the subdomain
 def get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y):
@@ -65,73 +64,68 @@ def get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdom
 
 # number of points that are handled inside the subdomain z (without ghost points)
 def n_points_in_subdomain_z(subdomain_coordinate_z):
-  a1 = (int)((variables.n_sampled_points_z - variables.n_subdomains_z*variables.n_points_per_subdomain_z) / variables.granularity)  # number of subdomains with high number of fibers
+  a1 = (int)((variables.n_points_whole_fiber - variables.n_subdomains_z*variables.n_points_per_subdomain_z) / variables.granularity_z)  # number of subdomains with high number of fibers
   a2 = variables.n_subdomains_z - a1                                      # number of subdomains with low number of fibers
   if subdomain_coordinate_z < a1:
-    return variables.n_points_per_subdomain_z + variables.granularity     # high number of points
+    return variables.n_points_per_subdomain_z + variables.granularity_z     # high number of points
   elif subdomain_coordinate_z < variables.n_subdomains_z-1:
     return variables.n_points_per_subdomain_z                             # low number of points
   else:
-    return variables.n_points_per_subdomain_z + variables.granularity - 1 # last subdomain has low number of fibers + 1
+    return variables.n_points_per_subdomain_z + variables.n_points_whole_fiber % variables.granularity_z # last subdomain has low number of fibers + 1
   
 def n_points_in_previous_subdomains_z(subdomain_coordinate_z):
   # number of points handled in previous subdomains in z direction
-  a1 = (int)((variables.n_sampled_points_z - variables.n_subdomains_z*variables.n_points_per_subdomain_z) / variables.granularity)  # number of subdomains with high number of fibers
+  a1 = (int)((variables.n_points_whole_fiber - variables.n_subdomains_z*variables.n_points_per_subdomain_z) / variables.granularity_z)  # number of subdomains with high number of fibers
   a2 = variables.n_subdomains_z - a1                                               # number of subdomains with low number of points
   
   if subdomain_coordinate_z < a1:
-    return subdomain_coordinate_z * (variables.n_points_per_subdomain_z+variables.granularity)
+    return subdomain_coordinate_z * (variables.n_points_per_subdomain_z+variables.granularity_z)
   else:
-    return a1 * (variables.n_points_per_subdomain_z+variables.granularity) + (subdomain_coordinate_z-a1) * variables.n_points_per_subdomain_z
+    return a1 * (variables.n_points_per_subdomain_z+variables.granularity_z) + (subdomain_coordinate_z-a1) * variables.n_points_per_subdomain_z
 
 # number of points in 3D mesh in the subdomain, in x direction
 def n_sampled_points_in_subdomain_x(subdomain_coordinate_x):
-  if variables.granularity == 1:        # if a linear mesh is requested
-    result = (int)(np.ceil(n_fibers_in_subdomain_x(subdomain_coordinate_x) / variables.sampling_stride_x))
-    if subdomain_coordinate_x == variables.n_subdomains_x-1 and (n_fibers_in_subdomain_x(subdomain_coordinate_x)-1) % variables.sampling_stride_x != 0:
-      result += 1
-      
-  elif variables.granularity == 2:      # for quadratic elements
-    n = n_fibers_in_subdomain_x(subdomain_coordinate_x)       # there are as many "linear" elements as nodes
-    if subdomain_coordinate_x == variables.n_subdomains_x-1:  # only at the right boundary there is one more point, i.e. one element less than points
-      n -= 1  
-    result = (int)(np.floor(n / (variables.sampling_stride_x*2))*2)
+  n = n_fibers_in_subdomain_x(subdomain_coordinate_x)       # there are as many "linear" elements as nodes
+  if subdomain_coordinate_x == variables.n_subdomains_x-1:  # only at the right boundary there is one more point, i.e. one element less than points
+    n -= 1
+  
+  if variables.generate_quadratic_3d_mesh:        # if a quadratic mesh is requested
+    result = (int)(np.floor(n / (variables.sampling_stride_x*2)) * 2)   # make sure the number of elements in the subdomain is even for quadratic elements (this has nothing to do with granularity)
+  else:                                           # if a linear mesh is requested
+    result = (int)(np.ceil(n / variables.sampling_stride_x))            # for linear elements, make remainder elements smaller (->ceil), for quadratic elements, make them larger (->floor)
     
-    if subdomain_coordinate_x == variables.n_subdomains_x-1:
-      result += 1
-      
+  if subdomain_coordinate_x == variables.n_subdomains_x-1:
+    result += 1
   return result
 
 # number of points in 3D mesh in the subdomain, in y direction
 def n_sampled_points_in_subdomain_y(subdomain_coordinate_y):
-  if variables.granularity == 1:        # if a linear mesh is requested
-    result = (int)(np.ceil(n_fibers_in_subdomain_y(subdomain_coordinate_y) / variables.sampling_stride_y))
-    if subdomain_coordinate_y == variables.n_subdomains_y-1 and (n_fibers_in_subdomain_y(subdomain_coordinate_y)-1) % variables.sampling_stride_y != 0:
-      result += 1
-      
-  elif variables.granularity == 2:      # for quadratic elements
-    n = n_fibers_in_subdomain_y(subdomain_coordinate_y)       # there are as many "linear" elements as nodes
-    if subdomain_coordinate_y == variables.n_subdomains_y-1:  # only at the right boundary there is one more point, i.e. one element less than points
-      n -= 1  
-    result = (int)(np.floor(n / (variables.sampling_stride_y*2))*2)
-    if subdomain_coordinate_y == variables.n_subdomains_y-1:
-      result += 1
+  n = n_fibers_in_subdomain_y(subdomain_coordinate_y)       # there are as many "linear" elements as nodes
+  if subdomain_coordinate_y == variables.n_subdomains_y-1:  # only at the right boundary there is one more point, i.e. one element less than points
+    n -= 1
+  
+  if variables.generate_quadratic_3d_mesh:        # if a quadratic mesh is requested
+    result = (int)(np.floor(n / (variables.sampling_stride_y*2)) * 2)   # make sure the number of elements in the subdomain is even for quadratic elements (this has nothing to do with granularity)
+  else:                                           # if a linear mesh is requested
+    result = (int)(np.ceil(n / variables.sampling_stride_y))            # for linear elements, make remainder elements smaller (->ceil), for quadratic elements, make them larger (->floor)
+    
+  if subdomain_coordinate_y == variables.n_subdomains_y-1:
+    result += 1
   return result
 
 # number of points in 3D mesh in the subdomain, in z direction
 def n_sampled_points_in_subdomain_z(subdomain_coordinate_z):
-  if variables.granularity == 1:        # if a linear mesh is requested
-    result = (int)(np.ceil(n_points_in_subdomain_z(subdomain_coordinate_z) / variables.local_sampling_stride_z))
-    if subdomain_coordinate_z == variables.n_subdomains_z-1 and (n_points_in_subdomain_z(subdomain_coordinate_z)-1) % variables.local_sampling_stride_z != 0:
-      result += 1
-      
-  elif variables.granularity == 2:      # for quadratic elements
-    n = n_points_in_subdomain_z(subdomain_coordinate_z)       # there are as many "linear" elements as nodes
-    if subdomain_coordinate_z == variables.n_subdomains_z-1:  # only at the right boundary there is one more point, i.e. one element less than points
-      n -= 1  
-    result = (int)(np.floor(n / (variables.local_sampling_stride_z*2))*2)
-    if subdomain_coordinate_z == variables.n_subdomains_z-1:
-      result += 1
+  n = n_points_in_subdomain_z(subdomain_coordinate_z)       # there are as many "linear" elements as nodes
+  if subdomain_coordinate_z == variables.n_subdomains_z-1:  # only at the right boundary there is one more point, i.e. one element less than points
+    n -= 1
+  
+  if variables.generate_quadratic_3d_mesh:        # if a quadratic mesh is requested
+    result = (int)(np.floor(n / (variables.sampling_stride_z*2)) * 2)   # make sure the number of elements in the subdomain is even for quadratic elements (this has nothing to do with granularity)
+  else:                                           # if a linear mesh is requested
+    result = (int)(np.ceil(n / variables.sampling_stride_z))            # for linear elements, make remainder elements smaller (->ceil), for quadratic elements, make them larger (->floor)
+    
+  if subdomain_coordinate_z == variables.n_subdomains_z-1:
+    result += 1
   return result
 
 # this is the main function that creates the meshes and partitioning
@@ -147,8 +141,8 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     ...
   }
   
-  One 3D mesh with key either "3Dmesh" or "3Dmesh_quadratic" will be created, and multiple 1D fiber meshes with keys "MeshFiber_0", "MeshFiber_1", etc.
-  The 3D mesh is aligned with the 1D meshes.
+  One or two 3D meshes with keys "3Dmesh" and "3Dmesh_quadratic" will be created, and multiple 1D fiber meshes with keys "MeshFiber_0", "MeshFiber_1", etc.
+  The 3D meshes are aligned with the 1D meshes.
   
   The mesh specifications have the following form:
   A 1D mesh:
@@ -185,10 +179,8 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     "nPointsGlobal": [n_points_3D_mesh_global_x, n_points_3D_mesh_global_y, n_points_3D_mesh_global_z],
   }
   
-  nPointsLocal
-  
-  The quadratic 3D mesh: same as 3D mesh, but under meshes["3Dmesh_quadratic"], with same number of elements but with quadratic elements with 27 nodes instead of 8, 
-  the missing nodes are interpolated.
+  The quadratic 3D mesh: same nodes as linear 3D mesh, but under meshes["3Dmesh_quadratic"], number of elements is smaller by factor of 8, 
+  but has quadratic elements with 27 nodes instead of 8.
   
   This means that all quantities like, e.g. the local 3D node positions can be retrieved by meshes["3Dmesh"]["nodePositions"] and so on.
   
@@ -270,37 +262,53 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     parameters.append(value)
   
   variables.n_fibers_total = parameters[0]
-  variables.n_points_whole_fiber = parameters[1]
-  
-  if not hasattr(variables, 'local_sampling_stride_z'):
-    variables.local_sampling_stride_z = 1
-  
-  variables.n_sampled_points_z = (int)(variables.n_points_whole_fiber / variables.sampling_stride_z)
   
   # The number of points in z direction in the input file is `variables.n_points_whole_fiber`.
-  # This number is initially sampled down to `variables.n_sampled_points_z` by taking every `variables.sampling_stride_z` point.
-  # Thus, the end point of the sampled mesh does not necessarily coincide with the original mesh (if the number is not divisible by the stride without remainder).
-  # There is a second sampling mechanicsm in z direction: the sampling by the stride `variables.local_sampling_stride_z`. 
-  # This stride works analogously to `variables.sampling_stride_x` and `variables.sampling_stride_y`. It guarantees that the end points of the mesh are not changed.
-  # However, the disadvantage is that differently sizes elements can occur (the remainder elements in every subdomain).
+  variables.n_points_whole_fiber = parameters[1]
+  
+  # if the old option local_sampling_stride_z instead of sampling_stride_z is set, print a warning
+  if hasattr(variables, 'local_sampling_stride_z'):
+    if variables.sampling_stride_z == 1 and variables.local_sampling_stride_z != 1:
+      variables.sampling_stride_z = variables.local_sampling_stride_z
+      if rank_no == 0:
+        print("Note, local_sampling_stride_z is no longer used! Simply use sampling_stride_z! (Now setting sampling_stride_z = {})".format(variables.sampling_stride_z))
   
   if "cuboid.bin" not in fiber_file:  
     variables.n_fibers_x = (int)(np.round(np.sqrt(variables.n_fibers_total)))
     variables.n_fibers_y = variables.n_fibers_x
 
   if rank_no == 0 and have_fibers:
-    print("n fibers:              {} ({} x {})".format(variables.n_fibers_total, variables.n_fibers_x, variables.n_fibers_y))
-    print("n points per fiber:    {}, sampled by stride {} to {}".format(variables.n_points_whole_fiber, variables.sampling_stride_x, variables.n_sampled_points_z))
+    print("n fibers:              {} ({} x {}), sampled by stride {} x {}".format(variables.n_fibers_total, variables.n_fibers_x, variables.n_fibers_y, variables.sampling_stride_x, variables.sampling_stride_y))
+    print("n points per fiber:    {}, sampled by stride {}".format(variables.n_points_whole_fiber, variables.sampling_stride_z))
     
-  variables.granularity = 1   # the lowest granularity of the number of fibers per subdomain
+  # granularity_x,granularity_y,granularity_z are the lowest granularity of the number of fibers per subdomain
+  # setting these variables to a higher value than 1 leads to subdomains that have to include a number of elements that is a multiple of granularity 
+  variables.granularity_x = 1   
+  variables.granularity_y = 1
+  variables.granularity_z = 1
     
+  if not hasattr(variables, 'enforce_equal_element_sizes'):
+    variables.enforce_equal_element_sizes = True
+    
+  if variables.enforce_equal_element_sizes:
+    variables.granularity_x = variables.sampling_stride_x
+    variables.granularity_y = variables.sampling_stride_y
+    variables.granularity_z = variables.sampling_stride_z
+  
   # if only one of linear or quadratic mesh should be created, it is created directly
   # if both the quadratic and the linear mesh should be created, the quadratic mesh is created first and then the linear mesh is created from the quadratic
     
   # if a quadratic mesh is required
   if generate_quadratic_3d_mesh:
     #load_fiber_data = True
-    variables.granularity = 2
+    variables.granularity_x = 2
+    variables.granularity_y = 2
+    variables.granularity_z = 2
+    
+    if variables.enforce_equal_element_sizes:
+      variables.granularity_x = max(2, variables.sampling_stride_x // 2 * 2)    # the granularity for quadratic meshes has to be a multiple of 2 and at least 2
+      variables.granularity_y = max(2, variables.sampling_stride_y // 2 * 2)
+      variables.granularity_z = max(2, variables.sampling_stride_z // 2 * 2)
     
     if variables.n_fibers_x % 2 == 0:
       print("\033[0;31mError: Quadratic mesh is requested but number of fibers in x direction ({}) is even. It has to be odd.\033[0m".format(variables.n_fibers_x))
@@ -308,8 +316,8 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     if variables.n_fibers_y % 2 == 0:
       print("\033[0;31mError: Quadratic mesh is requested but number of fibers in y direction ({}) is even. It has to be odd.\033[0m".format(variables.n_fibers_y))
       quit()
-    if variables.n_sampled_points_z % 2 == 0:
-      print("\033[0;31mError: Quadratic mesh is requested but (sampled) number of points for fiber in z direction ({}, sampled from number {} in file by stride {}) is even. It has to be odd.\033[0m".format(variables.n_sampled_points_z, variables.n_points_whole_fiber, variables.sampling_stride_z))
+    if variables.n_points_whole_fiber % 2 == 0:
+      print("\033[0;31mError: Quadratic mesh is requested but number of points for fiber in z direction ({}) is even. It has to be odd.\033[0m".format(variables.n_points_whole_fiber, variables.sampling_stride_z))
       quit()
       
   # parse whole fiber file, only if enabled
@@ -332,17 +340,11 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
       print("\n\n\033[1;31;40mError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n\033[0m".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
       quit()
     
-  # compute average number of points per subdomain, the actual number is equal to this or +1
-  variables.n_fibers_per_subdomain_x = (int)(variables.n_fibers_x / variables.n_subdomains_x)
-  variables.n_fibers_per_subdomain_y = (int)(variables.n_fibers_y / variables.n_subdomains_y)
-  variables.n_points_per_subdomain_z = (int)(variables.n_sampled_points_z / variables.n_subdomains_z)
+  # compute average number of points per subdomain, the actual number is equal to this or +(variables.granularity-1)
+  variables.n_fibers_per_subdomain_x = (int)((variables.n_fibers_x / variables.n_subdomains_x) // variables.granularity_x * variables.granularity_x)
+  variables.n_fibers_per_subdomain_y = (int)((variables.n_fibers_y / variables.n_subdomains_y) // variables.granularity_y * variables.granularity_y)
+  variables.n_points_per_subdomain_z = (int)((variables.n_points_whole_fiber / variables.n_subdomains_z) // variables.granularity_z * variables.granularity_z)
 
-  if generate_quadratic_3d_mesh:
-    # next lower even number of average
-    variables.n_fibers_per_subdomain_x = (int)((variables.n_fibers_x / variables.n_subdomains_x) // 2 * 2)
-    variables.n_fibers_per_subdomain_y = (int)((variables.n_fibers_y / variables.n_subdomains_y) // 2 * 2)
-    variables.n_points_per_subdomain_z = (int)((variables.n_sampled_points_z / variables.n_subdomains_z) // 2 * 2)
-    
   if variables.n_fibers_per_subdomain_x == 0 or variables.n_fibers_per_subdomain_y == 0:
     print("\033[0;31mError: Cannot partition {}x{} fibers into {}x{} subdomains.\033[0m".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_subdomains_x, variables.n_subdomains_y))
     quit()
@@ -368,12 +370,17 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
 
   # loop over z point indices
   for k in range(n_sampled_points_in_own_subdomain_z):
-    z_point_index = (variables.z_point_index_start + k*variables.local_sampling_stride_z) * variables.sampling_stride_z
+    z_point_index = variables.z_point_index_start + k*variables.sampling_stride_z
     
-    if own_subdomain_coordinate_z == variables.n_subdomains_z-1 and k == n_sampled_points_in_own_subdomain_z-1:
-      z_point_index = (variables.z_point_index_end-1) * variables.sampling_stride_z
+    if own_subdomain_coordinate_z == variables.n_subdomains_z-1:
+      if k == n_sampled_points_in_own_subdomain_z-1:
+        z_point_index = variables.z_point_index_end-1
+      elif k == n_sampled_points_in_own_subdomain_z-2 and k >= 1:
+        # for quadratic meshes, set second last point at the center between third last point and last point
+        z_point_index = int(0.5*(variables.z_point_index_start + (k-1)*variables.sampling_stride_z + variables.z_point_index_end-1))
+        
       
-    #print("{}: local_sampling_stride_z: {}, k: {}/{}, z: {}/{}".format(rank_no, variables.local_sampling_stride_z, k, n_sampled_points_in_own_subdomain_z, z_point_index, variables.z_point_index_end))
+    #print("{}: sampling_stride_z: {}, k: {}/{}, z: {}/{}".format(rank_no, variables.sampling_stride_z, k, n_sampled_points_in_own_subdomain_z, z_point_index, variables.z_point_index_end))
     
     # loop over fibers for own rank
     # loop over fiber in y-direction
@@ -381,8 +388,12 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
       fiber_in_subdomain_coordinate_y = j*variables.sampling_stride_y
       
       # on boundary rank set last node positions to be the boundary nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
-      if own_subdomain_coordinate_y == variables.n_subdomains_y-1 and j == n_sampled_points_in_own_subdomain_y-1:
-        fiber_in_subdomain_coordinate_y = n_fibers_in_subdomain_y(own_subdomain_coordinate_y)-1
+      if own_subdomain_coordinate_y == variables.n_subdomains_y-1:
+        if j == n_sampled_points_in_own_subdomain_y-1:
+          fiber_in_subdomain_coordinate_y = n_fibers_in_subdomain_y(own_subdomain_coordinate_y)-1
+        elif j == n_sampled_points_in_own_subdomain_y-2 and j >= 1:
+          # for quadratic meshes, set second last point at the center between third last point and last point
+          fiber_in_subdomain_coordinate_y = int(0.5*((j-1)*variables.sampling_stride_y + n_fibers_in_subdomain_y(own_subdomain_coordinate_y)-1))
       
       #if k==0:
       #  print("{}: sampling_stride_y: {}, j: {}/{}, y: {}/{}".format(rank_no, variables.sampling_stride_y, j, n_sampled_points_in_own_subdomain_y, fiber_in_subdomain_coordinate_y, n_fibers_in_subdomain_y(own_subdomain_coordinate_y)))
@@ -392,11 +403,15 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
         fiber_in_subdomain_coordinate_x = i*variables.sampling_stride_x
         
         # on boundary rank set last node positions to be the boundary nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
-        if own_subdomain_coordinate_x == variables.n_subdomains_x-1 and i == n_sampled_points_in_own_subdomain_x-1:
-          fiber_in_subdomain_coordinate_x = n_fibers_in_subdomain_x(own_subdomain_coordinate_x)-1
+        if own_subdomain_coordinate_x == variables.n_subdomains_x-1:
+          if i == n_sampled_points_in_own_subdomain_x-1:
+            fiber_in_subdomain_coordinate_x = n_fibers_in_subdomain_x(own_subdomain_coordinate_x)-1
+          elif i == n_sampled_points_in_own_subdomain_x-2 and i >= 1:
+            # for quadratic meshes, set second last point at the center between third last point and last point
+            fiber_in_subdomain_coordinate_x = int(0.5*((i-1)*variables.sampling_stride_x + n_fibers_in_subdomain_x(own_subdomain_coordinate_x)-1))
         
         #if j == 0 and k == 0:
-        #  print("{}: sampling_stride_x: {}, i: {}, x: {}/{} (j={},k={}) point: {}".format(rank_no, variables.sampling_stride_x, i, fiber_in_subdomain_coordinate_x, n_fibers_in_subdomain_x(own_subdomain_coordinate_x),j,k))
+        #  print("{}: sampling_stride_x: {}, i: {}/{}, x: {}/{} (j={},k={})".format(rank_no, variables.sampling_stride_x, i, n_sampled_points_in_own_subdomain_x, fiber_in_subdomain_coordinate_x, n_fibers_in_subdomain_x(own_subdomain_coordinate_x),j,k))
         
         # get fiber no
         fiber_index = get_fiber_no(own_subdomain_coordinate_x, own_subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)
@@ -461,7 +476,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     meshes["3Dmesh"] = {
       "nElements": variables.n_elements_3D_mesh_linear,
       "nRanks": [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z],
-      "nodePositions": node_positions_3d_mesh,
+      "nodePositions": node_positions_3d_mesh,      # without ghosts
       "inputMeshIsGlobal": False,
       "setHermiteDerivatives": False,
       "logKey": "3Dmesh",
@@ -483,9 +498,13 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
         
         # loop over z point indices
         for k in range(n_sampled_points_in_subdomain_z(subdomain_coordinate_z)):
-          z_point_index = (z_point_index_start + k*variables.local_sampling_stride_z) * variables.sampling_stride_z
-          if subdomain_coordinate_z == variables.n_subdomains_z-1 and k == n_sampled_points_in_subdomain_z(subdomain_coordinate_z)-1:
-            z_point_index = (z_point_index_end-1) * variables.sampling_stride_z
+          z_point_index = z_point_index_start + k*variables.sampling_stride_z
+          if subdomain_coordinate_z == variables.n_subdomains_z-1:
+            if k == n_sampled_points_in_subdomain_z(subdomain_coordinate_z)-1:
+              z_point_index = z_point_index_end-1
+            elif k == n_sampled_points_in_subdomain_z(subdomain_coordinate_z)-2 and k >= 1:
+              # for quadratic meshes, set second last point at the center between third last point and last point
+              z_point_index = int(0.5*(z_point_index_start + (k-1)*variables.sampling_stride_z + z_point_index_end-1))
           
           # ---- loop over subdomains and nodes in subdomains in y direction ----
           for subdomain_coordinate_y in range(variables.n_subdomains_y):
@@ -493,18 +512,26 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
             for j in range(n_sampled_points_in_subdomain_y(subdomain_coordinate_y)):
               fiber_in_subdomain_coordinate_y = j*variables.sampling_stride_y
               # on boundary subdomain set last node positions to be the boundary nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
-              if subdomain_coordinate_y == variables.n_subdomains_y-1 and j == n_sampled_points_in_subdomain_y(subdomain_coordinate_y)-1:
-                fiber_in_subdomain_coordinate_y = n_fibers_in_subdomain_y(subdomain_coordinate_y)-1
-                  
+              if subdomain_coordinate_y == variables.n_subdomains_y-1:
+                if j == n_sampled_points_in_subdomain_y(subdomain_coordinate_y)-1:
+                  fiber_in_subdomain_coordinate_y = n_fibers_in_subdomain_y(subdomain_coordinate_y)-1
+                elif j == n_sampled_points_in_subdomain_y(subdomain_coordinate_y)-2 and j >= 1:
+                  # for quadratic meshes, set second last point at the center between third last point and last point
+                  fiber_in_subdomain_coordinate_y = int(0.5*((j-1)*variables.sampling_stride_y + n_fibers_in_subdomain_y(subdomain_coordinate_y)-1))
+              
               # ---- loop over subdomains and nodes in subdomains in x direction ----
               for subdomain_coordinate_x in range(variables.n_subdomains_x):
                 # loop over fiber in x-direction
                 for i in range(n_sampled_points_in_subdomain_x(subdomain_coordinate_x)):
                   fiber_in_subdomain_coordinate_x = i*variables.sampling_stride_x
                   # on boundary subdomain set last node positions to be the boundary nodes (it could be that they are not yet the outermost nodes because of sampling_stride)
-                  if subdomain_coordinate_x == variables.n_subdomains_x-1 and i == n_sampled_points_in_subdomain_x(subdomain_coordinate_x)-1:
-                    fiber_in_subdomain_coordinate_x = n_fibers_in_subdomain_x(subdomain_coordinate_x)-1
-                  
+                  if subdomain_coordinate_x == variables.n_subdomains_x-1:
+                    if i == n_sampled_points_in_subdomain_x(subdomain_coordinate_x)-1:
+                      fiber_in_subdomain_coordinate_x = n_fibers_in_subdomain_x(subdomain_coordinate_x)-1
+                    elif i == n_sampled_points_in_subdomain_x(subdomain_coordinate_x)-2 and i >= 1:
+                      # for quadratic meshes, set second last point at the center between third last point and last point
+                      fiber_in_subdomain_coordinate_x = int(0.5*((i-1)*variables.sampling_stride_x + n_fibers_in_subdomain_x(subdomain_coordinate_x)-1))
+                      
                   # get fiber no
                   fiber_index = get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)
                   
@@ -539,7 +566,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
    
   # output for debugging
   if variables.debug_output:
-    print("{}: point sampling for elements, unsampled points: {} x {} x {}, sampling stride: {}, {}, {} (local_sampling_stride_z: {})".format(rank_no, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber, variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.local_sampling_stride_z))
+    print("{}: point sampling for elements, unsampled points: {} x {} x {}, sampling stride: {}, {}, {}".format(rank_no, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber, variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z))
     print("{}: sampled points, n_points_3D_mesh_global: {} x {} x {} = sum({}) x sum({}) x sum({})".format(rank_no, variables.n_points_3D_mesh_global_x, variables.n_points_3D_mesh_global_y, variables.n_points_3D_mesh_global_z, \
       [n_sampled_points_in_subdomain_x(subdomain_coordinate_x) for subdomain_coordinate_x in range(variables.n_subdomains_x)],\
       [n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(variables.n_subdomains_y)],\
@@ -579,9 +606,9 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
         print("{} x {} = {} fibers, per partition: {} x {} = {}".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_fibers_total, variables.n_fibers_per_subdomain_x, variables.n_fibers_per_subdomain_y, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y))
       else:
         print("{} x {} = {} fibers".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_fibers_total))
-      print("per fiber: 1D mesh    nodes global: {}, local: {}".format(variables.n_points_whole_fiber, n_points_in_subdomain_z(own_subdomain_coordinate_z) * variables.sampling_stride_z))
+      print("per fiber: 1D mesh    nodes global: {}, local: {}".format(variables.n_points_whole_fiber, n_points_in_subdomain_z(own_subdomain_coordinate_z)))
     
-    print("  sampling 3D mesh with stride {} x {} x {} (local_sampling_stride_z: {})".format(variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.local_sampling_stride_z))
+    print("  sampling 3D mesh with stride {} x {} x {} {}".format(variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, "\n  enforce_equal_element_sizes: True" if variables.enforce_equal_element_sizes else ""))
     if generate_linear_3d_mesh:
       print("    linear 3D mesh    nodes global: {} x {} x {} = {}, local: {} x {} x {} = {}".format(
         variables.n_points_3D_mesh_global_x, variables.n_points_3D_mesh_global_y, variables.n_points_3D_mesh_global_z, n_points_3D_mesh_global, 
@@ -599,28 +626,28 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
         
     if have_fibers:
       print("number of degrees of freedom:")
-      print("                    1D fiber: {:10d}  (per process: {})".format(variables.n_points_whole_fiber, n_points_in_subdomain_z(own_subdomain_coordinate_z) * variables.sampling_stride_z))
-      print("            0D-1D monodomain: {:10d}  (per process: {})".format(variables.n_points_whole_fiber*n_states_cellml, n_points_in_subdomain_z(own_subdomain_coordinate_z) * variables.sampling_stride_z*n_states_cellml))
-      print(" all fibers 0D-1D monodomain: {:10d}  (per process: {})".format(variables.n_fibers_total*variables.n_points_whole_fiber*n_states_cellml, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y*n_points_in_subdomain_z(own_subdomain_coordinate_z) * variables.sampling_stride_z*n_states_cellml))
+      print("                    1D fiber: {:10d}  (per process: {})".format(variables.n_points_whole_fiber, n_points_in_subdomain_z(own_subdomain_coordinate_z)))
+      print("            0D-1D monodomain: {:10d}  (per process: {})".format(variables.n_points_whole_fiber*n_states_cellml, n_points_in_subdomain_z(own_subdomain_coordinate_z)*n_states_cellml))
+      print(" all fibers 0D-1D monodomain: {:10d}  (per process: {})".format(variables.n_fibers_total*variables.n_points_whole_fiber*n_states_cellml, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y*n_points_in_subdomain_z(own_subdomain_coordinate_z)*n_states_cellml))
       print("                 3D bidomain: {:10d}  (per process: {})".format(n_points_3D_mesh_global, n_sampled_points_in_own_subdomain_x*n_sampled_points_in_own_subdomain_y*n_sampled_points_in_own_subdomain_z))
-      print("                       total: {:10d}  (per process: {})".format(variables.n_fibers_total*variables.n_points_whole_fiber*n_states_cellml+n_points_3D_mesh_global, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y*n_points_in_subdomain_z(own_subdomain_coordinate_z) * variables.sampling_stride_z*n_states_cellml+n_sampled_points_in_own_subdomain_x*n_sampled_points_in_own_subdomain_y*n_sampled_points_in_own_subdomain_z))
+      print("                       total: {:10d}  (per process: {})".format(variables.n_fibers_total*variables.n_points_whole_fiber*n_states_cellml+n_points_3D_mesh_global, variables.n_fibers_per_subdomain_x*variables.n_fibers_per_subdomain_y*n_points_in_subdomain_z(own_subdomain_coordinate_z)*n_states_cellml+n_sampled_points_in_own_subdomain_x*n_sampled_points_in_own_subdomain_y*n_sampled_points_in_own_subdomain_z))
 
   # exit if number of elements is <= 0 on any rank
   if generate_quadratic_3d_mesh:
     if variables.n_elements_3D_mesh_quadratic[0] <= 0 or variables.n_elements_3D_mesh_quadratic[1] <= 0 or variables.n_elements_3D_mesh_quadratic[2] <= 0:
-      print("\n\033[0;31mError! When partitioning {}x{}x{} quadratic 3D elements to {}x{}x{}={} ranks, rank {} gets {}x{}x{}={} elements (subdomain coordinates (0-based): ({},{},{})/({},{},{})).\n (Sampling 3D mesh with stride {} x {} x {}, local_sampling_stride_z: {})\nDecrease number of processes or increase mesh size or specify different partitioning.\n\033[0m".
+      print("\n\033[0;31mError! When partitioning {}x{}x{} quadratic 3D elements to {}x{}x{}={} ranks, rank {} gets {}x{}x{}={} elements (subdomain coordinates (0-based): ({},{},{})/({},{},{})).\n (Sampling 3D mesh with stride {} x {} x {})\nDecrease number of processes or increase mesh size or specify different partitioning.\n\033[0m".
       format(n_elements_3D_quadratic_global_x, n_elements_3D_quadratic_global_y, n_elements_3D_quadratic_global_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains,
       rank_no, variables.n_elements_3D_mesh_quadratic[0], variables.n_elements_3D_mesh_quadratic[1], variables.n_elements_3D_mesh_quadratic[2], n_elements_3D_quadratic_local,
       own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z,
-      variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.local_sampling_stride_z))
+      variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z))
       quit()
   if generate_linear_3d_mesh:
     if variables.n_elements_3D_mesh_linear[0] <= 0 or variables.n_elements_3D_mesh_linear[1] <= 0 or variables.n_elements_3D_mesh_linear[2] <= 0:
-      print("\n\033[0;31mError! When partitioning {}x{}x{} 3D elements to {}x{}x{}={} ranks, rank {} gets {}x{}x{}={} elements (subdomain coordinates (0-based): ({},{},{})/({},{},{})).\n (Sampling 3D mesh with stride {} x {} x {}, local_sampling_stride_z: {})\nDecrease number of processes or increase mesh size or specify different partitioning.\n\033[0m".
+      print("\n\033[0;31mError! When partitioning {}x{}x{} 3D elements to {}x{}x{}={} ranks, rank {} gets {}x{}x{}={} elements (subdomain coordinates (0-based): ({},{},{})/({},{},{})).\n (Sampling 3D mesh with stride {} x {} x {})\nDecrease number of processes or increase mesh size or specify different partitioning.\n\033[0m".
       format(n_elements_3D_linear_global_x, n_elements_3D_linear_global_y, n_elements_3D_linear_global_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains,
       rank_no, variables.n_elements_3D_mesh_linear[0], variables.n_elements_3D_mesh_linear[1], variables.n_elements_3D_mesh_linear[2], n_elements_3D_linear_local,
       own_subdomain_coordinate_x, own_subdomain_coordinate_y, own_subdomain_coordinate_z, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z,
-      variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.local_sampling_stride_z))
+      variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z))
       quit()
     
   ###############################
@@ -638,12 +665,12 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
       print("{}:    fibers x: [{}, {}]".format(rank_no, 0, n_fibers_in_subdomain_x(own_subdomain_coordinate_x)))
       print("{}:    fibers y: [{}, {}]".format(rank_no, 0, n_fibers_in_subdomain_y(own_subdomain_coordinate_y)))
       print("{}:       ({})".format(rank_no, variables.fibers_on_own_rank))
-      print("{}:    points z: [{}, {}] ({})".format(rank_no, variables.z_point_index_start * variables.sampling_stride_z, variables.z_point_index_end * variables.sampling_stride_z, n_points_in_subdomain_z(own_subdomain_coordinate_z) * variables.sampling_stride_z))
+      print("{}:    points z: [{}, {}] ({})".format(rank_no, variables.z_point_index_start, variables.z_point_index_end, n_points_in_subdomain_z(own_subdomain_coordinate_z)))
         
     # determine number of nodes and elements of the local part of a fiber  
-    variables.n_fiber_nodes_on_subdomain = n_points_in_subdomain_z(own_subdomain_coordinate_z) * variables.sampling_stride_z   # number of nodes without ghosts
+    variables.n_fiber_nodes_on_subdomain = n_points_in_subdomain_z(own_subdomain_coordinate_z)   # number of nodes without ghosts
 
-    variables.fiber_start_node_no = n_points_in_previous_subdomains_z(own_subdomain_coordinate_z) * variables.sampling_stride_z
+    variables.fiber_start_node_no = n_points_in_previous_subdomains_z(own_subdomain_coordinate_z)
 
     # loop over all fibers
     for i in range(variables.n_fibers_total):

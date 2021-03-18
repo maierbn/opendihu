@@ -92,7 +92,8 @@ sampling_stride_fat = 1
 # scenario name for log file
 scenario_name = ""
 
-hdemg_electrode_faces = ["1+"],         # which faces of the 3D mesh should be written into the 2D mesh
+hdemg_electrode_faces = None         # which faces of the 3D mesh should be written into the 2D mesh
+hdemg_electrode_positions = None
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 # These functions can be redefined differently in a custom variables script

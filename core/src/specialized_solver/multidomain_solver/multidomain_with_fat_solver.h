@@ -89,7 +89,7 @@ protected:
   FiniteElementMethodDiffusionFat finiteElementMethodFat_;   //< the finite element object that is used for the Laplace problem of the potential flow, needed for the fiber directions
 
   std::map<node_no_t,node_no_t> sharedNodes_;   //< the node nos that are shared between the muscle mesh (key) and the fat mesh (value)
-  std::set<dof_no_t> boundaryDofsFat_;            //< all dofs with no in the fat mesh on the boundary ΓM
+  std::set<dof_no_t> boundaryDofsFat_;            //< all local dofs without ghosts with no. in the fat mesh on the boundary ΓM
   std::set<PetscInt> boundaryDofsGlobalFat_;      //< same as boundaryDofsFat_ but for all global dofs
   std::map<PetscInt,PetscInt> fatDofToMuscleDofGlobal_;   //< the dof nos that are shared between the muscle mesh (key) and the fat mesh (value)
   std::map<PetscInt,PetscInt> muscleDofToFatDofGlobal_;   //< the dof nos that are shared between the muscle mesh (key) and the fat mesh (value)

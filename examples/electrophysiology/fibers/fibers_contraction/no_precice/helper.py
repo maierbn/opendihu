@@ -422,13 +422,9 @@ n_points_3D_mesh_linear_global_y = sum([n_sampled_points_in_subdomain_y(subdomai
 n_points_3D_mesh_linear_global_z = sum([n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(variables.n_subdomains_z)])
 n_points_3D_mesh_linear_global = n_points_3D_mesh_linear_global_x*n_points_3D_mesh_linear_global_y*n_points_3D_mesh_linear_global_z
 
-n_points_3D_mesh_quadratic_global_x = 2*n_points_3D_mesh_linear_global_x - 1
-n_points_3D_mesh_quadratic_global_y = 2*n_points_3D_mesh_linear_global_y - 1
-n_points_3D_mesh_quadratic_global_z = 2*n_points_3D_mesh_linear_global_z - 1
- 
 # set boundary conditions for the elasticity
 [mx, my, mz] = variables.meshes["3Dmesh_quadratic"]["nPointsGlobal"]
-[nx, ny, nz] = variables.meshes["3Dmesh_quadratic"]["nElements"]
+# [nx, ny, nz] = variables.meshes["3Dmesh_quadratic"]["nElements"]  # this is the local number of elements, not the global number that is needed for defining boundary conditions
 
 variables.fiber_mesh_names = [mesh_name for mesh_name in variables.meshes.keys() if "MeshFiber" in mesh_name]
 
@@ -447,9 +443,10 @@ variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,Non
 
     
 # Neumann BC at bottom nodes, traction downwards
-nx = n_points_3D_mesh_linear_global_x-1
-ny = n_points_3D_mesh_linear_global_y-1
-nz = n_points_3D_mesh_linear_global_z-1
+# compute number of quadratic elements
+nx = (n_points_3D_mesh_linear_global_x-1) // 2
+ny = (n_points_3D_mesh_linear_global_y-1) // 2
+nz = (n_points_3D_mesh_linear_global_z-1) // 2
 variables.nx = nx
 variables.ny = ny
 variables.nz = nz

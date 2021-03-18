@@ -198,8 +198,7 @@ cortical_input_file = input_directory+"/cortical_input0.txt"
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1 
 sampling_stride_y = 1 
-sampling_stride_z = 50
-local_sampling_stride_z = 1 
+sampling_stride_z = 50        # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 sampling_stride_fat = 1 
 
 # how much of the multidomain mesh is used for elasticity

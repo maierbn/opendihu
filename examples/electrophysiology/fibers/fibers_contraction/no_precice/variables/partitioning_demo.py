@@ -89,7 +89,7 @@ sampling_stride_x = 2
 sampling_stride_y = 2
 sampling_stride_z = 200     # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
-distribute_fibers_equally = False   
+distribute_nodes_equally = False   
 # True: set high priority to make subdomains have approximately equal number of fibers but creates tiny remainder elements inside the subdomains
 # False: make elements more equally sized, this can lead to a slight imbalance in the number of fibers per subdomain
 

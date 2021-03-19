@@ -287,10 +287,10 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
   variables.granularity_y = 1
   variables.granularity_z = 1
     
-  if not hasattr(variables, 'enforce_equal_element_sizes'):
-    variables.enforce_equal_element_sizes = True
+  if not hasattr(variables, 'distribute_nodes_equally'):
+    variables.distribute_nodes_equally = False
     
-  if variables.enforce_equal_element_sizes:
+  if not variables.distribute_nodes_equally:
     variables.granularity_x = variables.sampling_stride_x
     variables.granularity_y = variables.sampling_stride_y
     variables.granularity_z = variables.sampling_stride_z
@@ -305,7 +305,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
     variables.granularity_y = 2
     variables.granularity_z = 2
     
-    if variables.enforce_equal_element_sizes:
+    if not variables.distribute_nodes_equally:
       variables.granularity_x = max(2, variables.sampling_stride_x // 2 * 2)    # the granularity for quadratic meshes has to be a multiple of 2 and at least 2
       variables.granularity_y = max(2, variables.sampling_stride_y // 2 * 2)
       variables.granularity_z = max(2, variables.sampling_stride_z // 2 * 2)
@@ -608,7 +608,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
         print("{} x {} = {} fibers".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_fibers_total))
       print("per fiber: 1D mesh    nodes global: {}, local: {}".format(variables.n_points_whole_fiber, n_points_in_subdomain_z(own_subdomain_coordinate_z)))
     
-    print("  sampling 3D mesh with stride {} x {} x {} {}".format(variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, "\n  enforce_equal_element_sizes: True" if variables.enforce_equal_element_sizes else ""))
+    print("  sampling 3D mesh with stride {} x {} x {} {}".format(variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, "\n  distribute_nodes_equally: True" if variables.distribute_nodes_equally else ""))
     if generate_linear_3d_mesh:
       print("    linear 3D mesh    nodes global: {} x {} x {} = {}, local: {} x {} x {} = {}".format(
         variables.n_points_3D_mesh_global_x, variables.n_points_3D_mesh_global_y, variables.n_points_3D_mesh_global_z, n_points_3D_mesh_global, 

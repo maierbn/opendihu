@@ -101,6 +101,22 @@ fiber_distribution_file = input_directory+"/MU_fibre_distribution_10MUs.txt"
 cellml_file             = input_directory+"/hodgkin_huxley_1952.c"
 #cellml_file             = input_directory+"/new_slow_TK_2014_12_08.cellml"
 
+# partitioning
+# ------------
+# this has to match the total number of processes
+n_subdomains_x = 1
+n_subdomains_y = 1
+n_subdomains_z = 1
+
+# stride for sampling the 3D elements from the fiber data
+sampling_stride_x = 2
+sampling_stride_y = 2
+sampling_stride_z = 50       # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
+
+distribute_nodes_equally = False     # (default: False)
+# True: set high priority to make subdomains have approximately equal number of fibers but creates tiny remainder elements inside the subdomains
+# False: make elements more equally sized, this can lead to a slight imbalance in the number of fibers per subdomain
+
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):
   # get radius in cm, 1 μm = 1e-6 m = 1e-4*1e-2 m = 1e-4 cm

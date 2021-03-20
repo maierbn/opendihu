@@ -344,7 +344,7 @@ config = {
                     "inputMeshIsGlobal":           True,
                     "solverName":                  "implicitSolver",
                     "checkForNanInf":              False,
-                    "nAdditionalFieldVariables":   1 if variables.use_elasticity else 0,
+                    "nAdditionalFieldVariables":   1 if variables.use_elasticity else 1,
                     "additionalSlotNames":         [],
                     "FiniteElementMethod" : {
                       "inputMeshIsGlobal":         True,

@@ -225,6 +225,7 @@ protected:
   };                                                                        //< type for fiberPointBuffersStatesAreCloseToEquilibrium_
   std::vector<state_t> fiberPointBuffersStatesAreCloseToEquilibrium_;       //< for every entry in fiberPointBuffers_, constant if the states didn't change too much in the last compute0D, neighbour_not_constant if the state of the neighbouring pointBuffer changes
   int nFiberPointBufferStatesCloseToEquilibrium_;                           //< number of "constant" entries in fiberPointBuffersStatesAreCloseToEquilibrium_
+  bool setComputeStateInformation_;                                         //< whether the information in fiberPointBuffersStatesAreCloseToEquilibrium_ should be added to the algebraics to transfer in a variable named "computeStateInformation"
 
   std::vector<int> statesForTransferIndices_;          //< state no.s to transfer to other solvers within slot connector data
   std::vector<int> algebraicsForTransferIndices_;      //< which algebraics should be transferred to other solvers as part of slot connector data

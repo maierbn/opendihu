@@ -68,6 +68,8 @@ fetchFiberData()
 
         // resize buffer of further data that will be transferred back in updateFiberData()
         int nStatesAndAlgebraicsValues = statesForTransferIndices_.size() + algebraicsForTransferIndices_.size() - 1;
+        if (setComputeStateInformation_)
+          nStatesAndAlgebraicsValues++;
         fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues.resize(fiberFunctionSpace->nDofsGlobal() * nStatesAndAlgebraicsValues);
         
         elementLengthsReceiveBuffer = fiberData_[fiberDataNo].elementLengths.data();
@@ -263,6 +265,20 @@ updateFiberData()
           fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues[furtherDataIndex*nValues + valueNo]
             = fiberPointBuffersAlgebraicsForTransfer_[pointBuffersNo][i][entryNo];
         }
+
+        // add the information about whether the point is constant or not_constant or neighbour_not_constant
+        if (setComputeStateInformation_)
+        {
+          fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues[furtherDataIndex*nValues + valueNo]
+            = fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo];
+
+          // if fiber has not been stimulated, set value to -1
+          if (onlyComputeIfHasBeenStimulated_ && !fiberHasBeenStimulated_[fiberDataNo])
+          {
+            fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues[furtherDataIndex*nValues + valueNo] = -1;
+          }
+          // the same value is set for all Vc::double_v::size() entries of the Vc::double_v vector (different entryNo's)
+        }
       }
       LOG(DEBUG) << "states and algebraics for transfer at fiberDataNo=" << fiberDataNo << ": " << fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues;
       LOG(DEBUG) << "size: " << fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues.size() << ", nValues: " << nValues;
@@ -326,6 +342,8 @@ updateFiberData()
 
       std::vector<int> nValuesOnRanks(rankSubset->size());
       int nStatesAndAlgebraicsValues = statesForTransferIndices_.size() + algebraicsForTransferIndices_.size() - 1;
+      if (setComputeStateInformation_)
+        nStatesAndAlgebraicsValues++;
 
       for (int rankNo = 0; rankNo < rankSubset->size(); rankNo++)
       {
@@ -339,6 +357,7 @@ updateFiberData()
         sendBuffer = fiberData_[fiberDataNo].furtherStatesAndAlgebraicsValues.data();
       }
 
+      // receive buffer
       std::vector<double> valuesLocal(fiberFunctionSpace->nDofsLocalWithoutGhosts() * nStatesAndAlgebraicsValues);
       MPI_Scatterv(sendBuffer, nValuesOnRanks.data(), offsetsOnRanks.data(), MPI_DOUBLE,
                    valuesLocal.data(), fiberFunctionSpace->nDofsLocalWithoutGhosts() * nStatesAndAlgebraicsValues, MPI_DOUBLE,
@@ -417,6 +436,24 @@ updateFiberData()
 
         LOG(DEBUG) << "store " << nValues << " values for algebraic " << algebraicsForTransferIndices_[algebraicIndex];
         LOG(DEBUG) << *fieldVariableAlgebraics;
+      }
+
+      // store the information about whether the point is constant or not_constant or neighbour_not_constant
+      if (setComputeStateInformation_)
+      {
+        // get field variable
+        std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable2
+          = instances[i].timeStepping2().instancesLocal()[j].getSlotConnectorData()->variable2;
+
+        int algebraicIndex = algebraicsForTransferIndices_.size();
+        std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableAlgebraics
+          = variable2[algebraicIndex].values;
+
+        int nValues = fiberFunctionSpace->nDofsLocalWithoutGhosts();
+        double *values = valuesLocal.data() + furtherDataIndex * nValues;
+
+        // int componentNo, int nValues, const dof_no_t *dofNosLocal, const double *values
+        fieldVariableAlgebraics->setValues(0, nValues, fiberFunctionSpace->meshPartition()->dofNosLocal().data(), values);
       }
 
       // increase index for fiberData_ struct

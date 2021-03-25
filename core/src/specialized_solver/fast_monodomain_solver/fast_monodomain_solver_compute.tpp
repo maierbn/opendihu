@@ -226,13 +226,13 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlge
 
       switch(fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo])
       {
-      case constant:
+      case inactive:
         s << ".";
         break;
-      case neighbour_not_constant:
+      case neighbor_is_active:
         s << "n";
         break;
-      case not_constant:
+      case active:
         s << "N";
         break;
       }
@@ -623,15 +623,27 @@ template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 equilibriumAccelerationUpdate(const Vc::double_v statesPreviousValues[], int pointBuffersNo)
 {
+  // every point is one of three possible states:
+  // inactive:            do not check if the value changed, "inactive" can only be set to "neighbor_is_active" by the neighbour point
+  // neighbor_is_active:  one of the neighbors is "active",
+  //                      check if one of the neighbors is still "active",
+  //                                 if not, change to "inactive"
+  //                      enable check if the value changed,
+  //                                 if it changes, set to "active", set neighbors to "neighbor_is_active"
+  //                                 if it did not change, set to "inactive"
+  // active:              enable check if the value changed,
+  //                                 if it changes, set to "active", set neighbors to "neighbor_is_active"
+  //                                 if it did not change, set to "inactive"
+
   // check if states for the current point are at their equilibrium
   if (disableComputationWhenStatesAreCloseToEquilibrium_)
   {
     bool statesAreAtEquilibrium = true;
 
-    // if the current point is not constant and therefore was computed
-    if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] != constant)
+    // if the current point is not inactive and therefore was computed
+    if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] != inactive)
     {
-      // check if it now was indeed constant
+      // check if it now was indeed inactive
       // loop over all states
       for (int stateNo = 0; stateNo < nStates; stateNo++)
       {
@@ -653,7 +665,7 @@ equilibriumAccelerationUpdate(const Vc::double_v statesPreviousValues[], int poi
         double changeValue = Vc::max(relativeChange);
 
 
-        // if change is higher than tolerance
+        // if maximum relative change in the pointBuffer (vector of size Vc::double_v::size()) is higher than the tolerance
         if (changeValue > 1e-5)
         {
           //LOG(INFO) << "point " << pointBuffersNo << " state " << stateNo << " " << oldValue << "->" << newValue << ": " << relativeChange << " " << changeValue;
@@ -663,85 +675,73 @@ equilibriumAccelerationUpdate(const Vc::double_v statesPreviousValues[], int poi
         }
       }
     }
-/*
-    // for debugging
-    if (statesAreAtEquilibrium)
-    {
-      fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] = constant;
-    }
-    else
-    {
-      fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] = not_constant;
-    }
-*/
 
-    // if the current point is constant but was computed because the neighbours were not constant,
+    // if the current point is inactive but was computed because the neighbours were not inactive,
     // check if this condition still holds
-    if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] == neighbour_not_constant
+    if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] == neighbor_is_active
       && statesAreAtEquilibrium
     )
     {
-      // check if one of the neighbours is still not constant, if it is not, set own point to constant
+      // check if one of the neighbours is still not inactive, if it is not, set own point to inactive
       if (pointBuffersNo > 0)
-        if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo-1] != not_constant)
+        if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo-1] != active)
         {
-          if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] != constant)
+          if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] != inactive)
           {
-            fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] = constant;
-            nFiberPointBufferStatesCloseToEquilibrium_++;
+            fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] = inactive;
+            nFiberPointBufferStatesCloseToEquilibrium_++;   // this counter allows to disable 1D computations when no fiber on the current rank is active at all
           }
         }
 
       if (pointBuffersNo < fiberPointBuffers_.size()-1)
-        if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo+1] != not_constant)
+        if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo+1] != active)
         {
-          if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] != constant)
+          if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] != inactive)
           {
-            fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] = constant;
+            fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] = inactive;
             nFiberPointBufferStatesCloseToEquilibrium_++;
           }
         }
 
     }
 
-    // if own point was previously not constant, eventually set to constant
-    if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] == not_constant
-      || fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] == neighbour_not_constant
+    // if own point was previously not inactive, eventually set to inactive
+    if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] == active
+      || fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] == neighbor_is_active
     )
     {
       if (statesAreAtEquilibrium)
       {
-        if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] != constant)
-        {
-          fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] = constant;
-          nFiberPointBufferStatesCloseToEquilibrium_++;
-        }
+        fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] = inactive;
+        nFiberPointBufferStatesCloseToEquilibrium_++;
       }
       else
       {
-        // own point is not constant
+        // own point is not inactive
 
-        if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] == constant)
+        if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] == inactive)  // this cannot happen
           nFiberPointBufferStatesCloseToEquilibrium_--;
 
-        fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] = not_constant;
+        fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] = active;
 
-        // set neighbouring point buffers to "neighbour_not_constant"
+        // set neighbouring point buffers to "neighbor_is_active"
         if (pointBuffersNo > 0)
-          if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo-1] == constant)
+        {
+          if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo-1] == inactive)
           {
-            if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo-1] == constant)
-              nFiberPointBufferStatesCloseToEquilibrium_--;
+            nFiberPointBufferStatesCloseToEquilibrium_--;
+            fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo-1] = neighbor_is_active;
+          }
+        }
 
-            fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo-1] = neighbour_not_constant;
-          }
         if (pointBuffersNo < fiberPointBuffers_.size()-1)
-          if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo+1] == constant)
+        {
+          if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo+1] == inactive)
           {
-            if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo+1] == constant)
-              nFiberPointBufferStatesCloseToEquilibrium_--;
-            fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo+1] = neighbour_not_constant;
+            nFiberPointBufferStatesCloseToEquilibrium_--;
+            fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo+1] = neighbor_is_active;
           }
+        }
       }
     }
   }
@@ -755,27 +755,27 @@ isEquilibriumAccelerationCurrentPointDisabled(bool stimulateCurrentPoint, int po
   {
     if (stimulateCurrentPoint)
     {
-      fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] = not_constant;
+      fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] = active;
 
-      // set neighbouring point buffers to "neighbour_not_constant"
+      // set neighbouring point buffers to "neighbor_is_active"
       if (pointBuffersNo > 0)
-        if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo-1] == constant)
+        if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo-1] == inactive)
         {
-          if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo-1] == constant)
+          if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo-1] == inactive)
             nFiberPointBufferStatesCloseToEquilibrium_--;
-          fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo-1] = neighbour_not_constant;
+          fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo-1] = neighbor_is_active;
         }
       if (pointBuffersNo < fiberPointBuffers_.size()-1)
-        if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo+1] == constant)
+        if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo+1] == inactive)
         {
-          if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo+1] == constant)
+          if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo+1] == inactive)
             nFiberPointBufferStatesCloseToEquilibrium_--;
-          fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo+1] = neighbour_not_constant;
+          fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo+1] = neighbor_is_active;
         }
     }
 
     // do not compute current point if the states are at the equilibrium anyways and won't change by the computation
-    if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] == constant)
+    if (fiberPointBuffersStatesAreCloseToEquilibrium_[pointBuffersNo] == inactive)
     {
       return true;
     }

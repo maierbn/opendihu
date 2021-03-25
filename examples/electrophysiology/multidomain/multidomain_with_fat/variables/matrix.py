@@ -121,7 +121,11 @@ sampling_stride_x = 3
 sampling_stride_y = 3
 sampling_stride_z = 20      # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40
 sampling_stride_fat = 1
-  
+
+distribute_nodes_equally = True     # (default: False)
+# True: set high priority to make subdomains have approximately equal number of fibers but creates tiny remainder elements inside the subdomains
+# False: make elements more equally sized, this can lead to a slight imbalance in the number of fibers per subdomain
+
 # HD-EMG electrode parameters
 fiber_file_for_hdemg_surface = fat_mesh_file    # use the fat mesh for placing electrodes, this option is the file of the 2D mesh on which electrode positions are set
 hdemg_electrode_faces = ["1+"]                  # which faces of this 2D mesh should be considered for placing the HD-EMG electrodes (list of faces, a face is one of "0-" (left), "0+" (rig

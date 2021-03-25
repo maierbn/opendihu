@@ -1,9 +1,20 @@
 % display matrix entries for different processes, 
 % fill in the mesh sizes on the processes
-n_local_dofs_muscle = [555,555,555,555];
-n_local_dofs_fat    = [444,1036,444,1036];
+
+% data for 4 processes
+%n_local_dofs_muscle = [555,555,555,555];
+%n_local_dofs_fat    = [444,1036,444,1036];
+n_local_dofs_muscle = [570,570,570,570];
+n_local_dofs_fat    = [456,1102,459,1108];
 n_columns = 5;
-matrix = Mat_0x560597fecda0_0_singleMat;
+colors = [0.5 0 0;   1 0.8 0;     1 0.5 0.055;  0.839 0.153 0.157];
+matrix = Mat_0x556060db4990_0_singleMat;
+
+% data for 16 processes
+%n_local_dofs_muscle = [190,95,95,190,190,95,95,190,180,90,90,180,180,90,90,180];
+%n_local_dofs_fat    = [152,76,76,456,152,76,76,456,144,72,72,432,144,72,72,432];
+%colors = [0.5,0.0,0.0;1.0,0.80000000000000004,0.0;1.0,0.49803921568627452,0.054901960784313725;			0.83921568627450982,			0.15294117647058825,			0.15686274509803921;			1.0,			1.0,			0.0;			1.0,			0.0,			1.0;			0.0,			1.0,			1.0;			0.62999923704890515,			0.62999923704890515,			1.0;			0.66999313344014644,			0.50000762951094835,			0.33000686655985351;			1.0,			0.50000762951094835,			0.74999618524452583;			0.53000686655985352,			0.3499961852445258,			0.7000076295109483;			1.0,			0.74999618524452583,			0.50000762951094835;			0.66666666666666663,0.66666666666666663,1.0;		1.0,			0.0,			0.0;			0.0,			1.0,			0.0;			0.0,			0.0,			1.0];
+%matrix = Mat_0x55ebeff16510_0_singleMat;
 
 %% computation
 n_compartments = n_columns-2;
@@ -26,18 +37,17 @@ original_matrix = sparse(n_rows,n_rows);
 original_diagonal_matrix = sparse(n_rows,n_rows);
 diagonal_matrix = sparse(n_rows,n_rows);
 
-colors = [0.5 0 0;   1 0.8 0;     1 0.5 0.055;  0.839 0.153 0.157];
 close all
 
 % create first figure for the full original matrix
-f1 = figure('Position',[100 100 840 800]);
+f1 = figure('Position',[100 100 840 800],'visible','off');
 set(axes, 'Ydir', 'reverse')
 set(gca,'FontSize',20)
 hold on;
 axis equal
 
 % create second figure for the diagonal part of the original matrix
-f2 = figure('Position',[400 100 840 800]);
+f2 = figure('Position',[400 100 840 800],'visible','off');
 set(axes, 'Ydir', 'reverse')
 set(gca,'FontSize',20)
 hold on;
@@ -80,7 +90,8 @@ for row_rank_no = 1:n_ranks
         
         % loop over column ranks
         for column_rank_no = 1:n_ranks
-
+            fprintf("row %d,%d col %d\n",row_rank_no,row_compartment_no,column_rank_no)
+            
             if column_rank_no == 1
                 column_index_start = 1;
             else
@@ -113,12 +124,12 @@ for row_rank_no = 1:n_ranks
                 target_column_start = (column_compartment_no-1)*n_global_dofs_muscle + 1 + rank_offset;
 
                 % output the current copy operation
-                fprintf("row %d,%d | column %d,%d, [%d:%d] = [%d:%d] n_rows: %d\n", ...
-                    row_rank_no, row_compartment_no, ...
-                    column_rank_no, column_compartment_no, ...
-                    target_row_start, target_row_start+source_row_size-1, ...
-                    source_row_start, source_row_start+source_row_size-1, ...
-                    n_rows)
+                %fprintf("row %d,%d | column %d,%d, [%d:%d] = [%d:%d] n_rows: %d\n", ...
+                %    row_rank_no, row_compartment_no, ...
+                %    column_rank_no, column_compartment_no, ...
+                %    target_row_start, target_row_start+source_row_size-1, ...
+                %    source_row_start, source_row_start+source_row_size-1, ...
+                %    n_rows)
 
                 % read the block from the parallel reorder matrix
                 source_block = matrix(...
@@ -146,7 +157,8 @@ for row_rank_no = 1:n_ranks
                     ) = source_block;
                 
                     % select figure for diagonal matrix
-                    figure(f2);
+                    %figure(f2);
+                    set(0,'CurrentFigure',f2);
                 
                     % create separate matrix for display
                     matrix_display = sparse(n_rows,n_rows);
@@ -163,7 +175,8 @@ for row_rank_no = 1:n_ranks
             
                 % plot sparse structure with color according to source row rank
                 % select figure for full matrix
-                figure(f1);
+                %figure(f1);
+                set(0,'CurrentFigure',f1);
                 
                 % create separate matrix for display
                 matrix_display = sparse(n_rows,n_rows);
@@ -201,7 +214,8 @@ for row_block_no = 1:n_compartments+2
         end
         
         for f = [f1 f2]
-            figure(f);
+            %figure(f);
+            set(0,'CurrentFigure',f);
 
             % horizontal lines
             line([row_index_start,row_index_end],[column_index_start,column_index_start],'Color','black');
@@ -219,10 +233,6 @@ saveas(f1, 'original_matrix.png')
 saveas(f2, 'original_diagonal_matrix.png')
 
 %% show matrix by ranks 1
-close all
-%spy(matrix)
-
-colors = [0.5 0 0;   1 0.8 0;     1 0.5 0.055;  0.839 0.153 0.157];
 close all
 %spy(matrix)
 figure('Position',[100 100 840 800])
@@ -272,8 +282,6 @@ end
 saveas(gcf, 'reordered_matrix.png')
 
 %% show diagonal matrix by ranks
-close all
-colors = [0.5 0 0;   1 0.8 0;     1 0.5 0.055;  0.839 0.153 0.157];
 close all
 %spy(matrix)
 figure('Position',[100 100 840 800])
@@ -344,15 +352,21 @@ eigs(matrix,10,'sm')
 disp('the highest eigenvalues:')
 eigs(matrix,10,'lm')
 
-disp('all eigenvalues:')
-e = eigs(matrix,n_rows,'lm')
-save('eigenvalues.mat','e')
-
 %% plot eigenvalues
-plot(real(e))
+disp('all eigenvalues:')
+e1 = eigs(matrix,n_rows);
+e2 = eigs(diagonal_matrix,n_rows);
 
-%%
-disp('the ten smallest eigenvalues of the diagonal matrix:')
-eigs(diagonal_matrix,10,'sm')
+figure;
+plot(real(e1),'Marker','.','LineWidth',3,'Color',[0 0 0]);
+box(gca,'on');
+grid(gca,'on');
+set(gca,'FontSize',18,'XMinorTick','on');
+saveas(gcf, 'eigenvalues.png')
 
-
+figure;
+plot(real(e2),'Marker','.','LineWidth',3,'Color',[0 0 0]);
+box(gca,'on');
+grid(gca,'on');
+set(gca,'FontSize',18,'XMinorTick','on');
+saveas(gcf, 'eigenvalues_diagonal.png')

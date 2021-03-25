@@ -352,7 +352,7 @@ initialize()
     fiberPointBuffers_.resize(nVcVectors);
     fiberPointBuffersAlgebraicsForTransfer_.resize(nVcVectors);
     fiberPointBuffersParameters_.resize(nVcVectors);
-    fiberPointBuffersStatesAreCloseToEquilibrium_.resize(nVcVectors, not_constant);
+    fiberPointBuffersStatesAreCloseToEquilibrium_.resize(nVcVectors, active);
     nFiberPointBufferStatesCloseToEquilibrium_ = 0;
 
     for (int i = 0; i < nVcVectors; i++)
@@ -509,7 +509,7 @@ initialize()
         }
       }
 
-      // prepare extra slot for compute state information (i.e., constant, neighbour_not_constant or not_constant)
+      // prepare extra slot for compute state information (i.e., inactive, neighbour_is_active or active)
       if (variable2.size() > algebraicsForTransferIndices_.size())
       {
         int algebraicIndex = algebraicsForTransferIndices_.size();

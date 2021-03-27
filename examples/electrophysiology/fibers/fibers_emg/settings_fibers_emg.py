@@ -25,6 +25,7 @@ import sys, os
 import timeit
 import argparse
 import importlib
+import distutils.util
 
 # parse rank arguments
 rank_no = (int)(sys.argv[-2])
@@ -53,6 +54,7 @@ if ".py" in sys.argv[0]:
   sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
 
 # define command line arguments
+mbool = lambda x:bool(distutils.util.strtobool(x))   # function to parse bool arguments
 parser = argparse.ArgumentParser(description='fibers_emg')
 parser.add_argument('--scenario_name',                       help='The name to identify this run in the log.',            default=variables.scenario_name)
 parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',             type=int)
@@ -89,6 +91,8 @@ parser.add_argument('--dt_1D',                               help='The timestep 
 parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',                      type=float, default=variables.dt_splitting)
 parser.add_argument('--dt_3D',                               help='The timestep for the 3D model, either bidomain or mechanics.', type=float, default=variables.dt_3D)
 parser.add_argument('--optimization_type',                   help='The optimization_type in the cellml adapter.',         default=variables.optimization_type, choices=["vc", "simd", "openmp", "gpu"])
+parser.add_argument('--maximum_number_of_threads',           help='If optimization_type is "openmp", the max thread number, 0=all.', type=int, default=variables.maximum_number_of_threads)
+parser.add_argument('--use_aovs_memory_layout',              help='If optimization_type is "vc", whether to use AoVS memory layout.', type=mbool, default=variables.use_aovs_memory_layout)
 parser.add_argument('--disable_firing_output',               help='Disables the initial list of fiber firings.',          default=variables.disable_firing_output, action='store_true')
 parser.add_argument('--enable_surface_emg',                  help='Enable the surface emg output writer.',                default=variables.enable_surface_emg, action='store_true')
 parser.add_argument('--enable_weak_scaling',                 help='Disable optimization for not stimulated fibers.',      default=variables.enable_weak_scaling, action='store_true')
@@ -99,7 +103,7 @@ parser.add_argument('-on_error_attach_debugger',             help='Enable verbos
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier',                   action="store_true")
 parser.add_argument('--rank_reordering',                     help='Enable rank reordering in the c++ code',               action="store_true")
 parser.add_argument('--use_elasticity',                      help='Enable linear elasticity',                             action="store_true")
-parser.add_argument('--approximate_exponential_function',    help='Approximate the exp function by a Taylor series',      default=variables.approximate_exponential_function, action="store_true")
+parser.add_argument('--approximate_exponential_function',    help='Approximate the exp function by a Taylor series',      type=mbool, default=variables.approximate_exponential_function)
 # parameter for the 3D mesh generation
 parser.add_argument('--mesh3D_sampling_stride', nargs=3,     help='Stride to select the mesh points in x, y and z direction.', type=int, default=None)
 parser.add_argument('--mesh3D_sampling_stride_x',            help='Stride to select the mesh points in x direction.',     type=int, default=variables.sampling_stride_x)
@@ -165,7 +169,7 @@ if rank_no == 0:
   print("dt_0D:           {:0.1e}, diffusion_solver_type:      {}".format(variables.dt_0D, variables.diffusion_solver_type))
   print("dt_1D:           {:0.1e}, potential_flow_solver_type: {}, approx. exp.: {}".format(variables.dt_1D, variables.potential_flow_solver_type, variables.approximate_exponential_function))
   print("dt_splitting:    {:0.1e}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(variables.dt_splitting, variables.emg_solver_type, variables.emg_initial_guess_nonzero))
-  print("dt_3D:           {:0.1e}, paraview_output: {}, optimization_type: {}, enable_weak_scaling: {}".format(variables.dt_3D, variables.paraview_output, variables.optimization_type, variables.enable_weak_scaling))
+  print("dt_3D:           {:0.1e}, paraview_output: {}, optimization_type: {}{}, enable_weak_scaling: {}".format(variables.dt_3D, variables.paraview_output, variables.optimization_type, " ({} threads)".format(variables.maximum_number_of_threads) if variables.optimization_type=="openmp" else " (AoVS)" if variables.optimization_type=="vc" and variables.use_aovs_memory_layout else " (SoVA)" if variables.optimization_type=="vc" and not variables.use_aovs_memory_layout else "", variables.enable_weak_scaling))
   print("output_timestep: {:0.1e}  stimulation_frequency: {} 1/ms = {} Hz".format(variables.output_timestep, variables.stimulation_frequency, variables.stimulation_frequency*1e3))
   print("fiber_file:              {}".format(variables.fiber_file))
   print("cellml_file:             {}".format(variables.cellml_file))
@@ -292,7 +296,8 @@ config = {
                       "optimizationType":                       variables.optimization_type,                    # "vc", "simd", "openmp" type of generated optimizated source file
                       "approximateExponentialFunction":         variables.approximate_exponential_function,     # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
                       "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
-                      "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+                      "maximumNumberOfThreads":                 variables.maximum_number_of_threads,            # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+                      "useAoVSMemoryLayout":                    variables.use_aovs_memory_layout,               # if optimizationType is "vc", whether to use the Array-of-Vectorized-Struct (AoVS) memory layout instead of the Struct-of-Vectorized-Array (SoVA) memory layout. Setting to True is faster.
                       
                       # stimulation callbacks
                       #"libraryFilename":                       "cellml_simd_lib.so",                           # compiled library

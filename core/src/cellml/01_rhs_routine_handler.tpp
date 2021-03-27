@@ -62,6 +62,9 @@ initializeRhsRoutine()
     if (optimizationType_ == "vc")
     {
       approximateExponentialFunction_ = this->specificSettings_.getOptionBool("approximateExponentialFunction", true);
+      useAoVSMemoryLayout_ = true;
+      if (this->specificSettings_.hasKey("useAoVSMemoryLayout"))
+        useAoVSMemoryLayout_ = this->specificSettings_.getOptionBool("useAoVSMemoryLayout", true);
     }
     else if (optimizationType_ == "openmp")
     {
@@ -274,7 +277,7 @@ createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nIns
 
     // create source file
     this->cellmlSourceCodeGenerator_.generateSourceFile(sourceToCompileFilename_, optimizationType_,
-                                                        approximateExponentialFunction_, maximumNumberOfThreads_);
+                                                        approximateExponentialFunction_, maximumNumberOfThreads_, useAoVSMemoryLayout_);
 
     // create library file
     if (libraryFilename.find("/") != std::string::npos)

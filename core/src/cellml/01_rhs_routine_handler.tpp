@@ -51,6 +51,12 @@ initializeRhsRoutine()
     // load type
     optimizationType_ = this->specificSettings_.getOptionString("optimizationType", "vc");
 
+    if (optimizationType_ == "comp")
+    {
+      LOG(WARNING) << "Option \"optimizationType\"=\"comp\" has been renamed to \"simd\"! Using \"simd\" instead.";
+      optimizationType_ = "simd";
+    }
+
     if (optimizationType_ != "simd" && optimizationType_ != "vc" && optimizationType_ != "openmp" && optimizationType_ != "gpu")
     {
       LOG(ERROR) << "Option \"optimizationType\" is \"" << optimizationType_ << "\" but valid values are \"simd\", \"vc\", \"openmp\" or \"gpu\"."

@@ -288,7 +288,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.979899"
-     inkscape:cx="131.02975"
+     inkscape:cx="45.419322"
      inkscape:cy="125.16847"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
@@ -310,7 +310,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -473,7 +473,7 @@
          style="fill:#800000;fill-opacity:1;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none">$\bfS$</tspan></text>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;line-height:125%;font-family:'Univers for UniS 55 Roman';-inkscape-font-specification:'Univers for UniS 55 Roman, ';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#f5f5f5;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.23333311px;line-height:125%;font-family:'Univers for UniS 55 Roman';-inkscape-font-specification:'Univers for UniS 55 Roman, ';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;"
        x="113.64764"
        y="104.6219"
        id="text21851"><tspan
@@ -481,7 +481,7 @@
          id="tspan21849"
          x="113.64764"
          y="104.6219"
-         style="stroke-width:0.26458332px;fill:#f5f5f5;fill-opacity:1;">$\bfg$</tspan></text>
+         style="stroke-width:0.26458332px;fill:#000000;fill-opacity:1;">$\bfg$</tspan></text>
     <path
        sodipodi:nodetypes="czc"
        inkscape:connector-curvature="0"

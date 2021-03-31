@@ -67,7 +67,7 @@
     \put(0.37009859,0.1278281){\color[rgb]{0.50196078,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfP$\end{tabular}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=4]{stress_tensors.pdf}}%
     \put(0.1962405,0.21473889){\color[rgb]{0.50196078,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfS$\end{tabular}}}}%
-    \put(0.57442938,0.21473889){\color[rgb]{0.96078431,0.96078431,0.96078431}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfg$\end{tabular}}}}%
+    \put(0.57442938,0.21473889){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfg$\end{tabular}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=5]{stress_tensors.pdf}}%
     \put(0.69424136,0.21473889){\color[rgb]{0.50196078,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$J\,\bfsigma$\end{tabular}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=6]{stress_tensors.pdf}}%

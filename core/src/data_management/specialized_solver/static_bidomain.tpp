@@ -54,6 +54,7 @@ createPetscObjects()
   this->fiberDirection_ = this->functionSpace_->template createFieldVariable<3>("fiberDirection");
   this->extraCellularPotential_ = this->functionSpace_->template createFieldVariable<1>("phi_e");
   this->zero_ = this->functionSpace_->template createFieldVariable<1>("zero");
+  this->jacobianConditionNumber_ = this->functionSpace_->template createFieldVariable<1>("jacobianConditionNumber");
 
   LOG(DEBUG) << "Vm field variable (" << this->transmembranePotential_ << ")";
 }
@@ -108,6 +109,13 @@ zero()
 }
 
 template<typename FunctionSpaceType>
+std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>> StaticBidomain<FunctionSpaceType>::
+jacobianConditionNumber()
+{
+  return this->jacobianConditionNumber_;
+}
+
+template<typename FunctionSpaceType>
 void StaticBidomain<FunctionSpaceType>::
 print() // use override in stead of extending the parents' print output.This way "solution" is still in the end.
 {
@@ -138,7 +146,8 @@ getFieldVariablesForOutputWriter()
     extraCellularPotential_,
     transmembranePotential_,
     transmembraneFlow_,
-    this->flowPotential_
+    this->flowPotential_,
+    jacobianConditionNumber_
   );
 }
 

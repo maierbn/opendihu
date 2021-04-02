@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import sys
 
 def get_xi_2d(quadrilateral,p):
   [p0, p1, p2, p3] = quadrilateral

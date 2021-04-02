@@ -1783,13 +1783,13 @@ It appears in the summary of the muscle contraction model in \cref{eq:contractio
   \def\svgwidth{0.5\textwidth}
   \input{images/stress_tensors.pdf_tex}%
   \caption{Stress tensors and geometric maps that can be used together in a solid mechanics formulation. The right Cauchy-Green tensor $\bfC$  and the second Piola-Kirchhoff stress $\bfS$ are dual Eulerian tensors and map between tangent space $T_\bfX\Omega_0$ and co-tangent space $T^\ast_\bfX\Omega_0$ in the reference domain. The deformation gradient $\bfF$ and the first Piola-Kirchhoff stress $\bfP$ are dual two-point tensors mapping from the reference to the current configuration. 
-  %The Eulerian metric $\bfg$ which is the identity in cartesian coordinates and the Kirchhoff stress $J\,\bfsigma$ (where $\bfsigma$ is the Cauchy stress) are the dual objects in the Eulerian setting. All three pairs of dual tensors are linked together by transformations such as pull-back and push-forward.
+  The Eulerian metric $\bfg$ which is the identity in cartesian coordinates and the Kirchhoff stress $J\,\bfsigma$ (where $\bfsigma$ is the Cauchy stress) are the dual objects in the Eulerian setting. All three pairs of dual tensors are linked together by transformations such as pull-back and push-forward.
   }%
   \label{fig:stress_tensors}%
 \end{figure}
 
 \Cref{fig:stress_tensors} summarizes the geometric maps by black arrows and the stress measures by red arrows. 
-%To relate strains and stresses in a material model, the corresponding tensors have to be dual objects. Here, three settings are possible: The Eulerian setting uses the metric $\bfg$ and the dual Kirchhoff stress $J\,\bfsigma$. The two-point setting uses the deformation gradient $\bfF$ and the dual first Piola-Kirchhoff stress $\bfP$. The Lagrangian setting uses the right Cauchy-Green tensor $\bfC$ and the dual second Piola-Kirchhoff stress $\bfS$. 
+To relate strains and stresses in a material model, the corresponding tensors have to be dual objects. Here, three settings are possible: The Eulerian setting uses the metric $\bfg$ and the dual Kirchhoff stress $J\,\bfsigma$. The two-point setting uses the deformation gradient $\bfF$ and the dual first Piola-Kirchhoff stress $\bfP$. The Lagrangian setting uses the right Cauchy-Green tensor $\bfC$ and the dual second Piola-Kirchhoff stress $\bfS$. 
 Different pairs of strain and stress tensors can be used. 
 The Lagrangian setting defines the right Cauchy-Green tensor $\bfC$ and the dual second Piola-Kirchhoff stress $\bfS$.
 We consider these quantities in the further derivations, because the Lagrangian formulation is naturally used to derive the discretization schemes.

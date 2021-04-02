@@ -8,7 +8,7 @@
 # usage: ./generate_fiber_distribution <output filename> <number of MUs> [<mode> [...]]
 # or run without arguments to get help
 
-import sys
+import sys, os
 import random
 import time
 import numpy as np
@@ -181,9 +181,13 @@ def generate_mu_positions(n_motor_units, n_fibers_x, enable_plots, output_filena
       plt.plot(x,y, '+', markersize=24,color=color)
     filename = "plots/"+output_filename+"_mu_positions.pdf"
     ax = plt.gca()
-    ax.set_ylim(0,max([p[0] for p in mu_positions]))
-    ax.set_xlim(0,max([p[1] for p in mu_positions]))
     ax.axis('equal')
+    ax.set_ylim(0,max([p[1]*1.1 for p in mu_positions]))
+    ax.set_xlim(0,max([p[0]*1.1 for p in mu_positions]))
+    ax.set_title("MU territory center points")
+    subdirectory = filename[0:filename.rfind("/")]
+    if not os.path.exists(subdirectory):
+      os.makedirs(subdirectory)
     plt.savefig(filename)
     print("  Saved MU positions to file \"{}\".".format(filename))
   

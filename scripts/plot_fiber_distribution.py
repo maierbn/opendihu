@@ -201,7 +201,7 @@ xlist = np.linspace(1,n_motor_units,5*n_motor_units)
 
 scaling_factor_pdf = sum([generate_fiber_distribution.pdf_unscaled(x) for x in range(1,n_motor_units+1)])
 n_fibers_total = n_fibers_x**2
-plt.plot(xlist, [generate_fiber_distribution.pdf(x)*n_fibers_total for x in xlist], lw=4, label='${:.3f}^x$'.format(basis))
+plt.plot(xlist, [generate_fiber_distribution.pdf(x)*n_fibers_total for x in xlist], lw=4, label='${}^x$'.format(round(basis,3)))
   
 #plt.plot(xlist, [np.exp(x)/np.exp(n_motor_units)*bins[-1] for x in xlist])
 ax = fig.gca()
@@ -212,7 +212,7 @@ ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 plt.xlabel("Motor Unit Index")
 plt.ylabel("Count")
 plt.legend()
-plt.savefig("plots/"+output_filename+"_fiber_distribution.pdf")
+plt.savefig("plots/"+output_filename+"_fiber_distribution_.pdf")
 plt.show()
 
 print("\nResult plots were written in plot subdirectory as \"plots/"+output_filename+"_*.pdf\".")

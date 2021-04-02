@@ -73,10 +73,10 @@ output_timestep_electrodes = 2e8    # [ms] timestep for python callback, which i
 
 # input files
 input_directory = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
-fiber_file              = input_directory+"/input/left_biceps_brachii_37x37fibers.bin"
+fiber_file              = input_directory+"/left_biceps_brachii_37x37fibers.bin"
 fat_mesh_file           = fiber_file + "_fat.bin"
-firing_times_file       = input_directory+"/input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-fiber_distribution_file = input_directory+"/input/MU_fibre_distribution_37x37_20.txt"
+firing_times_file       = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+fiber_distribution_file = input_directory+"/MU_fibre_distribution_37x37_20.txt"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements

@@ -58,7 +58,7 @@ for mu_no in range(n_motor_units):
   {
     "radius":                radius,                 # [μm] parameter for motor unit: radius of the fiber, used to compute Am
     "cm":                    cm,                     # [uF/cm^2] parameter Cm
-    "activation_start_time": 0 if mu_no == mu_no_activate else 10000,   # [s] when to start activating this motor unit, here it is a ramp
+    "activation_start_time": 0 if (mu_no+1) == mu_no_activate else 10000,   # [s] when to start activating this motor unit, here it is a ramp
     "stimulation_frequency": stimulation_frequency,  # [Hz] stimulation frequency for activation
     "jitter": [0.1*random.uniform(-1,1) for i in range(100)]     # [-] random jitter values that will be added to the intervals to simulate jitter
   })  

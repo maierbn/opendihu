@@ -81,7 +81,6 @@ if False:
   xi1,xi2,xi3 = symbols('xi1,xi2,xi3', real=True)
   Phi1 = (1-xi1)*(1-xi2)*x11 + xi1*(1-xi2)*x21 + (1-xi1)*xi2*x31 + xi1*xi2*x41
   Phi2 = (1-xi1)*(1-xi2)*x12 + xi1*(1-xi2)*x22 + (1-xi1)*xi2*x32 + xi1*xi2*x42
-  Phi3 = (1-xi1)*(1-xi2)*x13 + xi1*(1-xi2)*x22 + (1-xi1)*xi2*x33 + xi1*xi2*x43
 
   print("2D linear")
   solution = solve([Phi1 - xp1, Phi2 - xp2], [xi1,xi2])
@@ -108,7 +107,7 @@ if False:
   sys.exit(0)
 
 #2D linear simplex
-if True:
+if False:
   Phi1 = (1-xi1-xi2)*x11 + xi1*x21 + xi2*x31
   Phi2 = (1-xi1-xi2)*x12 + xi1*x22 + xi2*x32
   Phi3 = (1-xi1-xi2)*x13 + xi1*x23 + xi2*x33
@@ -135,7 +134,7 @@ if True:
   print("")
   
 #3D linear simplex
-if False:
+if True:
   Phi1 = (1-xi1-xi2-xi3)*x11 + xi1*x21 + xi2*x31 + xi3*x41
   Phi2 = (1-xi1-xi2-xi3)*x12 + xi1*x22 + xi2*x32 + xi3*x42
   Phi3 = (1-xi1-xi2-xi3)*x13 + xi1*x23 + xi2*x33 + xi3*x43
@@ -170,66 +169,6 @@ if False:
   print("then compute xi3=",expr)
   print("c++:", cxxcode(expr, standard='C++11'))
   print("")
-
-if False:
-  #it doesn't work like this, kl
-  print("3D simplex, the inner, big one when decomposing the hexaeder into 5 tetrahedrons")
-  
-  t1,t2,t3,t4,t5 = symbols('t1,t2,t3,t4,t5', real=True)
-  xia1,xia4,xia7 = symbols('xia1,xia4,xia7', positive=True, real=True)
-  
-  xp1,xp2,xp3 = symbols('xp1,xp2,xp3', real=True)
-  
-  #xp1 = (1-xia1-xia4-xia7)*x21 + xia1*x11 + xia4*x41 + xia7*x71
-  #xp2 = (1-xia1-xia4-xia7)*x22 + xia1*x12 + xia4*x42 + xia7*x72
-  #xp3 = (1-xia1-xia4-xia7)*x23 + xia1*x13 + xia4*x43 + xia7*x73
-
-  Phi1 = (1-xi3)*((1-xi1)*(1-xi2)*x11 + xi1*(1-xi2)*x21 + (1-xi1)*xi2*x31 + xi1*xi2*x41) + xi3*((1-xi1)*(1-xi2)*x51 + xi1*(1-xi2)*x61 + (1-xi1)*xi2*x71 + xi1*xi2*x81)
-  Phi2 = (1-xi3)*((1-xi1)*(1-xi2)*x12 + xi1*(1-xi2)*x22 + (1-xi1)*xi2*x32 + xi1*xi2*x42) + xi3*((1-xi1)*(1-xi2)*x52 + xi1*(1-xi2)*x62 + (1-xi1)*xi2*x72 + xi1*xi2*x82)
-  Phi3 = (1-xi3)*((1-xi1)*(1-xi2)*x13 + xi1*(1-xi2)*x22 + (1-xi1)*xi2*x33 + xi1*xi2*x43) + xi3*((1-xi1)*(1-xi2)*x53 + xi1*(1-xi2)*x62 + (1-xi1)*xi2*x73 + xi1*xi2*x83)
- 
-  #xi1sol = solve([xp1-Phi1], [xi1])[xi1]
-  #print("xi1: ", xi1sol)
-  #print("")
-  
-  #Phi2sol = simplify(Phi2.subs(xi1,xi1sol))
-  #print("Phi2sol:", Phi2sol)
-  #print("")
-  #Phi2sol = factor(Phi2sol)
-  #print("Phi2sol: ",Phi2sol)
-  #print("")
-  
-  #Phi2sol = collect(Phi2sol, xi2)
-  #print("Phi2sol: ",Phi2sol)
-  #print("")
-  
-  print("sustitute Phi2sol")
-  Phi2sol = (t1 + xi2*t2 + xi2**2*t3) / (t4 + xi2*t5)
-  
-  t1 = -x11*x12*xi3*xia1 + x11*x12*xia1 + x11*x22*xi3**2 + x11*x22*xi3*xia1 - 2*x11*x22*xi3 - x11*x22*xia1 + x11*x22 + x11*x52*xi3*xia1 - x11*x62*xi3**2 - x11*x62*xi3*xia1 + x11*x62*xi3 - x12*x21*xi3**2 + x12*x21*xi3*xia1 + x12*x21*xi3*xia4 + x12*x21*xi3*xia7 + x12*x21*xi3 - x12*x21*xia1 - x12*x21*xia4 - x12*x21*xia7 - x12*x41*xi3*xia4 + x12*x41*xia4 + x12*x61*xi3**2 - x12*x61*xi3 - x12*x71*xi3*xia7 + x12*x71*xia7 - x21*x22*xi3*xia1 - x21*x22*xi3*xia4 - x21*x22*xi3*xia7 + x21*x22*xi3 + x21*x22*xia1 + x21*x22*xia4 + x21*x22*xia7 - x21*x22 + x21*x52*xi3**2 - x21*x52*xi3*xia1 - x21*x52*xi3*xia4 - x21*x52*xi3*xia7 + x21*x62*xi3*xia1 + x21*x62*xi3*xia4 + x21*x62*xi3*xia7 - x21*x62*xi3 + x22*x41*xi3*xia4 - x22*x41*xia4 - x22*x51*xi3**2 + x22*x51*xi3 + x22*x71*xi3*xia7 - x22*x71*xia7 + x41*x52*xi3*xia4 - x41*x62*xi3*xia4 + x51*x62*xi3**2 - x52*x61*xi3**2 + x52*x71*xi3*xia7 - x62*x71*xi3*xia7 
-  t2 = x11*x12*xi3*xia1 - x11*x12*xia1 - 2*x11*x22*xi3**2 - x11*x22*xi3*xia1 + 4*x11*x22*xi3 + x11*x22*xia1 - 2*x11*x22 - x11*x32*xi3*xia1 + x11*x32*xia1 + x11*x42*xi3**2 + x11*x42*xi3*xia1 - 2*x11*x42*xi3 - x11*x42*xia1 + x11*x42 - x11*x52*xi3*xia1 + 2*x11*x62*xi3**2 + x11*x62*xi3*xia1 - 2*x11*x62*xi3 + x11*x72*xi3*xia1 - x11*x82*xi3**2 - x11*x82*xi3*xia1 + x11*x82*xi3 + 2*x12*x21*xi3**2 - x12*x21*xi3*xia1 - x12*x21*xi3*xia4 - x12*x21*xi3*xia7 - 3*x12*x21*xi3 + x12*x21*xia1 + x12*x21*xia4 + x12*x21*xia7 + x12*x21 - x12*x41*xi3**2 + x12*x41*xi3*xia4 + 2*x12*x41*xi3 - x12*x41*xia4 - x12*x41 - 2*x12*x61*xi3**2 + 2*x12*x61*xi3 + x12*x71*xi3*xia7 - x12*x71*xia7 + x12*x81*xi3**2 - x12*x81*xi3 + x21*x22*xi3*xia1 + x21*x22*xi3*xia4 + x21*x22*xi3*xia7 - x21*x22*xi3 - x21*x22*xia1 - x21*x22*xia4 - x21*x22*xia7 + x21*x22 - x21*x32*xi3**2 + x21*x32*xi3*xia1 + x21*x32*xi3*xia4 + x21*x32*xi3*xia7 + x21*x32*xi3 - x21*x32*xia1 - x21*x32*xia4 - x21*x32*xia7 - x21*x42*xi3*xia1 - x21*x42*xi3*xia4 - x21*x42*xi3*xia7 + x21*x42*xi3 + x21*x42*xia1 + x21*x42*xia4 + x21*x42*xia7 - x21*x42 - 2*x21*x52*xi3**2 + x21*x52*xi3*xia1 + x21*x52*xi3*xia4 + x21*x52*xi3*xia7 + x21*x52*xi3 - x21*x62*xi3*xia1 - x21*x62*xi3*xia4 - x21*x62*xi3*xia7 + x21*x62*xi3 + x21*x72*xi3**2 - x21*x72*xi3*xia1 - x21*x72*xi3*xia4 - x21*x72*xi3*xia7 + x21*x82*xi3*xia1 + x21*x82*xi3*xia4 + x21*x82*xi3*xia7 - x21*x82*xi3 + x22*x31*xi3**2 - 2*x22*x31*xi3 + x22*x31 - x22*x41*xi3*xia4 + x22*x41*xia4 + 2*x22*x51*xi3**2 - 2*x22*x51*xi3 - x22*x71*xi3**2 - x22*x71*xi3*xia7 + x22*x71*xi3 + x22*x71*xia7 - x31*x62*xi3**2 + x31*x62*xi3 - x32*x41*xi3*xia4 + x32*x41*xia4 + x32*x61*xi3**2 - x32*x61*xi3 - x32*x71*xi3*xia7 + x32*x71*xia7 + x41*x42*xi3*xia4 - x41*x42*xia4 + x41*x52*xi3**2 - x41*x52*xi3*xia4 - x41*x52*xi3 + x41*x62*xi3*xia4 + x41*x72*xi3*xia4 - x41*x82*xi3*xia4 - x42*x51*xi3**2 + x42*x51*xi3 + x42*x71*xi3*xia7 - x42*x71*xia7 - 2*x51*x62*xi3**2 + x51*x82*xi3**2 + 2*x52*x61*xi3**2 - x52*x71*xi3*xia7 - x52*x81*xi3**2 - x61*x72*xi3**2 + x62*x71*xi3**2 + x62*x71*xi3*xia7 + x71*x72*xi3*xia7 - x71*x82*xi3*xia7
-  t3 = x11*x22*xi3**2 - 2*x11*x22*xi3 + x11*x22 - x11*x42*xi3**2 + 2*x11*x42*xi3 - x11*x42 - x11*x62*xi3**2 + x11*x62*xi3 + x11*x82*xi3**2 - x11*x82*xi3 - x12*x21*xi3**2 + 2*x12*x21*xi3 - x12*x21 + x12*x41*xi3**2 - 2*x12*x41*xi3 + x12*x41 + x12*x61*xi3**2 - x12*x61*xi3 - x12*x81*xi3**2 + x12*x81*xi3 + x21*x32*xi3**2 - 2*x21*x32*xi3 + x21*x32 + x21*x52*xi3**2 - x21*x52*xi3 - x21*x72*xi3**2 + x21*x72*xi3 - x22*x31*xi3**2 + 2*x22*x31*xi3 - x22*x31 - x22*x51*xi3**2 + x22*x51*xi3 + x22*x71*xi3**2 - x22*x71*xi3 + x31*x42*xi3**2 - 2*x31*x42*xi3 + x31*x42 + x31*x62*xi3**2 - x31*x62*xi3 - x31*x82*xi3**2 + x31*x82*xi3 - x32*x41*xi3**2 + 2*x32*x41*xi3 - x32*x41 - x32*x61*xi3**2 + x32*x61*xi3 + x32*x81*xi3**2 - x32*x81*xi3 - x41*x52*xi3**2 + x41*x52*xi3 + x41*x72*xi3**2 - x41*x72*xi3 + x42*x51*xi3**2 - x42*x51*xi3 - x42*x71*xi3**2 + x42*x71*xi3 + x51*x62*xi3**2 - x51*x82*xi3**2 - x52*x61*xi3**2 + x52*x81*xi3**2 + x61*x72*xi3**2 - x62*x71*xi3**2 + x71*x82*xi3**2 - x72*x81*xi3**2
-  t4 = -x11*xi3 + x11 + x21*xi3 - x21 + x51*xi3 - x61*xi3
-  t5 = x11*xi3 - x11 - x21*xi3 + x21 - x31*xi3 + x31 + x41*xi3 - x41 - x51*xi3 + x61*xi3 + x71*xi3 - x81*xi3
-  
-  print(solve([xp2-Phi2sol], [xi2])[0])
-  
-  xi2_a = (-t2 + t5*xp2 - sqrt(-4*t1*t3 + t2**2 - 2*t2*t5*xp2 + 4*t3*t4*xp2 + t5**2*xp2**2))/(2*t3)
-  xi2_b = (-t2 + t5*xp2 + sqrt(-4*t1*t3 + t2**2 - 2*t2*t5*xp2 + 4*t3*t4*xp2 + t5**2*xp2**2))/(2*t3)
-  
-  
-  
-  
-  xi2 = solve([xp2-Phi2sol], [xi2])[xi2]
-  print("xi2: ", xi2)
-  print("")
-  
-  xi3 = solve([xp3-Phi3], [xi3])[xi3]
-  print("xi3: ",xi3)
-  print("")
-  
- 
-  print(solve([xp1-Phi1, xp2-Phi2, xp3-Phi3], [xi1,xi2,xi3]))
 
 if True:
   

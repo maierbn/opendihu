@@ -350,7 +350,7 @@ config = {
                     "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
                     "solverName":                  "implicitSolver",                        # reference to the linear solver
                     "checkForNanInf":              False,
-                    "nAdditionalFieldVariables":   1 if variables.use_elasticity else 1,
+                    "nAdditionalFieldVariables":   1 if variables.use_elasticity else 2,
                     "additionalSlotNames":         [],
                     "FiniteElementMethod" : {
                       "inputMeshIsGlobal":         True,

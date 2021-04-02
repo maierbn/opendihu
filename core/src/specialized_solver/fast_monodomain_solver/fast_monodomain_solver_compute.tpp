@@ -147,6 +147,10 @@ compute0D(double startTime, double timeStepWidth, int nTimeSteps, bool storeAlge
     return;
   }
 
+  // set first and last point of the subdomain active to capture stimuli from neighbors
+  fiberPointBuffersStatesAreCloseToEquilibrium_[0] = active;
+  fiberPointBuffersStatesAreCloseToEquilibrium_[nPointBuffers-1] = active;
+
   const double factorForForDataNo = (double)Vc::double_v::size() / fiberData_[0].valuesLength;
   for (global_no_t pointBuffersNo = 0; pointBuffersNo < nPointBuffers; pointBuffersNo++)
   {
@@ -666,13 +670,18 @@ equilibriumAccelerationUpdate(const Vc::double_v statesPreviousValues[], int poi
 
 
         // if maximum relative change in the pointBuffer (vector of size Vc::double_v::size()) is higher than the tolerance
-        if (changeValue > 1e-5)
+        if (changeValue > 1e-6)
+        //if (Vc::any_of(Vc::abs((newValue - oldValue) / newValue) > 1e-5))
+        //if (true)
         {
           //LOG(INFO) << "point " << pointBuffersNo << " state " << stateNo << " " << oldValue << "->" << newValue << ": " << relativeChange << " " << changeValue;
 
           statesAreAtEquilibrium = false;
           break;
         }
+        /*LOG(INFO) << "(active and no change), pointBuffersNo " << pointBuffersNo << ", state " << stateNo 
+          << " newValue: " << newValue << ", oldValue: " << oldValue
+          << ", changeValue: " << changeValue << ", relativeChange: " << relativeChange;*/
       }
     }
 

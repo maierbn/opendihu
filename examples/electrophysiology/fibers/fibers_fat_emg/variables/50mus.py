@@ -131,7 +131,9 @@ if True:
   import sys
   # only on rank 0
   if (int)(sys.argv[-2]) == 0:
-    for mu_no,item in enumerate(motor_units):    
+    for mu_no,item in enumerate(motor_units):
+      if mu_no % 4 != 0:
+        continue    
       print("MU {}".format(mu_no))
       for (key,value) in item.items():
         if key != "jitter":

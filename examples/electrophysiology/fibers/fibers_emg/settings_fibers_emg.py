@@ -193,7 +193,7 @@ config = {
   "scenarioName":                   variables.scenario_name,    # scenario name which will appear in the log file
   "logFormat":                      "csv",                      # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
-  "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",     # output file that contains a log about creation of mappings between meshes
+  "mappingsBetweenMeshesLogFile":   "out/" + variables.scenario_name + "/mappings_between_meshes.txt",
   "meta": {                 # additional fields that will appear in the log
     "partitioning": [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
@@ -274,17 +274,18 @@ config = {
                 [{
                   "ranks":                          list(range(variables.n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
                   "Heun" : {
-                    "timeStepWidth":                variables.dt_0D,  # 5e-5
-                    "logTimeStepWidthAsKey":        "dt_0D",
-                    "durationLogKey":               "duration_0D",
-                    "initialValues":                [],
-                    "timeStepOutputInterval":       1e4,
-                    "inputMeshIsGlobal":            True,
-                    "checkForNanInf":               False,
-                    "dirichletBoundaryConditions":  {},
-                    "dirichletOutputFilename":      None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-                    "nAdditionalFieldVariables":    0,
-                    "additionalSlotNames":          [],
+                    "timeStepWidth":                variables.dt_0D,                         # timestep width of 0D problem
+                    "logTimeStepWidthAsKey":        "dt_0D",                                 # key under which the time step width will be written to the log file
+                    "durationLogKey":               "duration_0D",                           # log key of duration for this solver
+                    "timeStepOutputInterval":       1e4,                                     # how often to print the current timestep
+                    "initialValues":                [],                                      # no initial values are specified
+                    "dirichletBoundaryConditions":  {},                                      # no Dirichlet boundary conditions are specified
+                    "dirichletOutputFilename":      None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+                    
+                    "inputMeshIsGlobal":            True,                                    # the boundary conditions and initial values would be given as global numbers
+                    "checkForNanInf":               False,                                   # abort execution if the solution contains nan or inf values
+                    "nAdditionalFieldVariables":    0,                                       # number of additional field variables
+                    "additionalSlotNames":          [],                                      # names for the additional slots
                       
                     "CellML" : {
                       "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
@@ -316,8 +317,8 @@ config = {
                       "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                       "mappings":                               variables.mappings,                             # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
                       
-                      "meshName":                               "MeshFiber_{}".format(fiber_no),
-                      "stimulationLogFilename":                 "out/stimulation.log",                          # a file that will contain the times of stimulations
+                      "meshName":                               "MeshFiber_{}".format(fiber_no),                # reference to the fiber mesh
+                      "stimulationLogFilename":                 "out/" + variables.scenario_name + "/stimulation.log",                          # a file that will contain the times of stimulations
                     },      
                     "OutputWriter" : [
                       {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/0D_states({},{})".format(fiber_in_subdomain_coordinate_x,fiber_in_subdomain_coordinate_y), "binary": True, "fixedFormat": False, "combineFiles": True}
@@ -339,15 +340,15 @@ config = {
                   "ImplicitEuler" : {       # include both CrankNicolson and ImplicitEuler in the settings such that both variants in C++ file are possible
                     "initialValues":               [],
                     #"numberTimeSteps":            1,
-                    "timeStepWidth":               variables.dt_1D,  # 1e-5
+                    "timeStepWidth":               variables.dt_1D,                         # timestep width for the diffusion problem
                     "timeStepWidthRelativeTolerance": 1e-10,
-                    "logTimeStepWidthAsKey":       "dt_1D",
-                    "durationLogKey":              "duration_1D",
-                    "timeStepOutputInterval":      1e4,
-                    "dirichletBoundaryConditions": {},            # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
-                    "dirichletOutputFilename":     None,          # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-                    "inputMeshIsGlobal":           True,
-                    "solverName":                  "implicitSolver",
+                    "logTimeStepWidthAsKey":       "dt_1D",                                 # key under which the time step width will be written to the log file
+                    "durationLogKey":              "duration_1D",                           # log key of duration for this solver
+                    "timeStepOutputInterval":      1e4,                                     # how often to print the current timestep
+                    "dirichletBoundaryConditions": {},                                      # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
+                    "dirichletOutputFilename":     None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+                    "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
+                    "solverName":                  "implicitSolver",                        # reference to the linear solver
                     "checkForNanInf":              False,
                     "nAdditionalFieldVariables":   1 if variables.use_elasticity else 1,
                     "additionalSlotNames":         [],

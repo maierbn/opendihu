@@ -47,11 +47,7 @@ for mu_no in range(n_motor_units):
   radius = c1 + c2*1.02**(mu_no)
 
   # stimulation frequency [Hz] between 24 and 7
-  min_value = 7
-  max_value = 24
-  c2 = (max_value - min_value) / (1.02**(n_motor_units-1) - 1)
-  c1 = min_value - c2
-  stimulation_frequency = c1 + c2*1.02**(n_motor_units-1-mu_no)
+  stimulation_frequency = 24
 
   # exponential distribution: low number of fibers per MU, slow twitch (type I), activated first --> high number of fibers per MU, fast twitch (type II), activated last
   motor_units.append(
@@ -72,10 +68,10 @@ dt_0D = 2.5e-3                        # [ms] timestep width of ODEs (2e-3)
 dt_1D = 6.25e-4                        # [ms] timestep width of diffusion (4e-3)
 dt_splitting = 2.5e-3                 # [ms] overall timestep width of strang splitting (4e-3)
 dt_3D = 5e-1                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep_fibers = 100       # [ms] timestep for fiber output, 0.5
-output_timestep_3D_emg = 100            # [ms] timestep for output big files of 3D EMG, 100
-output_timestep_surface = 100              # [ms] timestep for output surface EMG, 0.5
-output_timestep_electrodes = 100    # [ms] timestep for python callback, which is electrode measurement output, has to be >= dt_3D
+output_timestep_fibers = 50       # [ms] timestep for fiber output, 0.5
+output_timestep_3D_emg = 50            # [ms] timestep for output big files of 3D EMG, 100
+output_timestep_surface = 50              # [ms] timestep for output surface EMG, 0.5
+output_timestep_electrodes = 50    # [ms] timestep for python callback, which is electrode measurement output, has to be >= dt_3D
 
 # input files
 input_directory = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")

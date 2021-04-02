@@ -474,6 +474,7 @@ config = {
           "durationLogKey":         "duration_bidomain",
           "solverName":             "activationSolver",
           "initialGuessNonzero":    variables.emg_initial_guess_nonzero,
+          "enableJacobianConditionNumber": False,         # if set to true, estimate the condition number of the jacobian of the element-coordinate-to-world-frame mapping in every element and output it in the output writer
           "slotNames":             [],
 
           "PotentialFlow": {

@@ -179,13 +179,21 @@ performMappings(std::vector<DofsMappingType> &mappings, double currentTime)
           }
         }
 
-#ifndef NDEBUG
-        LOG(DEBUG) << "   slot " << mapping.connectorSlotNosTo[toSlotIndex] << " (index " << toSlotIndex << "/" << mapping.connectorSlotNosTo.size() << ")"
+//#ifndef NDEBUG
+        LOG(INFO) << "   slot " << mapping.connectorSlotNosTo[toSlotIndex] << " (index " << toSlotIndex << "/" << mapping.connectorSlotNosTo.size() << ")"
           << ", set values from callback: " << valuesToSet << " at dofs: " << mapping.dofNosToSetLocal;
-#endif
+//#endif
 
         // set values in target field variable
-        slotSetValues(mapping.connectorSlotNosTo[toSlotIndex], mapping.slotConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
+        bool slotSetValuesSucceeded = slotSetValues(mapping.connectorSlotNosTo[toSlotIndex], mapping.slotConnectorArrayIndexTo, mapping.dofNosToSetLocal, valuesToSet, INSERT_VALUES);
+        if (!slotSetValuesSucceeded)
+        {
+          LOG(WARNING) << "Could not set values " << valuesToSet << " from callback for slot " 
+            << mapping.connectorSlotNosTo[toSlotIndex] << " (index " << toSlotIndex << "/" << mapping.connectorSlotNosTo.size() 
+            << ") at dofs " << mapping.dofNosToSetLocal << ".";
+          }
+        
+        LOG(INFO) << "slotSetValues done.";
       }
 
       // decrement reference counters for python objects

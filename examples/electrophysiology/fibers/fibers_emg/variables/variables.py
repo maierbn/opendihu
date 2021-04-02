@@ -64,6 +64,7 @@ exfile_output = False               # If the Exfile output writer should be enab
 enable_surface_emg = False          # Enables the surface emg output writer
 optimization_type = "vc"            # the optimization_type used in the cellml adapter, "vc" uses explicit vectorization
 approximate_exponential_function = False   # if the exponential function should be approximated by a Taylor series with only 11 FLOPS
+use_aovs_memory_layout = True       # if optimizationType is "vc", whether to use the Array-of-Vectorized-Stru    ct (AoVS) memory layout instead of the Struct-of-Vectorized-Array (SoVA) memory layout. Setting to True is faster.
 
 # motor unit stimulation times
 fiber_distribution_file = "../../../input/MU_fibre_distribution_3780.txt"
@@ -78,10 +79,9 @@ n_subdomains_y = 1
 n_subdomains_z = 1
 
 # stride for sampling the 3D elements from the fiber data
-# here any number is possible
 sampling_stride_x = 2
 sampling_stride_y = 2
-sampling_stride_z = 50
+sampling_stride_z = 1     # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
 # scenario name for log file
 scenario_name = ""
@@ -149,3 +149,4 @@ generate_linear_3d_mesh = True
 generate_quadratic_3d_mesh = False
 mappings = None
 enable_weak_scaling = False
+maximum_number_of_threads = 0

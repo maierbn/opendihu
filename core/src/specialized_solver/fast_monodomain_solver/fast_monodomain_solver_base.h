@@ -219,12 +219,13 @@ protected:
 
   bool disableComputationWhenStatesAreCloseToEquilibrium_;                  //< option to avoid computation when the states won't change much
   enum state_t {
-    constant,                         //< the state values at the own point did not change in the last computation (according to a tolerance). This means the current point does not need to be computed.
-    neighbour_not_constant,           //< the state values did not change, so the state is constant, but at a neighbouring point the value changed. This means the own value has to be computed because it can change due to diffusion.
-    not_constant                      //< the state values at the own point change and have to be computed
+    inactive,                         //< the state values at the own point did not change in the last computation (according to a tolerance). This means the current point does not need to be computed.
+    neighbor_is_active,           //< the state values did not change, so the state is inactive, but at a neighbouring point the value changed. This means the own value has to be computed because it can change due to diffusion.
+    active                      //< the state values at the own point change and have to be computed
   };                                                                        //< type for fiberPointBuffersStatesAreCloseToEquilibrium_
-  std::vector<state_t> fiberPointBuffersStatesAreCloseToEquilibrium_;       //< for every entry in fiberPointBuffers_, constant if the states didn't change too much in the last compute0D, neighbour_not_constant if the state of the neighbouring pointBuffer changes
-  int nFiberPointBufferStatesCloseToEquilibrium_;                           //< number of "constant" entries in fiberPointBuffersStatesAreCloseToEquilibrium_
+  std::vector<state_t> fiberPointBuffersStatesAreCloseToEquilibrium_;       //< for every entry in fiberPointBuffers_, inactive if the states didn't change too much in the last compute0D, neighbor_is_active if the state of the neighbouring pointBuffer changes
+  int nFiberPointBufferStatesCloseToEquilibrium_;                           //< number of "inactive" entries in fiberPointBuffersStatesAreCloseToEquilibrium_
+  bool setComputeStateInformation_;                                         //< whether the information in fiberPointBuffersStatesAreCloseToEquilibrium_ should be added to the algebraics to transfer in a variable named "computeStateInformation"
 
   std::vector<int> statesForTransferIndices_;          //< state no.s to transfer to other solvers within slot connector data
   std::vector<int> algebraicsForTransferIndices_;      //< which algebraics should be transferred to other solvers as part of slot connector data

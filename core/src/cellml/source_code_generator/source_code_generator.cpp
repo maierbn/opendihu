@@ -2,11 +2,12 @@
 
 #include <Python.h>  // has to be the first included header
 
-void CellmlSourceCodeGenerator::generateSourceFile(std::string outputFilename, std::string optimizationType, bool approximateExponentialFunction, int maximumNumberOfThreads)
+void CellmlSourceCodeGenerator::generateSourceFile(std::string outputFilename, std::string optimizationType, 
+                                                   bool approximateExponentialFunction, int maximumNumberOfThreads, bool useAoVSMemoryLayout)
 {
   if (optimizationType == "vc")
   {
-    generateSourceFileVc(outputFilename, approximateExponentialFunction);
+    generateSourceFileVc(outputFilename, approximateExponentialFunction, useAoVSMemoryLayout);
   }
   else if (optimizationType == "simd")
   {

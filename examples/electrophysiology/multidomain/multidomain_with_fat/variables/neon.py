@@ -85,7 +85,7 @@ firing_times_file = "../../../input/MU_firing_times_always.txt"
 # a higher number leads to less 3D elements
 sampling_stride_x = 1
 sampling_stride_y = 1
-sampling_stride_z = 20
+sampling_stride_z = 20      # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 sampling_stride_fat = 1
 
 # HD-EMG electrode parameters

@@ -122,12 +122,12 @@ multidomain_solver_type = "gmres"          # solver for the multidomain problem
 multidomain_preconditioner_type = "euclid"   # preconditioner
 multidomain_max_iterations = 1e3                         # maximum number of iterations
 
-multidomain_alternative_solver_type = "gmres"            # alternative solver, used when normal solver diverges
-multidomain_alternative_preconditioner_type = "euclid"    # preconditioner of the alternative solver
+multidomain_alternative_solver_type = "lu"            # alternative solver, used when normal solver diverges
+multidomain_alternative_preconditioner_type = "none"    # preconditioner of the alternative solver
 multidomain_alternative_solver_max_iterations = 1e4      # maximum number of iterations of the alternative solver
 
-multidomain_absolute_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
-multidomain_relative_tolerance = 1e-15 # absolute residual tolerance for the multidomain solver
+multidomain_absolute_tolerance = 1e-10 # absolute residual tolerance for the multidomain solver
+multidomain_relative_tolerance = 1e-10 # absolute residual tolerance for the multidomain solver
 
 initial_guess_nonzero = "lu" not in multidomain_solver_type   # set initial guess to zero for direct solver
 theta = 1.0                               # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
@@ -170,6 +170,7 @@ output_timestep_multidomain = 2     # [ms] timestep for multidomain solver outpu
 output_timestep_elasticity = 1      # [ms] timestep for elasticity output files
 output_timestep_neurons = 1         # [ms] timestep for output of files for all sensor organs and neurons
 output_timestep_motoneuron = 0.2    # [ms] timestep for output of files for motoneuron
+output_timestep_0D_states = 2       # [ms] timestep for output of all states within multidomain, produces large files, enabled only if states_output = True
 
 #output_timestep_multidomain = dt_elasticity
 #output_timestep_elasticity = dt_elasticity
@@ -179,10 +180,12 @@ output_timestep_motoneuron = 0.2    # [ms] timestep for output of files for moto
 import os
 input_directory   = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
 #cellml_file       = input_directory+"/new_slow_TK_2014_12_08.c"
-cellml_file       = input_directory+"/hodgkin_huxley-razumova.cellml"
+#cellml_file       = input_directory+"/hodgkin_huxley-razumova.cellml"
+cellml_file       = input_directory+"/hodgkin_huxley-razumova_equilibrium.cellml"
 
 fiber_file        = input_directory+"/left_biceps_brachii_9x9fibers_b.bin"  # this is a variant of 9x9fibers with a slightly different mesh that somehow works better
 #fiber_file        = input_directory+"/left_biceps_brachii_13x13fibers.bin"
+#fiber_file        = input_directory+"/cuboid_9x9fibers.bin"
 fat_mesh_file     = fiber_file + "_fat.bin"
 firing_times_file = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 firing_times_file = input_directory+"/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
@@ -196,8 +199,7 @@ fiber_distribution_file = input_directory+"/MU_fibre_distribution_10MUs.txt"
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1 
 sampling_stride_y = 1 
-sampling_stride_z = 50
-local_sampling_stride_z = 1 
+sampling_stride_z = 50        # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 sampling_stride_fat = 1 
 
 # how much of the multidomain mesh is used for elasticity
@@ -211,7 +213,7 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-states_output = False    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
+states_output = True    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
 show_linear_solver_output = False    # if every solve of multidomain diffusion should be printed
 disable_firing_output = True   # if information about firing of MUs should be printed
 
@@ -470,7 +472,7 @@ def callback_golgi_tendon_organs_input(input_values, output_values, current_time
   for i in range(n_input_values):
     stress = input_values[i]
     
-    output_values[0][i] = abs(stress)
+    output_values[0][i] = abs(stress) * 10
     
   # artifical muscle spindle input for debugging
   if False:
@@ -629,7 +631,7 @@ def callback_motoneurons_input(input_values, output_values, current_time, slot_n
     total_signal += input_values[input_index] * 1e-3
     
   # add cortical input
-  total_signal += 5e-3
+  total_signal += 5e-3            # [nA]
   # motor neuron fires with ~14Hz if drive(t) = 5e-3
   
   # set same value to all connected motoneurons

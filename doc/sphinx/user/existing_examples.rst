@@ -2099,6 +2099,10 @@ EMG on the surface, at t = 1.406 s. Also the fine resolution can be seen
   
   This is the scenario with 128 processes, top: partitioning, each color corresponds to one rank. Bottom: EMG signal, it can be seen that this is very smooth, because of the high spatial resolution.
   
+.. _multidomain_with_fat_6:
+.. figure:: examples/multidomain_with_fat_6.png
+  :width: 60%
+  
 multidomain_contraction
 ~~~~~~~~~~~~~~~~~~~~~~~~
 

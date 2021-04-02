@@ -41,8 +41,16 @@ outputData(FieldVariablesForOutputWriterType fieldVariables, std::string meshNam
   else
   {
     megaMolWriterContext.nPointsPerCoordinateDirection[0] = geometryField->functionSpace()->meshPartition()->nNodesGlobal(0);
-    megaMolWriterContext.nPointsPerCoordinateDirection[1] = geometryField->functionSpace()->meshPartition()->nNodesGlobal(1);
-    megaMolWriterContext.nPointsPerCoordinateDirection[2] = geometryField->functionSpace()->meshPartition()->nNodesGlobal(2);
+
+    if (geometryField->functionSpace()->dim() >= 2)
+      megaMolWriterContext.nPointsPerCoordinateDirection[1] = geometryField->functionSpace()->meshPartition()->nNodesGlobal(1);
+    else
+      megaMolWriterContext.nPointsPerCoordinateDirection[1] = 1;
+
+    if (geometryField->functionSpace()->dim() >= 3)
+      megaMolWriterContext.nPointsPerCoordinateDirection[2] = geometryField->functionSpace()->meshPartition()->nNodesGlobal(2);
+    else
+      megaMolWriterContext.nPointsPerCoordinateDirection[1] = 1;
 
     LOG(DEBUG) << "evaluate names of field variables";
     for (typename std::vector<std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,1>>>::iterator iter = scalarFieldVariables.begin();

@@ -11,5 +11,5 @@ jobs:
     steps:
       - checkout 				# pull the current branch from origin
       #- run: make release
-      - run: ls && pwd && python3 dependencies/scons/scons.py BUILD_TYPE=RELEASE -j1
+      - run: ls && pwd && python3 dependencies/scons/scons.py BUILD_TYPE=RELEASE USE_MPI_ALLOC=TRUE circle_ci=TRUE -j1   # only use 1 core because of limited RAM
 

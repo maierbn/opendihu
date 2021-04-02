@@ -170,7 +170,7 @@ neuron_meshes = {
 }
 variables.meshes.update(neuron_meshes)
 
-print("stimulation_node_nos: {}".format(stimulation_node_nos))
+#print("stimulation_node_nos: {}".format(stimulation_node_nos))
 print("golgi_tendon_organ_node_nos: {}".format(golgi_tendon_organ_node_nos))
 print("muscle_spindle_node_nos: {}".format(muscle_spindle_node_nos))
 print("updateSystemMatrixInterval: {}".format(int(variables.dt_elasticity/variables.dt_splitting)))
@@ -206,7 +206,12 @@ multidomain_solver = {
   "updateSystemMatrixEveryTimestep":  True,                                 # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
   "updateSystemMatrixInterval":       int(variables.dt_elasticity/variables.dt_splitting),   # if updateSystemMatrixEveryTimestep is True, how often the system matrix should be rebuild, in terms of calls to the solver. (E.g., 2 means every second time the solver is called)
   "recreateLinearSolverInterval":     0,                                    # how often the Petsc KSP object (linear solver) should be deleted and recreated. This is to remedy memory leaks in Petsc's implementation of some solvers. 0 means disabled.
-  "setDirichletBoundaryCondition":    True,                                # if the last dof of the fat layer (MultidomainWithFatSolver) or the extracellular space (MultidomainSolver) should have a 0 Dirichlet boundary condition
+  "rescaleRelativeFactors":           True,                                 # if all relative factors should be rescaled such that max Σf_r = 1
+  "setDirichletBoundaryConditionPhiE":False,                                # (set to False) if the last dof of the extracellular space (variable phi_e) should have a 0 Dirichlet boundary condition. However, this makes the solver converge slower.
+  "setDirichletBoundaryConditionPhiB":False,                                # (set to False) if the last dof of the fat layer (variable phi_b) should have a 0 Dirichlet boundary condition. However, this makes the solver converge slower.
+  "resetToAverageZeroPhiE":           True,                                 # if a constant should be added to the phi_e part of the solution vector after every solve, such that the average is zero
+  "resetToAverageZeroPhiB":           True,                                 # if a constant should be added to the phi_b part of the solution vector after every solve, such that the average is zero
+  
 
   "PotentialFlow": {
     "FiniteElementMethod" : {  
@@ -270,10 +275,6 @@ config = {
   "meta": {                                                               # additional fields that will appear in the log
     "partitioning":         [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
-  "connectedSlots": [
-    ("stress", "g_mu"),     # stress output of CellML models -> gamma of the MU (input of MultidomainSolver)
-    ("g_tot", "m_g_in")     # gamma total (gamma value of all compartments as computed by MultidomainSolver) ->  gamma_in of MuscleContractionSolver
-  ],
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": {
     "3Dmesh": [
@@ -296,6 +297,8 @@ config = {
     ("ms2",    "ms_in2"),
     ("ms3",    "ms_in3"),
     ("ms4",    "ms_in4"),
+    ("stress", "g_mu"),     # stress output of CellML models -> gamma of the MU (input of MultidomainSolver)
+    ("g_tot", "m_g_in")     # gamma total (gamma value of all compartments as computed by MultidomainSolver) ->  gamma_in of MuscleContractionSolver
   ],
   
   "Solvers": {

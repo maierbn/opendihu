@@ -294,6 +294,8 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
         ExternalConnectionLine newExternalConnectionLine;
         newExternalConnectionLine.lineNoFrom = slotLineNosTerm[0][slotsConnections[i].fromSlot];
         newExternalConnectionLine.lineNoTo   = slotLineNosTerm[1][slotsConnections[i].toSlot];
+        newExternalConnectionLine.slotNoFrom = slotsConnections[i].fromSlot;
+        newExternalConnectionLine.slotNoTo   = slotsConnections[i].toSlot;
         newExternalConnectionLine.lineColumn = 0;
         newExternalConnectionLine.lineType = slotsConnections[i].type;
 
@@ -310,6 +312,8 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
         ExternalConnectionLine newExternalConnectionLine;
         newExternalConnectionLine.lineNoFrom = slotLineNosTerm[0][slotsConnections[i].toSlot];
         newExternalConnectionLine.lineNoTo   = slotLineNosTerm[1][slotsConnections[i].fromSlot];
+        newExternalConnectionLine.slotNoFrom = slotsConnections[i].fromSlot;
+        newExternalConnectionLine.slotNoTo   = slotsConnections[i].toSlot;
         newExternalConnectionLine.lineColumn = 0;
         newExternalConnectionLine.lineType = slotsConnections[i].type;
 
@@ -658,6 +662,10 @@ generateFinalDiagram()
       maximumLinePosition = std::max((int)(externalConnectionLines_[i].lineColumn), maximumLinePosition);
     }
 #endif
+
+    int nDigitsSlotNoTo = 1;
+    int nDigitsSlotNoFrom = 1;
+
     // loop over all externalConnectionLines_ and see if they pass through the current line
     // collect all those rows into data structure verticalLinesInCurrentRow
     for (int i = 0; i < externalConnectionLines_.size(); i++)
@@ -665,6 +673,13 @@ generateFinalDiagram()
       // start and end row of current connection line
       int startLineNo = externalConnectionLines_[i].lineNoFrom;
       int endLineNo   = externalConnectionLines_[i].lineNoTo;
+      
+      // determine number of digits of the slotNo
+      if (externalConnectionLines_[i].slotNoTo > 0)
+        nDigitsSlotNoTo = int(log10(externalConnectionLines_[i].slotNoTo)) + 1;
+      
+      if (externalConnectionLines_[i].slotNoFrom > 0)
+        nDigitsSlotNoFrom = int(log10(externalConnectionLines_[i].slotNoFrom)) + 1;
 
       // if the connection line starts or ends in the current row, there will be a horizontal line
       if (currentLineNo == startLineNo)
@@ -730,7 +745,7 @@ generateFinalDiagram()
     //VLOG(1) << "line " << currentLineNo << ", currentLineNo " << currentLineNo << ", line=[" << line << "] has vertical lines: " << verticalLinesInCurrentRow;
 
     // fill current line with spaces such that it has the correct length
-    const int requiredLineLength = VARIABLES_LINE_LENGTH + 4 + nColumnsForInternalConnectionLines + 5;  //< line length for structure and variables
+    const int requiredLineLength = VARIABLES_LINE_LENGTH + 4 + nColumnsForInternalConnectionLines + 5 + 1;  //< line length for structure and variables
     lineLength = StringUtility::stringLength(line);
 
     // determine fill character for horizontal line
@@ -757,13 +772,18 @@ generateFinalDiagram()
       for (int i = 0; i < requiredLineLength - lineLength; i++)
       {
         // starting tip of arrow if the line starts or ends in the current row and has the according type
-        if (i == 0 && lineStartsHere && (lineType == solver_t::SlotsConnectionRepresentation::slot_connection_t::ba
-          || lineType == solver_t::SlotsConnectionRepresentation::slot_connection_t::bidirectionalCopy))
+        // at i == 0 if the slot no has one digit, at i == 1 if the slot no has two digits, etc.
+        if (i == nDigitsSlotNoFrom-1
+          && lineStartsHere 
+          && (lineType == solver_t::SlotsConnectionRepresentation::slot_connection_t::ba
+              || lineType == solver_t::SlotsConnectionRepresentation::slot_connection_t::bidirectionalCopy))
         {
           line += "<";
         }
-        else if (i == 0 && lineEndsHere && (lineType == solver_t::SlotsConnectionRepresentation::slot_connection_t::ab
-          || lineType == solver_t::SlotsConnectionRepresentation::slot_connection_t::bidirectionalCopy))
+        else if (i == nDigitsSlotNoTo-1
+          && lineEndsHere 
+          && (lineType == solver_t::SlotsConnectionRepresentation::slot_connection_t::ab
+              || lineType == solver_t::SlotsConnectionRepresentation::slot_connection_t::bidirectionalCopy))
         {
           line += "<";
         }

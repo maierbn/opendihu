@@ -109,6 +109,7 @@ If no actions for one of them is needed, `None` can be used. Each action is give
 `fromConnectorSlot` and `toConnectorSlots`
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 These two values specify the slots for the value transfer. The slots can either be identified by the slot number or by the slot name.
+
 * If the slots should be used to identify the slots, consult the `solver_structure.txt` representation to find out the slot numbers. Then, option `fromConnectorSlot` is simply a single integer. The option `toConnectorSlots` is either a single number or a list of multiple numbers for multiple output slots. Multiple output slots are only supported for the mode "callback".
 * If the slots should be identified by slot names, the same holds, but instead of numbers, simply provide the slot names as strings.
 

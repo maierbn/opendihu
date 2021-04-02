@@ -93,7 +93,9 @@ initialize()
   ierr = MatSetNearNullSpace(this->singleSystemMatrix_, nullSpace); CHKERRV(ierr); // for multigrid methods
   //ierr = MatNullSpaceDestroy(&nullSpace); CHKERRV(ierr);
 
+  // initialize the linear solver
   this->initializeLinearSolver();
+  isFirstTimestep_ = true;
 
   // create temporary vector which is needed in computation of rhs, b1_ was created by setSystemMatrixSubmatrices()
   ierr = MatCreateVecs(b1_[0], &temporary_, NULL); CHKERRV(ierr);
@@ -130,6 +132,19 @@ initialize()
 
   ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), this->nCompartments_+2, NULL, 
                        this->subvectorsSolution_.data(), &this->nestedSolution_); CHKERRV(ierr);
+
+  // output sizes of matrices for debugging output
+#if 0
+  global_no_t nDofsGlobalMuscle = this->dataMultidomain_.functionSpace()->nDofsGlobal();
+  global_no_t nDofsGlobalFat = this->dataFat_.functionSpace()->nDofsGlobal() - boundaryDofsGlobalFat_.size();
+
+  dof_no_t nDofsLocalWithoutGhostsMuscle = this->dataMultidomain_.functionSpace()->nDofsLocalWithoutGhosts();
+  dof_no_t nDofsLocalWithoutGhostsFat = this->dataFat_.functionSpace()->nDofsLocalWithoutGhosts() - nSharedDofsLocal_;
+
+  LOG(ERROR) << "rank " << this->dataMultidomain_.functionSpace()->meshPartition()->rankSubset()->ownRankNo() << ", n dofs muscle: " << nDofsLocalWithoutGhostsMuscle << "/" << nDofsGlobalMuscle
+    << ", fat: " << nDofsLocalWithoutGhostsFat << "/" << nDofsGlobalFat << ", ncols: " << this->nColumnSubmatricesSystemMatrix_ << ", total dofs: "
+    << nDofsGlobalMuscle * (this->nColumnSubmatricesSystemMatrix_-1) + nDofsGlobalFat;
+#endif
 
   // write initial meshes
   callOutputWriter(0, 0.0, 0);
@@ -245,10 +260,11 @@ setSystemMatrixSubmatrices(double timeStepWidth)
   b2_.resize(this->nCompartments_);
 
   // initialize the matrices b1, b2 to compute the rhs
-  // set all this->submatricesSystemMatrix_
+  // the final right hand side will be b_Vm^(i+1) = b1_ * Vm^(i) + b2_ * phi_e^(i)
   for (int k = 0; k < this->nCompartments_; k++)
   {
     // set b1_ = (θ-1)*1/(Am^k*Cm^k)*K_sigmai^k
+    // begin with b1_ = K_sigmai^k
     ierr = MatConvert(stiffnessMatrix, MATSAME, MAT_INITIAL_MATRIX, &b1_[k]); CHKERRV(ierr);
     
     double prefactor = (theta_ - 1) / (this->am_[k]*this->cm_[k]);
@@ -271,18 +287,19 @@ setSystemMatrixSubmatrices(double timeStepWidth)
       ierr = MatAXPY(b1_[k], prefactor, massMatrix, SAME_NONZERO_PATTERN); CHKERRV(ierr);
     }
 
-    // set b2_ = (θ-1)*K_sigmai^k
+    // set b2_ = (θ-1)/(Am^k*Cm^k)*K_sigmai^k
+    // begin with b2_ = K_sigmai^k
     ierr = MatConvert(stiffnessMatrix, MATSAME, MAT_INITIAL_MATRIX, &b2_[k]); CHKERRV(ierr);
     
     if (useLumpedMassMatrix_)
     {
-      // in this formulation we have b2_[k] = -dt*(θ-1)*M^{-1}*K_sigmai^k
+      // in this formulation we have b2_[k] = -dt*(θ-1)/(Am^k*Cm^k)*M^{-1}*K_sigmai^k
       Mat result;
       ierr = MatMatMult(minusDtMInv, b2_[k], MAT_INITIAL_MATRIX, PETSC_DEFAULT, &result); CHKERRV(ierr);
       b2_[k] = result;
     }
 
-    prefactor = theta_ - 1;
+    prefactor = (theta_ - 1) / (this->am_[k]*this->cm_[k]);
     ierr = MatScale(b2_[k], prefactor); CHKERRV(ierr);
   }
 }
@@ -729,6 +746,21 @@ solveLinearSystem()
   {
     LOG(DEBUG) << "set initial guess nonzero";
     ierr = KSPSetInitialGuessNonzero(*this->linearSolver_->ksp(), PETSC_TRUE); CHKERRV(ierr);
+    
+    // at the first timestep, set the initial guess of Vm^(i+1) to Vm^(i)
+    if (isFirstTimestep_)
+    {
+      LOG(INFO) << "set the initial guess of Vm^(i+1) to Vm^(i) at the first timestep.";
+      for (int k = 0; k < this->nCompartments_; k++)
+      {
+        std::vector<double> vmValues;
+        // get values Vm^(i)
+        this->dataMultidomain_.transmembranePotential(k)->getValuesWithoutGhosts(vmValues);
+        
+        // set values in Vm^(i+1) as initial guess
+        this->dataMultidomain_.transmembranePotentialSolution(k)->setValuesWithoutGhosts(vmValues);
+      }
+    }
   }
 
   // transform input phi_b to entry in solution vector without shared dofs, this->subvectorsSolution_[this->nCompartments_+1]
@@ -817,10 +849,12 @@ solveLinearSystem()
   // copy all values and the boundary dof values to the proper phi_b which is dataFat_.extraCellularPotentialFat()->valuesGlobal()
   copySolutionToPhiB();
 
+  // the next call to solveLinearSystem is no longer the first timestep
+  isFirstTimestep_ = false;
+
   LOG(DEBUG) << "after linear solver:";
   LOG(DEBUG) << "extracellularPotentialFat: " << PetscUtility::getStringVector(dataFat_.extraCellularPotentialFat()->valuesGlobal());
   LOG(DEBUG) << *dataFat_.extraCellularPotentialFat();
-
 }
 
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusionMuscle,typename FiniteElementMethodDiffusionFat>

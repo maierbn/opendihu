@@ -1,6 +1,6 @@
 #include "slot_connection/slot_connector_data_transfer_tuple.h"
 
-#include "slot_connection/slot_connector_data_helper.h"
+#include "slot_connection/data_helper/slot_connector_data_helper.h"
 
 /** Transfer between a tuple and another field variables with given component number
  */

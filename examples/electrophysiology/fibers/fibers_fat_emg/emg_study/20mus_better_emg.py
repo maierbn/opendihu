@@ -133,8 +133,8 @@ if True:
   import sys
   # only on rank 0
   if (int)(sys.argv[-2]) == 0:
-    for mu_no,item in enumerate(motor_units):    
-      print("MU {}".format(mu_no))
+    for mu_no,item in enumerate(motor_units[0::4]):
+      print("MU {}".format(mu_no*4))
       for (key,value) in item.items():
         if key != "jitter":
           print("  {}: {}".format(key,value))

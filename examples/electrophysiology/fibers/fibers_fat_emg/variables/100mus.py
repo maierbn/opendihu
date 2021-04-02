@@ -13,6 +13,7 @@ Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 
 # -----------------
 # motor units from paper Klotz2019 "Modelling the electrical activity of skeletal muscle tissue using a multi‐domain approach"
 
+import os
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
 import numpy as np
@@ -71,11 +72,11 @@ output_timestep_surface = 1e5              # [ms] timestep for output surface EM
 output_timestep_electrodes = 2e8    # [ms] timestep for python callback, which is electrode measurement output, has to be >= dt_3D
 
 # input files
-fiber_file = "../../../input/left_biceps_brachii_67x67fibers.bin"
-#fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
-fat_mesh_file = fiber_file + "_fat.bin"
-firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-fiber_distribution_file = "../../../input/MU_fibre_distribution_67x67_100.txt"
+input_directory = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
+fiber_file              = input_directory+"/input/left_biceps_brachii_67x67fibers.bin"
+fat_mesh_file           = fiber_file + "_fat.bin"
+firing_times_file       = input_directory+"/input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+fiber_distribution_file = input_directory+"/input/MU_fibre_distribution_67x67_100.txt"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
@@ -131,8 +132,8 @@ if True:
   import sys
   # only on rank 0
   if (int)(sys.argv[-2]) == 0:
-    for mu_no,item in enumerate(motor_units):    
-      print("MU {}".format(mu_no))
+    for mu_no,item in enumerate(motor_units[0::20]):
+      print("MU {}".format(mu_no*20))
       for (key,value) in item.items():
         if key != "jitter":
           print("  {}: {}".format(key,value))

@@ -242,6 +242,7 @@ def algorithm_mode_1(output_filename, n_motor_units, n_fibers_x, _basis, n_max_i
 
   # generate pseudorandom motor unit positions using a Weyl sequence
   mu_positions = generate_mu_positions(n_motor_units, n_fibers_x, enable_plots, output_filename, mu_position_offset, mu_position_stride)
+  print("mu_positions: {}".format(mu_positions))
 
   def pdf_distance(equalization_factors,scaling_factor,i,j,mu_no):
     """ the probability distribution of the motor unit of fiber (i,j) """
@@ -342,7 +343,7 @@ def algorithm_mode_1(output_filename, n_motor_units, n_fibers_x, _basis, n_max_i
     plt.figure(1)
     
     # plot radial basis function
-    x_list = np.linspace(mu_positions[0]-n_fibers_x//2, mu_positions[0]+n_fibers_x//2)
+    x_list = np.linspace(mu_positions[0][0]-n_fibers_x//2, mu_positions[0][0]+n_fibers_x//2)
     
     previous = use_accurate_radial_basis_function
     

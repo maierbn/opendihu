@@ -27,7 +27,7 @@ scenario_name = "spindles_fibers"
 # load
 precontraction_constant_body_force = (0,0,20*9.81e-4)   # [cm/ms^2], gravity constant for the body force
 precontraction_bottom_traction = [0,0,0]        # [N]
-constant_gamma = 0.2    # 0.3 works, the active stress will be pmax*constant_gamma
+constant_gamma = 0.1    # 0.3 works, the active stress will be pmax*constant_gamma
 
 # parameters for prestretch
 # -----------------------------

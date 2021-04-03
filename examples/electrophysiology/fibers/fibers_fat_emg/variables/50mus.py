@@ -13,6 +13,7 @@ Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 
 # -----------------
 # motor units from paper Klotz2019 "Modelling the electrical activity of skeletal muscle tissue using a multi‐domain approach"
 
+import os
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
 import numpy as np
@@ -71,11 +72,11 @@ output_timestep_surface = 1e5              # [ms] timestep for output surface EM
 output_timestep_electrodes = 2e8    # [ms] timestep for python callback, which is electrode measurement output, has to be >= dt_3D
 
 # input files
-fiber_file = "../../../input/left_biceps_brachii_37x37fibers.bin"
-#fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
-fat_mesh_file = fiber_file + "_fat.bin"
-firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-fiber_distribution_file = "../../../input/MU_fibre_distribution_37x37_50.txt"
+input_directory = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
+fiber_file              = input_directory+"/left_biceps_brachii_37x37fibers.bin"
+fat_mesh_file           = fiber_file + "_fat.bin"
+firing_times_file       = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+fiber_distribution_file = input_directory+"/MU_fibre_distribution_37x37_50.txt"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
@@ -99,9 +100,9 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-disable_firing_output = False
+disable_firing_output = True
 fast_monodomain_solver_optimizations = True # enable the optimizations in the fast multidomain solver
-use_vc = True                       # If the vc optimization type should be used for CellmlAdapter
+optimization_type = "vc"            # the optimization_type used in the cellml adapter, "vc" uses explicit vectorization
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):
@@ -131,8 +132,10 @@ if True:
   import sys
   # only on rank 0
   if (int)(sys.argv[-2]) == 0:
-    for mu_no,item in enumerate(motor_units):    
-      print("MU {}".format(mu_no))
+    for mu_no,item in enumerate(motor_units[0::10]):
+      if mu_no % 4 != 0:
+        continue    
+      print("MU {}".format(mu_no*10))
       for (key,value) in item.items():
         if key != "jitter":
           print("  {}: {}".format(key,value))

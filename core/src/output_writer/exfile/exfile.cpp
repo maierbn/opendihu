@@ -52,7 +52,8 @@ void Exfile::outputComFile()
   
   std::string lastMeshName;
   int lastDimensionality = 3;
-  
+  std::set<std::string> fiberMeshes;
+
   // loop over times of stored files
   for (std::map<double,std::vector<FilenameWithElementAndNodeCount>>::iterator iter = filenamesWithElementAndNodeCount_.begin(); iter != filenamesWithElementAndNodeCount_.end(); iter++)
   {
@@ -81,6 +82,9 @@ void Exfile::outputComFile()
         //<< "gfx modify g_element $group surface;" << std::endl
         //<< "$n+=1500;" << std::endl;
         
+      if (iter2->dimensionality == 1)
+        fiberMeshes.insert(iter2->meshName);
+
       // increase offsets by number of nodes and elements in the current files
       nodeOffset += iter2->nNodes;
       elementOffset += iter2->nElements;
@@ -109,9 +113,14 @@ void Exfile::outputComFile()
   else if (lastDimensionality == 1)
   {
     file << std::endl
-      << "##### 1D mesh #####" << std::endl
-      << "# add spheres representation" << std::endl
-      << "gfx modify g_element $group points domain_mesh1d coordinate geometry glyph sphere size \"" << sphereSize << "\" select_on material default data solution" << std::endl << std::endl;
+      << "##### 1D meshes #####" << std::endl
+      << "# add spheres representation" << std::endl;
+
+    for (std::string meshName : fiberMeshes)
+    {
+      file << "gfx modify g_element \"" << meshName << "\" points domain_mesh1d coordinate geometry glyph sphere size \"" << sphereSize << "\" select_on material default data solution" << std::endl;
+    }
+    file << std::endl;
   }
   
   file << "# add axes" << std::endl

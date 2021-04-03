@@ -16,11 +16,18 @@ innervation_zone_width = 0.         # not used [cm], this will later be used to 
 # -------
 diffusion_solver_type = "cg"        # solver and preconditioner for the diffusion part of the Monodomain equation
 diffusion_preconditioner_type = "none"      # preconditioner
+diffusion_solver_maxit = 1e4
+diffusion_solver_reltol = 1e-10
 potential_flow_solver_type = "gmres"        # solver and preconditioner for an initial Laplace flow on the domain, from which fiber directions are determined
 potential_flow_preconditioner_type = "gamg" # preconditioner
+potential_flow_solver_maxit = 1e4
+potential_flow_solver_reltol = 1e-10
 emg_solver_type = "cg"              # solver and preconditioner for the 3D static Bidomain equation that solves the intra-muscular EMG signal
 emg_preconditioner_type = "none"    # preconditioner
 emg_initial_guess_nonzero = False   # If the initial guess for the emg linear system should be set to the previous solution
+emg_solver_maxit = 1e4
+emg_solver_reltol = 1e-5
+emg_solver_abstol = 1e-10
 
 # timing parameters
 # -----------------
@@ -45,10 +52,7 @@ output_timestep_3D_emg = 0.1        # [ms] timestep for output big files of 3D E
 cellml_file = "../../../input/hodgkin_huxley_1952.c"
 
 # Fiber geometry, binary file
-#fiber_file = "../../../input/3000fibers.bin"
-#fiber_file = "../../../input/7x7fibers.bin"
-fiber_file = "../../../input/13x13fibers.bin"
-#fiber_file = "../../../input/49fibers.bin"
+fiber_file = "../../../input/left_biceps_brachii_7x7fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 
 load_fiber_data = False             # If the fiber geometry data should be loaded completely in the python script. If True, this reads the binary file and assigns the node positions in the config. If False, the C++ code will read the binary file and only extract the local node positions. This is more performant for highly parallel runs.
@@ -58,7 +62,10 @@ paraview_output = False             # If the paraview output writer should be en
 adios_output = False                # If the MegaMol/ADIOS output writer should be enabled
 python_output = False               # If the Python output writer should be enabled
 exfile_output = False               # If the Exfile output writer should be enabled
-
+enable_surface_emg = True           # Enables the surface emg output writer
+optimization_type = "vc"            # the optimization_type used in the cellml adapter, "vc" uses explicit vectorization
+approximate_exponential_function = True   # if the exponential function should be approximated by a Taylor series with only 11 FLOPS
+fast_monodomain_solver_optimizations = True # enable the optimizations in the fast multidomain solver
 
 # motor unit stimulation times
 fiber_distribution_file = "../../../input/MU_fibre_distribution_3780.txt"
@@ -149,6 +156,4 @@ fat_mesh_n_points = None
 fat_mesh_n_points_global = None
 local_range_i = None
 local_range_k = None
-fast_monodomain_solver_optimizations = True # enable the optimizations in the fast multidomain solver
-use_vc = True                       # If the vc optimization type should be used for CellmlAdapter
 

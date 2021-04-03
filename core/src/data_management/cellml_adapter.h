@@ -10,14 +10,17 @@ namespace Data
 {
 
 /**  The datastructures used for the cellml adapter.
-  */
+ *   A DiscretizableInTime class has no own slotConnectorData, since is has no own data.
+ *   The relevant data (solution vector) is stored in the timestepping scheme. However, the algebraics and parameters are stored here (in the data object).
+ *   Therefore, the CellmlAdapter has a copy of the slotConnectorData of the timestepping scheme
+ */
 template <int nStates, int nAlgebraics, typename FunctionSpaceType>
 class CellmlAdapter : public Data<FunctionSpaceType>
 {
 public:
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nAlgebraics> FieldVariableAlgebraics;
   typedef FieldVariable::FieldVariable<FunctionSpaceType,nStates> FieldVariableStates;
-  typedef SlotConnectorData<FunctionSpaceType,nStates,nAlgebraics> SlotConnectorDataType;
+  //typedef SlotConnectorData<FunctionSpaceType,nStates,nAlgebraics> SlotConnectorDataType;
 
   //! constructor
   CellmlAdapter(DihuContext context);
@@ -62,9 +65,9 @@ public:
   //! return a reference parametersForTransfer_
   std::vector<int> &parametersForTransfer();
 
-  //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the slot_connector_data_transfer class
-  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
+  //! initialize the slotConnectorData object of the timestepping scheme, this method is called once in the initialize() of the timestepping scheme
+  //! It adds all slots that were defined in the CellmlAdapter to the slotConnectorData of the timestepping scheme
+  void setSlotConnectorDataTimestepping(std::shared_ptr<SlotConnectorData<FunctionSpaceType,nStates>> slotConnectorDataTimeStepping);
 
   //! field variables that will be output by outputWriters
   typedef std::tuple<
@@ -93,7 +96,7 @@ private:
   std::vector<std::string> parameterNames_;               //< component names of the parameter field variable
   std::vector<std::string> slotNames_;                    //< names of the data slots that are used for slot connectors
 
-  std::shared_ptr<SlotConnectorDataType> slotConnectorData_;//< the object that holds all components of field variables that will be transferred to other solvers
+  std::shared_ptr<SlotConnectorData<FunctionSpaceType,nStates>> slotConnectorDataTimestepping_;   //< slotConnectorData = the object that holds all components of field variables that will be transferred to other solvers, this is a copy of the slot connector data object of the timestepping scheme
   PythonConfig specificSettings_;                               //< the settings object
 
   std::vector<int> statesForTransfer_;                    //< state no.s to transfer to other solvers within slot connector data

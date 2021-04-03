@@ -1,0 +1,102 @@
+%% Creator: Inkscape inkscape 0.92.3, www.inkscape.org
+%% PDF/EPS/PS + LaTeX output extension by Johan Engelen, 2010
+%% Accompanies image file 'geometric_quantities.pdf' (pdf, eps, ps)
+%%
+%% To include the image in your LaTeX document, write
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics{<filename>.pdf}
+%% To scale the image, write
+%%   \def\svgwidth{<desired width>}
+%%   \input{<filename>.pdf_tex}
+%%  instead of
+%%   \includegraphics[width=<desired width>]{<filename>.pdf}
+%%
+%% Images with a different path to the parent latex file can
+%% be accessed with the `import' package (which may need to be
+%% installed) using
+%%   \usepackage{import}
+%% in the preamble, and then including the image with
+%%   \import{<path to file>}{<filename>.pdf_tex}
+%% Alternatively, one can specify
+%%   \graphicspath{{<path to file>/}}
+%% 
+%% For more information, please see info/svg-inkscape on CTAN:
+%%   http://tug.ctan.org/tex-archive/info/svg-inkscape
+%%
+\begingroup%
+  \makeatletter%
+  \providecommand\color[2][]{%
+    \errmessage{(Inkscape) Color is used for the text in Inkscape, but the package 'color.sty' is not loaded}%
+    \renewcommand\color[2][]{}%
+  }%
+  \providecommand\transparent[1]{%
+    \errmessage{(Inkscape) Transparency is used (non-zero) for the text in Inkscape, but the package 'transparent.sty' is not loaded}%
+    \renewcommand\transparent[1]{}%
+  }%
+  \providecommand\rotatebox[2]{#2}%
+  \newcommand*\fsize{\dimexpr\f@size pt\relax}%
+  \newcommand*\lineheight[1]{\fontsize{\fsize}{#1\fsize}\selectfont}%
+  \ifx\svgwidth\undefined%
+    \setlength{\unitlength}{388.6873358bp}%
+    \ifx\svgscale\undefined%
+      \relax%
+    \else%
+      \setlength{\unitlength}{\unitlength * \real{\svgscale}}%
+    \fi%
+  \else%
+    \setlength{\unitlength}{\svgwidth}%
+  \fi%
+  \global\let\svgwidth\undefined%
+  \global\let\svgscale\undefined%
+  \makeatother%
+  \begin{picture}(1,0.83428404)%
+    \lineheight{1}%
+    \setlength\tabcolsep{0pt}%
+    \put(0,0){\includegraphics[width=\unitlength,page=1]{geometric_quantities.pdf}}%
+    \put(0.2529357,0.53916039){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\Omega_0$\end{tabular}}}}%
+    \put(0.6873301,0.52057193){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\Omega_t$\end{tabular}}}}%
+    \put(0.27223144,0.28157197){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$T_\bfX\Omega_0$\end{tabular}}}}%
+    \put(0.24018014,0.00815471){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$T^\ast_\bfX\Omega_0$\end{tabular}}}}%
+    \put(0.14844543,0.79703741){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}reference configuration\end{tabular}}}}%
+    \put(0.60632435,0.7972381){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}current configuration\end{tabular}}}}%
+    \put(-0.0003396,0.35425116){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}tangent space\\at point $\bfX$\end{tabular}}}}%
+    \put(-0.00138929,0.16969633){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}co-tangent space\\at point $\bfX$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=2]{geometric_quantities.pdf}}%
+    \put(0.66487422,0.29057966){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$T_\bfx\Omega_t$\end{tabular}}}}%
+    \put(0.65302387,0.01602179){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$T^\ast_\bfx\Omega_t$\end{tabular}}}}%
+    \put(0.30475078,0.20052477){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfC$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=3]{geometric_quantities.pdf}}%
+    \put(0.3523539,0.68660674){\color[rgb]{1,0.49803922,0.05490196}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfM$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=4]{geometric_quantities.pdf}}%
+    \put(0.26437218,0.73339957){\color[rgb]{1,0.49803922,0.05490196}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}1\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=5]{geometric_quantities.pdf}}%
+    \put(0.32422356,0.64219228){\color[rgb]{0.50196078,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfX$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=6]{geometric_quantities.pdf}}%
+    \put(0.31643449,0.32769238){\color[rgb]{1,0.49803922,0.05490196}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfT$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=7]{geometric_quantities.pdf}}%
+    \put(0.24810833,0.32055158){\color[rgb]{0.50196078,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfX$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=8]{geometric_quantities.pdf}}%
+    \put(0.74752798,0.3179854){\color[rgb]{1,0.49803922,0.05490196}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bft$\end{tabular}}}}%
+    \put(0.6980035,0.34528514){\color[rgb]{0.50196078,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfx$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=9]{geometric_quantities.pdf}}%
+    \put(0.32424765,0.11558921){\color[rgb]{1,0.49803922,0.05490196}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfA$\end{tabular}}}}%
+    \put(0.32026025,0.07143072){\color[rgb]{0.50196078,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfX$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=10]{geometric_quantities.pdf}}%
+    \put(0.72699692,0.11755486){\color[rgb]{1,0.49803922,0.05490196}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfa$\end{tabular}}}}%
+    \put(0.72445489,0.08458756){\color[rgb]{0.50196078,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfx$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=11]{geometric_quantities.pdf}}%
+    \put(0.47189886,0.63588176){\color[rgb]{0.50196078,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfvarphi_t$\end{tabular}}}}%
+    \put(0.49737644,0.41582352){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfF$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=12]{geometric_quantities.pdf}}%
+    \put(0.4937635,0.19915568){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfF^{-\top}$\end{tabular}}}}%
+    \put(0.76113567,0.20810513){\color[rgb]{0.96078431,0.96078431,0.96078431}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfg$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=13]{geometric_quantities.pdf}}%
+    \put(0.68785846,0.58160608){\color[rgb]{0.50196078,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfx$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=14]{geometric_quantities.pdf}}%
+    \put(0.69621745,0.612674){\color[rgb]{1,0.49803922,0.05490196}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bflambda=\bfF\,\bfM$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=15]{geometric_quantities.pdf}}%
+    \put(0.61255471,0.66482016){\color[rgb]{1,0.49803922,0.05490196}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\lambda$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=16]{geometric_quantities.pdf}}%
+  \end{picture}%
+\endgroup%

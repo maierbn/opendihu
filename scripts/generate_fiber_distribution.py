@@ -8,7 +8,7 @@
 # usage: ./generate_fiber_distribution <output filename> <number of MUs> [<mode> [...]]
 # or run without arguments to get help
 
-import sys
+import sys, os
 import random
 import time
 import numpy as np
@@ -16,45 +16,48 @@ import scipy
 import scipy.integrate
 import scipy.signal
 import matplotlib
-matplotlib.use('Agg')
-
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from matplotlib.lines import Line2D
+n_motor_units = 0
 
-if len(sys.argv) < 3:
-  print("usage: ./generate_fiber_distribution <output filename> <number of MUs> <mode> [<n_fibers_x> [<basis> [...]]] ")
-  print("  mode: 0 = random assignment of fibers to MUs (default)")
-  print("        1 = MUs are centered at different locations (use this if unsure)")
-  print("        2 = like 1, but no scaling on the probabilities is performed,")
-  print("            this means numerous fibers will get no MU assigned")
-  print("        3 = combine four runs of mode 1 to get MUs with fibers that do not touch each other")
-  print("")
-  print("  for mode 0:")
-  print("       ./generate_fiber_distribution <output filename> <number of MUs> 0 [<n_fibers_x> [<basis>]]\n")
-  print("  for mode 1:")
-  print("       ./generate_fiber_distribution <output filename> <number of MUs> 1 [<n_fibers_x> [<basis> [<n_max_iterations> [<chunk_size>]]]] ")
-  print("       if <n_max_iterations> is set to -1, use pysgpp instead of scipy.optimize (if available)\n")
-  print("  for mode 2:")
-  print("       ./generate_fiber_distribution <output filename> <number of MUs> 2 [<n_fibers_x> [<basis>]] \n")
-  print("  for mode 3:")
-  print("       ./generate_fiber_distribution <output filename> <number of MUs> 3 <part_mode> [<n_fibers_x> [<basis> [<n_max_iterations> [<chunk_size>]]]]")
-  
-  sys.exit(0)
+if __name__ == "__main__":
+  matplotlib.use('Agg')
 
-# parse command line arguments  
-output_filename = sys.argv[1]
-n_motor_units = (int)(sys.argv[2])
 
-# parse mode
-mode = 0
-if len(sys.argv) > 3:
-  mode = (int)(sys.argv[3])
-  if mode not in [0,1,2,3]:
-    print("mode was {}, set to 1".format(mode))
-    mode = 1
+  if len(sys.argv) < 3:
+    print("usage: ./generate_fiber_distribution <output filename> <number of MUs> <mode> [<n_fibers_x> [<basis> [...]]] ")
+    print("  mode: 0 = random assignment of fibers to MUs (default)")
+    print("        1 = MUs are centered at different locations (use this if unsure)")
+    print("        2 = like 1, but no scaling on the probabilities is performed,")
+    print("            this means numerous fibers will get no MU assigned")
+    print("        3 = combine four runs of mode 1 to get MUs with fibers that do not touch each other")
+    print("")
+    print("  for mode 0:")
+    print("       ./generate_fiber_distribution <output filename> <number of MUs> 0 [<n_fibers_x> [<basis>]]\n")
+    print("  for mode 1:")
+    print("       ./generate_fiber_distribution <output filename> <number of MUs> 1 [<n_fibers_x> [<basis> [<n_max_iterations> [<chunk_size>]]]] ")
+    print("       if <n_max_iterations> is set to -1, use pysgpp instead of scipy.optimize (if available)\n")
+    print("  for mode 2:")
+    print("       ./generate_fiber_distribution <output filename> <number of MUs> 2 [<n_fibers_x> [<basis>]] \n")
+    print("  for mode 3:")
+    print("       ./generate_fiber_distribution <output filename> <number of MUs> 3 <part_mode> [<n_fibers_x> [<basis> [<n_max_iterations> [<chunk_size>]]]]")
     
-basis = 1.20
+    sys.exit(0)
+
+  # parse command line arguments  
+  output_filename = sys.argv[1]
+  n_motor_units = (int)(sys.argv[2])
+
+  # parse mode
+  mode = 0
+  if len(sys.argv) > 3:
+    mode = (int)(sys.argv[3])
+    if mode not in [0,1,2,3]:
+      print("mode was {}, set to 1".format(mode))
+      mode = 1
+      
+  basis = 1.20
 
 # definition of stochastic functions
 def pdf_unscaled(mu_no):
@@ -80,8 +83,9 @@ def inverse_cdf(y):
   result = scipy.optimize.minimize_scalar(lambda x: np.linalg.norm(cdf(x) - y))
   return result.x
   
-ystart = cdf(0.5)
-yend = cdf(n_motor_units+0.5)
+if __name__ == "__main__":
+  ystart = cdf(0.5)
+  yend = cdf(n_motor_units+0.5)
 
 def draw_sample():
   return int(np.round(inverse_cdf(random.uniform(ystart,yend))))
@@ -117,7 +121,7 @@ def pdf_distance_unscaled(equalization_factors,i,j,mu_no):
 
   return probability * equalization_factors[mu_no-1]
   
-def generate_mu_positions(n_motor_units, n_fibers_x, enable_plots, output_filename, mu_position_offset=0):
+def generate_mu_positions(n_motor_units, n_fibers_x, enable_plots, output_filename, mu_position_offset=0, mu_position_stride=1):
   """
   Generate pseudo-random MU center points using a low-discrepancy Weyl sequence
   :param n_motor_units:  Number of center points to generate
@@ -142,7 +146,7 @@ def generate_mu_positions(n_motor_units, n_fibers_x, enable_plots, output_filena
   # get random positions according to low-discrepancy series
   alpha1 = 0.5545497
   alpha2 = 0.308517
-  for mu_no in range(mu_position_offset, mu_position_offset+n_motor_units):
+  for mu_no in range(mu_position_offset, mu_position_offset+n_motor_units*mu_position_stride, mu_position_stride):
     
     x = (mu_no*alpha1) % 1.0
     y = (mu_no*alpha2) % 1.0
@@ -157,20 +161,33 @@ def generate_mu_positions(n_motor_units, n_fibers_x, enable_plots, output_filena
 
   # plot actual center points of MUs
   if enable_plots:
-    print("  Randomly chosen MU positions:")
+    #print("  Weyl sequence chosen MU positions:")
     # plot MU centers in 2D plot
     colors = cm.rainbow(np.linspace(0, 1, n_motor_units))
+
+    # set global parameters for font sizes
+    plt.rcParams.update({'font.size': 14})
+    plt.rcParams['lines.linewidth'] = 3
+    plt.rcParams['lines.markersize'] = 8
 
     plt.figure(0)
     for mu_no in range(n_motor_units):
       mu_position = mu_positions[mu_no]
-      print("  MU {}, center position: {}".format(mu_no,mu_position))
+      #print("  MU {}, center position: {}".format(mu_no,mu_position))
       x = mu_position[0]
       y = mu_position[1]
     
       color = colors[mu_no,:]
       plt.plot(x,y, '+', markersize=24,color=color)
     filename = "plots/"+output_filename+"_mu_positions.pdf"
+    ax = plt.gca()
+    ax.axis('equal')
+    ax.set_ylim(0,max([p[1]*1.1 for p in mu_positions]))
+    ax.set_xlim(0,max([p[0]*1.1 for p in mu_positions]))
+    ax.set_title("MU territory center points")
+    subdirectory = filename[0:filename.rfind("/")]
+    if not os.path.exists(subdirectory):
+      os.makedirs(subdirectory)
     plt.savefig(filename)
     print("  Saved MU positions to file \"{}\".".format(filename))
   
@@ -197,7 +214,7 @@ def algorithm_mode_0(output_filename, n_motor_units, n_fibers_x, basis):
     str_values = map(str, values)
     f.write(" ".join(str_values))
   
-def algorithm_mode_1(output_filename, n_motor_units, n_fibers_x, _basis, n_max_iterations, chunk_size, sigma, mu_position_offset=0):
+def algorithm_mode_1(output_filename, n_motor_units, n_fibers_x, _basis, n_max_iterations, chunk_size, sigma, mu_position_offset=0, mu_position_stride=1):
   """
   mode 1: centralized placement of fibers around center of MU, assigning all fibers
   :param output_filename:  The filename of the output file that will contain the MU nos for the fibers
@@ -224,7 +241,7 @@ def algorithm_mode_1(output_filename, n_motor_units, n_fibers_x, _basis, n_max_i
   t_start = time.time()
 
   # generate pseudorandom motor unit positions using a Weyl sequence
-  mu_positions = generate_mu_positions(n_motor_units, n_fibers_x, enable_plots, output_filename, mu_position_offset)
+  mu_positions = generate_mu_positions(n_motor_units, n_fibers_x, enable_plots, output_filename, mu_position_offset, mu_position_stride)
 
   def pdf_distance(equalization_factors,scaling_factor,i,j,mu_no):
     """ the probability distribution of the motor unit of fiber (i,j) """
@@ -760,7 +777,7 @@ def algorithm_mode_1(output_filename, n_motor_units, n_fibers_x, _basis, n_max_i
     
   return output_filename_with_suffix
   
-def algorithm_mode_2(output_filename, n_motor_units, n_fibers_x, _basis, sigma, mu_position_offset=0):
+def algorithm_mode_2(output_filename, n_motor_units, n_fibers_x, _basis, sigma, mu_position_offset=0, mu_position_stride=1):
   """
   mode 2: centralized placement of fibers around center of MU, not assigning all fibers, this is analogous to multidomain
   :param output_filename:  The filename of the output file that will contain the MU nos for the fibers
@@ -783,7 +800,7 @@ def algorithm_mode_2(output_filename, n_motor_units, n_fibers_x, _basis, sigma, 
   a_factor = np.pi**2 / (4*sigma**4)   # use a higher factor for a smaller width of the RBF, which leads to sharper motor unit territories
   
   # generate pseudorandom motor unit positions using a Weyl sequence
-  mu_positions = generate_mu_positions(n_motor_units, n_fibers_x, enable_plots, output_filename, mu_position_offset)
+  mu_positions = generate_mu_positions(n_motor_units, n_fibers_x, enable_plots, output_filename, mu_position_offset, mu_position_stride)
   
   equalization_factors = [1 for _ in range(n_motor_units)]
   
@@ -883,7 +900,7 @@ def algorithm_mode_2(output_filename, n_motor_units, n_fibers_x, _basis, sigma, 
 
   return output_filename_with_suffix
 
-def algorithm_mode_3(output_filename, n_motor_units, n_fibers_x, _basis, n_max_iterations, chunk_size, sigma, part_mode, mu_position_offset=0):
+def algorithm_mode_3(output_filename, n_motor_units, n_fibers_x, _basis, n_max_iterations, chunk_size, sigma, part_mode, mu_position_offset=0, mu_position_stride=1):
   """
   mode 3: combination of 4 instances of mode 1 or 2, in order to create MUs where the fiber do not touch each other
   :param output_filename:  The filename of the output file that will contain the MU nos for the fibers
@@ -936,11 +953,12 @@ def algorithm_mode_3(output_filename, n_motor_units, n_fibers_x, _basis, n_max_i
     
     # call the algorithm of method 1 or 2
     if part_mode == 1:
-      filename = algorithm_mode_1(output_filename_instance, n_motor_units_instance, n_fibers_x_instance, basis_instance, n_max_iterations, chunk_size, sigma, mu_position_offset)
+      filename = algorithm_mode_1(output_filename_instance, n_motor_units_instance, n_fibers_x_instance, basis_instance, n_max_iterations, chunk_size, sigma, mu_position_offset, 4)
     else:
-      filename = algorithm_mode_2(output_filename_instance, n_motor_units_instance, n_fibers_x_instance, basis_instance, sigma, mu_position_offset)
+      filename = algorithm_mode_2(output_filename_instance, n_motor_units_instance, n_fibers_x_instance, basis_instance, sigma, mu_position_offset, 4)
     
-    mu_position_offset += n_motor_units_instance
+    #mu_position_offset += n_motor_units_instance
+    mu_position_offset += 1
     
     # parse the resulting file
     f = open(filename,"r")
@@ -1010,7 +1028,7 @@ def algorithm_mode_3(output_filename, n_motor_units, n_fibers_x, _basis, n_max_i
   numbers,edges = np.histogram(mu_nos_for_fibers,bins)
   
   # print the expected and actual number of fibers per MU
-  print("\nFinal result of all 4 combined results:")
+  print("\nFinal result of the 4 combined sub problems:")
   print("\nMU sizes:")
   for mu_no in range(1,n_motor_units+1):
     print("  MU {}: {} fiber(s)".
@@ -1029,283 +1047,293 @@ def algorithm_mode_3(output_filename, n_motor_units, n_fibers_x, _basis, n_max_i
   basis = original_basis
   scaling_factor_pdf = sum([pdf_unscaled(x) for x in range(1,n_motor_units+1)])
 
+  print("-----------------------------------------------------------\nRun the following to see the results of the 4 sub problems:")
+  for i in range(4):
+    print("  plot_fiber_distribution.py {}_{}".format(output_filename_with_suffix, i))
+  print("\nRun the following to plot the total result:")
+  print("  plot_fiber_distribution.py {} {} {} {}".format(output_filename_with_suffix, n_motor_units, n_fibers_x, basis))
+  print("\nIf it contains too many MUs to properly visualize, only color \na subset of MUs by specifying a list as the last argument, e.g.:")
+  print("  plot_fiber_distribution.py {} {} {} {} 1,5,8".format(output_filename_with_suffix, n_motor_units, n_fibers_x, basis))
+  print("-----------------------------------------------------------\n")
+
   return output_filename_with_suffix
   
+if __name__ == "__main__": 
 
-# initialize random to produce deterministic values
-#random.seed(0)
+  # initialize random to produce deterministic values
+  #random.seed(0)
 
-# mode 0: random placement of fibers
-if mode == 0:
+  # mode 0: random placement of fibers
+  if mode == 0:
 
-  # parse command line arguments
-  # ./generate_fiber_distribution <output filename> <number of MUs> 0 [<n_fibers_x> [<basis>]]
-  n_fibers_x = -1
-  if len(sys.argv) > 4:
-    n_fibers_x = (int)(sys.argv[4])
-  else:
-    print("The number of fibers in x and y direction has to be known:")
-    n_fibers_x = (int)(input("Please enter n_fibers_x and press Enter: "))
-  
-  if len(sys.argv) > 5:
-    basis = (float)(sys.argv[5])
-  
-  print("Parameters:\n"
-    "  output_filename: \"{}\"\n"
-    "  n_motor_units:    {}\n"
-    "  mode:             0 (random placement of fibers)\n"
-    "  n_fibers_x:       {} (number of fibers in one coordinate direction) \n"
-    "  basis:            {} i.e. exponential distribution will be MU size = {}^mu_no\n".
-  format(output_filename, n_motor_units, n_fibers_x, basis, basis))
-
-  n_fibers_y = n_fibers_x
-  n_fibers = n_fibers_x * n_fibers_y
-  mu_positions = None
-  
-  # call algorithm that will write the file
-  algorithm_mode_0(output_filename, n_motor_units, n_fibers_x, basis)
-  
-# mode 1: centralized placement of fibers around center of MU, assigning all fibers
-elif mode == 1:
-  
-  # parse command line arguments
-  # ./generate_fiber_distribution <output filename> <number of MUs> 1 [<n_fibers_x> [<basis> [<n_max_iterations> [<chunk_size>]]]]
-  n_fibers_x = -1
-  if len(sys.argv) > 4:
-    n_fibers_x = (int)(sys.argv[4])
-  else:
-    print("The number of fibers in x and y direction has to be known:")
-    n_fibers_x = (int)(input("Please enter n_fibers_x and press Enter: "))
-  
-  if len(sys.argv) > 5:
-    basis = (float)(sys.argv[5])
-  
-  n_max_iterations = 100
-  if len(sys.argv) > 6:
-    n_max_iterations = (int)(sys.argv[6])
-  
-  chunk_size = 5          # sizes of the optimization problems that will be solved. A smaller chunk_size means faster optimization problems but more of them
-  if len(sys.argv) > 7:
-    chunk_size = (int)(sys.argv[7])
-  
-  # shape parameters for radial basis function
-  #sigma = 0.1*n_fibers_x    # std deviation for size of motor unit territories
-  sigma = 0.01*n_fibers_x    # std deviation for size of motor unit territories
-  
-  print("Parameters:\n"
-    "  output_filename: \"{}\"\n"
-    "  n_motor_units:    {}\n"
-    "  mode:             1 (centralized placement of fibers around center of MU, assigning all fibers)\n"
-    "  n_fibers_x:       {} (number of fibers in one coordinate direction) \n"
-    "  basis:            {} i.e. exponential distribution will be MU size = {}^mu_no\n"
-    "  n_max_iterations: {} (maximum number of iterations of the nonlinear solver, decrease this value if the script takes too long, -1=use pysgpp)\n"
-    "  chunk_size:       {} (size of the optimization problems to solve, decrease to get smaller optimization problems but more of them)\n"
-    "                       There will be {} optimization problems to be solved\n"
-    "  sigma:            {} \n".
-  format(output_filename, n_motor_units, n_fibers_x, basis, basis, n_max_iterations, chunk_size, (int)(np.ceil(n_motor_units / chunk_size)), sigma))
-
-  n_fibers_y = n_fibers_x
-
-  # call algorithm that will write the file
-  algorithm_mode_1(output_filename, n_motor_units, n_fibers_x, basis, n_max_iterations, chunk_size, sigma)
-
-# mode 2: centralized placement of fibers around center of MU, not assigning all fibers, this is analogous to multidomain
-elif mode == 2:
-
-  # parse command line arguments
-  # ./generate_fiber_distribution <output filename> <number of MUs> 2 [<n_fibers_x> [<basis>]]
-  n_fibers_x = -1
-  if len(sys.argv) > 4:
-    n_fibers_x = (int)(sys.argv[4])
-  else:
-    print("The number of fibers in x and y direction has to be known:")
-    n_fibers_x = (int)(input("Please enter n_fibers_x and press Enter: "))
-  
-  if len(sys.argv) > 5:
-    basis = (float)(sys.argv[5])
-  
-  # shape parameters for radial basis function
-  #sigma = 0.1*n_fibers_x    # std deviation for size of motor unit territories
-  sigma = 0.04*n_fibers_x    # std deviation for size of motor unit territories
-  #sigma = 0.08*4*n_fibers_x    # std deviation for size of motor unit territories
-  #sigma = 0.01*n_fibers_x    # std deviation for size of motor unit territories
-
-  print("Parameters:\n"
-    "  output_filename: \"{}\"\n"
-    "  n_motor_units:    {}\n"
-    "  mode:             2 (centralized placement of fibers around center of MU, not assigning all fibers)\n"
-    "  n_fibers_x:       {} (number of fibers in one coordinate direction) \n"
-    "  basis:            {} i.e. exponential distribution will be MU size = {}^mu_no\n"
-    "  sigma:            {} \n".
-  format(output_filename, n_motor_units, n_fibers_x, basis, basis, sigma))
-
-  n_fibers_y = n_fibers_x
-  n_fibers_total = n_fibers_x * n_fibers_y
-  
-  # call algorithm that will write the file
-  algorithm_mode_2(output_filename, n_motor_units, n_fibers_x, basis, sigma)
-
-# mode 3: combination of 4 instances of mode 1 or 2, in order to create MUs where the fiber do not touch each other
-elif mode == 3:
-  
-  # parse command line arguments
-  # ./generate_fiber_distribution <output filename> <number of MUs> 3 <part_mode> [<n_fibers_x> [<basis> [<n_max_iterations> [<chunk_size>]]]]
-  
-  if len(sys.argv) > 4:
-    part_mode = (int)(sys.argv[4])
-    if part_mode not in [1,2]:
-      print("Error, part_mode has to be either 1 or 2. Now setting to 1.")
-      part_mode = 1
-  
-  n_fibers_x = -1
-  if len(sys.argv) > 5:
-    n_fibers_x = (int)(sys.argv[5])
-  else:
-    print("The number of fibers in x and y direction has to be known:")
-    n_fibers_x = (int)(input("Please enter n_fibers_x and press Enter: "))
-  
-  if len(sys.argv) > 6:
-    basis = (float)(sys.argv[6])
-  
-  n_max_iterations = 100
-  if len(sys.argv) > 7:
-    n_max_iterations = (int)(sys.argv[7])
-  
-  chunk_size = 5          # sizes of the optimization problems that will be solved. A smaller chunk_size means faster optimization problems but more of them
-  if len(sys.argv) > 8:
-    chunk_size = (int)(sys.argv[8])
-  
-  # shape parameters for radial basis function
-  #sigma = 0.1*n_fibers_x    # std deviation for size of motor unit territories
-  sigma = 0.01*n_fibers_x    # std deviation for size of motor unit territories
-  
-  print("Parameters:\n"
-    "  output_filename: \"{}\"\n"
-    "  n_motor_units:    {}\n"
-    "  mode:             3 (combination of 4 instances of mode 1, in order to create MUs where the fiber do not touch each other)\n"
-    "  part_mode:        {}\n"
-    "  n_fibers_x:       {} (number of fibers in one coordinate direction) \n"
-    "  basis:            {} i.e. exponential distribution will be MU size = {}^mu_no\n"
-    "  n_max_iterations: {} (maximum number of iterations of the nonlinear solver, decrease this value if the script takes too long, -1=use pysgpp)\n"
-    "  chunk_size:       {} (size of the optimization problems to solve, decrease to get smaller optimization problems but more of them)\n"
-    "                       There will be {} optimization problems to be solved\n"
-    "  sigma:            {} \n".
-  format(output_filename, n_motor_units, part_mode, n_fibers_x, basis, basis, n_max_iterations, chunk_size, (int)(np.ceil(n_motor_units / chunk_size)), sigma))
-
-  n_fibers_y = n_fibers_x
-  
-  algorithm_mode_3(output_filename, n_motor_units, n_fibers_x, basis, n_max_iterations, chunk_size, sigma, part_mode)
-  
-# plot results, independent of mode
-# ---------------------------------
-
-# parse generated mu assignments
-output_filename_with_suffix = output_filename
-if ".txt" not in output_filename_with_suffix:
-  output_filename_with_suffix = "{}.txt".format(output_filename_with_suffix)
-f = open(output_filename_with_suffix,"r")
-line = f.readline()
-mu_nos_for_fibers = line.split(" ")
-mu_nos_for_fibers = list(map(int, mu_nos_for_fibers))
-  
-# plot fibers in 2D plot
-#print("n_motor_units: {}, min: {}".format(n_motor_units, (int)(min(mu_nos_for_fibers))))
-
-colors = cm.rainbow(np.linspace(0, 1, n_motor_units))
-color_invalid_mu = np.reshape(np.array((1,1,1,1)), (1,4)) # add white for not assigned fibers
-colors = np.concatenate((colors, color_invalid_mu))
-
-index = 0
-point_colors = []
-for j in range(n_fibers_y):
-  for i in range(n_fibers_x):
-    mu_no = (int)(mu_nos_for_fibers[index])
-    color = colors[mu_no-1,:]
-      
-    # for dataset with high number of motor units only plot some
-    if n_motor_units > 20:
-      if mu_no not in [11, 41, 91]:
-        color = (0.8,0.8,0.8)
-
-    point_colors.append(color)
-    #plt.plot(i,j,'o',color=colors[mu_no-1,:])
+    # parse command line arguments
+    # ./generate_fiber_distribution <output filename> <number of MUs> 0 [<n_fibers_x> [<basis>]]
+    n_fibers_x = -1
+    if len(sys.argv) > 4:
+      n_fibers_x = (int)(sys.argv[4])
+    else:
+      print("The number of fibers in x and y direction has to be known:")
+      n_fibers_x = (int)(input("Please enter n_fibers_x and press Enter: "))
     
-    index += 1
+    if len(sys.argv) > 5:
+      basis = (float)(sys.argv[5])
     
-if n_motor_units <= 15:
-  fig = plt.figure(5,figsize=(4,4))
-else:
-  fig = plt.figure(5,figsize=(8,8))
+    print("Parameters:\n"
+      "  output_filename: \"{}\"\n"
+      "  n_motor_units:    {}\n"
+      "  mode:             0 (random placement of fibers)\n"
+      "  n_fibers_x:       {} (number of fibers in one coordinate direction) \n"
+      "  basis:            {} i.e. exponential distribution will be MU size = {}^mu_no\n".
+    format(output_filename, n_motor_units, n_fibers_x, basis, basis))
 
-  
-# plot actual center points of MUs
-if mu_positions is not None:
-  for mu_no in range(n_motor_units):
-    mu_position = mu_positions[mu_no]
-    x = mu_position[0]
-    y = mu_position[1]
+    n_fibers_y = n_fibers_x
+    n_fibers = n_fibers_x * n_fibers_y
+    mu_positions = None
     
-    color = colors[mu_no,:]
-    #print(mu_position,x,y,color)
-    plt.plot(x,y, 'x', markersize=24,markeredgewidth=2,color=color)
+    # call algorithm that will write the file
+    algorithm_mode_0(output_filename, n_motor_units, n_fibers_x, basis)
+    
+  # mode 1: centralized placement of fibers around center of MU, assigning all fibers
+  elif mode == 1:
+    
+    # parse command line arguments
+    # ./generate_fiber_distribution <output filename> <number of MUs> 1 [<n_fibers_x> [<basis> [<n_max_iterations> [<chunk_size>]]]]
+    n_fibers_x = -1
+    if len(sys.argv) > 4:
+      n_fibers_x = (int)(sys.argv[4])
+    else:
+      print("The number of fibers in x and y direction has to be known:")
+      n_fibers_x = (int)(input("Please enter n_fibers_x and press Enter: "))
+    
+    if len(sys.argv) > 5:
+      basis = (float)(sys.argv[5])
+    
+    n_max_iterations = 100
+    if len(sys.argv) > 6:
+      n_max_iterations = (int)(sys.argv[6])
+    
+    chunk_size = 5          # sizes of the optimization problems that will be solved. A smaller chunk_size means faster optimization problems but more of them
+    if len(sys.argv) > 7:
+      chunk_size = (int)(sys.argv[7])
+    
+    # shape parameters for radial basis function
+    #sigma = 0.1*n_fibers_x    # std deviation for size of motor unit territories
+    sigma = 0.01*n_fibers_x    # std deviation for size of motor unit territories
+    
+    print("Parameters:\n"
+      "  output_filename: \"{}\"\n"
+      "  n_motor_units:    {}\n"
+      "  mode:             1 (centralized placement of fibers around center of MU, assigning all fibers)\n"
+      "  n_fibers_x:       {} (number of fibers in one coordinate direction) \n"
+      "  basis:            {} i.e. exponential distribution will be MU size = {}^mu_no\n"
+      "  n_max_iterations: {} (maximum number of iterations of the nonlinear solver, decrease this value if the script takes too long, -1=use pysgpp)\n"
+      "  chunk_size:       {} (size of the optimization problems to solve, decrease to get smaller optimization problems but more of them)\n"
+      "                       There will be {} optimization problems to be solved\n"
+      "  sigma:            {} \n".
+    format(output_filename, n_motor_units, n_fibers_x, basis, basis, n_max_iterations, chunk_size, (int)(np.ceil(n_motor_units / chunk_size)), sigma))
 
-X,Y = np.meshgrid(range(n_fibers_x),range(n_fibers_y))
-m = plt.scatter(X,Y,color=point_colors,marker="s")
-m.set_sizes([100])
-           
-ax = plt.gca()
+    n_fibers_y = n_fibers_x
 
-legend_elements = []
+    # call algorithm that will write the file
+    algorithm_mode_1(output_filename, n_motor_units, n_fibers_x, basis, n_max_iterations, chunk_size, sigma)
 
-for mu_no in range(n_motor_units):
-  legend_elements.append(Line2D([0], [0], marker="s", color=colors[mu_no], lw=0, label='MU {}'.format(mu_no+1)))
+  # mode 2: centralized placement of fibers around center of MU, not assigning all fibers, this is analogous to multidomain
+  elif mode == 2:
+
+    # parse command line arguments
+    # ./generate_fiber_distribution <output filename> <number of MUs> 2 [<n_fibers_x> [<basis>]]
+    n_fibers_x = -1
+    if len(sys.argv) > 4:
+      n_fibers_x = (int)(sys.argv[4])
+    else:
+      print("The number of fibers in x and y direction has to be known:")
+      n_fibers_x = (int)(input("Please enter n_fibers_x and press Enter: "))
+    
+    if len(sys.argv) > 5:
+      basis = (float)(sys.argv[5])
+    
+    # shape parameters for radial basis function
+    #sigma = 0.1*n_fibers_x    # std deviation for size of motor unit territories
+    sigma = 0.04*n_fibers_x    # std deviation for size of motor unit territories
+    #sigma = 0.08*4*n_fibers_x    # std deviation for size of motor unit territories
+    #sigma = 0.01*n_fibers_x    # std deviation for size of motor unit territories
+
+    print("Parameters:\n"
+      "  output_filename: \"{}\"\n"
+      "  n_motor_units:    {}\n"
+      "  mode:             2 (centralized placement of fibers around center of MU, not assigning all fibers)\n"
+      "  n_fibers_x:       {} (number of fibers in one coordinate direction) \n"
+      "  basis:            {} i.e. exponential distribution will be MU size = {}^mu_no\n"
+      "  sigma:            {} \n".
+    format(output_filename, n_motor_units, n_fibers_x, basis, basis, sigma))
+
+    n_fibers_y = n_fibers_x
+    n_fibers_total = n_fibers_x * n_fibers_y
+    
+    # call algorithm that will write the file
+    algorithm_mode_2(output_filename, n_motor_units, n_fibers_x, basis, sigma)
+
+  # mode 3: combination of 4 instances of mode 1 or 2, in order to create MUs where the fiber do not touch each other
+  elif mode == 3:
+    
+    # parse command line arguments
+    # ./generate_fiber_distribution <output filename> <number of MUs> 3 <part_mode> [<n_fibers_x> [<basis> [<n_max_iterations> [<chunk_size>]]]]
+    
+    if len(sys.argv) > 4:
+      part_mode = (int)(sys.argv[4])
+      if part_mode not in [1,2]:
+        print("Error, part_mode has to be either 1 or 2. Now setting to 1.")
+        part_mode = 1
+    
+    n_fibers_x = -1
+    if len(sys.argv) > 5:
+      n_fibers_x = (int)(sys.argv[5])
+    else:
+      print("The number of fibers in x and y direction has to be known:")
+      n_fibers_x = (int)(input("Please enter n_fibers_x and press Enter: "))
+    
+    if len(sys.argv) > 6:
+      basis = (float)(sys.argv[6])
+    
+    n_max_iterations = 100
+    if len(sys.argv) > 7:
+      n_max_iterations = (int)(sys.argv[7])
+    
+    chunk_size = 5          # sizes of the optimization problems that will be solved. A smaller chunk_size means faster optimization problems but more of them
+    if len(sys.argv) > 8:
+      chunk_size = (int)(sys.argv[8])
+    
+    # shape parameters for radial basis function
+    #sigma = 0.1*n_fibers_x    # std deviation for size of motor unit territories
+    sigma = 0.01*n_fibers_x    # std deviation for size of motor unit territories
+    
+    print("Parameters:\n"
+      "  output_filename: \"{}\"\n"
+      "  n_motor_units:    {}\n"
+      "  mode:             3 (combination of 4 instances of mode 1, in order to create MUs where the fiber do not touch each other)\n"
+      "  part_mode:        {}\n"
+      "  n_fibers_x:       {} (number of fibers in one coordinate direction) \n"
+      "  basis:            {} i.e. exponential distribution will be MU size = {}^mu_no\n"
+      "  n_max_iterations: {} (maximum number of iterations of the nonlinear solver, decrease this value if the script takes too long, -1=use pysgpp)\n"
+      "  chunk_size:       {} (size of the optimization problems to solve, decrease to get smaller optimization problems but more of them)\n"
+      "                       There will be {} optimization problems to be solved\n"
+      "  sigma:            {} \n".
+    format(output_filename, n_motor_units, part_mode, n_fibers_x, basis, basis, n_max_iterations, chunk_size, (int)(np.ceil(n_motor_units / chunk_size)), sigma))
+
+    n_fibers_y = n_fibers_x
+    
+    algorithm_mode_3(output_filename, n_motor_units, n_fibers_x, basis, n_max_iterations, chunk_size, sigma, part_mode)
+    
+  # plot results, independent of mode
+  # ---------------------------------
+
+  # parse generated mu assignments
+  output_filename_with_suffix = output_filename
+  if ".txt" not in output_filename_with_suffix:
+    output_filename_with_suffix = "{}.txt".format(output_filename_with_suffix)
+  f = open(output_filename_with_suffix,"r")
+  line = f.readline()
+  mu_nos_for_fibers = line.split(" ")
+  mu_nos_for_fibers = list(map(int, mu_nos_for_fibers))
+    
+  # plot fibers in 2D plot
+  #print("n_motor_units: {}, min: {}".format(n_motor_units, (int)(min(mu_nos_for_fibers))))
+
+  colors = cm.rainbow(np.linspace(0, 1, n_motor_units))
+  color_invalid_mu = np.reshape(np.array((1,1,1,1)), (1,4)) # add white for not assigned fibers
+  colors = np.concatenate((colors, color_invalid_mu))
+
+  index = 0
+  point_colors = []
+  for j in range(n_fibers_y):
+    for i in range(n_fibers_x):
+      mu_no = (int)(mu_nos_for_fibers[index])
+      color = colors[mu_no-1,:]
         
-# reduce the number of legend entries
-if len(legend_elements) > 10:
-  stride = (int)(len(legend_elements)/10)
-  all_legend_elements = list(legend_elements)
-  legend_elements = legend_elements[::stride]
-  if legend_elements[-1] != all_legend_elements[-1]:
-    legend_elements.append(all_legend_elements[-1])
-              
-ax.legend(handles=legend_elements, bbox_to_anchor=(1.04, 0.5), loc="center left")
+      # for dataset with high number of motor units only plot some
+      if n_motor_units > 20:
+        if mu_no not in [11, 41, 91]:
+          color = (0.8,0.8,0.8)
 
-ax.set_xlim(0,1.1*n_fibers_x)
-ax.set_ylim(0,n_fibers_y+1)
-ax.axis('off')
-plt.axis('equal')
-plt.tight_layout()
-plt.savefig("plots/"+output_filename+"_2d_fiber_distribution.pdf")
+      point_colors.append(color)
+      #plt.plot(i,j,'o',color=colors[mu_no-1,:])
+      
+      index += 1
+      
+  if n_motor_units <= 15:
+    fig = plt.figure(5,figsize=(4,4))
+  else:
+    fig = plt.figure(5,figsize=(8,8))
 
-# plot total distribution of MUs
+    
+  # plot actual center points of MUs
+  if mu_positions is not None:
+    for mu_no in range(n_motor_units):
+      mu_position = mu_positions[mu_no]
+      x = mu_position[0]
+      y = mu_position[1]
+      
+      color = colors[mu_no,:]
+      #print(mu_position,x,y,color)
+      plt.plot(x,y, 'x', markersize=24,markeredgewidth=2,color=color)
 
-fig = plt.figure(6,figsize=(6.4, 2.8))
-bins = [x-0.5 for x in range(1,n_motor_units+2)]
-numbers,edges = np.histogram(mu_nos_for_fibers,bins)
+  X,Y = np.meshgrid(range(n_fibers_x),range(n_fibers_y))
+  m = plt.scatter(X,Y,color=point_colors,marker="s")
+  m.set_sizes([100])
+             
+  ax = plt.gca()
 
-plt.hist(mu_nos_for_fibers,bins=bins, align='mid', rwidth=0.8)
-a = numbers[-1] / (basis**n_motor_units)
-xlist = np.linspace(1,n_motor_units,5*n_motor_units)
+  legend_elements = []
 
-if mode == 2:
-  plt.plot(xlist, [basis ** x * a for x in xlist], lw=4, label='${}^x$'.format(basis))
-else:
-  scaling_factor_pdf = sum([pdf_unscaled(x) for x in range(1,n_motor_units+1)])
-  n_fibers_total = n_fibers_x**2
-  plt.plot(xlist, [pdf(x)*n_fibers_total for x in xlist], lw=4, label='${}^x$'.format(basis))
-  print("n_fibers_x: {}, n_fibers_total: {}, basis {}, scaling_factor_pdf: {}, pdf(1)={}, pdf({})={}".format(n_fibers_x, n_fibers_total, basis, scaling_factor_pdf, pdf(1), n_motor_units, pdf(n_motor_units)))
-  
-#plt.plot(xlist, [np.exp(x)/np.exp(n_motor_units)*bins[-1] for x in xlist])
-ax = fig.gca()
-ax.set_xlim(1,n_motor_units)
-from matplotlib.ticker import MaxNLocator
-ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+  for mu_no in range(n_motor_units):
+    legend_elements.append(Line2D([0], [0], marker="s", color=colors[mu_no], lw=0, label='MU {}'.format(mu_no+1)))
+          
+  # reduce the number of legend entries
+  if len(legend_elements) > 10:
+    stride = (int)(len(legend_elements)/10)
+    all_legend_elements = list(legend_elements)
+    legend_elements = legend_elements[::stride]
+    if legend_elements[-1] != all_legend_elements[-1]:
+      legend_elements.append(all_legend_elements[-1])
+                
+  ax.legend(handles=legend_elements, bbox_to_anchor=(1.04, 0.5), loc="center left")
 
-plt.xlabel("Motor Unit Index")
-plt.ylabel("Count")
-plt.legend()
-plt.savefig("plots/"+output_filename+"_fiber_distribution.pdf")
+  ax.set_xlim(0,1.1*n_fibers_x)
+  ax.set_ylim(0,n_fibers_y+1)
+  ax.axis('off')
+  plt.axis('equal')
+  plt.tight_layout()
+  plt.savefig("plots/"+output_filename+"_2d_fiber_distribution.pdf")
 
-print("\nResult plots were written in plot subdirectory as \"plots/"+output_filename+"_*.pdf\".")
-#plt.show()
+  # plot total distribution of MUs
+
+  fig = plt.figure(6,figsize=(6.4, 2.8))
+  bins = [x-0.5 for x in range(1,n_motor_units+2)]
+  numbers,edges = np.histogram(mu_nos_for_fibers,bins)
+
+  plt.hist(mu_nos_for_fibers,bins=bins, align='mid', rwidth=0.8)
+  a = numbers[-1] / (basis**n_motor_units)
+  xlist = np.linspace(1,n_motor_units,5*n_motor_units)
+
+  if mode == 2:
+    plt.plot(xlist, [basis ** x * a for x in xlist], lw=4, label='${}^x$'.format(basis))
+  else:
+    scaling_factor_pdf = sum([pdf_unscaled(x) for x in range(1,n_motor_units+1)])
+    n_fibers_total = n_fibers_x**2
+    plt.plot(xlist, [pdf(x)*n_fibers_total for x in xlist], lw=4, label='${}^x$'.format(basis))
+    print("n_fibers_x: {}, n_fibers_total: {}, basis {}, scaling_factor_pdf: {}, pdf(1)={}, pdf({})={}".format(n_fibers_x, n_fibers_total, basis, scaling_factor_pdf, pdf(1), n_motor_units, pdf(n_motor_units)))
+    
+  #plt.plot(xlist, [np.exp(x)/np.exp(n_motor_units)*bins[-1] for x in xlist])
+  ax = fig.gca()
+  ax.set_xlim(1,n_motor_units)
+  from matplotlib.ticker import MaxNLocator
+  ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+  plt.xlabel("Motor Unit Index")
+  plt.ylabel("Count")
+  plt.legend()
+  plt.savefig("plots/"+output_filename+"_fiber_distribution.pdf")
+
+  print("\nResult plots were written in plot subdirectory as \"plots/"+output_filename+"_*.pdf\".")
+  #plt.show()
 

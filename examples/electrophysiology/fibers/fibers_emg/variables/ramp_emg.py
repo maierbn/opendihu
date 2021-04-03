@@ -91,14 +91,31 @@ adios_output = False
 exfile_output = False
 python_output = False
 enable_surface_emg = True
-optimization_type = "gpu"
+optimization_type = "vc"
 
 #fiber_file=input_directory+"/left_biceps_brachii_37x37fibers.bin"
 fiber_file              = input_directory+"/left_biceps_brachii_13x13fibers.bin"
+fiber_file              = input_directory+"/left_biceps_brachii_7x7fibers.bin"
 firing_times_file       = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = input_directory+"/MU_fibre_distribution_10MUs.txt"
 cellml_file             = input_directory+"/hodgkin_huxley_1952.c"
 #cellml_file             = input_directory+"/new_slow_TK_2014_12_08.cellml"
+
+# partitioning
+# ------------
+# this has to match the total number of processes
+n_subdomains_x = 1
+n_subdomains_y = 1
+n_subdomains_z = 1
+
+# stride for sampling the 3D elements from the fiber data
+sampling_stride_x = 2
+sampling_stride_y = 2
+sampling_stride_z = 50       # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
+
+distribute_nodes_equally = False     # (default: False)
+# True: set high priority to make subdomains have approximately equal number of fibers but creates tiny remainder elements inside the subdomains
+# False: make elements more equally sized, this can lead to a slight imbalance in the number of fibers per subdomain
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):

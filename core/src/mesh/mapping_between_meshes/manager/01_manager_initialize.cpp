@@ -29,7 +29,7 @@ void ManagerInitialize::storeMappingBetweenMeshes(std::string sourceMeshName, Py
       MappingWithSettings mappingWithSettings;
       mappingWithSettings.mapping = nullptr;
       mappingWithSettings.xiTolerance = 0.1;
-      mappingWithSettings.enableWarnings = true;
+      mappingWithSettings.enableWarnings = false;
       mappingWithSettings.compositeUseOnlyInitializedMappings = false;
       mappingWithSettings.isEnabledFixUnmappedDofs = true;
       mappingWithSettings.defaultValue = 0.0;

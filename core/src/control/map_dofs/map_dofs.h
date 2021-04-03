@@ -115,8 +115,8 @@ protected:
   //! get the mesh partition of the function space of the field variable that corresponds to the given slot. Note, it is of type MeshPartitionBase, because the FunctionSpaceType of that slot is not fixed.
   std::shared_ptr<Partition::MeshPartitionBase> getMeshPartitionBase(int slotNo, int arrayIndex);
 
-  //! set the values at given dofs at the field variable given by slotNo
-  void slotSetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode = INSERT_VALUES);
+  //! set the values at given dofs at the field variable given by slotNo, return value: if values were set
+  bool slotSetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, const std::vector<double> &values, InsertMode petscInsertMode = INSERT_VALUES);
 
   //! get the values at given dofs at the field variable given by slotNo
   void slotGetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &values);

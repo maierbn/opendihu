@@ -55,7 +55,7 @@ advanceTimeSpan(bool withOutputWritersEnabled)
   {
     if (timeStepNo % this->timeStepOutputInterval_ == 0 && (this->timeStepOutputInterval_ <= 10 || timeStepNo > 0))  // show first timestep only if timeStepOutputInterval is <= 10
     {
-      LOG(INFO) << "Heun, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
+      LOG(INFO) << "Heun, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime << ", field variable " << this->data_->solution() << "(" << this->data_->solution()->name() << " on mesh " << this->data_->solution()->functionSpace()->meshName() << ")";
     }
 
     VLOG(1) << "starting from solution (" << this->data_->solution() << "): " << *this->data_->solution();

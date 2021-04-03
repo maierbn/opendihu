@@ -34,7 +34,7 @@
 %\usepackage{ngerman}
 \usepackage[tbtags,sumlimits,intlimits,namelimits]{amsmath}
 
-%\usepackage{amsfonts}
+\usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{bbm}
 \usepackage{ulem}
@@ -102,11 +102,14 @@
     {ö}{{\"o}}1
     {⇐}{{$\leftarrow$}}1
     {>=}{{$\geq$}}1
-    {~}{{\textasciitilde}}1,  
+    {~}{{\textasciitilde}}1
+    {`}{\textquotedbl}1,  
   language=C++,
   numbers=none,
-  numberstyle=\tiny, 
-  basicstyle=\small, %  print  whole  listing  small
+  numberstyle=\tiny,
+  xleftmargin=2.0ex, 
+  %basicstyle=\small, %  print  whole  listing  small
+  basicstyle=\small\ttfamily,
   morekeywords={elif,do,end,then,proc,local,Eingabe,Ausgabe,alignof,loop,each},
   deletekeywords={new},
   columns=flexible,   % alignment
@@ -233,18 +236,23 @@
 
 
 \usepackage{setspace}
-\newcommand{\code}[1]{{\small\lstinline[basicstyle=\footnotesize\ttfamily]!#1!}}
-\newfloat{algorithm}{ht}{aux0}              % Algorithmus-Umgebung
-\floatname{algorithm}{Code-Abschnitt}
+\newcommand{\code}[1]{{\small\lstinline[basicstyle=\small\ttfamily\color{Maroon},breaklines=true,upquote=true]!#1!}}
+\newcommand{\codenobreak}[1]{{\small\lstinline[basicstyle=\small\ttfamily\color{Maroon},breaklines=false,upquote=true]!#1!}}
+\newcommand{\emphcode}[1]{{\small\lstinline[basicstyle=\small\itshape\ttfamily\color{Maroon},breaklines=true]!#1!}}
+\newcommand{\codebox}[1]{\begin{lstlisting}[columns=fullflexible,breaklines=true,postbreak=\mbox{\textcolor{gray}{$\hookrightarrow$}\space}]#1\end{lstlisting}}
+
+%\newfloat{algorithm}{ht}{aux0}              % Algorithmus-Umgebung
+%\floatname{algorithm}{Code-Abschnitt}
 \newcommand{\anm}[1]{\textcolor{blue}{#1}}
 \def\bigA{\mathop{\mathrm{A}}}
 
 %----------------------Funktionen, Zeichen----------------------
 \def\det{\hbox{det} \,}
-\def\span{\hbox{span} \,}
+\def\spn{\hbox{span} \,}
 \def\div{\hbox{div} \,}
 \def\grad{\hbox{grad} \,}
 \def\supp{\hbox{supp} \,}
+\def\cof{\hbox{cof} \,}
 \def\tr{\hbox{tr} \,}
 \def\sym{\hbox{sym} \,}
 \def\diag{\hbox{diag} \,}
@@ -265,6 +273,7 @@
 \def\bbI{\mathbb{I}} % identity tensor
 \def\P{\mathcal{P}} % C2 domain of elasticity
 \def\G{G} % C2 domain of elasticity
+\def\dt{d\noexpand\mkern-1mu t}
 
 %----------------------Ableitungen------------------------
 
@@ -376,12 +385,22 @@
 \newcommand{\bfZ}{\textbf{Z}}
 \newcommand{\bfzero}{\textbf{0}}
 
+\newcommand{\bfalpha}{\boldsymbol{\alpha}}
+\newcommand{\bfbeta}{\boldsymbol{\beta}}
+\newcommand{\bfgamma}{\boldsymbol{\gamma}}
+\newcommand{\bfdelta}{\boldsymbol{\delta}}
 \newcommand{\bfeps}{\boldsymbol{\eps}}
-\newcommand{\bfsigma}{\boldsymbol{\sigma}}
+\newcommand{\bftheta}{\boldsymbol{\theta}}
+\newcommand{\bfeta}{\boldsymbol{\eta}}
 \newcommand{\bfphi}{\boldsymbol{\phi}}
+\newcommand{\bfvarphi}{\boldsymbol{\varphi}}
+\newcommand{\bfpsi}{\boldsymbol{\psi}}
+\newcommand{\bfsigma}{\boldsymbol{\sigma}}
 \newcommand{\bfPi}{\boldsymbol{\Pi}}
 \newcommand{\bfXi}{\boldsymbol{\Xi}}
 \newcommand{\bfxi}{\boldsymbol{\xi}}
+\newcommand{\bfchi}{\boldsymbol{\chi}}
+\newcommand{\bfChi}{\boldsymbol{\chi}}
 \newcommand{\bfzeta}{\boldsymbol{\zeta}}
 \newcommand{\bfmu}{\boldsymbol{\mu}}
 \newcommand{\bflambda}{\boldsymbol{\lambda}}

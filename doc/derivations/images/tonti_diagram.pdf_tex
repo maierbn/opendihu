@@ -1,4 +1,4 @@
-%% Creator: Inkscape inkscape 0.91, www.inkscape.org
+%% Creator: Inkscape inkscape 0.92.3, www.inkscape.org
 %% PDF/EPS/PS + LaTeX output extension by Johan Engelen, 2010
 %% Accompanies image file 'tonti_diagram.pdf' (pdf, eps, ps)
 %%
@@ -35,8 +35,10 @@
     \renewcommand\transparent[1]{}%
   }%
   \providecommand\rotatebox[2]{#2}%
+  \newcommand*\fsize{\dimexpr\f@size pt\relax}%
+  \newcommand*\lineheight[1]{\fontsize{\fsize}{#1\fsize}\selectfont}%
   \ifx\svgwidth\undefined%
-    \setlength{\unitlength}{499.1420578bp}%
+    \setlength{\unitlength}{489.80286141bp}%
     \ifx\svgscale\undefined%
       \relax%
     \else%
@@ -48,24 +50,31 @@
   \global\let\svgwidth\undefined%
   \global\let\svgscale\undefined%
   \makeatother%
-  \begin{picture}(1,0.31211778)%
-    \put(0.29184255,0.24149438){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\textbf{S}$}}}}%
-    \put(0.69090058,0.23826296){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\bfeps$}}}}%
-    \put(0.69090058,0.02931082){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\textbf{u}$}}}}%
-    \put(0.29184256,0.03102807){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{$\textbf{F}$}}}}%
+  \begin{picture}(1,0.26254695)%
+    \lineheight{1}%
+    \setlength\tabcolsep{0pt}%
     \put(0,0){\includegraphics[width=\unitlength,page=1]{tonti_diagram.pdf}}%
-    \put(0.04729375,0.2588697){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{static BC}}}}%
+    \put(0.2018851,0.27052536){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\begin{minipage}{0.04374939\unitlength}\raggedright \end{minipage}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=2]{tonti_diagram.pdf}}%
-    \put(0.79026052,0.05506932){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{geometric BC}}}}%
+    \put(0.58792171,0.22362827){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}displacements\end{tabular}}}}%
+    \put(0.66274778,0.19605669){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfu$\end{tabular}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=3]{tonti_diagram.pdf}}%
-    \put(0.08719703,0.15978386){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{equilibrium}}}}%
-    \put(0.71038753,0.16057208){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{kinematics}}}}%
-    \put(0.43245169,0.29821392){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{material}}}}%
-    \put(0.07928398,0.11836729){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{(always linear)}}}}%
-    \put(0.42272069,0.26224219){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{(nonlinear)}}}}%
-    \put(0.71151823,0.11787783){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{(nonlinear)}}}}%
+    \put(0.63964583,0.0756124){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}strain\end{tabular}}}}%
+    \put(0.66274778,0.04280037){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfE$\end{tabular}}}}%
     \put(0,0){\includegraphics[width=\unitlength,page=4]{tonti_diagram.pdf}}%
-    \put(0.79824678,0.01742768){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{(Dirichlet)}}}}%
-    \put(0.03946747,0.22764552){\color[rgb]{0,0,0}\makebox(0,0)[lb]{\smash{\textbf{(Neumann)}}}}%
+    \put(0.30095851,0.0756124){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}stress\end{tabular}}}}%
+    \put(0.32406041,0.04280037){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfS$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=5]{tonti_diagram.pdf}}%
+    \put(0.29521426,0.22713769){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}forces\end{tabular}}}}%
+    \put(0.30615159,0.19432565){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}$\bfT,\bfB$\end{tabular}}}}%
+    \put(0,0){\includegraphics[width=\unitlength,page=6]{tonti_diagram.pdf}}%
+    \put(0.02160407,0.06982508){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}Neumann BC\end{tabular}}}}%
+   % \put(0,0){\includegraphics[width=\unitlength,page=7]{tonti_diagram.pdf}}%
+    \put(0.83169099,0.2230814){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}Dirichlet BC\end{tabular}}}}%
+    \put(0.44559185,0.03363802){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}material\end{tabular}}}}%
+    \put(0.67993753,0.15015332){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}kinematics\\(nonlinear)\end{tabular}}}}%
+    \put(0.18297299,0.15021457){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}equilibrium\end{tabular}}}}%
+    \put(0.43401721,0.00470142){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}(nonlinear)\end{tabular}}}}%
+    \put(0.23505887,0.12127797){\color[rgb]{0,0,0}\makebox(0,0)[lt]{\lineheight{1.25}\smash{\begin{tabular}[t]{l}(linear)\end{tabular}}}}%
   \end{picture}%
 \endgroup%

@@ -76,7 +76,7 @@ Because $\phi$ is zero on the boundary, the second term vanishes:
   \end{array}
 \end{equation}
 
-Now we have to specify a finite-dimensional ansatz space to choose the solution function from. We do this by specifying a basis and take the span of it: $V:=\span\{\phi_1, \dots \phi_n\}$.
+Now we have to specify a finite-dimensional ansatz space to choose the solution function from. We do this by specifying a basis and take the span of it: $V:=\spn\{\phi_1, \dots \phi_n\}$.
 
 The numerical solution is given by
 \begin{equation}
@@ -892,7 +892,7 @@ Like the solution $u(\bfx)$ also the right hand side $f(\bfx)$ has to be spatial
     f_h(\bfx) = \s{i=1}{N}f_i\,\phi_i(\bfx).
   \end{array}
 \end{equation*}
-By again choosing the space of testfunctions to be the same as the span of basis functions, ${V=\span\{\phi_1, \dots, \phi_n\}}$ we get the Galerkin formulation as
+By again choosing the space of testfunctions to be the same as the span of basis functions, ${V=\spn\{\phi_1, \dots, \phi_n\}}$ we get the Galerkin formulation as
 \begin{equation*}
   \begin{array}{lll}
     -\s{i=1}{N} u_i \int_\Omega ∇\phi_i\cdot ∇\phi_j \,\d\bfx = \s{i=1}{N}f_i \int_\Omega \phi_i\cdot \phi_j \,\d\bfx \quad \text{for }j = 1, \dots, N.
@@ -1129,26 +1129,6 @@ For orders of basis greater than two suggested from Hinton et al. \cite{hinton_r
 where $S=\sum_{i=1}^{n}\sum_{j=1}^{n} m_{i,j}$ and $D=\sum_{i=1}^{n}m_{i,i}$.
 
 
-\subsection{Analytical Solution}
-The analytical solution to the diffusion equation \eqref{eq:diffusion} makes use of the fundamental solution
-\begin{equation*}
-  \begin{array}{lll}
-    H(x,t) = \dfrac1{\sqrt{4\pi\,c\,t}}\exp\left(-\dfrac{x^2}{4\,c\,t}\right) \quad \text{for 1D}\\[4mm]
-    H(\bfx,t) = \dfrac1{(4\pi\,c\,t)^{n/2}}\exp\left(-\dfrac{\Vert \bfx \Vert_2^2}{4\,c\,t}\right) \quad \text{for 2D,3D}\\[4mm]
-  \end{array}
-\end{equation*}
-For $\Omega=\R^d$ and initial condition
-\begin{equation*}
-  \begin{array}{lll}
-    u(\bfx,0) = u_0(\bfx)\qquad \bfx \in \Omega
-  \end{array}
-\end{equation*}
-the solution is
-\begin{equation*}
-  \begin{array}{lll}
-    u(\bfx,t) = \ds\int_{\R^d} H(\bfx - \bfy,t)\,u_0(\bfy)\,\d \bfy.
-  \end{array}
-\end{equation*}
 
 %------------------------------------------------------------------------------------------------
 \subsection{Derivation with boundary conditions}
@@ -1160,7 +1140,7 @@ In general, the weak form of a diffusion problem discretized with Crank-Nicolson
     \Rightarrow\quad \ds\int_Ω \big(\theta\,∇\cdot (\bfsigma ∇u^{(i+1)}) + (1-\theta)\,∇\cdot (\bfsigma ∇u^{(i)})\big)\,\phi \,\d\bfx = \dfrac{1}{dt} \ds\int_Ω(u^{(i+1)} - u^{(i)})\,\phi\,\d\bfx, \quad \forall \phi \in V_h\\[4mm]
   \end{array}
 \end{equation}
-Discretize in space with $u = \sum_j u_j\,\varphi_j, V_h = \span\{\varphi_j | j = 1\dots N\}$ and using Divergence theorem
+Discretize in space with $u = \sum_j u_j\,\varphi_j, V_h = \spn\{\varphi_j | j = 1\dots N\}$ and using Divergence theorem
 \begin{equation}\label{eq:weak_form1}
   \begin{array}{lll}
     \ds\sum\limits_{j=1}^{N} \big(\theta\,u_j^{(i+1)} + (1-\theta)\,u_j^{(i)}\big)  \left(-\ds\int_Ω (\bfsigma∇\varphi_j)\cdot ∇\phi_k \,\d\bfx + \ds\int_{∂Ω} (\bfsigma\,∇\varphi_j\cdot \bfn)\phi_k \,\d\bfx  \right) \\[4mm]
@@ -1583,2525 +1563,650 @@ The bidomain equation can be used for computation of EMG ($\phi_e$), after the H
 \end{equation*}
 
 %------------------------------------------------------------------------------------------------
-\section{Structural mechanics}
-%The order in this section may be a bit confusing or lacking transition texts. It should be seen more as a collection of the theory and formulas.
+\section{Solid Mechanics Model of Muscle Contraction}\label{sec:model_muscle_contraction}
 
-This section collects theory about structural mechanics formulations and algorithms.
-Throughout the text the Einstein sum convention is used.
+Muscle contraction is described on the organ level by a description of solid mechanics. Because of possibly large strains, a nonlinear hyperelastic formulation is used. For mathematical foundations in continuum mechanics, we refer to basic literature such as the books of Holzapfel \cite{holzapfel2000nonlinear} and Marsden and Hughes \cite{marsden1994mathematical}, as well as literature on the application of the Finite Element Method in continuum mechanics \cite{zienkiewicz1977finite,SUSSMAN1987357,zienkiewicz2005finite}.
 
-\subsection{Introduction of some quantities}
-No quantities that are completely defined in the actual configuration are considered. $\bfF$ maps between configurations, $\bfS, \bfC, \bfeps$ are completely in the reference configuration.
-The definitions are briefly listed here.
-\begin{itemize}
-\item[$\bullet$] The deformation gradient $\bfF = \partial{\bfx}/\partial{\bfX}$ gives the linear approximation to the deformed image $\bflambda_{\bfa_0}$ (stretch vector) of a material vector $\bfa_0$, i.e. $\bflambda_{\bfa_0} = \bfF\,\bfa$ with $\bfy - \bfx = \bfF(\bfX)(\bfY-\bfX) + o(\bfY-\bfX)$.
-\item[$\bullet$] Polar decomposition of deformation gradient $\bfF$:
-\begin{equation*}
-  \begin{array}{lll}
-    \bfF = \bfR\,\bfU, \quad \bfR^\top\bfR = \bfI, \quad \bfU = \bfU^\top \,\text{positive definite}
-  \end{array}
-\end{equation*}
-$\bfR$ rotation tensor, $\bfU$ right stretch tensor, $\det \bfU = \det \bfF = J > 0$.
+% assumptions
+We consider the 3D muscle domain $\Omega_0=\Omega_M \subset \R^3$ in reference configuration at time $t=0$, that deforms into a current configuration $\Omega_t$ at time $t$. The material points are given by $\bfX \in \Omega_0$. The corresponding points $\bfx \in \Omega_t$ in the current configuration are defined by the placement function $\bfx = \bfvarphi_t(\bfX)$. In the following, capital letters refer to quantities in material or Lagrangian description, i.e., defined in the reference configuration and small letters refer to quantities in spatial or Eulerian description, i.e., defined in the current configuration.
+
+The relation of point coordinates in the current configuration with respect to the reference configuration can also be described by the displacements field $\bfu$:
 %
-\item[$\bullet$] Mapping properties between reference ($\d\bfX, \d\bfS, \d V$) and current configuration ($\d\bfx, \d\bfs, \d v$):
-\begin{equation*}
-  \begin{array}{lll}
-    \d\bfx = \bfF(\bfX)\,\d\bfX \qquad &\text{line map,}\\[4mm]
-    \d\bfs = J\bfF^{-\top}(\bfX)\,\d\bfS \qquad & \text{surface map (Nansons' formula),}\\[4mm]
-    \d v = J(\bfX)\,\d V \qquad & \text{volume map.}
-  \end{array}
-\end{equation*}
+\begin{align*}
+  \bfx(\bfX) = \bfX + \bfu(\bfX).
+\end{align*}
+The current velocity $\bfv$ is the time derivative of the displacements, $\bfv := \dot{\bfu}$.
+
+The foundation of continuum mechanics usually builds on three balance principles: conservation of mass, of momentum and of angular momentum. In the following, these principles are presented in their Eulerian forms.
+
+First, we assume \emph{conservation of mass} in terms of the densities $\rho_0(\bfX)$ and $\rho(\bfx)$ in reference and current configurations:
 %
-\item[$\bullet$] Right Cauchy-Green tensor $\bfC = \bfF^\top \bfF$, symmetric, positive definite, $\det \bfC = J^2 > 0$.
-\item[$\bullet$] Left Cauchy-Green tensor $\bfb = \bfF\bfF^\top$, symmetric, positive definite, $\det \bfb = J^2 > 0$.
-\item[$\bullet$] Green-Lagrange strain tensor $\bfeps = \bfE =\dfrac12(\bfC - \bfI)$, symmetric (Both symbols are used here, because of literature). Note that the computation of $\bfeps$ from a vector of displacement DOFs is nonlinear.
-\item[$\bullet$] 2nd Piola-Kirchhoff stress tensor $\bfS = \p{\Psi(\bfE)}{\bfE} = 2\p{\psi(\bfC)}{\bfC}$, symmetric.
-\end{itemize}
-
-\subsection{Green-Lagrange strain tensor and derivatives}
-
-In this subsection quantities of the reference configuration are denoted by left superscript ${}^o{\cdot}$, quantities in the current configuration at time $t$ are denoted by left superscript ${}^t{\cdot}$. Derivation with respect to the reference configuration are denoted by ${}^{t}_o{\cdot}$.
-
-The position $({}^tx_1^M,{}^tx_2^M,{}^tx_3^M)$ of a material point $M$ at time $t$ is given by
-\begin{equation*}
-  \begin{array}{lll}
-    {}^tx_i^M = {}^ox_i^M + {}^tu_i^M,
-  \end{array}
-\end{equation*}
-where ${}^ox_i$ is the position in reference configuration and ${}^tu_i$ is the displacement. The deformation gradient $\bfF$ is defined by the entries
-\begin{equation*}
-  \begin{array}{lll}
-    F_{ij} = {}^t_ox_{i,j} = \p{{}^tx_i}{{}^ox_j}.
-  \end{array}
-\end{equation*}
-The subscript comma means differentiation. We have ${}^t_ox_{i,j} = \delta_{ij} + {}^ tu_{i,j}$. 
-The discretization of $^{t}u$ is given by
-\begin{equation*}
-  \begin{array}{lll}
-    {}^tu_i(x) = \phi_L(x)\,{}^tu_i^L,
-  \end{array}
-\end{equation*}
-where ${}^tu_i^L$ are the coefficients, i.e. the nodal displacements. Lower case indices $i,j,k,\dots$ refer to component indices $\{1,2,3\}$, capital indices are for dofs $\{1,\dots,n\}$. 
-The symbol ${}^tu_i^L$ stands for the nodal degree of freedom $L$ of the displacement component $i\in \{1,2,3\}$.
-
-Differentiation yields
-\begin{equation*}
-  \begin{array}{lll}
-    {}^t_ox_{i,j} = \p{{}^tx_i}{{}^ox_j} = \delta_{ij} + \p{{}^tu_i}{{}^ox_j} = \delta_{ij} + \phi_{L,j}({}^o\bfx)\,{}^tu_i^L = \delta_{ij} + u_{i,j},\quad \text{i.e.}\\[4mm]
-    \bfF = \bfI + ∇_\bfX \bfu.
-  \end{array}
-\end{equation*}
-We have
-\begin{equation*}
-  \begin{array}{lll}
-    \phi_{L,j}({}^o\bfx) = \d{\phi_{L}\big(\bfxi({}^o\bfx)\big)}{{}^ox_j} = \p{\phi_{L}}{\xi_\ell}\p{\xi_\ell}{{}^ox_j}.
-  \end{array}
-\end{equation*}
-The Green-Lagrange strain tensor ${}^t_o\bfeps$ is defined as 
-\begin{equation*}
-  \begin{array}{lll}
-    {}^t_o \bfeps_{kl} = \dfrac12\big({}^t_ox_{b,k}\,{}^t_ox_{b,l} - \delta_{kl}\big), \quad \text{or}\quad \bfE = \dfrac12(\bfF^\top\bfF - \bfI)
-  \end{array}
-\end{equation*}
-From that we get
-\begin{equation*}
-  \begin{array}{lll}
-    {}^t_o \bfeps_{kl} &= \dfrac12\big({}^t_ox_{b,k}\,{}^t_ox_{b,l} - \delta_{kl}\big) = \dfrac12\big((\delta_{bk} + u_{b,k})\,(\delta_{bl} + u_{b,l}) - \delta_{kl}\big) \\[4mm]
-    &= \dfrac12\big((\delta_{bk}\,\delta_{bl} + u_{b,k}\,\delta_{bl} + \delta_{bk}u_{b,l} + u_{b,k}\,u_{b,l}) - \delta_{kl}\big) 
-    = \dfrac12\big(\delta_{kl} + u_{l,k} + u_{k,l} + u_{b,k}\,u_{b,l} - \delta_{kl}\big) \\[4mm]
-    &= \dfrac12\big(u_{l,k} + u_{k,l} + u_{b,k}\,u_{b,l}\big), \qquad \text{or}
-  \end{array}
-\end{equation*}
-\begin{equation*}
-  \begin{array}{rll}
-    \bfE &= \dfrac12\big((∇\bfu)^\top + ∇\bfu\big) + \dfrac12 ∇\bfu^\top ∇\bfu, \qquad \text{where the gradient is w.r.t $\bfX$ (material description)}.
-  \end{array}
-\end{equation*}
-Note that for virtual strain (used later) the virtual displacements are infinitesimally small and the quadratic term can be neglected, yielding
-\begin{equation*}
-  \begin{array}{lll}
-    {}^t_o δ\bfeps_{kl}= \dfrac12\big(δu_{l,k} + δu_{k,l}\big) ,\qquad δ\bfE = \dfrac12\big((∇δ\bfu)^\top + ∇δ\bfu\big).
-  \end{array}
-\end{equation*}
-
-Next the derivative with respect to a nodal displacement $u_i^L$ is considered. Therefore we need
-\begin{equation*}
-  \begin{array}{lll}
-    \p{{}^t_ox_{i,j}}{u^L_k} = \p{\phi_L\,{}^tu_i^L}{u^L_k} = \phi_{L,j}\,\delta_{ik}.
-  \end{array}
-\end{equation*}
-We then proceed to compute
-\begin{equation*}
-  \begin{array}{lll}
-    \p{{}^t_o\bfeps_{kl}}{u^L_i} = \dfrac12\Big(\p{{}^t_ox_{b,k}}{u^L_i}\,{}^t_ox_{b,l} + {}^t_ox_{b,k}\,\p{{}^t_ox_{b,l}}{u^L_i}\Big) = \dfrac12\Big( \phi_{L,k}\,\delta_{bi} \,{}^t_ox_{b,l} + {}^t_ox_{b,k}\, \phi_{L,l}\,\delta_{bi}\Big) = \dfrac12\Big( {}^t_ox_{i,l}\,\phi_{L,k} + {}^t_ox_{i,k}\, \phi_{L,l}\Big).
-  \end{array}
-\end{equation*}
-We compute the second derivative (results from \cite{SUSSMAN1987357})
-\begin{equation*}
-  \begin{array}{lll}
-   \dfrac{\p ^t_o\bfeps_{kl}}{\p u^L_i\,\p u^M_j} = \dots = \frac12\big(\phi_{L,k}\,\phi_{M,l} + \phi_{L,l}\,\phi_{M,k}\big)\,\delta_{ij}.
-  \end{array}
-\end{equation*}
-
-
-\subsection{Material modeling}
-
-\subsubsection{Principal invariants}
-The principal scalar invariants of the right Cauchy Green Tensor $\bfC = \bfF^\top\bfF$ are defined as
-\def\tr{\mathrm{tr}}
-\begin{equation*}
-  \begin{array}{lll}
-    I_1(\bfC) = \tr(\bfC) = \bfC : \bfI = C_{ii} = λ_1 + λ_2 + λ_3\\[4mm]
-    I_2(\bfC) = \dfrac12\big(\tr(\bfC)^2 - \tr(\bfC^2)\big) = \dfrac12(C_{ii}\,C_{jj} - C_{ji}\,C_{ij}) = λ_1\,λ_2 + λ_1\,λ_2 + λ_2\,λ_3\\[4mm]
-    I_3(\bfC) = \det(\bfC) = ε_{ijk}\,C_{1i}\,C_{2j}\,C_{3k} = λ_1\,λ_2\,λ_3\\[4mm]
-    I_4(\bfC) = \bfa_0 \cdot \bfC \, \bfa_0\\[4mm]
-    I_5(\bfC) = \bfa_0 \cdot \bfC^2 \, \bfa_0
-  \end{array}
-\end{equation*}
-The principal stretches $\lambda_a, a=1,2,3$ are the eigenvalues of the right Cauchy-Green tensor $\bfC$. $ε_{ijk}$ is the Levi-Civita symbol
-\begin{equation*}
-  \begin{array}{lll}
-    ε_{ijk} = \begin{cases}
-      1\quad & \text{for }(i,j,k) \in \{(1,2,3), (2,3,1), (3,1,2)\}\\[2mm]
-      -1 \quad  & \text{for } (i,j,k) \in \{(3,2,1), (1,3,2), (2,1,3)\}\\[2mm]
-      0 \quad & \text{else}
-    \end{cases}
-  \end{array}
-\end{equation*}
-Reduced invariants (p.233), with kinematic assumption $\bar I_3=1$:
-\begin{equation*}
-  \begin{array}{lll}
-    \bar I_1(\bar\bfC) = \tr(\bar\bfC) = \bar\bfC : \bfI = J^{-2/3} I_1\\[4mm]
-    \bar I_2(\bar\bfC) = \dfrac12\big(\tr(\bar\bfC)^2 - \tr(\bar\bfC^2)\big) = J^{-4/3} I_2\\[4mm]
-    \bar I_3(\bar\bfC) = \det(\bar\bfC) = 1
-  \end{array}
-\end{equation*}
-
-\subsubsection{Strain energy density function}
-Strain energy density function $\Psi(\bfC) = \Psi(I_1, I_2, I_3)$ for isotropic hyperelastic materials. To compute $\bfS = 2\,\p{\Psi(\bfC)}{\bfC}$ derivatives w.r.t. to the invariants are required. (p. 216 Holzapfel Nonlinear Solid Mechanics  \cite{holzapfel2000nonlinear})
-\begin{equation*}
-  \begin{array}{lll}
-    \p{I_1}{\bfC} = \p{\tr\bfC}{\bfC} = \p{\bfI:\bfC}{\bfC} = \bfI, \quad &\p{I_1}{C_{AB}} = \delta_{AB}\\[4mm]
-    \p{I_2}{\bfC} = \tr \bfC\,\bfI - \bfC, \quad &\p{I_2}{C_{AB}} = I_1\,\delta_{AB} - C_{AB}\\[4mm]
-    \p{I_3}{\bfC} = I_3\,\bfC^{-1}, \quad &\p{I_3}{C_{AB}} = I_3\,C^{-1}_{AB}\\[4mm]
-    \p{I_4}{\bfC} = \bfa_0 \otimes \bfa_0\\[4mm]
-    \p{I_5}{\bfC} = \bfa_0 \otimes \bfC\,\bfa_0 + \bfa_0\,\bfC \otimes \bfa_0
-  \end{array}
-\end{equation*}
-Note for the reduced invariants (p.234):
-\begin{equation*}
-  \begin{array}{lll}
-    \p{\bar{I}_1}{\bar\bfC} = \p{\tr\bar\bfC}{\bar\bfC} = \p{\bfI:\bar\bfC}{\bar\bfC} = \bfI\\[4mm]
-    \p{\bar I_2}{\bar\bfC} = \tr \bar\bfC\,\bfI - \bar\bfC\\[4mm]
-    \p{\bar I_4}{\bar\bfC} = \bfa_0 \otimes \bfa_0\\[4mm]
-    \p{\bar I_5}{\bar\bfC} = \bfa_0 \otimes \bar\bfC\,\bfa_0 + \bfa_0\,\bar\bfC \otimes \bfa_0  \quad \text{(p.277)}
-  \end{array}
-\end{equation*}
-In total we get
-\begin{equation*}
-  \begin{array}{lll}
-    \bfS &=  \p{\Psi(\bfE)}{\bfE} = 2\,\p{\Psi(\bfC)}{\bfC} = \ds\s{a=1}{3}\p{\Psi}{I_a}\p{I_a}{\bfC}\\[4mm]
-     &= 2\left(\left(\p{\Psi}{I_1} + I_1\,\p{\Psi}{I_2}\right)\,\bfI - \p{\Psi}{I_2}\bfC + I_3\,\p{\Psi}{I_3} \,\bfC^{-1}\right)
-  \end{array}
-\end{equation*}
-Useful:
-\begin{equation*}
-  \begin{array}{lll}
-    \left( \p{\bfA^{-1}}{\bfA} \right)_{ijkl} = -\dfrac12(A^{-1}_{ik}\,A^{-1}_{lj} + A^{-1}_{il}\,A^{-1}_{kj}) = -A^{-1}\odot A^{-1}\,.
-  \end{array}
-\end{equation*}
-\subsection{Elasticity tensor}
-For the solution of the nonlinear problem the elasticity tensor $\bbC$ has to be computed (Holzapfel p.261  \cite{holzapfel2000nonlinear}):
-\begin{equation*}
-  \begin{array}{lll}
-    \bbC &= \p{\bfS}{\bfE} = 2\p{\bfS}{\bfC} = 4\dfrac{\partial^2\Psi(I_1,I_2,I_3)}{\p\bfC\p\bfC}\\[4mm]
-     &= \delta_1\,\bfI \otimes \bfI + \delta_2\,(\bfI \otimes \bfC + \bfC \otimes \bfI) + \delta_3 ( \bfI \otimes \bfC^{-1} + \bfC^{-1} \otimes \bfI)\\[4mm]
-     &\quad +  \delta_4 \bfC \otimes \bfC + \delta_5(\bfC \otimes \bfC^{-1} + \bfC^{-1}\otimes \bfC) \\[4mm]
-     & \quad + \delta_6 \bfC^{-1} \otimes \bfC^{-1} + \delta_7 \bfC^{-1} \odot \bfC^{-1} + \delta_8\,\bbI
-  \end{array}
-\end{equation*}
-Recall the definitions:
-\begin{equation*}
-  \begin{array}{lll}
-  A\otimes B := A_{ab}B_{cd} \\[4mm]
-  \bbI_{ABCD} :=\displaystyle \frac{\delta_{AC}\delta_{BD}+\delta_{AD}\delta_{BC}}{2}
-  \end{array}
-\end{equation*}
-
-The coefficients $\delta_1, \dots \delta_8$ are defined by
-\begin{equation*}
-  \begin{array}{lll}
-    \delta_1 = 4\left(\dfrac{\partial^2\Psi}{\p I_1 \p I_1} + 2\,I_1\,\dfrac{\partial^2\Psi}{\p I_1 \p I_2} + \p{\Psi}{I_2} + I_1^2\,\dfrac{\partial^2\Psi}{\p I_2 \p I_2} \right),\\[4mm]
-    \delta_2 = -4\left(\dfrac{\partial^2\Psi}{\p I_1 \p I_2} + I_1\,\dfrac{\partial^2\Psi}{\p I_2 \p I_2}\right),\\[4mm]
-    \delta_3 = 4\left(I_3\,\dfrac{\partial^2\Psi}{\p I_1 \p I_3} + I_1\,I_3\,\dfrac{\partial^2\Psi}{\p I_2 \p I_3}\right), \qquad \delta_4 = 4\,\dfrac{\partial^2\Psi}{\p I_2 \p I_2},\\[4mm]
-    \delta_5 = -4\,I_3\,\dfrac{\partial^2\Psi}{\p I_2 \p I_3}, \qquad \delta_6 = 4\left(I_3\p{\Psi}{I_3} + I_3^2\dfrac{\partial^2\Psi}{\p I_3 \p I_3}\right),\\[4mm]
-    \delta_7 = -4\,I_3\,\p{\Psi}{I_3}, \qquad \delta_8 = -4\,\p{\Psi}{I_2}.
-  \end{array}
-\end{equation*}
-The elasticity tensor $\bbC$ has the following symmetries:
-\begin{equation*}
-  \begin{array}{lll}
-   \bbC_{ijrs} = \bbC_{jirs} = \bbC_{ijsr} = \bbC_{jisr} \quad \text{minor symmetries}\\[4mm]
-    \bbC_{ijrs} = \bbC_{rsij} \quad \text{major symmetries}
-  \end{array}
-\end{equation*}
-The minor symmetries are due to the symmetry of the 2nd Piola Kirchhoff tensor, $\bfS$ and the right Cauchy-Green tensor, $\bfC$, because
-\begin{equation*}
-  \begin{array}{lll}
-    \bbC_{ijrs} = \p{S_{ij}}{C_{rs}}.
-  \end{array}
-\end{equation*}
-The major symmetries are because of the existence of the strain density function because
-\begin{equation*}
-  \begin{array}{lll}
-    \bbC_{ijrs} = \dfrac{∂^2\Psi(\bfC)}{∂C_{ij}\,∂C_{rs}}.
-  \end{array}
-\end{equation*}
-
-The 21 unique entries are:
-\begin{equation*}
-  \begin{array}{lll}
-    \bbC_{ijrs} \text{ with } (i,j,r,s) =\\[4mm]
-    (1,1,1,1),
-    (1,2,1,1),
-    (1,3,1,1),
-    (2,2,1,1),
-    (2,3,1,1),
-    (3,3,1,1),\\[4mm]
-    (1,2,1,2),
-    (1,3,1,2),
-    (2,2,1,2),
-    (2,3,1,2),
-    (3,3,1,2),\\[4mm]
-    (1,3,1,3),
-    (2,2,1,3),
-    (2,3,1,3),
-    (3,3,1,3),\\[4mm]
-    (2,2,2,2),
-    (2,3,2,2),
-    (3,3,2,2),\\[4mm]
-    (2,3,2,3),
-    (3,3,2,3),\\[4mm]
-    (3,3,3,3)\\[4mm]
-  \end{array}
-\end{equation*}
-
-\subsection{Constitutive Equations}
-\subsubsection{Incompressible Mooney-Rivlin}
-The \emph{Mooney-Rivlin} model is used which for incompressible material defines the strain energy function as
-\begin{equation*}
-  \begin{array}{lll}
-    \Psi_\text{Mooney-Rivlin}(I_1, I_2) = c_1(I_1 - 3) + c_2(I_2 - 3),
-  \end{array}
-\end{equation*}
-where $I_1, I_2$ are the strain invariants and $c_1, c_2$ are material parameters.
-
-For incompressible materials the strain energy function is defined as (p.247)
-\begin{equation*}
-  \begin{array}{lll}
-    \Psi = \Psi_\text{Mooney-Rivlin}(I_1, I_2) - \dfrac12 p\,(I_3-1),\text{ or}\\[4mm]
-    \Psi = \Psi_\text{Mooney-Rivlin}(I_1, I_2) - \dfrac12 p\,(I_3-1)^2 
-  \end{array}
-\end{equation*}
-and the stress as 
-\begin{equation*}
-  \begin{array}{lll}
-    \bfS &= 2\dfrac{∂}{∂\bfC}\Psi_\text{Mooney-Rivlin}(I_1,I_2) - \dfrac{∂\big(p(I_3 - 1)\big)}{∂\bfC} = -p\bfC^{-1} + 2\left(\p{\Psi}{I_1} + I_1\,\p{\Psi}{I_2}\right)\bfI - 2\p{\Psi}{I_2}\bfC\\[4mm]
-    &= -p\bfC^{-1} + 2\,\big(c_1 + \,\tr(\bfC)\,c_2\big)\,\bfI - 2\,c_2\,\bfC
-  \end{array}
-\end{equation*}
-The Cauchy stress:
-\begin{equation*}
-  \begin{array}{lll}
-    \bfsigma &= -p\bfI + 2\left(\p{\Psi}{I_1} + I_1\,\p{\Psi}{I_2}\right)\bfb - 2\,\p{\Psi}{I_2}\,\bfb^2\\[4mm]
-             &= -p\bfI + 2(c_1 + I_1\,c_2)\,\bfb - 2\,c_2\,\bfb^2\\[4mm]
-    \bfsigma &= -p\,\bfI + 2\,c_1\,\bfb - 2\,c_2\,\bfb^{-1}\quad \text{with Left Cauchy-Green tensor }\bfb = \bfF\,\bfF^\top\quad (\text{p.238 Holzapfel})\\[4mm]
-             %&= -p\,\bfI + 2\,c_1\,\bfb - 2\,c_2\,I_3^{-1}\big(\bfb^2 - I_1\,\bfb + I_2\,\bfI)\big)\\[4mm]
-    %\bfb^2 &= I_1\,\bfb - I_2\,\bfI + I_3\,\bfb^{-1}\quad \Rightarrow\quad \bfb^{-1} = I_3^{-1}\big(\bfb^2 - I_1\,\bfb + I_2\,\bfI)\big)
-    \bfb^2 &= \bfb\,\bfb = \bfF\,\bfF^\top\,\bfF\,\bfF^\top, \quad 
-      \bfb_{ij}^2 = \bfb_{ik}\bfb_{kj} = \bfF_{il}\,\bfF_{lk}^\top\,\bfF_{km}\,\bfF^\top_{mj} = \bfF_{il}\,\bfF_{kl}\,\bfF_{km}\,\bfF_{jm} 
-  \end{array}
-\end{equation*}
-(Holzapfel p.224 \cite{holzapfel2000nonlinear})
-
-The parameter $p$ is here an indeterminate Lagrange multiplier that is identified as the hydrostatic pressure. However it has to be computed from the equilibrium equations and boundary conditions.
-
-\subsubsection{Compressible Mooney-Rivlin}
-The strain-energy function for compressible material can be given in either coupled or decoupled form.
-The decoupled form uses the modified strain invariants $\bar{I}_1 = J^{-2/3}\,I_1, \bar{I}_2 = J^{-4/3}\,I_2, \bar{I}_3 = 1$. It decouples the strain energy function to a volumetric elastic response, $Ψ_\text{vol}(J)$ and the isochoric elastic response $Ψ_\text{iso}(\bar{\bfC})$.
-\begin{equation*}
-  \begin{array}{lll}
-    \Psi = \Psi_\text{vol}(J) + \Psi_\text{iso}(\bar{I}_1,\bar{I}_2)
-  \end{array}
-\end{equation*}
-The volumetric part is often given by
-\begin{equation*}
-  \begin{array}{lll}
-    \Psi_{vol}(J) = \kappa\,G(J) \quad\text{with, e.g.,}\\[4mm]
-    \quad G(J) = \beta^{-2}(\beta\,\log(J) + J^{-\beta} - 1), \qquad \text{or}\\[4mm]
-    \quad G(J) = \frac14(J^2 - 1 - 2\,\log(J)) 
-  \end{array}
-\end{equation*}
-(Holzapfel p.233, p.244/255 \cite{holzapfel2000nonlinear})
-
-A coupled form uses the normal strain invariants, $I_1, I_2, J$, e.g. the coupled Mooney-Rivlin model,
-\begin{equation*}
-  \begin{array}{lll}
-    \Psi(J,I_1,I_2) = c(J-1)^2 - d\,\ln J + c_1(I_1 - 3) + c_2(I_2 - 3), \qquad d = 2(c_1 + 2\,c_2)
-  \end{array}
-\end{equation*}
-(Holzapfel p.247 \cite{holzapfel2000nonlinear})
-
-The stress tensor follows by derivation
-\begin{equation*}
-  \begin{array}{lll}
-    \bfS &= 2\p{\Psi}{\bfC} = 2(c_1 + c_2\,I_1)\bfI - 2\,c_2\,\bfC + (2\,c\,J\,(J-1)-d)\bfC^{-1}\\[4mm]
-    &= 2(c_1 + c_2\,\tr{\bfC})\bfI - 2\,c_2\,\bfC + \Big(2\,c\,\det(\bfF)\,\big(\det(\bfF)-1\big)-d\Big)\bfC^{-1}\\[4mm]
-  \end{array}
-\end{equation*}
-
-Alternative model:
-\begin{equation*}
-  \begin{array}{lll}
-    \Psi = \dfrac12 \kappa (J - 1)^2 + c_1(\bar{I_1} - 3) + c_2(\bar{I_2} - 3)
-  \end{array}
-\end{equation*}
-(\cite{SUSSMAN1987357} Sussmann, Bathe p.15)
-
-\subsubsection{Transversely isotropic formulation}
-
-This formulation assumes a ground matrix and fibres with direction $\bfa_0$ in reference configuration. Two pseudo-invariants $I_4(\bfC, \bfa_0), I_5(\bfC, \bfa_0)$ are introduced:
-\begin{equation*}
-  \begin{array}{lll}
-    I_4(\bfC, \bfa_0) = \bfa_0\cdot \bfC\,\bfa_0,\\[4mm]
-    I_5(\bfC, \bfa_0) = \bfa_0\cdot\bfC^2\,\bfa_0.
-  \end{array}
-\end{equation*}
-The strain energy function is then stated as
-\begin{equation*}
-  \begin{array}{lll}
-    \Psi = \Psi\big(I_1(\bfC), I_2(\bfC), I_3(\bfC), I_4(\bfC, \bfa_0), I_5(\bfC, \bfa_0)\big)
-  \end{array}
-\end{equation*}
-For the formulation of the stress, derivatives of the pseudo-invariants w.r.t $\bfC$ are needed:
-\begin{equation*}
-  \begin{array}{lll}
-    \p{I_4}{\bfC} = \bfa_0 \otimes \bfa_0, \qquad & \p{I_4}{C_{ij}} = a_{0,i}\,a_{0,j},\\[4mm]
-    \p{I_5}{\bfC} = \bfa_0 \otimes \bfC\,\bfa_0 + \bfa_0\,\bfC \dyad \bfa_0, \qquad &\p{I_5}{C_{ij}} = a_{0,i}\,C_{jk}\,a_{0,k} + a_{0,j}\,C_{ik}\,a_{0,k}.
-  \end{array}
-\end{equation*}
-
-\subsubsection{Reduced Quantities}
-
-For compressible materials reduced quantities are used. The deformation gradient and right Cauchy-Green tensor are multiplicatively decomposed into a volume-changing (volumetric, dilational) and volume-preserving (isochoric, distortional, deviatoric) part as follows:
-\begin{equation*}
-  \begin{array}{lll}
-    \bfF = (J^{1/3}\bfI)\,\bar{\bfF},\\[4mm]
-    \bfC = (J^{2/3}\bfI)\,\bar{\bfC}.
-  \end{array}
-\end{equation*}
-The volume preserving measures are given by
-\begin{equation*}
-  \begin{array}{lll}
-    \bar{\bfF} = J^{-1/3}\,\bfF \quad \dots &\text{modified deformation gradient}\\[4mm]
-    \bar{\bfC} = J^{-2/3}\,\bfC \quad \dots& \text{modified right Cauchy-Green tensor}
-  \end{array}
-\end{equation*}
-The volume-changing deformations are associated with $J^{1/3}\bfI$ and $J^{2/3}\bfI$.
-
-Accordingly, reduced invariants are (p.233)
-\begin{equation*}
-  \begin{array}{lll}
-    \bar{I_1} = \tr(\bar{\bfC}) = J^{-2/3}\,I_1,\\[4mm]
-    \bar{I_2} = \dfrac12\big(\tr(\bar{\bfC})^2 - \tr(\bar{\bfC}^2)\big) = J^{-4/3}\,I_2,\\[4mm]
-    \bar{I_3} = \det(\bar{\bfC}) = 1.
-  \end{array}
-\end{equation*}
-
-The strain-enery function is now given in a decoupled representation as
-\begin{equation*}
-  \begin{array}{lll}
-    \Psi(\bfC) = \Psi_\text{vol}(J) + \Psi_\text{iso}(\bar{\bfC}) = \Psi_\text{vol}(J) + \Psi_\text{iso}(\bar{I_1}, \bar{I_2}),\\[4mm]
-    \Psi_\text{vol}(J) = \kappa\,\G(J)
-  \end{array}
-\end{equation*}
-with penalty functions $\G(J)$ with conditions
-\begin{equation*}
-  \begin{array}{lll}
-    & \G(J) = 0 \quad\Leftrightarrow\quad J = 1\\[4mm]
-    \text{and}\quad &\G(J) \quad \text{strictly convex}
-  \end{array}
-\end{equation*}
-Possible functions in literature are:
-\begin{equation*}
-  \begin{array}{lll}
-    \G_1(J) = \dfrac12\big(J(\bfu) - 1)^2,\\[4mm]
-    \G_2(J) = \dfrac12\big(J(\bfu) - 1).
-  \end{array} 
-\end{equation*}
- 
-This leads to volumetric and deviatoric/isochoric contribution of stresses
-\begin{equation}\label{eq:stress_split}
-  \begin{array}{lll}
-    \bfS = 2\p{\Psi(\bfC)}{\bfC} = \bfS_\text{vol} + \bfS_\text{iso},\\[4mm]
-    \bfS_\text{vol} = 2\p{\Psi_\text{vol}(J)}{\bfC} = J\,p\,\bfC^{-1}\\[4mm]
-    \bfS_\text{iso} = 2\p{\Psi_\text{iso}(\bar{\bfC})}{\bfC} = J^{-2/3}\,\mathbb{P} : \bar{\bfS} \qquad \text{(see Holzapfel p.229 \cite{holzapfel2000nonlinear} for definition of $\mathbb{P}$)}\\[4mm]
-    p = \d{\Psi_\text{vol}(J)}{J}, \quad \bar{\bfS} = 2\,\p{\Psi_\text{iso}(\bar{\bfC})}{\bar{\bfC}}
-  \end{array}
-\end{equation}
-
-\subsection{Formulation in current configuration}
-
-The following spatial quantities are defined in the current configuration.
-\begin{equation*}
-  \begin{array}{lll}
-    \bfx \quad \dots \, &\text{position}\\
-    \bfv = \dot{\bfx} \quad \dots \, &\text{velocity}\\
-    \rho \quad \dots\, & \text{density}\\
-    \bfsigma \quad \dots \, &\text{Cauchy stress}
-  \end{array}
-\end{equation*}
-
-The connection from the symmetric Cauchy stress tensor $\bfsigma$ to the 2nd Piola-Kirchhoff stress tensor $\bfS$ is given by 
-\begin{equation*}
-  \begin{array}{lll}
-    \bfsigma = J^{-1}\bfF\,\bfS\,\bfF^\top\\[4mm]
-    \bfS = J\,\bfF^{-1}\,\bfsigma\,\bfF^{-\top}\\[4mm]
-    \bfsigma = \dfrac1{J}\bfP\,\bfF^\top \quad \Rightarrow \quad \bfP = J \bfsigma\,\bfF^{-\top}\\[4mm]
-    \bfS = \bfF^{-1}\bfP\quad \Rightarrow \quad \bfP = \bfF\,\bfS
-  \end{array}
-\end{equation*}
-
-(Holzapfel \cite{holzapfel2000nonlinear} p. 135) 
-From the \emph{conservation of mass} we get the spatial equation
-\begin{equation*}
-  \begin{array}{lll}
-    \dot{\rho}(\bfx,t) + \rho(\bfx,t)\,∇\cdot \bfv(\bfx,t)  = 0
-  \end{array}
-\end{equation*}
-which for constant density, $\rho$, reduces to
-\begin{equation*}
-  \begin{array}{lll}
-    ∇\cdot \bfv(\bfx,t) = 0.
-  \end{array}
-\end{equation*}
-
-(Holzapfel \cite{holzapfel2000nonlinear} p. 145) 
-From the \emph{balance of linear momentum} the equations of motion in spatial description can be derived.
-\begin{equation}\label{eq:linmom}
-  \begin{array}{lll}
-    \div \bfsigma + \bfb = \rho\,\dot{\bfv}
-  \end{array}
-\end{equation}
-
-The \emph{balance of angular momentum} enforces the Cauchy stress tensor, $\bfsigma$ to be symmetric (Holzapfel \cite{holzapfel2000nonlinear} p. 147).
-\begin{equation*}
-  \begin{array}{lll}
-    \bfsigma = \bfsigma^\top
-  \end{array}
-\end{equation*}
-
-\Cref{eq:linmom} can be restated in terms of the displacement $\bfu$ as
-\begin{equation*}
-  \begin{array}{lll}
-    \rho\,\ddot{\bfu} - ∇_\bfx \cdot \bfsigma = 0,\\[4mm]
-    ∇_\bfx\cdot \dot{\bfu} = 0.
-  \end{array}
-\end{equation*}
-
-For the quasi-static case, $\dot{\bfu} = 0$, this reduces to
-\begin{equation*}
-  \begin{array}{lll}
-    ∇_\bfx\cdot \bfsigma = 0.
-  \end{array}
-\end{equation*}
-Substituting the Cauchy stress $\bfsigma$ for the material configuration stress, $\bfS$, yields
-\begin{equation*}
-  \begin{array}{lll}
-    ∇_\bfx\cdot (J^{-1}\,\bfF\,\bfS\,\bfF^\top) = 0
-  \end{array}
-\end{equation*}
- 
-\subsection{Incompressible solid mechanics}
-
-A material is incompressible if one of the following necessary and sufficient conditions are satisfied (Holzapfel \cite{holzapfel2000nonlinear} p.103):
-\begin{equation*}
-  \begin{array}{lll}
-    J = 1, \quad \d v = \text{const}, \quad \dot{J} = 0, \quad \bfF^{-\top} : \dot{\bfF} = 0, \quad \div(\bfv) = 0
-  \end{array}
-\end{equation*}
-
-\bild{tonti_diagram}{0.8\textwidth}{Tonti diagram}
-
-A nonlinear case occurs if the constitutive relation between $\bfS$ and $\bfeps$ is nonlinear or if the relationship between displacement $\bfu$ and strain $\bfeps$ is nonlinear, as depicted in the Tonti diagram, \cref{fig:tonti_diagram}.
-
-The case of 3D finite elasticity the relation between the displacement vector $\hat{\bfu}$ and the strain $\bfE = (\bfC - \bfI)/2$ is nonlinear because of $\bfC = \bfF^\top \bfF$. In addition the material model is often nonlinear, because of the invariants. 
-
-For incompressible and nearly incompressible analyses it is necessary to use a mixed formulation to avoid convergence problems (locking). \cite{zienkiewicz1977finite}, \cite{bathe2006finite}.
-
-Sec.~\ref{sec:penalty} describes the penalty method, Sec.~\ref{sec:mixed} formulates the classical mixed formulation that is used for compressible / nearly incompressible analyses.
-
-\subsubsection{Material description}
-
-Starting point is the equation of motion in the material description
-\begin{equation*}
-  \begin{array}{lll}
-    ∇_\bfX\cdot \bfP + \bfB = \rho_0\,\ddot{\bfu},
-  \end{array}
-\end{equation*}
-with body forces in reference configuration, $\bfB=J\,\bfb$, and the first Piola-Kirchhoff stress tensor, ${\bfP = J\bfsigma^\top \bfF^{-\top}}$, prescribed surface traction $\bar{T}$, displacement field $u$ in the reference configuration.
-The principle of virtual work is (Holzapfel \cite{holzapfel2000nonlinear}, p.385)
-\begin{equation*}
-  \begin{array}{lll}
-    \ub{\ds\int_{\Omega} \bfP : ∇_\bfX \delta\bfu\,\d V}{=δW_\text{int}} = \ub{\ds\int_{\Omega} (\bfB - \rho_0\,\ddot{\bfu})\cdot δ\bfu\,\d V + \ds\int_{∂\Omega}  \bar{\bfT}\cdot δ\bfu\,\d S}{=δW_\text{ext}}
-  \end{array}
-\end{equation*}
-The internal virtual work $δW_\text{int}$ can be expressed in terms of Green-Lagrange strain, $\bfE$, and 2nd Piola-Kirchhoff stress, $\bfS$,
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int} = \ds\int_{\Omega} \bfP : ∇_\bfX \delta\bfu\,\d V = \ds\int_{\Omega} \bfS : δ\bfE\,\d V.
-  \end{array}
-\end{equation*}
-
-For the static case, $\ddot{\bfu} = \bfzero$, the virtual work can be expressed by a potential,
-\begin{equation}\label{eq:functionals}
-  \begin{array}{lll}
-    \Pi_\text{int}(\bfu) = \ds\int_\Omega \Psi\big(\bfF(\bfu)\big)\,\d V,\\[4mm]
-    \Pi_\text{ext}(\bfu) = -\ds\int_\Omega \bfB \bfu\,\d V - \ds\int_{∂\Omega}\bar{T}\bfu\,\d S.\\[4mm]
-  \end{array}
-\end{equation}
-This is useful in order to describe the material behaviour by a scalar strain enery density function, $\Psi$.
-
-By taking the directional derivative,
-\begin{equation*}
-  \begin{array}{lll}
-    D_{δ\bfu}\Pi(\bfu) = \d{\eps} \Pi(\bfu + \epsδ\bfu)\big|_{\eps=0},
-  \end{array}
-\end{equation*}
-we get back to the virtual work terms.
-\begin{equation*}
-  \begin{array}{lll}
-    D_{δ\bfu}\Pi_\text{int} = δW_\text{int}, \qquad D_{δ\bfu}\Pi_\text{ext} = -δW_\text{ext}.
-  \end{array}
-\end{equation*}
-
-
-\subsubsection{Penalty method}\label{sec:penalty}
-For incompressible materials we use the decoupled representation of the strain energy function,
-\begin{equation*}
-  \begin{array}{lll}
-    \Psi(\bfC) = \Psi_\text{vol}\big(J(\bfu)\big) + \Psi_\text{iso}(\bar{\bfC}(\bfu)), \quad \text{with } \Psi_\text{vol}(J) = \kappa\,\G(J), \quad \G(J) := \dfrac12 (J-1)^2
-  \end{array}
-\end{equation*}
-The derivative yields
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int} &= D_{δ\bfu}\Pi_\text{int} = \ds\int_{\Omega}\left( \p{\Psi_\text{vol}\big(J(\bfu)\big)}{\bfC} + \p{\Psi_\text{iso}(\bar{\bfC}(\bfu)}{\bfC} \right) : D_\text{δ\bfu}\bfC(\bfu)\,\d V\\[4mm]
-    &= \ds\int_{\Omega}\Big(\ub{J\ub{\d{\Psi_\text{vol}}{J}}{=p}\bfC^{-1}}{=\bfS_\text{vol}} + \ub{2\p{\Psi_\text{iso}}{\bfC}}{=\bfS_\text{iso}} \Big):δ\bfE\,\d V = \ds\int_{\Omega}\big(\bfS_\text{vol} + \bfS_\text{iso} \big):δ\bfE\,\d V
-  \end{array}
-\end{equation*}
-In comparison with \eqref{eq:stress_split} we identify the split of the 2nd Piola-Kirchhoff stress tensor, ${\bfS = \bfS_\text{vol} + \bfS_\text{iso}}$. The pressure $p$ is artifical and does not represent the physical volumetric pressure.
-\begin{equation*}
-  \begin{array}{lll}
-    p = \d{\Psi_\text{vol}}{J} = \kappa\,\d{G(J)}{J} = \kappa\big(J(\bfu) - 1\big).
-  \end{array}
-\end{equation*}
-The penalty parameter $\kappa$ is a numerical parameter, for $\kappa \to \infty$ the problem gets incompressible, but ill-conditioned.
-
-The variation of the Green-Lagrange strain tensor, $δ\bfE$ is given by (p.375)
-\begin{equation}\label{eq:deltae}
-  \begin{array}{lll}
-    δ\bfE = \sym(\bfF^\top\,∇δu) = \dfrac12\big((\bfF^\top ∇δ\bfu)^\top + \bfF^\top ∇δ\bfu\big),\\[4mm]
-    δE_{AB} = \dfrac12\left(F_{aB}\,\p{δu_a}{X_A} + F_{aA}\,\p{δu_a}{X_B}\right)
-  \end{array}
-\end{equation}
-
-The governing equations are given by the principle of virtual work,
-\begin{equation}\label{eq:pvw_r}
-  \begin{array}{lll}
-    δW_\text{int}(\bfu) - δW_\text{ext} = 0.
-  \end{array}
-\end{equation}
-The extern virtual energy is assumed to not depend on the displacements.
-
-\eqref{eq:pvw_r}  has to hold for arbitrary virtual displacements, $δ\bfu$. The system of equations is thus
-\begin{equation}\label{eq:fullp}
-  \begin{array}{lll}
-    \ub{\ds\int_{\Omega}\bfS:δ\bfE(δ\bfu)\,\d V}{=δW_\text{int}} 
-    - \ub{\ds\int_{\Omega} (\bfB - \rho_0\,\ddot{\bfu})\cdot δ\bfu\,\d V + \ds\int_{∂\Omega}  \bar{\bfT}\cdot δ\bfu\,\d s}{=δW_\text{ext}} = 0,\qquad \forall\,δ\bfu
-  \end{array}
-\end{equation}
-With the usual discretization,
-\begin{equation*}
-  \begin{array}{lll}
-    u_a = u^L_a\,\phi_L, \quad δu_a = δu^L_a\,\phi_L, \qquad \hat{\bfu} = (u_a^L)_{a=1,2,3}, \quad δ\hat{\bfu} = (δu_a^L)_{a=1,2,3},
-  \end{array}
-\end{equation*}
-we get from \eqref{eq:deltae} and \eqref{eq:fullp} in index form
-\begin{equation}\label{eq:iind}
-  \begin{array}{lll}
-    &\ds\int_{\Omega}\dfrac12S_{AB}\left(F_{aB}\,\p{δu_a}{X_A} + F_{aA}\,\p{δu_a}{X_B}\right) \,\d V 
-    - \ds\int_{\Omega} (B_a - \rho_0\,\ddot{u}_a) δu_a\,\d V + \ds\int_{∂\Omega}  \bar{T}_a δu_a\,\d s= 0\\[4mm]
-    \Leftrightarrow\quad & 
-    \ds\int_{\Omega}\dfrac12S_{AB}(\hat{\bfu})\,δu^L_a \left(F_{aB}(\hat{\bfu})\,\p{\phi_L}{X_A} + F_{aA}(\hat{\bfu})\,\p{\phi_L}{X_B}\right) \,\d V 
-    - \text{rhs}= 0\\[4mm]
-  \end{array}
-\end{equation}
-where the constant $\text{rhs}$, which is the discretized $δW_\text{ext}$, is given by
-\begin{equation*}
-  \begin{array}{lll}
-    \text{rhs} = \ds\int_{\Omega} (B_a - \rho_0\,\ddot{u}_a) δu^L_a\,\phi_L\,\d V - \ds\int_{∂\Omega}  \bar{T}_a δu^L_a\,\phi_L\,\d s.
-  \end{array}
-\end{equation*}
-This defines a nonlinear function, $\bfR(\hat{\bfu}) \in \R^{3N}$, with one value for each $δu^L_a, a=1,2,3, L=1,\dots,N$ (I.e. entry $(a,L)$ of the vector $\bfR$ contains formula \eqref{eq:iind} with $δu_{\bar{a}}^{\bar{L}}=1$ for $\bar{a}=a, \bar{L}=L$ and $δu_{\bar{a}}^{\bar{L}}=0$ otherwise). The aim is to find $\hat{\bfu}$ such that $\bfR(\hat{\bfu}) = 0$. 
-
-Within the Newton-Raphson scheme the equation is linearized around iterative values $\hat{\bfu}^{(k)}$.
-\begin{equation*} 
-  \begin{array}{lll}
-    \bfR(\hat{\bfu}^{(k+1)}) = \bfR\Big|_{\hat{\bfu}=\hat{\bfu}^{(k)}} + D_{Δ\hat{\bfu}^{(k)}}δW_\text{int}(\hat{\bfu},δ\hat{\bfu})
-    %\d{\bfR(\hat{\bfu})}{\hat{\bfu}}\Big|_{\hat{\bfu}=\hat{\bfu}^{(k)}} \ub{\big(\hat{\bfu}^{(k+1)}-\hat{\bfu}^{(k)}\big)}{=:Δ\hat{\bfu}^{(k)}} 
-    +\O\big((Δ\hat{\bfu}^{(k)})^2\big).
-  \end{array}
-\end{equation*}
-The iterative procedure starts with an initial value $\hat{\bfu}^{(0)} = \hat{\bfu}_0$ and repeatedly computes
-\begin{equation*}
-  \begin{array}{lll}
-    \hat{\bfu}^{(k+1)} = \hat{\bfu}^{(k)} + Δ\hat{\bfu}^{(k)}.
-  \end{array}
-\end{equation*}
-The increment $Δ\hat{\bfu}^{(k)}$is computed by assuming $\bfR(\hat{\bfu}^{(k+1)}) = 0$ and solving
-\begin{equation}\label{eq:newton_update}
-  \begin{array}{lll}
-    D_{Δ\hat{\bfu}^{(k)}}δW_\text{int}(\hat{\bfu},δ\hat{\bfu}) = -\bfR(\hat{\bfu}^{(k)}).
-  \end{array}
-\end{equation}
-This is a linear system that has to be solved. It is repeated until the residual norm $\Vert \bfR(\hat{\bfu}^{(k)}) \Vert$ gets below a threshold.
- 
-The left-hand side term of \eqref{eq:newton_update} is derived from \eqref{eq:pvw_r} (Holzapfel p.396),
-\begin{equation}\label{eq:directional_derivative_w_int}
-  \begin{array}{lll}
-    D_{Δ\hat{\bfu}^{(k)}}δW_\text{int}(\hat{\bfu},δ\hat{\bfu}) = \ds\int_\Omega \p{\delta u_a}{X_B}(\ub{δ_{ab}\,S_{BD} + F_{aA}\,F_{bC}\,C_{ABCD}}{=\tilde{k}_{abBD}})\p{Δu_b}{X_D}\,\d V
-  \end{array}
-\end{equation}
-with
-\begin{equation*}
-  \begin{array}{llll}
-    B,D=1,\dots,3\quad &\dots \qquad & \text{indices over spatial dimensions}\\[4mm]
-    a,b=1, \quad &\dots & \text{indices over degrees of freedom}\\[4mm]
-    \bfS, \quad &\dots & \text{current 2nd Piola-Kirchhoff stress tensor}\\[4mm]
-    \mathbb{C} = \p{\bfS(\bfE)}{\bfE}, \quad &\dots & \text{elasticity tensor}\\[4mm]
-    \tilde{k}_{abBD}, \quad &\dots & \text{integrand to be used for tangent stiffness matrix.}\\[4mm]
-  \end{array}
-\end{equation*}
-Note that the expression is a scalar value in total with the inner parantheses term being a forth-order tensor. The expression is bilinear in $δu$ and $Δu$.
-The virtual displacements, $δ\bfu$ and increments, $Δ\bfu$ are discretized as usual, leading to the stiffness matrix $\bfk$.
-
-Herein, $∂δu_a/∂X_B$ is a virtual displacement in component $a=1,2,3$, derivative $B$. In discretized form it is $δ\hat{u}_{a,B}^L$ with dof index $(L,B)$ and component number $a$. Eq.~\eqref{eq:directional_derivative_w_int} has to hold for all $δ\hat{u}_{a,B}^L$, these are the equations or rows in the stiffness matrix. The columns of the stiffness matrix correspond to the unknown increments, $Δu_d$, discretized as 
+\begin{align*}
+  \ds\int\limits_{V_0} \rho_0\,\d V = \int\limits_{V_t} \rho \,\d v.
+\end{align*}
 %
-\begin{equation*}
-  \begin{array}{lll}
-    \p{Δu_b}{X_D} = Δ\hat{u}_{b}^M \phi_{b,D}^M.
-  \end{array}
-\end{equation*}
-The coefficients, $Δ\hat{u}_{b}^M$, are also the same for the real increments, not the derivatives, i.e.
-\begin{equation*}
-  \begin{array}{lll}
-    Δu_b = Δ\hat{u}_{b}^M \phi_{b}^M.
-  \end{array}
-\end{equation*}
-
-The entries of the tangent stiffness matrix, $k_{ij}$ are thus
-\begin{equation*}
-  \begin{array}{lll}
-    k_{ij} = \ds\int_\Omega \p{\phi_a^L}{X_B}\tilde{k}_{abBD}\p{\phi_b^M}{X_D}\,\d V \qquad \text{(sum over $B$ and $D$)}
-  \end{array}
-\end{equation*}
-with appropriate mappings $i \mapsto (a,L)$ and $j \mapsto (b,M)$.
-
-The stress, $\bfS$ is computed by
-\begin{equation*}
-  \begin{array}{lll}
-    \bfS = \bfS_\text{vol} + \bfS_\text{iso} = J\,p\,\bfC^{-1} + 2\p{\Psi_\text{iso}}{\bfC}
-  \end{array}
-\end{equation*}
-
-The elasticity tensor
-\begin{equation*}
-  \begin{array}{lll}
-    \C = \C_\text{vol} + \C_\text{iso} = 2 \p{\bfS_\text{vol}}{\bfC} + 2 \p{\bfS_\text{iso}}{\bfC}
-  \end{array}
-\end{equation*}
-According to Holzapfel \cite{holzapfel2000nonlinear} the required quantities are as follows:
-\label{quantities_penalty}
+The equation holds for all corresponding subdomains $V_0\subset \Omega_0$ and $V_t \subset \Omega_t$. With the intermediate step of deducing $\d/\d t \int_{\Omega_t} \rho \,\d v=0$, we get the following differential equation:%
+\begin{align}\label{eq:contraction_helper1}
+  \dot{\rho}(\bfv,t) + \rho(\bfx,t)\,\div\big(\bfv(\bfx,t)\big) = 0.
+\end{align}
 %
-\begin{equation*}
-  \begin{array}{lll}
-    J = \det(\bfF), \quad \bfC = \bfF^\top \bfF\\[4mm]
-    \bar{\bfC} = J^{-2/3}\bfC \quad &\text{(p.228)}\\[4mm]
-    \bar{\gamma}_1 = 2\left(\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_1} + \bar{I}_1\,\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_2}\right)\quad &\text{(p.234)}\\[4mm]
-    \bar{\gamma}_2 = -2\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_2}\quad &\text{(p.234)}\\[4mm]
-    \bar{\bfS} = 2\p{\Psi_\text{iso}(\bar{I_1},\bar{I_2})}{\bar{\bfC}} = \bar{\gamma_1}\,\bfI + \bar{\gamma_2}\,\bar{\bfC}\quad &\text{(p.234)}\\[4mm]
-    (\mathbb{I})_{abcd} = \delta_{ac}\,\delta_{bd}&\text{(p.23)}\\[4mm]
-    \mathbb{P} = \mathbb{I} - \dfrac13 \bfC^{-1} \otimes \bfC \quad &\text{(p.229)}\\[4mm]
-    \bfS_\text{iso} = J^{-2/3}\mathbb{P}:\bar{\bfS} \quad &\text{(p.234)}\\[4mm]
-    p = \d{\Psi_\text{vol}(J)}{J} \quad &\text{(p.230)}\\[4mm]
-    \bfS_\text{vol} = J\,p\,\bfC^{-1} \quad &\text{(p.230, p.245)}\\[4mm]
-    \bfS = \bfS_\text{iso} + \bfS_\text{vol} \quad &\text{(p.233)}\\
-    \hline\\
-    \tilde{p} = p + J\,\d{p}{J} \quad &\text{(p.255)}\\[4mm]
-    \big(\bfC^{-1} \odot \bfC^{-1}\big)_{abcd} = \dfrac12\big(C^{-1}_{ac}\,C^{-1}_{bd} + C^{-1}_{ad}\,C^{-1}_{bc}\big) \quad &\text{(p.254)}\\[4mm]
-    \mathbb{C}_\text{vol} = J\,\tilde{p}\,\bfC^{-1} \otimes \bfC^{-1} - 2\,J\,p\,\bfC^{-1} \odot \bfC^{-1} \quad &\text{(p.254)}\\[4mm]
-    \bar{\delta}_1 = 4\left(\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_1} + 2\,\bar{I}_1\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_2} +\dfrac{∂\Psi_\text{iso}}{∂\bar{I}_2} + \bar{I}_1^2\,\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2}\right) \quad &\text{(p.262)}\\[4mm]
-    \bar{\delta}_2 = -4\left(\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_2} + \bar{I}_1\,\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2}\right) \quad &\text{(p.262)}\\[4mm]
-    \bar{\delta}_3 = 4\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2} \quad &\text{(p.262)}\\[4mm]
-    \bar{\delta}_4 = -4\dfrac{∂\Psi_\text{iso}}{∂\bar{I}_2} \quad &\text{(p.262)}\\[4mm]
-    \bar{\mathbb{C}} = J^{-4/3}\left(\bar{\delta}_1\,\bfI \otimes \bfI + \bar{\delta}_2\,\big(\bfI \otimes \bar{\bfC} + \bar{\bfC} \otimes \bfI\big) + \bar{\delta}_3\bar{\bfC} \otimes \bar{\bfC} + \bar{\delta}_4\,\mathbb{I} \right) \quad &\text{(p.262)}\\[4mm]
-    \tilde{\mathbb{P}} = \bfC^{-1} \odot \bfC^{-1} - \dfrac13 \bfC^{-1} \otimes \bfC^{-1} \quad &\text{(p.255)}\\[4mm]
-    \mathbb{C}_\text{iso} = \mathbb{P} : \bar{\mathbb{C}} : \mathbb{P}^\top + \dfrac23 J^{-2/3} \bar{\bfS} : \bfC\,\tilde{\mathbb{P}} - \dfrac23\big(\bfC^{-1}\otimes \bfS_\text{iso} + \bfS_\text{iso}\otimes \bfC^{-1}\big) \quad &\text{(p.255)}\\[4mm]
-    \mathbb{C} = \mathbb{C}_\text{vol} + \mathbb{C}_\text{iso} \quad &\text{(p.254)}\\[4mm]
-  \end{array}
-\end{equation*}
 
-\subsubsection{Linear elasticity}
-For linear elasticity we have $\bfx \approx \bfX$ and
-\begin{equation*}
-  \begin{array}{lll}
-    \bfK \,\bfu = \bff
-  \end{array}
-\end{equation*}
-with right hand side
-\begin{equation*}
-  \begin{array}{lll}
-    \bff = \ds\int_{∂Ω}\bar{T}_a\,δu_a^L\,\phi_L\,\d s
-  \end{array}
-\end{equation*}
-and stiffness matrix
-\begin{equation*}
-  \begin{array}{lll}
-    \bfK(δ\bfu)\,\bfu = \ds\int_{Ω} \bfsigma : δ\bfeps \, \d \bfx
-  \end{array}
-\end{equation*}
-where $\bfsigma = \mathbb{C} : \bfeps$ with
-\begin{equation*}
-  \begin{array}{lll}
-    \mathbb{C}_{abcd} = K\,δ_{ab}\,δ_{cd} + μ\,(δ_{ac}\,δ_{bd} + δ_{ad}\,δ_{bc} - \dfrac23 δ_{ab}\,δ_{cd}),
-  \end{array}
-\end{equation*}
-with bulk modulus $K$ and shear modulus $μ$.
-
-The following symmetry properties hold:
-\begin{equation*}
-  \begin{array}{lll}
-    \bbC_{abcd} = \bbC_{bacd} = \bbC_{abdc} = \bbC_{badc} \quad \text{minor symmetries}\\[4mm]
-    \bbC_{abcd} = \bbC_{cdab} \quad \text{major symmetries}
-  \end{array}
-\end{equation*}
-Discretization yields:
-\begin{equation*}
-  \begin{array}{lll}
-    \bfu_{a}(\bfx) = u_a^M\,\phi^M(\bfx),\\[4mm]
-    \p{\bfu_{a}(\bfx)}{x_b} = u_a^M\,\p{\phi^M(\bfx)}{x_b}.
-  \end{array}
-\end{equation*}
-As before, $a,b=1,\dots,D$ indicate components, $L,M$ indicate nodes / dofs.
-Strain $\bfeps$ is computed linearly from displacements: 
-\begin{equation*}
-  \begin{array}{lll}
-    \bfeps_{ab}(\bfx) = \dfrac12\left(\p{\bfu_{(b)}(\bfx)}{x_{(a)}} + \p{\bfu_{(a)}(\bfx)}{x_{(b)}}\right) = \dfrac12\left(u_{(b)}^L\,\p{\phi^L(\bfx)}{x_{(a)}} + u_{(a)}^M\,\p{\phi^M(\bfx)}{x_{(b)}}\right)
-  \end{array}
-\end{equation*}
-This results in
-\begin{equation*}
-  \begin{array}{lll}
-    \bfK\,\bfu &= δ\bfeps_{ab}(\bfx)\,\mathbb{C}_{abcd}\,\bfeps_{cd}(\bfx) \\[4mm]
-    &= \mathbb{C}_{abcd}\,\dfrac12\left(δu_{(d)}^L\,\p{\phi^L(\bfx)}{x_{(c)}} + δu_{(c)}^M\,\p{\phi^M(\bfx)}{x_{(d)}}\right)\, \dfrac12\left(u_{(b)}^N\,\p{\phi^N(\bfx)}{x_{(a)}} + u_{(a)}^O\,\p{\phi^O(\bfx)}{x_{(b)}}\right)\\[4mm]
-    &= \dfrac14 \mathbb{C}_{abcd}\,\Big(
-    δu_{(d)}^L\,u_{(b)}^N\,\p{\phi^L(\bfx)}{x_{(c)}}\p{\phi^N(\bfx)}{x_{(a)}}
-    + δu_{(d)}^L\,u_{(a)}^O\,\p{\phi^L(\bfx)}{x_{(c)}}\p{\phi^O(\bfx)}{x_{(b)}}\\[4mm]
-    & + δu_{(c)}^M\,u_{(b)}^N\,\p{\phi^M(\bfx)}{x_{(d)}}\p{\phi^N(\bfx)}{x_{(a)}}
-    + δu_{(c)}^M\,u_{(a)}^O\,\p{\phi^M(\bfx)}{x_{(d)}}\p{\phi^O(\bfx)}{x_{(b)}}\Big).
-  \end{array}
-\end{equation*}
-For matrix entry $\bfM_{LaMb}$, we have
-\begin{equation*}
-  \begin{array}{lll}
-    % L -> L
-    % N -> M
-    % d -> a
-    % b -> b
-    % a -> c
-    % c -> d
-    \bfM_{LaMb} &= \dfrac14\mathbb{C}_{cbda}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}
-    % L -> L
-    % O -> M
-    % d -> a
-    % a -> b
-    % b -> c
-    % c -> d
-    + \dfrac14\mathbb{C}_{bcda}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
-    % M -> L
-    % N -> M
-    % c -> a
-    % b -> b
-    % a -> c
-    % d -> d
-    &+ \dfrac14\mathbb{C}_{cbad}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}
-    % M -> L
-    % O -> M
-    % c -> a
-    % a -> b
-    % b -> c
-    % d -> d
-    + \dfrac14\mathbb{C}_{bcad}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
-    &= \dfrac14\big(\mathbb{C}_{cbda} + \mathbb{C}_{bcda} + \mathbb{C}_{cbad} + \mathbb{C}_{bcad}\big) \p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
-    &= \mathbb{C}_{adbc}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\\[4mm]
-  \end{array}
-\end{equation*}
-%\begin{equation*}
-%  \begin{array}{lll}
-%    \bfK_{LM} = \ds\int_{Ω} \mathbb{C}_{abcd} \,\dfrac12\left(\p{\phi^{(M)}_{d}}{x_{c}} + \p{\phi^{(M)}_{c}}{x_{d}}\right) \dfrac12\left(\p{\phi^{(L)}_{b}}{x_{a}} + \p{\phi^{(L)}_{a}}{x_{b}}\right)  \d \bfx
-%  \end{array}
-%\end{equation*}
-
-\subsubsection{Using active stress}
-For the stress inside the muscle we have $\bfsigma = \bfsigma_\text{passive} + \bfsigma_\text{active}$. 
-\begin{equation*}
-  \begin{array}{lll}
-    \bfI(\bfu,δ\bfu) = \ds\int_{Ω} (\bfsigma_\text{passive} + \bfsigma_\text{active}) : δ\bfeps \, \d \bfx = \ds\int_{Ω} (\mathbb{C}:\bfeps + \bfsigma_\text{active}) : δ\bfeps \, \d \bfx = \bfK(δ\bfu)\,\bfu + \bff_\text{active}
-  \end{array}
-\end{equation*}
-The additional term can be computed by
-\begin{equation*}
-  \begin{array}{lll}
-    \bff_\text{active} = \ds\int_{Ω} \bfsigma^\text{active}_{ab} \, δ\bfeps_{ab} \, \d \bfx = \ds\int_{Ω}  \bfsigma^\text{active}_{ab} \dfrac12\left(δu_{b}^L\,\p{\phi^L(\bfx)}{x_{a}} + δu_{a}^M\,\p{\phi^M(\bfx)}{x_{b}}\right) \, \d \bfx.
-  \end{array}
-\end{equation*}
-The entry of $\bff$ is
-\begin{equation*}
-  \begin{array}{lll}
-    % L -> L
-    % b -> a
-    % a -> b
-    \bff^\text{active}_{La} = \ds\int_{Ω}\left(  \dfrac12 \bfsigma^\text{active}_{ba} \,\p{\phi^L(\bfx)}{x_{b}}  
-    % M -> L
-    % a -> a
-    % b -> b
-    + \dfrac12 \bfsigma^\text{active}_{ab}\,\p{\phi^L(\bfx)}{x_{b}}  \right)  \, \d \bfx.
-  \end{array}
-\end{equation*}
-Because of symmetry of $\bfsigma$, we have
-\begin{equation*}
-  \begin{array}{lll}
-    \bff^\text{active}_{La} = \ds\int_{Ω}\bfsigma^\text{active}_{ab}\,\p{\phi^L(\bfx)}{x_{b}} \,\d\bfx.
-  \end{array}
-\end{equation*}
-Care must be taken when setting up the principle of virtual work, $δW_\text{int} = δW_\text{ext}$. Normally, we would have
-
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int} = \bfI(\bfu,δ\bfu)
-  \end{array}
-\end{equation*}
-and 
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int}(\bfu,δ\bfu) = δW_\text{ext}(\bfu,δ\bfu), \quad \forall δ\bfu \in H^{1}_0(\Omega).
-  \end{array}
-\end{equation*}
-This gives one scalar equation for each basis vector of the discretized space.  
-Each equation can be thought of as equating the work that is needed externally and transferred to elastic energy internally, if one particular node is displaced along one coordinate axis by an infinitesimal amount.
-This would lead to strains around the particular node. The strain itself produce a stress response. This stress together with the strain, again, produces the work.
-
-In this formulation, the active stress term, $(\bfsigma^\text{active} : δ\bfeps)$, is part of the internal virtual work. However, this makes no sense as it is not the strain that causes the stress in this case, but the stress acts independent of the strain. This active stress actively adds virtual work to the system and should therefore be considered as external virtual work.
-
-The quantity $\bfsigma^\text{active}$ in the equation can be seen as an additive part of the stress that results not from the material response to the strain, but from an external active stress, $\bfsigma^\text{active,applied}$, which is independently magically applied everywhere in the muscle continuum.
-Therefore we have to set
-\begin{equation*}
-  \begin{array}{lll}
-    \bfsigma^\text{active} = -\bfsigma^\text{active,applied}
-  \end{array}
-\end{equation*}
-
-This leads to the following equation which has no minus signs.
-\begin{equation*}
-  \begin{array}{lll}
-    \ds\int_{Ω} \mathbb{C}:\bfeps : δ\bfeps \, \d \bfx = \ds\int_{Ω}\bfsigma^\text{active,applied} : δ\bfeps \,\d\bfx.
-  \end{array}
-\end{equation*}
-
-Furthermore, there will only be external virtual work by the active stress when the strain is negative (which means compression/contraction). Therefore, we have to use
-\begin{equation*}
-  \begin{array}{lll}
-    \ds\int_{Ω} \mathbb{C}:\bfeps : δ\bfeps \, \d \bfx = \ds\int_{Ω}\bfsigma^\text{active,applied} : \left(δ\bfeps\right)_{-} \,\d\bfx,
-  \end{array}
-\end{equation*}
-with
-\begin{equation*}
-  \begin{array}{lll}
-    (x)_{-} = \begin{cases}x & \text{if } x < 0,\\ 0 & \text{else.}\end{cases}
-  \end{array}
-\end{equation*}
-
-(Not completely sure about the argumentation, at least this gives reasonable numerical results, while other signs and omitting the $(\cdot)_{-}$ fails.)
-
-\subsubsection{Handling of Dirichlet boundary conditions}
+As muscle tissue largely consists of water, it is typically assumed to be an incompressible domain. This is equivalent to a constant density, $\dot{\rho}=0$, and, thus, \cref{eq:contraction_helper1} reduces to
 %
-The Newton algorithm to solve the nonlinear equation $f(\bfx) = \bfb$ for $\bfx$ with respect to Dirichlet boundary conditions $\bfx_{i} = \bfx_{0i}$ for $i \in \mathcal{I}$ can be summarized as follows:
-\begin{equation*}
-  \begin{array}{lll}
-    \text{set initial $\bfx_0$}\\
-    \bfx_i := \bfx_{0i} \quad \text{(initial values satisfy boundary conditions)}\\
-    \bff := f(\bfx_i)\\
-    \textbf{while } \Vert \bfb - \bff \Vert \geq \text{tol}\\
-    \quad \texttt{apply\_BC\_to\_$\bff$}\\
-    \quad \mathbb{C}_i := J_f(\bfx_i)\\ 
-    \quad \texttt{apply\_BC\_to\_$\mathbb{C}_i$}\\
-    \quad \text{solve } \quad \mathbb{C}_i\,Δ\bfx_i = \bfb - \bff \quad \text{ for $Δ\bfx_i$}\\
-    \quad \bfx_{i+1} := \bfx_i + Δ\bfx_i\\
-    \quad \bff := f(\bfx_{i+1})
-  \end{array}
-\end{equation*}
-The operation \texttt{apply\_BC\_to\_$\bff$} sets values $\bff_{i} = \bfb_{i}$ for all $i \in \mathcal{I}$. The operation \texttt{apply\_BC\_to\_$\mathbb{C}_i$} sets rows and columns for which BC are specified to the identity matrix, i.e. set 
-\begin{equation*}
-  \begin{array}{lll}
-    \mathbb{C}_{ii} = 1\quad \forall\,i \in \mathcal{I}\\[4mm]
-    \mathbb{C}_{ij} = \mathbb{C}_{ji} = 0, \quad \forall j\neq i\, \forall i \in \mathcal{I}.
-  \end{array}
-\end{equation*}
-By doing so the system of linear equation $\mathbb{C}_i\,Δ\bfx_i = \bfb - \bff$ contains the equations $Δx_i = b_i - f_i = 0$ for $i\in \mathcal{I}$. Therefore the variables $\bfx_i$ don't change their value in the loop and keep the initially assigned Dirichlet BC value.
-
-% -----------------------------
-%The following description is completely in reference configuration (material description).
-
-%The stress and strain tensors are split into isochoric (deviatoric) and volumetric parts.
-%Decomposition of strain tensor $\bfeps$ into volumetric strain $\eps_\text{vol}$ and isochoric (deviatoric) strain $\bfeps_\text{iso}$.
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\bfeps = \bfeps_\text{iso} + \dfrac13 \eps_\text{vol}\bfI, \qquad \bfeps_{ij} = \bfeps_{\text{iso},ij} + \dfrac13\eps_\text{vol}\,\delta_{ij},
-  %\end{array}
-%\end{equation*}
-%where the volumetric strain is then
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\eps_\text{vol} = \tr(\bfeps), \qquad \eps_\text{vol} = \bfeps_{kk},
-  %\end{array}
-%\end{equation*}
-%the deviatoric strain is
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\bfeps_\text{iso} = \bfeps -  \dfrac13 \eps_\text{vol}\bfI,\qquad   \bfeps_{\text{iso},ij} = \bfeps_{ij} - \dfrac13\,\eps_\text{vol}\,\delta_{ij}.
-  %\end{array}
-%\end{equation*}
-
-%For the stress we define
-%\begin{equation}\label{eq:sdev_def}
-  %\begin{array}{lll}
-    %\bfS_\text{iso} = \bfS + p\,\bfI, \qquad \bfS_{\text{iso},ij} = \bfS_{ij} + p\,\delta_{ij}
-  %\end{array}
-%\end{equation}
-
-%The pressure $p$ is positive in compression, whereas strains are positive in expansion, therefore the minus sign.
-%\begin{equation*}
-  %\begin{array}{lll}
-    %p = -\dfrac13\,\tr(\bfS), \qquad p = -\dfrac13\,\bfS_{kk}
-  %\end{array}
-%\end{equation*}
-
-%The relation between pressure $p$ and volumetric strain $\eps_\text{vol}$ is modeled by a linear relationship with constant $\kappa$,
-%\begin{equation*}
-  %\begin{array}{lll}
-    %p = -\kappa \eps_\text{vol},
-  %\end{array}
-%\end{equation*}
-%where $\kappa$ is the bulk modulus and is expressed in terms of Lamé parameters, $E$ and $\nu$, as follows:
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\kappa = \dfrac{E}{3(1-2ν)}
-  %\end{array}
-%\end{equation*}
-%Incompressibility is reached for $\nu \to 0.5$ respective $\kappa\to\infty$.
-
-
-%The Principle of Virtual Work states in general:
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\ds\int_{\Omega} \delta\bfeps : \bfS\,\d V = W_\text{ext}
-  %\end{array}
-%\end{equation*}
-
-%The right-hand side $W_\text{ext}$ is the external virtual work
-%\begin{equation*}
-  %\begin{array}{lll}
-    %W_\text{ext} = \ds\int_{\Omega} \delta \bfu^\top \bff_B\,\d V + \ds\int_{\Gamma_f} \delta \bfu_{\Gamma_f}^{\top} \bff_{\Gamma_f}\,\d S
-  %\end{array}
-%\end{equation*}
-%with:
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\bfu: \quad & \text{displacements}\\[4mm]
-    %\bff_B: \quad & \text{body force (force per unit volume)}\\[4mm]    
-    %\bff_{\Gamma_f}: \quad &\text{surface traction on surface $\Gamma_f$}
-  %\end{array}
-%\end{equation*}
-
-%For mixed formulation where pressure and deviatoric stress are both unknown variables, the principle of virtual work is formulated as
-%\begin{equation}\label{eq:mixed_eq1}
-  %\begin{array}{lll}
-    %\ds\int_{\Omega} \delta \bfeps_\text{iso} : \bfS_\text{iso} \,\d V - \ds\int_{\Omega} \delta \eps_\text{vol}\,p \,\d V = W_\text{ext}.
-  %\end{array}
-%\end{equation}
-
-%Because there are now two independent variables, $p$ and $\bfS_\text{iso}$ we need the second equation to establish the connection.
-%\begin{equation}\label{eq:mixed_eq2}
-  %\begin{array}{lll}
-    %\ds\int_{\Omega} \left(\dfrac1{\kappa}p + \eps_\text{vol}\right)\delta p\,\d V = 0
-  %\end{array}
-%\end{equation}
-
-%\subsubsection{Linear elasticity}
-
-%The constitutive relation between strain, given by the two parts, volumetric $\bfeps_\text{vol}$ and deviatoric $\bfeps_\text{iso}$ and stress $\bfS$ is assumed to be the linear relationship
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\bfS_{ij} = \kappa\,\bfeps_\text{vol}\,\delta_{ij} + 2\,G\,\bfeps_{\text{iso},ij}
-  %\end{array}
-%\end{equation*}
-%with the constants
-%\begin{equation*}
-  %\begin{array}{lll}
-    %G = \dfrac{E}{2(1+ν)}: \quad &\text{shear modulus}\\[4mm]
-    %\kappa = \dfrac{E}{3(1-2ν)} \quad &\text{bulk modulus (incompressible: $κ\to\infty$).}
-  %\end{array}
-%\end{equation*}
-
-%We can express the constitutive relation in the form
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\bfS = \bfD\,\bfeps, \quad \bfS_\text{iso} = \bfD_\text{iso}\,\bfeps_\text{iso}
-  %\end{array}
-%\end{equation*}
-%where $\bfD$, $\bfD_\text{iso}$ is an appropriate material tensor.
-
-%We discretize the displacement and strain using the vector of DOFs, $\hat{\bfu}$,
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\bfu = \bfN\,\hat{\bfu}, \quad \bfeps_\text{iso}= \bfB_\text{iso}\,\hat{\bfu}, \quad \bfeps_\text{vol} = \bfB_\text{vol}\,\hat{\bfu}.
-  %\end{array}
-%\end{equation*}
-%This formula for the strain which is linear in the DOFs is not possible for general 3D descriptions, as for $\eps = 1/2 (\bfF^\top \bfF-\bfI)$ we have a quadratic dependence in the displacement then. However for beam elements and 1D elements it is valid, also for assumption of small strains and displacements.
-
-%Also the pressure is discretized independently,
-%\begin{equation*}
-  %\begin{array}{lll}
-    %p = \bfN_p\,\hat{\bfp}.
-  %\end{array}
-%\end{equation*}
-
-%From \eqref{eq:mixed_eq1} and \eqref{eq:mixed_eq2} we get the matrix formulation of the problem,
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\left[\begin{array}{cc}
-      %\bfK_{uu} & \bfK_{up}\\[2mm]
-      %\bfK_{up}^\top & \bfK_{pp}
-    %\end{array}\right]
-    %\left[\begin{array}{c}
-      %\hat{\bfu}\\[2mm]
-      %\hat{\bfp}
-    %\end{array}\right] = 
-    %\left[\begin{array}{c}
-      %\bfR\\[2mm]
-      %\bfzero,
-    %\end{array}\right] 
-  %\end{array}
-%\end{equation*}
-%where
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\bfK_{uu} = \ds\int_{\Omega} \bfB_\text{iso}^\top \bfD_\text{iso} \,\bfB_\text{iso} \,\d V,\\[4mm]
-    %\bfK_{up} = -\ds\int_{\Omega} \bfB_\text{vol}^\top \bfN_p \,\d V,\\[4mm]
-    %\bfK_{pp} = -\ds\int_{\Omega} \bfN_p^\top\dfrac1{\kappa} \bfN_p \,\d V.
-  %\end{array}
-%\end{equation*}
-%For completely incompressible material behaviour we replace $1/\kappa$ by $0$ and have
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\left[\begin{array}{cc}
-      %\bfK_{uu} & \bfK_{up}\\[2mm]
-      %\bfK_{up}^\top & \bfzero
-    %\end{array}\right]
-    %\left[\begin{array}{c}
-      %\hat{\bfu}\\[2mm]
-      %\hat{\bfp}
-    %\end{array}\right] = 
-    %\left[\begin{array}{c}
-      %\bfR\\[2mm]
-      %\bfzero,
-    %\end{array}\right]
-  %\end{array}
-%\end{equation*}
-
-%\subsection{Finite elasticity}
-
-%\bild{tonti_diagram}{0.8\textwidth}{Tonti diagram}
-
-%A nonlinear case occurs if the constitutive relation between $\bfS$ and $\bfeps$ is nonlinear or if the relationship between displacement $\bfu$ and strain $\bfeps$ is nonlinear, as depicted in the Tonti diagram, \cref{fig:tonti_diagram}.
-
-%The case of 3D finite elasticity the relation between the displacement vector $\hat{\bfu}$ and the strain $\bfE = (\bfC - \bfI)/2$ is nonlinear because of $\bfC = \bfF^\top \bfF$. In addition the material model is often nonlinear, because of the invariants. 
-
-%Starting point for the derivation of the governing equations is again the Principle of Virtual Work in mixed formulation, \eqref{eq:mixed_eq1} and \eqref{eq:mixed_eq2}.
-
-%The variation of a strain quantity $\bfeps$, that is discretized by a vector of displacement degrees of freedom, $\hat{\bfu}$ is computed as
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\delta \bfeps = \left(\p{\eps}{\hat{\bfu}} \right)^\top \delta\hat{\bfu} = \delta\hat{\bfu}^\top\,\left(\p{\eps}{\hat{\bfu}} \right).
-  %\end{array}
-%\end{equation*}
-%We discretize the pressure $p$ by linear combination of ansatz functions, stored in the vector $\bfN_p$ with the coefficients $\hat{\bfp}$ being the degrees of freedom.
-%\begin{equation*}
-  %\begin{array}{lll}
-    %p = \bfN_p^\top \hat{\bfp}
-  %\end{array}
-%\end{equation*}
-
-%Plugging this into \eqref{eq:mixed_eq1} and together with a general material formulation $\bfS(\hat{\bfu})$, we get for the virtual internal work:
-%\begin{equation}\label{eq:Wint}
-  %\begin{array}{lll}
-    %\delta W_\text{int} = \delta \hat{\bfu}^\top \left(\ds\int_{\Omega} \p{\bfeps_\text{iso}}{\hat{\bfu}} : \bfS_\text{iso}(\hat{\bfu}) \,\d V - \ds\int_{\Omega} \p{\eps_\text{vol}}{\hat{\bfu}}\,\bfN_p^\top \hat{\bfp} \,\d V\right)
-  %\end{array}
-%\end{equation}
-%or in index notation
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\delta W_\text{int} = \delta\hat{\bfu}_i \left(\ds\int_{\Omega} \p{\bfeps_{\text{iso},jk}}{\hat{\bfu}_i} \bfS_{\text{iso},jk}(\hat{\bfu}) \,\d V - \ds\int_{\Omega} \p{\eps_\text{vol}}{\hat{\bfu}_{i}}\,\bfN_{p,j} \hat{\bfp}_j \,\d V\right)
-  %\end{array}
-%\end{equation*}
-%The external virtual work can be written as
-%\begin{equation}\label{eq:Wext}
-  %\begin{array}{lll}
-    %\delta W_\text{ext} = \delta\hat{\bfu}^\top \left(\ds\int_{\Omega} \bff_{B}\,\d V + \ds\int_{\Gamma_f}  \bff_{\Gamma_f}\,\d S\right),
-  %\end{array}
-%\end{equation}
-%where the force vectors $\bff_B$ and $\bff_{\Gamma_f}$ are of same size as $\hat{\bfu}$ and contain the appropriate entries (consistent nodal forces).
- 
-%The resulting equation of the form
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\delta W_\text{int} + \delta W_\text{ext} = 0
-  %\end{array}
-%\end{equation*}
-%can now with \eqref{eq:Wint} and \eqref{eq:Wext} be written as
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\delta\hat{\bfu}^\top \ub{
-      %\ds\int_{\Omega} \p{\bfeps_\text{iso}(\hat{\bfu})}{\hat{\bfu}} : \bfS_\text{iso}(\hat{\bfu}) \,\d V - \ds\int_{\Omega} \p{\eps_\text{vol}(\hat{\bfu})}{\hat{\bfu}}\, \bfN_p^\top \hat{\bfp} \,\d V 
-      %+ \ds\int_{\Omega} \bff_{B}\,\d V + \ds\int_{\Gamma_f}  \bff_{\Gamma_f}\,\d S 
-    %}{=:\bfR_1(\hat{\bfu},\hat{\bfp})} = 0
-  %\end{array}
-%\end{equation*}
-%The strain tensors $\eps_\text{iso}$ and $\eps_\text{vol}$ can be computed nonlinearly from $\hat{\bfu}$.
-
-%The second equation that connects to the pressure $p$ is \eqref{eq:mixed_eq2}. It contains the variation of the pressure, $\delta p$ which is resolved as follows
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\delta p = \bfN_p^\top \delta \hat{\bfp}.
-  %\end{array}
-%\end{equation*}
-%Using the pressure degrees of freedom, $\hat{\bfp}$, we have:
-%\begin{equation*}
-  %\begin{array}{lll}
-    %&\ds\int_{\Omega} \ub{\left(\dfrac1{\kappa}\,\bfN_p^\top \hat{\bfp} + \eps_\text{vol}(\hat{\bfu})\right)}{\in \R} \bfN_p^\top \delta \hat{\bfp} \,\d V = 0\\[4mm]
-    %\Leftrightarrow \quad & \delta \hat{\bfp}^\top  \ub{\ds\int_{\Omega}  \bfN_p \left(\dfrac1{\kappa}\,\bfN_p^\top \hat{\bfp} + \eps_\text{vol}(\hat{\bfu})\right)\,\d V}{=:\bfR_2(\hat{\bfu},\hat{\bfp})} = 0
-  %\end{array}
-%\end{equation*}
-
-%This nonlinear set of equations has now to be solved for the degrees of freedom ${(\hat{\bfu}, \hat{\bfp})}$.
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\mat{\bfR_1(\hat{\bfu},\hat{\bfp}) \\[4mm]
-    %\bfR_2(\hat{\bfu},\hat{\bfp})} = \bfzero
-  %\end{array}
-%\end{equation*}
-%For simplified notation the unknows are describes by a single vector $\bfw = (\hat{\bfu}, \hat{\bfp})$ and the equations by $\bfR(\bfw) = (\bfR_1(\bfw), \bfR_2(\bfw))$.
-
-%The Newton-Raphson scheme linearizes the equations around iterative values $\bfw^{(k)}$.
-%\begin{equation*} 
-  %\begin{array}{lll}
-    %\bfR(\bfw^{(k+1)}) = \bfR\Big|_{\bfw=\bfw^{(k)}} + \d{\bfR(\bfw)}{\bfw}\Big|_{\bfw=\bfw^{(k)}} \ub{\big(\bfw^{(k+1)}-\bfw^{(k)}\big)}{=:Δ\bfw^{(k)}} + \O\big((\bfw^{(k+1)}-\bfw^{(k)})^2\big).
-  %\end{array}
-%\end{equation*}
-%The iterative procedure starts with a start value $\bfw^{(0)} = \bfw_0$ and repeats to compute ${\bfw^{(k+1)} = \bfw^{(k)} + Δ\bfw^{(k)}}$. The increment $Δ\bfw^{(k)}$is computed by assuming $\bfR(\bfw^{(k+1)}) = 0$ and solving
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\d{\bfR(\bfw)}{\bfw}\Big|_{\bfw=\bfw^{(k)}} Δ\bfw^{(k)} = -\bfR(\bfw^{(k)}).
-  %\end{array}
-%\end{equation*}
-%This is a linear system that has to be solved. It is repeated until the residual norm $\Vert \bfR(\bfw^{(k)}) \Vert$ gets below a threshold.
- 
-%The Jacobian, $\mathrm{d} \bfR(\bfw) / \mathrm{d} \bfw$ has the following form:
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\d{\bfR(\bfw)}{\bfw} =
-    %\mat{
-      %\p{\bfR_1(\hat{\bfu}, \hat{\bfp})}{\hat{\bfu}} & \p{\bfR_1(\hat{\bfu}, \hat{\bfp})}{\hat{\bfp}}\\[4mm]
-      %\p{\bfR_2(\hat{\bfu}, \hat{\bfp})}{\hat{\bfu}} & \p{\bfR_2(\hat{\bfu}, \hat{\bfp})}{\hat{\bfp}}
-    %}
-  %\end{array}
-%\end{equation*}
-%The terms are listed in the following. The first term has to be computed by
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\p{\hat{\bfu}} \bfR_1(\hat{\bfu}, \hat{\bfp}) &= \p{\hat{\bfu}}\left( 
-    %\ds\int_{\Omega} \p{\bfeps_\text{iso}(\hat{\bfu})}{\hat{\bfu}} : \bfS_\text{iso}(\hat{\bfu}) \,\d V - \ds\int_{\Omega} \p{\eps_\text{vol}(\hat{\bfu})}{\hat{\bfu}}\, \bfN_p^\top \hat{\bfp} \,\d V 
-      %+ \ds\int_{\Omega} \bff_{B}\,\d V + \ds\int_{\Gamma_f}  \bff_{\Gamma_f}\,\d S
-    %\right)\\[4mm]
-    %\p{\hat{\bfu}_j} \bfR_{1,i}(\hat{\bfu}, \hat{\bfp}) &= 
-    %\ds\int_{\Omega} \dfrac{∂^2\bfeps_{\text{iso},kl}}{∂\hat{\bfu}_i\,∂\hat{\bfu}_j} \bfS_{\text{iso},kl} + 
-    %\dfrac{∂\bfeps_{\text{iso},kl}}{∂\hat{\bfu}_i} \p{\bfS_{\text{iso},kl}}{\hat{\bfu}_j}\,\d V 
-    %- \ds\int_{\Omega} \dfrac{∂^2\eps_\text{vol}}{∂\hat{\bfu}_i\,∂\hat{\bfu}_j}\, \bfN_{p,k} \hat{\bfp}_k \,\d V.
-  %\end{array}
-%\end{equation*}
-%The second term is:
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\p{\hat{\bfp}} \bfR_1(\hat{\bfu}, \hat{\bfp}) &= \p{\hat{\bfp}}\left( 
-    %\ds\int_{\Omega} \p{\bfeps_\text{iso}(\hat{\bfu})}{\hat{\bfu}} : \bfS_\text{iso}(\hat{\bfu}) \,\d V - \ds\int_{\Omega} \p{\eps_\text{vol}(\hat{\bfu})}{\hat{\bfu}}\, \bfN_p^\top \hat{\bfp} \,\d V 
-      %+ \ds\int_{\Omega} \bff_{B}\,\d V + \ds\int_{\Gamma_f}  \bff_{\Gamma_f}\,\d S
-    %\right)\\[4mm]
-    %\p{\hat{\bfp}_j} \bfR_{1,i}(\hat{\bfu}, \hat{\bfp}) &= 
-    %- \ds\int_{\Omega} \dfrac{∂\eps_\text{vol}}{∂\hat{\bfu}_i}\, \bfN_{p,j} \,\d V
-  %\end{array}
-%\end{equation*}
-%Note that $\bfS_{\text{iso}}(\hat{\bfu})$ was defined in \eqref{eq:sdev_def} as 
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\bfS_\text{iso} = \bfS + p\,\bfI = \bfS + \big(\tr (\bfS)\big)\,\bfI.
-  %\end{array}
-%\end{equation*}
-%This $p$ is different from the discretized degrees of freedom $\hat{\bfp}$, because it is derived via the constitutive relation $\bfS(\hat{\bfu})$ from the displacement degrees of freedom, $\hat{\bfu}$, whereas $\hat{\bfp}$ are separate degrees of freedom.
-%Therefore we have
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\p{\bfS_\text{iso}}{\hat{\bfp}} = 0.
-  %\end{array}
-%\end{equation*}
-
-%The third term is:
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\p{\hat{\bfu}} \bfR_2(\hat{\bfu}, \hat{\bfp}) &= \p{\hat{\bfu}}\left( 
-    %\ds\int_{\Omega}  \bfN_p \left(\dfrac1{\kappa}\,\bfN_p^\top \hat{\bfp} + \eps_\text{vol}(\hat{\bfu})\right)\,\d V
-    %\right)\\[4mm]
-    %\p{\hat{\bfu}_j} \bfR_{2,i}(\hat{\bfu}, \hat{\bfp}) &= 
-    %\ds\int_{\Omega}  \bfN_{p,i} \p{\eps_\text{vol}}{\hat{\bfu}_j}\,\d V \quad\text{(? - reformulate with minus sign, cmp. to $∂\bfR_{1,i}/∂\hat{\bfp_j}$)}
-  %\end{array}
-%\end{equation*}
- 
-%The fourth term is:
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\p{\hat{\bfp}} \bfR_2(\hat{\bfu}, \hat{\bfp}) &= \p{\hat{\bfp}}\left( 
-    %\ds\int_{\Omega}  \bfN_p \left(\dfrac1{\kappa}\,\bfN_p^\top \hat{\bfp} + \eps_\text{vol}(\hat{\bfu})\right)\,\d V
-    %\right)\\[4mm]
-    %\p{\hat{\bfp}_j} \bfR_{2,i}(\hat{\bfu}, \hat{\bfp}) &= 
-    %\ds\int_{\Omega}  \bfN_{p,i} \dfrac1{\kappa}\,\bfN_{p,j}\,\d V
-  %\end{array}
-%\end{equation*}
-
-%For completely incompressible material we set $1/\kappa = 0$ and get 
-%\begin{equation*}
-  %\begin{array}{lll}
-    %\p{\hat{\bfp}} \bfR_2(\hat{\bfu}, \hat{\bfp}) = \bfzero.
-  %\end{array}
-%\end{equation*}
-
-\subsection{Nonlinear hyperelasticity}
-
-This section is a rewrite of the theory.
-
-We assume a stationary problem. We use a mixed formulation, meaning that the displacement, $\bfu(\bfX)$, and the pressure, $p(\bfX)$, are discretized separately. The formulation is described in material configuration.
-
-We define the Hellinger-Reissner energy functional, $\Pi_L(\bfu,p)$ which describes the potential energy of the system. It is additively composed of internal and external potential energy,
-\begin{equation*}
-  \begin{array}{lll}
-    \Pi_L(\bfu,p) = \Pi_\text{int}(\bfu,p) + \Pi_\text{ext}(\bfu).
-  \end{array}
-\end{equation*}
-The external energy functional is given by
-\begin{equation*}
-  \begin{array}{lll}
-    \Pi_\text{ext}(\bfu) = -\ds\int_{\Omega_0} \bfB \bfu\,\d V - \ds\int_{∂\Omega_0}\bar{T}\bfu\,\d S,\\[4mm]
-  \end{array}
-\end{equation*}
-with body forces, $\bfB=J\,\bfb$, in reference configuration, $\Omega_0$, and prescribed surface traction $\bar{T}$.
-
-The internal energy functional can be expressed by
+\begin{align}\label{eq:assumption_1_local}
+  \div(\bfv(\bfx,t)) = 0.
+\end{align}
 %
-\begin{equation*}
-  \begin{array}{lll}
-    \Pi_\text{int}(\bfu) = \ds\int_{\Omega_0} \Big( p\,\big(J(\bfu) - 1\big) + \Psi_\text{iso}\big(\bar\bfC(\bfu)\big)\Big)\,\d V.\\[4mm]
-  \end{array}
-\end{equation*}
-Here, $\Psi_\text{iso}$ is a strain-energy density function, and is defined on the reference configuration, $\Omega_0$.
-It describes the isochoric elastic response of the material and depends on the modified right Cauchy-Green tensor,
-\begin{equation*}
-  \begin{array}{lll}
-    \bar\bfC(\bfu) = J^{-2/3}\,\bfC.
-  \end{array}
-\end{equation*}
-$p$ is the Lagrange multiplier to the the incompressibility constraint, $J(\bfu) = 1$. It is also the hydrostatic pressure in this case.
 
-According to the principle of stationary potential energy, the system is in equilibrium if the potential energy functional is stationary.
-This is the case if the first variation of the potential, $δ\Pi_L$, is zero.
-
-The variation is defined as
-\begin{equation}\label{eq:stationary_potential}
-  \begin{array}{lll}
-    D_{δ\bfu}\Pi(\bfu) = \d{\eps} \Pi(\bfu + \epsδ\bfu)\big|_{\eps=0}.
-  \end{array}
-\end{equation}
-Using the additive structure of $\Pi_L$, we can express the principle of stationary as
-\begin{equation}\label{eq:variations_functional_zero}
-  \begin{array}{lll}
-    0 = D_{δ\bfu}\Pi_L(\bfu, p) = D_{δ\bfu}\Pi_\text{int}(\bfu,p) + D_{δ\bfu}\Pi_\text{ext}(\bfu),\\[4mm]
-    0 = D_{δp}\Pi_L(\bfu, p) = D_{δp}\Pi_\text{int}(\bfu,p)
-  \end{array}
-\end{equation}
-The variations of the internal energy functionals are identified as the internal and external virtual work,
-\begin{equation*}
-  \begin{array}{lll}
-    D_{δ\bfu}\Pi_\text{int}(\bfu,p) = δW_\text{int}, \quad D_{δ\bfu}\Pi_\text{ext}(\bfu) = -δW_\text{ext}.
-  \end{array}
-\end{equation*}
-The first equation of \cref{eq:stationary_potential} can be rewritten as 
-\begin{equation*}
-  \begin{array}{rll}
-    δW_\text{int} - δW_\text{ext} &= 0.
-  \end{array}
-\end{equation*}
-
-
-
-
-Next, we derive the expressions for \cref{eq:variations_functional_zero}. 
-We start with the directional derivative in the direction of the virtual pressure, $δp$.
-\begin{equation*}
-  \begin{array}{lll}
-    D_{δp}\Pi_\text{int}(\bfu,p) &= \d{\eps} \Pi_\text{int}(\bfu, p + \epsδp)\big|_{\eps=0}\\[4mm]
-       &= \d{\eps} \ds\int_{\Omega_0} \Big( (p + \epsδp)\,\big(J(\bfu) - 1\big) + \Psi_\text{iso}\big(\bar\bfC(\bfu)\big)\Big)\,\d V|_{\eps=0}\\[4mm]
-       &= \ds\int_{\Omega_0} \big(J(\bfu) - 1\big)δp\,\d V.
-  \end{array}
-\end{equation*}
-The corresponding Euler-Lagrange equation is the incompressibility constraint, $J=1$.
-
-For the directional derivative of the internal energy functional with respect to $δ\bfu$ we get
-\begin{equation}\label{eq:internal_potential_directional_der}
-  \begin{array}{lll}
-    D_{δ\bfu}\Pi_\text{int}(\bfu,p) &= \d{\eps} \Pi_\text{int}(\bfu+\epsδ\bfu, p)\big|_{\eps=0}\\[4mm]
-      &= \d{\eps} \ds\int_{\Omega_0} \Big( p\,\big(J(\bfu+\epsδ\bfu) - 1\big) + \Psi_\text{iso}\big(\bar\bfC(\bfu+\epsδ\bfu)\big)\Big)\,\d V|_{\eps=0}\\[4mm]
-      &= \ds\int_{\Omega_0} \Big( \ub{J(\bfu)\,p\,\bfC^{-1}(\bfu)}{=\bfS_\text{vol}(\bfu,p)} + \ub{2\p{\Psi_\text{iso}(\bar{\bfC}(\bfu))}{\bfC}}{=\bfS_\text{iso}(\bfu)} \Big): δ\bfE(\bfu)\,\d V\\[4mm]
-      &= \ds\int_{\Omega_0} \bfS(\bfu,p): δ\bfE(\bfu)\,\d V\\[4mm]
-      &= δW_\text{int,vol}(\bfu,p) + δW_\text{int,iso}(\bfu) = δW_\text{int}.
-  \end{array}
-\end{equation}
-(See \cite{holzapfel2000nonlinear} eq. (8.105) for the missing steps.)
-As can be seen, the internal virtual work is decomposed into volumentric and isochoric portions.
-
-The external virtual work is given by
-\begin{equation*}
-  \begin{array}{lll}
-    D_{δ\bfu}\Pi_\text{ext}(\bfu) = -δW_\text{ext} = -\ds\int_{\Omega_0} \bfB\cdot δ\bfu\,\d V - \ds\int\limits_{∂\Omega^\text{traction}_0} \bar{\bfT}\cdot δ\bfu\,\d S
-  \end{array}
-\end{equation*}
-
-\textbf{Discretization}
-
-The displacements, $\bfu$, have components, $u_a$, i.e., $\bfu = u_a\,\bfe_a$. Indices $a,b,c, A,B,C,\dots$ denote dimensions and always run from 1 to dimension $D$, e.g. $i=1,\dots,3$. Lower-case letters are for current configuration, upper-case letters denote reference configuration. 
-Indices $L,M,N,\dots$ denote degrees of freedom and run from 1 to the number of nodes.
-Einstein sum convention is used, indices in parantheses mean no summation over this index.
-
-We discretize the displacements, $u_a$, pressure, $p$, increments $Δu_a, Δp$ and the virtual displacements and virtual pressure, $δu_a, δp$, using two different ansatz functions for displacements and pressure, $\phi(\bfX)$ and $\psi(\bfX)$, respectively,
-\begin{equation*}
-  \begin{array}{lll}
-    u_a = \hat{u}_a^L \phi_{(a)}^L,    \qquad  &\p{u_a}{X_A} = \hat{u}_{a}^M \phi_{(a),A}^M, \qquad  &p = \hat{p}^L \psi^L\\[4mm]
-    Δu_a = Δ\hat{u}_{a}^L \phi_{(a)}^L,\qquad  &\p{Δu_a}{X_A} = Δ\hat{u}_{a}^M \phi_{(a),A}^M, \qquad &Δp = Δ\hat{p}^L \psi^L \\[2ex]
-    δu_a = δ\hat{u}_{a}^L \phi_{(a)}^L,\qquad  &\p{δu_a}{X_A} = δ\hat{u}_{a}^M \phi_{(a),A}^M, \qquad &δp = δ\hat{p}^L \psi^L
-  \end{array}
-\end{equation*}
-We choose
-\begin{equation*}
-  \begin{array}{lll}
-    \phi_{(a)}^M(\bfX) = \phi^M(\bfX) = \phi^{M_1}(X_1)\cdot\phi^{M_2}(X_2)\cdot\phi^{M_3}(X_3) \quad \Rightarrow \quad \phi_{(a),2}^M(\bfX) = \phi^{M_1}(X_1)\cdot\phi'^{M_2}(X_2)\cdot\phi^{M_3}(X_3)
-  \end{array}
-\end{equation*}
-
-The variation of the Green-Lagrange strain tensor, $δ\bfE$ is given by (\cite{holzapfel2000nonlinear} p.375)
-\begin{equation}\label{eq:deltaee}
-  \begin{array}{lll}
-    δ\bfE &= \sym(\bfF^\top\,∇δu) = \dfrac12\big((\bfF^\top ∇δ\bfu)^\top + \bfF^\top ∇δ\bfu\big),\\[4mm]
-    δE_{AB} &= \dfrac12\left(F_{aB}\,\p{δu_a}{X_A} + F_{aA}\,\p{δu_a}{X_B}\right)\\[4mm]
-    &= \dfrac12\left(F_{aB}\,δ\hat{u}_{a}^M \phi_{(a),A}^M + F_{aA}\,δ\hat{u}_{a}^M \phi_{(a),B}^M\right)\\[4mm]
-    &= \dfrac12\left(F_{aB}\, \phi_{(a),A}^M + F_{aA}\, \phi_{(a),B}^M\right)δ\hat{u}_{a}^M
-  \end{array}
-\end{equation}
-
-
-Starting from \cref{eq:internal_potential_directional_der} we get with \cref{eq:deltaee}
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int}({\bfu},{p}) = \ds\int_{\Omega}\dfrac12  S_{AB}(\bfu,p)\, \left(F_{aB}\, \phi_{(a),A}^M + F_{aA}\, \phi_{(a),B}^M\right)δ\hat{u}_{a}^M \,\d V
-  \end{array}
-\end{equation*}
-We derive an expression for $S_{AB}$. From \cref{eq:internal_potential_directional_der} we know
-
-\begin{equation*}
-  \begin{array}{lll}
-    S_{AB} &= J(\bfu)\,p\,C^{-1}_{AB}(\bfu) + 2 \p{\Psi_\text{iso}(\bar{\bfC}(\bfu))}{C_{AB}}\\[4mm]
-    &= J(\bfu)\,p\,C^{-1}_{AB}(\bfu) + 2 \p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2}{C_{AB}})\\[4mm]
-  \end{array}
-\end{equation*}
-with (\cite{holzapfel2000nonlinear} p.234)
-\begin{equation*}
-  \begin{array}{lll}
-    S_{AB} = J^{-2/3}\cdot\big( \dfrac12 (δ_{AC}δ_{BD} + δ_{AD}δ_{BC}) - \frac13 C^{-1}_{AB}\,C_{CD} \big) \, \bar{S}_{CD} + J\,p\,C^{-1}_{AB}
-  \end{array}
-\end{equation*}
-with (p.228,229)
-\begin{equation*}
-  \begin{array}{lll}
-    \bar{S}_{CD} &= \bar{\gamma}_1\,δ_{CD} + \bar{\gamma}_2\,\bar{C}_{CD}\\[4mm]
-     &= \bar{\gamma}_1\,δ_{CD} + \bar{\gamma}_2\,J^{-2/3}\,C_{CD}, \qquad 
-     \bar{\gamma}_1 = 2\,\left(\p{\Psi_\text{iso}(\bar{I}_1,\bar{I}_2)}{\bar{I}_1} + \bar{I}_1\,\p{\Psi_\text{iso}(\bar{I}_1,\bar{I}_2)}{\bar{I}_2} \right), \quad 
-     \bar{\gamma}_2 = -2\,\p{\Psi_\text{iso}(\bar{I}_1,\bar{I}_2)}{\bar{I}_2}
-  \end{array}
-\end{equation*}
-So in summary we get
-\begin{equation*}
-  \begin{array}{lll}
-    S_{AB} &= J^{-2/3}\Big( \dfrac12 (δ_{AC}δ_{BD} + δ_{AD}δ_{BC}) - \frac13 C^{-1}_{AB}\,C_{CD} \Big) \, (\bar{\gamma}_1\,δ_{CD} + \bar{\gamma}_2\,J^{-2/3}\,C_{CD})
-    + J\,p\,C^{-1}_{AB}.
-  \end{array}
-\end{equation*}
-$S_{AB}$, which is the 2nd Piola-Kirchhoff stress tensor, is symmetric, since $\bfC$ and $\bfC^{-1}$ are symmetric.
-
-The jacobian determinant, $J$, can be computed from discretized quantities as follows.
-\begin{equation*}
-  \begin{array}{lll}
-    F_{aA} = δ_{aA} + \p{u_a}{X_A} = δ_{aA} + \hat{u}_{a}^M \phi_{(a),A}^M\\[4mm]
-    J = \det{\bfF}
-  \end{array}
-\end{equation*}
-
-    
-
-
-The external virtual work for the dynamic case is given by
-\begin{equation*}
-  \begin{array}{lll}
-    D_{δ\bfu}\Pi_\text{ext} = -δW_\text{ext} &= -\ds\int_{\Omega} (B_a - \rho_0\,\ddot{u}_a) δu_a\,\d V - \ds\int_{∂\Omega}  \bar{T}_a δu_a\,\d S\\[4mm]
-     &= -\ds\int_{\Omega} \big(B_a^L\,\phi_{(a)}^L - \rho_0\,\hat{\ddot{u}}_a^L\,\phi_{(a)}^L\big) δ\hat{u}^M_a\,\phi_{(a)}^M \,\d V - \ds\int_{∂\Omega}  \bar{T}_a^L \phi_{(a)}^L δ\hat{u}^M_a\,\phi_{(a)}^M\,\d S
-  \end{array}
-\end{equation*}
-
-In summary, the nonlinear equations are
-\begin{equation*}
-  \begin{array}{lll}
-    &\left\{
-      \begin{array}{lll}
-        D_{δ\bfu}\Pi_\text{int}(\bfu,p) + D_{δ\bfu}\Pi_\text{ext}(\bfu) = 0   \qquad & \forall \,δ\bfu,\\[4mm]
-        D_{δp}\Pi_\text{int}(\bfu,p) = 0            \qquad & \forall \,δp,
-      \end{array}\right. \\[8mm]
-    \quad \Leftrightarrow\quad&
-    \left\{
-      \begin{array}{lll}
-        δW_\text{int} - δW_\text{ext} = 0 \qquad &\forall\,δ\bfu,\\[4mm]
-        D_{δp}\Pi_L = 0 \qquad &\forall\,δp,
-      \end{array}\right. 
-  \end{array}
-\end{equation*}
-where
-\begin{equation}\label{eq:first_ders}
-  \begin{array}{lll}
-    δW_\text{int}({\bfu},{p})  = \ds\int_{\Omega}\dfrac12  S_{AB}(\bfu,p)\, \left(F_{aB}\, \phi_{(a),A}^M + F_{aA}\, \phi_{(a),B}^M\right)δ\hat{u}_{a}^M \,\d V\\[4mm]
-    δW_\text{ext}  = \ds\int_{\Omega} (B_a - \rho_0\,\ddot{u}_a) \phi_{(a)}^M\,δ\hat{u}^M_a \,\d V +\ds\int_{∂\Omega}  \bar{T}^L_a\,\phi_{(a)}^L\, \phi_{(a)}^M\,δ\hat{u}^M_a\,\d S \\[4mm]
-    D_{δp}\Pi_L(\bfu) = \ds\int_\Omega \big(J(\bfu) - 1)\,δp\,\d V 
-  \end{array}
-\end{equation}
-
-\textbf{Solution}
-
-To illustrate the algorithm, we define $(\hat{\bfu},\hat{p}) =: \bfz$ and the governing equations to be $W(\bfu,p) =: \mathcal{W}(z)=0$. We proceed by linearization:
-\begin{equation*}
-  \begin{array}{lll}
-    \mathcal{W}(z+Δz) = \mathcal{W}(z) + \mathcal{J}\,Δz + o(z + Δz)\\[4mm]
-     \mathcal{W}(z) + \mathcal{J}\,Δz \overset{!}{=} 0\\[4mm]
-  \end{array}
-\end{equation*}
-This leads to the iterative Newton scheme, which in its simplest form uses the iteration
-\begin{equation*}
-  \begin{array}{lll}
-    \mathcal{J}\,Δz^{(i)} = -\mathcal{W}(z^{(i)}),\\[4mm]
-    z^{(i+1)} = z^{(i)} + Δz^{(i)}
-  \end{array}
-\end{equation*}
-In terms of $\bfu$ and p, this can be expressed as
-\begin{equation*}
-  \begin{array}{lll}
-    D^2_{δ\bfu,Δ\bfu}\Pi_L(\bfu,p)\,Δ\bfu + D^2_{δ\bfu,Δp}\Pi_L(\bfu,p) \,Δp & = -D_{δ\bfu}\Pi_L(\bfu,p) \qquad & \forall \,δ\bfu \\[4mm]
-    D^2_{δp,Δ\bfu}\Pi_L(\bfu,p)\,Δ\bfu    + D^2_{δp,Δp}\Pi_L(\bfu,p) \,Δp    & = -D_{δp}\Pi_L(\bfu,p)    \qquad & \forall \,δp
-  \end{array}
-\end{equation*}
-To compute the second directional derivatives we recall the first derivatives \cref{eq:first_ders}:
-\begin{equation}\label{eq:first_dir_der}
-  \begin{array}{lll}
-    D_{δ\bfu}\Pi_L(\bfu,p) =& \ds\int_{\Omega}\dfrac12  S_{AB}(\bfu,p)\, \left(F_{aB}\, \phi_{(a),A}^L + F_{aA}\, \phi_{(a),B}^L\right)δ\hat{u}_{a}^L \,\d V\\[4mm]
-     &- \ds\int_{\Omega} (B_a - \rho_0\,\hat{\ddot{u}}_a) \phi_{(a)}^L\,δ\hat{u}^L_a \,\d V -\ds\int_{∂\Omega}  \bar{T}_a\, \phi_{(a)}^L\,δ\hat{u}^L_a\,\d S\\[4mm]
-    D_{δp}\Pi_L(\bfu,p) = &\ds\int_\Omega \big(J(\bfu) - 1)\,δp\,\d V = \ds\int_\Omega \big(J(\bfu) - 1)\,\psi^L\, δ\hat{p}^L\,\d V
-  \end{array}
-\end{equation}
-
-
-Linearization yields (p.396)
-\begin{equation}\label{eq:goveq}
-  \begin{array}{lll}
-    D^2_{δ\bfu,Δ\bfu}\Pi_L(\bfu,p) &= \ds\int_{\Omega_0} \big(∇ δ\bfu : ∇ Δ\bfu \,\bfS + \bfF^\top ∇ δ\bfu : (\C_\text{vol} + \C_\text{iso}) : \bfF^\top ∇ Δ\bfu \big)\,\d V\\[4mm]
-     &= \ds\int_{\Omega_0} \big(\ub{\p{δu_a}{X_B}\p{Δu_a}{X_D} S_{BD}}{\substack{\text{geometrical} \\ \text{stress contribution}}} + \ub{F_{aA}\p{δu_a}{X_B}\C_{ABCD}\,F_{bC}\p{Δu_b}{X_D}}{\substack{\text{material}\\ \text{contribution}}} \big)\,\d V\\[16mm]
-     &= \ds\int_{\Omega_0} \p{δu_a}{X_B}(δ_{ab} S_{BD} + F_{aA}\,F_{bC}\,\C_{ABCD})\p{Δu_b}{X_D}\,\d V\\[4mm]
-    &= \ds\int_{\Omega_0} δ\hat{u}^L_a \,\phi^L_{(a),B} \big(δ_{ab} S_{BD} + F_{aA}\,F_{bC}\,\C_{ABCD}\big)\phi^M_{(b),D} \,Δ\hat{u}^M_b \,\d V\\[4mm]
-    D^2_{δp,Δ\bfu}\Pi_L(\bfu,p) &= \ds\int_{\Omega_0} J(\bfu)\,δp\,∇_\bfx\cdot Δ\bfu\,\d V\\[4mm]
-    D^2_{δ\bfu,Δp}\Pi_L(\bfu,p) &= \ds\int_{\Omega_0} J(\bfu)\,∇_\bfx\cdot δ\bfu\,Δp\,\d V\\[4mm]
-    D^2_{δp,Δp}\Pi_L(\bfu,p) &= 0
-  \end{array}
-\end{equation}
-with $\C = ∂\bfS(\bfE)/∂\bfE = 2∂\bfS(\bfC)/∂\bfC = \C_\text{vol}+ \C_\text{iso}$ from Holzapfel \cite{holzapfel2000nonlinear} ($\C_\text{vol}$ p.254, $\C_\text{iso}$ p.255)
-$$
-  \begin{array}{lll}
-    \C_\text{vol} = \p{J(\bfu)p\bfC^{-1}(\bfu)}{\bfC}\,,\\[4mm]
-    \C_\text{iso} = 4\dfrac{∂^2\Psi_{\text{iso}}(\bar{\bfC})}{∂\bfC∂\bfC}\,.\\[4mm]
-  \end{array}
-$$
-Note that the term for $D^2_{δ\bfu,Δ\bfu}\Pi_L(\bfu,p)$ is the same as in \eqref{eq:directional_derivative_w_int}, while we can expand the term $∇_\bfx\cdot δ\bfu$ as (Holzapfel \cite{holzapfel2000nonlinear} p.405)
-$$
-  \begin{array}{lll}
-   ∇_\bfx\cdot δ\bfu& =& \bfC^{-1}:δ\bfE  \\[4mm]
-                    & =& \bfC^{-1}:\text{sym}(\bfF^{T} ∇_\bfX δ\bfu) \\[4mm]
-                    & =& \bfC^{-1}: \bfF^{T} ∇_\bfX δ\bfu \\[4mm]
-                     (A:BC & =& B^{T}A:C) \\[4mm]
-                    & =& \bfF \bfC^{-1}: ∇_\bfX δ\bfu  \\[4mm]
-                    & =& \bfF^{-T}:∇_\bfX δ\bfu\,.  
-  \end{array}
-$$
-Equation \eqref{eq:goveq} is given in index notation by:
-\begin{equation*}
-  \begin{array}{lll}
-     D^2_{δ\bfu,Δ\bfu}\Pi_L(\bfu,p) = \ds\int_\Omega \p{\delta u_a}{X_B}(δ_{ab}\,S_{DB} + F_{aA}\,F_{bC}\,C_{ABCD})\p{Δu_b}{X_D}\,\d V\\[4mm]
-     D^2_{δp,Δ\bfu}\Pi_L(\bfu,p) = \ds\int_\Omega J\,δp\,(F^{-1})_{Ba}\p{Δu_{a}}{X_B} \,\d V
-      = \ds\int_\Omega J\,δp\,(F^{-1})_{Ba} \phi^L_{(a),B}\,Δ\hat{u}^L_a \,\d V \\[4mm]
-     D^2_{δ\bfu,Δp}\Pi_L(\bfu,p) = \ds\int_\Omega J\,Δp\,(F^{-1})_{Ba}\p{δu_{a}}{X_B} \,\d V
-      = \ds\int_\Omega J\,Δp\,(F^{-1})_{Ba} \phi_{(a),B}^L\,δ\hat{u}^L_a \,\d V\\[4mm]
-     D^2_{δp,Δp}\Pi_L(\bfu,p) = 0
-  \end{array}
-\end{equation*}
-In summary we get 
-\begin{equation*}
-  \begin{array}{lll}
-    D^2_{δ\bfu,Δ\bfu}\Pi_L(\bfu,p) &= \ds\int_\Omega \p{\delta u_a}{X_B}(δ_{ab}\,S_{DB} + F_{aA}\,F_{bC}\,C_{ABCD})\p{Δu_b}{X_D}\,\d V\\[4mm]
-     &= δ\hat{u}^L_{a}\,Δ\hat{u}^M_{b} \ds\int_\Omega \phi^L_{(a),B}\,(δ_{ab}\,S_{DB} + F_{aA}\,F_{bC}\,C_{ABCD})\,\phi^M_{(b),D}\,\d V,\\[4mm]
-    D^2_{δp,Δ\bfu}\Pi_L(\bfu,p) &= \ds\int_\Omega J\,δp\,(F^{-1})_{Ba}\,\p{Δu_{a}}{X_B} \,\d V,\\[4mm]
-     &= δ\hat{p}^L\,Δ\hat{u}_a^M\, \ds\int_\Omega J\,\psi^L\,(F^{-1})_{Ba}\,\phi_{(a),B}^M \,\d V\\[4mm]
-    D^2_{δ\bfu,Δp}\Pi_L(\bfu,p) &= \ds\int_\Omega J\,Δp\,(F^{-1})_{Ba}\,\p{δu_{a}}{X_B} \\[4mm]% = \ds\int_\Omega J\,Δp\,\ds\sum\limits_{a} δ\hat{u}_{a}^M\,(F^{-1})_{ba}\,\phi_{(a),b}^M \,\d V,\\[4mm]
-     &= Δ\hat{p}^L\,δ\hat{u}_a^M\,\ds\int_\Omega J\,\psi^L\,(F^{-1})_{Ba}\phi_{(a),B}^M \,\d V\\[4mm]
-    D^2_{δp,Δp}\Pi_L(\bfu,p) &= 0,
-  \end{array}
-\end{equation*}
-
-leading to the matrix formulation of the Newton iteration:
-\begin{equation}\label{eq:static_newton_iteration}
-  \begin{array}{lll}
-    \matt{\bfk_{δ\bfu,Δ\bfu} & \bfk_{δp,Δ\bfu}^\top \\[2mm]
-    \bfk_{δp,Δ\bfu} & \bfzero} \, \matt{Δ\hat{\bfu} \\[2mm] Δ\hat{p}} =  \matt{\bfR_{δ\bfu} \\[2mm] \bfR_{δp}}.
-  \end{array}
-\end{equation}
-The stiffness matrix is symmetric.
-
-Given the number of spatial dimensions $a,b=1,\dots,D=3$, the blocks of the Jacobian or tangent stiffness matrix are given by:
-\begin{equation*}
-  \begin{array}{lll}
-    \bfk_{δ\bfu,Δ\bfu,(L,a),(M,b)} = \ds\int_\Omega \phi_{(a),B}^L\tilde{k}_{abBD}\phi_{(b),D}^M\,\d V \qquad \text{with}\qquad 
-    \tilde{k}_{abBD} = δ_{ab}\,S_{BD} + F_{aA}\,F_{bC}\,\mathbb{C}_{ABCD}\\[4mm]
-    d\times d \mbox{ blocks of submatrices, each with size } (u_{\text{dofs}} \times u_{\text{dofs}})\\[4mm]
-    \bfk_{δp,Δ\bfu,L,(M,a)} = \ds\int_\Omega J\,\psi^L\,(F^{-1})_{Ba}\,\phi_{(a),B}^M \,\d V\\[4mm]
-    1\times d \mbox{ blocks of submatrices, each with size } (p_{\text{dofs}} \times u_{\text{dofs}})\\[4mm]
-    \end{array}
-\end{equation*}
-The blocks of the residual on the righ-hand side (quasi-static case and neglecting gravity) follow from \cref{eq:first_dir_der} and are given by
-\begin{equation*}
-  \begin{array}{lll}
-    -\bfR_{δ\bfu, (L,a)} = D_{δ\bfu, (L,a)}\Pi_L(\bfu,p) = δW_{\text{int}, (L,a)} - δW_{\text{ext}, (L,a)} = -\big(\bfR_{δ\bfu, (L,a)}^{\text{int}} + \bfR^{\text{ext}}_{δ\bfu, (L,a)}\big)  \mbox{ with}\\[4mm]
-\quad    -\bfR_{δ\bfu, (L,a)}^{\text{int}} = \ds\int_{\Omega}\dfrac12  S_{AB}\, \left(F_{aB}\phi_{(a),A}^L + F_{aA}\phi_{(a),B}^L\,\right) \,\d V \\[4mm]
-\quad    -\bfR_{δ\bfu, (L,a)}^{\text{ext}} = -\ds\int_{\Omega} \big(B_a^M\,\phi_{(a)}^M - \rho_0\,\hat{\ddot{u}}_a^M\,\phi_{(a)}^M\big) \phi_{(a)}^L \,\d V - \ds\int_{∂\Omega}  \bar{T}_a^M \,\phi_{(a)}^M\, \phi_{(a)}^L\,\d S \\[4mm]
-    d \mbox{ blocks of subvectors with length } u_{\text{dofs}}\\[4mm]
-    -\bfR_{δp,L} = D_{δp, L}\Pi_L(\bfu,p) = \ds\int_\Omega (J-1)\,\psi^L\,\d V \\[4mm]
-    1 \mbox{ subvector of length } p_{\text{dofs}}
-  \end{array}
-\end{equation*}
-The tensors inside $\bfk$ and $\bfR$ are computed using the current iterates $\hat\bfu^{(i)}, \,\hat p^{(i)}$. The new values $\hat\bfu^{(i+1)}, \hat p^{(i+1)}$ are computed by adding the 
-increments $Δ\hat\bfu^{(i)}, Δ\hat p^{(i)}$:
-\begin{equation*}
-  \begin{array}{lll}
-    \hat\bfu^{(i+1)} = \hat \bfu^{(i)} + Δ\hat\bfu^{(i)}\\[4mm]
-    \hat p^{(i+1)} = \hat p^{(i)} + Δ\hat p^{(i)}
-  \end{array}
-\end{equation*}
+The second assumption is the \emph{balance of momentum}, which is expressed as %
+\begin{align*}
+  \d{t} \ds\int\limits_{V_t} \rho\,\bfv\, \d v = \ds\int\limits_{V_t} \rho\,\bfb \,\d v + \ds\int\limits_{∂V_t} \bft \,\d a.
+\end{align*}
+Here, $\bfb$ describes a body force and $\bft$ describes a traction force that acts on the surface of the current configuration. The corresponding differential form is given by the following differential equation:%
+\begin{align}\label{eq:assumption_2_local}
+  \rho\,\dot{\bfv}(\bfx,t) = \rho\,\bfb(\bfx,t) + \div\bfsigma(\bfx,t).
+\end{align}
 %
-The following is a summary of the steps to compute the 2nd Piola-Kirchhoff stress, $\bfS$ and the tangent stiffness tensor, $\C$. The pages of the derivation in the book \cite{holzapfel2000nonlinear} are given as reference.
-\label{quantities_mixed}
+The second order Cauchy stress tensor $\bfsigma$ has units of force per area and is defined by the relation $\bft = \bfsigma \bfn$ between a traction force $\bft$ in a virtual cut out of the body at $\bfx$ and the normal vector $\bfn$ of the cut area.
+
+The third assumption is the \emph{balance of angular momentum} and can be formulated using the 3D cross-product:%
+\begin{align*}
+  \d{t} \ds\int\limits_{V_t} \bfx \times (\rho\,\bfv)\, \d v = \ds\int\limits_{V_t} \bfx \times (\rho\,\bfb) \,\d v + \ds\int\limits_{∂V_t} \bfx \times \bft\,\d a.
+\end{align*}
 %
-\begin{equation*}
-  \begin{array}{lll}
-    J = \det(\bfF), \quad \bfC = \bfF^\top \bfF\\[4mm]
-    \bar{\bfC} = J^{-2/3}\bfC \quad &\text{(p.228)}\\[4mm]
-    \bar{\gamma}_1 = 2\left(\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_1} + \bar{I}_1\,\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_2}\right)\quad &\text{(p.234)}\\[4mm]
-    \bar{\gamma}_2 = -2\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_2},\quad\text{note, there is no $\bar{\gamma}_3$} &\text{(p.234)}\\[4mm]
-    \bar{\gamma}_4 = 2\p{\Psi_\text{iso}}{\bar{I}_4}\quad &\text{(p.273)}\\[4mm]
-    \bar{\gamma}_5 = 2\p{\Psi_\text{iso}}{\bar{I}_5}\quad &\text{(p.273)}\\[4mm]
-    \bar{\bfS} = 2\p{\Psi_\text{iso}(\bar{I_1},\bar{I_2})}{\bar{\bfC}} = \bar{\gamma_1}\,\bfI + \bar{\gamma_2}\,\bar{\bfC} \quad \text{(isotropic)} \quad &\text{(p.234)}\\[4mm]
-    \bar{\bfS} = 2\p{\Psi_\text{iso}(\bar{I_1},\bar{I_2})}{\bar{\bfC}} = \bar{\gamma_1}\,\bfI + \bar{\gamma_2}\,\bar{\bfC} \\[4mm]
-    \hspace*{4cm}+ \bar{\gamma_4}\, \bfa_0 \otimes \bfa_0 + \bar{\gamma_5}\,(\bfa_0 \otimes \bar{\bfC}\,\bfa_0 + \bfa_0\bar{\bfC}\otimes \bfa_0) \quad \text{(trans-isotropic)} \quad &\text{(p.271)}\\[4mm]
-    (\mathbb{I})_{abcd} = \delta_{ac}\,\delta_{bd}&\text{(p.23)}\\[4mm]
-    \mathbb{P} = \mathbb{I} - \dfrac13 \bfC^{-1} \otimes \bfC \quad &\text{(p.229)}\\[4mm]
-    \bfS_\text{iso} = J^{-2/3}\mathbb{P}:\bar{\bfS} \quad &\text{(p.234)}\\[4mm]
-    \bfS_\text{vol} = J\,p\,\bfC^{-1} \quad &\text{(p.230, p.245)}\\[4mm]
-    \bfS = \bfS_\text{iso} + \bfS_\text{vol} \quad \text{symmetric}\quad &\text{(p.233)}\\
-  \end{array}
-\end{equation*}
-\begin{equation*}
-  \begin{array}{lll}
-    \big(\bfC^{-1} \odot \bfC^{-1}\big)_{abcd} = \dfrac12\big(C^{-1}_{ac}\,C^{-1}_{bd} + C^{-1}_{ad}\,C^{-1}_{bc}\big) \quad &\text{(p.254)}\\[4mm]
-    \mathbb{C}_\text{vol} = J\,p\,\bfC^{-1} \otimes \bfC^{-1} - 2\,J\,p\,\bfC^{-1} \odot \bfC^{-1} \quad &\text{(p.254, p.406)}\\[4mm]
-    \bar{\delta}_1 = 4\left(\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_1} + 2\,\bar{I}_1\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_2} +\dfrac{∂\Psi_\text{iso}}{∂\bar{I}_2} + \bar{I}_1^2\,\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2}\right) \quad &\text{(p.262)}\\[4mm]
-    \bar{\delta}_2 = -4\left(\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_2} + \bar{I}_1\,\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2}\right) \quad &\text{(p.262)}\\[4mm]
-    \bar{\delta}_3 = 4\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2} \quad &\text{(p.262)}\\[4mm]
-    \bar{\delta}_4 = -4\dfrac{∂\Psi_\text{iso}}{∂\bar{I}_2} \quad &\text{(p.262)}\\[4mm]
-    \bar{\delta}_5 = 4\left(\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_4} +\bar I_1 \dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_4}\right) \quad &\text{(p.272)}\\[4mm]
-    \bar{\delta}_6 = -4\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_4} \quad &\text{(p.272)}\\[4mm]
-    \bar{\delta}_7 = 4\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_4\,∂\bar{I}_4} \quad &\text{(p.272)}\\[4mm]
-    \mathbb{S} = (\mathbb{I} + \bar{\mathbb{I}}) / 2, \quad \mathbb{I}_{abcd} = δ_{ac}\,δ_{bd}, \quad \bar{\mathbb{I}}_{abcd} = δ_{ad}\,δ_{bc} &\text{(p.262, p.23)}\\[4mm]
-    \bar{\mathbb{C}} = J^{-4/3}\,2\,\p{\bar \bfS}{\bar{\bfC}} = J^{-4/3}\left(\bar{\delta}_1\,\bfI \otimes \bfI + \bar{\delta}_2\,\big(\bfI \otimes \bar{\bfC} + \bar{\bfC} \otimes \bfI\big) + \bar{\delta}_3\bar{\bfC} \otimes \bar{\bfC} + \bar{\delta}_4\,\mathbb{S} \right) \quad \text{isotropic} &\text{(p.262)}\\[4mm]
-    
-    \p{\bar I_5}{\bar\bfC} = \bfa_0 \otimes \bar\bfC\,\bfa_0 + \bfa_0\,\bar\bfC \otimes \bfa_0, \quad \left(\p{\bar I_5}{\bar\bfC}\right)_{ij} = a_{0,i}\,a_{0,k}\,\ub{\bar{C}_{kj}}{=\bar{C}_{jk}} + a_{0,j}\,a_{0,k}\,\ub{\bar{C}_{ki}}{=\bar{C}_{ik}} \quad &\text{(p.277)}\\[4mm]
-    \dfrac{∂^2\bar{I}_5}{∂\bar{\bfC}∂\bar{\bfC}} = \p{\bar{\bfC}}(\bfa_0 \otimes \bar\bfC\,\bfa_0 + \bfa_0\,\bar\bfC \otimes \bfa_0), \\[4mm] 
-     \dfrac{∂^2\bar{I}_5}{∂\bar{\bfC}_{ij}∂\bar{\bfC}_{lm}} = \dfrac12(\delta_{jm}\,a_{0,i}\,a_{0,l} + \delta_{im}\,a_{0,j}\,a_{0,l} + \delta_{jl}\,a_{0,i}\,a_{0,m} + \delta_{il}\,a_{0,j}\,a_{0,m})\\[4mm]
-    
-    \bar{\mathbb{C}} = J^{-4/3}\Big(\bar{\delta}_1\,\bfI \otimes \bfI + \bar{\delta}_2\,\big(\bfI \otimes \bar{\bfC} + \bar{\bfC} \otimes \bfI\big) + \bar{\delta}_3\bar{\bfC} \otimes \bar{\bfC} + \bar{\delta}_4\,\mathbb{S}  \\[4mm]
-    \hspace*{2cm} +\bar{δ}_5\,(\bfI \otimes \bfa_0 \otimes \bfa_0 + \bfa_0 \otimes \bfa_0 \otimes \bfI) \\[4mm]
-    \hspace*{2cm} +\bar{δ}_6\,(\bar{\bfC} \otimes \bfa_0 \otimes \bfa_0 + \bfa_0 \otimes \bfa_0 \otimes \bar{\bfC})\\[4mm]
-    \hspace*{2cm} +\bar{δ}_7\,(\bfa_0 \otimes \bfa_0 \otimes \bfa_0 \otimes \bfa_0) 
-    + \bar{δ}_8\,\left(\bfI \otimes \p{\bar{I}_5}{\bar{\bfC}} + \p{\bar{I}_5}{\bar{\bfC}} \otimes \bfI \right)\\[4mm]
-    \hspace*{2cm}+ \bar{δ}_9\,\left(\bar{\bfC} \otimes \p{\bar{I}_5}{\bar{\bfC}} + \p{\bar{I}_5}{\bar{\bfC}} \otimes \bar{\bfC} \right) + \bar{δ}_{10}\left(\p{\bar{I}_5}{\bar{\bfC}} \otimes \p{\bar{I}_5}{\bar{\bfC}}\right) \\[4mm]
-    \hspace*{2cm}+ \bar{δ}_{11} \left(\bfa_0 \otimes \bfa_0 \otimes \p{\bar{I}_5}{\bar{\bfC}} + \p{\bar{I}_5}{\bar{\bfC}} \otimes \bfa_0 \otimes \bfa_0 \right) + \bar{δ}_{12} \dfrac{∂^2\bar{I}_5}{∂\bar{\bfC}∂\bar{\bfC}}\Big)
-    \quad \text{trans-isotropic} &\text{(p.272)}\\[4mm]
-    \tilde{\mathbb{P}} = \bfC^{-1} \odot \bfC^{-1} - \dfrac13 \bfC^{-1} \otimes \bfC^{-1} \quad &\text{(p.255)}\\[4mm]
-    \mathbb{C}_\text{iso} = \mathbb{P} : \bar{\mathbb{C}} : \mathbb{P}^\top + \dfrac23 J^{-2/3} \bar{\bfS} : \bfC\,\tilde{\mathbb{P}} - \dfrac23\big(\bfC^{-1}\otimes \bfS_\text{iso} + \bfS_\text{iso}\otimes \bfC^{-1}\big) \quad &\text{(p.255)}\\[4mm]
-    \mathbb{C} = \mathbb{C}_\text{vol} + \mathbb{C}_\text{iso} \quad \text{minor symmetries}\quad &\text{(p.254)}\\[4mm]
-  \end{array}
-\end{equation*}
+This can be shown to be equivalent to the symmetry of the Cauchy stress tensor, $\bfsigma = \bfsigma^\top$.
 
-\subsubsection{Compressible Hyperelasticity}
+A further assumption in the multi-scale muscle framework is to only consider isothermal conditions. 
+An activated muscle performs work and energy is added to the system by metabolism. Further, the muscle is not thermodynamically isolated. The system is not closed regarding conversion and transfer of energy and, thus, the balance of energy cannot be modeled easily.
 
-Compressible materials in decoupled form have the same equations for stress, $\bfS$, and material tangent tensor, $\CC$, except the hydrostatic pressure, $p$, is computed from the volumetric strain energy function,
-\begin{equation*}
-  \begin{array}{lll}
-    p = \p{Ψ_\text{vol}(J)}{J}
-  \end{array}
-\end{equation*}
-(Holzapfel p.245)
+The mathematical description has to be closed by defining a constitutive relation between stresses and strains. The usual approach for hyperelastic materials is to define a strain energy function $\Psi$. This scalar function is formulated in terms of the right Cauchy-Green tensor $\bfC$, which is related to the strain of the deformed body. Then, the stresses are given by%
+\begin{align*}
+  \bfS = 2\p{\Psi(\bfC)}{\bfC},
+\end{align*}
+where $\bfS$ is the second Piola-Kirchhoff stress tensor, which in the incompressible case is the pull-back of the Cauchy stress $\bfsigma$ used in the balance of momentum in \cref{eq:assumption_2_local}.
+%which is related to the Cauchy stress $\bfsigma$ used in the balance of momentum in \cref{eq:assumption_2_local}.
 
-The computation is analogous to the Penalty method \ref{sec:penalty} and is the same as for the incompressible case, except for computation of $p$ and $\tilde{p}$ that is used for $\mathbb{C}$.
- 
-For the coupled form, the algorithm is different:
+%It is usually formulated in terms of the five principle strain invariants $I_1$ to $I_5$. A derivative of $\Psi$ is used to derive a term for the stress. More details follow in \cref{sec:discretization_mechanics}.
 
-\begin{equation*}
-  \begin{array}{lll}
-    J = \det(\bfF), \quad \bfC = \bfF^\top \bfF\\[4mm]
-    \gamma_1 = 2\left(\p{\Psi(I_1, I_2, I_3)}{I_1} + I_1\,\p{\Psi(I_1, I_2, I_3)}{I_2}\right)\quad &\text{(p.248)}\\[4mm]
-    \gamma_2 = -2\p{\Psi(I_1, I_2, I_3)}{I_2}\quad &\text{(p.248)}\\[4mm]
-    \gamma_3 = 2\,I_3\,\p{\Psi(I_1, I_2, I_3)}{I_3}\quad &\text{(p.248)}\\[4mm]
-    \bfS = 2\p{\Psi(I_1, I_2, I_3)}{\bfC} = \gamma_1\,\bfI + \gamma_2\,\bfC + \gamma_3\,\bfC^{-1} \\[4mm]
-  \end{array}
-\end{equation*}
-\begin{equation*}
-  \begin{array}{lll}
-    \big(\bfC^{-1} \odot \bfC^{-1}\big)_{abcd} = \dfrac12\big(C^{-1}_{ac}\,C^{-1}_{bd} + C^{-1}_{ad}\,C^{-1}_{bc}\big) \quad &\text{(p.254)}\\[4mm]
-    \delta_1 = 4\left(\dfrac{∂^2\Psi}{∂I_1\,∂I_1} + 2\,I_1\dfrac{∂^2\Psi}{∂I_1\,∂I_2} +\dfrac{∂\Psi}{∂I_2} + I_1^2\,\dfrac{∂^2\Psi}{∂I_2\,∂I_2}\right) \quad &\text{(p.261)}\\[4mm]
-    \delta_2 = -4\left(\dfrac{∂^2\Psi}{∂I_1\,∂I_2} + I_1\,\dfrac{∂^2\Psi}{∂I_2\,∂I_2}\right) \quad\\[4mm]
-    \delta_3 = 4\left(I_3\,\dfrac{∂^2\Psi}{∂I_1\,∂I_3} + I_1\,I_3\,\dfrac{∂^2\Psi}{∂I_2\,∂I_3}\right) \quad\\[4mm]
-    \delta_4 = 4\dfrac{∂^2\Psi}{∂I_2\,∂I_2} \quad\\[4mm]
-    \delta_5 = -4\,I_3\,\dfrac{∂^2\Psi}{∂I_2\,∂I_3}\\[4mm]
-    \delta_6 = 4\left(I_3\,\dfrac{∂\Psi}{∂I_3} + I_3^2\,\dfrac{∂^2\Psi}{∂I_3\,∂I_3}\right)\\[4mm]
-    \delta_7 = -4\,I_3\,\dfrac{∂\Psi}{∂I_3}\\[4mm]
-    \delta_8 = -4\,\dfrac{∂\Psi}{∂I_2}\\[4mm]
-    \mathbb{S} = (\mathbb{I} + \bar{\mathbb{I}}) / 2, \quad \mathbb{I}_{abcd} = δ_{ac}\,δ_{bd}, \quad \bar{\mathbb{I}}_{abcd} = δ_{ad}\,δ_{bc} &\text{(p.262, p.23)}\\[4mm]
-    \mathbb{C} = 2\,\p{\bfS}{\bfC} = 
-      \delta_1\,\bfI \otimes \bfI 
-      +\delta_2\,\big(\bfI \otimes \bfC + \bfC \otimes \bfI\big)
-      +\delta_3\,\big(\bfI \otimes \bfC^{-1} + \bfC^{-1} \otimes \bfI\big)
-      +\delta_4\,\bfC \otimes \bfC \\[4mm] 
-    \qquad\qquad+\delta_5\,\big(\bfC \otimes \bfC^{-1} + \bfC^{-1} \otimes \bfC\big)
-      +\delta_6\,\big(\bfC^{-1} \otimes \bfC^{-1}\big)
-      +\delta_7\,\big(\bfC^{-1} \odot \bfC^{-1}\big)
-      +\delta_8\,\mathbb{S} \quad &\text{(p.261)} \\[4mm]
-  \end{array}
-\end{equation*}
- 
- 
-\subsection{Dynamic elasticity}
+In the muscle contraction model of \cite{Heidlauf2013}, the strain energy function is additively composed of two passive terms, one isotropic, one anisotropic, and one additional active term:
+\begin{align*}
+  \Psi(\bfC) = \Psi_\text{isotropic}(I_1,I_2) + \Psi_\text{anisotropic}(\lambda_f) + \Psi_\text{active}(\gamma).
+\end{align*}
+The isotropic term $\Psi_\text{isotropic}$ is formulated in terms of the strain invariants $I_1=\tr(\bfC)$ and $I_2=\big(\tr(\bfC)^2 - \tr(\bfC^2)\big)/2$. The anisotropic term $\Psi_\text{anisotropic}$ depends on the fiber stretch $\lambda_f$. The active term $\Psi_\text{active}$ yields the active stress that results from muscular activation, which is described by the activation parameter $\gamma$.
+%Note the missing dependency on the third invariant $I_3$, which is constant because of the enforced incompressibility.
 
-\subsubsection{Dynamic linear elasticity}
+The passive behavior of muscle tissue is modeled by a transversely isotropic Mooney-Rivlin material.
+The isotropic part is given by the Mooney-Rivlin formulation:%
+\begin{align}\label{eq:mooney_rivlin}
+  \Psi_\text{isotropic}(I_1,I_2) = c_1\,(I_1 - 3) + c_2\,(I_2-3).
+\end{align}
+The values of the two material parameters $c_1$ and $c_2$ can be determined by compression tests and are summarized in the work of \cite{Heidlauf2013}.
 
-For the linear case we have the governing equation,
-\begin{equation*}
-  \begin{array}{lll}
-    \bfM\,\ddot{\bfu} + \bfC\,\dot{\bfu} + \bfK\,\bfu - \bff = \bfzero
-  \end{array}
-\end{equation*}
-with
-\begin{equation*}
-  \begin{array}{lll}
-    \bfM_{ij} = \ds\int_{\Omega} \bfN_i^\top \rho \bfN_j \,\d V: \quad &\text{mass matrix, density $\rho$}\\[4mm]
-    \bfC_{ij} = \ds\int_{\Omega} \bfN_i^\top \bfmu \bfN_j \,\d V: &\text{damping matrix, viscosity parameters $\bfmu$}
-  \end{array}
-\end{equation*}
-(Zienkiewicz I p.470)
-
-In the case $\bfC = \bfzero$ we can use the second order, symplectic \emph{Leapfrog} integration. There is also an extension to using damping. But since we don't have conservation of energy anyways, use a RK4 scheme instead:
-
-In the general case with damping we use a transformation to a system of first order ODEs.
-\begin{equation*}
-  \begin{array}{lll}
-    \bfw = \mat{\bfu \\ \bfv} = \mat{\bfu \\ \dot{\bfu}}\\[4mm]
-    \bfw' = \mat{\bfv\\ \bfM^{-1}(\bff - \bfK\,\bfu - \bfC\,\bfv)} =: \mat{\bfv \\ \bfa(\bfu,\bfv)}
-  \end{array}
-\end{equation*}
-Applying the 4th order Runge-Kutta scheme gives the following algorithm:
+The anisotropic behavior depends only on the fiber stretch $\lambda_f$. The formulation in \cite{Heidlauf2013} uses two material parameters $b$ and $d$ and the following function:
+\begin{align*}
+  \Psi_\text{anisotropic}(\lambda_f) = \dfrac{b}{d}(\lambda_f^d - 1) - b\,\log(\lambda_f).
+\end{align*}
 %
-\begin{equation*}
-  \begin{array}{lll}
-    \bfk_1 = Δt\,\bfa(\bfu^{(n)}, \bfv^{(n)}, t^{(n)}), \qquad & \bfl_1 = Δt\,\bfv^{(n)}\\[4mm]
-    \bfk_2 = Δt\,\bfa(\bfu^{(n)}+\frac12\bfl_1, \bfv^{(n)}+\frac12\bfk_1, t^{(n+\frac12)}), \qquad & \bfl_2 = Δt\,(\bfv^{(n)} + \frac12 \bfk_1)\\[4mm]
-    \bfk_3 = Δt\,\bfa(\bfu^{(n)}+\frac12\bfl_2, \bfv^{(n)}+\frac12\bfk_2, t^{(n+\frac12)}), \qquad & \bfl_3 = Δt\,(\bfv^{(n)} + \frac12 \bfk_2)\\[4mm]
-    \bfk_4 = Δt\,\bfa(\bfu^{(n)}+\bfl_3, \bfv^{(n)} + \bfk_3, t^{(n+1)}), \qquad & \bfl_4 = Δt\,(\bfv^{(n)} + \bfk_3)\\[4mm]
-    \bfv^{(n+1)} = \bfv^{(n)} + \frac16(\bfk_1 + 2\,\bfk_2 + 2\,\bfk_3 + \bfk_4), & 
-    \bfu^{(n+1)} = \bfu^{(n)} + \frac16(\bfl_1 + 2\,\bfl_2 + 2\,\bfl_3 + \bfl_4)
-  \end{array}
-\end{equation*}
-Computing $\bfa(\bfu,\bfv)$ is done by
-\begin{equation*}
-  \begin{array}{lll}
-    \bfa(\bfu,\bfv) = \bfM^{-1}(\bff - \bfK\,\bfu - \bfC\,\bfv).
-  \end{array}
-\end{equation*}
 
-\subsubsection{Dynamic nonlinear elasticity}
-Governing equations
-\begin{equation}\label{eq:dynamic_nonlinear_gov}
-  \begin{array}{lll}
-    \left\{
-    \begin{array}{lll}
-      δW_\text{int}({\bfu},{p}) - δW_\text{ext}(\dot{\bfv}) = 0 \qquad &\forall\,δ\bfu,\\[4mm]
-      \dot{\bfu} = \bfv,\\[4mm]
-      D_{δp}\Pi_L(\bfu) = 0 \qquad &\forall\,δp
-    \end{array}\right.    
-  \end{array}
-\end{equation}
-where
-\begin{equation}\label{eq:first_ders}
-  \begin{array}{lll}
-    δW_\text{int}({\bfu},{p})  = \ds\int_{\Omega}\dfrac12  S_{AB}(\bfu,p)\, \left(F_{aB}\, \phi_{(a),A}^M + F_{aA}\, \phi_{(a),B}^M\right)δ\hat{u}_{a}^M \,\d V\\[4mm]
-    δW_\text{ext}  = \ds\int_{\Omega} (B_{(a)}^L - \rho_0\,\dot{v}_{(a)}^L)\,\phi_{(a)}^L\, \phi_{(a)}^M\,δ\hat{u}^M_a \,\d V +\ds\int_{∂\Omega}  \bar{T}^L_{(a)}\,\phi_{(a)}^L\, \phi_{(a)}^M\,δ\hat{u}^M_a\,\d S \\[4mm]
-    D_{δp}\Pi_L(\bfu) = \ds\int_\Omega \big(J(\bfu) - 1)\,δp\,\d V 
-  \end{array}
-\end{equation}
-We discretize it in time
-\begin{equation*}
-  \begin{array}{lll}
-    \dot{\bfu}=\bfv: \qquad &\dfrac{1}{dt}(\bfu^{(n+1)} - \bfu^{(n)}) = \theta \bfv^{(n+1)} + (1-\theta) \bfv^{(n)},\\[4mm]
-    \dot{\bfv}=\bfa: \qquad &\dfrac{1}{dt}(\bfv^{(n+1)} - \bfv^{(n)}) = \theta \bfa^{(n+1)} + (1-\theta) \bfa^{(n)},\\[4mm]
-  \end{array}
-\end{equation*}
-For Crank-Nicolson method, $\theta = \frac12$, for implicit Euler, $\theta = 1$. Plugging this into \eqref{eq:dynamic_nonlinear_gov} yields the following three equations. 
-Given values for $\bfu^{(n)}, \bfv^{(n)}, p^{(n)}$, solve the following to get $\bfu^{(n+1)}, \bfv^{(n+1)}, p^{(n+1)}$:
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int}(\bfu,{p})|_{
-      \substack{
-        \bfu=\theta \bfu^{(n+1)} + (1-\theta)\bfu^{(n)},\\  
-        p=\theta p^{(n+1)} + (1-\theta)p^{(n)} }} - δW_\text{ext,dead} + \ds\int_{\Omega} \rho_0\,\dfrac{v^{(n+1),L}_{(a)} - v^{(n),L}_{(a)}}{dt}\,\phi_{(a)}^L\, \phi_{(a)}^M\,δ\hat{u}^M_a \,\d V = 0 \qquad &\forall\,δ\bfu,\\[8mm]
-    \dfrac{1}{dt}(\bfu^{(n+1)} - \bfu^{(n)}) - \theta \bfv^{(n+1)} - (1-\theta) \bfv^{(n)} = 0.\\[4mm]
-    D_{δp}\Pi_L(\bfu^{(n+1)}) = 0 \qquad &\forall\,δp,\\[4mm]    
-  \end{array}
-\end{equation*}
-where
-\begin{equation}\label{eq:first_ders}
-  \begin{array}{lll}
-    δW_\text{int}({\bfu},{p})  = \ds\int_{\Omega}\dfrac12  S_{AB}(\bfu,p)\, \left(F_{aB}\, \phi_{(a),A}^M + F_{aA}\, \phi_{(a),B}^M\right)δ\hat{u}_{a}^M \,\d V\\[4mm]
-    δW_\text{ext,dead}  = \ds\int_{\Omega} B_{(a)}^L\,\phi_{(a)}^L\, \phi_{(a)}^M\,δ\hat{u}^M_a \,\d V +\ds\int_{∂\Omega}  \bar{T}^L_{(a)}\,\phi_{(a)}^L\, \phi_{(a)}^M\,δ\hat{u}^M_a\,\d S \\[4mm]
-    D_{δp}\Pi_L(\bfu) = \ds\int_\Omega \big(J(\bfu) - 1)\,δp\,\d V 
-  \end{array}
-\end{equation}
-This is a vectorial function, $F(\hat{\bfu}^{(n+1)},\hat{\bfv}^{(n+1)},\hat{p}^{(n+1)})=-R=0$ that can be solved by a Newton scheme.
+The active contribution is directly formulated in terms of the second Piola-Kirchhoff stress $\bfS$. The relation between the active stress $\bfS_\text{active}$ and the active contribution $\Psi_\text{active}$ of the strain energy function as well as the definition of $\bfS_\text{active}$ is given as follows:
+\begin{align}\label{eq:active_stress_term}
+  \bfS_\text{active} = \dfrac{1}{\lambda_f}\p{\Psi_\text{active}}{\lambda_f} \bfA \otimes \bfA = \dfrac{1}{\lambda_f} \cdot S_\text{max,active}\cdot f_\ell(\lambda_f)\cdot\bar{\gamma}\, \bfA \otimes \bfA.
+\end{align}
+%
+Here, the resulting active stress tensor $\bfS_\text{active}$ is the second order tensor oriented according to the material fiber direction $\bfA: \Omega_0 \to \R^3$ and given by the dyadic product $\bfA \otimes \bfA = A_{i}\,A_{j}\,\bfe_i \otimes \bfe_j$, scaled by the maximum active stress parameter $S_\text{max,active}$, a function $f_\ell$ that models the force-length relation, and the 3D homogenized value $\bar{\gamma}$ of the activation parameter $\gamma \in [0,1]$ following from the half-sarcomere model.
 
-The linear system for each Newton iteration takes the form
-\begin{equation*}
-  \begin{array}{llll}
-    \matt{
-      \bfk_{δ\bfu,Δ\bfu} & \bfl_{δ\bfu,Δ\bfv} & \bfk_{δp,Δ\bfu}^\top \\[2mm]
-      \bfl_{δ\bfv,Δ\bfu} & \bfl_{δ\bfv,Δ\bfv} & \bfzero \\[2mm]
-      \bfk_{δp,Δ\bfu} & \bfzero & \bfzero
-    } \, 
-    \matt{Δ\hat{\bfu} \\[2mm] Δ\hat{\bfv} \\[2mm] Δ\hat{p}} =  \matt{\bfR_{δ\bfu} \\[2mm] \bfR_{δ\bfv} \\[2mm] \bfR_{δp}}.
-  \end{array}
-\end{equation*}
-with
-\begin{equation*}
-  \begin{array}{lll}
-    -\bfR_{δ\bfu, (L,a)} = δW_{\text{int}, (L,a)} - δW_{\text{ext}, (L,a)}
-      =: -\big(\bfR_{δ\bfu, (L,a)}^{\text{int}} + \bfR^{\text{ext,old}}_{δ\bfu, (L,a)} + \bfR^{\text{ext,new}}_{δ\bfu, (L,a)} + \bfR^{\text{ext,dead}}_{δ\bfu, (L,a)}\big)  \mbox{ with}\\[4mm]
-\quad    -\bfR_{δ\bfu, (L,a)}^{\text{int}} = \ds\int_{\Omega}\dfrac12  S_{AB}(\bfu^{(n+1/2)}(\bfX),p^{(n+1/2)}(\bfX))    \, \left(F_{aB}\phi_{(a),A}^L + F_{aA}\phi_{(a),B}^L\,\right) \,\d V \\[4mm]
-                      \hspace{3cm} \text{with } \bfu^{(n+1/2)}(\bfX) = \theta \bfu^{(n+1)}(\bfX) + (1-\theta)\bfu^{(n)}(\bfX),\\[4mm]
-                      \hspace{4cm}              p^{(n+1/2)}(\bfX)  = \theta p^{(n+1)}(\bfX) + (1-\theta)p^{(n)}(\bfX)\\[4mm]
-                      
-\quad    -\bfR_{δ\bfu, (L,a)}^{\text{ext,new}} =  \dfrac1{dt}\ds\int_{\Omega} \rho_0\,\hat{v}^{(n+1),M}_a\,\phi_{(a)}^M \phi_{(a)}^L \,\d V\\[4mm]
-\quad    -\bfR_{δ\bfu, (L,a)}^{\text{ext,old}} =  -\dfrac1{dt}\ds\int_{\Omega} \rho_0\,\hat{v}^{(n,M)}_a\,\phi_{(a)}^M \phi_{(a)}^L \,\d V\\[4mm]
-\quad    -\bfR_{δ\bfu, (L,a)}^{\text{ext,dead}} = -\ds\int_{\Omega} B_a^M\,\phi_{(a)}^M \phi_{(a)}^L \,\d V - \ds\int_{∂\Omega}  \bar{T}_a^M \,\phi_{(a)}^M\, \phi_{(a)}^L\,\d S \\[4mm]
-    d \mbox{ blocks of subvectors with length } u_{\text{dofs}}\\[4mm]
-    -\bfR_{δ\bfv,(L,a)} = \dfrac1{dt} \hat{u}^{(n+1)}_{(L,a)} - \theta \hat{v}^{(n+1)}_{(L,a)} - \dfrac1{dt} \hat{u}^{(n)}_{(L,a)} + (\theta - 1)\,\hat{v}^{(n)}_{(L,a)} \\[4mm]
-    d \mbox{ blocks of subvectors with length } u_{\text{dofs}}\\[4mm]
-    -\bfR_{δp,L} = \ds\int_\Omega \bigg(J\big(\bfu^{(n+1)}(\bfX)\big)-1\bigg)\,\psi^L\,\d V \\[4mm]
-    1 \mbox{ subvector of length } p_{\text{dofs}}\\[4mm]    
-  \end{array}
-\end{equation*}
+In the deforming body fat layer, the active stress contribution is disregarded. For simulating tendons, different material models can be used such as the model proposed by Carniel et al. \cite{Carniel2017}, which describes microstructural interactions between collagen fibers and their matrix in addition to the elastic response of the fibers themselves. To alter the material model, the definition of $\Psi$ can simply be changed while all other equations remain intact. Similarly, other material models can be defined using the framework of the strain energy function.
 
-To reuse the derivation of the static case, we restrict to implicit Euler, $\theta = 1$. Then, $\bfk_{δ\bfu,Δ\bfu}$ and $\bfk_{δp,Δ\bfu}$ are the same as in \eqref{eq:static_newton_iteration}.
+In short summary, the following system of equations describes the continuum mechanics model of muscle contraction:
+%
+\begin{subequations}\label{eq:contraction}
+  \begin{align}
+    \div(\bfv) &= 0, \qquad &&\text{(incompressibility)} \label{eq:contraction_1}\\[4mm]
+    \rho\,\dot{\bfv} &= \rho\,\bfb + \div\bfsigma, && \text{(balance of linear momentum)}\label{eq:contraction_2}\\[4mm]
+    \bfsigma &= \bfsigma^\top, && \text{(balance of angular momentum)}\label{eq:contraction_3}\\[4mm]
+    \bfS &= 2\p{\Psi(\bfC)}{\bfC}, && \text{(constitutive equation)}\label{eq:contraction_4}
+  \end{align}
+\end{subequations}
+with a material model that defines the strain energy function $\Psi$.
 
-\begin{equation*}
-  \begin{array}{lll}
-    \bfl_{δ\bfu,Δ\bfv,(L,a),(M,b)} = \dfrac{\partial}{\partial \hat{v}^{(n+1),M}_{b}}\left(\dfrac1{dt}\ds\int_{\Omega} \rho_0\,\hat{v}^{(n+1),N}_a\,\phi_{(a)}^N \phi_{(a)}^L \,\d V\right)
-    = \dfrac1{dt}\delta_{ab} \ds\int_{\Omega} \rho_0\,\,\phi_{(b)}^M \,\phi_{(a)}^L \,\d V\\[4mm]
-    \bfl_{δ\bfv,Δ\bfu,(L,a),(M,b)} = \dfrac{\partial}{\partial \hat{u}^{(n+1),M}_{b}}(-\bfR_{δ\bfv,(L,a)}) = \dfrac{1}{dt}\delta_{ab}\,\delta^{LM}\\[4mm]
-    \bfl_{δ\bfv,Δ\bfv,(L,a),(M,b)} = \dfrac{\partial}{\partial \hat{v}^{(n+1),M}_{b}}(-\bfR_{δ\bfv,(L,a)}) = -\delta_{ab}\,\delta^{LM}\\[4mm]
-  \end{array}
-\end{equation*}
+Dirichlet boundary conditions for the displacements $\bfu$ and velocities $\bfv$ can fix certain parts of the muscle, e.g., at the attachment points of the tendons:
+\begin{align*}
+  \bfu(\bfx,t) &= \bar{\bfu}(t), & \bfv(\bfx,t) &= \bar{\bfv}(t) \quad &&\text{for } \bfx \in ∂\Omega_\text{Dirichlet}.
+\end{align*}
+%
+Initial conditions for $\bfu$ and $\bfv$ define the initial pose of the muscle tissue:
+%
+\begin{align*}
+  \bfu(\bfx,0) &= \bfu_0(\bfx), & \bfv(\bfx,0) &= \bfv_0(\bfx) \quad &&\text{for } \bfx \in \Omega_M.
+\end{align*}
+%
+Additionally, Neumann boundary conditions can be used to prescribe traction forces on the surface.
 
-Note, the matrix is unsymmetric, it would be symmetric if $\bfl_{δ\bfu,Δ\bfv}  = \bfl_{δ\bfv,Δ\bfu}^\top$ which is the case if $\rho_0 = 1$ and $\int_{\Omega} \phi_{b}^M \phi_{a}^L \,\d V = \delta_{ab}\delta^{LM}$, i.e. lumped mass matrix with row-sum.
+The description of the multi-scale model \cite{Roehrle2012,Heidlauf2013} assumes quasi-static conditions, which means that the velocities are set to zero, $\bfv=\bfzero$, and inertial terms are neglected. As a consequence, the incompressibility constraint in \cref{eq:contraction_1} has to be formulated differently and the balance of momentum in \cref{eq:contraction_2} reduces to $\rho\,\bfb + \div \bfsigma = 0$.
+However, our implementation extends the model to the fully dynamic formulation given in \cref{eq:contraction_1,eq:contraction_2,eq:contraction_3,eq:contraction_4}. 
 
-\newpage
+More details on the mechanics equations, their discretization and the resulting numerical scheme to obtain the solution functions $\bfu$ and $\bfv$ are given in \cref{sec:discretization_mechanics}.
 
-\newpage
+\subsection{Discretization and Solution Approach for the Solid Mechanics Model }\label{sec:discretization_mechanics}
 
-\subsection{Examples with analytical solution}
-\subsubsection{Uniaxial extension with constant total load}
+The following sections provides a more profound introduction of solid mechanics to complement the overview given before. We also describe the Finite Element discretization of the solid mechanics model and the algorithms used to obtain a numeric solution. 
 
-\bild{uniaxial_extension}{0.8\textwidth}{Uniaxial extension example}
+Dynamic \emph{finite elasticity} methods considering large strains and generic hyperelastic materials, both compressible and incompressible, are less frequently used than \emph{linear elasticity} descriptions with linearizations at various levels. Nonetheless, corresponding formulations exist in literature with sometimes varying conventions and symbols.
 
-The domain in reference and current configuration is depicted in \cref{fig:uniaxial_extension}) and defined as follows, symmetry between $y$ and $z$-direction is assumed.
-\begin{equation*}
-  \begin{array}{lll}
-    \Omega_\text{ref} = [0, L_x] \times [0, L_z]^2\\[4mm]
-    \Omega_\text{current} = [0, \lambda\,L_x] \times [0, L_z/\sqrt{\lambda}]^2,
-  \end{array}
-\end{equation*}
-A load $t(\bfx) = t_\text{max}/l_z^2$ is defined on the right surface area. In reference configuration it is
-\begin{equation*}
-  \begin{array}{lll}
-    T(\bfx) = \dfrac{t_\text{max}}{L_z^2},\\[4mm]
-  \end{array}
-\end{equation*}
-in current configuration
-\begin{equation*}
-  \begin{array}{lll}
-    t(\bfx) &= \dfrac{t_\text{max}}{l_z^2} = \dfrac{t_\text{max}}{\bfL_z \cdot\bfC \bfL_z} \quad \text{with }\bfL_z = (0, 0, L_z), \quad l_z^2 = \dfrac{L_z^2}{\lambda}\\[4mm]
-    &= t_\text{max}\,\dfrac{\lambda}{L_z^2}
-  \end{array}
-\end{equation*}
-Because the normal vector is the same, $\bfn = \bfN$, we have
-\begin{equation*}
-  \begin{array}{lll}
-    T(\bfx)\,\d S = \bft\,\d s, \quad T(\bfx) = \bft(\bfx)\,\dfrac{\d s}{\d S} = \bft(\bfx)\, \dfrac{l_z^2}{L_z^2} = t(\bfx) \dfrac1{\lambda} = \dfrac{t_\text{max}}{L_z^2}
-  \end{array}
-\end{equation*}
+The implementation of a solver for such generic descriptions exploiting parallel execution and integrating a multi-scale biomechanics model, being a contribution of this work, is an interdisciplinary endeavour. Therefore, we introduce consistent notation and summarize the required basics and the derivation up to the final algorithm  such that it may serve also readers that are not specialized in the field of continuum mechanics. The derivation largely follows the book of Holzapfel \cite{holzapfel2000nonlinear} and the discretization follows the work of Zienkiewicz, Taylor et al. \cite{zienkiewicz1977finite,zienkiewicz2005finite}.
 
-The geometric quantities can be computed to
-\begin{equation*}
-  \begin{array}{lll}
-    \bfx = \mat{\lambda X_1\\[2mm] X_2/\sqrt{\lambda} \\[2mm] X_3/\sqrt{\lambda}}, 
-    \quad \bfF = \matt{\lambda & 0 & 0\\[2mm] 0 & 1/\sqrt{\lambda} & 0 \\[2mm] 0 & 0 & 1/\sqrt{\lambda}},
-    \quad \bfC = \matt{\lambda^2 & 0 & 0\\[2mm] 0 & 1/\lambda & 0 \\[2mm] 0 & 0 & 1/\lambda },\\[12mm]
-    \tr(\bfC) = \lambda^2 + 2/\sqrt{\lambda}, \quad \tr(\bfC^2) = \lambda^4 + 2/\lambda^2\\[4mm]
-    I_1 = \tr(\bfC) = \lambda^2 + 2/\lambda \quad \\[4mm]
-    I_2 = \dfrac12\big(\tr(\bfC)^2 - \tr(\bfC^2)\big) \\[4mm]
-    = \dfrac{1}{2}\big(\lambda^4 + \dfrac{4\,\lambda^2}{\sqrt{\lambda}} + \dfrac{4}{\lambda} - \lambda^4 - \dfrac{2}{\lambda^2}\big)
-    = 2\,\lambda^{3/2} + 2\lambda^{-1} - \lambda^{-2}\\[4mm]
-    I_3 = J = \det{\bfF} = 1, \quad \bar{\bfC} = \bfC\\[4mm]
-    \bfE = \dfrac12\matt{\lambda^2-1 & 0 & 0\\[2mm] 0 & 1/\lambda-1 & 0 \\[2mm] 0 & 0 & 1/\lambda-1}, \quad \bfC^{-1} = \matt{1/\lambda^2 & 0 & 0\\[2mm] 0 & \lambda & 0 \\[2mm] 0 & 0 & \lambda }
-  \end{array}
-\end{equation*}
-\textbf{Solution using penalty method}
+\subsection{Geometric Description}\label{sec:geometric_description}
 
-For the incompressible Mooney-Rivlin material with $\Psi(I_1,I_2) = c_1\,(I_1-3) + c_2\,(I_2 - 3), I_3 = 1$ we get the fictitious PK2 stress tensor as,
-\begin{equation*}
-  \begin{array}{lll}
-    \bar{\bfS} = 2\,(c_1 + c_2\,I_1)\,\bfI - 2\,c_2\bar{\bfC} = \diag\Big(2\,c_1 + 4\,c_2/\lambda,\quad 2\,c_1 -2\,c_2/\lambda, \quad 2\,c_1 -2\,c_2/\lambda\Big)
-  \end{array}
-\end{equation*}
-The displacements at node A are given by
-\begin{equation*}
-  \begin{array}{lll}
-    \hat{\bfu}^A = \big(\lambda\,L_x - L_x, \dfrac{L_z}{\sqrt{\lambda}} - L_z,0\big) = \big((\lambda-1)\,L_x,(\dfrac1{\sqrt{\lambda}}-1)\,L_z,0\big).
-  \end{array}
-\end{equation*}
-Computation of the fictitious stress tensor involves coefficients, $\bar{\gamma}_1, \bar{\gamma}_2$:
-\begin{equation*}
-  \begin{array}{lll}
-    \bar{\gamma}_1 = 2\left( \p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_1} + \bar{I}_1\,\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_2} \right)\\[4mm]
-    \bar{\gamma}_2 = -2\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_2}
-  \end{array}
-\end{equation*}
-With $\Psi(\bar{I}_1,\bar{I}_2) = c_1\,(\bar{I}_1-3) + c_2\,(\bar{I}_2 - 3)$ we get
-\begin{equation*}
-  \begin{array}{lll}
-    \p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_1} = c_1, \quad \p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_2} = c_2
-  \end{array}
-\end{equation*}
-Now assume $c_2 = 0$.
-\begin{equation*}
-  \begin{array}{lll}
-    \bfC : \bar{\bfS} &= 2\,c_1\,\lambda^2 + 4\,c_1\,\lambda^{-1} \\[4mm]
-    \bfS_\text{iso} &= J^{-2/3}\,\mathbb{P} : \bar{\bfS} = \bar{\bfS} - \dfrac13 (\bfC^{-1} \otimes \bfC):\bar{\bfS} \\[4mm]
-     &= \bar{\bfS} - \dfrac13 \matt{
-    1/\lambda^2 \cdot (2\,c_1\,\lambda^2 + 4\,c_1\,\lambda^{-1}) & 0 & 0 \\[2mm]
-    0 & \lambda \cdot (2\,c_1\,\lambda^2+ 4\,c_1\,\lambda^{-1}) & 0 \\[2mm]
-    0 & 0 & \lambda \cdot (2\,c_1\,\lambda^2+ 4\,c_1\,\lambda^{-1})} \\[8mm]
-    &= \matt{2\,c_1 & 0 & 0\\[2mm] 0 & 2\,c_1 & 0 \\[2mm] 0 & 0 & 2\,c_1} - \dfrac13 \matt{
-    2\,c_1 + 4\,c_1\,\lambda^{-3} & 0 & 0 \\[2mm]
-    0 & 2\,c_1\,\lambda^3 + 4\,c_1 & 0 \\[2mm]
-    0 & 0 & 2\,c_1\,\lambda^3 + 4\,c_1} \\[8mm]
-    &= \matt{
-    \frac43\,c_1\,(1-\lambda^{-3}) & 0 & 0 \\[2mm]
-    0 & \frac23\,c_1\,(1-\lambda^3) & 0 \\[2mm]
-    0 & 0 & \frac23\,c_1\,(1-\lambda^3)}\\[12mm]
-    \bfS &= \bfS_\text{iso} + \bfS_\text{vol} = \bfS_\text{iso} + J\,p\,\bfC^{-1} = \matt{
-    \frac43\,c_1\,(1-\lambda^{-3}) + p\,\lambda^{-2} & 0 & 0 \\[2mm]
-    0 & \frac23\,c_1\,(1-\lambda^3) + p\,\lambda & 0 \\[2mm]
-    0 & 0 & \frac23\,c_1\,(1-\lambda^3) + p\,\lambda}
-  \end{array}
-\end{equation*}
-The artifical pressure, $p$ is different from the real hydrostatic pressure. It is given by
-\begin{equation*}
-  \begin{array}{lll}
-    p = \d{\Psi_\text{vol}(J)}{J} = \d{J} \big(\dfrac{\kappa}{2}(J - 1)^2\big) = \kappa\,(J-1)
-  \end{array}
-\end{equation*}
-An incompressible solution has $J\approx 1$ but because $\kappa \to \infty$ it has a $p \neq 0$.
-To satisfy the force equilibrium we get
-\begin{equation*}
-  \begin{array}{lll}
-    \textbf{$y$-direction:}\\
-    S_{22} = 0 \quad \Rightarrow \quad 
-    \dfrac23\,c_1\,(1-\lambda^3) + p\,\lambda = 0 \quad \Rightarrow \quad p =  \dfrac23\,c_1\,(\lambda^3-1)\lambda^{-1}\\[4mm]
-    
-    \textbf{$x$-direction:}\\
-    -\sigma_{11}\,l_z^2 + t_\text{max}\,\dfrac{\lambda}{L_z^2}\,l_z^2 = 0,\quad \Rightarrow \quad 
-    \sigma_{11} = t_\text{max}\dfrac{\lambda}{L_z^2}\\[4mm]
-    \bfS = J\,\bfF^{-1} \bfsigma \bfF^{-\top}, \quad 
-    S_{11} = \lambda^{-1} \sigma_{11} \lambda^{-1}\\[4mm]
-    \Rightarrow \quad S_{11} \overset{!}{=} \dfrac{t_\text{max}}{L_z^2\,\lambda}\\[4mm]
-    \Leftrightarrow \quad   \dfrac43\,c_1\,(1-\lambda^{-3}) + \left( \dfrac23\,c_1\,(\lambda^3-1)\lambda^{-1} \right)\lambda^{-2} \overset{!}{=} \dfrac{t_\text{max}}{L_z^2\,\lambda}   \\[4mm]
-    \Leftrightarrow \quad   \dfrac43\,c_1\,(1-\lambda^{-3}) + \dfrac23\,c_1\,(1-\lambda^{-3}) = \dfrac{t_\text{max}}{L_z^2\,\lambda}   \\[4mm]
-    \Leftrightarrow \quad   2\,c_1\,(1-\lambda^{-3}) = \dfrac{t_\text{max}}{L_z^2\,\lambda} 
-    \quad  \Leftrightarrow \quad   2\,L_z^2\,c_1\,(\lambda-\lambda^{-2}) = t_\text{max}   \\[4mm]
-    \Leftrightarrow \quad   2\,c_1\,L_z^2\,(\lambda^3 - 1) - t_\text{max}\,\lambda^2 = 0
-  \end{array}
-\end{equation*}
-\begin{lstlisting}[columns=fixed,basicstyle=\ttfamily]
-  >>> solve(2./3*c0*lz*lz*(lambdaValue**3 - 1) - tmax*lambdaValue**2,
-   lambdaValue, simplify=True, positive=True)[2]
-  0.5*tmax**2/(c0*lz**2*(4.0*c0**3*lz**6 + tmax**3 + (-tmax**6 + (4.0*
-  c0**3*lz**6 + tmax**3)**2)**0.5)**(1/3)) + 0.5*tmax/(c0*lz**2) + 0.5
-  *(4.0*c0**3*lz**6 + tmax**3 + (-tmax**6 + (4.0*c0**3*lz**6 + tmax**3
-  )**2)**0.5)**(1/3)/(c0*lz**2)
-\end{lstlisting}
+% introduce quantities
+% F, C, E, E(u), variation δE
+%  S, P, sigma
 
-\textbf{Direct solution using pressure from equilibrium}
+We begin with the geometric description of the material body and define the basic quantities that are later used to describe the physics.
+As introduced in \cref{sec:model_muscle_contraction}, the function $\bfvarphi_t:\Omega_0\to \Omega_t$ maps points $\bfX$ in the reference configuration $\Omega_0$ to points $\bfx = \bfX + \bfU$ in the current configuration $\Omega_t$ using the displacement field $\bfU(\bfX)$. The displacement field formulated in terms of points $\bfx$ in the current configuration is denoted by $\bfu(\bfx)=\bfU(\bfX(\bfx))$.
 
-Analytical approach (p.224). Assuming Mooney-Rivlin with $c_2 = 0$ (Neo-Hookean),
-\begin{equation*}
-  \begin{array}{lll}
-    \bfS &= -p\bfC^{-1} + 2\left(\p{\Psi}{I_1} + I_1\p{\Psi}{I_2}\right)\bfI - 2\,\p{\Psi}{I_2}\,\bfC\\[4mm]
-     &= -p\bfC^{-1} + 2\,c_1\,\bfI =
-      \matt{-p/\lambda^2 + 2\,c_1 & 0 & 0\\[2mm] 
-     0 & -p\,\lambda + 2\,c_1 & 0\\[2mm]
-     0 & 0 & -p\,\lambda + 2\,c_1}
-  \end{array}
-\end{equation*}
-From equilibrium we get
-\begin{equation*}
-  \begin{array}{lll}
-    \textbf{$y$-direction:}\\
-    S_{22} = 0 \quad \Rightarrow \quad -p\,\lambda + 2\,c_1 = 0 \quad \Rightarrow \quad p = \dfrac{2\,c_1}{\lambda}\\[4mm]
-    
-    \textbf{$x$-direction:}\\
-    -\sigma_{11}\,l_z^2 + t_\text{max}\,\dfrac{\lambda}{L_z^2}\,l_z^2 = 0,\quad \Rightarrow \quad 
-    \sigma_{11} = t_\text{max}\dfrac{\lambda}{L_z^2}\\[4mm]
-    \bfS = J\,\bfF^{-1} \bfsigma \bfF^{-\top}, \quad 
-    S_{11} = \lambda^{-1} \sigma_{11} \lambda^{-1}\\
-    \Rightarrow \quad S_{11} \overset{!}{=} \dfrac{t_\text{max}}{L_z^2\,\lambda}\\[4mm]
-    \quad \Rightarrow \quad -p\,\lambda^{-2} + 2\,c_1 = -2\,c_1\,\lambda^{-3} + 2\,c_1 = \dfrac{t_\text{max}}{L_z^2\,\lambda}\\[4mm]
-    \quad \Rightarrow \quad 2\,c_1\,\lambda^{3} - \dfrac{t_\text{max}}{L_z^2}\,\lambda^2 -2\,c_1 = 0
-    \quad \Rightarrow \quad \lambda = \text{nonlinear($t_\text{max}$)}
-    %\quad \Rightarrow \quad \lambda \approx \left(1+\dfrac{t_\text{max}}{2\,c_1}\right)^3 \text{  (in reference configuration)}
-  \end{array}
-\end{equation*}
-\begin{lstlisting}[columns=fixed,basicstyle=\ttfamily]
-  >>> solve(2*c1*l**3 -t*l**2 -2*c1, l, simplify=True, positive=True)[2]
-  -t**2/(6*c1*(-108*c1**3 - t**3 + sqrt(-t**6 + (108*c1**3 + t**3)**2)
-  )**(1/3)) + t/(6*c1) - (-108*c1**3 - t**3 + sqrt(-t**6 + (108*c1**3
-   + t**3)**2))**(1/3)/(6*c1)
-\end{lstlisting}
-%Test: the stress in reference configuration yields
-%\begin{equation*}
-%  \begin{array}{lll}
-%    \bfS &= \diag\big(-p\,\lambda^{-2} + 2\,c_1, \quad -p\,\lambda + 2\,c_1, \quad -p\,\lambda + 2\,c_1\big)\\[4mm]
-%    &= \diag\big(-2\,c_1\,\lambda^{-3} + 2\,c_1, \quad -2\,c_1 + 2\,c_1, \quad -2\,c_1 + 2\,c_1\big)\\[4mm]
-%    &= \diag\big(-2\,c_1\,(1+\dfrac{t_\text{max}}{2\,c_1}) + 2\,c_1, \quad 0, \quad 0\big)\\[4mm]
-%    &= \diag\big(-t_\text{max}, \quad 0, \quad 0\big) \quad \checkmark\\[4mm]
-%  \end{array}
-%\end{equation*}
+The deformation gradient $\bfF$ is the second order tensor that is obtained by differentiating the function $\bfvarphi_t$. It is given using the unit vectors $\bfe_i$ and components $F_{aA}$:
+\begin{align*}
+  \bfF &= F_{aA}\,\bfe_a \otimes \bfe_A, \quad && F_{aA} = \p{x_a}{X_A}.
+\end{align*}
+Capital and small indices refer to reference and current configuration, respectively. The deformation gradient can also be expressed using the displacement field $\bfU$:
+\begin{align}\label{eq:solid1}
+  \bfF = \bfI + ∇\bfU.
+\end{align}
 
-Internal energy:
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int} = \ds\int_{\Omega}\dfrac12S_{AB}(\hat{\bfu})\,δu^L_a \left(F_{aB}(\hat{\bfu})\,\p{\phi_L}{X_A} + F_{aA}(\hat{\bfu})\,\p{\phi_L}{X_B}\right) \,\d V
-  \end{array}
-\end{equation*}
-Now we assume a virtual displacement at node $\mathcal{A}$, $\delta u_a(\bfX) = δu_a^\mathcal{A} \phi^\mathcal{A} (\bfX)$.
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int} = \ds\int_{\Omega}\dfrac12S_{AB}\, δu_a^\mathcal{A}\,\left(F_{aB}\,\p{\phi^\mathcal{A}}{X_A} + F_{aA}\,\p{\phi^\mathcal{A}}{X_B}\right) \,\d V,
-  \end{array}
-\end{equation*}
-The ansatz function $\phi^\mathcal{A}$ and their derivatives are:
-\begin{equation*}
-  \begin{array}{lll}
-    \phi^\mathcal{A}(\bfX) = \dfrac{X_1}{L_x}\dfrac{X_2}{L_z}\left(1 - \dfrac{X_3}{L_z}\right),\\[4mm]
-    \p{\phi^\mathcal{A}}{X_1} = \dfrac1{L_x}\dfrac{X_2}{L_z}\left(1 - \dfrac{X_3}{L_z}\right), \\[4mm]
-    \p{\phi^\mathcal{A}}{X_2} = \dfrac1{L_z}\dfrac{X_1}{L_x}\left(1 - \dfrac{X_3}{L_z}\right),\\[4mm]
-    \p{\phi^\mathcal{A}}{X_3} = -\dfrac{X_1}{L_x}\dfrac{X_2}{L_z}\dfrac{1}{L_z},\\[4mm]
-  \end{array}
-\end{equation*}
-For $\delta\bfu(\bfX) = (\phi^\mathcal{A}(\bfX), 0, 0)^\top$, i.e. $δ u_1^\mathcal{A} = 1, δu_2^\mathcal{A} = δu_3^\mathcal{A} = 0$ we compute the virtual internal energy:
-\begin{equation*} 
-  \begin{array}{lll}
-    δW_\text{int} &= \ds\int_{\Omega}\dfrac12S_{AB}\, \left(F_{1B}\,\p{\phi^\mathcal{A}}{X_A} + F_{1A}\,\p{\phi^\mathcal{A}}{X_B}\right) \,\d V 
-    = \ds\int_{\Omega} \dfrac12 S_{11}\left( F_{11} \p{\phi^\mathcal{A}}{X_1} + F_{11} \p{\phi^\mathcal{A}}{X_1} \right) \,\d V\\[4mm]
-    &= S_{11}\ds\int_{\Omega} \lambda \dfrac1{L_x}\dfrac{X_2}{L_z}\left(1 - \dfrac{X_3}{L_z}\right) \,\d V 
-    =  S_{11}\, \lambda \,\dfrac{L_x}{L_x} \dfrac12 \dfrac{L_z^2}{L_z} \ds\int_{0}^{L_z}\left(1 - \dfrac{X_3}{L_z}\right) \,\d X_3 \\[4mm]
-    &= S_{11}\, \lambda \, \dfrac12 L_z \left(L_z - \dfrac12\dfrac{L_z^2}{L_z}\right)\\[4mm]
-    &= \dfrac14\, L_z^2\,S_{11}\, \lambda  = \dfrac14 \,L_z^2 \,F_{11}\,S_{11}\\[4mm]
-  \end{array}
-\end{equation*}
-Virtual external energy
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{ext} 
-    &= \ds\int_{\Omega} (\bfB - \rho_0\,\ddot{\bfu})\cdot δ\bfu\,\d V + \ds\int_{∂\Omega}  \bar{\bfT}\cdot δ\bfu\,\d S\\[4mm]
-    &= \ds\int_{∂\Omega}  (T(\bfX),0,0)^\top \cdot \big(δu_1(\bfX),δu_2(\bfX),δu_3(\bfX)\big)^\top\,\d S \\[4mm]
-    &= \ds\int\limits_{0}^{L_z}\ds\int\limits_{0}^{L_z}  \dfrac{t_\text{max}}{L_z^2}\,\phi^\mathcal{A}(L_x, X_2, X_3) \,\d X_2\,\d X_3\\[4mm]
-    &= \dfrac{t_\text{max}}{L_z^2}\ds\int\limits_{0}^{L_z}\ds\int\limits_{0}^{L_z} \dfrac{L_x}{L_x}\dfrac{X_2}{L_z}\left(1 - \dfrac{X_3}{L_z}\right)  \,\d X_2\,\d X_3\\[8mm]
-    &= \dfrac{t_\text{max}}{L_z^2} \dfrac12 \dfrac{L_z^2}{L_z} \left(L_z - \dfrac12 \dfrac{L_z^2}{L_z}\right) = \dfrac14\, L_z^2\, t_\text{max}\dfrac{1}{L_z^2} = \dfrac14\, t_\text{max} = \dfrac14\,L_z^2\, T(\bfx)
-  \end{array}
-\end{equation*}
-From principle of virtual work we should get the correct stress.
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int} - δW_\text{ext} = 0 \quad \Leftrightarrow \quad \dfrac14 \, L_z^2\,S_{11}\, \lambda - \dfrac14\, t_\text{max} = 0 \\[4mm]
-    \quad \Leftrightarrow \quad \dfrac14 \,(L_z^2\,S_{11}\,\lambda - t_\text{max}) = 0\\[4mm]
-    \quad \Leftrightarrow \quad L_z^2\,S_{11}\,\lambda = t_\text{max} \quad \Leftrightarrow \quad S_{11} = \dfrac{t_\text{max}}{\lambda\,L_z^2} = \dfrac1{\lambda^2}t(\bfX) = \dfrac1{\lambda}T(\bfX) \quad \checkmark
-  \end{array}
-\end{equation*}
-Note: we do not get any further information from the principle of virtual work further than the equilibrium conditions. This is because the stress was preserved as variable and not replaced by the constitutive equations, that relate them to strain and stretch $\lambda$. 
+Here and in the following, the gradient symbol $∇$ refers to differentiation with respect to material coordinates $\bfX$. 
+We assume cartesian coordinates.
 
-Assume Mooney-Rivlin with $c_2 \neq 0$,
-\begin{equation*}
-  \begin{array}{lll}
-    \bfS &= -p\bfC^{-1} + 2\left(\p{\Psi}{I_1} + I_1\p{\Psi}{I_2}\right)\bfI - 2\,\p{\Psi}{I_2}\,\bfC\\[4mm]
-     &= -p\bfC^{-1} + (2\,c_1 + \tr\bfC c_2)\,\bfI - 2\,c_2\,\bfC \\[4mm]
-    &= \diag\big( -p\,\lambda^{-2} + 2\,c_1 + 2\,c_2\,\lambda^2 + 4\,c_2\,\lambda^{-1} - 2\,c_2\,\lambda^2,\\[4mm]
-    &\qquad
-    -p\,\lambda + 2\,c_1 + 2\,c_2\,\lambda^2 + 4\,c_2\,\lambda^{-1} - 2\,c_2\,\lambda^{-1},\\[4mm]
-    &\qquad
-     -p\,\lambda  + 2\,c_1 + 2\,c_2\,\lambda^2 + 4\,c_2\,\lambda^{-1} - 2\,c_2\,\lambda^{-1}\big)\\[4mm]
-    &= \diag\big( -p\,\lambda^{-2} + 2\,c_1 + 4\,c_2\,\lambda^{-1},\\[4mm]
-    &\qquad
-    -p\,\lambda + 2\,c_1 + 2\,c_2\,\lambda^2 + 2\,c_2\,\lambda^{-1},\\[4mm]
-    &\qquad
-     -p\,\lambda  + 2\,c_1 + 2\,c_2\,\lambda^2 + 2\,c_2\,\lambda^{-1}\big)
-  \end{array}
-\end{equation*}
-%From equilibrium we get
-%\begin{equation*}
-%  \begin{array}{lll}S_{22} = 0 \quad \Rightarrow \quad -p\,\lambda  + 2\,c_1 + 2\,c_2\,\lambda^2 + 2\,c_2\,\lambda^{-1} = 0\\[4mm]
-%    \quad \Rightarrow\quad 
-%   p = 2\,c_1\,\lambda^{-1} + 2\,c_2\,\lambda + 2\,c_2\,\lambda^{-2}\\[4mm]
-%    -S_{11} + t_\text{max} = 0 \quad \Rightarrow \quad   -p\,\lambda^{-2} + 2\,c_1 + 4\,c_2\,\lambda^{-1} = t_\text{max} \\[4mm]
-%    \quad \Rightarrow \quad  
-%    2\,c_1\,\lambda^{-3} + 2\,c_2\,\lambda^{-1} + 2\,c_2\,\lambda^{-4} + 2\,c_1 + 4\,c_2\,\lambda^{-1} = t_\text{max}\\[4mm]
-%    \quad \Rightarrow\quad  2\,c_1\,\lambda^{-3} + 6\,c_2\,\lambda^{-1} + 2\,c_2\,\lambda^{-4} + 2\,c_1 = t_\text{max}
-%  \end{array}
-%\end{equation*}
+% tangent, normal, volume map
+The determinant of the deformation gradient is $J:= \det \bfF>0$. It is positive for any physically valid transformation.
+The deformation gradient is used to map geometric quantities from the reference to the current configuration:
+\begin{subequations}\label{eq:geometry_maps}
+  \begin{align}
+    \bft &= \bfF\,\bfT, & \text{(tangent map)} \label{eq:tangent_map}\\[4mm]
+    \bfa &= \cof(\bfF)\,\bfA, & \text{(normal map)} \label{eq:normal_map}\\[4mm]
+    v &= J\,V. & \text{(volume map)}\label{eq:volume_map}
+  \end{align}
+\end{subequations}
+%
+As given in \cref{eq:tangent_map} and visualized in \cref{fig:geometric_quantities}, the tensor $\bfF$ maps material tangents $\bfT$ in $\Omega_0$ to the corresponding spatial line elements $\bft$ in $\Omega_t$. 
+Accordingly, the spatial stretch at a point $\bfx \in \Omega_t$ in a certain direction is given by $\lambda=\sqrt{\bflambda^\top\,\bflambda}$ with $\bflambda = \bfF\,\bfM$, where $\bfM$ is a material line element with unit length pointing in the respective Lagrangian direction.
 
-\subsubsection{Uniaxial extension with constant load per surface area}
-This is the same example as the previous one except now with load constant per surface area, but total load varying, ${t(\bfx) = \hat{t} = t_\text{max}/L_z^2}, {T = \hat{t}/\lambda}$. For Neo-Hookean we have the equilibrium conditions,
-\begin{equation*}
-  \begin{array}{lll}
-    \textbf{$y$-direction:}\\
-    S_{22} = 0  \quad\Rightarrow\quad -p\,\lambda + 2\,c_1 = 0\quad\Rightarrow\quad p = \dfrac{2\,c_1}{\lambda}\\[4mm]
-    \textbf{$x$-direction:}\\
-    \sigma_{11} = \hat{t} \quad \Leftrightarrow \quad
-    \bfS = J\,\bfF^{-1} \bfsigma \bfF^{-\top}, \quad S_{11} = \lambda^{-1} \sigma_{11} \lambda^{-1}\\[4mm]
-    \Rightarrow \quad S_{11} = \hat{t} \, \lambda^{-2}
-    \quad \Rightarrow \quad -p\,\lambda^{-2} + 2\,c_1 = -2\,c_1\,\lambda^{-3} + 2\,c_1 = \hat{t}\,\lambda^{-2}\\[4mm]
-    \Rightarrow \quad 2\,c_1\,\lambda^3 - \hat{t}\,\lambda-2\,c_1  = 0
-  \end{array}
-\end{equation*}
+In \cref{eq:normal_map}, the cofactor of $\bfF$ given by $\cof(\bfF) = J\,\bfF^{-\top}$ maps normals $\bfA$ and surface areas $|\bfA|$ from $\Omega_0$ to the corresponding values $\bfa$ and $|\bfa|$ in $\Omega_t$. Nanson's formula, $\d \bfa = \cof(\bfF)\,\d\bfA$, is used to transform surface integrals from Eulerian to Lagrangian description.
+Note that tangents at a point $\bfX$ live in the tangent space $T_\bfX\Omega_0$ and normals live in the co-tangent space $T^\ast_\bfX\Omega_0$.
 
-\begin{lstlisting}[columns=fixed,basicstyle=\ttfamily]
-  >>> solve(2*c1*l**(3) -t*l**2 -2*c1, l, simplify=True, positive=True)[0].evalf()
-  0.30285343213869*(1.81712059283214*that + (18.0*c0**1.5 + 2.44948974278318*(54.0*c0**3 - that**3)**0.5)**(2/3))/(sqrt(c0)*(18.0*c0**1.5 + 2.44948974278318*(54.0*c0**3 - that**3)**0.5)**(1/3))
-\end{lstlisting}
+\Cref{eq:volume_map} describes the volume map from $\Omega_0$ to $\Omega_t$, which simply scales the reference volume $V$ by the determinant $J$ to obtain the volume $v$ in the current configuration.
 
-Internal virtual energy:
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int} = \dfrac14 \,L_z^2 \,F_{11}\,S_{11}
-  \end{array}
-\end{equation*}
+% geometric quantities
+\begin{figure}
+  \centering%
+  \def\svgwidth{0.7\textwidth}
+  \input{images/geometric_quantities.pdf_tex}%
+  \caption{Vector spaces and variables used in the geometric description of the solid mechanics model. The left side shows the reference configuration with tangent and co-tangent space of point $\bfX$. The right side shows tangent and co-tangent space for the current domain and a point $\bfx$. The spatial stretch $\lambda$ is defined by mapping a material element $\bfM$ to the current configuration. The maps $\bfvarphi_t$, $\bfF$ and $\bfF^{-\top}$ map tangents $\bfT,\bft$ and normals $\bfA,\bfa$ between the configurations.}%
+  \label{fig:geometric_quantities}%
+\end{figure}
 
-External virtual energy:
-\begin{equation*}
-  \begin{array}{lll}
-     δW_\text{ext} &= \ds\int_{\Omega} (\bfB - \rho_0\,\ddot{\bfu})\cdot δ\bfu\,\d V + \ds\int_{∂\Omega}  \bar{\bfT}\cdot δ\bfu\,\d S\\[4mm]
-    &= \ds\int_{∂\Omega}  (T(\bfX),0,0)^\top \cdot δ\bfu\,\d S = \ds\int\limits_{0}^{L_z}\ds\int\limits_{0}^{L_z}  \dfrac{\hat{t}}{\lambda}\,\phi^\mathcal{A}(L_x, X_2, X_3) \,\d X_2\,\d X_3\\[4mm]
-    &= \dfrac{\hat{t}}{\lambda}\,\ds\int\limits_{0}^{L_z}\ds\int\limits_{0}^{L_z} \dfrac{L_x}{L_x}\dfrac{X_2}{L_z}\left(1 - \dfrac{X_3}{L_z}\right)  \,\d X_2\,\d X_3\\[8mm]
-    &= \dfrac{\hat{t}}{\lambda}\,\dfrac12 \dfrac{L_z^2}{L_z} \left(L_z - \dfrac12 \dfrac{L_z^2}{L_z}\right) = \dfrac14\, L_z^2\, \dfrac{\hat{t}}{\lambda} 
-  \end{array}
-\end{equation*}
-We get
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int} - δW_\text{ext} = \dfrac14\,L_z^2\left(F_{11}\,S_{11} - \dfrac{\hat{t}}{\lambda}\right) \quad\Leftrightarrow\quad  S_{11} = \hat{t}\,\lambda^{-2}\quad\checkmark
-  \end{array}
-\end{equation*}
-%------------------------------------------------------------------------------------------------
-\subsection{2D uniaxial extension with constant total load}
+Furthermore, the deformation gradient $\bfF$ is used to define the right Cauchy Green tensor $\bfC = \bfF^\top\bfF$, which maps from tangent to co-tangent space in reference configuration, and subsequently the Green-Lagrange strain tensor:
+%
+\begin{align*}
+  \bfE = \dfrac12(\bfC - \bfI).
+\end{align*}
+%
+This strain measure can be interpreted as comparing the current Lagrangian metric $\bfC$, a measure for the symmetric part of the current deformation, with the reference metric which is the identity. Using \cref{eq:solid1}, the Green-Lagrange strain tensor can be formulated in terms of derivatives of the displacements:%
+\begin{align}\label{eq:green_lagrange_u}
+  \bfE &= \dfrac12\big((∇\bfU)^\top + ∇\bfU + ∇\bfU^\top ∇\bfU\big).
+\end{align}
 
-\bild{uniaxial_extension_2d}{0.8\textwidth}{Uniaxial extension example}
+% stress measures
+To employ the physical balance principles described in \cref{sec:model_muscle_contraction}, we need to define stress measures. The Cauchy stress tensor $\bfsigma$ has been introduced in \cref{sec:model_muscle_contraction} using Euler's cut principle where the mechanical action on an arbitrary cut out of the domain is represented by a traction vector $\bft$ as contact force per surface area. The traction vector acts on the current configuration and is a function of the position $\bfx \in \Omega_t$ and the local orientation of the cut given by the normal vector $\bfn$. The stress tensor $\bfsigma$ is defined by Cauchy's theorem:
+\begin{align*}
+  \bft = \bfsigma \cdot \bfn.
+\end{align*}
+Thus, the Cauchy stress describes the \say{true stress} of contact forces per deformed area. Both slots of the second order tensor are associated with the current configuration. More specifically, $\sigma$ is contravariant and maps from a normal $\bfn$ in co-tangent space $T^\ast_\bfx\Omega_t$ to the traction $\bft$ in tangent space $T_\bfx\Omega_t$. While the physical description is natural in this Eulerian setting, the numerical treatment is more convenient in the Lagrangian setting, where we can integrate over a non-deforming domain. 
+Moreover, a two-point setting, where surface areas are measured in the undeformed configuration and traction forces are measured in the deformed configuration, is often useful in engineering. This is the natural setting, e.g., in tension tests. Therefore, other stress measures involving the reference configuration are defined.
 
-The domain in reference and current configuration is depicted in \cref{fig:uniaxial_extension_2d}) and defined as follows,
-\begin{equation*}
-  \begin{array}{lll}
-    \Omega_\text{ref} = [0, L_x] \times [0, L_y]\\[4mm]
-    \Omega_\text{current} = [0, \lambda\,L_x] \times [0, L_y\,\lambda^{-1}],
-  \end{array}
-\end{equation*}
-A load $t(\bfx) = t_\text{max}/l_y$ is defined on the right border. In reference configuration it is
-\begin{equation*}
-  \begin{array}{lll}
-    T(\bfx) = \dfrac{t_\text{max}}{L_y},\\[4mm]
-  \end{array}
-\end{equation*}
-in current configuration
-\begin{equation*}
-  \begin{array}{lll}
-    t(\bfx) &= \dfrac{t_\text{max}}{l_y} = t_\text{max}\,\dfrac{\lambda}{L_y}.
-  \end{array}
-\end{equation*}
-Because the normal vector is the same, $\bfn = \bfN$, we have
-\begin{equation*}
-  \begin{array}{lll}
-    T(\bfx)\,\d S = \bft\,\d s, \quad T(\bfx) = \bft(\bfx)\,\dfrac{\d s}{\d S} = \bft(\bfx)\, \dfrac{l_y}{L_y} = t(\bfx) \dfrac1{\lambda}, \quad \text{i.e.}\quad \quad T(\bfx) = t(\bfx)\,\lambda^{-1}
-  \end{array}
-\end{equation*}
+% numerics -> physics
+% pull-back, push-back
+Using the mappings presented in \cref{eq:geometry_maps}, all quantities can be transformed between both configurations. 
+The physical derivation can be carried out equivalently in a Lagrangian or Eulerian setting and switching between them is possible at any point in the derivation. For this purpose, two operations are defined: the pull-back $\varphi^\ast(\bfg) = \bfF^\top\bfg\,\bfF$ and push-forward operations $\varphi_\ast(\bfG) = \bfF^{-\top}\bfG\,\bfF^{-1}$, which bring tensors from Eulerian to Lagrangian description and vice-versa.
 
-The geometric quantities can be computed to
-\begin{equation*}
-  \begin{array}{lll}
-    \bfx = \mat{\lambda \,X_1\\[2mm]\lambda^{-1}\, X_2 }, 
-    \quad \bfF = \matt{\lambda & 0\\[2mm] 0 & \lambda^{-1}},
-    \quad \bfC = \matt{\lambda^2 & 0\\[2mm] 0 & \lambda^{-2} },\\[12mm]
-    \tr(\bfC) = \lambda^2 + \lambda^{-2}, \quad \tr(\bfC^2) = \lambda^4 + \lambda^{-4}\\[4mm]
-    I_1 = \tr(\bfC) = \lambda^2 + \lambda^{-2} \quad \\[4mm]
-    I_2 = \dfrac12\big(\tr(\bfC)^2 - \tr(\bfC^2)\big) = \dfrac12(\lambda^4 + 2 + \lambda^{-4} - \lambda^{4} - \lambda^{-4}) = 1 \\[4mm]
-    I_3 = J = \det{\bfF} = 1, \quad \bar{\bfC} = \bfC\\[4mm]
-    \bfE = \dfrac12\matt{\lambda^2-1 & 0 \\[2mm] 0 & \lambda^{-2}-1 }, \quad \bfC^{-1} = \matt{\lambda^{-2} & 0 \\[2mm] 0 & \lambda^{2}}
-  \end{array}
-\end{equation*}
-\textbf{Solution using penalty method}
+Continuum mechanical models establish equations for the unknown displacement function $\bfu$ and its evolution in time via relations between stresses and strains. In the following, we focus on descriptions of the stress.
 
-For the incompressible Mooney-Rivlin material with $\Psi(I_1,I_2) = c_1\,(I_1-3) + c_2\,(I_2 - 3), I_3 = 1$ we get the fictitious PK2 stress tensor as,
-The displacements at node A are given by
-\begin{equation*}
-  \begin{array}{lll}
-    \hat{\bfu}^A = \big(\lambda\,L_x - L_x, L_y\,\lambda^{-1} - L_y\big) = \big((\lambda-1)\,L_x,(\lambda^{-1}-1)\,L_y\big).
-  \end{array}
-\end{equation*}
+% sigma, 1st PK, 2nd PK
+The first Piola-Kirchhoff stress tensor $\bfP$ measures contact forces in the current configuration with regard to the area of the reference configuration and relates to the Cauchy stress as $\bfP = \bfsigma\,\cof(\bfF)$. The second Piola-Kirchhoff tensor $\bfS$ is a fully Lagrangian field given as the pull-back of the Cauchy stress scaled by $J$:%
+\begin{align*}
+  \bfS = \varphi^\ast(J\,\bfsigma) = J\,\bfF^{-1}\bfsigma\,\bfF^{-\top}.
+\end{align*}
+It appears in the summary of the muscle contraction model in \cref{eq:contraction} in connection with the strain energy function $\Psi$.
 
-Assuming Neo-Hookean material law, $\Psi(I_1) = c_1\,(I_1 - 2)$ the fictitious PK2 stress tensor yields
-\begin{equation*}
-  \begin{array}{lll}
-    \bar{\bfS} = 2\,c_1\,\bfI.
-  \end{array}
-\end{equation*}
-and the stress tensor
-\begin{equation*}
-  \begin{array}{lll}
-    \bfC : \bar{\bfS} &= 2\,c_1\,(\lambda^2 + \lambda^{-2}) \\[4mm]
-    \bfS_\text{iso} &= J^{-1}\,\mathbb{P} : \bar{\bfS} = \bar{\bfS} - \dfrac12 (\bfC^{-1} \otimes \bfC):\bar{\bfS} \\[4mm]
-     &= \bar{\bfS} - \dfrac12 \matt{
-    \lambda^{-2} \cdot \big(2\,c_1\,(\lambda^2 + \lambda^{-2})\big) & 0 \\[2mm]
-    0 & \lambda^{2} \cdot \big(2\,c_1\,(\lambda^2 + \lambda^{-2})\big)} \\[8mm]
-    &= \matt{2\,c_1 & 0 \\[2mm] 0 & 2\,c_1} - \dfrac12 \matt{
-    2\,c_1\,(1 + \lambda^{-4}) & 0 \\[2mm]
-    0 & 2\,c_1\,(\lambda^4 + 1)} \\[8mm]
-    &= \matt{
-    c_1\,(1-\lambda^{-4}) & 0 \\[2mm]
-    0 & c_1\,(1-\lambda^4)}
-  \end{array}
-\end{equation*}
-\begin{equation*}
-  \begin{array}{lll}
-    \bfS &= \bfS_\text{iso} + \bfS_\text{vol} = \bfS_\text{iso} + J\,p\,\bfC^{-1} = \matt{
-    c_1\,(1-\lambda^{-4}) + p\,\lambda^{-2} & 0 \\[2mm]
-    0 & c_1\,(1-\lambda^4) + p\,\lambda^{2}}
-  \end{array}
-\end{equation*}
-The artifical pressure, $p$ is different from the real hydrostatic pressure. It is given by
-\begin{equation*}
-  \begin{array}{lll}
-    p = \d{\Psi_\text{vol}(J)}{J} = \d{J} \big(\dfrac{\kappa}{2}(J - 1)^2\big) = \kappa\,(J-1)
-  \end{array}
-\end{equation*}
-An incompressible solution has $J\approx 1$ but because $\kappa \to \infty$ it has a $p \neq 0$.
-To satisfy the force equilibrium we get
-\begin{equation*}
-  \begin{array}{lll}
-    \textbf{$y$-direction:}\\
-    S_{22} = 0 \quad \Rightarrow \quad 
-    c_1\,(1-\lambda^4) + p\,\lambda^{2} = 0 \quad \Rightarrow \quad p =  \big(c_1\,(\lambda^4-1)\big)\lambda^{-2} 
-    = c_1\,(\lambda^2-\lambda^{-2})\\[4mm]
-    
-    \textbf{$x$-direction:}\\
-    -\sigma_{11}\,l_y + t_\text{max}\,\dfrac{\lambda}{L_y}\,l_y = 0,\quad \Rightarrow \quad 
-    \sigma_{11} = t_\text{max}\dfrac{\lambda}{L_y}\\[4mm]
-    \bfS = J\,\bfF^{-1} \bfsigma \bfF^{-\top}, \quad 
-    S_{11} = \lambda^{-1} \sigma_{11} \lambda^{-1}\\[4mm]
-    \Rightarrow \quad S_{11} \overset{!}{=} \dfrac{t_\text{max}}{L_y\,\lambda}\\[4mm]
-    \Leftrightarrow \quad   c_1\,(1-\lambda^{-4}) + \left( c_1\,(\lambda^2-\lambda^{-2}) \right)\lambda^{-2} \overset{!}{=} \dfrac{t_\text{max}}{L_y\,\lambda}   \\[4mm]
-    \Leftrightarrow \quad   c_1\,(1-\lambda^{-4}) + c_1\,(1-\lambda^{-4}) = \dfrac{t_\text{max}}{L_y\,\lambda}   \\[4mm]
-    \Leftrightarrow \quad    2\,c_1\,(1-\lambda^{-4}) = \dfrac{t_\text{max}}{L_y\,\lambda} 
-    \quad  \Leftrightarrow \quad   2\,L_y\,c_1\,(\lambda-\lambda^{-3}) = t_\text{max}   \\[4mm]
-    \Leftrightarrow \quad   2\,c_1\,L_y\,(\lambda^4 - 1) - t_\text{max}\,\lambda^3 = 0
-  \end{array}
-\end{equation*}
-\begin{lstlisting}[columns=fixed,basicstyle=\ttfamily]
-  >>> solve(2*c0*ly*(lambdaValue**4 - 1) - tmax*lambdaValue**3, 
-  lambdaValue, simplify=True, positive=True)[2]
-  (tmax/8 + sqrt(-384*3**(2/3)*c0**(8/3)*ly**(8/3)/(-9*tmax**2
-   + sqrt(3)*sqrt(4096*c0**4*ly**4 + 27*tmax**4))**(1/3) 
-   + 24*3**(1/3)*c0**(4/3)*ly**(4/3)*(-9*tmax**2 + sqrt(3)*
-   sqrt(4096*c0**4*ly**4 + 27*tmax**4))**(1/3) + 9*tmax**2)/24
-    - sqrt(384*3**(2/3)*c0**(8/3)*ly**(8/3)/(-9*tmax**2 + 
-    sqrt(3)*sqrt(4096*c0**4*ly**4 + 27*tmax**4))**(1/3) 
-    - 24*3**(1/3)*c0**(4/3)*ly**(4/3)*(-9*tmax**2 + sqrt(3)*
-    sqrt(4096*c0**4*ly**4 + 27*tmax**4))**(1/3) 
-    + 18*sqrt(3)*tmax**3/sqrt(-128*3**(2/3)*c0**(8/3)*ly**(8/3)
-    /(-9*tmax**2 + sqrt(3)*sqrt(4096*c0**4*ly**4 + 27*tmax**4))
-    **(1/3) + 8*3**(1/3)*c0**(4/3)*ly**(4/3)*(-9*tmax**2 
-    + sqrt(3)*sqrt(4096*c0**4*ly**4 + 27*tmax**4))**(1/3) 
-    + 3*tmax**2) + 18*tmax**2)/24)/(c0*ly)
-\end{lstlisting}
+% stress tensors
+\begin{figure}
+  \centering%
+  \def\svgwidth{0.5\textwidth}
+  \input{images/stress_tensors.pdf_tex}%
+  \caption{Stress tensors and geometric maps that can be used together in a solid mechanics formulation. The right Cauchy-Green tensor $\bfC$  and the second Piola-Kirchhoff stress $\bfS$ are dual Eulerian tensors and map between tangent space $T_\bfX\Omega_0$ and co-tangent space $T^\ast_\bfX\Omega_0$ in the reference domain. The deformation gradient $\bfF$ and the first Piola-Kirchhoff stress $\bfP$ are dual two-point tensors mapping from the reference to the current configuration. 
+  The Eulerian metric $\bfg$ which is the identity in cartesian coordinates and the Kirchhoff stress $J\,\bfsigma$ (where $\bfsigma$ is the Cauchy stress) are the dual objects in the Eulerian setting. All three pairs of dual tensors are linked together by transformations such as pull-back and push-forward.
+  }%
+  \label{fig:stress_tensors}%
+\end{figure}
 
-From the penalty parameter $p = c_1\,(\lambda^2-\lambda^{-2})$ we can compute the amount by which the system violates incompressibility:
-\begin{equation*}
-  \begin{array}{lll}
-    p = \kappa\,(J-1) \quad \Rightarrow \quad J = 1 + \dfrac{p}{\kappa}
-  \end{array}
-\end{equation*}
+\Cref{fig:stress_tensors} summarizes the geometric maps by black arrows and the stress measures by red arrows. 
+To relate strains and stresses in a material model, the corresponding tensors have to be dual objects. Here, three settings are possible: The Eulerian setting uses the metric $\bfg$ and the dual Kirchhoff stress $J\,\bfsigma$. The two-point setting uses the deformation gradient $\bfF$ and the dual first Piola-Kirchhoff stress $\bfP$. The Lagrangian setting uses the right Cauchy-Green tensor $\bfC$ and the dual second Piola-Kirchhoff stress $\bfS$. 
+Different pairs of strain and stress tensors can be used. 
+The Lagrangian setting defines the right Cauchy-Green tensor $\bfC$ and the dual second Piola-Kirchhoff stress $\bfS$.
+We consider these quantities in the further derivations, because the Lagrangian formulation is naturally used to derive the discretization schemes.
 
-\textbf{Direct solution using pressure from equilibrium}
+\subsection{A Linearized Model as an Exemplary Description of Solid Mechanics}\label{sec:linearized_mechanics_model}
 
-Analytical approach (p.224). Assuming Incompressibility ($I_3 = 1$), Mooney-Rivlin with $c_2 = 0$ (Neo-Hookean),
-\begin{equation}\label{eq:analytical_app}
-  \begin{array}{lll}
-    \bfS &= -p\bfC^{-1} + 2\left(\p{\Psi}{I_1} + I_1\p{\Psi}{I_2}\right)\bfI - 2\,\p{\Psi}{I_2}\,\bfC\\[4mm]
-     &= -p\bfC^{-1} + 2\,c_1\,\bfI =
-      \matt{-p\,\lambda^{-2} + 2\,c_1 & 0\\[2mm] 
-     0 & -p\,\lambda^2 + 2\,c_1 }
-  \end{array}
-\end{equation}
-From equilibrium we get
-\begin{equation*}
-  \begin{array}{lll}
-    \textbf{$y$-direction:}\\
-    S_{22} = 0 \quad \Rightarrow \quad -p\,\lambda^2 + 2\,c_1 = 0 \quad \Rightarrow \quad p = \dfrac{2\,c_1}{\lambda^2}\\[4mm]
-    
-    \textbf{$x$-direction:}\\
-    -\sigma_{11}\,l_y + t_\text{max}\,\dfrac{\lambda}{L_y}\,l_y = 0,\quad \Rightarrow \quad 
-    \sigma_{11} = t_\text{max}\dfrac{\lambda}{L_y}\\[4mm]
-    \bfS = J\,\bfF^{-1} \bfsigma \bfF^{-\top}, \quad 
-    S_{11} = \lambda^{-1} \sigma_{11} \lambda^{-1}\\
-    \Rightarrow \quad S_{11} \overset{!}{=} \dfrac{t_\text{max}}{L_y\,\lambda}\\[4mm]
-    \quad \Rightarrow \quad -p\,\lambda^{-2} + 2\,c_1 = -2\,c_1\,\lambda^{-4} + 2\,c_1 = \dfrac{t_\text{max}}{L_y\,\lambda}\\[4mm]
-    \quad \Rightarrow \quad 2\,c_1\,\lambda^{4} - \dfrac{t_\text{max}}{L_y}\,\lambda^3 -2\,c_1 = 0
-    \quad \Rightarrow \quad \lambda = \text{nonlinear($t_\text{max}$)}
-  \end{array}
-\end{equation*}
-\begin{lstlisting}[columns=fixed,basicstyle=\ttfamily]
-  >>> solve(2.*c0*ly*(lambdaValue**4. - 1.) - tmax*lambdaValue**3.,
-   lambdaValue, simplify=True, positive=True)[3]
-  
-  (0.125*tmax + 0.0416666666666667*sqrt(34.6139896873778*
-  c0**1.33333333333333*ly**1.33333333333333*
-  (-9.0*tmax**2 + 1.73205080756888*(4096.0*
-  c0**4*ly**4 + 27.0*tmax**4)**0.5)**0.333333333333333 
-  - 798.752188051931*c0**2.66666666666667*ly**2.66666666666667
-  *(-9.0*tmax**2 + 1.73205080756888*(4096.0*c0**4*ly**4 + 27.0*tmax**4)**0.5)**(-0.333333333333333) + 9.0*tmax**2) + 0.0416666666666667*sqrt(-34.6139896873778*c0**1.33333333333333*ly**1.33333333333333*(-9.0*tmax**2 + 1.73205080756888*(4096.0*c0**4*ly**4 + 27.0*tmax**4)**0.5)**0.333333333333333 + 798.752188051931*c0**2.66666666666667*ly**2.66666666666667*(-9.0*tmax**2 + 1.73205080756888*(4096.0*c0**4*ly**4 + 27.0*tmax**4)**0.5)**(-0.333333333333333) + 31.1769145362398*tmax**3*(11.5379965624593*c0**1.33333333333333*ly**1.33333333333333*(-9.0*tmax**2 + 1.73205080756888*(4096.0*c0**4*ly**4 + 27.0*tmax**4)**0.5)**0.333333333333333 - 266.250729350644*c0**2.66666666666667*ly**2.66666666666667*(-9.0*tmax**2 + 1.73205080756888*(4096.0*c0**4*ly**4 + 27.0*tmax**4)**0.5)**(-0.333333333333333) + 3.0*tmax**2)**(-0.5) + 18.0*tmax**2))/(c0*ly)
-\end{lstlisting}
-%Test: the stress in reference configuration yields
-%\begin{equation*}
-%  \begin{array}{lll}
-%    \bfS &= \diag\big(-p\,\lambda^{-2} + 2\,c_1, \quad -p\,\lambda + 2\,c_1, \quad -p\,\lambda + 2\,c_1\big)\\[4mm]
-%    &= \diag\big(-2\,c_1\,\lambda^{-3} + 2\,c_1, \quad -2\,c_1 + 2\,c_1, \quad -2\,c_1 + 2\,c_1\big)\\[4mm]
-%    &= \diag\big(-2\,c_1\,(1+\dfrac{t_\text{max}}{2\,c_1}) + 2\,c_1, \quad 0, \quad 0\big)\\[4mm]
-%    &= \diag\big(-t_\text{max}, \quad 0, \quad 0\big) \quad \checkmark\\[4mm]
-%  \end{array}
-%\end{equation*}
+The quantities introduced in \cref{sec:geometric_description} are linked together by various relations, which are summarized in a digram in \cref{fig:tonti_diagram}. The goal is to find the relationship between given forces (top left in \cref{fig:tonti_diagram}) and the resulting deformation of the body described by the displacements (top right in \cref{fig:tonti_diagram}).
+Prescribed external traction forces $\bfT$ and external or inertial body forces $\bfB$ act on the body and result in stresses $\bfS$ satisfying the \emph{equilibrium} relation. A \emph{material law} connects stresses $\bfS$ and strains $\bfE$. The \emph{kinematics} of the body determine the relationship between displacements $\bfu$ and strains $\bfE$. Geometric Dirichlet boundary conditions prescribe displacements and Neumann boundary conditions such as traction forces contribute to the stress field. 
 
-Internal energy:
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int} = \ds\int_{\Omega}\dfrac12S_{AB}(\hat{\bfu})\,δu^L_a \left(F_{aB}(\hat{\bfu})\,\p{\phi_L}{X_A} + F_{aA}(\hat{\bfu})\,\p{\phi_L}{X_B}\right) \,\d V
-  \end{array}
-\end{equation*}
-Now we assume a virtual displacement at node $\mathcal{A}$, $\delta u_a(\bfX) = δu_a^\mathcal{A} \phi^\mathcal{A} (\bfX)$.
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int} = \ds\int_{\Omega}\dfrac12S_{AB}\, δu_a^\mathcal{A}\,\left(F_{aB}\,\p{\phi^\mathcal{A}}{X_A} + F_{aA}\,\p{\phi^\mathcal{A}}{X_B}\right) \,\d V,
-  \end{array}
-\end{equation*}
-The ansatz function $\phi^\mathcal{A}$ and their derivatives are given by:
-\begin{equation*}
-  \begin{array}{lll}
-    \phi^\mathcal{A}(\bfX) = \dfrac{X_1}{L_x}\dfrac{X_2}{L_y},\quad 
-    \p{\phi^\mathcal{A}}{X_1} = \dfrac1{L_x}\dfrac{X_2}{L_y}, \quad 
-    \p{\phi^\mathcal{A}}{X_2} = \dfrac1{L_y}\dfrac{X_1}{L_x}
-  \end{array}
-\end{equation*}
-For $\delta\bfu(\bfX) = (\phi^\mathcal{A}(\bfX), 0)^\top$, i.e. $δ u_1^\mathcal{A} = 1, δu_2^\mathcal{A} = 0$ we compute the virtual internal energy:
-\begin{equation*} 
-  \begin{array}{lll}
-    δW_\text{int} &= \ds\int_{\Omega}\dfrac12S_{AB}\, \left(F_{1B}\,\p{\phi^\mathcal{A}}{X_A} + F_{1A}\,\p{\phi^\mathcal{A}}{X_B}\right) \,\d V 
-    = \ds\int_{\Omega} \dfrac12 S_{11}\left( F_{11} \p{\phi^\mathcal{A}}{X_1} + F_{11} \p{\phi^\mathcal{A}}{X_1} \right) \,\d V\\[4mm]
-    &= S_{11}\ds\int_{\Omega} \lambda \dfrac1{L_x}\dfrac{X_2}{L_y} \,\d V 
-    =  S_{11}\, \lambda \,\dfrac{L_x}{L_x} \dfrac12 \dfrac{L_y^2}{L_y}\\[4mm]
-    &= \dfrac12\, L_y\,S_{11}\, \lambda  = \dfrac12 \,L_y \,F_{11}\,S_{11}\\[4mm]
-  \end{array}
-\end{equation*}
-Virtual external energy
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{ext} 
-    &= \ds\int_{\Omega} (\bfB - \rho_0\,\ddot{\bfu})\cdot δ\bfu\,\d V + \ds\int_{∂\Omega}  \bar{\bfT}\cdot δ\bfu\,\d S\\[4mm]
-    &= \ds\int_{∂\Omega}  (T(\bfX),0)^\top \cdot \big(δu_1(\bfX),δu_2(\bfX)\big)^\top\,\d S \\[4mm]
-    &= \ds\int\limits_{0}^{L_y}\dfrac{t_\text{max}}{L_y}\,\phi^\mathcal{A}(L_x, X_2) \,\d X_2\\[4mm]
-    &= \dfrac{t_\text{max}}{L_y}\ds\int\limits_{0}^{L_y} \dfrac{L_x}{L_x}\dfrac{X_2}{L_y}\,\d X_2\\[8mm]
-    &= \dfrac{t_\text{max}}{L_y} \dfrac12 \dfrac{L_y^2}{L_y} = \dfrac12\, t_\text{max} = \dfrac12\,L_y\, T(\bfx)
-  \end{array}
-\end{equation*}
-From principle of virtual work we should get the correct stress.
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int} - δW_\text{ext} = 0 \quad \Leftrightarrow \quad \dfrac14 \, L_z^2\,S_{11}\, \lambda - \dfrac14\, t_\text{max} = 0 \\[4mm]
-    \quad \Leftrightarrow \quad \dfrac12 \,(L_y\,S_{11}\,\lambda - t_\text{max}) = 0\\[4mm]
-    \quad \Leftrightarrow \quad L_y\,S_{11}\,\lambda = t_\text{max} \quad \Leftrightarrow \quad S_{11} = \dfrac{t_\text{max}}{\lambda\,L_y} = \dfrac1{\lambda^2}t(\bfX) = \dfrac1{\lambda}T(\bfX) \quad \checkmark
-  \end{array}
-\end{equation*}
-Note: we do not get any further information from the principle of virtual work further than the equilibrium conditions. This is because the stress was preserved as variable and not replaced by the constitutive equations, that relate them to strain and stretch $\lambda$. 
+Whereas the equilibrium relation is linear, the material and kinematic descriptions can both be chosen to be linear or nonlinear. 
+In cases of small strains, geometric and material linearity can be assumed.
 
-%------------------------------------------------------------------------------------------------
-\subsection{2D uniaxial extension with constant total load, 2 elements}
+In this section, we present a simplified, static model where all of the assumed relations are linear. 
+This model serves as a prototype for the subsequent derivation of the fully nonlinear model. Besides the nonlinear model, our software OpenDiHu also implements the linearized description. The linear model exhibits better numerical properties and can be solved faster than the generic model. Thus, it can serve as a toy problem and for mechanical systems, where the linearization assumption is valid.
 
-\bild{uniaxial_extension_2d_2elements}{0.8\textwidth}{Uniaxial extension example with two quadratic elements, mixed formulation}
+% Tonti diagram
+\begin{figure}
+  \centering%
+  \def\svgwidth{\textwidth}
+  \input{images/tonti_diagram.pdf_tex}%
+  \caption{The three relations between various quantities that compose the solid mechanics model: Equilibrium links traction and body forces $\bfT$ and $\bfB$ to the stresses $\bfS$. A material model connects them to strains $\bfE$. The kinematic relations yield the resulting displacement field $\bfu$. Note that all quantities in this diagram are given in Lagrangian formulation.}%
+  \label{fig:tonti_diagram}%
+\end{figure}
+% linear, static and dynamic
 
-This is the same example as before, now considering a discretization with 2 linear-quadratic elements.
+Using variational calculus, the system response of external forces and infinitesimal, compatible, virtual displacements $δ\bfu$ is studied. 
+We start with the \emph{principle of virtual work}, which states that in equilibrium the virtual work $δW$ performed by external forces along virtual displacements $δ\bfu$ is zero. Equivalently, the external virtual work $δW_\text{ext}$ is equal to the internal virtual work $δW_\text{int}$. 
 
-Computation of $δW_\text{int}$ for a virtual displacement at node $\mathcal{B}$, $\delta u_a(\bfX) = δu_a^\mathcal{B} \phi^\mathcal{B} (\bfX)$. We have
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int} = \ds\int_{\Omega}\dfrac12S_{AB}\, δu_a^\mathcal{B}\,\left(F_{aB}\,\p{\phi^\mathcal{B}}{X_A} + F_{aA}\,\p{\phi^\mathcal{B}}{X_B}\right) \,\d V,
-  \end{array}
-\end{equation*}
-The ansatz function $\phi^\mathcal{B}$ and their derivatives are given by:
-\begin{equation*}
-  \begin{array}{lll}
-    \phi^\mathcal{B}(\bfX) = \left(1 - \left|\dfrac{2\,X_1}{L_x} - 1\right|\right)\dfrac{L_y - X_2}{L_y} \quad = 
-    \begin{cases}
-      \dfrac{2\,X_1}{L_x} \dfrac{L_y - X_2}{L_y} & \quad \text{for } 0 < X_1 \leq L_x/2\\[4mm]
-      \left(2-\dfrac{2\,X_1}{L_x}\right) \dfrac{L_y - X_2}{L_y} & \quad \text{for } L_x/2 < X_1 \leq L_x
-    \end{cases}\\[4mm]
-    %
-    \p{\phi^\mathcal{B}}{X_1} = 
-    \begin{cases} 
-      \dfrac2{L_x}\dfrac{L_y - X_2}{L_y} & \quad \text{for } 0 < X_1 \leq L_x/2\\[4mm]
-      -\dfrac2{L_x}\dfrac{L_y - X_2}{L_y} & \quad \text{for } L_x/2 < X_1 \leq L_x
-    \end{cases}\\[12mm]
-    %
-    \p{\phi^\mathcal{B}}{X_2} =
-    \begin{cases}
-      -\dfrac{2\,X_1}{L_x} \dfrac{1}{L_y} & \quad \text{for } 0 < X_1 \leq L_x/2\\[4mm]
-      -\left(2-\dfrac{2\,X_1}{L_x}\right) \dfrac1{L_y} & \quad \text{for } L_x/2 < X_1 \leq L_x
-    \end{cases}\\[4mm]
-  \end{array}
-\end{equation*}
-For $\delta\bfu(\bfX) = (\phi^\mathcal{B}(\bfX), 0)^\top$, i.e. $δ u_1^\mathcal{B} = 1, δu_2^\mathcal{B} = 0$ we compute the virtual internal energy. The deformation gradient, $F$, is constant over the domain, therefore $F_{11} = \lambda$.
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int} &= \ds\int_{\Omega}\dfrac12S_{AB}\, \left(F_{1B}\,\p{\phi^\mathcal{B}}{X_A} + F_{1A}\,\p{\phi^\mathcal{B}}{X_B}\right) \,\d V 
-    = \ds\int_{\Omega} \dfrac12 S_{11}\left( F_{11} \p{\phi^\mathcal{B}}{X_1} + F_{11} \p{\phi^\mathcal{B}}{X_1} \right) \,\d V\\[4mm]
-    &= S_{11}\,\lambda \ds\int_{\Omega} \p{\phi^\mathcal{B}}{X_1} \,\d V
-    = S_{11}\,\lambda\, \left(\ds\int\limits_{X_1=0}^{L_x/2} \ds\int\limits_{X_2=0}^{L_y} \p{\phi^\mathcal{B}}{X_1} \,\d X_2\,\d X_1 + \ds\int\limits_{X_1=L_x/2}^{L_x} \ds\int\limits_{X_2=0}^{L_y} \p{\phi^\mathcal{B}}{X_1} \,\d X_2\,\d X_1 \right)\\[4mm]
-    &= S_{11}\,\lambda\, \left(\ds\int\limits_{X_1=0}^{L_x/2} \ds\int\limits_{X_2=0}^{L_y} \dfrac2{L_x}\dfrac{L_y - X_2}{L_y} \,\d X_2\,\d X_1 
-      + \ds\int\limits_{X_1=L_x/2}^{L_x} \ds\int\limits_{X_2=0}^{L_y} -\dfrac2{L_x}\dfrac{L_y - X_2}{L_y} \,\d X_2\,\d X_1 \right)\\[4mm]
-    &=  S_{11}\, \lambda \left( \ds\int\limits_{X_1=0}^{L_x/2} \dfrac2{L_x}\dfrac{L_y^2 - L_y^2/2}{L_y} \,\d X_1 +  \ds\int\limits_{X_1=0}^{L_x/2} -\dfrac2{L_x}\dfrac{L_y^2 - L_y^2/2}{L_y} \,\d X_1 \right)\\[4mm]
-    &=  S_{11}\, \lambda \left( \ds\int\limits_{X_1=0}^{L_x/2} \dfrac2{L_x}\dfrac{L_y}{2} \,\d X_1 +  \ds\int\limits_{X_1=0}^{L_x/2} -\dfrac2{L_x}\dfrac{L_y}{2} \,\d X_1 \right)\\[4mm]
-    &=  S_{11}\, \lambda \left( \ds\int\limits_{X_1=0}^{L_x/2} \dfrac{L_y}{L_x} \,\d X_1 +  \ds\int\limits_{X_1=0}^{L_x/2} -\dfrac{L_y}{L_x} \,\d X_1 \right)\\[4mm]
-    &=  S_{11}\, \lambda \left( \dfrac{L_y}{2}   -\dfrac{L_y}{2} \right) = 0 \quad \checkmark
-  \end{array}
-\end{equation*}
-For $\delta\bfu(\bfX) = (0,\phi^\mathcal{B}(\bfX))^\top$, i.e. $δ u_1^\mathcal{B} = 0, δu_2^\mathcal{B} = 1$ we get:
-\begin{equation*}
-  \begin{array}{lll}
-    δW_\text{int} &= \ds\int_{\Omega}\dfrac12S_{AB}\, \left(F_{2B}\,\p{\phi^\mathcal{B}}{X_A} + F_{2A}\,\p{\phi^\mathcal{B}}{X_B}\right) \,\d V 
-    = 0 \qquad \text{because } S_{ij} = 0 \quad \forall\, (i,j) \neq (1,1), \quad F_{21} = 0
-  \end{array}
-\end{equation*}
+The external virtual work $δW_\text{ext}$ is given by external forces $\bft$ and the virtual displacements $δ\bfu$ at the same location. The internal virtual work $δW_\text{int}$ is the body's response in terms of stresses $\bfsigma$ and virtual strains $\bfeps$.
+In summary, the equilibrium equation is given by:
+\begin{align}
+  δW_\text{int}(\bfu,δ\bfu) &= δW_\text{ext}(δ\bfu) \qquad && \forall δ\bfu \in H^1_0(\Omega)\label{eq:linearized_helper1}\\[4mm]
+  \quad \Leftrightarrow \quad \ds\int_\Omega \bfsigma(\bfu) : δ\bfeps\,\d\bfx &= \ds\int_{∂\Omega} \bft : δ\bfu\,\d \bfx &&\forall δ\bfu \in H^1_0(\Omega).\label{eq:linearized_helper1b}
+\end{align}
+Here, the vectors contain the degrees of freedom of a Finite Element discretization. The operator \say{:} denotes the component-wise product. 
 
-Problem: $S_{22} \neq 0$ in code
+Often, it is easier to write the equations in component form. Indices $a,b,c,\dots$ are used to specify a dimension index in $\{1,\dots,d\}$. The letters $L,M \in \{1,\dots,N\}$ designate indices over degrees of freedom in a mesh with $N$ nodes. The Einstein sum convention is used where repeated indices implicitly indicate summation, except when the indices are in parantheses.
+Thus, the right hand side of \cref{eq:linearized_helper1b} with ansatz functions $\phi^L$ and the degrees of freedom $δu_a^L$ of $δ\bfu$ can be written as:
+\begin{align*}
+  \bff_a = \ds\int_{∂\Omega} t_{(a)}\,δu_{(a)}^L\,\phi^L \,\d \bfx.
+\end{align*}
+
+The linear material model is Hooke's law, given by 
+%
+\begin{align}\label{eq:linearized_helper2}
+  \bfsigma = \C:\bfeps
+\end{align}
+with the fourth order material tensor%
+\begin{align*}
+  \C_{abcd} = K\,δ_{ab}\,δ_{cd} + μ\,(δ_{ac}\,δ_{bd} + δ_{ad}\,δ_{bc} - \dfrac23 δ_{ab}\,δ_{cd}).
+\end{align*}
+The bulk modulus $K$ is a measure for the (in-)compressibility and the shear modulus $\mu$ specifies the elastic shear stiffness. $δ_{ab}$ is the Kronecker delta.
+The material tensor $\C$ exhibits the following major and minor symmetries:%
+\begin{subequations}\label{eq:symmetries}
+\begin{align}
+  \C_{abcd} &= \C_{cdab}, \quad &\text{(major symmetries)}\\[4mm]
+  \C_{abcd} &= \C_{bacd} = \C_{abdc} = \C_{badc}, \quad & \text{(minor symmetries)}
+\end{align}
+\end{subequations}
+effectively reducing the number of independent entries from 81 to 21 for 3D domains.
+
+The third relation according to \cref{fig:tonti_diagram} is the kinematics relation between displacements $\bfu$ and strains $\bfeps$. 
+The strain expression given in \cref{eq:green_lagrange_u} is linearized by neglecting products of the derivatives and using the spatial displacements $\bfu$ instead of $\bfU$:
+\begin{align}\label{eq:linearized_helper3}
+  \bfeps = \dfrac12\big((∇\bfu)^\top + ∇\bfu\big).
+\end{align}
+Because of small displacements, we do not distinguish between reference and current configuration, and \cref{eq:linearized_helper1} combines the strain measure $\bfeps$, which is derived from the Lagrangian Green-Lagrange strain with the Eulerian Cauchy stress $\bfsigma$.
+
+By combining \cref{eq:linearized_helper1,eq:linearized_helper2,eq:linearized_helper3} and discretizing displacements and virtual displacements, we get the linear matrix equation
+\begin{align}\label{eq:linearized_helper4}
+  \bfK\,\bfu = \bff.
+\end{align}
+The stiffness matrix $\bfK$ has rows and columns for every combination of degree of freedom $L,M \in \{1,\dots,N\}$ and dimension indices $a,b \in \{1,2,3\}$. The entries are given by:
+\begin{align*}
+  \bfK_{LaMb} = \ds\int_{\Omega} \mathbb{C}_{adbc}\p{\phi^L(\bfx)}{x_{d}}\p{\phi^M(\bfx)}{x_{c}}\,\d \bfx.
+\end{align*}
+%
+
+The resulting model in \cref{eq:linearized_helper4} describes the passive behavior of a body under the linearization assumptions. For muscle tissue, we also need to incorporate active stresses that are generated at the sarcomeres in the muscle. We add an active stress term $\bfsigma^\text{active}$ to the external virtual work in \cref{eq:linearized_helper1}, yielding the model:
+%
+\begin{align}\label{eq:linearized_helper5}
+  δW_\text{int}(\bfu,δ\bfu) &= \bff + \ds\int_\Omega \bfsigma^\text{active} : δ\bfeps_{-}\,\d\bfx &&\forall δ\bfu \in H^1_0(\Omega).
+\end{align}
+%
+The active stress is associated with compression, i.e., negative virtual strains $δ\bfeps < 0$. Therefore, we use $δ\bfeps_{-}$ which is defined equal to $δ\bfeps$ for $δ\bfeps < 0$ and zero otherwise.
+From \cref{eq:linearized_helper5}, we get the same discretized linear system as in \cref{eq:linearized_helper4}, but with an additional term $\bff^\text{ active}$ at the right hand side that contains the discretized prescribed active stress field $\bfsigma^\text{active}_{ab}(\bfx)$:
+\begin{align*}
+  \bff^\text{ active}_{La} = \ds\int_{Ω}\bfsigma^\text{active}_{ab}(\bfx)\,\p{\phi^L(\bfx)}{x_{b}} \,\d\bfx.
+\end{align*}
+%
+
+\subsection{Nonlinear Material Modeling}\label{sec:material_modeling}
+%
+Next, we present the derivation of a nonlinear model that forgoes all linearization assumptions of small strains. We begin with the description of the material law, which links strains and stresses.
+
+As noted in \cref{sec:discretization_mechanics}, the strain energy function $\Psi$ is used to define the material model and it is linked to the second Piola-Kirchhoff stress $\bfS$ by the relation%
+\begin{align}\label{eq:material_model_helper1}
+  \bfS = 2\p{\Psi(\bfC)}{\bfC}.
+\end{align}
+
+The \emph{principle of material objectivity} requires that material properties are invariant under a change of observer. As a result, the \emph{representation theorem for isotropic materials} states that the stress tensor can be represented using three strain invariants $I_1, I_2$ and $I_3$. For a transversely isotropic material, two invariants $I_4$ and $I_5$ that depend on the anisotropy direction $\bfa_0$ (corresponding to a fiber direction) are added.
+Consequently, we can formulate the strain energy function $\Psi=\Psi(I_1,I_2,I_3,I_4,I_5)$ in terms of these invariants. The principle strain invariants $I_1$ to $I_3$ of the right Cauchy-Green tensor $\bfC$ and the additional anisotropic invariants $I_4$ and $I_5$ are defined as:
+\begin{align*}
+  &I_1(\bfC) = \tr(\bfC),  &
+  &I_2(\bfC) = \dfrac12\big(\tr(\bfC)^2 - \tr(\bfC^2)\big), &
+  I_3(\bfC) = \det(\bfC) = J^2,\\[4mm]
+  &I_4(\bfC,\bfa_0) = \bfa_0 \cdot \bfC \, \bfa_0, &
+  &I_5(\bfC,\bfa_0) = \bfa_0 \cdot \bfC^2 \, \bfa_0. &
+\end{align*}
+The fiber stretch is related to the fourth invariant by $\lambda_f = \sqrt{I_4}$. Note that requiring incompressibility is equivalent to enforcing $J=1$, and, in this case, we get ${I_3(\bfC) = 1}$. 
+
+It is convenient to use a decoupled description, where the deformation gradient $\bfF$ and the right Cauchy-Green tensor $\bfC$ are multiplicatively decomposed into volume-changing (volumetric) and volume-preserving (isochoric) parts:%
+\begin{align*}
+  \bfF &= (J^{1/3}\bfI)\,\bar{\bfF},  & \bfC &= (J^{2/3}\bfI)\,\bar{\bfC}.
+\end{align*}
+%
+Here, the volumetric parts are the identity tensors scaled by a power of the determinant $J$ of the deformation gradient. The isochoric or distortional parts $\bar{\bfF}$ and $\bar{\bfC}$ are given by%
+\begin{align*}
+  \bar{\bfF} &= J^{-1/3}\,\bfF,  & \bar\bfC &= J^{-2/3}\,\bfC.
+\end{align*}
+The reduced invariants $\bar{I}_1$ to $\bar{I}_5$ of the reduced right Cauchy-Green tensor $\bar\bfC$ are defined accordingly.
+Similarly, the strain energy function has a decoupled representation with volumetric part $\Psi_\text{vol}$ and isochoric part $\Psi_\text{iso}$:
+\begin{align*}
+  \Psi = \Psi_\text{vol}(J) + \Psi_\text{iso}(\bar{\bfC}) = \Psi_\text{vol}(J) + \Psi_\text{iso}(\bar{I}_1,\bar{I}_2,\bar{I}_4,\bar{I}_5).
+\end{align*}
+
+Using the decoupled form, any incompressible material can be modeled with the \emph{penalty method} as follows. 
+The material behaviour is given by the isochoric strain energy $\Psi_\text{iso}(\bar{\bfC})$, e.g., by employing the Mooney-Rivlin model in \cref{eq:mooney_rivlin}. The volumetric part is defined as
+\begin{align*}
+  \Psi_\text{vol}(J) &= \kappa\,G(J) \qquad \text{with } G(J) = \dfrac12 (J-1)^2,
+\end{align*}
+with the incompressibility parameter $\kappa$ and the penalty function $G(J)$. This function is strictly convex and approaches zero as $J$ approaches 1. For large values of $\kappa$, the behavior is nearly incompressible. A disadvantage of this method is, that the resulting system becomes singular for $J \to 1$.
+
+A better approach in this regard is to use a mixed formulation, where incompressibility is enforced exactly using a Lagrange multiplier. This approach is also implemented in OpenDiHu and is the preferred method for incompressible materials. 
+
+In OpenDiHu, the strain energy function of a new material can be given using the following four terms:
+%
+\begin{align*}
+  \Psi = \Psi_\text{vol}(J) + \Psi_\text{iso}(\bar{I}_1,\bar{I}_2,\bar{I}_4,\bar{I}_5) + \Psi_1(I_1,I_2,I_3) + \Psi_2(\bfC,\bfa_0).
+\end{align*}
+The decoupled form is available with $\Psi_\text{vol}$ and $\Psi_\text{iso}$, the coupled form for isotropic materials can be used via $\Psi_1$. The term $\Psi_2$ gives the most flexibility, as the constitutive model can be directly formulated using the right Cauchy-Green tensor $\bfC$ and the fiber direction $\bfa_0$. The unused terms among $\Psi_\text{vol},\Psi_\text{iso},\Psi_1$ and $\Psi_2$ can be defined as constant zero. The incompressibility constraint using Lagrange multipliers can be switched on or off such that both incompressible and compressible materials can be computed.
+%
+
+\subsection{Derivation of the Stress Tensor and the Elasticity Tensor}\label{sec:stress_and_elasticity}
+Following \cref{eq:material_model_helper1}, the second Piola-Kirchhoff stress $\bfS$ is given by a the derivative of the strain energy function $\Psi$ with respect to $\bfC$.
+For the representation using the invariants, the chain rule has to be used:%
+\begin{align*}
+   \bfS &= 2\,\p{\Psi(\bfC)}{\bfC} = \p{\Psi}{I_a}\p{I_a}{\bfC}.
+\end{align*}
+Using the decoupled form, the resulting stresses are also decoupled as $\bfS = \bfS_\text{vol}+\bfS_\text{iso}$. The volumetric stress $\bfS_\text{vol}$ describes the elastic response to compression, the isochoric stress $\bfS_\text{iso}$ describes the response to the deviatoric deformation. In the following, all steps to compute these stresses are listed. The rationale is to give a condensed reference of the implemented algorithm in OpenDiHu to facilitate further development.
+For the derivation of all intermediate steps, we refer to the literature \cite{holzapfel2000nonlinear}.
+
+At first, the reduced stress tensor $\bar{\bfS}$ that neglects the volumetric change is formulated as:%
+%
+\begin{align*}
+  \bar{\bfS} = 2\p{\Psi_\text{iso}(\bar{I}_1,\bar{I}_2,\bar{I}_4,\bar{I}_5)}{\bar{\bfC}} &= \bar{\gamma}_1\,\bfI + \bar{\gamma}_2\,\bar{\bfC}
+  + \bar{\gamma}_4\, \bfa_0 \otimes \bfa_0 + \bar{\gamma}_5\,(\bfa_0 \otimes \bar{\bfC}\,\bfa_0 + \bfa_0\bar{\bfC}\otimes \bfa_0).
+\end{align*}
+In case of an isotropic material, the terms involving $\bfa_0$ are not needed. The prefactors are given by derivatives of the strain energy function with respect to the reduced invariants:
+%
+\begin{align*}
+  \bar{\gamma}_1 &= 2\left(\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_1} + \bar{I}_1\,\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_2}\right),
+  &\bar{\gamma}_2 &= -2\p{\Psi_\text{iso}(\bar{I}_1, \bar{I}_2)}{\bar{I}_2},
+  &\bar{\gamma}_4 &= 2\p{\Psi_\text{iso}}{\bar{I}_4}\\[4mm]
+  \bar{\gamma}_5 &= 2\p{\Psi_\text{iso}}{\bar{I}_5}
+\end{align*}
+%
+Using the fourth order identity tensor $\mathbb{I}$ and the projection tensor $\mathbb{P}$,%
+\begin{align*}
+  (\mathbb{I})_{abcd} &= \delta_{ac}\,\delta_{bd}, &
+  \mathbb{P} &= \mathbb{I} - \dfrac13 \bfC^{-1} \otimes \bfC,
+\end{align*}
+the stress tensors can finally be computed as
+\begin{align*}
+  \bfS_\text{iso} &= J^{-2/3}\mathbb{P}:\bar{\bfS}, &
+  \bfS_\text{vol} &= J\,p\,\bfC^{-1}, &
+  \bfS &= \bfS_\text{iso} + \bfS_\text{vol}.
+\end{align*}
+In the compressible case including the penalty method, the value of $p$, that is needed for $\bfS_\text{vol}$, is given by the constitutive model as $p = \d \Psi_\text{vol}(J)/\d J$. In the incompressible case, $p$ is the unknown Lagrange multiplier that gets computed as part of the numerical solution. In that case, $p$ has the physical meaning of the hydrostatic pressure.
+
+Another important quantity for the numerical solution is the fourth order elasticity tensor $\C$, which is defined as
+\begin{align*}
+  \C = 2\p{\bfS(\bfC)}{\bfC} = 4\dfrac{\partial^2 \Psi(\bfC)}{\partial\bfC\partial\bfC}.
+\end{align*}
+It is the derivative of the stress tensor and is required in the Jacobian matrix of an iteration of the nonlinear Newton solver. Like the material tensor in \cref{eq:symmetries}, it shows major and minor symmetries and has 21 independent entries.
+
+Like the stress tensor, the elasticity tensor is also additively composed into a volumetric term $\C_\text{vol}$ and an isochoric term $\C_\text{iso}$. The volumetric term can be computed by:%
+\begin{align*}
+  \mathbb{C}_\text{vol} &= J\,\tilde{p}\,\bfC^{-1} \otimes \bfC^{-1} - 2\,J\,p\,\bfC^{-1} \odot \bfC^{-1}, &
+  \big(\bfC^{-1} \odot \bfC^{-1}\big)_{abcd} &= \dfrac12\big(C^{-1}_{ac}\,C^{-1}_{bd} + C^{-1}_{ad}\,C^{-1}_{bc}\big).
+\end{align*}
+The term includes two pressure variables $\tilde{p}$ and $p$. In the incompressible formulation, both variables equals the Lagrange multiplier $p$. For the compressible formulation, $\tilde{p}$ is derived as $\tilde{p} = p + J\,\d p/\d J$ and $p$ is computed from the volumetric strain energy function as stated above.
+
+\clearpage
+The isochoric term $\mathbb{C}_\text{iso}$ of the elasticity tensor follows from the following list of quantities to compute:%
+\begin{align*}
+  &\bar{\delta}_1 = 4\left(\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_1} + 2\,\bar{I}_1\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_2} +\dfrac{∂\Psi_\text{iso}}{∂\bar{I}_2} + \bar{I}_1^2\,\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2}\right), \,
+  \bar{\delta}_2 = -4\left(\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_2} + \bar{I}_1\,\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2}\right),\\[4mm]
+  &\bar{\delta}_3 = 4\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_2}, \quad
+  \bar{\delta}_4 = -4\dfrac{∂\Psi_\text{iso}}{∂\bar{I}_2}, \quad
+  \bar{\delta}_5 = 4\left(\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_1\,∂\bar{I}_4} +\bar I_1 \dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_4}\right),\\[4mm]
+  &\bar{\delta}_6 = -4\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_2\,∂\bar{I}_4}, \,\,\,\,
+  \bar{\delta}_7 = 4\dfrac{∂^2\Psi_\text{iso}}{∂\bar{I}_4\,∂\bar{I}_4}, \,\,\,\,
+  \mathbb{I}_{abcd} = δ_{ac}\,δ_{bd}, \,\,\,\,
+  \bar{\mathbb{I}}_{abcd} = δ_{ad}\,δ_{bc}, \,\,\,\,
+  \mathbb{S} = (\mathbb{I} + \bar{\mathbb{I}}) / 2, \\[4mm]
+  &\p{\bar I_5}{\bar\bfC} = \bfa_0 \otimes \bar\bfC\,\bfa_0 + \bfa_0\,\bar\bfC \otimes \bfa_0, \quad
+  \dfrac{∂^2\bar{I}_5}{∂\bar{\bfC}∂\bar{\bfC}} = \p{\bar{\bfC}}(\bfa_0 \otimes \bar\bfC\,\bfa_0 + \bfa_0\,\bar\bfC \otimes \bfa_0),\\[4mm]
+  &\bar{\mathbb{C}} = J^{-4/3}\bigg(\bar{\delta}_1\,\bfI \otimes \bfI + \bar{\delta}_2\,\big(\bfI \otimes \bar{\bfC} + \bar{\bfC} \otimes \bfI\big) + \bar{\delta}_3\bar{\bfC} \otimes \bar{\bfC} + \bar{\delta}_4\,\mathbb{S}
+  +\bar{δ}_5\,(\bfI \otimes \bfa_0 \otimes \bfa_0 + \bfa_0 \otimes \bfa_0 \otimes \bfI)\\[4mm]
+  &\hspace*{1cm} +\bar{δ}_6\,(\bar{\bfC} \otimes \bfa_0 \otimes \bfa_0 + \bfa_0 \otimes \bfa_0 \otimes \bar{\bfC})
+  +\bar{δ}_7\,(\bfa_0 \otimes \bfa_0 \otimes \bfa_0 \otimes \bfa_0) \\[4mm]
+  &\hspace*{1cm} + \bar{δ}_8\,\Big(\bfI \otimes \p{\bar{I}_5}{\bar{\bfC}} + \p{\bar{I}_5}{\bar{\bfC}} \otimes \bfI \Big)
+  + \bar{δ}_9\,\Big(\bar{\bfC} \otimes \p{\bar{I}_5}{\bar{\bfC}} + \p{\bar{I}_5}{\bar{\bfC}} \otimes \bar{\bfC} \Big) + \bar{δ}_{10}\Big(\p{\bar{I}_5}{\bar{\bfC}} \otimes \p{\bar{I}_5}{\bar{\bfC}}\Big) \\[4mm]
+  &\hspace*{1cm}+ \bar{δ}_{11} \Big(\bfa_0 \otimes \bfa_0 \otimes \p{\bar{I}_5}{\bar{\bfC}} + \p{\bar{I}_5}{\bar{\bfC}} \otimes \bfa_0 \otimes \bfa_0 \Big) + \bar{δ}_{12} \dfrac{∂^2\bar{I}_5}{∂\bar{\bfC}∂\bar{\bfC}}\bigg)\\[4mm]
+  &\tilde{\mathbb{P}} = \bfC^{-1} \odot \bfC^{-1} - \dfrac13 \bfC^{-1} \otimes \bfC^{-1} \\[4mm]
+  &\mathbb{C}_\text{iso} = \mathbb{P} : \bar{\mathbb{C}} : \mathbb{P}^\top + \dfrac23 J^{-2/3} \bar{\bfS} : \bfC\,\tilde{\mathbb{P}} - \dfrac23\big(\bfC^{-1}\otimes \bfS_\text{iso} + \bfS_\text{iso}\otimes \bfC^{-1}\big)
+\end{align*}
+Then, $\C = \C_\text{vol} + \C_\text{iso}$ can be calculated.
+%
+%
+
+% invariants: I1-I5
+% transversely isotropic
+% reduced invariants, reduced quantities for compressible materials
+% strain energy function, derivative
+% elasticity tensor
+% -> computation of S and C
+
+\subsection{Derivation of the Static Hyperelastic Finite Element Model}\label{sec:static_hyperelastic_fe_model}
+
+In \cref{sec:linearized_mechanics_model}, the ingredients of a solid mechanics model derivation consisting of equilibrium, material and kinematic equations were outlined and used to derive a linearized description. For the nonlinear model, the material equations were discussed in \cref{sec:material_modeling} and the stress and elasticity tensors were derived in \cref{sec:stress_and_elasticity}. This section uses these building blocks and presents the full derivation for the generic hyperelastic Finite Element model.
+
+First, we assume a static, incompressible problem. The equilibrium equation can be formulated in terms of the \emph{Hellinger-Reissner energy functional} $\Pi_L(\bfu,p)$, which describes the potential energy of the system depending on the displacement and pressure functions $\bfu$ and $p$.
+The functional is additively composed of internal and external potential energy:
+\begin{align*}
+  \Pi_L(\bfu,p) = \Pi_\text{int}(\bfu,p) + \Pi_\text{ext}(\bfu).
+\end{align*}
+The external energy functional is formulated by
+\begin{align*}
+  \Pi_\text{ext}(\bfu) = -\ds\int_{\Omega_0} \bfB\, \bfu\,\d V - \ds\int_{∂\Omega_0^t}\bar{\bfT}\,\bfu\,\d S,
+\end{align*}
+with body force $\bfB$ in reference configuration and prescribed surface traction $\bar{\bfT}$ on the traction boundary $∂\Omega_0^t$.
+The internal energy functional is given by:
+%
+%
+\begin{align}\label{eq:mechanics_helper1}
+  \Pi_\text{int}(\bfu,p) = \ds\int_{\Omega_0} \Psi_\text{iso}\big(\bar\bfC(\bfu)\big)\,\d V
+    + \ds\int_{\Omega_0} p\,\big(J(\bfu) - 1\big)\,\d V.
+\end{align}
+%
+Here, $\Psi_\text{iso}$ is the isochoric strain-energy density function in terms of the reduced right Cauchy-Green tensor $\bar{\bfC}$.
+The first term in \cref{eq:mechanics_helper1} describes the isochoric elastic response of the material, the second term adds the incompressibility constraint $J=1$ with the Lagrange multiplier $p$. The value of $p$ is computed as part of the model and can be identified as the hydrostatic pressure. Therefore, the second term is interpreted as the elastic response to compression and is included in the internal energy functional $\Pi_\text{int}$.
+
+According to the \emph{principle of stationary potential energy}, the system is in equilibrium, if the potential energy functional is stationary.
+This is the case, if the first variation $δ\Pi_L$ is zero.
+Using the additive structure of $\Pi_L$, we can express the principle of stationarity as
+\begin{subequations}
+  \begin{align}
+    D_{δ\bfu}\Pi_L(\bfu, p) &= D_{δ\bfu}\Pi_\text{int}(\bfu,p) + D_{δ\bfu}\Pi_\text{ext}(\bfu) \overset{!}{=} 0, & \forall δ\bfu  \label{eq:variations_functional_zero_a}\\[4mm]
+    D_{δp}\Pi_L(\bfu, p) &= D_{δp}\Pi_\text{int}(\bfu,p) \overset{!}{=} 0 & \forall δp. \label{eq:variations_functional_zero_b}
+  \end{align}
+\end{subequations}
+The variations of the internal and external energy functionals are defined as
+\begin{align}\label{eq:def_variation}
+  D_{δ\bfu}\Pi(\bfu) &= \d{\eps} \Pi(\bfu + \epsδ\bfu)\big|_{\eps=0}, & 
+  D_{δp}\Pi(p) &= \d{\eps} \Pi(p + \epsδp)\big|_{\eps=0}.
+\end{align}
+They can be identified as the internal and external virtual work,
+\begin{align*}
+  D_{δ\bfu}\Pi_\text{int}(\bfu,p) &= δW_\text{int}, & D_{δ\bfu}\Pi_\text{ext}(\bfu) &= -δW_\text{ext}.
+\end{align*}
+Thus, \cref{eq:variations_functional_zero_a} can be expressed as 
+\begin{align*}
+  δW_\text{int} - δW_\text{ext} &= 0,
+\end{align*}
+which is the form of the equilibrium equation that was used in \cref{eq:linearized_helper1} in the derivation of the linearized model in \cref{sec:linearized_mechanics_model} . The Euler-Lagrange equations corresponding to the variational problem are the local incompressibility constraint and the partial differential equation of balance of momentum presented in \cref{eq:contraction_1,eq:contraction_2}.
+
+Executing the derivative in the definitions of the variations in \cref{eq:def_variation} yields the following terms:
+\begin{align*}
+  &D_{δ\bfu}\Pi_\text{int}(\bfu,p)  = \ds\int_{\Omega_0} \bfS(\bfu,p): δ\bfE(δ\bfu)\,\d V,
+  \qquad D_{δp}\Pi_\text{int}(\bfu,p) =\ds\int_{\Omega_0} \big(J(\bfu) - 1\big)δp\,\d V, \\[4mm]
+  &D_{δ\bfu}\Pi_\text{ext}(\bfu) = -\ds\int_{\Omega_0} \bfB\cdot δ\bfu\,\d V - \ds\int\limits_{∂\Omega^t_0} \bar{\bfT}\cdot δ\bfu\,\d S,
+\end{align*}
+where the variational variables $δp,δ\bfu$ and $δ\bfE$ are the virtual pressure, virtual displacements, and virtual strains.
+
+% discretization
+We discretize the solutions of the functional for the displacements $\bfu(\bfx)$ and pressure $p(\bfx)$ and their variations using different ansatz functions $\phi^L$, $L=1,\dots,N_u$ and $\psi^L$, $L=1,\dots,N_p$:
+\begin{align*}
+   u_a &= \hat{u}_a^L \phi_{(a)}^L, & δu_a &= δ\hat{u}_a^L \phi_{(a)}^L,   & p &= \hat{p}^L \psi^L, & δp &= δ\hat{p}^L \psi^L.
+\end{align*}
+The displacements function is vector-valued and given by $\bfu(\bfx) = (u_1(\bfx), u_2(\bfx), u_3(\bfx))^\top$. The vectors containing the degrees of freedom are denoted by $\hat{\bfu} = (\hat{u}^L)_{L=1,\dots,N_u}$ and $\hat{\bfp} = (\hat{p}^L)_{L=1,\dots,N_p}$.
+
+The kinematics equation to compute virtual strains from virtual displacements follows from \cref{eq:green_lagrange_u} in Lagrangian description and is given by $δ\bfE = \sym(\bfF^\top ∇\bfu)$ or in discretized form, where the subscript comma $\square_{,A}$  indicates the derivative with respect to the indexed coordinate $\bfX_A$:
+\begin{align*}
+  δE_{AB} &= \dfrac12\left(F_{aB}\, \phi_{(a),A}^M + F_{aA}\, \phi_{(a),B}^M\right)δ\hat{u}_{a}^M.
+\end{align*}
+%
+% summarize equations
+In summary, the discretized nonlinear equations are given by 
+\begin{align*}
+  δW_\text{int}(\bfu,p) - δW_\text{ext} &= 0 \qquad &\forall\,δ\bfu, \\[4mm]
+  D_{δp}\Pi_L(\bfu) &= 0 \qquad &\forall\,δp,
+\end{align*}
+with the discretized terms
+\begin{subequations}\label{eq:mechanics_static_system}
+  \begin{align}
+    δW_\text{int}({\bfu},{p})  = \ds\int_{\Omega}\dfrac12  S_{AB}(\bfu,p)\, \left(F_{aB}\, \phi_{(a),A}^M + F_{aA}\, \phi_{(a),B}^M\right)δ\hat{u}_{a}^M \,\d V,\\[4mm]
+    δW_\text{ext}  = \ds\int_{\Omega} B_a \phi_{(a)}^M\,δ\hat{u}^M_a \,\d V +\ds\int_{∂\Omega}  \bar{T}^L_a\,\phi_{(a)}^L\, \phi_{(a)}^M\,δ\hat{u}^M_a\,\d S, \\[4mm]
+    D_{δp}\Pi_L(\bfu) = \ds\int_\Omega \big(J(\bfu) - 1)\,δp\,\d V .
+  \end{align}
+\end{subequations}
+
+\subsection{Nonlinear Solver for the Solid Mechanics Model}\label{sec:solver_static_hyperelastic_fe_model}
+
+% Newton solver
+The governing nonlinear system of equations is solved by a Newton scheme. We define the vector of the unknown degrees of freedom as $(\hat{\bfu},\hat{p}) =: \bfz$. Then, the nonlinear equation takes the general form $\bfW(\bfz) = 0$. By linearization around a value $\bfz$, we get%
+\begin{align*}
+  \bfW(\bfz+Δ\bfz) = \bfW(\bfz) + \bfJ\,Δ\bfz + o(\bfz + Δ\bfz),
+\end{align*}
+with the increment $Δ\bfz = (Δ\hat\bfu, Δ\hat{p})$ and the Jacobian matrix $\bfJ = \partial {\bfW}/\partial {\bfz}$.
+Neglecting the sublinear error term $o(z + Δz)$, we can start from an initial guess $\bfz^{(0)}$ and proceed to find the root of $\bfW$ using the the following iterative Newton scheme:%
+\begin{subequations}\label{eq:newton_scheme}
+  \begin{align}
+    \bfJ\,Δ\bfz^{(n)} = -\bfW(\bfz^{(n)}),\label{eq:mechanics_linear_system}\\[4mm]
+    \bfz^{(n+1)} = \bfz^{(n)} + Δ\bfz^{(n)}.
+  \end{align}
+\end{subequations}
+\Cref{eq:mechanics_linear_system} is a linear system of equations with the system matrix given by $\bfJ$, which has to be solved in every iteration step $n$. The linear system of equations can be expressed as follows:
+\begin{align}\label{eq:static_newton_iteration}
+  \matt{\bfk_{δ\bfu,Δ\bfu} & \bfk_{δp,Δ\bfu}^\top \\[2mm]
+  \bfk_{δp,Δ\bfu} & \bfzero} \, \matt{Δ\hat{\bfu} \\[2mm] Δ\hat{p}} 
+  =
+  \matt{-\bfR_{δ\bfu} \\[2mm] -\bfR_{δp}}.
+\end{align}
+The definition of the right hand sides $\bfR_{δ\bfu} = δW_\text{int} - δW_\text{ext}$ and $\bfR_{δp}=D_{δp}\Pi_L$ is given in \cref{eq:mechanics_static_system}. The system matrix is composed as follows. The upper left part consists of 3 times 3 blocks of submatrices, each with size $N_u \times N_u$ and the entries given by:
+\begin{align*}
+  \bfk_{δ\bfu,Δ\bfu,(L,a),(M,b)} &= \ds\int_\Omega \phi_{(a),B}^L\tilde{k}_{abBD}\phi_{(b),D}^M\,\d V &\text{with}\quad 
+  \tilde{k}_{abBD} &= δ_{ab}\,S_{BD} + F_{aA}\,F_{bC}\,\mathbb{C}_{ABCD}.
+\end{align*}
+Here, $S_{BD}$ and $\mathbb{C}_{ABCD}$ are entries of the second Piola-Kirchhoff stress tensor $\bfS$ and the elasticity tensor $\mathbb{C}$. The computation of these terms uses the description in \cref{sec:stress_and_elasticity}.
+
+The lower left part of the system matrix in \cref{eq:static_newton_iteration} is given by 1 times 3 blocks of submatrices, each with size $N_p \times N_u$ and entries given by:
+\begin{align*}
+  \bfk_{δp,Δ\bfu,L,(M,a)} = \ds\int_\Omega J\,\psi^L\,(F^{-1})_{Ba}\,\phi_{(a),B}^M \,\d V.
+\end{align*}
+The upper right part equals the transposed lower left block such that the system matrix is symmetric. Solving the system in \cref{eq:static_newton_iteration} in every iteration of the Newton scheme in \cref{eq:newton_scheme} converges to the solution of the static solid mechanics problem.
+
+\subsection{Derivation and Solution of the Dynamic Hyperelastic Finite Element Model}\label{sec:solver_dynamic_hyperelasticity_fe_model}
+% dynamic hyperelasticity (6.9.2)
+Based on the static formulation that was described in \cref{sec:static_hyperelastic_fe_model,sec:solver_static_hyperelastic_fe_model}, we now formulate a dynamic model that takes into account the inertia of the contracting muscle.
+
+We add an unknown velocity function $\bfv: \Omega_t \to \R^3$ to the formulation. The additional equation $\dot{\bfu} = \bfv$ relates the displacements and the velocity. Moreover, a new inertial body force $\bfB_\text{a} = \rho_0\,\dot{\bfv}$ is added. 
+
+The time derivatives are discretized to timesteps $t=i\cdot \dt$ with an implicit Euler scheme:
+\begin{align*}
+  \dot{\bfu} &\leadsto \dfrac1{\dt}(\bfu^{(i+1)} - \bfu^{(i)}), & \dot{\bfv} &\leadsto \dfrac1{\dt}(\bfv^{(i+1)} - \bfv^{(i)}).
+\end{align*}
+%
+
+Because of the added inertial body force, the external virtual work now depends on the vector of unknowns.
+In consequence, we split the external virtual work $δW_\text{ext}$ into a dead part $δW_\text{ext,dead}$ that solely depends on external forces and an inertial part:%
+\begin{align*}
+  δW_\text{ext} = δW_\text{ext,dead} + \ds\int_{\Omega} \rho_0\,\dfrac{v^{(i+1),L}_{(a)} - v^{(i),L}_{(a)}}{dt}\,\phi_{(a)}^L\, \phi_{(a)}^M\,δ\hat{u}^M_a \,\d V = 0.
+\end{align*}
+In summary, the system of equations to proceed from timestep $i$ to $(i+1)$ is given as:
+\begin{subequations}\label{eq:mechanics_dynamic}
+  \begin{align}
+    δW_\text{int}({\bfu^{(i+1)}},p^{(i+1)}) - δW_\text{ext}(\bfv^{(i)},\bfv^{(i+1)}) &= 0 \qquad &&\forall\,δ\bfu,\label{eq:mechanics_dynamic1}\\[4mm]
+    \dfrac1{\dt}(\bfu^{(i+1)} - \bfu^{(i)}) - \bfv^{(i+1)} &= 0,\label{eq:mechanics_dynamic2}\\[4mm]
+    D_{δp}\Pi_L(\bfu^{(i+1)}) &= 0 \qquad &&\forall\,δp.\label{eq:mechanics_dynamic3}
+  \end{align}
+\end{subequations}
+Here, \cref{eq:mechanics_dynamic1} is the principle of virtual work, \cref{eq:mechanics_dynamic2} relates displacements $\bfu$ and velocities $\bfv$ and \cref{eq:mechanics_dynamic3} is the incompressibility constraint.
+
+The system is again solved using the Newton scheme presented in \cref{sec:solver_static_hyperelastic_fe_model}.
+The linear system for each Newton iteration takes the following form:
+\begin{align*}
+  \matt{
+    \bfk_{δ\bfu,Δ\bfu} & \bfl_{δ\bfu,Δ\bfv} & \bfk_{δp,Δ\bfu}^\top \\[2mm]
+    \bfl_{δ\bfv,Δ\bfu} & \bfl_{δ\bfv,Δ\bfv} & \bfzero \\[2mm]
+    \bfk_{δp,Δ\bfu} & \bfzero & \bfzero
+  } \, 
+  \matt{Δ\hat{\bfu} \\[2mm] Δ\hat{\bfv} \\[2mm] Δ\hat{p}} 
+  =
+  \matt{-\bfR_{δ\bfu} \\[2mm] -\bfR_{δ\bfv} \\[2mm] -\bfR_{δp}}.
+\end{align*}
+The entries $\bfk_{δ\bfu,Δ\bfu}$ and $\bfk_{δp,Δ\bfu}$ are the same as in the static case in \cref{eq:static_newton_iteration}.
+The other non-zero entries are given by 
+\begin{align*}
+  \bfl_{δ\bfu,Δ\bfv,(L,a),(M,b)} &= \dfrac1{\dt}\delta_{ab} \ds\int_{\Omega} \rho_0\,\,\phi_{(b)}^M \,\phi_{(a)}^L \,\d V, & 
+  \bfl_{δ\bfv,Δ\bfu,(L,a),(M,b)} &= \dfrac{1}{\dt}\delta_{ab}\,\delta^{LM},\\[4mm]
+  \bfl_{δ\bfv,Δ\bfv,(L,a),(M,b)} &= -\delta_{ab}\,\delta^{LM}.
+\end{align*}
+
+Note that in the dynamic problem, the system matrix is unsymmetric. It would be symmetric if the entries $\bfl_{δ\bfu,Δ\bfv}$ and $\bfl_{δ\bfv,Δ\bfu}^\top$ were be the same. This would be the case for a density of one, $\rho_0 = 1$, and if the term $\int_{\Omega} \phi_{b}^M \phi_{a}^L \,\d V$ would be replaced by $\delta_{ab}\delta^{LM}$. The second condition means that a lumped mass matrix would be used where the diagonal entries are set to the row sums of the original matrix.
+
+We discretize the Finite Element solution in space by \emph{Taylor-Hood} elements. This type of element uses quadratic ansatz functions $\phi$ for the displacements and velocities and linear ansatz functions $\psi$ for the Lagrange multiplier or hydrostatic pressure $p$ on a 3D hexahedral mesh. This choice was proven to exhibit no locking \cite{zienkiewicz2005finite}. Locking is a phenomenon of degraded convergence of the Finite Element method for solid mechanics problems and occurs for improper discretization schemes.
+
+For a compressible material, the incompressibility constraint which is the last equation in the systems \cref{eq:mechanics_static_system} or \cref{eq:mechanics_dynamic} is removed. Instead of solving for the pressure $p$ as a Lagrange multiplier, the value is given by the constitutive model as described in \cref{sec:material_modeling}. In consequence, the system matrix of the linear system of equations that is solved in the Newton iterations has a smaller size for compressible materials.
+
+Moreover, the size varies depending on whether the static or the dynamic problem given in \cref{sec:solver_static_hyperelastic_fe_model,sec:solver_dynamic_hyperelasticity_fe_model} is solved. Assuming a linear mesh with $N_p$ degrees of freedom and a quadratic mesh with $N_u$ degrees of freedom, the square system matrix has $3\,N_u$ rows and columns for a static compressible formulation, $3\,N_u + N_p$ for a static incompressible formulation, $6\,N_u$ for a dynamic compressible model, and $6\,N_u+N_p$ for a dynamic incompressible model.
+
+% static compressible:    3*N_u
+% static incompressible:  3*N_u + N_p
+% dynamic compressible:   3*N_u + 3*N_u
+% dynamic incompressible: 3*N_u + 3*N_u + N_p
 
 
-From the analytical approach \cref{eq:analytical_app} (p.224) we have:
-\begin{equation*}
-  \begin{array}{lll}
-    p = \dfrac{2\,c_1}{λ^2},\qquad \bfS = \matt{-p\,\lambda^{-2} + 2\,c_1 & 0\\[2mm] 
-     0 & -p\,\lambda^2 + 2\,c_1}, \quad \text{i.e.}\\[4mm]
-    \bfS = \matt{2\,c_1\,(1-λ^{-4}) & 0 \\[2mm]
-     0 & 0}
-  \end{array}
-\end{equation*}
-The solution from mixed formulation gives, using $J=1$, $\Psi = c_1\,(I_1 - 2)$:
-\begin{equation*}
-  \begin{array}{lll}
-    \bar{\bfC} = J^{-1}\,\bfC = \bfC = \matt{λ^2 & 0 \\[2mm] 0 & λ^{-2}}, \quad \bfC^{-1} = \matt{λ^{-2} & 0 \\[2mm] 0 & λ^2}\\[4mm]
-    \bar{γ}_1 = 2\,\p{\Psi_\text{iso}(\bar{I}_1)}{\bar{I}_1} = 2\,c_1, \qquad \bar{γ}_2 = 0\\[4mm]
-    \bar{\bfS} = \bar{γ}_1\,\bfI + \bar{γ}_2\,\bar{\bfC} = \matt{2\,c_1 & 0 \\[2mm] 0& 2\,c_1}.\\[4mm]
-    \bfS_\text{iso} = J^{-2/2}\,\mathbb{P} : \bar{\bfS} = \bar{\bfS} - \dfrac12 \bfC^{-1}\,(\bfC : \bar{\bfS}) = \matt{2\,c_1 & 0 \\[2mm] 0& 2\,c_1} - \dfrac12 \,\matt{λ^{-2} & 0 \\[2mm] 0 & λ^2}\left(2\,c_1\,λ^2 + 2\,c_1\,λ^{-2}\right) \\[8mm]
-    \qquad =\matt{2\,c_1 & 0 \\[2mm] 0& 2\,c_1} - \dfrac12\matt{2\,c_1 + 2\,c_1\,λ^{-4} & 0 \\[2mm] 0& 2\,c_1\,λ^4 + 2\,c_1}\\[8mm]
-    \qquad = \matt{c_1\,(1 - λ^{-4}) & 0 \\[2mm]
-    0 & c_1\,(1 - λ^4)}
-  \end{array}
-\end{equation*}
-From $S_{22} \overset{!}{=} 0$ we get $p = c_1\,(λ^2 - λ^{-2})$. Then,
-\begin{equation*}
-  \begin{array}{lll}
-    \bfS_\text{vol} = J\,p\,\bfC^{-1} = \matt{c_1\,(1 - \lambda^{-4}) & 0 \\[2mm] 0 & c_1\,(λ^4 - 1)}
-    \\[8mm]
-    \bfS = \bfS_\text{vol} + \bfS_\text{iso} = \matt{2\,c_1\,(1 - λ^{-4}) & 0 \\[2mm]
-    0 & 0}
-  \end{array}
-\end{equation*}
-Transformation in current configaration yields the Cauchy stress, $\bfsigma$,
-\begin{equation*}
-  \begin{array}{lll}
-    \bfsigma = J^{-1} \bfF\bfS\,\bfF^\top 
-    = \matt{λ & 0 \\[2mm] 0 & λ^{-1}} 
-    \matt{2\,c_1\,(1 - λ^{-4}) & 0 \\[2mm]
-    0 & 0} 
-    \matt{λ & 0 \\[2mm] 0 & λ^{-1}} 
-    = \matt{2\,c_1\,(λ^2 - λ^{-2}) & 0 \\[2mm]
-    0 & 0}\\[4mm]
-    \Rightarrow \quad p = -\dfrac12 \tr \bfsigma = -c_1\,(λ^2 - λ^{-2})
-  \end{array}
-\end{equation*}
-\newpage
-%%------------------------------------------------------------------------------------------------
+In any case, the mechanics model can be linked to the subcellular model by defining the active stress as given in \cref{eq:active_stress_term}. Since the active stress does not depend directly on the passive behavior, the active stress term can be added as a constant to the passive stress term. This constant also has no influence on the jacobian matrix $\bfJ$. As the subcellular model depends on the fiber stretch $\lambda_f = \sqrt{I_4}$, there is a feedback loop between the subcellular and the solid mechanics model.
+
+Details on the connection to the subcellular model as well as details on the numeric solution schemes for the nonlinear Newton solver and the linear solvers in every Newton iteration, including the solver schemes, how initial values are chosen and measures to speed up convergence such as load stepping are discussed in the implementation and result sections.
+
+%To speed up the computation, the initial guess of the vector of unknowns in every timestep is linearly extrapolated from the two previous timesteps.
+
+
+
 \section{Model Order Reduction}
 Considering the total reduction, we get the system to be solved for the fully reduced state $\tilde{\mathbf{z}}$: 
 \begin{equation*}

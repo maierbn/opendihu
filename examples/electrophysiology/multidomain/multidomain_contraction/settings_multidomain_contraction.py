@@ -150,6 +150,12 @@ multidomain_solver = {
   "enableFatComputation":             True,                                 # disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity
   "showLinearSolverOutput":           variables.show_linear_solver_output,  # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
   "updateSystemMatrixEveryTimestep":  False,                                 # if this multidomain solver will update the system matrix in every first timestep, us this only if the geometry changed, e.g. by contraction
+  "recreateLinearSolverInterval":     0,                                    # how often the Petsc KSP object (linear solver) should be deleted and recreated. This is to remedy memory leaks in Petsc's implementation of some solvers. 0 means disabled.
+  "rescaleRelativeFactors":           True,                                 # if all relative factors should be rescaled such that max Σf_r = 1  
+  "setDirichletBoundaryConditionPhiE":False,                                # (set to False) if the last dof of the extracellular space (variable phi_e) should have a 0 Dirichlet boundary condition. However, this makes the solver converge slower.
+  "setDirichletBoundaryConditionPhiB":False,                                # (set to False) if the last dof of the fat layer (variable phi_b) should have a 0 Dirichlet boundary condition. However, this makes the solver converge slower.
+  "resetToAverageZeroPhiE":           True,                                 # if a constant should be added to the phi_e part of the solution vector after every solve, such that the average is zero
+  "resetToAverageZeroPhiB":           True,                                 # if a constant should be added to the phi_b part of the solution vector after every solve, such that the average is zero
   
   "PotentialFlow": {
     "FiniteElementMethod" : {  
@@ -235,12 +241,12 @@ config = {
     
     
     "3Dmesh": [
-       {"name": "3Dmesh_elasticity_quadratic",                                 "xiTolerance": 0.5, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},
-       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic",  "xiTolerance": 0.5, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
+       {"name": "3Dmesh_elasticity_quadratic",                                 "xiTolerance": 0.5, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True, "defaultValue": 0},
+       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic",  "xiTolerance": 0.5, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True, "defaultValue": 0},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
     ],
     "3DFatMesh":  [
-       {"name": "3DFatMesh_elasticity_quadratic",                              "xiTolerance": 0.5, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},
-       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic",  "xiTolerance": 0.5, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
+       {"name": "3DFatMesh_elasticity_quadratic",                              "xiTolerance": 0.5, "enableWarnings": True, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True, "defaultValue": 0},
+       {"name": "3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic",  "xiTolerance": 0.5, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True, "defaultValue": 0},    # mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic->3Dmesh)
     ]
   },
   "Solvers": {
@@ -383,11 +389,14 @@ config = {
         "numberTimeSteps":              1,                         # only use 1 timestep per interval
         "timeStepOutputInterval":       100,                       # do not output time steps
         "Pmax":                         variables.pmax,            # maximum PK2 active stress
+        "enableForceLengthRelation":    False,                     # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
+        "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
         "slotNames":                    ["lambda", "ldot", "g_in", "T"],  # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
         ],
         "mapGeometryToMeshes":          ["3Dmesh","3DFatMesh"],    # the mesh names of the meshes that will get the geometry transferred
+        "reverseMappingOrder":          True,                      # if the mapping target->own mesh should be used instead of own->target mesh. This gives better results in some cases.
         "dynamic":                      True,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
         
         # the actual solid mechanics solver, this is either "DynamicHyperelasticitySolver" or "HyperelasticitySolver", depending on the value of "dynamic"
@@ -417,6 +426,7 @@ config = {
           #"loadFactors":                [0.5, 1.0],                # load factors for every timestep
           "loadFactors":                [],                        # no load factors, solve problem directly
           "loadFactorGiveUpThreshold":  0.5,                      # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
+          "scaleInitialGuess":          False,                      # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
           "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
           
           # boundary and initial conditions
@@ -431,7 +441,8 @@ config = {
           "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
           "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
           
-          "dirichletOutputFilename":    "out/"+variables.scenario_name+"/dirichlet_boundary_conditions",     # output filename for the dirichlet boundary conditions, set to "" to have no output
+          "totalForceLogFilename":       None,              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
+          "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions",     # output filename for the dirichlet boundary conditions, set to "" to have no output
           
           # define which file formats should be written
           # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.

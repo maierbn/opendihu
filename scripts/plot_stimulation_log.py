@@ -3,6 +3,8 @@
 
 #
 # Script to visualize stimulation log files.
+# usage:
+# plot_stimulation_log.py [<stimulation.log> [<begin_plot_time> <end_plot_time>]]
 #
 
 import sys
@@ -18,8 +20,15 @@ import py_reader    # reader utility for opendihu *.py files
 
 filename = "stimulation.log"
 
+begin_plot_time = 0
+end_plot_time = np.inf
+
 if len(sys.argv) > 1:
   filename = sys.argv[1]
+if len(sys.argv) > 3:
+  begin_plot_time = float(sys.argv[2])
+  end_plot_time = float(sys.argv[3])
+  print("plot time range [{}, {}]".format(begin_plot_time, end_plot_time))
 	
 # import needed packages from matplotlib
 show_plot = True
@@ -47,7 +56,7 @@ with open(filename) as f:
     values = line.split(";")
     mu_no = int(values[0])
     fiber_no = int(values[1])
-    times = [float(v)/1000.0 for v in values[2:-1]]
+    times = [float(v)/1000.0 for v in values[2:-1] if begin_plot_time <= float(v)/1000.0 < end_plot_time]
     
     fiber_mu_nos[fiber_no] = mu_no
     fiber_times[fiber_no] = times
@@ -62,11 +71,15 @@ with open(filename) as f:
 
 print("end time: {}, n motor units: {}, n fibers: {}".format(end_time, len(mu_times), len(fiber_times)))
 
+# set global parameters for font sizes
+plt.rcParams.update({'font.size': 18})
+plt.rcParams['lines.linewidth'] = 1
+plt.rcParams['lines.markersize'] = 10
 
 # plot firing times for mus
 # --------------------------------
 # prepare plot
-fig = plt.figure()
+fig = plt.figure(figsize=(12,6))
 # plot line for each MU
 for (mu_no,times) in mu_times.items():
   

@@ -1,7 +1,7 @@
 #include "slot_connection/global_connections_by_slot_name.h"
 
 #include "utility/python_utility.h"
-#include "slot_connection/slot_connector_data_helper.h"
+#include "slot_connection/data_helper/slot_connector_data_helper.h"
 
 //! add all parsed slot connections to the slotsConnection_ object of a splitting scheme
 template<typename SlotConnectorDataType1, typename SlotConnectorDataType2>

@@ -164,10 +164,10 @@ n_points_on_previous_ranks_sampled_z = sum([n_sampled_points_in_subdomain_z(subd
 
 # loop over z point indices of the 3D mesh
 for k in range(n_sampled_points_3D_in_own_subdomain_z):
-  z_point_index = (variables.z_point_index_start + k*variables.local_sampling_stride_z) * variables.sampling_stride_z
+  z_point_index = variables.z_point_index_start + k*variables.sampling_stride_z
   
   if variables.own_subdomain_coordinate_z == variables.n_subdomains_z-1 and k == n_sampled_points_3D_in_own_subdomain_z-1:
-    z_point_index = (variables.z_point_index_end-1) * variables.sampling_stride_z
+    z_point_index = variables.z_point_index_end-1
     
   #print("{}: sampling_stride_z: {}, k: {}, z: {}/{}".format(rank_no, variables.sampling_stride_z, k, z_point_index, variables.z_point_index_end))
   
@@ -704,6 +704,7 @@ elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain"
     ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
     ("connectorSlot","vm"):     "wal_environment/vS",                 # expose state 0 = Vm to the operator splitting
     ("connectorSlot", "stress"):"razumova/stress",                    # expose algebraic 12 = γ to the operator splitting
+    ("connectorSlot", "lambda"):"razumova/L_S",                       # expose lambda
   }
   variables.parameters_initial_values = [0.0, 1.0]                    # wal_environment/I_HH = I_stim, razumova/L_S = λ
   variables.nodal_stimulation_current = 40.                           # not used

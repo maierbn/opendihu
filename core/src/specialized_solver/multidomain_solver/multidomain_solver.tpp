@@ -32,6 +32,7 @@ MultidomainSolver(DihuContext context) :
   nCompartments_ = this->specificSettings_.getOptionInt("nCompartments", 1, PythonUtility::NonNegative);
   initialGuessNonzero_ = this->specificSettings_.getOptionBool("initialGuessNonzero", true);
   showLinearSolverOutput_ = this->specificSettings_.getOptionBool("showLinearSolverOutput", true);
+  rescaleRelativeFactors_ = this->specificSettings_.getOptionBool("rescaleRelativeFactors", false);
   updateSystemMatrixEveryTimestep_ = this->specificSettings_.getOptionBool("updateSystemMatrixEveryTimestep", false);
   updateSystemMatrixInterval_ = 1;
   if (updateSystemMatrixEveryTimestep_)
@@ -497,6 +498,22 @@ initializeCompartmentRelativeFactors()
     ierr = VecAXPY(dataMultidomain_.relativeFactorTotal()->valuesGlobal(), 1.0, dataMultidomain_.compartmentRelativeFactor(k)->valuesGlobal()); CHKERRV(ierr);
   }
 
+  if (rescaleRelativeFactors_)
+  {
+    // compute maximum
+    double maximum = 1;
+    ierr = VecMax(dataMultidomain_.relativeFactorTotal()->valuesGlobal(), NULL, &maximum); CHKERRV(ierr);
+
+    double scalingFactor = 1/maximum;
+    LOG(INFO) << "Rescaling all f_r by factor " << scalingFactor << " such that max Σf_r = 1.";
+
+    // scale all relative factors and the sum
+    for (int k = 0; k < nCompartments_; k++)
+    {
+      ierr = VecScale(dataMultidomain_.compartmentRelativeFactor(k)->valuesGlobal(), scalingFactor); CHKERRV(ierr);
+    }
+    ierr = VecScale(dataMultidomain_.relativeFactorTotal()->valuesGlobal(), scalingFactor); CHKERRV(ierr);
+  }
 
   for (int k = 0; k < nCompartments_; k++)
   {

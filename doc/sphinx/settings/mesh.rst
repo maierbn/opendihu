@@ -151,7 +151,7 @@ The number of elements of the mesh in the coordinate directions. For D=1, i.e. l
   
 nodePositions
 ~~~~~~~~~~~~~~~
-Specify all node positions. There are two different formats:
+Specify all node positions (all global node positions or all local node positions without ghosts, depending on ``inputMeshIsGlobal``). There are two different formats:
 
 1. A list of points where each point is a list with three entries ``[x,y,z]``. Even for lower dimensional meshes, ``D<3``, the node positions have three components.
 
@@ -195,7 +195,7 @@ It applies to all values given as mesh properties, such as node positions, eleme
 
 * If set to ``True``, all specified values and degrees of freedom are interpreted with global indexing. In this case, the same values should be given on all processes. Consequently, the program can be run on different numbers of processes with the same settings.
 * If set to ``False``, all specified values and degrees of freedom are interpreted to be for the local portion of the own process, only.
-  In parallel execution, each process has to get only its own range of values, which are typically different on each process. 
+  In parallel execution, each process has to get only its own range of values (without ghosts), which are typically different on each process. 
 
   For example, the number of elements is only specified for the local portion. Opendihu will compute the global number of elements from the local numbers on all the processes.
 

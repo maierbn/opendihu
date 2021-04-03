@@ -1,6 +1,6 @@
 
 # scenario name for log file
-scenario_name = "50mus"
+scenario_name = "100mus"
 
 # material parameters
 # --------------------
@@ -18,7 +18,7 @@ import random
 random.seed(0)  # ensure that random numbers are the same on every rank
 import numpy as np
 
-n_motor_units = 50   # number of motor units
+n_motor_units = 100   # number of motor units
 
 motor_units = []
 for mu_no in range(n_motor_units):
@@ -52,7 +52,7 @@ for mu_no in range(n_motor_units):
   {
     "radius":                radius,                 # [μm] parameter for motor unit: radius of the fiber, used to compute Am
     "cm":                    cm,                     # [uF/cm^2] parameter Cm
-    "activation_start_time": 0.1*mu_no,              # [s] when to start activating this motor unit, here it is a ramp
+    "activation_start_time": 0.002*mu_no,            # [s] when to start activating this motor unit, here it is a ramp
     "stimulation_frequency": stimulation_frequency,  # [Hz] stimulation frequency for activation
     "jitter": [0.1*random.uniform(-1,1) for i in range(100)]     # [-] random jitter values that will be added to the intervals to simulate jitter
   })  

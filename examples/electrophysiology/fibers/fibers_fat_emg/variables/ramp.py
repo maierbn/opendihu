@@ -71,7 +71,7 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-disable_firing_output = False
+disable_firing_output = True
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):

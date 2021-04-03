@@ -59,16 +59,16 @@ for mu_no in range(n_motor_units):
 
 # timing parameters
 # -----------------
-end_time = 50000.0                      # [ms] end time of the simulation
+end_time = 50000.0                  # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
-dt_0D = 2.5e-3                        # [ms] timestep width of ODEs (2e-3)
-dt_1D = 6.25e-4                        # [ms] timestep width of diffusion (4e-3)
-dt_splitting = 2.5e-3                 # [ms] overall timestep width of strang splitting (4e-3)
+dt_0D = 2.5e-3                      # [ms] timestep width of ODEs (2e-3)
+dt_1D = 6.25e-4                     # [ms] timestep width of diffusion (4e-3)
+dt_splitting = 2.5e-3               # [ms] overall timestep width of strang splitting (4e-3)
 dt_3D = 5e-1                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep_fibers = 2e5       # [ms] timestep for fiber output, 0.5
-output_timestep_3D_emg = 2e5            # [ms] timestep for output big files of 3D EMG, 100
-output_timestep_surface = 1e5              # [ms] timestep for output surface EMG, 0.5
+output_timestep_fibers = 2e5        # [ms] timestep for fiber output, 0.5
+output_timestep_3D_emg = 2e5        # [ms] timestep for output big files of 3D EMG, 100
+output_timestep_surface = 1e5       # [ms] timestep for output surface EMG, 0.5
 output_timestep_electrodes = 2e8    # [ms] timestep for python callback, which is electrode measurement output, has to be >= dt_3D
 
 # input files
@@ -100,7 +100,7 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-disable_firing_output = False
+disable_firing_output = True
 fast_monodomain_solver_optimizations = True # enable the optimizations in the fast multidomain solver
 optimization_type = "vc"            # the optimization_type used in the cellml adapter, "vc" uses explicit vectorization
 

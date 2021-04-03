@@ -60,9 +60,10 @@ parser.add_argument('--emg_solver_maxit',                    help='Maximum numbe
 parser.add_argument('--emg_solver_reltol',                   help='Relative tolerance for activation solver',             type=float, default=variables.emg_solver_reltol)
 parser.add_argument('--emg_solver_abstol',                   help='Absolute tolerance for activation solver',             type=float, default=variables.emg_solver_abstol)
 parser.add_argument('--emg_initial_guess_nonzero',           help='If the initial guess for the emg linear system should be set to the previous solution.', default=variables.emg_initial_guess_nonzero, action='store_true')
-parser.add_argument('--paraview_output',                     help='Enable the paraview output writer.',          default=variables.paraview_output, action='store_true')
+parser.add_argument('--paraview_output',                     help='Enable the paraview output writer.',                   default=variables.paraview_output, action='store_true')
 parser.add_argument('--python_output',                       help='Enable the python output writer.',                     default=variables.python_output, action='store_true')
-parser.add_argument('--adios_output',                        help='Enable the MegaMol/ADIOS output writer.',          default=variables.adios_output, action='store_true')
+parser.add_argument('--adios_output',                        help='Enable the MegaMol/ADIOS output writer.',              default=variables.adios_output, action='store_true')
+parser.add_argument('--fat_mesh_file',                       help='The filename of the file that contains the fat mesh layer.', default=variables.fat_mesh_file)
 parser.add_argument('--fiber_file',                          help='The filename of the file that contains the fiber data.', default=variables.fiber_file)
 parser.add_argument('--cellml_file',                         help='The filename of the file that contains the cellml model.', default=variables.cellml_file)
 parser.add_argument('--fiber_distribution_file',             help='The filename of the file that contains the MU firing times.', default=variables.fiber_distribution_file)
@@ -71,9 +72,9 @@ parser.add_argument('--stimulation_frequency',               help='Stimulations 
 parser.add_argument('--end_time', '--tend', '-t',            help='The end simulation time.',                             type=float, default=variables.end_time)
 parser.add_argument('--output_timestep',                     help='The timestep for writing outputs.',                    type=float, default=variables.output_timestep)
 parser.add_argument('--output_timestep_fibers',              help='The timestep for writing fiber outputs.',              type=float, default=variables.output_timestep_fibers)
-parser.add_argument('--output_timestep_3D_emg',              help='The timestep for writing 3D emg outputs.',    type=float, default=variables.output_timestep_3D_emg)
-parser.add_argument('--output_timestep_electrodes',          help='The timestep for writing 3D emg outputs.',    type=float, default=variables.output_timestep_electrodes)
-parser.add_argument('--output_timestep_surface',             help='The timestep for writing 3D emg surface outputs.', type=float, default=variables.output_timestep_surface)
+parser.add_argument('--output_timestep_3D_emg',              help='The timestep for writing 3D emg outputs.',             type=float, default=variables.output_timestep_3D_emg)
+parser.add_argument('--output_timestep_electrodes',          help='The timestep for writing 3D emg outputs.',             type=float, default=variables.output_timestep_electrodes)
+parser.add_argument('--output_timestep_surface',             help='The timestep for writing 3D emg surface outputs.',     type=float, default=variables.output_timestep_surface)
 parser.add_argument('--dt_0D',                               help='The timestep for the 0D model.',                       type=float, default=variables.dt_0D)
 parser.add_argument('--dt_1D',                               help='The timestep for the 1D model.',                       type=float, default=variables.dt_1D)
 parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',                      type=float, default=variables.dt_splitting)
@@ -83,7 +84,7 @@ parser.add_argument('--approximate_exponential_function',    help='Approximate t
 parser.add_argument('--disable_firing_output',               help='Disables the initial list of fiber firings.',          default=variables.disable_firing_output, action='store_true')
 parser.add_argument('--enable_surface_emg',                  help='Enable the surface emg output writer.',                default=variables.enable_surface_emg, action='store_true')
 parser.add_argument('--fast_monodomain_solver_optimizations',help='Enable the optimizations for fibers.',                 type=mbool, default=variables.fast_monodomain_solver_optimizations)
-parser.add_argument('--enable_weak_scaling',                 help='Disable optimization for not stimulated fibers.',      default=variables.enable_weak_scaling, action='store_true')
+parser.add_argument('--enable_weak_scaling',                 help='Disable optimization for not stimulated fibers.',      default=False, action='store_true')
 parser.add_argument('--v',                                   help='Enable full verbosity in c++ code')
 parser.add_argument('-v',                                    help='Enable verbosity level in c++ code',                   action="store_true")
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
@@ -93,6 +94,7 @@ parser.add_argument('--mesh3D_sampling_stride', nargs=3,     help='Stride to sel
 parser.add_argument('--mesh3D_sampling_stride_x',            help='Stride to select the mesh points in x direction.',     type=int, default=variables.sampling_stride_x)
 parser.add_argument('--mesh3D_sampling_stride_y',            help='Stride to select the mesh points in y direction.',     type=int, default=variables.sampling_stride_y)
 parser.add_argument('--mesh3D_sampling_stride_z',            help='Stride to select the mesh points in z direction.',     type=int, default=variables.sampling_stride_z)
+initial_fiber_file = variables.fiber_file
 
 # parse command line arguments and assign values to variables module
 args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
@@ -100,7 +102,8 @@ if len(other_args) != 0 and rank_no == 0:
     print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
 
 # derive new fat file name if the fiber file has ben changed via the command line argument
-variables.fat_mesh_file = variables.fiber_file + "_fat.bin"
+if variables.fiber_file != initial_fiber_file:
+  variables.fat_mesh_file = variables.fiber_file + "_fat.bin"
 variables.fiber_file_for_hdemg_surface = variables.fat_mesh_file
 
 # initialize some dependend variables
@@ -156,7 +159,7 @@ if rank_no == 0:
   print("dt_0D:           {:0.1e}, diffusion_solver_type:      {}".format(variables.dt_0D, variables.diffusion_solver_type))
   print("dt_1D:           {:0.1e}, potential_flow_solver_type: {}, approx. exp.: {}".format(variables.dt_1D, variables.potential_flow_solver_type, variables.approximate_exponential_function))
   print("dt_splitting:    {:0.1e}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(variables.dt_splitting, variables.emg_solver_type, variables.emg_initial_guess_nonzero))
-  print("dt_3D:           {:0.1e}, paraview_output: {}, optimization_type: {}, fast_monodomain_solver_optimizations: {}".format(variables.dt_3D, variables.paraview_output, variables.optimization_type))
+  print("dt_3D:           {:0.1e}, paraview_output: {}, optimization_type: {}".format(variables.dt_3D, variables.paraview_output, variables.optimization_type))
   print("output_timestep: {:0.1e}  stimulation_frequency: {} 1/ms = {} Hz".format(variables.output_timestep, variables.stimulation_frequency, variables.stimulation_frequency*1e3))
   print("                          fast_monodomain_solver_optimizations: {}".format(variables.fast_monodomain_solver_optimizations))
   print("fiber_file:              {}".format(variables.fiber_file))
@@ -329,7 +332,7 @@ config = {
                     "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
                     "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
                     "checkForNanInf":              False,                                   # if the solution should be checked for NaN and inf values, this requires a lot of runtimes
-                    "nAdditionalFieldVariables":   1 if variables.use_elasticity else 2,    # number of additional field variables that should be added and potentially written to output files, these field variables can be used for receiving data from other solvers
+                    "nAdditionalFieldVariables":   2,                                       # number of additional field variables that should be added and potentially written to output files, these field variables can be used for receiving data from other solvers
                     "additionalSlotNames":         [],                                      # slot names for the additional field variables
                     "FiniteElementMethod" : {
                       "inputMeshIsGlobal":         True,

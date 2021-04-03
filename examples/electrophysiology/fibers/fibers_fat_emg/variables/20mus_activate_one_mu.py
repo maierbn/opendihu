@@ -106,7 +106,7 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-disable_firing_output = False
+disable_firing_output = True
 fast_monodomain_solver_optimizations = True # enable the optimizations in the fast multidomain solver
 optimization_type = "vc"            # the optimization_type used in the cellml adapter, "vc" uses explicit vectorization
 

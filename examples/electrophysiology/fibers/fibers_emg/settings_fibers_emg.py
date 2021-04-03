@@ -1,6 +1,5 @@
-# Multiple 1D fibers (monodomain) with 3D EMG (static bidomain), biceps geometry
+# Multiple 1D fibers (monodomain) with 3D intra-muscular EMG (static bidomain), biceps geometry
 # to see all available arguments, execute: ./fibers_emg ../settings_fibers_emg.py -help
-# This is the most complex example, if you need help, can ask BM.
 #
 # if fiber_file=cuboid.bin, it uses a small cuboid test example
 #
@@ -73,11 +72,12 @@ parser.add_argument('--emg_solver_type',                     help='The solver fo
 #parser.add_argument('--emg_solver_type',                    help='The solver for the static bidomain.',                  default=variables.emg_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
 parser.add_argument('--emg_preconditioner_type',             help='The preconditioner for the static bidomain.',          default=variables.emg_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
 parser.add_argument('--emg_solver_maxit',                    help='Maximum number of iterations for activation solver',   type=int, default=variables.emg_solver_maxit)
-parser.add_argument('--emg_solver_reltol',                   help='Relative tolerance for activation solver',             type=float, default=variables.diffusion_solver_reltol)
-parser.add_argument('--emg_solver_abstol',                   help='Absolute tolerance for activation solver',             type=float, default=variables.diffusion_solver_reltol)
+parser.add_argument('--emg_solver_reltol',                   help='Relative tolerance for activation solver',             type=float, default=variables.emg_solver_reltol)
+parser.add_argument('--emg_solver_abstol',                   help='Absolute tolerance for activation solver',             type=float, default=variables.emg_solver_abstol)
 parser.add_argument('--emg_initial_guess_nonzero',           help='If the initial guess for the emg linear system should be set to the previous solution.', default=variables.emg_initial_guess_nonzero, action='store_true')
-parser.add_argument('--paraview_output',                     help='Enable the paraview output writer.',                   default=variables.paraview_output, action='store_true')
-parser.add_argument('--adios_output',                        help='Enable the MegaMol/ADIOS output writer.',              default=variables.adios_output, action='store_true')
+parser.add_argument('--paraview_output',                     help='Enable the paraview output writer.',          default=variables.paraview_output, action='store_true')
+parser.add_argument('--python_output',                       help='Enable the python output writer.',                     default=variables.python_output, action='store_true')
+parser.add_argument('--adios_output',                        help='Enable the MegaMol/ADIOS output writer.',          default=variables.adios_output, action='store_true')
 parser.add_argument('--fiber_file',                          help='The filename of the file that contains the fiber data.', default=variables.fiber_file)
 parser.add_argument('--cellml_file',                         help='The filename of the file that contains the cellml model.', default=variables.cellml_file)
 parser.add_argument('--fiber_distribution_file',             help='The filename of the file that contains the MU firing times.', default=variables.fiber_distribution_file)
@@ -91,19 +91,18 @@ parser.add_argument('--dt_1D',                               help='The timestep 
 parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',                      type=float, default=variables.dt_splitting)
 parser.add_argument('--dt_3D',                               help='The timestep for the 3D model, either bidomain or mechanics.', type=float, default=variables.dt_3D)
 parser.add_argument('--optimization_type',                   help='The optimization_type in the cellml adapter.',         default=variables.optimization_type, choices=["vc", "simd", "openmp", "gpu"])
+parser.add_argument('--approximate_exponential_function',    help='Approximate the exp function by a Taylor series',      type=mbool, default=variables.approximate_exponential_function)
 parser.add_argument('--maximum_number_of_threads',           help='If optimization_type is "openmp", the max thread number, 0=all.', type=int, default=variables.maximum_number_of_threads)
 parser.add_argument('--use_aovs_memory_layout',              help='If optimization_type is "vc", whether to use AoVS memory layout.', type=mbool, default=variables.use_aovs_memory_layout)
 parser.add_argument('--disable_firing_output',               help='Disables the initial list of fiber firings.',          default=variables.disable_firing_output, action='store_true')
 parser.add_argument('--enable_surface_emg',                  help='Enable the surface emg output writer.',                default=variables.enable_surface_emg, action='store_true')
+parser.add_argument('--fast_monodomain_solver_optimizations',help='Enable the optimizations for fibers.',                 type=mbool, default=variables.fast_monodomain_solver_optimizations)
 parser.add_argument('--enable_weak_scaling',                 help='Disable optimization for not stimulated fibers.',      default=variables.enable_weak_scaling, action='store_true')
 parser.add_argument('--v',                                   help='Enable full verbosity in c++ code')
 parser.add_argument('-v',                                    help='Enable verbosity level in c++ code',                   action="store_true")
 parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
-parser.add_argument('-on_error_attach_debugger',             help='Enable verbosity level for given file in c++ code')
 parser.add_argument('-pause',                                help='Stop at parallel debugging barrier',                   action="store_true")
-parser.add_argument('--rank_reordering',                     help='Enable rank reordering in the c++ code',               action="store_true")
 parser.add_argument('--use_elasticity',                      help='Enable linear elasticity',                             action="store_true")
-parser.add_argument('--approximate_exponential_function',    help='Approximate the exp function by a Taylor series',      type=mbool, default=variables.approximate_exponential_function)
 # parameter for the 3D mesh generation
 parser.add_argument('--mesh3D_sampling_stride', nargs=3,     help='Stride to select the mesh points in x, y and z direction.', type=int, default=None)
 parser.add_argument('--mesh3D_sampling_stride_x',            help='Stride to select the mesh points in x direction.',     type=int, default=variables.sampling_stride_x)
@@ -122,6 +121,8 @@ if variables.n_subdomains is not None:
   variables.n_subdomains_z = variables.n_subdomains[2]
   
 variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
+if variables.enable_weak_scaling:
+  variables.fast_monodomain_solver_optimizations = False
 
 # 3D mesh resolution
 if variables.mesh3D_sampling_stride is not None:
@@ -169,8 +170,9 @@ if rank_no == 0:
   print("dt_0D:           {:0.1e}, diffusion_solver_type:      {}".format(variables.dt_0D, variables.diffusion_solver_type))
   print("dt_1D:           {:0.1e}, potential_flow_solver_type: {}, approx. exp.: {}".format(variables.dt_1D, variables.potential_flow_solver_type, variables.approximate_exponential_function))
   print("dt_splitting:    {:0.1e}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(variables.dt_splitting, variables.emg_solver_type, variables.emg_initial_guess_nonzero))
-  print("dt_3D:           {:0.1e}, paraview_output: {}, optimization_type: {}{}, enable_weak_scaling: {}".format(variables.dt_3D, variables.paraview_output, variables.optimization_type, " ({} threads)".format(variables.maximum_number_of_threads) if variables.optimization_type=="openmp" else " (AoVS)" if variables.optimization_type=="vc" and variables.use_aovs_memory_layout else " (SoVA)" if variables.optimization_type=="vc" and not variables.use_aovs_memory_layout else "", variables.enable_weak_scaling))
+  print("dt_3D:           {:0.1e}, paraview_output: {}, optimization_type: {}{}".format(variables.dt_3D, variables.paraview_output, variables.optimization_type, " ({} threads)".format(variables.maximum_number_of_threads) if variables.optimization_type=="openmp" else " (AoVS)" if variables.optimization_type=="vc" and variables.use_aovs_memory_layout else " (SoVA)" if variables.optimization_type=="vc" and not variables.use_aovs_memory_layout else ""))
   print("output_timestep: {:0.1e}  stimulation_frequency: {} 1/ms = {} Hz".format(variables.output_timestep, variables.stimulation_frequency, variables.stimulation_frequency*1e3))
+  print("                          fast_monodomain_solver_optimizations: {}".format(variables.fast_monodomain_solver_optimizations))
   print("fiber_file:              {}".format(variables.fiber_file))
   print("cellml_file:             {}".format(variables.cellml_file))
   print("fiber_distribution_file: {}".format(variables.fiber_distribution_file))
@@ -197,10 +199,10 @@ config = {
   "meta": {                 # additional fields that will appear in the log
     "partitioning": [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
-  "Meshes": variables.meshes,
+  "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": {"MeshFiber_{}".format(i) : ["3Dmesh", "3Dmesh_quadratic"] for i in range(variables.n_fibers_total)},
   "Solvers": {
-    "implicitSolver": {     # solver for the implicit timestepping scheme of the diffusion time step
+    "diffusionTermSolver": {# solver for the implicit timestepping scheme of the diffusion time step
       "relativeTolerance":  variables.diffusion_solver_reltol,
       "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual    
       "maxIterations":      variables.diffusion_solver_maxit,
@@ -221,14 +223,14 @@ config = {
       "gamgType":           "agg",        # if the preconditionerType is "gamg", the type of the amg solver
       "nLevels":            25,           # if the preconditionerType is "gamg", the maximum number of levels
     },
-    "activationSolver": {   # solver for the static Bidomain equation and the EMG
+    "muscularEMGSolver": {   # solver for the static Bidomain equation and the EMG
       "relativeTolerance":  variables.emg_solver_reltol,
       "absoluteTolerance":  variables.emg_solver_abstol,    
       "maxIterations":      variables.emg_solver_maxit,
       "solverType":         variables.emg_solver_type,
       "preconditionerType": variables.emg_preconditioner_type,
       "dumpFilename":       "",
-      "dumpFormat":         "ascii",
+      "dumpFormat":         "matlab",
     },
     "linearElasticitySolver": {   # solver for linear elasticity
       "relativeTolerance":  1e-1,
@@ -264,7 +266,7 @@ config = {
             "timeStepOutputInterval": 100,
             "endTime":                variables.dt_splitting,
             "connectedSlotsTerm1To2": [0,1] if variables.use_elasticity else [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), for elasticity also transfer gamma
-            "connectedSlotsTerm2To1": [0,1] if variables.use_elasticity else [0],   # transfer the same back
+            "connectedSlotsTerm2To1": [0,1] if variables.use_elasticity else [0],   # transfer the same back, this avoids data copy
 
             "Term1": {      # CellML, i.e. reaction term of Monodomain equation
               "MultipleInstances": {
@@ -338,25 +340,25 @@ config = {
                 [{
                   "ranks":                         list(range(variables.n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
                   "ImplicitEuler" : {       # include both CrankNicolson and ImplicitEuler in the settings such that both variants in C++ file are possible
-                    "initialValues":               [],
+                    "initialValues":               [],                                      # initial values to be set in the solution vector prior to the first timestep
                     #"numberTimeSteps":            1,
                     "timeStepWidth":               variables.dt_1D,                         # timestep width for the diffusion problem
-                    "timeStepWidthRelativeTolerance": 1e-10,
+                    "timeStepWidthRelativeTolerance": 1e-10,                                # tolerance for the time step width, when to rebuild the system matrix
                     "logTimeStepWidthAsKey":       "dt_1D",                                 # key under which the time step width will be written to the log file
                     "durationLogKey":              "duration_1D",                           # log key of duration for this solver
                     "timeStepOutputInterval":      1e4,                                     # how often to print the current timestep
                     "dirichletBoundaryConditions": {},                                      # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
                     "dirichletOutputFilename":     None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                     "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
-                    "solverName":                  "implicitSolver",                        # reference to the linear solver
-                    "checkForNanInf":              False,
-                    "nAdditionalFieldVariables":   1 if variables.use_elasticity else 2,
-                    "additionalSlotNames":         [],
+                    "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
+                    "checkForNanInf":              False,                                   # if the solution should be checked for NaN and inf values, this requires a lot of runtimes
+                    "nAdditionalFieldVariables":   1 if variables.use_elasticity else 2,    # number of additional field variables that should be added and potentially written to output files, these field variables can be used for receiving data from other solvers
+                    "additionalSlotNames":         [],                                      # slot names for the additional field variables
                     "FiniteElementMethod" : {
                       "inputMeshIsGlobal":         True,
                       "meshName":                  "MeshFiber_{}".format(fiber_no),
                       "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
-                      "solverName":                "implicitSolver",
+                      "solverName":                "diffusionTermSolver",
                       "slotName":                  "",
                     },
                     "OutputWriter" : [
@@ -367,25 +369,25 @@ config = {
                     ]
                   },
                   "CrankNicolson": {      # include both CrankNicolson and ImplicitEuler in the settings such that both variants in C++ file are possible
-                    "initialValues":               [], 
+                    "initialValues":               [],                                      # initial values to be set in the solution vector prior to the first timestep
                     #"numberTimeSteps":            1,
-                    "timeStepWidth":               variables.dt_1D,  # 1e-5
-                    "timeStepWidthRelativeTolerance": 1e-10,
-                    "logTimeStepWidthAsKey":       "dt_1D",
-                    "durationLogKey":              "duration_1D",
-                    "timeStepOutputInterval":      1e4,
-                    "dirichletBoundaryConditions": {},            # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
-                    "dirichletOutputFilename":     None,          # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-                    "inputMeshIsGlobal":           True,
-                    "solverName":                  "implicitSolver",
-                    "checkForNanInf":              False,
-                    "nAdditionalFieldVariables":   1 if variables.use_elasticity else 0,
-                    "additionalSlotNames":         [], 
+                    "timeStepWidth":               variables.dt_1D,                         # timestep width for the diffusion problem
+                    "timeStepWidthRelativeTolerance": 1e-10,                                # tolerance for the time step width, when to rebuild the system matrix
+                    "logTimeStepWidthAsKey":       "dt_1D",                                 # key under which the time step width will be written to the log file
+                    "durationLogKey":              "duration_1D",                           # log key of duration for this solver
+                    "timeStepOutputInterval":      1e4,                                     # how often to print the current timestep to console
+                    "dirichletBoundaryConditions": {},                                      # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
+                    "dirichletOutputFilename":     None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+                    "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
+                    "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
+                    "checkForNanInf":              False,                                   # if the solution should be checked for NaN and inf values, this requires a lot of runtimes
+                    "nAdditionalFieldVariables":   1 if variables.use_elasticity else 0,    # number of additional field variables that should be added and potentially written to output files, these field variables can be used for receiving data from other solvers
+                    "additionalSlotNames":         [],                                      # slot names for the additional field variables
                     "FiniteElementMethod" : { 
                       "inputMeshIsGlobal":         True,
                       "meshName":                  "MeshFiber_{}".format(fiber_no),
                       "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
-                      "solverName":                "implicitSolver",
+                      "solverName":                "diffusionTermSolver",
                       "slotName":                  "", 
                     },  
                     "OutputWriter" : [ 
@@ -405,8 +407,8 @@ config = {
       },
       "fiberDistributionFile":    variables.fiber_distribution_file,   # for FastMonodomainSolver, e.g. MU_fibre_distribution_3780.txt
       "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
-      "onlyComputeIfHasBeenStimulated": True if not variables.enable_weak_scaling else False,                          # only compute fibers after they have been stimulated for the first time
-      "disableComputationWhenStatesAreCloseToEquilibrium": True if not variables.enable_weak_scaling else False,       # optimization where states that are close to their equilibrium will not be computed again
+      "onlyComputeIfHasBeenStimulated": variables.fast_monodomain_solver_optimizations,                          # only compute fibers after they have been stimulated for the first time
+      "disableComputationWhenStatesAreCloseToEquilibrium": variables.fast_monodomain_solver_optimizations,       # optimization where states that are close to their equilibrium will not be computed again      
       "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set
       "neuromuscularJunctionRelativeSize": 0.1,                        # range where the neuromuscular junction is located around the center, relative to fiber length. The actual position is draws randomly from the interval [0.5-s/2, 0.5+s/2) with s being this option. 0 means sharply at the center, 0.1 means located approximately at the center, but it can vary 10% in total between all fibers.
       "generateGPUSource":        True,                                # (set to True) only effective if optimizationType=="gpu", whether the source code for the GPU should be generated. If False, an existing source code file (which has to have the correct name) is used and compiled, i.e. the code generator is bypassed. This is useful for debugging, such that you can adjust the source code yourself. (You can also add "-g -save-temps " to compilerFlags under CellMLAdapter)
@@ -419,7 +421,7 @@ config = {
         "timeStepWidth":          variables.dt_3D,
         "timeStepOutputInterval": 50,
         "durationLogKey":         "duration_bidomain",
-        "solverName":             "activationSolver",
+        "solverName":             "muscularEMGSolver",
         "initialGuessNonzero":    variables.emg_initial_guess_nonzero,
         "slotNames":              [],
         
@@ -438,7 +440,7 @@ config = {
         "Activation": {
           "FiniteElementMethod" : {
             "meshName":           "3Dmesh",
-            "solverName":         "activationSolver",
+            "solverName":         "muscularEMGSolver",
             "prefactor":          1.0,
             "inputMeshIsGlobal":  True,
             "dirichletBoundaryConditions": {},
@@ -473,10 +475,10 @@ config = {
           "timeStepWidth":          variables.dt_3D,
           "timeStepOutputInterval": 50,
           "durationLogKey":         "duration_bidomain",
-          "solverName":             "activationSolver",
+          "solverName":             "muscularEMGSolver",
           "initialGuessNonzero":    variables.emg_initial_guess_nonzero,
-          "enableJacobianConditionNumber": False,         # if set to true, estimate the condition number of the jacobian of the element-coordinate-to-world-frame mapping in every element and output it in the output writer
-          "slotNames":             [],
+          "enableJacobianConditionNumber": False,        # if set to true, estimate the condition number of the jacobian of the element-coordinate-to-world-frame mapping in every element and output it in the output writer
+          "slotNames":              [],
 
           "PotentialFlow": {
             "FiniteElementMethod" : {
@@ -493,7 +495,7 @@ config = {
           "Activation": {
             "FiniteElementMethod" : {
               "meshName":           "3Dmesh",
-              "solverName":         "activationSolver",
+              "solverName":         "muscularEMGSolver",
               "prefactor":          1.0,
               "inputMeshIsGlobal":  True,
               "dirichletBoundaryConditions": {},

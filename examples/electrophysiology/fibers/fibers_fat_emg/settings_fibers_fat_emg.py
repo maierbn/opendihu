@@ -74,7 +74,7 @@ parser.add_argument('--output_timestep',                     help='The timestep 
 parser.add_argument('--output_timestep_fibers',              help='The timestep for writing fiber outputs.',              type=float, default=variables.output_timestep_fibers)
 parser.add_argument('--output_timestep_3D_emg',              help='The timestep for writing 3D emg outputs.',             type=float, default=variables.output_timestep_3D_emg)
 parser.add_argument('--output_timestep_electrodes',          help='The timestep for writing 3D emg outputs.',             type=float, default=variables.output_timestep_electrodes)
-parser.add_argument('--output_timestep_surface',             help='The timestep for writing 3D emg surface outputs.',     type=float, default=variables.output_timestep_surface)
+parser.add_argument('--output_timestep_surface',             help='The timestep for writing 2D emg surface outputs.',     type=float, default=variables.output_timestep_surface)
 parser.add_argument('--dt_0D',                               help='The timestep for the 0D model.',                       type=float, default=variables.dt_0D)
 parser.add_argument('--dt_1D',                               help='The timestep for the 1D model.',                       type=float, default=variables.dt_1D)
 parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',                      type=float, default=variables.dt_splitting)

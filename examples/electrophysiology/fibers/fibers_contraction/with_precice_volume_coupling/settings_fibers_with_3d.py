@@ -131,7 +131,7 @@ if rank_no == 0:
   print("dt_0D:           {:0.1e}, diffusion_solver_type:      {}".format(variables.dt_0D, variables.diffusion_solver_type))
   print("dt_1D:           {:0.1e}, potential_flow_solver_type: {}, approx. exp.: {}".format(variables.dt_1D, variables.potential_flow_solver_type, variables.approximate_exponential_function))
   print("dt_splitting:    {:0.1e}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(variables.dt_splitting, variables.emg_solver_type, variables.emg_initial_guess_nonzero))
-  print("dt_3D:           {:0.1e}, paraview_output: {}, optimization_type: {}".format(variables.dt_3D, variables.paraview_output, variables.optimization_type)
+  print("dt_3D:           {:0.1e}, paraview_output: {}, optimization_type: {}".format(variables.dt_3D, variables.paraview_output, variables.optimization_type))
   print("output_timestep: {:0.1e}, stimulation_frequency: {} 1/ms = {} Hz".format(variables.output_timestep, variables.stimulation_frequency, variables.stimulation_frequency*1e3))
   print("fiber_file:              {}".format(variables.fiber_file))
   print("cellml_file:             {}".format(variables.cellml_file))

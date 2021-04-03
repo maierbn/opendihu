@@ -86,7 +86,7 @@ if basis is None:
   def df(x,b):
     scaling_factor_pdf = sum([b**x for x in range(1,n_motor_units+1)])
     return x*b**(x-1) / scaling_factor_pdf * n_fibers_x**2
-  b,_ = scipy.optimize.curve_fit(f, xdata, numbers, jac=df, p0=1.2)
+  b,_ = scipy.optimize.curve_fit(f, xdata, numbers, p0=1.1)
   basis = b[0]
   print("Guess basis from data: {}".format(basis))
   
@@ -115,6 +115,9 @@ plt.rcParams['lines.markersize'] = 8
 
 print("\n---------------\n Plot file \"{}\"\n {} motor units\n {} x {} fibers\n basis: {}\n MUs to plot: {}".format(output_filename_with_suffix, n_motor_units, n_fibers_x, n_fibers_y, basis, mus_to_plot))
   
+print("\nUse the following command to visualize only a subset of the MUs:")
+print("  plot_fiber_distribution.py {} {} {} {} 1,2,{}".format(output_filename, n_motor_units, n_fibers_x, round(basis,3), n_motor_units))
+
 # plot fibers in 2D plot
 #print("n_motor_units: {}, min: {}".format(n_motor_units, (int)(min(mu_nos_for_fibers))))
 
@@ -128,11 +131,6 @@ for j in range(n_fibers_y):
   for i in range(n_fibers_x):
     mu_no = (int)(mu_nos_for_fibers[index])
     color = colors[mu_no-1,:]
-      
-    # for dataset with high number of motor units only plot some
-    if n_motor_units > 20:
-      if mu_no not in [11, 41, 91]:
-        color = (0.8,0.8,0.8)
         
     # make mus that are not part of the list of MUs to plot gray
     if mu_no not in mus_to_plot:
@@ -147,8 +145,11 @@ if n_motor_units <= 15:
   fig = plt.figure(5,figsize=(4,4))
 else:
   fig = plt.figure(5,figsize=(8,8))
-
   
+# 109 -> 6
+# 37  -> 24   (37*24)/n_fibers_x
+markersize = min(100,(37*10)/n_fibers_x)
+
 # plot actual center points of MUs
 if mu_positions is not None:
   for mu_no in mus_to_plot:
@@ -162,8 +163,8 @@ if mu_positions is not None:
     plt.plot(x,y, '.', markersize=10,markeredgewidth=1,color="k")
 
 X,Y = np.meshgrid(range(n_fibers_x),range(n_fibers_y))
-m = plt.scatter(X,Y,color=point_colors,marker="s")
-m.set_sizes([100])
+m = plt.scatter(X,Y,color=point_colors,marker="s",linewidths=None)
+m.set_sizes([markersize**2])
            
 ax = plt.gca()
 
@@ -199,9 +200,8 @@ plt.hist(mu_nos_for_fibers,bins=bins, align='mid', rwidth=0.8)
 a = numbers[-1] / (basis**n_motor_units)
 xlist = np.linspace(1,n_motor_units,5*n_motor_units)
 
-scaling_factor_pdf = sum([generate_fiber_distribution.pdf_unscaled(x) for x in range(1,n_motor_units+1)])
-n_fibers_total = n_fibers_x**2
-plt.plot(xlist, [generate_fiber_distribution.pdf(x)*n_fibers_total for x in xlist], lw=4, label='${}^x$'.format(round(basis,3)))
+scaling_factor_pdf = sum([basis**mu_no for mu_no in range(1,n_motor_units+1)])
+plt.plot(xlist, [basis**x / scaling_factor_pdf * n_fibers_x**2 for x in xlist], lw=4, label='${}^x$'.format(round(basis,3)))
   
 #plt.plot(xlist, [np.exp(x)/np.exp(n_motor_units)*bins[-1] for x in xlist])
 ax = fig.gca()

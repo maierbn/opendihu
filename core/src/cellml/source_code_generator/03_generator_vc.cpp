@@ -302,7 +302,7 @@ void CellmlSourceCodeGeneratorVc::preprocessCode(std::set<std::string> &helperFu
 }
 
 std::string CellmlSourceCodeGeneratorVc::
-defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateExponentialFunction, bool useVc, bool useReal)
+defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateExponentialFunction, int approximateExponentialFunctionSeriesIndex, bool useVc, bool useReal)
 {
   if (!helperFunctionsCode_.empty())
     return helperFunctionsCode_;
@@ -387,15 +387,16 @@ defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateEx
   //return Vc::exp(x);
   // it was determined the x is always in the range [-12,+12]
 
-  // exp(x) = lim n→∞ (1 + x/n)^n, we set n=1024
-  x = 1.0 + x / 1024.;
-  for (int i = 0; i < 10; i++)
+  // exp(x) = lim n→∞ (1 + x/n)^n, we set n=2^approximateExponentialFunctionSeriesIndex  (for approximateExponentialFunctionSeriesIndex=)" << approximateExponentialFunctionSeriesIndex << R"()
+  x = 1.0 + x / ")" << pow(2, approximateExponentialFunctionSeriesIndex)
+    << R"(;
+  for (int i = 0; i < ")" << approximateExponentialFunctionSeriesIndex << R"(; i++)
   {
     x *= x;
   }
   return x;
 
-  // relative error of this implementation:
+  // relative error of this implementation for n=2^10=1024:
   // x    rel error
   // 0    0
   // 1    0.00048784455634225593
@@ -610,7 +611,7 @@ Vc::double_v pow(Vc::double_v basis, double exponent)
 }
 
 void CellmlSourceCodeGeneratorVc::
-generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunction, bool useAoVSMemoryLayout)
+generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunction, int approximateExponentialFunctionSeriesIndex, bool useAoVSMemoryLayout)
 {
   std::set<std::string> helperFunctions;   //< functions found in the CellML code that need to be provided, usually the pow2, pow3, etc. helper functions for pow(..., 2), pow(...,3) etc.
 
@@ -627,7 +628,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
     << "using Vc::double_v; " << std::endl;
 
   // define helper functions
-  sourceCode << defineHelperFunctions(helperFunctions, approximateExponentialFunction, true);
+  sourceCode << defineHelperFunctions(helperFunctions, approximateExponentialFunction, approximateExponentialFunctionSeriesIndex, true);
 
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
@@ -864,7 +865,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
 }
 
 void CellmlSourceCodeGeneratorVc::
-generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExponentialFunction)
+generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExponentialFunction, int approximateExponentialFunctionSeriesIndex)
 {
   std::set<std::string> helperFunctions;   //< functions found in the CellML code that need to be provided, usually the pow2, pow3, etc. helper functions for pow(..., 2), pow(...,3) etc.
 
@@ -887,7 +888,7 @@ generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExp
   VLOG(1) << "call defineHelperFunctions with helperFunctions: " << helperFunctions;
 
   // define helper functions
-  sourceCode << defineHelperFunctions(helperFunctions, approximateExponentialFunction, true);
+  sourceCode << defineHelperFunctions(helperFunctions, approximateExponentialFunction, approximateExponentialFunctionSeriesIndex, true);
 
   // define initializeStates function
   sourceCode

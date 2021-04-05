@@ -68,6 +68,8 @@ initializeRhsRoutine()
     if (optimizationType_ == "vc")
     {
       approximateExponentialFunction_ = this->specificSettings_.getOptionBool("approximateExponentialFunction", true);
+      approximateExponentialFunctionSeriesIndex_ = this->specificSettings_.getOptionInt("approximateExponentialFunctionSeriesIndex", 10, PythonUtility::Positive);
+
       useAoVSMemoryLayout_ = true;
       if (this->specificSettings_.hasKey("useAoVSMemoryLayout"))
         useAoVSMemoryLayout_ = this->specificSettings_.getOptionBool("useAoVSMemoryLayout", true);
@@ -283,7 +285,8 @@ createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nIns
 
     // create source file
     this->cellmlSourceCodeGenerator_.generateSourceFile(sourceToCompileFilename_, optimizationType_,
-                                                        approximateExponentialFunction_, maximumNumberOfThreads_, useAoVSMemoryLayout_);
+                                                        approximateExponentialFunction_, approximateExponentialFunctionSeriesIndex_,
+                                                        maximumNumberOfThreads_, useAoVSMemoryLayout_);
 
     // create library file
     if (libraryFilename.find("/") != std::string::npos)
@@ -368,6 +371,12 @@ template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
 bool RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>::approximateExponentialFunction()
 {
   return approximateExponentialFunction_;
+}
+
+template<int nStates, int nAlgebraics_, typename FunctionSpaceType>
+int RhsRoutineHandler<nStates,nAlgebraics_,FunctionSpaceType>::approximateExponentialFunctionSeriesIndex()
+{
+  return approximateExponentialFunctionSeriesIndex_;
 }
 
 template<int nStates, int nAlgebraics_, typename FunctionSpaceType>

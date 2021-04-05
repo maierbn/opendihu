@@ -21,7 +21,8 @@ public:
 
   //! write the source file with explicit vectorization using Vc
   //! The file contains the source for the total solve the rhs computation
-  void generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExponentialFunction);
+  void generateSourceFileFastMonodomain(std::string outputFilename, bool approximateExponentialFunction, 
+                                        int approximateExponentialFunctionSeriesIndex);
 
 protected:
 
@@ -30,11 +31,12 @@ protected:
   void preprocessCode(std::set<std::string> &helperFunctions, bool useVc = true);
 
   //! define "pow" and "exponential" helper functions
-  std::string defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateExponentialFunction, bool useVc, bool useReal = true);
+  std::string defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateExponentialFunction, 
+                                    int approximateExponentialFunctionSeriesIndex, bool useVc, bool useReal = true);
 
   //! Write the source file with explicit vectorization using Vc
   //! The file contains the source for only the rhs computation
-  void generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunction, bool useAoVSMemoryLayout=false);
+  void generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunction, int approximateExponentialFunctionSeriesIndex, bool useAoVSMemoryLayout=false);
 
   bool preprocessingDone_ = false;      //< if preprocessing of the code tree has been done already
   std::string helperFunctionsCode_;     //< code with all helper functions like pow, exponential

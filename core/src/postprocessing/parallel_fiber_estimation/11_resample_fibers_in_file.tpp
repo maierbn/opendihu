@@ -258,11 +258,19 @@ stretchMeshAtCornersInFile(std::string filename)
 
         double scalingFunction2 = relativeR;
 
-        double s = 0.3;  // [1-s, 1]    // parameter 0 < s << 1, how far the area of mesh changes reaches in radial direction, smaller is more concentrated around the corners
-        if (relativeR > 1-s)
-          scalingFunction2 = -1./(2*s)*relativeR*relativeR + 1./s*relativeR - pow(1-s,2)/(2*s);
+        double s = 0.3;       // [1-s, 1]    // parameter 0 < s << 1, how far the area of mesh changes reaches in radial direction, smaller is more concentrated around the corners
+        double alpha = 0.5;   // 0 << alpha < 1, parameter how much the mesh is pulled towards the center, lower value = more, 1 = not at all
 
-        double scalingFunction = 0.5*(scalingFunction1 + scalingFunction2);
+        double s2 = std::pow(s, 2);
+        if (relativeR > 1-s)
+        {
+          // the following function is derived in doc/sympy/extend_mesh.py
+          double x = relativeR;
+          scalingFunction2 = 4*alpha - 8*alpha/s + 4*alpha/s2 + x*(-4*alpha + 16*alpha/s - 12*alpha/s2 + 5 - 16/s + 12/s2) - 4 + 8/s + std::pow(x, 3)*(4 - 4*alpha)/s2 + std::pow(x, 2)*(-8*alpha*s + 12*alpha + 8*s - 12)/s2 - 4/s2;
+        }
+
+        //double scalingFunction = 0.5*(scalingFunction1 + scalingFunction2);
+        double scalingFunction = scalingFunction2;
 
         if (relativeR < 1e-10)
         {

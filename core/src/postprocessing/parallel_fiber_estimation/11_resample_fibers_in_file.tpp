@@ -248,7 +248,7 @@ stretchMeshAtCornersInFile(std::string filename)
         double indexR = sqrt(indexI*indexI + indexJ*indexJ);
 
         double maxR = fabs((nFibersX-1 - indexCenter)/cos(indexPhi));  // cos(phi) = a/h = x/maxR => maxR = x/cos(phi)
-        if (fabs(cos(indexPhi)) < 1e-5)
+        if ((indexPhi >= M_PI_4 && indexPhi < 3*M_PI_4) || (indexPhi <= -M_PI_4 && indexPhi > -3*M_PI_4))
           maxR = fabs((nFibersX-1 - indexCenter)/sin(indexPhi));  // sin(phi) = g/h = y/maxR => maxR = y/sin(phi)
 
         double relativeR = fabs(indexR / maxR);
@@ -258,7 +258,7 @@ stretchMeshAtCornersInFile(std::string filename)
 
         double scalingFunction2 = relativeR;
 
-        double s = 0.5;       // [1-s, 1]    // parameter 0 < s << 1, how far the area of mesh changes reaches in radial direction, smaller is more concentrated around the corners
+        double s = 0.3;       // [1-s, 1]    // parameter 0 < s << 1, how far the area of mesh changes reaches in radial direction, smaller is more concentrated around the corners
         double alpha = 0.7;   // 0 << alpha < 1, parameter how much the mesh is pulled towards the center, lower value = more, 1 = not at all
 
         double s2 = std::pow(s, 2);

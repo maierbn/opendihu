@@ -385,7 +385,7 @@ defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateEx
       sourceCode << R"(
 {
   //return Vc::exp(x);
-  // it was determined the x is always in the range [-12,+12]
+  // it was determined the x is always in the range [-12,+12] for the Hodgkin-Huxley model
 
   // exp(x) = lim n→∞ (1 + x/n)^n, we set n=1024
   x = 1.0 + x / 1024.;
@@ -478,6 +478,9 @@ defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateEx
   
   sourceCode << R"(
   // The relative error of this implementation is below 0.04614465854334056 for x in [0.2,19].
+
+  // improve value by Newton iterations
+  result -= (1 - x/exponential(result));
   return result;
 }
 )";

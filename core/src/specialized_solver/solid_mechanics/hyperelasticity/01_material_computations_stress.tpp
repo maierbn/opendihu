@@ -364,7 +364,7 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
     {
       LOG(ERROR) << "fictitiousPK2Stress contains nan: " << fictitiousPK2Stress << ", J=" << J;
     }
-    LOG(FATAL) << "PK2stress contains nan: " << pK2Stress;
+    LOG(ERROR) << "PK2stress contains nan: " << pK2Stress;
   }
 #endif
 
@@ -524,7 +524,7 @@ computePK2StressField()
         }
 
 #ifndef NDEBUG
-        LOG(DEBUG) << "element " << elementNoLocal << ", J=" << deformationGradientDeterminant << "," << jacobianDeterminant
+        LOG(DEBUG) << "element " << elementNoLocal << " (" << elementNoLocalv << "), J=" << deformationGradientDeterminant << "," << jacobianDeterminant
           << ", displacementsValues: " << displacementsValues[0] << "," << displacementsValues[1]
           << ", deformationGradient: " << deformationGradient << ", inverseJacobianMaterial: " << inverseJacobianMaterial
           << ", geometryReferenceValues: " << geometryReferenceValues[0] << "," << geometryReferenceValues[1]
@@ -535,7 +535,7 @@ computePK2StressField()
       if (Vc::any_of(deformationGradientDeterminant < 0))
       {
         LOG(ERROR) << "J = det(F) = " << deformationGradientDeterminant << " is negative, in computation of PK2 stresses.\n"
-          << "Element no. " << elementNoLocal << ", xi=" << xi << ", det(material jacobian): " << jacobianDeterminant
+          << "Element no. " << elementNoLocal << " (" << elementNoLocalv << "), xi=" << xi << ", det(material jacobian): " << jacobianDeterminant
           << ", displacementsValues: " << displacementsValues[0] << "," << displacementsValues[1]
           << ", deformationGradient: " << deformationGradient << ", inverseJacobianMaterial: " << inverseJacobianMaterial
           << ", geometryReferenceValues: " << geometryReferenceValues[0] << "," << geometryReferenceValues[1];
@@ -578,7 +578,7 @@ computePK2StressField()
       if (Term::usesFiberDirection)
       {
         if (Vc::any_of(MathUtility::abs(MathUtility::norm<3>(fiberDirection) - 1) > 1e-3))
-          LOG(FATAL) << "fiberDirecton " << fiberDirection << " is not normalized (c)(norm: " << MathUtility::norm<3>(fiberDirection)
+          LOG(ERROR) << "fiberDirecton " << fiberDirection << " is not normalized (c)(norm: " << MathUtility::norm<3>(fiberDirection)
             << ", difference to 1: " << MathUtility::norm<3>(fiberDirection) - 1 << ") elementalDirectionValues:" << elementalDirectionValues;
       }
 #endif
@@ -593,31 +593,31 @@ computePK2StressField()
       // checking for nans in debug mode
 #ifndef NDEBUG
       if (MathUtility::containsNanOrInf(inverseJacobianMaterial))
-        LOG(FATAL) << "inverseJacobianMaterial contains nan: " << inverseJacobianMaterial << ", jacobianMaterial: " << jacobianMaterial;
+        LOG(ERROR) << "inverseJacobianMaterial contains nan: " << inverseJacobianMaterial << ", jacobianMaterial: " << jacobianMaterial;
 
       if (MathUtility::containsNanOrInf(deformationGradient))
-        LOG(FATAL) << "deformationGradient contains nan: " << deformationGradient;
+        LOG(ERROR) << "deformationGradient contains nan: " << deformationGradient;
 
       if (MathUtility::containsNanOrInf(rightCauchyGreen))
-        LOG(FATAL) << "rightCauchyGreen contains nan: " << rightCauchyGreen;
+        LOG(ERROR) << "rightCauchyGreen contains nan: " << rightCauchyGreen;
 
       if (MathUtility::containsNanOrInf(inverseRightCauchyGreen))
-        LOG(FATAL) << "inverseRightCauchyGreen contains nan: " << inverseRightCauchyGreen;
+        LOG(ERROR) << "inverseRightCauchyGreen contains nan: " << inverseRightCauchyGreen;
 
       if (MathUtility::containsNanOrInf(invariants))
-        LOG(FATAL) << "invariants contains nan: " << invariants;
+        LOG(ERROR) << "invariants contains nan: " << invariants;
 
       if (MathUtility::containsNanOrInf(deformationGradientDeterminant))
-        LOG(FATAL) << "deformationGradientDeterminant contains nan: " << deformationGradientDeterminant;
+        LOG(ERROR) << "deformationGradientDeterminant contains nan: " << deformationGradientDeterminant;
 
       if (MathUtility::containsNanOrInf(reducedInvariants))
-        LOG(FATAL) << "reducedInvariants contains nan: " << reducedInvariants
+        LOG(ERROR) << "reducedInvariants contains nan: " << reducedInvariants
           << ", invariants: " << invariants << ", deformationGradient: " << deformationGradient
           << ", deformationGradientDeterminant: " << deformationGradientDeterminant
           << ", rightCauchyGreenDeterminant: " << rightCauchyGreenDeterminant << ", rightCauchyGreen: " << rightCauchyGreen;
 
       if (MathUtility::containsNanOrInf(pressure))
-        LOG(FATAL) << "pressure contains nan: " << pressure;
+        LOG(ERROR) << "pressure contains nan: " << pressure;
 #endif
 
       // Pk2 stress tensor S = S_vol + S_iso (p.234)

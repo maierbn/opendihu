@@ -74,7 +74,7 @@ dt_splitting = 3e-3                 # [ms] overall timestep width of strang spli
 dt_3D = 4e-1                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep = 4e-1              # [ms] timestep for output surface EMG, 0.5
 output_timestep_fibers = 10         # [ms] timestep for fiber output, 0.5
-output_timestep_big = 25            # [ms] timestep for output big files of 3D EMG, 100
+output_timestep_3D_emg = 25         # [ms] timestep for output big files of 3D EMG, 100
 
 # simulation time:  4s
 # final video time: 40s

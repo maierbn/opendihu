@@ -352,7 +352,7 @@ initialize()
     fiberPointBuffers_.resize(nVcVectors);
     fiberPointBuffersAlgebraicsForTransfer_.resize(nVcVectors);
     fiberPointBuffersParameters_.resize(nVcVectors);
-    fiberPointBuffersStatesAreCloseToEquilibrium_.resize(nVcVectors, not_constant);
+    fiberPointBuffersStatesAreCloseToEquilibrium_.resize(nVcVectors, active);
     nFiberPointBufferStatesCloseToEquilibrium_ = 0;
 
     for (int i = 0; i < nVcVectors; i++)
@@ -438,6 +438,7 @@ initialize()
       initializeStates(fiberPointBuffers_[i].states);
     }
   }
+  setComputeStateInformation_ = false;
 
   // initialize field variable names
   for (int i = 0; i < instances.size(); i++)
@@ -477,6 +478,10 @@ initialize()
         }
       }
 
+      // get field variable
+      std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable2
+        = instances[i].timeStepping2().instancesLocal()[j].getSlotConnectorData()->variable2;
+
       // loop over algebraics to transfer
       for (int algebraicIndex = 0; algebraicIndex < algebraicsForTransferIndices_.size(); algebraicIndex++, furtherDataIndex++)
       {
@@ -487,10 +492,6 @@ initialize()
         assert (i < instances.size());
         assert (j < instances[i].timeStepping2().instancesLocal().size());
 
-        // get field variable
-        std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable2
-          = instances[i].timeStepping2().instancesLocal()[j].getSlotConnectorData()->variable2;
-
         if (algebraicIndex >= variable2.size())
         {
           LOG(WARNING) << "There are " << algebraicsForTransferIndices_.size() << " algebraicsForTransfer specified in StrangSplitting, "
@@ -498,7 +499,6 @@ initialize()
             << "This means that algebraic no. " << algebraicsForTransferIndices_[algebraicIndex] << ", \"" << name << "\" cannot be transferred." << std::endl
             << "Maybe you need to increase \"nAdditionalFieldVariables\" in  the diffusion solver (\"ImplicitEuler\" or \"CrankNicolson\") "
             << "or reduce the number of entries in \"algebraicsForTransfer\".";
-
         }
         else
         {
@@ -507,6 +507,22 @@ initialize()
 
           fieldVariableAlgebraics->setName(name);
         }
+      }
+
+      // prepare extra slot for compute state information (i.e., inactive, neighbour_is_active or active)
+      if (variable2.size() > algebraicsForTransferIndices_.size())
+      {
+        int algebraicIndex = algebraicsForTransferIndices_.size();
+
+        // get algebraics field variable
+        std::vector<::Data::ComponentOfFieldVariable<FiberFunctionSpace,1>> &variable2
+          = instances[i].timeStepping2().instancesLocal()[j].getSlotConnectorData()->variable2;
+        std::shared_ptr<FieldVariable::FieldVariable<FiberFunctionSpace,1>> fieldVariableAlgebraics
+            = variable2[algebraicIndex].values;
+
+        std::string name = "computeStateInformation";
+        fieldVariableAlgebraics->setName(name);
+        setComputeStateInformation_ = true;
       }
     }
   }

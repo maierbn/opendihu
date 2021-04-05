@@ -7,7 +7,7 @@ scenario_name = "ramp"
 # quantities in CellML unit system
 sigma_f = 8.93              # [mS/cm] conductivity in fiber direction (f)
 
-Conductivity = 3.828        # [mS/cm] sigma, conductivity
+Conductivity = sigma_f      # [mS/cm] sigma, conductivity
 Am = 500.0                  # [cm^-1] surface area to volume ratio
 Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch)
 # diffusion prefactor = Conductivity/(Am*Cm)
@@ -56,7 +56,7 @@ end_time = 100                      # [ms] end time of the simulation
 dt_0D = 2.5e-5                      # [ms] timestep width of ODEs (2e-3)
 dt_1D = 2.5e-5                      # [ms] timestep width of diffusion (4e-3)
 dt_splitting = 2.5e-5               # [ms] overall timestep width of strang splitting (4e-3)
-dt_3D = 1e-1                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG, this has to be the same value as in the precice_config.xml
+dt_3D = 1e0                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG, this has to be the same value as in the precice_config.xml
 output_timestep = 1                 # [ms] timestep for output files, 5.0
 output_timestep_fibers = output_timestep   # [ms] timestep for fiber output
 output_timestep_big = 25            # [ms] timestep for output big files of 3D EMG, 100
@@ -76,8 +76,7 @@ import opendihu
 if "contraction" in opendihu.program_name:
   sampling_stride_x = 1
   sampling_stride_y = 1
-  sampling_stride_z = 1      # stride value that produces equally sized elements, but possibly discards some nodes at the end in z direction, 
-  local_sampling_stride_z = 200  # stride value that works the same as the strides in x,y, produces smaller remainder elements on every rank 
+  sampling_stride_z = 200
   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
 else:
@@ -85,8 +84,7 @@ else:
   
   sampling_stride_x = 1
   sampling_stride_y = 1
-  sampling_stride_z = 1      # stride value that produces equally sized elements, but possibly discards some nodes at the end in z direction, 
-  local_sampling_stride_z = 20  # stride value that works the same as the strides in x,y, produces smaller remainder elements on every rank 
+  sampling_stride_z = 50
   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
 # input files
@@ -116,7 +114,8 @@ python_output = False          # produce python output files
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):
-  r = motor_units[mu_no]["radius"]*1e-2
+  # get radius in cm, 1 μm = 1e-6 m = 1e-4*1e-2 m = 1e-4 cm
+  r = motor_units[mu_no]["radius"]*1e-4
   # cylinder surface: A = 2*π*r*l, V = cylinder volume: π*r^2*l, Am = A/V = 2*π*r*l / (π*r^2*l) = 2/r
   return 2./r
 

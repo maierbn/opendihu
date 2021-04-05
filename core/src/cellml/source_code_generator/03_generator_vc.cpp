@@ -385,7 +385,7 @@ defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateEx
       sourceCode << R"(
 {
   //return Vc::exp(x);
-  // it was determined the x is always in the range [-12,+12]
+  // it was determined the x is always in the range [-12,+12] for the Hodgkin-Huxley model
 
   // exp(x) = lim n→∞ (1 + x/n)^n, we set n=1024
   x = 1.0 + x / 1024.;
@@ -478,6 +478,9 @@ defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateEx
   
   sourceCode << R"(
   // The relative error of this implementation is below 0.04614465854334056 for x in [0.2,19].
+
+  // improve value by Newton iterations
+  result -= (1 - x/exponential(result));
   return result;
 }
 )";
@@ -610,7 +613,7 @@ Vc::double_v pow(Vc::double_v basis, double exponent)
 }
 
 void CellmlSourceCodeGeneratorVc::
-generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunction)
+generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunction, bool useAoVSMemoryLayout)
 {
   std::set<std::string> helperFunctions;   //< functions found in the CellML code that need to be provided, usually the pow2, pow3, etc. helper functions for pow(..., 2), pow(...,3) etc.
 
@@ -707,14 +710,20 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
     << "  // fill input vectors of states and parameters\n"
     << "  for (int stateNo = 0; stateNo < nStates; stateNo++)\n"
     << "    for (int i = 0; i < nVcVectors; i++)  // Vc vector no\n"
-    << "      for (int k = 0; k < Vc::double_v::size(); k++)  // entry no in Vc vector \n"
-    << "        statesVc[stateNo*nVcVectors + i][k] = states[std::min(stateNo*nInstances + i*(int)Vc::double_v::size()+k, nStates*nInstances-1)];\n"
-    << "\n"
+    << "      for (int k = 0; k < Vc::double_v::size(); k++)  // entry no in Vc vector \n";
+  if (useAoVSMemoryLayout)
+    sourceCode << "        statesVc[i*nStates + stateNo][k] = states[std::min(stateNo*nInstances + i*(int)Vc::double_v::size()+k, nStates*nInstances-1)];\n";
+  else
+    sourceCode << "        statesVc[stateNo*nVcVectors + i][k] = states[std::min(stateNo*nInstances + i*(int)Vc::double_v::size()+k, nStates*nInstances-1)];\n";
+  sourceCode << "\n"
     << "  for (int parameterNo = 0; parameterNo < nParametersPerInstance; parameterNo++)\n"
     << "    for (int i = 0; i < nVcVectors; i++)  // Vc vector no\n"
-    << "      for (int k = 0; k < Vc::double_v::size(); k++)  // entry no in Vc vector \n"
-    << "        parametersVc[parameterNo*nVcVectors + i][k] = parameters[std::min(parameterNo*nInstances + i*(int)Vc::double_v::size()+k, nParametersPerInstance*nInstances-1)];\n"
-    << std::endl
+    << "      for (int k = 0; k < Vc::double_v::size(); k++)  // entry no in Vc vector \n";
+  if (useAoVSMemoryLayout)
+    sourceCode << "        parametersVc[i*nParametersPerInstance + parameterNo][k] = parameters[std::min(parameterNo*nInstances + i*(int)Vc::double_v::size()+k, nParametersPerInstance*nInstances-1)];\n";
+  else
+    sourceCode << "        parametersVc[parameterNo*nVcVectors + i][k] = parameters[std::min(parameterNo*nInstances + i*(int)Vc::double_v::size()+k, nParametersPerInstance*nInstances-1)];\n";
+  sourceCode << std::endl
     << "  for (int i = 0; i < nVcVectors; i++)" << std::endl
     << "  {" << std::endl;
 
@@ -725,7 +734,7 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
     {
       sourceCode << "    ";
 
-      codeExpression.visitLeafs([&sourceCode,&nVcVectors,this](CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
+      codeExpression.visitLeafs([&sourceCode,&nVcVectors,&useAoVSMemoryLayout,this](CellmlSourceCodeGeneratorVc::code_expression_t &expression, bool isFirstVariable)
       {
         switch(expression.type)
         {
@@ -741,19 +750,31 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
               // all other variables (states, rates, algebraics, parameters) exist for every instance
               if (expression.code == "states")
               {
-                sourceCode << "statesVc[" << expression.arrayIndex * nVcVectors << "+i]";
+                if (useAoVSMemoryLayout)
+                  sourceCode << "statesVc[i*nStates + " << expression.arrayIndex << "]";
+                else
+                  sourceCode << "statesVc[" << expression.arrayIndex * nVcVectors << "+i]";
               }
               else if (expression.code == "rates")
               {
-                sourceCode << "ratesVc[" << expression.arrayIndex * nVcVectors << "+i]";
+                if (useAoVSMemoryLayout)
+                  sourceCode << "ratesVc[i*nStates + " << expression.arrayIndex << "]";
+                else
+                  sourceCode << "ratesVc[" << expression.arrayIndex * nVcVectors << "+i]";
               }
               else if (expression.code == "algebraics")
               {
-                sourceCode << "algebraicsVc[" << expression.arrayIndex * nVcVectors << "+i]";
+                if (useAoVSMemoryLayout)
+                  sourceCode << "algebraicsVc[i*nAlgebraics + " << expression.arrayIndex << "]";
+                else
+                  sourceCode << "algebraicsVc[" << expression.arrayIndex * nVcVectors << "+i]";
               }
               else if (expression.code == "parameters")
               {
-                sourceCode << "parametersVc[" << expression.arrayIndex * nVcVectors << "+i]";
+                if (useAoVSMemoryLayout)
+                  sourceCode << "parametersVc[i*nParametersPerInstance + " << expression.arrayIndex << "]";
+                else
+                  sourceCode << "parametersVc[" << expression.arrayIndex * nVcVectors << "+i]";
               }
               else
               {
@@ -786,17 +807,24 @@ generateSourceFileVc(std::string outputFilename, bool approximateExponentialFunc
     << "      for (int k = 0; k < Vc::double_v::size(); k++)  // entry no in Vc vector \n"
     << "      {\n"
     << "        if (rateNo*nInstances + i*Vc::double_v::size()+k >= nStates*nInstances)\n"
-    << "          continue;\n"
-    << "        rates[rateNo*nInstances + i*Vc::double_v::size()+k] = ratesVc[rateNo*nVcVectors + i][k];\n"
-    << "      }\n"
+    << "          continue;\n";
+  if (useAoVSMemoryLayout)
+    sourceCode << "        rates[rateNo*nInstances + i*Vc::double_v::size()+k] = ratesVc[i*nStates + rateNo][k];\n";
+  else
+    sourceCode << "        rates[rateNo*nInstances + i*Vc::double_v::size()+k] = ratesVc[rateNo*nVcVectors + i][k];\n";
+  sourceCode << "      }\n"
     << "\n"
     << "  for (int algebraicNo = 0; algebraicNo < nAlgebraics; algebraicNo++)\n"
     << "    for (int i = 0; i < nVcVectors; i++)  // Vc vector no\n"
     << "      for (int k = 0; k < Vc::double_v::size(); k++)  // entry no in Vc vector \n"
     << "      {\n"
     << "        if (algebraicNo*nInstances + i*Vc::double_v::size()+k >= nAlgebraics*nInstances)\n"
-    << "          continue;\n"
-    << "        algebraics[algebraicNo*nInstances + i*Vc::double_v::size()+k] = algebraicsVc[algebraicNo*nVcVectors + i][k];\n"
+    << "          continue;\n";
+  if (useAoVSMemoryLayout)
+    sourceCode << "        algebraics[algebraicNo*nInstances + i*Vc::double_v::size()+k] = algebraicsVc[i*nAlgebraics + algebraicNo][k];\n";
+  else
+    sourceCode << "        algebraics[algebraicNo*nInstances + i*Vc::double_v::size()+k] = algebraicsVc[algebraicNo*nVcVectors + i][k];\n";
+  sourceCode
     << "      }\n"
     << "\n";
 

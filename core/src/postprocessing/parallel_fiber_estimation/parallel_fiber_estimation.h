@@ -164,6 +164,9 @@ protected:
   //! resamples the final fibers in the output file to match the required number of nodes per fiber
   void resampleFibersInFile(int nPointsPerFiber, std::string filename);
 
+  //! stretches the mesh in x-y planes at the corner points such that the 180° angle is less severe
+  void stretchMeshAtCornersInFile(std::string filename);
+
   //! if the filename is something like path/fibers0x0.bin, replace 0 by nFibersX, return true if replacement was performed
   bool adjustFilename(std::string &filename, int nFibersX);
 

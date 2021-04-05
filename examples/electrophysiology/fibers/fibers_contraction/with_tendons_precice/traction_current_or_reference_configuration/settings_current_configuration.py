@@ -233,6 +233,7 @@ config = {
     "preciceParticipantName":   "MuscleSolver",             # name of the own precice participant, has to match the name given in the precice xml config file
     "scalingFactor":            1,                          # a factor to scale the exchanged data, prior to communication
     "couplingEnabled":          False,                      # if the precice coupling is enable, if not it is simply the normal solver (for debugging)
+    "endTimeIfCouplingDisabled": variables.end_time,        # if "couplingEnabled" is set to False, use this end time for the simulation
     "preciceMeshes": [                                      # the precice meshes get created as the top or bottom surface of the main geometry mesh of the nested solver
       {
         "preciceMeshName":      "MuscleMeshBottom",         # precice name of the 2D coupling mesh
@@ -453,6 +454,8 @@ config = {
           "numberTimeSteps":              1,                         # only use 1 timestep per interval
           "timeStepOutputInterval":       100,                       # do not output time steps
           "Pmax":                         variables.pmax,            # maximum PK2 active stress
+          "enableForceLengthRelation":    False,                     # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
+          "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
           "slotNames":                    [],                        # names of the data connector slots
           "OutputWriter" : [
             #{"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
@@ -487,6 +490,7 @@ config = {
             #"loadFactors":                [0.25, 0.66, 1.0],                # load factors for every timestep
             "loadFactors":                [],                        # no load factors, solve problem directly
             "loadFactorGiveUpThreshold":  4e-2,                      # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
+            "scaleInitialGuess":          False,                      # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
             "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
             
             # boundary and initial conditions

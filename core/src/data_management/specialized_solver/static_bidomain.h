@@ -45,6 +45,9 @@ public:
   //! a field variable with constant value of zero, needed for the nested rhs vector
   std::shared_ptr<FieldVariableType> zero();
 
+  //! a field variable with for the estimated condition number of the jacobian
+  std::shared_ptr<FieldVariableType> jacobianConditionNumber();
+
   //! get a reference to the rhs matrix
   Mat &rhsMatrix();
 
@@ -64,7 +67,8 @@ public:
     std::shared_ptr<FieldVariableType>,             // transmembranePotential
     std::shared_ptr<FieldVariableType>,             // extra-cellular potential
     std::shared_ptr<FieldVariableType>,             // transmembraneFlow
-    std::shared_ptr<FieldVariableType>              // solution of laplace potential flow
+    std::shared_ptr<FieldVariableType>,             // solution of laplace potential flow
+    std::shared_ptr<FieldVariableType>              // estimated condition number of the jacobian
   > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
@@ -82,6 +86,7 @@ private:
   std::shared_ptr<FieldVariableType> transmembranePotential_;     //< the Vm value (transmembrane potential)
   std::shared_ptr<FieldVariableType> extraCellularPotential_;     //< the phi_e value which is the extra-cellular potential
   std::shared_ptr<FieldVariableType> zero_;                       //< a field variable with constant value of zero, needed for the nested rhs vector
+  std::shared_ptr<FieldVariableType> jacobianConditionNumber_;    //< field variable to store the estimated condition number of the jacobian matrix of the element coordinates to world mapping
   std::shared_ptr<SlotConnectorDataType> slotConnectorData_;  //< the field variables that will be transferred to other solvers for the slot connector
 };
 

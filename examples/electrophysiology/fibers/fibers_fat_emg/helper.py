@@ -197,10 +197,10 @@ n_points_on_previous_ranks_sampled_z = sum([n_sampled_points_in_subdomain_z(subd
 
 # loop over z point indices of the 3D mesh
 for k in range(n_sampled_points_3D_in_own_subdomain_z):
-  z_point_index = (variables.z_point_index_start + k*variables.local_sampling_stride_z) * variables.sampling_stride_z
+  z_point_index = variables.z_point_index_start + k*variables.sampling_stride_z
   
   if variables.own_subdomain_coordinate_z == variables.n_subdomains_z-1 and k == n_sampled_points_3D_in_own_subdomain_z-1:
-    z_point_index = (variables.z_point_index_end-1) * variables.sampling_stride_z
+    z_point_index = variables.z_point_index_end-1
     
   #print("{}: sampling_stride_z: {}, k: {}, z: {}/{}".format(rank_no, variables.sampling_stride_z, k, z_point_index, variables.z_point_index_end))
   
@@ -477,7 +477,7 @@ def get_motor_unit_no(fiber_no):
 def get_diffusion_prefactor(fiber_no, mu_no):
   diffusion_prefactor = variables.get_conductivity(fiber_no, mu_no) / (variables.get_am(fiber_no, mu_no) * variables.get_cm(fiber_no, mu_no))
   #print("diffusion_prefactor: {}/({}*{}) = {}".format(variables.get_conductivity(fiber_no, mu_no), variables.get_am(fiber_no, mu_no), variables.get_cm(fiber_no, mu_no), diffusion_prefactor))
-  return variables.get_conductivity(fiber_no, mu_no) / (variables.get_am(fiber_no, mu_no) * variables.get_cm(fiber_no, mu_no))
+  return diffusion_prefactor
 
 def fiber_gets_stimulated(fiber_no, frequency, current_time):
   """

@@ -538,7 +538,6 @@ initializeCellMLSourceFileVc()
   // parse options
   CellmlAdapterType &cellmlAdapter = nestedSolvers_.instancesLocal()[0].timeStepping1().instancesLocal()[0].discretizableInTime();
   bool approximateExponentialFunction = cellmlAdapter.approximateExponentialFunction();
-  int approximateExponentialFunctionSeriesIndex = cellmlAdapter.approximateExponentialFunctionSeriesIndex();
 
   PythonConfig specificSettingsCellML = cellmlAdapter.specificSettings();
   CellmlSourceCodeGenerator &cellmlSourceCodeGenerator = cellmlAdapter.cellmlSourceCodeGenerator();
@@ -584,8 +583,7 @@ initializeCellMLSourceFileVc()
     LOG(DEBUG) << "generate source file \"" << sourceToCompileFilename << "\".";
 
     // create source file
-    cellmlSourceCodeGenerator.generateSourceFileFastMonodomain(sourceToCompileFilename, approximateExponentialFunction,
-                                                               approximateExponentialFunctionSeriesIndex);
+    cellmlSourceCodeGenerator.generateSourceFileFastMonodomain(sourceToCompileFilename, approximateExponentialFunction);
 
     // create path for library file
     if (libraryFilename.find("/") != std::string::npos)

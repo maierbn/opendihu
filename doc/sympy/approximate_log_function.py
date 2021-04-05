@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 import numpy as np
 
-def log1(x_value):
-  # approximation with Chebychev
+def log(x_value):
   x = x_value-1
   x2 = x*x
   a0 = -np.log(2); a1 = 2;a2 = -1;a3 = 2/3.;a4 = -0.5;
@@ -10,7 +9,6 @@ def log1(x_value):
   return a0*T0 + a1*T1 + a2*T2 + a3*T3 + a4*T4
 
 def log2(x_value):
-  # approximation with Taylor
   if x_value < 2:
     t = x_value-1;
     t2 = t*t
@@ -30,46 +28,25 @@ def log2(x_value):
     t6 = t4*t2
     return  np.log(9) + 1./9*t - 1./162*t2 + 1./2187*t2*t - 1/26244.*t4 + 1./295245*t4*t - 1./3188646*t6
 
-def log3(x):
-  
-  # approximation by inverting e function with Newton
-  y = log2(x)
-  for i in range(3):
-    n = 2**12
-    ey = (1 + 1/n)**n
-    #ey = np.exp(y)
-    y -= (1 - x/ey)
-  return y
-
 import matplotlib.pyplot as plt
 fig = plt.figure()
-x_list = np.linspace(0.2, 20, 200)
+x_list = np.linspace(0.1, 20, 200)
 
-plt.title("log functions")
 plt.plot(x_list, np.log(x_list), label="exact")
-plt.plot(x_list, [log1(x) for x in x_list], label="Chebyshev")
+#plt.plot(x_list, [log(x) for x in x_list], label="Chebyshev")
 plt.plot(x_list, [log2(x) for x in x_list], label="Taylor")
-plt.plot(x_list, [log3(x) for x in x_list], label="Newton")
 plt.legend()
-plt.semilogy()
-plt.grid()
 
-rel_errors1 = [abs(np.log(x)-log1(x))/np.log(x) for x in x_list]
-rel_errors2 = [abs(np.log(x)-log2(x))/np.log(x) for x in x_list]
-rel_errors3 = [abs(np.log(x)-log3(x))/np.log(x) for x in x_list]
-
-print("Chebychev: maximum relative error: {} at {}".format(max(rel_errors1), np.argmax(np.array(rel_errors1))))
-print("Taylor: maximum relative error: {} at {}".format(max(rel_errors2), np.argmax(np.array(rel_errors2))))
-print("Newton: maximum relative error: {} at {}".format(max(rel_errors3), np.argmax(np.array(rel_errors3))))
-
-fig = plt.figure()
-plt.title("relative errors")
-#plt.plot(x_list, rel_errors1, label="Chebyshev")
-plt.plot(x_list, rel_errors2, label="Taylor")
-plt.plot(x_list, rel_errors3, label="Newton")
-plt.legend()
-plt.semilogy()
-plt.grid()
-
+max_rel_error = 0
+location = 0
+for x in np.linspace(0.2,19,100):
+  rel_error =  (np.log(x)-log2(x))/np.log2(x)
+  print("{}, {}, {}, error: {}".format(x, np.log(x), log(x), rel_error))
+  old_rel_error = max_rel_error
+  max_rel_error = max(max_rel_error, rel_error)
+  if old_rel_error != max_rel_error:
+    location = x
+  
+print("maximum relative error: {} at {}".format(max_rel_error, location))
 
 plt.show()

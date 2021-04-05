@@ -17,6 +17,5 @@ public:
   //! @param maximumNumberOfThreads value for the openmp optimization type
   //! @param useAoVSMemoryLayout which memory layout to use for the vc optimization type, true=Array-of-Vectorized-Struct, false=Struct-of-Vectorized-Array
   void generateSourceFile(std::string outputFilename, std::string optimizationType,
-                          bool approximateExponentialFunction, int approximateExponentialFunctionSeriesIndex,
-                          int maximumNumberOfThreads, bool useAoVSMemoryLayout);
+                          bool approximateExponentialFunction, int maximumNumberOfThreads, bool useAoVSMemoryLayout);
 };

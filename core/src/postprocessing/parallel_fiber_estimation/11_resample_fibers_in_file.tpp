@@ -258,7 +258,7 @@ stretchMeshAtCornersInFile(std::string filename)
 
         double scalingFunction2 = relativeR;
 
-        double s = 0.5;       // [1-s, 1]    // parameter 0 < s << 1, how far the area of mesh changes reaches in radial direction, smaller is more concentrated around the corners
+        double s = 0.3;       // [1-s, 1]    // parameter 0 < s << 1, how far the area of mesh changes reaches in radial direction, smaller is more concentrated around the corners
         double alpha = 0.7;   // 0 << alpha < 1, parameter how much the mesh is pulled towards the center, lower value = more, 1 = not at all
 
         double s2 = std::pow(s, 2);

@@ -502,9 +502,11 @@ bool containsNanOrInf(const Vc::double_v value, dof_no_v_t elementNoLocalv)
 {
   for (int i = 0; i < Vc::double_v::size(); i++)
   {
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
     // do not consider indices that are -1
     if (elementNoLocalv[i] == -1)
       continue;
+#endif
 
     if (containsNanOrInf(value[i]))
     {

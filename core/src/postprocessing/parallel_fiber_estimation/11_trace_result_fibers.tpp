@@ -777,6 +777,9 @@ writeToFile(std::string filename, std::vector<std::vector<Vec3>> &fibers, int nF
   {
     fixInvalidFibersInFile(filename);
 
+    // reduce problem of elements with 180 degrees interior angle
+    stretchMeshAtCornersInFile(filename);
+
     if (nPointsWholeFiber != nNodesPerFiber_ || finalBottomZClip_ != bottomZClip_ || finalTopZClip_ != topZClip_)
     {
       resampleFibersInFile(nPointsWholeFiber, filename);

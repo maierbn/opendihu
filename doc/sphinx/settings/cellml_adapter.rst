@@ -10,22 +10,22 @@ By specifying a mesh with 0 elements, you get a single instance of the model.
 A CellML model is a first-order differential-algebraic system of equations (DAE) of the following form:
 
 .. math::
-   \frac{\partial \textbf{u}}{\partial t} = f(t,\textbf{u}(t),\textbf{y}(t),\hat{\textbf{c}},\hat{\textbf{p}}(t)) \\
-   \textbf{y}(t) = g(\textbf{u}(t),\hat{\textbf{c}},\hat{\textbf{p}}(t))
+   \frac{\partial \textbf{y}}{\partial t} = f(t,\textbf{y}(t),\textbf{h}(t),\hat{\textbf{c}},\hat{\textbf{p}}(t)) \\
+   \textbf{h}(t) = g(\textbf{y}(t),\hat{\textbf{c}},\hat{\textbf{p}}(t))
    
-The values :math:`\textbf{u} \in \mathbb{R}^n` are called *states* and will be integrated in time using a timestepping scheme. 
-There are also the algebraic values, :math:`\textbf{y}`, which are not integrated. 
+The values :math:`\textbf{y} \in \mathbb{R}^n` are called *states* and will be integrated in time using a timestepping scheme. 
+There are also the algebraic values, :math:`\textbf{h}`, which are not integrated. 
 A set of parameters, :math:`\hat{\textbf{p}}`, can be defined in the settings and changed over time.
 There are also constants , :math:`\hat{\textbf{c}}`, that are given in the CellML model and cannot be changed.
 
-There exist several different names for the quantities :math:`\textbf{u}, \frac{\partial \textbf{u}}{\partial t}, \textbf{y}` and :math:`\hat{\textbf{p}}`:
+There exist several different names for the quantities :math:`\textbf{y}, \frac{\partial \textbf{y}}{\partial t}, \textbf{h}` and :math:`\hat{\textbf{p}}`:
 
 =============================================== ================ =========== ========== ================== ==========================
 symbol                                          opendihu         OpenCOR     OpenCMISS  computed by model  initial values can be set
 =============================================== ================ =========== ========== ================== ==========================
-:math:`\textbf{u}`                              states           states      STATES     by timestepping    yes
-:math:`\frac{\partial \textbf{u}}{\partial t}`  rates            rates       RATES      yes                no
-:math:`\textbf{y}`                              algebraics       algebraic   WANTED     yes                no
+:math:`\textbf{y}`                              states           states      STATES     by timestepping    yes
+:math:`\frac{\partial \textbf{y}}{\partial t}`  rates            rates       RATES      yes                no
+:math:`\textbf{h}`                              algebraics       algebraic   WANTED     yes                no
 :math:`\hat{\textbf{c}}`                        constants        constants   CONSTANTS  no                 no
 :math:`\hat{\textbf{p}}`                        parameters       algebraic   KNOWN      no                 yes
 =============================================== ================ =========== ========== ================== ==========================
@@ -82,6 +82,7 @@ The default FunctionSpace is `FunctionSpace::Generic` which is the following typ
     "approximateExponentialFunction":         True,                                   # if optimizationType is "vc" or "gpu", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
     "compilerFlags":                          "-fPIC -O3 -march=native -shared ",     # compiler flags used to compile the optimized model code
     "maximumNumberOfThreads":                 0,                                      # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+    "useAoVSMemoryLayout":                    use_aovs_memory_layout,                 # if optimizationType is "vc", whether to use the Array-of-Vectorized-Stru    ct (AoVS) memory layout instead of the Struct-of-Vectorized-Array (SoVA) memory layout. Setting to True is faster.
     
     # stimulation callbacks
     #"setSpecificParametersFunction":         set_specific_parameters,                # callback function that sets parameters like stimulation current
@@ -142,12 +143,12 @@ If `initializeStatesToEquilibrium` is set to `True`, equilibrum values of the st
 Given the CellML model as
 
 .. math::
-   \frac{\partial \textbf{u}}{\partial t} = f(t,\textbf{u}(t),\textbf{y}(t),\hat{\textbf{c}},\hat{\textbf{p}}(t)),
+   \frac{\partial \textbf{y}}{\partial t} = f(t,\textbf{y}(t),\textbf{h}(t),\hat{\textbf{c}},\hat{\textbf{p}}(t)),
    
 the equation is solved by a 4th order Runge-Kutta timestepping scheme, until
 
 .. math::
-   \Vert\frac{\partial \textbf{u}}{\partial t}\Vert < \epsilon
+   \Vert\frac{\partial \textbf{y}}{\partial t}\Vert < \epsilon
    
 is reached, with :math:`\epsilon = 1e-5`. The timestep width of the Runge-Kutta scheme can be given by `initializeStatesToEquilibriumTimestepWidth`. If an instability with this timestep width is detected (any value gets `inf` or `nan`), the timestep width will be decreased automatically and the computation will be restarted.
 

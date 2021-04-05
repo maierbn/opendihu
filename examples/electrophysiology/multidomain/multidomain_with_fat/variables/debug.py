@@ -71,11 +71,11 @@ output_timestep_multidomain = dt_multidomain  # [ms] timestep for multidomain ou
 output_timestep_0D_states = dt_0D    # [ms] timestep for output files of 0D subcellular model states
 end_time = 40*dt_0D
 
-scenario_name = "{}_{}_dt{}_atol{}_rtol{}_theta{}_sym{}_lump{}".format(multidomain_solver_type, multidomain_preconditioner_type, dt_splitting, multidomain_absolute_tolerance, multidomain_relative_tolerance, theta, use_symmetric_preconditioner_matrix, use_lumped_mass_matrix)
+scenario_name = "debug"
 
 # input files
-#cellml_file = "../../../input/hodgkin_huxley_1952.c"
-cellml_file = "../../../input/new_slow_TK_2014_12_08.c"
+cellml_file = "../../../input/hodgkin_huxley_1952.c"
+#cellml_file = "../../../input/new_slow_TK_2014_12_08.c"
 #fiber_file = "../../../input/left_biceps_brachii_7x7fibers.bin"
 #fiber_file = "../../../input/small_5x5x11.bin"
 fiber_file = "../../../input/box_3x3x17.bin"
@@ -87,7 +87,7 @@ firing_times_file = "../../../input/MU_firing_times_immediately.txt"
 # a higher number leads to less 3D elements
 sampling_stride_x = 1
 sampling_stride_y = 1
-sampling_stride_z = 1 #74   # faster, but stimulus does not propagate
+sampling_stride_z = 1     # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 sampling_stride_fat = 1
 
 # other options
@@ -95,7 +95,7 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-states_output = True
+states_output = False
 disable_firing_output = False
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's

@@ -7,7 +7,7 @@ scenario_name = "ramp"
 # quantities in CellML unit system
 sigma_f = 8.93              # [mS/cm] conductivity in fiber direction (f)
 
-Conductivity = 3.828        # [mS/cm] sigma, conductivity
+Conductivity = sigma_f      # [mS/cm] sigma, conductivity
 Am = 500.0                  # [cm^-1] surface area to volume ratio
 Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch)
 # diffusion prefactor = Conductivity/(Am*Cm)
@@ -76,8 +76,7 @@ import opendihu
 if "contraction" in opendihu.program_name:
   sampling_stride_x = 1
   sampling_stride_y = 1
-  sampling_stride_z = 1      # stride value that produces equally sized elements, but possibly discards some nodes at the end in z direction, 
-  local_sampling_stride_z = 200  # stride value that works the same as the strides in x,y, produces smaller remainder elements on every rank 
+  sampling_stride_z = 200
   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
 else:
@@ -85,8 +84,7 @@ else:
   
   sampling_stride_x = 1
   sampling_stride_y = 1
-  sampling_stride_z = 1      # stride value that produces equally sized elements, but possibly discards some nodes at the end in z direction, 
-  local_sampling_stride_z = 20  # stride value that works the same as the strides in x,y, produces smaller remainder elements on every rank 
+  sampling_stride_z = 20
   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
 # input files

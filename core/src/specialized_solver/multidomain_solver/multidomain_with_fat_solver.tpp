@@ -133,6 +133,19 @@ initialize()
   ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), this->nCompartments_+2, NULL, 
                        this->subvectorsSolution_.data(), &this->nestedSolution_); CHKERRV(ierr);
 
+  // output sizes of matrices for debugging output
+#if 0
+  global_no_t nDofsGlobalMuscle = this->dataMultidomain_.functionSpace()->nDofsGlobal();
+  global_no_t nDofsGlobalFat = this->dataFat_.functionSpace()->nDofsGlobal() - boundaryDofsGlobalFat_.size();
+
+  dof_no_t nDofsLocalWithoutGhostsMuscle = this->dataMultidomain_.functionSpace()->nDofsLocalWithoutGhosts();
+  dof_no_t nDofsLocalWithoutGhostsFat = this->dataFat_.functionSpace()->nDofsLocalWithoutGhosts() - nSharedDofsLocal_;
+
+  LOG(ERROR) << "rank " << this->dataMultidomain_.functionSpace()->meshPartition()->rankSubset()->ownRankNo() << ", n dofs muscle: " << nDofsLocalWithoutGhostsMuscle << "/" << nDofsGlobalMuscle
+    << ", fat: " << nDofsLocalWithoutGhostsFat << "/" << nDofsGlobalFat << ", ncols: " << this->nColumnSubmatricesSystemMatrix_ << ", total dofs: "
+    << nDofsGlobalMuscle * (this->nColumnSubmatricesSystemMatrix_-1) + nDofsGlobalFat;
+#endif
+
   // write initial meshes
   callOutputWriter(0, 0.0, 0);
 }
@@ -247,10 +260,11 @@ setSystemMatrixSubmatrices(double timeStepWidth)
   b2_.resize(this->nCompartments_);
 
   // initialize the matrices b1, b2 to compute the rhs
-  // set all this->submatricesSystemMatrix_
+  // the final right hand side will be b_Vm^(i+1) = b1_ * Vm^(i) + b2_ * phi_e^(i)
   for (int k = 0; k < this->nCompartments_; k++)
   {
     // set b1_ = (θ-1)*1/(Am^k*Cm^k)*K_sigmai^k
+    // begin with b1_ = K_sigmai^k
     ierr = MatConvert(stiffnessMatrix, MATSAME, MAT_INITIAL_MATRIX, &b1_[k]); CHKERRV(ierr);
     
     double prefactor = (theta_ - 1) / (this->am_[k]*this->cm_[k]);
@@ -273,18 +287,19 @@ setSystemMatrixSubmatrices(double timeStepWidth)
       ierr = MatAXPY(b1_[k], prefactor, massMatrix, SAME_NONZERO_PATTERN); CHKERRV(ierr);
     }
 
-    // set b2_ = (θ-1)*K_sigmai^k
+    // set b2_ = (θ-1)/(Am^k*Cm^k)*K_sigmai^k
+    // begin with b2_ = K_sigmai^k
     ierr = MatConvert(stiffnessMatrix, MATSAME, MAT_INITIAL_MATRIX, &b2_[k]); CHKERRV(ierr);
     
     if (useLumpedMassMatrix_)
     {
-      // in this formulation we have b2_[k] = -dt*(θ-1)*M^{-1}*K_sigmai^k
+      // in this formulation we have b2_[k] = -dt*(θ-1)/(Am^k*Cm^k)*M^{-1}*K_sigmai^k
       Mat result;
       ierr = MatMatMult(minusDtMInv, b2_[k], MAT_INITIAL_MATRIX, PETSC_DEFAULT, &result); CHKERRV(ierr);
       b2_[k] = result;
     }
 
-    prefactor = theta_ - 1;
+    prefactor = (theta_ - 1) / (this->am_[k]*this->cm_[k]);
     ierr = MatScale(b2_[k], prefactor); CHKERRV(ierr);
   }
 }

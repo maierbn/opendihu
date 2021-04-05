@@ -75,7 +75,7 @@ dt_splitting = 3e-3                 # [ms] overall timestep width of strang spli
 dt_3D = 4e-1                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep = 4e-1              # [ms] timestep for output surface EMG, 0.5
 output_timestep_fibers = 4e-1       # [ms] timestep for fiber output, 0.5
-output_timestep_big = 25            # [ms] timestep for output big files of 3D EMG, 100
+output_timestep_3D_emg = 25         # [ms] timestep for output big files of 3D EMG, 100
 
 # simulation time:  4s
 # final video time: 40s
@@ -100,6 +100,22 @@ firing_times_file       = input_directory+"/MU_firing_times_always.txt"    # use
 fiber_distribution_file = input_directory+"/MU_fibre_distribution_10MUs.txt"
 cellml_file             = input_directory+"/hodgkin_huxley_1952.c"
 #cellml_file             = input_directory+"/new_slow_TK_2014_12_08.cellml"
+
+# partitioning
+# ------------
+# this has to match the total number of processes
+n_subdomains_x = 1
+n_subdomains_y = 1
+n_subdomains_z = 1
+
+# stride for sampling the 3D elements from the fiber data
+sampling_stride_x = 2
+sampling_stride_y = 2
+sampling_stride_z = 50       # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
+
+distribute_nodes_equally = False     # (default: False)
+# True: set high priority to make subdomains have approximately equal number of fibers but creates tiny remainder elements inside the subdomains
+# False: make elements more equally sized, this can lead to a slight imbalance in the number of fibers per subdomain
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):

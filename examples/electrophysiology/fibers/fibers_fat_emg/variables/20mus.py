@@ -13,6 +13,7 @@ Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 
 # -----------------
 # motor units from paper Klotz2019 "Modelling the electrical activity of skeletal muscle tissue using a multi‐domain approach"
 
+import os
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
 import numpy as np
@@ -58,24 +59,24 @@ for mu_no in range(n_motor_units):
 
 # timing parameters
 # -----------------
-end_time = 50000.0                      # [ms] end time of the simulation
+end_time = 50000.0                  # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
-dt_0D = 2.5e-3                        # [ms] timestep width of ODEs (2e-3)
-dt_1D = 6.25e-4                        # [ms] timestep width of diffusion (4e-3)
-dt_splitting = 2.5e-3                 # [ms] overall timestep width of strang splitting (4e-3)
+dt_0D = 2.5e-3                      # [ms] timestep width of ODEs (2e-3)
+dt_1D = 6.25e-4                     # [ms] timestep width of diffusion (4e-3)
+dt_splitting = 2.5e-3               # [ms] overall timestep width of strang splitting (4e-3)
 dt_3D = 5e-1                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep_fibers = 2e5       # [ms] timestep for fiber output, 0.5
-output_timestep_3D_emg = 2e5            # [ms] timestep for output big files of 3D EMG, 100
-output_timestep_surface = 1e5              # [ms] timestep for output surface EMG, 0.5
+output_timestep_fibers = 2e5        # [ms] timestep for fiber output, 0.5
+output_timestep_3D_emg = 2e5        # [ms] timestep for output big files of 3D EMG, 100
+output_timestep_surface = 1e5       # [ms] timestep for output surface EMG, 0.5
 output_timestep_electrodes = 2e8    # [ms] timestep for python callback, which is electrode measurement output, has to be >= dt_3D
 
 # input files
-fiber_file = "../../../input/left_biceps_brachii_37x37fibers.bin"
-#fiber_file = "../../../input/left_biceps_brachii_9x9fibers.bin"
-fat_mesh_file = fiber_file + "_fat.bin"
-firing_times_file = "../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-fiber_distribution_file = "../../../input/MU_fibre_distribution_37x37_20.txt"
+input_directory = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
+fiber_file              = input_directory+"/left_biceps_brachii_37x37fibers.bin"
+fat_mesh_file           = fiber_file + "_fat.bin"
+firing_times_file       = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+fiber_distribution_file = input_directory+"/MU_fibre_distribution_37x37_20.txt"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
@@ -99,9 +100,10 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-disable_firing_output = False
+disable_firing_output = True
+enable_surface_emg = True          # Enables the surface emg output writer
 fast_monodomain_solver_optimizations = True # enable the optimizations in the fast multidomain solver
-use_vc = True                       # If the vc optimization type should be used for CellmlAdapter
+optimization_type = "vc"            # the optimization_type used in the cellml adapter, "vc" uses explicit vectorization
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):
@@ -131,8 +133,8 @@ if True:
   import sys
   # only on rank 0
   if (int)(sys.argv[-2]) == 0:
-    for mu_no,item in enumerate(motor_units):    
-      print("MU {}".format(mu_no))
+    for mu_no,item in enumerate(motor_units[0::4]):
+      print("MU {}".format(mu_no*4))
       for (key,value) in item.items():
         if key != "jitter":
           print("  {}: {}".format(key,value))

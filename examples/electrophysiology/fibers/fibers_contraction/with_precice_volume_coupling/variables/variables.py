@@ -16,8 +16,12 @@ innervation_zone_width = 0.         # not used [cm], this will later be used to 
 # -------
 diffusion_solver_type = "cg"        # solver and preconditioner for the diffusion part of the Monodomain equation
 diffusion_preconditioner_type = "none"      # preconditioner
+diffusion_solver_maxit = 1e4
+diffusion_solver_reltol = 1e-10
 potential_flow_solver_type = "gmres"        # solver and preconditioner for an initial Laplace flow on the domain, from which fiber directions are determined
 potential_flow_preconditioner_type = "none" # preconditioner
+potential_flow_solver_maxit = 1e4
+potential_flow_solver_reltol = 1e-10
 emg_solver_type = "cg"              # solver and preconditioner for the 3D static Bidomain equation that solves the intra-muscular EMG signal
 emg_preconditioner_type = "none"    # preconditioner
 emg_initial_guess_nonzero = False   # If the initial guess for the emg linear system should be set to the previous solution
@@ -55,6 +59,8 @@ paraview_output = False             # If the paraview output writer should be en
 adios_output = False                # If the MegaMol/ADIOS output writer should be enabled
 python_output = False               # If the Python output writer should be enabled
 exfile_output = False               # If the Exfile output writer should be enabled
+optimization_type = "vc"            # the optimization_type used in the cellml adapter, "vc" uses explicit vectorization
+approximate_exponential_function = True   # if the exponential function should be approximated by a Taylor series with only 11 FLOPS
 
 
 # motor unit stimulation times
@@ -70,10 +76,9 @@ n_subdomains_y = 1
 n_subdomains_z = 1
 
 # stride for sampling the 3D elements from the fiber data
-# here any number is possible
 sampling_stride_x = 2
 sampling_stride_y = 2
-sampling_stride_z = 150
+sampling_stride_z = 150   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
 # scenario name for log file
 scenario_name = ""

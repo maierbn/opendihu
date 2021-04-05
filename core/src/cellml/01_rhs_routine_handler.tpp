@@ -51,6 +51,12 @@ initializeRhsRoutine()
     // load type
     optimizationType_ = this->specificSettings_.getOptionString("optimizationType", "vc");
 
+    if (optimizationType_ == "comp")
+    {
+      LOG(WARNING) << "Option \"optimizationType\"=\"comp\" has been renamed to \"simd\"! Using \"simd\" instead.";
+      optimizationType_ = "simd";
+    }
+
     if (optimizationType_ != "simd" && optimizationType_ != "vc" && optimizationType_ != "openmp" && optimizationType_ != "gpu")
     {
       LOG(ERROR) << "Option \"optimizationType\" is \"" << optimizationType_ << "\" but valid values are \"simd\", \"vc\", \"openmp\" or \"gpu\"."
@@ -62,6 +68,9 @@ initializeRhsRoutine()
     if (optimizationType_ == "vc")
     {
       approximateExponentialFunction_ = this->specificSettings_.getOptionBool("approximateExponentialFunction", true);
+      useAoVSMemoryLayout_ = true;
+      if (this->specificSettings_.hasKey("useAoVSMemoryLayout"))
+        useAoVSMemoryLayout_ = this->specificSettings_.getOptionBool("useAoVSMemoryLayout", true);
     }
     else if (optimizationType_ == "openmp")
     {
@@ -274,7 +283,7 @@ createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nIns
 
     // create source file
     this->cellmlSourceCodeGenerator_.generateSourceFile(sourceToCompileFilename_, optimizationType_,
-                                                        approximateExponentialFunction_, maximumNumberOfThreads_);
+                                                        approximateExponentialFunction_, maximumNumberOfThreads_, useAoVSMemoryLayout_);
 
     // create library file
     if (libraryFilename.find("/") != std::string::npos)

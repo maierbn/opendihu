@@ -513,6 +513,14 @@ computePK2StressField()
         // F
         deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);
         deformationGradientDeterminant = MathUtility::computeDeterminant(deformationGradient);  // J
+        
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
+        for (int i = 0; i < Vc::double_v::size(); i++)
+        {
+          if (elementNoLocalv[i] == -1)
+            deformationGradientDeterminant[i] = 1;
+        } 
+#endif        
 
         if (Vc::all_of(deformationGradientDeterminant > 0.2))
           break;
@@ -592,31 +600,31 @@ computePK2StressField()
 
       // checking for nans in debug mode
 #ifndef NDEBUG
-      if (MathUtility::containsNanOrInf(inverseJacobianMaterial))
+      if (MathUtility::containsNanOrInf(inverseJacobianMaterial, elementNoLocalv))
         LOG(ERROR) << "inverseJacobianMaterial contains nan: " << inverseJacobianMaterial << ", jacobianMaterial: " << jacobianMaterial;
 
-      if (MathUtility::containsNanOrInf(deformationGradient))
+      if (MathUtility::containsNanOrInf(deformationGradient, elementNoLocalv))
         LOG(ERROR) << "deformationGradient contains nan: " << deformationGradient;
 
-      if (MathUtility::containsNanOrInf(rightCauchyGreen))
+      if (MathUtility::containsNanOrInf(rightCauchyGreen, elementNoLocalv))
         LOG(ERROR) << "rightCauchyGreen contains nan: " << rightCauchyGreen;
 
-      if (MathUtility::containsNanOrInf(inverseRightCauchyGreen))
+      if (MathUtility::containsNanOrInf(inverseRightCauchyGreen, elementNoLocalv))
         LOG(ERROR) << "inverseRightCauchyGreen contains nan: " << inverseRightCauchyGreen;
 
-      if (MathUtility::containsNanOrInf(invariants))
+      if (MathUtility::containsNanOrInf(invariants, elementNoLocalv))
         LOG(ERROR) << "invariants contains nan: " << invariants;
 
-      if (MathUtility::containsNanOrInf(deformationGradientDeterminant))
+      if (MathUtility::containsNanOrInf(deformationGradientDeterminant, elementNoLocalv))
         LOG(ERROR) << "deformationGradientDeterminant contains nan: " << deformationGradientDeterminant;
 
-      if (MathUtility::containsNanOrInf(reducedInvariants))
+      if (MathUtility::containsNanOrInf(reducedInvariants, elementNoLocalv))
         LOG(ERROR) << "reducedInvariants contains nan: " << reducedInvariants
           << ", invariants: " << invariants << ", deformationGradient: " << deformationGradient
           << ", deformationGradientDeterminant: " << deformationGradientDeterminant
           << ", rightCauchyGreenDeterminant: " << rightCauchyGreenDeterminant << ", rightCauchyGreen: " << rightCauchyGreen;
 
-      if (MathUtility::containsNanOrInf(pressure))
+      if (MathUtility::containsNanOrInf(pressure, elementNoLocalv))
         LOG(ERROR) << "pressure contains nan: " << pressure;
 #endif
 
@@ -624,9 +632,10 @@ computePK2StressField()
       //! compute 2nd Piola-Kirchhoff stress tensor S = 2*dPsi/dC and the fictitious PK2 Stress Sbar
       Tensor2_v_t<D> fictitiousPK2Stress;   // Sbar
       Tensor2_v_t<D> pk2StressIsochoric;    // S_iso
-      Tensor2_v_t<D> pK2Stress = this->computePK2Stress(pressure, rightCauchyGreen, inverseRightCauchyGreen, invariants, reducedInvariants, deformationGradientDeterminant, fiberDirection,
-                                                      fictitiousPK2Stress, pk2StressIsochoric
-                                                    );
+      Tensor2_v_t<D> pK2Stress = this->computePK2Stress(pressure, rightCauchyGreen, inverseRightCauchyGreen, invariants, reducedInvariants, 
+                                                        deformationGradientDeterminant, fiberDirection, elementNoLocalv,
+                                                        fictitiousPK2Stress, pk2StressIsochoric
+                                                        );
 
       std::array<double_v_t,6> valuesInVoigtNotation({pK2Stress[0][0], pK2Stress[1][1], pK2Stress[2][2], pK2Stress[0][1], pK2Stress[1][2], pK2Stress[0][2]});
 

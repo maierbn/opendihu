@@ -153,6 +153,13 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       // F
       Tensor2_v_t<D> deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);
       double_v_t deformationGradientDeterminant = MathUtility::computeDeterminant(deformationGradient);  // J
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
+        for (int i = 0; i < Vc::double_v::size(); i++)
+        {
+          if (elementNoLocalv[i] == -1)
+            deformationGradientDeterminant[i] = 1;
+        } 
+#endif        
 
       Tensor2_v_t<D> rightCauchyGreen = this->computeRightCauchyGreenTensor(deformationGradient);  // C = F^T*F
 
@@ -1112,6 +1119,13 @@ materialComputeJacobian()
       Tensor2_v_t<D> deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);    // F
       double_v_t deformationGradientDeterminant;    // J
       Tensor2_v_t<D> inverseDeformationGradient = MathUtility::computeInverse(deformationGradient, approximateMeshWidth, deformationGradientDeterminant);  // F^-1
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
+        for (int i = 0; i < Vc::double_v::size(); i++)
+        {
+          if (elementNoLocalv[i] == -1)
+            deformationGradientDeterminant[i] = 1;
+        } 
+#endif        
 
       Tensor2_v_t<D> rightCauchyGreen = this->computeRightCauchyGreenTensor(deformationGradient);  // C = F^T*F
 

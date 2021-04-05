@@ -239,7 +239,7 @@ stretchMeshAtCornersInFile(std::string filename)
         // the following computations calculate two values: a in [0,1] and factor around 1
         // a specifies how much the factor is used and how much the normal radius is used, a = 0 means normal radius, i.e., no mesh change, a=1 means full changed mesh
 
-        double h = 0.6;   // parameter, how far the area of mesh changes reaches in circumferential direction, 0<h<=1, smaller is more concentrated around corners
+        double h = 0.9;   // parameter, how far the area of mesh changes reaches in circumferential direction, 0<h<=1, smaller is more concentrated around corners
         double a = (1-sin(2*M_PI*((a1-0.5)/h+0.5)+M_PI_2))/2;    // 0 -> 0  0.5 -> 1  1 -> 0
 
         if (a1 < 0.5-h/2 || a1 > 0.5+h/2)

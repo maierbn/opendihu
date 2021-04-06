@@ -146,7 +146,7 @@ Result:
     <coupling-scheme:serial-explicit>
       <participants first="PartitionedFibers" second="MuscleContraction"/>
       <max-time value="1000.0"/>           <!-- end time of the whole simulation -->
-      <time-window-size value="1e0"/>   <!-- timestep width dt_3D -->
+      <time-window-size value="1e-1"/>   <!-- timestep width dt_3D -->
       
       <exchange data="Gamma"    mesh="PartitionedFibersMesh" from="PartitionedFibers" to="MuscleContraction"/>
       <exchange data="Geometry" mesh="MuscleContractionMesh" from="MuscleContraction" to="PartitionedFibers"/> <!--initialize="true"-->

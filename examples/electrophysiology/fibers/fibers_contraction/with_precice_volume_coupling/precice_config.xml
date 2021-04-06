@@ -2,7 +2,8 @@
 
 <precice-configuration>
   <log>
-    <sink type="stream" output="stdout"  filter='(%Severity% >= debug) and (not (%Function% = "advance"))' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />
+    <!--<sink type="stream" output="stdout"  filter='(%Severity% >= debug) and (not (%Function% = "advance"))' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />-->
+    <sink type="stream" output="stdout"  filter='(%Severity% >= debug) and (not (%Function% = "advance")) and (%Rank% = 0)' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />
     <!--<sink type="stream" output="stdout"  filter='%Severity% >= debug' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />-->
     <!--<sink type="file" output="debug.log" filter= "(%Severity% >= debug)" format="%Message%" enabled="true" />	-->
   </log>
@@ -35,7 +36,7 @@
       <!-- Makes the named mesh available to the participant. Mesh is provided by the solver directly. -->
       <use-mesh name="PartitionedFibersMesh" provide="yes"/>
       <use-mesh name="MuscleContractionMesh" from="MuscleContraction"/>
-      <export:vtk directory="precice-output" />
+      <export:vtk directory="precice-output" every-n-time-windows="10"  />
       
       <!-- Define input/output of the solver.  -->
       <write-data name="Gamma" mesh="PartitionedFibersMesh"/>
@@ -76,7 +77,7 @@ Result:
       <use-mesh name="PartitionedFibersMesh" from="PartitionedFibers"/>
       <write-data name="Geometry" mesh="MuscleContractionMesh"/>
       <read-data  name="Gamma"    mesh="MuscleContractionMesh"/>
-      <export:vtk directory="precice-output" />
+      <export:vtk directory="precice-output" every-n-time-windows="10"  />
       
       <!-- map from PartitionedFibersMesh to  MuscleContractionMesh -->
       <!-- shape-parameter: 

@@ -70,10 +70,15 @@ initialize()
   const std::string configFileName = this->specificSettings_.getOptionString("preciceConfigFilename", "../precice_config.xml");
   outputOnlyConvergedTimeSteps_ = this->specificSettings_.getOptionBool("outputOnlyConvergedTimeSteps", true);
 
-  int rankNo = nestedSolver_.data().functionSpace()->meshPartition()->rankSubset()->ownRankNo();
-  int nRanks = nestedSolver_.data().functionSpace()->meshPartition()->rankSubset()->size();
+  // get the union of all MPI ranks that occur for any fiber
+  std::shared_ptr<Partition::RankSubset> rankSubset = this->context_.partitionManager()->rankSubsetForCollectiveOperations();
+  int rankNo = rankSubset->ownRankNo();
+  int nRanks = rankSubset->size();
 
-  // initialize interface to precice for the bottom surface mesh
+  // debugging output of all ranks
+  //std::cout << "rank for precice: " << rankNo << "/" << nRanks << " " << DihuContext::ownRankNoCommWorld() << "/" << DihuContext::nRanksCommWorld() << std::endl;
+
+  // initialize interface to precice 
   preciceSolverInterface_ = std::make_shared<precice::SolverInterface>(preciceParticipantName_, configFileName, rankNo, nRanks);
 
   // parse the options in "preciceData" and initialize all variables in precice, store in variable preciceData_

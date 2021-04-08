@@ -120,7 +120,6 @@ initializePreciceData()
   // get all present slot names
   std::vector<std::string> slotNames;
   SlotConnectorDataHelper<SlotConnectorDataType>::getSlotNames(slotConnectorData, slotNames);
-  int nArrayItems = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems(slotConnectorData);   // number of fibers if there are fibers
 
   // loop over items of the list under "preciceData", the order of the items is also the order of the data connector slots
   for (int listIndex = 0; listIndex < list.size(); listIndex++)
@@ -221,6 +220,8 @@ initializePreciceData()
           LOG(DEBUG) << "got mesh partition for slot No " << preciceData.slotNo;
 
         int nDofsLocalWithoutGhosts = meshPartitionBase->nDofsLocalWithoutGhosts();
+        int nArrayItems = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems(slotConnectorData, preciceData.slotNo);   // number of fibers if there are fibers
+
         preciceMesh->nNodesLocal = nDofsLocalWithoutGhosts * nArrayItems;
 
         // get the vector of values [0,1,...,nDofsLocalWithGhosts]

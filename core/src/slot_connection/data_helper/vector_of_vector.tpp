@@ -18,13 +18,18 @@ nSlots(std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<S
 //! get the number of items if the slotConnector is organized in an array, `arrayIndex` can then be chosen in [0,nArrayItems]
 template<typename SlotConnectorDataType>
 int SlotConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>>::
-nArrayItems(std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>> slotConnectorData)
+nArrayItems(std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>> slotConnectorData, int slotNo)
 {
   if (!slotConnectorData)
     return 0;
   if (!slotConnectorData->empty())
+  {
     if (!(*slotConnectorData)[0]->empty())
-      return slotConnectorData->size() * (*slotConnectorData)[0]->size();
+    {
+      int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*((*slotConnectorData)[0]))[0], slotNo);
+      return slotConnectorData->size() * (*slotConnectorData)[0]->size() * nArrayItemsPerItem;
+    }
+  }
   return 0;
 }
 

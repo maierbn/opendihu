@@ -17,14 +17,14 @@ nSlots(std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>> slot
 //! get the number of items if the slotConnector is organized in an array, `arrayIndex` can then be chosen in [0,nArrayItems]
 template<typename SlotConnectorDataType>
 int SlotConnectorDataHelper<std::vector<std::shared_ptr<SlotConnectorDataType>>>::
-nArrayItems(std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>> slotConnectorData)
+nArrayItems(std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>> slotConnectorData, int slotNo)
 {
   if (!slotConnectorData)
     return 0;
   if (slotConnectorData->empty())
     return 0;
 
-  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0]);
+  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0], slotNo);
   return slotConnectorData->size() * nArrayItemsPerItem;
 }
 
@@ -41,33 +41,11 @@ getMeshPartitionBase(
   if (slotConnectorData->empty())
     return nullptr;
 
-  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0]);
+  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0], slotNo);
   int itemNo = arrayIndex / nArrayItemsPerItem;
   int arrayIndexInItem = arrayIndex % nArrayItemsPerItem;
 
   return SlotConnectorDataHelper<SlotConnectorDataType>::getMeshPartitionBase((*slotConnectorData)[itemNo], slotNo, arrayIndexInItem);
-
-/*
-  int nSlotsVariable1 = (*slotConnectorData)[arrayIndex]->variable1.size();
-
-  // if the slot no corresponds to a field variables stored under variable1
-  if (slotNo < nSlotsVariable1)
-  {
-    std::shared_ptr<typename SlotConnectorDataType::FieldVariable1Type> fieldVariable
-      = (*slotConnectorData)[arrayIndex]->variable1[slotNo].values;
-
-    return fieldVariable->functionSpace()->meshPartitionBase();
-  }
-  else
-  {
-    // if the slot no corresponds to a field variables stored under variable2
-    int index = slotNo - nSlotsVariable1;
-    std::shared_ptr<typename SlotConnectorDataType::FieldVariable2Type> fieldVariable
-      = (*slotConnectorData)[arrayIndex]->variable2[index].values;
-
-    return fieldVariable->functionSpace()->meshPartitionBase();
-  }
-  */
 }
 
 //! set the values at given dofs at the field variable given by slotNo
@@ -89,46 +67,12 @@ slotSetValues(
     return false;
   }
 
-  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0]);
+  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0], slotNo);
   int itemNo = arrayIndex / nArrayItemsPerItem;
   int arrayIndexInItem = arrayIndex % nArrayItemsPerItem;
 
   return SlotConnectorDataHelper<SlotConnectorDataType>::slotSetValues((*slotConnectorData)[itemNo], slotNo, arrayIndexInItem,
                                                                        dofNosLocal, values, petscInsertMode);
-/*
-  int nSlotsVariable1 = (*slotConnectorData)[arrayIndex]->variable1.size();
-
-  // if the slot no corresponds to a field variables stored under variable1
-  if (slotNo < nSlotsVariable1)
-  {
-    std::shared_ptr<typename SlotConnectorDataType::FieldVariable1Type> fieldVariable
-      = (*slotConnectorData)[arrayIndex]->variable1[slotNo].values;
-
-    int componentNo = (*slotConnectorData)[arrayIndex]->variable1[slotNo].componentNo;
-
-    // set the values in the field variable
-    LOG(DEBUG) << "slot " << slotNo << ", array index " << arrayIndex << ": "
-      << "in fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
-      << ", set dofs " << dofNosLocal << " to values " << values;
-    fieldVariable->setValues(componentNo, dofNosLocal, values, petscInsertMode);
-    LOG(DEBUG) << "fieldVariable: " << *fieldVariable;
-  }
-  else
-  {
-    // if the slot no corresponds to a field variables stored under variable2
-    int index = slotNo - nSlotsVariable1;
-    std::shared_ptr<typename SlotConnectorDataType::FieldVariable2Type> fieldVariable
-      = (*slotConnectorData)[arrayIndex]->variable2[index].values;
-
-    int componentNo = (*slotConnectorData)[arrayIndex]->variable2[index].componentNo;
-
-    // set the values in the field variable
-    LOG(DEBUG) << "slot " << slotNo << ", array index " << arrayIndex << ": "
-      << "in fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
-      << ", set dofs " << dofNosLocal << " to values " << values;
-    fieldVariable->setValues(componentNo, dofNosLocal, values, petscInsertMode);
-    LOG(DEBUG) << "fieldVariable: " << *fieldVariable;
-  }*/
 }
 
 //! get the values at given dofs at the field variable given by slotNo
@@ -150,46 +94,12 @@ slotGetValues(
     return;
   }
 
-  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0]);
+  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0], slotNo);
   int itemNo = arrayIndex / nArrayItemsPerItem;
   int arrayIndexInItem = arrayIndex % nArrayItemsPerItem;
 
-  SlotConnectorDataHelper<SlotConnectorDataType>::slotGetValues((*slotConnectorData)[itemNo], slotNo, arrayIndexInItem, dofNosLocal, values);
-
-/*
-  int nSlotsVariable1 = (*slotConnectorData)[arrayIndex]->variable1.size();
-
-  // if the slot no corresponds to a field variables stored under variable1
-  if (slotNo < nSlotsVariable1)
-  {
-    std::shared_ptr<typename SlotConnectorDataType::FieldVariable1Type> fieldVariable
-      = (*slotConnectorData)[arrayIndex]->variable1[slotNo].values;
-
-    int componentNo = (*slotConnectorData)[arrayIndex]->variable1[slotNo].componentNo;
-
-    // get the actual values
-    fieldVariable->getValues(componentNo, dofNosLocal, values);
-
-    LOG(DEBUG) << "slot " << slotNo << ", array index " << arrayIndex << ": "
-      << "from fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
-      << ", at dofs " << dofNosLocal << " get values " << values;
-  }
-  else
-  {
-    // if the slot no corresponds to a field variables stored under variable2
-    int index = slotNo - nSlotsVariable1;
-    std::shared_ptr<typename SlotConnectorDataType::FieldVariable2Type> fieldVariable
-      = (*slotConnectorData)[arrayIndex]->variable2[index].values;
-
-    int componentNo = (*slotConnectorData)[arrayIndex]->variable2[index].componentNo;
-
-    // get the actual values
-    fieldVariable->getValues(componentNo, dofNosLocal, values);
-
-    LOG(DEBUG) << "slot " << slotNo << ", array index " << arrayIndex << ": "
-      << "from fieldVariable \"" << fieldVariable->name() << "\", component " << componentNo
-      << ", at dofs " << dofNosLocal << " get values " << values;
-  }*/
+  SlotConnectorDataHelper<SlotConnectorDataType>::slotGetValues((*slotConnectorData)[itemNo], slotNo, arrayIndexInItem,
+                                                                dofNosLocal, values);
 }
 
 //! set the geometry values at given dofs of the function space of the field variable given by slotNo
@@ -211,41 +121,12 @@ slotSetGeometryValues(
     return;
   }
 
-  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0]);
+  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0], slotNo);
   int itemNo = arrayIndex / nArrayItemsPerItem;
   int arrayIndexInItem = arrayIndex % nArrayItemsPerItem;
 
   SlotConnectorDataHelper<SlotConnectorDataType>::slotSetGeometryValues((*slotConnectorData)[itemNo], slotNo, arrayIndexInItem,
                                                                         dofNosLocal, values);
-
-/*
-  int nSlotsVariable1 = (*slotConnectorData)[arrayIndex]->variable1.size();
-
-  // if the slot no corresponds to a field variables stored under variable1
-  if (slotNo < nSlotsVariable1)
-  {
-    std::shared_ptr<typename SlotConnectorDataType::FieldVariable1Type> fieldVariable
-      = (*slotConnectorData)[arrayIndex]->variable1[slotNo].values;
-
-    // set the values in the field variable
-    LOG(DEBUG) << "slot " << slotNo << ", array index " << arrayIndex << ": "
-      << "in fieldVariable \"" << fieldVariable->name() << "\", function space \"" << fieldVariable->functionSpace()->meshName() << "\""
-      << ", set dofs " << dofNosLocal << " of geometry field to values " << values;
-    fieldVariable->functionSpace()->geometryField().setValues(dofNosLocal, values);
-  }
-  else
-  {
-    // if the slot no corresponds to a field variables stored under variable2
-    int index = slotNo - nSlotsVariable1;
-    std::shared_ptr<typename SlotConnectorDataType::FieldVariable2Type> fieldVariable
-      = (*slotConnectorData)[arrayIndex]->variable2[index].values;
-
-    // set the values in the field variable
-    LOG(DEBUG) << "slot " << slotNo << ", array index " << arrayIndex << ": "
-      << "in fieldVariable \"" << fieldVariable->name() << "\", function space \"" << fieldVariable->functionSpace()->meshName() << "\""
-      << ", set dofs " << dofNosLocal << " of geometry field to values " << values;
-    fieldVariable->functionSpace()->geometryField().setValues(dofNosLocal, values);
-  }*/
 }
 
 //! get the geometry values at given dofs of the function space of the field variable given by slotNo
@@ -267,43 +148,13 @@ slotGetGeometryValues(
     return;
   }
 
-  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0]);
+  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0], slotNo);
   int itemNo = arrayIndex / nArrayItemsPerItem;
   int arrayIndexInItem = arrayIndex % nArrayItemsPerItem;
 
   LOG(DEBUG) << "slotGetGeometryValues on item " << arrayIndex << " -> " << arrayIndexInItem << "(" << nArrayItemsPerItem << ")";
   SlotConnectorDataHelper<SlotConnectorDataType>::slotGetGeometryValues((*slotConnectorData)[itemNo], slotNo, arrayIndexInItem,
                                                                         dofNosLocal, values);
-/*
-  int nSlotsVariable1 = (*slotConnectorData)[arrayIndex]->variable1.size();
-
-  // if the slot no corresponds to a field variables stored under variable1
-  if (slotNo < nSlotsVariable1)
-  {
-    std::shared_ptr<typename SlotConnectorDataType::FieldVariable1Type> fieldVariable
-      = (*slotConnectorData)[arrayIndex]->variable1[slotNo].values;
-
-    // get the actual values
-    fieldVariable->functionSpace()->geometryField().getValues(dofNosLocal, values);
-
-    LOG(DEBUG) << "slot " << slotNo << ", array index " << arrayIndex << ": "
-      << "from fieldVariable \"" << fieldVariable->name() << "\", function space \"" << fieldVariable->functionSpace()->meshName() << "\""
-      << ", at dofs " << dofNosLocal << " get values " << values;
-  }
-  else
-  {
-    // if the slot no corresponds to a field variables stored under variable2
-    int index = slotNo - nSlotsVariable1;
-    std::shared_ptr<typename SlotConnectorDataType::FieldVariable2Type> fieldVariable
-      = (*slotConnectorData)[arrayIndex]->variable2[index].values;
-
-    // get the actual values
-    fieldVariable->functionSpace()->geometryField().getValues(dofNosLocal, values);
-
-    LOG(DEBUG) << "slot " << slotNo << ", array index " << arrayIndex << ": "
-      << "from fieldVariable \"" << fieldVariable->name() << "\", function space \"" << fieldVariable->functionSpace()->meshName() << "\""
-      << ", at dofs " << dofNosLocal << " get values " << values;
-  }*/
 }
 
 //! get the values at given dofs at the field variable given by slotNo
@@ -319,31 +170,11 @@ slotSetRepresentationGlobal(
   if (slotConnectorData->empty())
     return;
 
-  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0]);
+  int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*slotConnectorData)[0], slotNo);
   int itemNo = arrayIndex / nArrayItemsPerItem;
   int arrayIndexInItem = arrayIndex % nArrayItemsPerItem;
 
   SlotConnectorDataHelper<SlotConnectorDataType>::slotSetRepresentationGlobal((*slotConnectorData)[itemNo], slotNo, arrayIndexInItem);
-/*
-  int nSlotsVariable1 = (*slotConnectorData)[arrayIndex]->variable1.size();
-
-  // if the slot no corresponds to a field variables stored under variable1
-  if (slotNo < nSlotsVariable1)
-  {
-    std::shared_ptr<typename SlotConnectorDataType::FieldVariable1Type> fieldVariable
-      = (*slotConnectorData)[arrayIndex]->variable1[slotNo].values;
-
-    fieldVariable->setRepresentationGlobal();
-  }
-  else
-  {
-    // if the slot no corresponds to a field variables stored under variable2
-    int index = slotNo - nSlotsVariable1;
-    std::shared_ptr<typename SlotConnectorDataType::FieldVariable2Type> fieldVariable
-      = (*slotConnectorData)[arrayIndex]->variable2[index].values;
-
-    fieldVariable->setRepresentationGlobal();
-  }*/
 }
 
 //! collect all slot names

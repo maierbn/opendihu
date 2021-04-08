@@ -170,4 +170,38 @@ Depending on the value of ``dynamic``, either an instance of ``DynamicHyperelast
 See the description in :doc:`dynamic_hyperelasticity` for all details, such as boundary conditions.
 
 
+timeStepOutputInterval
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+How often the current timestep will be printed to the console and log. 
+If this is >100 and numberTimeSteps is 1, nothing will be printed.
 
+
+Pmax
+^^^^^^^
+The maximum active stress value, also called :math:`S_\text{max}` in the derivation.
+    
+enableForceLengthRelation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If the function :math:`f_l(λ_f)` which models the force-length relation (as in Heidlauf2013) should be multiplied to the active stress value.
+Set to false if this relation is already considered in the CellML model.
+
+lambdaDotScalingFactor
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+A scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. 
+Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model. Usually this factor can be set to 1.
+
+mapGeometryToMeshes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+This is a list of opendihu mesh names that will be updated with the deformed geometry of the 3D mesh.
+If this list is not empty, only the specified meshes will be deformed according to the computed displacements.
+
+If this list is empty, the meshes of all connected slots will automatically be deformed, as this is usually what you want.
+
+slotNames
+^^^^^^^^^^^^^^
+A list names of the connector slots, maximum 6 characters per name, see :doc:`output_connector_slots` for details.
+    
+dynamic
+^^^^^^^^^^^
+This is a bool variable that specifies if the static solver (:doc:`hyperelasticity`) or the dynamic solver (:doc:`dynamic_hyperelasticity`) should be used.
+   

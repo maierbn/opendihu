@@ -122,8 +122,8 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 config = {
   "scenarioName":          variables.scenario_name,
   "logFormat":             "csv",
-  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
-  "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",
+  "solverStructureDiagramFile":     "out/" + variables.scenario_name + "/solver_structure_muscle_contraction.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "out/" + variables.scenario_name + "/mappings_between_meshes_muscle_contraction.txt",
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": variables.mappings_between_meshes,
   "Solvers": {

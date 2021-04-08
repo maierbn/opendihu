@@ -14,7 +14,7 @@ struct SlotConnectorDataHelper
   static int nSlots(std::shared_ptr<SlotConnectorDataType> slotConnectorData);
 
   //! get the number of items if the slotConnector is organized in an array, `arrayIndex` can then be chosen in [0,nArrayItems]
-  static int nArrayItems(std::shared_ptr<SlotConnectorDataType> slotConnectorData);
+  static int nArrayItems(std::shared_ptr<SlotConnectorDataType> slotConnectorData, int slotNo);
 
   //! get the mesh partition of the field variable at the slot
   static std::shared_ptr<Partition::MeshPartitionBase> getMeshPartitionBase(
@@ -65,7 +65,7 @@ struct SlotConnectorDataHelper<std::vector<std::shared_ptr<SlotConnectorDataType
   static int nSlots(std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>> slotConnectorData);
 
   //! get the number of items if the slotConnector is organized in an array, `arrayIndex` can then be chosen in [0,nArrayItems]
-  static int nArrayItems(std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>> slotConnectorData);
+  static int nArrayItems(std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>> slotConnectorData, int slotNo);
 
   //! get the mesh partition of the field variable at the slot
   static std::shared_ptr<Partition::MeshPartitionBase> getMeshPartitionBase(
@@ -120,7 +120,7 @@ struct SlotConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::shar
   static int nSlots(std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>> slotConnectorData);
 
   //! get the number of items if the slotConnector is organized in an array, `arrayIndex` can then be chosen in [0,nArrayItems]
-  static int nArrayItems(std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>> slotConnectorData);
+  static int nArrayItems(std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>> slotConnectorData, int slotNo);
 
   //! get the mesh partition of the field variable at the slot
   static std::shared_ptr<Partition::MeshPartitionBase> getMeshPartitionBase(
@@ -175,7 +175,7 @@ struct SlotConnectorDataHelper<std::tuple<std::shared_ptr<SlotConnectorDataType1
   static int nSlots(std::shared_ptr<std::tuple<std::shared_ptr<SlotConnectorDataType1>,std::shared_ptr<SlotConnectorDataType2>>> slotConnectorData);
 
   //! get the number of items if the slotConnector is organized in an array, `arrayIndex` can then be chosen in [0,nArrayItems]
-  static int nArrayItems(std::shared_ptr<std::tuple<std::shared_ptr<SlotConnectorDataType1>,std::shared_ptr<SlotConnectorDataType2>>> slotConnectorData);
+  static int nArrayItems(std::shared_ptr<std::tuple<std::shared_ptr<SlotConnectorDataType1>,std::shared_ptr<SlotConnectorDataType2>>> slotConnectorData, int slotNo);
 
   //! get the mesh partition of the field variable at the slot
   static std::shared_ptr<Partition::MeshPartitionBase> getMeshPartitionBase(

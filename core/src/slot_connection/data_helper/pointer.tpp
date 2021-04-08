@@ -14,7 +14,7 @@ nSlots(std::shared_ptr<SlotConnectorDataType> slotConnectorData)
 //! get the number of items if the slotConnector is organized in an array, `arrayIndex` can then be chosen in [0,nArrayItems]
 template<typename SlotConnectorDataType>
 int SlotConnectorDataHelper<SlotConnectorDataType>::
-nArrayItems(std::shared_ptr<SlotConnectorDataType> slotConnectorData)
+nArrayItems(std::shared_ptr<SlotConnectorDataType> slotConnectorData, int slotNo)
 {
   if (!slotConnectorData)
     return 0;

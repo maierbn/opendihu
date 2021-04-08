@@ -43,7 +43,7 @@ SEMT_DOWNLOAD = True
 EASYLOGGINGPP_DOWNLOAD = True
 
 # ADIOS2, adaptable I/O library, needed for interfacing MegaMol
-ADIOS_DOWNLOAD = False
+ADIOS_DOWNLOAD = True
 
 # MegaMol, visualization framework of VISUS, optional, needs ADIOS2
 MEGAMOL_DOWNLOAD = False    # install MegaMol from official git repo, but needed is the private repo, ask Tobias Rau for access to use MegaMol with opendihu

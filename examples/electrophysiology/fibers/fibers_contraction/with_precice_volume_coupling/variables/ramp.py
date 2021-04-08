@@ -7,7 +7,7 @@ scenario_name = "ramp"
 # quantities in CellML unit system
 sigma_f = 8.93              # [mS/cm] conductivity in fiber direction (f)
 
-Conductivity = 3.828        # [mS/cm] sigma, conductivity
+Conductivity = sigma_f      # [mS/cm] sigma, conductivity
 Am = 500.0                  # [cm^-1] surface area to volume ratio
 Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch)
 # diffusion prefactor = Conductivity/(Am*Cm)

@@ -133,6 +133,19 @@ initialize()
   ierr = VecCreateNest(this->rankSubset_->mpiCommunicator(), this->nCompartments_+2, NULL, 
                        this->subvectorsSolution_.data(), &this->nestedSolution_); CHKERRV(ierr);
 
+  // output sizes of matrices for debugging output
+#if 0
+  global_no_t nDofsGlobalMuscle = this->dataMultidomain_.functionSpace()->nDofsGlobal();
+  global_no_t nDofsGlobalFat = this->dataFat_.functionSpace()->nDofsGlobal() - boundaryDofsGlobalFat_.size();
+
+  dof_no_t nDofsLocalWithoutGhostsMuscle = this->dataMultidomain_.functionSpace()->nDofsLocalWithoutGhosts();
+  dof_no_t nDofsLocalWithoutGhostsFat = this->dataFat_.functionSpace()->nDofsLocalWithoutGhosts() - nSharedDofsLocal_;
+
+  LOG(ERROR) << "rank " << this->dataMultidomain_.functionSpace()->meshPartition()->rankSubset()->ownRankNo() << ", n dofs muscle: " << nDofsLocalWithoutGhostsMuscle << "/" << nDofsGlobalMuscle
+    << ", fat: " << nDofsLocalWithoutGhostsFat << "/" << nDofsGlobalFat << ", ncols: " << this->nColumnSubmatricesSystemMatrix_ << ", total dofs: "
+    << nDofsGlobalMuscle * (this->nColumnSubmatricesSystemMatrix_-1) + nDofsGlobalFat;
+#endif
+
   // write initial meshes
   callOutputWriter(0, 0.0, 0);
 }

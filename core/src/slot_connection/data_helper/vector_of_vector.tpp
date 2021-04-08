@@ -76,6 +76,44 @@ getMeshPartitionBase(
   }
 }
 
+//! get the mesh name of the field variable at the slot
+template<typename SlotConnectorDataType>
+std::string SlotConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>>::
+getMeshName(
+  std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>> slotConnectorData,
+  int slotNo
+)
+{
+  if (!slotConnectorData)
+    return std::string();
+  if (slotConnectorData->empty())
+    return std::string();
+
+  int sizeFirstVector = slotConnectorData->size();
+  int sizeSecondVector = (*slotConnectorData)[0]->size();
+
+  int nSlotsVariable1 = (*(*slotConnectorData)[0])[0]->variable1.size();
+
+  // if the slot no corresponds to a field variables stored under variable1
+  if (slotNo < nSlotsVariable1)
+  {
+    std::shared_ptr<typename SlotConnectorDataType::FieldVariable1Type> fieldVariable
+      = (*(*slotConnectorData)[0])->variable1[slotNo].values;
+
+    return fieldVariable->functionSpace()->meshName();
+  }
+  else
+  {
+    // if the slot no corresponds to a field variables stored under variable2
+    int index = slotNo - nSlotsVariable1;
+    std::shared_ptr<typename SlotConnectorDataType::FieldVariable2Type> fieldVariable
+      = (*(*slotConnectorData)[0])->variable2[index].values;
+
+    return fieldVariable->functionSpace()->meshName();
+  }
+  return std::string();
+}
+
 //! set the values at given dofs at the field variable given by slotNo
 template<typename SlotConnectorDataType>
 bool SlotConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>>::

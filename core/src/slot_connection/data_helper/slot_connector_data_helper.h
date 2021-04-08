@@ -22,6 +22,12 @@ struct SlotConnectorDataHelper
     int slotNo, int arrayIndex
   );
 
+  //! get the mesh name of the field variable at the slot
+  static std::string getMeshName(
+    std::shared_ptr<SlotConnectorDataType> slotConnectorData,
+    int slotNo
+  );
+
   //! set the values at given dofs at the field variable given by slotNo
   static bool slotSetValues(
     std::shared_ptr<SlotConnectorDataType> slotConnectorData,
@@ -71,6 +77,12 @@ struct SlotConnectorDataHelper<std::vector<std::shared_ptr<SlotConnectorDataType
   static std::shared_ptr<Partition::MeshPartitionBase> getMeshPartitionBase(
     std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>> slotConnectorData,
     int slotNo, int arrayIndex
+  );
+
+  //! get the mesh name of the field variable at the slot
+  static std::string getMeshName(
+    std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>> slotConnectorData,
+    int slotNo
   );
 
   //! set the values at given dofs at the field variable given by slotNo
@@ -128,6 +140,12 @@ struct SlotConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::shar
     int slotNo, int arrayIndex
   );
 
+  //! get the mesh name of the field variable at the slot
+  static std::string getMeshName(
+    std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>> slotConnectorData,
+    int slotNo
+  );
+
   //! set the values at given dofs at the field variable given by slotNo
   static bool slotSetValues(
     std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>> slotConnectorData,
@@ -181,6 +199,12 @@ struct SlotConnectorDataHelper<std::tuple<std::shared_ptr<SlotConnectorDataType1
   static std::shared_ptr<Partition::MeshPartitionBase> getMeshPartitionBase(
     std::shared_ptr<std::tuple<std::shared_ptr<SlotConnectorDataType1>,std::shared_ptr<SlotConnectorDataType2>>> slotConnectorData,
     int slotNo, int arrayIndex
+  );
+
+  //! get the mesh name of the field variable at the slot
+  static std::string getMeshName(
+    std::shared_ptr<std::tuple<std::shared_ptr<SlotConnectorDataType1>,std::shared_ptr<SlotConnectorDataType2>>> slotConnectorData,
+    int slotNo
   );
 
   //! set the values at given dofs at the field variable given by slotNo

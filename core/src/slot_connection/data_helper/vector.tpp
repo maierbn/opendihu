@@ -48,6 +48,22 @@ getMeshPartitionBase(
   return SlotConnectorDataHelper<SlotConnectorDataType>::getMeshPartitionBase((*slotConnectorData)[itemNo], slotNo, arrayIndexInItem);
 }
 
+//! get the mesh name of the field variable at the slot
+template<typename SlotConnectorDataType>
+std::string SlotConnectorDataHelper<std::vector<std::shared_ptr<SlotConnectorDataType>>>::
+getMeshName(
+  std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>> slotConnectorData,
+  int slotNo
+)
+{
+  if (!slotConnectorData)
+    return std::string();
+  if (slotConnectorData->empty())
+    return std::string();
+
+  return SlotConnectorDataHelper<SlotConnectorDataType>::getMeshName((*slotConnectorData)[0], slotNo);
+}
+
 //! set the values at given dofs at the field variable given by slotNo
 template<typename SlotConnectorDataType>
 bool SlotConnectorDataHelper<std::vector<std::shared_ptr<SlotConnectorDataType>>>::

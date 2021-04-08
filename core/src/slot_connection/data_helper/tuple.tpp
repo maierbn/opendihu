@@ -31,6 +31,7 @@ nArrayItems(std::shared_ptr<std::tuple<std::shared_ptr<SlotConnectorDataType1>,s
     int offsetSlotNo = slotNo - nSlotsFirstTuple;
     return SlotConnectorDataHelper<SlotConnectorDataType2>::nArrayItems(std::get<1>(*slotConnectorData), offsetSlotNo);
   }
+  return 0;
 }
 
 //! get the mesh partition of the field variable at the slot

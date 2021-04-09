@@ -223,6 +223,7 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T,A> &values)
     return stream;
   }
 
+#ifndef HAVE_STDSIMD
   stream << "[" << values[0];
 
   if (VLOG_IS_ON(1))
@@ -230,7 +231,8 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T,A> &values)
     // with VLOG output all entries
     for (unsigned long i = 1; i < values.size(); i++)
     {
-      stream << "," << values[i];
+      T v(values[i]);
+      stream << "," << v;
     }
   }
   else
@@ -242,9 +244,15 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T,A> &values)
       stream << "," << values[i];
     }
     if (i == 100 && i < values.size())
-      stream << "..." << values[values.size()-3] << "," << values[values.size()-2] << "," << values[values.size()-1]
+    {
+      T v0(values[values.size()-3]);
+      T v1(values[values.size()-2]);
+      T v2(values[values.size()-1]);
+      stream << "..." << v0 << "," << v1 << "," << v2
         << " (" << values.size() << " entries total, only showing the first 100 (call with -vmodule=vector_operators*=1 to show all))";
+    }
   }
+#endif
 
   stream << "]";
   return stream;

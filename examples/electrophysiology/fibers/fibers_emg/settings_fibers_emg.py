@@ -467,7 +467,7 @@ config = {
         "OutputWriter": [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental",},
         ] if variables.enable_surface_emg else [],
-        "face":                     ["0+","1+"],              # which faces of the 3D mesh should be written into the 2D mesh
+        "face":                     ["0+"],              # which faces of the 3D mesh should be written into the 2D mesh
         "samplingPoints":           None,                # the electrode positions, they are created in the helper.py script
         "updatePointPositions":     False,               # the electrode points should be initialize in every timestep (set to False for the static case). This makes a difference if the muscle contracts, then True=fixed electrodes, False=electrodes moving with muscle.
         "filename":                 "out/{}/electrodes.csv".format(variables.scenario_name),

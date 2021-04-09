@@ -80,6 +80,22 @@ setTimeSpan(double startTime, double endTime)
   endTime_ = endTime;
 }
 
+//! start time of time interval to be simulated
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+double StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+startTime()
+{
+  return endTime_;    // there is no start time as the static bidomain solver solves a static equation
+}
+
+//! end time of simulation
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+double StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+endTime()
+{
+  return endTime_;
+}
+
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 void StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 initialize()

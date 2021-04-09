@@ -106,18 +106,19 @@ fi
 echo ""
 echo "--- Compile opendihu"
 "cd" $opendihu_directory
-$scons no_tests=TRUE
+$scons no_tests=TRUE -j $(nproc --all)
 
 echo ""
 echo "--- Compile parallel fiber estimation"
 "cd" $parallel_fiber_estimation_directory
-$scons
+$scons 
 
 "cd" build_release
 
 echo ""
 echo "--- Generate actual fiber meshes in different sizes using the parallel_fiber_estimation example"
 #read -p "Press enter to continue"
+mkdir -p ${current_directory}/resulting_meshes
 
 # parameters for files with different numbers of fibers
 # number of fibers (number without boundary): 9(7),   11(9),   13(11),   25(23),   37(35),     65(63),     129(127),     257(255),     513(511)
@@ -179,7 +180,7 @@ for i in ${!array_l[@]}; do
       --top_z_clip $top_z_clip_mm \
       --element_size $element_length_mm \
       -l=${l} -m=${m} --n_elements_x_per_subdomain=${n} \
-      --max_area_factor 
+      --n_elements_z_per_subdomain=100 \
       --program_name=${program_name}"
 
     ${mpi_command} ./${program_name} ../settings_generate.py \
@@ -189,6 +190,7 @@ for i in ${!array_l[@]}; do
       --top_z_clip $top_z_clip_mm \
       --element_size $element_length_mm \
       -l=${l} -m=${m} --n_elements_x_per_subdomain=${n} \
+      --n_elements_z_per_subdomain=100 \
       --program_name=${program_name}
 
     # scale from mm to cm
@@ -238,6 +240,8 @@ for i in ${!array_l[@]}; do
     # rename the fibers to their final name
     mv ${current_directory}/processed_meshes/${basename}_08_${number_fibers1}x${number_fibers1}fibers_xy_swapped.bin ${current_directory}/processed_meshes/${basename}_${number_fibers1}x${number_fibers1}fibers.bin
     mv ${current_directory}/processed_meshes/${basename}_08_${number_fibers2}x${number_fibers2}fibers_xy_swapped.bin ${current_directory}/processed_meshes/${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin
+    cp ${current_directory}/processed_meshes/${basename}_${number_fibers1}x${number_fibers1}fibers.bin ${current_directory}/resulting_meshes/${basename}_${number_fibers1}x${number_fibers1}fibers.bin
+    cp ${current_directory}/processed_meshes/${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin ${current_directory}/resulting_meshes/${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin
     echo -e "\033[0;32mcreated final result: " ${basename}_${number_fibers1}x${number_fibers1}fibers.bin "\033[0m"
     echo -e "\033[0;32mcreated final result: " ${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin "\033[0m"
   else
@@ -258,6 +262,7 @@ for i in ${!array_l[@]}; do
     else
       echo "File ${basename}_${number_fibers1}x${number_fibers1}fibers.bin_fat.bin already exists, do not create again."
     fi
+    cp ${basename}_${number_fibers1}x${number_fibers1}fibers.bin_fat.bin ${current_directory}/resulting_meshes
     
     echo ""
     echo "Create ${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin_fat.bin if does not exist"
@@ -266,6 +271,7 @@ for i in ${!array_l[@]}; do
     else
       echo "File ${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin_fat.bin already exists, do not create again."
     fi
+    cp ${basename}_${number_fibers2}x${number_fibers2}fibers.no_boundary.bin_fat.bin ${current_directory}/resulting_meshes
   else   
     echo ""
     echo "--- Do not create a fat layer mesh for ${number_fibers1}x${number_fibers1} and ${number_fibers2}x${number_fibers2} fibers because the file would be very large."
@@ -275,21 +281,37 @@ for i in ${!array_l[@]}; do
 
 done
 
+# remove failed meshes
+rm ${current_directory}/processed_meshes/${basename}_49x49fibers.bin
+rm ${current_directory}/resulting_meshes/${basename}_49x49fibers.bin
+rm ${current_directory}/processed_meshes/${basename}_73x73fibers.bin
+rm ${current_directory}/resulting_meshes/${basename}_73x73fibers.bin
+
 # refine mesh with parameters m=0 lmax=2 nel=4 with 33(31):
 # for m=4: 353 fibers
 # for m=15: 513 fibers
 
-echo "--- Refine file with 33x33 and 31x31 fibers to yield 353x353 and 351x351 fibers"
+echo "--- Refine file with 33x33 and 31x31 fibers to yield 161x161 and 151x151 fibers"
 # input fiber
 input1=${current_directory}/processed_meshes/${basename}_33x33fibers.bin
 input2=${current_directory}/processed_meshes/${basename}_31x31fibers.no_boundary.bin
 
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 4 $input1 $bottom_z_clip $top_z_clip $element_length     # 353
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 4 $input2 $bottom_z_clip $top_z_clip $element_length     # 351
+${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 4 $input1 $bottom_z_clip $top_z_clip $element_length     # 161
+${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 4 $input2 $bottom_z_clip $top_z_clip $element_length     # 151
 
-echo "--- Refine file with 33x33 and 31x31 fibers to yield 513x513 and 511x511 fibers"
+cp ${current_directory}/processed_meshes/${basename}_161x161fibers.bin ${current_directory}/resulting_meshes/${basename}_161x161fibers.bin
+cp ${current_directory}/processed_meshes/${basename}_151x151fibers.no_boundary.bin ${current_directory}/resulting_meshes/${basename}_151x151fibers.no_boundary.bin
+
+echo "--- Refine file with 33x33 and 31x31 fibers to yield 513x513 and 481x481 fibers"
 ${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 15 $input1 $bottom_z_clip $top_z_clip $element_length     # 513
-${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 15 $input2 $bottom_z_clip $top_z_clip $element_length     # 511
+${parallel_fiber_estimation_directory}/build_release/refine ${parallel_fiber_estimation_directory}/settings_refine.py 15 $input2 $bottom_z_clip $top_z_clip $element_length     # 481
+
+cp ${current_directory}/processed_meshes/${basename}_513x513fibers.bin ${current_directory}/resulting_meshes/${basename}_513x513fibers.bin
+cp ${current_directory}/processed_meshes/${basename}_481x481fibers.no_boundary.bin ${current_directory}/resulting_meshes/${basename}_481x481fibers.no_boundary.bin
 
 cd $current_directory
 
+echo
+echo
+du -h resulting_meshes
+echo 'The created meshes have been written to "resulting_meshes". Now you can copy these files to the examples/electrophysiology/input directory'

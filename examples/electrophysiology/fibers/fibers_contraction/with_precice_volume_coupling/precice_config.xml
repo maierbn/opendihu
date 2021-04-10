@@ -52,15 +52,24 @@ Using values:
 Result:
   s = 91.0456277631
 -->
-      <mapping:rbf-gaussian 
+      <!--<mapping:rbf-gaussian 
         direction="read" 
         from="MuscleContractionMesh" 
         to="PartitionedFibersMesh" 
         constraint="consistent" 
         timing="initial" 
         shape-parameter="91.05"
-      />
+      />-->
       
+     <mapping:rbf-compact-polynomial-c6
+        direction="read" 
+        from="MuscleContractionMesh" 
+        to="PartitionedFibersMesh" 
+        constraint="consistent" 
+        timing="initial" 
+        support-radius="0.5"  
+     />
+
       <!--<mapping:nearest-neighbor direction="read" from="MuscleContractionMesh" to="PartitionedFibersMesh" constraint="consistent" />-->
       <!-- rbf-compact-tps-c2 abgeschnittene splines, 3-5 Nachbarn im support radius--> 
       <!-- <mapping:rbf-thin-plate-splines

@@ -364,8 +364,10 @@ initialize()
       {
         fiberPointBuffersParameters_[i][parameterNo] = parameterValues[parameterNo*nAlgebraicsLocalCellml];    // note, the stride in parameterValues is "nAlgebraicsLocalCellml", not "nParametersPerInstance_"
 
+#ifndef HAVE_STDSIMD
         VLOG(1) << "fiberPointBuffersParameters_ buffer no " << i << ", parameter no " << parameterNo
           << ", value: " <<  fiberPointBuffersParameters_[i][parameterNo];
+#endif
       }
     }
   }

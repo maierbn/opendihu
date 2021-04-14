@@ -30,17 +30,27 @@ def log2(x_value):
 
 import matplotlib.pyplot as plt
 fig = plt.figure()
-x_list = np.linspace(0.1, 20, 200)
+x_list = np.linspace(0.2, 20, 200)
 
 plt.plot(x_list, np.log(x_list), label="exact")
 #plt.plot(x_list, [log(x) for x in x_list], label="Chebyshev")
 plt.plot(x_list, [log2(x) for x in x_list], label="Taylor")
 plt.legend()
 
+# define global plotting parameters
+plt.rcParams.update({'font.size': 16})
+plt.rcParams['lines.linewidth'] = 3
+
+fig = plt.figure()
+plt.plot(x_list, [(np.log(x)-log2(x))/np.log(x) for x in x_list])
+plt.grid()
+plt.savefig("apxlog.pdf")
+plt.show()
+
 max_rel_error = 0
 location = 0
-for x in np.linspace(0.2,19,100):
-  rel_error =  (np.log(x)-log2(x))/np.log2(x)
+for x in np.linspace(0.2,20,200):
+  rel_error =  (np.log(x)-log2(x))/np.log(x)
   print("{}, {}, {}, error: {}".format(x, np.log(x), log(x), rel_error))
   old_rel_error = max_rel_error
   max_rel_error = max(max_rel_error, rel_error)

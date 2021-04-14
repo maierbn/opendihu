@@ -479,8 +479,12 @@ defineHelperFunctions(std::set<std::string> &helperFunctions, bool approximateEx
   sourceCode << R"(
   // The relative error of this implementation is below 0.04614465854334056 for x in [0.2,19].
 
-  // improve value by Newton iterations
+  // improve value by one Newton iteration to assert that the approximated log function is the inverse of the approximated exp function
+  // y = log(x)
+  // F(y) = exp(y)-x, solve for F(y) = 0, one Newton iteration is y -= F(y)/F'(y) = (exp(y)-x) / exp(y) = 1 - x/exp(y)
+  
   result -= (1 - x/exponential(result));
+  
   return result;
 }
 )";

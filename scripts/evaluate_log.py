@@ -10,6 +10,7 @@ import datetime
 import time
 from cycler import cycler
 import os
+import pandas_utility
 
 input_filename = "logs/log.csv"
 list_columns = False
@@ -87,7 +88,8 @@ if list_columns:
 	print("File {} contains {} colums: {}".format(input_filename, n_columns, column_names))
 
 # load data frame
-df = pd.read_csv(input_filename, sep=';', error_bad_lines=False, warn_bad_lines=True, comment="#", header=None, names=column_names, usecols=range(n_columns), mangle_dupe_cols=True)
+#df = pd.read_csv(input_filename, sep=';', error_bad_lines=False, warn_bad_lines=True, comment="#", header=None, names=column_names, usecols=range(n_columns), mangle_dupe_cols=True)
+df = pandas_utility.load_df(input_filename)
 
 # filter data
 #df = df.loc[df['endTime'] == 1]

@@ -2,11 +2,42 @@
 
 import numpy as np
 import sys, os
+import argparse
+import distutils.util
 
 # number of elements
 nx = 2    # 2
 ny = 1    # 2
 nz = 5    # 5
+
+own_rank_no = (int)(sys.argv[-2])
+n_ranks = (int)(sys.argv[-1])
+
+# define command line arguments
+mbool = lambda x:bool(distutils.util.strtobool(x))   # function to parse bool arguments
+parser = argparse.ArgumentParser(description='3d_hyperelasticity')
+parser.add_argument('--scenario_name',         help='The name to identify this run in the log.',      default="3d_box")
+parser.add_argument('--nx',                    help='Number of elements in x direction.', type=int,   default=nx)
+parser.add_argument('--ny',                    help='Number of elements in y direction.', type=int,   default=ny)
+parser.add_argument('--nz',                    help='Number of elements in z direction.', type=int,   default=nz)
+parser.add_argument('--use_analytic_jacobian', help='If the analytic jacobian is computed.', type=mbool, default=True)
+parser.add_argument('--use_numeric_jacobian',  help='If the numeric jacobian is computed.', type=mbool, default=False)
+
+# parse command line arguments and assign values to variables module
+class variables:
+  pass
+args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
+if len(other_args) != 0 and own_rank_no == 0:
+    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
+
+nx = variables.nx
+ny = variables.ny
+nz = variables.nz
+use_analytic_jacobian = variables.use_analytic_jacobian
+use_numeric_jacobian = variables.use_numeric_jacobian
+
+print("scenario name: {}\nnumber of elements: {} x {} x {}\nanalytic jacobian: {}\nnumeric jacobian: {}".
+  format(variables.scenario_name,nx,ny,nz,use_analytic_jacobian,use_numeric_jacobian))
 
 # number of nodes
 mx = 2*nx + 1
@@ -20,8 +51,6 @@ xpos = 0.0
 ypos = 0.0
 zpos = 0.0
 
-own_rank_no = (int)(sys.argv[-2])
-n_ranks = (int)(sys.argv[-1])
 
 # bottom plane
 for j in range(0,my):
@@ -100,21 +129,21 @@ for j in range(my):
     }
     
 config = {
-  "scenarioName": "3d_box",
+  "scenarioName": variables.scenario_name,
   "logFormat":    "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
-  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
-  "mappingsBetweenMeshesLogFile":   "mappings_between_meshes.txt",   # log file for mappings between meshes
+  "solverStructureDiagramFile":     "out/" + variables.scenario_name + "/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "out/" + variables.scenario_name + "/mappings_between_meshes.txt",   # log file for mappings between meshes
   
   "Meshes": fiber_meshes,
   "HyperelasticitySolver": {
     "durationLogKey": "nonlinear",
     
     "materialParameters": [2, 3, 4, 5],  # c1, c2, b1, d1
-    "displacementsScalingFactor": 10.0,   # scaling factor for displacements
+    "displacementsScalingFactor": 1.0,   # scaling factor for displacements
     "constantBodyForce":          [0.0, 0.0, 0.0],   # body force in whole body region
-    "residualNormLogFilename": "log_residual_norm.txt",
-    "useAnalyticJacobian": True,
-    "useNumericJacobian": False,   # Only works in parallel execution. If both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
+    "residualNormLogFilename": "out/" + variables.scenario_name + "/log_residual_norm.txt",
+    "useAnalyticJacobian": use_analytic_jacobian,
+    "useNumericJacobian": use_numeric_jacobian,   # Only works in parallel execution. If both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
       
     "dumpDenseMatlabVariables": False,   # extra output of matlab vectors, x,r, jacobian matrix
     # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables are all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
@@ -145,6 +174,7 @@ config = {
     
     #"loadFactors":  [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
     "loadFactors": [],                  # no load factors, solve problem directly
+    "scaleInitialGuess":          False,# when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
     "nNonlinearSolveCalls": 1,          # how often the nonlinear solve should be repeated
     
     # boundary conditions
@@ -155,22 +185,22 @@ config = {
     "updateDirichletBoundaryConditionsFunction": None,
     "updateDirichletBoundaryConditionsFunctionCallInterval": 1,
     
-    "dirichletOutputFilename":  "out/dirichlet_boundary_conditions",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values
+    "dirichletOutputFilename":  "out/" + variables.scenario_name + "/dirichlet_boundary_conditions",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values
     
     "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-      {"format": "Paraview", "outputInterval": 1, "filename": "out/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-      {"format": "PythonFile", "filename": "out/u", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "incremental"},
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+      {"format": "PythonFile", "filename": "out/" + variables.scenario_name + "/u", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "incremental"},
     ],
     "pressure": {   # output files for pressure function space (linear elements)
       "OutputWriter" : [
         {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-        {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "incremental"},
+        {"format": "PythonFile", "filename": "out/" + variables.scenario_name + "/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "incremental"},
       ]
     },
     # output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
     "LoadIncrements": {   
       "OutputWriter" : [
-        {"format": "Paraview", "outputInterval": 1, "filename": "out/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+        {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       ]
     },
   },

@@ -134,7 +134,7 @@ for j in range(n_fibers_y):
         
     # make mus that are not part of the list of MUs to plot gray
     if mu_no not in mus_to_plot:
-        color = (0.8,0.8,0.8)
+        color = (1,1,0.9)
 
     point_colors.append(color)
     #plt.plot(i,j,'o',color=colors[mu_no-1,:])
@@ -189,12 +189,14 @@ ax.axis('off')
 plt.axis('equal')
 plt.tight_layout()
 plt.savefig("plots/"+output_filename+"_2d_fiber_distribution_.pdf")
+plt.savefig("plots/"+output_filename+"_2d_fiber_distribution_.png")
 
 # plot total distribution of MUs
 
 fig = plt.figure(6,figsize=(6.4, 2.8))
 bins = [x-0.5 for x in range(1,n_motor_units+2)]
 numbers,edges = np.histogram(mu_nos_for_fibers,bins)
+print("Smallest MU: {}, Largest MU: {}".format(min(numbers), max(numbers)))
 
 plt.hist(mu_nos_for_fibers,bins=bins, align='mid', rwidth=0.8)
 a = numbers[-1] / (basis**n_motor_units)
@@ -213,6 +215,7 @@ plt.xlabel("Motor Unit Index")
 plt.ylabel("Count")
 plt.legend()
 plt.savefig("plots/"+output_filename+"_fiber_distribution_.pdf")
+plt.savefig("plots/"+output_filename+"_fiber_distribution_.png")
 plt.show()
 
 print("\nResult plots were written in plot subdirectory as \"plots/"+output_filename+"_*.pdf\".")

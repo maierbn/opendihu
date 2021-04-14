@@ -2,7 +2,8 @@
 
 <precice-configuration>
   <log>
-    <sink type="stream" output="stdout"  filter='(%Severity% >= debug) and (not (%Function% = "advance"))' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />
+    <!--<sink type="stream" output="stdout"  filter='(%Severity% >= debug) and (not (%Function% = "advance"))' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />-->
+    <sink type="stream" output="stdout"  filter='(%Severity% >= debug) and (not (%Function% = "advance")) and (%Rank% = 0)' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />
     <!--<sink type="stream" output="stdout"  filter='%Severity% >= debug' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />-->
     <!--<sink type="file" output="debug.log" filter= "(%Severity% >= debug)" format="%Message%" enabled="true" />	-->
   </log>
@@ -35,7 +36,7 @@
       <!-- Makes the named mesh available to the participant. Mesh is provided by the solver directly. -->
       <use-mesh name="PartitionedFibersMesh" provide="yes"/>
       <use-mesh name="MuscleContractionMesh" from="MuscleContraction"/>
-      <export:vtk directory="precice-output" />
+      <export:vtk directory="precice-output" every-n-time-windows="10"  />
       
       <!-- Define input/output of the solver.  -->
       <write-data name="Gamma" mesh="PartitionedFibersMesh"/>
@@ -51,15 +52,24 @@ Using values:
 Result:
   s = 91.0456277631
 -->
-      <mapping:rbf-gaussian 
+      <!--<mapping:rbf-gaussian 
         direction="read" 
         from="MuscleContractionMesh" 
         to="PartitionedFibersMesh" 
         constraint="consistent" 
         timing="initial" 
         shape-parameter="91.05"
-      />
+      />-->
       
+     <mapping:rbf-compact-polynomial-c6
+        direction="read" 
+        from="MuscleContractionMesh" 
+        to="PartitionedFibersMesh" 
+        constraint="consistent" 
+        timing="initial" 
+        support-radius="0.5"  
+     />
+
       <!--<mapping:nearest-neighbor direction="read" from="MuscleContractionMesh" to="PartitionedFibersMesh" constraint="consistent" />-->
       <!-- rbf-compact-tps-c2 abgeschnittene splines, 3-5 Nachbarn im support radius--> 
       <!-- <mapping:rbf-thin-plate-splines
@@ -76,7 +86,7 @@ Result:
       <use-mesh name="PartitionedFibersMesh" from="PartitionedFibers"/>
       <write-data name="Geometry" mesh="MuscleContractionMesh"/>
       <read-data  name="Gamma"    mesh="MuscleContractionMesh"/>
-      <export:vtk directory="precice-output" />
+      <export:vtk directory="precice-output" every-n-time-windows="10"  />
       
       <!-- map from PartitionedFibersMesh to  MuscleContractionMesh -->
       <!-- shape-parameter: 
@@ -146,7 +156,7 @@ Result:
     <coupling-scheme:serial-explicit>
       <participants first="PartitionedFibers" second="MuscleContraction"/>
       <max-time value="1000.0"/>           <!-- end time of the whole simulation -->
-      <time-window-size value="1e0"/>   <!-- timestep width dt_3D -->
+      <time-window-size value="1e-1"/>   <!-- timestep width dt_3D -->
       
       <exchange data="Gamma"    mesh="PartitionedFibersMesh" from="PartitionedFibers" to="MuscleContraction"/>
       <exchange data="Geometry" mesh="MuscleContractionMesh" from="MuscleContraction" to="PartitionedFibers"/> <!--initialize="true"-->

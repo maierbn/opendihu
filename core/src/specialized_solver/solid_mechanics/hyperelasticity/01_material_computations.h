@@ -131,6 +131,7 @@ protected:
                    const std::array<double_v_t,5> reducedInvariants,      //< [in] the reduced invariants Ibar_1, ..., Ibar_5
                    const double_v_t deformationGradientDeterminant,       //< [in] J = det(F)
                    VecD<3,double_v_t> fiberDirection,                     //< [in] a0, direction of fibers
+                   dof_no_v_t elementNoLocalv,                            //< [in] the current element nos (simd vector) with unused entries set to -1, needed only as mask which entries to discard
                    Tensor2<3,double_v_t> &fictitiousPK2Stress,            //< [out] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
                    Tensor2<3,double_v_t> &pk2StressIsochoric              //< [out] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
                   );

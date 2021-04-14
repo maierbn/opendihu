@@ -136,8 +136,8 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 config = {
   "scenarioName":          variables.scenario_name,
   "logFormat":             "csv",
-  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
-  "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",
+  "solverStructureDiagramFile":     "out/" + variables.scenario_name + "/solver_structure_partitioned_fibers.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "out/" + variables.scenario_name + "/mappings_between_meshes_partitioned_fibers.txt",
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": variables.mappings_between_meshes,
   "Solvers": {
@@ -163,7 +163,7 @@ config = {
   "PreciceAdapterVolumeCoupling": {
     "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
     "timestepWidth":            1,                          # coupling time step width, must match the value in the precice config
-    "couplingEnabled":          False,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
+    "couplingEnabled":          True,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
     "endTimeIfCouplingDisabled": variables.end_time,        # if "couplingEnabled" is set to False, use this end time for the simulation
     "preciceConfigFilename":    "../precice_config.xml",    # the preCICE configuration file
     "preciceParticipantName":   "PartitionedFibers",        # name of the own precice participant, has to match the name given in the precice xml config file

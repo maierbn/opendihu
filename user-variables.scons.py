@@ -69,8 +69,8 @@ PRECICE_DOWNLOAD = True
 MPI_DIR = "/usr/lib/x86_64-linux-gnu/openmpi"    # standard path for openmpi on ubuntu >= 18.04
 
 # Vectorized code for matrix assembly
-# Set to True for fastest code, set to False for faster compilation
-USE_VECTORIZED_FE_MATRIX_ASSEMBLY = False
+# Set to True for fastest code, set to False for faster compilation, note this works only using the Vc code, not std::simd code (only for GCC < 9)
+USE_VECTORIZED_FE_MATRIX_ASSEMBLY = True
 if USE_VECTORIZED_FE_MATRIX_ASSEMBLY:
   print("Note, USE_VECTORIZED_FE_MATRIX_ASSEMBLY is True in user-variables.scons.py, this means faster programs but longer compilation times.\n")
 

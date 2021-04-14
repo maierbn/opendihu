@@ -21,6 +21,7 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
                  const std::array<double_v_t,5> reducedInvariants,      //< [in] the reduced invariants Ibar_1, ..., Ibar_5
                  const double_v_t deformationGradientDeterminant,       //< [in] J = det(F)
                  VecD<3,double_v_t> fiberDirection,                     //< [in] a0, direction of fibers
+                 dof_no_v_t elementNoLocalv,                            //< [in] the current element nos (simd vector) with unused entries set to -1, needed only as mask which entries to discard
                  Tensor2<3,double_v_t> &fictitiousPK2Stress,            //< [out] Sbar, the fictitious 2nd Piola-Kirchhoff stress tensor
                  Tensor2<3,double_v_t> &pk2StressIsochoric              //< [out] S_iso, the isochoric part of the 2nd Piola-Kirchhoff stress tensor
                 )
@@ -180,7 +181,8 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
 #ifndef NDEBUG
   VLOG(1) << "fictitiousPK2Stress: " << fictitiousPK2Stress << ", inverseRightCauchyGreen: " << inverseRightCauchyGreen << ", J: " << J << ", p: " << pressure;
   VLOG(1) << "decoupledFormFactors: " << decoupledFormFactor1 << ", " << decoupledFormFactor2 << ", " << decoupledFormFactor4 << ", " << decoupledFormFactor5;
-  VLOG(1) << "fiberDirection: " << fiberDirection << ", C: " << rightCauchyGreen;
+  VLOG(1) << "elementNoLocalv: " << elementNoLocalv << ", parameterVector: " << parameterVector << std::endl;
+  VLOG(1) << "fiberDirection: " << fiberDirection << ", C: " << rightCauchyGreen << ", J: " << J << ", factorJ23: " << factorJ23;
 #endif
 
   // decoupled form of strain energy function
@@ -356,9 +358,9 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
   }
 
 #ifndef NDEBUG
-  if (MathUtility::containsNanOrInf(pK2Stress))
+  if (MathUtility::containsNanOrInf(pK2Stress, elementNoLocalv))
   {
-    if (MathUtility::containsNanOrInf(fictitiousPK2Stress))
+    if (MathUtility::containsNanOrInf(fictitiousPK2Stress, elementNoLocalv))
     {
       LOG(ERROR) << "fictitiousPK2Stress contains nan: " << fictitiousPK2Stress << ", J=" << J;
     }
@@ -511,6 +513,14 @@ computePK2StressField()
         // F
         deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);
         deformationGradientDeterminant = MathUtility::computeDeterminant(deformationGradient);  // J
+        
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
+        for (int i = 0; i < Vc::double_v::size(); i++)
+        {
+          if (elementNoLocalv[i] == -1)
+            deformationGradientDeterminant[i] = 1;
+        } 
+#endif        
 
         if (Vc::all_of(deformationGradientDeterminant > 0.2))
           break;
@@ -590,31 +600,31 @@ computePK2StressField()
 
       // checking for nans in debug mode
 #ifndef NDEBUG
-      if (MathUtility::containsNanOrInf(inverseJacobianMaterial))
+      if (MathUtility::containsNanOrInf(inverseJacobianMaterial, elementNoLocalv))
         LOG(ERROR) << "inverseJacobianMaterial contains nan: " << inverseJacobianMaterial << ", jacobianMaterial: " << jacobianMaterial;
 
-      if (MathUtility::containsNanOrInf(deformationGradient))
+      if (MathUtility::containsNanOrInf(deformationGradient, elementNoLocalv))
         LOG(ERROR) << "deformationGradient contains nan: " << deformationGradient;
 
-      if (MathUtility::containsNanOrInf(rightCauchyGreen))
+      if (MathUtility::containsNanOrInf(rightCauchyGreen, elementNoLocalv))
         LOG(ERROR) << "rightCauchyGreen contains nan: " << rightCauchyGreen;
 
-      if (MathUtility::containsNanOrInf(inverseRightCauchyGreen))
+      if (MathUtility::containsNanOrInf(inverseRightCauchyGreen, elementNoLocalv))
         LOG(ERROR) << "inverseRightCauchyGreen contains nan: " << inverseRightCauchyGreen;
 
-      if (MathUtility::containsNanOrInf(invariants))
+      if (MathUtility::containsNanOrInf(invariants, elementNoLocalv))
         LOG(ERROR) << "invariants contains nan: " << invariants;
 
-      if (MathUtility::containsNanOrInf(deformationGradientDeterminant))
+      if (MathUtility::containsNanOrInf(deformationGradientDeterminant, elementNoLocalv))
         LOG(ERROR) << "deformationGradientDeterminant contains nan: " << deformationGradientDeterminant;
 
-      if (MathUtility::containsNanOrInf(reducedInvariants))
+      if (MathUtility::containsNanOrInf(reducedInvariants, elementNoLocalv))
         LOG(ERROR) << "reducedInvariants contains nan: " << reducedInvariants
           << ", invariants: " << invariants << ", deformationGradient: " << deformationGradient
           << ", deformationGradientDeterminant: " << deformationGradientDeterminant
           << ", rightCauchyGreenDeterminant: " << rightCauchyGreenDeterminant << ", rightCauchyGreen: " << rightCauchyGreen;
 
-      if (MathUtility::containsNanOrInf(pressure))
+      if (MathUtility::containsNanOrInf(pressure, elementNoLocalv))
         LOG(ERROR) << "pressure contains nan: " << pressure;
 #endif
 
@@ -622,9 +632,10 @@ computePK2StressField()
       //! compute 2nd Piola-Kirchhoff stress tensor S = 2*dPsi/dC and the fictitious PK2 Stress Sbar
       Tensor2_v_t<D> fictitiousPK2Stress;   // Sbar
       Tensor2_v_t<D> pk2StressIsochoric;    // S_iso
-      Tensor2_v_t<D> pK2Stress = this->computePK2Stress(pressure, rightCauchyGreen, inverseRightCauchyGreen, invariants, reducedInvariants, deformationGradientDeterminant, fiberDirection,
-                                                      fictitiousPK2Stress, pk2StressIsochoric
-                                                    );
+      Tensor2_v_t<D> pK2Stress = this->computePK2Stress(pressure, rightCauchyGreen, inverseRightCauchyGreen, invariants, reducedInvariants, 
+                                                        deformationGradientDeterminant, fiberDirection, elementNoLocalv,
+                                                        fictitiousPK2Stress, pk2StressIsochoric
+                                                        );
 
       std::array<double_v_t,6> valuesInVoigtNotation({pK2Stress[0][0], pK2Stress[1][1], pK2Stress[2][2], pK2Stress[0][1], pK2Stress[1][2], pK2Stress[0][2]});
 

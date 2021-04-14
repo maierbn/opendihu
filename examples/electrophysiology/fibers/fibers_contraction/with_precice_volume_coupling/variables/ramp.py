@@ -25,6 +25,7 @@ b  = 1.075e-2               # [N/cm^2] anisotropy parameter
 d  = 9.1733                 # [-] anisotropy parameter
 material_parameters = [c1, c2, b, d]   # material parameters
 pmax = 7.3                  # [N/cm^2] maximum isometric active stress
+pmax = 2
 
 # for debugging, b = 0 leads to normal Mooney-Rivlin
 #b = 0
@@ -39,16 +40,16 @@ bottom_traction = [0.0,0.0,-1e-1]        # [1 N]
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
 motor_units = [
-  {"radius": 40.00, "activation_start_time": 0.0, "stimulation_frequency": 23.92, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # low number of fibers
-  {"radius": 42.35, "activation_start_time": -0.2, "stimulation_frequency": 23.36, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 45.00, "activation_start_time": -0.4, "stimulation_frequency": 23.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 48.00, "activation_start_time": -0.6, "stimulation_frequency": 22.46, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 51.42, "activation_start_time": -0.8, "stimulation_frequency": 20.28, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 55.38, "activation_start_time": -1.0, "stimulation_frequency": 16.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 60.00, "activation_start_time": -1.2, "stimulation_frequency": 12.05, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 65.45, "activation_start_time": -1.4, "stimulation_frequency": 10.03, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 72.00, "activation_start_time": -1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},
-  {"radius": 80.00, "activation_start_time": -1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]},    # high number of fibers
+  {"radius": 40.00, "activation_start_time": 0.0, "stimulation_frequency": 23.92, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #1    # low number of fibers
+  {"radius": 42.35, "activation_start_time": 0.2, "stimulation_frequency": 23.36, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #2
+  {"radius": 45.00, "activation_start_time": 0.4, "stimulation_frequency": 23.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #3
+  {"radius": 48.00, "activation_start_time": 0.6, "stimulation_frequency": 22.46, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #4
+  {"radius": 51.42, "activation_start_time": 0.8, "stimulation_frequency": 20.28, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #5
+  {"radius": 55.38, "activation_start_time": 1.0, "stimulation_frequency": 16.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #6 
+  {"radius": 60.00, "activation_start_time": 1.2, "stimulation_frequency": 12.05, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #7
+  {"radius": 65.45, "activation_start_time": 1.4, "stimulation_frequency": 10.03, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #8
+  {"radius": 72.00, "activation_start_time": 1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #9
+  {"radius": 80.00, "activation_start_time": 1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #10   # high number of fibers
 ]
 # note: negative start time is the same as zero, it is just there for debugging. Delete the minus signs to get a ramp
 
@@ -56,10 +57,10 @@ end_time = 100                      # [ms] end time of the simulation
 dt_0D = 2.5e-5                      # [ms] timestep width of ODEs (2e-3)
 dt_1D = 2.5e-5                      # [ms] timestep width of diffusion (4e-3)
 dt_splitting = 2.5e-5               # [ms] overall timestep width of strang splitting (4e-3)
-dt_3D = 1e-1                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG, this has to be the same value as in the precice_config.xml
-output_timestep = 1                 # [ms] timestep for output files, 5.0
+dt_3D = 1e-1                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG, this has to be the same value as in the precice_config.xml
+output_timestep = 1.0                # [ms] timestep for output files, 5.0
 output_timestep_fibers = output_timestep   # [ms] timestep for fiber output
-output_timestep_big = 25            # [ms] timestep for output big files of 3D EMG, 100
+output_timestep_big = 1.0            # [ms] timestep for output big files of 3D EMG, 100
 
 
 
@@ -74,9 +75,9 @@ import opendihu
 
 # parameters for the contraction program
 if "contraction" in opendihu.program_name:
-  sampling_stride_x = 1
-  sampling_stride_y = 1
-  sampling_stride_z = 200
+  sampling_stride_x = 2
+  sampling_stride_y = 2
+  sampling_stride_z = 40
   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
 else:
@@ -87,19 +88,25 @@ else:
   sampling_stride_z = 20
   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
+distribute_nodes_equally = False     # (default: False)
+# True: set high priority to make subdomains have approximately equal number of fibers but creates tiny remainder elements inside the subdomains
+# False: make elements more equally sized, this can lead to a slight imbalance in the number of fibers per subdomain
+
 # input files
 import os
 input_directory   = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
 
-fiber_file        = input_directory + "/left_biceps_brachii_7x7fibers.bin"
+#fiber_file        = input_directory + "/left_biceps_brachii_7x7fibers.bin"
+fiber_file        = input_directory + "/left_biceps_brachii_13x13fibers.bin"
 firing_times_file = input_directory + "/MU_firing_times_always.txt"
-fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs.txt"
+#fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs.txt"
+fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs_13x13.txt"
 cellml_file       = input_directory + "/new_slow_TK_2014_12_08.cellml"
 
 # EMG solver parameters
 emg_solver_type = "cg"              # solver and preconditioner for the 3D static Bidomain equation that solves the intra-muscular EMG signal
 emg_preconditioner_type = "none"    # preconditioner
-emg_initial_guess_nonzero = False   # If the initial guess for the emg linear system should be set to the previous solution
+emg_initial_guess_nonzero = True    # If the initial guess for the emg linear system should be set to the previous solution
 emg_solver_maxit = 1e4              # maximum number of iterations for the static bidomain solver
 emg_solver_reltol = 1e-5            # relative tolerance for solver
 emg_solver_abstol = 1e-5            # absolute tolerance for solver
@@ -114,7 +121,8 @@ python_output = False          # produce python output files
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):
-  r = motor_units[mu_no]["radius"]*1e-2
+  # get radius in cm, 1 μm = 1e-6 m = 1e-4*1e-2 m = 1e-4 cm
+  r = motor_units[mu_no]["radius"]*1e-4
   # cylinder surface: A = 2*π*r*l, V = cylinder volume: π*r^2*l, Am = A/V = 2*π*r*l / (π*r^2*l) = 2/r
   return 2./r
 

@@ -32,7 +32,7 @@ mpirun -n 18 ./fibers_shorten_emg ../settings_fibers_emg.py shorten.py --end_tim
 # openmp
 echo ===== openmp 6 =====
 mv src/new_slow_TK_2014_12_08.c .; rm -rf lib src && mkdir src && cp new_slow_TK_2014_12_08.c src
-mpirun -n 18 ./fibers_shorten_emg ../settings_fibers_emg.py shorten.py --end_time=3 --scenario_name=openmp-18-0 --optimization_type=openmp --maximum_number_of_threads=0  
+mpirun -n 18 ./fibers_shorten_emg ../settings_fibers_emg.py shorten.py --end_time=3 --scenario_name=openmp-18-2 --optimization_type=openmp --maximum_number_of_threads=2
 mv src/new_slow_TK_2014_12_08.c .; rm -rf lib src && mkdir src && cp new_slow_TK_2014_12_08.c src
 mpirun -n 18 ./fibers_shorten_emg ../settings_fibers_emg.py shorten.py --end_time=3 --scenario_name=openmp-18-1 --optimization_type=openmp --maximum_number_of_threads=1  
 mv src/new_slow_TK_2014_12_08.c .; rm -rf lib src && mkdir src && cp new_slow_TK_2014_12_08.c src

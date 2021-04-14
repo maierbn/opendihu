@@ -21,8 +21,6 @@ preciceReadData()
   using SlotConnectorDataType = typename NestedSolver::SlotConnectorDataType;
   std::shared_ptr<SlotConnectorDataType> slotConnectorData = this->nestedSolver_.getSlotConnectorData();
 
-  int nArrayItems = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems(slotConnectorData);   // number of fibers if there are fibers
-
   // loop over data
   for (typename PreciceAdapterVolumeCouplingInitialize<NestedSolver>::PreciceData &preciceData : this->preciceData_)
   {
@@ -59,6 +57,8 @@ preciceReadData()
       // get the vector of values [0,1,...,nDofsLocalWithGhosts]
       const std::vector<PetscInt> &dofNosLocalWithGhosts = meshPartitionBase->dofNosLocal();
       std::vector<PetscInt> dofNosLocalWithoutGhosts(dofNosLocalWithGhosts.begin(), dofNosLocalWithGhosts.begin()+nDofsLocalWithoutGhosts);
+
+      int nArrayItems = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems(slotConnectorData, preciceData.slotNo);   // number of fibers if there are fibers
 
       // store received data in field variable
       if (preciceData.isGeometryField)
@@ -110,8 +110,6 @@ preciceWriteData()
   using SlotConnectorDataType = typename NestedSolver::SlotConnectorDataType;
   std::shared_ptr<SlotConnectorDataType> slotConnectorData = this->nestedSolver_.getSlotConnectorData();
 
-  int nArrayItems = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems(slotConnectorData);   // number of fibers if there are fibers
-
   // loop over data
   for (typename PreciceAdapterVolumeCouplingInitialize<NestedSolver>::PreciceData &preciceData : this->preciceData_)
   {
@@ -128,6 +126,8 @@ preciceWriteData()
       // get the vector of values [0,1,...,nDofsLocalWithGhosts]
       const std::vector<PetscInt> &dofNosLocalWithGhosts = meshPartitionBase->dofNosLocal();
       std::vector<PetscInt> dofNosLocalWithoutGhosts(dofNosLocalWithGhosts.begin(), dofNosLocalWithGhosts.begin()+nDofsLocalWithoutGhosts);
+
+      int nArrayItems = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems(slotConnectorData, preciceData.slotNo);   // number of fibers if there are fibers
 
       // if it is a geometry field, get the node positions of a mesh
       if (preciceData.isGeometryField)

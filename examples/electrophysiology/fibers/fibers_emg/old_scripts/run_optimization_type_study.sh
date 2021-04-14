@@ -32,7 +32,7 @@ mpirun -n 18 ./fibers_emg ../settings_fibers_emg.py optimization_type_study.py -
 # openmp
 echo ===== openmp 6 =====
 rm -rf lib src
-mpirun -n 18 ./fibers_emg ../settings_fibers_emg.py optimization_type_study.py --end_time=10 --scenario_name=openmp-18-0 --optimization_type=openmp --maximum_number_of_threads=0 --fiber_file=../../../input/left_biceps_brachii_25x25fibers.bin
+mpirun -n 18 ./fibers_emg ../settings_fibers_emg.py optimization_type_study.py --end_time=10 --scenario_name=openmp-18-2 --optimization_type=openmp --maximum_number_of_threads=2 --fiber_file=../../../input/left_biceps_brachii_25x25fibers.bin
 rm -rf lib src
 mpirun -n 18 ./fibers_emg ../settings_fibers_emg.py optimization_type_study.py --end_time=10 --scenario_name=openmp-18-1 --optimization_type=openmp --maximum_number_of_threads=1 --fiber_file=../../../input/left_biceps_brachii_25x25fibers.bin
 rm -rf lib src

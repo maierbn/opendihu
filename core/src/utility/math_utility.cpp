@@ -478,6 +478,7 @@ double estimateConditionNumber(const Tensor2<3> &matrix, const Tensor2<3> &inver
 
 bool containsNanOrInf(const double value)
 {
+  // check if the double value is a nan or a high value
   if (!std::isfinite(value) || fabs(value) > 1e+75 || value == std::numeric_limits<double>::max())
   {
     return true;
@@ -489,6 +490,24 @@ bool containsNanOrInf(const Vc::double_v value)
 {
   for (int i = 0; i < Vc::double_v::size(); i++)
   {
+    if (containsNanOrInf(value[i]))
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool containsNanOrInf(const Vc::double_v value, dof_no_v_t elementNoLocalv)
+{
+  for (int i = 0; i < Vc::double_v::size(); i++)
+  {
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
+    // do not consider indices that are -1
+    if (elementNoLocalv[i] == -1)
+      continue;
+#endif
+
     if (containsNanOrInf(value[i]))
     {
       return true;

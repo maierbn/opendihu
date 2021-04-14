@@ -6,6 +6,7 @@ import sys, os
 import timeit
 import argparse
 import importlib
+import distutils.util
 
 # parse rank arguments
 rank_no = (int)(sys.argv[-2])
@@ -154,13 +155,16 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 config = {
   "scenarioName":                   variables.scenario_name,    # scenario name which will appear in the log file
   "logFormat":                      "csv",                      # "csv" or "json", format of the lines in the log file, csv gives smaller files
-  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
-  "mappingsBetweenMeshesLogFile":   "out/" + variables.scenario_name + "/mappings_between_meshes.txt",
+  "solverStructureDiagramFile":     "out/" + variables.scenario_name + "/solver_structure_fibers_with_3d.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "out/" + variables.scenario_name + "/mappings_between_meshes_fibers_with_3d.txt",
   "meta": {                 # additional fields that will appear in the log
     "partitioning": [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": variables.mappings_between_meshes,
+  "connectedSlots": [
+    ("stress", "g3D"),      # map the gamma variable from the fiber meshes to the 3Dmesh
+  ],
   "Solvers": {
     "diffusionTermSolver": {# solver for the implicit timestepping scheme of the diffusion time step
       "relativeTolerance":  variables.diffusion_solver_reltol,
@@ -209,7 +213,7 @@ config = {
         "preciceDataName":      "Geometry",                 # name of the vector or scalar to transfer, as given in the precice xml settings file
         "preciceMeshName":      "PartitionedFibersMesh",    # name of the precice coupling mesh, as given in the precice xml settings file
         "opendihuMeshName":     None,                       # extra specification of the opendihu mesh that is used for the initialization of the precice mapping. If None or "", the mesh of the field variable is used.
-        "slotName":             None,                       # name of the existing slot of the opendihu data connector to which this variable is associated to (only relevant if not isGeometryField)
+        "slotName":             "vm",                       # name of the existing slot of the opendihu data connector to which this variable is associated to (only relevant if not isGeometryField)
         "isGeometryField":      True,                       # if this is the geometry field of the mesh
       },
       {
@@ -217,7 +221,7 @@ config = {
         "preciceDataName":      "Gamma",                    # name of the vector or scalar to transfer, as given in the precice xml settings file
         "preciceMeshName":      "PartitionedFibersMesh",    # name of the precice coupling mesh, as given in the precice xml settings file
         "opendihuMeshName":     None,                       # extra specification of the opendihu mesh that is used for the initialization of the precice mapping. If None or "", the mesh of the field variable is used.
-        "slotName":             "gamma",                    # name of the existing slot of the opendihu data connector to which this variable is associated to (only relevant if not isGeometryField)
+        "slotName":             "g3D",                    # name of the existing slot of the opendihu data connector to which this variable is associated to (only relevant if not isGeometryField)
         "isGeometryField":      False,                      # if this is the geometry field of the mesh
       },
     ],
@@ -331,7 +335,7 @@ config = {
                       "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
                       "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
                       "checkForNanInf":              False,                                   # if the solution should be checked for NaN and inf values, this requires a lot of runtimes
-                      "nAdditionalFieldVariables":   2,                                       # number of additional field variables that should be added and potentially written to output files, these field variables can be used for receiving data from other solvers
+                      "nAdditionalFieldVariables":   1,                                       # number of additional field variables that should be added and potentially written to output files, these field variables can be used for receiving data from other solvers
                       "additionalSlotNames":         ["gamma"],                               # slot names for the additional field variables
                       
                       "FiniteElementMethod" : {
@@ -377,8 +381,9 @@ config = {
           "durationLogKey":         "duration_bidomain",
           "solverName":             "muscularEMGSolver",
           "initialGuessNonzero":    variables.emg_initial_guess_nonzero,
-          "slotNames":              [],
-
+          "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
+          "slotNames":              ["vm", "g3D"],
+          
           "PotentialFlow": {
             "FiniteElementMethod" : {
               "meshName":           "3Dmesh",

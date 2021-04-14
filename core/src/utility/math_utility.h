@@ -207,8 +207,16 @@ bool containsNanOrInf(const double value);
 //! check if the given value contains any value > 1e+75 or nan
 bool containsNanOrInf(const Vc::double_v value);
 
+//! same as containsNanOrInf but elementNoLocalv is treated as a mask to discard values that are -1
+bool containsNanOrInf(const Vc::double_v value, dof_no_v_t elementNoLocalv);
+
+//! check if the given tensorial quantity contains nan or inf values
 template<typename T, std::size_t N>
 bool containsNanOrInf(std::array<T,N> value);
+
+//! same as containsNanOrInf but elementNoLocalv is treated as a mask to discard values that are -1
+template<typename T, std::size_t N>
+bool containsNanOrInf(std::array<T,N> value, dof_no_v_t elementNoLocalv);
 
 /** pow as constexpr function
  *  https://stackoverflow.com/a/27270730/10290071

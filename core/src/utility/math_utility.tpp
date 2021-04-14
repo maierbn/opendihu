@@ -671,4 +671,17 @@ bool containsNanOrInf(std::array<T,N> value)
   return false;
 }
 
+template<typename T, std::size_t N>
+bool containsNanOrInf(std::array<T,N> value, dof_no_v_t elementNoLocalv)
+{
+  for (std::size_t i = 0; i < N; i++)
+  {
+    if (containsNanOrInf(value.at(i), elementNoLocalv))
+    {
+      return true;
+    }
+  }
+  return false;
+}
+
 }  // namespace

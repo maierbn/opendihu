@@ -116,6 +116,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
     if (VLOG_IS_ON(1))
     {
       global_no_t elementNoGlobal = displacementsFunctionSpace->meshPartition()->getElementNoGlobalNatural(elementNoLocal);
+      VLOG(1) << "elementNoLocalv: " << elementNoLocalv;
       VLOG(1) << "elementNoLocal " << elementNoLocal << ", displacementsValues: " << displacementsValues;
       VLOG(1) << "elementNoGlobal " << elementNoGlobal << ", geometryReferenceValues: " << geometryReferenceValues;
     }
@@ -152,6 +153,13 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       // F
       Tensor2_v_t<D> deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);
       double_v_t deformationGradientDeterminant = MathUtility::computeDeterminant(deformationGradient);  // J
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
+        for (int i = 0; i < Vc::double_v::size(); i++)
+        {
+          if (elementNoLocalv[i] == -1)
+            deformationGradientDeterminant[i] = 1;
+        } 
+#endif        
 
       Tensor2_v_t<D> rightCauchyGreen = this->computeRightCauchyGreenTensor(deformationGradient);  // C = F^T*F
 
@@ -188,7 +196,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
       Tensor2_v_t<D> fictitiousPK2Stress;   // Sbar
       Tensor2_v_t<D> pk2StressIsochoric;    // S_iso
       Tensor2_v_t<D> pK2Stress = this->computePK2Stress(pressure, rightCauchyGreen, inverseRightCauchyGreen, invariants, reducedInvariants,
-                                                        deformationGradientDeterminant, fiberDirection,
+                                                        deformationGradientDeterminant, fiberDirection, elementNoLocalv,
                                                         fictitiousPK2Stress, pk2StressIsochoric);
 
       // add active stress contribution if this material has this
@@ -221,7 +229,7 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
         global_no_t elementNoGlobal = displacementsFunctionSpace->meshPartition()->getElementNoGlobalNatural(elementNoLocal);
 
         VLOG(2) << "";
-        VLOG(2) << "element local " << elementNoLocal << " global " << elementNoGlobal << " xi: " << xi;
+        VLOG(2) << "element local " << elementNoLocal << " (" << elementNoLocalv << ") global " << elementNoGlobal << " xi: " << xi;
         VLOG(2) << "  geometryReferenceValues: " << geometryReferenceValues;
         VLOG(2) << "  displacementsValues: " << displacementsValues;
         VLOG(2) << "  Jacobian: J_phi=" << jacobianMaterial;
@@ -255,9 +263,13 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
 
       if (Vc::any_of(deformationGradientDeterminant < 1e-12))   // if any entry of the deformation gradient is negative
       {
+#ifndef HAVE_STDSIMD
         LOG(WARNING) << "Deformation gradient " << deformationGradient << " has zero or negative determinant " << deformationGradientDeterminant
           << std::endl << "Geometry values in element " << elementNoLocal << ": " << geometryReferenceValues << std::endl
           << "Displacements at xi " << xi << ": " << displacementsValues;
+#else
+        LOG(WARNING) << "Deformation gradient has zero or negative determinant.";
+#endif
         this->lastSolveSucceeded_ = false;
       }
 
@@ -862,7 +874,7 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
         {
           if (dofNoLocal[vcComponentNo] != -1 && dofNoLocal[vcComponentNo] < functionSpace->nDofsLocalWithoutGhosts())
           {
-            combinedVecResidual_->setValue(3 + dimensionNo, dofNoLocal[vcComponentNo], residuum[vcComponentNo], INSERT_VALUES);
+            combinedVecResidual_->setValue(3 + dimensionNo, (int)(dofNoLocal[vcComponentNo]), (double)(residuum[vcComponentNo]), INSERT_VALUES);
           }
         }
 #else
@@ -1111,6 +1123,13 @@ materialComputeJacobian()
       Tensor2_v_t<D> deformationGradient = this->computeDeformationGradient(displacementsValues, inverseJacobianMaterial, xi);    // F
       double_v_t deformationGradientDeterminant;    // J
       Tensor2_v_t<D> inverseDeformationGradient = MathUtility::computeInverse(deformationGradient, approximateMeshWidth, deformationGradientDeterminant);  // F^-1
+#ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
+        for (int i = 0; i < Vc::double_v::size(); i++)
+        {
+          if (elementNoLocalv[i] == -1)
+            deformationGradientDeterminant[i] = 1;
+        } 
+#endif        
 
       Tensor2_v_t<D> rightCauchyGreen = this->computeRightCauchyGreenTensor(deformationGradient);  // C = F^T*F
 
@@ -1149,7 +1168,7 @@ materialComputeJacobian()
       Tensor2_v_t<D> fictitiousPK2Stress;   // Sbar
       Tensor2_v_t<D> pk2StressIsochoric;    // S_iso
       Tensor2_v_t<D> pK2Stress = this->computePK2Stress(pressure, rightCauchyGreen, inverseRightCauchyGreen, invariants, reducedInvariants,
-                                                        deformationGradientDeterminant, fiberDirection,
+                                                        deformationGradientDeterminant, fiberDirection, elementNoLocalv,
                                                         fictitiousPK2Stress, pk2StressIsochoric);
 
       std::array<Vec3,nDisplacementsDofsPerElement> gradPhi = displacementsFunctionSpace->getGradPhi(xi);
@@ -1189,9 +1208,13 @@ materialComputeJacobian()
 
       if (Vc::any_of(deformationGradientDeterminant < 1e-12))   // if any entry of the deformation gradient is negative
       {
+#ifndef HAVE_STDSIMD
         LOG(WARNING) << "Deformation gradient " << deformationGradient << " has zero or negative determinant " << deformationGradientDeterminant
           << std::endl << "Geometry values in element " << elementNoLocal << ": " << geometryReferenceValues << std::endl
           << "Displacements at xi " << xi << ": " << displacementsValues;
+#else
+        LOG(WARNING) << "Deformation gradient has zero or negative determinant";
+#endif
 
         this->lastSolveSucceeded_ = false;
       }

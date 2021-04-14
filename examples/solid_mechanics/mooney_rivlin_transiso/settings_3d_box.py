@@ -44,6 +44,9 @@ mx = 2*nx + 1
 my = 2*ny + 1
 mz = 2*nz + 1
 
+# number of unknowns
+n_unknowns = mx*my*mz*3 + nx*ny*nz
+
 # boundary conditions (for quadratic elements)
 dirichlet_bc = {}
 
@@ -133,6 +136,9 @@ config = {
   "logFormat":    "csv",     # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "out/" + variables.scenario_name + "/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "out/" + variables.scenario_name + "/mappings_between_meshes.txt",   # log file for mappings between meshes
+  "meta": {
+    "n_unknowns": n_unknowns,                    # field that will appear in the log file
+  },
   
   "Meshes": fiber_meshes,
   "HyperelasticitySolver": {

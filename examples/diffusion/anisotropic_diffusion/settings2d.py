@@ -4,7 +4,7 @@ n = 40   # number of elements
 # initial values
 iv = {}
 
-for y in range(int(0.2*n), int(0.3*n)):
+for y in range(int(0.45*n), int(0.55*n)):
   for x in range(int(0.5*n), int(0.8*n)):
     i = y*(n+1) + x
     iv[i] = 1.0

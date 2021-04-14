@@ -1,7 +1,7 @@
 import numpy as np
 
 # Poisson 1D
-n = 11  # n elements
+n = 2  # n elements
 m = n+1  # n nodes
 
 import opendihu
@@ -12,32 +12,31 @@ if "quadratic" in opendihu.program_name:
   
 # Dirichlet boundary conditions
 bc = {}
-bc[0] = 1.0
-bc[m-1] = 0.0
+#bc[0] = 1.0
+bc[0] = 0.0
+bc[m-1] = 1.0
 
 # right hand side
 rhs = np.zeros(m)
 for i in range(m):
-  if i < int(m/2):
-    rhs[i] = -10
-  else:
-    rhs[i] = 0
+  x = i / (m-1)
+  rhs[i] = 6*x
+  
 # settings for Hermite discretization
 if "hermite" in opendihu.program_name:
   m = 2*n+2
-  bc = {0: 1, m-2: 0}  # Dirichlet bc
+  bc = {0: 0, 1: 0, m-2: 1, m-1:3/n}  # Dirichlet bc
+  #bc = {0: 0, 1:0, m-2: 1}  # Dirichlet bc
   
   # set right hand side, only nodal dofs, not derivatives
   rhs = np.zeros(m)
   
   for element_no in range(n+1):
     x = float(element_no)/n
-    if element_no < n/2:
-      rhs[2*element_no] = -10
-      rhs[2*element_no+1] = 0
-    else:
-      rhs[2*element_no] = 0
-  
+    #rhs[2*element_no] = -10
+    rhs[2*element_no] = 6*x
+    rhs[2*element_no+1] = 6/n
+    
 print("  rhs: {}".format(rhs))
 
   
@@ -49,7 +48,7 @@ config = {
   "FiniteElementMethod" : {
     # mesh parameters
     "nElements": [n],
-    "physicalExtent": [1.0],
+    "physicalExtent": [1],
     "inputMeshIsGlobal": True,
     
     # problem parameters
@@ -63,7 +62,7 @@ config = {
     "solverType": "gmres",
     "preconditionerType": "none",
     "relativeTolerance": 1e-15,
-    "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    
+    "absoluteTolerance": 1e-15,         # 1e-10 absolute tolerance of the residual    
     "maxIterations": 10000,
     "dumpFormat": "ascii",
     "dumpFilename": "out/poisson",

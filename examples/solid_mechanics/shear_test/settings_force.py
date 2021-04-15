@@ -111,13 +111,16 @@ def handle_result_hyperelasticity(result):
     # field_variables[4]: T (material traction)
     # field_variables[5]: PK2-Stress (Voigt), components: S_11, S_22, S_33, S_12, S_13, S_23
     
-    strain = max(field_variables[1]["components"][2]["values"])
-    stress = max(field_variables[5]["components"][2]["values"])
+    k = mz-1
+    j = my//2
+    i = 0
+    strain = field_variables[1]["components"][0]["values"][k*mx*my + j*mx + i]
+    stress = [field_variables[5]["components"][component_no]["values"][k*mx*my + j*mx + i] for component_no in range(6)]
     
     print("strain: {}, stress: {}".format(strain, stress))
     
     with open("result.csv","a") as f:
-      f.write("{},{},{}\n".format(scenario_name,strain,stress))
+      f.write("{},{},{},{},{},{},{},{}\n".format(scenario_name,strain,stress[0],stress[1],stress[2],stress[3],stress[4],stress[5]))
 
 # callback for result
 def handle_result_febio(result):
@@ -129,14 +132,17 @@ def handle_result_febio(result):
     print("field variables for febio:")
     for i,field_variable in enumerate(field_variables):
       print(i,field_variable["name"])
-    
-    strain = max(field_variables[2]["components"][2]["values"])
-    stress = max(field_variables[5]["components"][2]["values"])
+      
+    k = mz-1
+    j = my//2
+    i = 0
+    strain = field_variables[2]["components"][0]["values"][k*mx*my + j*mx + i]
+    stress = [field_variables[5]["components"][component_no]["values"][k*mx*my + j*mx + i] for component_no in range(6)]
     
     print("strain: {}, stress: {}".format(strain, stress))
     
     with open("result.csv","a") as f:
-      f.write("{},{},{}\n".format(scenario_name,strain,stress))
+      f.write("{},{},{},{},{},{},{},{}\n".format(scenario_name,strain,stress[0],stress[1],stress[2],stress[3],stress[4],stress[5]))
 
 # callback for result
 def handle_result_linear_elasticity(result):

@@ -16,7 +16,7 @@ n_ranks = (int)(sys.argv[-1])
 # define command line arguments
 mbool = lambda x:bool(distutils.util.strtobool(x))   # function to parse bool arguments
 parser = argparse.ArgumentParser(description='3d_hyperelasticity')
-parser.add_argument('--scenario_name',         help='The name to identify this run in the log.',      default="3d_muscle")
+parser.add_argument('--scenario_name',         help='The name to identify this run in the log.',      default="3d_box")
 parser.add_argument('--nx',                    help='Number of elements in x direction.', type=int,   default=nx)
 parser.add_argument('--ny',                    help='Number of elements in y direction.', type=int,   default=ny)
 parser.add_argument('--nz',                    help='Number of elements in z direction.', type=int,   default=nz)

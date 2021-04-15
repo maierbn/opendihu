@@ -237,10 +237,11 @@ column_shortnames = {
   "durationInitCellml": "initCell",
   "memoryResidentSet": "mem",
   "meta_partitioning": "subdomains",
+  "nonlinear_durationSolve": "nonlin",
 }
 
 # define columns for table and plot (long names)
-columns_to_print = ["meta_partitioning", "totalUsertime", "duration_total", "duration_0D", "duration_1D", "duration_bidomain", "duration_multidomain", "duration_mechanics", "duration_init", "durationOnlyWrite", "memoryResidentSet", "n"]
+columns_to_print = ["meta_partitioning", "totalUsertime", "duration_total", "duration_0D", "duration_1D", "duration_bidomain", "duration_multidomain", "duration_mechanics", "nonlinear_durationSolve", "duration_init", "durationOnlyWrite", "memoryResidentSet", "n"]
 columns_to_plot = ["duration_total", "duration_init", "durationOnlyWrite", "duration_0D", "duration_1D", "duration_bidomain", "duration_multidomain", "duration_mechanics"]
 
 plot_labels = ["total", "initialization", "write VTK files", "0D model", "1D model", "3D model"]

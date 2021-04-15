@@ -20,8 +20,10 @@ parser.add_argument('--scenario_name',         help='The name to identify this r
 parser.add_argument('--nx',                    help='Number of elements in x direction.', type=int,   default=nx)
 parser.add_argument('--ny',                    help='Number of elements in y direction.', type=int,   default=ny)
 parser.add_argument('--nz',                    help='Number of elements in z direction.', type=int,   default=nz)
+parser.add_argument('--njacobi',               help='Frequency of Jacobi recomputation.', type=int,   default=5)
 parser.add_argument('--use_analytic_jacobian', help='If the analytic jacobian is computed.', type=mbool, default=True)
 parser.add_argument('--use_numeric_jacobian',  help='If the numeric jacobian is computed.', type=mbool, default=False)
+parser.add_argument('--file_output',           help='If the results should be output.', type=mbool, default=True)
 
 # parse command line arguments and assign values to variables module
 class variables:
@@ -36,8 +38,9 @@ nz = variables.nz
 use_analytic_jacobian = variables.use_analytic_jacobian
 use_numeric_jacobian = variables.use_numeric_jacobian
 
-print("scenario name: {}\nnumber of elements: {} x {} x {}\nanalytic jacobian: {}\nnumeric jacobian: {}".
-  format(variables.scenario_name,nx,ny,nz,use_analytic_jacobian,use_numeric_jacobian))
+if own_rank_no == 0:
+  print("scenario name: {}\nnumber of elements: {} x {} x {}\nanalytic jacobian: {}\nnumeric jacobian: {}\nfile output: {}\njacobi rebuild freq.: {}".
+    format(variables.scenario_name,nx,ny,nz,use_analytic_jacobian,use_numeric_jacobian, variables.file_output, variables.njacobi))
 
 # number of nodes
 mx = 2*nx + 1
@@ -172,7 +175,7 @@ config = {
     "dumpFormat": "matlab",             # default, ascii, matlab
     "snesMaxFunctionEvaluations": 1e8,  # maximum number of function iterations
     "snesMaxIterations": 15,             # maximum number of iterations in the nonlinear solver
-    "snesRebuildJacobianFrequency": 5,  # frequency with which the jacobian is newly computed
+    "snesRebuildJacobianFrequency": variables.njacobi,  # frequency with which the jacobian is newly computed
     "snesRelativeTolerance": 1e-5,      # relative tolerance of the nonlinear solver
     "snesLineSearchType": "l2",         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
     "snesAbsoluteTolerance": 1e-5,      # absolute tolerance of the nonlinear solver
@@ -196,18 +199,19 @@ config = {
     "OutputWriter" : [   # output files for displacements function space (quadratic elements)
       {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/u", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       {"format": "PythonFile", "filename": "out/" + variables.scenario_name + "/u", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "incremental"},
-    ],
+    ] if variables.file_output else []
+    ,
     "pressure": {   # output files for pressure function space (linear elements)
       "OutputWriter" : [
         {"format": "Paraview", "outputInterval": 1, "filename": "out/p", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
         {"format": "PythonFile", "filename": "out/" + variables.scenario_name + "/p", "outputInterval": 1, "binary":False, "onlyNodalValues":True, "fileNumbering": "incremental"},
-      ]
+      ] if variables.file_output else []
     },
     # output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
     "LoadIncrements": {   
       "OutputWriter" : [
         {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-      ]
+      ] if variables.file_output else []
     },
   },
 }

@@ -88,7 +88,7 @@ if dirichlet_bc_mode == "fix_all":
        
 # set Neumann BC, set traction at the top
 k = nz-1
-traction_vector = [0.1*force, 0.05*force, 0.15*force]     # the traction force in specified in the reference configuration
+traction_vector = [0.1*force, 0.05*force, 0]     # the traction force in specified in the reference configuration
 #traction_vector = [0, 0, force]     # the traction force in specified in the reference configuration
 
 elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": traction_vector, "face": "2+"} for j in range(ny) for i in range(nx)]

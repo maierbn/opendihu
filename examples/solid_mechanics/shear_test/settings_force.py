@@ -88,7 +88,7 @@ if dirichlet_bc_mode == "fix_all":
        
 # set Neumann BC, set traction at the top
 k = nz-1
-traction_vector = [0.1*force, 0.05*force, 0]     # the traction force in specified in the reference configuration
+traction_vector = [0.1*force, 0.05*force, 1]     # the traction force in specified in the reference configuration
 #traction_vector = [0, 0, force]     # the traction force in specified in the reference configuration
 
 elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": traction_vector, "face": "2+"} for j in range(ny) for i in range(nx)]
@@ -111,13 +111,13 @@ def handle_result_hyperelasticity(result):
     # field_variables[4]: T (material traction)
     # field_variables[5]: PK2-Stress (Voigt), components: S_11, S_22, S_33, S_12, S_13, S_23
     
-    k = mz-1
+    k = mz-5
     j = my//2
-    i = 0
+    i = 5
     strain = field_variables[1]["components"][0]["values"][k*mx*my + j*mx + i]
     stress = [field_variables[5]["components"][component_no]["values"][k*mx*my + j*mx + i] for component_no in range(6)]
     
-    print("strain: {}, stress: {}".format(strain, stress))
+    print("strain: {}, stress: {}, ndofs: {}".format(strain, stress, len(field_variables[1]["components"][0]["values"])))
     
     with open("result.csv","a") as f:
       f.write("{},{},{},{},{},{},{},{}\n".format(scenario_name,strain,stress[0],stress[1],stress[2],stress[3],stress[4],stress[5]))
@@ -133,13 +133,13 @@ def handle_result_febio(result):
     for i,field_variable in enumerate(field_variables):
       print(i,field_variable["name"])
       
-    k = mz-1
+    k = mz-5
     j = my//2
-    i = 0
+    i = 5
     strain = field_variables[2]["components"][0]["values"][k*mx*my + j*mx + i]
     stress = [field_variables[5]["components"][component_no]["values"][k*mx*my + j*mx + i] for component_no in range(6)]
     
-    print("strain: {}, stress: {}".format(strain, stress))
+    print("strain: {}, stress: {}, ndofs: {}".format(strain, stress, len(field_variables[1]["components"][0]["values"])))
     
     with open("result.csv","a") as f:
       f.write("{},{},{},{},{},{},{},{}\n".format(scenario_name,strain,stress[0],stress[1],stress[2],stress[3],stress[4],stress[5]))

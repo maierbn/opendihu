@@ -15,9 +15,13 @@ def g(z):
   else:
     return -90
     
+# define global plotting parameters
+plt.rcParams.update({'font.size': 14})
+plt.rcParams['lines.linewidth'] = 2
+
 plt.figure(1)
 
-xlist = np.linspace(0,10,100)
+xlist = np.linspace(0,20,100)
 ylist = [g(x) for x in xlist]
 
 
@@ -25,5 +29,5 @@ plt.plot(xlist, ylist, linewidth=2)
 plt.xlabel("z [mm]")
 plt.ylabel("Vm [mV]")
 
-plt.savefig("analytical_fibers_emg_3.png")
+plt.savefig("rosenfalck_function.pdf")
 plt.show()

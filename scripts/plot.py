@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Script to visualize python output files.
@@ -240,7 +240,10 @@ if dimension == 1:
           label = field_variable_name
         else:
           label = component_name
-        line, = ax1.plot([], [], '+-', lw=2, label=label)
+        if len(data) > 100:
+          line, = ax1.plot([], [], '+-', lw=2, label=label)
+        else:
+          line, = ax1.plot([], [], '-', lw=2, label=label)
         lines_2D.append(line)
       ax1.set_xlim(min_x, max_x)
       ax1.set_xlabel('t')
@@ -252,6 +255,8 @@ if dimension == 1:
       if data[0]["basisFunction"] == "Hermite" and data[0]["onlyNodalValues"] == False:  # for Hermite do not show nodes
         line_2D, = ax1.plot([], [], '-', color="b", lw=2, label=solution_components[0])
       elif data[0]["basisFunction"] == "Lagrange"  and data[0]["basisOrder"] == 2:   # for quadratic Lagrange also do not show nodes
+        line_2D, = ax1.plot([], [], '-', color="b", lw=2, label=solution_components[0])
+      elif len(data) > 100:
         line_2D, = ax1.plot([], [], '-', color="b", lw=2, label=solution_components[0])
       else:
         line_2D, = ax1.plot([], [], '+-', color="b", lw=2, label=solution_components[0])
@@ -323,7 +328,10 @@ if dimension == 1:
         if j > 0:
           min_value = min(min_value, min_comp*scaling_factor)
           max_value = max(max_value, max_comp*scaling_factor)
-        line_plot, = ax3.plot([], [], '+-', lw=1, label=component_name)
+        if len(data) > 100:
+          line_plot, = ax3.plot([], [], '-', lw=2, label=component_name)
+        else:
+          line_plot, = ax3.plot([], [], '+-', lw=1, label=component_name)
         line_comp.append(line_plot)
         
         #print "   min_value: {} -> {}, max_value: {} -> {}".format(min_comp*scaling_factor, min_value, max_comp*scaling_factor, max_value)

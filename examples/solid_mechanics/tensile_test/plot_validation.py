@@ -30,22 +30,22 @@ with open('build_release/result.csv') as csvfile:
     
 # loop over scenario names
 labels = [
-  "Nearly incompressible (OpenDiHu)",
-  "Nearly incompressible (FEBio)",
   "Fully incompressible (OpenDiHu)",
-  "Fully incompressible, decoupled (OpenDiHu)",
+  "Nearly incompressible (OpenDiHu)",
+  "Nearly incompressible, decoupled (OpenDiHu)",
+  "Nearly incompressible (FEBio)",
 ]
 scenarios = [
-  "nearly_incompressible_mooney_rivlin",
-  "nearly_incompressible_mooney_rivlin_febio",
   "incompressible_mooney_rivlin",
-  "nearly_incompressible_mooney_rivlin_decoupled"
+  "nearly_incompressible_mooney_rivlin",
+  "nearly_incompressible_mooney_rivlin_decoupled",
+  "nearly_incompressible_mooney_rivlin_febio",
 ]
 markers = [
   "o-",
+  "+-",
   "o-",
   "+-",
-  "+-"
 ]
 
 # define global plotting parameters
@@ -62,7 +62,7 @@ for i,scenario_name in enumerate(scenarios):
 plt.ylabel('stress [$N/cm^2$]')
 plt.xlabel('strain [-]')
 plt.grid(which='major')
-plt.subplots_adjust(right=0.53)
+plt.subplots_adjust(right=0.5)
 ax.legend(bbox_to_anchor=(1.0, 1.0),frameon=False,borderaxespad=0)
 plt.savefig("validation_tensile_test.pdf")
 plt.show()

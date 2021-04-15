@@ -11,16 +11,21 @@ n_nodes_x1 = 2*nx1+1
 n_nodes_first_mesh = (2*nx1+1)*(2*ny+1) 
 for i in range(int(n_nodes_x1)):
   x = i/n_nodes_x1
-  dirichlet_bc[i] = np.sin(x*np.pi)
+  index = 2*ny*n_nodes_x1 + i
+  #dirichlet_bc[index] = np.sin(x*np.pi)
   
 # Dirichlet boundary conditions for the second mesh
 n_nodes_x2 = 2*nx2+1
 for i in range(int(n_nodes_x2)):
   x = i/n_nodes_x2
   i2 = n_nodes_first_mesh + n_nodes_x2*(2*ny) + i
-  dirichlet_bc[i2] = np.sin(x*np.pi)
+  dirichlet_bc[i2] = -1
   
-  print("dirichlet_bc[{}] = {}, dirichlet_bc[{}] = {}".format(i, dirichlet_bc[i], i2, dirichlet_bc[i2]))
+# center point right mesh
+dirichlet_bc[n_nodes_first_mesh + (2*ny+1)/2 * (n_nodes_x2-1) + (n_nodes_x2-1)//2] = 1
+
+# Neumann boundary conditions for the first mesh
+neumann_bc = [{"element": j*nx1, "constantValue": -1, "face": "0-"} for j in range(ny)] 
 
 config = {
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
@@ -46,8 +51,8 @@ config = {
     "outputInterval": 1.0,
     
     "dirichletBoundaryConditions": dirichlet_bc,
-    "dirichletOutputFilename":     "dirichlet_bc",                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-    "neumannBoundaryConditions": [],
+    "dirichletOutputFilename":     "out/dirichlet_bc",                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+    "neumannBoundaryConditions":   neumann_bc,
     "prefactor": [1,2],
     
     "meshName": ["submesh0", "submesh1"],

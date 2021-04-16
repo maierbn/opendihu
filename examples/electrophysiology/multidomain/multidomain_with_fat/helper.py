@@ -164,10 +164,10 @@ n_points_on_previous_ranks_sampled_z = sum([n_sampled_points_in_subdomain_z(subd
 
 # loop over z point indices of the 3D mesh
 for k in range(n_sampled_points_3D_in_own_subdomain_z):
-  z_point_index = (variables.z_point_index_start + k*variables.local_sampling_stride_z) * variables.sampling_stride_z
+  z_point_index = variables.z_point_index_start + k*variables.sampling_stride_z
   
   if variables.own_subdomain_coordinate_z == variables.n_subdomains_z-1 and k == n_sampled_points_3D_in_own_subdomain_z-1:
-    z_point_index = (variables.z_point_index_end-1) * variables.sampling_stride_z
+    z_point_index = variables.z_point_index_end-1
     
   #print("{}: sampling_stride_z: {}, k: {}, z: {}/{}".format(rank_no, variables.sampling_stride_z, k, z_point_index, variables.z_point_index_end))
   
@@ -674,6 +674,9 @@ if variables.hdemg_electrode_faces and variables.hdemg_n_electrodes_xy*variables
 
   # load whole file of node positions
   # the node positions are organized in fibers
+  if variables.fiber_file_for_hdemg_surface is None:
+    variables.fiber_file_for_hdemg_surface = variables.fat_mesh_file
+
   input_filename = variables.fiber_file_for_hdemg_surface
   with open(input_filename, "rb") as infile:
     

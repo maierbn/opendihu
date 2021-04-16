@@ -373,7 +373,8 @@ advanceTimeSpan(bool withOutputWritersEnabled)
     {
       values.clear();
       this->data_.displacements()->getValuesWithoutGhosts(i, values);
-      LOG(INFO) << "component " << i << ", initialize displacement values: " << values;
+
+      LOG(DEBUG) << "component " << i << ", initialize displacement values: " << values;
       uvp_->setValues(i, data_.functionSpace()->meshPartition()->nDofsLocalWithoutGhosts(),
                       data_.functionSpace()->meshPartition()->dofNosLocal().data(), values.data(), INSERT_VALUES);
     }

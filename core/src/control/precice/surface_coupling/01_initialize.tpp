@@ -50,10 +50,16 @@ initialize()
   // check if the coupling is enabled
   couplingEnabled_ = this->specificSettings_.getOptionBool("couplingEnabled", true);
 
+  timeStepWidth_ = this->specificSettings_.getOptionDouble("timestepWidth", 0.01, PythonUtility::Positive);
+
   // if not enabled, abort initialization
   if (!couplingEnabled_)
   {
-    LOG(WARNING) << "Coupling is disabled (option \"couplingEnabled\": False).";
+    endTimeIfCouplingDisabled_ = this->specificSettings_.getOptionDouble("endTimeIfCouplingDisabled", 1, PythonUtility::Positive);
+
+    LOG(WARNING) << "Coupling in PreciceAdapterVolumeCoupling is disabled (option \"couplingEnabled\": False), "
+      << "using end time \"endTimeIfCouplingDisabled\": " << endTimeIfCouplingDisabled_ << ".";
+
     initialized_ = true;
     return;
   }
@@ -84,7 +90,6 @@ initialize()
   // determine maximum timestep size
   maximumPreciceTimestepSize_ = std::max(maximumPreciceTimestepSize_, preciceSolverInterface_->initialize());
 
-  timeStepWidth_ = this->specificSettings_.getOptionDouble("timestepWidth", 0.01, PythonUtility::Positive);
   LOG(DEBUG) << "precice initialization done, dt: " << maximumPreciceTimestepSize_ << "," << timeStepWidth_;
 
   initialized_ = true;

@@ -18,13 +18,18 @@ nSlots(std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<S
 //! get the number of items if the slotConnector is organized in an array, `arrayIndex` can then be chosen in [0,nArrayItems]
 template<typename SlotConnectorDataType>
 int SlotConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>>::
-nArrayItems(std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>> slotConnectorData)
+nArrayItems(std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>> slotConnectorData, int slotNo)
 {
   if (!slotConnectorData)
     return 0;
   if (!slotConnectorData->empty())
+  {
     if (!(*slotConnectorData)[0]->empty())
-      return slotConnectorData->size() * (*slotConnectorData)[0]->size();
+    {
+      int nArrayItemsPerItem = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems((*((*slotConnectorData)[0]))[0], slotNo);
+      return slotConnectorData->size() * (*slotConnectorData)[0]->size() * nArrayItemsPerItem;
+    }
+  }
   return 0;
 }
 
@@ -69,6 +74,44 @@ getMeshPartitionBase(
 
     return fieldVariable->functionSpace()->meshPartitionBase();
   }
+}
+
+//! get the mesh name of the field variable at the slot
+template<typename SlotConnectorDataType>
+std::string SlotConnectorDataHelper<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>>::
+getMeshName(
+  std::shared_ptr<std::vector<std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType>>>>> slotConnectorData,
+  int slotNo
+)
+{
+  if (!slotConnectorData)
+    return std::string();
+  if (slotConnectorData->empty())
+    return std::string();
+
+  int sizeFirstVector = slotConnectorData->size();
+  int sizeSecondVector = (*slotConnectorData)[0]->size();
+
+  int nSlotsVariable1 = (*(*slotConnectorData)[0])[0]->variable1.size();
+
+  // if the slot no corresponds to a field variables stored under variable1
+  if (slotNo < nSlotsVariable1)
+  {
+    std::shared_ptr<typename SlotConnectorDataType::FieldVariable1Type> fieldVariable
+      = (*(*slotConnectorData)[0])->variable1[slotNo].values;
+
+    return fieldVariable->functionSpace()->meshName();
+  }
+  else
+  {
+    // if the slot no corresponds to a field variables stored under variable2
+    int index = slotNo - nSlotsVariable1;
+    std::shared_ptr<typename SlotConnectorDataType::FieldVariable2Type> fieldVariable
+      = (*(*slotConnectorData)[0])->variable2[index].values;
+
+    return fieldVariable->functionSpace()->meshName();
+  }
+  return std::string();
 }
 
 //! set the values at given dofs at the field variable given by slotNo

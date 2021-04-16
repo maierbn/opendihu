@@ -80,6 +80,22 @@ setTimeSpan(double startTime, double endTime)
   endTime_ = endTime;
 }
 
+//! start time of time interval to be simulated
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+double StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+startTime()
+{
+  return endTime_;    // there is no start time as the static bidomain solver solves a static equation
+}
+
+//! end time of simulation
+template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
+double StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
+endTime()
+{
+  return endTime_;
+}
+
 template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodDiffusion>
 void StaticBidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusion>::
 initialize()
@@ -125,7 +141,13 @@ initialize()
   data_.flowPotential()->setValues(*finiteElementMethodPotentialFlow_.data().solution());
   LOG(DEBUG) << "flow potential: " << *data_.flowPotential();
 
-  data_.flowPotential()->computeGradientField(data_.fiberDirection());
+  // enable computation of the condition number of the jacobian in every element
+  std::shared_ptr<FieldVariableType> jacobianConditionNumber = nullptr;
+  if (this->specificSettings_.hasKey("enableJacobianConditionNumber"))
+    if (this->specificSettings_.getOptionBool("enableJacobianConditionNumber",true))
+      jacobianConditionNumber = data_.jacobianConditionNumber();
+
+  data_.flowPotential()->computeGradientField(data_.fiberDirection(), jacobianConditionNumber);
   // note, fiberDirection is not normalized, it gets normalized in the initialize method of the finite element data class (diffusion_tensor_directional.tpp)
 
   VLOG(1) << "flow potential: " << *data_.flowPotential();

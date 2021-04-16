@@ -240,7 +240,10 @@ if dimension == 1:
           label = field_variable_name
         else:
           label = component_name
-        line, = ax1.plot([], [], '+-', lw=2, label=label)
+        if len(data) > 100:
+          line, = ax1.plot([], [], '+-', lw=2, label=label)
+        else:
+          line, = ax1.plot([], [], '-', lw=2, label=label)
         lines_2D.append(line)
       ax1.set_xlim(min_x, max_x)
       ax1.set_xlabel('t')
@@ -249,7 +252,11 @@ if dimension == 1:
       
     else:
       # prepare main plot
-      if data[0]["basisFunction"] == "Hermite" and data[0]["onlyNodalValues"] == False:  # for Hermite
+      if data[0]["basisFunction"] == "Hermite" and data[0]["onlyNodalValues"] == False:  # for Hermite do not show nodes
+        line_2D, = ax1.plot([], [], '-', color="b", lw=2, label=solution_components[0])
+      elif data[0]["basisFunction"] == "Lagrange"  and data[0]["basisOrder"] == 2:   # for quadratic Lagrange also do not show nodes
+        line_2D, = ax1.plot([], [], '-', color="b", lw=2, label=solution_components[0])
+      elif len(data) > 100:
         line_2D, = ax1.plot([], [], '-', color="b", lw=2, label=solution_components[0])
       else:
         line_2D, = ax1.plot([], [], '+-', color="b", lw=2, label=solution_components[0])
@@ -321,7 +328,10 @@ if dimension == 1:
         if j > 0:
           min_value = min(min_value, min_comp*scaling_factor)
           max_value = max(max_value, max_comp*scaling_factor)
-        line_plot, = ax3.plot([], [], '+-', lw=1, label=component_name)
+        if len(data) > 100:
+          line_plot, = ax3.plot([], [], '-', lw=2, label=component_name)
+        else:
+          line_plot, = ax3.plot([], [], '+-', lw=1, label=component_name)
         line_comp.append(line_plot)
         
         #print "   min_value: {} -> {}, max_value: {} -> {}".format(min_comp*scaling_factor, min_value, max_comp*scaling_factor, max_value)
@@ -355,6 +365,9 @@ if dimension == 1:
           sdata = []
           for d in data:
             solution_values = py_reader.get_values(d, field_variable_name, component_name)
+            if solution_values is None:
+              print("field_variable_name: {}, component_name: {}".format(field_variable_name, component_name))
+              print("d: {}".format(d))
             xdata.append(d['currentTime'])
             sdata.append(solution_values[0])
           
@@ -413,12 +426,53 @@ if dimension == 1:
             
             for j in range(n):
               xi = float(j)/n
-              x = (1-xi)*xdata[2*el_no+0] + xi*xdata[2*el_no+2]
+              x = xdata[2*el_no+0]*hermite0(xi) + xdata[2*el_no+1]*hermite1(xi) + xdata[2*el_no+2]*hermite2(xi) + xdata[2*el_no+3]*hermite3(xi)
               
               #print("xi={}, x={}".format(xi,x))
               
               new_xdata[el_no*n+j] = x
               new_sdata[el_no*n+j] = c0*hermite0(xi) + c1*hermite1(xi) + c2*hermite2(xi) + c3*hermite3(xi)
+            
+              #print("xi={}, s={:.2e}={:.2e}*{:.2e}+ {:.2e}*{:.2e}+ {:.2e}*{:.2e}+ {:.2e}*{:.2e}".format(xi,new_sdata[el_no*n+j],c0,hermite0(xi),c1,hermite1(xi),c2,hermite2(xi),c3,hermite3(xi)))
+                          
+          xdata = new_xdata
+          sdata = new_sdata
+            
+        elif data[i]["basisFunction"] == "Lagrange"  and data[i]["basisOrder"] == 2:
+            
+          def q0(xi):
+            return (2*xi - 1) * (xi-1)
+          
+          def q1(xi):
+            return 4*(xi - xi*xi)
+            
+          def q2(xi):
+            return 2*xi*xi - xi
+            
+          n_elements = data[i]["nElements"][0]
+          
+          n = 20
+          new_xdata = np.zeros(n_elements*n)
+          new_sdata = np.zeros(n_elements*n)
+          
+          #print("n entries: {}, new_xdata:{}".format(n_elements*n, new_xdata))
+          #print("xdata: {}".format(xdata))
+          
+          for el_no in range(n_elements):
+            c0 = sdata[2*el_no+0]
+            c1 = sdata[2*el_no+1]
+            c2 = sdata[2*el_no+2]
+            
+            #print("parsed coefficients: {} {} {}".format(c0,c1,c2))
+            
+            for j in range(n):
+              xi = float(j)/n
+              x = xdata[2*el_no+0]*q0(xi) + xdata[2*el_no+1]*q1(xi) + xdata[2*el_no+2]*q2(xi)
+              
+              #print("xi={}, x={} {}*{}+ {}*{}+ {}*{}".format(xi,x,xdata[2*el_no+0],q0(xi),xdata[2*el_no+1],q1(xi),xdata[2*el_no+2],q2(xi)))
+              
+              new_xdata[el_no*n+j] = x
+              new_sdata[el_no*n+j] = c0*q0(xi) + c1*q1(xi) + c2*q2(xi)
             
           xdata = new_xdata
           sdata = new_sdata

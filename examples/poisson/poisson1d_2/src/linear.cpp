@@ -1,30 +1,23 @@
-#include <Python.h>
 #include <iostream>
 #include <cstdlib>
-
-#include <iostream>
-#include "easylogging++.h"
 
 #include "opendihu.h"
 
 int main(int argc, char *argv[])
 {
-  // multiple fibers in arbitrary partitioning, coupled to dynamic nonlinear elasticity
-  
+  // 1D Poisson equation f = du^2/dx^2
+    
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
   
-  // define problem
-  PreciceAdapter::MuscleContraction<
-    MuscleContractionSolver<>
+  SpatialDiscretization::FiniteElementMethod<
+    Mesh::StructuredRegularFixedOfDimension<1>,
+    BasisFunction::LagrangeOfOrder<1>,
+    Quadrature::Gauss<2>,
+    Equation::Static::Poisson
   > problem(settings);
   
-  // run problem
   problem.run();
   
   return EXIT_SUCCESS;
 }
-
-
-
-

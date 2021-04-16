@@ -164,18 +164,32 @@ initializeRhs()
           double deformationGradientDeterminant;
           Tensor2<3,double> deformationGradientInverse = MathUtility::computeInverse(deformationGradient, approximateMeshWidth, deformationGradientDeterminant);
 
-          // compute matrix*vector product T = F^-1*t  (T=neumannValue, F=deformationGradient, t=tractionInCurrentConfiguration)
-          VecD<3,double> oldNeumannValue, newNeumannValue;
-          for (int i = 0; i < nComponents; i++)
-            oldNeumannValue[i] = neumannValue[i];
+          // because we compile with --ffast-math, std::isnan is not available,
+          // check for an invalid value in deformationGradientDeterminant if the first 9 bits are x11111111
+          union {
+            double d;
+            uint64_t i;
+          };
+          d = deformationGradientDeterminant;
+          const bool isValid = ((i << 1) >> (14*4)) != 0xff;
 
-          newNeumannValue = deformationGradientInverse * oldNeumannValue;
+          // In the first timestep where reference = current configuration, J is nan.
+          // Only if the deformation gradient determinant is not nan, perform the conversion from current to reference configuration.
+          if (isValid)
+          {
+            // compute matrix*vector product T = F^-1*t  (T=neumannValue, F=deformationGradient, t=tractionInCurrentConfiguration)
+            VecD<3,double> oldNeumannValue, newNeumannValue;
+            for (int i = 0; i < nComponents; i++)
+              oldNeumannValue[i] = neumannValue[i];
 
-          for (int i = 0; i < nComponents; i++)
-            neumannValue[i] = newNeumannValue[i];
+            newNeumannValue = deformationGradientInverse * oldNeumannValue;
 
-          //VLOG(1) << "el " << elementNoLocal << ", xi: " << xi
-          //  << ", F: " << deformationGradient << ", F^-1: " << deformationGradientInverse << ", traction t: " << oldNeumannValue << " -> T: " << neumannValue;
+            for (int i = 0; i < nComponents; i++)
+              neumannValue[i] = newNeumannValue[i];
+
+            //LOG(DEBUG) << "el " << elementNoLocal << ", xi: " << xi
+            //  << ", J: " << deformationGradientDeterminant << ", F: " << deformationGradient << ", F^-1: " << deformationGradientInverse << ", traction t: " << oldNeumannValue << " -> T: " << neumannValue;
+          }
         }
 
         boundaryConditionValueAtXi += neumannValue * FunctionSpaceSurface::phi(dofIndex, xiSurface);

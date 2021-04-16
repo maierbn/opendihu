@@ -27,6 +27,7 @@ emg_preconditioner_type = "none"    # preconditioner
 emg_initial_guess_nonzero = False   # If the initial guess for the emg linear system should be set to the previous solution
 emg_solver_maxit = 1e4
 emg_solver_reltol = 1e-5
+emg_solver_abstol = 1e-10
 
 # timing parameters
 # -----------------
@@ -37,8 +38,9 @@ dt_1D = 1.5e-3                      # [ms] timestep width of diffusion
 dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting
 dt_3D = 1e0                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep = 1e0               # [ms] timestep for output files
+output_timestep_surface = 1e0       # [ms] timestep for output of surface emg
 output_timestep_fibers = 1e0        # [ms] timestep for output files of fibers
-output_timestep_big = 1e0           # [ms] timestep for output big files
+output_timestep_3D_emg = 1e0           # [ms] timestep for output big files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 
 # input files
@@ -49,10 +51,7 @@ activation_start_time = 0           # [ms] time when to start checking for stimu
 cellml_file = "../../../input/hodgkin_huxley_1952.c"
 
 # Fiber geometry, binary file
-#fiber_file = "../../../input/3000fibers.bin"
-#fiber_file = "../../../input/7x7fibers.bin"
-fiber_file = "../../../input/13x13fibers.bin"
-#fiber_file = "../../../input/49fibers.bin"
+fiber_file = "../../../input/left_biceps_brachii_7x7fibers.bin"
 
 load_fiber_data = False             # If the fiber geometry data should be loaded completely in the python script. If True, this reads the binary file and assigns the node positions in the config. If False, the C++ code will read the binary file and only extract the local node positions. This is more performant for highly parallel runs.
 debug_output = False                # verbose output in this python script, for debugging the domain decomposition
@@ -64,6 +63,8 @@ exfile_output = False               # If the Exfile output writer should be enab
 enable_surface_emg = False          # Enables the surface emg output writer
 optimization_type = "vc"            # the optimization_type used in the cellml adapter, "vc" uses explicit vectorization
 approximate_exponential_function = False   # if the exponential function should be approximated by a Taylor series with only 11 FLOPS
+use_aovs_memory_layout = True       # if optimizationType is "vc", whether to use the Array-of-Vectorized-Stru    ct (AoVS) memory layout instead of the Struct-of-Vectorized-Array (SoVA) memory layout. Setting to True is faster.
+fast_monodomain_solver_optimizations = True # enable the optimizations in the fast multidomain solver
 
 # motor unit stimulation times
 fiber_distribution_file = "../../../input/MU_fibre_distribution_3780.txt"
@@ -78,10 +79,9 @@ n_subdomains_y = 1
 n_subdomains_z = 1
 
 # stride for sampling the 3D elements from the fiber data
-# here any number is possible
 sampling_stride_x = 2
 sampling_stride_y = 2
-sampling_stride_z = 50
+sampling_stride_z = 1     # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
 # scenario name for log file
 scenario_name = ""
@@ -149,3 +149,4 @@ generate_linear_3d_mesh = True
 generate_quadratic_3d_mesh = False
 mappings = None
 enable_weak_scaling = False
+maximum_number_of_threads = 0

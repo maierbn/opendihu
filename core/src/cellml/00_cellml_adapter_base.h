@@ -100,10 +100,6 @@ public:
   //! get the initialized cellmlSourceCodeGenerator
   CellmlSourceCodeGenerator &cellmlSourceCodeGenerator();
 
-  //! get the data that will be transferred in the operator splitting to the other term of the splitting
-  //! the transfer is done by the slot_connector_data class
-  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
-
 protected:
 
   //! compute equilibrium of states for option "initializeStatesToEquilibrium"

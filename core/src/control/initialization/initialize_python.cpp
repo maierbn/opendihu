@@ -4,16 +4,22 @@
 #include <python_home.h>  // defines PYTHON_HOME_DIRECTORY
 #include "control/diagnostic_tool/performance_measurement.h"
 #include "utility/python_capture_stderr.h"
+#include "control/initialization/python_opendihu_module.h"
 
 void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFileGiven)
 {
   LOG(TRACE) << "initialize python";
 
-  // set program name of python script
-  char const *programName = "opendihu";
+  // make program name of executable available in the script
+  char const *programName = argv[0];
 
   wchar_t *programNameWChar = Py_DecodeLocale(programName, NULL);
   Py_SetProgramName(programNameWChar);  /* optional but recommended */
+
+  // pass information to "opendihu" module that can be accessed from within the settings script
+  PythonOpendihu::programName = std::string(programName);
+  PythonOpendihu::metaText = metaText();
+  PythonOpendihu::versionText = versionText();
 
   // set python home and path, apparently this is not needed
   VLOG(1) << "python home directory: \"" << PYTHON_HOME_DIRECTORY << "\"";
@@ -24,6 +30,9 @@ void DihuContext::initializePython(int argc, char *argv[], bool explicitConfigFi
 
   // add the emb module that captures stderr to the existing table of built-in modules
   PyImport_AppendInittab("emb", emb::PyInit_emb);
+
+  // add the opendihu module that holds some constants
+  PyImport_AppendInittab("opendihu", PythonOpendihu::PyInit_opendihu);
 
   // initialize python
   Py_Initialize();

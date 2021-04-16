@@ -41,6 +41,7 @@ protected:
     std::vector<dof_no_t> dofNosLocal;        //< the local dof nos in the 3D mesh of the surface mesh nodes
     std::vector<double> geometryValues;       //< the geometry values, i.e., node positions
     int nNodesLocal;                          //< local number of nodes
+    std::string opendihuMeshName;             //< opendihu mesh name corresponding to the precice mesh
   };
 
   /** one field variable to be transferred, called `data:vector` or `data:scalar` in the precice config
@@ -91,6 +92,7 @@ protected:
   int timeStepOutputInterval_;                //< interval in which to output current time
   double scalingFactor_;                      //< a factor to scale the exchanged data prior to communication
   bool outputOnlyConvergedTimeSteps_;         //< option if the output should be written only for converged timesteps
+  double endTimeIfCouplingDisabled_;          //< the end time that is used if the coupling is not enabled
 
   bool initialized_;                          //< if initialize() was already called
 };

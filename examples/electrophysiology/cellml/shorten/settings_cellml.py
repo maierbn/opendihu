@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 def set_specific_parameters(n_nodes_global, time_step_no, current_time, parameters, additional_argument):
   
   # do not stimulate for t > 1
-  if current_time > 0.1:
-    return
+  #if current_time < 5 or current_time > 5.1:
+  #  return
   
   # determine nodes to stimulate (center node)  (this is not relevant here, as we only have 1 node which has no. 0)
   # but this code is included here if sb. wants to copy it to a different scenario where we have multiple nodes
@@ -30,7 +30,10 @@ def set_specific_parameters(n_nodes_global, time_step_no, current_time, paramete
       nodes_to_stimulate_global.append(center_node+k)
   
   # set stimulation value of 40, set parameter no. 0 of node 0. (there is only one node here)
-  stimulation_current = 40.
+  if current_time < 5 or current_time > 5.1:
+    stimulation_current = 40.
+  else:
+    stimulation_current = 0.
   
   for node_no_global in nodes_to_stimulate_global:
     parameters[(node_no_global, 0, 0)] = stimulation_current   # key: ([x,y,z], nodalDofIndex, parameterNo)
@@ -79,9 +82,9 @@ config = {
   "logFormat":                      "csv", # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "mappings_between_meshes.txt",   # log file for mappings between meshes
-  "ExplicitEuler" : {
+  "Heun" : {
     "timeStepWidth":          1e-5,   # dt of solver
-    "endTime" :               10.0,   # end simulation time of solver
+    "endTime" :               35.0,   # end simulation time of solver
     "initialValues":          [],     # initial values (not used)
     "timeStepOutputInterval": 1e5,    # the interval when the current time will be printed in the console (e.g. 'Explicit Euler, timestep 100000/10000000, t=1')
     "inputMeshIsGlobal":      True,   # for the mesh, not relevant here as we have no elements, only one node
@@ -94,7 +97,7 @@ config = {
     "OutputWriter" : [
        #{"format": "Callback", "outputInterval": 1e4, "callback": callback},
       #{"format": "Paraview", "filename": "out", "binaryOutput": "false", "fixedFormat": False, "outputInterval": 1},
-      {"format": "PythonFile", "filename": "out/result", "outputInterval": 1e4, "binary": True, "onlyNodalValues": True, "fileNumbering": "incremental"},
+      {"format": "PythonFile", "filename": "out/result", "outputInterval": 5e3, "binary": True, "onlyNodalValues": True, "fileNumbering": "incremental"},
     ],
 
     "CellML" : {

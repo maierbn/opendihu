@@ -66,16 +66,16 @@ motor_units = [
 
 # timing parameters
 # -----------------
-end_time = 4000.0                      # [ms] end time of the simulation
+end_time = 10.0                      # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
 dt_0D = 2.5e-5                        # [ms] timestep width of ODEs (2e-3)
 dt_1D = 2.5e-5                        # [ms] timestep width of diffusion (4e-3)
 dt_splitting = 2.5e-5                 # [ms] overall timestep width of strang splitting (4e-3)
 dt_3D = 1e-1                        # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
-output_timestep = 1e-1              # [ms] timestep for output surface EMG, 0.5
-output_timestep_fibers = 1e-2       # [ms] timestep for fiber output, 0.5
-output_timestep_big = 25            # [ms] timestep for output big files of 3D EMG, 100
+output_timestep = 25              # [ms] timestep for output surface EMG, 0.5
+output_timestep_fibers = 25       # [ms] timestep for fiber output, 0.5
+output_timestep_3D_emg = 25            # [ms] timestep for output big files of 3D EMG, 100
 
 # simulation time:  4s
 # final video time: 40s
@@ -90,8 +90,8 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-enable_surface_emg = True
-optimization_type = "gpu"
+enable_surface_emg = False
+optimization_type = "vc"
 
 #fiber_file=input_directory+"/left_biceps_brachii_37x37fibers.bin"
 fiber_file              = input_directory+"/left_biceps_brachii_7x7fibers.bin"
@@ -123,5 +123,5 @@ def get_specific_states_frequency_jitter(fiber_no, mu_no):
   return motor_units[mu_no % len(motor_units)]["jitter"]
 
 def get_specific_states_call_enable_begin(fiber_no, mu_no):
-  return 10
+  return 0
   return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3

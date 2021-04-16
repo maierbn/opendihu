@@ -160,7 +160,7 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
     std::shared_ptr<FieldVariableTargetType> &fieldVariableTarget,
     int componentNoSource, int componentNoTarget, bool avoidCopyIfPossible)
 {
-  LOG(DEBUG) << "map " << fieldVariableSource->name() << "." << componentNoSource << " (dim " << FieldVariableSourceType::FunctionSpace::dim() << ", "
+  VLOG(1) << "map " << fieldVariableSource->name() << "." << componentNoSource << " (dim " << FieldVariableSourceType::FunctionSpace::dim() << ", "
     << FieldVariableSourceType::nComponents() << " components total)"
     << " -> " << fieldVariableTarget->name() << "." << componentNoTarget << " (dim " << FieldVariableTargetType::FunctionSpace::dim() << ", "
     << FieldVariableTargetType::nComponents() << " components total)"
@@ -198,7 +198,7 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
           && dynamic_cast<void*>(fieldVariableSource.get()) == dynamic_cast<void*>(fieldVariableTarget.get())
           && dynamic_cast<void*>(fieldVariableSource.get()) != nullptr)
         {
-          VLOG(1) << "Mapping field variable onto itself is no operation.";
+          VLOG(1) << "Mapping field variable onto itself is no operation";
           return;
         }
         if (FieldVariableTargetType::nComponents() == 1)
@@ -211,8 +211,52 @@ map(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
               // This means that the target field variable pointer can be set to the source field variable pointer.
               if ((long long)(fieldVariableSource.get()) != (long long)(fieldVariableTarget.get()))
               {
-                VLOG(1) << "set target pointer to source pointer, name \"" << fieldVariableTarget->name() << "\" to \"" << fieldVariableSource->name() << "\"";
+                VLOG(1) << "set target pointer = source pointer";
+                std::string fieldVariableSourceName = fieldVariableSource->name();
+                std::string fieldVariableTargetOldName = fieldVariableTarget->name();
+                
+                // if the representation is different, set to global, 
+                // no, not required
+                /*if (fieldVariableSource->partitionedPetscVec()->currentRepresentation() != fieldVariableTarget->partitionedPetscVec()->currentRepresentation())
+                {
+                  VLOG(1) << "fieldVariableSource->setRepresentationGlobal()";
+                  fieldVariableSource->setRepresentationGlobal();
+                }*/
+                
+                VLOG(1) << "starting point: fieldVariableSource: \"" << fieldVariableSourceName << "\", " << fieldVariableSource;
+                VLOG(1) << "                fieldVariableTarget: \"" << fieldVariableTargetOldName << "\", " << fieldVariableTarget;
+                
+                
+                // debugging output
+#if 0
+                std::vector<double> values;
+                fieldVariableSource->getValuesWithoutGhosts(0,values);
+                int nValues = values.size();
+                
+                std::stringstream s;
+                for (int i = 0; i < std::min(100,nValues); i++)
+                  s << ",  " << i << ": " << values[i];
+                VLOG(1) << "                fieldVariableSource has " << nValues << " entries (only showing the first 100): " << s.str();
+                
+                s.str("");
+                values.clear();
+                
+                fieldVariableTarget->getValuesWithoutGhosts(0,values);
+                nValues = values.size();
+                for (int i = 0; i < std::min(100,nValues); i++)
+                  s << ",  " << i << ": " << values[i];
+                VLOG(1) << "                fieldVariableTarget has " << nValues << " entries (only showing the first 100): " << s.str();
+#endif
+                
                 fieldVariableTarget = std::dynamic_pointer_cast<FieldVariableTargetType>(fieldVariableSource);
+                
+                // if the source field variable had a name "additionalFieldVariable..." and the target field variable had a real name,
+                // preserve the real name of the target field variable
+                if (fieldVariableSourceName.find("additionalFieldVariable") != std::string::npos)
+                {
+                  VLOG(1) << "rename fieldVariableTarget from \"" << fieldVariableTarget->name() << "\" to \"" << fieldVariableTargetOldName << "\"";
+                  fieldVariableTarget->setName(fieldVariableTargetOldName);
+                }
               }
               else
               {

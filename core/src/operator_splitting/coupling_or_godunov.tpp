@@ -60,14 +60,18 @@ advanceTimeSpan(bool withOutputWritersEnabled)
     this->slotsConnection_->setTransferDirection(true);
 
     if (VLOG_IS_ON(1))
-      VLOG(1) << "  before transfer 1->2 timeStepping1_.getSlotConnectorData(): " << this->timeStepping1_.getSlotConnectorData();
+      VLOG(1) << "  before transfer 1->2 timeStepping1_.getSlotConnectorData() " 
+        << "type: " << StringUtility::demangle(typeid(decltype(this->timeStepping1_.getSlotConnectorData())).name()) 
+        << ",\n  data: " << SlotConnectorDataHelper<typename TimeStepping1::SlotConnectorDataType>::getString(this->timeStepping1_.getSlotConnectorData());
 
     // transfer to timestepping2_
     SlotConnectorDataTransfer<typename TimeStepping1::SlotConnectorDataType, typename TimeStepping2::SlotConnectorDataType>::
       transfer(this->timeStepping1_.getSlotConnectorData(), this->timeStepping2_.getSlotConnectorData(), *this->slotsConnection_);
 
     if (VLOG_IS_ON(1))
-      VLOG(1) << "  after transfer 1->2 timeStepping2_.getSlotConnectorData(): " << this->timeStepping2_.getSlotConnectorData();
+      VLOG(1) << "  after transfer 1->2 timeStepping2_.getSlotConnectorData(): " 
+        << "type: " << StringUtility::demangle(typeid(decltype(this->timeStepping2_.getSlotConnectorData())).name()) 
+        << ",\n  data: " << SlotConnectorDataHelper<typename TimeStepping2::SlotConnectorDataType>::getString(this->timeStepping2_.getSlotConnectorData());
 
     if (this->durationLogKey_ != "")
     {

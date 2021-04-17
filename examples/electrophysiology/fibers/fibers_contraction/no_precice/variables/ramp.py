@@ -2,47 +2,6 @@
 # scenario name for log file
 scenario_name = "ramp"
 
-# Fixed units in cellMl models:
-# These define the unit system.
-# 1 cm = 1e-2 m
-# 1 ms = 1e-3 s
-# 1 uA = 1e-6 A
-# 1 uF = 1e-6 F
-# 
-# derived units:
-#   (F=s^4*A^2*m^-2*kg^-1) => 1 ms^4*uA^2*cm^-2*x*kg^-1 = (1e-3)^4 s^4 * (1e-6)^2 A^2 * (1e-2)^-2 m^-2 * (x)^-1 kg^-1 = 1e-12 * 1e-12 * 1e4 F = 1e-20 * x^-1 F := 1e-6 F => x = 1e-14
-# 1e-14 kg = 10e-15 kg = 10e-12 g = 10 pg
-
-# (N=kg*m*s^-2) => 1 10pg*cm*ms^2 = 1e-14 kg * 1e-2 m * (1e-3)^-2 s^-2 = 1e-14 * 1e-2 * 1e6 N = 1e-10 N = 10 nN
-# (S=kg^-1*m^-2*s^3*A^2, Siemens not Sievert!) => (1e-14*kg)^-1*cm^-2*ms^3*uA^2 = (1e-14)^-1 kg^-1 * (1e-2)^-2 m^-2 * (1e-3)^3 s^3 * (1e-6)^2 A^2 = 1e14 * 1e4 * 1e-9 * 1e-12 S = 1e-3 S = 1 mS
-# (V=kg*m^2*s^-3*A^-1) => 1 10pg*cm^2*ms^-3*uA^-1 = (1e-14) kg * (1e-2)^2 m^2 * (1e-3)^-3 s^-3 * (1e-6)^-1 A^-1 = 1e-14 * 1e-4 * 1e6 * 1e6 V = 1e-6 V = 1mV
-# (Hz=s^-1) => 1 ms^-1 = (1e-3)^-1 s^-1 = 1e3 Hz
-# (kg/m^3) => 1 10 pg/cm^3 = 1e-14 kg / (1e-2 m)^3 = 1e-14 * 1e6 kg/m^3 = 1e-8 kg/m^3
-# (Pa=kg/(m*s^2)) => 1e-14 kg / (1e-2 m * 1e-3^2 s^2) = 1e-14 / (1e-8) Pa = 1e-6 Pa
-
-# Hodgkin-Huxley
-# t: ms
-# STATES[0], Vm: mV
-# CONSTANTS[1], Cm: uF*cm^-2
-# CONSTANTS[2], I_Stim: uA*cm^-2
-# -> all units are consistent
-
-# Shorten
-# t: ms
-# CONSTANTS[0], Cm: uF*cm^-2
-# STATES[0], Vm: mV
-# ALGEBRAIC[32], I_Stim: uA*cm^-2
-# -> all units are consistent
-
-# Fixed units in mechanics system
-# 1 cm = 1e-2 m
-# 1 ms = 1e-3 s
-# 1 N
-# 1 N/cm^2 = (kg*m*s^-2) / (1e-2 m)^2 = 1e4 kg*m^-1*s^-2 = 10 kPa
-# (kg = N*s^2*m^-1) => N*ms^2*cm^-1 = N*(1e-3 s)^2 * (1e-2 m)^-1 = 1e-4 N*s^2*m^-1 = 1e-4 kg
-# (kg/m^3) => 1 * 1e-4 kg * (1e-2 m)^-3 = 1e2 kg/m^3
-# (m/s^2) => 1 cm/ms^2 = 1e-2 m * (1e-3 s)^-2 = 1e4 m*s^-2
-
 # material parameters
 # --------------------
 # quantities in mechanics unit system
@@ -58,7 +17,7 @@ b  = 1.075e-2               # [N/cm^2] anisotropy parameter
 d  = 9.1733                 # [-] anisotropy parameter
 
 # for debugging, b = 0 leads to normal Mooney-Rivlin
-b = 0
+#b = 0
 
 material_parameters = [c1, c2, b, d]   # material parameters
 pmax = 7.3                  # [N/cm^2] maximum isometric active stress
@@ -104,28 +63,27 @@ motor_units = [
 end_time = 4000.0                      # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 stimulation_frequency_jitter = 0    # [-] jitter in percent of the frequency, added and substracted to the stimulation_frequency after each stimulation
-dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
-dt_1D = 1e-3                        # [ms] timestep width of diffusion (1e-3)
-dt_splitting = 1e-3                 # [ms] overall timestep width of strang splitting (1e-3)
+dt_0D = 2.5e-5                        # [ms] timestep width of ODEs (2e-3)
+dt_1D = 2.5e-5                        # [ms] timestep width of diffusion (4e-3)
+dt_splitting = 2.5e-5                 # [ms] overall timestep width of strang splitting (4e-3)
 dt_3D = 1                           # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
 output_timestep_fibers = 4e0       # [ms] timestep for fiber output, 0.5
 output_timestep_3D = 4e0              # [ms] timestep for output of fibers and mechanics, should be a multiple of dt_3D
 
 
 # input files
-fiber_file = "../../../../input/left_biceps_brachii_9x9fibers.bin"
-#fiber_file = "../../../../input/left_biceps_brachii_13x13fibers.bin"
+#fiber_file = "../../../../input/left_biceps_brachii_9x9fibers.bin"
+fiber_file = "../../../../input/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 firing_times_file = "../../../../input/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-fiber_distribution_file = "../../../../input/MU_fibre_distribution_10MUs.txt"
+fiber_distribution_file = "../../../../input/MU_fibre_distribution_25x25_10MUs.txt"
 cellml_file             = "../../../../input/new_slow_TK_2014_12_08.c"
 
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
 sampling_stride_x = 2
 sampling_stride_y = 2
-local_sampling_stride_z = 74
-sampling_stride_z = 1
+sampling_stride_z = 30
 
 distribute_nodes_equally = False   
 # True: set high priority to make subdomains have approximately equal number of fibers but creates tiny remainder elements inside the subdomains
@@ -150,7 +108,7 @@ use_vc = True                       # If the vc optimization type should be used
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 def get_am(fiber_no, mu_no):
   # get radius in cm, 1 μm = 1e-6 m = 1e-4*1e-2 m = 1e-4 cm
-  r = motor_units[mu_no]["radius"]*1e-4
+  r = motor_units[mu_no % len(motor_units)]["radius"]*1e-4
   # cylinder surface: A = 2*π*r*l, V = cylinder volume: π*r^2*l, Am = A/V = 2*π*r*l / (π*r^2*l) = 2/r
   return 2./r
   #return Am

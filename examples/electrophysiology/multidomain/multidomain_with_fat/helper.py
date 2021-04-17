@@ -7,6 +7,7 @@ import pickle
 import sys,os
 import struct
 import argparse
+import random
 import time
 sys.path.insert(0, '..')
 import variables    # file variables.py
@@ -410,7 +411,18 @@ def compartment_gets_stimulated(compartment_no, frequency, current_time):
     #print("{}: fiber {} is mu {}, t = {}, row: {}, stimulated: {} {}".format(rank_no, fiber_no, mu_no, current_time, (index % n_firing_times), variables.firing_times[index % n_firing_times, mu_no], "true" if variables.firing_times[index % n_firing_times, mu_no] == 1 else "false"))
   
   return variables.firing_times[index % n_firing_times, mu_no] == 1
-  
+
+ 
+n_nodes_x = variables.n_points_3D_mesh_global_x
+n_nodes_y = variables.n_points_3D_mesh_global_y
+n_nodes_z = variables.n_points_3D_mesh_global_z
+neuromuscular_junction_offsets = np.zeros((variables.n_compartments, n_nodes_x, n_nodes_y))
+
+for compartment_no in range(variables.n_compartments):
+  for j in range(n_nodes_y):
+    for i in range(n_nodes_x):
+      neuromuscular_junction_offsets[compartment_no,i,j] = int((-0.5 + random.random())*0.1*n_nodes_z)
+ 
 # callback function that can set states, i.e. prescribed values for stimulation
 def set_specific_states(n_nodes_global, time_step_no, current_time, states, compartment_no):
   
@@ -425,19 +437,19 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
     z_index_center = (int)(n_nodes_z/2)
     y_index_center = (int)(n_nodes_y/2)
     x_index_center = (int)(n_nodes_x/2)
-    
-    for k in range(n_nodes_z):
-      if z_index_center-1 <= k <= z_index_center+1:  # use only 3 nodes in z direction from center
-        for j in range(n_nodes_y):
-          #if y_index_center-1 <= j <= y_index_center+1:  # use only 3 nodes in y direction from center
-          if True:                                        # use all nodes
-            for i in range(n_nodes_x):
-              #if x_index_center-1 <= i <= x_index_center+1:  # use only 3 nodes in x direction from center
-              if True:                                        # use all nodes
-                
-                key = ((i,j,k),0,0)        # key: ((x,y,z),nodal_dof_index,state_no)
-                states[key] = variables.vm_value_stimulated
-                #print("set states at ({},{},{}) to {}".format(i,j,k,variables.vm_value_stimulated))
+
+    # iterate over (i,j) pairs    
+    for j in range(n_nodes_y):
+      for i in range(n_nodes_x):
+
+        # iterate over points of neuromuscular junction
+        modified_k = z_index_center + (int)(neuromuscular_junction_offsets[compartment_no,i,j])
+        for k in range(modified_k-1,modified_k+2):
+          if k >= 0 and k < n_nodes_z:
+
+            key = ((i,j,k),0,0)        # key: ((x,y,z),nodal_dof_index,state_no)
+            states[key] = variables.vm_value_stimulated
+            #print("set states at ({},{},{}) to {}".format(i,j,k,variables.vm_value_stimulated))
 
     #print("states: {}".format(states))
     #print("n_nodes: ({},{},{})".format(n_nodes_x, n_nodes_y, n_nodes_z))

@@ -97,7 +97,7 @@ multidomain_alternative_solver_max_iterations = 1e4      # maximum number of ite
 
 # timing parameters
 # -----------------
-end_time = 200.0                   # [ms] end time of the simulation
+end_time = 35.0                     # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
 dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
 dt_multidomain = 1e-3               # [ms] timestep width of the multidomain solver

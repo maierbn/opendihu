@@ -310,6 +310,6 @@ getString(std::shared_ptr<SlotConnectorDataType> slotConnectorData)
     return std::string("x");
 
   std::stringstream s;
-  s << slotConnectorData;
+  s << *slotConnectorData;
   return s.str();
 }

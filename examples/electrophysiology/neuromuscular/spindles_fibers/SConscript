@@ -8,6 +8,4 @@
 Import('env')     # import Environment object from calling SConstruct
 
 # create the main executable
-env.Program(target = 'multidomain_with_fat', source = "src/multidomain_with_fat.cpp")
-env.Program(target = 'multidomain_with_fat_emg', source = "src/multidomain_with_fat_emg.cpp")
-env.Program(target = 'multidomain_shorten_with_fat', source = "src/multidomain_shorten_with_fat.cpp")
+env.Program(target = 'spindles_fibers', source = "src/spindles_fibers.cpp")

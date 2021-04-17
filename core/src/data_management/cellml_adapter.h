@@ -87,6 +87,9 @@ private:
 
   //! initialize the slotConnectorData_ object, this can only be done after the states variable has been set
   void initializeSlotConnectorData();
+  
+  //! retrieve the current parameters_ field variable from the slot connector, because is could have been changed by the slot connector transfer
+  void updateParametersPointer();
 
   std::shared_ptr<FieldVariableAlgebraics> algebraics_;   //< algebraics field variable
   std::shared_ptr<FieldVariableStates> states_;           //< states field variable, this is a shared pointer with the timestepping scheme, which own the actual variable (creates it)

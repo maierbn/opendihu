@@ -51,8 +51,14 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<
   std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1Front
     = (*std::get<0>(*(*transferableSolutionData1)[0]))[0];
 
+  
   // initialize output connection object
   slotsConnection.initialize(*transferableSolutionData1Front, *transferableSolutionData2, offsetSlotNoData1, offsetSlotNoData2);
+
+#ifndef NDEBUG
+  LOG(DEBUG) << "variable1.size: " << transferableSolutionData1Front->variable1.size() << ", variable2.size: " << transferableSolutionData1Front->variable2.size()
+    << "slotsConnection: " << slotsConnection.getDebugInformation();
+#endif
 
   // for the first vector of variables (the "states" in case of CellMLAdapter)
   for (int i = 0; i < transferableSolutionData1Front->variable1.size(); i++)
@@ -65,7 +71,10 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<
     bool slotIsConnected = slotsConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
     if (!slotIsConnected)
+    {
+      LOG(DEBUG) << "   variable1[" << i << "] not connected";
       continue;
+    }
 
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a> FieldVariable1;
 
@@ -156,7 +165,10 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<
     bool slotIsConnected = slotsConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
     if (!slotIsConnected)
+    {
+      LOG(DEBUG) << "   variable2[" << i << "] not connected";
       continue;
+    }
 
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b> FieldVariable1;
 
@@ -275,6 +287,11 @@ transfer(const std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType1,nCompo
   // initialize output connection object
   slotsConnection.initialize(*transferableSolutionData1, *transferableSolutionData2Front, offsetSlotNoData1, offsetSlotNoData2);
 
+#ifndef NDEBUG
+  LOG(DEBUG) << "variable1.size: " << transferableSolutionData1->variable1.size() << ", variable2.size: " << transferableSolutionData1->variable2.size() << ", geometryField: " << transferableSolutionData1->geometryField
+    << "slotsConnection: " << slotsConnection.getDebugInformation();
+#endif
+
   // for the first vector of variables (the "states" in case of CellMLAdapter)
   for (int i = 0; i < transferableSolutionData1->variable1.size(); i++)
   {
@@ -286,7 +303,10 @@ transfer(const std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType1,nCompo
     bool slotIsConnected = slotsConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
     if (!slotIsConnected)
+    {
+      LOG(DEBUG) << "   variable1[" << i << "] not connected";
       continue;
+    }
 
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a> FieldVariable1;
 
@@ -377,7 +397,10 @@ transfer(const std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType1,nCompo
     bool slotIsConnected = slotsConnection.getSlotInformation(fromVectorNo, fromVectorIndex, toVectorNo, toVectorIndex, avoidCopyIfPossible);
 
     if (!slotIsConnected)
+    {
+      LOG(DEBUG) << "   variable2[" << i << "] not connected";
       continue;
+    }
 
     typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1b> FieldVariable1;
 

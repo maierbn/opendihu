@@ -57,10 +57,10 @@ end_time = 100                      # [ms] end time of the simulation
 dt_0D = 2.5e-5                      # [ms] timestep width of ODEs (2e-3)
 dt_1D = 2.5e-5                      # [ms] timestep width of diffusion (4e-3)
 dt_splitting = 2.5e-5               # [ms] overall timestep width of strang splitting (4e-3)
-dt_3D = 1e-1                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG, this has to be the same value as in the precice_config.xml
-output_timestep = 10                # [ms] timestep for output files, 5.0
+dt_3D = 1                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG, this has to be the same value as in the precice_config.xml
+output_timestep = 10.0                # [ms] timestep for output files, 5.0
 output_timestep_fibers = output_timestep   # [ms] timestep for fiber output
-output_timestep_big = 25            # [ms] timestep for output big files of 3D EMG, 100
+output_timestep_big = 100.0            # [ms] timestep for output big files of 3D EMG, 100
 
 
 
@@ -77,7 +77,7 @@ import opendihu
 if "contraction" in opendihu.program_name:
   sampling_stride_x = 2
   sampling_stride_y = 2
-  sampling_stride_z = 40
+  sampling_stride_z = 148
   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
 else:
@@ -88,12 +88,21 @@ else:
   sampling_stride_z = 20
   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
+distribute_nodes_equally = False     # (default: False)
+# True: set high priority to make subdomains have approximately equal number of fibers but creates tiny remainder elements inside the subdomains
+# False: make elements more equally sized, this can lead to a slight imbalance in the number of fibers per subdomain
+
+# Tolerance value in the element coordinate system of the 3D elements, [0,1]^3
+# when a fiber point is still considered part of the element.
+# Try to increase this such that all mappings have all points.
+mapping_tolerance = 0.5 
+
 # input files
 import os
 input_directory   = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
 
-#fiber_file        = input_directory + "/left_biceps_brachii_7x7fibers.bin"
-fiber_file        = input_directory + "/left_biceps_brachii_13x13fibers.bin"
+fiber_file        = input_directory + "/left_biceps_brachii_9x9fibers.bin"
+#fiber_file        = input_directory + "/left_biceps_brachii_13x13fibers.bin"
 firing_times_file = input_directory + "/MU_firing_times_always.txt"
 #fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs.txt"
 fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs_13x13.txt"
@@ -129,7 +138,7 @@ def get_conductivity(fiber_no, mu_no):
   return Conductivity
 
 def get_specific_states_call_frequency(fiber_no, mu_no):
-  stimulation_frequency = motor_units[mu_no % len(motor_units)]["stimulation_frequency"]
+  stimulation_frequency = motor_units[mu_no % len(motor_units)]["stimulation_frequency"]*0.2
   return stimulation_frequency*1e-3
 
 def get_specific_states_frequency_jitter(fiber_no, mu_no):

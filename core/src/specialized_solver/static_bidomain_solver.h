@@ -34,6 +34,12 @@ public:
   //! dummy method, set endTime as current output time
   void setTimeSpan(double startTime, double endTime);
 
+  //! start time of time interval to be simulated
+  double startTime();
+  
+  //! end time of simulation
+  double endTime();
+  
   //! run the simulation
   void run();
 

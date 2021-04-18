@@ -122,8 +122,8 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 config = {
   "scenarioName":          variables.scenario_name,
   "logFormat":             "csv",
-  "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
-  "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",
+  "solverStructureDiagramFile":     "out/" + variables.scenario_name + "/solver_structure_muscle_contraction.txt",     # output file of a diagram that shows data connection between solvers
+  "mappingsBetweenMeshesLogFile":   "out/" + variables.scenario_name + "/mappings_between_meshes_muscle_contraction.txt",
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": variables.mappings_between_meshes,
   "Solvers": {
@@ -134,11 +134,11 @@ config = {
       "preconditionerType": "lu",           # type of the preconditioner
       "maxIterations":       1e4,           # maximum number of iterations in the linear solver
       "snesMaxFunctionEvaluations": 1e8,    # maximum number of function iterations
-      "snesMaxIterations":   10,            # maximum number of iterations in the nonlinear solver
+      "snesMaxIterations":   40,            # maximum number of iterations in the nonlinear solver
       "snesRelativeTolerance": 1e-5,       # relative tolerance of the nonlinear solver
       "snesAbsoluteTolerance": 1e-5,        # absolute tolerance of the nonlinear solver
       "snesLineSearchType": "l2",        # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
-      "snesRebuildJacobianFrequency": 5,
+      "snesRebuildJacobianFrequency": 1,
       "dumpFilename":        "",
       "dumpFormat":          "matlab",
     }

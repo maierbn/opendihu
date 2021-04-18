@@ -120,7 +120,6 @@ initializePreciceData()
   // get all present slot names
   std::vector<std::string> slotNames;
   SlotConnectorDataHelper<SlotConnectorDataType>::getSlotNames(slotConnectorData, slotNames);
-  int nArrayItems = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems(slotConnectorData);   // number of fibers if there are fibers
 
   // loop over items of the list under "preciceData", the order of the items is also the order of the data connector slots
   for (int listIndex = 0; listIndex < list.size(); listIndex++)
@@ -139,31 +138,33 @@ initializePreciceData()
     preciceData.slotName = currentPreciceData.getOptionString("slotName", "");
     preciceData.slotNo = slotNo;
 
-    if (!preciceData.isGeometryField)
+    LOG(DEBUG) << "isGeometryField: " << preciceData.isGeometryField << ", slotName: \"" << preciceData.slotName << "\".";
+
+    if (preciceData.slotName == "")
     {
-      if (preciceData.slotName == "")
+      preciceData.slotNo = slotNo;
+      LOG(DEBUG) << "Using slotNo " << slotNo << " because slotName was not given.";
+    }
+    else
+    {
+      LOG(DEBUG) << "The slotName \"" << preciceData.slotName << "\" is given.";
+      std::vector<std::string>::iterator slotNameIter = std::find(slotNames.begin(), slotNames.end(), preciceData.slotName);
+
+      // if the "from" and "to" slot names match to slot names in the current slotConnectorData
+      if (slotNameIter != slotNames.end())
       {
-        preciceData.slotNo = slotNo;
-        LOG(DEBUG) << "Using slotNo " << slotNo << " because slotName was not given.";
+        LOG(DEBUG) << "Slot found";
+        // determine slot nos
+        preciceData.slotNo = std::distance(slotNames.begin(), slotNameIter);
+        LOG(DEBUG) << "Slot \"" << preciceData.slotName << "\" is slot no " << preciceData.slotNo;
       }
       else
       {
-        std::vector<std::string>::iterator slotNameIter = std::find(slotNames.begin(), slotNames.end(), preciceData.slotName);
-
-        // if the "from" and "to" slot names match to slot names in the current slotConnectorData
-        if (slotNameIter != slotNames.end())
-        {
-          // determine slot nos
-          preciceData.slotNo = std::distance(slotNames.begin(), slotNameIter);
-          LOG(DEBUG) << "Slot \"" << preciceData.slotName << "\" is slot no " << preciceData.slotNo;
-        }
-        else
-        {
-          preciceData.slotNo = slotNo;
-          LOG(WARNING) << "A slot with name \"" << preciceData.slotName << "\" does not exist. Available slots: " << slotNames
-            << ". Use `None` or the empty string to specify the slot by its number (referenced slots will be in the order of "
-            << "the items under \"preciceData\").\n Using slot No " << slotNo;
-        }
+        LOG(DEBUG) << "Slot not found";
+        preciceData.slotNo = slotNo;
+        LOG(WARNING) << "A slot with name \"" << preciceData.slotName << "\" does not exist. Available slots: " << slotNames
+          << ". Use `None` or the empty string to specify the slot by its number (referenced slots will be in the order of "
+          << "the items under \"preciceData\").\n Using slot No " << slotNo;
       }
     }
 
@@ -192,6 +193,7 @@ initializePreciceData()
       preciceMesh->preciceMeshName = preciceMeshName;
 
       std::vector<Vec3> geometryValues;
+      int nArrayItems = 1;
 
       // get the function space that is used to initialize the mapping
       std::shared_ptr<FunctionSpace> functionSpace = nullptr;
@@ -203,6 +205,14 @@ initializePreciceData()
         // get the node positions of the opendihu mesh to initialize the mapping
         preciceMesh->nNodesLocal = functionSpace->geometryField().nDofsLocalWithoutGhosts();
         functionSpace->geometryField().getValuesWithoutGhosts(geometryValues);
+        
+        // store opendihu mesh name
+        preciceMesh->opendihuMeshName = functionSpace->meshName();
+        
+        // the following cannot happen
+        if (preciceMesh->opendihuMeshName != preciceData.opendihuMeshName)
+          LOG(FATAL) << "Initializing precice mesh from settings opendihuMeshName=\"" << preciceData.opendihuMeshName 
+            << "\" and the resulting mesh is " << preciceMesh->opendihuMeshName;
       }
       else
       {
@@ -220,7 +230,12 @@ initializePreciceData()
         else
           LOG(DEBUG) << "got mesh partition for slot No " << preciceData.slotNo;
 
+        // get opendihu mesh name
+        preciceMesh->opendihuMeshName = SlotConnectorDataHelper<SlotConnectorDataType>::getMeshName(slotConnectorData, preciceData.slotNo);
+        
         int nDofsLocalWithoutGhosts = meshPartitionBase->nDofsLocalWithoutGhosts();
+        nArrayItems = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems(slotConnectorData, preciceData.slotNo);   // number of fibers if there are fibers
+
         preciceMesh->nNodesLocal = nDofsLocalWithoutGhosts * nArrayItems;
 
         // get the vector of values [0,1,...,nDofsLocalWithGhosts]
@@ -266,10 +281,17 @@ initializePreciceData()
       // store the precice mesh to the vector of meshes
       preciceMeshes_.push_back(preciceMesh);
 
-      LOG(DEBUG) << "created precice mesh \"" << preciceMeshName << "\" with " << preciceMesh->nNodesLocal << " local nodes";
+      // output message about mesh names
+      std::stringstream message;
+      message << "Initialized precice mesh \"" << preciceMesh->preciceMeshName 
+        << "\" from opendihu mesh \"" << preciceMesh->opendihuMeshName << "\" with " << preciceMesh->nNodesLocal << " local nodes";
+      if (nArrayItems > 1)
+        message << " (and other corresponding meshes, in total " << nArrayItems << " fibers/compartments)";
+      LOG(INFO) << message.str() << ".";
     }
     else
     {
+      LOG(DEBUG) << "Use existing precice mesh with preciceMeshId " << preciceMeshId;
       preciceData.preciceMesh = *iter;
     }
 
@@ -299,6 +321,40 @@ initializePreciceData()
     // increment slotNo, this value is used for slots that are not identified by slotName in the config
     if (!preciceData.isGeometryField)
       slotNo++;
+
+    // check if mesh size matches the specified slot
+    // get the mesh partition
+    std::shared_ptr<Partition::MeshPartitionBase> meshPartitionBase
+      = SlotConnectorDataHelper<SlotConnectorDataType>::getMeshPartitionBase(slotConnectorData, preciceData.slotNo, 0);
+
+    int nDofsLocalWithoutGhosts = meshPartitionBase->nDofsLocalWithoutGhosts();
+    int nArrayItems = SlotConnectorDataHelper<SlotConnectorDataType>::nArrayItems(slotConnectorData, preciceData.slotNo);   // number of fibers if there are fibers
+
+    if (nDofsLocalWithoutGhosts*nArrayItems != preciceData.preciceMesh->nNodesLocal)
+    {
+      LOG(DEBUG) << ", all available slots: " << SlotConnectorDataHelper<SlotConnectorDataType>::getString(slotConnectorData);
+      LOG(FATAL) << currentPreciceData << ": Mesh does not match slot in PreciceAdapterVolumeCoupling.\n\n " 
+        << "The " << (listIndex+1) << (listIndex==0? "st" : (listIndex==1? "nd" : (listIndex==2? "rd" : "th")))
+        << " list item under \"preciceData\" uses slot " << preciceData.slotNo << " (slotName \"" << preciceData.slotName << "\")"
+        << " and preciceMesh \"" << preciceData.preciceMesh->preciceMeshName << "\".\nThe slot has " 
+        << nDofsLocalWithoutGhosts << " dofs * " << nArrayItems << " array items (fibers) = " 
+        << nDofsLocalWithoutGhosts*nArrayItems << " dofs in total. The mesh was initialized from opendihu mesh \"" 
+        << preciceData.preciceMesh->opendihuMeshName << "\" with " 
+        << preciceData.preciceMesh->nNodesLocal << " nodes. \n" 
+        << "(isGeometryField: " << std::boolalpha << preciceData.isGeometryField << ")\n"
+        << "You can do the following:\n" 
+        << "- Rename the preciceMesh to a unique name and update the precice config xml file accordingly.\n"
+        << "- Check the solver structure file to find out the meshes that are associated with the slots.\n"
+        << "  Check that the correct mesh is specified and that the precice mesh was not initialized earlier with a different opendihu mesh.\n"
+        << "  Every precice mesh is initialized the first time in appears under \"preciceData\", sometimes reordering the entries can help.\n"
+        << "  If the desired mesh is not available at the current solver, maybe insert a MapDofs class.";
+    }
+    
+    LOG(INFO) << "Precice data \"" << preciceData.preciceDataName << "\" maps to " 
+      << (preciceData.isGeometryField? "the geometry field of " : "") << "slot " << preciceData.slotNo 
+      << " (\"" << preciceData.slotName << "\") and uses precice mesh \"" << preciceData.preciceMesh->preciceMeshName 
+      << "\", which is opendihu mesh \"" << preciceData.preciceMesh->opendihuMeshName << "\" with " 
+      << preciceData.preciceMesh->nNodesLocal << " local nodes.";
 
     // store preciceData to vector
     preciceData_.push_back(preciceData);

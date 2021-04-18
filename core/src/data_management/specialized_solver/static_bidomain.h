@@ -68,7 +68,8 @@ public:
     std::shared_ptr<FieldVariableType>,             // extra-cellular potential
     std::shared_ptr<FieldVariableType>,             // transmembraneFlow
     std::shared_ptr<FieldVariableType>,             // solution of laplace potential flow
-    std::shared_ptr<FieldVariableType>              // estimated condition number of the jacobian
+    std::shared_ptr<FieldVariableType>,             // estimated condition number of the jacobian
+    std::vector<std::shared_ptr<FieldVariableType>>    // additional field variables that are not computed but transferred
   > FieldVariablesForOutputWriter;
 
   //! get pointers to all field variables that can be written by output writers
@@ -88,6 +89,9 @@ private:
   std::shared_ptr<FieldVariableType> zero_;                       //< a field variable with constant value of zero, needed for the nested rhs vector
   std::shared_ptr<FieldVariableType> jacobianConditionNumber_;    //< field variable to store the estimated condition number of the jacobian matrix of the element coordinates to world mapping
   std::shared_ptr<SlotConnectorDataType> slotConnectorData_;  //< the field variables that will be transferred to other solvers for the slot connector
+  
+  std::vector<std::string> componentNames_;         //< names of the components of the solution and increment variables
+  std::vector<std::shared_ptr<FieldVariableType>> additionalFieldVariables_;   //< additional field variables that are not used for computation but can be passed from the discretizableInTime_ object to the enclosing solvers
 };
 
 } // namespace Data

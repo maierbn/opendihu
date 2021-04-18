@@ -14,7 +14,7 @@ nSlots(std::shared_ptr<SlotConnectorDataType> slotConnectorData)
 //! get the number of items if the slotConnector is organized in an array, `arrayIndex` can then be chosen in [0,nArrayItems]
 template<typename SlotConnectorDataType>
 int SlotConnectorDataHelper<SlotConnectorDataType>::
-nArrayItems(std::shared_ptr<SlotConnectorDataType> slotConnectorData)
+nArrayItems(std::shared_ptr<SlotConnectorDataType> slotConnectorData, int slotNo)
 {
   if (!slotConnectorData)
     return 0;
@@ -47,6 +47,35 @@ getMeshPartitionBase(std::shared_ptr<SlotConnectorDataType> slotConnectorData, i
 
     return fieldVariable->functionSpace()->meshPartitionBase();
   }
+}
+
+//! get the mesh name of the field variable at the slot
+template<typename SlotConnectorDataType>
+std::string SlotConnectorDataHelper<SlotConnectorDataType>::
+getMeshName(std::shared_ptr<SlotConnectorDataType> slotConnectorData, int slotNo)
+{
+  if (!slotConnectorData)
+    return std::string();
+  int nSlotsVariable1 = slotConnectorData->variable1.size();
+
+  // if the slot no corresponds to a field variables stored under variable1
+  if (slotNo < nSlotsVariable1)
+  {
+    std::shared_ptr<typename SlotConnectorDataType::FieldVariable1Type> fieldVariable
+      = slotConnectorData->variable1[slotNo].values;
+
+    return fieldVariable->functionSpace()->meshName();
+  }
+  else
+  {
+    // if the slot no corresponds to a field variables stored under variable2
+    int index = slotNo - nSlotsVariable1;
+    std::shared_ptr<typename SlotConnectorDataType::FieldVariable2Type> fieldVariable
+      = slotConnectorData->variable2[index].values;
+
+    return fieldVariable->functionSpace()->meshName();
+  }
+  return std::string();
 }
 
 //! set the values at given dofs at the field variable given by slotNo
@@ -150,6 +179,8 @@ slotSetGeometryValues(
     return;
 
   int nSlotsVariable1 = slotConnectorData->variable1.size();
+  using FunctionSpaceType = typename SlotConnectorDataType::FieldVariable1Type::FunctionSpace;
+  using GeometryFieldType = FieldVariable::FieldVariable<FunctionSpaceType,3>;
 
   // if the slot no corresponds to a field variables stored under variable1
   if (slotNo < nSlotsVariable1)
@@ -162,6 +193,9 @@ slotSetGeometryValues(
       << "function space \"" << fieldVariable->functionSpace()->meshName() << "\", "
       << "set dofs " << dofNosLocal << " of geometry field to values " << values;
     fieldVariable->functionSpace()->geometryField().setValues(dofNosLocal, values);
+    
+    // add the geometry field in the slot connector data, such that it will be automatically transferred to the connected slots
+    slotConnectorData->addGeometryField(std::make_shared<GeometryFieldType>(fieldVariable->functionSpace()->geometryField()));
   }
   else
   {
@@ -175,6 +209,9 @@ slotSetGeometryValues(
       << "function space \"" << fieldVariable->functionSpace()->meshName() << "\", "
       << "set dofs " << dofNosLocal << " of geometry field to values " << values;
     fieldVariable->functionSpace()->geometryField().setValues(dofNosLocal, values);
+
+    // add the geometry field in the slot connector data, such that it will be automatically transferred to the connected slots
+    slotConnectorData->addGeometryField(std::make_shared<GeometryFieldType>(fieldVariable->functionSpace()->geometryField()));
   }
 }
 

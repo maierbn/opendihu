@@ -134,11 +134,11 @@ config = {
       "preconditionerType": "lu",           # type of the preconditioner
       "maxIterations":       1e4,           # maximum number of iterations in the linear solver
       "snesMaxFunctionEvaluations": 1e8,    # maximum number of function iterations
-      "snesMaxIterations":   10,            # maximum number of iterations in the nonlinear solver
+      "snesMaxIterations":   40,            # maximum number of iterations in the nonlinear solver
       "snesRelativeTolerance": 1e-5,       # relative tolerance of the nonlinear solver
       "snesAbsoluteTolerance": 1e-5,        # absolute tolerance of the nonlinear solver
       "snesLineSearchType": "l2",        # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
-      "snesRebuildJacobianFrequency": 5,
+      "snesRebuildJacobianFrequency": 1,
       "dumpFilename":        "",
       "dumpFormat":          "matlab",
     }

@@ -276,8 +276,13 @@ computeReducedInvariants(const std::array<double_v_t,5> invariants, const double
 
   if (Vc::any_of(deformationGradientDeterminant <= 0))
   {
+#ifdef HAVE_STDSIMD
+    LOG(ERROR) << "J=det F is negative. Result will be unphysical.\n"
+      << "For dynamic problems, reduce time step width, for static problems, add smaller \"loadFactors\" or reduce load.";
+#else
     LOG(ERROR) << "J=det F is negative: " << deformationGradientDeterminant << ". Result will be unphysical.\n"
       << "For dynamic problems, reduce time step width, for static problems, add smaller \"loadFactors\" or reduce load.";
+#endif
 
     Vc::where(deformationGradientDeterminant <= 0, reducedInvariants[0]) = 3;
     Vc::where(deformationGradientDeterminant <= 0, reducedInvariants[1]) = 0;

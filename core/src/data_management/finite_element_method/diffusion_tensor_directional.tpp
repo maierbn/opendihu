@@ -132,12 +132,14 @@ diffusionTensor(element_no_v_t elementNoLocal, const std::array<double,FunctionS
       || !MathUtility::isFinite(diffusionTensor[6]) || !MathUtility::isFinite(diffusionTensor[7]) || !MathUtility::isFinite(diffusionTensor[8]))
     {
       LOG(ERROR) << "Directional diffusion tensor contains nans or infs.";
+#ifndef HAVE_STDSIMD      
       LOG(INFO) << "elementNoLocal: " << elementNoLocal << ", xi: " << xi;
       LOG(INFO) << "directionVector: " << directionVector << " elemental direction values: " << elementalValues;
       LOG(INFO) << ", spatiallyVaryingPrefactor: " << spatiallyVaryingPrefactor;
       LOG(INFO) << "diffusionTensor from settings: " << std::endl << this->diffusionTensor_.value(elementNoLocal);
       LOG(INFO) << "additionalDiffusionTensor: " << std::endl << this->additionalDiffusionTensor_.value(elementNoLocal);
       LOG(INFO) << "resulting diffusion tensor in direction " << directionVector << ":" << std::endl << diffusionTensor;
+#endif
      }
   }
   else if (D == 2)
@@ -146,10 +148,12 @@ diffusionTensor(element_no_v_t elementNoLocal, const std::array<double,FunctionS
       || !MathUtility::isFinite(diffusionTensor[3]))
     {
       LOG(ERROR) << "Directional diffusion tensor contains nans or infs.";
+#ifndef HAVE_STDSIMD
       LOG(INFO) << "elementNoLocal: " << elementNoLocal << ", xi: " << xi;
       LOG(INFO) << "directionVector: " << directionVector << " elemental direction values: " << elementalValues;
       LOG(INFO) << "diffusionTensor: " << diffusionTensor << ", this->additionalDiffusionTensor: " << this->additionalDiffusionTensor_.value(elementNoLocal)
         << ", spatiallyVaryingPrefactor: " << spatiallyVaryingPrefactor;
+#endif
      }
   }
   else if (D == 1)
@@ -157,10 +161,12 @@ diffusionTensor(element_no_v_t elementNoLocal, const std::array<double,FunctionS
     if (!MathUtility::isFinite(diffusionTensor[0]))
     {
       LOG(ERROR) << "Directional diffusion tensor contains nans.";
+#ifndef HAVE_STDSIMD
       LOG(INFO) << "elementNoLocal: " << elementNoLocal << ", xi: " << xi;
       LOG(INFO) << "directionVector: " << directionVector << " elemental direction values: " << elementalValues;
       LOG(INFO) << "diffusionTensor: " << diffusionTensor << ", this->additionalDiffusionTensor: " << this->additionalDiffusionTensor_.value(elementNoLocal)
         << ", spatiallyVaryingPrefactor: " << spatiallyVaryingPrefactor;
+#endif
      }
   }
 

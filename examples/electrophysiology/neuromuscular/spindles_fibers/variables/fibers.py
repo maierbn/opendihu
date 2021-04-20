@@ -57,7 +57,8 @@ d  = 9.1733                 # [-] anisotropy parameter
 
 material_parameters = [c1, c2, b, d]   # material parameters
 pmax = 7.3                  # [N/cm^2] maximum isometric active stress
-Conductivity = 3.828        # [mS/cm] sigma, conductivity 
+#Conductivity = 3.828        # [mS/cm] sigma, conductivity 
+Conductivity = 8.93         # [mS/cm] sigma, conductivity 
 
 # timing and activation parameters
 # -----------------
@@ -143,9 +144,10 @@ use_lumped_mass_matrix = False            # which formulation to use, the formul
 # timing parameters
 # -----------------
 end_time = 5_000.0                  # [ms] end time of the simulation
-dt_0D = 1e-3                        # [ms] timestep width of ODEs (1e-3)
+dt_0D = 2.5e-5                        # [ms] timestep width of ODEs (1e-3), for shorten use 2.5e-5
+dt_1D = 2.5e-5                      # [ms] timestep width of the 1D electric conduction problem, for shorten use 2.5e-5
+dt_splitting = 2.5e-5                # [ms] timestep width of strang splitting between 0D and 1D for the fibers, for shorten use 2.5e-5
 dt_3D = 1e-3                        # [ms] timestep width of the bidomain solver
-dt_splitting = dt_3D                # [ms] timestep width of strang splitting between 0D and multidomain, this is the same as the dt_multidomain, because we do not want to subcycle for the diffusion part
 dt_elasticity = 1e-1                # [ms] time step width of elasticity solver
 #dt_elasticity = 1e-2                # [ms] time step width of elasticity solver
 
@@ -162,8 +164,8 @@ output_timestep_elasticity = 1      # [ms] timestep for elasticity output files
 output_timestep_neurons = 1         # [ms] timestep for output of files for all sensor organs and neurons
 output_timestep_motoneuron = 0.2    # [ms] timestep for output of files for motoneuron
 output_timestep_0D_states = 2       # [ms] timestep for output of all states within multidomain, produces large files, enabled only if states_output = True
-output_timestep_fibers = 0.1         # [ms] timestep for fiber output files
-output_timestep_3D_emg = 0.1         # [ms] timestep for output of 3D emg
+output_timestep_fibers = 0.5         # [ms] timestep for fiber output files
+output_timestep_3D_emg = 0.5         # [ms] timestep for output of 3D emg
 
 #output_timestep_multidomain = dt_elasticity
 #output_timestep_elasticity = dt_elasticity
@@ -172,8 +174,8 @@ output_timestep_3D_emg = 0.1         # [ms] timestep for output of 3D emg
 # -----------
 import os
 input_directory   = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
-#cellml_file       = input_directory+"/new_slow_TK_2014_12_08.c"
-cellml_file       = input_directory+"/hodgkin_huxley-razumova.cellml"
+cellml_file       = input_directory+"/new_slow_TK_2014_12_08.c"
+#cellml_file       = input_directory+"/hodgkin_huxley-razumova.cellml"
 
 fiber_file        = input_directory+"/left_biceps_brachii_9x9fibers_b.bin"  # this is a variant of 9x9fibers with a slightly different mesh that somehow works better
 fiber_file        = input_directory+"/left_biceps_brachii_9x9fibers.bin"
@@ -198,8 +200,7 @@ cortical_input_file = input_directory+"/cortical_input_realistic.txt"
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1 
 sampling_stride_y = 1 
-sampling_stride_z = 1
-local_sampling_stride_z = 50
+sampling_stride_z = 50
 sampling_stride_fat = 1 
 
 # how much of the 3D mesh is used for elasticity
@@ -213,12 +214,12 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-states_output = False                    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
+states_output = True                    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
 enable_surface_emg = True               # if the EMG values on a 2D surface should be written to files
 show_linear_solver_output = False       # if every solve of multidomain diffusion should be printed
 disable_firing_output = True            # if information about firing of MUs should be printed
 optimization_type = "vc"                # the optimization_type used in the cellml adapter, "vc" uses explicit vectorization
-approximate_exponential_function = True # if the exponential function should be approximated by a Taylor series with only 11 FLOPS
+approximate_exponential_function = False # if the exponential function should be approximated by a Taylor series with only 11 FLOPS
 
 # neurons and sensors
 # -------------------

@@ -108,6 +108,7 @@ if dimension == 1:
   show_components = False  # if all the components of the solution should be displayed
   show_specified_fields = False   # if only the specified fields should be plotted in 2D in a single axis
   plot_over_time = data[0]['nElements'] == [0]   # if the plot should have time as x-axis instead of geometry
+  compute_stress = False
   
   if len(specified_field_names) > 0:
     show_specified_fields = True
@@ -126,7 +127,7 @@ if dimension == 1:
   
   def init():
     global geometry_component, line_2D, lines_2D, lines_3D, line_comp, cbar, top_text, ax1, ax2, cmap, show_geometry, show_components, show_specified_fields, \
-      specified_fields, solution_components, solution_name, solution_component, scaling_factors, min_x, max_x, min_y, max_y, min_z, max_z
+      specified_fields, solution_components, solution_name, solution_component, scaling_factors, min_x, max_x, min_y, max_y, min_z, max_z, compute_stress
       
     field_variable_names = py_reader.get_field_variable_names(data[0])
     
@@ -329,13 +330,30 @@ if dimension == 1:
           min_value = min(min_value, min_comp*scaling_factor)
           max_value = max(max_value, max_comp*scaling_factor)
         if len(data) > 100:
-          line_plot, = ax3.plot([], [], '-', lw=2, label=component_name)
+          line_plot, = ax3.plot([], [], '-',  lw=1, label=component_name)
         else:
           line_plot, = ax3.plot([], [], '+-', lw=1, label=component_name)
         line_comp.append(line_plot)
         
         #print "   min_value: {} -> {}, max_value: {} -> {}".format(min_comp*scaling_factor, min_value, max_comp*scaling_factor, max_value)
       
+      # compute stress
+      component_names = py_reader.get_component_names(data[0], solution_name)
+      if "razumova/A_1" in component_names and "razumova/A_2" in component_names:
+        compute_stress = True
+        line_plot, = ax3.plot([], [], '-', color="red", lw=4, label="stress")
+        line_comp.append(line_plot)
+        min_A_2, max_A_2 = py_reader.get_min_max(data, solution_name, "razumova/A_2")
+        min_stress = ((( (min_A_2/140)*0.05) - 0.000107)/0.0021)*0.840625
+        max_stress = ((( (max_A_2/140)*0.05) - 0.000107)/0.0021)*0.840625
+        print("min stress: {}, max stress: {}".format(min_stress,max_stress))
+        
+        v = max(abs(max_stress), abs(min_stress))
+        if abs(v) < 1e-5:
+          v = 1e-5
+        scaling_factor = abs(1./v)
+        scaling_factors.append(scaling_factor)
+        
       ax3.set_xlim(min_x, max_x)
       if plot_over_time:
         ax3.set_xlabel('t')
@@ -352,7 +370,7 @@ if dimension == 1:
     return top_text,
 
   def animate(i):
-    global top_text, solution_name, solution_component, last_length
+    global top_text, solution_name, solution_component, last_length, compute_stress
     
     ##################
     # 2D plot of main solution component
@@ -522,6 +540,22 @@ if dimension == 1:
           
         # refresh the line object that is the graph of the curve
         line_comp[j].set_data(xdata,np.array(data_comp)*scaling_factors[j])
+      
+      # compute stress
+      if compute_stress:
+        xdata = []
+        data_comp = []
+        for d in data:
+          A_1 = py_reader.get_values(d, solution_name, "razumova/A_1")
+          A_2 = py_reader.get_values(d, solution_name, "razumova/A_2")
+          stress = ((( (A_1/140)*0.0+ (A_2/140)*0.05) - 0.000107)/0.0021)*0.840625
+          
+          xdata.append(d['currentTime'])
+          data_comp.append(stress[0])
+        
+        # refresh the line object that is the graph of the curve
+        line_comp[-1].set_data(xdata,np.array(data_comp)*scaling_factors[-1])
+    
         
     # display timestep
     if not plot_over_time:

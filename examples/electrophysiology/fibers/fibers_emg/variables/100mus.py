@@ -84,7 +84,7 @@ cellml_file             = input_directory+"/hodgkin_huxley_1952.c"
 # a higher number leads to less 3D elements
 sampling_stride_x = 2
 sampling_stride_y = 2
-sampling_stride_z = 40      # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40
+sampling_stride_z = 1 #40      # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40
 
 # HD-EMG electrode parameters
 fiber_file_for_hdemg_surface = fat_mesh_file    # use the fat mesh for placing electrodes, this option is the file of the 2D mesh on which electrode positions are set

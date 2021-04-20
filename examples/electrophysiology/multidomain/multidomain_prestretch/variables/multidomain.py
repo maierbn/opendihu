@@ -106,7 +106,7 @@ random.seed(0)  # ensure that random numbers are the same on every rank
 import numpy as np
 
 n_fibers_in_fiber_file = 81
-n_motor_units = 20   # number of motor units
+n_motor_units = 5   # number of motor units
 
 motor_units = []
 for mu_no in range(n_motor_units):
@@ -156,7 +156,9 @@ for mu_no in range(n_motor_units):
     "jitter": [0.1*random.uniform(-1,1) for i in range(100)]     # [-] random jitter values that will be added to the intervals to simulate jitter
   })
   
-motor_units = motor_units[0:1]  # for debugging only 1 motor unit
+#motor_units = motor_units[0:1]  # for debugging only 1 motor unit
+for i,mu in enumerate(motor_units):
+  print("MU {} has stimulation frequency {} Hz".format(i,mu["stimulation_frequency"]))
 
 # solvers
 # -------
@@ -223,7 +225,7 @@ fiber_file        = input_directory+"/left_biceps_brachii_9x9fibers.bin"
 #fiber_file        = input_directory+"/left_biceps_brachii_13x13fibers.bin"
 fat_mesh_file     = fiber_file + "_fat.bin"
 firing_times_file = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
-firing_times_file = input_directory+"/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+#firing_times_file = input_directory+"/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = input_directory+"/MU_fibre_distribution_10MUs.txt"
 
 # stride for sampling the 3D elements from the fiber data

@@ -116,6 +116,7 @@ if rank_no == 0:
   print("dt_3D:           {:0.1e}, paraview_output: {}, optimization_type: {}".format(variables.dt_3D, variables.paraview_output, variables.optimization_type))
   print("dt_elasticity:   {:0.0e}    elasticity solver: {}, preconditioner: {}".format(variables.dt_elasticity, variables.elasticity_solver_type, variables.elasticity_preconditioner_type))
   print("fiber_file:              {}".format(variables.fiber_file))
+  print("fat_mesh_file:           {}".format(variables.fat_mesh_file))
   print("cellml_file:             {}".format(variables.cellml_file))
   print("fiber_distribution_file: {}".format(variables.fiber_distribution_file))
   print("firing_times_file:       {}".format(variables.firing_times_file))
@@ -179,7 +180,7 @@ config = {
     ("ms2",    "ms_in2"),
     ("ms3",    "ms_in3"),
     ("ms4",    "ms_in4"),
-    ("stress", "m_g_in")     # connection of activation from subcellular model to muscle contraction
+ #   ("stress", "m_g_in")     # connection of activation from subcellular model to muscle contraction
   ],
   
   "Solvers": {
@@ -658,7 +659,7 @@ config = {
                   "outputDofs":                       None,                # this option is only needed in mode "callback"
                   "callback":                         None,                # this option is only needed in mode "callback"
                   "thresholdValue":                   20,                  # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
-                  "valueToSet":                       20,                  # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
+                  "valueToSet":                       variables.vm_value_stimulated,       # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
                 }
               for motor_unit_no in range(variables.n_motor_units)],
                          
@@ -671,7 +672,7 @@ config = {
                 "durationLogKey":         "duration_total",
                 "timeStepOutputInterval": 1,
                 "endTime":                variables.end_time,
-                "connectedSlotsTerm1To2": None,       # data transfer is configured using global option "connectedSlots"
+                "connectedSlotsTerm1To2": {1:2},  # {4:2} #None,       # data transfer is configured using global option "connectedSlots"
                 "connectedSlotsTerm2To1": None,       # transfer nothing back
                 "Term1": {        # fibers_emg
                   
@@ -786,7 +787,7 @@ config = {
                                     "inputMeshIsGlobal":           True,
                                     "solverName":                  "implicitSolver",
                                     "checkForNanInf":              False,
-                                    "nAdditionalFieldVariables":   2,
+                                    "nAdditionalFieldVariables":   3,
                                     "additionalSlotNames":         ["stress", "alpha"],
                                     "FiniteElementMethod" : {
                                       "inputMeshIsGlobal":         True,

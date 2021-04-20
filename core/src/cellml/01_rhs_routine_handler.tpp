@@ -328,28 +328,41 @@ createLibraryOnOneRank(std::string libraryFilename, const std::vector<int> &nIns
     {
       LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
 
-      // remove "-fopenmp" in the compile command
-      std::string newCompileCommand = compileCommand.str();
-      std::string strToReplace = "-fopenmp";
-      std::size_t pos = newCompileCommand.find(strToReplace);
-      newCompileCommand.replace(pos, strToReplace.length(), "");
-
-      // remove -foffload="..."strToReplace = "-fopenmp";
-      pos = newCompileCommand.find("-foffload=\"");
-      std::size_t pos2 = newCompileCommand.find("\"", pos+11);
-      newCompileCommand.replace(pos, pos2-pos+1, "");
-
-      LOG(INFO) << "Retry without offloading, command: \n" << newCompileCommand;
-
-      // execute new compilation command
-      int ret = system(newCompileCommand.c_str());
-      if (ret != 0)
+      try
       {
-        LOG(ERROR) << "Compilation failed again.";
+        // remove "-fopenmp" in the compile command
+        std::string newCompileCommand = compileCommand.str();
+        std::string strToReplace = "-fopenmp";
+        std::size_t pos = newCompileCommand.find(strToReplace);
+        if (pos != std::string::npos)
+        {
+          newCompileCommand.replace(pos, strToReplace.length(), "");
+        }
+
+        // remove -foffload="..."
+        pos = newCompileCommand.find("-foffload=\"");
+        std::size_t pos2 = newCompileCommand.find("\"", pos+11);
+        if (pos != std::string::npos && pos2 != std::string::npos)
+        {
+          newCompileCommand.replace(pos, pos2-pos+1, "");
+        }
+
+        LOG(INFO) << "Retry without offloading, command: \n" << newCompileCommand;
+
+        // execute new compilation command
+        int ret = system(newCompileCommand.c_str());
+        if (ret != 0)
+        {
+          LOG(ERROR) << "Compilation failed again.";
+        }
+        else
+        {
+          LOG(DEBUG) << "Compilation successful.";
+        }
       }
-      else
+      catch(...)
       {
-        LOG(DEBUG) << "Compilation successful.";
+         LOG(ERROR) << "Could not modify compile command. Command: \"" << compileCommand.str() << "\".";
       }
     }
     else

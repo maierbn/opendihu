@@ -113,6 +113,15 @@ public:
 
 protected:
 
+  //! load the firing times file and initialize the firingEvents_ and motorUnitNo_ variables
+  void initializeFiringTimes();
+
+  //! initialize the internal data structures, such as fiberData_
+  void initializeDataStructures();
+
+  //! set the names of the field variables in the data connector slots
+  void initializeFieldVariableNames();
+
   //! create a source file with compute0D function from the CellML model, using the vc optimization type
   void initializeCellMLSourceFileVc();
 

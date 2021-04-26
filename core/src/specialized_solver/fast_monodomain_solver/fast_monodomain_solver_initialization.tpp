@@ -20,7 +20,7 @@ void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 initialize()
 {
   LOG(DEBUG) << "initialize FastMonodomainSolverBase";
-  
+
   // only initialize once
   if (initialized_)
     return;
@@ -35,6 +35,19 @@ initialize()
     LOG(FATAL) << "Timestepping scheme of diffusion in FastMonodomainSolver must be either ImplicitEuler or CrankNicolson!";
   }
 
+  // disable the generation of the source code and compilation of the library in the nested CellmlAdapter
+  // loop over instances of the CellML adapter
+  for (int i = 0; i < nestedSolvers_.instancesLocal().size(); i++)
+  {
+    std::vector<TimeSteppingScheme::Heun<CellmlAdapterType>> &innerInstances
+      = nestedSolvers_.instancesLocal()[i].timeStepping1().instancesLocal();  // TimeSteppingScheme::Heun<CellmlAdapter...
+
+    for (int j = 0; j < innerInstances.size(); j++)
+    {
+      innerInstances[j].discretizableInTime().setCreateOwnRhsRoutine(false);
+    }
+  }
+
   // add this solver to the solvers diagram, which is an ASCII art representation that will be created at the end of the simulation.
   DihuContext::solverStructureVisualizer()->addSolver("FastMonodomainSolver", true);   // hasInternalConnectionToFirstNestedSolver=true (the last argument) means slot connector data is shared with the first subsolver
 
@@ -47,7 +60,7 @@ initialize()
   // indicate in solverStructureVisualizer that the child solver initialization is done
   DihuContext::solverStructureVisualizer()->endChild();
 
-  // initialize motor unit numbers and firing times
+  // parse various options from the Python script
   fiberDistributionFilename_ = specificSettings_.getOptionString("fiberDistributionFile", "");
   firingTimesFilename_ = specificSettings_.getOptionString("firingTimesFile", "");
   onlyComputeIfHasBeenStimulated_ = specificSettings_.getOptionBool("onlyComputeIfHasBeenStimulated", true);
@@ -87,6 +100,51 @@ initialize()
   LOG(DEBUG) << "config: " << specificSettings_;
   LOG(DEBUG) << "fiberDistributionFilename: " << fiberDistributionFilename_;
   LOG(DEBUG) << "firingTimesFilename: " << firingTimesFilename_;
+
+  // load the firing times of the motor units from a file
+  initializeFiringTimes();
+
+  // initialize all other internal data structures, also the data buffers used for GPU computations
+  initializeDataStructures();
+
+  if (useVc_)
+  {
+    // if the optimization type is "vc", create, compile, link and load the according C++-Source for CPU
+    initializeCellMLSourceFileVc();
+  }
+  else
+  {
+    // if the optimzation type is GPU, create, compile, link and load the according C++-sources for GPU
+    initializeCellMLSourceFileGpu();
+    initializeValuesOnGpu();
+  }
+
+  // initialize state values
+  for (int i = 0; i < fiberPointBuffers_.size(); i++)
+  {
+    // if an initialization function is given, use it to initialize the state values
+    if (initializeStates_ != nullptr)
+    {
+      initializeStates_(fiberPointBuffers_[i].states);
+    }
+    else
+    {
+      initializeStates(fiberPointBuffers_[i].states);
+    }
+  }
+  setComputeStateInformation_ = false;
+
+  // initialize the variable names where field variables are connector via connector slots
+  initializeFieldVariableNames();
+
+  initialized_ = true;
+}
+
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
+initializeFiringTimes()
+{
+  std::shared_ptr<Partition::RankSubset> rankSubset = nestedSolvers_.data().functionSpace()->meshPartition()->rankSubset();
 
   // parse firingTimesFilename_
   std::string firingTimesFileContents = MPIUtility::loadFile(firingTimesFilename_, rankSubset->mpiCommunicator());
@@ -171,7 +229,12 @@ initialize()
 
   if (firingEvents_.empty())
     LOG(FATAL) << "Could not parse firing times.";
+}
 
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
+initializeDataStructures()
+{
   // initialize data structures
   std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
@@ -243,7 +306,7 @@ initialize()
       if (computingRank == rankSubset->ownRankNo())
       {
         LOG(DEBUG) << "compute (i,j)=(" << i << "," << j << "), computingRank " << computingRank
-          << ", fiberNo: " << fiberNo << ", fiberDataNo: " << fiberDataNo 
+          << ", fiberNo: " << fiberNo << ", fiberDataNo: " << fiberDataNo
           << ", rankSubset->size(): " << rankSubset->size() << ", own: " << rankSubset->ownRankNo();
         nInstancesToComputePerFiber_ = fiberFunctionSpace->nDofsGlobal();
         nInstancesToCompute_ += nInstancesToComputePerFiber_;
@@ -251,13 +314,13 @@ initialize()
         assert(fiberDataNo < fiberData_.size());
         assert(fiberFunctionSpace);
         assert(motorUnitNo_.size() > 0);
-        
+
         LOG(DEBUG) << "Fiber " << fiberNoGlobal << " (i,j)=(" << i << "," << j << ") is MU " << motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
 
         fiberData_.at(fiberDataNo).valuesLength = nInstancesToComputePerFiber_;
         fiberData_.at(fiberDataNo).fiberNoGlobal = fiberNoGlobal;
         fiberData_.at(fiberDataNo).motorUnitNo = motorUnitNo_[fiberNoGlobal % motorUnitNo_.size()];
-        
+
         // determine neuromuscular junction position, it is offset by a random value from the center
         if (neuromuscularJunctionRelativeSize_ <= 0.0)
         {
@@ -340,6 +403,8 @@ initialize()
   {
     LOG(INFO) << "Time of first stimulation: " << firstStimulationTime << ", motor unit " << firstStimulationMotorUnitNo;
   }
+
+  CellmlAdapterType &cellmlAdapter = nestedSolvers_.instancesLocal()[0].timeStepping1().instancesLocal()[0].discretizableInTime();
 
   // get the states and algebraics no.s to be transferred as slot connector data
   statesForTransferIndices_ = cellmlAdapter.statesForTransfer();
@@ -425,30 +490,14 @@ initialize()
     << " Vc vectors, size of double_v: " << Vc::double_v::size() << ", "
     << statesForTransferIndices_.size()-1 << " additional states for transfer, "
     << algebraicsForTransferIndices_.size() << " algebraics for transfer";
+}
 
-  if (useVc_)
-  {
-    initializeCellMLSourceFileVc();
-  }
-  else
-  {
-    initializeCellMLSourceFileGpu();
-    initializeValuesOnGpu();
-  }
-
-  // initialize state values
-  for (int i = 0; i < fiberPointBuffers_.size(); i++)
-  {
-    if (initializeStates_ != nullptr)
-    {
-      initializeStates_(fiberPointBuffers_[i].states);
-    }
-    else
-    {
-      initializeStates(fiberPointBuffers_[i].states);
-    }
-  }
-  setComputeStateInformation_ = false;
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
+initializeFieldVariableNames()
+{
+  // initialize data structures
+  std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
   // initialize field variable names
   for (int i = 0; i < instances.size(); i++)
@@ -456,7 +505,7 @@ initialize()
     std::vector<TimeSteppingScheme::Heun<CellmlAdapterType>> &innerInstances
       = instances[i].timeStepping1().instancesLocal();  // TimeSteppingScheme::Heun<CellmlAdapter...
 
-    for (int j = 0; j < innerInstances.size(); j++, fiberNo++)
+    for (int j = 0; j < innerInstances.size(); j++)
     {
       std::shared_ptr<FiberFunctionSpace> fiberFunctionSpace = innerInstances[j].data().functionSpace();
       CellmlAdapterType &cellmlAdapter = innerInstances[j].discretizableInTime();
@@ -536,10 +585,8 @@ initialize()
       }
     }
   }
-
-
-  initialized_ = true;
 }
+
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
@@ -552,130 +599,144 @@ initializeCellMLSourceFileVc()
   PythonConfig specificSettingsCellML = cellmlAdapter.specificSettings();
   CellmlSourceCodeGenerator &cellmlSourceCodeGenerator = cellmlAdapter.cellmlSourceCodeGenerator();
 
-  // determine filename of library
-  std::stringstream s;
-  s << "lib/"+StringUtility::extractBasename(cellmlSourceCodeGenerator.sourceFilename()) << "_fast_monodomain.so";
-  std::string libraryFilename = s.str();
+  std::string libraryFilename;
 
-  //std::shared_ptr<Partition::RankSubset> rankSubset = nestedSolvers_.data().functionSpace()->meshPartition()->rankSubset();
-  int ownRankNo = DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->ownRankNo();
-
-  if (ownRankNo == 0)
+  // if option "libraryFilename" is given, do not create new C++ source code, use the existing library instead
+  if (specificSettingsCellML.hasKey("libraryFilename"))
   {
-    // initialize generated source code of cellml model
+    libraryFilename = specificSettingsCellML.getOptionString("libraryFilename", "lib.so");
 
-    // compile source file to a library
+    LOG(INFO) << "Loading existing library \"" << libraryFilename << "\".";
+  }
+  else
+  {
+    // option "libraryFilename" was not given, create source code for GPU and and compile it to the shared library
 
-    s.str("");
-    s << "src/"+StringUtility::extractBasename(cellmlSourceCodeGenerator.sourceFilename()) << "_fast_monodomain"
-      << cellmlSourceCodeGenerator.sourceFileSuffix();
-    std::string sourceToCompileFilename = s.str();
+    // determine filename of library
+    std::stringstream s;
+    s << "lib/"+StringUtility::extractBasename(cellmlSourceCodeGenerator.sourceFilename()) << "_fast_monodomain.so";
+    libraryFilename = s.str();
 
-    // create path of library filename if it does not exist
-    if (libraryFilename.find("/") != std::string::npos)
+    //std::shared_ptr<Partition::RankSubset> rankSubset = nestedSolvers_.data().functionSpace()->meshPartition()->rankSubset();
+    int ownRankNo = DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->ownRankNo();
+
+    if (ownRankNo == 0)
     {
-      std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
-      // if directory does not yet exist, create it
-      struct stat info;
-      if (stat(path.c_str(), &info) != 0)
+      // initialize generated source code of cellml model
+
+      // compile source file to a library
+
+      s.str("");
+      s << "src/"+StringUtility::extractBasename(cellmlSourceCodeGenerator.sourceFilename()) << "_fast_monodomain"
+        << cellmlSourceCodeGenerator.sourceFileSuffix();
+      std::string sourceToCompileFilename = s.str();
+
+      // create path of library filename if it does not exist
+      if (libraryFilename.find("/") != std::string::npos)
       {
+        std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
+        // if directory does not yet exist, create it
+        struct stat info;
+        if (stat(path.c_str(), &info) != 0)
+        {
+          int ret = system((std::string("mkdir -p ")+path).c_str());
+
+          if (ret != 0)
+          {
+            LOG(ERROR) << "Could not create path \"" << path << "\".";
+          }
+        }
+      }
+
+      // generate library
+
+      LOG(DEBUG) << "generate source file \"" << sourceToCompileFilename << "\".";
+
+      // create source file
+      cellmlSourceCodeGenerator.generateSourceFileFastMonodomain(sourceToCompileFilename, approximateExponentialFunction);
+
+      // create path for library file
+      if (libraryFilename.find("/") != std::string::npos)
+      {
+        std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
         int ret = system((std::string("mkdir -p ")+path).c_str());
 
         if (ret != 0)
         {
-          LOG(ERROR) << "Could not create path \"" << path << "\".";
+          LOG(ERROR) << "Could not create path \"" << path << "\" for library file.";
         }
       }
-    }
 
-    // generate library
+      std::stringstream compileCommand;
 
-    LOG(DEBUG) << "generate source file \"" << sourceToCompileFilename << "\".";
+      // load compiler flags
+      std::string compilerFlags = specificSettingsCellML.getOptionString("compilerFlags", "-O3 -march=native -fPIC -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
 
-    // create source file
-    cellmlSourceCodeGenerator.generateSourceFileFastMonodomain(sourceToCompileFilename, approximateExponentialFunction);
-
-    // create path for library file
-    if (libraryFilename.find("/") != std::string::npos)
-    {
-      std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
-      int ret = system((std::string("mkdir -p ")+path).c_str());
-
-      if (ret != 0)
+    #ifdef NDEBUG
+      if (compilerFlags.find("-O3") == std::string::npos)
       {
-        LOG(ERROR) << "Could not create path \"" << path << "\" for library file.";
+        LOG(WARNING) << "\"compilerFlags\" does not contain \"-O3\", this may be slow.";
       }
-    }
+      if (compilerFlags.find("-m") == std::string::npos)
+      {
+        LOG(WARNING) << "\"compilerFlags\" does not contain any \"-m\" flag, such as \"-march=native\". "
+          << "Make sure that SIMD instructions sets (SEE, AVX-2 etc.) are the same in opendihu and the compiled library. \n"
+          << " If unsure, use \"-O3 -march-native\".";
+      }
+    #endif
+      // for GPU: -ta=host,tesla,time
 
-    std::stringstream compileCommand;
+      // compose compile command
+      std::stringstream s;
+      s << cellmlSourceCodeGenerator.compilerCommand() << " " << sourceToCompileFilename << " "
+        << compilerFlags << " " << cellmlSourceCodeGenerator.additionalCompileFlags() << " ";
 
-    // load compiler flags
-    std::string compilerFlags = specificSettingsCellML.getOptionString("compilerFlags", "-O3 -march=native -fPIC -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
+      std::string compileCommandOptions = s.str();
 
-  #ifdef NDEBUG
-    if (compilerFlags.find("-O3") == std::string::npos)
-    {
-      LOG(WARNING) << "\"compilerFlags\" does not contain \"-O3\", this may be slow.";
-    }
-    if (compilerFlags.find("-m") == std::string::npos)
-    {
-      LOG(WARNING) << "\"compilerFlags\" does not contain any \"-m\" flag, such as \"-march=native\". "
-        << "Make sure that SIMD instructions sets (SEE, AVX-2 etc.) are the same in opendihu and the compiled library. \n"
-        << " If unsure, use \"-O3 -march-native\".";
-    }
-  #endif
-    // for GPU: -ta=host,tesla,time
+      compileCommand << compileCommandOptions
+        << " -o " << libraryFilename;
 
-    // compose compile command
-    std::stringstream s;
-    s << cellmlSourceCodeGenerator.compilerCommand() << " " << sourceToCompileFilename << " "
-      << compilerFlags << " " << cellmlSourceCodeGenerator.additionalCompileFlags() << " ";
-
-    std::string compileCommandOptions = s.str();
-
-    compileCommand << compileCommandOptions
-      << " -o " << libraryFilename;
-
-    int ret = system(compileCommand.str().c_str());
-    if (ret != 0)
-    {
-      LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
-
-      // remove "-fopenmp" in the compile command
-      std::string newCompileCommand = compileCommand.str();
-      std::string strToReplace = "-fopenmp";
-      std::size_t pos = newCompileCommand.find(strToReplace);
-      newCompileCommand.replace(pos, strToReplace.length(), "");
-
-      // remove -foffload="..."strToReplace = "-fopenmp";
-      pos = newCompileCommand.find("-foffload=\"");
-      std::size_t pos2 = newCompileCommand.find("\"", pos+11);
-      newCompileCommand.replace(pos, pos2-pos+1, "");
-
-      LOG(INFO) << "Retry without offloading, command: \n" << newCompileCommand;
-
-      // execute new compilation command
-      int ret = system(newCompileCommand.c_str());
+      int ret = system(compileCommand.str().c_str());
       if (ret != 0)
       {
-        LOG(ERROR) << "Compilation failed again.";
+        LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
+
+        // remove "-fopenmp" in the compile command
+        std::string newCompileCommand = compileCommand.str();
+        std::string strToReplace = "-fopenmp";
+        std::size_t pos = newCompileCommand.find(strToReplace);
+        newCompileCommand.replace(pos, strToReplace.length(), "");
+
+        // remove -foffload="..."strToReplace = "-fopenmp";
+        pos = newCompileCommand.find("-foffload=\"");
+        std::size_t pos2 = newCompileCommand.find("\"", pos+11);
+        newCompileCommand.replace(pos, pos2-pos+1, "");
+
+        LOG(INFO) << "Retry without offloading, command: \n" << newCompileCommand;
+
+        // execute new compilation command
+        int ret = system(newCompileCommand.c_str());
+        if (ret != 0)
+        {
+          LOG(ERROR) << "Compilation failed again.";
+        }
+        else
+        {
+          LOG(DEBUG) << "Compilation successful.";
+        }
       }
       else
       {
-        LOG(DEBUG) << "Compilation successful.";
+        LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
       }
     }
-    else
-    {
-      LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
-    }
+
+    // barrier disabled because in interferes with the barrier in 00_source_code_generator_base.cpp
+    //LOG(ERROR) << "MPI barrier in fast_monodomain_solver on MPI_COMM_WORLD";
+
+    // wait on all ranks until conversion is finished
+    MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");
   }
-
-  // barrier disabled because in interferes with the barrier in 00_source_code_generator_base.cpp
-  //LOG(ERROR) << "MPI barrier in fast_monodomain_solver on MPI_COMM_WORLD";
-
-  // wait on all ranks until conversion is finished
-  MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");
 
   // load the rhs library
   void *handle = CellmlAdapterType::loadRhsLibraryGetHandle(libraryFilename);

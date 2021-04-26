@@ -142,7 +142,7 @@ initialize()
   // initialize output writers
   this->outputWriterManager_.initialize(this->context_, this->specificSettings_, this->data().functionSpace()->meshPartition()->rankSubset());
 
-  // load rhs routine
+  // create and load rhs routine library
   this->initializeRhsRoutine();
 
   // parse the callback functions from the python config

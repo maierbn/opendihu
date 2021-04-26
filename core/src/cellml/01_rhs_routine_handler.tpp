@@ -40,45 +40,51 @@ initializeRhsRoutine()
     LOG(WARNING) << "Option \"simdSourceFilename\" is no longer used, simply specify \"sourceFilename\" to create a simd version and compile the function.";
   }
 
+  // load type
+  optimizationType_ = this->specificSettings_.getOptionString("optimizationType", "vc");
+
+  if (optimizationType_ == "comp")
+  {
+    LOG(WARNING) << "Option \"optimizationType\"=\"comp\" has been renamed to \"simd\"! Using \"simd\" instead.";
+    optimizationType_ = "simd";
+  }
+
+  if (optimizationType_ != "simd" && optimizationType_ != "vc" && optimizationType_ != "openmp" && optimizationType_ != "gpu")
+  {
+    LOG(ERROR) << "Option \"optimizationType\" is \"" << optimizationType_ << "\" but valid values are \"simd\", \"vc\", \"openmp\" or \"gpu\"."
+      << " Now setting to \"vc\".";
+    optimizationType_ = "vc";
+  }
+
+  // for vc optimization, the exponential function can be approximated which is faster than the exact exp function
+  if (optimizationType_ == "vc")
+  {
+    approximateExponentialFunction_ = this->specificSettings_.getOptionBool("approximateExponentialFunction", true);
+    useAoVSMemoryLayout_ = true;
+    if (this->specificSettings_.hasKey("useAoVSMemoryLayout"))
+      useAoVSMemoryLayout_ = this->specificSettings_.getOptionBool("useAoVSMemoryLayout", true);
+  }
+  else if (optimizationType_ == "openmp")
+  {
+    // default value 0 means no restriction
+    maximumNumberOfThreads_ = this->specificSettings_.getOptionInt("maximumNumberOfThreads", 0, PythonUtility::NonNegative);
+  }
+
+  if (!this->createOwnRhsRoutine_)
+    return;
+
   // determine library filename, create library if necessary
   std::string libraryFilename;
   if (this->specificSettings_.hasKey("libraryFilename"))
   {
     libraryFilename = this->specificSettings_.getOptionString("libraryFilename", "lib.so");
+
+    if (!this->createOwnRhsRoutine_)
+      return;
   }
   else
   {
-    // load type
-    optimizationType_ = this->specificSettings_.getOptionString("optimizationType", "vc");
-
-    if (optimizationType_ == "comp")
-    {
-      LOG(WARNING) << "Option \"optimizationType\"=\"comp\" has been renamed to \"simd\"! Using \"simd\" instead.";
-      optimizationType_ = "simd";
-    }
-
-    if (optimizationType_ != "simd" && optimizationType_ != "vc" && optimizationType_ != "openmp" && optimizationType_ != "gpu")
-    {
-      LOG(ERROR) << "Option \"optimizationType\" is \"" << optimizationType_ << "\" but valid values are \"simd\", \"vc\", \"openmp\" or \"gpu\"."
-       << " Now setting to \"vc\".";
-      optimizationType_ = "vc";
-    }
-
-    // for vc optimization, the exponential function can be approximated which is faster than the exact exp function
-    if (optimizationType_ == "vc")
-    {
-      approximateExponentialFunction_ = this->specificSettings_.getOptionBool("approximateExponentialFunction", true);
-      useAoVSMemoryLayout_ = true;
-      if (this->specificSettings_.hasKey("useAoVSMemoryLayout"))
-        useAoVSMemoryLayout_ = this->specificSettings_.getOptionBool("useAoVSMemoryLayout", true);
-    }
-    else if (optimizationType_ == "openmp")
-    {
-      // default value 0 means no restriction
-      maximumNumberOfThreads_ = this->specificSettings_.getOptionInt("maximumNumberOfThreads", 0, PythonUtility::NonNegative);
-    }
-
-    // compile source file to a library
+    // determine file name of the source code file and library file
     std::stringstream baseFilename;
     baseFilename << StringUtility::extractBasename(this->cellmlSourceCodeGenerator_.sourceFilename())
       << "_" << this->cellmlSourceCodeGenerator_.nParameters() << "_";
@@ -192,7 +198,7 @@ loadRhsLibraryGetHandle(std::string libraryFilename)
 
   if (handle == NULL)
   {
-    LOG(ERROR) << "Could not load library \"" << (currentWorkingDirectory+libraryFilename) << "\": " << dlerror();
+    LOG(ERROR) << "Could not load library \"" << (currentWorkingDirectory+libraryFilename) << "\":\n\n" << dlerror();
   }
 
   return handle;

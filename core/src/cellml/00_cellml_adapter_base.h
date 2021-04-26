@@ -88,6 +88,9 @@ public:
   //! get a vector with the names of the states
   void getStateNames(std::vector<std::string> &stateNames);
 
+  //! set the variable createOwnRhsRoutine_ prior to initialization, to control of this CellmlAdapter creates its own vc source code of the rhs
+  void setCreateOwnRhsRoutine(bool createOwnRhsRoutine);
+
   //! get the const number of algebraics
   constexpr int nAlgebraics() const;
 
@@ -114,6 +117,7 @@ protected:
   Data data_;                                              //< the data object that stores all variables, i.e. algebraics and states
   static std::array<double,nStates_> statesInitialValues_; //< the initial values for the states, see setInitialValues
   static bool statesInitialValuesInitialized_;             //< if the statesInitialValues_ variables has been initialized
+  bool createOwnRhsRoutine_;                               //< if this instances should invoke the source-to-source compiler to create a library of the rhs and load the library. This is disabled, if the fast monodomain solver is used.
 
   int nInstances_;                                         //< number of instances of the CellML problem. Usually it is the number of mesh nodes when a mesh is used. When running in parallel this is the local number of instances without ghosts.
   int internalTimeStepNo_ = 0;                             //< the counter how often the right hand side was called

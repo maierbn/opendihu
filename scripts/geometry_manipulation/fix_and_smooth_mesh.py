@@ -451,6 +451,7 @@ def resolve_self_intersections(grid_points_world_space_improved, n_grid_points_x
     changed_a_point = False
     are_all_elements_properly_oriented = True
     n_unresolved_self_intersections = 0
+    output_fix = False
     
     # loop over all elements
     for i in range(0,n_grid_points_x-1):

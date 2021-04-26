@@ -22,7 +22,7 @@ template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
 CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 CellmlAdapterBase(DihuContext context) :
   context_(context), specificSettings_(PythonConfig(context_.getPythonConfig(), "CellML")),
-  data_(context_), cellmlSourceCodeGenerator_(), initialized_(false)
+  data_(context_), createOwnRhsRoutine_(true), cellmlSourceCodeGenerator_(), initialized_(false)
 {
   outputWriterManager_.initialize(this->context_, specificSettings_);
   LOG(TRACE) << "CellmlAdapterBase constructor";
@@ -735,6 +735,13 @@ void CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
 getStateNames(std::vector<std::string> &stateNames)
 {
   stateNames = this->cellmlSourceCodeGenerator_.stateNames();
+}
+
+template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>
+void CellmlAdapterBase<nStates_,nAlgebraics_,FunctionSpaceType>::
+setCreateOwnRhsRoutine(bool createOwnRhsRoutine)
+{
+  createOwnRhsRoutine_ = createOwnRhsRoutine;
 }
 
 template<int nStates_, int nAlgebraics_, typename FunctionSpaceType>

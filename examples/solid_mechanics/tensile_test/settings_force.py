@@ -48,10 +48,10 @@ if len(sys.argv) > 3:
     print("Error! Please specify the correct scenario, see settings.py for allowed values.\n")
     quit()
  
-# number of elements
-nx = 2
-ny = 2
-nz = 2
+# number of elements (2x2x2)
+nx = 8
+ny = 8
+nz = 8
 
 # number of nodes
 mx = 2*nx + 1
@@ -94,11 +94,12 @@ def handle_result_hyperelasticity(result):
     # field_variables[0]: geometry
     # field_variables[1]: u
     # field_variables[2]: v
-    # field_variables[3]: T (material traction)
-    # field_variables[4]: PK2-Stress (Voigt), components: S_11, S_22, S_33, S_12, S_13, S_23
+    # field_variables[3]: t (current traction)
+    # field_variables[4]: T (material traction)
+    # field_variables[5]: PK2-Stress (Voigt), components: S_11, S_22, S_33, S_12, S_13, S_23
     
     strain = max(field_variables[1]["components"][2]["values"])
-    stress = max(field_variables[4]["components"][2]["values"])
+    stress = max(field_variables[5]["components"][2]["values"])
     
     print("strain: {}, stress: {}".format(strain, stress))
     

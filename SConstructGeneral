@@ -210,6 +210,22 @@ if current_python_path is None:
 elif "scripts" not in current_python_path:
   os.environ["PYTHONPATH"] = current_python_path+":"+os.path.join(opendihu_home, "scripts")+":"+os.path.join(opendihu_home, "scripts/geometry_manipulation")
     
+# check if input directory exists
+input_dir = os.path.join(opendihu_home, "examples/electrophysiology/input")
+input_exists = os.path.isdir(input_dir)
+# check that input directory is non-empty
+if input_exists:
+  if not os.listdir(input_dir):
+    input_exists = False
+    
+# if the input directory does not exist, print a warning with instructions how to download the file
+if not input_exists:
+  print("\n\x1b[31mWarning! No input directory exists under examples/electrophysiology/input.\nPlease do the following: \n"
+    "   * Download the input.tgz file from https://doi.org/10.5281/zenodo.4705944 \n     and store it under examples/electrophysiology\n"
+    "   * Change to the directory and uncompress the file as follows:\n"
+    "      tar xf input.tgz\n"
+    "   * Make sure that the directory examples/electrophysiology/input contains the files.\n     Then run scons again.\n\n\x1b[0m")
+    
 # -----------------------------------------------
 # Depending on the variable BUILD_TYPE either build with debug, releasewithdebuginfo or release settings and link corresponding version of core
 # All the flags may only work with the GCC compiler, tested with GCC 7.3.0 and newer. 
@@ -222,8 +238,6 @@ if env["BUILD_TYPE"] == "debug":
     env.MergeFlags('-ftemplate-backtrace-limit=0')
     env.MergeFlags('-Wall -Wpedantic -Wno-sign-compare -Wno-error=sign-compare')
     env.MergeFlags('-DDEBUG -ggdb3 -g3 -Og  -DELPP_FEATURE_CRASH_LOG')   # gcc flags, will be sorted automatically into linker and compiler flags
-    env.MergeFlags('-I/store/software/opendihu/dependencies/chaste/install/include/chaste/continuum_mechanics/problem')
-    env.MergeFlags('-I/store/software/opendihu/dependencies/chaste/install/include/chaste/continuum_mechanics/common')
   else: # using pgi compiler here:
 #    env.MergeFlags('-O0 -g -ta=host,tesla:cc60,time -Minfo=accel -noswitcherror -std=c++14 -DELPP_FEATURE_CRASH_LOG -laccg -laccapi -laccn -laccg2 -lcudadevice')
     env.MergeFlags('-O0 -g -std=c++14 -DELPP_FEATURE_CRASH_LOG')

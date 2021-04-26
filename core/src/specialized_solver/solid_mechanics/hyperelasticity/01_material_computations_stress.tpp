@@ -302,6 +302,7 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
   */
 
   //for debugging, check symmetry of PK2 stress and if it is correct according to Mooney-Rivlin formula
+#ifndef HAVE_STDSIMD
   if (VLOG_IS_ON(2))
   {
     const double_v_t errorTolerance = 1e-14;
@@ -366,6 +367,7 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
     }
     LOG(ERROR) << "PK2stress contains nan: " << pK2Stress;
   }
+#endif
 #endif
 
   return pK2Stress;
@@ -542,11 +544,15 @@ computePK2StressField()
 
       if (Vc::any_of(deformationGradientDeterminant < 0))
       {
+#ifdef HAVE_STDSIMD
+        LOG(ERROR) << "J = det(F) is negative, in computation of PK2 stresses.\n";
+#else
         LOG(ERROR) << "J = det(F) = " << deformationGradientDeterminant << " is negative, in computation of PK2 stresses.\n"
           << "Element no. " << elementNoLocal << " (" << elementNoLocalv << "), xi=" << xi << ", det(material jacobian): " << jacobianDeterminant
           << ", displacementsValues: " << displacementsValues[0] << "," << displacementsValues[1]
           << ", deformationGradient: " << deformationGradient << ", inverseJacobianMaterial: " << inverseJacobianMaterial
           << ", geometryReferenceValues: " << geometryReferenceValues[0] << "," << geometryReferenceValues[1];
+#endif
       }
 
       // compute Fdot values

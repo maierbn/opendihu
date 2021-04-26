@@ -1,23 +1,26 @@
 import numpy as np
 
-nx1 = 3
-nx2 = 2
-ny = 2
+nx1 = 3   # number of elements in x direction of the first mesh of the composite mesh
+nx2 = 2   # number of elements in x direction of the second mesh of the composite mesh
+ny = 2    # number of elements in y direction
 
 # boundary conditions (for quadratic elements)
-bc = {}
+dirichlet_bc = {}
+# Dirichlet boundary conditions for the first mesh
 n_nodes_x1 = 2*nx1+1
+n_nodes_first_mesh = (2*nx1+1)*(2*ny+1) 
 for i in range(int(n_nodes_x1)):
   x = i/n_nodes_x1
-  bc[i] = np.sin(x*np.pi)
+  dirichlet_bc[i] = np.sin(x*np.pi)
   
+# Dirichlet boundary conditions for the second mesh
 n_nodes_x2 = 2*nx2+1
 for i in range(int(n_nodes_x2)):
   x = i/n_nodes_x2
-  i2 = (2*nx1+1)*(2*ny+1) - 3 + n_nodes_x2*(2*ny) + i
-  bc[i2] = np.sin(x*np.pi)
+  i2 = n_nodes_first_mesh + n_nodes_x2*(2*ny) + i
+  dirichlet_bc[i2] = np.sin(x*np.pi)
   
-  print("bc[{}] = {}, bc[{}] = {}".format(i, bc[i], i2, bc[i2]))
+  print("dirichlet_bc[{}] = {}, dirichlet_bc[{}] = {}".format(i, dirichlet_bc[i], i2, dirichlet_bc[i2]))
 
 config = {
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
@@ -42,8 +45,8 @@ config = {
     "inputMeshIsGlobal": True,
     "outputInterval": 1.0,
     
-    "dirichletBoundaryConditions": bc,
-    "dirichletOutputFilename":     None,                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+    "dirichletBoundaryConditions": dirichlet_bc,
+    "dirichletOutputFilename":     "dirichlet_bc",                                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     "neumannBoundaryConditions": [],
     "prefactor": [1,2],
     

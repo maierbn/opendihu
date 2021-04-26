@@ -374,7 +374,7 @@ setValue(int componentNo, Vc::int_v row, Vc::double_v value, InsertMode mode)
   {
     if (row[rowIndex] == -1)
       break;
-    this->setValue(componentNo, row[rowIndex], value[rowIndex], mode);
+    this->setValue(componentNo, (int)(row[rowIndex]), (double)(value[rowIndex]), mode);
   }
 }
 

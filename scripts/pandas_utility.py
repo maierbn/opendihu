@@ -120,7 +120,7 @@ def load_df(input_filename):
         
         # print progress
         if i % 100 == 0:
-          print("{:.2f}%\b\b\b\b\b\b".format(100*i/n_lines), end="", flush=True)
+          sys.stdout.write("{:.2f}%\b\b\b\b\b\b".format(100*i/n_lines))
         
     print("File \"{}\" contains {} lines, creating data frame.".format(input_filename, len(df_lines)))
         
@@ -403,8 +403,8 @@ def plot_weak_scaling(df, title, columns_to_plot, group_by_columns=['nRanks'], p
   ax.set_xticks(rank_nos)
   ax.set_xticklabels(rank_no_labels)
   ax.grid(which='major')
-  ax.set_xlabel('number of processes')
-  ax.set_ylabel('runtime [s]')
+  ax.set_xlabel('Number of processes')
+  ax.set_ylabel('Runtime [s]')
   ax.set_title(title)
   if plot_labels is not None:
     plt.subplots_adjust(right=0.66, top=0.94, bottom=0.18)

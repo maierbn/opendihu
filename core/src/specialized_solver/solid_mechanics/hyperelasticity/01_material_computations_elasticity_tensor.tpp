@@ -545,6 +545,7 @@ computeElasticityTensor(const Tensor2<3,double_v_t> &rightCauchyGreen,         /
   }
 
   // verify major and minor symmetries of elasticity tensor
+#ifndef HAVE_STDSIMD
   if (VLOG_IS_ON(1))
   {
   //LOG_N_TIMES(2,DEBUG) << "elasticityTensor: " << elasticityTensor;
@@ -578,6 +579,7 @@ computeElasticityTensor(const Tensor2<3,double_v_t> &rightCauchyGreen,         /
     LOG_N_TIMES(2,DEBUG) << "elasticity tensor checked for minor symmetries";
     //LOG(DEBUG) << "elasticity tensor checked for minor symmetries";
   }
+#endif
 }
 
 } // namespace

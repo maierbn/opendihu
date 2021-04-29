@@ -75,7 +75,7 @@ setValue(int componentNoRow, Vc::int_v row, int componentNoColumn, Vc::int_v col
       break;
 
     // call the normal, scalar setValue
-    this->setValue(componentNoRow, int(row[vcComponentNo]), componentNoColumn, int(column[vcComponentNo]), value, mode);
+    this->setValue(componentNoRow, (int)row[vcComponentNo], componentNoColumn, (int)column[vcComponentNo], value, mode);
   }
 }
 
@@ -90,7 +90,7 @@ setValue(int componentNoRow, Vc::int_v row, int componentNoColumn, Vc::int_v col
       break;
 
     // call the normal, scalar setValue
-    this->setValue(componentNoRow, (int)(row[vcComponentNo]), componentNoColumn, (int)(column[vcComponentNo]), (double)(value[vcComponentNo]), mode);
+    this->setValue(componentNoRow, (int)row[vcComponentNo], componentNoColumn, (int)column[vcComponentNo], (double)value[vcComponentNo], mode);
   }
 }
 

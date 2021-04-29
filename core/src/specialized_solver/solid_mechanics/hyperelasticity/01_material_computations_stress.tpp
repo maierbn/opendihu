@@ -377,7 +377,6 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
 #endif
   }
 #endif
-#endif
 
   return pK2Stress;
 }

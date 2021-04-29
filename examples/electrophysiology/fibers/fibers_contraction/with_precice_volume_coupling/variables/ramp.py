@@ -25,6 +25,7 @@ b  = 1.075e-2               # [N/cm^2] anisotropy parameter
 d  = 9.1733                 # [-] anisotropy parameter
 material_parameters = [c1, c2, b, d]   # material parameters
 pmax = 7.3                  # [N/cm^2] maximum isometric active stress
+pmax = 3.65
 pmax = 2
 
 # for debugging, b = 0 leads to normal Mooney-Rivlin
@@ -77,7 +78,7 @@ import opendihu
 if "contraction" in opendihu.program_name:
   sampling_stride_x = 2
   sampling_stride_y = 2
-  sampling_stride_z = 148
+  sampling_stride_z = 185
   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
 else:
@@ -88,7 +89,7 @@ else:
   sampling_stride_z = 20
   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
-distribute_nodes_equally = False     # (default: False)
+distribute_nodes_equally = True     # (default: False)
 # True: set high priority to make subdomains have approximately equal number of fibers but creates tiny remainder elements inside the subdomains
 # False: make elements more equally sized, this can lead to a slight imbalance in the number of fibers per subdomain
 
@@ -107,6 +108,9 @@ firing_times_file = input_directory + "/MU_firing_times_always.txt"
 #fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs.txt"
 fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs_13x13.txt"
 cellml_file       = input_directory + "/new_slow_TK_2014_12_08.cellml"
+
+if "hh" in opendihu.program_name:
+  cellml_file       = input_directory + "/hodgkin_huxley-razumova.cellml"
 
 # EMG solver parameters
 emg_solver_type = "cg"              # solver and preconditioner for the 3D static Bidomain equation that solves the intra-muscular EMG signal

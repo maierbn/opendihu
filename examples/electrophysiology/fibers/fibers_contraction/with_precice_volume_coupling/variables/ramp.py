@@ -102,7 +102,7 @@ mapping_tolerance = 0.5
 import os
 input_directory   = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
 
-fiber_file        = input_directory + "/left_biceps_brachii_9x9fibers.bin"
+fiber_file        = input_directory + "/left_biceps_brachii_9x9fibers.old.bin"
 #fiber_file        = input_directory + "/left_biceps_brachii_13x13fibers.bin"
 firing_times_file = input_directory + "/MU_firing_times_always.txt"
 #fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs.txt"

@@ -141,7 +141,7 @@ initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> fun
 
           // set element no to real local no
           localConfigsWithGlobalElementNo.back().elementNoLocal = elementNoLocal;
-          break;
+          //break;
         }
         else if (configBCElementNoGlobal > elementNoGlobalNatural)
         {

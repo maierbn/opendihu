@@ -36,15 +36,15 @@ void Manager::initialize(DihuContext context, PythonConfig settings, std::shared
     PyObject *writerSettings = settings.getOptionListBegin<PyObject *>("OutputWriter");
 
     // loop over other values
-    for (;
+    for (int listIndex = 0;
         !settings.getOptionListEnd("OutputWriter");
-        settings.getOptionListNext<PyObject *>("OutputWriter", writerSettings))
+        settings.getOptionListNext<PyObject *>("OutputWriter", writerSettings), listIndex++)
     {
       if (VLOG_IS_ON(1))
       {
         VLOG(1) << "parse outputWriter, settings: " << settings.pyObject() << ", writerSettings: " << writerSettings;
       }
-      PythonConfig writerConfig(settings, "OutputWriter", writerSettings);
+      PythonConfig writerConfig(settings, "OutputWriter", writerSettings, listIndex);
       createOutputWriterFromSettings(context, writerConfig, rankSubset);
     }
   }

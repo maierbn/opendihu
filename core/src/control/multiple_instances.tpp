@@ -65,7 +65,7 @@ MultipleInstances(DihuContext context) :
     }
     else
     {
-      instanceConfigs.push_back(std::make_shared<PythonConfig>(specificSettings_, "instances", instanceConfig));
+      instanceConfigs.push_back(std::make_shared<PythonConfig>(specificSettings_, "instances", instanceConfig, i));
     }
 
     VLOG(3) << "i = " << i << ", instanceConfig = " << instanceConfig;

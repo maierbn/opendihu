@@ -3,6 +3,10 @@
 #include <Python.h>  // has to be the first included header
 #include "utility/python_utility.h"
 
+/** This class contains a certain part of the python dict of the settings file.
+ *  It knows the path from the config variable, e.g. config["Solver1"]["Solver2"]["Solver3"]
+ *  and the contents, e.g., {"key1": 0, "key2": "value"}
+ */
 class PythonConfig
 {
 public:
@@ -15,8 +19,8 @@ public:
   //! constructor as sub scope of another python config which is a list
   PythonConfig(const PythonConfig &rhs, int i);
 
-  //! constructor directly from PyObject*, path from rhs + key
-  PythonConfig(const PythonConfig &rhs, std::string key, PyObject *config);
+  //! constructor directly from PyObject*, path from rhs + key + [listIndex] (if not -1)
+  PythonConfig(const PythonConfig &rhs, std::string key, PyObject *config, int listIndex=-1);
 
   //! constructor directly from PyObject*, path from rhs + key + key2
   PythonConfig(const PythonConfig &rhs, std::string key1, std::string key2, PyObject *config);

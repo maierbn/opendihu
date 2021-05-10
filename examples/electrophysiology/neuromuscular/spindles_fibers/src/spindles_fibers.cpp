@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
                     Control::MultipleInstances<
                       TimeSteppingScheme::Heun<                   // fiber reaction term
                         CellmlAdapter<
-                          9, 19,  // nStates,nAlgebraics: 57,1 = Shorten, 4,9 = Hodgkin Huxley
+                          57, 71,  // nStates,nAlgebraics: 57,71 = Shorten, 4,9 = Hodgkin Huxley
                           FunctionSpace::FunctionSpace<
                             Mesh::StructuredDeformableOfDimension<1>,
                             BasisFunction::LagrangeOfOrder<1>

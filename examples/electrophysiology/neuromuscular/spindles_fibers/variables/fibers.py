@@ -160,12 +160,12 @@ dt_motoneuron          = dt_neurons # [ms] timestep width of the cellml solver f
 dt_neuron_transfer     = dt_elasticity  # [ms] interval when to call callback functions and transfer values between CellML models, increase this to speed up the simulation
 #dt_neuron_transfer     = dt_neurons  # [ms] interval when to call callback functions and transfer values between CellML models, increase this to speed up the simulation
 
-output_timestep_elasticity = 1      # [ms] timestep for elasticity output files
+output_timestep_elasticity = 20      # [ms] timestep for elasticity output files
 output_timestep_neurons = 1         # [ms] timestep for output of files for all sensor organs and neurons
-output_timestep_motoneuron = 0.2    # [ms] timestep for output of files for motoneuron
+output_timestep_motoneuron = 1    # [ms] timestep for output of files for motoneuron
 output_timestep_0D_states = 2       # [ms] timestep for output of all states within multidomain, produces large files, enabled only if states_output = True
-output_timestep_fibers = 0.5         # [ms] timestep for fiber output files
-output_timestep_3D_emg = 0.5         # [ms] timestep for output of 3D emg
+output_timestep_fibers = 2         # [ms] timestep for fiber output files
+output_timestep_3D_emg = 20         # [ms] timestep for output of 3D emg
 
 #output_timestep_multidomain = dt_elasticity
 #output_timestep_elasticity = dt_elasticity
@@ -173,9 +173,20 @@ output_timestep_3D_emg = 0.5         # [ms] timestep for output of 3D emg
 # input files
 # -----------
 import os
+import opendihu
 input_directory   = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
-cellml_file       = input_directory+"/new_slow_TK_2014_12_08.c"
-#cellml_file       = input_directory+"/hodgkin_huxley-razumova.cellml"
+
+# if the hodgkin_huxley-razumova model is used
+if "hh" in opendihu.program_name:
+  cellml_file       = input_directory+"/hodgkin_huxley-razumova.cellml"
+  dt_0D = 1e-3                   # [ms] timestep width of ODEs (1e-3), for shorten use 2.5e-5
+  dt_1D = 1e-3                   # [ms] timestep width of the 1D electric conduction problem, for shorten use 2.5e-5
+  dt_splitting = 1e-3            # [ms] timestep width of strang splitting between 0D and 1D for the fibers, for shorten use 2.5e-5
+  scenario_name = "spindles_fibers_hh"
+
+else:
+  cellml_file       = input_directory+"/new_slow_TK_2014_12_08.c"
+  scenario_name = "spindles_fibers_shorten"
 
 fiber_file        = input_directory+"/left_biceps_brachii_9x9fibers_b.bin"  # this is a variant of 9x9fibers with a slightly different mesh that somehow works better
 fiber_file        = input_directory+"/left_biceps_brachii_9x9fibers.bin"
@@ -214,12 +225,12 @@ paraview_output = True
 adios_output = False
 exfile_output = False
 python_output = False
-states_output = True                    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
+states_output = False                    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
 enable_surface_emg = True               # if the EMG values on a 2D surface should be written to files
 show_linear_solver_output = False       # if every solve of multidomain diffusion should be printed
 disable_firing_output = True            # if information about firing of MUs should be printed
 optimization_type = "vc"                # the optimization_type used in the cellml adapter, "vc" uses explicit vectorization
-approximate_exponential_function = False # if the exponential function should be approximated by a Taylor series with only 11 FLOPS
+approximate_exponential_function = True # if the exponential function should be approximated by a Taylor series with only 11 FLOPS
 
 # neurons and sensors
 # -------------------

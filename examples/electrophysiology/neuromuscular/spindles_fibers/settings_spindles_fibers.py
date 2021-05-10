@@ -650,7 +650,7 @@ config = {
                   "fromConnectorSlot":                "mn",                # source slot of the dofs mapping
                   "toConnectorSlots":                 "vm",                # target slot of the dofs mapping
                   "fromSlotConnectorArrayIndex":      0,                  
-                  "toSlotConnectorArrayIndex":        motor_unit_no,      # which motor unit
+                  "toSlotConnectorArrayIndex":        get_fiber_index_in_motor_unit(fiber_index, motor_unit_no),      # which fiber in this motor unit
                   "mode":                             "localSetIfAboveThreshold",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
                   "fromDofNosNumbering":              "local",
                   "toDofNosNumbering":                "global",
@@ -661,7 +661,8 @@ config = {
                   "thresholdValue":                   20,                  # if mode is "localSetIfAboveThreshold", this is the threshold, if the value is above it, set the value `valueToSet`
                   "valueToSet":                       variables.vm_value_stimulated,       # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
                 }
-              for motor_unit_no in range(variables.n_motor_units)],
+              for motor_unit_no in range(variables.n_motor_units)
+                for fiber_index in range(get_n_fibers_in_motor_unit(motor_unit_no))],     # iterate over all motor units and all fibers in every motor unit
                          
                   
               # actual fibers_emg simulation plus electro-mechanics solver
@@ -684,7 +685,7 @@ config = {
                     "timeStepWidth":          variables.dt_3D,  # 1e-1
                     "logTimeStepWidthAsKey":  "dt_3D",
                     "durationLogKey":         "duration_total",
-                    "timeStepOutputInterval": 1,
+                    "timeStepOutputInterval": 10,
                     "endTime":                variables.end_time,
                     "connectedSlotsTerm1To2": {0:0}, 
                     "connectedSlotsTerm2To1": [None],  
@@ -736,6 +737,7 @@ config = {
                                       "approximateExponentialFunction":         variables.approximate_exponential_function,     # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
                                       "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
                                       "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+                                      #"libraryFilename":                        "lib/lib.so",                                   # manually compiled library
                                               
                                       # stimulation callbacks
                                       "setSpecificStatesFunction":              None,                                           # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
@@ -844,7 +846,7 @@ config = {
                       },
                       "fiberDistributionFile":    variables.fiber_distribution_file,   # for FastMonodomainSolver, e.g. MU_fibre_distribution_3780.txt
                       "firingTimesFile":          variables.firing_times_file,         # for FastMonodomainSolver, e.g. MU_firing_times_real.txt
-                      "onlyComputeIfHasBeenStimulated": True,                          # only compute fibers after they have been stimulated for the first time
+                      "onlyComputeIfHasBeenStimulated": False,                          # only compute fibers after they have been stimulated for the first time
                       "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again
                       "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set
                       "neuromuscularJunctionRelativeSize": 0.1,                        # range where the neuromuscular junction is located around the center, relative to fiber length. The actual position is draws randomly from the interval [0.5-s/2, 0.5+s/2) with s being this option. 0 means sharply at the center, 0.1 means located approximately at the center, but it can vary 10% in total between all fibers.
@@ -871,6 +873,7 @@ config = {
                           "solverName":             "activationSolver",
                           "initialGuessNonzero":    variables.emg_initial_guess_nonzero,
                           "slotNames":             [],
+                          "nAdditionalFieldVariables": 0,                # number of additional field variable that can be used for additional output
 
                           "PotentialFlow": {
                             "FiniteElementMethod" : {

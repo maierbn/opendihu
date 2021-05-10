@@ -819,6 +819,27 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, comp
 variables.fiber_distribution = np.genfromtxt(variables.fiber_distribution_file, delimiter=" ")
 variables.firing_times = np.genfromtxt(variables.firing_times_file)
 
+# determine MU sizes and create n_fibers_in_motor_unit array
+variables.n_fibers_in_motor_unit = [0 for _ in range(variables.n_motor_units)]
+variables.fiber_index_in_motor_unit = [[] for _ in range(variables.n_motor_units)]
+
+for fiber_no in range(variables.n_fibers_total):
+  mu_no = get_motor_unit_no(fiber_no)
+  variables.n_fibers_in_motor_unit[mu_no] += 1
+  variables.fiber_index_in_motor_unit[mu_no].append(fiber_no)
+
+#print("n_motor_units: {}".format(variables.n_motor_units))
+#print("n_fibers_total: {}".format(variables.n_fibers_total))
+#print("n_fibers_in_motor_unit: {}".format(variables.n_fibers_in_motor_unit))
+#print("fiber_index_in_motor_unit: {}".format(variables.fiber_index_in_motor_unit))
+
+def get_fiber_index_in_motor_unit(fiber_index, motor_unit_no):
+  return variables.fiber_index_in_motor_unit[motor_unit_no][fiber_index]
+  
+def get_n_fibers_in_motor_unit(motor_unit_no):
+  return variables.n_fibers_in_motor_unit[motor_unit_no]
+  
+
 # for debugging output show when the first 20 fibers will fire
 if rank_no == 0 and not variables.disable_firing_output:
   print("\nDebugging output about compartment firing: Taking input from file \"{}\"".format(variables.firing_times_file))
@@ -1077,7 +1098,10 @@ for muscle_spindle_no in range(variables.n_muscle_spindles):
   muscle_spindle_node_nos.append(dof_no_global)
 
 # determine positions of neuromuscular junctions in fiber mesh
-n_points_global = variables.meshes["MeshFiber_0"]["nElements"]+1
+# n_points_global = variables.meshes["MeshFiber_0"]["nElements"]+1    # for serial execution
+for (key,mesh) in variables.meshes.items():
+  if "MeshFiber" in key:
+    n_points_global = mesh["nElements"]+1
 
 # stimulate every fiber at its center
 center_index = int(n_points_global/2)

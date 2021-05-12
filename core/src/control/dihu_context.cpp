@@ -370,10 +370,19 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
   // initialize regularization parameters
   if (pythonConfig_.hasKey("regularization"))
   {
-    std::array<double,2> regularization = pythonConfig_.getOptionArray<double,2>("regularization", 0, PythonUtility::ValidityCriterion::Positive);
-    MathUtility::INVERSE_REGULARIZATION_TOLERANCE = regularization[0];
-    MathUtility::INVERSE_REGULARIZATION_EPSILON = regularization[1];
-    LOG(INFO) << "Note, setting regularization to [tol,eps] = [" << regularization[0] << "," << regularization[1] << "].";
+    if (pythonConfig_.isEmpty("regularization"))
+    {
+      MathUtility::INVERSE_REGULARIZATION_TOLERANCE = 0;
+      MathUtility::INVERSE_REGULARIZATION_EPSILON = 0;
+      LOG(INFO) << "Note, disabling regularization.";
+    }
+    else
+    {
+      std::array<double,2> regularization = pythonConfig_.getOptionArray<double,2>("regularization", 0, PythonUtility::ValidityCriterion::NonNegative);
+      MathUtility::INVERSE_REGULARIZATION_TOLERANCE = regularization[0];
+      MathUtility::INVERSE_REGULARIZATION_EPSILON = regularization[1];
+      LOG(INFO) << "Note, setting regularization to [tol,eps] = [" << regularization[0] << "," << regularization[1] << "].";
+    }
   }
   else
   {

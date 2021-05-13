@@ -295,9 +295,15 @@ updateParametersPointer()
   // loop over parameters in variable2
   int offset = algebraicsForTransfer_.size();
   
+  int nInstances = this->parameters_->functionSpace()->meshPartition()->nDofsLocalWithoutGhosts();
+  int nEntriesLocal = nInstances * this->parameters_->nComponents();
+
   LOG(DEBUG) << "updateParametersPointer: algebraicsForTransfer_.size(): " << algebraicsForTransfer_.size() 
     << ",  parametersForTransfer_.size(): " <<  parametersForTransfer_.size() << ", this->parameters_ : " << this->parameters_ 
-    << ", \"" << this->parameters_->name() << "\", " << this->parameters_->partitionedPetscVec()->getCurrentRepresentationString();
+    << ", \"" << this->parameters_->name() << "\", " << this->parameters_->partitionedPetscVec()->getCurrentRepresentationString()
+    << ", nDofsLocalWithoutGhosts: " << nInstances
+    << ", nComponents: " << this->parameters_->nComponents()
+    << ", nEntriesLocal: " << nEntriesLocal;
   
   for (int i = 0; i < parametersForTransfer_.size(); i++)
   {
@@ -323,14 +329,22 @@ updateParametersPointer()
         std::vector<double> values;
         slotConnectorDataTimestepping_->variable2[offset + i].values->getValuesWithoutGhosts(values);
         
-        LOG(DEBUG) << "copy " << values.size() << " entries (nAlgebraics=" << nAlgebraics << ") from field variable "
-          << slotConnectorDataTimestepping_->variable2[offset + i].values->name() << " to the location of the parameterValues pointer (parameterIndex " << parameterIndex << "), from "
+        LOG(DEBUG) << "copy " << values.size() << " entries (nInstances=" << nInstances << ", nAlgebraics(=nParameters)=" << nAlgebraics << ", "
+          << "nDofs: " << this->parameters_->nDofsLocalWithoutGhosts() << ","
+          << this->parameters_->functionSpace()->nDofsLocalWithGhosts() << "," << this->parameters_->nDofsGlobal()
+          << ", nEntriesLocal: " << nEntriesLocal << ") from field variable "
+          << slotConnectorDataTimestepping_->variable2[offset + i].values->name()
+          << " to the location of the parameterValues pointer (parameterIndex " << parameterIndex << "), from "
           << (void *)values.data() << " to " << (void *)(parameterValues_ + parameterIndex*nAlgebraics*sizeof(double));
         
+        if (parameterIndex*nInstances + values.size()-1 > nEntriesLocal)
+          LOG(ERROR) << "invalid copy operation, parameterValues is accessed at " << parameterIndex << "*" << nAlgebraics << "+" << values.size()-1
+            << " (=" << parameterIndex*nInstances + (values.size()-1) << "), but nEntriesLocal: " << nEntriesLocal;
+
         // copy raw data from values to parameterValues_
         for (int valueIndex = 0; valueIndex < values.size(); valueIndex++)
         {
-          parameterValues_[parameterIndex*nAlgebraics + valueIndex] = values[valueIndex];
+          parameterValues_[parameterIndex*nInstances + valueIndex] = values[valueIndex];
         }
         //memcpy((void *)(parameterValues_ + parameterIndex*nAlgebraics*sizeof(double)), (void *)values.data(), values.size()*sizeof(double));
       }

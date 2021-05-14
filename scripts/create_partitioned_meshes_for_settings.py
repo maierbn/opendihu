@@ -608,7 +608,7 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
         print("{} x {} = {} fibers".format(variables.n_fibers_x, variables.n_fibers_y, variables.n_fibers_total))
       print("per fiber: 1D mesh    nodes global: {}, local: {}".format(variables.n_points_whole_fiber, n_points_in_subdomain_z(own_subdomain_coordinate_z)))
     
-    print("  sampling 3D mesh with stride {} x {} x {} {}".format(variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, "\n  distribute_nodes_equally: True" if variables.distribute_nodes_equally else ""))
+    print("  sampling 3D mesh with stride {} x {} x {}\n  distribute_nodes_equally: {}".format(variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, "True" if variables.distribute_nodes_equally else "False"))
     if generate_linear_3d_mesh:
       print("    linear 3D mesh    nodes global: {} x {} x {} = {}, local: {} x {} x {} = {}".format(
         variables.n_points_3D_mesh_global_x, variables.n_points_3D_mesh_global_y, variables.n_points_3D_mesh_global_z, n_points_3D_mesh_global, 

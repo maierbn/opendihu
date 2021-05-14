@@ -15,6 +15,9 @@
 namespace MathUtility
 {
 
+extern double INVERSE_REGULARIZATION_TOLERANCE; // threshold for the absolute value of the determinant of the almost-singular matrix, when to add regularization
+extern double INVERSE_REGULARIZATION_EPSILON;   // regularization value to be added to diagonal of almost-singular matrix
+
 //! returns v*v (square)
 inline double sqr(double v){return v*v;}
 

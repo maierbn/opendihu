@@ -61,7 +61,7 @@ PythonConfig::PythonConfig(const PythonConfig &rhs, int i)
 }
 
 //! constructor directly from PyObject*, path from rhs + key
-PythonConfig::PythonConfig(const PythonConfig &rhs, std::string key, PyObject *config)
+PythonConfig::PythonConfig(const PythonConfig &rhs, std::string key, PyObject *config, int listIndex)
 {
   pythonConfig_ = config;
   VLOG(1) << "PythonConfig::constructor(rhs,key=\"" << key << "\",config) " << PythonUtility::getString(pythonConfig_);
@@ -71,7 +71,15 @@ PythonConfig::PythonConfig(const PythonConfig &rhs, std::string key, PyObject *c
   path_.resize(pathSize+2);
   std::copy(rhs.pathBegin(), rhs.pathEnd(), path_.begin());
   path_[pathSize] = key;
-  path_[pathSize+1] = std::string("...");
+
+  if (listIndex == -1)
+    path_[pathSize+1] = std::string("...");
+  else
+  {
+    std::stringstream s;
+    s << "." << listIndex;
+    path_[pathSize+1] = s.str();
+  }
 }
 
 //! constructor directly from PyObject*, path from rhs + key
@@ -137,6 +145,14 @@ std::string PythonConfig::getStringPath() const
     {
       pathString << "[...]";
     }
+    else if ((*iter)[0] == '.')    // format is .number
+    {
+      // if an array index follows
+      pathString << "[";
+      for (int i = 1; i < iter->size(); i++)
+        pathString << (*iter)[i];
+      pathString << "]";
+    }
     else
     {
       pathString << "[\"" << *iter << "\"]";
@@ -148,6 +164,15 @@ std::string PythonConfig::getStringPath() const
 //! checks if the settings contain the given key, no warning is printed
 bool PythonConfig::hasKey(std::string key) const
 {
+  if (!pythonConfig_)
+    return false;
+
+  if (!PyDict_Check(pythonConfig_))
+  {
+    std::string pathString = this->getStringPath();
+    LOG(ERROR) << "" << pathString << " is not a dict in \"" << Control::settingsFileName << "\".";
+    return false;
+  }
   return PythonUtility::hasKey(this->pythonConfig_, key);
 }
 

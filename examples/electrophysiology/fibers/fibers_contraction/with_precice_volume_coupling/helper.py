@@ -68,7 +68,21 @@ variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
 variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
 # create mappings between meshes
-variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(variables.n_fibers_total)}
+#variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(variables.n_fibers_total)}
+variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : {"name": "3Dmesh", "xiTolerance": 3e-1, "defaultValue": 0} for i in range(variables.n_fibers_total)}
+
+# a higher tolerance includes more fiber dofs that may be almost out of the 3D mesh
+variables.mappings_between_meshes = { 
+  "MeshFiber_{}".format(i) : { 
+    "name": "3Dmesh_quadratic",
+    "xiTolerance": variables.mapping_tolerance,
+    "enableWarnings": False, 
+    "compositeUseOnlyInitializedMappings": False,
+    "fixUnmappedDofs": True,
+    "defaultValue": 0,
+  } for i in range(variables.n_fibers_total)
+}
+
 
 # set output writer    
 variables.output_writer_fibers = []
@@ -111,7 +125,7 @@ if variables.exfile_output:
   variables.output_writer_fibers.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "fileNumbering": "incremental"})
 
 # set variable mappings for cellml model
-if "hodgkin_huxley" in variables.cellml_file:
+if "hodgkin_huxley" in variables.cellml_file and "hodgkin_huxley-razumova" not in variables.cellml_file:
   # parameters: I_stim
   variables.mappings = {
     ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
@@ -138,7 +152,7 @@ elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain"
     ("parameter", 0):           ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
     ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
     ("connectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
-    ("connectorSlot", 1): ("algebraic", "razumova/stress"),  # expose algebraic 12 = γ to the operator splitting
+    ("connectorSlot", 1, "stress"): ("algebraic", "razumova/stress"),  # expose algebraic 12 = γ to the operator splitting
   }
   variables.parameters_initial_values = [0.0, 1.0]                    # wal_environment/I_HH = I_stim, razumova/L_S = λ
   variables.nodal_stimulation_current = 40.                           # not used
@@ -162,15 +176,31 @@ elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "
   variables.mappings = {
     ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
     ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 11 = fiber stretch λ
-    ("parameter", 2):           ("constant", "Razumova/rel_velo"),    # parameter 2 is constant 12 = fiber contraction velocity \dot{λ}
-    ("connectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
-    ("connectorSlot", 1): ("algebraic", "Razumova/ActiveStress"),   # expose algebraic 4 = γ to the operator splitting
-    ("connectorSlot", 2): ("algebraic", "Razumova/Activation"),     # expose algebraic 5 = α to the operator splitting
+    #("parameter", 2):           ("constant", "Razumova/rel_velo"),    # parameter 2 is constant 12 = fiber contraction velocity \dot{λ}
+    ("connectorSlot", 0):       ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
+    ("connectorSlot", "stress"):("algebraic", "Razumova/ActiveStress"),   # expose algebraic 4 = γ to the operator splitting
+    #("connectorSlot", "gamma"): ("algebraic", "Razumova/Activation"),     # expose algebraic 5 = α to the operator splitting
   }
   variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
   variables.nodal_stimulation_current = 40.                           # not used
   variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
+  
+elif "hodgkin_huxley-razumova" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
+  # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
+  variables.mappings = {
+    ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
+    ("parameter", 1):           "Razumova/l_hs",            # parameter 1 is fiber stretch λ
+    ("connectorSlot", 0):    "membrane/V",               # expose Vm to the operator splitting
+    ("connectorSlot", "stress"):"Razumova/activestress",
+#    ("connectorSlot", "alpha"): "Razumova/activation",      # expose activation .
+  }
+  variables.parameters_initial_values = [0, 1]
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 20.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
 
+else:
+  print("\033[0;31mCellML file {} has no mappings implemented in helper.py\033[0m".format(variables.cellml_file))
+  quit()
 
 # callback functions
 # --------------------------
@@ -198,35 +228,6 @@ def fiber_gets_stimulated(fiber_no, frequency, current_time):
   
   return variables.firing_times[index % n_firing_times, mu_no] == 1
   
-def set_parameters(n_nodes_global, time_step_no, current_time, parameters, dof_nos_global, fiber_no):
-  
-  # determine if fiber gets stimulated at the current time
-  is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, variables.stimulation_frequency, current_time)
-  
-  # determine nodes to stimulate (center node, left and right neighbour)
-  innervation_zone_width_n_nodes = variables.innervation_zone_width*100  # 100 nodes per cm
-  innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
-  nodes_to_stimulate_global = [innervation_node_global]
-  if innervation_node_global > 0:
-    nodes_to_stimulate_global.insert(0, innervation_node_global-1)
-  if innervation_node_global < n_nodes_global-1:
-    nodes_to_stimulate_global.append(innervation_node_global+1)
-  
-  # stimulation value
-  if is_fiber_gets_stimulated:
-    stimulation_current = variables.nodal_stimulation_current
-  else:
-    stimulation_current = 0.
-  
-  first_dof_global = dof_nos_global[0]
-  last_dof_global = dof_nos_global[-1]
-    
-  for node_no_global in nodes_to_stimulate_global:
-    if first_dof_global <= node_no_global <= last_dof_global:
-      # get local no for global no (1D)
-      dof_no_local = node_no_global - first_dof_global
-      parameters[dof_no_local] = stimulation_current
- 
 # callback function that can set parameters, i.e. stimulation current
 def set_specific_parameters(n_nodes_global, time_step_no, current_time, parameters, fiber_no):
   
@@ -270,8 +271,8 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibe
       nodes_to_stimulate_global.insert(0, innervation_node_global-1)
     if innervation_node_global < n_nodes_global-1:
       nodes_to_stimulate_global.append(innervation_node_global+1)
-    if rank_no == 0:
-      print("t: {}, stimulate fiber {} at nodes {}".format(current_time, fiber_no, nodes_to_stimulate_global))
+    #if rank_no == 0:
+    #  print("t: {}, stimulate fiber {} at nodes {}".format(current_time, fiber_no, nodes_to_stimulate_global))
 
     for node_no_global in nodes_to_stimulate_global:
       states[(node_no_global,0,0)] = 20.0   # key: ((x,y,z),nodal_dof_index,state_no)
@@ -374,8 +375,9 @@ for j in range(my):
     variables.elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
   
 # fix edge
-for i in range(mx):
-  variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
+if False:
+  for i in range(mx):
+    variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
   
 # fix corner completely
 variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]

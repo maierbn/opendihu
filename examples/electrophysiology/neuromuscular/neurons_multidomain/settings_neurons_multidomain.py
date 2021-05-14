@@ -945,7 +945,8 @@ config = {
                   #"valueToSet":                       20,                 # if mode is "localSetIfAboveThreshold", this is the value to set the target dof to, if the source dof is above thresholdValue.
                 }
               ],
-              
+               
+              # map from motoneuronMesh to stimulated nodes
               "MapDofs": {
                 "description":                "motoneurons->stimulated nodes",  # description that will be shown in solver structure visualization
                 "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.

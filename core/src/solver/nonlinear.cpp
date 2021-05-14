@@ -55,6 +55,10 @@ Nonlinear::Nonlinear(PythonConfig specificSettings, MPI_Comm mpiCommunicator, st
   this->setupKsp(*this->ksp_);
 }
 
+void Nonlinear::initialize()
+{
+}
+
 std::shared_ptr<SNES> Nonlinear::snes()
 {
   return snes_;

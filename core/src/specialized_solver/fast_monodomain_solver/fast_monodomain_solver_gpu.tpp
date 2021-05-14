@@ -20,151 +20,166 @@ initializeCellMLSourceFileGpu()
   PythonConfig specificSettingsCellML = cellmlAdapter.specificSettings();
   CellmlSourceCodeGenerator &cellmlSourceCodeGenerator = cellmlAdapter.cellmlSourceCodeGenerator();
 
-  int nFibersToCompute = NFIBERS_TO_COMPUTE;  // nFibersToCompute_
-  
-  // create source code for the rhs part
-  std::string headerCode;
-  std::string mainCode;
-  const bool hasAlgebraicsForTransfer = !algebraicsForTransferIndices_.empty();
-  cellmlSourceCodeGenerator.generateSourceFastMonodomainGpu(approximateExponentialFunction,
-                                                            nFibersToCompute, nInstancesToComputePerFiber_, nParametersPerInstance_,
-                                                            hasAlgebraicsForTransfer,
-                                                            headerCode, mainCode);
+  // helper variables
+  std::string libraryFilename;
+  std::stringstream compileCommand;
 
-  int ownRankNoCommWorld = DihuContext::ownRankNoCommWorld();
-
-  // determine filename of library
-  std::stringstream s;
-  s << "lib/" << StringUtility::extractBasename(cellmlSourceCodeGenerator.sourceFilename())
-    << "_" << optimizationType_ << "_fast_monodomain." << ownRankNoCommWorld << ".so";
-  std::string libraryFilename = s.str();
-
-  s.str("");
-  s << "src/" << StringUtility::extractBasename(cellmlSourceCodeGenerator.sourceFilename())
-    << "_" << optimizationType_ << "_fast_monodomain." << ownRankNoCommWorld << ".cpp";
-  std::string sourceToCompileFilename = s.str();
-
-  // generate library
-  LOG(DEBUG) << "initializeCellMLSourceFileGpu: generate source file \"" << sourceToCompileFilename << "\".";
-
-  if (generateGpuSource_)
+  // if option "libraryFilename" is given, do not create new C++ source code, use the existing library instead
+  if (specificSettingsCellML.hasKey("libraryFilename"))
   {
-    generateMonodomainSolverGpuSource(sourceToCompileFilename, headerCode, mainCode);
+    libraryFilename = specificSettingsCellML.getOptionString("libraryFilename", "lib.so");
+
+    LOG(INFO) << "Loading existing library \"" << libraryFilename << "\".";
   }
   else
   {
-    LOG(WARNING) << "In FastMonodomainSolver for GPU: \"generateGpuSource\" is set to False, i.e. no code will be generated."
-      << " Instead, the existing source \"" << sourceToCompileFilename << "\" will be compiled.";
-  }
+    // option "libraryFilename" was not given, create source code for GPU and and compile it to the shared library
 
-  // create path for library file
-  if (libraryFilename.find("/") != std::string::npos)
-  {
-    std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
-    int ret = system((std::string("mkdir -p ")+path).c_str());
+    int nFibersToCompute = NFIBERS_TO_COMPUTE;  // nFibersToCompute_
 
-    if (ret != 0)
+    // create source code for the rhs part
+    std::string headerCode;
+    std::string mainCode;
+    const bool hasAlgebraicsForTransfer = !algebraicsForTransferIndices_.empty();
+    cellmlSourceCodeGenerator.generateSourceFastMonodomainGpu(approximateExponentialFunction,
+                                                              nFibersToCompute, nInstancesToComputePerFiber_, nParametersPerInstance_,
+                                                              hasAlgebraicsForTransfer,
+                                                              headerCode, mainCode);
+
+    int ownRankNoCommWorld = DihuContext::ownRankNoCommWorld();
+
+    // determine filename of library
+    std::stringstream s;
+    s << "lib/" << StringUtility::extractBasename(cellmlSourceCodeGenerator.sourceFilename())
+      << "_" << optimizationType_ << "_fast_monodomain." << ownRankNoCommWorld << ".so";
+    libraryFilename = s.str();
+
+    s.str("");
+    s << "src/" << StringUtility::extractBasename(cellmlSourceCodeGenerator.sourceFilename())
+      << "_" << optimizationType_ << "_fast_monodomain." << ownRankNoCommWorld << ".cpp";
+    std::string sourceToCompileFilename = s.str();
+
+    // generate library
+    LOG(DEBUG) << "initializeCellMLSourceFileGpu: generate source file \"" << sourceToCompileFilename << "\".";
+
+    if (generateGpuSource_)
     {
-      LOG(ERROR) << "Could not create path \"" << path << "\" for library file.";
-    }
-  }
-
-  // load compiler flags
-  std::string compilerFlags = specificSettingsCellML.getOptionString("compilerFlags", "-O3 -march=native -fPIC -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
-
-#ifdef NDEBUG
-  if (compilerFlags.find("-O3") == std::string::npos)
-  {
-    LOG(WARNING) << "\"compilerFlags\" does not contain \"-O3\", this may be slow.";
-  }
-  if (compilerFlags.find("-m") == std::string::npos)
-  {
-    LOG(WARNING) << "\"compilerFlags\" does not contain any \"-m\" flag, such as \"-march=native\". "
-      << "Make sure that SIMD instructions sets (SEE, AVX-2 etc.) are the same in opendihu and the compiled library. \n"
-      << " If unsure, use \"-O3 -march-native\".";
-  }
-#endif
-
-  // load pre and post compile commands
-  std::string preCompileCommand;
-  std::string postCompileCommand;
-  if (specificSettings_.hasKey("preCompileCommand"))
-  {
-    preCompileCommand = specificSettings_.getOptionString("preCompileCommand", "");
-    preCompileCommand += std::string("; ");
-  }
-  if (specificSettings_.hasKey("postCompileCommand"))
-  {
-    postCompileCommand = std::string("; ") + specificSettings_.getOptionString("postCompileCommand", "");
-  }
-  
-  // compose compile command
-  s.str("");
-  s << cellmlSourceCodeGenerator.compilerCommand() << " " << sourceToCompileFilename << " "
-    << compilerFlags << " " << cellmlSourceCodeGenerator.additionalCompileFlags() << " ";
-
-  std::string compileCommandOptions = s.str();
-
-  std::stringstream compileCommand;
-  compileCommand << preCompileCommand 
-    << compileCommandOptions
-    << " -o " << libraryFilename
-    << postCompileCommand;
-
-
-  // check compiler and version
-  if (optimizationType_ == "gpu")
-  {
-    std::string gccVersion = checkGccVersion();
-    if (atoi(gccVersion.c_str()) < 11)
-    {
-      LOG(ERROR) << "OpenMP offloading (to the extent needed here) is only supported with GCC 11 or later. Your current GCC version: " << gccVersion
-        << ".\n       Consider upgrading gcc or download the latest snapshot and build GCC yourself or try" << std::endl
-        << "          module load argon-tesla/gcc/11-20210110-openmp     "
-        << "(Note, this module's gcc is experimental and unfortunately does not work to compile opendihu, so you have to switch between compile and run.)";
-    }
-  }
-
-  // execute compilation command
-  int ret = system(compileCommand.str().c_str());
-  if (ret != 0)
-  {
-    LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
-
-    // remove "-fopenmp" in the compile command
-    std::string newCompileCommand = compileCommand.str();
-    std::string strToReplace = "-fopenmp";
-    std::size_t pos = newCompileCommand.find(strToReplace);
-    newCompileCommand.replace(pos, strToReplace.length(), "");
-
-    // remove -foffload="..."strToReplace = "-fopenmp";
-    pos = newCompileCommand.find("-foffload=\"");
-    std::size_t pos2 = newCompileCommand.find("\"", pos+11);
-    newCompileCommand.replace(pos, pos2-pos+1, "");
-
-    LOG(INFO) << "Retry without offloading, command: \n" << newCompileCommand;
-
-    // execute new compilation command
-    int ret = system(newCompileCommand.c_str());
-    if (ret != 0)
-    {
-      LOG(ERROR) << "Compilation failed again.";
+      generateMonodomainSolverGpuSource(sourceToCompileFilename, headerCode, mainCode);
     }
     else
     {
-      LOG(DEBUG) << "Compilation successful.";
+      LOG(WARNING) << "In FastMonodomainSolver for GPU: \"generateGpuSource\" is set to False, i.e. no code will be generated."
+        << " Instead, the existing source \"" << sourceToCompileFilename << "\" will be compiled.";
     }
-  }
-  else
-  {
-    LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
-  }
-  
 
-  //LOG(ERROR) << "GPU barrier: " << *DihuContext::partitionManager()->rankSubsetForCollectiveOperations();
+    // create path for library file
+    if (libraryFilename.find("/") != std::string::npos)
+    {
+      std::string path = libraryFilename.substr(0, libraryFilename.rfind("/"));
+      int ret = system((std::string("mkdir -p ")+path).c_str());
 
-  // wait on all ranks until conversion is finished
-  MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");
+      if (ret != 0)
+      {
+        LOG(ERROR) << "Could not create path \"" << path << "\" for library file.";
+      }
+    }
+
+    // load compiler flags
+    std::string compilerFlags = specificSettingsCellML.getOptionString("compilerFlags", "-O3 -march=native -fPIC -finstrument-functions -ftree-vectorize -fopt-info-vec-optimized=vectorizer_optimized.log -shared ");
+
+  #ifdef NDEBUG
+    if (compilerFlags.find("-O3") == std::string::npos)
+    {
+      LOG(WARNING) << "\"compilerFlags\" does not contain \"-O3\", this may be slow.";
+    }
+    if (compilerFlags.find("-m") == std::string::npos)
+    {
+      LOG(WARNING) << "\"compilerFlags\" does not contain any \"-m\" flag, such as \"-march=native\". "
+        << "Make sure that SIMD instructions sets (SEE, AVX-2 etc.) are the same in opendihu and the compiled library. \n"
+        << " If unsure, use \"-O3 -march-native\".";
+    }
+  #endif
+
+    // load pre and post compile commands
+    std::string preCompileCommand;
+    std::string postCompileCommand;
+    if (specificSettings_.hasKey("preCompileCommand"))
+    {
+      preCompileCommand = specificSettings_.getOptionString("preCompileCommand", "");
+      preCompileCommand += std::string("; ");
+    }
+    if (specificSettings_.hasKey("postCompileCommand"))
+    {
+      postCompileCommand = std::string("; ") + specificSettings_.getOptionString("postCompileCommand", "");
+    }
+
+    // compose compile command
+    s.str("");
+    s << cellmlSourceCodeGenerator.compilerCommand() << " " << sourceToCompileFilename << " "
+      << compilerFlags << " " << cellmlSourceCodeGenerator.additionalCompileFlags() << " ";
+
+    std::string compileCommandOptions = s.str();
+
+    compileCommand << preCompileCommand
+      << compileCommandOptions
+      << " -o " << libraryFilename
+      << postCompileCommand;
+
+
+    // check compiler and version
+    if (optimizationType_ == "gpu")
+    {
+      std::string gccVersion = checkGccVersion();
+      if (atoi(gccVersion.c_str()) < 11)
+      {
+        LOG(ERROR) << "OpenMP offloading (to the extent needed here) is only supported with GCC 11 or later. Your current GCC version: " << gccVersion
+          << ".\n       Consider upgrading gcc or download the latest snapshot and build GCC yourself or try" << std::endl
+          << "          module load argon-tesla/gcc/11-20210110-openmp     "
+          << "(Note, this module's gcc is experimental and unfortunately does not work to compile opendihu, so you have to switch between compile and run.)";
+      }
+    }
+
+    // execute compilation command
+    int ret = system(compileCommand.str().c_str());
+    if (ret != 0)
+    {
+      LOG(ERROR) << "Compilation failed. Command: \"" << compileCommand.str() << "\".";
+
+      // remove "-fopenmp" in the compile command
+      std::string newCompileCommand = compileCommand.str();
+      std::string strToReplace = "-fopenmp";
+      std::size_t pos = newCompileCommand.find(strToReplace);
+      newCompileCommand.replace(pos, strToReplace.length(), "");
+
+      // remove -foffload="..."strToReplace = "-fopenmp";
+      pos = newCompileCommand.find("-foffload=\"");
+      std::size_t pos2 = newCompileCommand.find("\"", pos+11);
+      newCompileCommand.replace(pos, pos2-pos+1, "");
+
+      LOG(INFO) << "Retry without offloading, command: \n" << newCompileCommand;
+
+      // execute new compilation command
+      int ret = system(newCompileCommand.c_str());
+      if (ret != 0)
+      {
+        LOG(ERROR) << "Compilation failed again.";
+      }
+      else
+      {
+        LOG(DEBUG) << "Compilation successful.";
+      }
+    }
+    else
+    {
+      LOG(DEBUG) << "Compilation successful. Command: \"" << compileCommand.str() << "\".";
+    }
+
+
+    //LOG(ERROR) << "GPU barrier: " << *DihuContext::partitionManager()->rankSubsetForCollectiveOperations();
+
+    // wait on all ranks until conversion is finished
+    MPIUtility::handleReturnValue(MPI_Barrier(DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->mpiCommunicator()), "MPI_Barrier");
+  }
 
   // load the rhs library
   void *handle = CellmlAdapterType::loadRhsLibraryGetHandle(libraryFilename);

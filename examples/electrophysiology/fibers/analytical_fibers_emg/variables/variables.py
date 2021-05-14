@@ -37,6 +37,7 @@ adios_output = False                # If the MegaMol/ADIOS output writer should 
 python_output = False               # If the Python output writer should be enabled
 exfile_output = False               # If the Exfile output writer should be enabled
 enable_surface_emg = False          # Enables the surface emg output writer
+enable_matrix_output = False        # if the matrix should be output to a MATLAB file
 
 # motor unit stimulation times
 cellml_file = ""

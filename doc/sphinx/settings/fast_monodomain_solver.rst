@@ -301,3 +301,35 @@ Whether to use the ``float`` datatype instead of ``double`` for the computations
 preCompileCommand, postCompileCommand
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 These are commands that are executed prior to and after the compilation command (only for GPU). Not sure if it is useful. For example, it does not work to load modules here, because the shell is different from the environment where the program is started.
+
+
+Tampering the generated source code
+------------------------------------------
+In case you want to manually adjust the source code that is compiled and loaded for the fast monodomain solver, there are two options:
+
+* You can build the shared library that is loaded by OpenDiHu yourself. Run the program once, to get the normal source code, e.g.:
+
+  .. code-block:: bash
+  
+    cd $OPENDIHU_HOME/examples/electrophysiology/fibers/fibers_emg/build_release
+    mpirun -n 4 ./fast_fibers_emg ../settings_fibers_emg.py ramp_emg.py
+    
+  Then, you can use the generated source code under ``build_release/src/hodgkin_huxley_1952_fast_monodomain.c`` as template for your own modifications.
+  
+  In the ``src`` directory, compile the library as follows:
+  
+  .. code-block:: bash
+  
+    g++ hodgkin_huxley_1952_fast_monodomain.c -O3 -march=native -fPIC -shared -lVc -I$OPENDIHU_HOME/dependencies/std_simd/install/include -I$OPENDIHU_HOME/dependencies/vc/install/include -L$OPENDIHU_HOME/dependencies/vc/install/lib -o ../cellml_simd_lib.so
+
+  The ``-march=native`` is important such that the compiled library uses a SIMD lane width of 4 (depending on the hardware), it has to be the same value as for the OpenDiHu core.
+  The flags ``-fPIC -shared`` create the shared object. In this case, the resulting library will be under ``build_release/cellml_simd_lib.so``. 
+  
+  To use this library, add the option ``"libraryFilename": "cellml_simd_lib.so"`` in the ``CellML`` part of the settings file. Then run the program again.
+  
+* The same approach works for the ``"vc"`` and ``"gpu"`` optimization types. For ``"gpu"``, there is another, more convenient method: 
+  By setting the option ``"generateGPUSource": False``, the source code is not generated and overwritten, but the existing source code file is compiled, linked and loaded by OpenDiHu. This means, you don't have to compile the library yourself.
+  
+  The steps are: Run the program once with ``"generateGPUSource": True`` to generate the initial source code file under ``src/``. Then, adjust the source code to your needs. Set ``"generateGPUSource": False``. Adjust the ``"compilerFlags"`` option, if you want to link to other libraries. Run the program again.
+  
+  

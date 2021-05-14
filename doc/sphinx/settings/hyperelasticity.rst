@@ -426,6 +426,24 @@ The following parameters can be given to specify the nonlinear solver:
 
 Details, e.g., about `dumpFilename` can also be found under :doc:`solver`.
 
+Note that the top-level ``regularization`` option also influences the error of the solution, see next section.
+
+regularization
+^^^^^^^^^^^^^^^^^^
+When using non-cartesian meshes, some elements may have interior angles of almost 180 degrees. In such elements, the inversion of the mapping from element coordinates to world coordinates is nearly singular.
+Inverting the jacobian matrix of this mapping is poorly conditioned and gives large errors. As a remedy, the following regularization can be specified. If the absolute determinant of the matrix is below a given threshold `tol`, a constant `eps*h` is added on the diagonal of the matrix. Thus, the problem becomes better conditioned. 
+The constant depends on the mesh width `h`. For :math:`h \to 0`, the regularization vanishes and the formulation converges to the correct solution.
+
+This regularization is applied to all matrix inversions (not only for the described mapping between element and world coordinates). The parameters `tol` and `eps` can be specified by the ``"regularization"`` option as a list ``[tol, eps]``.
+The option can be set to ``None``, to disable the regularization (equivalent to ``[0,0]``). If not specified, the default regularization is `[1e-2,1e-1]`.
+
+.. code-block:: python
+
+  config = {
+    "regularization":           [1e-5,1e-3],                  # None to disable or [tol,eps]. if the absolute determinant |J|=|det(F)| within an element is below tol, add eps*I to the matrix, to regularize the inversion of the nearly singular matrix
+    #"regularization":           None,                         # None to disable or [tol,eps]. if the absolute determinant |J|=|det(F)| within an element is below tol, add eps*I to the matrix, to regularize the inversion of the nearly singular matrix
+  }
+
 loadFactors
 ^^^^^^^^^^^^^^^^^^^^^^^
 

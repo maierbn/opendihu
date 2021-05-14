@@ -49,9 +49,9 @@ if len(sys.argv) > 3:
     quit()
  
 # number of elements
-nx = 2
-ny = 2
-nz = 2
+nx = 8
+ny = 8
+nz = 8
 
 # number of nodes
 mx = 2*nx + 1
@@ -107,16 +107,20 @@ def handle_result_hyperelasticity(result):
     # field_variables[0]: geometry
     # field_variables[1]: u
     # field_variables[2]: v
-    # field_variables[3]: T (material traction)
-    # field_variables[4]: PK2-Stress (Voigt), components: S_11, S_22, S_33, S_12, S_13, S_23
+    # field_variables[3]: t (current traction)
+    # field_variables[4]: T (material traction)
+    # field_variables[5]: PK2-Stress (Voigt), components: S_11, S_22, S_33, S_12, S_13, S_23
     
-    strain = max(field_variables[1]["components"][2]["values"])
-    stress = max(field_variables[4]["components"][2]["values"])
+    k = mz-5
+    j = my//2
+    i = 5
+    strain = field_variables[1]["components"][0]["values"][k*mx*my + j*mx + i]
+    stress = [field_variables[5]["components"][component_no]["values"][k*mx*my + j*mx + i] for component_no in range(6)]
     
-    print("strain: {}, stress: {}".format(strain, stress))
+    print("strain: {}, stress: {}, ndofs: {}".format(strain, stress, len(field_variables[1]["components"][0]["values"])))
     
     with open("result.csv","a") as f:
-      f.write("{},{},{}\n".format(scenario_name,strain,stress))
+      f.write("{},{},{},{},{},{},{},{}\n".format(scenario_name,strain,stress[0],stress[1],stress[2],stress[3],stress[4],stress[5]))
 
 # callback for result
 def handle_result_febio(result):
@@ -128,14 +132,17 @@ def handle_result_febio(result):
     print("field variables for febio:")
     for i,field_variable in enumerate(field_variables):
       print(i,field_variable["name"])
+      
+    k = mz-5
+    j = my//2
+    i = 5
+    strain = field_variables[2]["components"][0]["values"][k*mx*my + j*mx + i]
+    stress = [field_variables[5]["components"][component_no]["values"][k*mx*my + j*mx + i] for component_no in range(6)]
     
-    strain = max(field_variables[2]["components"][2]["values"])
-    stress = max(field_variables[5]["components"][2]["values"])
-    
-    print("strain: {}, stress: {}".format(strain, stress))
+    print("strain: {}, stress: {}, ndofs: {}".format(strain, stress, len(field_variables[1]["components"][0]["values"])))
     
     with open("result.csv","a") as f:
-      f.write("{},{},{}\n".format(scenario_name,strain,stress))
+      f.write("{},{},{},{},{},{},{},{}\n".format(scenario_name,strain,stress[0],stress[1],stress[2],stress[3],stress[4],stress[5]))
 
 # callback for result
 def handle_result_linear_elasticity(result):

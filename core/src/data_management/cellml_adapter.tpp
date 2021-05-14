@@ -248,7 +248,7 @@ parameterValues()
   return this->parameterValues_;
 }
 
-//! get the parameteValues_ pointer from the parameters field variable, then the field variable can no longer be used until restoreParameterValues() gets called
+//! get the parameterValues_ pointer from the parameters field variable, then the field variable can no longer be used until restoreParameterValues() gets called
 template <int nStates, int nAlgebraics, typename FunctionSpaceType>
 void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
 prepareParameterValues()
@@ -257,17 +257,18 @@ prepareParameterValues()
   PetscErrorCode ierr;
   Vec contiguousVec = this->parameters_->getValuesContiguous();
   ierr = VecGetArray(contiguousVec, &parameterValues_); CHKERRV(ierr);
+
+  updateParametersPointer();
+  
+  // debugging output
 #if 0
   PetscInt nValues;
   ierr = VecGetLocalSize(contiguousVec, &nValues); CHKERRV(ierr);
-  LOG(DEBUG) << "parameter values has " << nValues << " entries: ";
 
-  if (nValues == 11)
-    counter++;
-  if (counter == 22)
-    LOG(FATAL) << "end, component 3 should not be -75 but -75.0059";
-  //for (int i = 0; i < nValues; i++)
-  //  LOG(DEBUG) << i << ": " << parameterValues_[i];
+  std::stringstream s;
+  for (int i = 0; i < std::min(100,nValues); i++)
+    s << ",  " << i << ": " << parameterValues_[i];
+  LOG(INFO) << "parameter values (field variable " << this->parameters_ << ") has " << nValues << " entries (only showing the first 100): " << s.str();
 #endif
 }
 
@@ -278,6 +279,77 @@ restoreParameterValues()
 {
   PetscErrorCode ierr;
   ierr = VecRestoreArray(this->parameters_->getValuesContiguous(), &parameterValues_); CHKERRV(ierr);
+}
+
+//! retrieve the current parameters_ field variable from the slot connector, because is could have been changed by the slot connector transfer
+template <int nStates, int nAlgebraics, typename FunctionSpaceType>
+void CellmlAdapter<nStates,nAlgebraics,FunctionSpaceType>::
+updateParametersPointer()
+{
+  if (!slotConnectorDataTimestepping_)
+  {
+    LOG(DEBUG) << "updateParametersPointer: slotConnectorDataTimestepping_ is null.";
+    return;
+  }
+  
+  // loop over parameters in variable2
+  int offset = algebraicsForTransfer_.size();
+  
+  int nInstances = this->parameters_->functionSpace()->meshPartition()->nDofsLocalWithoutGhosts();
+  int nEntriesLocal = nInstances * this->parameters_->nComponents();
+
+  LOG(DEBUG) << "updateParametersPointer: algebraicsForTransfer_.size(): " << algebraicsForTransfer_.size() 
+    << ",  parametersForTransfer_.size(): " <<  parametersForTransfer_.size() << ", this->parameters_ : " << this->parameters_ 
+    << ", \"" << this->parameters_->name() << "\", " << this->parameters_->partitionedPetscVec()->getCurrentRepresentationString()
+    << ", nDofsLocalWithoutGhosts: " << nInstances
+    << ", nComponents: " << this->parameters_->nComponents()
+    << ", nEntriesLocal: " << nEntriesLocal;
+  
+  for (int i = 0; i < parametersForTransfer_.size(); i++)
+  {
+    if (offset + i < slotConnectorDataTimestepping_->variable2.size())
+    {
+      LOG(DEBUG) << "  slotConnectorDataTimestepping_->variable2[" << offset + i << "].values: " << slotConnectorDataTimestepping_->variable2[offset + i].values
+        << ", \"" << slotConnectorDataTimestepping_->variable2[offset + i].values->name() << "\", " 
+        << slotConnectorDataTimestepping_->variable2[offset + i].values->partitionedPetscVec()->getCurrentRepresentationString();
+      
+      // if the pointers in slotConnectorData and parameters are both set, but to different values
+      if (slotConnectorDataTimestepping_->variable2[offset + i].values && this->parameters_ 
+          && dynamic_cast<void*>(slotConnectorDataTimestepping_->variable2[offset + i].values.get()) != dynamic_cast<void*>(this->parameters_.get()))
+      {
+        LOG(DEBUG) << "CellmlAdapter::updateParametersPointer, slotConnectorDataTimestepping_->variable2 contains " << slotConnectorDataTimestepping_->variable2.size() << " entries: " 
+          << offset << " algebraics for transfer and " << parametersForTransfer_.size() << " parameters for transfer."
+          << " In parameter entry no. " << i << ", the field variable is " << slotConnectorDataTimestepping_->variable2[offset + i].values 
+          << " (name " << slotConnectorDataTimestepping_->variable2[offset + i].values->name()  << ")"
+          << " but the own stored parameters_ is " << this->parameters_ << " (name " << this->parameters_->name() 
+          << "). Now set the parameters_ pointer to the field variable in slotConnectorData.";
+          
+        // copy values to the respective location within the contiguous parameterValues_ vector
+        int parameterIndex = parametersForTransfer_[i];
+        std::vector<double> values;
+        slotConnectorDataTimestepping_->variable2[offset + i].values->getValuesWithoutGhosts(values);
+        
+        LOG(DEBUG) << "copy " << values.size() << " entries (nInstances=" << nInstances << ", nAlgebraics(=nParameters)=" << nAlgebraics << ", "
+          << "nDofs: " << this->parameters_->nDofsLocalWithoutGhosts() << ","
+          << this->parameters_->functionSpace()->nDofsLocalWithGhosts() << "," << this->parameters_->nDofsGlobal()
+          << ", nEntriesLocal: " << nEntriesLocal << ") from field variable "
+          << slotConnectorDataTimestepping_->variable2[offset + i].values->name()
+          << " to the location of the parameterValues pointer (parameterIndex " << parameterIndex << "), from "
+          << (void *)values.data() << " to " << (void *)(parameterValues_ + parameterIndex*nAlgebraics*sizeof(double));
+        
+        if (parameterIndex*nInstances + values.size()-1 > nEntriesLocal)
+          LOG(ERROR) << "invalid copy operation, parameterValues is accessed at " << parameterIndex << "*" << nAlgebraics << "+" << values.size()-1
+            << " (=" << parameterIndex*nInstances + (values.size()-1) << "), but nEntriesLocal: " << nEntriesLocal;
+
+        // copy raw data from values to parameterValues_
+        for (int valueIndex = 0; valueIndex < values.size(); valueIndex++)
+        {
+          parameterValues_[parameterIndex*nInstances + valueIndex] = values[valueIndex];
+        }
+        //memcpy((void *)(parameterValues_ + parameterIndex*nAlgebraics*sizeof(double)), (void *)values.data(), values.size()*sizeof(double));
+      }
+    }
+  }
 }
 
 template <int nStates, int nAlgebraics, typename FunctionSpaceType>

@@ -28,6 +28,12 @@ bool PythonUtility::hasKey(const PyObject* settings, std::string keyString)
     // check if input dictionary contains the key
     PyObject *key = PyUnicode_FromString(keyString.c_str());
 
+    if (!PyDict_Check(settings))
+    {
+      Py_CLEAR(key);
+      return false;
+    }
+
     if (PyDict_Contains((PyObject *)settings, key))
     {
       Py_CLEAR(key);

@@ -1,24 +1,46 @@
 import numpy as np
 
 # Poisson 1D
-n = 50
+n = 11  # n elements
+m = n+1  # n nodes
 
+import opendihu
+# settings for quadratic discretization
+if "quadratic" in opendihu.program_name:
+  m = 2*n+1
+  print("quadratic settings")
+  
 # Dirichlet boundary conditions
 bc = {}
 bc[0] = 1.0
-bc[n] = 0.0
+bc[m-1] = 0.0
 
 # right hand side
-rhs = np.zeros(n+1)
-for i in range(n+1):
-  x = float(i)/(n+1)
-  rhs[i] = np.sin(x*np.pi)
-  if i < (n+1)/2:
-    rhs[i] = -1
+rhs = np.zeros(m)
+for i in range(m):
+  if i < int(m/2):
+    rhs[i] = -10
   else:
     rhs[i] = 0
-  print("  rhs[{}] = {}".format(i, rhs[i]))
+# settings for Hermite discretization
+if "hermite" in opendihu.program_name:
+  m = 2*n+2
+  bc = {0: 1, m-2: 0}  # Dirichlet bc
+  
+  # set right hand side, only nodal dofs, not derivatives
+  rhs = np.zeros(m)
+  
+  for element_no in range(n+1):
+    x = float(element_no)/n
+    if element_no < n/2:
+      rhs[2*element_no] = -10
+      rhs[2*element_no+1] = 0
+    else:
+      rhs[2*element_no] = 0
+  
+print("  rhs: {}".format(rhs))
 
+  
 config = {
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "logFormat":                      "csv",                      # "csv" or "json", format of the lines in the log file, csv gives smaller files
@@ -42,14 +64,14 @@ config = {
     "preconditionerType": "none",
     "relativeTolerance": 1e-15,
     "absoluteTolerance": 1e-10,         # 1e-10 absolute tolerance of the residual    
-    "maxIterations": 1000,
+    "maxIterations": 10000,
     "dumpFormat": "ascii",
     "dumpFilename": "out/poisson",
     "slotName": "",
     
     "OutputWriter" : [
       #{"format": "Paraview", "interval": 1, "filename": "out/p", "binaryOutput": "false", "fixedFormat": False},
-      {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary": True, "onlyNodalValues": True, "fileNumbering": "incremental"}
+      {"format": "PythonFile", "filename": "out/p", "outputInterval": 1, "binary": True, "onlyNodalValues": False, "fileNumbering": "incremental"}
     ]
   },
 }

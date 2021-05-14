@@ -302,6 +302,7 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
   */
 
   //for debugging, check symmetry of PK2 stress and if it is correct according to Mooney-Rivlin formula
+#ifndef HAVE_STDSIMD
   if (VLOG_IS_ON(2))
   {
     const double_v_t errorTolerance = 1e-14;
@@ -356,15 +357,24 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
     if (!mismatch)
       LOG_N_TIMES(2,DEBUG) << "Sbar is correct!";
   }
+#endif
 
 #ifndef NDEBUG
   if (MathUtility::containsNanOrInf(pK2Stress, elementNoLocalv))
   {
     if (MathUtility::containsNanOrInf(fictitiousPK2Stress, elementNoLocalv))
     {
+#ifdef HAVE_STDSIMD
+      LOG(ERROR) << "fictitiousPK2Stress contains nan";
+#else
       LOG(ERROR) << "fictitiousPK2Stress contains nan: " << fictitiousPK2Stress << ", J=" << J;
+#endif
     }
+#ifdef HAVE_STDSIMD
+    LOG(ERROR) << "PK2stress contains nan";
+#else
     LOG(ERROR) << "PK2stress contains nan: " << pK2Stress;
+#endif
   }
 #endif
 
@@ -542,11 +552,15 @@ computePK2StressField()
 
       if (Vc::any_of(deformationGradientDeterminant < 0))
       {
+#ifdef HAVE_STDSIMD
+        LOG(ERROR) << "J = det(F) is negative, in computation of PK2 stresses.\n";
+#else
         LOG(ERROR) << "J = det(F) = " << deformationGradientDeterminant << " is negative, in computation of PK2 stresses.\n"
           << "Element no. " << elementNoLocal << " (" << elementNoLocalv << "), xi=" << xi << ", det(material jacobian): " << jacobianDeterminant
           << ", displacementsValues: " << displacementsValues[0] << "," << displacementsValues[1]
           << ", deformationGradient: " << deformationGradient << ", inverseJacobianMaterial: " << inverseJacobianMaterial
           << ", geometryReferenceValues: " << geometryReferenceValues[0] << "," << geometryReferenceValues[1];
+#endif
       }
 
       // compute Fdot values

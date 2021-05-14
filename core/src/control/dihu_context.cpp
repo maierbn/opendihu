@@ -366,6 +366,28 @@ DihuContext::DihuContext(int argc, char *argv[], bool doNotFinalizeMpi, bool set
   {
     globalConnectionsBySlotName_ = std::make_shared<GlobalConnectionsBySlotName>(pythonConfig_);
   }
+
+  // initialize regularization parameters
+  if (pythonConfig_.hasKey("regularization"))
+  {
+    if (pythonConfig_.isEmpty("regularization"))
+    {
+      MathUtility::INVERSE_REGULARIZATION_TOLERANCE = 0;
+      MathUtility::INVERSE_REGULARIZATION_EPSILON = 0;
+      LOG(INFO) << "Note, disabling regularization.";
+    }
+    else
+    {
+      std::array<double,2> regularization = pythonConfig_.getOptionArray<double,2>("regularization", 0, PythonUtility::ValidityCriterion::NonNegative);
+      MathUtility::INVERSE_REGULARIZATION_TOLERANCE = regularization[0];
+      MathUtility::INVERSE_REGULARIZATION_EPSILON = regularization[1];
+      LOG(INFO) << "Note, setting regularization to [tol,eps] = [" << regularization[0] << "," << regularization[1] << "].";
+    }
+  }
+  else
+  {
+    LOG(INFO) << "Note, setting regularization to [tol,eps] = [1e-2,1e-1]. Add `\"regularization\": None` in the settings to disable.";
+  }
 }
 
 DihuContext::DihuContext(int argc, char *argv[], std::string pythonSettings, bool doNotFinalizeMpi) :
@@ -415,7 +437,7 @@ std::string DihuContext::versionText()
 {
   std::stringstream versionTextStr;
 
-  versionTextStr << "opendihu 1.2, built " << __DATE__; // << " " << __TIME__; // do not add time otherwise it wants to recompile this file every time
+  versionTextStr << "opendihu 1.3, built " << __DATE__; // << " " << __TIME__; // do not add time otherwise it wants to recompile this file every time
 #ifdef __cplusplus
   versionTextStr << ", C++ " << __cplusplus;
 #endif

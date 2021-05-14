@@ -80,6 +80,8 @@ sampling_stride_x = 2
 sampling_stride_y = 2
 sampling_stride_z = 150   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
+mapping_tolerance = 0.1
+
 # scenario name for log file
 scenario_name = ""
 

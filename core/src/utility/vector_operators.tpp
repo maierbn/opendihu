@@ -161,6 +161,7 @@ std::ostream &operator<<(std::ostream &stream, const std::array<double,N> &vecto
 {
   stream << "(";
 
+#ifndef HAVE_STDSIMD
   // first entry
   if (vector[0] == std::numeric_limits<double>::max())
     stream << "None";
@@ -176,6 +177,7 @@ std::ostream &operator<<(std::ostream &stream, const std::array<double,N> &vecto
     else
       stream << vector[i];
   }
+#endif
   stream << ")";
   return stream;
 }
@@ -185,6 +187,7 @@ std::ostream &operator<<(std::ostream &stream, const std::array<T,N> &vector)
 {
   stream << "(";
 
+#ifndef HAVE_STDSIMD
   // first entry
   stream << vector[0];
 
@@ -193,6 +196,7 @@ std::ostream &operator<<(std::ostream &stream, const std::array<T,N> &vector)
   {
     stream << "," << vector[i];
   }
+#endif
   stream << ")";
   return stream;
 }
@@ -200,10 +204,12 @@ std::ostream &operator<<(std::ostream &stream, const std::array<T,N> &vector)
 template<std::size_t N>
 std::ostream &operator<<(std::ostream &stream, const std::array<std::size_t,N> vector)
 {
+#ifndef HAVE_STDSIMD
   stream << "(" << vector[0];
   for (std::size_t i = 1; i < N; i++)
     stream << "," << vector[i];
   stream << ")";
+#endif
   return stream;
 }
 
@@ -222,6 +228,7 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T,A> &values)
     stream << "[]";
     return stream;
   }
+#ifndef HAVE_STDSIMD
 
   stream << "[" << values[0];
 
@@ -245,7 +252,7 @@ std::ostream &operator<<(std::ostream &stream, const std::vector<T,A> &values)
       stream << "..." << values[values.size()-3] << "," << values[values.size()-2] << "," << values[values.size()-1]
         << " (" << values.size() << " entries total, only showing the first 100 (call with -vmodule=vector_operators*=1 to show all))";
   }
-
+#endif
   stream << "]";
   return stream;
 }

@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
   
-  TimeSteppingScheme::ExplicitEuler<
+  TimeSteppingScheme::Heun<
     CellmlAdapter<56,71>  // nStates,nAlgebraics: 57,71 = Shorten, 4,9 = Hodgkin Huxley
   > equationDiscretized(settings);
   

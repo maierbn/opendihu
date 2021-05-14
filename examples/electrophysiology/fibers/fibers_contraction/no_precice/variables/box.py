@@ -1,3 +1,7 @@
+# this is a scenario where the geometry is a cube,
+# create the mesh as follows:
+# generate_cuboid_mesh.py box.bin 5 5 501 1.25 1.25 0.01 -2.5 -2.5 -2.5
+
 
 # scenario name for log file
 scenario_name = "box"

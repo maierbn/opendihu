@@ -18,6 +18,7 @@ public:
 
   //! define the type of the data object
   typedef typename NestedSolver::Data Data;
+  typedef typename NestedSolver::SlotConnectorDataType SlotConnectorDataType;
 
   //! constructor
   using PreciceAdapterVolumeCouplingReadWrite<NestedSolver>::PreciceAdapterVolumeCouplingReadWrite;
@@ -30,6 +31,19 @@ public:
 
   //! return the data object, with the call to this method the output writers get the data to create their output files
   Data &data();
+
+  //! get the data that will be transferred in the operator splitting to the other term of the splitting
+  //! the transfer is done by the slot_connector_data_transfer class
+  std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
+
+  //! set a new time interval that will be simulated by next call to advanceTimeSpan. This also potentially changes the time step width (it preserves the number of timesteps in the new time span)
+  void setTimeSpan(double startTime, double endTime);
+
+  //! advance simulation by the given time span [startTime_, endTime_] with given numberTimeSteps
+  void advanceTimeSpan(bool withOutputWritersEnabled=true);
+
+  //! call the output writer on the data object, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
+  void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
 };
 

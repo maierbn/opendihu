@@ -1097,6 +1097,19 @@ for muscle_spindle_no in range(variables.n_muscle_spindles):
   dof_no_global = k*n_points_global_x*n_points_global_y + j*n_points_global_x + i
   muscle_spindle_node_nos.append(dof_no_global)
 
+# determine positions of golgi tendon organs
+golgi_tendon_organ_node_nos = []
+for golgi_tendon_organ_no in range(variables.n_golgi_tendon_organs):
+  i = random.randrange(0,n_points_global_x)
+  j = random.randrange(0,n_points_global_y)
+  if golgi_tendon_organ_no % 2 == 0:
+    k = int(0.1*n_points_global_z)
+  else:
+    k = int(0.9*n_points_global_z)
+  
+  dof_no_global = k*n_points_global_x*n_points_global_y + j*n_points_global_x + i
+  golgi_tendon_organ_node_nos.append(dof_no_global)
+
 # determine positions of neuromuscular junctions in fiber mesh
 # n_points_global = variables.meshes["MeshFiber_0"]["nElements"]+1    # for serial execution
 for (key,mesh) in variables.meshes.items():

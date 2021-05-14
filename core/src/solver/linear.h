@@ -23,7 +23,7 @@ public:
   virtual ~Linear();
 
   //! initialize the KSP (Krylov space solver in Petsc) and PC (preconditioner in Petsc) objects, has to be called before solve
-  void initialize();
+  virtual void initialize();
 
   //! return the KSP object that is used for solving
   std::shared_ptr<KSP> ksp();

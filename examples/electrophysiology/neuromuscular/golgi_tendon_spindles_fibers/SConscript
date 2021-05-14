@@ -8,5 +8,5 @@
 Import('env')     # import Environment object from calling SConstruct
 
 # create the main executable
-env.Program(target = 'spindles_fibers', source = "src/spindles_fibers.cpp")
-env.Program(target = 'spindles_fibers_hh', source = "src/spindles_fibers_hh.cpp")
+env.Program(target = 'golgi_tendon_spindles_fibers', source = "src/golgi_tendon_spindles_fibers.cpp")
+env.Program(target = 'golgi_tendon_spindles_fibers_hh', source = "src/golgi_tendon_spindles_fibers_hh.cpp")

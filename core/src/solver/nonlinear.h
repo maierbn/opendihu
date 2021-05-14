@@ -22,6 +22,9 @@ public:
   //! return the SNES object that is used for solving (nonlinear solver context)
   std::shared_ptr<SNES> snes();
 
+  //! do nothing for the nonlinear solver, the initialization is already done in the constructor
+  void initialize();
+
 protected:
   std::shared_ptr<SNES> snes_;   //< the PETSc SNES (scalable nonlinear equations solvers) object
 

@@ -8,8 +8,6 @@
 import sys, os
 import numpy as np
 import struct
-import stl
-from stl import mesh
 import datetime
 import pickle
 import time

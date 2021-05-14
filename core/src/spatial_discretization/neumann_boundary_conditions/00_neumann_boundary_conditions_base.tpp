@@ -58,11 +58,12 @@ initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> fun
 
   // loop over items in config list
   PyObject *listItem = specificSettings.getOptionListBegin<PyObject*>(boundaryConditionsConfigKey);
-  for (;
+
+  for (int listIndex = 0;
         !specificSettings.getOptionListEnd(boundaryConditionsConfigKey);
-        specificSettings.getOptionListNext<PyObject*>(boundaryConditionsConfigKey, listItem))
+        specificSettings.getOptionListNext<PyObject*>(boundaryConditionsConfigKey, listItem), listIndex++)
   {
-    PythonConfig pythonConfigItem = PythonConfig(specificSettings, boundaryConditionsConfigKey, listItem);
+    PythonConfig pythonConfigItem = PythonConfig(specificSettings, boundaryConditionsConfigKey, listItem, listIndex);
 
     // if element nos are specified as global nos, store them in configsWithGlobalElementNo and transfer to local element nos later
     if (inputMeshIsGlobal)
@@ -128,7 +129,8 @@ initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> fun
       global_no_t elementNoGlobalNatural = functionSpace_->meshPartition()->getElementNoGlobalNatural(elementNoLocal);
 
       // check if a boundary condition with this global element no is present in configWithGlobalElementNo
-      for (typename std::vector<ConfigWithGlobalElementNo>::const_iterator configBCElementIter = configsWithGlobalElementNo.begin(); configBCElementIter != configsWithGlobalElementNo.end(); configBCElementIter++)
+      for (typename std::vector<ConfigWithGlobalElementNo>::const_iterator configBCElementIter = configsWithGlobalElementNo.begin();
+           configBCElementIter != configsWithGlobalElementNo.end(); configBCElementIter++)
       {
         element_no_t configBCElementNoGlobal = configBCElementIter->elementNoGlobal;   // this is now the stored global no, because inputMeshIsGlobal
 
@@ -139,7 +141,7 @@ initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> fun
 
           // set element no to real local no
           localConfigsWithGlobalElementNo.back().elementNoLocal = elementNoLocal;
-          break;
+          //break;
         }
         else if (configBCElementNoGlobal > elementNoGlobalNatural)
         {

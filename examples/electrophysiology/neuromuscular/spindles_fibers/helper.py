@@ -1064,12 +1064,18 @@ if hasattr(variables, "main_bottom_traction"):
   # muscle mesh
   for j in range(my):
     for i in range(mx):
-      variables.main_elasticity_dirichlet_bc[0*mx*my + j*mx + i] = [0.0,0.0,None,None,None,None]
+      if variables.fix_bottom:
+        variables.main_elasticity_dirichlet_bc[0*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
+      else:
+        variables.main_elasticity_dirichlet_bc[0*mx*my + j*mx + i] = [0.0,0.0,None,None,None,None]
 
   # fat mesh
   for j in range(m2y):
     for i in range(m2x):
-      variables.main_elasticity_dirichlet_bc[offset + 0*m2x*m2y + j*m2x + i] = [0.0,0.0,None,None,None,None]
+      if variables.fix_bottom:
+        variables.main_elasticity_dirichlet_bc[offset + 0*m2x*m2y + j*m2x + i] = [None,None,0.0,None,None,None]
+      else:
+        variables.main_elasticity_dirichlet_bc[offset + 0*m2x*m2y + j*m2x + i] = [0.0,0.0,None,None,None,None]
 
   # Neumann BC at bottom nodes, traction downwards
   # muscle mesh
@@ -1079,6 +1085,15 @@ if hasattr(variables, "main_bottom_traction"):
   variables.main_elasticity_neumann_bc += [{"element": nx*ny*nz + 0*n2x*n2y + j*n2x + i, "constantVector": variables.main_bottom_traction, "face": "2-"} for j in range(n2y) for i in range(n2x)]
 
   #variables.elasticity_neumann_bc = []
+
+# callback for dirichlet bc
+# Function to update dirichlet boundary conditions over time, t.
+# This function returns "dirichlet_bc". Only those entries can be updated that were also initially set.
+#def update_dirichlet_boundary_conditions_helper(t):
+#  return variables.update_dirichlet_boundary_conditions(t,variables.main_elasticity_dirichlet_bc,[mx,my,mz,m2x,m2y,m2z])
+
+def update_neumann_boundary_conditions_helper(t):
+  return variables.update_neumann_boundary_conditions(t,[nx,ny,nz,n2x,n2y])
 
 #######################################
 # position sensor organs in the 3D mesh

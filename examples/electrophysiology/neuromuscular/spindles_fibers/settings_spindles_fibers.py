@@ -958,7 +958,7 @@ config = {
                       "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
                       #"loadFactors":                [0.5, 1.0],                # load factors for every timestep
                       "loadFactors":                [],                        # no load factors, solve problem directly
-                      "loadFactorGiveUpThreshold":  0.5,                       # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
+                      "loadFactorGiveUpThreshold":  0.25,                       # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
                       "scaleInitialGuess":          False,                     # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
                       "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
                       
@@ -966,8 +966,11 @@ config = {
                       "dirichletBoundaryConditions": variables.main_elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
                       "neumannBoundaryConditions":   variables.main_elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
                       "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
-                      "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
+                      "updateDirichletBoundaryConditionsFunction": None, #update_dirichlet_boundary_conditions_helper,                  # function that updates the dirichlet BCs while the simulation is running
                       "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
+                      "updateNeumannBoundaryConditionsFunction":   update_neumann_boundary_conditions_helper,                    # function that updates the Neumann BCs while the simulation is running
+                      "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step
+
                       
                       "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(variables.n_points_global_composite_mesh)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
                       "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(variables.n_points_global_composite_mesh)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]

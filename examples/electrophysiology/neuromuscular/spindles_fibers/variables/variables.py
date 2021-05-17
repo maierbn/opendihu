@@ -185,3 +185,5 @@ pmax = None
 bottom_traction = None
 cellml_file = ""
 states_initial_values = []
+main_elasticity_dirichlet_bc = {}
+fix_bottom = False

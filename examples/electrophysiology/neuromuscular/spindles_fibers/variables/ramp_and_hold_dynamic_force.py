@@ -130,10 +130,10 @@ emg_solver_reltol = 1e-5            # relative tolerance of the residual of the 
 # elasticity
 elasticity_solver_type = "lu"
 elasticity_preconditioner_type = "none"
-snes_max_iterations = 34                  # maximum number of iterations in the nonlinear solver
+snes_max_iterations = 100                # maximum number of iterations in the nonlinear solver
 snes_rebuild_jacobian_frequency = 1       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
 snes_relative_tolerance = 1e-5      # relative tolerance of the nonlinear solver
-snes_absolute_tolerance = 1e-4      # absolute tolerance of the nonlinear solver
+snes_absolute_tolerance = 1e-1      # absolute tolerance of the nonlinear solver
 relative_tolerance = 1e-10           # relative tolerance of the residual of the linear solver
 absolute_tolerance = 1e-10          # absolute tolerance of the residual of the linear solver
 
@@ -190,6 +190,7 @@ else:
 
 fiber_file        = input_directory+"/left_biceps_brachii_9x9fibers_b.bin"  # this is a variant of 9x9fibers with a slightly different mesh that somehow works better
 fiber_file        = input_directory+"/left_biceps_brachii_9x9fibers.bin"
+#fiber_file        = "/data/scratch/maierbn/opendihu/examples/electrophysiology/neuromuscular/spindles_fibers/build_release/cuboid.bin"
 fat_mesh_file     = fiber_file + "_fat.bin"
 firing_times_file = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 firing_times_file = input_directory+"/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
@@ -444,11 +445,66 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
 
 fix_bottom = False
 
-# update the dirichlet boundary conditions of the main elasicity problem depending on time, here no changes are made
+# update the dirichlet boundary conditions of the main elasicity problem depending on time
 def update_dirichlet_boundary_conditions(t, main_elasticity_dirichlet_bc, m):
-  [mx,my,mz,m2x,m2y,m2z] = m
+  [mx,my,mz,m2x,m2y,m2z] = m 
+  offset = mx*my*mz
+
+  # muscle mesh
+  for j in range(my):
+    for i in range(mx):
+      main_elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
+
+  # fat mesh
+  for j in range(m2y):
+    for i in range(m2x):
+      main_elasticity_dirichlet_bc[offset + (m2z-1)*m2x*m2y + j*m2x + i] = [None,None,0.0,None,None,None]
+
+  # fix edge, note: the multidomain simulation does not work without this (linear solver finds no solution)
+  for i in range(mx):
+    main_elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,0.0,0.0,None,None,None]
+    
+  factor = 0
+  bottom_stretch = t*factor if t < 1 else factor
+  print("bottom_stretch: {}".format(bottom_stretch))
+
+  # guide lower end of muscle along z axis
+  # muscle mesh
+  for j in range(my):
+    for i in range(mx):
+      main_elasticity_dirichlet_bc[0*mx*my + j*mx + i] = [None,None,-bottom_stretch,None,None,None]
+
+  # fat mesh
+  for j in range(m2y):
+    for i in range(m2x):
+      main_elasticity_dirichlet_bc[offset + 0*m2x*m2y + j*m2x + i] = [None,None,-bottom_stretch,None,None,None]
+
   print("main_elasticity_dirichlet_bc: {}".format(main_elasticity_dirichlet_bc))
   return main_elasticity_dirichlet_bc
+
+def update_neumann_boundary_conditions(t,n_list):
+  [nx,ny,nz,n2x,n2y] = n_list
+
+  min_bottom_traction = main_bottom_traction[2]
+  max_bottom_traction = -30
+  bottom_traction = min_bottom_traction + t/1000.*(max_bottom_traction - min_bottom_traction) if t < 1000 else max_bottom_traction
+
+  # Neumann BC at bottom nodes, traction downwards
+  # muscle mesh
+  main_elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": [0,0,bottom_traction], "face": "2-"} for j in range(ny) for i in range(nx)]
+
+  # fat mesh
+  main_elasticity_neumann_bc += [{"element": nx*ny*nz + 0*n2x*n2y + j*n2x + i, "constantVector": [0,0,bottom_traction], "face": "2-"} for j in range(n2y) for i in range(n2x)]
+
+  config = {
+    "inputMeshIsGlobal": True,
+    "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+    "neumannBoundaryConditions": main_elasticity_neumann_bc
+  }
+  print("t: {}, bottom_traction: {}".format(t, bottom_traction))
+
+  return config
+
 
 # fiber callbacks
 # ----------------------

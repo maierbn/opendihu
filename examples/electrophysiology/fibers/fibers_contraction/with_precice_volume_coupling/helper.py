@@ -378,7 +378,13 @@ for j in range(my):
 if False:
   for i in range(mx):
     variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
-  
+
+# guide bottom end
+for j in range(my):
+  for i in range(mx):
+    variables.elasticity_dirichlet_bc[j*mx + i] = [0.0,0.0,None,None,None,None]
+
+ 
 # fix corner completely
 variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
 

@@ -233,7 +233,9 @@ std::string SlotsConnection::getDebugInformation() const
   {
     result << "  Term1.slot " << i << " (";
 
-    int vectorNo = std::min(1,i/nFieldVariablesTerm1Vector1_);
+    int vectorNo = 1;
+    if (nFieldVariablesTerm1Vector1_ > 0)
+      vectorNo = std::min(1,i/nFieldVariablesTerm1Vector1_);
     int vectorIndex = i - vectorNo*nFieldVariablesTerm1Vector1_;
 
     result << "Term1.variable" << vectorNo+1 << "[" << vectorIndex << "], ";
@@ -356,7 +358,9 @@ std::string SlotsConnection::getDebugInformation() const
     }
     else
     {
-      vectorNo = std::min(1,connectorTerm2To1_[i].index/nFieldVariablesTerm1Vector1_);
+      vectorNo = 1;
+      if (nFieldVariablesTerm1Vector1_ > 0)
+        vectorNo = std::min(1,connectorTerm2To1_[i].index/nFieldVariablesTerm1Vector1_);
       vectorIndex = connectorTerm2To1_[i].index - vectorNo*nFieldVariablesTerm1Vector1_;
 
       result << "Term1.variable" << vectorNo+1 << "[" << vectorIndex << "], ";

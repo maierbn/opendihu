@@ -76,8 +76,8 @@ import opendihu
 
 # parameters for the contraction program
 if "contraction" in opendihu.program_name:
-  sampling_stride_x = 5
-  sampling_stride_y = 5
+  sampling_stride_x = 7
+  sampling_stride_y = 7
   sampling_stride_z = 185
   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 

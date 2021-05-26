@@ -66,6 +66,7 @@ HyperelasticityInitialize(DihuContext context, std::string settingsKey) :
 
   displacementsScalingFactor_ = specificSettings_.getOptionDouble("displacementsScalingFactor", 1.0);
   dumpDenseMatlabVariables_ = specificSettings_.getOptionBool("dumpDenseMatlabVariables", false);
+  dampingFactor_ = 0;
 
   // for the dynamic equation
   if (nDisplacementComponents == 6)
@@ -73,6 +74,9 @@ HyperelasticityInitialize(DihuContext context, std::string settingsKey) :
     density_                 = specificSettings_.getOptionDouble("density", 1.0, PythonUtility::Positive);
     timeStepWidth_           = specificSettings_.getOptionDouble("timeStepWidth", 1.0, PythonUtility::Positive);
     extrapolateInitialGuess_ = specificSettings_.getOptionBool("extrapolateInitialGuess", true);
+
+    if (specificSettings_.hasKey("dampingFactor"))
+      dampingFactor_         = specificSettings_.getOptionDouble("dampingFactor", 0.0, PythonUtility::NonNegative);
   }
 
   // initialize output writers

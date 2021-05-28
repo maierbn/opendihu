@@ -187,6 +187,10 @@ mapHighToLowDimension(
     VLOG(1) << "extracted source values: " << sourceValues;
   }
 
+  fieldVariableSource.zeroGhostBuffer();
+  fieldVariableSource.finishGhostManipulation();
+  fieldVariableSource.startGhostManipulation();
+
 #ifdef OUTPUT_INTERPOLATION_LEAP
   VecD<nComponents> previousTargetValue;
   element_no_t previousSourceElementNoLocal;

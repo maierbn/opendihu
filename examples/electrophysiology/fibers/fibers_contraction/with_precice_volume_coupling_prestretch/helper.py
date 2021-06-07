@@ -384,10 +384,23 @@ for j in range(my):
   
 # fix edge
 for i in range(mx):
-  variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
+  #variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
+  variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,0.0,0.0,None,None,None]
   
 # fix corner completely
 variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
+
+
+# guide lower end of muscle along z axis
+# muscle mesh
+for j in range(my):
+  for i in range(mx):
+    variables.main_elasticity_dirichlet_bc[0*mx*my + j*mx + i] = [0.0,0.0,None,None,None,None]
+
+# also fix z displacements for one point at the center
+#if variables.fix_bottom:
+#  variables.main_elasticity_dirichlet_bc[0*mx*my + (my//2)*mx + mx//2][2] = 0.0
+
 
 # Neumann BC at bottom nodes, traction downwards
 variables.elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]

@@ -1,6 +1,6 @@
 
 # scenario name for log file and output directory under "out"
-scenario_name = "ramp"
+scenario_name = "ramp_hh"
 
 # material parameters
 # --------------------
@@ -100,7 +100,7 @@ import opendihu
 if "contraction" in opendihu.program_name:
   sampling_stride_x = 2
   sampling_stride_y = 2
-  sampling_stride_z = 40
+  sampling_stride_z = 148
   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
 else:
@@ -111,7 +111,7 @@ else:
   sampling_stride_z = 20
   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
-distribute_nodes_equally = False     # (default: False)
+distribute_nodes_equally = True     # (default: False)
 # True: set high priority to make subdomains have approximately equal number of fibers but creates tiny remainder elements inside the subdomains
 # False: make elements more equally sized, this can lead to a slight imbalance in the number of fibers per subdomain
 
@@ -121,11 +121,13 @@ import os
 import opendihu
 input_directory   = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
 
-fiber_file        = input_directory + "/left_biceps_brachii_7x7fibers.bin"
+#fiber_file        = input_directory + "/left_biceps_brachii_7x7fibers.bin"
+fiber_file        = input_directory + "/left_biceps_brachii_9x9fibers.bin"
 #fiber_file        = input_directory + "/left_biceps_brachii_13x13fibers.bin"
 firing_times_file = input_directory + "/MU_firing_times_always.txt"
 #fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs.txt"
-fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs_13x13.txt"
+fiber_distribution_file = input_directory + "/MU_fibre_distribution_9x9_10.txt"
+#fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs_13x13.txt"
 
 # if the hodgkin_huxley-razumova model is used
 if "hh" in opendihu.program_name:

@@ -1,6 +1,6 @@
 
 # scenario name for log file
-scenario_name = "golgi_tendon_spindles_fibers"
+scenario_name = "spindles_fibers"
 
 # Fixed units in cellMl models:
 # These define the unit system.
@@ -57,7 +57,8 @@ d  = 9.1733                 # [-] anisotropy parameter
 
 material_parameters = [c1, c2, b, d]   # material parameters
 pmax = 7.3                  # [N/cm^2] maximum isometric active stress
-#Conductivity = 3.828        # [mS/cm] sigma, conductivity 
+damping_factor = 2          # [-] damping factor, 0 = disable damping
+#Conductivity = 3.828       # [mS/cm] sigma, conductivity 
 Conductivity = 8.93         # [mS/cm] sigma, conductivity 
 
 # timing and activation parameters
@@ -130,10 +131,10 @@ emg_solver_reltol = 1e-5            # relative tolerance of the residual of the 
 # elasticity
 elasticity_solver_type = "lu"
 elasticity_preconditioner_type = "none"
-snes_max_iterations = 34                  # maximum number of iterations in the nonlinear solver
+snes_max_iterations = 100                # maximum number of iterations in the nonlinear solver
 snes_rebuild_jacobian_frequency = 1       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
 snes_relative_tolerance = 1e-5      # relative tolerance of the nonlinear solver
-snes_absolute_tolerance = 1e-4      # absolute tolerance of the nonlinear solver
+snes_absolute_tolerance = 1e-1      # absolute tolerance of the nonlinear solver
 relative_tolerance = 1e-10           # relative tolerance of the residual of the linear solver
 absolute_tolerance = 1e-10          # absolute tolerance of the residual of the linear solver
 
@@ -161,10 +162,10 @@ dt_neuron_transfer     = dt_elasticity  # [ms] interval when to call callback fu
 #dt_neuron_transfer     = dt_neurons  # [ms] interval when to call callback functions and transfer values between CellML models, increase this to speed up the simulation
 
 output_timestep_elasticity = 20      # [ms] timestep for elasticity output files
-output_timestep_neurons = 1         # [ms] timestep for output of files for all sensor organs and neurons
-output_timestep_motoneuron = 1    # [ms] timestep for output of files for motoneuron
+output_timestep_neurons = 0.1         # [ms] timestep for output of files for all sensor organs and neurons
+output_timestep_motoneuron = 0.1    # [ms] timestep for output of files for motoneuron
 output_timestep_0D_states = 2       # [ms] timestep for output of all states within multidomain, produces large files, enabled only if states_output = True
-output_timestep_fibers = 2         # [ms] timestep for fiber output files
+output_timestep_fibers = 5         # [ms] timestep for fiber output files
 output_timestep_3D_emg = 20         # [ms] timestep for output of 3D emg
 
 #output_timestep_multidomain = dt_elasticity
@@ -190,6 +191,7 @@ else:
 
 fiber_file        = input_directory+"/left_biceps_brachii_9x9fibers_b.bin"  # this is a variant of 9x9fibers with a slightly different mesh that somehow works better
 fiber_file        = input_directory+"/left_biceps_brachii_9x9fibers.bin"
+#fiber_file        = "/data/scratch/maierbn/opendihu/examples/electrophysiology/neuromuscular/spindles_fibers/build_release/cuboid.bin"
 fat_mesh_file     = fiber_file + "_fat.bin"
 firing_times_file = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 firing_times_file = input_directory+"/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
@@ -257,46 +259,6 @@ muscle_spindle_delay = 30             # [ms] signal delay between muscle spindle
 # load cortical input values
 cortical_input = np.genfromtxt(cortical_input_file, delimiter=",")
 
-# golgi tendon organs
-n_golgi_tendon_organs = 3
-golgi_tendon_organ_cellml_file = input_directory+"/hodgkin_huxley_1952.cellml"
-golgi_tendon_organ_mappings = {
-  ("parameter", 0):            "membrane/i_Stim",   # stimulation
-  ("connectorSlot", "gt_out"): "membrane/V",        # voltage
-  ("connectorSlot", "gt_in"):  "membrane/i_Stim",   # stimulation
-}
-golgi_tendon_organ_parameters_initial_values = [0]    # [i_Stim]
-golgi_tendon_organ_delay = 300
-
-# interneurons
-n_interneurons = 3
-interneuron_cellml_file = input_directory+"/hodgkin_huxley_1952.cellml"
-interneuron_mappings = {
-  ("parameter", 0):            "membrane/i_Stim",   # stimulation
-  ("parameter", 1):            "membrane/Cm",       # stimulation
-  ("connectorSlot", "in_out"): "membrane/V",        # voltage
-  ("connectorSlot", "in_in"):  "membrane/i_Stim",   # stimulation
-}
-# initial values for the parameters, either once for all instances, or for all instances in array of struct ordering with nParameters_ parameters per instance: [inst0p0, inst0p1, ... inst0pn, inst1p0, inst1p1, ...]
-interneuron_parameters_initial_values = []    # [i_Stim, Cm]
-for i in range(n_interneurons):
-  
-  # compute a scaling factor that runs exponentially from min_factor to max_factor
-  min_factor = 0.5
-  max_factor = 2.0
-  
-  # ansatz scaling_factor(i) = c1 + c2*exp(i),
-  # scaling_factor(0) = min = c1 + c2  =>  c1 = min - c2
-  # scaling_factor(n-1) = max = min - c2 + c2*exp(n-1)  =>  max = min + c2*(exp(n-1) - 1)  =>  c2 = (max - min) / (exp(n-1) - 1)
-  c2 = (max_factor - min_factor) / (np.exp(n_interneurons-1) - 1)
-  c1 = min_factor - c2
-  scaling_factor = c1 + c2*np.exp(i)
-  
-  # add parameter values for motoneuron i
-  interneuron_parameters_initial_values += [0.0, 1*scaling_factor]
-  
-#print("interneuron_parameters_initial_values: {}".format(interneuron_parameters_initial_values))
-  
 # motor neurons
 n_motoneurons = 10
 motoneuron_cellml_file = input_directory+"/WSBM_1457_MN_Cisi_Kohn_2008.cellml"
@@ -440,7 +402,7 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
   # initialize buffer the first time, buffer later stores time of last activation, to model signal delay
   if 0 not in buffer:
     for muscle_spindle_index in range(n_input_values):
-      buffer[muscle_spindle_index] = None
+      buffer[muscle_spindle_index] = []
   
   # total summed up signal
   total_signal = 0
@@ -450,221 +412,108 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
     
     # determine spike by threshold
     if input_values[muscle_spindle_index] > 0:
-      buffer[muscle_spindle_index] = current_time    # store time of last activation in buffer
+      buffer[muscle_spindle_index].append(current_time)    # store time of last activation in buffer
       
     # if there has been a stimulation so far
-    if buffer[muscle_spindle_index] is not None:
+    if buffer[muscle_spindle_index]:
       
-      # convolute Dirac delta, kernel is a shifted and scaled gaussian
+      # convolve Dirac delta, kernel is a shifted and scaled gaussian
       t_delay = muscle_spindle_delay             # [ms] delay of the signal
-      gaussian_std_dev = 10                      # [ms] width of the gaussian curve
+      gaussian_std_dev = 2                       # [ms] width of the gaussian curve
       convolution_kernel = lambda t: scipy.stats.norm.pdf(t, loc=t_delay, scale=gaussian_std_dev)*np.sqrt(2*np.pi)*gaussian_std_dev
-      delayed_signal = convolution_kernel(current_time - buffer[muscle_spindle_index]) * 5
+
+      # current signal is the maximum of all convoluted kernels
+      convoluted_kernels = [convolution_kernel(current_time - activation_time) for activation_time in buffer[muscle_spindle_index]]
+      delayed_signal = np.max(convoluted_kernels)
         
       # sum up all input signals
       total_signal += delayed_signal * 1e-3
     
-    print(" spindle {}/{} signal: {}".format(muscle_spindle_index,n_input_values,delayed_signal * 1e-3))
+    #print(" spindle {}/{} signal: {}, activation times: {}, kernels: {}".format(muscle_spindle_index,n_input_values,delayed_signal * 5e-3, buffer[muscle_spindle_index], convoluted_kernels))
+    print(" spindle {}/{} signal: {}, {} activation times".format(muscle_spindle_index,n_input_values,delayed_signal * 1e-3, len(buffer[muscle_spindle_index])))
         
   # compute average signal over all muscle spindles
-  total_signal /= n_input_values
+  #total_signal /= n_input_values
+
+  # disable muscle spindles input for debugging
+  #total_signal = 0
     
   # motor neuron fires with ~14Hz if drive(t) = 5e-3
   
   # set values to all connected motoneurons
   for motoneuron_index in range(n_output_values):
-    output_values[0][motoneuron_index] = total_signal
-            
-  print("muscle_spindles_to_motoneurons: {} -> {}".format(input_values, output_values))
-
-def callback_golgi_tendon_organs_input(input_values, output_values, current_time, slot_nos, buffer):
-  """
-  Callback function that transform a number of input_values to a number of output_values.
-  This function gets called by a MapDofs object.
-  :param input_values: (list of float values) The input values from the slot as defined in the MapDofs settings.
-  :param output_values: (list of list of float values) output_values[slotIndex][valueIndex]
-                        The output values buffer, potentially for multiple slots.
-                        Initially, this is a list of the form [[None, None, ..., None]] with the size matching 
-                        the number of required output values. The function should set some of the entries to a computed value.
-                        The entries that are not None will be set in the output slot at the dofs defined by MapDofs.
-  :param current_time:  Current simulation time.
-  :param slot_nos:      List of [fromSlotNo, toSlotNo, fromArrayIndex, toArrayIndex].
-  :param buffer:        A persistent helper buffer. This variable can be set to anything and will be provided back to 
-                        this function every time. Using this buffer, it is possible to implement a time delay of signals.
-  """
-  # map from T in the 3D mesh to golgi tendon organs
-  
-  # get number of input and output values
-  n_input_values = len(input_values)      # = n_golgi_tendon_organs
-  n_output_values = len(output_values[0]) # = n_golgi_tendon_organs (per output slot if there are multiple)
-  
-  # loop over golgi tendon organs
-  for i in range(n_input_values):
-    stress = input_values[i]
-    
-    output_values[0][i] = abs(stress) * 10
-    
-  # artifical muscle spindle input for debugging
-  if False:
-    for i in range(n_output_values):
-      T = 100   # [ms] cycle duration of stimulus 
-      
-      if 2000 + i*200 < current_time  <= 2100 + i*200:
-        output_values[0][i] = np.sin(current_time / T * np.pi)**2 * 20
-  
-  print("traction at Golgi tendon organs: {}, output: {}".format(input_values, output_values))
-
-def callback_golgi_tendon_organs_to_interneurons(input_values, output_values, current_time, slot_nos, buffer):
-  """
-  Callback function that transform a number of input_values to a number of output_values.
-  This function gets called by a MapDofs object.
-  :param input_values: (list of float values) The input values from the slot as defined in the MapDofs settings.
-  :param output_values: (list of list of float values) output_values[slotIndex][valueIndex]
-                        The output values buffer, potentially for multiple slots.
-                        Initially, this is a list of the form [[None, None, ..., None]] with the size matching 
-                        the number of required output values. The function should set some of the entries to a computed value.
-                        The entries that are not None will be set in the output slot at the dofs defined by MapDofs.
-  :param current_time:  Current simulation time.
-  :param slot_nos:      List of [fromSlotNo, toSlotNo, fromArrayIndex, toArrayIndex].
-  :param buffer:        A persistent helper buffer. This variable can be set to anything and will be provided back to 
-                        this function every time. Using this buffer, it is possible to implement a time delay of signals.
-  """
-  # mapping Golgi tendon organs -> interneurons
-  
-  # get number of input and output values
-  n_input_values = len(input_values)      # = n_golgi_tendon_organs
-  n_output_values = len(output_values[0]) # = n_interneurons (per output slot if there are multiple)
-  
-  # sum up all input signals and set all outputs to this sum
-  
-  # collect sum of all Golgi tendon organs
-  total_signal = 0
-  
-  # loop over Golgi tendon organs
-  for golgi_tendon_organ_index in range(n_input_values):
-    
-    # if input is active
-    if input_values[golgi_tendon_organ_index] > 20:
-      total_signal += input_values[golgi_tendon_organ_index]
-    
-  # set same value to all connected interneurons
-  for interneuron_index in range(n_output_values):
-    output_values[0][interneuron_index] = total_signal * 0.01
-    
-  # initialize buffer the first time
-  if 0 not in buffer:
-    for golgi_tendon_organ_index in range(n_input_values):
-      buffer[golgi_tendon_organ_index] = None
-  
-  # loop over golgi tendon organ inputs
-  for golgi_tendon_organ_index in range(n_input_values):
-    
-    # determine spike by threshold
-    if input_values[golgi_tendon_organ_index] > 20:
-      buffer[golgi_tendon_organ_index] = current_time    # store time of last activation in buffer
-      
-    # if there has been a stimulation so far
-    if buffer[golgi_tendon_organ_index] is not None:
-      
-      # convolute Dirac delta, kernel is a shifted and scaled gaussian
-      t_delay = 0                   # [ms] delay of the signal
-      gaussian_std_dev = 10         # [ms] width of the gaussian curve
-      convolution_kernel = lambda t: scipy.stats.norm.pdf(t, loc=t_delay, scale=gaussian_std_dev)*np.sqrt(2*np.pi)*gaussian_std_dev
-      delayed_signal = convolution_kernel(current_time - buffer[golgi_tendon_organ_index]) * 5
-      # hodgkin-huxley fires from i_Stim(t) > 4 
-        
-      output_values[0][golgi_tendon_organ_index] = delayed_signal
-  
-  print("golgi_tendon_organs_to_interneurons input: {}, output: {}".format(input_values, output_values))
-
-def callback_interneurons_to_motoneurons(input_values, output_values, current_time, slot_nos, buffer):
-  """
-  Callback function that transform a number of input_values to a number of output_values.
-  This function gets called by a MapDofs object.
-  :param input_values: (list of float values) The input values from the slot as defined in the MapDofs settings.
-  :param output_values: (list of list of float values) output_values[slotIndex][valueIndex]
-                        The output values buffer, potentially for multiple slots.
-                        Initially, this is a list of the form [[None, None, ..., None]] with the size matching 
-                        the number of required output values. The function should set some of the entries to a computed value.
-                        The entries that are not None will be set in the output slot at the dofs defined by MapDofs.
-  :param current_time:  Current simulation time.
-  :param slot_nos:      List of [fromSlotNo, toSlotNo, fromArrayIndex, toArrayIndex].
-  :param buffer:        A persistent helper buffer. This variable can be set to anything and will be provided back to 
-                        this function every time. Using this buffer, it is possible to implement a time delay of signals.
-  """
-  # mapping interneurons -> input for motor neurons, i.e. signal delay from interneurons to motoneurons
-  # the actual N->M mapping from interneurons to motoneurons is done by callback_motoneurons_input
-  
-  # get number of input and output values
-  n_input_values = len(input_values)      # = n_interneurons
-  n_output_values = len(output_values[0]) # = n_interneurons (per output slot if there are multiple)
-  
-  # initialize buffer the first time
-  if 0 not in buffer:
-    for interneuron_index in range(n_input_values):
-      buffer[interneuron_index] = None
-  
-  # loop over interneurons
-  for interneuron_index in range(n_input_values):
-    
-    # determine spike by threshold
-    if input_values[interneuron_index] > 0:
-      buffer[interneuron_index] = current_time    # store time of last activation in buffer
-      
-    # if there has been a stimulation so far
-    if buffer[interneuron_index] is not None:
-      
-      # convolute Dirac delta, kernel is a shifted and scaled gaussian
-      t_delay = golgi_tendon_organ_delay          # [ms] delay of the signal
-      gaussian_std_dev = 10                       # [ms] width of the gaussian curve
-      convolution_kernel = lambda t: scipy.stats.norm.pdf(t, loc=t_delay, scale=gaussian_std_dev)*np.sqrt(2*np.pi)*gaussian_std_dev
-      delayed_signal = convolution_kernel(current_time - buffer[interneuron_index])   # motor neuron input should be around 1
-        
-      # loop over output values and set all to the computed signal, cut off at 1e-5
-      if delayed_signal > 1e-5:
-        #print("interneuron t: {}, last_activation: {}, computed delayed_signal: {}".format(current_time, buffer[interneuron_index], delayed_signal))
-        output_values[0][interneuron_index] = delayed_signal
-      else:
-        output_values[0][interneuron_index] = None     # signal is below 1e-5, do not set any values
-  
-  print("interneurons_to_motoneurons input: {}, output: {}".format(input_values, output_values))
-  
-def callback_motoneurons_input(input_values, output_values, current_time, slot_nos, buffer):
-  """
-  Callback function that transform a number of input_values to a number of output_values.
-  This function gets called by a MapDofs object.
-  :param input_values: (list of float values) The input values from the slot as defined in the MapDofs settings.
-  :param output_values: (list of list of float values) output_values[slotIndex][valueIndex]
-                        The output values buffer, potentially for multiple slots.
-                        Initially, this is a list of the form [[None, None, ..., None]] with the size matching 
-                        the number of required output values. The function should set some of the entries to a computed value.
-                        The entries that are not None will be set in the output slot at the dofs defined by MapDofs.
-  :param current_time:  Current simulation time.
-  :param slot_nos:      List of [fromSlotNo, toSlotNo, fromArrayIndex, toArrayIndex].
-  :param buffer:        A persistent helper buffer. This variable can be set to anything and will be provided back to 
-                        this function every time. Using this buffer, it is possible to implement a time delay of signals.
-  """
-  
-  # map from delayed muscle spindle model outputs and delayed interneuron outputs to motoneuron inputs
-  
-  # get number of input and output values
-  n_input_values = len(input_values)      # = n_muscle_spindles + n_interneurons
-  n_output_values = len(output_values[0]) # = n_motoneurons (per output slot if there are multiple)
-  
-  # compute mean of all input values
-  total_signal = np.mean(input_values)
- 
-  # set values to all connected motoneurons
-  for motoneuron_index in range(n_output_values):
-    # add cortical input as given in the input file, in [nA], motor neuron fires with ~14Hz if drive(t) = 5e-3
+    # add cortical input as given in the input file
     # [timestep, spindle_no]
     timestep_no = (int)(current_time/1e-2)
     cortical_input_value = cortical_input[timestep_no % np.size(cortical_input,0), motoneuron_index % n_output_values]
-    
+      
     output_values[0][motoneuron_index] = total_signal + cortical_input_value
+            
+  print("muscle_spindles_to_motoneurons: {} -> {}".format(input_values, output_values))
+
+fix_bottom = False
+
+# update the dirichlet boundary conditions of the main elasicity problem depending on time
+def update_dirichlet_boundary_conditions(t, main_elasticity_dirichlet_bc, m):
+  [mx,my,mz,m2x,m2y,m2z] = m 
+  offset = mx*my*mz
+
+  # muscle mesh
+  for j in range(my):
+    for i in range(mx):
+      main_elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
+
+  # fat mesh
+  for j in range(m2y):
+    for i in range(m2x):
+      main_elasticity_dirichlet_bc[offset + (m2z-1)*m2x*m2y + j*m2x + i] = [None,None,0.0,None,None,None]
+
+  # fix edge, note: the multidomain simulation does not work without this (linear solver finds no solution)
+  for i in range(mx):
+    main_elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,0.0,0.0,None,None,None]
     
-  print("motoneurons input from spindles and interneurons: {}, resulting drive: {}".format(input_values, output_values))
-  
+  factor = 1   # [cm] displacements to bottom
+  bottom_stretch = t/1000.*factor if t < 1000 else factor
+  print("bottom_stretch: {}".format(bottom_stretch))
+
+  # guide lower end of muscle along z axis
+  # muscle mesh
+  for j in range(my):
+    for i in range(mx):
+      main_elasticity_dirichlet_bc[0*mx*my + j*mx + i] = [0.0,0.0,None,None,None,None]
+
+  main_elasticity_dirichlet_bc[0*mx*my + (my//2)*mx + mx//2][2] = -bottom_stretch
+
+  # fat mesh
+  for j in range(m2y):
+    for i in range(m2x):
+      main_elasticity_dirichlet_bc[offset + 0*m2x*m2y + j*m2x + i] = [0.0,0.0,None,None,None,None]
+
+  #print("main_elasticity_dirichlet_bc: {}".format(main_elasticity_dirichlet_bc))
+  return main_elasticity_dirichlet_bc
+
+def update_neumann_boundary_conditions(t,n_list):
+  [nx,ny,nz,n2x,n2y] = n_list
+
+  min_bottom_traction = main_bottom_traction[2]
+  max_bottom_traction = -60
+  bottom_traction = min_bottom_traction + t/1000.*(max_bottom_traction - min_bottom_traction) if t < 1000 else max_bottom_traction
+
+  # Neumann BC at bottom nodes, traction downwards
+  # muscle mesh
+  main_elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": [0,0,bottom_traction], "face": "2-"} for j in range(ny) for i in range(nx)]
+
+  # fat mesh
+  main_elasticity_neumann_bc += [{"element": nx*ny*nz + 0*n2x*n2y + j*n2x + i, "constantVector": [0,0,bottom_traction], "face": "2-"} for j in range(n2y) for i in range(n2x)]
+
+  config = {
+    "inputMeshIsGlobal": True,
+    "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+    "neumannBoundaryConditions": main_elasticity_neumann_bc
+  }
+  print("t: {}, bottom_traction: {}".format(t, bottom_traction))
+
+  return config
 
 
 # fiber callbacks

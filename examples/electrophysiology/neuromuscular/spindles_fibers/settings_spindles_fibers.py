@@ -940,6 +940,7 @@ config = {
                       
                       "materialParameters":         variables.material_parameters,  # material parameters of the Mooney-Rivlin material
                       "density":                    variables.rho,             # density of the material
+                      "dampingFactor":              variables.damping_factor,  # factor for velocity dependent damping
                       "displacementsScalingFactor": 1.0,                       # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
                       "residualNormLogFilename":    "out/"+variables.scenario_name+"/4_main_log_residual_norm.txt",   # log file where residual norm values of the nonlinear solver will be written
                       "useAnalyticJacobian":        True,                      # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
@@ -966,7 +967,7 @@ config = {
                       "dirichletBoundaryConditions": variables.main_elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
                       "neumannBoundaryConditions":   variables.main_elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
                       "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
-                      "updateDirichletBoundaryConditionsFunction": None, #update_dirichlet_boundary_conditions_helper,                  # function that updates the dirichlet BCs while the simulation is running
+                      "updateDirichletBoundaryConditionsFunction": update_dirichlet_boundary_conditions_helper,                  # function that updates the dirichlet BCs while the simulation is running
                       "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
                       "updateNeumannBoundaryConditionsFunction":   update_neumann_boundary_conditions_helper,                    # function that updates the Neumann BCs while the simulation is running
                       "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step

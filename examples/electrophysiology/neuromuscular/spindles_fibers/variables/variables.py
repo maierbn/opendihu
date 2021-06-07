@@ -81,6 +81,7 @@ use_lumped_mass_matrix = False      # which formulation to use, the formulation 
 show_linear_solver_output = True    # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
 optimization_type = "vc"            # the optimization_type used in the cellml adapter, "vc" uses explicit vectorization
 approximate_exponential_function = False   # if the exponential function should be approximated by a Taylor series with only 11 FLOPS
+dynamic = True                      # if the dynamic hyperelasticity solver should be used
 
 # motor unit stimulation times
 firing_times_file = "../../../input/MU_firing_times_real.txt"

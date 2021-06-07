@@ -128,4 +128,4 @@ def get_specific_states_frequency_jitter(fiber_no, mu_no):
   return motor_units[mu_no % len(motor_units)]["jitter"]
 
 def get_specific_states_call_enable_begin(fiber_no, mu_no):
-  return motor_units[mu_no % len(motor_units)]["activation_start_time"]
+  return motor_units[mu_no % len(motor_units)]["activation_start_time"]*0.1

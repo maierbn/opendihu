@@ -185,6 +185,7 @@ protected:
   Vec3 constantBodyForce_;                                  //< the constant body force, if given or [0,0,0]
   double timeStepWidth_;                                    //< timeStepWidth, only need for the dynamic problem
   double density_;                                          //< density, only needed for the dynamic problem
+  double dampingFactor_;                                    //< factor of the velocity dependend damping term
   double lastNorm_;                                         //< residual norm of the last iteration in the nonlinear solver
   double secondLastNorm_;                                   //< residual norm of the second last iteration in the nonlinear solver
   double bestResidualNorm_;                                 //< best residual norm for load factor 1.0 achieved so far

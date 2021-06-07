@@ -600,6 +600,9 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
       n_states_cellml = 57
     elif "slow_TK_2014" in variables.cellml_file:
       n_states_cellml = 56
+    elif "hodgkin_huxley-razumova" in variables.cellml_file:
+      n_states_cellml = 9
+
     print("{} rank{}, partitioning: x{} x y{} x z{}".format(n_ranks, "s" if n_ranks > 1 else "", variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z))
     if have_fibers:
       if n_ranks > 0:

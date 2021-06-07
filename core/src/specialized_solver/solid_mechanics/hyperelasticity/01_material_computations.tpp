@@ -827,6 +827,13 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
             integrand += this->density_ * (newVelocity - oldVelocity) / this->timeStepWidth_ * DisplacementsFunctionSpace::phi(elementalDofNoL,xi)
               * DisplacementsFunctionSpace::phi(elementalDofNoM,xi);
 
+            // add damping factor if enabled: d*v*phi_L*phi_M
+            if (this->dampingFactor_ != 0)
+            {
+              integrand += this->dampingFactor_ * oldVelocity * DisplacementsFunctionSpace::phi(elementalDofNoL,xi)
+                * DisplacementsFunctionSpace::phi(elementalDofNoM,xi);
+            }
+
             evaluationsArray[samplingPointIndex][elementalDofNoM*3 + dimensionNo] = integrand * integrationFactor;
           }
 

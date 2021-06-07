@@ -9,6 +9,7 @@ PMax = 7.3                          # maximum stress [N/cm^2]
 Conductivity = 3.828                # sigma, conductivity [mS/cm]
 Am = 500.0                          # surface area to volume ratio [cm^-1]
 Cm = 0.58                           # membrane capacitance [uF/cm^2]
+damping_factor = 0                  # velocity dependent damping factor
 
 innervation_zone_width = 0.         # not used [cm], this will later be used to specify a variance of positions of the innervation point at the fibers
 

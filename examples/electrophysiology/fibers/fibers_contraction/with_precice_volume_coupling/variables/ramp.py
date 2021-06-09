@@ -41,16 +41,16 @@ bottom_traction = [0.0,0.0,-1e-1]        # [1 N]
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
 motor_units = [
-  {"radius": 40.00, "activation_start_time": 0.0, "stimulation_frequency": 23.92, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #1    # low number of fibers
-  {"radius": 42.35, "activation_start_time": 0.2, "stimulation_frequency": 23.36, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #2
-  {"radius": 45.00, "activation_start_time": 0.4, "stimulation_frequency": 23.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #3
-  {"radius": 48.00, "activation_start_time": 0.6, "stimulation_frequency": 22.46, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #4
-  {"radius": 51.42, "activation_start_time": 0.8, "stimulation_frequency": 20.28, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #5
-  {"radius": 55.38, "activation_start_time": 1.0, "stimulation_frequency": 16.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #6 
-  {"radius": 60.00, "activation_start_time": 1.2, "stimulation_frequency": 12.05, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #7
-  {"radius": 65.45, "activation_start_time": 1.4, "stimulation_frequency": 10.03, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #8
-  {"radius": 72.00, "activation_start_time": 1.6, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #9
-  {"radius": 80.00, "activation_start_time": 1.8, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #10   # high number of fibers
+  {"radius": 40.00, "activation_start_time": 0.00, "stimulation_frequency": 23.92, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #1    # low number of fibers
+  {"radius": 42.35, "activation_start_time": 0.02, "stimulation_frequency": 23.36, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #2
+  {"radius": 45.00, "activation_start_time": 0.04, "stimulation_frequency": 23.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #3
+  {"radius": 48.00, "activation_start_time": 0.06, "stimulation_frequency": 22.46, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #4
+  {"radius": 51.42, "activation_start_time": 0.08, "stimulation_frequency": 20.28, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #5
+  {"radius": 55.38, "activation_start_time": 0.10, "stimulation_frequency": 16.32, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #6 
+  {"radius": 60.00, "activation_start_time": 0.12, "stimulation_frequency": 12.05, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #7
+  {"radius": 65.45, "activation_start_time": 0.14, "stimulation_frequency": 10.03, "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #8
+  {"radius": 72.00, "activation_start_time": 0.16, "stimulation_frequency": 8.32,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #9
+  {"radius": 80.00, "activation_start_time": 0.18, "stimulation_frequency": 7.66,  "jitter": [0.1*random.uniform(-1,1) for i in range(100)]}, #10   # high number of fibers
 ]
 # note: negative start time is the same as zero, it is just there for debugging. Delete the minus signs to get a ramp
 
@@ -63,16 +63,14 @@ output_timestep = 10.0                # [ms] timestep for output files, 5.0
 output_timestep_fibers = output_timestep   # [ms] timestep for fiber output
 output_timestep_big = 100.0            # [ms] timestep for output big files of 3D EMG, 100
 
-
-
 # The values of dt_3D and end_time have to be also defined in "precice-config.xml" with the same value (the value is only significant in the precice-config.xml, the value here is used for output writer time intervals)
 # <max-time value="100.0"/>           <!-- end time of the whole simulation -->
 # <time-window-size value="1e0"/>   <!-- timestep width dt_3D -->
 
+import opendihu
+
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
-
-import opendihu
 
 # parameters for the contraction program
 if "contraction" in opendihu.program_name:
@@ -109,8 +107,17 @@ firing_times_file = input_directory + "/MU_firing_times_always.txt"
 fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs_13x13.txt"
 cellml_file       = input_directory + "/new_slow_TK_2014_12_08.cellml"
 
+# if the hodgkin_huxley-razumova model is used
 if "hh" in opendihu.program_name:
-  cellml_file       = input_directory + "/hodgkin_huxley-razumova.cellml"
+  cellml_file       = input_directory+"/hodgkin_huxley-razumova.cellml"
+  dt_0D = 1e-3                   # [ms] timestep width of ODEs (1e-3), for shorten use 2.5e-5
+  dt_1D = 1e-3                   # [ms] timestep width of the 1D electric conduction problem, for shorten use 2.5e-5
+  dt_splitting = 1e-3            # [ms] timestep width of strang splitting between 0D and 1D for the fibers, for shorten use 2.5e-5
+  scenario_name = "ramp_hh"
+
+else:
+  cellml_file       = input_directory+"/new_slow_TK_2014_12_08.c"
+  scenario_name = "ramp"
 
 # EMG solver parameters
 emg_solver_type = "cg"              # solver and preconditioner for the 3D static Bidomain equation that solves the intra-muscular EMG signal

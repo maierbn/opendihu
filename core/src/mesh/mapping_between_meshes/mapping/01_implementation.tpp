@@ -8,8 +8,6 @@
 #include "mesh/mapping_between_meshes/manager/04_manager.h"
 #include "mesh/mapping_between_meshes/manager/target_element_no_estimator.h"
 
-//#define OUTPUT_INTERPOLATION_LEAP    // debugging output
-
 namespace MappingBetweenMeshes
 {
 
@@ -187,15 +185,11 @@ mapHighToLowDimension(
     VLOG(1) << "extracted source values: " << sourceValues;
   }
 
-  fieldVariableSource.zeroGhostBuffer();
-  fieldVariableSource.finishGhostManipulation();
-  fieldVariableSource.startGhostManipulation();
-
-#ifdef OUTPUT_INTERPOLATION_LEAP
-  VecD<nComponents> previousTargetValue;
-  element_no_t previousSourceElementNoLocal;
-  std::array<double,FunctionSpaceSourceType::nDofsPerElement()> previousScalingFactors;
-#endif
+  // note: no collective operations on the source field variable are allowed here, as the method will be called different times on different ranks
+  // the following is not allowed:
+  //fieldVariableSource.zeroGhostBuffer();
+  //fieldVariableSource.finishGhostManipulation();
+  //fieldVariableSource.startGhostManipulation();
 
   LOG(DEBUG) << "mapHighToLowDimension " << fieldVariableSource.name() << " (" << fieldVariableSource.functionSpace()->meshName()
       << ") -> " << fieldVariableTarget.name() << " (" << fieldVariableTarget.functionSpace()->meshName() << ")";
@@ -234,36 +228,7 @@ mapHighToLowDimension(
     VecD<nComponents> targetValue = sourceValues * targetElement.scalingFactors;
     fieldVariableTarget.setValue(targetDofNoLocal, targetValue, INSERT_VALUES);
 
-    LOG(DEBUG) << fieldVariableTarget.functionSpace()->meshName() << " dof " << targetDofNoLocal << " value = " << targetValue << " = " << sourceValues << " * " << targetElement.scalingFactors << ", interpolation in element " << sourceElementNoLocal << " of " << fieldVariableSource.functionSpace()->meshName();
-
-#ifdef OUTPUT_INTERPOLATION_LEAP
-    if (targetDofNoLocal > 0)
-    {
-      double differenceToPrevious = MathUtility::distance<nComponents>(targetValue, previousTargetValue);
-      LOG(INFO) << "  target dof " << targetDofNoLocal << ", source element no local: " << sourceElementNoLocal << " differenceToPrevious=" << differenceToPrevious;
-      if (differenceToPrevious > 1)
-      {
-        LOG(WARNING) << "In mapping " << fieldVariableSource.name() << " (" << fieldVariableSource.functionSpace()->meshName()
-          << ") -> " << fieldVariableTarget.name() << " (" << fieldVariableTarget.functionSpace()->meshName() << "), differenceToPrevious=" << differenceToPrevious;
-        LOG(WARNING) << "  target dof " << targetDofNoLocal << ", source element no local: " << sourceElementNoLocal
-        << ", " << sourceValues.size() << " sourceValues: " << sourceValues
-        << ",\n scaling factors: " << targetElement.scalingFactors << " (scalingFactorsSum=" << scalingFactorsSum << "),\n previous target value: " << previousTargetValue
-        << ", target value: " << targetValue << ", previous source element: " << previousSourceElementNoLocal
-        << "\npreviousScalingFactors: " << previousScalingFactors;
-      }
-    }
-    if (VLOG_IS_ON(2))
-    {
-      VLOG(2)
-        << "  target dof " << targetDofNoLocal << ", source element no local: " << sourceElementNoLocal
-        << ", sourceValues: " << sourceValues
-        << ", scaling factors: " << targetElement.scalingFactors << " (scalingFactorsSum=" << scalingFactorsSum << "), target value: " << targetValue;
-    }
-    // store quantities from last dof for debugging output
-    previousTargetValue = targetValue;
-    previousSourceElementNoLocal = sourceElementNoLocal;
-    previousScalingFactors = targetElement.scalingFactors;
-#endif
+    VLOG(1) << fieldVariableTarget.functionSpace()->meshName() << " dof " << targetDofNoLocal << " value = " << targetValue << " = " << sourceValues << " * " << targetElement.scalingFactors << ", interpolation in element " << sourceElementNoLocal << " of " << fieldVariableSource.functionSpace()->meshName();
   }
 }
 

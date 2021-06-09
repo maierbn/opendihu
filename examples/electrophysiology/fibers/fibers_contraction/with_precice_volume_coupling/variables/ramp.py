@@ -25,8 +25,8 @@ b  = 1.075e-2               # [N/cm^2] anisotropy parameter
 d  = 9.1733                 # [-] anisotropy parameter
 material_parameters = [c1, c2, b, d]   # material parameters
 pmax = 7.3                  # [N/cm^2] maximum isometric active stress
-pmax = 3.65
-pmax = 2
+#pmax = 3.65
+#pmax = 2
 
 # for debugging, b = 0 leads to normal Mooney-Rivlin
 #b = 0

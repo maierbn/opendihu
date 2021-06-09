@@ -470,6 +470,11 @@ prepareMapping(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
   {
     // zero entries in component of target field variable
     zeroTargetFieldVariable(fieldVariableTarget, componentNoTarget);
+    
+    // communicate ghost buffers in source field variable
+    fieldVariableSource->zeroGhostBuffer();
+    fieldVariableSource->finishGhostManipulation();
+    fieldVariableSource->startGhostManipulation();
   }
 
   // reset counter of mapped meshes for log

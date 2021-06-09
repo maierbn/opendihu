@@ -1,15 +1,16 @@
 
 # scenario name for log file and output directory under "out"
-scenario_name = "ramp_hh"
+scenario_name = "ramp"
 
 # material parameters
 # --------------------
 # parameters for precontraction
 # -----------------------------
 # load
-precontraction_constant_body_force = (0,0,20*9.81e-4)   # [cm/ms^2], gravity constant for the body force
+#precontraction_constant_body_force = (0,0,50*9.81e-4)   # [cm/ms^2], gravity constant for the body force
+precontraction_constant_body_force = (0,0,10*9.81e-4)   # [cm/ms^2], gravity constant for the body force
 precontraction_bottom_traction = [0,0,0]        # [N]
-constant_gamma = 0.1    # 0.3 works, the active stress will be pmax*constant_gamma
+constant_gamma = 0.25    # if it diverges, reduce this value, the active stress will be pmax*constant_gamma
 
 # parameters for prestretch
 # -----------------------------
@@ -36,13 +37,11 @@ b  = 1.075e-2               # [N/cm^2] anisotropy parameter
 d  = 9.1733                 # [-] anisotropy parameter
 material_parameters = [c1, c2, b, d]   # material parameters
 pmax = 7.3                  # [N/cm^2] maximum isometric active stress
-pmax = 2
 
 # for debugging, b = 0 leads to normal Mooney-Rivlin
 #b = 0
 
 material_parameters = [c1, c2, b, d]   # material parameters
-pmax = 7.3                  # [N/cm^2] maximum isometric active stress
 
 # quantities in CellML unit system
 #Conductivity = 3.828        # [mS/cm] sigma, conductivity 
@@ -55,9 +54,6 @@ Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 
 # diffusion prefactor = Conductivity/(Am*Cm)
 
 constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
-#constant_body_force = (0,0,0)
-bottom_traction = [0.0,0.0,-1e-1]        # [1 N]
-#bottom_traction = [0.0,0.0,0.0]        # [1 N]
 
 # timing and activation parameters
 # -----------------
@@ -81,10 +77,10 @@ end_time = 100                      # [ms] end time of the simulation
 dt_0D = 2.5e-5                      # [ms] timestep width of ODEs (2e-3)
 dt_1D = 2.5e-5                      # [ms] timestep width of diffusion (4e-3)
 dt_splitting = 2.5e-5               # [ms] overall timestep width of strang splitting (4e-3)
-dt_3D = 1e-1                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG, this has to be the same value as in the precice_config.xml
-output_timestep = 1.0                # [ms] timestep for output files, 5.0
+dt_3D = 1                           # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG, this has to be the same value as in the precice_config.xml
+output_timestep = 10.0                # [ms] timestep for output files, 5.0
 output_timestep_fibers = output_timestep   # [ms] timestep for fiber output
-output_timestep_big = 1.0            # [ms] timestep for output big files of 3D EMG, 100
+output_timestep_big = 100.0            # [ms] timestep for output big files of 3D EMG, 100
 output_timestep_elasticity = 20      # [ms] timestep for elasticity output files
 
 # The values of dt_3D and end_time have to be also defined in "precice-config.xml" with the same value (the value is only significant in the precice-config.xml, the value here is used for output writer time intervals)
@@ -115,6 +111,12 @@ distribute_nodes_equally = True     # (default: False)
 # True: set high priority to make subdomains have approximately equal number of fibers but creates tiny remainder elements inside the subdomains
 # False: make elements more equally sized, this can lead to a slight imbalance in the number of fibers per subdomain
 
+# Tolerance value in the element coordinate system of the 3D elements, [0,1]^3
+# when a fiber point is still considered part of the element.
+# Try to increase this such that all mappings have all points.
+mapping_tolerance = 0.3
+#mapping_tolerance = 1.0
+
 # input files
 # -----------
 import os
@@ -122,7 +124,7 @@ import opendihu
 input_directory   = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
 
 #fiber_file        = input_directory + "/left_biceps_brachii_7x7fibers.bin"
-fiber_file        = input_directory + "/left_biceps_brachii_9x9fibers.bin"
+fiber_file        = input_directory + "/left_biceps_brachii_9x9fibers.old.bin"
 #fiber_file        = input_directory + "/left_biceps_brachii_13x13fibers.bin"
 firing_times_file = input_directory + "/MU_firing_times_always.txt"
 #fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs.txt"
@@ -135,7 +137,7 @@ if "hh" in opendihu.program_name:
   dt_0D = 1e-3                   # [ms] timestep width of ODEs (1e-3), for shorten use 2.5e-5
   dt_1D = 1e-3                   # [ms] timestep width of the 1D electric conduction problem, for shorten use 2.5e-5
   dt_splitting = 1e-3            # [ms] timestep width of strang splitting between 0D and 1D for the fibers, for shorten use 2.5e-5
-  scenario_name = "ramp_hh"
+  scenario_name = "ramp"
 
 else:
   cellml_file       = input_directory+"/new_slow_TK_2014_12_08.c"

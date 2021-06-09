@@ -423,7 +423,7 @@ repairMappedGeometryFibers(std::shared_ptr<FieldVariableTargetType> fieldVariabl
   // this method fixes the geometry of fibers if single points have wrong values after the mapping
   // however, this apparently never happens, therefore commented out
   
-#if 0
+//#if 0
   LOG(DEBUG) << "repairMappedGeometryFibers " << fieldVariableTarget->name() << " on " << fieldVariableTarget->functionSpace()->meshName();
   
   const dof_no_t nDofsLocalTarget = fieldVariableTarget->nDofsLocalWithoutGhosts();
@@ -488,7 +488,8 @@ repairMappedGeometryFibers(std::shared_ptr<FieldVariableTargetType> fieldVariabl
         for (int i = 0; i < 3; i++)
           targetValues[targetDofNoLocal][i] = targetValues[targetDofNoLocal+1][i] + medianDistance*v[i];
           
-        LOG(DEBUG) << "repaired from next two nodes, new targetValue: " << targetValues[targetDofNoLocal];
+        LOG(INFO) << "Repaired fiber node position " << targetDofNoLocal << " from next two nodes, new targetValue: "
+          << targetValues[targetDofNoLocal];
       }
       else if (targetDofNoLocal >= 2)
       {
@@ -502,14 +503,15 @@ repairMappedGeometryFibers(std::shared_ptr<FieldVariableTargetType> fieldVariabl
         for (int i = 0; i < 3; i++)
           targetValues[targetDofNoLocal][i] = targetValues[targetDofNoLocal+1][i] + medianDistance*v[i];
           
-        LOG(DEBUG) << "repaired from previous two nodes, new targetValue: " << targetValues[targetDofNoLocal];
+        LOG(INFO) << "Repaired fiber node position " << targetDofNoLocal << " from previous two nodes, new targetValue: "
+          << targetValues[targetDofNoLocal];
       }
     }
   }
   
   // set the computed values
   fieldVariableTarget->setValuesWithoutGhosts(targetValues);
-#endif
+//#endif
 }
 
 }   // namespace

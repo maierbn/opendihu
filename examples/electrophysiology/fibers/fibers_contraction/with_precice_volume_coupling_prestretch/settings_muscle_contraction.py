@@ -124,23 +124,30 @@ config = {
   "logFormat":             "csv",
   "solverStructureDiagramFile":     "out/" + variables.scenario_name + "/solver_structure_muscle_contraction.txt",     # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "out/" + variables.scenario_name + "/mappings_between_meshes_muscle_contraction.txt",
+  "regularization":        None,                         # None to disable or [tol,eps]. if the absolute determinant |J|=|det(F)| within an element is below tol, add eps*I to the matrix, to regularize the inversion of the nearly singular matrix
   "Meshes":                variables.meshes,
   "MappingsBetweenMeshes": {
     "3Dmesh": [
        {"name": "3Dmesh_quadratic", "xiTolerance": 0.35, "enableWarnings": False, "compositeUseOnlyInitializedMappings": True, "fixUnmappedDofs": True, "defaultValue": 0},
     ],
   },
+  "connectedSlots": [
+    ("p_lda", "lambda"),
+    ("p_ldot","ldot"),
+    ("p_gam", "gamma"),
+    ("p_T",   "T"),
+  ],
   "Solvers": {
     "precontractionMechanicsSolver": {   # solver for the preprocessing contraction simulation (static mechanics problem)
-      "relativeTolerance":   1e-5,           # 1e-10 relative tolerance of the linear solver
+      "relativeTolerance":   1e-10,           # 1e-10 relative tolerance of the linear solver
       "absoluteTolerance":   1e-10,           # 1e-10 absolute tolerance of the residual of the linear solver
       "solverType":          "lu",            # type of the linear solver
       "preconditionerType":  "none",          # type of the preconditioner
       "maxIterations":       1e4,                                         # maximum number of iterations in the linear solver
       "snesMaxFunctionEvaluations": 1e8,                                  # maximum number of function iterations
       "snesMaxIterations":   34,              # maximum number of iterations in the nonlinear solver
-      "snesRelativeTolerance": 1e-2,         # relative tolerance of the nonlinear solver
-      "snesAbsoluteTolerance": 1e-2,         # absolute tolerance of the nonlinear solver
+      "snesRelativeTolerance": 2e-2,         # relative tolerance of the nonlinear solver
+      "snesAbsoluteTolerance": 2e-2,         # absolute tolerance of the nonlinear solver
       "snesLineSearchType": "l2",                                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
       "snesRebuildJacobianFrequency": 1,    # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
       "hypreOptions":        "",                                          # additional options for the hypre solvers could be given here
@@ -170,11 +177,11 @@ config = {
       "preconditionerType": "lu",           # type of the preconditioner
       "maxIterations":       1e4,           # maximum number of iterations in the linear solver
       "snesMaxFunctionEvaluations": 1e8,    # maximum number of function iterations
-      "snesMaxIterations":   10,            # maximum number of iterations in the nonlinear solver
+      "snesMaxIterations":   40,            # maximum number of iterations in the nonlinear solver
       "snesRelativeTolerance": 1e-5,       # relative tolerance of the nonlinear solver
       "snesAbsoluteTolerance": 1e-5,        # absolute tolerance of the nonlinear solver
       "snesLineSearchType": "l2",        # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
-      "snesRebuildJacobianFrequency": 5,
+      "snesRebuildJacobianFrequency": 1,
       "dumpFilename":        "",
       "dumpFormat":          "matlab",
     }
@@ -197,7 +204,7 @@ config = {
         "meshName":               "3Dmesh",      # reference to the fibers mesh
         "numberTimeSteps":        1,             # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step
         "timeStepOutputInterval": 20,            # if the time step should be written to console, a value > 10 produces no output
-        "slotNames":              ["lambda", "gamma"],
+        "slotNames":              ["p_lda", "p_gam"],
         
         # a list of field variables that will get values assigned in every timestep, by the provided callback function
         "fieldVariables1": [
@@ -220,7 +227,7 @@ config = {
         "Pmax":                         variables.pmax,            # maximum PK2 active stress
         "enableForceLengthRelation":    False,                     # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
         "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
-        "slotNames":                    ["lambda", "ldot", "gamma", "T"],
+        "slotNames":                    ["p_lda", "p_ldot", "p_gam", "p_T"],
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/1_precontraction_mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
         ],
@@ -397,7 +404,7 @@ config = {
           "Pmax":                         variables.pmax,            # maximum PK2 active stress
           "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
           "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
-          "slotNames":                    ["lambda", "ldot", "gamma", "T"],   # names of the data connector slots
+          "slotNames":                    ["lambda", "ldot", "gamma", "T", "m_ux", "m_uy", "m_uz"],   # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
           "dynamic":                      False,                     # if the dynamic formulation with velocity or the quasi-static formulation is computed
           
           "OutputWriter" : [
@@ -489,7 +496,8 @@ config = {
             
             #"loadFactors":  [0.1, 0.2, 0.35, 0.5, 1.0],             # load factors for every timestep
             "loadFactors":                [],                        # no load factors, solve problem directly
-            "loadFactorGiveUpThreshold":  4e-2,                      # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the progression between two subsequent load factors gets smaller than this value, the solution is aborted.
+            #"loadFactorGiveUpThreshold":  4e-2,                      # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the progression between two subsequent load factors gets smaller than this value, the solution is aborted.
+            "loadFactorGiveUpThreshold":  0.6,                       # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the progression between two subsequent load factors gets smaller than this value, the solution is aborted.
             "scaleInitialGuess":          False,                     # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
             "nNonlinearSolveCalls": 1,                               # how often the nonlinear solve should be repeated
         
@@ -504,8 +512,8 @@ config = {
             "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
             
             # boundary and initial conditions
-            "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
-            "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
+            "dirichletBoundaryConditions": variables.main_elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
+            "neumannBoundaryConditions":   variables.main_elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
             "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
             "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
             "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied

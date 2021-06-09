@@ -325,23 +325,34 @@ variables.meshes["3Dmesh_quadratic_precontraction"] = copy.deepcopy(variables.me
 # parameters for precontraction
 # -----------------------------
 variables.precontraction_elasticity_dirichlet_bc = {}
-# muscle mesh
-for j in range(my):
-  for i in range(mx):
-    variables.precontraction_elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
 
-# fix edge
-for i in range(mx):
-  variables.precontraction_elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,0.0,0.0,None,None,None]
-  
-# fix corner completely
-variables.precontraction_elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
+# fix top of muscle in z direction
+if False:   # (disabled for better convergence)
+  for j in range(my):
+    for i in range(mx):
+      variables.precontraction_elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
+
+j_center = my//2
+i_center = mx//2
+
+# fix center point at thte top completely
+variables.precontraction_elasticity_dirichlet_bc[(mz-1)*mx*my + j_center*mx + i_center] = [0.0,0.0,0.0,None,None,None]
+
+# fix line through edge
+if False:   # (disabled for better convergence)
+  for i in range(mx):
+    variables.precontraction_elasticity_dirichlet_bc[(mz-1)*mx*my + j_center*mx + i] = [0.0,0.0,0.0,None,None,None]
 
 # guide lower end of muscle along z axis
 # muscle mesh
-for j in range(my):
-  for i in range(mx):
-    variables.precontraction_elasticity_dirichlet_bc[0*mx*my + j*mx + i] = [0.0,0.0,None,None,None,None]
+if False:
+  for j in range(my):
+    for i in range(mx):
+      variables.precontraction_elasticity_dirichlet_bc[0*mx*my + j*mx + i] = [0.0,0.0,None,None,None,None]
+      
+# fix the horizontal movement of the longitudinal center line through the muscle
+for k in range(mz-1):
+  variables.precontraction_elasticity_dirichlet_bc[k*mx*my + j_center*mx + i_center] = [0.0,0.0,None,None,None,None]
 
 # Neumann BC at bottom nodes, traction downwards
 # muscle mesh
@@ -377,46 +388,31 @@ if hasattr(variables, "prestretch_bottom_traction"):
 # ---------------------------------------------
 if hasattr(variables, "main_bottom_traction"):
   variables.main_elasticity_dirichlet_bc = {}
-  # muscle mesh
+
+  # set Dirichlet BC at top nodes for elasticity problem, fix muscle at top
   for j in range(my):
     for i in range(mx):
       variables.main_elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
 
-# set boundary conditions for the elasticity
-[mx, my, mz] = variables.meshes["3Dmesh_quadratic"]["nPointsGlobal"]
-nx = (mx-1)//2
-ny = (my-1)//2
-nz = (mz-1)//2
-
-# set Dirichlet BC at top nodes for elasticity problem, fix muscle at top
-variables.elasticity_dirichlet_bc = {}
-for j in range(my):
-  for i in range(mx):
-    variables.elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
-  
-# fix edge
-for i in range(mx):
-  #variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
-  variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,0.0,0.0,None,None,None]
-  
-# fix corner completely
-variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
+  # fix edge at the top
+  if True:
+    for i in range(mx):
+      #variables.main_elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
+      variables.main_elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,0.0,0.0,None,None,None]
+    
+  # fix corner completely
+  variables.main_elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
 
 
-# guide lower end of muscle along z axis
-# muscle mesh
-for j in range(my):
-  for i in range(mx):
-    variables.main_elasticity_dirichlet_bc[0*mx*my + j*mx + i] = [0.0,0.0,None,None,None,None]
-
-# also fix z displacements for one point at the center
-#if variables.fix_bottom:
-#  variables.main_elasticity_dirichlet_bc[0*mx*my + (my//2)*mx + mx//2][2] = 0.0
-
+  # guide lower end of muscle along z axis
+  # muscle mesh
+  for j in range(my):
+    for i in range(mx):
+      variables.main_elasticity_dirichlet_bc[0*mx*my + j*mx + i] = [0.0,0.0,None,None,None,None]
 
 # Neumann BC at bottom nodes, traction downwards
-variables.elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
-#variables.elasticity_neumann_bc = []
+variables.main_elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.main_bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
+#variables.main_elasticity_neumann_bc = []
 
 #print("bottom_traction={}\n elasticity_neumann_bc={}".format(variables.bottom_traction,variables.elasticity_neumann_bc))
 

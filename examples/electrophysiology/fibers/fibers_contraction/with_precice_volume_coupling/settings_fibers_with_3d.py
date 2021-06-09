@@ -157,6 +157,7 @@ config = {
   "logFormat":                      "csv",                      # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "out/" + variables.scenario_name + "/solver_structure_fibers_with_3d.txt",     # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "out/" + variables.scenario_name + "/mappings_between_meshes_fibers_with_3d.txt",
+  "regularization": None,
   "meta": {                 # additional fields that will appear in the log
     "partitioning": [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },

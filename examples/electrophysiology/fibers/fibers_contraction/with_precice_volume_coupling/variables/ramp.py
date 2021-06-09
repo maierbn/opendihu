@@ -87,14 +87,15 @@ else:
   sampling_stride_z = 20
   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
-distribute_nodes_equally = True     # (default: False)
+distribute_nodes_equally = False     # (default: False)
 # True: set high priority to make subdomains have approximately equal number of fibers but creates tiny remainder elements inside the subdomains
 # False: make elements more equally sized, this can lead to a slight imbalance in the number of fibers per subdomain
 
 # Tolerance value in the element coordinate system of the 3D elements, [0,1]^3
 # when a fiber point is still considered part of the element.
 # Try to increase this such that all mappings have all points.
-mapping_tolerance = 0.5 
+#mapping_tolerance = 0.3
+mapping_tolerance = 1.0
 
 # input files
 import os
@@ -113,7 +114,7 @@ if "hh" in opendihu.program_name:
   dt_0D = 1e-3                   # [ms] timestep width of ODEs (1e-3), for shorten use 2.5e-5
   dt_1D = 1e-3                   # [ms] timestep width of the 1D electric conduction problem, for shorten use 2.5e-5
   dt_splitting = 1e-3            # [ms] timestep width of strang splitting between 0D and 1D for the fibers, for shorten use 2.5e-5
-  scenario_name = "ramp_hh"
+  scenario_name = "ramp"
 
 else:
   cellml_file       = input_directory+"/new_slow_TK_2014_12_08.c"

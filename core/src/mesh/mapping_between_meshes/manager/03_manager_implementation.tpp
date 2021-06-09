@@ -415,4 +415,101 @@ finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableT
   Control::PerformanceMeasurement::stop("durationMapFinalize");
 }
 
+//! repair invalid geometry values for 1D fibers after mapping from a 3D mesh
+template<typename FieldVariableTargetType>
+void ManagerImplementation::
+repairMappedGeometryFibers(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget)
+{
+  // this method fixes the geometry of fibers if single points have wrong values after the mapping
+  // however, this apparently never happens, therefore commented out
+  
+#if 0
+  LOG(DEBUG) << "repairMappedGeometryFibers " << fieldVariableTarget->name() << " on " << fieldVariableTarget->functionSpace()->meshName();
+  
+  const dof_no_t nDofsLocalTarget = fieldVariableTarget->nDofsLocalWithoutGhosts();
+
+  using Vec = VecD<FieldVariableTargetType::nComponents()>;
+  const int D = FieldVariableTargetType::nComponents();
+
+  std::vector<Vec> targetValues;
+  fieldVariableTarget->getValuesWithoutGhosts(targetValues);
+
+  // compute median distance between points
+  static std::set<double> distances;
+  distances.clear();
+  
+  for (dof_no_t targetDofNoLocal = 1; targetDofNoLocal != nDofsLocalTarget; targetDofNoLocal++)
+  {
+    Vec3 position = MathUtility::transformToD<3,D>(targetValues[targetDofNoLocal]);
+    Vec3 previousPosition = MathUtility::transformToD<3,D>(targetValues[targetDofNoLocal-1]);
+    
+    double distance = MathUtility::distance<3>(position,previousPosition);
+    distances.insert(distance);
+  }
+  
+  std::set<double>::const_iterator distanceIter = distances.begin();
+  int nEntries = distances.size();
+  for (int i = 0; i < nEntries/2; i++, distanceIter++);
+  double medianDistance = *distanceIter;
+  
+  LOG(DEBUG) << "distances: " << distances;
+  LOG(DEBUG) << "medianDistance: " << medianDistance;
+  
+  // check if any distanecs is invalid
+  
+  for (dof_no_t targetDofNoLocal = 0; targetDofNoLocal != nDofsLocalTarget; targetDofNoLocal++)
+  {
+    Vec3 position = MathUtility::transformToD<3,D>(targetValues[targetDofNoLocal]);
+    Vec3 previousPosition;
+    
+    if (targetDofNoLocal == 0)
+      previousPosition = MathUtility::transformToD<3,D>(targetValues[targetDofNoLocal+1]);
+    else
+      previousPosition = MathUtility::transformToD<3,D>(targetValues[targetDofNoLocal-1]);
+    
+    double distance = MathUtility::distance<3>(position,previousPosition);
+    
+    LOG(DEBUG) << "  dof " << targetDofNoLocal << ", distance: " << distance;
+    
+    if (fabs(distance - medianDistance) > 1.5*medianDistance)
+    {
+      LOG(DEBUG) << "Node position at local dof " << targetDofNoLocal << " (" << position << ") has distance " 
+        << distance << " to previous position (" << previousPosition << "), medianDistance: " << medianDistance;
+        
+      if (targetDofNoLocal < nDofsLocalTarget-2)
+      {
+        // estimate from next two nodes
+        Vec3 v = 
+          -MathUtility::transformToD<3,D>(targetValues[targetDofNoLocal+2]) 
+          + MathUtility::transformToD<3,D>(targetValues[targetDofNoLocal+1]);
+        
+        MathUtility::normalize<3,double>(v);
+        
+        for (int i = 0; i < 3; i++)
+          targetValues[targetDofNoLocal][i] = targetValues[targetDofNoLocal+1][i] + medianDistance*v[i];
+          
+        LOG(DEBUG) << "repaired from next two nodes, new targetValue: " << targetValues[targetDofNoLocal];
+      }
+      else if (targetDofNoLocal >= 2)
+      {
+        // estimate from previous two node
+        Vec3 v = 
+          -MathUtility::transformToD<3,D>(targetValues[targetDofNoLocal-2]) 
+          + MathUtility::transformToD<3,D>(targetValues[targetDofNoLocal-1]);
+        
+        MathUtility::normalize<3,double>(v);
+        
+        for (int i = 0; i < 3; i++)
+          targetValues[targetDofNoLocal][i] = targetValues[targetDofNoLocal+1][i] + medianDistance*v[i];
+          
+        LOG(DEBUG) << "repaired from previous two nodes, new targetValue: " << targetValues[targetDofNoLocal];
+      }
+    }
+  }
+  
+  // set the computed values
+  fieldVariableTarget->setValuesWithoutGhosts(targetValues);
+#endif
+}
+
 }   // namespace

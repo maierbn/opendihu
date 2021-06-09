@@ -43,6 +43,15 @@ void normalize(VecD<D,double_v_t> &vector)
   vector = vector * inverseNorm;
 }
 
+template<int D, int D2>
+VecD<D> transformToD(const VecD<D2> &vector)
+{
+  VecD<D> result{0};
+  for (int i = 0; i < std::min(D,D2); i++)
+    result[i] = vector[i];
+  return result;
+}
+
 template<typename T>
 void readPoint(T &file, Vec3 &point)
 {

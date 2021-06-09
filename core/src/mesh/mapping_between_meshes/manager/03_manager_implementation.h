@@ -44,6 +44,10 @@ public:
   template<typename FieldVariableTargetType>
   void finalizeMappingLowToHigh(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget);
 
+  //! repair invalid geometry values for 1D fibers after mapping from a 3D mesh
+  template<typename FieldVariableTargetType>
+  void repairMappedGeometryFibers(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget);
+
 protected:
 
   //! set the component of the target field variable to all zero (if it is a component), or all components (if componentNoTarget == -1)

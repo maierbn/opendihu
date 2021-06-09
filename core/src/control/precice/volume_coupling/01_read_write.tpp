@@ -75,7 +75,7 @@ preciceReadData()
               geometryValues_[dofNoLocal][componentNo] = scalarValues_[3*(arrayIndex*nDofsLocalWithoutGhosts + dofNoLocal) + componentNo];
             }
           }
-
+          
           SlotConnectorDataHelper<SlotConnectorDataType>::slotSetGeometryValues(slotConnectorData, preciceData.slotNo, arrayIndex,
                                                                                 dofNosLocalWithoutGhosts, geometryValues_);
         }

@@ -12,5 +12,6 @@ There are reference pages that explain frequently used classes.
    
    developer/conventions
    developer/reference
+   developer/supercomputer
    developer/new_physics
    developer/contributors

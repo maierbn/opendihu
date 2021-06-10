@@ -9,6 +9,7 @@ PMax = 7.3                          # maximum stress [N/cm^2]
 Conductivity = 3.828                # sigma, conductivity [mS/cm]
 Am = 500.0                          # surface area to volume ratio [cm^-1]
 Cm = 0.58                           # membrane capacitance [uF/cm^2]
+damping_factor = 0                  # velocity dependent damping factor
 
 innervation_zone_width = 0.         # not used [cm], this will later be used to specify a variance of positions of the innervation point at the fibers
 
@@ -81,6 +82,7 @@ use_lumped_mass_matrix = False      # which formulation to use, the formulation 
 show_linear_solver_output = True    # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
 optimization_type = "vc"            # the optimization_type used in the cellml adapter, "vc" uses explicit vectorization
 approximate_exponential_function = False   # if the exponential function should be approximated by a Taylor series with only 11 FLOPS
+dynamic = True                      # if the dynamic hyperelasticity solver should be used
 
 # motor unit stimulation times
 firing_times_file = "../../../input/MU_firing_times_real.txt"

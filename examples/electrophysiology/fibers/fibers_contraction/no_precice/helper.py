@@ -432,16 +432,15 @@ variables.fiber_mesh_names = [mesh_name for mesh_name in variables.meshes.keys()
 variables.elasticity_dirichlet_bc = {}
 for j in range(my):
   for i in range(mx):
-    variables.elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
+    variables.elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [0.0,0.0,0.0,None,None,None]
   
 # fix edge
-for i in range(mx):
-  variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
+#for i in range(mx):
+#  variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
   
 # fix corner completely
-variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
-
-    
+#variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
+   
 # Neumann BC at bottom nodes, traction downwards
 # compute number of quadratic elements
 nx = (n_points_3D_mesh_linear_global_x-1) // 2

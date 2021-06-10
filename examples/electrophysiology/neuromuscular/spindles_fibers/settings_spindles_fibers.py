@@ -930,7 +930,7 @@ config = {
                     ],
                     "mapGeometryToMeshes":          ["3Dmesh","3DFatMesh"],    # the mesh names of the meshes that will get the geometry transferred
                     "reverseMappingOrder":          True,                      # if the mapping target->own mesh should be used instead of own->target mesh. This gives better results in some cases.
-                    "dynamic":                      True,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
+                    "dynamic":                      variables.dynamic,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
                     
                     # the actual solid mechanics solver, this is either "DynamicHyperelasticitySolver" or "HyperelasticitySolver", depending on the value of "dynamic"
                     "DynamicHyperelasticitySolver": {
@@ -940,6 +940,7 @@ config = {
                       
                       "materialParameters":         variables.material_parameters,  # material parameters of the Mooney-Rivlin material
                       "density":                    variables.rho,             # density of the material
+                      "dampingFactor":              variables.damping_factor,  # factor for velocity dependent damping
                       "displacementsScalingFactor": 1.0,                       # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
                       "residualNormLogFilename":    "out/"+variables.scenario_name+"/4_main_log_residual_norm.txt",   # log file where residual norm values of the nonlinear solver will be written
                       "useAnalyticJacobian":        True,                      # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
@@ -966,7 +967,7 @@ config = {
                       "dirichletBoundaryConditions": variables.main_elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
                       "neumannBoundaryConditions":   variables.main_elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
                       "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
-                      "updateDirichletBoundaryConditionsFunction": None, #update_dirichlet_boundary_conditions_helper,                  # function that updates the dirichlet BCs while the simulation is running
+                      "updateDirichletBoundaryConditionsFunction": update_dirichlet_boundary_conditions_helper,                  # function that updates the dirichlet BCs while the simulation is running
                       "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
                       "updateNeumannBoundaryConditionsFunction":   update_neumann_boundary_conditions_helper,                    # function that updates the Neumann BCs while the simulation is running
                       "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step
@@ -1012,6 +1013,84 @@ config = {
                           #{"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/4_load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
                         ]
                       },
+                    },
+
+                    "HyperelasticitySolver": {
+                      "durationLogKey":             "duration_mechanics",               # key to find duration of this solver in the log file
+                      "timeStepOutputInterval":     1,                         # how often the current time step should be printed to console
+                      
+                      "materialParameters":         variables.material_parameters,  # material parameters of the Mooney-Rivlin material
+                      "displacementsScalingFactor": 1.0,                       # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
+                      "residualNormLogFilename":    "out/"+variables.scenario_name+"/4_main_log_residual_norm.txt",   # log file where residual norm values of the nonlinear solver will be written
+                      "useAnalyticJacobian":        True,                      # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
+                      "useNumericJacobian":         False,                     # whether to use the numerically computed jacobian matrix in the nonlinear solver (slow), only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
+                        
+                      "dumpDenseMatlabVariables":   False,                     # whether to have extra output of matlab vectors, x,r, jacobian matrix (very slow)
+                      # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
+                      
+                      # mesh
+                      "inputMeshIsGlobal":          True,                     # boundary conditions and initial values are given as global numbers (every process has all information)
+                      "meshName":                   ["3Dmesh_elasticity_quadratic", "3DFatMesh_elasticity_quadratic"],       # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
+                      "fiberMeshNames":             [],                       # fiber meshes that will be used to determine the fiber direction
+                      "fiberDirection":             [0,0,1],                  # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
+                
+                      # solving
+                      "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
+                      #"loadFactors":                [0.5, 1.0],                # load factors for every timestep
+                      "loadFactors":                [],                        # no load factors, solve problem directly
+                      "loadFactorGiveUpThreshold":  0.25,                       # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
+                      "scaleInitialGuess":          False,                     # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
+                      "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
+                      
+                      # boundary and initial conditions
+                      "dirichletBoundaryConditions": variables.main_elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
+                      "neumannBoundaryConditions":   variables.main_elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
+                      "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+                      "updateDirichletBoundaryConditionsFunction": None, #update_dirichlet_boundary_conditions_helper,                  # function that updates the dirichlet BCs while the simulation is running
+                      "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
+                      "updateNeumannBoundaryConditionsFunction":   update_neumann_boundary_conditions_helper,                    # function that updates the Neumann BCs while the simulation is running
+                      "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step
+
+                      
+                      "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(variables.n_points_global_composite_mesh)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+                      "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
+                      "constantBodyForce":           variables.main_constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
+                      
+                      "dirichletOutputFilename":     "out/"+variables.scenario_name+"/4_main_dirichlet_boundary_conditions",     # output filename for the dirichlet boundary conditions, set to "" to have no output
+                      "totalForceLogFilename":       "out/"+variables.scenario_name+"/4_main_tendon_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
+                      "totalForceLogOutputInterval":       10,                                  # output interval when to write the totalForceLog file
+                      "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
+                      "totalForceTopElementNosGlobal":     [(nz-1)*ny*nx + j*nx + i for j in range(ny) for i in range(nx)],   # global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal
+
+                      # define which file formats should be written
+                      # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
+                      "OutputWriter" : [
+                        
+                        # Paraview files
+                        {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/4_displacements", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                        
+                        # Python callback function "postprocess"
+                        #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
+                      ],
+                      # 2. additional output writer that writes also the hydrostatic pressure
+                      "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
+                        "OutputWriter" : [
+                          #{"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/4_pressure", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                        ]
+                      },
+                      # 3. additional output writer that writes virtual work terms
+                      "dynamic": {    # output of the dynamic solver, has additional virtual work values 
+                        "OutputWriter" : [   # output files for displacements function space (quadratic elements)
+                          #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                          #{"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/4_virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                        ],
+                      },
+                      # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
+                      "LoadIncrements": {   
+                        "OutputWriter" : [
+                          #{"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/4_load_increments", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                        ]
+                      }
                     }
                   }
                 }

@@ -421,9 +421,7 @@ void ManagerImplementation::
 repairMappedGeometryFibers(std::shared_ptr<FieldVariableTargetType> fieldVariableTarget)
 {
   // this method fixes the geometry of fibers if single points have wrong values after the mapping
-  // however, this apparently never happens, therefore commented out
-  
-//#if 0
+  // this occurs only for highly irregularly shaped elements
   LOG(DEBUG) << "repairMappedGeometryFibers " << fieldVariableTarget->name() << " on " << fieldVariableTarget->functionSpace()->meshName();
   
   const dof_no_t nDofsLocalTarget = fieldVariableTarget->nDofsLocalWithoutGhosts();
@@ -434,10 +432,14 @@ repairMappedGeometryFibers(std::shared_ptr<FieldVariableTargetType> fieldVariabl
   std::vector<Vec> targetValues;
   fieldVariableTarget->getValuesWithoutGhosts(targetValues);
 
-  // compute median distance between points
+  // compute median distance between points and compute median position
   static std::set<double> distances;
-  distances.clear();
+  static std::set<double> xpos;
+  static std::set<double> ypos;
+  static std::set<double> zpos;
   
+  Vec3 sum = MathUtility::transformToD<3,D>(targetValues[0]);
+  // iterate over all elements of the fiber
   for (dof_no_t targetDofNoLocal = 1; targetDofNoLocal != nDofsLocalTarget; targetDofNoLocal++)
   {
     Vec3 position = MathUtility::transformToD<3,D>(targetValues[targetDofNoLocal]);
@@ -445,73 +447,134 @@ repairMappedGeometryFibers(std::shared_ptr<FieldVariableTargetType> fieldVariabl
     
     double distance = MathUtility::distance<3>(position,previousPosition);
     distances.insert(distance);
+    xpos.insert(position[0]);
+    ypos.insert(position[1]);
+    zpos.insert(position[2]);
   }
   
+  // determine the median element length (distance)
   std::set<double>::const_iterator distanceIter = distances.begin();
   int nEntries = distances.size();
   for (int i = 0; i < nEntries/2; i++, distanceIter++);
   double medianDistance = *distanceIter;
   
+  // determine the median x position
+  std::set<double>::const_iterator xposIter = xpos.begin();
+  for (int i = 0; i < xpos.size()/2; i++, xposIter++);
+  double medianXPos = *xposIter;
+  
+  // determine the median y position
+  std::set<double>::const_iterator yposIter = ypos.begin();
+  for (int i = 0; i < ypos.size()/2; i++, yposIter++);
+  double medianYPos = *yposIter;
+  
+  // determine the median z position
+  std::set<double>::const_iterator zposIter = zpos.begin();
+  for (int i = 0; i < zpos.size()/2; i++, zposIter++);
+  double medianZPos = *zposIter;
+  
   LOG(DEBUG) << "distances: " << distances;
   LOG(DEBUG) << "medianDistance: " << medianDistance;
   
-  // check if any distanecs is invalid
+  // check if any distances are invalid and fix them
   
+  dof_no_t lastValidDof = -1;
+  dof_no_t validDofFiberBegin = -1;
+  
+  // loop over all nodes
   for (dof_no_t targetDofNoLocal = 0; targetDofNoLocal != nDofsLocalTarget; targetDofNoLocal++)
   {
     Vec3 position = MathUtility::transformToD<3,D>(targetValues[targetDofNoLocal]);
-    Vec3 previousPosition;
     
-    if (targetDofNoLocal == 0)
-      previousPosition = MathUtility::transformToD<3,D>(targetValues[targetDofNoLocal+1]);
-    else
-      previousPosition = MathUtility::transformToD<3,D>(targetValues[targetDofNoLocal-1]);
-    
-    double distance = MathUtility::distance<3>(position,previousPosition);
-    
-    LOG(DEBUG) << "  dof " << targetDofNoLocal << ", distance: " << distance;
-    
-    if (fabs(distance - medianDistance) > 1.5*medianDistance)
+    // if point is invalid (position is for away from median in all dimensions)
+    if (fabs(position[0] - medianXPos) > 5 && fabs(position[1] - medianYPos) > 5 && fabs(position[2] - medianZPos) > 5)
     {
-      LOG(DEBUG) << "Node position at local dof " << targetDofNoLocal << " (" << position << ") has distance " 
-        << distance << " to previous position (" << previousPosition << "), medianDistance: " << medianDistance;
-        
-      if (targetDofNoLocal < nDofsLocalTarget-2)
+      // do nothing, position will get fixed at next valid dof
+    }
+    else
+    {
+      // if point is valid
+      
+      // if there is at least one valid point beforehand
+      if (lastValidDof != -1)
       {
-        // estimate from next two nodes
-        Vec3 v = 
-          -MathUtility::transformToD<3,D>(targetValues[targetDofNoLocal+2]) 
-          + MathUtility::transformToD<3,D>(targetValues[targetDofNoLocal+1]);
+        // fix all previous invalid points
+        Vec3 lastValidPosition = MathUtility::transformToD<3,D>(targetValues[lastValidDof]);
+        Vec3 v = -lastValidPosition + position;
         
-        MathUtility::normalize<3,double>(v);
-        
-        for (int i = 0; i < 3; i++)
-          targetValues[targetDofNoLocal][i] = targetValues[targetDofNoLocal+1][i] + medianDistance*v[i];
+        // loop over all previous invalid points
+        int index = 1;
+        int nInvalidElements = targetDofNoLocal - lastValidDof;
+        for (dof_no_t dofNoLocal = lastValidDof+1; dofNoLocal < targetDofNoLocal; dofNoLocal++, index++)
+        {
+          Vec3 fixedPosition = lastValidPosition + v * index / nInvalidElements;
           
-        LOG(INFO) << "Repaired fiber node position " << targetDofNoLocal << " from next two nodes, new targetValue: "
-          << targetValues[targetDofNoLocal];
+          LOG(DEBUG) << "Fix dof " << dofNoLocal << "/" << nDofsLocalTarget << ": " 
+            << fixedPosition << ", previous: " << targetValues[dofNoLocal];
+            
+          // assign fixed position to target values entry
+          for (int i = 0; i < 3; i++)
+            targetValues[dofNoLocal][i] = fixedPosition[i];
+        }
       }
-      else if (targetDofNoLocal >= 2)
-      {
-        // estimate from previous two node
-        Vec3 v = 
-          -MathUtility::transformToD<3,D>(targetValues[targetDofNoLocal-2]) 
-          + MathUtility::transformToD<3,D>(targetValues[targetDofNoLocal-1]);
         
-        MathUtility::normalize<3,double>(v);
+      // store valid dof no
+      lastValidDof = targetDofNoLocal;
+      if (validDofFiberBegin == -1)
+        validDofFiberBegin = targetDofNoLocal;
+    }
+  }
+  
+  // fix invalid points at the beginning of the fiber
+  if (validDofFiberBegin > 0 && validDofFiberBegin + 1 < nDofsLocalTarget)
+  {
+    // beginning of fiber (i=invalid, validDofFiberBegin=4):
+    // i i i i p0 p1 p2 ...
+    
+    Vec3 p0 = MathUtility::transformToD<3,D>(targetValues[validDofFiberBegin]);
+    Vec3 p1 = MathUtility::transformToD<3,D>(targetValues[validDofFiberBegin+1]);
+    Vec3 v = -p1 + p0;
+    
+    // loop over the first invalid points until the first valid
+    for (dof_no_t dofNoLocal = 0; dofNoLocal < validDofFiberBegin; dofNoLocal++)
+    {
+      Vec3 fixedPosition = p0 + v * (validDofFiberBegin - dofNoLocal);
+      
+      LOG(DEBUG) << "Fix dof " << dofNoLocal << "/" << nDofsLocalTarget << " (at beginning): " 
+        << fixedPosition << ", previous: " << targetValues[dofNoLocal];
         
-        for (int i = 0; i < 3; i++)
-          targetValues[targetDofNoLocal][i] = targetValues[targetDofNoLocal+1][i] + medianDistance*v[i];
-          
-        LOG(INFO) << "Repaired fiber node position " << targetDofNoLocal << " from previous two nodes, new targetValue: "
-          << targetValues[targetDofNoLocal];
-      }
+      // assign fixed position to target values entry
+      for (int i = 0; i < 3; i++)
+        targetValues[dofNoLocal][i] = fixedPosition[i];
+    }
+  }
+  
+  // fix invalid points at the end of the fiber
+  if (lastValidDof < nDofsLocalTarget-1 && lastValidDof > 0)
+  {
+    // end of fiber (i=invalid, lastValidDof=nDofsLocalTarget-5):
+    // ... p0 p1 i i i i
+    
+    Vec3 p0 = MathUtility::transformToD<3,D>(targetValues[lastValidDof-1]);
+    Vec3 p1 = MathUtility::transformToD<3,D>(targetValues[lastValidDof]);
+    Vec3 v = -p0 + p1;
+    
+    // loop over the invalid points at the end
+    for (dof_no_t dofNoLocal = lastValidDof+1; dofNoLocal < nDofsLocalTarget; dofNoLocal++)
+    {
+      Vec3 fixedPosition = p1 + v * (dofNoLocal - lastValidDof);
+      
+      LOG(DEBUG) << "Fix dof " << dofNoLocal << "/" << nDofsLocalTarget << " (at end): " 
+        << fixedPosition << ", previous: " << targetValues[dofNoLocal];
+      
+      // assign fixed position to target values entry
+      for (int i = 0; i < 3; i++)
+        targetValues[dofNoLocal][i] = fixedPosition[i];
     }
   }
   
   // set the computed values
   fieldVariableTarget->setValuesWithoutGhosts(targetValues);
-//#endif
 }
 
 }   // namespace

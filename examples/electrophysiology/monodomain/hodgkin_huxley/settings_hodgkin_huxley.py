@@ -11,10 +11,26 @@
 import sys
 import numpy as np
 
-end_time = 100   # [ms] end time of simulation
-n_elements = 200
-element_size = 1./100   # [cm]
-#element_size = 1./10
+end_time = 60   # [ms] end time of simulation
+n_elements = 100
+#element_size = 1./100   # [cm]
+element_size = 1./5
+
+n_elements = 100
+element_size = 1./5
+name = "out/very_coarse"
+
+#n_elements = 400
+#element_size = 1./20
+#name = "out/coarse"
+
+#n_elements = 2000
+#element_size = 1./100
+#name = "out/fine"
+
+#n_elements = 41
+#element_size = 1./2
+#name = "out/very_very_coarse"
 
 # global parameters
 Conductivity = 3.828    # sigma, conductivity [mS/cm]
@@ -39,7 +55,7 @@ cellml_file = "../../../input/hodgkin_huxley_1952.c"
 
 fiber_distribution_file = "../../../input/MU_fibre_distribution_3780.txt"
 #firing_times_file = "../../../input/MU_firing_times_real.txt"
-firing_times_file = "../../../input/MU_firing_times_immediately.txt"
+firing_times_file = "../../../input/MU_firing_times_once.txt"
 
 # parse command line options (scenario name)
 scenario_name = ""
@@ -163,6 +179,8 @@ def set_specific_parameters(n_nodes_global, time_step_no, current_time, paramete
 # callback function from output writer
 def callback(data, shape, nEntries, dim, timeStepNo, currentTime, null):
   pass
+    
+print("physicalExtent: {}".format(n_elements*element_size))
     
 config = {
   "scenarioName":                 scenario_name,
@@ -297,8 +315,8 @@ config = {
         
         # output writer only for the diffusion variable (i.e. state "Vm")
         "OutputWriter" : [
-          {"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/vm", "binary": True, "onlyNodalValues": False, "fileNumbering": "incremental"},
-          {"format": "Paraview",   "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/vm", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
+          #{"format": "PythonFile", "outputInterval": int(1./dt_1D*output_timestep), "filename": "out/vm", "binary": True, "onlyNodalValues": False, "fileNumbering": "incremental"},
+          {"format": "Paraview",   "outputInterval": int(1./dt_1D*output_timestep), "filename": name, "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"},
           #{"format": "ExFile", "filename": "out/fiber", "outputInterval": 1e5, "sphereSize": "0.02*0.02*0.02"},
         ],
       },

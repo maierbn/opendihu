@@ -36,7 +36,7 @@ variables.constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant f
 variables.force = 1.0       # [N]
 
 variables.dt_elasticity = 0.1   # [ms] time step width for elasticity
-variables.end_time      = 10     # [ms] simulation time
+variables.end_time      = 100     # [ms] simulation time
 variables.scenario_name = "tendon_top_b"
 variables.is_bottom_tendon = True        # whether the tendon is at the bottom (negative z-direction), this is important for the boundary conditions
 

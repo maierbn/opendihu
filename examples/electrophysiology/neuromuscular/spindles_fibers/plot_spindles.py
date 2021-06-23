@@ -77,9 +77,9 @@ motoneurons_data = py_reader.load_data(motoneurons_files)
 # create plots
 
 if not args.plot_frequency_progression:
-  fig,axes = plt.subplots(2,2,figsize=(12,6),sharex=True, gridspec_kw={'width_ratios': [10, 1]})
+  fig,axes = plt.subplots(3,2,figsize=(12,7),sharex=True, gridspec_kw={'width_ratios': [10, 1], "height_ratios": [0.6,1,1]})
 else:
-  fig,axes = plt.subplots(3,2,figsize=(12,8),sharex=True, gridspec_kw={'width_ratios': [10, 1], "height_ratios": [1,1,0.5]})
+  fig,axes = plt.subplots(4,2,figsize=(12,9),sharex=True, gridspec_kw={'width_ratios': [10, 1], "height_ratios": [0.5,1,1,0.5]})
 
 # set global parameters for font sizes
 plt.rcParams.update({
@@ -140,21 +140,28 @@ if args.end_time == np.inf:
   values_input = values_input[:,start_index:]
   values_output = values_output[:,start_index:]
     
+# plot prescribed force / boundary condition in top plot
+axes[0,0].plot([0,1000,max(t_values)],[10,60,60], "-", color="k", lw=2)
+
+# set title and axis labels
+axes[0,0].set_ylabel('Prescribed\n force [N]', fontsize=12)
+axes[0,0].grid(axis="x")
+    
 # plot lines for all timesteps
 # loop over neurons
 n = values_output.shape[0]
-axes[0,0].plot([0,max(t_values)],[1,1], ":", color=(0.5,0.5,0.5))
+axes[1,0].plot([0,max(t_values)],[1,1], ":", color=(0.5,0.5,0.5))
 for i in range(n):
-  color = next(axes[0,0]._get_lines.prop_cycler)['color']
-  axes[0,0].plot(t_values, values_input[i,:], ':', color=color)
+  color = next(axes[1,0]._get_lines.prop_cycler)['color']
+  axes[1,0].plot(t_values, values_input[i,:], ':', color=color)
   if i == 0:
-    ax2 = axes[0,0].twinx()
+    ax2 = axes[1,0].twinx()
   ax2.plot(t_values, values_output[i,:], '-', color=color)
 
 # set title and axis labels
-axes[0,0].set_title('Muscle spindles (number: {})'.format(n))
-axes[0,0].set_ylabel('Sensed muscle stretch\n(dotted lines)', fontsize=12)
-axes[0,0].grid(axis="x")
+axes[1,0].set_title('Muscle spindles (number: {})'.format(n))
+axes[1,0].set_ylabel('Sensed muscle stretch\n(dotted lines)', fontsize=12)
+axes[1,0].grid(axis="x")
 ax2.set_ylabel('Spindle response [mV]\n(solid lines)', fontsize=12)
 
 # ---------------------
@@ -249,12 +256,12 @@ if args.plot_firing_times:
   max_frequency = np.max([np.max(m) for m in frequencies_mus])
   
   norm = matplotlib.colors.Normalize(vmin=min_frequency,vmax=max_frequency)
-  fig.colorbar(cm.ScalarMappable(norm=norm, cmap=matplotlib.cm.viridis), ax=axes[1,1], pad=0.1, panchor=(0.0, 0.5))
+  fig.colorbar(cm.ScalarMappable(norm=norm, cmap=matplotlib.cm.viridis), ax=axes[2,1], pad=0.1, panchor=(0.0, 0.5))
       
   # plot line for each MU
   for (mu_no,times) in enumerate(firing_times_mu):
     
-    axes[1,0].plot([0,end_time],[mu_no+1,mu_no+1],"k-")
+    axes[2,0].plot([0,end_time],[mu_no+1,mu_no+1],"k-")
 
     # plot stimulation times as vertical bar
     bar_height = 0.2
@@ -263,15 +270,15 @@ if args.plot_firing_times:
     colors = matplotlib.cm.viridis(color_values)
     
     for i,t in enumerate(list(times)):
-      axes[1,0].plot(t, mu_no+1, marker="+", color=colors[i])
+      axes[2,0].plot(t, mu_no+1, marker="+", color=colors[i])
     
     #axes[1].plot(list(times),[mu_no+1 for _ in times],marker="+",color=colors)
   
   # set title and axis labels
-  axes[1,0].set_title('Motor neurons (number: {})'.format(n_motor_units))
+  axes[2,0].set_title('Motor neurons (number: {})'.format(n_motor_units))
   #axes[1,0].set_xlabel('time [ms]', fontsize=12)
-  axes[1,0].set_ylabel('Motor units [-]', fontsize=12)
-  axes[1,0].grid(axis="x")
+  axes[2,0].set_ylabel('Motor units [-]', fontsize=12)
+  axes[2,0].grid(axis="x")
   
   if args.plot_frequency_progression:
     l = []
@@ -299,7 +306,7 @@ if args.plot_firing_times:
     frequency_values = gpr.predict(np.array([t_values]).reshape(-1,1))
     #print("frequency_values: {}".format(frequency_values))
     
-    axes[2,0].plot(t_values, frequency_values, '-', label="With spindles")
+    axes[3,0].plot(t_values, frequency_values, '-', label="With spindles")
     
     if args.load_frequency_file != "":
       with open(args.load_frequency_file, "rb") as f:
@@ -307,22 +314,22 @@ if args.plot_firing_times:
         
         n_values = min(len(other_frequency_values), len(t_values))
         
-        axes[2,0].plot(other_t_values[0:n_values], other_frequency_values[0:n_values], '--', label="Without spindles")
+        axes[3,0].plot(other_t_values[0:n_values], other_frequency_values[0:n_values], '--', label="Without spindles")
         
     if args.store_frequency_file != "":
       with open(args.store_frequency_file, "wb") as f:
         print("Dump frequency values to file \"{}\"".format(args.store_frequency_file))
         pickle.dump((t_values,frequency_values), f)
     
-    axes[2,0].set_ylim(10,max_frequency)
+    axes[3,0].set_ylim(10,max_frequency)
       
     # set title and axis labels
-    axes[2,0].set_xlabel('Time [ms]', fontsize=12)
-    axes[2,0].set_ylabel('Firing frequency [Hz]', fontsize=12)
-    axes[2,0].legend()
-    axes[2,0].grid(axis="x")
+    axes[3,0].set_xlabel('Time [ms]', fontsize=12)
+    axes[3,0].set_ylabel('Firing frequency [Hz]', fontsize=12)
+    axes[3,0].legend()
+    axes[3,0].grid(axis="x")
   
-    axes[2,1].set_visible(False)
+    axes[3,1].set_visible(False)
     
 else:
 
@@ -332,19 +339,20 @@ else:
   n = values_output.shape[0]
   for i in range(n):
     color = next(axes[1,0]._get_lines.prop_cycler)['color']
-    axes[1,0].plot(t_values, values_output[i,:], '-', color=color)
+    axes[2,0].plot(t_values, values_output[i,:], '-', color=color)
     if i == 0:
-      ax2 = axes[1,0].twinx()
+      ax2 = axes[2,0].twinx()
     ax2.plot(t_values, values_input[i,:], ':', color=color)
     
   # set title and axis labels
-  axes[1,0].set_title('Motor neurons (number: {})'.format(n))
-  axes[1,0].set_xlabel('time [ms]', fontsize=12)
-  axes[1,0].set_ylabel('voltage [mV]\n(solid lines)', fontsize=12)
+  axes[2,0].set_title('Motor neurons (number: {})'.format(n))
+  axes[2,0].set_xlabel('time [ms]', fontsize=12)
+  axes[2,0].set_ylabel('voltage [mV]\n(solid lines)', fontsize=12)
   ax2.set_ylabel('input current [uA]\n(dotted lines)', fontsize=12)
 
 axes[0,1].set_visible(False)
 axes[1,1].set_visible(False)
+axes[2,1].set_visible(False)
 
 # show plot window
 plt.tight_layout()

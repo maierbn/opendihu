@@ -1,4 +1,3 @@
-# Multidomain helper script
 # This is a helper script that sets a lot of the internal variables which are all defined in variables.py
 
 import numpy as np
@@ -625,7 +624,7 @@ if rank_no == 0:
     n_points_local_elasticity_mesh[0], n_points_local_elasticity_mesh[1], n_points_local_elasticity_mesh[2], n_points_local_elasticity_mesh[0]*n_points_local_elasticity_mesh[1]*n_points_local_elasticity_mesh[2]))
   print("          quadratic elements global: {} x {} x {} = {}, local: {} x {} x {} = {}".format(
     n_elements_global_elasticity_mesh[0], n_elements_global_elasticity_mesh[1], n_elements_global_elasticity_mesh[2], n_elements_global_elasticity_mesh[0]*n_elements_global_elasticity_mesh[1]*n_elements_global_elasticity_mesh[2],
-    n_elements_local_elasticity_fat_mesh[0], n_elements_local_elasticity_fat_mesh[1], n_elements_local_elasticity_fat_mesh[2], n_elements_local_elasticity_fat_mesh[0]*n_elements_local_elasticity_fat_mesh[1]*n_elements_local_elasticity_fat_mesh[2]))
+    n_elements_local_elasticity_mesh[0], n_elements_local_elasticity_mesh[1], n_elements_local_elasticity_mesh[2], n_elements_local_elasticity_mesh[0]*n_elements_local_elasticity_mesh[1]*n_elements_local_elasticity_mesh[2]))
   print("   fat and skin layer: nodes global: {} x {} x {} = {}, local: {} x {} x {} = {}".format(
     n_points_global_elasticity_fat_mesh[0], n_points_global_elasticity_fat_mesh[1], n_points_global_elasticity_fat_mesh[2], n_points_global_elasticity_fat_mesh[0]*n_points_global_elasticity_fat_mesh[1]*n_points_global_elasticity_fat_mesh[2],
     n_points_local_elasticity_fat_mesh[0], n_points_local_elasticity_fat_mesh[1], n_points_local_elasticity_fat_mesh[2], n_points_local_elasticity_fat_mesh[0]*n_points_local_elasticity_fat_mesh[1]*n_points_local_elasticity_fat_mesh[2]))

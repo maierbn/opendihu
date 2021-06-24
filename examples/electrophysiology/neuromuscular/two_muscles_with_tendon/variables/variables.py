@@ -43,7 +43,7 @@ linear_absolute_tolerance = 1e-10          # absolute tolerance of the residual 
 
 # timing parameters
 # -----------------
-end_time = 10.0                   # [ms] end time of the simulation
+end_time = 20.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz. This is not used here.
 dt_muscle_spindles          = 1e-3  # [ms]
 dt_golgi_tendon_organs      = 1e-3  # [ms]
@@ -56,7 +56,7 @@ dt_elasticity = 1e0                 # [ms] time step width of elasticity solver
 output_timestep = 1e0               # [ms] timestep for output files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 output_timestep_fibers = 2   # [ms] timestep for multidomain output files
-output_timestep_elasticity = 20    # [ms] timestep for elasticity output files
+output_timestep_elasticity = 1    # [ms] timestep for elasticity output files
 output_timestep_emg = 20    # [ms] timestep for emg output files
 
 output_timestep_golgi_tendon_organs = 20
@@ -325,7 +325,7 @@ golgi_tendon_organ_delay = 300
 
 
 
-tendon_force = 0 # TODO
+tendon_force = 1 # TODO
 main_constant_body_force = [0, 0, 0]
 
 ### mechanics

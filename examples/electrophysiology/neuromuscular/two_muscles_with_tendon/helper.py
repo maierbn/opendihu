@@ -199,12 +199,21 @@ elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "
   
 elif "hodgkin_huxley-razumova" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
-  variables.mappings = {
+  variables.muscle1_mappings = {
     ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
     ("parameter", 1):           "Razumova/l_hs",            # parameter 1 is fiber stretch λ
-    ("connectorSlot", "vm"):    "membrane/V",               # expose Vm to the operator splitting
-    ("connectorSlot", "stress"):"Razumova/activestress",
-    ("connectorSlot", "alpha"): "Razumova/activation",      # expose activation .
+    ("connectorSlot", "_m1vm"):  "membrane/V",               # expose Vm to the operator splitting
+    ("connectorSlot", "_m1g_in"):"Razumova/activestress",
+    ("connectorSlot", "_m1alp"): "Razumova/activation",      # expose activation .
+    # ("connectorSlot", "m1lda"): "Razumova/l_hs",            # fiber stretch λ
+  }
+  variables.muscle2_mappings = {
+    ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
+    ("parameter", 1):           "Razumova/l_hs",            # parameter 1 is fiber stretch λ
+    ("connectorSlot", "_m2vm"):  "membrane/V",               # expose Vm to the operator splitting
+    ("connectorSlot", "_m2g_in"):"Razumova/activestress",
+    ("connectorSlot", "_m2alp"): "Razumova/activation",      # expose activation .
+    # ("connectorSlot", "m2lda"): "Razumova/l_hs",            # fiber stretch λ
   }
   variables.parameters_initial_values = [0, 1]
   variables.nodal_stimulation_current = 40.                           # not used

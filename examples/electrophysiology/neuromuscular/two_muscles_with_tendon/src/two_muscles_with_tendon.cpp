@@ -43,7 +43,55 @@ int main(int argc, char *argv[])
               Control::MultipleInstances<
                 TimeSteppingScheme::Heun<                   // fiber reaction term
                   CellmlAdapter<
-                    4, 9,  // nStates,nAlgebraics: 57,1 = Shorten, 4,9 = Hodgkin Huxley
+                    9, 19,  // nStates,nAlgebraics: 57,1 = Shorten, 4,9 = Hodgkin Huxley. 9.19 = HH-R
+                    FunctionSpace::FunctionSpace<
+                      Mesh::StructuredDeformableOfDimension<1>,
+                      BasisFunction::LagrangeOfOrder<1>
+                    >
+                  >
+                >
+              >,
+              Control::MultipleInstances<
+                TimeSteppingScheme::ImplicitEuler<          // fiber diffusion, note that implicit euler gives lower error in this case than crank nicolson
+                  SpatialDiscretization::FiniteElementMethod<
+                    Mesh::StructuredDeformableOfDimension<1>,
+                    BasisFunction::LagrangeOfOrder<1>,
+                    Quadrature::Gauss<2>,
+                    Equation::Dynamic::IsotropicDiffusion
+                  >
+                >
+              >
+            >
+          >
+        >,
+        // 3D bidomain
+        OutputWriter::OutputSurface<
+          TimeSteppingScheme::StaticBidomainSolver<              // bidomain
+            SpatialDiscretization::FiniteElementMethod<       //FEM for initial potential flow, fibre directions
+              Mesh::StructuredDeformableOfDimension<3>,
+              BasisFunction::LagrangeOfOrder<1>,
+              Quadrature::Gauss<3>,
+              Equation::Static::Laplace
+            >,
+            SpatialDiscretization::FiniteElementMethod<       // anisotropic diffusion
+              Mesh::StructuredDeformableOfDimension<3>,
+              BasisFunction::LagrangeOfOrder<1>,
+              Quadrature::Gauss<5>,
+              Equation::Dynamic::DirectionalDiffusion
+            >
+          >
+        >
+      >,
+      // Fast monodomain: 0D / 1D + 3D bidomain
+      Control::Coupling<
+        // Fast monodomain: 0D / 1D
+        FastMonodomainSolver<                        // a wrapper that improves performance of multidomain
+          Control::MultipleInstances<                       // fibers
+            OperatorSplitting::Strang<
+              Control::MultipleInstances<
+                TimeSteppingScheme::Heun<                   // fiber reaction term
+                  CellmlAdapter<
+                    9, 19,  // nStates,nAlgebraics: 57,1 = Shorten, 4,9 = Hodgkin Huxley. 9.19 = HH-R
                     FunctionSpace::FunctionSpace<
                       Mesh::StructuredDeformableOfDimension<1>,
                       BasisFunction::LagrangeOfOrder<1>

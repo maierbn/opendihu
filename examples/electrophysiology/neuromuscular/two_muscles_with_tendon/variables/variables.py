@@ -48,10 +48,10 @@ stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in f
 dt_muscle_spindles          = 1e-3  # [ms]
 dt_golgi_tendon_organs      = 1e-3  # [ms]
 dt_motoneuron               = 1e-3  # [ms]
-dt_0D = 1e-3                        # [ms] timestep width of ODEs
-dt_1D = 1.5e-3                      # [ms] timestep width of diffusion
+dt_0D = 0.5e-3                        # [ms] timestep width of ODEs
+dt_1D = 1e-3                      # [ms] timestep width of diffusion
 dt_bidomain = 1e-2                  # [ms] timestep width of multidomain
-dt_splitting_0D1D = 3e-3            # [ms] overall timestep width of strang splitting
+dt_splitting_0D1D = 1e-3            # [ms] overall timestep width of strang splitting
 dt_elasticity = 1e0                 # [ms] time step width of elasticity solver
 output_timestep = 1e0               # [ms] timestep for output files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
@@ -235,7 +235,8 @@ import os
 import numpy as np
 input_directory = os.path.join(os.environ.get('OPENDIHU_HOME', '../../../../../'), "examples/electrophysiology/input")
 
-cellml_file = input_directory+"/hodgkin_huxley_1952.c"
+# cellml_file = input_directory+"/hodgkin_huxley_1952.c"
+cellml_file = input_directory+"/hodgkin_huxley-razumova.cellml"
 fiber_distribution_file = input_directory+"/MU_fibre_distribution_multidomain_67x67_100.txt"
  
 

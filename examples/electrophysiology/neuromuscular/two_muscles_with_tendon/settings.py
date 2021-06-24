@@ -318,6 +318,13 @@ config = {
   },
 
 
+  # connections of the slots, identified by slot name
+  "connectedSlots": [
+    # use global slot, because automatic connection of "Razumova/activestress" does not work for some reason
+    ("m1gout", "m1g_in"),
+    ("m2gout", "m2g_in"),
+  ],
+
 
   "Coupling": {
     "timeStepWidth":          variables.dt_elasticity,

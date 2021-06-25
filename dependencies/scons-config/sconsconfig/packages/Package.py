@@ -879,6 +879,10 @@ class Package(object):
     if self.static:
       ctx.env.PrependUnique(CCFLAGS = '-static')
       ctx.env.PrependUnique(LINKFLAGS = '-static')
+    
+    # add pthread flag
+    ctx.env.AppendUnique(LINKFLAGS = '-pthread')
+    ctx.env.AppendUnique(CCFLAGS = '-pthread')
      
     if self.link_flags is not None:
       ctx.Log("  link_flags is set, use additional link flags: {}\n".format(self.link_flags))

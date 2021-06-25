@@ -1,13 +1,14 @@
 # Multiple 1D fibers (monodomain) with 3D contraction, biceps geometry
 # This is a helper script that sets a lot of the internal variables which are all defined in variables.py
-#
-# if variables.fiber_file=cuboid.bin, it uses a small cuboid test example
 
 import numpy as np
+import scipy
 import pickle
-import sys
+import sys,os
 import struct
 import argparse
+import random
+import time
 sys.path.insert(0, '..')
 import variables    # file variables.py
 from create_partitioned_meshes_for_settings import *   # file create_partitioned_meshes_for_settings
@@ -16,52 +17,15 @@ from create_partitioned_meshes_for_settings import *   # file create_partitioned
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
 
-# generate cuboid fiber file
-if "cuboid.bin" in variables.fiber_file:
-  
-  if variables.n_fibers_y is None:
-    variables.n_fibers_x = 4
-    variables.n_fibers_y = variables.n_fibers_x
-    variables.n_points_whole_fiber = 20
-  
-  size_x = variables.n_fibers_x * 0.1
-  size_y = variables.n_fibers_y * 0.1
-  size_z = variables.n_points_whole_fiber / 100.
-  
-  if rank_no == 0:
-    print("create cuboid.bin with size [{},{},{}], n points [{},{},{}]".format(size_x, size_y, size_z, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber))
-    
-    # write header
-    with open(variables.fiber_file, "wb") as outfile:
-      
-      # write header
-      header_str = "opendihu self-generated cuboid  "
-      outfile.write(struct.pack('32s',bytes(header_str, 'utf-8')))   # 32 bytes
-      outfile.write(struct.pack('i', 40))  # header length
-      outfile.write(struct.pack('i', variables.n_fibers_x*variables.n_fibers_y))   # n_fibers
-      outfile.write(struct.pack('i', variables.n_points_whole_fiber))   # variables.n_points_whole_fiber
-      outfile.write(struct.pack('i', 0))   # nBoundaryPointsXNew
-      outfile.write(struct.pack('i', 0))   # nBoundaryPointsZNew
-      outfile.write(struct.pack('i', 0))   # nFineGridFibers_
-      outfile.write(struct.pack('i', 1))   # nRanks
-      outfile.write(struct.pack('i', 1))   # nRanksZ
-      outfile.write(struct.pack('i', 0))   # nFibersPerRank
-      outfile.write(struct.pack('i', 0))   # date
-    
-      # loop over points
-      for y in range(variables.n_fibers_y):
-        for x in range(variables.n_fibers_x):
-          for z in range(variables.n_points_whole_fiber):
-            point = [x*(float)(size_x)/(variables.n_fibers_x), y*(float)(size_y)/(variables.n_fibers_y), z*(float)(size_z)/(variables.n_points_whole_fiber)]
-            outfile.write(struct.pack('3d', point[0], point[1], point[2]))   # data point
-
+variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
 variables.load_fiber_data = True   # load all local node positions from fiber_file, in order to infer partitioning for fat_layer mesh
 
 # create the partitioning using the script in create_partitioned_meshes_for_settings.py
 result = create_partitioned_meshes_for_settings(
     variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, 
     variables.fiber_file, variables.load_fiber_data,
-    variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.generate_linear_3d_mesh, variables.generate_quadratic_3d_mesh)
+    variables.sampling_stride_x, variables.sampling_stride_y, variables.sampling_stride_z, variables.generate_linear_3d_mesh, variables.generate_quadratic_3d_mesh,
+    fiber_set_rank_nos=False, have_fibers=True)
 [variables.meshes, variables.own_subdomain_coordinate_x, variables.own_subdomain_coordinate_y, variables.own_subdomain_coordinate_z, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber] = result
   
 variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
@@ -81,7 +45,6 @@ variables.mappings_between_meshes = {
     "defaultValue": 0,
   } for i in range(variables.n_fibers_total)
 }
-
 
 # set output writer    
 variables.output_writer_fibers = []
@@ -175,10 +138,10 @@ elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "
   variables.mappings = {
     ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
     ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 11 = fiber stretch λ
-    #("parameter", 2):           ("constant", "Razumova/rel_velo"),    # parameter 2 is constant 12 = fiber contraction velocity \dot{λ}
-    ("connectorSlot", 0):       ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
-    ("connectorSlot", "stress"):("algebraic", "Razumova/ActiveStress"),   # expose algebraic 4 = γ to the operator splitting
-    #("connectorSlot", "gamma"): ("algebraic", "Razumova/Activation"),     # expose algebraic 5 = α to the operator splitting
+    ("parameter", 2):           ("constant", "Razumova/rel_velo"),    # parameter 2 is constant 12 = fiber contraction velocity \dot{λ}
+    ("connectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
+    ("connectorSlot", 1): ("algebraic", "Razumova/ActiveStress"),   # expose algebraic 4 = γ to the operator splitting
+    ("connectorSlot", 2): ("algebraic", "Razumova/Activation"),     # expose algebraic 5 = α to the operator splitting
   }
   variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
   variables.nodal_stimulation_current = 40.                           # not used
@@ -189,9 +152,9 @@ elif "hodgkin_huxley-razumova" in variables.cellml_file:   # this is (4, "Titin"
   variables.mappings = {
     ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
     ("parameter", 1):           "Razumova/l_hs",            # parameter 1 is fiber stretch λ
-    ("connectorSlot", 0):    "membrane/V",               # expose Vm to the operator splitting
+    ("connectorSlot", "vmf"):    "membrane/V",               # expose Vm to the operator splitting
     ("connectorSlot", "stress"):"Razumova/activestress",
-#    ("connectorSlot", "alpha"): "Razumova/activation",      # expose activation .
+    ("connectorSlot", "alpha"): "Razumova/activation",      # expose activation .
   }
   variables.parameters_initial_values = [0, 1]
   variables.nodal_stimulation_current = 40.                           # not used
@@ -201,8 +164,11 @@ else:
   print("\033[0;31mCellML file {} has no mappings implemented in helper.py\033[0m".format(variables.cellml_file))
   quit()
 
+# load MU distribution and firing times
+variables.firing_times = np.genfromtxt(variables.firing_times_file)
+
+# ---------------------
 # callback functions
-# --------------------------
 def get_motor_unit_no(fiber_no):
   return int(variables.fiber_distribution[fiber_no % len(variables.fiber_distribution)]-1)
 
@@ -227,32 +193,6 @@ def fiber_gets_stimulated(fiber_no, frequency, current_time):
   
   return variables.firing_times[index % n_firing_times, mu_no] == 1
   
-# callback function that can set parameters, i.e. stimulation current
-def set_specific_parameters(n_nodes_global, time_step_no, current_time, parameters, fiber_no):
-  
-  # determine if fiber gets stimulated at the current time
-  is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, variables.stimulation_frequency, current_time)
-  
-  # determine nodes to stimulate (center node, left and right neighbour)
-  innervation_zone_width_n_nodes = variables.innervation_zone_width*100  # 100 nodes per cm
-  innervation_node_global = int(n_nodes_global / 2)  # + np.random.randint(-innervation_zone_width_n_nodes/2,innervation_zone_width_n_nodes/2+1)
-  nodes_to_stimulate_global = [innervation_node_global]
-  
-  for k in range(10):
-    if innervation_node_global-k >= 0:
-      nodes_to_stimulate_global.insert(0, innervation_node_global-k)
-    if innervation_node_global+k <= n_nodes_global-1:
-      nodes_to_stimulate_global.append(innervation_node_global+k)
-  
-  # stimulation value
-  if is_fiber_gets_stimulated:
-    stimulation_current = 40.
-  else:
-    stimulation_current = 0.
-
-  for node_no_global in nodes_to_stimulate_global:
-    parameters[(node_no_global,0)] = stimulation_current   # key: ((x,y,z),nodal_dof_index)
-
 # callback function that can set states, i.e. prescribed values for stimulation
 def set_specific_states(n_nodes_global, time_step_no, current_time, states, fiber_no):
 
@@ -270,8 +210,8 @@ def set_specific_states(n_nodes_global, time_step_no, current_time, states, fibe
       nodes_to_stimulate_global.insert(0, innervation_node_global-1)
     if innervation_node_global < n_nodes_global-1:
       nodes_to_stimulate_global.append(innervation_node_global+1)
-    #if rank_no == 0:
-    #  print("t: {}, stimulate fiber {} at nodes {}".format(current_time, fiber_no, nodes_to_stimulate_global))
+    if rank_no == 0:
+      print("t: {}, stimulate fiber {} at nodes {}".format(current_time, fiber_no, nodes_to_stimulate_global))
 
     for node_no_global in nodes_to_stimulate_global:
       states[(node_no_global,0,0)] = 20.0   # key: ((x,y,z),nodal_dof_index,state_no)
@@ -350,46 +290,129 @@ if rank_no == 0:
 ####################################
 # set Dirichlet BC for the flow problem
 
-n_points_3D_mesh_global_x = sum([n_sampled_points_in_subdomain_x(subdomain_coordinate_x) for subdomain_coordinate_x in range(variables.n_subdomains_x)])
-n_points_3D_mesh_global_y = sum([n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(variables.n_subdomains_y)])
-n_points_3D_mesh_global_z = sum([n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(variables.n_subdomains_z)])
-n_points_3D_mesh_global = n_points_3D_mesh_global_x*n_points_3D_mesh_global_y*n_points_3D_mesh_global_z
+n_points_3D_mesh_linear_global_x = sum([n_sampled_points_in_subdomain_x(subdomain_coordinate_x) for subdomain_coordinate_x in range(variables.n_subdomains_x)])
+n_points_3D_mesh_linear_global_y = sum([n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(variables.n_subdomains_y)])
+n_points_3D_mesh_linear_global_z = sum([n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(variables.n_subdomains_z)])
+n_points_3D_mesh_linear_global = n_points_3D_mesh_linear_global_x*n_points_3D_mesh_linear_global_y*n_points_3D_mesh_linear_global_z
+
+n_points_3D_mesh_quadratic_global_x = 2*n_points_3D_mesh_linear_global_x - 1
+n_points_3D_mesh_quadratic_global_y = 2*n_points_3D_mesh_linear_global_y - 1
+n_points_3D_mesh_quadratic_global_z = 2*n_points_3D_mesh_linear_global_z - 1
+ 
+variables.n_points_global_mesh = n_points_3D_mesh_quadratic_global_x*n_points_3D_mesh_quadratic_global_y*n_points_3D_mesh_quadratic_global_z
  
 # set Dirichlet BC values for bottom nodes to 0 and for top nodes to 1
 variables.potential_flow_dirichlet_bc = {}
-for i in range(n_points_3D_mesh_global_x*n_points_3D_mesh_global_y):
+for i in range(n_points_3D_mesh_linear_global_x*n_points_3D_mesh_linear_global_y):
   variables.potential_flow_dirichlet_bc[i] = 0.0
-  variables.potential_flow_dirichlet_bc[(n_points_3D_mesh_global_z-1)*n_points_3D_mesh_global_x*n_points_3D_mesh_global_y + i] = 1.0
-    
+  variables.potential_flow_dirichlet_bc[(n_points_3D_mesh_linear_global_z-1)*n_points_3D_mesh_linear_global_x*n_points_3D_mesh_linear_global_y + i] = 1.0
+
+variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
+variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
+  
 # set boundary conditions for the elasticity
 [mx, my, mz] = variables.meshes["3Dmesh_quadratic"]["nPointsGlobal"]
 nx = (mx-1)//2
 ny = (my-1)//2
 nz = (mz-1)//2
 
-# set Dirichlet BC at top nodes for elasticity problem, fix muscle at top
-variables.elasticity_dirichlet_bc = {}
-for j in range(my):
+# copy meshes
+import copy
+variables.meshes["3Dmesh_quadratic_precontraction"] = copy.deepcopy(variables.meshes["3Dmesh_quadratic"])
+
+# set Dirichlet BC at top nodes for linear elasticity problem, fix muscle at top
+
+# parameters for precontraction
+# -----------------------------
+variables.precontraction_elasticity_dirichlet_bc = {}
+
+# fix top of muscle in z direction
+if False:   # (disabled for better convergence)
+  for j in range(my):
+    for i in range(mx):
+      variables.precontraction_elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
+
+j_center = my//2
+i_center = mx//2
+
+# fix center point at thte top completely
+variables.precontraction_elasticity_dirichlet_bc[(mz-1)*mx*my + j_center*mx + i_center] = [0.0,0.0,0.0,None,None,None]
+
+# fix line through edge
+if False:   # (disabled for better convergence)
   for i in range(mx):
-    variables.elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
-  
-# fix edge
+    variables.precontraction_elasticity_dirichlet_bc[(mz-1)*mx*my + j_center*mx + i] = [0.0,0.0,0.0,None,None,None]
+
+# guide lower end of muscle along z axis
+# muscle mesh
 if False:
-  for i in range(mx):
-    variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
-
-# guide bottom end
-for j in range(my):
-  for i in range(mx):
-    variables.elasticity_dirichlet_bc[j*mx + i] = [0.0,0.0,None,None,None,None]
-
- 
-# fix corner completely
-variables.elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
+  for j in range(my):
+    for i in range(mx):
+      variables.precontraction_elasticity_dirichlet_bc[0*mx*my + j*mx + i] = [0.0,0.0,None,None,None,None]
+      
+# fix the horizontal movement of the longitudinal center line through the muscle
+for k in range(mz-1):
+  variables.precontraction_elasticity_dirichlet_bc[k*mx*my + j_center*mx + i_center] = [0.0,0.0,None,None,None,None]
 
 # Neumann BC at bottom nodes, traction downwards
-variables.elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
-#variables.elasticity_neumann_bc = []
+# muscle mesh
+variables.precontraction_elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.precontraction_bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
+
+# parameters for prestretch
+# -----------------------------
+if hasattr(variables, "prestretch_bottom_traction"):
+  variables.prestretch_elasticity_dirichlet_bc = {}
+  # muscle mesh
+  for j in range(my):
+    for i in range(mx):
+      variables.prestretch_elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
+
+  # fix edge, note: the prestretch simulation does not work without this (linear solver finds no solution)
+  for i in range(mx):
+    variables.prestretch_elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,0.0,0.0,None,None,None]
+    
+  # fix corner completely
+  variables.prestretch_elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
+
+  # guide lower end of muscle along z axis
+  # muscle mesh
+  for j in range(my):
+    for i in range(mx):
+      variables.prestretch_elasticity_dirichlet_bc[0*mx*my + j*mx + i] = [0.0,0.0,None,None,None,None]
+
+  # Neumann BC at bottom nodes, traction downwards
+  # muscle mesh
+  variables.prestretch_elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.prestretch_bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
+
+# parameters for the main simulation
+# ---------------------------------------------
+if hasattr(variables, "main_bottom_traction"):
+  variables.main_elasticity_dirichlet_bc = {}
+
+  # set Dirichlet BC at top nodes for elasticity problem, fix muscle at top
+  for j in range(my):
+    for i in range(mx):
+      variables.main_elasticity_dirichlet_bc[(mz-1)*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
+
+  # fix edge at the top
+  if True:
+    for i in range(mx):
+      #variables.main_elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,None,0.0,None,None,None]
+      variables.main_elasticity_dirichlet_bc[(mz-1)*mx*my + 0*mx + i] = [0.0,0.0,0.0,None,None,None]
+    
+  # fix corner completely
+  variables.main_elasticity_dirichlet_bc[(mz-1)*mx*my + 0] = [0.0,0.0,0.0,None,None,None]
+
+
+  # guide lower end of muscle along z axis
+  # muscle mesh
+  for j in range(my):
+    for i in range(mx):
+      variables.main_elasticity_dirichlet_bc[0*mx*my + j*mx + i] = [0.0,0.0,None,None,None,None]
+
+# Neumann BC at bottom nodes, traction downwards
+variables.main_elasticity_neumann_bc = [{"element": 0*nx*ny + j*nx + i, "constantVector": variables.main_bottom_traction, "face": "2-"} for j in range(ny) for i in range(nx)]
+#variables.main_elasticity_neumann_bc = []
 
 #print("bottom_traction={}\n elasticity_neumann_bc={}".format(variables.bottom_traction,variables.elasticity_neumann_bc))
 

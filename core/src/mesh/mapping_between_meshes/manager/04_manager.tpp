@@ -470,6 +470,11 @@ prepareMapping(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
   {
     // zero entries in component of target field variable
     zeroTargetFieldVariable(fieldVariableTarget, componentNoTarget);
+    
+    // communicate ghost buffers in source field variable
+    fieldVariableSource->zeroGhostBuffer();
+    fieldVariableSource->finishGhostManipulation();
+    fieldVariableSource->startGhostManipulation();
   }
 
   // reset counter of mapped meshes for log
@@ -500,6 +505,11 @@ finalizeMapping(std::shared_ptr<FieldVariableSourceType> fieldVariableSource,
   }
   else if (mapHighToLow)
   {
+    // check if fiber geometry is reasonable
+    // if the mapping is from 3D to 1D and the field variable has 3 components (which indicates geometry)
+    if (FieldVariableSourceType::FunctionSpace::dim() == 3 && FieldVariableTargetType::FunctionSpace::dim() == 1 && FieldVariableTargetType::nComponents() == 3)
+      repairMappedGeometryFibers(fieldVariableTarget);
+      
     addLogEntryFieldVariable(fieldVariableSource, componentNoSource, fieldVariableTarget, componentNoTarget, mappingLogEntry_t::logEvent_t::eventMapReverse);
   }
 }

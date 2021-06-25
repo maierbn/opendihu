@@ -122,6 +122,10 @@ sampling_stride_z = 740  # 74,120, 1, 2, 4, 5, 8, 10, 20, 37, 40, 74, 148, 185, 
 # 74 -> 20
 # 37 -> 40
 
+distribute_nodes_equally = True     # (default: False)
+# True: set high priority to make subdomains have an equal number of nodes, however, this potentially creates tiny remainder elements inside the subdomains
+# False: make elements more equally sized, this can lead to a slight imbalance in the number of fibers per subdomain
+
 # Tolerance value in the element coordinate system of the 3D elements, [0,1]^3
 # when a fiber point is still considered part of the element.
 # Try to increase this such that all mappings have all points.

@@ -357,17 +357,25 @@ computePK2Stress(double_v_t &pressure,                                   //< [in
     if (!mismatch)
       LOG_N_TIMES(2,DEBUG) << "Sbar is correct!";
   }
+#endif
 
 #ifndef NDEBUG
   if (MathUtility::containsNanOrInf(pK2Stress, elementNoLocalv))
   {
     if (MathUtility::containsNanOrInf(fictitiousPK2Stress, elementNoLocalv))
     {
+#ifdef HAVE_STDSIMD
+      LOG(ERROR) << "fictitiousPK2Stress contains nan";
+#else
       LOG(ERROR) << "fictitiousPK2Stress contains nan: " << fictitiousPK2Stress << ", J=" << J;
-    }
-    LOG(ERROR) << "PK2stress contains nan: " << pK2Stress;
-  }
 #endif
+    }
+#ifdef HAVE_STDSIMD
+    LOG(ERROR) << "PK2stress contains nan";
+#else
+    LOG(ERROR) << "PK2stress contains nan: " << pK2Stress;
+#endif
+  }
 #endif
 
   return pK2Stress;

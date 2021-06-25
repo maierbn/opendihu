@@ -8,6 +8,7 @@
 #include <chrono>
 #include <sys/stat.h> // stat
 #include <unistd.h>   // stat
+#include <errno.h>    // errno
 #include <sstream>
 #include "easylogging++.h"
 #include "utility/vector_operators.h"
@@ -262,18 +263,67 @@ void CellmlSourceCodeGeneratorBase::convertFromXmlToC()
   for (;;)
   {
     struct stat buffer;
+    
     // if file cFilename exists, exit infinite loop
-    if (stat(cFilename.c_str(), &buffer) == 0)
+    int ret = stat(cFilename.c_str(), &buffer);
+    
+    LOG(DEBUG) << "return value of stat: " << ret;
+    if (ret == 0)
     {
-      break;
+      LOG(DEBUG) << "Obtained information about \"" << cFilename << "\": dev: " << buffer.st_dev << ", ino: " << buffer.st_ino << ", mode: " << buffer.st_mode << ", nlink: " << buffer.st_nlink
+        << ", uid: " << buffer.st_uid << ", gid: " << buffer.st_gid << ", rdev: " << buffer.st_rdev << ", size: " << buffer.st_size << ", blksize: " << buffer.st_blksize
+        << ", blocks: " << buffer.st_blocks << ", atime: " << buffer.st_atime << ", mtime: " << buffer.st_mtime << ", ctime: " << buffer.st_ctime;
+        
+      // on linux, the file is first created as empty file, afterwards it obtains its final length
+      // if the file is non-empty, we are done with waiting
+      if (buffer.st_size != 0)
+        break;
     }
-
+    else 
+    {
+      switch(errno)
+      {
+      case EACCES: 
+        LOG(DEBUG) << "EACCES: Search permission is denied for one of the directories in the path prefix of path.";
+        break;
+      case EBADF: 
+        LOG(DEBUG) << "EBADF: fd is bad.";
+        break;
+      case EFAULT: 
+        LOG(DEBUG) << "EFAULT: Bad address. ";
+        break;
+      case ELOOP: 
+        LOG(DEBUG) << "ELOOP: Too many symbolic links encountered while traversing the path. ";
+        break;
+      case ENAMETOOLONG: 
+        LOG(DEBUG) << "ENAMETOOLONG: path is too long.";
+        break;
+      case ENOENT: 
+        LOG(DEBUG) << "ENOENT: A component of path does not exist, or path is an empty string";
+        break;
+      case ENOMEM: 
+        LOG(DEBUG) << "ENOMEM: Out of memory (i.e., kernel memory). ";
+        break;
+      case ENOTDIR: 
+        LOG(DEBUG) << "ENOTDIR: A component of the path prefix of path is not a directory.";
+        break;
+      case EOVERFLOW: 
+        LOG(DEBUG) << "EOVERFLOW: path or fd refers to a file whose size, inode number, or number of blocks cannot be represented in, respectively, the types off_t, ino_t, or blkcnt_t. ";
+        break;
+      default: 
+        LOG(DEBUG) << "Other error with errno " << errno;
+        break;
+      }
+    }
+    LOG(DEBUG) << "C file \"" << cFilename << "\" does not yet exist or is empty, wait until it was created by rank 0.";
+    
     // yield to other processes
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
     std::this_thread::yield();
   }
 
   sourceFilename_ = cFilename;
+  LOG(DEBUG) << "convertFromXmlToC finished, sourceFilename_: \"" << sourceFilename_ << "\"";
 }
 
 void CellmlSourceCodeGeneratorBase::generateSingleInstanceCode()

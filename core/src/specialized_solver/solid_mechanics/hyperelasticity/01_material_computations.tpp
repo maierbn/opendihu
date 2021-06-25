@@ -263,12 +263,12 @@ materialComputeInternalVirtualWork(bool communicateGhosts)
 
       if (Vc::any_of(deformationGradientDeterminant < 1e-12))   // if any entry of the deformation gradient is negative
       {
-#ifndef HAVE_STDSIMD
+#ifdef HAVE_STDSIMD
+        LOG(WARNING) << "Deformation gradient " << deformationGradient << " has zero or negative determinant";
+#else
         LOG(WARNING) << "Deformation gradient " << deformationGradient << " has zero or negative determinant " << deformationGradientDeterminant
           << std::endl << "Geometry values in element " << elementNoLocal << ": " << geometryReferenceValues << std::endl
           << "Displacements at xi " << xi << ": " << displacementsValues;
-#else
-        LOG(WARNING) << "Deformation gradient has zero or negative determinant.";
 #endif
         this->lastSolveSucceeded_ = false;
       }
@@ -879,9 +879,9 @@ materialAddAccelerationTermAndVelocityEquation(bool communicateGhosts)
 #ifdef USE_VECTORIZED_FE_MATRIX_ASSEMBLY
         for (int vcComponentNo = 0; vcComponentNo < Vc::double_v::size(); vcComponentNo++)
         {
-          if (dofNoLocal[vcComponentNo] != -1 && dofNoLocal[vcComponentNo] < functionSpace->nDofsLocalWithoutGhosts())
+          if ((int)dofNoLocal[vcComponentNo] != -1 && (int)dofNoLocal[vcComponentNo] < functionSpace->nDofsLocalWithoutGhosts())
           {
-            combinedVecResidual_->setValue(3 + dimensionNo, (int)(dofNoLocal[vcComponentNo]), (double)(residuum[vcComponentNo]), INSERT_VALUES);
+            combinedVecResidual_->setValue(3 + dimensionNo, (int)dofNoLocal[vcComponentNo], (double)residuum[vcComponentNo], INSERT_VALUES);
           }
         }
 #else
@@ -1215,14 +1215,13 @@ materialComputeJacobian()
 
       if (Vc::any_of(deformationGradientDeterminant < 1e-12))   // if any entry of the deformation gradient is negative
       {
-#ifndef HAVE_STDSIMD
+#ifdef HAVE_STDSIMD
+        LOG(WARNING) << "Deformation gradient has zero or negative determinant.";
+#else
         LOG(WARNING) << "Deformation gradient " << deformationGradient << " has zero or negative determinant " << deformationGradientDeterminant
           << std::endl << "Geometry values in element " << elementNoLocal << ": " << geometryReferenceValues << std::endl
           << "Displacements at xi " << xi << ": " << displacementsValues;
-#else
-        LOG(WARNING) << "Deformation gradient has zero or negative determinant";
 #endif
-
         this->lastSolveSucceeded_ = false;
       }
 

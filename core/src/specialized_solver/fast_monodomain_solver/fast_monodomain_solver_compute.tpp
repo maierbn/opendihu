@@ -554,6 +554,7 @@ isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointI
 
       fiberDataCurrentPoint.lastStimulationCheckTime += 1./(setSpecificStatesCallFrequency+currentJitter);
 
+      LOG(INFO) << "t: " << fiberDataCurrentPoint.lastStimulationCheckTime << ", stimulate fiber " << fiberDataCurrentPoint.fiberNoGlobal << ", MU " << motorUnitNo;
 #ifndef NDEBUG
       LOG(DEBUG) << " new lastStimulationCheckTime: " << fiberDataCurrentPoint.lastStimulationCheckTime;
 #endif
@@ -610,7 +611,7 @@ isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointI
       << ", stimulation already for " << + 1./(setSpecificStatesCallFrequency+currentJitter);
 #endif
 
-    LOG(INFO) << "t: " << currentTime << ", stimulate fiber " << fiberDataCurrentPoint.fiberNoGlobal << ", MU " << motorUnitNo;
+    //LOG(INFO) << "t: " << currentTime << ", stimulate fiber " << fiberDataCurrentPoint.fiberNoGlobal << ", MU " << motorUnitNo;
   }
 
   if (!stimulate)

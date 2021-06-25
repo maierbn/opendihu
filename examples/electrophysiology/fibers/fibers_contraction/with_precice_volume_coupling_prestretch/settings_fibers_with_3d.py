@@ -157,7 +157,6 @@ config = {
   "logFormat":                      "csv",                      # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "out/" + variables.scenario_name + "/solver_structure_fibers_with_3d.txt",     # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "out/" + variables.scenario_name + "/mappings_between_meshes_fibers_with_3d.txt",
-  "regularization": None,
   "meta": {                 # additional fields that will appear in the log
     "partitioning": [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },
@@ -336,8 +335,8 @@ config = {
                       "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
                       "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
                       "checkForNanInf":              False,                                   # if the solution should be checked for NaN and inf values, this requires a lot of runtimes
-                      "nAdditionalFieldVariables":   1,                                       # number of additional field variables that should be added and potentially written to output files, these field variables can be used for receiving data from other solvers
-                      "additionalSlotNames":         ["gamma"],                               # slot names for the additional field variables
+                      "nAdditionalFieldVariables":   2,                                       # number of additional field variables that should be added and potentially written to output files, these field variables can be used for receiving data from other solvers
+                      "additionalSlotNames":         ["gamma", "activation"],                 # slot names for the additional field variables
                       
                       "FiniteElementMethod" : {
                         "inputMeshIsGlobal":         True,

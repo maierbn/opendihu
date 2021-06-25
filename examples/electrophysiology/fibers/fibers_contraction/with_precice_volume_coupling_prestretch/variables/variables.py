@@ -25,15 +25,28 @@ potential_flow_solver_reltol = 1e-10
 emg_solver_type = "cg"              # solver and preconditioner for the 3D static Bidomain equation that solves the intra-muscular EMG signal
 emg_preconditioner_type = "none"    # preconditioner
 emg_initial_guess_nonzero = False   # If the initial guess for the emg linear system should be set to the previous solution
+emg_solver_maxit = 1e4
+emg_solver_abstol = 1e-5
+emg_solver_reltol = 1e-5
+
+# elasticity
+elasticity_solver_type = "preonly"
+elasticity_preconditioner_type = "lu"
+snes_max_iterations = 10                  # maximum number of iterations in the nonlinear solver
+snes_rebuild_jacobian_frequency = 2       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+snes_relative_tolerance = 1e-5      # relative tolerance of the nonlinear solver
+snes_absolute_tolerance = 1e-5      # absolute tolerance of the nonlinear solver
+linear_relative_tolerance = 1e-5           # relative tolerance of the residual of the linear solver
+linear_absolute_tolerance = 1e-10          # absolute tolerance of the residual of the linear solver
 
 # timing parameters
 # -----------------
 end_time = 1000.0                   # [ms] end time of the simulation
-stimulation_frequency = 1000*1e-3   # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz.
+stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz. This is not used here.
 dt_0D = 1e-3                        # [ms] timestep width of ODEs
 dt_1D = 1.5e-3                      # [ms] timestep width of diffusion
 dt_splitting = 3e-3                 # [ms] overall timestep width of strang splitting
-dt_3D = 1e0                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG
+dt_elasticity = 1e0                 # [ms] time step width of elasticity solver
 output_timestep = 1e0               # [ms] timestep for output files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 
@@ -59,14 +72,18 @@ paraview_output = False             # If the paraview output writer should be en
 adios_output = False                # If the MegaMol/ADIOS output writer should be enabled
 python_output = False               # If the Python output writer should be enabled
 exfile_output = False               # If the Exfile output writer should be enabled
+initial_guess_nonzero = True        # if the initial guess of the multidomain solver should be set to the previous values, this is only possible if an iterative solver is used
+theta = 0.5                         # weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler
+use_symmetric_preconditioner_matrix = True    # if the diagonal blocks of the system matrix should be used as preconditioner matrix
+use_lumped_mass_matrix = False      # which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations
+show_linear_solver_output = True    # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
 optimization_type = "vc"            # the optimization_type used in the cellml adapter, "vc" uses explicit vectorization
 approximate_exponential_function = True   # if the exponential function should be approximated by a Taylor series with only 11 FLOPS
 
 
 # motor unit stimulation times
-fiber_distribution_file = "../../../../input/MU_fibre_distribution_3780.txt"
-firing_times_file = "../../../../input/MU_firing_times_real.txt"
-#firing_times_file = "../../../../input/MU_firing_times_immediately.txt"
+firing_times_file = "../../../input/MU_firing_times_real.txt"
+#firing_times_file = "../../../input/MU_firing_times_immediately.txt"
 
 # partitioning
 # ------------
@@ -79,8 +96,6 @@ n_subdomains_z = 1
 sampling_stride_x = 2
 sampling_stride_y = 2
 sampling_stride_z = 150   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
-
-mapping_tolerance = 0.1
 
 # scenario name for log file
 scenario_name = ""
@@ -146,6 +161,12 @@ n_fiber_nodes_on_subdomain = None
 fiber_start_node_no = None
 generate_linear_3d_mesh = True
 generate_quadratic_3d_mesh = True
+fat_mesh_n_points = None
+fat_mesh_n_points_global = None
+local_range_i = None
+local_range_k = None
+relative_factors = None
+n_compartments = None
 rho = None
 material_parameters = None
 nx = None

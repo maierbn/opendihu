@@ -23,6 +23,7 @@ parseNamesInSourceCodeFile()
   if (!sourceFile.is_open())
   {
     LOG(FATAL) << "Could not open source file \"" << this->sourceFilename_<< "\" for reading!";
+    LOG(DEBUG) << "good: " << sourceFile.good() << " eof: " << sourceFile.eof() << ", fail: " << sourceFile.fail() << ", bad: " << sourceFile.bad();
   }
   else
   {
@@ -30,6 +31,11 @@ parseNamesInSourceCodeFile()
     std::stringstream source;
     source << sourceFile.rdbuf();
     sourceFile.close();
+    
+    source.seekg(0, std::ios::end);
+    int fileSize = source.tellg();
+    source.seekg(0, std::ios::beg);
+    LOG(DEBUG) << "Length of file \"" << this->sourceFilename_ << "\": " << fileSize;
 
     // step through lines
     while(!source.eof())

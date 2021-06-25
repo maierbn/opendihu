@@ -4,15 +4,27 @@ scenario_name = "ramp"
 
 # material parameters
 # --------------------
-# quantities in CellML unit system
-sigma_f = 8.93              # [mS/cm] conductivity in fiber direction (f)
+# parameters for precontraction
+# -----------------------------
+# load
+#precontraction_constant_body_force = (0,0,50*9.81e-4)   # [cm/ms^2], gravity constant for the body force
+precontraction_constant_body_force = (0,0,10*9.81e-4)   # [cm/ms^2], gravity constant for the body force
+precontraction_bottom_traction = [0,0,0]        # [N]
+constant_gamma = 0.25    # if it diverges, reduce this value, the active stress will be pmax*constant_gamma
 
-Conductivity = sigma_f      # [mS/cm] sigma, conductivity
-Am = 500.0                  # [cm^-1] surface area to volume ratio
-Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch)
-# diffusion prefactor = Conductivity/(Am*Cm)
+# parameters for prestretch
+# -----------------------------
+# load
+prestretch_constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
+prestretch_bottom_traction = [0,0,-10]        # [N]  (-30 also works)
 
-# quantities in mechanics unit system
+# parameters for main simulation
+# load
+main_constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
+main_bottom_traction = [0,0,-10]        # [N]  (-30 works)
+
+# general parameters
+# -----------------------------
 rho = 10                    # [1e-4 kg/cm^3] density of the muscle (density of water)
 
 # Mooney-Rivlin parameters [c1,c2,b,d] of c1*(Ibar1 - 3) + c2*(Ibar2 - 3) + b/d (λ - 1) - b*ln(λ)
@@ -25,16 +37,23 @@ b  = 1.075e-2               # [N/cm^2] anisotropy parameter
 d  = 9.1733                 # [-] anisotropy parameter
 material_parameters = [c1, c2, b, d]   # material parameters
 pmax = 7.3                  # [N/cm^2] maximum isometric active stress
-#pmax = 3.65
-#pmax = 2
 
 # for debugging, b = 0 leads to normal Mooney-Rivlin
 #b = 0
 
+material_parameters = [c1, c2, b, d]   # material parameters
+
+# quantities in CellML unit system
+#Conductivity = 3.828        # [mS/cm] sigma, conductivity 
+Conductivity = 8.93         # [mS/cm] sigma, conductivity 
+sigma_f = 8.93              # [mS/cm] conductivity in fiber direction (f)
+
+Conductivity = sigma_f      # [mS/cm] sigma, conductivity
+Am = 500.0                  # [cm^-1] surface area to volume ratio
+Cm = 0.58                   # [uF/cm^2] membrane capacitance, (1 = fast twitch, 0.58 = slow twitch)
+# diffusion prefactor = Conductivity/(Am*Cm)
+
 constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
-#constant_body_force = (0,0,0)
-bottom_traction = [0.0,0.0,-1e-1]        # [1 N]
-#bottom_traction = [0.0,0.0,0.0]        # [1 N]
 
 # timing and activation parameters
 # -----------------
@@ -54,23 +73,24 @@ motor_units = [
 ]
 # note: negative start time is the same as zero, it is just there for debugging. Delete the minus signs to get a ramp
 
-end_time = 100                      # [ms] end time of the simulation
+end_time = 10                      # [ms] end time of the simulation
 dt_0D = 2.5e-5                      # [ms] timestep width of ODEs (2e-3)
 dt_1D = 2.5e-5                      # [ms] timestep width of diffusion (4e-3)
 dt_splitting = 2.5e-5               # [ms] overall timestep width of strang splitting (4e-3)
-dt_3D = 1                         # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG, this has to be the same value as in the precice_config.xml
+dt_3D = 1                           # [ms] time step width of coupling, when 3D should be performed, also sampling time of monopolar EMG, this has to be the same value as in the precice_config.xml
 output_timestep = 10.0                # [ms] timestep for output files, 5.0
 output_timestep_fibers = output_timestep   # [ms] timestep for fiber output
 output_timestep_big = 100.0            # [ms] timestep for output big files of 3D EMG, 100
+output_timestep_elasticity = 20      # [ms] timestep for elasticity output files
 
 # The values of dt_3D and end_time have to be also defined in "precice-config.xml" with the same value (the value is only significant in the precice-config.xml, the value here is used for output writer time intervals)
 # <max-time value="100.0"/>           <!-- end time of the whole simulation -->
 # <time-window-size value="1e0"/>   <!-- timestep width dt_3D -->
 
-import opendihu
-
 # stride for sampling the 3D elements from the fiber data
 # a higher number leads to less 3D elements
+
+import opendihu
 
 # parameters for the contraction program
 if "contraction" in opendihu.program_name:
@@ -82,31 +102,34 @@ if "contraction" in opendihu.program_name:
 else:
   # parameters for the fibers_with_3d program
   
-  sampling_stride_x = 1
-  sampling_stride_y = 1
-  sampling_stride_z = 20
+  sampling_stride_x = 2
+  sampling_stride_y = 2
+  sampling_stride_z = 185
   # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40 
 
-distribute_nodes_equally = False     # (default: False)
+distribute_nodes_equally = True     # (default: False)
 # True: set high priority to make subdomains have approximately equal number of fibers but creates tiny remainder elements inside the subdomains
 # False: make elements more equally sized, this can lead to a slight imbalance in the number of fibers per subdomain
 
 # Tolerance value in the element coordinate system of the 3D elements, [0,1]^3
 # when a fiber point is still considered part of the element.
 # Try to increase this such that all mappings have all points.
-#mapping_tolerance = 0.3
-mapping_tolerance = 1.0
+mapping_tolerance = 0.3
+#mapping_tolerance = 1.0
 
 # input files
+# -----------
 import os
+import opendihu
 input_directory   = os.path.join(os.environ["OPENDIHU_HOME"], "examples/electrophysiology/input")
 
+#fiber_file        = input_directory + "/left_biceps_brachii_7x7fibers.bin"
 fiber_file        = input_directory + "/left_biceps_brachii_9x9fibers.old.bin"
 #fiber_file        = input_directory + "/left_biceps_brachii_13x13fibers.bin"
 firing_times_file = input_directory + "/MU_firing_times_always.txt"
 #fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs.txt"
-fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs_13x13.txt"
-cellml_file       = input_directory + "/new_slow_TK_2014_12_08.cellml"
+fiber_distribution_file = input_directory + "/MU_fibre_distribution_9x9_10.txt"
+#fiber_distribution_file = input_directory + "/MU_fibre_distribution_10MUs_13x13.txt"
 
 # if the hodgkin_huxley-razumova model is used
 if "hh" in opendihu.program_name:
@@ -150,7 +173,7 @@ def get_conductivity(fiber_no, mu_no):
   return Conductivity
 
 def get_specific_states_call_frequency(fiber_no, mu_no):
-  stimulation_frequency = motor_units[mu_no % len(motor_units)]["stimulation_frequency"]*0.2
+  stimulation_frequency = motor_units[mu_no % len(motor_units)]["stimulation_frequency"]
   return stimulation_frequency*1e-3
 
 def get_specific_states_frequency_jitter(fiber_no, mu_no):
@@ -158,3 +181,26 @@ def get_specific_states_frequency_jitter(fiber_no, mu_no):
 
 def get_specific_states_call_enable_begin(fiber_no, mu_no):
   return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3
+
+# callback function for artifical stress values in precontraction computation
+def set_gamma_values(n_dofs_global, n_nodes_global_per_coordinate_direction, time_step_no, current_time, values, global_natural_dofs, custom_argument):
+    # n_dofs_global:       (int) global number of dofs in the mesh where to set the values
+    # n_nodes_global_per_coordinate_direction (list of ints)   [mx, my, mz] number of global nodes in each coordinate direction. 
+    #                       For composite meshes, the values are only for the first submesh, for other meshes sum(...) equals n_dofs_global
+    # time_step_no:        (int)   current time step number
+    # current_time:        (float) the current simulation time
+    # values:              (list of floats) all current local values of the field variable, if there are multiple components, they are stored in struct-of-array memory layout 
+    #                       i.e. [point0_component0, point0_component1, ... point0_componentN, point1_component0, point1_component1, ...]
+    #                       After the call, these values will be assigned to the field variable.
+    # global_natural_dofs  (list of ints) for every local dof no. the dof no. in global natural ordering
+    # additional_argument: The value of the option "additionalArgument", can be any Python object.
+    
+    # set all values to 1
+    for i in range(len(values)):
+      values[i] = constant_gamma
+
+# callback function for artifical lambda values in precontraction computation
+def set_lambda_values(n_dofs_global, n_nodes_global_per_coordinate_direction, time_step_no, current_time, values, global_natural_dofs, custom_argument):
+    # set all values to 1
+    for i in range(len(values)):
+      values[i] = 1.0

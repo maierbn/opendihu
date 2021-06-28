@@ -2,9 +2,11 @@
 Implement New Physics
 ========================
 
-This page is a tutorial (will be, eventually) about how to implement new a physics model that is not yet possible with the C++ core.
+This page is a tutorial about how to implement new a physics model that is not yet possible with the C++ core.
 It covers the setup steps to create a new solver class, how to use the existing integration functionality, how to use the available infrastructure such as output writers, Petsc vectors etc. and how to create an example that uses the new model.
 This will be done by considering an exemplary *advection-diffusion equation*.
+
+A "reference solution" was created, see the ``diffusion_advection_solver.tpp`` files under ``specialized_solvers/darcy`` and the example under ``examples/darcy/diffusion_advection2d``.
 
 1. *Complete the formulation.* 
 

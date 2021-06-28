@@ -48,6 +48,7 @@
 #include "specialized_solver/my_new_solver/my_new_timestepping_solver.h"
 #include "specialized_solver/dummy.h"
 #include "specialized_solver/muscle_contraction_solver.h"
+#include "specialized_solver/darcy/diffusion_advection_solver.h"
 #include "time_stepping_scheme/heun_adaptive.h"
 
 #include "spatial_discretization/finite_element_method/05_time_stepping.h"

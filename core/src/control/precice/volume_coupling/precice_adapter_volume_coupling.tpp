@@ -72,8 +72,14 @@ run()
     }
 #endif
 
+    if (timeStepNo >= 1)
+      Control::PerformanceMeasurement::start("precice_read_data");
+
     // read incoming values
     this->preciceReadData();
+   
+    if (timeStepNo >= 1)
+      Control::PerformanceMeasurement::stop("precice_read_data");
 
     // compute the time step width such that it fits in the remaining time in the current time window
     double timeStepWidth = std::min(this->maximumPreciceTimestepSize_, this->timeStepWidth_);
@@ -85,8 +91,14 @@ run()
     // the parameter specifies whether the output writers are enabled
     this->nestedSolver_.advanceTimeSpan(!this->outputOnlyConvergedTimeSteps_);
 
+    if (timeStepNo >= 1)
+      Control::PerformanceMeasurement::start("precice_write_data");
+
     // write outgoing data to precice
     this->preciceWriteData();
+
+    if (timeStepNo >= 1)
+      Control::PerformanceMeasurement::stop("precice_write_data");
 
     // increase current simulation time
     currentTime += timeStepWidth;
@@ -112,8 +124,13 @@ run()
     {
       if (this->outputOnlyConvergedTimeSteps_)
       {
+
+        Control::PerformanceMeasurement::start("precice_output");
+
         // output all data in the nested solvers
         this->nestedSolver_.callOutputWriter(timeStepNo, currentTime);
+        
+        Control::PerformanceMeasurement::stop("precice_output");
       }
     }
 

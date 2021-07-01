@@ -1249,7 +1249,7 @@ if __name__ == "__main__":
   for j in range(n_fibers_y):
     for i in range(n_fibers_x):
       mu_no = (int)(mu_nos_for_fibers[index])
-      color = colors[mu_no-1,:]
+      color = colors[(mu_no-1) % len(colors[:,0]),:]
         
       # for dataset with high number of motor units only plot some
       if n_motor_units > 20:

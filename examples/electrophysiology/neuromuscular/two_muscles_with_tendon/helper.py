@@ -408,14 +408,14 @@ variables.muscle2_elasticity_dirichlet_bc = {}
 # muscle mesh
 for j in range(ny):
     for i in range(nx):
-      variables.muscle2_elasticity_dirichlet_bc[(mz-1)*nx*ny + j*nx + i] = [None,None,0.0, None,None,None]
+      variables.muscle2_elasticity_dirichlet_bc[(nz-1)*nx*ny + j*nx + i] = [None,None,0.0, None,None,None]
 
 # fix edge, note: the multidomain simulation does not work without this (linear solver finds no solution)
 for i in range(nx):
-    variables.muscle2_elasticity_dirichlet_bc[(mz-1)*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
+    variables.muscle2_elasticity_dirichlet_bc[(nz-1)*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
     
 # fix corner completely
-variables.muscle2_elasticity_dirichlet_bc[(mz-1)*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
+variables.muscle2_elasticity_dirichlet_bc[(nz-1)*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
 
 # guide left end of muscle along z axis
 # muscle mesh

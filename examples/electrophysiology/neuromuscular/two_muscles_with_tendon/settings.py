@@ -354,7 +354,7 @@ config = {
             "logTimeStepWidthAsKey":        "dt_muscle_spindles",
             "durationLogKey":               "duration_muscle_spindles",
             "initialValues":                [],
-            "timeStepOutputInterval":       1e4,
+            "timeStepOutputInterval":       500,
             "inputMeshIsGlobal":            True,
             "dirichletBoundaryConditions":  {},
             "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
@@ -409,7 +409,7 @@ config = {
             "logTimeStepWidthAsKey":        "dt_golgi_tendon_organs",
             "durationLogKey":               "duration_golgi_tendon_organ",
             "initialValues":                [],
-            "timeStepOutputInterval":       1e4,
+            "timeStepOutputInterval":       500,
             "inputMeshIsGlobal":            True,
             "dirichletBoundaryConditions":  {},
             "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
@@ -460,7 +460,7 @@ config = {
             "logTimeStepWidthAsKey":        "dt_motoneuron",
             "durationLogKey":               "duration_motoneuron",
             "initialValues":                [],
-            "timeStepOutputInterval":       1,
+            "timeStepOutputInterval":       500,
             "inputMeshIsGlobal":            True,
             "dirichletBoundaryConditions":  {},
             "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
@@ -509,7 +509,7 @@ config = {
             "timeStepWidth":          variables.dt_bidomain,  # 1e-1
             "logTimeStepWidthAsKey":  "dt_3D",
             "durationLogKey":         "duration_total_muscle1",
-            "timeStepOutputInterval": 1,
+            "timeStepOutputInterval": 50,
             "endTime":                1,
             "connectedSlotsTerm1To2": {0:0},  # elasticity: transfer gamma to elasticity, fibers_emg: transfer Vm to StaticBidomainSolver
             "connectedSlotsTerm2To1": [None],   # elasticity: only transfer back geometry (this happens automatically),   fibers_emg: transfer nothing back
@@ -721,7 +721,7 @@ config = {
             "timeStepWidth":          variables.dt_bidomain,  # 1e-1
             "logTimeStepWidthAsKey":  "dt_3D",
             "durationLogKey":         "duration_total_muscle2",
-            "timeStepOutputInterval": 1,
+            "timeStepOutputInterval": 50,
             "endTime":                1,
             "connectedSlotsTerm1To2": {0:0},  # elasticity: transfer gamma to elasticity, fibers_emg: transfer Vm to StaticBidomainSolver
             "connectedSlotsTerm2To1": [None],   # elasticity: only transfer back geometry (this happens automatically),   fibers_emg: transfer nothing back
@@ -943,7 +943,7 @@ config = {
         "Term1": {
           "MuscleContractionSolver": {
             "numberTimeSteps":              1,                         # only use 1 timestep per interval
-            "timeStepOutputInterval":       100,                       # do not output time steps
+            "timeStepOutputInterval":       1,
             "Pmax":                         variables.pmax,            # maximum PK2 active stress
             "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
             "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
@@ -1041,7 +1041,7 @@ config = {
         "Term2": {
           "MuscleContractionSolver": {
             "numberTimeSteps":              1,                         # only use 1 timestep per interval
-            "timeStepOutputInterval":       100,                       # do not output time steps
+            "timeStepOutputInterval":       1,
             "Pmax":                         variables.pmax,            # maximum PK2 active stress
             "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
             "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.

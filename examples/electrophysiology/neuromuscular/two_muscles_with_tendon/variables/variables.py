@@ -5,7 +5,7 @@
 
 # material parameters
 # --------------------
-PMax = 7.3                          # maximum stress [N/cm^2]
+Pmax = 7.3                          # maximum stress [N/cm^2]
 Conductivity = 3.828                # sigma, conductivity [mS/cm]
 Am = 500.0                          # surface area to volume ratio [cm^-1]
 Cm = 0.58                           # membrane capacitance [uF/cm^2]
@@ -206,7 +206,6 @@ nx = None
 ny = None
 nz = None
 constant_body_force = None
-pmax = None
 bottom_traction = None
 states_initial_values = []
 fix_bottom = False

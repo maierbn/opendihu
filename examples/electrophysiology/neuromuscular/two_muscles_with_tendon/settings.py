@@ -321,8 +321,9 @@ config = {
   # connections of the slots, identified by slot name
   "connectedSlots": [
     # use global slot, because automatic connection of "Razumova/activestress" does not work for some reason
-    # ("m1gout", "m1g_in"),
-    # ("m2gout", "m2g_in"),
+    # global slots only support named slots (connectedSlotsTerm1To2 also allows indices)
+    ("m1gout", "m1g_in"),
+    ("m2gout", "m2g_in"),
   ],
 
 
@@ -944,7 +945,7 @@ config = {
           "MuscleContractionSolver": {
             "numberTimeSteps":              1,                         # only use 1 timestep per interval
             "timeStepOutputInterval":       1,
-            "Pmax":                         variables.pmax,            # maximum PK2 active stress
+            "Pmax":                         variables.Pmax,            # maximum PK2 active stress
             "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
             "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
             "slotNames":                    ["m1lda", "m1ldot", "m1g_in", "m1T", "m1ux", "m1uy", "m1uz"],  # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
@@ -1042,7 +1043,7 @@ config = {
           "MuscleContractionSolver": {
             "numberTimeSteps":              1,                         # only use 1 timestep per interval
             "timeStepOutputInterval":       1,
-            "Pmax":                         variables.pmax,            # maximum PK2 active stress
+            "Pmax":                         variables.Pmax,            # maximum PK2 active stress
             "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
             "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
             "slotNames":                    ["m2lda", "m2ldot", "m2g_in", "m2T", "m2ux", "m2uy", "m2uz"],  # slot names of the data connector slots: lambda, lambdaDot, gamma, traction

@@ -205,7 +205,7 @@ elif "hodgkin_huxley-razumova" in variables.cellml_file:   # this is (4, "Titin"
     ("connectorSlot", "m1vm"):  "membrane/V",               # expose Vm to the operator splitting
     ("connectorSlot", "m1gout"):"Razumova/activestress",
     ("connectorSlot", "m1alp"): "Razumova/activation",      # expose activation .
-    # ("connectorSlot", "m1lda"): "Razumova/l_hs",            # fiber stretch λ
+    ("connectorSlot", "m1lda"): "Razumova/l_hs",            # fiber stretch λ
   }
   variables.muscle2_mappings = {
     ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
@@ -213,7 +213,7 @@ elif "hodgkin_huxley-razumova" in variables.cellml_file:   # this is (4, "Titin"
     ("connectorSlot", "m2vm"):  "membrane/V",               # expose Vm to the operator splitting
     ("connectorSlot", "m2gout"):"Razumova/activestress",
     ("connectorSlot", "m2alp"): "Razumova/activation",      # expose activation .
-    # ("connectorSlot", "m2lda"): "Razumova/l_hs",            # fiber stretch λ
+    ("connectorSlot", "m2lda"): "Razumova/l_hs",            # fiber stretch λ
   }
   variables.parameters_initial_values = [0, 1]
   variables.nodal_stimulation_current = 40.                           # not used

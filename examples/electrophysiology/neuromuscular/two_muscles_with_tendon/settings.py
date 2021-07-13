@@ -333,7 +333,8 @@ config = {
     "durationLogKey":         "duration_coupling",
     "timeStepOutputInterval": 1,
     "endTime":                variables.end_time,
-    "connectedSlotsTerm1To2": None,       # connect lambda to slot 0 and gamma to slot 2
+    # "connectedSlotsTerm1To2": {"m1gout":"m1g_in", "m2gout":"m2g_in"}, # only use numbers here!
+    # "connectedSlotsTerm1To2": {11:2,19:9},       # same effect as global slot definition
     "connectedSlotsTerm2To1": None,       # transfer nothing back
 
     "Term1": {
@@ -1147,6 +1148,3 @@ if rank_no == 0:
   t_stop_script = timeit.default_timer()
   print("Python config parsed in {:.1f}s.".format(t_stop_script - t_start_script))
 
-print(config['Coupling']['Term1']['MultipleCoupling']\
-['Term4']['Coupling']['Term1']['MultipleInstances']['instances'][0]['StrangSplitting'] \
-['Term1']['MultipleInstances']['instances'][0]['Heun']['CellML'])

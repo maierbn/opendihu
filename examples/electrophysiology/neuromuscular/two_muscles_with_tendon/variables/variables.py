@@ -324,12 +324,20 @@ golgi_tendon_organ_delay = 300
 
 
 
-tendon_force = 1 # TODO
 main_constant_body_force = [0, 0, 0]
+
+muscle1_tendon_z = muscle1_extent[2]
+muscle2_tendon_z = muscle1_extent[2] + tendon_length
+
+def compute_tendon_force(d):
+    tendon_length_relaxed = tendon_length
+    # Hooke's law
+    return max(0.0, 5*(d - tendon_length_relaxed))
 
 ### mechanics
 def muscle1_update_neumann_boundary_conditions(t,m_list):
   [mx,my,mz] = m_list # elements
+  tendon_force = compute_tendon_force(muscle2_tendon_z - muscle1_tendon_z)
 
   # Neumann BC at bottom nodes, force to the right (will be divided by area by config flag)
   # muscle mesh
@@ -340,13 +348,14 @@ def muscle1_update_neumann_boundary_conditions(t,m_list):
     "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
     "neumannBoundaryConditions": muscle1_elasticity_neumann_bc
   }
-  print("t: {}, tendon force: {}".format(t, tendon_force))
+  print("Muscle1: t: {:6.2f}, tendon force: {}".format(t, tendon_force))
 
   return config
 
 
 def muscle2_update_neumann_boundary_conditions(t,m_list):
   [mx,my,mz] = m_list # elements
+  tendon_force = compute_tendon_force(muscle2_tendon_z - muscle1_tendon_z)
 
   # Neumann BC at bottom nodes, force to the left (will be divided by area by config flag)
   # muscle mesh
@@ -357,13 +366,69 @@ def muscle2_update_neumann_boundary_conditions(t,m_list):
     "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
     "neumannBoundaryConditions": muscle2_elasticity_neumann_bc
   }
-  print("t: {}, tendon force: {}".format(t, tendon_force))
+  print("Muscle2: t: {:6.2f}, tendon force: {}".format(t, tendon_force))
 
   return config
 
 
 
+
+def get_from_obj(data, path):
+    for elem in path:
+        if type(elem) == str:
+            data = data[elem]
+        elif type(elem) == int:
+            data = data[elem]
+        elif type(elem) == tuple:
+            # search for key == value with (key, value) = elem
+            key, value = elem
+            data = next(filter(lambda e: e[key] == value, data))
+        else:
+            raise KeyError(f"Unknown type of '{elem}': '{type(elem)}'. Path: '{'.'.join(path)}'")
+    return data
+
 def muscle1_postprocess(data):
-    print('callback 1')
+    t = get_from_obj(data, [0, 'currentTime'])
+    z_data = get_from_obj(data, [0, 'data', ('name','geometry'), 'components', 2, 'values'])
+    [mx, my, mz] = get_from_obj(data, [0, 'nElementsLocal'])
+    basis_order = get_from_obj(data, [0, 'basisOrder'])
+    basis_function = get_from_obj(data, [0, 'basisFunction'])
+    assert(basis_function == 'Lagrange')
+    assert(basis_order == 2)
+    nx = 2*mx + 1
+    ny = 2*my + 1
+    nz = 2*mz + 1
+    # compute average z-value of end of muscle
+    z_value = 0
+    for j in range(ny):
+        for i in range(nx):
+            z_value += z_data[(nz-1)*nx*ny + j*nx + i]
+    z_value /= ny*nx
+
+    global muscle1_tendon_z
+    muscle1_tendon_z = z_value
+    print("Muscle2: t: {:6.2f}, avg. change of muscle length: {:+2.2f}".format(t, muscle1_tendon_z - muscle1_extent[2]))
+
+
 def muscle2_postprocess(data):
-    print('callback 2')
+    t = get_from_obj(data, [0, 'currentTime'])
+    z_data = get_from_obj(data, [0, 'data', ('name','geometry'), 'components', 2, 'values'])
+    [mx, my, mz] = get_from_obj(data, [0, 'nElementsLocal'])
+    basis_order = get_from_obj(data, [0, 'basisOrder'])
+    basis_function = get_from_obj(data, [0, 'basisFunction'])
+    assert(basis_function == 'Lagrange')
+    assert(basis_order == 2)
+    nx = 2*mx + 1
+    ny = 2*my + 1
+    nz = 2*mz + 1
+    # compute average z-value of end of muscle
+    z_value = 0
+    for j in range(ny):
+        for i in range(nx):
+            z_value += z_data[0*nx*ny + j*nx + i]
+    z_value /= ny*nx
+
+    global muscle2_tendon_z
+    muscle2_tendon_z = z_value
+    print("Muscle2: t: {:6.2f}, avg. change of muscle length: {:+2.2f}".format(t, muscle2_extent[2] - muscle2_tendon_z))
+

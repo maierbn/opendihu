@@ -23,7 +23,10 @@ If there are error messages, have a look at the log file `config.log`.
 
 # Literature / How to cite
 
-Currently, we have this conference paper:
+View the dissertation of Benjamin Maier, submitted in June 2021:
+[Maier, B. (2021). Scalable Biophysical Simulations of the Neuromuscular System](https://arxiv.org/abs/2107.07104)
+
+Currently, we have this conference paper from 2019:
 [Maier, B., Emamy, N., Krämer, A., & Mehl, M. (2019). Highly parallel multi-physics simulation of muscular activation and EMG. In COUPLED VIII: proceedings of the VIII International Conference on Computational Methods for Coupled Problems in Science and Engineering (pp. 610-621). CIMNE](https://upcommons.upc.edu/handle/2117/190149)
 
-More are forthcoming in 2021.
+More descriptive literature is expected to be published in late 2021.

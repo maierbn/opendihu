@@ -60,7 +60,7 @@ output_timestep_elasticity = 1    # [ms] timestep for elasticity output files
 output_timestep_emg = 20    # [ms] timestep for emg output files
 
 output_timestep_golgi_tendon_organs = 20
-output_timestep_neurons = 1         # [ms] timestep for output of files for all sensor organs and neurons
+output_timestep_spindles = 1         # [ms] timestep for output of files for all sensor organs and neurons
 output_timestep_motoneuron = 1    # [ms] timestep for output of files for motoneuron
 output_timestep_surface = 20
 

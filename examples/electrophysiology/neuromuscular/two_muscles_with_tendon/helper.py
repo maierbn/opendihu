@@ -105,8 +105,8 @@ subfolder = ""
 if variables.paraview_output:
   if variables.adios_output:
     subfolder = "paraview/"
-  variables.output_writer_fibers_muscle1.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_fibers", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
-  variables.output_writer_fibers_muscle2.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle2_fibers", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
+  variables.output_writer_fibers_muscle1.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_fibers", "binary": False, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
+  variables.output_writer_fibers_muscle2.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle2_fibers", "binary": False, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
   variables.output_writer_emg_muscle1.append({"format": "Paraview", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
   variables.output_writer_emg_muscle2.append({"format": "Paraview", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle2_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
   

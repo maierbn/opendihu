@@ -27,8 +27,8 @@ import importlib
 import distutils.util
 
 # parse rank arguments
-rank_no = (int)(sys.argv[-2])
-n_ranks = (int)(sys.argv[-1])
+rank_no = int(sys.argv[-2])
+n_ranks = int(sys.argv[-1])
 
 # add variables subfolder to python path where the variables script is located
 script_path = os.path.dirname(os.path.abspath(__file__))
@@ -144,7 +144,7 @@ if n_ranks != variables.n_subdomains:
   for i in range(1,n_ranks+1):
     for j in range(1,n_ranks+1):
       if i*j <= n_ranks and n_ranks % (i*j) == 0:
-        k = (int)(n_ranks / (i*j))
+        k = int(n_ranks / (i*j))
         performance = (k-optimal_value)**2 + (j-optimal_value)**2 + 1.1*(i-optimal_value)**2
         possible_partitionings.append([i,j,k,performance])
         
@@ -398,7 +398,8 @@ config = {
 
               # output writer for states, algebraics and parameters                
               "OutputWriter" : [
-                {"format": "PythonFile", "outputInterval": (int)(2./variables.dt_muscle_spindles*variables.output_timestep_neurons), "filename": "out/muscle_spindles", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"}
+                {"format": "Paraview",   "outputInterval": int(2./variables.dt_muscle_spindles*variables.output_timestep_spindles), "filename": "out/" + variables.scenario_name + "/muscle_spindles", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"},
+                {"format": "PythonFile", "outputInterval": int(2./variables.dt_muscle_spindles*variables.output_timestep_spindles), "filename": "out/" + variables.scenario_name + "/muscle_spindles", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"},
               ]
             }
           }
@@ -449,7 +450,8 @@ config = {
 
               # output writer for states, algebraics and parameters                
               "OutputWriter" : [
-                {"format": "PythonFile", "outputInterval": (int)(2./variables.dt_golgi_tendon_organs*variables.output_timestep_golgi_tendon_organs), "filename": "out/golgi_tendon_organs", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"}
+                {"format": "Paraview",   "outputInterval": int(2./variables.dt_golgi_tendon_organs*variables.output_timestep_golgi_tendon_organs), "filename": "out/" + variables.scenario_name + "/golgi_tendon_organs", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"},
+                {"format": "PythonFile", "outputInterval": int(2./variables.dt_golgi_tendon_organs*variables.output_timestep_golgi_tendon_organs), "filename": "out/" + variables.scenario_name + "/golgi_tendon_organs", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"},
               ]
             }
           }
@@ -500,7 +502,8 @@ config = {
 
               # output writer for states, algebraics and parameters                
               "OutputWriter" : [
-                {"format": "PythonFile", "outputInterval": int(2./variables.dt_motoneuron*variables.output_timestep_motoneuron), "filename": "out/motoneurons", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"}
+                {"format": "Paraview",   "outputInterval": int(2./variables.dt_motoneuron*variables.output_timestep_motoneuron), "filename": "out/" + variables.scenario_name + "/motoneurons", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"},
+                {"format": "PythonFile", "outputInterval": int(2./variables.dt_motoneuron*variables.output_timestep_motoneuron), "filename": "out/" + variables.scenario_name + "/motoneurons", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"},
               ]
             }
           }

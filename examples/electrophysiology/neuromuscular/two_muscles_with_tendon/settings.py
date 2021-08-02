@@ -195,7 +195,7 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 neuron_meshes = {
   "motoneuronMesh": {
     "nElements" :         variables.n_motoneurons-1 if n_ranks == 1 else variables.n_motoneurons*n_ranks,  # the last dof is empty in parallel
-    "physicalExtent":     0,
+    "physicalExtent":     1, # has no special meaning. only to seperate data points in paraview
     "physicalOffset":     0,
     "logKey":             "motoneuron",
     "inputMeshIsGlobal":  True,
@@ -203,7 +203,7 @@ neuron_meshes = {
   },
   "muscleSpindleMesh": {
     "nElements" :         variables.n_muscle_spindles-1 if n_ranks == 1 else variables.n_muscle_spindles*n_ranks,
-    "physicalExtent":     0,
+    "physicalExtent":     1, # has no special meaning. only to seperate data points in paraview
     "physicalOffset":     0,
     "logKey":             "muscle_spindle",
     "inputMeshIsGlobal":  True,
@@ -211,7 +211,7 @@ neuron_meshes = {
   },
   "golgiTendonOrganMesh": {
     "nElements" :         variables.n_golgi_tendon_organs-1 if n_ranks == 1 else variables.n_golgi_tendon_organs*n_ranks,
-    "physicalExtent":     0,
+    "physicalExtent":     1, # has no special meaning. only to seperate data points in paraview
     "physicalOffset":     0,
     "logKey":             "golgi_tendon_organ",
     "inputMeshIsGlobal":  True,

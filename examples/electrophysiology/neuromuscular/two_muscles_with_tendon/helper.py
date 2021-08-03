@@ -29,6 +29,8 @@ def n_fibers_in_subdomain_y(_):
 def get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y):
     return fiber_in_subdomain_coordinate_x + variables.n_fibers_x * fiber_in_subdomain_coordinate_y
 
+variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
+variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
 #############################
 # create the partitioning using the script in create_partitioned_meshes_for_settings.py
@@ -228,6 +230,7 @@ else:
 
 
 # load MU distribution and firing times
+variables.fiber_distribution = np.genfromtxt(variables.fiber_distribution_file, delimiter=" ")
 variables.firing_times = np.genfromtxt(variables.firing_times_file)
 
 
@@ -259,9 +262,22 @@ def compartment_gets_stimulated(compartment_no, frequency, current_time):
   
   return variables.firing_times[index % n_firing_times, mu_no] == 1
 
-# load MU distribution and firing times
-variables.fiber_distribution = np.genfromtxt(variables.fiber_distribution_file, delimiter=" ")
-variables.firing_times = np.genfromtxt(variables.firing_times_file)
+
+# determine MU sizes and create n_fibers_in_motor_unit array
+variables.n_fibers_in_motor_unit = [0 for _ in range(variables.n_motor_units)]
+variables.fiber_index_in_motor_unit = [[] for _ in range(variables.n_motor_units)]
+
+for fiber_no in range(variables.n_fibers_total):
+  mu_no = get_motor_unit_no(fiber_no)
+  variables.n_fibers_in_motor_unit[mu_no] += 1
+  variables.fiber_index_in_motor_unit[mu_no].append(fiber_no)
+
+def get_fiber_index_in_motor_unit(fiber_index, motor_unit_no):
+  return variables.fiber_index_in_motor_unit[motor_unit_no][fiber_index]
+  
+def get_n_fibers_in_motor_unit(motor_unit_no):
+  return variables.n_fibers_in_motor_unit[motor_unit_no]
+
 
 
 # for debugging output show when the first 20 fibers will fire
@@ -342,9 +358,6 @@ variables.potential_flow_dirichlet_bc = {}
 for i in range(nx*ny):
   variables.potential_flow_dirichlet_bc[i] = 0.0
   variables.potential_flow_dirichlet_bc[(nz-1)*nx*ny + i] = 1.0
-
-variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
-variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
   
 # set boundary conditions for the elasticity
 # Note, we have a composite mesh, consisting of 3Dmesh_elasticity_quadratic and 3DFatMesh_elasticity_quadratic and this composite mesh has a numbering that goes over all dofs.

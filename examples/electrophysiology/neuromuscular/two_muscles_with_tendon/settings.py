@@ -953,7 +953,7 @@ config = {
             "OutputWriter" : [
               {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/muscle1_contraction", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
             ],
-            "mapGeometryToMeshes":          "muscle1Mesh",    # the mesh names of the meshes that will get the geometry transferred
+            "mapGeometryToMeshes":          ["muscle1Mesh"] + [key for key in fiber_meshes.keys() if "muscle1_fiber" in key],    # the mesh names of the meshes that will get the geometry transferred
             "reverseMappingOrder":          True,                      # if the mapping target->own mesh should be used instead of own->target mesh. This gives better results in some cases.
             "dynamic":                      variables.dynamic,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
             
@@ -1051,7 +1051,7 @@ config = {
             "OutputWriter" : [
               {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/muscle2_contraction", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
             ],
-            "mapGeometryToMeshes":          "muscle2Mesh",    # the mesh names of the meshes that will get the geometry transferred
+            "mapGeometryToMeshes":          ["muscle2Mesh"] + [key for key in fiber_meshes.keys() if "muscle2_fiber" in key],    # the mesh names of the meshes that will get the geometry transferred
             "reverseMappingOrder":          True,                      # if the mapping target->own mesh should be used instead of own->target mesh. This gives better results in some cases.
             "dynamic":                      variables.dynamic,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
             

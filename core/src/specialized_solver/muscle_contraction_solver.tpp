@@ -282,7 +282,7 @@ initializeMappingBetweenMeshes()
     for (std::string meshName : meshNamesOfGeometryToMapTo_)
     {
 
-      // for first order meshes
+      // for first order 3D meshes
       using TargetFunctionSpaceType1 = ::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<1>>;
       LOG(DEBUG) << "mesh \"" << meshName << "\", test if " << StringUtility::demangle(typeid(TargetFunctionSpaceType1).name());
 
@@ -302,7 +302,7 @@ initializeMappingBetweenMeshes()
       }
       else LOG(DEBUG) << "no";
 
-      // for second order meshes
+      // for second order 3D meshes
       using TargetFunctionSpaceType2 = ::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>;
       LOG(DEBUG) << "mesh \"" << meshName << "\", test if " << StringUtility::demangle(typeid(TargetFunctionSpaceType2).name());
 
@@ -323,7 +323,7 @@ initializeMappingBetweenMeshes()
       }
       else LOG(DEBUG) << "no";
 
-      // for first order composite meshes
+      // for first order composite 3D meshes
       using TargetFunctionSpaceType3 = ::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>,BasisFunction::LagrangeOfOrder<1>>;
       LOG(DEBUG) << "mesh \"" << meshName << "\", test if " << StringUtility::demangle(typeid(TargetFunctionSpaceType3).name());
 
@@ -343,7 +343,7 @@ initializeMappingBetweenMeshes()
       }
       else LOG(DEBUG) << "no";
 
-      // for second order composite meshes
+      // for second order composite 3D meshes
       using TargetFunctionSpaceType4 = ::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>;
       LOG(DEBUG) << "mesh \"" << meshName << "\", test if " << StringUtility::demangle(typeid(TargetFunctionSpaceType4).name());
 
@@ -360,6 +360,23 @@ initializeMappingBetweenMeshes()
           DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<TargetFunctionSpaceType4,SourceFunctionSpaceType>(functionSpaceTarget, functionSpaceSource);
         else
           DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<SourceFunctionSpaceType,TargetFunctionSpaceType4>(functionSpaceSource, functionSpaceTarget);
+      }
+      else LOG(DEBUG) << "no";
+
+      // for first order 1D meshes
+      using TargetFunctionSpaceType5 = ::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunction::LagrangeOfOrder<1>>;
+      LOG(DEBUG) << "mesh \"" << meshName << "\", test if " << StringUtility::demangle(typeid(TargetFunctionSpaceType5).name());
+
+      // if the mesh name corresponds to a linear mesh
+      if (this->context_.meshManager()->hasFunctionSpaceOfType<TargetFunctionSpaceType5>(meshName))
+      {
+        // get target function space
+        std::shared_ptr<TargetFunctionSpaceType5> functionSpaceTarget = this->context_.meshManager()->functionSpace<TargetFunctionSpaceType5>(meshName);
+
+        LOG(DEBUG) << "** create mapping " << functionSpaceSource->meshName() << " -> " << functionSpaceTarget->meshName();
+
+        // create mapping between functionSpaceSource and functionSpaceTarget
+        DihuContext::mappingBetweenMeshesManager()->template mappingBetweenMeshes<SourceFunctionSpaceType,TargetFunctionSpaceType5>(functionSpaceSource, functionSpaceTarget);
       }
       else LOG(DEBUG) << "no";
     }
@@ -395,7 +412,7 @@ mapGeometryToGivenMeshes()
     // loop over all given mesh names to which we should transfer the geometry
     for (std::string meshName : meshNamesOfGeometryToMapTo_)
     {
-      // for first order meshes
+      // for first order 3D meshes
       using TargetFunctionSpaceType1 = ::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<1>>;
       using TargetFieldVariableType1 = FieldVariable::FieldVariable<TargetFunctionSpaceType1,3>;
 
@@ -418,7 +435,7 @@ mapGeometryToGivenMeshes()
         DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<SourceFieldVariableType,TargetFieldVariableType1>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
       }
 
-      // for second order meshes
+      // for second order 3D meshes
       using TargetFunctionSpaceType2 = ::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>;
       using TargetFieldVariableType2 = FieldVariable::FieldVariable<TargetFunctionSpaceType2,3>;
 
@@ -441,7 +458,7 @@ mapGeometryToGivenMeshes()
         DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<SourceFieldVariableType,TargetFieldVariableType2>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
       }
 
-      // for first order composite meshes
+      // for first order composite 3D meshes
       using TargetFunctionSpaceType3 = ::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>,BasisFunction::LagrangeOfOrder<1>>;
       using TargetFieldVariableType3 = FieldVariable::FieldVariable<TargetFunctionSpaceType3,3>;
 
@@ -464,7 +481,7 @@ mapGeometryToGivenMeshes()
         DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<SourceFieldVariableType,TargetFieldVariableType3>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
       }
 
-      // for second order composite meshes
+      // for second order composite 3D meshes
       using TargetFunctionSpaceType4 = ::FunctionSpace::FunctionSpace<Mesh::CompositeOfDimension<3>,BasisFunction::LagrangeOfOrder<2>>;
       using TargetFieldVariableType4 = FieldVariable::FieldVariable<TargetFunctionSpaceType4,3>;
 
@@ -485,6 +502,26 @@ mapGeometryToGivenMeshes()
         // map the whole geometry field (all components), do not avoid copy
         DihuContext::mappingBetweenMeshesManager()->template map<SourceFieldVariableType,TargetFieldVariableType4>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
         DihuContext::mappingBetweenMeshesManager()->template finalizeMapping<SourceFieldVariableType,TargetFieldVariableType4>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
+      }
+
+      // for first order 1D meshes
+      using TargetFunctionSpaceType5 = ::FunctionSpace::FunctionSpace<Mesh::StructuredDeformableOfDimension<1>,BasisFunction::LagrangeOfOrder<1>>;
+      using TargetFieldVariableType5 = FieldVariable::FieldVariable<TargetFunctionSpaceType5,3>;
+
+      // if the mesh name corresponds to a linear mesh
+      if (this->context_.meshManager()->hasFunctionSpaceOfType<TargetFunctionSpaceType5>(meshName))
+      {
+        // get target geometry field variable
+        std::shared_ptr<TargetFieldVariableType5> geometryFieldTarget = std::make_shared<TargetFieldVariableType5>(
+          this->context_.meshManager()->functionSpace<TargetFunctionSpaceType5>(meshName)->geometryField());
+
+        LOG(DEBUG) << "transfer geometry field to linear mesh, " << geometryFieldSource->functionSpace()->meshName() << " -> "
+          << geometryFieldTarget->functionSpace()->meshName();
+        LOG(DEBUG) << StringUtility::demangle(typeid(SourceFunctionSpaceType).name()) << " -> " << StringUtility::demangle(typeid(TargetFunctionSpaceType5).name());
+
+        // perform the mapping
+        // map the whole geometry field (all components), do not avoid copy
+        DihuContext::mappingBetweenMeshesManager()->template map<SourceFieldVariableType,TargetFieldVariableType5>(geometryFieldSource, geometryFieldTarget, -1, -1, false);
       }
     }
   }

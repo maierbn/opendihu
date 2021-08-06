@@ -25,11 +25,14 @@ public:
   //! initialize the object
   void initialize();
 
+  //! get the nested solver
+  NestedSolver &nestedSolver();
+
+  typedef typename NestedSolver::FunctionSpace FunctionSpace;
+
 protected:
 
 #ifdef HAVE_PRECICE
-
-  typedef typename NestedSolver::FunctionSpace FunctionSpace;
 
   /** a coupling mesh of precice, this does not have to coincide with an opendihu mesh
    */

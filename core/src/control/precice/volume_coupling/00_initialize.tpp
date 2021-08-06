@@ -99,6 +99,14 @@ initialize()
 }
 
 
+//! get the nested solver
+template<typename NestedSolver>
+NestedSolver &PreciceAdapterVolumeCouplingInitialize<NestedSolver>::
+nestedSolver()
+{
+  return nestedSolver_;
+}
+
 #ifdef HAVE_PRECICE
 
 template<typename NestedSolver>

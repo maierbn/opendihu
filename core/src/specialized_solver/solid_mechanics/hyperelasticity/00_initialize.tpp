@@ -116,10 +116,14 @@ initialize()
   nonlinearSolver_ = this->context_.solverManager()->template solver<Solver::Nonlinear>(
     this->specificSettings_, this->displacementsFunctionSpace_->meshPartition()->mpiCommunicator());
 
+  LOG(INFO) << "create Dirichlet boundary conditions object if it does not yet exist (" << dirichletBoundaryConditions_ << ")";
+
   // initialize Dirichlet boundary conditions
   if (dirichletBoundaryConditions_ == nullptr)
   {
+    LOG(INFO) << "make_shared Dirichlet boundary conditions";
     dirichletBoundaryConditions_ = std::make_shared<DirichletBoundaryConditions<DisplacementsFunctionSpace,nDisplacementComponents>>(this->context_);
+    LOG(INFO) << "initialize Dirichlet boundary conditions";
     dirichletBoundaryConditions_->initialize(this->specificSettings_, this->data_.functionSpace(), "dirichletBoundaryConditions");
   }
 
@@ -1033,8 +1037,15 @@ addDirichletBoundaryConditions(std::vector<typename DirichletBoundaryConditions<
     LOG(DEBUG) << "addDirichletBoundaryConditions on compressible material";
   }
 
+  LOG(INFO) << "dirichletBoundaryConditions: " << dirichletBoundaryConditions_;
+  if (!dirichletBoundaryConditions_)
+  {
+    LOG(ERROR) << "Dirichlet boundary conditions are not initialized.";
+    return;
+  }
   dirichletBoundaryConditions_->addBoundaryConditions(boundaryConditionElements, overwriteBcOnSameDof);
 
+  LOG(INFO) << 2;
   // an incompressible material has 3+1 (static problem) or 6+1 (dynamic problem) components (displacements+velocities+pressure)
   // a compressible material has only 3 (static problem) or 6 (dynamic problem) components (no pressure)
 
@@ -1050,6 +1061,7 @@ addDirichletBoundaryConditions(std::vector<typename DirichletBoundaryConditions<
   std::vector<int> indices(nDisplacementsVelocityValues);
   std::iota(indices.begin(), indices.end(), 0);
 
+  LOG(INFO) << 3;
   // loop over displacement components (and velocity components, if dynamic) and one pressure component
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
   {
@@ -1061,6 +1073,7 @@ addDirichletBoundaryConditions(std::vector<typename DirichletBoundaryConditions<
     combinedSolutionValues[componentNo].resize(nValues);
     combinedVecSolution_->getValues(componentNo, nValues, indices.data(), combinedSolutionValues[componentNo].data());
 
+    LOG(INFO) << 4;
     // residual vector
     //combinedResidualValues[componentNo].resize(nValues);
     //combinedVecResidual_->getValues(componentNo, nValues, indices.data(), combinedResidualValues[componentNo].data());
@@ -1068,12 +1081,15 @@ addDirichletBoundaryConditions(std::vector<typename DirichletBoundaryConditions<
     // vector for the external virtual work contribution that does not depend on u, δW_ext,dead (this is the same as δW_ext for static case)
     combinedVecExternalVirtualWorkDeadValues[componentNo].resize(nValues);
     combinedVecExternalVirtualWorkDead_->getValues(componentNo, nValues, indices.data(), combinedVecExternalVirtualWorkDeadValues[componentNo].data());
+
+    LOG(INFO) << 5;
   }
 
   // remove generic meshes "genericMesh" and "genericMeshForMatrixcombinedJacobian"
   DihuContext::meshManager()->deleteFunctionSpace("genericMesh");
   DihuContext::meshManager()->deleteFunctionSpace("genericMeshForMatrixcombinedJacobian");
 
+  LOG(INFO) << 6;
   // create new vectors and matrices with the updated boundary conditions
   initializePetscVariables();
 
@@ -1085,16 +1101,19 @@ addDirichletBoundaryConditions(std::vector<typename DirichletBoundaryConditions<
     if (componentNo == nDisplacementComponents)
       nValues = nPressureValues;
 
+    LOG(INFO) << 7;
     // solution vector
     combinedVecSolution_->setValues(componentNo, nValues, indices.data(), combinedSolutionValues[componentNo].data());
 
     // residual vector
     //combinedVecResidual_->setValues(componentNo, nValues, indices.data(), combinedResidualValues[componentNo].data());
 
+    LOG(INFO) << 8;
     // vector for the external virtual work contribution that does not depend on u, δW_ext,dead (this is the same as δW_ext for static case)
     combinedVecExternalVirtualWorkDead_->setValues(componentNo, nValues, indices.data(), combinedVecExternalVirtualWorkDeadValues[componentNo].data());
   }
 
+  LOG(INFO) << 9;
   combinedVecSolution_->startGhostManipulation();
   combinedVecSolution_->finishGhostManipulation();
 

@@ -1,0 +1,14 @@
+# This script declares to SCons how to compile the example.
+# It has to be called from a SConstruct file.
+# The 'env' object is passed from there and contains further specification like directory and debug/release flags.
+#
+# Note: If you're creating a new example and copied this file, adjust the desired name of the executable in the 'target' parameter of env.Program.
+
+
+Import('env')     # import Environment object from calling SConstruct
+
+env.Program(target = "muscle", source = "src/muscle_contraction.cpp")
+#env.Program(target = "tendon", source = "src/tendon_linear_precice_dynamic.cpp")
+#env.Program(target = "fibers_with_3d_hh", source = "src/fibers_with_3d_hh.cpp")
+#env.Program(target = "fibers_with_3d", source = "src/fibers_with_3d.cpp")
+

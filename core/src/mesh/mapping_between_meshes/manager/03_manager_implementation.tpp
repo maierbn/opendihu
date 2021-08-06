@@ -438,7 +438,7 @@ repairMappedGeometryFibers(std::shared_ptr<FieldVariableTargetType> fieldVariabl
   static std::set<double> ypos;
   static std::set<double> zpos;
   
-  Vec3 sum = MathUtility::transformToD<3,D>(targetValues[0]);
+  //Vec3 sum = MathUtility::transformToD<3,D>(targetValues[0]);
   // iterate over all elements of the fiber
   for (dof_no_t targetDofNoLocal = 1; targetDofNoLocal != nDofsLocalTarget; targetDofNoLocal++)
   {

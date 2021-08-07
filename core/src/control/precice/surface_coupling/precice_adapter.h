@@ -18,7 +18,7 @@ public:
 
   //! define the type of the data object
   typedef typename NestedSolver::Data Data;
-  typedef typename NestedSolver::SlotConnectorDataType SlotConnectorDataType;
+  typedef typename Data::SlotConnectorDataType SlotConnectorDataType;
 
   //! constructor
   using PreciceAdapterCheckpoint<NestedSolver>::PreciceAdapterCheckpoint;

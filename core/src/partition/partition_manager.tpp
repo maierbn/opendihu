@@ -108,7 +108,7 @@ createPartitioningStructuredLocal(PythonConfig specificSettings, std::array<glob
     LOG(ERROR) << specificSettings.getStringPath() << ": Number of ranks (" << nRanksSubsetCommunicator << ") in rank subset does not match given nRanks in config " << nRanks << ", total " << nRanksTotal << ".";
   }
   
-  std::array<int,3> rankGridCoordinate({0});  // the coordinate of the current rank in the nRanks[0] x nRanks[1] x nRanks[2] grid of ranks
+  std::array<int,3> rankGridCoordinate({0,0,0});  // the coordinate of the current rank in the nRanks[0] x nRanks[1] x nRanks[2] grid of ranks
   rankGridCoordinate[0] = rankNoSubsetCommunicator % nRanks[0];
   
   if (D >= 2) 
@@ -121,7 +121,7 @@ createPartitioningStructuredLocal(PythonConfig specificSettings, std::array<glob
   }
 
   // expand nRanks to 3 entries where not valid entries are set to 1
-  std::array<int,3> nRanks3({1});
+  std::array<int,3> nRanks3({1, 1, 1});
   for (int i = 0; i < D; i++)
   {
     nRanks3[i] = nRanks[i];
@@ -131,7 +131,7 @@ createPartitioningStructuredLocal(PythonConfig specificSettings, std::array<glob
   std::array<MPI_Comm,D> oneDimensionCommunicator;  // 3 communicators (for D==3) that contain one row of elements for x,y and z coordinate directions
   
   // communicator of row in x-direction
-  int oneDimensionCommunicatorColor = rankGridCoordinate[2]*nRanks[1] + rankGridCoordinate[1];
+  int oneDimensionCommunicatorColor = rankGridCoordinate[2]*nRanks3[1] + rankGridCoordinate[1];
     
   // create new communicator which contains all ranks that have the same value of color (and not MPI_UNDEFINED)
   MPIUtility::handleReturnValue(MPI_Comm_split(rankSubset->mpiCommunicator(), oneDimensionCommunicatorColor, rankNoSubsetCommunicator,

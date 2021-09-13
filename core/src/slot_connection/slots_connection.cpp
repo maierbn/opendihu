@@ -407,35 +407,15 @@ std::string SlotsConnection::getDebugInformation() const
   return result.str();
 }
 
-bool SlotsConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
-                                          int &toVectorNo, int &toVectorIndex, bool &avoidCopyIfPossible, bool disableWarnings) const
+
+bool SlotsConnection::getSlotInformationUncached(int fromVectorNo, int fromVectorIndex,
+                                                 int &toVectorNo, int &toVectorIndex,
+                                                 bool &avoidCopyIfPossible, bool disableWarnings) const
 {
-
-  // in release target, use precomputed look-up table for slot connection indices
-#ifdef NDEBUG
-  if (slotInformationInitialized_)
-  {
-    if (fromVectorIndex >= slotInformation_[transferDirectionTerm1To2_][fromVectorNo].size())
-    {
-      return false;
-    }
-
-    const Result &result = slotInformation_[transferDirectionTerm1To2_][fromVectorNo][fromVectorIndex];
-    toVectorNo = result.toVectorNo;
-    toVectorIndex = result.toVectorIndex;
-    avoidCopyIfPossible = result.avoidCopyIfPossible;
-    return result.successful;
-  }
-#endif
 
   disableWarnings = true;   // do not show warnings, they would also appear if SlotsConnectionDataType is a tuple, this is the case for MapDofs
 
   // fromVectorNo and toVectorNo are 0 or 1
-
-#ifndef NDEBUG
-  VLOG(1) << "getSlotInformation(" << fromVectorNo << "," << fromVectorIndex << ")" << getDebugInformation();
-  LOG(DEBUG) << "getSlotInformation(" << fromVectorNo << "," << fromVectorIndex << "), " << (transferDirectionTerm1To2_? "1->2" : "2->1");
-#endif
 
   if (transferDirectionTerm1To2_)
   {
@@ -617,6 +597,74 @@ bool SlotsConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
 
   // completed successfully
   return true;
+}
+
+bool SlotsConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
+                                          int &toVectorNo, int &toVectorIndex, bool &avoidCopyIfPossible, bool disableWarnings) const
+{
+  #ifndef NDEBUG
+    VLOG(1) << "getSlotInformation(" << fromVectorNo << "," << fromVectorIndex << ")" << getDebugInformation();
+    LOG(DEBUG) << "getSlotInformation(" << fromVectorNo << "," << fromVectorIndex << "), " << (transferDirectionTerm1To2_? "1->2" : "2->1");
+  #endif
+
+  // use precomputed look-up table for slot connection indices
+  if (slotInformationInitialized_)
+  {
+#ifndef NDEBUG
+    // recompute values in debug mode to check that the lookup table is correct
+    int check_toVectorNo;
+    int check_toVectorIndex;
+    bool check_avoidCopyIfPossible;
+    bool check_success = getSlotInformationUncached(fromVectorNo, fromVectorIndex,
+                               check_toVectorNo, check_toVectorIndex, check_avoidCopyIfPossible,
+                               disableWarnings);
+#endif
+
+    if (fromVectorIndex >= slotInformation_[transferDirectionTerm1To2_][fromVectorNo].size())
+    {
+#ifndef NDEBUG
+      if (check_success != false)
+      {
+        LOG(FATAL) << "lookup table does not match recomputed getSlotInformation: (" << &slotInformation_ << ")\n"
+          "  slotInformation_[" << (transferDirectionTerm1To2_? "1->2" : "2->1") << "][" << fromVectorNo << "][" << fromVectorIndex << "]:\n"
+          "    return:     " << false << " (fromVectorIndex is too large)\n"
+          "  getSlotInformationUncached(" << fromVectorNo << "," << fromVectorIndex << "):\n"
+          "    successful: " << check_success << "\n"
+          << getDebugInformation();
+      }
+#endif
+      return false;
+    }
+
+    const Result &result = slotInformation_[transferDirectionTerm1To2_][fromVectorNo][fromVectorIndex];
+    toVectorNo = result.toVectorNo;
+    toVectorIndex = result.toVectorIndex;
+    avoidCopyIfPossible = result.avoidCopyIfPossible;
+#ifndef NDEBUG
+    if ((result.successful != check_success)
+      || (result.successful && (toVectorNo != check_toVectorNo || toVectorIndex != check_toVectorIndex || avoidCopyIfPossible != check_avoidCopyIfPossible)))
+    {
+      LOG(FATAL) << "lookup table does not match recomputed getSlotInformation: (" << &slotInformation_ << ")\n"
+        "  slotInformation_[" << (transferDirectionTerm1To2_? "1->2" : "2->1") << "][" << fromVectorNo << "][" << fromVectorIndex << "]:\n"
+        "    toVectorNo:          " << toVectorNo << "\n"
+        "    toVectorIndex:       " << toVectorIndex << "\n"
+        "    avoidCopyIfPossible: " << avoidCopyIfPossible << "\n"
+        "    successful:          " << result.successful << "\n"
+        "  getSlotInformationUncached(" << fromVectorNo << "," << fromVectorIndex << "):\n"
+        "    toVectorNo:          " << check_toVectorNo << "\n"
+        "    toVectorIndex:       " << check_toVectorIndex << "\n"
+        "    avoidCopyIfPossible: " << check_avoidCopyIfPossible << "\n"
+        "    successful:          " << check_success << "\n"
+        << getDebugInformation();
+    }
+#endif
+    return result.successful;
+  }
+  else
+  {
+    return getSlotInformationUncached(fromVectorNo, fromVectorIndex,
+      toVectorNo, toVectorIndex, avoidCopyIfPossible, disableWarnings);
+  }
 }
 
 std::shared_ptr<SlotsConnection> &SlotsConnection::subSlotsConnection1()

@@ -566,19 +566,29 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
     }
   }
 
-#ifndef NDEBUG
-  LOG(DEBUG) << "lookup-table initialization done:";
+  // print result
+  LOG(DEBUG) << "lookup-table initialization done: (" << &slotInformation_ << ")";
+  LOG(DEBUG) << "  offsetSlot: " << offsetSlotNoData1_ << " "  << offsetSlotNoData2_;
+  LOG(DEBUG) << "  nFieldVariablesTerm1: " << nFieldVariablesTerm1Vector1_ << " "  << nFieldVariablesTerm1Vector2_;
+  LOG(DEBUG) << "  nFieldVariablesTerm2: " << nFieldVariablesTerm2Vector1_ << " "  << nFieldVariablesTerm2Vector2_;
+  LOG(DEBUG) << "  fieldVariableNamesTerm1: " << fieldVariableNamesTerm1Vector1_ << " "  << fieldVariableNamesTerm1Vector2_;
+  LOG(DEBUG) << "  fieldVariableNamesTerm2: " << fieldVariableNamesTerm2Vector1_ << " "  << fieldVariableNamesTerm2Vector2_;
+  LOG(DEBUG) << "  slotInformation_[" << "1To2?" << "][" << "fromVectorNo" << "][" << "i" << "] = " << "success, toVectorNo, toVectorIndex, avoidCopyIfPossible";
   for (int transferDirectionTerm1To2 = 0; transferDirectionTerm1To2 < 2; transferDirectionTerm1To2++)
   {
     for (int fromVectorNo = 0; fromVectorNo < 2; fromVectorNo++)
     {
       for (int i = 0; i < slotInformation_[transferDirectionTerm1To2][fromVectorNo].size(); i++)
       {
-        LOG(DEBUG) << "  slotInformation_[" << transferDirectionTerm1To2 << "][" << fromVectorNo << "][" << i << "] = " << slotInformation_[transferDirectionTerm1To2][fromVectorNo][i].successful;
+        LOG(DEBUG) << "  slotInformation_["
+          << (transferDirectionTerm1To2? "1To2" : "2To1") << "][" << std::setw(1) << fromVectorNo << "][" << std::setw(2) << i << "] = "
+          << std::setw(5) << slotInformation_[transferDirectionTerm1To2][fromVectorNo][i].successful << ", "
+          << std::setw(1) << slotInformation_[transferDirectionTerm1To2][fromVectorNo][i].toVectorNo << ", "
+          << std::setw(2) << slotInformation_[transferDirectionTerm1To2][fromVectorNo][i].toVectorIndex << ", "
+          << std::setw(5) << slotInformation_[transferDirectionTerm1To2][fromVectorNo][i].avoidCopyIfPossible;
       }
     }
   }
-#endif
 
   // restore previous value of the variable transferDirectionTerm1To2_
   transferDirectionTerm1To2_ = previousTransferDirectionTerm1To2;

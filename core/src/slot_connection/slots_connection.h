@@ -69,6 +69,8 @@ public:
   std::string getDebugInformation() const;
 
 private:
+  //! same as getSlotInformation but does not use the `slotInformation_` look-up table
+  bool getSlotInformationUncached(int fromVectorNo, int fromVectorIndex, int &toVectorNo, int &toVectorIndex, bool &avoidCopyIfPossible, bool disableWarnings=false) const;
 
   //! initialize the slotInformation_ variable
   template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b>

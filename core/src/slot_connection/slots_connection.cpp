@@ -35,7 +35,7 @@ SlotsConnection::SlotsConnection(PythonConfig settings):
 
 //! copy constructor
 SlotsConnection::SlotsConnection(const SlotsConnection &rhs) :
-  fieldVariableNamesInitialized_(false), transferDirectionTerm1To2_(true), slotInformationInitialized_(false)
+  fieldVariableNamesInitialized_(false), slotInformationInitialized_(false)
 {
   connectorForVisualizerTerm1To2_ = rhs.connectorForVisualizerTerm1To2_;
   connectorForVisualizerTerm2To1_ = rhs.connectorForVisualizerTerm2To1_;
@@ -233,7 +233,7 @@ std::string SlotsConnection::getDebugInformation() const
   {
     result << "  Term1.slot " << i << " (";
 
-    int vectorNo = std::min(1,i/nFieldVariablesTerm1Vector1_);
+    int vectorNo = i >= nFieldVariablesTerm1Vector1_ ? 1 : 0;
     int vectorIndex = i - vectorNo*nFieldVariablesTerm1Vector1_;
 
     result << "Term1.variable" << vectorNo+1 << "[" << vectorIndex << "], ";
@@ -269,7 +269,7 @@ std::string SlotsConnection::getDebugInformation() const
     }
     else
     {
-      vectorNo = std::min(1,connectorTerm1To2_[i].index/nFieldVariablesTerm2Vector1_);
+      vectorNo = connectorTerm1To2_[i].index >= nFieldVariablesTerm2Vector1_ ? 1 : 0;
       vectorIndex = connectorTerm1To2_[i].index - vectorNo*nFieldVariablesTerm2Vector1_;
 
       result << "Term2.variable" << vectorNo+1 << "[" << vectorIndex << "], ";
@@ -320,7 +320,7 @@ std::string SlotsConnection::getDebugInformation() const
   {
     result << "  Term2.slot " << i << " (";
 
-    int vectorNo = std::min(1,i/nFieldVariablesTerm2Vector1_);
+    int vectorNo = i >= nFieldVariablesTerm2Vector1_ ? 1 : 0;
     int vectorIndex = i - vectorNo*nFieldVariablesTerm2Vector1_;
 
     result << "Term2.variable" << vectorNo+1 << "[" << vectorIndex << "], ";
@@ -356,7 +356,7 @@ std::string SlotsConnection::getDebugInformation() const
     }
     else
     {
-      vectorNo = std::min(1,connectorTerm2To1_[i].index/nFieldVariablesTerm1Vector1_);
+      vectorNo = connectorTerm2To1_[i].index >= nFieldVariablesTerm1Vector1_ ? 1 : 0;
       vectorIndex = connectorTerm2To1_[i].index - vectorNo*nFieldVariablesTerm1Vector1_;
 
       result << "Term1.variable" << vectorNo+1 << "[" << vectorIndex << "], ";
@@ -483,10 +483,7 @@ bool SlotsConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
       return false;
     }
 
-    if (nFieldVariablesTerm2Vector1_ == 0)
-      toVectorNo = 1;
-    else
-      toVectorNo = std::min(1,int(toIndex/nFieldVariablesTerm2Vector1_));
+    toVectorNo = toIndex >= nFieldVariablesTerm2Vector1_ ? 1 : 0;
     toVectorIndex = toIndex - toVectorNo*nFieldVariablesTerm2Vector1_;
 
     avoidCopyIfPossible = connectorTerm1To2_[fromIndex].avoidCopyIfPossible;
@@ -575,10 +572,7 @@ bool SlotsConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
       return false;
     }
 
-    if (nFieldVariablesTerm1Vector1_ == 0)
-      toVectorNo = 1;
-    else
-      toVectorNo = std::min(1,int(toIndex/nFieldVariablesTerm1Vector1_));
+    toVectorNo = toIndex >= nFieldVariablesTerm1Vector1_ ? 1 : 0;
     toVectorIndex = toIndex - toVectorNo*nFieldVariablesTerm1Vector1_;
 
     LOG(DEBUG) << "toVectorNo=" << toVectorNo << ", toVectorIndex=" << toVectorIndex << ", toIndex=" << toIndex;

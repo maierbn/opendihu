@@ -105,6 +105,12 @@ public:
   //! set a new time interval that will be simulated by next call to advanceTimeSpan.
   void setTimeSpan(double startTime, double endTime);
 
+  //! start time of time interval to be simulated
+  double startTime();
+
+  //! end time of simulation
+  double endTime();
+
   //! get the slot connector data, to be used for an enclosing solver
   std::shared_ptr<SlotConnectorDataType> getSlotConnectorData();
 

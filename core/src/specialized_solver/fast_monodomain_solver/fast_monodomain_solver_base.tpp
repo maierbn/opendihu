@@ -39,6 +39,18 @@ setTimeSpan(double startTime, double endTime)
   nestedSolvers_.setTimeSpan(startTime, endTime);
 }
 
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+double FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
+startTime() {
+  return nestedSolvers_.startTime();
+}
+
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+double FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
+endTime() {
+  return nestedSolvers_.endTime();
+}
+
 //! get a reference to the nested solvers
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 typename FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::NestedSolversType &FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::

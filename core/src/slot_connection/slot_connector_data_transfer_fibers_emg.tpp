@@ -29,7 +29,8 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<
          >>> transferableSolutionData1,
          std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
          SlotsConnection &slotsConnection,
-         int offsetSlotNoData1, int offsetSlotNoData2)
+         int offsetSlotNoData1, int offsetSlotNoData2,
+         bool originalTransferDirection)
 {
   /** Explanation: map values from transferableSolutionData1 to transferableSolutionData2.
    *  These two variables specify all slots of two terms. They contain multiple field variables and the specification of component no's.
@@ -274,7 +275,8 @@ transfer(const std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType1,nCompo
            >
          >>> transferableSolutionData2,
          SlotsConnection &slotsConnection,
-         int offsetSlotNoData1, int offsetSlotNoData2)
+         int offsetSlotNoData1, int offsetSlotNoData2,
+         bool originalTransferDirection)
 {
   LOG(DEBUG) << "transfer fibers_emg (2)";
 

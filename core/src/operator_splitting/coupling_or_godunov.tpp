@@ -67,7 +67,7 @@ advanceTimeSpan(bool withOutputWritersEnabled)
 
     // transfer to timestepping2_
     SlotConnectorDataTransfer<typename TimeStepping1::SlotConnectorDataType, typename TimeStepping2::SlotConnectorDataType>::
-      transfer(this->timeStepping1_.getSlotConnectorData(), this->timeStepping2_.getSlotConnectorData(), *this->slotsConnection_);
+      transfer(this->timeStepping1_.getSlotConnectorData(), this->timeStepping2_.getSlotConnectorData(), *this->slotsConnection_, 0, 0, true);
 
     if (VLOG_IS_ON(1))
       VLOG(1) << "  after transfer 1->2 timeStepping2_.getSlotConnectorData(): " 
@@ -106,7 +106,7 @@ advanceTimeSpan(bool withOutputWritersEnabled)
 
     // transfer to timestepping1_
     SlotConnectorDataTransfer<typename TimeStepping2::SlotConnectorDataType, typename TimeStepping1::SlotConnectorDataType>::
-      transfer(this->timeStepping2_.getSlotConnectorData(), this->timeStepping1_.getSlotConnectorData(), *this->slotsConnection_);
+      transfer(this->timeStepping2_.getSlotConnectorData(), this->timeStepping1_.getSlotConnectorData(), *this->slotsConnection_, 0, 0, false);
 
     if (VLOG_IS_ON(1))
       VLOG(1) << "  after transfer 2->1: timeStepping1_.getSlotConnectorData(): " << this->timeStepping1_.getSlotConnectorData();

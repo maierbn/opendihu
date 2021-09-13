@@ -32,7 +32,8 @@ public:
   static void transfer(const std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType1>>> transferableSolutionData1,
                        std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType2>>> transferableSolutionData2,
                        SlotsConnection &slotsConnection,
-                       int offsetSlotNoData1=0, int offsetSlotNoData2=0);
+                       int offsetSlotNoData1=0, int offsetSlotNoData2=0,
+                       bool originalTransferDirection=true);
 };
 
 /** Transfer between a normal entry and a vector, the first entry of the vector is used
@@ -52,7 +53,8 @@ public:
                        >>> transferableSolutionData1,
                        std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
                        SlotsConnection &slotsConnection,
-                       int offsetSlotNoData1=0, int offsetSlotNoData2=0);
+                       int offsetSlotNoData1=0, int offsetSlotNoData2=0,
+                       bool originalTransferDirection=true);
 };
 
 /** Transfer between a normal entry and a vector, the first entry of the vector is used
@@ -72,7 +74,8 @@ public:
                          Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
                        >>> transferableSolutionData2,
                        SlotsConnection &slotsConnection,
-                       int offsetSlotNoData1=0, int offsetSlotNoData2=0);
+                       int offsetSlotNoData1=0, int offsetSlotNoData2=0,
+                       bool originalTransferDirection=true);
 };
 
 #include "slot_connection/slot_connector_data_transfer_vector.tpp"

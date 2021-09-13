@@ -47,7 +47,8 @@ public:
   static void transfer(const std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1,
                        std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
                        SlotsConnection &slotsConnection,
-                       int offsetSlotNoData1=0, int offsetSlotNoData2=0
+                       int offsetSlotNoData1=0, int offsetSlotNoData2=0,
+                       bool originalTransferDirection=true
                       );
 };
 

@@ -26,6 +26,8 @@ template<typename FunctionSpaceType, int nComponents1, int nComponents2>
 void PrescribedValues<FunctionSpaceType,nComponents1,nComponents2>::
 advanceTimeSpan(bool withOutputWritersEnabled)
 {
+  LOG_SCOPE_FUNCTION;
+
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::start(this->durationLogKey_);
@@ -78,6 +80,8 @@ template<typename FunctionSpaceType, int nComponents1, int nComponents2>
 void PrescribedValues<FunctionSpaceType,nComponents1,nComponents2>::
 initialize()
 {
+  LOG_SCOPE_FUNCTION;
+
   // initialize() will be called before the simulation starts.
 
   // call initialize of the parent class, this parses the timestepping settings from the settings file

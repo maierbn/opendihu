@@ -239,6 +239,8 @@ template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 advanceTimeSpan(bool withOutputWritersEnabled)
 {
+  LOG_SCOPE_FUNCTION;
+
   // start duration measurement
   if (this->logKey_ != "")
     Control::PerformanceMeasurement::start(this->logKey_);
@@ -275,6 +277,8 @@ template<typename TimeSteppingScheme>
 void MultipleInstances<TimeSteppingScheme>::
 initialize()
 {
+  LOG_SCOPE_FUNCTION;
+
   if (this->logKey_ != "")
   {
     std::stringstream logKey;

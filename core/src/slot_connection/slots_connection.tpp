@@ -6,6 +6,8 @@ initialize(const Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nCompo
            const Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b> &transferableSolutionData2,
            int offsetSlotNoData1, int offsetSlotNoData2)
 {
+  LOG_SCOPE_FUNCTION;
+
   LOG(DEBUG) << "SlotsConnection::initialize, " << (transferDirectionTerm1To2_? "1->2" : "2->1") << ", offsets: " << offsetSlotNoData1 << "," << offsetSlotNoData2
     << ", initialized: " << fieldVariableNamesInitialized_;
 

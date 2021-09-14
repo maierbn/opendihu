@@ -15,6 +15,8 @@ template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 advanceTimeSpan(bool withOutputWritersEnabled)
 {
+  LOG_SCOPE_FUNCTION;
+
   LOG(TRACE) << "FastMonodomainSolver::advanceTimeSpan";
 
   // loop over fibers and communicate element lengths and initial values to the ranks that participate in computing

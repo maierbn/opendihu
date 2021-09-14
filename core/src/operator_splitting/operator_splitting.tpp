@@ -64,6 +64,8 @@ template<typename TimeStepping1, typename TimeStepping2>
 void OperatorSplitting<TimeStepping1, TimeStepping2>::
 initialize()
 {
+  LOG_SCOPE_FUNCTION;
+
   if (initialized_)
     return;
   LOG(TRACE) << "  OperatorSplitting::initialize";

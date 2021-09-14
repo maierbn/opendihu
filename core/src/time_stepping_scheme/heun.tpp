@@ -18,6 +18,8 @@ template<typename DiscretizableInTime>
 void Heun<DiscretizableInTime>::
 initialize()
 {
+  LOG_SCOPE_FUNCTION;
+
   LOG(TRACE) << "Heun::initialize";
 
   this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->context_);  // create data object for heun
@@ -30,6 +32,8 @@ template<typename DiscretizableInTime>
 void Heun<DiscretizableInTime>::
 advanceTimeSpan(bool withOutputWritersEnabled)
 {
+  LOG_SCOPE_FUNCTION;
+
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::start(this->durationLogKey_);

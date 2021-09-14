@@ -27,6 +27,8 @@ template<typename TimeStepping>
 void MyNewTimesteppingSolver<TimeStepping>::
 advanceTimeSpan(bool withOutputWritersEnabled)
 {
+  LOG_SCOPE_FUNCTION;
+
   // This method computes some time steps of the simulation by running a for loop over the time steps.
   // The number of steps, timestep width and current time are all set by the parent class, TimeSteppingScheme.
   // You shouldn't change too much in this method.
@@ -95,6 +97,8 @@ template<typename TimeStepping>
 void MyNewTimesteppingSolver<TimeStepping>::
 initialize()
 {
+  LOG_SCOPE_FUNCTION;
+
   // initialize() will be called before the simulation starts.
 
   // call initialize of the parent class, this parses the timestepping settings from the settings file

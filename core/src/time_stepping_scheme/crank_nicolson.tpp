@@ -21,6 +21,7 @@ template<typename DiscretizableInTimeType>
 void CrankNicolson<DiscretizableInTimeType>::
 advanceTimeSpan(bool withOutputWritersEnabled)
 {
+  LOG_SCOPE_FUNCTION;
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::start(this->durationLogKey_);
@@ -90,11 +91,13 @@ template<typename DiscretizableInTimeType>
 void CrankNicolson<DiscretizableInTimeType>::
 initialize()
 {
+  LOG_SCOPE_FUNCTION;
+
   LOG(TRACE) << "CrankNicolson::initialize()";
   
   if (this->initialized_)
     return;
-  
+
   TimeSteppingImplicit<DiscretizableInTimeType>::initialize();
   
   this->initialized_ = true;

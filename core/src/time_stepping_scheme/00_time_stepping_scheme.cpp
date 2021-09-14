@@ -195,4 +195,3 @@ std::string TimeSteppingScheme::durationLogKey()
 }
 
 }  // namespace
-

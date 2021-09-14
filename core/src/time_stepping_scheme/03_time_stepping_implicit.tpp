@@ -22,6 +22,8 @@ template<typename DiscretizableInTimeType>
 void TimeSteppingImplicit<DiscretizableInTimeType>::
 initialize()
 {
+  LOG_SCOPE_FUNCTION;
+
   if (this->initialized_)
     return;
 

@@ -45,6 +45,7 @@ template<typename MeshType,typename Term,bool withLargeOutputFiles>
 void MuscleContractionSolver<MeshType,Term,withLargeOutputFiles>::
 advanceTimeSpan(bool withOutputWritersEnabled)
 {
+  LOG_SCOPE_FUNCTION;
   // This method computes some time steps of the simulation by running a for loop over the time steps.
   // The number of steps, timestep width and current time are all set by the parent class, TimeSteppingScheme.
 
@@ -134,6 +135,8 @@ template<typename MeshType,typename Term,bool withLargeOutputFiles>
 void MuscleContractionSolver<MeshType,Term,withLargeOutputFiles>::
 initialize()
 {
+  LOG_SCOPE_FUNCTION;
+
   // only initialize once
   if (initialized_)
     return;

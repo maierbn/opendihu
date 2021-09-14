@@ -18,6 +18,8 @@ template<typename FiniteElementMethodPotentialFlow,typename FiniteElementMethodD
 void MultidomainWithFatSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle,FiniteElementMethodDiffusionFat>::
 initialize()
 {
+  LOG_SCOPE_FUNCTION;
+
   MultidomainSolver<FiniteElementMethodPotentialFlow,FiniteElementMethodDiffusionMuscle>::initializeObjects();
 
   // indicate in solverStructureVisualizer that now a child solver will be initialized

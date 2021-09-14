@@ -29,6 +29,7 @@ template<typename Term,bool withLargeOutput,typename MeshType>
 void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 initialize()
 {
+  LOG_SCOPE_FUNCTION;
   TimeSteppingScheme::initialize();
 
   // add this solver to the solvers diagram
@@ -352,6 +353,7 @@ template<typename Term,bool withLargeOutput,typename MeshType>
 void DynamicHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 advanceTimeSpan(bool withOutputWritersEnabled)
 {
+  LOG_SCOPE_FUNCTION;
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::start(this->durationLogKey_);

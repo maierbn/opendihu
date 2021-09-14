@@ -18,6 +18,8 @@
 #include "partition/partition_manager.h"
 #include "control/python_config/python_config.h"
 
+#include "utility/log_scope.h"
+
 extern bool GLOBAL_DEBUG;
 // forward declaration
 namespace Mesh { class Manager; }

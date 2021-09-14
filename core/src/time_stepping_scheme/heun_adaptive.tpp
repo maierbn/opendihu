@@ -19,6 +19,8 @@ HeunAdaptive<DiscretizableInTime>::HeunAdaptive(DihuContext context) :
 template<typename DiscretizableInTime>
 void HeunAdaptive<DiscretizableInTime>::initialize()
 {
+  LOG_SCOPE_FUNCTION;
+
   // create data object for heun
   this->data_ = std::make_shared<Data::TimeSteppingHeun<typename DiscretizableInTime::FunctionSpace, DiscretizableInTime::nComponents()>>(this->context_);
 
@@ -90,6 +92,7 @@ template<typename DiscretizableInTime>
 void HeunAdaptive<DiscretizableInTime>::
 advanceTimeSpan(bool withOutputWritersEnabled)
 {
+  LOG_SCOPE_FUNCTION;
 
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")

@@ -18,6 +18,8 @@ template<typename TimeStepping1, typename TimeStepping2>
 void Strang<TimeStepping1,TimeStepping2>::
 advanceTimeSpan(bool withOutputWritersEnabled)
 {
+  LOG_SCOPE_FUNCTION;
+
   // start duration measurement, the name of the output variable can be set by "durationLogKey" in the config
   if (this->durationLogKey_ != "")
     Control::PerformanceMeasurement::start(this->durationLogKey_);

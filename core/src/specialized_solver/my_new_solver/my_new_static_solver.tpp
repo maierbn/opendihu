@@ -29,6 +29,8 @@ template<typename NestedSolver>
 void MyNewStaticSolver<NestedSolver>::
 initialize()
 {
+  LOG_SCOPE_FUNCTION;
+
   // make sure that we initialize only once, in the next call, initialized_ is true
   if (initialized_)
     return;

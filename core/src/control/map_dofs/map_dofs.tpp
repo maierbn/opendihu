@@ -10,6 +10,8 @@ template<typename FunctionSpaceType, typename NestedSolverType>
 void MapDofs<FunctionSpaceType,NestedSolverType>::
 advanceTimeSpan(bool withOutputWritersEnabled)
 {
+  LOG_SCOPE_FUNCTION;
+
   LOG(DEBUG) << "MapDofs::advanceTimeSpan, " << mappingsBeforeComputation_.size() << " mappings before computation, "
     << mappingsAfterComputation_.size() << " mappings after computation.";
   LOG(DEBUG) << "MapDofs::performMappings beforeComputation";

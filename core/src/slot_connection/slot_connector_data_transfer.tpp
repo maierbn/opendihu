@@ -28,8 +28,6 @@ void SlotConnectorDataTransfer<
   // initialize output connection object
   slotsConnection.initialize(*transferableSolutionData1, *transferableSolutionData2, offsetSlotNoData1, offsetSlotNoData2);
 
-  typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a> FieldVariable1;
-
   // for the first vector of variables (the "states" in case of CellMLAdapter)
   for (int i = 0; i < transferableSolutionData1->variable1.size(); i++)
   {
@@ -45,6 +43,8 @@ void SlotConnectorDataTransfer<
       LOG(DEBUG) << "slot from variable1, index " << fromVectorIndex << " not connected";
       continue;
     }
+
+    typedef FieldVariable::FieldVariable<FunctionSpaceType1,nComponents1a> FieldVariable1;
 
     std::shared_ptr<FieldVariable1> fieldVariable1 = transferableSolutionData1->variable1[fromVectorIndex].values;
     int componentNo1 = transferableSolutionData1->variable1[fromVectorIndex].componentNo;
@@ -65,6 +65,7 @@ void SlotConnectorDataTransfer<
 
     if (toVectorNo == 0)
     {
+      // to variable1
       typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2a> FieldVariable2;
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2->variable1[toVectorIndex].values;
       int componentNo2 = transferableSolutionData2->variable1[toVectorIndex].componentNo;
@@ -84,6 +85,7 @@ void SlotConnectorDataTransfer<
     }
     else
     {
+      // to variable2
       typedef FieldVariable::FieldVariable<FunctionSpaceType2,nComponents2b> FieldVariable2;
       std::shared_ptr<FieldVariable2> &fieldVariable2 = transferableSolutionData2->variable2[toVectorIndex].values;
       int componentNo2 = transferableSolutionData2->variable2[toVectorIndex].componentNo;

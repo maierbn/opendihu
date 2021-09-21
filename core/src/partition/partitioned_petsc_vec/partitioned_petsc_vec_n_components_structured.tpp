@@ -1153,9 +1153,11 @@ output(std::ostream &stream)
   ierr = VecGetSize(vector, &nEntries); CHKERRV(ierr);
   ierr = VecGetLocalSize(vector, &nEntriesLocal); CHKERRV(ierr);
 
-  stream << "vector \"" << this->name_ << "\", (" << nEntries << " global, " << nEntriesLocal
-    << " local entries (per component), representation " << this->getCurrentRepresentationString()
-    << ", vectors local[0]: " << vectorLocal_[0] << ", global[0]: " << vectorGlobal_[0] << ", contiguous: " << valuesContiguous_ << ")";
+  // ident 3 tabs + 1 space to get a better alignment with slot_connector_data.tpp operator<<
+  stream << "\t\t\t " << "vector \"" << this->name_ << "\" (" << nEntries << " global, " << nEntriesLocal
+    << " local entries (per component), representation: " << this->getCurrentRepresentationString()
+    << ", vectors local[0]: " << vectorLocal_[0] << ", global[0]: " << vectorGlobal_[0]
+    << ", contiguous: " << valuesContiguous_ << ")";
 
   // loop over components
   for (int componentNo = 0; componentNo < nComponents; componentNo++)
@@ -1257,7 +1259,8 @@ output(std::ostream &stream)
     
     if (ownRankNo == 0)
     {
-      stream << std::endl << "\"" << this->name_ << "\" component " << componentNo << ": local values on ranks: [";
+      // ident 4 tabs to get a better alignment with slot_connector_data.tpp operator<<
+      stream << std::endl << "\t\t\t\t\"" << this->name_ << "\" component " << componentNo << ": local values on ranks: [";
       std::vector<double> globalValues(this->meshPartition_->nDofsGlobal());
       for (int rankNo = 0; rankNo < nRanks; rankNo++)
       {

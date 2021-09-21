@@ -524,8 +524,8 @@ output(std::ostream &stream)
     
     if (ownRankNo == 0)
     {
-      stream << "vector \"" << this->name_ << "\", representation \""
-        << this->getCurrentRepresentationString() << "\"" << std::endl;
+      stream << "vector \"" << this->name_ << "\" (representation: "
+        << this->getCurrentRepresentationString() << ")" << std::endl;
       stream << "component " << componentNo << ": [";
       for (int rankNo = 0; rankNo < nRanks; rankNo++)
       {

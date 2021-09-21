@@ -76,31 +76,32 @@ template<typename FunctionSpaceType, int nComponents1, int nComponents2>
 std::ostream &operator<<(std::ostream &stream, const SlotConnectorData<FunctionSpaceType,nComponents1,nComponents2> &rhs)
 {
   if (rhs.variable1.empty())
-    stream << "\t(variable1 empty\n";
+    stream << "\t(\n" << "\t\tvariable1: empty\n";
   else
   {
-    stream << "\t(variable1:\n";
+    stream << "\t(\n" << "\t\tvariable1:\n";
     for (const ComponentOfFieldVariable<FunctionSpaceType,nComponents1> &entry : rhs.variable1)
     {
-      stream << "\t\t[" << entry.values << ": " << *(entry.values) << " name \"" << entry.values->name() << "\", component " << entry.componentNo << "], " << std::endl;
+      stream << "\t\t\t{" << *(entry.values) << " (" << entry.values << ") name \"" << entry.values->name() << "\", component " << entry.componentNo << "}, " << std::endl;
     }
   }
 
   if (rhs.variable2.empty())
-    stream << "\t, variable2 empty\n";
+    stream << "\t\tvariable2: empty\n";
   else
   {
-    stream << "\t, variable2:\n";
+    stream << "\t\tvariable2:\n";
     for (const ComponentOfFieldVariable<FunctionSpaceType,nComponents2> &entry : rhs.variable2)
     {
-      stream << "\t\t[" << entry.values << ": " << *(entry.values) << " name \"" << entry.values->name() << "\", component " << entry.componentNo << "], " << std::endl;
+      stream << "\t\t\t{" << *(entry.values) << " (" << entry.values << ") name \"" << entry.values->name() << "\", component " << entry.componentNo << "}, " << std::endl;
     }
   }
-  stream << "\t), slotNames: ";
+  stream << "\t\tslotNames:";
   for (std::string slotName : rhs.slotNames)
   {
     stream << " " << slotName;
   }
+  stream << ")" << std::endl;
 
   return stream;
 }

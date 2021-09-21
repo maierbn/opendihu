@@ -313,11 +313,12 @@ output(std::ostream &stream) const
   {
     stream << "\"" << this->name_ << "\" on mesh \"" << this->functionSpace_->meshName() << "\""
       << ", isGeometryField: " << std::boolalpha << this->isGeometryField_
-      << ", " << this->componentNames_.size() << (this->componentNames_.size() == 1? " component:" : " components: ");
+      << ", " << this->componentNames_.size() << (this->componentNames_.size() == 1? " component: " : " components: ");
     for (auto &componentName : this->componentNames_)
     {
       stream << "\"" << componentName << "\", ";
     }
+    stream << std::endl;
   }
 
   if (values_)

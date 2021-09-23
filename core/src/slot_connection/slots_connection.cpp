@@ -78,9 +78,13 @@ void SlotsConnection::addConnectionTerm1ToTerm2(int slotNoFrom, int slotNoTo)
   fieldVariableNamesInitialized_ = false;
 
   std::stringstream s;
+  s << "all connections (from->to,avoidCopyIfPossible):\n";
   for (int i = 0; i < connectorForVisualizerTerm1To2_.size(); i++)
   {
-    s << "  " << i << "->" << connectorForVisualizerTerm1To2_[i].index << " " << connectorForVisualizerTerm1To2_[i].avoidCopyIfPossible << "\n";
+    s << "  " << std::setw(2) << i << "->" << std::setw(2) << connectorForVisualizerTerm1To2_[i].index;
+    if (connectorForVisualizerTerm1To2_[i].index != -1)
+      s << " " << connectorForVisualizerTerm1To2_[i].avoidCopyIfPossible;
+    s << "\n";
   }
   LOG(DEBUG) << s.str();
 }
@@ -121,9 +125,13 @@ void SlotsConnection::addConnectionTerm2ToTerm1(int slotNoFrom, int slotNoTo)
   fieldVariableNamesInitialized_ = false;
 
   std::stringstream s;
+  s << "all connections (from->to, avoidCopyIfPossible):\n";
   for (int i = 0; i < connectorForVisualizerTerm2To1_.size(); i++)
   {
-    s << "  " << i << "->" << connectorForVisualizerTerm2To1_[i].index << " " << connectorForVisualizerTerm2To1_[i].avoidCopyIfPossible << "\n";
+    s << "  " << std::setw(2) << i << "->" << std::setw(2) << connectorForVisualizerTerm2To1_[i].index;
+    if (connectorForVisualizerTerm2To1_[i].index != -1)
+      s << " " << connectorForVisualizerTerm2To1_[i].avoidCopyIfPossible;
+    s << "\n";
   }
   LOG(DEBUG) << s.str();
 }

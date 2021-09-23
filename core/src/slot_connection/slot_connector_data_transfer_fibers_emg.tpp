@@ -56,8 +56,8 @@ transfer(const std::shared_ptr<std::vector<std::shared_ptr<
   slotsConnection.initialize(*transferableSolutionData1Front, *transferableSolutionData2, offsetSlotNoData1, offsetSlotNoData2);
 
 #ifndef NDEBUG
-  LOG(DEBUG) << "variable1.size: " << transferableSolutionData1Front->variable1.size() << ", variable2.size: " << transferableSolutionData1Front->variable2.size()
-    << "slotsConnection: " << slotsConnection.getDebugInformation();
+  LOG(DEBUG) << "variable1.size: " << transferableSolutionData1Front->variable1.size() << ", variable2.size: " << transferableSolutionData1Front->variable2.size();
+  LOG(DEBUG) << "slotsConnection: " << slotsConnection.getDebugInformation();
 #endif
 
   // for the first vector of variables (the "states" in case of CellMLAdapter)
@@ -288,8 +288,8 @@ transfer(const std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType1,nCompo
   slotsConnection.initialize(*transferableSolutionData1, *transferableSolutionData2Front, offsetSlotNoData1, offsetSlotNoData2);
 
 #ifndef NDEBUG
-  LOG(DEBUG) << "variable1.size: " << transferableSolutionData1->variable1.size() << ", variable2.size: " << transferableSolutionData1->variable2.size() << ", geometryField: " << transferableSolutionData1->geometryField
-    << "slotsConnection: " << slotsConnection.getDebugInformation();
+  LOG(DEBUG) << "variable1.size: " << transferableSolutionData1->variable1.size() << ", variable2.size: " << transferableSolutionData1->variable2.size() << ", geometryField: " << transferableSolutionData1->geometryField;
+  LOG(DEBUG) << "slotsConnection: " << slotsConnection.getDebugInformation();
 #endif
 
   // for the first vector of variables (the "states" in case of CellMLAdapter)

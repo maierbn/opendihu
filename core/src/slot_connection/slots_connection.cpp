@@ -524,8 +524,8 @@ bool SlotsConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
       return false;
     }
 
-    LOG(DEBUG) << "  yes, transfer fromVectorNo=" << fromVectorNo << ", fromVectorIndex=" << fromVectorIndex << "(fromIndex " << fromIndex << ")"
-      << " to toVectorNo=" << toVectorNo << ", toVectorIndex=" << toVectorIndex << ", toIndex=" << toIndex;
+    LOG(DEBUG) << "  yes, transfer fromVectorNo=" << fromVectorNo << ", fromVectorIndex=" << fromVectorIndex << " (fromIndex " << fromIndex << ")"
+      << " to toVectorNo=" << toVectorNo << ", toVectorIndex=" << toVectorIndex << " (toIndex=" << toIndex << ")";
   }
   else
   {
@@ -533,8 +533,6 @@ bool SlotsConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
 
     // transform from index
     int fromIndex = fromVectorNo*nFieldVariablesTerm2Vector1_ + fromVectorIndex;
-
-    LOG(DEBUG) << "fromVectorNo=" << fromVectorNo << ", fromVectorIndex=" << fromVectorIndex << ", fromIndex=" << fromIndex;
 
     // check for wrong indices and output errors
     if (fromIndex >= connectorTerm2To1_.size())
@@ -583,7 +581,6 @@ bool SlotsConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
     toVectorNo = toIndex >= nFieldVariablesTerm1Vector1_ ? 1 : 0;
     toVectorIndex = toIndex - toVectorNo*nFieldVariablesTerm1Vector1_;
 
-    LOG(DEBUG) << "toVectorNo=" << toVectorNo << ", toVectorIndex=" << toVectorIndex << ", toIndex=" << toIndex;
 
     avoidCopyIfPossible = connectorTerm2To1_[fromIndex].avoidCopyIfPossible;
 
@@ -614,8 +611,8 @@ bool SlotsConnection::getSlotInformation(int fromVectorNo, int fromVectorIndex,
       return false;
     }
 
-    LOG(DEBUG) << "  yes, transfer transfer fromVectorNo=" << fromVectorNo << ", fromVectorIndex=" << fromVectorIndex << "(fromIndex " << fromIndex << ") "
-      << "to toVectorNo=" << toVectorNo << ", toVectorIndex=" << toVectorIndex << ", toIndex=" << toIndex;
+    LOG(DEBUG) << "  yes, transfer fromVectorNo=" << fromVectorNo << ", fromVectorIndex=" << fromVectorIndex << " (fromIndex " << fromIndex << ") "
+      << "to toVectorNo=" << toVectorNo << ", toVectorIndex=" << toVectorIndex << " (toIndex=" << toIndex << ")";
   }
 
   // completed successfully

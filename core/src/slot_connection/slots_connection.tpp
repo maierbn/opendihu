@@ -156,32 +156,32 @@ initialize(const Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nCompo
       }
     }
 
-    LOG(DEBUG) << "offsetSlotNoData1_: " << offsetSlotNoData1_ << ", offsetSlotNoData2_: " << offsetSlotNoData2_;
-
-    LOG(DEBUG) << "connectorTerm1To2_: ";
-    int i = 0;
-    for (std::vector<Connector>::const_iterator iter = connectorTerm1To2_.begin(); iter != connectorTerm1To2_.end(); iter++, i++)
-    {
-      LOG(DEBUG) << "  " << i << ". " << iter->index << " (avoidCopyIfPossible=" << iter->avoidCopyIfPossible << ")";
-    }
-    LOG(DEBUG) << "connectorTerm2To1_: ";
-    i = 0;
-    for (std::vector<Connector>::const_iterator iter = connectorTerm2To1_.begin(); iter != connectorTerm2To1_.end(); iter++, i++)
-    {
-      LOG(DEBUG) << "  " << i << ". " << iter->index << " (avoidCopyIfPossible=" << iter->avoidCopyIfPossible << ")";
-    }
-
     LOG(DEBUG) << "connectorForVisualizerTerm1To2_: ";
-    i = 0;
+    int i = 0;
     for (std::vector<Connector>::const_iterator iter = connectorForVisualizerTerm1To2_.begin(); iter != connectorForVisualizerTerm1To2_.end(); iter++, i++)
     {
-      LOG(DEBUG) << "  " << i << ". " << iter->index << " (avoidCopyIfPossible=" << iter->avoidCopyIfPossible << ")";
+      LOG(DEBUG) << "  " << std::setw(2) << i << ". " << std::setw(2) << iter->index << " (avoidCopyIfPossible=" << iter->avoidCopyIfPossible << ")";
     }
     LOG(DEBUG) << "connectorForVisualizerTerm2To1_: ";
     i = 0;
     for (std::vector<Connector>::const_iterator iter = connectorForVisualizerTerm2To1_.begin(); iter != connectorForVisualizerTerm2To1_.end(); iter++, i++)
     {
-      LOG(DEBUG) << "  " << i << ". " << iter->index << " (avoidCopyIfPossible=" << iter->avoidCopyIfPossible << ")";
+      LOG(DEBUG) << "  " << std::setw(2) << i << ". " << std::setw(2) << iter->index << " (avoidCopyIfPossible=" << iter->avoidCopyIfPossible << ")";
+    }
+
+    LOG(DEBUG) << "offsetSlotNoData1_: " << offsetSlotNoData1_ << ", offsetSlotNoData2_: " << offsetSlotNoData2_;
+
+    LOG(DEBUG) << "connectorTerm1To2_: ";
+    i = 0;
+    for (std::vector<Connector>::const_iterator iter = connectorTerm1To2_.begin(); iter != connectorTerm1To2_.end(); iter++, i++)
+    {
+      LOG(DEBUG) << "  " << std::setw(2) << i << ". " << std::setw(2) << iter->index << " (avoidCopyIfPossible=" << iter->avoidCopyIfPossible << ")";
+    }
+    LOG(DEBUG) << "connectorTerm2To1_: ";
+    i = 0;
+    for (std::vector<Connector>::const_iterator iter = connectorTerm2To1_.begin(); iter != connectorTerm2To1_.end(); iter++, i++)
+    {
+      LOG(DEBUG) << "  " << std::setw(2) << i << ". " << std::setw(2) << iter->index << " (avoidCopyIfPossible=" << iter->avoidCopyIfPossible << ")";
     }
 
     initializeSlotInformation(transferableSolutionData1, transferableSolutionData2);

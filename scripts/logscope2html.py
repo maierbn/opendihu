@@ -1,6 +1,9 @@
 """
 Transfrom OpenDiHu logs with log scopes into a html document
     cat log | python3 logscope2html.py > log.html
+
+Useful command to reduce the log size:
+    ssh pcsgs03 'cat .../log | grep -v -e "[a-zA-Z_]*[0-9]*[a-zA-Z_]*[0-9]* dof [0-9]* value" -e "create MappingBetweenMeshes" -e "before mapping:" -e "local values on ranks: " -Ee "DEBUG: (jacobian|normal index space|cofactor|geometryValues): "' | python3 ~/opendihu/scripts/logscope2html.py > log.html
 """
 
 import sys
@@ -23,6 +26,10 @@ re_highlight_purple_start = re.compile('^\033\[35m(?P<text>.*?)')
 re_highlight_purple_end   = re.compile('(?P<text>.*?)\033\[0m</span>$') # we insert a span beforehand
 
 re_build_information = re.compile('.*This is opendihu ([0-9\.]*), built [a-zA-Z0-9 ]*, C\+\+ [0-9]*, GCC [0-9\.]*, current time: (?P<currenttime>[0-9/: ]*), hostname: (.*), n ranks: [0-9]*$')
+
+re_disconnected_slot_information = re.compile("^(DEBUG:\s*slotInformation_\[[12](To|to|->)[12]\]\[[01]\]\[\s*[0-9]+\]\s*=\s*false,)(.*)$")
+re_disconnected_slot       = re.compile("^(DEBUG:)(\s*[0-9]+(\.|\s*->)\s*)(-1)(\s+.*)$")
+re_disconnected_slot_local = re.compile("^(DEBUG:)(\s*[0-9]+(\.|\s*->)\s*)(-2)(\s+.*)$")
 
 file_in = sys.stdin
 stack = []
@@ -57,6 +64,32 @@ print("""
             margin-bottom: 0.1cm;
             background-color: rgba(0,100,0,0.05);
         }
+
+        // show explanation for slot connections on mouse hover
+        .hover_uc, .hover_ucl {
+            position: relative;
+        }
+        .hover_uc:after, .hover_ucl:after {
+            visibility: hidden;
+            opacity: 0;
+            border-radius: 5px;
+            padding: 2px 2px;
+            transition: opacity 500ms ease-in-out;
+        }
+        .hover_uc:after {
+            content: "slot not connected";
+            background-color: #444;
+            color: #fff;
+        }
+        .hover_ucl:after {
+            content: "slot connected but not present in other term";
+            background-color: #335;
+            color: #eef;
+        }
+        .hover_uc:hover:after, .hover_ucl:hover:after {
+            opacity: 1;
+            visibility: visible;
+        }
     </style>
     <script>
         function openAllDetails(open) {
@@ -90,7 +123,9 @@ for line in file_in:
         assert name==stack[-1], "Start/End do not match: "+name
         print("</details>")
         stack.pop()
+
     elif m := re_build_information.match(line):
+        # keep the build information on top of the page
         if line[-1] == '\n':
             line = line[:-1]
         html_line = html.escape(line)
@@ -102,6 +137,7 @@ for line in file_in:
         if line[-1] == '\n':
             line = line[:-1]
         html_line = html.escape(line)
+
         # replace ansi color codes
         html_line = re_highlight_red   .sub('<span style="color:red;"   >\g<text></span>', html_line)
         html_line = re_highlight_green .sub('<span style="color:green;" >\g<text></span>', html_line)
@@ -121,6 +157,11 @@ for line in file_in:
         # highlight solver names
         html_line = re.sub('::setSolverDescription\(&quot;(?P<name>.*?)&quot;\)', '::setSolverDescription(&quot;<span style="background-color:rgba(0,255,0,0.2);">\g<name></span>&quot;)', html_line)
         html_line = re.sub('CouplingOrGodunov\(&quot;(?P<name>.*?)&quot;\)', 'CouplingOrGodunov(&quot;<span style="background-color:rgba(0,255,0,0.2);">\g<name></span>&quot;)', html_line)
+
+        # deemphesize unconnected slots
+        html_line = re_disconnected_slot_information.sub('\g<1><span style="color:grey;">\g<3></span>', html_line)
+        html_line = re_disconnected_slot      .sub('\g<1><span class="hover_uc"  style="color:grey;"   >\g<2>\g<4>\g<5></span>', html_line)
+        html_line = re_disconnected_slot_local.sub('\g<1><span class="hover_ucl" style="color:#ADD8E6;">\g<2>\g<4>\g<5></span>', html_line)
 
         print(f'<div>{html_line}</div>')
 

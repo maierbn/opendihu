@@ -15,8 +15,7 @@ void SlotConnectorDataTransfer<
 >::transfer(const std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType1>>> transferableSolutionData1,
             std::shared_ptr<std::vector<std::shared_ptr<SlotConnectorDataType2>>> transferableSolutionData2,
             SlotsConnection &slotsConnection,
-            int offsetSlotNoData1, int offsetSlotNoData2,
-            bool originalTransferDirection)
+            int offsetSlotNoData1, int offsetSlotNoData2)
 {
   // debugging and error output
   LOG(DEBUG) << "transfer vector (1)";
@@ -47,8 +46,7 @@ void SlotConnectorDataTransfer<
       (*transferableSolutionData1)[i],
       (*transferableSolutionData2)[i],
       slotsConnection,
-      offsetSlotNoData1, offsetSlotNoData2,
-      originalTransferDirection
+      offsetSlotNoData1, offsetSlotNoData2
     );
   }
 
@@ -68,8 +66,7 @@ void SlotConnectorDataTransfer<
             >>> transferableSolutionData1,
             std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
             SlotsConnection &slotsConnection,
-            int offsetSlotNoData1, int offsetSlotNoData2,
-            bool originalTransferDirection)
+            int offsetSlotNoData1, int offsetSlotNoData2)
 {
   // debugging and error output
   LOG(DEBUG) << "transfer vector (2)";
@@ -307,8 +304,7 @@ void SlotConnectorDataTransfer<
               Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
             >>> transferableSolutionData2,
             SlotsConnection &slotsConnection,
-            int offsetSlotNoData1, int offsetSlotNoData2,
-            bool originalTransferDirection)
+            int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer vector (3)";
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT

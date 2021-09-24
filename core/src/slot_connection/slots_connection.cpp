@@ -150,6 +150,11 @@ void SlotsConnection::setTransferDirection(bool term1To2)
     subSlotsConnection4_->setTransferDirection(term1To2);
 }
 
+bool SlotsConnection::getTransferDirection() const
+{
+  return transferDirectionTerm1To2_;
+}
+
 void SlotsConnection::updateAvoidCopyIfPossible()
 {
   // if field variable gets mapped in both directions, set avoidCopyIfPossible to true
@@ -235,7 +240,7 @@ std::string SlotsConnection::getDebugInformation() const
     << (connectorTerm1To2_.size() == 1? "" : "s") << ":" << std::endl;
 
   if (connectorTerm1To2_.size() == 0)
-  result << "  (none)" << std::endl;
+    result << "  (none)" << std::endl;
 
   for (int i = 0; i < connectorTerm1To2_.size(); i++)
   {

@@ -13,7 +13,7 @@ void SlotConnectorDataTransfer<
   Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>
 >::transfer(const std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nComponents1b>> transferableSolutionData1,
             std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
-            SlotsConnection &slotsConnection, int offsetSlotNoData1, int offsetSlotNoData2, bool originalTransferDirection)
+            SlotsConnection &slotsConnection, int offsetSlotNoData1, int offsetSlotNoData2)
 {
   LOG(DEBUG) << "transfer standard, type1: " << FunctionSpaceType1::dim() << "D " << nComponents1a << "," << nComponents1b << " comp.,"
     << " type2: " << FunctionSpaceType2::dim() << "D " << nComponents2a << "," << nComponents2b << "comp.";

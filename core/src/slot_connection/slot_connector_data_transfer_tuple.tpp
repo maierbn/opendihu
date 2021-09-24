@@ -17,8 +17,7 @@ void SlotConnectorDataTransfer<
              std::shared_ptr<SlotConnectorDataType2>
            >> transferableSolutionData1,
            std::shared_ptr<SlotConnectorDataType3> transferableSolutionData3,
-           SlotsConnection &slotsConnection, int offsetSlotNoData1, int offsetSlotNoData2,
-           bool originalTransferDirection)
+           SlotsConnection &slotsConnection, int offsetSlotNoData1, int offsetSlotNoData2)
 {
   /* /!\ always use subSlotsConnection1 for slot argument and
      subSlotsConnection2 for tuple argument in transfer(tuple, slot) and
@@ -48,7 +47,7 @@ void SlotConnectorDataTransfer<
     SlotConnectorDataType1,
     SlotConnectorDataType3
   >::transfer(std::get<0>(*transferableSolutionData1), transferableSolutionData3, *slotsConnection.subSlotsConnection1(),
-              offsetSlotNoData1, offsetSlotNoData2, originalTransferDirection);
+              offsetSlotNoData1, offsetSlotNoData2);
 
   LOG(DEBUG) << "transfer tuple (1b), offsetSlotNoData1: " << offsetSlotNoData1 << ", offsetSlotNoData2: " << offsetSlotNoData2;
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
@@ -78,7 +77,7 @@ void SlotConnectorDataTransfer<
     SlotConnectorDataType2,
     SlotConnectorDataType3
   >::transfer(std::get<1>(*transferableSolutionData1), transferableSolutionData3, *slotsConnection.subSlotsConnection2(),
-              offsetSlotNoData1, offsetSlotNoData2, originalTransferDirection);
+              offsetSlotNoData1, offsetSlotNoData2);
 }
 
 /** Transfer between a tuple and another field variables with given component number
@@ -96,8 +95,7 @@ void SlotConnectorDataTransfer<
              std::shared_ptr<SlotConnectorDataType2>,
              std::shared_ptr<SlotConnectorDataType3>
            >> transferableSolutionData2,
-           SlotsConnection &slotsConnection, int offsetSlotNoData1, int offsetSlotNoData2,
-           bool originalTransferDirection)
+           SlotsConnection &slotsConnection, int offsetSlotNoData1, int offsetSlotNoData2)
 {
   /* /!\ always use subSlotsConnection1 for slot argument and
      subSlotsConnection2 for tuple argument in transfer(tuple, slot) and
@@ -127,7 +125,7 @@ void SlotConnectorDataTransfer<
     SlotConnectorDataType1,
     SlotConnectorDataType2
   >::transfer(transferableSolutionData1, std::get<0>(*transferableSolutionData2), *slotsConnection.subSlotsConnection1(),
-              offsetSlotNoData1, offsetSlotNoData2, originalTransferDirection);
+              offsetSlotNoData1, offsetSlotNoData2);
 
   LOG(DEBUG) << "transfer tuple (2b)";
 #ifdef SOLUTION_VECTOR_MAPPING_DEBUGGING_OUTPUT
@@ -157,7 +155,7 @@ void SlotConnectorDataTransfer<
     SlotConnectorDataType1,
     SlotConnectorDataType3
   >::transfer(transferableSolutionData1, std::get<1>(*transferableSolutionData2), *slotsConnection.subSlotsConnection2(),
-              offsetSlotNoData1, offsetSlotNoData2, originalTransferDirection);
+              offsetSlotNoData1, offsetSlotNoData2);
 }
 
 template<typename SlotConnectorDataType1, typename SlotConnectorDataType2, typename SlotConnectorDataType3, typename SlotConnectorDataType4>
@@ -179,9 +177,9 @@ void SlotConnectorDataTransfer<
              std::shared_ptr<SlotConnectorDataType3>,
              std::shared_ptr<SlotConnectorDataType4>
            >> transferableSolutionData2,
-           SlotsConnection &slotsConnection, int offsetSlotNoData1, int offsetSlotNoData2,
-           bool originalTransferDirection)
+           SlotsConnection &slotsConnection, int offsetSlotNoData1, int offsetSlotNoData2)
 {
+  bool originalTransferDirection = slotsConnection.getTransferDirection();
   /* /!\ ensure to use the same data structures for forward and backward slot
      transfers. Otherwise the slot indices will not be the same and the cached
      slot connections in SlotsConnection.slotInformation_ will be wrong. Use
@@ -203,7 +201,7 @@ void SlotConnectorDataTransfer<
     SlotConnectorDataType1,
     SlotConnectorDataType3
   >::transfer(std::get<0>(*transferableSolutionData1), std::get<0>(*transferableSolutionData2), *slotsConnection.subSlotsConnection1(),
-              offsetSlotNoData1, offsetSlotNoData2, originalTransferDirection);
+              offsetSlotNoData1, offsetSlotNoData2);
 
   LOG(DEBUG) << "transfer tuple (3ab)";
 
@@ -226,7 +224,7 @@ void SlotConnectorDataTransfer<
     SlotConnectorDataType1,
     SlotConnectorDataType4
     >::transfer(std::get<0>(*transferableSolutionData1), std::get<1>(*transferableSolutionData2), *slotsConnection.subSlotsConnection2(),
-    offsetSlotNoData1, offsetSlotNoData2, originalTransferDirection);
+                offsetSlotNoData1, offsetSlotNoData2);
   }
   else
   {
@@ -240,7 +238,7 @@ void SlotConnectorDataTransfer<
     SlotConnectorDataType1,
     SlotConnectorDataType4
     >::transfer(std::get<0>(*transferableSolutionData1), std::get<1>(*transferableSolutionData2), *slotsConnection.subSlotsConnection3(),
-    offsetSlotNoData1, offsetSlotNoData2, originalTransferDirection);
+                offsetSlotNoData1, offsetSlotNoData2);
   }
 
   LOG(DEBUG) << "transfer tuple (3ba)";
@@ -265,7 +263,7 @@ void SlotConnectorDataTransfer<
     SlotConnectorDataType2,
     SlotConnectorDataType3
     >::transfer(std::get<1>(*transferableSolutionData1), std::get<0>(*transferableSolutionData2), *slotsConnection.subSlotsConnection3(),
-    offsetSlotNoData1, offsetSlotNoData2, originalTransferDirection);
+                offsetSlotNoData1, offsetSlotNoData2);
   }
   else
   {
@@ -280,7 +278,7 @@ void SlotConnectorDataTransfer<
     SlotConnectorDataType2,
     SlotConnectorDataType3
     >::transfer(std::get<1>(*transferableSolutionData1), std::get<0>(*transferableSolutionData2), *slotsConnection.subSlotsConnection2(),
-    offsetSlotNoData1, offsetSlotNoData2, originalTransferDirection);
+                offsetSlotNoData1, offsetSlotNoData2);
   }
 
   LOG(DEBUG) << "transfer tuple (3bb)";
@@ -302,5 +300,5 @@ void SlotConnectorDataTransfer<
     SlotConnectorDataType2,
     SlotConnectorDataType4
   >::transfer(std::get<1>(*transferableSolutionData1), std::get<1>(*transferableSolutionData2), *slotsConnection.subSlotsConnection4(),
-              offsetSlotNoData1, offsetSlotNoData2, originalTransferDirection);
+              offsetSlotNoData1, offsetSlotNoData2);
 }

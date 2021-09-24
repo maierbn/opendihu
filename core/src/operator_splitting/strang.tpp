@@ -83,7 +83,7 @@ advanceTimeSpan(bool withOutputWritersEnabled)
 
     // transfer to timestepping2_
     SlotConnectorDataTransfer<typename TimeStepping1::SlotConnectorDataType, typename TimeStepping2::SlotConnectorDataType>::
-      transfer(this->timeStepping1_.getSlotConnectorData(), this->timeStepping2_.getSlotConnectorData(), *this->slotsConnection_, 0, 0, true);
+      transfer(this->timeStepping1_.getSlotConnectorData(), this->timeStepping2_.getSlotConnectorData(), *this->slotsConnection_);
 
     if (this->durationLogKey_ != "")
     {
@@ -114,7 +114,7 @@ advanceTimeSpan(bool withOutputWritersEnabled)
 
     // scale solution in timeStepping2 and transfer to timestepping1_
     SlotConnectorDataTransfer<typename TimeStepping2::SlotConnectorDataType, typename TimeStepping1::SlotConnectorDataType>::
-      transfer(this->timeStepping2_.getSlotConnectorData(), this->timeStepping1_.getSlotConnectorData(), *this->slotsConnection_, 0, 0, false);
+      transfer(this->timeStepping2_.getSlotConnectorData(), this->timeStepping1_.getSlotConnectorData(), *this->slotsConnection_);
 
     if (this->durationLogKey_ != "")
     {
@@ -155,7 +155,7 @@ advanceTimeSpan(bool withOutputWritersEnabled)
 
     // transfer to timestepping2_
     SlotConnectorDataTransfer<typename TimeStepping1::SlotConnectorDataType, typename TimeStepping2::SlotConnectorDataType>::
-      transfer(this->timeStepping1_.getSlotConnectorData(), this->timeStepping2_.getSlotConnectorData(), this->slotsConnection_, 0, 0, true);
+      transfer(this->timeStepping1_.getSlotConnectorData(), this->timeStepping2_.getSlotConnectorData(), this->slotsConnection_);
 #endif
 
     // advance simulation time

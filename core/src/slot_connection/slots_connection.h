@@ -29,6 +29,7 @@ public:
 
   //! set current transfer direction that will be taken into account for mapTo
   void setTransferDirection(bool term1To2);
+  bool getTransferDirection() const;
 
   //! get the information to which slot the slot (fromVectorNo, fromIndex) should be mapped, @return: if there was no error, if it returns false, do not perform this mapping as the slot is not connected
   bool getSlotInformation(int fromVectorNo, int fromVectorIndex, int &toVectorNo, int &toVectorIndex, bool &avoidCopyIfPossible, bool disableWarnings=false) const;

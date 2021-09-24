@@ -43,8 +43,7 @@ public:
                        >>> transferableSolutionData1,
                        std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType2,nComponents2a,nComponents2b>> transferableSolutionData2,
                        SlotsConnection &slotsConnection,
-                       int offsetSlotNoData1=0, int offsetSlotNoData2=0,
-                       bool originalTransferDirection=true);
+                       int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 };
 
 template<typename FunctionSpaceType1, int nComponents1a, int nComponents1b, typename FunctionSpaceType2, int nComponents2a, int nComponents2b, typename SlotConnectorDataType2c>
@@ -72,8 +71,7 @@ public:
                           >
                         >>> transferableSolutionData2,
                        SlotsConnection &slotsConnection,
-                       int offsetSlotNoData1=0, int offsetSlotNoData2=0,
-                       bool originalTransferDirection=true);
+                       int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 };
 
 #include "slot_connection/slot_connector_data_transfer_fibers_emg.tpp"

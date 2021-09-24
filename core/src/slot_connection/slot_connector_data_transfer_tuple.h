@@ -26,9 +26,7 @@ public:
                        >> transferableSolutionData1,
                        std::shared_ptr<SlotConnectorDataType3> transferableSolutionData3,
                        SlotsConnection &slotsConnection,
-                       int offsetSlotNoData1=0, int offsetSlotNoData2=0,
-                       bool originalTransferDirection=true
-                      );
+                       int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 };
 
 template<typename SlotConnectorDataType1, typename SlotConnectorDataType2, typename SlotConnectorDataType3>
@@ -48,8 +46,7 @@ public:
                          std::shared_ptr<SlotConnectorDataType2>,
                          std::shared_ptr<SlotConnectorDataType3>
                        >> transferableSolutionData2,
-                       SlotsConnection &slotsConnection, int offsetSlotNoData1=0, int offsetSlotNoData2=0,
-                       bool originalTransferDirection=true);
+                       SlotsConnection &slotsConnection, int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 };
 
 
@@ -76,8 +73,7 @@ public:
                          std::shared_ptr<SlotConnectorDataType3>,
                          std::shared_ptr<SlotConnectorDataType4>
                        >> transferableSolutionData2,
-                       SlotsConnection &slotsConnection, int offsetSlotNoData1=0, int offsetSlotNoData2=0,
-                       bool originalTransferDirection=true);
+                       SlotsConnection &slotsConnection, int offsetSlotNoData1=0, int offsetSlotNoData2=0);
 };
 
 #include "slot_connection/slot_connector_data_transfer_tuple.tpp"

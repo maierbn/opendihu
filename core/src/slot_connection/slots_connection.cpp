@@ -466,7 +466,7 @@ bool SlotsConnection::getSlotInformationUncached(int fromVectorNo, int fromVecto
     int toIndex = connectorTerm1To2_[fromIndex].index;
 
     // if toIndex is set to None in the python config, this means we do not want to have a connection in this slot and it is no warning
-    if (toIndex == -1)
+    if (toIndex <= -1)
     {
       return false;
     }
@@ -553,7 +553,7 @@ bool SlotsConnection::getSlotInformationUncached(int fromVectorNo, int fromVecto
     int toIndex = connectorTerm2To1_[fromIndex].index;
 
     // if toIndex is set to None in the python config, this means we do not want to have a connection in this slot and it is no warning
-    if (toIndex == -1)
+    if (toIndex <= -1)
     {
       return false;
     }

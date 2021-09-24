@@ -132,11 +132,20 @@ initialize(const Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nCompo
       Connector connector = connectorForVisualizerTerm1To2_[globalSlotNo1];
       if (connector.index == -1)
       {
+        // slot is not connected
         connectorTerm1To2_.push_back(connector);
       }
       else if (connector.index >= offsetSlotNoData2_)
       {
+        // slot is connected, apply offset to global slot indices
         connector.index -= offsetSlotNoData2_;
+        connectorTerm1To2_.push_back(connector);
+      }
+      else
+      {
+        // slot is connected, but the target slot is not present in the other term.
+        // (i.e. the mapping will be performed on an other level of the solver hierarchy)
+        connector.index = -2;
         connectorTerm1To2_.push_back(connector);
       }
     }
@@ -147,11 +156,20 @@ initialize(const Data::SlotConnectorData<FunctionSpaceType1,nComponents1a,nCompo
       Connector connector = connectorForVisualizerTerm2To1_[globalSlotNo2];
       if (connector.index == -1)
       {
+        // slot is not connected
         connectorTerm2To1_.push_back(connector);
       }
       else if (connector.index >= offsetSlotNoData1_)
       {
+        // slot is connected, apply offset to global slot indices
         connector.index -= offsetSlotNoData1_;
+        connectorTerm2To1_.push_back(connector);
+      }
+      else
+      {
+        // slot is connected, but the target slot is not present in the other term.
+        // (i.e. the mapping will be performed on an other level of the solver hierarchy)
+        connector.index = -2;
         connectorTerm2To1_.push_back(connector);
       }
     }
@@ -547,21 +565,19 @@ initializeSlotInformation(const Data::SlotConnectorData<FunctionSpaceType1,nComp
 
     for (int fromVectorNo = 0; fromVectorNo < 2; fromVectorNo++)
     {
-      // iterate to the next fromVectorIndex until there were 3 unconnected slots, then it is assumed that there are no more
-      int nUnsuccessful = 0;
-      for (int fromVectorIndex = 0; ; fromVectorIndex++)
+      int nVectorEntries = -1;
+      if      ( transferDirectionTerm1To2 && fromVectorNo == 0) nVectorEntries = nFieldVariablesTerm1Vector1_;
+      else if ( transferDirectionTerm1To2 && fromVectorNo == 1) nVectorEntries = nFieldVariablesTerm1Vector2_;
+      else if (!transferDirectionTerm1To2 && fromVectorNo == 0) nVectorEntries = nFieldVariablesTerm2Vector1_;
+      else if (!transferDirectionTerm1To2 && fromVectorNo == 1) nVectorEntries = nFieldVariablesTerm2Vector2_;
+
+      for (int fromVectorIndex = 0; fromVectorIndex < nVectorEntries; fromVectorIndex++)
       {
         transferDirectionTerm1To2_ = transferDirectionTerm1To2;
         Result result;
         result.successful = getSlotInformation(fromVectorNo, fromVectorIndex, result.toVectorNo, result.toVectorIndex, result.avoidCopyIfPossible, true);
 
         slotInformation_[transferDirectionTerm1To2][fromVectorNo].push_back(result);
-
-        if (!result.successful)
-          nUnsuccessful++;
-
-        if (nUnsuccessful == 3)
-          break;
       }
     }
   }

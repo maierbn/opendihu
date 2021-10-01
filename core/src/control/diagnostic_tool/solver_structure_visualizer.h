@@ -23,51 +23,6 @@ class SolverStructureVisualizer
 {
 public:
 
-  //! constructor
-  SolverStructureVisualizer();
-
-  //! add a solver to the diagram
-  void addSolver(std::string name, bool hasInternalConnectionToFirstNestedSolver=false, bool hasInternalConnectionToSecondNestedSolver=false);
-
-  //! add a description for the current that will be included in the visualization, to be called after addSolver
-  void setSolverDescription(std::string description);
-
-  //! indicate that all further calls to addSolver will be children of the current solver
-  void beginChild(std::string description="");
-
-  //! indicate the end of the current child
-  void endChild();
-
-  //! add the output connection information between two children to the current solver
-  void addSlotsConnection(std::shared_ptr<SlotsConnection> slotsConnection);
-
-  //! set the slot connector data
-  template<typename FunctionSpaceType, int nComponents1, int nComponents2>
-  void setSlotConnectorData(std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType,nComponents1,nComponents2>> slotConnectorData, bool isFromTuple=false);
-
-  //! set the slot connector data
-  template<typename T>
-  void setSlotConnectorData(std::shared_ptr<std::vector<T>> slotConnectorData, bool isFromTuple=false);
-
-  //! set the slot connector data
-  template<typename SlotConnectorData1, typename SlotConnectorData2>
-  void setSlotConnectorData(std::shared_ptr<std::tuple<SlotConnectorData1,SlotConnectorData2>> slotConnectorData, bool isFromTuple=false);
-
-  //! add connections between slots that occur within the same solver, this is used by MapDofs
-  void addSlotMapping(int slotNoFrom, int slotNoTo);
-
-  //! beginChild, addSolver etc. as well as writeDiagramFile will have no effect, this is needed for MultipleInstances such that not all instances appear as separate solvers but only the first one
-  void disable();
-
-  //! beginChild and addSolver and writeDiagramFile etc. will work again
-  void enable();
-
-  //! produce the resulting file, only if solverAddingEnabled_
-  void writeDiagramFile(std::string filename);
-
-  //! get the diagram as string
-  std::string getDiagram();
-
   /** Representation of one solver in the diagram
    */
   struct solver_t
@@ -99,7 +54,7 @@ public:
     {
       int fromSlot;
       int toSlot;
-      enum slot_connection_t {ab, ba, bidirectionalCopy, bidirectionalReuse} type;    //< ab=term1 -> term2, ba=term2 -> term1, bidirectional=shared between term1 and term2
+      enum slot_connection_t {ab, ba, bidirectionalCopy, bidirectionalReuse, internalBeforeComputation, internalAfterComputation} type;    //< ab=term1 -> term2, ba=term2 -> term1, bidirectional=shared between term1 and term2, internalBeforeComputation=MapDofs.beforeComputation, internalAfterComputation=MapDofs.afterComputation
       bool involvesMapping;
     };
 
@@ -109,6 +64,51 @@ public:
     std::vector<std::shared_ptr<solver_t>> children;    //< the nested solvers inside the current solver
     std::shared_ptr<solver_t> parent;                   //< pointer to the parent of the current nested solver
   };
+
+  //! constructor
+  SolverStructureVisualizer();
+
+  //! add a solver to the diagram
+  void addSolver(std::string name, bool hasInternalConnectionToFirstNestedSolver=false, bool hasInternalConnectionToSecondNestedSolver=false);
+
+  //! add a description for the current that will be included in the visualization, to be called after addSolver
+  void setSolverDescription(std::string description);
+
+  //! indicate that all further calls to addSolver will be children of the current solver
+  void beginChild(std::string description="");
+
+  //! indicate the end of the current child
+  void endChild();
+
+  //! add the output connection information between two children to the current solver
+  void addSlotsConnection(std::shared_ptr<SlotsConnection> slotsConnection);
+
+  //! set the slot connector data
+  template<typename FunctionSpaceType, int nComponents1, int nComponents2>
+  void setSlotConnectorData(std::shared_ptr<Data::SlotConnectorData<FunctionSpaceType,nComponents1,nComponents2>> slotConnectorData, bool isFromTuple=false);
+
+  //! set the slot connector data
+  template<typename T>
+  void setSlotConnectorData(std::shared_ptr<std::vector<T>> slotConnectorData, bool isFromTuple=false);
+
+  //! set the slot connector data
+  template<typename SlotConnectorData1, typename SlotConnectorData2>
+  void setSlotConnectorData(std::shared_ptr<std::tuple<SlotConnectorData1,SlotConnectorData2>> slotConnectorData, bool isFromTuple=false);
+
+  //! add connections between slots that occur within the same solver, this is used by MapDofs
+  void addSlotMapping(int slotNoFrom, int slotNoTo, solver_t::SlotsConnectionRepresentation::slot_connection_t internalType);
+
+  //! beginChild, addSolver etc. as well as writeDiagramFile will have no effect, this is needed for MultipleInstances such that not all instances appear as separate solvers but only the first one
+  void disable();
+
+  //! beginChild and addSolver and writeDiagramFile etc. will work again
+  void enable();
+
+  //! produce the resulting file, only if solverAddingEnabled_
+  void writeDiagramFile(std::string filename);
+
+  //! get the diagram as string
+  std::string getDiagram();
 
 protected:
 

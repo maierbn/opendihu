@@ -202,7 +202,7 @@ void SolverStructureVisualizer::parseSlotsConnection(std::shared_ptr<solver_t> c
 }
 
 //! add connections between slots that occur within the same solver
-void SolverStructureVisualizer::addSlotMapping(int slotNoFrom, int slotNoTo)
+void SolverStructureVisualizer::addSlotMapping(int slotNoFrom, int slotNoTo, solver_t::SlotsConnectionRepresentation::slot_connection_t internalType)
 {
   if (!enabled_)
     return;
@@ -211,7 +211,7 @@ void SolverStructureVisualizer::addSlotMapping(int slotNoFrom, int slotNoTo)
   bool mappingExists = false;
   for (const solver_t::SlotsConnectionRepresentation &mappingWithinSolver : currentSolver_->mappingsWithinSolver)
   {
-    if (mappingWithinSolver.fromSlot == slotNoFrom && mappingWithinSolver.toSlot == slotNoTo)
+    if (mappingWithinSolver.fromSlot == slotNoFrom && mappingWithinSolver.toSlot == slotNoTo && mappingWithinSolver.type == internalType)
     {
       mappingExists = true;
       break;
@@ -221,9 +221,14 @@ void SolverStructureVisualizer::addSlotMapping(int slotNoFrom, int slotNoTo)
   if (mappingExists)
     return;
 
+  if (internalType != solver_t::SlotsConnectionRepresentation::internalBeforeComputation && internalType != solver_t::SlotsConnectionRepresentation::internalAfterComputation) {
+    LOG(ERROR) << "Slot Mapping should have type `internal*Computation`. Got :" << internalType;
+  }
+
   solver_t::SlotsConnectionRepresentation mappingWithinSolver;
   mappingWithinSolver.fromSlot = slotNoFrom;
   mappingWithinSolver.toSlot = slotNoTo;
+  mappingWithinSolver.type = internalType;
   currentSolver_->mappingsWithinSolver.push_back(mappingWithinSolver);
 }
 

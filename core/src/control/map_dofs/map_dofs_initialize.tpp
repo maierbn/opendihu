@@ -65,18 +65,19 @@ initialize()
   DihuContext::solverStructureVisualizer()->setSlotConnectorData(getSlotConnectorData());
 
   // add mappings to be visualized by solverStructureVisualizer
+  using connection_t = SolverStructureVisualizer::solver_t::SlotsConnectionRepresentation;
   for (const DofsMappingType &mapping : mappingsBeforeComputation_)
   {
     for (int connectorSlotNoTo : mapping.connectorSlotNosTo)
     {
-      DihuContext::solverStructureVisualizer()->addSlotMapping(mapping.connectorSlotNoFrom, connectorSlotNoTo);
+      DihuContext::solverStructureVisualizer()->addSlotMapping(mapping.connectorSlotNoFrom, connectorSlotNoTo, connection_t::internalBeforeComputation);
     }
   }
   for (const DofsMappingType &mapping : mappingsAfterComputation_)
   {
     for (int connectorSlotNoTo : mapping.connectorSlotNosTo)
     {
-      DihuContext::solverStructureVisualizer()->addSlotMapping(mapping.connectorSlotNoFrom, connectorSlotNoTo);
+      DihuContext::solverStructureVisualizer()->addSlotMapping(mapping.connectorSlotNoFrom, connectorSlotNoTo, connection_t::internalAfterComputation);
     }
   }
 }

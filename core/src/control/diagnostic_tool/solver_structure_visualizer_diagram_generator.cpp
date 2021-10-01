@@ -96,21 +96,47 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
         {
           int fromSlotNo = mapping.fromSlot;
           int toSlotNo = mapping.toSlot;
+          int type = mapping.type;
+          if (type != solver_t::SlotsConnectionRepresentation::internalBeforeComputation && type != solver_t::SlotsConnectionRepresentation::internalAfterComputation) {
+            LOG(ERROR) << "Slot Mapping should have type `internal*Computation`. Got :" << type;
+          }
+
+          bool isBefore = type == solver_t::SlotsConnectionRepresentation::internalBeforeComputation;
 
           // connection top to bottom
           if (fromSlotNo < toSlotNo)
           {
             if (i == fromSlotNo)
             {
-              mappingString += "┌ ";
+              mappingString += isBefore ? "┌ " : " ┐";
             }
             else if (i == toSlotNo)
             {
-              mappingString += "└»";
+              mappingString += isBefore ? "└»" : "«┘";
             }
             else if (fromSlotNo < i && i < toSlotNo)
             {
-              mappingString += "│ ";
+              mappingString += isBefore ? "│ " : " │";
+            }
+            else
+            {
+              mappingString += "  ";
+            }
+          }
+          else if (fromSlotNo > toSlotNo)
+          {
+            // connection bottom to top
+            if (i == toSlotNo)
+            {
+              mappingString += isBefore ? "┌»" : "«┐";
+            }
+            else if (i == fromSlotNo)
+            {
+              mappingString += isBefore ? "└ " : " ┘";
+            }
+            else if (toSlotNo < i && i < fromSlotNo)
+            {
+              mappingString += isBefore ? "│ " : " │";
             }
             else
             {
@@ -119,18 +145,10 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
           }
           else
           {
-            // connection bottom to top
-            if (i == toSlotNo)
+            // fromSlotNo == toSlotNo. e.g. when using a callback
+            if (i == fromSlotNo)
             {
-              mappingString += "┌»";
-            }
-            else if (i == fromSlotNo)
-            {
-              mappingString += "└ ";
-            }
-            else if (toSlotNo < i && i < fromSlotNo)
-            {
-              mappingString += "│ ";
+              mappingString += isBefore ? "╶»" : "«╴";
             }
             else
             {
@@ -211,7 +229,11 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
         case solver_t::SlotsConnectionRepresentation::slot_connection_t::bidirectionalCopy:
           result << " <─> ";
           break;
-
+        case solver_t::SlotsConnectionRepresentation::slot_connection_t::internalBeforeComputation:
+        case solver_t::SlotsConnectionRepresentation::slot_connection_t::internalAfterComputation:
+          LOG(ERROR) << "slotsConnections should not have a connecion type of `internal*Computation`. Got: " << slotsConnections[i].type;
+        default:
+          LOG(ERROR) << "unknown slot connection type: " << slotsConnections[i].type;
         };
 
         result << "¤" << slotsConnections[i].toSlot << "\n";
@@ -902,6 +924,10 @@ generateFinalDiagram()
             {
               line += "│";
             }
+            break;
+          case solver_t::SlotsConnectionRepresentation::slot_connection_t::internalBeforeComputation:
+          case solver_t::SlotsConnectionRepresentation::slot_connection_t::internalAfterComputation:
+            LOG(ERROR) << "slotsConnections should not have a connecion type of `internal*Computation`. Got: " << verticalLinesInCurrentRow[linesIndex].type;
             break;
           };
           linesIndex++;

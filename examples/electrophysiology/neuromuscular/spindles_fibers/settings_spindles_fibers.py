@@ -1107,4 +1107,3 @@ config = {
 if rank_no == 0:
   t_stop_script = timeit.default_timer()
   print("Python config parsed in {:.1f}s.".format(t_stop_script - t_start_script))
-

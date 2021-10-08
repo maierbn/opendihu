@@ -68,7 +68,6 @@ Conductivity = 8.93         # [mS/cm] sigma, conductivity
 
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
-import scipy
 import numpy as np
 
 n_fibers_in_fiber_file = 81
@@ -420,7 +419,7 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
       # convolve Dirac delta, kernel is a shifted and scaled gaussian
       t_delay = muscle_spindle_delay             # [ms] delay of the signal
       gaussian_std_dev = 2                       # [ms] width of the gaussian curve
-      convolution_kernel = lambda t: scipy.stats.norm.pdf(t, loc=t_delay, scale=gaussian_std_dev)*np.sqrt(2*np.pi)*gaussian_std_dev
+      convolution_kernel = lambda t: np.exp(-0.5 * ((t - t_delay) / gaussian_std_dev)**2)
 
       # current signal is the maximum of all convoluted kernels
       convoluted_kernels = [convolution_kernel(current_time - activation_time) for activation_time in buffer[muscle_spindle_index]]

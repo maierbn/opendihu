@@ -65,7 +65,6 @@ pmax = 7.3                  # [N/cm^2] maximum isometric active stress
 
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
-import scipy
 import numpy as np
 
 n_fibers_in_fiber_file = 81
@@ -409,7 +408,7 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
       # convolute Dirac delta, kernel is a shifted and scaled gaussian
       t_delay = muscle_spindle_delay             # [ms] delay of the signal
       gaussian_std_dev = 10                      # [ms] width of the gaussian curve
-      convolution_kernel = lambda t: scipy.stats.norm.pdf(t, loc=t_delay, scale=gaussian_std_dev)*np.sqrt(2*np.pi)*gaussian_std_dev
+      convolution_kernel = lambda t: np.exp(-0.5 * ((t - t_delay) / gaussian_std_dev)**2)
       delayed_signal = convolution_kernel(current_time - buffer[muscle_spindle_index]) * 5
         
       # sum up all input signals

@@ -67,7 +67,6 @@ Conductivity = 8.93         # [mS/cm] sigma, conductivity
 
 import random
 random.seed(0)  # ensure that random numbers are the same on every rank
-import scipy
 import numpy as np
 
 n_fibers_in_fiber_file = 81
@@ -320,7 +319,7 @@ def callback_muscle_spindles_input(input_values, output_values, current_time, sl
   n_input_values = len(input_values)      # = n_muscle_spindles
   n_output_values = len(output_values[0]) # = n_muscle_spindles (per output slot if there are multiple)
   
-  print("callback_muscle_spindles_input, input={}".format(input_values))
+  print("callback_muscle_spindles_input, input={}".format(input_values), flush=True)
   
   # initialize buffer, buffer is needed to compute velocity and acceleration
   if "stretch" not in buffer:
@@ -418,7 +417,7 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
       # convolute Dirac delta, kernel is a shifted and scaled gaussian
       t_delay = muscle_spindle_delay             # [ms] delay of the signal
       gaussian_std_dev = 10                      # [ms] width of the gaussian curve
-      convolution_kernel = lambda t: scipy.stats.norm.pdf(t, loc=t_delay, scale=gaussian_std_dev)*np.sqrt(2*np.pi)*gaussian_std_dev
+      convolution_kernel = lambda t: np.exp(-0.5 * ((t - t_delay) / gaussian_std_dev)**2)
       delayed_signal = convolution_kernel(current_time - buffer[muscle_spindle_index]) * 5
         
       # sum up all input signals

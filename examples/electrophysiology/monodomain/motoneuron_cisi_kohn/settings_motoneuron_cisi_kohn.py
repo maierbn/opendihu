@@ -4,7 +4,6 @@
 
 import sys
 import numpy as np
-import scipy.stats
 
 end_time = 200   # [ms] end time of simulation
 n_elements = 200
@@ -98,7 +97,7 @@ def callback_motoneuron(input_values, output_values, current_time, slot_nos, buf
     # convolute Dirac delta, kernel is a shifted and scaled gaussian
     t_delay = 10              # [ms] delay of the signal
     gaussian_std_dev = 0.1    # [ms] width of the gaussian curve
-    convolution_kernel = lambda t: scipy.stats.norm.pdf(t, loc=t_delay, scale=gaussian_std_dev)*np.sqrt(2*np.pi)*gaussian_std_dev
+    convolution_kernel = lambda t: np.exp(-0.5 * ((t - t_delay) / gaussian_std_dev)**2)
     delayed_signal = convolution_kernel(current_time - buffer[0]) * 20
       
     # loop over output values and set all to the computed signal, cut off at 1e-5

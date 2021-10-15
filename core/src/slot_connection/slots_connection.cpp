@@ -168,7 +168,7 @@ void SlotsConnection::updateAvoidCopyIfPossible()
       if (connectorForVisualizerTerm2To1_[mappedIndex].index == i)
       {
         connectorForVisualizerTerm1To2_[i].avoidCopyIfPossible = true;
-        connectorForVisualizerTerm2To1_[i].avoidCopyIfPossible = true;
+        connectorForVisualizerTerm2To1_[mappedIndex].avoidCopyIfPossible = true;
       }
     }
   }

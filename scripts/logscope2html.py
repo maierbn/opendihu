@@ -24,12 +24,17 @@ re_highlight_orange = re.compile('\033\[33m(?P<text>.*?)\033\[0m')
 re_highlight_grey   = re.compile('\033\[90m(?P<text>.*?)\033\[0m')
 re_highlight_purple_start = re.compile('^\033\[35m(?P<text>.*?)')
 re_highlight_purple_end   = re.compile('(?P<text>.*?)\033\[0m</span>$') # we insert a span beforehand
+re_highlight_bright_white_start = re.compile('^\033\[97m(?P<text>.*?)')
+re_highlight_bright_white_end   = re.compile('(?P<text>.*?)\033\[0m</span>$') # we insert a span beforehand
 
 re_build_information = re.compile('.*This is opendihu ([0-9\.]*), built [a-zA-Z0-9 ]*, C\+\+ [0-9]*, GCC [0-9\.]*, current time: (?P<currenttime>[0-9/: ]*), hostname: (.*), n ranks: [0-9]*$')
 
-re_disconnected_slot_information = re.compile("^(DEBUG:\s*slotInformation_\[[12](To|to|->)[12]\]\[[01]\]\[\s*[0-9]+\]\s*=\s*false,)(.*)$")
-re_disconnected_slot       = re.compile("^(DEBUG:)(\s*[0-9]+(\.|\s*->)\s*)(-1)(\s+.*)$")
-re_disconnected_slot_local = re.compile("^(DEBUG:)(\s*[0-9]+(\.|\s*->)\s*)(-2)(\s+.*)$")
+re_disconnected_slot_information = re.compile("^(DEBUG:\s*slotInformation_\[[12](To|to|-&gt;)[12]\]\[[01]\]\[\s*[0-9]+\]\s*=\s*false,)(.*)$")
+re_disconnected_slot       = re.compile("^(DEBUG:)?(\s*[0-9]+(\.|\s*-&gt;)\s*)(-1)(|\s+.*)$")
+re_disconnected_slot_local = re.compile("^(DEBUG:)?(\s*[0-9]+(\.|\s*-&gt;)\s*)(-2)(|\s+.*)$")
+re_disconnected_slot2       = re.compile("^\s*Term[12]\.slot [0-9]+ \(.*\) -&gt; Term[12]\.slot -1 \(.*\)\s*$")
+re_disconnected_slot_local2 = re.compile("^\s*Term[12]\.slot [0-9]+ \(.*\) -&gt; Term[12]\.slot -2 .*$")
+
 
 file_in = sys.stdin
 stack = []
@@ -104,6 +109,7 @@ print("""
 """)
 
 purple_count = False
+bright_white_count = False
 
 for line in file_in:
     if m := re_start.match(line):
@@ -154,6 +160,16 @@ for line in file_in:
             html_line = re_highlight_purple_end.sub('\g<text>', html_line)
             purple_count = False
 
+        # verbose might span over mutliple lines
+        if re_highlight_bright_white_start.match(html_line):
+            html_line = re_highlight_bright_white_start.sub('\g<text>', html_line)
+            bright_white_count = True
+        if bright_white_count:
+            html_line = f'<span style="color:#474747;">{html_line}</span>'
+        if re_highlight_bright_white_end.match(html_line):
+            html_line = re_highlight_bright_white_end.sub('\g<text>', html_line)
+            bright_white_count = False
+
         # highlight solver names
         html_line = re.sub('::setSolverDescription\(&quot;(?P<name>.*?)&quot;\)', '::setSolverDescription(&quot;<span style="background-color:rgba(0,255,0,0.2);">\g<name></span>&quot;)', html_line)
         html_line = re.sub('CouplingOrGodunov\(&quot;(?P<name>.*?)&quot;\)', 'CouplingOrGodunov(&quot;<span style="background-color:rgba(0,255,0,0.2);">\g<name></span>&quot;)', html_line)
@@ -162,6 +178,8 @@ for line in file_in:
         html_line = re_disconnected_slot_information.sub('\g<1><span style="color:grey;">\g<3></span>', html_line)
         html_line = re_disconnected_slot      .sub('\g<1><span class="hover_uc"  style="color:grey;"   >\g<2>\g<4>\g<5></span>', html_line)
         html_line = re_disconnected_slot_local.sub('\g<1><span class="hover_ucl" style="color:#ADD8E6;">\g<2>\g<4>\g<5></span>', html_line)
+        html_line = re_disconnected_slot2      .sub('<span class="hover_uc"  style="color:grey;"   >\g<0></span>', html_line)
+        html_line = re_disconnected_slot_local2.sub('<span class="hover_ucl" style="color:#ADD8E6;">\g<0></span>', html_line)
 
         print(f'<div>{html_line}</div>')
 

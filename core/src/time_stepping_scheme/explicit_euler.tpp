@@ -54,7 +54,7 @@ advanceTimeSpan(bool withOutputWritersEnabled)
     this->discretizableInTime_.evaluateTimesteppingRightHandSideExplicit(
       solution, increment, timeStepNo, currentTime);
 
-    VLOG(1) << "increment: " << *this->data_->increment() << ", dt: " << this->timeStepWidth_;
+    VLOG(1) << "increment: " << *this->data_->increment() << "\ndt: " << this->timeStepWidth_;
 
     // integrate, y += dt * delta_u
     PetscErrorCode ierr;

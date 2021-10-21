@@ -11,7 +11,7 @@ namespace OutputWriter
 {
 
 template<typename DataType>
-bool Generic::prepareWrite(DataType& data, int timeStepNo, double currentTime, int callCountIncrement)
+bool Generic::prepareWrite(const DataType& data, int timeStepNo, double currentTime, int callCountIncrement)
 {
   VLOG(2) << "Generic::prepareWrite (\"" << filenameBase_ << "\") timeStepNo=" << timeStepNo << ", currentTime=" << currentTime;
 

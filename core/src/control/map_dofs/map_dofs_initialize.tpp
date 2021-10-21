@@ -386,6 +386,7 @@ slotGetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLoc
   );
   if (slotNo < nSlotsNestedSolver)
   {
+    // data from inner solver
     SlotConnectorDataHelper<typename NestedSolverType::SlotConnectorDataType>::slotGetValues(
       std::get<0>(*data_.getSlotConnectorData()), slotNo, arrayIndex, dofNosLocal, values
     );
@@ -393,6 +394,8 @@ slotGetValues(int slotNo, int arrayIndex, const std::vector<dof_no_t> &dofNosLoc
   }
   else
   {
+    // additional field variable
+
     // get the field variable and component no for this slot
     int index = slotNo - nSlotsNestedSolver;
 

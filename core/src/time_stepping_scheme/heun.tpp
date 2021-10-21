@@ -73,7 +73,7 @@ advanceTimeSpan(bool withOutputWritersEnabled)
     // integrate u* += dt * delta_u : values = solution.values + timeStepWidth * increment.values
     VecAXPY(solution, this->timeStepWidth_, increment);
 
-    VLOG(1) << "increment: " << *this->data_->increment() << ", dt: " << this->timeStepWidth_;
+    VLOG(1) << "increment: " << *this->data_->increment() << "\ndt: " << this->timeStepWidth_;
 
     // now, advance solution value to compute u_{t+1}
     // compute  delta_u* = f(u*)

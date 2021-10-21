@@ -141,7 +141,7 @@ template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
 setRepresentationContiguous()
 {
-  if (this->currentRepresentation_ == Partition::values_representation_t::representationLocal)
+  if (this->currentRepresentation_ != Partition::values_representation_t::representationContiguous)
   {
     getValuesContiguous();
   }

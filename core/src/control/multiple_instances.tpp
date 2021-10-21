@@ -486,6 +486,16 @@ instancesLocal()
 //! time of simulation
 template<typename TimeSteppingScheme>
 double MultipleInstances<TimeSteppingScheme>::
+startTime()
+{
+  if (nInstancesLocal_ > 0)
+    return instancesLocal_[0].startTime();
+  return 0;
+}
+
+//! time of simulation
+template<typename TimeSteppingScheme>
+double MultipleInstances<TimeSteppingScheme>::
 endTime()
 {
   if (nInstancesLocal_ > 0)

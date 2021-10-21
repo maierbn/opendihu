@@ -57,7 +57,10 @@ public:
 
   //! the FastMonodomainSolver accesses the internals of MultipleInstances
   std::vector<TimeSteppingScheme> &instancesLocal();
- 
+
+  //! time of simulation
+  double startTime();
+
   //! time of simulation
   double endTime();
 

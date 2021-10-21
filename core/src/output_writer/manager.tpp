@@ -20,6 +20,7 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
   {
     if (std::dynamic_pointer_cast<Exfile>(outputWriter) != nullptr)
     {
+      LogScope s ("WriteOutputExfile");
       Control::PerformanceMeasurement::start("durationWriteOutputExfile");
 
       std::shared_ptr<Exfile> writer = std::static_pointer_cast<Exfile>(outputWriter);
@@ -29,6 +30,7 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
     }
     else if (std::dynamic_pointer_cast<Paraview>(outputWriter) != nullptr)
     {
+      LogScope s ("WriteOutputParaview");
       Control::PerformanceMeasurement::start("durationWriteOutputParaview");
 
       std::shared_ptr<Paraview> writer = std::static_pointer_cast<Paraview>(outputWriter);
@@ -38,6 +40,7 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
     }
     else if (std::dynamic_pointer_cast<PythonCallback>(outputWriter) != nullptr)
     {
+      LogScope s ("WriteOutputPythonCallback");
       Control::PerformanceMeasurement::start("durationWriteOutputPythonCallback");
 
       std::shared_ptr<PythonCallback> writer = std::static_pointer_cast<PythonCallback>(outputWriter);
@@ -47,6 +50,7 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
     }
     else if (std::dynamic_pointer_cast<PythonFile>(outputWriter) != nullptr)
     {
+      LogScope s ("WriteOutputPythonFile");
       Control::PerformanceMeasurement::start("durationWriteOutputPythonFile");
 
       std::shared_ptr<PythonFile> writer = std::static_pointer_cast<PythonFile>(outputWriter);
@@ -56,6 +60,7 @@ void Manager::writeOutput(DataType &problemData, int timeStepNo, double currentT
     }
     else if (std::dynamic_pointer_cast<MegaMol>(outputWriter) != nullptr)
     {
+      LogScope s ("WriteOutputMegamol");
       Control::PerformanceMeasurement::start("durationWriteOutputMegamol");
 
       std::shared_ptr<MegaMol> writer = std::static_pointer_cast<MegaMol>(outputWriter);

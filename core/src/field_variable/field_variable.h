@@ -37,6 +37,12 @@ public:
   //! set the internal representation to be contiguous, i.e. using the contiguous vectors
   void setRepresentationContiguous();
 
+  //! get the current internal data representation, or `noVector` if the internal vector is not initialized.
+  Partition::values_representation_t currentRepresentation() const;
+
+  //! set the internal representation. Allows to reset the representation without writing back values if they are unchanged since the vector was in state `representation` the last time.
+  void setRepresentation(Partition::values_representation_t representation, values_modified_t values = values_modified_t::values_modified);
+
   //! check if the field variable contains Nan or Inf values
   bool containsNanOrInf();
 };

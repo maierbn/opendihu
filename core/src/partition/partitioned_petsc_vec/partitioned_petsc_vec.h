@@ -15,6 +15,12 @@ template<typename MeshType, typename BasisFunctionType>
 class FunctionSpace;
 }
 
+enum values_modified_t
+{
+  values_modified,
+  values_unchanged
+};
+
 /** This encapsulates a Petsc Vec, combined with the partition of the mesh.
  *  For each component a local Vec is stored that holds all values of that component.
  *  Global Petsc numbering: such that each rank has its own contiguous subset in this numbering of the total range.
@@ -92,6 +98,9 @@ public:
 
   //! set the internal representation to be contiguous, i.e. using the contiguous vectors
   void setRepresentationContiguous();
+
+  //! set the internal representation. Allows to reset the representation without writing back values if they are unchanged since the vector was in state `representation` the last time.
+  void setRepresentation(Partition::values_representation_t representation, values_modified_t values = values_modified_t::values_modified);
 
   //! output the vector to stream, for debugging
   void output(std::ostream &stream);
@@ -214,6 +223,9 @@ public:
   //! if the vector has multiple components, return a nested Vec of the global vector, else return the global vector
   Vec &valuesGlobal();
 
+  // these two virtual methods are specialized below for nComponents==1 and nComponents!=1
+  // implemented in partitioned_petsc_vec_structured.tpp
+
   //! fill a contiguous vector with all components after each other, "struct of array"-type data layout.
   //! after manipulation of the vector has finished one has to call restoreValuesContiguous
   virtual Vec &getValuesContiguous() = 0;
@@ -230,6 +242,9 @@ public:
 
   //! set the internal representation to be contiguous, i.e. using the contiguous vectors
   void setRepresentationContiguous();
+
+  //! set the internal representation. Allows to reset the representation without writing back values if they are unchanged since the vector was in state `representation` the last time.
+  void setRepresentation(Partition::values_representation_t representation, values_modified_t values = values_modified_t::values_modified);
 
   //! get a vector of local dof nos (from meshPartition), without ghost dofs
   std::vector<PetscInt> &localDofNosWithoutGhosts();

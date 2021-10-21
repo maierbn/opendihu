@@ -59,6 +59,28 @@ setRepresentationContiguous()
   if (this->values_) // if there is an internal values_ vector (this is not the case for geometry fields of stencil-type settings)
     this->values_->setRepresentationContiguous();
 }
+template<typename FunctionSpaceType,int nComponents>
+Partition::values_representation_t FieldVariable<FunctionSpaceType,nComponents>::
+currentRepresentation() const
+{
+  if (this->values_) // if there is an internal values_ vector (this is not the case for geometry fields of stencil-type settings)
+    return this->values_->currentRepresentation();
+  else
+    return Partition::values_representation_t::noVector;
+}
+
+template<typename FunctionSpaceType,int nComponents>
+void FieldVariable<FunctionSpaceType,nComponents>::
+setRepresentation(Partition::values_representation_t representation, values_modified_t values)
+{
+  if (!this->values_ && representation != Partition::values_representation_t::noVector)
+  {
+    LOG(FATAL) << "Cannot setRepresentation(" <<Partition::valuesRepresentationString[representation] << ", ...) when `values_ == null`";
+  }
+  if (this->values_) // if there is an internal values_ vector (this is not the case for geometry fields of stencil-type settings)
+    this->values_->setRepresentation(representation, values);
+}
+
 
 template<typename FunctionSpaceType,int nComponents>
 bool FieldVariable<FunctionSpaceType,nComponents>::

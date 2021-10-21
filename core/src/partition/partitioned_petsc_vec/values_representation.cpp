@@ -10,7 +10,8 @@ const char *valuesRepresentationString[16] =
   "contiguous",
   "invalid",
   "combined-local",
-  "combined-global"
+  "combined-global",
+  "no-vector"
 };
 
 } // namespace

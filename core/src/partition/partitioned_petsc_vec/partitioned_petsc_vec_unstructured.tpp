@@ -149,6 +149,60 @@ setRepresentationContiguous()
 
 template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
 void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
+setRepresentation(Partition::values_representation_t representation, values_modified_t values)
+{
+  VLOG(2) << "\"" << this->name_ << "\" setRepresentation("
+    << Partition::valuesRepresentationString[representation] << ", "
+    << (values == values_modified_t::values_unchanged ? "values unchanged" : "values changed")
+    << "), previous representation: " << this->getCurrentRepresentationString();
+
+  if (this->currentRepresentation_ == representation)
+  {
+    return;
+  }
+
+  switch (representation)
+  {
+    case Partition::values_representation_t::representationLocal:
+      if (values == values_modified_t::values_unchanged)
+      {
+        // avoid restoreValuesContiguous() in implementation above
+        this->currentRepresentation_ = representation;
+      }
+      else
+      {
+        setRepresentationLocal();
+      }
+      break;
+    case Partition::values_representation_t::representationGlobal:
+      if (values == values_modified_t::values_unchanged)
+      {
+        // avoid restoreValuesContiguous() in implementation above
+        this->currentRepresentation_ = representation;
+      }
+      else
+      {
+        setRepresentationGlobal();
+      }
+      break;
+    case Partition::values_representation_t::representationContiguous:
+      if (values == values_modified_t::values_unchanged)
+      {
+        this->currentRepresentation_ = representation;
+      }
+      else
+      {
+        setRepresentationContiguous();
+      }
+      break;
+    default:
+      LOG(FATAL) << "The representation cannot be set to " << representation << ": '"
+        << Partition::valuesRepresentationString[representation] << "'";
+  }
+}
+
+template<typename FunctionSpaceType, int nComponents, typename DummyForTraits>
+void PartitionedPetscVec<FunctionSpaceType, nComponents, DummyForTraits>::
 zeroGhostBuffer()
 {
 }

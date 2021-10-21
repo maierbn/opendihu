@@ -49,6 +49,7 @@ getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const
     std::array<std::vector<double>, nComponents> componentValues;
 
     // ensure that ghost values are in place
+    Partition::values_representation_t old_representation = currentFieldVariable->currentRepresentation();
     currentFieldVariable->zeroGhostBuffer();
     currentFieldVariable->setRepresentationGlobal();
     currentFieldVariable->startGhostManipulation();
@@ -77,9 +78,14 @@ getGeometryFieldNodalValues(CurrentFieldVariableType currentFieldVariable, const
         index += nDofsPerNode;
       }
     }
-    values.reserve(values.size()+componentValues[0].size()*nComponents);
+
+    // reset variable to old representation, so external code is not suprised
+    // eg. time stepping code usally uses representationContiguous and will be suprised if this changed
+    // we did not write to the values
+    currentFieldVariable->setRepresentation(old_representation, values_modified_t::values_unchanged);
 
     // copy values in consecutive order (x y z x y z) to output
+    values.reserve(values.size()+componentValues[0].size()*nComponents);
     for (int i = 0; i < componentValues[0].size(); i++)
     {
       for (int componentNo = 0; componentNo < nComponents; componentNo++)

@@ -27,7 +27,7 @@ config = {
      "inputMeshIsGlobal": True,         # initial values and BC's are given for all dofs, even if executed in parallel
      "timeStepOutputInterval": 1,       # how often to print the current timestep to console 
      "nAdditionalFieldVariables": 0,    # for more complex nested solvers, the number of additional field variables that will be transferred without being touched
-     "additionalSlotNames": [],         # the slot names for the additional field variables, this is a list of strings with maximum 6 characters each
+     "additionalSlotNames": [],         # the slot names for the additional field variables, this is a list of strings with maximum 10 characters each
      "solverName": "linearSolver",      # the solver to use, referes to what was defined under "Solvers"
      "checkForNanInf": True,            # if the solution should be checked for nan or inf values which indicate an instability, this may be an expensive check
         

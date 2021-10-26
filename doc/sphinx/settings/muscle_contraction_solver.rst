@@ -83,7 +83,7 @@ Depending on the value of ``dynamic``, either an instance of ``DynamicHyperelast
       {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
     ],
     "mapGeometryToMeshes":          [],                        # the mesh names of the meshes that will get the geometry transferred
-    "slotNames":                    ["lambda", "ldot", "gamma", "T"],    # names of the connector slots, maximum 6 characters per name 
+    "slotNames":                    ["lambda", "ldot", "gamma", "T"],    # names of the connector slots, maximum 10 characters per name 
     "dynamic":                      True,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
     
     # the actual solid mechanics solver, this is either "DynamicHyperelasticitySolver" or "HyperelasticitySolver", depending on the value of "dynamic"

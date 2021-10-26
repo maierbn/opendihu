@@ -41,7 +41,7 @@ The python settings are as given below:
     "meshName":            "mesh",        # the mesh to use for the field variables
     "numberTimeSteps":     1,             # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step
     "timeStepOutputInterval": 10,         # if the time step should be written to console, a value > 1 produces no output
-    "slotNames":           ["reac"],      # list of names of the connector slots, maximum length is 6 characters per name
+    "slotNames":           ["reac"],      # list of names of the connector slots, maximum length is 10 characters per name
     
     # a list of field variables that will get values assigned in every timestep, by the provided callback function
     "fieldVariables1": [
@@ -64,7 +64,7 @@ The :doc:`mesh` on which the field variable will live. It is also possible to sp
 
 slotNames
 ----------
-A list of strings, names for the connector slots. Each name should be smaller or equal than 6 characters. 
+A list of strings, names for the connector slots. Each name should be smaller or equal than 10 characters. 
 In general, named slots are used to connect the slots from a global setting "connectedSlots". See :doc:`output_connector_slots` for details.
 
 additionalArgument

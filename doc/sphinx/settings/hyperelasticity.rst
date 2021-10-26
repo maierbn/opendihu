@@ -374,7 +374,7 @@ The progression of the residual norm over number of iterations can be visualized
 slotNames
 ^^^^^^^^^^^^
 (optional) A list of names for the data connector slots. The slot names are used for connecting the slots to other solvers, i.e., when the displacement results should be reused by another solver. 
-Each slot name should have <= 6 characters. See :doc:`output_connector_slots` for more details.
+Each slot name should have <= 10 characters. See :doc:`output_connector_slots` for more details.
 
 The key `slotNames` can also be omitted if the slots should not be reused. Note that these slotNames are not needed if the Hyperelasticity solver is contained in a :doc:`muscle_contraction_solver`.
 

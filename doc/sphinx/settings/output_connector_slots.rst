@@ -155,7 +155,7 @@ Then you can define the option
 
 It is a list of tuples with ``("fromName", "toName")`` entries. 
 
-Note that the slot names must be 6 characters long or less. This restriction is because of the solver structure visualization. (Actually they can be any length but only the first 6 characters will be shown in the solver structure file.)
+Note that the slot names must be 10 characters long or less. This restriction is because of the solver structure visualization. (Actually they can be any length but only the first 10 characters will be shown in the solver structure file.)
 
 Connection by choosing equal slot names
 ---------------------------------------------

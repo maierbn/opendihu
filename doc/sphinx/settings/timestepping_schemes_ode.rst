@@ -115,7 +115,7 @@ The additional field variables can be set by connecting them via their connector
 
 additionalSlotNames
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-A list of strings, names for of connector slots for the additional field variables. Each name should be smaller or equal than 6 characters. 
+A list of strings, names for of connector slots for the additional field variables. Each name should be smaller or equal than 10 characters. 
 In general, named slots are used to connect the slots from a global setting "connectedSlots". See :doc:`output_connector_slots` for details.
 
 ExplicitEuler

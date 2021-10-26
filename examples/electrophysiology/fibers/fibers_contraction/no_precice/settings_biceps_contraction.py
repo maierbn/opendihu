@@ -311,7 +311,7 @@ config = {
                     "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
                     "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
                     "nAdditionalFieldVariables":   4,                                       # number of additional field variables that will be written to the output file, here for stress
-                    "additionalSlotNames":         ["stress", "alpha", "lambda", "ldot"],   # names for the additional slots, maximum length is 6 characters per slot name
+                    "additionalSlotNames":         ["stress", "alpha", "lambda", "ldot"],   # names for the additional slots, maximum length is 10 characters per slot name
                     "checkForNanInf":              True,                                    # abort execution if the solution contains nan or inf values
                     
                     "FiniteElementMethod" : {
@@ -408,7 +408,7 @@ config = {
         "Pmax":                         variables.pmax,            # maximum PK2 active stress
         "enableForceLengthRelation":    variables.enable_force_length_relation,  # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
         "lambdaDotScalingFactor":       variables.lambda_dot_scaling_factor,     # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
-        "slotNames":                    ["lambda", "ldot", "gamma", "T"],   # names of the data slots (lamdba, lambdaDot, gamma, traction), maximum 6 characters per slot name
+        "slotNames":                    ["lambda", "ldot", "gamma", "T"],   # names of the data slots (lamdba, lambdaDot, gamma, traction), maximum 10 characters per slot name
         "OutputWriter" : [
           {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
         ],

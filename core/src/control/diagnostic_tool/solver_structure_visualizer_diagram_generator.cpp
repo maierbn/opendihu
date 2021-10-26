@@ -6,7 +6,8 @@
 #include "output_writer/generic.h"
 #include "utility/string_utility.h"
 
-const int VARIABLES_LINE_LENGTH = 48;  // number of characters for the solver structure and variables, afterwards there will be connection lines
+const int VARIABLES_LINE_LENGTH = 54;  // number of characters for the solver structure and variables, afterwards there will be connection lines
+const int SLOT_NAME_LENGTH = 10;
 
 //! iterate over all nested solvers
 void SolverStructureVisualizer::DiagramGenerator::
@@ -173,15 +174,15 @@ generateDiagramRecursion(std::stringstream &result, std::vector<std::vector<int>
         s << outputSlotString;
       }
 
-      // make the length of the slot name equal to 6 characters
+      // make the length of the slot name equal to SLOT_NAME_LENGTH characters
       int slotNameInitialLength = StringUtility::stringLength(slotName);
-      if (slotNameInitialLength > 6)
+      if (slotNameInitialLength > SLOT_NAME_LENGTH)
       {
-        slotName = slotName.substr(0, 6);
+        slotName = slotName.substr(0, SLOT_NAME_LENGTH);
       }
-      else if (slotNameInitialLength < 6)
+      else if (slotNameInitialLength < SLOT_NAME_LENGTH)
       {
-        slotName = std::string(6-slotNameInitialLength, ' ') + slotName;
+        slotName = std::string(SLOT_NAME_LENGTH - slotNameInitialLength, ' ') + slotName;
       }
 
       s << std::string(requiredLineLength - currentLineLength, ' ')     // fill with spaces
@@ -535,7 +536,7 @@ generateFinalDiagram()
     int lineLength = StringUtility::stringLength(line);
 
     // if the line is too short, add space until is has the correct length
-    for (int i = 0; i < VARIABLES_LINE_LENGTH + 7 - lineLength; i++)
+    for (int i = 0; i < VARIABLES_LINE_LENGTH + SLOT_NAME_LENGTH + 1 - lineLength; i++)
     {
       line += " ";
     }
@@ -767,7 +768,7 @@ generateFinalDiagram()
     //VLOG(1) << "line " << currentLineNo << ", currentLineNo " << currentLineNo << ", line=[" << line << "] has vertical lines: " << verticalLinesInCurrentRow;
 
     // fill current line with spaces such that it has the correct length
-    const int requiredLineLength = VARIABLES_LINE_LENGTH + 4 + nColumnsForInternalConnectionLines + 5 + 1;  //< line length for structure and variables
+    const int requiredLineLength = VARIABLES_LINE_LENGTH + 4 + nColumnsForInternalConnectionLines + SLOT_NAME_LENGTH;  //< line length for structure and variables
     lineLength = StringUtility::stringLength(line);
 
     // determine fill character for horizontal line

@@ -80,5 +80,5 @@ The python settings are as given below. The values for ``"PotentialFlow"`` and `
   
 slotNames
 ----------
-A list of strings, names for the connector slots. Each name should be smaller or equal than 6 characters. 
+A list of strings, names for the connector slots. Each name should be smaller or equal than 10 characters. 
 In general, named slots are used to connect the slots from a global setting "connectedSlots". See :doc:`output_connector_slots` for details.

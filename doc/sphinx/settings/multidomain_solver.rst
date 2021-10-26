@@ -96,7 +96,7 @@ The options below can be used for both `MultidomainSolver` and `MultidomainWithF
     "endTime":                          variables.end_time,                   # end time, this is not relevant because it will be overridden by the splitting scheme
     "timeStepOutputInterval":           100,                                  # how often the output timestep should be printed
     "durationLogKey":                   "duration_multidomain",               # key for duration in log.csv file
-    "slotNames":                        ["vm_old", "vm_new", "g_mu", "g_tot"],  # names of the data connector slots, maximum length per name is 6 characters. g_mu is gamma (active stress) of the compartment, g_tot is the total gamma
+    "slotNames":                        ["vm_old", "vm_new", "g_mu", "g_tot"],  # names of the data connector slots, maximum length per name is 10 characters. g_mu is gamma (active stress) of the compartment, g_tot is the total gamma
     
     # material parameters for the compartments
     "nCompartments":                    variables.n_compartments,             # number of compartments

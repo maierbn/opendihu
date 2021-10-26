@@ -382,7 +382,7 @@ Each key (left hand side) has one of the following formats:
 
 * ``("parameter", 0)`` to specify a parameter with given number. The number is needed to identify the initial values for the parameters.
 * ``("connectorSlot", 0)`` where ``0`` can be any integer number, to specify a connector slot, the number is arbitrary and is only used to order multiple slots in relation to each other.
-* ``("connectorSlot", "slotA")`` here with a slot name, the name has to be maximum 6 characters long.
+* ``("connectorSlot", "slotA")`` here with a slot name, the name has to be maximum 10 characters long.
 * ``("connectorSlot", 0, "slotA")`` This is a combination of the two formats above, it specifies a slot name and also a number for ordering the slots.
 
 The value that corresponds to the key (right hand side) of one `mappings` item is a two-element tuple or string of the form 

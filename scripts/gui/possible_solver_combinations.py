@@ -319,7 +319,7 @@ possible_solver_combinations = {
                     outputwriter
                 ]),
                 SettingsDictEntry("mapGeometryToMeshes", '[]', 'the mesh names of the meshes that will get the geometry transferred', 'muscle_contraction_solver.html#python-settings'),
-                SettingsDictEntry("slotNames", '[]', 'names of the connector slots, maximum 6 characters per name', 'muscle_contraction_solver.html#python-settings'),
+                SettingsDictEntry("slotNames", '[]', 'names of the connector slots, maximum 10 characters per name', 'muscle_contraction_solver.html#python-settings'),
                 SettingsDictEntry("dynamic", 'True', 'if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem', 'muscle_contraction_solver.html#python-settings'),
                 SettingsChoice([
                     dynamic_hyperelasticity_solver
@@ -841,7 +841,7 @@ possible_solver_combinations = {
                 #SettingsDictEntry("meshName", '"meshX"', 'the mesh to use for the field variables', 'prescribed_values.html#meshname'),
                 SettingsDictEntry("numberTimeSteps", '1', 'number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step', 'prescribed_values.html#usage'),
                 SettingsDictEntry("timeStepOutputInterval", '10', 'if the time step should be written to console, a value > 1 produces no output', 'prescribed_values.html#usage'),
-                SettingsDictEntry("slotNames", '[]', 'list of names of the connector slots, maximum length is 6 characters per name', 'prescribed_values.html#slotnames'),
+                SettingsDictEntry("slotNames", '[]', 'list of names of the connector slots, maximum length is 10 characters per name', 'prescribed_values.html#slotnames'),
                 SettingsDictEntry("fieldVariables1", '[]', 'list of field variables that will get values assigned in every timestep, by the provided callback function', 'prescribed_values.html#usage'),
                 SettingsDictEntry("fieldVariables2", '[]', 'list of field variables that will get values assigned in every timestep, by the provided callback function', 'prescribed_values.html#usage'),
                 SettingsDictEntry("additionalArgument", 'None', 'a custom argument to the fieldVariables callback functions, this will be passed on as the last argument', 'prescribed_values.html#additionalargument'),

@@ -145,7 +145,7 @@ multidomain_solver = {
   "endTime":                          variables.end_time,                   # end time, this is not relevant because it will be overridden by the splitting scheme
   "timeStepOutputInterval":           100,                                  # how often the output timestep should be printed
   "durationLogKey":                   "duration_multidomain",               # key for duration in log.csv file
-  "slotNames":                        ["vm_old", "vm_new", "g_mu", "g_tot"],  # names of the data connector slots, maximum length per name is 6 characters. g_mu is gamma (active stress) of the compartment, g_tot is the total gamma
+  "slotNames":                        ["vm_old", "vm_new", "g_mu", "g_tot"],  # names of the data connector slots, maximum length per name is 10 characters. g_mu is gamma (active stress) of the compartment, g_tot is the total gamma
   
   # material parameters for the compartments
   "nCompartments":                    variables.n_compartments,             # number of compartments
@@ -302,7 +302,7 @@ config = {
             "dirichletOutputFilename":      None,               # output filename for the dirichlet boundary conditions, set to "" to have no output
             "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
             "nAdditionalFieldVariables":    0,
-            "additionalSlotNames":          [],               # slot names of the additional slots, maximum 6 characters per name
+            "additionalSlotNames":          [],               # slot names of the additional slots, maximum 10 characters per name
                 
             "CellML" : {
               "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file

@@ -231,7 +231,9 @@ material_parameters = [c1, c2, b, d]   # material parameters
 #--------------------------------
 
 import os
+import sys
 import numpy as np
+
 input_directory = os.path.join(os.environ.get('OPENDIHU_HOME', '../../../../../'), "examples/electrophysiology/input")
 
 # cellml_file = input_directory+"/hodgkin_huxley_1952.c"
@@ -433,8 +435,6 @@ def muscle2_postprocess(data):
     print("Muscle2: t: {:6.2f}, avg. change of muscle length: {:+2.2f}".format(t, muscle2_extent[2] - muscle2_tendon_z))
 
 
-import scipy
-import scipy.stats
 
 def callback_muscle_spindles_input(input_values, output_values, current_time, slot_nos, buffer):
   """
@@ -458,7 +458,9 @@ def callback_muscle_spindles_input(input_values, output_values, current_time, sl
   n_input_values = len(input_values)      # = n_muscle_spindles
   n_output_values = len(output_values[0]) # = n_muscle_spindles (per output slot if there are multiple)
   
-  print("callback_muscle_spindles_input, input={}".format(input_values))
+  print()
+  print()
+  print("callback_muscle_spindles_input, input={}".format(input_values), flush=True)
   
   # initialize buffer, buffer is needed to compute velocity and acceleration
   if "stretch" not in buffer:
@@ -495,6 +497,8 @@ def callback_muscle_spindles_input(input_values, output_values, current_time, sl
   
   # store current time
   buffer["current_time"] = current_time
+
+  sys.stdout.flush() # flush output. neccessary if stdout ist a pipe (eg | tee). files seem to be ok
   
   # artifical muscle spindle input for debugging
   if False:
@@ -563,7 +567,7 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
       # convolute Dirac delta, kernel is a shifted and scaled gaussian
       t_delay = muscle_spindle_delay             # [ms] delay of the signal
       gaussian_std_dev = 10                      # [ms] width of the gaussian curve
-      convolution_kernel = lambda t: scipy.stats.norm.pdf(t, loc=t_delay, scale=gaussian_std_dev)*np.sqrt(2*np.pi)*gaussian_std_dev
+      convolution_kernel = lambda t: np.exp(-0.5 * ((t - t_delay) / gaussian_std_dev)**2)
       delayed_signal = convolution_kernel(current_time - buffer[muscle_spindle_index]) * 5
         
       # sum up all input signals
@@ -586,6 +590,7 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
     output_values[0][motoneuron_index] = total_signal + cortical_input_value
             
   print("muscle_spindles_to_motoneurons: {} -> {}".format(input_values, output_values))
+  sys.stdout.flush() # flush output. neccessary if stdout ist a pipe (eg | tee). files seem to be ok
 
 
 

@@ -196,7 +196,7 @@ print("""
             const ms = new Date() - time_log
             const days = Math.floor(ms / 1000 / 60 / 60 / 24)
             const hours = Math.floor(ms / 1000 / 60 / 60 - (days * 24))
-            const min = Math.floor(ms / 1000 / 60 - (hours * 60))
+            const min = Math.floor(ms / 1000 / 60 - (days * 24 * 60) - (hours * 60))
             if (days > 0) {
                 time.innerHTML = `(${days}d ${hours}h ${min}min ago)`
             } else if (hours > 0) {

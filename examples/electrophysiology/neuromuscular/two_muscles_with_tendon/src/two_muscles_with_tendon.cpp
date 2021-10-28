@@ -120,7 +120,6 @@ int main(int argc, char *argv[])
       TimeSteppingScheme::Heun<
         CellmlAdapter<
           6,14,
-          // 2,1,
           HelperFunctionSpace
         >
       >,
@@ -140,24 +139,24 @@ int main(int argc, char *argv[])
         >
       >,
       // Fast monodomain: 0D / 1D + 3D bidomain
-      // Control::MapDofs<
-      //   HelperFunctionSpace,
+      Control::MapDofs<
+        HelperFunctionSpace,
         Control::Coupling<
           MonodomainSolver,
           BidomainSolver
         >
-      // >
+      >
     >,
     // 2x mechanics TODO make sure that no data is copied
-    Control::Coupling<
-      Control::MapDofs< // lambda -> msucle splindle input, we could also put this around the Coupling (see splindles_fibers). Does this make a difference?
-        HelperFunctionSpace,
+    Control::MapDofs< // lambda -> msucle splindle input, we could also put this around the Coupling (see splindles_fibers). Does this make a difference?
+      HelperFunctionSpace,
+      Control::Coupling<
+        MuscleContractionSolver<
+          Mesh::StructuredDeformableOfDimension<3>
+        >,
         MuscleContractionSolver<
           Mesh::StructuredDeformableOfDimension<3>
         >
-      >,
-      MuscleContractionSolver<
-        Mesh::StructuredDeformableOfDimension<3>
       >
     >
   > problem(settings);

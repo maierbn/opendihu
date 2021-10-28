@@ -274,7 +274,7 @@ cortical_input_file = input_directory+"/cortical_input_realistic.txt"
 cortical_input = np.genfromtxt(cortical_input_file, delimiter=",")
 
 # motor neurons
-n_motoneurons = 10
+n_motoneurons = 101
 motoneuron_cellml_file = input_directory+"/WSBM_1457_MN_Cisi_Kohn_2008.cellml"
 motoneuron_mappings = {
   ("parameter", 0):            "motor_neuron/drive",   # stimulation
@@ -486,7 +486,7 @@ def callback_muscle_spindles_input(input_values, output_values, current_time, sl
     buffer["stretch"][i]      = stretch
     buffer["velocity"][i]     = velocity
     buffer["acceleration"][i] = acceleration
-    print("spindle no. {}, stretch: {}, v: {}, a: {}".format(i, stretch, velocity, acceleration))
+    print("spindle no. {:2d}, stretch: {:+.8e}, v: {:+.8e}, a: {:+.8e}".format(i, stretch, velocity, acceleration))
       
     # scale value for muscle spindle model 
     output_values[0][i] = stretch                 # fiber stretch, output units: [L0] with L0=cm
@@ -539,13 +539,7 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
   # get number of input and output values
   n_input_values = len(input_values)      # = n_muscle_spindles
   n_output_values = len(output_values[0]) # = n_motoneurons
-  
-  print()
-  print()
-  print(current_time)
-  print(buffer)
-  print()
-  print()
+
   # initialize buffer the first time, buffer later stores time of last activation, to model signal delay
   if 0 not in buffer:
     for muscle_spindle_index in range(n_input_values):
@@ -573,7 +567,7 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
       # sum up all input signals
       total_signal += delayed_signal * 1e-3
     
-      print(" spindle {}/{} signal: {}".format(muscle_spindle_index,n_input_values,delayed_signal * 1e-3))
+      print(" spindle {:2d}/{:2d} signal: {:.2e}".format(muscle_spindle_index,n_input_values,delayed_signal * 1e-3))
         
   # compute average signal over all muscle spindles
   total_signal /= n_input_values
@@ -585,7 +579,8 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
     # add cortical input as given in the input file
     # [timestep, spindle_no]
     timestep_no = int(current_time/1e-2)
-    cortical_input_value = cortical_input[timestep_no % np.size(cortical_input,0), motoneuron_index % n_output_values]
+    # wrap around for large time steps and if there are not enought MUs in cortical_input
+    cortical_input_value = cortical_input[timestep_no % cortical_input.shape[0], motoneuron_index % cortical_input.shape[1]]
       
     output_values[0][motoneuron_index] = total_signal + cortical_input_value
             
@@ -597,4 +592,4 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
 
 
 # TODO, also see get_n_fibers_in_motor_unit
-n_motor_units = 101
+n_motor_units = n_motoneurons

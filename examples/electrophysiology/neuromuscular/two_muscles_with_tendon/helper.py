@@ -12,8 +12,8 @@ sys.path.insert(0, '..')
 import variables    # file variables.py
 
 # parse arguments
-rank_no = (int)(sys.argv[-2])
-n_ranks = (int)(sys.argv[-1])
+rank_no = int(sys.argv[-2])
+n_ranks = int(sys.argv[-1])
 
 variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
 
@@ -230,10 +230,14 @@ else:
 
 
 # load MU distribution and firing times
-variables.fiber_distribution = np.genfromtxt(variables.fiber_distribution_file, delimiter=" ")
+variables.fiber_distribution = np.genfromtxt(variables.fiber_distribution_file, delimiter=" ", dtype=int)
 variables.firing_times = np.genfromtxt(variables.firing_times_file)
 
-
+# MU indices in file are 1-based.
+needed_motorneurons = np.max(variables.fiber_distribution[:variables.n_fibers_total])
+# we cannot reindex the MUs so unused MUs are not computed because things like cortical input depend on the MU numbering
+if variables.n_motoneurons < needed_motorneurons:
+    raise Exception(f"Not enough motoneurons: {variables.n_fibers_total} fibers with MUs in [0, {needed_motorneurons}], but n_motoneurons={variables.n_motoneurons}")
 
 
 # ---------------------
@@ -251,7 +255,7 @@ def compartment_gets_stimulated(compartment_no, frequency, current_time):
 
   # determine motor unit
   alpha = 1.0   # 0.8
-  mu_no = (int)(get_motor_unit_no(compartment_no)*alpha)
+  mu_no = int(get_motor_unit_no(compartment_no)*alpha)
   
   # determine if fiber fires now
   index = int(np.round(current_time * frequency))
@@ -454,14 +458,19 @@ def muscle2_update_neumann_boundary_conditions_helper(t):
 # position sensor organs in the 3D mesh
 
 # determine (random) positions of muscle spindles in elasticity mesh
-muscle_spindle_node_nos = []
+_muscle_spindle_node_nos = []
 for muscle_spindle_no in range(variables.n_muscle_spindles):
   i = random.randrange(0,nx)
   j = random.randrange(0,ny)
   k = random.randrange(0,nz)
 
   dof_no_global = k*nx*ny + j*nx + i
-  muscle_spindle_node_nos.append(dof_no_global)
+  _muscle_spindle_node_nos.append(dof_no_global)
+muscle1_spindle_node_nos = _muscle_spindle_node_nos
+muscle2_spindle_node_nos = _muscle_spindle_node_nos
+# the muscle spindle mesh holds muscle spdindels of both muscles
+muscle1_spindle_indices = list(range(variables.n_muscle_spindles))
+muscle2_spindle_indices = list(range(variables.n_muscle_spindles, 2*variables.n_muscle_spindles))
 
 #######################################
 # position Golgi tendon organs in the 3D mesh
@@ -486,4 +495,12 @@ for golgi_tendon_organ_no in range(variables.n_golgi_tendon_organs):
 center_index = variables.n_points_whole_fiber // 2
 stimulation_node_nos = [center_index-1, center_index, center_index+1]
 
+#######################################
+# motoneurons
+muscle1_motoneuron_indices = list(range(variables.n_motoneurons))
+muscle2_motoneuron_indices = list(range(variables.n_motoneurons, 2*variables.n_motoneurons))
 
+print(f"Muscle 1 indices in motoneuron mesh: {muscle1_motoneuron_indices[0]:3}...{muscle1_motoneuron_indices[-1]:3}")
+print(f"Muscle 2 indices in motoneuron mesh: {muscle2_motoneuron_indices[0]:3}...{muscle2_motoneuron_indices[-1]:3}")
+print(f"Muscle 1 indices in spindle    mesh: {muscle1_spindle_indices[0]:3}...{muscle1_spindle_indices[-1]:3}")
+print(f"Muscle 2 indices in spindle    mesh: {muscle2_spindle_indices[0]:3}...{muscle2_spindle_indices[-1]:3}")

@@ -99,19 +99,24 @@ void TimeSteppingScheme::initialize()
 
     if (specificSettings_.hasKey("numberTimeSteps"))
     {
+      // both are specified
       const int numberTimeSteps = specificSettings_.getOptionInt("numberTimeSteps", 10, PythonUtility::NonNegative);
       if (numberTimeSteps > 0)
       {
         numberTimeSteps_ = numberTimeSteps;
         isTimeStepWidthSignificant_ = false;
-        timeStepTargetWidth_ = 0.0;
-        LOG(WARNING) << "Time step width (" << timeStepTargetWidth_ << ") will be overridden by number of time steps (" << numberTimeSteps_ << ")";
+        if (timeStepTargetWidth_ != 0.0)
+        {
+          // both, numberTimeSteps and timeStepWidth are given with nonzero value -> use numberTimeSteps
+          LOG(WARNING) << "Time step width (" << timeStepTargetWidth_ << ") will be overridden by number of time steps (" << numberTimeSteps_ << ")";
+          timeStepTargetWidth_ = 0.0;
+        }
 
         setNumberTimeSteps(numberTimeSteps_);
       }
       else
       {
-        LOG(WARNING) << "Time step width (" << timeStepTargetWidth_ << ") will NOT be overridden by number of time steps (" << numberTimeSteps << ")";
+        // numberTimeSteps == 0 -> ignore and use timeStepTargetWidth_
         isTimeStepWidthSignificant_ = true;
       }
     }

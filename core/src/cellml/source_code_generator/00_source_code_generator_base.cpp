@@ -64,9 +64,26 @@ void CellmlSourceCodeGeneratorBase::initializeSourceCode(
 
   LOG(DEBUG) << "nParameters_: " << nParameters_ << ", parametersInitialValues.size(): " << parametersInitialValues.size() << ", nAlgebraics_: " << nAlgebraics_ << ", nInstances_: " << nInstances_;
 
+  if (parametersInitialValues.size() != nParameters_ && parametersInitialValues.size() != nParameters_ * nInstances_)
+  {
+    // the given number of parameters does not match the number of initial values in the settings
+    LOG(WARNING) << "In CellML: There should be " << nParameters_
+      << " = " << parametersUsedAsAlgebraic_.size() << "+" << parametersUsedAsConstant_.size()
+      << " parameters (algebraics: " << parametersUsedAsAlgebraic_ << ", constants: " << parametersUsedAsConstant_ << ") or "
+      << nParameters_ * nInstances_ << " parameters in array of struct format, but "  << parametersInitialValues.size()
+      << " initial values are given by \"parametersInitialValues\".";
+    if (parametersInitialValues.size() < nParameters_)
+      LOG(WARNING) << "  Using '0' as default value for " << (nParameters_ - parametersInitialValues.size()) << "undefiend parameters.";
+    else
+      LOG(WARNING) << "  Using only the first " << nParameters_ << " parameters";
+
+    parametersInitialValues.resize(nParameters_, 0.0);
+  }
+
   // set initial values of parameters
   if (parametersInitialValues.size() == nParameters_)
   {
+    // only parameters for one instance: use these for all instances
     LOG(DEBUG) << "parameters size is matching for one instances";
     LOG(DEBUG) << "copy parameters which were given only for one instance to all " << nInstances_ << " instances";
     for (int instanceNo = 0; instanceNo < nInstances_; instanceNo++)
@@ -80,8 +97,10 @@ void CellmlSourceCodeGeneratorBase::initializeSourceCode(
       }
     }
   }
-  else if (parametersInitialValues.size() == nParameters_ * nInstances_)
+  else // parametersInitialValues.size() == nParameters_ * nInstances_
   {
+    // parameters are given for all instances
+    // contiguous array of struct: inst1p0, inst1p1, ... instNp0, instNp1... instNpM
     LOG(DEBUG) << "parameters size is matching for all instances";
     for (int instanceNo = 0; instanceNo < nInstances_; instanceNo++)
     {
@@ -89,28 +108,6 @@ void CellmlSourceCodeGeneratorBase::initializeSourceCode(
       {
         // parameters are given in array of struct ordering with nParameters_ parameters per instance: [inst0p0, inst0p1, ... inst0pn, inst1p0, inst1p1, ...]
         parameterValues[j*nInstances_ + instanceNo] = parametersInitialValues[instanceNo*nParameters_ + j];
-      }
-    }
-  }
-  else 
-  {
-    // here, the given number of parameters does not match the number of initial values in the settings
-
-    // output warning
-    LOG(WARNING) << "In CellML: There should be " << nParameters_
-      << " = " << parametersUsedAsAlgebraic_.size() << "+" << parametersUsedAsConstant_.size()
-      << " parameters (algebraics: " << parametersUsedAsAlgebraic_ << ", constants: " << parametersUsedAsConstant_ << "), but " << parametersInitialValues.size()
-      << " initial values are given by \"parametersInitialValues\". Using default values 0 for the rest.\n";
-
-    parametersInitialValues.resize(nParameters_, 0.0);
-  
-    LOG(DEBUG) << "copy parameters which were given only for one instance to all instances";
-    for (int instanceNo = 0; instanceNo < nInstances_; instanceNo++)
-    {
-      for (int j = 0; j < nParameters_; j++)
-      {
-        // parameterValues has struct of array memory layout with space for a total of nAlgebraics_ parameters [i0p0, i1p0, i2p0, ... i0p1, i1p1, i2p1, ...]
-        parameterValues[j*nInstances_ + instanceNo] = parametersInitialValues[j];
       }
     }
   }

@@ -476,7 +476,7 @@ muscle2_spindle_indices = list(range(variables.n_muscle_spindles, 2*variables.n_
 # position Golgi tendon organs in the 3D mesh
 
 # determine (random) positions of Golgi organs in elasticity mesh close to tendons
-golgi_tendon_organ_node_nos = []
+_golgi_tendon_organ_node_nos = []
 for golgi_tendon_organ_no in range(variables.n_golgi_tendon_organs):
   i = random.randrange(0,nx)
   j = random.randrange(0,ny)
@@ -487,7 +487,12 @@ for golgi_tendon_organ_no in range(variables.n_golgi_tendon_organs):
     k = int(0.9*nz)
  
   dof_no_global = k*nx*ny + j*nx + i
-  golgi_tendon_organ_node_nos.append(dof_no_global)
+  _golgi_tendon_organ_node_nos.append(dof_no_global)
+muscle1_golgi_tendon_organ_node_nos = _golgi_tendon_organ_node_nos
+muscle2_golgi_tendon_organ_node_nos = _golgi_tendon_organ_node_nos
+# the muscle spindle mesh holds muscle spdindels of both muscles
+muscle1_golgi_tendon_organ_indices = list(range(variables.n_golgi_tendon_organs))
+muscle2_golgi_tendon_organ_indices = list(range(variables.n_golgi_tendon_organs, 2*variables.n_golgi_tendon_organs))
 
 #######################################
 # determine positions of neuromuscular junctions in fiber mesh
@@ -500,7 +505,29 @@ stimulation_node_nos = [center_index-1, center_index, center_index+1]
 muscle1_motoneuron_indices = list(range(variables.n_motoneurons))
 muscle2_motoneuron_indices = list(range(variables.n_motoneurons, 2*variables.n_motoneurons))
 
-print(f"Muscle 1 indices in motoneuron mesh: {muscle1_motoneuron_indices[0]:3}...{muscle1_motoneuron_indices[-1]:3}")
-print(f"Muscle 2 indices in motoneuron mesh: {muscle2_motoneuron_indices[0]:3}...{muscle2_motoneuron_indices[-1]:3}")
+#######################################
+# combined interneuron + muscle spindle mesh
+# (input for motoneurons)
+"""
+splindles1 --mean--> mn1 \
+                          }--mean--> mn1
+golgi      --------> in  X
+                          }--mean--> mn2
+splindles2 --mean--> mn2 /            ^
+                      ^               |
+                      |               '- motoneuron input: muscle..._motoneuron_indices
+                      '- combinded mesh: in_ms_..._indices
+"""
+in_ms_mesh_muscle1_motoneuron_indices = list(range(variables.n_motoneurons))
+in_ms_mesh_muscle2_motoneuron_indices = list(range(variables.n_motoneurons, 2*variables.n_motoneurons))
+in_ms_mesh_interneuron_indices = list(range(2*variables.n_motoneurons, 2*variables.n_motoneurons + variables.n_interneurons))
+
 print(f"Muscle 1 indices in spindle    mesh: {muscle1_spindle_indices[0]:3}...{muscle1_spindle_indices[-1]:3}")
 print(f"Muscle 2 indices in spindle    mesh: {muscle2_spindle_indices[0]:3}...{muscle2_spindle_indices[-1]:3}")
+print(f"Muscle 1 indices in golgi t.o. mesh: {muscle1_golgi_tendon_organ_indices[0]:3}...{muscle1_golgi_tendon_organ_indices[-1]:3}")
+print(f"Muscle 2 indices in golgi t.o. mesh: {muscle1_golgi_tendon_organ_indices[0]:3}...{muscle1_golgi_tendon_organ_indices[-1]:3}")
+print(f"Muscle 1 indices in motoneuron mesh: {muscle1_motoneuron_indices[0]:3}...{muscle1_motoneuron_indices[-1]:3}")
+print(f"Muscle 2 indices in motoneuron mesh: {muscle2_motoneuron_indices[0]:3}...{muscle2_motoneuron_indices[-1]:3}")
+print(f"Muscle 1 indices in sp.+itern. mesh: {in_ms_mesh_muscle1_motoneuron_indices[0]:3}...{in_ms_mesh_muscle1_motoneuron_indices[-1]:3}")
+print(f"Muscle 2 indices in sp.+itern. mesh: {in_ms_mesh_muscle2_motoneuron_indices[0]:3}...{in_ms_mesh_muscle2_motoneuron_indices[-1]:3}")
+print(f"Intern.  indices in sp.+itern. mesh: {in_ms_mesh_interneuron_indices[0]:3}...{in_ms_mesh_interneuron_indices[-1]:3}")

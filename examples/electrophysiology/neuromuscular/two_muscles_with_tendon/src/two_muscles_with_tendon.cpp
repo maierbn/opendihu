@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
   Control::Coupling<
     Control::MultipleCoupling<
       // muscle spindles solver
-      Control::MapDofs<
+      Control::MapDofs< // spindles -> motor neurons
         HelperFunctionSpace,
         TimeSteppingScheme::Heun<
           CellmlAdapter<
@@ -108,30 +108,37 @@ int main(int argc, char *argv[])
         >
       >,
       // golgi tendon organ
-      TimeSteppingScheme::Heun<
-        CellmlAdapter<
-          4,9,
-          HelperFunctionSpace
+      Control::MapDofs< // golgi tendon organs -> interneurons
+        HelperFunctionSpace,
+        TimeSteppingScheme::Heun<
+          CellmlAdapter<
+            4,9,
+            HelperFunctionSpace
+          >
+        >
+      >,
+      // interneurons
+      Control::MapDofs< // interneurons -> motor neurons
+        HelperFunctionSpace,
+        TimeSteppingScheme::Heun<
+          CellmlAdapter<
+            4,9,
+            HelperFunctionSpace
+          >
         >
       >,
       // motor neurons
-      // Control::MapDofs<
-      //   HelperFunctionSpace,
-      TimeSteppingScheme::Heun<
-        CellmlAdapter<
-          6,14,
-          HelperFunctionSpace
+      Control::MapDofs< // signals from spindles and interneurons -> motor neuron input
+        HelperFunctionSpace,
+        TimeSteppingScheme::Heun<
+          CellmlAdapter<
+            6,14,
+            HelperFunctionSpace
+          >
         >
       >,
-      // // interneurons neurons
-      // TimeSteppingScheme::Heun<
-      //   CellmlAdapter<
-      //     4,9,
-      //     HelperFunctionSpace
-      //   >
-      // >,
       // Fast monodomain: 0D / 1D + 3D bidomain
-      Control::MapDofs<
+      Control::MapDofs< // motor neuron -> activation signal
         HelperFunctionSpace,
         Control::Coupling<
           MonodomainSolver,
@@ -139,7 +146,7 @@ int main(int argc, char *argv[])
         >
       >,
       // Fast monodomain: 0D / 1D + 3D bidomain
-      Control::MapDofs<
+      Control::MapDofs< // motor neuron -> activation signal
         HelperFunctionSpace,
         Control::Coupling<
           MonodomainSolver,
@@ -148,14 +155,17 @@ int main(int argc, char *argv[])
       >
     >,
     // 2x mechanics TODO make sure that no data is copied
-    Control::MapDofs< // lambda -> msucle splindle input, we could also put this around the Coupling (see splindles_fibers). Does this make a difference?
+    Control::MapDofs< // lambda -> muscle splindle input
       HelperFunctionSpace,
-      Control::Coupling<
-        MuscleContractionSolver<
-          Mesh::StructuredDeformableOfDimension<3>
-        >,
-        MuscleContractionSolver<
-          Mesh::StructuredDeformableOfDimension<3>
+      Control::MapDofs< // T -> golgi tendon organ input
+        HelperFunctionSpace,
+        Control::Coupling<
+          MuscleContractionSolver<
+            Mesh::StructuredDeformableOfDimension<3>
+          >,
+          MuscleContractionSolver<
+            Mesh::StructuredDeformableOfDimension<3>
+          >
         >
       >
     >

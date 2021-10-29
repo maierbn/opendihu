@@ -35,6 +35,18 @@ re_disconnected_slot_local = re.compile("^(DEBUG:)?(\s*[0-9]+(\.|\s*-&gt;)\s*)(-
 re_disconnected_slot2       = re.compile("^\s*Term[12]\.slot [0-9]+ \(.*\) -&gt; Term[12]\.slot -1 \(.*\)\s*$")
 re_disconnected_slot_local2 = re.compile("^\s*Term[12]\.slot [0-9]+ \(.*\) -&gt; Term[12]\.slot -2 .*$")
 
+re_highlight_solver_names = [
+    re.compile('(?<=::setSolverDescription\(&quot;)(?P<name>.*?)(?=&quot;\))'),
+    re.compile('(?<=CouplingOrGodunov\(&quot;)(?P<name>.*?)(?=&quot;\))'),
+]
+re_highlight_mesh_names = [
+    re.compile('(?<=Mesh configuration for &quot;)(?P<name>.*?)(?=&quot;)'),
+    re.compile('(?<= and name &quot;)(?P<name>.*?)(?=&quot;)'),
+    re.compile('(?<=Mesh with meshName &quot;)(?P<name>.*?)(?=&quot; requested)'),
+    re.compile('(?<=on mesh &quot;)(?P<name>.*?)(?=&quot;)'),
+    re.compile('(?<=initialize, use functionSpace_: )(?P<name>.*?)$'),
+    re.compile('(?<=functionSpace: )(?P<name>.*?)(?=, nElementsLocal: )'),
+]
 
 file_in = sys.stdin
 stack = []
@@ -170,9 +182,13 @@ for line in file_in:
             html_line = re_highlight_bright_white_end.sub('\g<text>', html_line)
             bright_white_count = False
 
-        # highlight solver names
-        html_line = re.sub('::setSolverDescription\(&quot;(?P<name>.*?)&quot;\)', '::setSolverDescription(&quot;<span style="background-color:rgba(0,255,0,0.2);">\g<name></span>&quot;)', html_line)
-        html_line = re.sub('CouplingOrGodunov\(&quot;(?P<name>.*?)&quot;\)', 'CouplingOrGodunov(&quot;<span style="background-color:rgba(0,255,0,0.2);">\g<name></span>&quot;)', html_line)
+        # highlight names
+        subst = '<span style="background-color:rgba(0,255,0,0.2);">\g<name></span>'
+        for r in re_highlight_solver_names:
+            html_line = r.sub(subst, html_line)
+        subst = '<span style="background-color:rgba(0,0,255,0.2);">\g<name></span>'
+        for r in re_highlight_mesh_names:
+            html_line = r.sub(subst, html_line)
 
         # deemphesize unconnected slots
         html_line = re_disconnected_slot_information.sub('\g<1><span style="color:grey;">\g<3></span>', html_line)

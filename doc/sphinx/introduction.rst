@@ -22,7 +22,7 @@ The **performance** goal is satisfied within the C++ core implementation. The da
 The framework is **extensible** to future models. It provides infrastructure to store and manipulate scalar and vector fields, handle input and output, assemble system matrices and interface various PETSc solvers. For example, there is support for `CellML <https://www.cellml.org/>`_, a format for interchanging systems of ordinary equations. 
 The framework and its applications are constantly extended. However, there are stable releases.
 
-Read my thesis or one of the papers for a better introductory text ;-)
+Read `my thesis <https://arxiv.org/abs/2107.07104>`__ or `one of the papers <https://github.com/maierbn/opendihu#literature--how-to-cite>`__ for a better introductory text ;-)
 
 .. Documentation
 .. ------------------

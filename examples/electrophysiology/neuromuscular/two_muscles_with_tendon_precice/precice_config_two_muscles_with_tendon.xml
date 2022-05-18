@@ -1,0 +1,171 @@
+<?xml version="1.0"?>
+
+<precice-configuration>
+  <!-- format for console output of precice -->
+  <log>
+    <sink type="stream" output="stdout"  filter='(%Severity% >= debug) and (%Rank% = 0) and (not (%Function% = "advance"))' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />
+    <!--<sink type="stream" output="stdout"  filter='%Severity% >= debug' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />-->
+    <!--<sink type="file" output="debug.log" filter= "(%Severity% >= debug)" format="%Message%" enabled="true" />	-->
+  </log>
+
+  <solver-interface dimensions="3">
+    
+    <!-- Data fields that are exchanged between the solvers -->
+    <data:vector name="Displacement"/>
+    <data:vector name="Velocity"/>
+    <data:vector name="Traction"/>
+
+    <!-- A common mesh that uses these data fields -->
+    <mesh name="TendonMeshLeft">
+      <use-data name="Displacement"/>
+      <use-data name="Velocity"/>
+      <use-data name="Traction"/>
+    </mesh>
+    
+    <mesh name="TendonMeshRight"> 
+      <use-data name="Displacement"/>
+      <use-data name="Velocity"/>
+      <use-data name="Traction"/>
+    </mesh>
+    
+    <mesh name="Muscle1MeshRight">
+      <use-data name="Displacement"/>
+      <use-data name="Velocity"/>
+      <use-data name="Traction"/>
+    </mesh>
+
+    <mesh name="Muscle2MeshLeft">
+      <use-data name="Displacement"/>
+      <use-data name="Velocity"/>
+      <use-data name="Traction"/>
+    </mesh>
+
+    <!-- analogous to FSI: muscle=fluid (Dirichlet BC), tendon=structure (Neumann BC) -->
+
+    <!-- Represents each solver using preCICE. In a coupled simulation, two participants have to be
+         defined. The name of the participant has to match the name given on construction of the
+         precice::SolverInterface object used by the participant. -->
+    
+    <participant name="Muscle1Solver">
+
+      <!-- Makes the named mesh available to the participant. Mesh is provided by the solver directly. -->
+      <use-mesh name="Muscle1MeshRight"  provide="yes"/>
+      <use-mesh name="TendonMeshLeft"     from="TendonSolver"/>
+      
+      <!-- Define input/output of the solver, the mesh should be the own one. -->
+      <read-data  name="Displacement"  mesh="Muscle1MeshRight"/>
+      <read-data  name="Velocity"      mesh="Muscle1MeshRight"/>
+      <write-data name="Traction"      mesh="Muscle1MeshRight"/>
+      
+      <!-- rbf to map from TendonMeshLeft to Muscle1MeshRight -->
+      <mapping:rbf-gaussian  
+        direction="read" 
+        from="TendonMeshLeft" 
+        to="Muscle1MeshRight" 
+        constraint="consistent" 
+        timing="initial" 
+        shape-parameter="91.05"
+      />     
+    </participant>
+
+    <participant name="TendonSolver">
+      
+      <!-- Makes the named mesh available to the participant. Mesh is provided by the solver directly. -->
+      <use-mesh name="TendonMeshLeft" provide="yes"/>
+      <use-mesh name="TendonMeshRight" provide="yes"/>
+      <use-mesh name="Muscle1MeshRight" from="Muscle1Solver"/>
+      <use-mesh name="Muscle2MeshLeft" from="Muscle2Solver"/>
+      
+      <!-- Define input/output of the solver, the mesh should be the own one.  -->
+      <write-data name="Displacement"  mesh="TendonMeshLeft"/>
+      <write-data name="Velocity"      mesh="TendonMeshLeft"/>
+      <read-data  name="Traction"      mesh="TendonMeshLeft"/>
+
+      <write-data name="Displacement"  mesh="TendonMeshRight"/>
+      <write-data name="Velocity"      mesh="TendonMeshRight"/>
+      <read-data  name="Traction"      mesh="TendonMeshRight"/>
+      
+
+      <!-- rbf to map from MuscleMeshRight to TendonMeshLeft -->
+      <mapping:rbf-gaussian 
+        direction="read" 
+        from="Muscle1MeshRight" 
+        to="TendonMeshLeft" 
+        constraint="consistent" 
+        timing="initial" 
+        shape-parameter="50"
+      />
+
+      <!-- rbf to map from MuscleMeshLeft to TendonMeshRight -->
+      <mapping:rbf-gaussian 
+        direction="read" 
+        from="Muscle2MeshLeft" 
+        to="TendonMeshRight" 
+        constraint="consistent" 
+        timing="initial" 
+        shape-parameter="50"
+      />
+    </participant>
+
+    <participant name="Muscle2Solver">
+
+      <!-- Makes the named mesh available to the participant. Mesh is provided by the solver directly. -->
+      <use-mesh name="Muscle2MeshLeft"  provide="yes"/>
+      <use-mesh name="TendonMeshRight"     from="TendonSolver"/>
+      
+      <!-- Define input/output of the solver, the mesh should be the own one. -->
+      <read-data  name="Displacement"  mesh="Muscle2MeshLeft"/>
+      <read-data  name="Velocity"      mesh="Muscle2MeshLeft"/>
+      <write-data name="Traction"      mesh="Muscle2MeshLeft"/>
+      
+      <!-- rbf to map from TendonMeshRight to Muscle2MeshLeft -->
+      <mapping:rbf-gaussian  
+        direction="read" 
+        from="TendonMeshRight" 
+        to="Muscle2MeshLeft" 
+        constraint="consistent" 
+        timing="initial" 
+        shape-parameter="91.05"
+      />      
+    </participant>
+    
+    <!-- TODO: does it mater which one is from? I have set it to the control participant for now -->
+    <!-- Communication method, use TCP sockets, Change network to "ib0" on SuperMUC -->
+    <m2n:sockets from="TendonSolver" to="Muscle1Solver" network="lo" />
+    <m2n:sockets from="TendonSolver" to="Muscle2Solver" network="lo" />
+
+    <!-- serial-implicit coupling scales only the displacements, which are transferred from muscle to tendon -->
+    <!-- parallel-implicit coupling scales displacements and tractions -->
+    <!-- see https://github.com/precice/precice/wiki/Acceleration-Configuration -->
+    <coupling-scheme:multi>
+      <participant name="TendonSolver" control="yes"/>
+      <participant name="Muscle1Solver"/>
+      <participant name="Muscle2Solver"/>
+      
+      <max-time value="20000.0"/>           <!-- end time of the whole simulation -->
+      <time-window-size value="1.0"/>   <!-- timestep width for coupling -->
+      <max-iterations value="1000" />
+      <extrapolation-order value="1"/>
+
+      <!-- TODO: why only displacement has convergence settings?-->
+      <absolute-convergence-measure limit="0.1" data="Displacement" mesh="TendonMesh" />
+      <!--<relative-convergence-measure limit="0.1" data="Displacement" mesh="TendonMeshTop" />-->
+      <!--<relative-convergence-measure limit="0.1" data="Displacement" mesh="TendonMeshBottomA" />-->
+      <!--<relative-convergence-measure limit="0.1" data="Displacement" mesh="TendonMeshBottomB" />-->
+      <!--<min-iteration-convergence-measure min-iterations="{integer}" data="{string}" mesh="{string}" strict="0" suffices="0"/>-->
+      
+      <acceleration:constant>
+        <relaxation value="0.5" />
+      </acceleration:constant>
+  
+      <exchange data="Displacement"    mesh="TendonMeshLeft"      from="TendonSolver" to="Muscle1Solver"/>
+      <exchange data="Velocity"        mesh="TendonMeshLeft"      from="TendonSolver" to="Muscle1Solver"/>
+      <exchange data="Traction"        mesh="Muscle1MeshRight"    from="Muscle1Solver"       to="TendonSolver"/>
+      
+      <exchange data="Displacement"    mesh="TendonMeshRight"     from="TendonSolver"   to="Muscle2Solver"/>
+      <exchange data="Velocity"        mesh="TendonMeshRight"     from="TendonSolver"   to="Muscle2Solver"/>
+      <exchange data="Traction"        mesh="Muscle2Left"      from="Muscle2Solver"       to="TendonSolver"/>
+    </coupling-scheme:multi>
+    
+  </solver-interface>
+</precice-configuration>

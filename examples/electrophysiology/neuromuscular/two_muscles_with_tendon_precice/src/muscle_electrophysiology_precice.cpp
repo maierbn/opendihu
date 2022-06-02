@@ -7,8 +7,6 @@
 
 #include "opendihu.h"
 
-// TODO: check indices in CellML 
-
 int main(int argc, char *argv[])
 {
   // multiple fibers in arbitrary partitioning, coupled to dynamic nonlinear elasticity
@@ -25,7 +23,7 @@ int main(int argc, char *argv[])
             Control::MultipleInstances<
               TimeSteppingScheme::Heun<                   // fiber reaction term
                 CellmlAdapter<
-                  44, 19,  // nStates,nAlgebraics: 57,71 = Shorten, 4,9 = Hodgkin Huxley 
+                  44, 19,  // nStates,nAlgebraics: 57,71 = Shorten, 4,9 = Hodgkin Huxley
                   FunctionSpace::FunctionSpace<
                     Mesh::StructuredDeformableOfDimension<1>,
                     BasisFunction::LagrangeOfOrder<1>
@@ -46,7 +44,7 @@ int main(int argc, char *argv[])
           >
         >
       >,
-      MuscleContractionSolver<> // TODO: where is this defined?
+      MuscleContractionSolver<>
     >
   > problem(settings);
   
@@ -55,3 +53,7 @@ int main(int argc, char *argv[])
   
   return EXIT_SUCCESS;
 }
+
+
+
+

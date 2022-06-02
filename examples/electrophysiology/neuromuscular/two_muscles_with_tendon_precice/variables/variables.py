@@ -142,12 +142,12 @@ def get_specific_states_frequency_jitter(fiber_no, mu_no):
 def get_specific_states_call_enable_begin(fiber_no, mu_no):
   return activation_start_time
 
-muscle1_extent = [3.0, 3.0, 14.8] # [cm, cm, cm]
+muscle_left_extent = [3.0, 3.0, 14.8] # [cm, cm, cm]
 tendon_length = 1.2 # cm
-muscle2_extent = [3.0, 3.0, 14.8] # [cm, cm, cm]
+muscle_right_extent = [3.0, 3.0, 14.8] # [cm, cm, cm]
 
-n_elements_muscle1 = [2, 2, 4] # linear elements. each qudaratic element uses the combined nodes of 8 linear elements
-n_elements_muscle2 = [2, 2, 4]
+n_elements_muscle_left = [2, 2, 4] # linear elements. each qudaratic element uses the combined nodes of 8 linear elements
+n_elements_muscle_right = [2, 2, 4]
 n_points_whole_fiber = 40
 n_fibers_x = 4
 n_fibers_y = 4
@@ -666,7 +666,7 @@ def callback_motoneurons_input(input_values, output_values, current_time, slot_n
       
     print("motoneurons input from spindles and interneurons: {}, resulting drive: {}".format(input_values, output_values))
 
-def muscle1_postprocess(data):
+def muscle_left_postprocess(data):
     t = get_from_obj(data, [0, 'currentTime'])
     z_data = get_from_obj(data, [0, 'data', ('name','geometry'), 'components', 2, 'values'])
     [mx, my, mz] = get_from_obj(data, [0, 'nElementsLocal'])
@@ -684,12 +684,12 @@ def muscle1_postprocess(data):
             z_value += z_data[(nz-1)*nx*ny + j*nx + i]
     z_value /= ny*nx
 
-    global muscle1_tendon_z
-    muscle1_tendon_z = z_value
-    print("Muscle2: t: {:6.2f}, avg. change of muscle length: {:+2.2f}".format(t, muscle1_tendon_z - muscle1_extent[2]))
+    global muscle_left_tendon_z
+    muscle_left_tendon_z = z_value
+    print("Muscle2: t: {:6.2f}, avg. change of muscle length: {:+2.2f}".format(t, muscle_left_tendon_z - muscle_left_extent[2]))
 
 
-def muscle2_postprocess(data):
+def muscle_right_postprocess(data):
     t = get_from_obj(data, [0, 'currentTime'])
     z_data = get_from_obj(data, [0, 'data', ('name','geometry'), 'components', 2, 'values'])
     [mx, my, mz] = get_from_obj(data, [0, 'nElementsLocal'])
@@ -707,9 +707,9 @@ def muscle2_postprocess(data):
             z_value += z_data[0*nx*ny + j*nx + i]
     z_value /= ny*nx
 
-    global muscle2_tendon_z
-    muscle2_tendon_z = z_value
-    print("Muscle2: t: {:6.2f}, avg. change of muscle length: {:+2.2f}".format(t, muscle2_extent[2] - muscle2_tendon_z))
+    global muscle_right_tendon_z
+    muscle_right_tendon_z = z_value
+    print("Muscle2: t: {:6.2f}, avg. change of muscle length: {:+2.2f}".format(t, muscle_right_extent[2] - muscle_right_tendon_z))
 
 
 
@@ -719,5 +719,5 @@ mapping_tolerance = 0.1
 pmax = None #FIXME: is it relatex to Pmax?
 enable_force_length_relation = True
 lambda_dot_scaling_factor = 1
-muscle1_mappings = {}
-muscle2_mappings = {}
+muscle_left_mappings = {}
+muscle_right_mappings = {}

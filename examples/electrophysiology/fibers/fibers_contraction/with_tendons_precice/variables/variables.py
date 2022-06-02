@@ -46,7 +46,7 @@ cellml_file = "../../../../input/shorten_ocallaghan_davidson_soboleva_2007.c"
 # Fiber geometry, binary file
 #fiber_file = "../../../../input/3000fibers.bin"
 #fiber_file = "../../../../input/7x7fibers.bin"
-fiber_file = "../../../../input/13x13fibers.bin"
+fiber_file = "../../../../input/cuboid_13x13fibers.bin"
 #fiber_file = "../../../../input/49fibers.bin"
 fat_mesh_file = fiber_file + "_fat.bin"
 

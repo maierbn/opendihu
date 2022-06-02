@@ -47,18 +47,18 @@ for j in range(variables.n_fibers_y):
     fiber_no = j*variables.n_fibers_x + i
     
     # determine start position of fiber in (x,y)-plane
-    x = 0 + i / (variables.n_fibers_x - 1) * variables.muscle1_extent[0]
-    y = 0 + j / (variables.n_fibers_y - 1) * variables.muscle1_extent[1]
+    x = 0 + i / (variables.n_fibers_x - 1) * variables.muscle_left_extent[0]
+    y = 0 + j / (variables.n_fibers_y - 1) * variables.muscle_left_extent[1]
 
     # loop over points of a single fiber
     node_positions = []
     for k in range(variables.n_points_whole_fiber):
       x_pos = x
       y_pos = y
-      z_pos = 0.0 + k / (variables.n_points_whole_fiber - 1) * variables.muscle1_extent[2]
+      z_pos = 0.0 + k / (variables.n_points_whole_fiber - 1) * variables.muscle_left_extent[2]
       node_positions.append([x_pos,y_pos,z_pos])
     
-    mesh_name = "muscle1_fiber{}".format(fiber_no)
+    mesh_name = "muscle_left_fiber{}".format(fiber_no)
     fiber_mesh_names.append(mesh_name)
     
     fiber_meshes[mesh_name] = {
@@ -74,18 +74,18 @@ for j in range(variables.n_fibers_y):
     fiber_no = j*variables.n_fibers_x + i
     
     # determine start position of fiber in (x,y)-plane
-    x = 0 + i / (variables.n_fibers_x - 1) * variables.muscle2_extent[0]
-    y = 0 + j / (variables.n_fibers_y - 1) * variables.muscle2_extent[1]
+    x = 0 + i / (variables.n_fibers_x - 1) * variables.muscle_right_extent[0]
+    y = 0 + j / (variables.n_fibers_y - 1) * variables.muscle_right_extent[1]
 
     # loop over points of a single fiber
     node_positions = []
     for k in range(variables.n_points_whole_fiber):
       x_pos = x
       y_pos = y
-      z_pos = (variables.muscle1_extent[2] + variables.tendon_length) + k / (variables.n_points_whole_fiber - 1) * variables.muscle2_extent[2]
+      z_pos = (variables.muscle_left_extent[2] + variables.tendon_length) + k / (variables.n_points_whole_fiber - 1) * variables.muscle_right_extent[2]
       node_positions.append([x_pos,y_pos,z_pos])
     
-    mesh_name = "muscle2_fiber{}".format(fiber_no)
+    mesh_name = "muscle_right_fiber{}".format(fiber_no)
     fiber_mesh_names.append(mesh_name)
     
     fiber_meshes[mesh_name] = {
@@ -113,43 +113,43 @@ variables.mappings_between_meshes = {
 
 
 #### set output writer
-variables.output_writer_fibers_muscle1 = []
-variables.output_writer_fibers_muscle2 = []
-variables.output_writer_emg_muscle1 = []
-variables.output_writer_emg_muscle2 = []
+variables.output_writer_fibers_muscle_left = []
+variables.output_writer_fibers_muscle_right = []
+variables.output_writer_emg_muscle_left = []
+variables.output_writer_emg_muscle_right = []
 
 subfolder = ""
 if variables.paraview_output:
   if variables.adios_output:
     subfolder = "paraview/"
-  variables.output_writer_fibers_muscle1.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_fibers", "binary": False, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
-  variables.output_writer_fibers_muscle2.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle2_fibers", "binary": False, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
-  variables.output_writer_emg_muscle1.append({"format": "Paraview", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
-  variables.output_writer_emg_muscle2.append({"format": "Paraview", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle2_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
+  variables.output_writer_fibers_muscle_left.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle_left_fibers", "binary": False, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
+  variables.output_writer_fibers_muscle_right.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle_right_fibers", "binary": False, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
+  variables.output_writer_emg_muscle_left.append({"format": "Paraview", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle_left_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
+  variables.output_writer_emg_muscle_right.append({"format": "Paraview", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle_right_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
   
 if variables.adios_output:
   if variables.paraview_output:
     subfolder = "adios/"
-  variables.output_writer_fibers_muscle1.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_fibers", "useFrontBackBuffer": False, "combineNInstances": 1, "fileNumbering": "incremental"})
-  variables.output_writer_fibers_muscle2.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle2_fibers", "useFrontBackBuffer": False, "combineNInstances": 1, "fileNumbering": "incremental"})
-  variables.output_writer_emg_muscle1.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_emg", "useFrontBackBuffer": False, "combineNInstances": 1, "fileNumbering": "incremental"})
-  variables.output_writer_emg_muscle2.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle2_emg", "useFrontBackBuffer": False, "combineNInstances": 1, "fileNumbering": "incremental"})
+  variables.output_writer_fibers_muscle_left.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle_left_fibers", "useFrontBackBuffer": False, "combineNInstances": 1, "fileNumbering": "incremental"})
+  variables.output_writer_fibers_muscle_right.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle_right_fibers", "useFrontBackBuffer": False, "combineNInstances": 1, "fileNumbering": "incremental"})
+  variables.output_writer_emg_muscle_left.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle_left_emg", "useFrontBackBuffer": False, "combineNInstances": 1, "fileNumbering": "incremental"})
+  variables.output_writer_emg_muscle_right.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle_right_emg", "useFrontBackBuffer": False, "combineNInstances": 1, "fileNumbering": "incremental"})
   
 if variables.python_output:
   if variables.adios_output:
     subfolder = "python/"
-  variables.output_writer_fibers_muscle1.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_fibers", "binary": True, "fileNumbering": "incremental"})
-  variables.output_writer_fibers_muscle2.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle2_fibers", "binary": True, "fileNumbering": "incremental"})
-  variables.output_writer_emg_muscle1.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_emg", "binary": True, "fileNumbering": "incremental"})
-  variables.output_writer_emg_muscle2.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle2_emg", "binary": True, "fileNumbering": "incremental"})
+  variables.output_writer_fibers_muscle_left.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle_left_fibers", "binary": True, "fileNumbering": "incremental"})
+  variables.output_writer_fibers_muscle_right.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle_right_fibers", "binary": True, "fileNumbering": "incremental"})
+  variables.output_writer_emg_muscle_left.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle_left_emg", "binary": True, "fileNumbering": "incremental"})
+  variables.output_writer_emg_muscle_right.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle_right_emg", "binary": True, "fileNumbering": "incremental"})
   
 if variables.exfile_output:
   if variables.adios_output:
     subfolder = "exfile/"
-  variables.output_writer_fibers_muscle1.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_fibers", "fileNumbering": "incremental"})
-  variables.output_writer_fibers_muscle2.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle2_fibers", "fileNumbering": "incremental"})
-  variables.output_writer_emg_muscle1.append({"format": "Exfile", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_emg", "fileNumbering": "incremental"})
-  variables.output_writer_emg_muscle2.append({"format": "Exfile", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle2_emg", "fileNumbering": "incremental"})
+  variables.output_writer_fibers_muscle_left.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle_left_fibers", "fileNumbering": "incremental"})
+  variables.output_writer_fibers_muscle_right.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle_right_fibers", "fileNumbering": "incremental"})
+  variables.output_writer_emg_muscle_left.append({"format": "Exfile", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle_left_emg", "fileNumbering": "incremental"})
+  variables.output_writer_emg_muscle_right.append({"format": "Exfile", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle_right_emg", "fileNumbering": "incremental"})
   
 
 
@@ -216,7 +216,7 @@ elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "
   
 elif "hodgkin_huxley-razumova" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
-  variables.muscle1_mappings = {
+  variables.muscle_left_mappings = {
     ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
     ("parameter", 1):           "Razumova/l_hs",            # parameter 1 is fiber stretch λ
     ("connectorSlot", "m1vm"):  "membrane/V",               # expose Vm to the operator splitting
@@ -224,7 +224,7 @@ elif "hodgkin_huxley-razumova" in variables.cellml_file:   # this is (4, "Titin"
     ("connectorSlot", "m1alp"): "Razumova/activation",      # expose activation .
     ("connectorSlot", "m1lda"): "Razumova/l_hs",            # fiber stretch λ
   }
-  variables.muscle2_mappings = {
+  variables.muscle_right_mappings = {
     ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
     ("parameter", 1):           "Razumova/l_hs",            # parameter 1 is fiber stretch λ
     ("connectorSlot", "m2vm"):  "membrane/V",               # expose Vm to the operator splitting
@@ -364,8 +364,8 @@ if rank_no == 0 and not variables.disable_firing_output:
 ####################################
 # set Dirichlet BC for the flow problem
 
-[nx, ny, nz] = [elem + 1 for elem in variables.n_elements_muscle1]
-[mx, my, mz] = [elem // 2 for elem in variables.n_elements_muscle1] # quadratic elements consist of 2 linear elements along each axis
+[nx, ny, nz] = [elem + 1 for elem in variables.n_elements_muscle_left]
+[mx, my, mz] = [elem // 2 for elem in variables.n_elements_muscle_left] # quadratic elements consist of 2 linear elements along each axis
 
 variables.n_points_global = nx * ny * nz
 variables.n_elements_global = mx * my * mz
@@ -409,63 +409,63 @@ variables.fiber_mesh_names = [mesh_name for mesh_name in variables.meshes.keys()
 # u=0                    u_x=u_y=0                 u=0
 #
 #### muscle 1
-variables.muscle1_elasticity_dirichlet_bc = {}
+variables.muscle_left_elasticity_dirichlet_bc = {}
 # muscle mesh
 for j in range(ny):
     for i in range(nx):
-      variables.muscle1_elasticity_dirichlet_bc[0*nx*ny + j*nx + i] = [None,None,0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
+      variables.muscle_left_elasticity_dirichlet_bc[0*nx*ny + j*nx + i] = [None,None,0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
 
 # fix edge, note: the multidomain simulation does not work without this (linear solver finds no solution)
 for i in range(nx):
-    variables.muscle1_elasticity_dirichlet_bc[0*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
+    variables.muscle_left_elasticity_dirichlet_bc[0*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
     
 # fix corner completely
-variables.muscle1_elasticity_dirichlet_bc[0*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
+variables.muscle_left_elasticity_dirichlet_bc[0*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
 
 # guide right end of muscle along z axis
 # muscle mesh
 for j in range(ny):
     for i in range(nx):
-      variables.muscle1_elasticity_dirichlet_bc[(nz-1)*nx*ny + j*nx + i] = [0.0,0.0,None, None,None,None]
+      variables.muscle_left_elasticity_dirichlet_bc[(nz-1)*nx*ny + j*nx + i] = [0.0,0.0,None, None,None,None]
 
 # initial Neumann BC at bottom nodes, traction along z axis
 # will be set by tendon
-variables.muscle1_elasticity_neumann_bc = [{"element": (mz-1)*mx*my + j*mx + i, "constantVector": (0,0,0), "face": "2+"} for j in range(my) for i in range(mx)]
+variables.muscle_left_elasticity_neumann_bc = [{"element": (mz-1)*mx*my + j*mx + i, "constantVector": (0,0,0), "face": "2+"} for j in range(my) for i in range(mx)]
 
 
 #### muscle 2
-variables.muscle2_elasticity_dirichlet_bc = {}
+variables.muscle_right_elasticity_dirichlet_bc = {}
 # muscle mesh
 for j in range(ny):
     for i in range(nx):
-      variables.muscle2_elasticity_dirichlet_bc[(nz-1)*nx*ny + j*nx + i] = [None,None,0.0, None,None,None]
+      variables.muscle_right_elasticity_dirichlet_bc[(nz-1)*nx*ny + j*nx + i] = [None,None,0.0, None,None,None]
 
 # fix edge, note: the multidomain simulation does not work without this (linear solver finds no solution)
 for i in range(nx):
-    variables.muscle2_elasticity_dirichlet_bc[(nz-1)*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
+    variables.muscle_right_elasticity_dirichlet_bc[(nz-1)*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
     
 # fix corner completely
-variables.muscle2_elasticity_dirichlet_bc[(nz-1)*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
+variables.muscle_right_elasticity_dirichlet_bc[(nz-1)*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
 
 # guide left end of muscle along z axis
 # muscle mesh
 for j in range(ny):
     for i in range(nx):
-      variables.muscle2_elasticity_dirichlet_bc[0*nx*ny + j*nx + i] = [0.0,0.0,None, None,None,None]
+      variables.muscle_right_elasticity_dirichlet_bc[0*nx*ny + j*nx + i] = [0.0,0.0,None, None,None,None]
 
 # initial Neumann BC at bottom nodes, traction along z axis
 # will be set by tendon
-variables.muscle2_elasticity_neumann_bc = [{"element": 0*mx*my + j*mx + i, "constantVector": (0,0,0), "face": "2-"} for j in range(my) for i in range(mx)]
+variables.muscle_right_elasticity_neumann_bc = [{"element": 0*mx*my + j*mx + i, "constantVector": (0,0,0), "face": "2-"} for j in range(my) for i in range(mx)]
 
 
 
 # callback for dirichlet bc
 # Function to update dirichelt boundary conditions over time, t.
 # This function returns "neumann_bc". Only those entries can be updated that were also initially set.
-def muscle1_update_neumann_boundary_conditions_helper(t):
-  return variables.muscle1_update_neumann_boundary_conditions(t, [mx,my,mz])
-def muscle2_update_neumann_boundary_conditions_helper(t):
-  return variables.muscle2_update_neumann_boundary_conditions(t, [mx,my,mz])
+def muscle_left_update_neumann_boundary_conditions_helper(t):
+  return variables.muscle_left_update_neumann_boundary_conditions(t, [mx,my,mz])
+def muscle_right_update_neumann_boundary_conditions_helper(t):
+  return variables.muscle_right_update_neumann_boundary_conditions(t, [mx,my,mz])
 
 #######################################
 # position sensor organs in the 3D mesh
@@ -479,11 +479,11 @@ for muscle_spindle_no in range(variables.n_muscle_spindles):
 
   dof_no_global = k*nx*ny + j*nx + i
   _muscle_spindle_node_nos.append(dof_no_global)
-muscle1_spindle_node_nos = _muscle_spindle_node_nos
-muscle2_spindle_node_nos = _muscle_spindle_node_nos
+muscle_left_spindle_node_nos = _muscle_spindle_node_nos
+muscle_right_spindle_node_nos = _muscle_spindle_node_nos
 # the muscle spindle mesh holds muscle spdindels of both muscles
-muscle1_spindle_indices = list(range(variables.n_muscle_spindles))
-muscle2_spindle_indices = list(range(variables.n_muscle_spindles, 2*variables.n_muscle_spindles))
+muscle_left_spindle_indices = list(range(variables.n_muscle_spindles))
+muscle_right_spindle_indices = list(range(variables.n_muscle_spindles, 2*variables.n_muscle_spindles))
 
 #######################################
 # position Golgi tendon organs in the 3D mesh
@@ -501,11 +501,11 @@ for golgi_tendon_organ_no in range(variables.n_golgi_tendon_organs):
  
   dof_no_global = k*nx*ny + j*nx + i
   _golgi_tendon_organ_node_nos.append(dof_no_global)
-muscle1_golgi_tendon_organ_node_nos = _golgi_tendon_organ_node_nos
-muscle2_golgi_tendon_organ_node_nos = _golgi_tendon_organ_node_nos
+muscle_left_golgi_tendon_organ_node_nos = _golgi_tendon_organ_node_nos
+muscle_right_golgi_tendon_organ_node_nos = _golgi_tendon_organ_node_nos
 # the muscle spindle mesh holds muscle spdindels of both muscles
-muscle1_golgi_tendon_organ_indices = list(range(variables.n_golgi_tendon_organs))
-muscle2_golgi_tendon_organ_indices = list(range(variables.n_golgi_tendon_organs, 2*variables.n_golgi_tendon_organs))
+muscle_left_golgi_tendon_organ_indices = list(range(variables.n_golgi_tendon_organs))
+muscle_right_golgi_tendon_organ_indices = list(range(variables.n_golgi_tendon_organs, 2*variables.n_golgi_tendon_organs))
 
 #######################################
 # determine positions of neuromuscular junctions in fiber mesh
@@ -515,8 +515,8 @@ stimulation_node_nos = [center_index-1, center_index, center_index+1]
 
 #######################################
 # motoneurons
-muscle1_motoneuron_indices = list(range(variables.n_motoneurons))
-muscle2_motoneuron_indices = list(range(variables.n_motoneurons, 2*variables.n_motoneurons))
+muscle_left_motoneuron_indices = list(range(variables.n_motoneurons))
+muscle_right_motoneuron_indices = list(range(variables.n_motoneurons, 2*variables.n_motoneurons))
 
 #######################################
 # combined interneuron + muscle spindle mesh
@@ -531,18 +531,18 @@ splindles2 --mean--> mn2 /            ^
                       |               '- motoneuron input: muscle..._motoneuron_indices
                       '- combinded mesh: in_ms_..._indices
 """
-in_ms_mesh_muscle1_motoneuron_indices = list(range(variables.n_motoneurons))
-in_ms_mesh_muscle2_motoneuron_indices = list(range(variables.n_motoneurons, 2*variables.n_motoneurons))
+in_ms_mesh_muscle_left_motoneuron_indices = list(range(variables.n_motoneurons))
+in_ms_mesh_muscle_right_motoneuron_indices = list(range(variables.n_motoneurons, 2*variables.n_motoneurons))
 in_ms_mesh_interneuron_indices = list(range(2*variables.n_motoneurons, 2*variables.n_motoneurons + variables.n_interneurons))
 
-print(f"Muscle 1 indices in spindle    mesh: {muscle1_spindle_indices[0]:3}...{muscle1_spindle_indices[-1]:3}")
-print(f"Muscle 2 indices in spindle    mesh: {muscle2_spindle_indices[0]:3}...{muscle2_spindle_indices[-1]:3}")
-print(f"Muscle 1 indices in golgi t.o. mesh: {muscle1_golgi_tendon_organ_indices[0]:3}...{muscle1_golgi_tendon_organ_indices[-1]:3}")
-print(f"Muscle 2 indices in golgi t.o. mesh: {muscle1_golgi_tendon_organ_indices[0]:3}...{muscle1_golgi_tendon_organ_indices[-1]:3}")
-print(f"Muscle 1 indices in motoneuron mesh: {muscle1_motoneuron_indices[0]:3}...{muscle1_motoneuron_indices[-1]:3}")
-print(f"Muscle 2 indices in motoneuron mesh: {muscle2_motoneuron_indices[0]:3}...{muscle2_motoneuron_indices[-1]:3}")
-print(f"Muscle 1 indices in sp.+itern. mesh: {in_ms_mesh_muscle1_motoneuron_indices[0]:3}...{in_ms_mesh_muscle1_motoneuron_indices[-1]:3}")
-print(f"Muscle 2 indices in sp.+itern. mesh: {in_ms_mesh_muscle2_motoneuron_indices[0]:3}...{in_ms_mesh_muscle2_motoneuron_indices[-1]:3}")
+print(f"Muscle 1 indices in spindle    mesh: {muscle_left_spindle_indices[0]:3}...{muscle_left_spindle_indices[-1]:3}")
+print(f"Muscle 2 indices in spindle    mesh: {muscle_right_spindle_indices[0]:3}...{muscle_right_spindle_indices[-1]:3}")
+print(f"Muscle 1 indices in golgi t.o. mesh: {muscle_left_golgi_tendon_organ_indices[0]:3}...{muscle_left_golgi_tendon_organ_indices[-1]:3}")
+print(f"Muscle 2 indices in golgi t.o. mesh: {muscle_left_golgi_tendon_organ_indices[0]:3}...{muscle_left_golgi_tendon_organ_indices[-1]:3}")
+print(f"Muscle 1 indices in motoneuron mesh: {muscle_left_motoneuron_indices[0]:3}...{muscle_left_motoneuron_indices[-1]:3}")
+print(f"Muscle 2 indices in motoneuron mesh: {muscle_right_motoneuron_indices[0]:3}...{muscle_right_motoneuron_indices[-1]:3}")
+print(f"Muscle 1 indices in sp.+itern. mesh: {in_ms_mesh_muscle_left_motoneuron_indices[0]:3}...{in_ms_mesh_muscle_left_motoneuron_indices[-1]:3}")
+print(f"Muscle 2 indices in sp.+itern. mesh: {in_ms_mesh_muscle_right_motoneuron_indices[0]:3}...{in_ms_mesh_muscle_right_motoneuron_indices[-1]:3}")
 print(f"Intern.  indices in sp.+itern. mesh: {in_ms_mesh_interneuron_indices[0]:3}...{in_ms_mesh_interneuron_indices[-1]:3}")
 
 

@@ -51,7 +51,7 @@ variables.end_time      = 10     # [ms] simulation time
 variables.scenario_name = "tendon"
 
 # input mesh file
-fiber_file = "../../../../input/left_biceps_brachii_tendon1.bin"        # bottom tendon
+variables.fiber_file = "tendon"        # bottom tendon
 #fiber_file = "../../../../input/left_biceps_brachii_tendon2a.bin"
 #fiber_file = "../../../../input/left_biceps_brachii_tendon2b.bin"
 #fiber_file = "../../../../input/left_biceps_brachii_7x7fibers.bin"

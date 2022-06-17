@@ -48,14 +48,14 @@ if rank_no == 0:
 
 # boundary conditions (for quadratic elements)
 # --------------------------------------------
+nx = variables.nx
+ny = variables.ny
+nz = variables.nz
 
-nx = variables.n_elements[0]
-ny = variables.n_elements[1]
-nz = variables.n_elements[2]
+mx = variables.mx
+my = variables.my
+mz = variables.mz
 
-mx = int(variables.n_elements[0]/2)
-my = int(variables.n_elements[1]/2)
-mz = int(variables.n_elements[2]/2)
 
 # set Neumann BC, set traction at the end of the tendon that is attached to the muscle
 k = nz-1

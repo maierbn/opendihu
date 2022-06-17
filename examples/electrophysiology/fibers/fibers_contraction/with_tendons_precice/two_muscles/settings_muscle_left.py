@@ -4,8 +4,6 @@ import sys, os
 import timeit
 import importlib
 
-variables.scenario_name = "muscle_right"
-
 # parse rank arguments
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
@@ -18,6 +16,9 @@ sys.path.insert(0, os.path.join(script_path,'variables'))
 import variables              # file variables.py, defined default values for all parameters, you can set the parameters there  
 from create_partitioned_meshes_for_settings import *   # file create_partitioned_meshes_for_settings with helper functions about own subdomain
 from helper import *
+
+variables.scenario_name = "muscle_right"
+
 
 # automatically initialize partitioning if it has not been set
 if n_ranks != variables.n_subdomains:
@@ -70,7 +71,7 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 meshes_muscle_left = {
   # no `nodePositions` fields as the nodes are created internally
   "muscle_left_Mesh": {
-    "nElements" :         variables.n_elements_muscle_left,
+    "nElements" :         variables.n_elements,
     "physicalExtent":     variables.muscle_left_extent,
     "physicalOffset":     variables.muscle_left_offset,
     "logKey":             "muscle_left",
@@ -79,7 +80,7 @@ meshes_muscle_left = {
   },
   # needed for mechanics solver
   "muscle_right_Mesh_quadratic": {
-    "nElements" :         [elems // 2 for elems in variables.n_elements_muscle_left],
+    "nElements" :         [elems // 2 for elems in variables.n_elements],
     "physicalExtent":     variables.muscle_left_extent,
     "physicalOffset":     variables.muscle_left_offset,
     "logKey":             "muscle_right_left",
@@ -89,6 +90,14 @@ meshes_muscle_left = {
 }
 variables.meshes.update(meshes_muscle_left)
 variables.meshes.update(fiber_meshes)
+
+nx = variables.nx
+ny = variables.ny
+nz = variables.nz
+
+mx = variables.mx
+my = variables.my
+mz = variables.mz
 
 # define the config dict
 config = {
@@ -375,7 +384,6 @@ config = {
             # mesh
             "inputMeshIsGlobal":          True,                     # the mesh is given locally
             "meshName":                   "3Dmesh_quadratic",        # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
-            "fiberMeshNames":             variables.fiber_mesh_names,  # fiber meshes that will be used to determine the fiber direction, for multidomain there are no fibers so this would be empty list
             #"fiberDirection":             [0,0,1],                  # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
       
             # solving
@@ -436,7 +444,4 @@ config = {
 }
 
 
-# stop timer and calculate how long parsing lasted
-if rank_no == 0:
-  t_stop_script = timeit.default_timer()
-  print("Python config parsed in {:.1f}s.".format(t_stop_script - t_start_script))
+

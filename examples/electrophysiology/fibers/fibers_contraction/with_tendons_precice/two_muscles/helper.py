@@ -31,7 +31,6 @@ variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
 variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
 # fiber directions
-fiber_meshes = {}
 fiber_mesh_names = []
 
 if variables.scenario_name == "muscle_left":
@@ -51,10 +50,10 @@ if variables.scenario_name == "muscle_left":
         z_pos = variables.muscle_left_offset[2] + k / (variables.n_points_whole_fiber - 1) * variables.muscle_left_extent[2]
         node_positions.append([x_pos,y_pos,z_pos])
       
-      mesh_name = "fiber{}".format(fiber_no)
+      mesh_name = "fiber_{}".format(fiber_no)
       fiber_mesh_names.append(mesh_name)
       
-      fiber_meshes[mesh_name] = {
+      variables.fiber_meshes[mesh_name] = {
         "nodePositions": node_positions,
         "nElements": [variables.n_points_whole_fiber - 1],
         "inputMeshIsGlobal": True,
@@ -78,10 +77,10 @@ elif variables.scenario_name == "muscle_right":
         z_pos = variables.muscle_right_offset[2] + k / (variables.n_points_whole_fiber - 1) * variables.muscle_right_extent[2]
         node_positions.append([x_pos,y_pos,z_pos])
       
-      mesh_name = "fiber{}".format(fiber_no)
+      mesh_name = "fiber_{}".format(fiber_no)
       fiber_mesh_names.append(mesh_name)
       
-      fiber_meshes[mesh_name] = {
+      variables.fiber_meshes[mesh_name] = {
         "nodePositions": node_positions,
         "nElements": [variables.n_points_whole_fiber - 1],
         "inputMeshIsGlobal": True,
@@ -105,16 +104,34 @@ elif variables.scenario_name == "tendon":
         z_pos = variables.tendon_offset[2] + k / (variables.n_points_whole_fiber - 1) * variables.tendon_extent[2]
         node_positions.append([x_pos,y_pos,z_pos])
       
-      mesh_name = "fiber{}".format(fiber_no)
+      mesh_name = "fiber_{}".format(fiber_no)
       fiber_mesh_names.append(mesh_name)
       
-      fiber_meshes[mesh_name] = {
+      variables.fiber_meshes[mesh_name] = {
         "nodePositions": node_positions,
         "nElements": [variables.n_points_whole_fiber - 1],
         "inputMeshIsGlobal": True,
         "nRanks": [n_ranks],
       }
 
+      variables.meshes.update(variables.fiber_meshes)
+
+
+# create mappings between meshes
+#variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(variables.n_fibers_total)}
+variables.mappings_between_meshes = {"fiber{}".format(i) : {"name": "3Dmesh", "xiTolerance": 1e-3} for i in range(variables.n_fibers_total)}
+
+# a higher tolerance includes more fiber dofs that may be almost out of the 3D mesh
+variables.mappings_between_meshes = {
+  "fiber_{}".format(i) : {
+    "name": "3Dmesh_quadratic",
+    "xiTolerance": variables.mapping_tolerance,
+    "enableWarnings": False, 
+    "compositeUseOnlyInitializedMappings": False,
+    "fixUnmappedDofs": True,
+    "defaultValue": 0,
+  } for i in range(variables.n_fibers_total)
+}
 
 ##### set output writer    
 variables.output_writer_fibers = []
@@ -343,11 +360,14 @@ def set_stress_values(n_dofs_global, n_nodes_global_per_coordinate_direction, ti
 # u=0                    u_x=u_y=0                 u=0
 #
 #### set Dirichlet BC for the flow problem
-variables.muscle_elasticity_dirichlet_bc = {}
 
-nx = variables.n_elements[0]
-ny = variables.n_elements[1]
-nz = variables.n_elements[2]
+nx = variables.nx
+ny = variables.ny
+nz = variables.nz
+
+mx = variables.mx
+my = variables.my
+mz = variables.mz
 
 k = 0
 if variables.scenario_name == "muscle_right":
@@ -355,12 +375,16 @@ if variables.scenario_name == "muscle_right":
 # muscle mesh
 for j in range(ny):
     for i in range(nx):
-      variables.muscle_elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None,None,0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
+      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None,None,0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
 
 # fix edge, note: the multidomain simulation does not work without this (linear solver finds no solution)
 for i in range(nx):
-    variables.muscle_elasticity_dirichlet_bc[k*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
+    variables.elasticity_dirichlet_bc[k*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
     
 # fix corner completely
-variables.muscle_elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
+variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
+
+# set boundary conditions for the elasticity
+#[mx, my, mz] = variables.meshes["3Dmesh_quadratic"]["nPointsGlobal"]
+#[nx, ny, nz] = variables.meshes["3Dmesh_quadratic"]["nElements"]
 

@@ -2,10 +2,11 @@
 # Note, this is not possible to be run in parallel because the fibers cannot be initialized without MultipleInstances class.
 import sys, os
 import numpy as np
-import pickle
-import argparse
 import sys
 
+# parse rank arguments
+rank_no = (int)(sys.argv[-2])
+n_ranks = (int)(sys.argv[-1])
 
 #add variables subfolder to python path where the variables script is located
 script_path = os.path.dirname(os.path.abspath(__file__))
@@ -14,21 +15,11 @@ sys.path.insert(0, os.path.join(script_path,'variables'))
 
 import variables              # file variables.py, defines default values for all parameters, you can set the parameters there
 from create_partitioned_meshes_for_settings import *   # file create_partitioned_meshes_for_settings with helper functions about own subdomain
+from helper import *
 
-# material parameters
-# --------------------
-# quantities in mechanics unit system
-variables.rho = 10          # [1e-4 kg/cm^3] density of the muscle (density of water)
+# modify variables according to specific scenario
 
-# Mooney-Rivlin parameters [c1,c2,b,d] of c1*(Ibar1 - 3) + c2*(Ibar2 - 3) + b/d (λ - 1) - b*ln(λ)
-# Heidlauf13: [6.352e-10 kPa, 3.627 kPa, 2.756e-5 kPa, 43.373] = [6.352e-11 N/cm^2, 3.627e-1 N/cm^2, 2.756e-6 N/cm^2, 43.373], pmax = 73 kPa = 7.3 N/cm^2
-# Heidlauf16: [3.176e-10 N/cm^2, 1.813 N/cm^2, 1.075e-2 N/cm^2, 9.1733], pmax = 7.3 N/cm^2
-
-#c1 = 3.176e-10              # [N/cm^2]
-#c2 = 1.813                  # [N/cm^2]
-#b  = 1.075e-2               # [N/cm^2] anisotropy parameter
-#d  = 9.1733                 # [-] anisotropy parameter
-#variables.material_parameters = [c1, c2, b, d]   # material parameters for Mooney-Rivlin
+variables.scenario_name = "tendon"
 
 # material parameters for tendon material
 c = 9.98                    # [N/cm^2=kPa]
@@ -41,49 +32,11 @@ k1 = 42.217e3               # [N/cm^2=kPa]
 k2 = 411.360e3              # [N/cm^2=kPa]
 variables.material_parameters = [c, ca, ct, cat, ctt, mu, k1, k2]
 
-pmax = 7.3                  # [N/cm^2=kPa] maximum isometric active stress
-
-variables.constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
 variables.force = 1.0       # [N]
 
 variables.dt_elasticity = 0.1      # [ms] time step width for elasticity
-variables.end_time      = 10     # [ms] simulation time
-variables.scenario_name = "tendon"
-
-# input mesh file
-variables.fiber_file = "tendon"        # bottom tendon
-#fiber_file = "../../../../input/left_biceps_brachii_tendon2a.bin"
-#fiber_file = "../../../../input/left_biceps_brachii_tendon2b.bin"
-#fiber_file = "../../../../input/left_biceps_brachii_7x7fibers.bin"
-#fiber_file = "../../../../input/left_biceps_brachii_7x7fibers.bin"
-
-load_fiber_data = False             # If the fiber geometry data should be loaded completely in the python script. If True, this reads the binary file and assigns the node positions in the config. If False, the C++ code will read the binary file and only extract the local node positions. This is more performant for highly parallel runs.
-
-# parse arguments
-rank_no = (int)(sys.argv[-2])
-n_ranks = (int)(sys.argv[-1])
-
-# define command line arguments
-parser = argparse.ArgumentParser(description='tendon')
-parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',    type=int)
-parser.add_argument('--n_subdomains_x', '-x',                help='Number of subdomains in x direction.',        type=int, default=variables.n_subdomains_x)
-parser.add_argument('--n_subdomains_y', '-y',                help='Number of subdomains in y direction.',        type=int, default=variables.n_subdomains_y)
-parser.add_argument('--n_subdomains_z', '-z',                help='Number of subdomains in z direction.',        type=int, default=variables.n_subdomains_z)
-parser.add_argument('--fiber_file',                          help='The filename of the file that contains the fiber data.', default=variables.fiber_file)
-parser.add_argument('-vmodule', help='ignore')
-
-# parse command line arguments and assign values to variables module
-args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
-if len(other_args) != 0 and rank_no == 0:
-    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
-
-# partitioning
-# ------------
-# this has to match the total number of processes
-if variables.n_subdomains is not None:
-  variables.n_subdomains_x = variables.n_subdomains[0]
-  variables.n_subdomains_y = variables.n_subdomains[1]
-  variables.n_subdomains_z = variables.n_subdomains[2]
+ 
+variables.n_elements = [2,2,10]
 
 # compute partitioning
 if rank_no == 0:
@@ -91,34 +44,18 @@ if rank_no == 0:
     print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
     sys.exit(-1)
     
-# stride for sampling the 3D elements from the fiber data
-# here any number is possible
-sampling_stride_x = 1
-sampling_stride_y = 1
-sampling_stride_z = 2
 
-# create the partitioning using the script in create_partitioned_meshes_for_settings.py
-result = create_partitioned_meshes_for_settings(
-    variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, 
-    fiber_file, load_fiber_data,
-    sampling_stride_x, sampling_stride_y, sampling_stride_z, True, True)
-
-[variables.meshes, variables.own_subdomain_coordinate_x, variables.own_subdomain_coordinate_y, variables.own_subdomain_coordinate_z, variables.n_fibers_x, variables.n_fibers_y, variables.n_points_whole_fiber] = result
-
-n_points_3D_mesh_linear_global_x = sum([n_sampled_points_in_subdomain_x(subdomain_coordinate_x) for subdomain_coordinate_x in range(variables.n_subdomains_x)])
-n_points_3D_mesh_linear_global_y = sum([n_sampled_points_in_subdomain_y(subdomain_coordinate_y) for subdomain_coordinate_y in range(variables.n_subdomains_y)])
-n_points_3D_mesh_linear_global_z = sum([n_sampled_points_in_subdomain_z(subdomain_coordinate_z) for subdomain_coordinate_z in range(variables.n_subdomains_z)])
-n_points_3D_mesh_linear_global = n_points_3D_mesh_linear_global_x*n_points_3D_mesh_linear_global_y*n_points_3D_mesh_linear_global_z
-nx = n_points_3D_mesh_linear_global_x-1
-ny = n_points_3D_mesh_linear_global_y-1
-nz = n_points_3D_mesh_linear_global_z-1
-
-node_positions = variables.meshes["3Dmesh_quadratic"]["nodePositions"]
 
 # boundary conditions (for quadratic elements)
 # --------------------------------------------
-[mx, my, mz] = variables.meshes["3Dmesh_quadratic"]["nPointsGlobal"]
-[nx, ny, nz] = variables.meshes["3Dmesh_quadratic"]["nElements"]
+
+nx = variables.n_elements[0]
+ny = variables.n_elements[1]
+nz = variables.n_elements[2]
+
+mx = int(variables.n_elements[0]/2)
+my = int(variables.n_elements[1]/2)
+mz = int(variables.n_elements[2]/2)
 
 # set Neumann BC, set traction at the end of the tendon that is attached to the muscle
 k = nz-1
@@ -131,7 +68,6 @@ traction_vector = [0, 0, -variables.force]     # the traction force in specified
 face = "2-"     
 variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": traction_vector, "face": face} for j in range(ny) for i in range(nx)]
 
-print("nRanks: ",variables.meshes["3Dmesh_quadratic"]["nRanks"])
 
 config = {
   "scenarioName":                   variables.scenario_name,      # scenario name to identify the simulation runs in the log file
@@ -227,7 +163,7 @@ config = {
       "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
       
       # boundary and initial conditions
-      "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
+      "dirichletBoundaryConditions": variables.muscle_elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
       "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
       "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
       "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running

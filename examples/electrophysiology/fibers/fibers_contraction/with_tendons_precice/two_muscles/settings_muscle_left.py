@@ -2,8 +2,9 @@
 
 import sys, os
 import timeit
-import argparse
 import importlib
+
+variables.scenario_name = "muscle_right"
 
 # parse rank arguments
 rank_no = (int)(sys.argv[-2])
@@ -16,65 +17,7 @@ sys.path.insert(0, os.path.join(script_path,'variables'))
 
 import variables              # file variables.py, defined default values for all parameters, you can set the parameters there  
 from create_partitioned_meshes_for_settings import *   # file create_partitioned_meshes_for_settings with helper functions about own subdomain
-
-# if first argument contains "*.py", it is a custom variable definition file, load these values
-if ".py" in sys.argv[0]:
-  variables_path_and_filename = sys.argv[0]
-  variables_path,variables_filename = os.path.split(variables_path_and_filename)  # get path and filename 
-  sys.path.insert(0, os.path.join(script_path,variables_path))                    # add the directory of the variables file to python path
-  variables_module,_ = os.path.splitext(variables_filename)                       # remove the ".py" extension to get the name of the module
-  
-  if rank_no == 0:
-    print("Loading variables from \"{}\".".format(variables_path_and_filename))
-    
-  custom_variables = importlib.import_module(variables_module, package=variables_filename)    # import variables module
-  variables.__dict__.update(custom_variables.__dict__)
-  sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
-else:
-  print("Error: no variables file was specified, e.g:\n ./muscle ../settings_muscle.py ramp.py")
-  exit(0)
-
-# -------------- begin user parameters ----------------
-# -------------- end user parameters ----------------
-
-# define command line arguments
-parser = argparse.ArgumentParser(description='muscle')
-parser.add_argument('--scenario_name',                       help='The name to identify this run in the log.',   default=variables.scenario_name)
-parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',    type=int)
-parser.add_argument('--n_subdomains_x', '-x',                help='Number of subdomains in x direction.',        type=int, default=variables.n_subdomains_x)
-parser.add_argument('--n_subdomains_y', '-y',                help='Number of subdomains in y direction.',        type=int, default=variables.n_subdomains_y)
-parser.add_argument('--n_subdomains_z', '-z',                help='Number of subdomains in z direction.',        type=int, default=variables.n_subdomains_z)
-parser.add_argument('--diffusion_solver_type',               help='The solver for the diffusion.',               default=variables.diffusion_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
-parser.add_argument('--diffusion_preconditioner_type',       help='The preconditioner for the diffusion.',       default=variables.diffusion_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
-parser.add_argument('--paraview_output',                     help='Enable the paraview output writer.',          default=variables.paraview_output, action='store_true')
-parser.add_argument('--adios_output',                        help='Enable the MegaMol/ADIOS output writer.',          default=variables.adios_output, action='store_true')
-parser.add_argument('--fiber_file',                          help='The filename of the file that contains the fiber data.', default=variables.fiber_file)
-parser.add_argument('--fiber_distribution_file',             help='The filename of the file that contains the MU firing times.', default=variables.fiber_distribution_file)
-parser.add_argument('--firing_times_file',                   help='The filename of the file that contains the cellml model.', default=variables.firing_times_file)
-parser.add_argument('--end_time', '--tend', '-t',            help='The end simulation time.',                    type=float, default=variables.end_time)
-parser.add_argument('--output_timestep',                     help='The timestep for writing outputs.',           type=float, default=variables.output_timestep)
-parser.add_argument('--dt_0D',                               help='The timestep for the 0D model.',              type=float, default=variables.dt_0D)
-parser.add_argument('--dt_1D',                               help='The timestep for the 1D model.',              type=float, default=variables.dt_1D)
-parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',             type=float, default=variables.dt_splitting)
-parser.add_argument('--dt_3D',                               help='The timestep for the 3D model, i.e. dynamic solid mechanics.', type=float, default=variables.dt_3D)
-parser.add_argument('--disable_firing_output',               help='Disables the initial list of fiber firings.', default=variables.disable_firing_output, action='store_true')
-parser.add_argument('--v',                                   help='Enable full verbosity in c++ code')
-parser.add_argument('-v',                                    help='Enable verbosity level in c++ code', action="store_true")
-parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
-parser.add_argument('-pause',                                help='Stop at parallel debugging barrier', action="store_true")
-
-# parse command line arguments and assign values to variables module
-args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
-if len(other_args) != 0 and rank_no == 0:
-    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
-
-# initialize some dependend variables
-if variables.n_subdomains is not None:
-  variables.n_subdomains_x = variables.n_subdomains[0]
-  variables.n_subdomains_y = variables.n_subdomains[1]
-  variables.n_subdomains_z = variables.n_subdomains[2]
-  
-variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
+from helper import *
 
 # automatically initialize partitioning if it has not been set
 if n_ranks != variables.n_subdomains:
@@ -118,50 +61,34 @@ if rank_no == 0:
   
   print("prefactor: sigma_eff/(Am*Cm) = {} = {} / ({}*{})".format(variables.Conductivity/(variables.Am*variables.Cm), variables.Conductivity, variables.Am, variables.Cm))
   
-  # start timer to measure duration of parsing of this script  
-  t_start_script = timeit.default_timer()
     
 # initialize all helper variables
-from helper import *
-
 variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
 variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
-if False:
-  for subdomain_coordinate_y in range(variables.n_subdomains_y):
-    for subdomain_coordinate_x in range(variables.n_subdomains_x):
-      
-      print("subdomain (x{},y{}) ranks: {} n fibers in subdomain: x{},y{}".format(subdomain_coordinate_x, subdomain_coordinate_y, 
-        list(range(subdomain_coordinate_y*variables.n_subdomains_x + subdomain_coordinate_x, n_ranks, variables.n_subdomains_x*variables.n_subdomains_y)),
-        n_fibers_in_subdomain_x(subdomain_coordinate_x), n_fibers_in_subdomain_y(subdomain_coordinate_y)))
-
-      for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)):
-        for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)):
-          print("({},{}) n instances: {}".format(fiber_in_subdomain_coordinate_x,fiber_in_subdomain_coordinate_y,
-              n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y)))
-
-
-variables.elasticity_dirichlet_bc = {}
-
-k = 0 #left muscle
-
-# fix z value on the whole x-y-plane
-for j in range(my):
-  for i in range(mx):
-    variables.elasticity_dirichlet_bc[k*mx*my + j*mx + i] = [None,None,0.0,None,None,None]
-
-# fix left edge 
-for j in range(my):
-  variables.elasticity_dirichlet_bc[k*mx*my + j*mx + 0][0] = 0.0
-  
-# fix front edge 
-for i in range(mx):
-  variables.elasticity_dirichlet_bc[k*mx*my + 0*mx + i][1] = 0.0
-       
-variables.scenario_name = "muscle_left"
-variables.fiber_file = "muscle_left"        # bottom tendon
-
-
+# add meshes
+meshes_muscle_left = {
+  # no `nodePositions` fields as the nodes are created internally
+  "muscle_left_Mesh": {
+    "nElements" :         variables.n_elements_muscle_left,
+    "physicalExtent":     variables.muscle_left_extent,
+    "physicalOffset":     variables.muscle_left_offset,
+    "logKey":             "muscle_left",
+    "inputMeshIsGlobal":  True,
+    "nRanks":             n_ranks
+  },
+  # needed for mechanics solver
+  "muscle_right_Mesh_quadratic": {
+    "nElements" :         [elems // 2 for elems in variables.n_elements_muscle_left],
+    "physicalExtent":     variables.muscle_left_extent,
+    "physicalOffset":     variables.muscle_left_offset,
+    "logKey":             "muscle_right_left",
+    "inputMeshIsGlobal":  True,
+    "nRanks":             n_ranks,
+  }
+}
+variables.meshes.update(meshes_muscle_left)
+variables.meshes.update(fiber_meshes)
 
 # define the config dict
 config = {

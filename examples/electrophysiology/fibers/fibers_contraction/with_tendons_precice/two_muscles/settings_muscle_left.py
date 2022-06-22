@@ -448,16 +448,16 @@ config = {
             "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step
 
             #TODO: avoid hard coded 45. Smt like mx*my*mz
-            "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(45)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-            "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(45)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+            "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+            "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
             "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
             "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
             
             "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions_muscle",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-            "totalForceLogFilename":       "out/muscle_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
-            "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
-            "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
-            "totalForceTopElementNosGlobal":     [(nz-1)*ny*nx + j*nx + i for j in range(ny) for i in range(nx)],   # global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal
+            # "totalForceLogFilename":       "out/muscle_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
+            # "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
+            # "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
+            # "totalForceTopElementNosGlobal":     [(nz-1)*ny*nx + j*nx + i for j in range(ny) for i in range(nx)],   # global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal
       
             # define which file formats should be written
             # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.

@@ -41,6 +41,28 @@
     </mesh>
 
     <!--The first participant is the master!! It has to be the tendon -->
+
+        <participant name="MuscleSolverLeft">
+
+      <!-- Makes the named mesh available to the participant. Mesh is provided by the solver directly. -->
+      <use-mesh name="MuscleMeshLeft"  provide="yes"/>
+      <use-mesh name="TendonMeshLeft"     from="TendonSolver"/>
+      
+      <!-- Define input/output of the solver, the mesh should be the own one. -->
+      <read-data  name="Displacement"  mesh="MuscleMeshLeft"/>
+      <read-data  name="Velocity"      mesh="MuscleMeshLeft"/>
+      <write-data name="Traction"      mesh="MuscleMeshLeft"/>
+      
+      <!-- rbf to map displacement and velocity from TendonMeshLeft to Muscle1MeshRight -->
+      <mapping:rbf-gaussian  
+        direction="read" 
+        from="TendonMeshLeft" 
+        to="MuscleMeshLeft" 
+        constraint="consistent" 
+        timing="initial" 
+        shape-parameter="91.05"
+      />     
+    </participant>
     
     <participant name="TendonSolver"> 
       
@@ -81,27 +103,7 @@
       />
     </participant>
 
-    <participant name="MuscleSolverLeft">
 
-      <!-- Makes the named mesh available to the participant. Mesh is provided by the solver directly. -->
-      <use-mesh name="MuscleMeshLeft"  provide="yes"/>
-      <use-mesh name="TendonMeshLeft"     from="TendonSolver"/>
-      
-      <!-- Define input/output of the solver, the mesh should be the own one. -->
-      <read-data  name="Displacement"  mesh="MuscleMeshLeft"/>
-      <read-data  name="Velocity"      mesh="MuscleMeshLeft"/>
-      <write-data name="Traction"      mesh="MuscleMeshLeft"/>
-      
-      <!-- rbf to map displacement and velocity from TendonMeshLeft to Muscle1MeshRight -->
-      <mapping:rbf-gaussian  
-        direction="read" 
-        from="TendonMeshLeft" 
-        to="MuscleMeshLeft" 
-        constraint="consistent" 
-        timing="initial" 
-        shape-parameter="91.05"
-      />     
-    </participant>
 
     <participant name="MuscleSolverRight">
 
@@ -138,8 +140,8 @@
       <participant name="MuscleSolverLeft"/>
       <participant name="MuscleSolverRight"/>
       
-      <max-time value="20000.0"/>           <!-- end time of the whole simulation -->
-      <time-window-size value="1.0"/>   <!-- timestep width for coupling -->
+      <max-time value="1000.0"/>           <!-- end time of the whole simulation -->
+      <time-window-size value="0.1"/>   <!-- timestep width for coupling -->
       <max-iterations value="1000" />
       <extrapolation-order value="1"/>
 

@@ -33,10 +33,6 @@ k2 = 411.360e3              # [N/cm^2=kPa]
 variables.material_parameters = [c, ca, ct, cat, ctt, mu, k1, k2]
 
 variables.force = 1.0       # [N]
-
-variables.dt_elasticity = 0.1      # [ms] time step width for elasticity
-variables.end_time      = 10     # [ms] simulation time
-
  
 variables.n_elements = [2,2,10]
 
@@ -46,30 +42,6 @@ if rank_no == 0:
     print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
     sys.exit(-1)
     
-
-
-# boundary conditions (for quadratic elements)
-# --------------------------------------------
-nx = variables.nx
-ny = variables.ny
-nz = variables.nz
-
-mx = variables.mx
-my = variables.my
-mz = variables.mz
-
-
-# set Neumann BC, set traction at the end of the tendon that is attached to the muscle
-k = nz-1
-traction_vector = [0, 0, variables.force]     # the traction force in specified in the reference configuration
-face = "2+"
-variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": traction_vector, "face": face} for j in range(ny) for i in range(nx)]
-
-k = 0
-traction_vector = [0, 0, -variables.force]     # the traction force in specified in the reference configuration
-face = "2-"     
-variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": traction_vector, "face": face} for j in range(ny) for i in range(nx)]
-
 
 # add meshes
 meshes_tendon = {
@@ -93,6 +65,31 @@ meshes_tendon = {
   }
 }
 variables.meshes.update(meshes_tendon)
+
+# boundary conditions (for quadratic elements)
+# --------------------------------------------
+
+#[mx, my, mz] = variables.meshes["tendon_Mesh_quadratic"]["nPointsGlobal"]
+nx = variables.nx
+ny = variables.ny
+nz = variables.nz
+
+mx = variables.mx
+my = variables.my
+mz = variables.mz
+
+
+# set Neumann BC, set traction at the end of the tendon that is attached to the muscle
+k = nz-1
+traction_vector = [0, 0, variables.force]     # the traction force in specified in the reference configuration
+face = "2+"
+variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": traction_vector, "face": face} for j in range(ny) for i in range(nx)]
+
+k = 0
+traction_vector = [0, 0, -variables.force]     # the traction force in specified in the reference configuration
+face = "2-"     
+variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": traction_vector, "face": face} for j in range(ny) for i in range(nx)]
+
 
 config = {
   "scenarioName":                   variables.scenario_name,      # scenario name to identify the simulation runs in the log file
@@ -166,17 +163,17 @@ config = {
       "fiberDirection":             [0,0,1],                      # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
       
       # nonlinear solver
-      "relativeTolerance":          1e-10,                         # 1e-10 relative tolerance of the linear solver
+       "relativeTolerance":          1e-10,                         # 1e-10 relative tolerance of the linear solver
       "absoluteTolerance":          1e-10,                        # 1e-10 absolute tolerance of the residual of the linear solver       
       "solverType":                 "preonly",                    # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
       "preconditionerType":         "lu",                         # type of the preconditioner
       "maxIterations":              1e4,                          # maximum number of iterations in the linear solver
       "snesMaxFunctionEvaluations": 1e8,                          # maximum number of function iterations
-      "snesMaxIterations":          24,#240                           # maximum number of iterations in the nonlinear solver
+      "snesMaxIterations":          24,                           # maximum number of iterations in the nonlinear solver
       "snesRelativeTolerance":      1e-5,                         # relative tolerance of the nonlinear solver
       "snesLineSearchType":         "l2",                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
-      "snesAbsoluteTolerance":      1e-5, #1e-3                        # absolute tolerance of the nonlinear solver
-      "snesRebuildJacobianFrequency": 5,#1                          # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+      "snesAbsoluteTolerance":      1e-5,                         # absolute tolerance of the nonlinear solver
+      "snesRebuildJacobianFrequency": 5,                          # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
       
       #"dumpFilename": "out/r{}/m".format(sys.argv[-1]),          # dump system matrix and right hand side after every solve
       "dumpFilename":               "",                           # dump disabled
@@ -201,10 +198,10 @@ config = {
       "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
       
       "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions_tendon",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-      "totalForceLogFilename":       "out/tendon_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
-      "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
-      "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
-      "totalForceTopElementNosGlobal":     [(nz-1)*ny*nx + j*nx + i for j in range(ny) for i in range(nx)],   # global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal
+      # "totalForceLogFilename":       "out/tendon_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
+      # "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
+      # "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
+      # "totalForceTopElementNosGlobal":     [(nz-1)*ny*nx + j*nx + i for j in range(ny) for i in range(nx)],   # global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal
 
       "OutputWriter" : [
             {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},

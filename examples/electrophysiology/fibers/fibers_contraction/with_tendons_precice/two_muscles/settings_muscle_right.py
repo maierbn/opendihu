@@ -74,30 +74,6 @@ if rank_no == 0:
 # edge                       |                     edge
 # u=0                    u_x=u_y=0                 u=0
 #
-#### set Dirichlet BC for the flow problem
-
-nx = variables.nx
-ny = variables.ny
-nz = variables.nz
-
-mx = variables.mx
-my = variables.my
-mz = variables.mz
-
-variables.elasticity_dirichlet_bc = {}
- 
-k = nz-1
-# muscle mesh
-for j in range(ny):
-    for i in range(nx):
-      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None,None,0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
-
-# fix edge, note: the multidomain simulation does not work without this (linear solver finds no solution)
-for i in range(nx):
-    variables.elasticity_dirichlet_bc[k*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
-    
-# fix corner completely
-variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
 
 
 # initialize all helper variables
@@ -128,6 +104,8 @@ meshes_muscle_right = {
 variables.meshes.update(meshes_muscle_right)
 variables.meshes.update(fiber_meshes)
 
+#### set Dirichlet BC for the flow problem
+
 nx = variables.nx
 ny = variables.ny
 nz = variables.nz
@@ -135,6 +113,23 @@ nz = variables.nz
 mx = variables.mx
 my = variables.my
 mz = variables.mz
+
+
+variables.elasticity_dirichlet_bc = {}
+ 
+k = nz-1
+# muscle mesh
+for j in range(ny):
+    for i in range(nx):
+      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None,None,0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
+
+# fix edge, note: the multidomain simulation does not work without this (linear solver finds no solution)
+for i in range(nx):
+    variables.elasticity_dirichlet_bc[k*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
+    
+# fix corner completely
+variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
+
 
 # define the config dict
 config = {
@@ -461,10 +456,10 @@ config = {
             "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
             
             "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions_muscle",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-            "totalForceLogFilename":       "out/muscle_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
-            "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
-            "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
-            "totalForceTopElementNosGlobal":     [(nz-1)*ny*nx + j*nx + i for j in range(ny) for i in range(nx)],   # global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal
+            # "totalForceLogFilename":       "out/muscle_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
+            # "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
+            # "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
+            # "totalForceTopElementNosGlobal":     [(nz-1)*ny*nx + j*nx + i for j in range(ny) for i in range(nx)],   # global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal
       
             # define which file formats should be written
             # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.

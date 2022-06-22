@@ -4,8 +4,6 @@ import sys, os
 import timeit
 import importlib
 
-variables.scenario_name = "muscle_right"
-
 # parse rank arguments
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
@@ -18,6 +16,10 @@ sys.path.insert(0, os.path.join(script_path,'variables'))
 import variables              # file variables.py, defined default values for all parameters, you can set the parameters there  
 from create_partitioned_meshes_for_settings import *   # file create_partitioned_meshes_for_settings with helper functions about own subdomain
 from helper import *
+
+# modify variables according to specific scenario
+
+variables.scenario_name = "muscle_right"
 
 # automatically initialize partitioning if it has not been set
 if n_ranks != variables.n_subdomains:
@@ -53,7 +55,6 @@ if rank_no == 0:
   print("dt_0D:           {:0.0e}, diffusion_solver_type:      {}".format(variables.dt_0D, variables.diffusion_solver_type))
   print("dt_3D:           {:0.0e}, paraview_output: {}".format(variables.dt_3D, variables.paraview_output))
   print("output_timestep: {:0.0e}  stimulation_frequency: {} 1/ms = {} Hz".format(variables.output_timestep, variables.stimulation_frequency, variables.stimulation_frequency*1e3))
-  print("fiber_file:              {}".format(variables.fiber_file))
   print("cellml_file:             {}".format(variables.cellml_file))
   print("fiber_distribution_file: {}".format(variables.fiber_distribution_file))
   print("firing_times_file:       {}".format(variables.firing_times_file))
@@ -61,6 +62,43 @@ if rank_no == 0:
   
   print("prefactor: sigma_eff/(Am*Cm) = {} = {} / ({}*{})".format(variables.Conductivity/(variables.Am*variables.Cm), variables.Conductivity, variables.Am, variables.Cm))
   
+#############################
+
+# parameters for the main simulation
+# ---------------------------------------------
+# https://uni-stuttgart.conceptboard.com/board/i45e-9bz9-qzb0-ppek-n9s2
+#          ----> z
+#          +----------+-.  tendon  .-+----------+
+#  u_z=0 & | muscle 1 |~:~~~~~~~~~~:~| muscle 2 | u_z=0 &
+# one      +----------+-'    ^     '-+----------+  one
+# edge                       |                     edge
+# u=0                    u_x=u_y=0                 u=0
+#
+#### set Dirichlet BC for the flow problem
+
+nx = variables.nx
+ny = variables.ny
+nz = variables.nz
+
+mx = variables.mx
+my = variables.my
+mz = variables.mz
+
+variables.elasticity_dirichlet_bc = {}
+ 
+k = nz-1
+# muscle mesh
+for j in range(ny):
+    for i in range(nx):
+      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None,None,0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
+
+# fix edge, note: the multidomain simulation does not work without this (linear solver finds no solution)
+for i in range(nx):
+    variables.elasticity_dirichlet_bc[k*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
+    
+# fix corner completely
+variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
+
 
 # initialize all helper variables
 variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
@@ -70,7 +108,7 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 meshes_muscle_right = {
   # no `nodePositions` fields as the nodes are created internally
   "muscle_right_Mesh": {
-    "nElements" :         variables.n_elements_muscle_right,
+    "nElements" :         variables.n_elements,
     "physicalExtent":     variables.muscle_right_extent,
     "physicalOffset":     variables.muscle_right_offset,
     "logKey":             "muscle_right",
@@ -79,7 +117,7 @@ meshes_muscle_right = {
   },
   # needed for mechanics solver
   "muscle_right_Mesh_quadratic": {
-    "nElements" :         [elems // 2 for elems in variables.n_elements_muscle1],
+    "nElements" :         [elems // 2 for elems in variables.n_elements],
     "physicalExtent":     variables.muscle_right_extent,
     "physicalOffset":     variables.muscle_right_offset,
     "logKey":             "muscle_right_quadratic",
@@ -90,6 +128,13 @@ meshes_muscle_right = {
 variables.meshes.update(meshes_muscle_right)
 variables.meshes.update(fiber_meshes)
 
+nx = variables.nx
+ny = variables.ny
+nz = variables.nz
+
+mx = variables.mx
+my = variables.my
+mz = variables.mz
 
 # define the config dict
 config = {
@@ -98,7 +143,7 @@ config = {
   "solverStructureDiagramFile":     "out/solver_structure.txt",     # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "out/mappings_between_meshes.txt",  # log file of when mappings between meshes occur
   "Meshes":                variables.meshes,
-  "MappingsBetweenMeshes": variables.mappings_between_meshes,
+  "MappingsBetweenMeshes": {"muscle_right_fiber_{}".format(f) : ["muscle_right_Mesh", "muscle_right_Mesh_quadratic"] for f in range(variables.n_fibers_total)},
   "Solvers": {
     "diffusionTermSolver": {# solver for the implicit timestepping scheme of the diffusion time step
       "maxIterations":      1e4,
@@ -126,6 +171,10 @@ config = {
     }
   },
   "PreciceAdapter": {        # precice adapter for muscle
+    "couplingEnabled":          True,
+    "outputOnlyConvergedTimeSteps": False, #default is true
+    "scalingFactor":            1,
+
     "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
     "timestepWidth":            1,                          # coupling time step width, must match the value in the precice config
     "preciceConfigFilename":    "precice_config_two_muscles.xml",    # the preCICE configuration file
@@ -151,6 +200,7 @@ config = {
     ],
     
     "Coupling": {
+      "description":            "fibers and contraction",
       "timeStepWidth":          variables.dt_3D,  # 1e-1
       "logTimeStepWidthAsKey":  "dt_3D",
       "durationLogKey":         "duration_total",
@@ -158,6 +208,7 @@ config = {
       "endTime":                variables.end_time,
       "connectedSlotsTerm1To2": {1:2},          # transfer gamma to MuscleContractionSolver, the receiving slots are λ, λdot, γ
       "connectedSlotsTerm2To1":  None,       # transfer nothing back
+      
       "Term1": {        # monodomain, fibers
         "MultipleInstances": {
           "logKey":                     "duration_subdomains_xy",
@@ -196,7 +247,8 @@ config = {
                       "inputMeshIsGlobal":            True,                                    # the boundary conditions and initial values would be given as global numbers
                       "checkForNanInf":               True,                                    # abort execution if the solution contains nan or inf values
                       "nAdditionalFieldVariables":    0,                                       # number of additional field variables
-                        
+                      "additionalSlotNames":          [],
+
                       "CellML" : {
                         "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
                         #"statesInitialValues":                   [],                                             # if given, the initial values for the the states of one instance
@@ -227,8 +279,8 @@ config = {
                         "mappings":                               variables.mappings,                             # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
                         "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
                         
-                        "meshName":                               "MeshFiber_{}".format(fiber_no),                # reference to the fiber mesh
-                        "stimulationLogFilename":                 "out/stimulation.log",                          # a file that will contain the times of stimulations
+                        "meshName":                               "muscle_right_fiber_{}".format(fiber_no),                # reference to the fiber mesh
+                        "stimulationLogFilename":                 "out/muscle_right/stimulation.log",                          # a file that will contain the times of stimulations
                       },      
                       "OutputWriter" : [
                         {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/0D_states({},{})".format(fiber_in_subdomain_coordinate_x,fiber_in_subdomain_coordinate_y), "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
@@ -261,14 +313,18 @@ config = {
                       "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
                       "nAdditionalFieldVariables":   2,                                       # number of additional field variables that will be written to the output file, here for stress
                       "checkForNanInf":              True,                                    # abort execution if the solution contains nan or inf values
-                      
+                      "additionalSlotNames":          [],
+
                       "FiniteElementMethod" : {
                         "inputMeshIsGlobal":         True,
-                        "meshName":                  "MeshFiber_{}".format(fiber_no),
+                        "meshName":                  "muscle_right_fiber_{}".format(fiber_no),
                         "solverName":                "diffusionTermSolver",
                         "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
+                        "slotName":                  ""
                       },
                       "OutputWriter" : [
+                        #{"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/"+variables.scenario_name+"/muscle_left_fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles":True, "fileNumbering": "incremental"},
+
                         #{"format": "Paraview", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles": True},
                         #{"format": "Paraview", "outputInterval": 1./variables.dt_1D*variables.output_timestep, "filename": "out/fiber_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
                         #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./variables.dt_1D*variables.output_timestep, "sphereSize": "0.02*0.02*0.02"},
@@ -284,56 +340,56 @@ config = {
               },
             },
             
-            # this is for biceps_contraction_no_cell, i.e. PrescribedValues instead of fibers
-            "GodunovSplitting": {   # this splitting scheme is only needed to replicate the solver structure as with the fibers
-              "timeStepWidth":          variables.dt_3D,
-              "logTimeStepWidthAsKey":  "dt_splitting",
-              "durationLogKey":         "duration_prescribed_values",
-              "timeStepOutputInterval": 100,
-              "endTime":                variables.dt_3D,
-              "connectedSlotsTerm1To2": [],
-              "connectedSlotsTerm2To1": [],   # transfer the same back, this avoids data copy
+            # # this is for biceps_contraction_no_cell, i.e. PrescribedValues instead of fibers
+            # "GodunovSplitting": {   # this splitting scheme is only needed to replicate the solver structure as with the fibers
+            #   "timeStepWidth":          variables.dt_3D,
+            #   "logTimeStepWidthAsKey":  "dt_splitting",
+            #   "durationLogKey":         "duration_prescribed_values",
+            #   "timeStepOutputInterval": 100,
+            #   "endTime":                variables.dt_3D,
+            #   "connectedSlotsTerm1To2": [],
+            #   "connectedSlotsTerm2To1": [],   # transfer the same back, this avoids data copy
 
-              "Term1": {
-                "MultipleInstances": {
-                  "logKey":             "duration_subdomains_z",
-                  "nInstances":         n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y),
-                  "instances": 
-                  [{
-                    "ranks":                          list(range(variables.n_subdomains_z)),   # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
-                    "PrescribedValues": {
-                      "meshName":               "MeshFiber_{}".format(fiber_no),               # reference to the fiber mesh
-                      "numberTimeSteps":        1,             # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step
-                      "timeStepOutputInterval": 20,            # if the time step should be written to console, a value > 10 produces no output
-                      "slotNames":              [],            # names of the data connector slots
+            #   "Term1": {
+            #     "MultipleInstances": {
+            #       "logKey":             "duration_subdomains_z",
+            #       "nInstances":         n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y),
+            #       "instances": 
+            #       [{
+            #         "ranks":                          list(range(variables.n_subdomains_z)),   # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
+            #         "PrescribedValues": {
+            #           "meshName":               "fiber_{}".format(fiber_no),               # reference to the fiber mesh
+            #           "numberTimeSteps":        1,             # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step
+            #           "timeStepOutputInterval": 20,            # if the time step should be written to console, a value > 10 produces no output
+            #           "slotNames":              [],            # names of the data connector slots
                       
-                      # a list of field variables that will get values assigned in every timestep, by the provided callback function
-                      "fieldVariables1": [
-                        {"name": "Vm",     "callback": None},
-                        {"name": "stress", "callback": set_stress_values},
-                      ],
-                      "fieldVariables2":     [],
-                      "additionalArgument":  fiber_no,         # a custom argument to the fieldVariables callback functions, this will be passed on as the last argument
+            #           a list of field variables that will get values assigned in every timestep, by the provided callback function
+            #           "fieldVariables1": [
+            #             {"name": "Vm",     "callback": None},
+            #             {"name": "stress", "callback": set_stress_values},
+            #           ],
+            #           "fieldVariables2":     [],
+            #           "additionalArgument":  fiber_no,         # a custom argument to the fieldVariables callback functions, this will be passed on as the last argument
                       
-                      "OutputWriter" : [
-                        {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_fibers), "filename": "out/" + variables.scenario_name + "/prescribed_fibers", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
-                      ]
-                    },      
-                  } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
-                      for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) \
-                        for fiber_no in [get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)] \
-                          for motor_unit_no in [get_motor_unit_no(fiber_no)]],
+            #           "OutputWriter" : [
+            #             {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_fibers), "filename": "out/" + variables.scenario_name + "/prescribed_fibers", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
+            #           ]
+            #         },      
+            #       } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
+            #           for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) \
+            #             for fiber_no in [get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)] \
+            #               for motor_unit_no in [get_motor_unit_no(fiber_no)]],
                           
-                  #"OutputWriter" : variables.output_writer_fibers,
-                  "OutputWriter": [
-                    {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_fibers), "filename": "out/" + variables.scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
-                  ]
-                }
-              },
+            #       "OutputWriter" : variables.output_writer_fibers,
+            #       "OutputWriter": [
+            #         {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_fibers), "filename": "out/" + variables.scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
+            #       ]
+            #     }
+            #   },
               
-              # term2 is unused, it is needed to be similar to the actual fiber solver structure
-              "Term2": {}
-            }
+            #   term2 is unused, it is needed to be similar to the actual fiber solver structure
+            #   "Term2": {}
+            # }
               
           } if (subdomain_coordinate_x,subdomain_coordinate_y) == (variables.own_subdomain_coordinate_x,variables.own_subdomain_coordinate_y) else None
           for subdomain_coordinate_y in range(variables.n_subdomains_y)
@@ -354,15 +410,18 @@ config = {
           "OutputWriter" : [
             {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
           ],
+          "mapGeometryToMeshes":          ["muscle_right_Mesh"] + [key for key in fiber_meshes.keys()],    # the mesh names of the meshes that will get the geometry transferred
+          "reverseMappingOrder":          True,                      # if the mapping target->own mesh should be used instead of own->target mesh. This gives better results in some cases.
           "mapGeometryToMeshes":          [],                        # the mesh names of the meshes that will get the geometry transferred
           "dynamic":                      True,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
-          
+          "enableForceLengthRelation":    True,
+          "lambdaDotScalingFactor":       1,
           # the actual solid mechanics solver, this is either "DynamicHyperelasticitySolver" or "HyperelasticitySolver", depending on the value of "dynamic"
           "DynamicHyperelasticitySolver": {
             "timeStepWidth":              variables.dt_3D,           # time step width 
             "durationLogKey":             "nonlinear",               # key to find duration of this solver in the log file
             "timeStepOutputInterval":     1,                         # how often the current time step should be printed to console
-            
+            "totalForceLogFilename":      "",
             "materialParameters":         variables.material_parameters,  # material parameters of the Mooney-Rivlin material
             "density":                    variables.rho,             # density of the material
             "displacementsScalingFactor": 1.0,                       # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
@@ -375,9 +434,9 @@ config = {
             
             # mesh
             "inputMeshIsGlobal":          True,                     # the mesh is given locally
-            "meshName":                   "3Dmesh_quadratic",        # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
-            "fiberMeshNames":             variables.fiber_mesh_names,  # fiber meshes that will be used to determine the fiber direction, for multidomain there are no fibers so this would be empty list
-            #"fiberDirection":             [0,0,1],                  # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
+            "meshName":                   "muscle_right_Mesh_quadratic",        # name of the 3D mesh, it is defined under "Meshes" at the beginning of this config
+            "fiberMeshNames":             [],  # fiber meshes that will be used to determine the fiber direction, for multidomain there are no fibers so this would be empty list
+            "fiberDirection":             [0,0,1],                  # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
       
             # solving
             "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
@@ -392,14 +451,21 @@ config = {
             "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
             "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
             "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
-            
-            "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-            "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+            "updateNeumannBoundaryConditionsFunction":   None,                    # function that updates the Neumann BCs while the simulation is running
+            "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step
+
+            #TODO: avoid hard coded 45. Smt like mx*my*mz
+            "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(45)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+            "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(45)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
             "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
             "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
             
             "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions_muscle",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-            
+            "totalForceLogFilename":       "out/muscle_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
+            "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
+            "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
+            "totalForceTopElementNosGlobal":     [(nz-1)*ny*nx + j*nx + i for j in range(ny) for i in range(nx)],   # global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal
+      
             # define which file formats should be written
             # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
             "OutputWriter" : [
@@ -435,5 +501,6 @@ config = {
     }
   }
 }
+
 
 

@@ -35,6 +35,8 @@ variables.material_parameters = [c, ca, ct, cat, ctt, mu, k1, k2]
 variables.force = 1.0       # [N]
 
 variables.dt_elasticity = 0.1      # [ms] time step width for elasticity
+variables.end_time      = 10     # [ms] simulation time
+
  
 variables.n_elements = [2,2,10]
 
@@ -69,6 +71,29 @@ face = "2-"
 variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": traction_vector, "face": face} for j in range(ny) for i in range(nx)]
 
 
+# add meshes
+meshes_tendon = {
+  # no `nodePositions` fields as the nodes are created internally
+  "tendon_Mesh": {
+    "nElements" :         variables.n_elements,
+    "physicalExtent":     variables.tendon_extent,
+    "physicalOffset":     variables.tendon_offset,
+    "logKey":             "tendon",
+    "inputMeshIsGlobal":  True,
+    "nRanks":             n_ranks
+  },
+  # needed for mechanics solver
+  "tendon_Mesh_quadratic": {
+    "nElements" :         [elems // 2 for elems in variables.n_elements],
+    "physicalExtent":     variables.tendon_extent,
+    "physicalOffset":     variables.tendon_offset,
+    "logKey":             "tendon_quadratic",
+    "inputMeshIsGlobal":  True,
+    "nRanks":             n_ranks,
+  }
+}
+variables.meshes.update(meshes_tendon)
+
 config = {
   "scenarioName":                   variables.scenario_name,      # scenario name to identify the simulation runs in the log file
   "logFormat":                      "csv",                        # "csv" or "json", format of the lines in the log file, csv gives smaller files
@@ -79,6 +104,7 @@ config = {
   "PreciceAdapter": {        # precice adapter for bottom tendon
     "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
     "timestepWidth":            1,                          # coupling time step width, must match the value in the precice config
+    "couplingEnabled":          True,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
     "preciceConfigFilename":    "precice_config_two_muscles.xml",    # the preCICE configuration file
     "preciceParticipantName":   "TendonSolver",             # name of the own precice participant, has to match the name given in the precice xml config file
     "preciceMeshes": [                                      # the precice meshes get created as the top or bottom surface of the main geometry mesh of the nested solver
@@ -117,7 +143,7 @@ config = {
     ],
     
     "DynamicHyperelasticitySolver": {
-      "timeStepWidth":              variables.dt_elasticity,      # time step width 
+      "timeStepWidth":              variables.dt_elasticity,#variables.dt_elasticity,      # time step width 
       "endTime":                    variables.end_time,           # end time of the simulation time span    
       "durationLogKey":             "duration_mechanics",         # key to find duration of this solver in the log file
       "timeStepOutputInterval":     1,                            # how often the current time step should be printed to console
@@ -133,7 +159,7 @@ config = {
       # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
       
       # mesh
-      "meshName":                   "3Dmesh_quadratic",           # mesh with quadratic Lagrange ansatz functions
+      "meshName":                   "tendon_Mesh_quadratic",           # mesh with quadratic Lagrange ansatz functions
       "inputMeshIsGlobal":          True,                         # boundary conditions are specified in global numberings, whereas the mesh is given in local numberings
       
       "fiberMeshNames":             [],                           # fiber meshes that will be used to determine the fiber direction
@@ -146,11 +172,11 @@ config = {
       "preconditionerType":         "lu",                         # type of the preconditioner
       "maxIterations":              1e4,                          # maximum number of iterations in the linear solver
       "snesMaxFunctionEvaluations": 1e8,                          # maximum number of function iterations
-      "snesMaxIterations":          24,                           # maximum number of iterations in the nonlinear solver
+      "snesMaxIterations":          24,#240                           # maximum number of iterations in the nonlinear solver
       "snesRelativeTolerance":      1e-5,                         # relative tolerance of the nonlinear solver
       "snesLineSearchType":         "l2",                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
-      "snesAbsoluteTolerance":      1e-5,                         # absolute tolerance of the nonlinear solver
-      "snesRebuildJacobianFrequency": 5,                          # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+      "snesAbsoluteTolerance":      1e-5, #1e-3                        # absolute tolerance of the nonlinear solver
+      "snesRebuildJacobianFrequency": 5,#1                          # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
       
       #"dumpFilename": "out/r{}/m".format(sys.argv[-1]),          # dump system matrix and right hand side after every solve
       "dumpFilename":               "",                           # dump disabled
@@ -163,9 +189,9 @@ config = {
       "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
       
       # boundary and initial conditions
-      "dirichletBoundaryConditions": variables.muscle_elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
+      "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
       "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
-      "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+      "divideNeumannBoundaryConditionValuesByTotalArea": False,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
       "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
       "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
       
@@ -175,17 +201,16 @@ config = {
       "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
       
       "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions_tendon",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-      
+      "totalForceLogFilename":       "out/tendon_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
+      "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
+      "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
+      "totalForceTopElementNosGlobal":     [(nz-1)*ny*nx + j*nx + i for j in range(ny) for i in range(nx)],   # global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal
+
+      "OutputWriter" : [
+            {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+          ],
       # define which file formats should be written
       # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
-      "OutputWriter" : [
-        
-        # Paraview files
-        {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/tendon", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-        
-        # Python callback function "postprocess"
-        #{"format": "PythonCallback", "outputInterval": 1, "callback": postprocess, "onlyNodalValues":True, "filename": ""},
-      ],
       # 2. additional output writer that writes also the hydrostatic pressure
       "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
         "OutputWriter" : [
@@ -195,7 +220,7 @@ config = {
       # 3. additional output writer that writes virtual work terms
       "dynamic": {    # output of the dynamic solver, has additional virtual work values 
         "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-          {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
           #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
         ],
       },

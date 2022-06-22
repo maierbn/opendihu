@@ -16,6 +16,7 @@ from create_partitioned_meshes_for_settings import *   # file create_partitioned
 rank_no = (int)(sys.argv[-2])
 n_ranks = (int)(sys.argv[-1])
 
+variables.n_subdomains = variables.n_subdomains_x * variables.n_subdomains_y * variables.n_subdomains_z
 if variables.n_subdomains != n_ranks:
   print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\033[0m\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
   quit()
@@ -31,36 +32,37 @@ variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
 variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
 # fiber directions
+fiber_meshes = {}
 fiber_mesh_names = []
 
-if variables.scenario_name == "muscle_left":
-  for j in range(variables.n_fibers_y):
-    for i in range(variables.n_fibers_x):
-      fiber_no = j*variables.n_fibers_x + i
-      
-      # determine start position of fiber in (x,y)-plane
-      x = 0 + i / (variables.n_fibers_x - 1) * variables.muscle_left_extent[0]
-      y = 0 + j / (variables.n_fibers_y - 1) * variables.muscle_left_extent[1]
+#create muscle left fibers
+for j in range(variables.n_fibers_y):
+  for i in range(variables.n_fibers_x):
+    fiber_no = j*variables.n_fibers_x + i
+    
+    # determine start position of fiber in (x,y)-plane
+    x = 0 + i / (variables.n_fibers_x - 1) * variables.muscle_left_extent[0]
+    y = 0 + j / (variables.n_fibers_y - 1) * variables.muscle_left_extent[1]
 
-      # loop over points of a single fiber
-      node_positions = []
-      for k in range(variables.n_points_whole_fiber):
-        x_pos = x
-        y_pos = y
-        z_pos = variables.muscle_left_offset[2] + k / (variables.n_points_whole_fiber - 1) * variables.muscle_left_extent[2]
-        node_positions.append([x_pos,y_pos,z_pos])
-      
-      mesh_name = "fiber_{}".format(fiber_no)
-      fiber_mesh_names.append(mesh_name)
-      
-      variables.fiber_meshes[mesh_name] = {
-        "nodePositions": node_positions,
-        "nElements": [variables.n_points_whole_fiber - 1],
-        "inputMeshIsGlobal": True,
-        "nRanks": [n_ranks],
-      }
-elif variables.scenario_name == "muscle_right":
-  ### muscle 2: same discretization but can have different extent
+    # loop over points of a single fiber
+    node_positions = []
+    for k in range(variables.n_points_whole_fiber):
+      x_pos = x
+      y_pos = y
+      z_pos = variables.muscle_left_offset[2] + k / (variables.n_points_whole_fiber - 1) * variables.muscle_left_extent[2]
+      node_positions.append([x_pos,y_pos,z_pos])
+    
+    mesh_name = "muscle_left_fiber_{}".format(fiber_no)
+    fiber_mesh_names.append(mesh_name)
+    
+    fiber_meshes[mesh_name] = {
+      "nodePositions": node_positions,
+      "nElements": [variables.n_points_whole_fiber - 1],
+      "inputMeshIsGlobal": True,
+      "nRanks": [n_ranks],
+    }
+
+  #create muscle right fibers
   for j in range(variables.n_fibers_y):
     for i in range(variables.n_fibers_x):
       fiber_no = j*variables.n_fibers_x + i
@@ -77,17 +79,16 @@ elif variables.scenario_name == "muscle_right":
         z_pos = variables.muscle_right_offset[2] + k / (variables.n_points_whole_fiber - 1) * variables.muscle_right_extent[2]
         node_positions.append([x_pos,y_pos,z_pos])
       
-      mesh_name = "fiber_{}".format(fiber_no)
+      mesh_name = "muscle_right_fiber_{}".format(fiber_no)
       fiber_mesh_names.append(mesh_name)
       
-      variables.fiber_meshes[mesh_name] = {
+      fiber_meshes[mesh_name] = {
         "nodePositions": node_positions,
         "nElements": [variables.n_points_whole_fiber - 1],
         "inputMeshIsGlobal": True,
         "nRanks": [n_ranks],
       }
-elif variables.scenario_name == "tendon":
-  ### tendon: same discretization but can have different extent
+  #create tendon fibers
   for j in range(variables.n_fibers_y):
     for i in range(variables.n_fibers_x):
       fiber_no = j*variables.n_fibers_x + i
@@ -104,34 +105,15 @@ elif variables.scenario_name == "tendon":
         z_pos = variables.tendon_offset[2] + k / (variables.n_points_whole_fiber - 1) * variables.tendon_extent[2]
         node_positions.append([x_pos,y_pos,z_pos])
       
-      mesh_name = "fiber_{}".format(fiber_no)
+      mesh_name = "tendon_fiber_{}".format(fiber_no)
       fiber_mesh_names.append(mesh_name)
       
-      variables.fiber_meshes[mesh_name] = {
+      fiber_meshes[mesh_name] = {
         "nodePositions": node_positions,
         "nElements": [variables.n_points_whole_fiber - 1],
         "inputMeshIsGlobal": True,
         "nRanks": [n_ranks],
       }
-
-      variables.meshes.update(variables.fiber_meshes)
-
-
-# create mappings between meshes
-#variables.mappings_between_meshes = {"MeshFiber_{}".format(i) : "3Dmesh" for i in range(variables.n_fibers_total)}
-variables.mappings_between_meshes = {"fiber{}".format(i) : {"name": "3Dmesh", "xiTolerance": 1e-3} for i in range(variables.n_fibers_total)}
-
-# a higher tolerance includes more fiber dofs that may be almost out of the 3D mesh
-variables.mappings_between_meshes = {
-  "fiber_{}".format(i) : {
-    "name": "3Dmesh_quadratic",
-    "xiTolerance": variables.mapping_tolerance,
-    "enableWarnings": False, 
-    "compositeUseOnlyInitializedMappings": False,
-    "fixUnmappedDofs": True,
-    "defaultValue": 0,
-  } for i in range(variables.n_fibers_total)
-}
 
 ##### set output writer    
 variables.output_writer_fibers = []
@@ -202,7 +184,25 @@ elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "
   }
   variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
   variables.nodal_stimulation_current = 40.                           # not used
-  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
+  variables.vm_value_stimulated = 40.     
+  
+elif "hodgkin_huxley-razumova" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
+# parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
+  variables.mappings = {
+    ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
+    ("parameter", 1):           "Razumova/l_hs",            # parameter 1 is fiber stretch λ
+    ("connectorSlot", "m1vm"):  "membrane/V",               # expose Vm to the operator splitting
+    ("connectorSlot", "m1gout"):"Razumova/activestress",
+    ("connectorSlot", "m1alp"): "Razumova/activation",      # expose activation .
+    ("connectorSlot", "m1lda"): "Razumova/l_hs",            # fiber stretch λ
+  }
+  variables.parameters_initial_values = [0, 1]
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 20.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
+
+else:
+  print("\033[0;31mCellML file {} has no mappings implemented in helper.py\033[0m".format(variables.cellml_file))
+  quit()                            # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
 
 # load MU distribution and firing times
 variables.fiber_distribution = np.genfromtxt(variables.fiber_distribution_file, delimiter=" ", dtype=int)
@@ -369,20 +369,22 @@ mx = variables.mx
 my = variables.my
 mz = variables.mz
 
-k = 0
-if variables.scenario_name == "muscle_right":
-  k = nz-1
-# muscle mesh
-for j in range(ny):
-    for i in range(nx):
-      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None,None,0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
+if variables.scenario_name != "tendon":
+  variables.elasticity_dirichlet_bc = {}
+  k = 0
+  if variables.scenario_name == "muscle_right":
+    k = nz-1
+  # muscle mesh
+  for j in range(ny):
+      for i in range(nx):
+        variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None,None,0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
 
-# fix edge, note: the multidomain simulation does not work without this (linear solver finds no solution)
-for i in range(nx):
-    variables.elasticity_dirichlet_bc[k*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
-    
-# fix corner completely
-variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
+  # fix edge, note: the multidomain simulation does not work without this (linear solver finds no solution)
+  for i in range(nx):
+      variables.elasticity_dirichlet_bc[k*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
+      
+  # fix corner completely
+  variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
 
 # set boundary conditions for the elasticity
 #[mx, my, mz] = variables.meshes["3Dmesh_quadratic"]["nPointsGlobal"]

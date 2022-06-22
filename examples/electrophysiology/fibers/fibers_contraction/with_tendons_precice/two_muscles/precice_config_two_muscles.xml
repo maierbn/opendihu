@@ -40,35 +40,9 @@
       <use-data name="Traction"/>
     </mesh>
 
-    <!-- analogous to FSI: muscle=fluid (Dirichlet BC), tendon=structure (Neumann BC) -->
-
-    <!-- Represents each solver using preCICE. In a coupled simulation, two participants have to be
-         defined. The name of the participant has to match the name given on construction of the
-         precice::SolverInterface object used by the participant. -->
+    <!--The first participant is the master!! It has to be the tendon -->
     
-    <participant name="MuscleSolverLeft">
-
-      <!-- Makes the named mesh available to the participant. Mesh is provided by the solver directly. -->
-      <use-mesh name="MuscleMeshLeft"  provide="yes"/>
-      <use-mesh name="TendonMeshLeft"     from="TendonSolver"/>
-      
-      <!-- Define input/output of the solver, the mesh should be the own one. -->
-      <read-data  name="Displacement"  mesh="MuscleMeshLeft"/>
-      <read-data  name="Velocity"      mesh="MuscleMeshLeft"/>
-      <write-data name="Traction"      mesh="MuscleMeshLeft"/>
-      
-      <!-- rbf to map from TendonMeshLeft to Muscle1MeshRight -->
-      <mapping:rbf-gaussian  
-        direction="read" 
-        from="TendonMeshLeft" 
-        to="MuscleMeshLeft" 
-        constraint="consistent" 
-        timing="initial" 
-        shape-parameter="91.05"
-      />     
-    </participant>
-
-    <participant name="TendonSolver">
+    <participant name="TendonSolver"> 
       
       <!-- Makes the named mesh available to the participant. Mesh is provided by the solver directly. -->
       <use-mesh name="TendonMeshLeft" provide="yes"/>
@@ -86,25 +60,47 @@
       <read-data  name="Traction"      mesh="TendonMeshRight"/>
       
 
-      <!-- rbf to map from MuscleMeshRight to TendonMeshLeft -->
+      <!-- rbf to map Traction from MuscleMeshRight to TendonMeshLeft -->
       <mapping:rbf-gaussian 
         direction="read" 
         from="MuscleMeshLeft" 
         to="TendonMeshLeft" 
-        constraint="consistent" 
+        constraint="conservative" 
         timing="initial" 
         shape-parameter="50"
       />
 
-      <!-- rbf to map from MuscleMeshLeft to TendonMeshRight -->
+      <!-- rbf to map Traction from MuscleMeshLeft to TendonMeshRight -->
       <mapping:rbf-gaussian 
         direction="read" 
         from="MuscleMeshRight" 
         to="TendonMeshRight" 
-        constraint="consistent" 
+        constraint="conservative" 
         timing="initial" 
         shape-parameter="50"
       />
+    </participant>
+
+    <participant name="MuscleSolverLeft">
+
+      <!-- Makes the named mesh available to the participant. Mesh is provided by the solver directly. -->
+      <use-mesh name="MuscleMeshLeft"  provide="yes"/>
+      <use-mesh name="TendonMeshLeft"     from="TendonSolver"/>
+      
+      <!-- Define input/output of the solver, the mesh should be the own one. -->
+      <read-data  name="Displacement"  mesh="MuscleMeshLeft"/>
+      <read-data  name="Velocity"      mesh="MuscleMeshLeft"/>
+      <write-data name="Traction"      mesh="MuscleMeshLeft"/>
+      
+      <!-- rbf to map displacement and velocity from TendonMeshLeft to Muscle1MeshRight -->
+      <mapping:rbf-gaussian  
+        direction="read" 
+        from="TendonMeshLeft" 
+        to="MuscleMeshLeft" 
+        constraint="consistent" 
+        timing="initial" 
+        shape-parameter="91.05"
+      />     
     </participant>
 
     <participant name="MuscleSolverRight">
@@ -154,9 +150,9 @@
       <!--<relative-convergence-measure limit="0.1" data="Displacement" mesh="TendonMeshBottomB" />-->
       <!--<min-iteration-convergence-measure min-iterations="{integer}" data="{string}" mesh="{string}" strict="0" suffices="0"/>-->
       
-      <acceleration:constant>
+      <!-- <acceleration:constant>
         <relaxation value="0.5" />
-      </acceleration:constant>
+      </acceleration:constant> -->
   
       <exchange data="Displacement"    mesh="TendonMeshLeft"      from="TendonSolver" to="MuscleSolverLeft"/>
       <exchange data="Velocity"        mesh="TendonMeshLeft"      from="TendonSolver" to="MuscleSolverLeft"/>

@@ -80,15 +80,15 @@ mz = variables.mz
 
 
 # set Neumann BC, set traction at the end of the tendon that is attached to the muscle
-k = nz-1
-traction_vector = [0, 0, variables.force]     # the traction force in specified in the reference configuration
-face = "2+"
-variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": traction_vector, "face": face} for j in range(ny) for i in range(nx)]
+# k = nz-1
+# traction_vector = [0, 0, variables.force]     # the traction force in specified in the reference configuration
+# face = "2+"
+# variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": traction_vector, "face": face} for j in range(ny) for i in range(nx)]
 
-k = 0
-traction_vector = [0, 0, -variables.force]     # the traction force in specified in the reference configuration
-face = "2-"     
-variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": traction_vector, "face": face} for j in range(ny) for i in range(nx)]
+# k = 0
+# traction_vector = [0, 0, -variables.force]     # the traction force in specified in the reference configuration
+# face = "2-"     
+# variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": traction_vector, "face": face} for j in range(ny) for i in range(nx)]
 
 
 config = {

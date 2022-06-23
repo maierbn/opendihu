@@ -175,7 +175,7 @@ config = {
     "preciceMeshes": [                                      # the precice meshes get created as the top or bottom surface of the main geometry mesh of the nested solver
       {
         "preciceMeshName":      "MuscleMeshLeft",         # precice name of the 2D coupling mesh
-        "face":                 "2-",                       # face of the 3D mesh where the 2D mesh is located, "2-" = bottom, "2+" = top
+        "face":                 "2+",                       # face of the 3D mesh where the 2D mesh is located, "2-" = left, "2+" = right (z-coordinate)
       }
     ],
     "preciceData": [
@@ -401,7 +401,7 @@ config = {
           "Pmax":                         variables.pmax,            # maximum PK2 active stress
           "slotNames":                    [],                        # names of the data connector slots
           "OutputWriter" : [
-            {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+            {"format": "Paraview", "outputInterval": 10, "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
           ],
           "mapGeometryToMeshes":          ["muscle_left_Mesh"] + [key for key in fiber_meshes.keys()],    # the mesh names of the meshes that will get the geometry transferred
           "reverseMappingOrder":          True,                      # if the mapping target->own mesh should be used instead of own->target mesh. This gives better results in some cases.
@@ -479,7 +479,7 @@ config = {
             "dynamic": {    # output of the dynamic solver, has additional virtual work values 
               "OutputWriter" : [   # output files for displacements function space (quadratic elements)
                 #{"format": "Paraview", "outputInterval": int(output_interval/dt), "filename": "out/dynamic", "binary": False, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-                {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                {"format": "Paraview", "outputInterval": 10, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
               ],
             },
             # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written

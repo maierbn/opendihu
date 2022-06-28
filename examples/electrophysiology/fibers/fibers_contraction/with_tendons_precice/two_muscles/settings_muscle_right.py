@@ -21,6 +21,10 @@ from helper import *
 
 variables.scenario_name = "muscle_right"
 
+# this muscle is passive!
+input_directory = os.path.join(os.environ.get('OPENDIHU_HOME', '../../../../../'), "examples/electrophysiology/input")
+variables.firing_times_file = input_directory + "/MU_firing_times_real_no_firing.txt"
+
 # automatically initialize partitioning if it has not been set
 if n_ranks != variables.n_subdomains:
   
@@ -130,9 +134,6 @@ for i in range(nx):
 # fix corner completely
 variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
 
-# this muscle is passive!
-input_directory = os.path.join(os.environ.get('OPENDIHU_HOME', '../../../../../'), "examples/electrophysiology/input")
-variables.firing_times_file = input_directory + "/MU_firing_times_real_no_firing.txt"
 
 # define the config dict
 config = {

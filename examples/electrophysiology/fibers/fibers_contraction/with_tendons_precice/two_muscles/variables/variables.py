@@ -144,12 +144,14 @@ def get_specific_states_frequency_jitter(fiber_no, mu_no):
 def get_specific_states_call_enable_begin(fiber_no, mu_no):
   return activation_start_time
 
-muscle_left_extent = [3.0, 3.0, 14.8] # [cm, cm, cm]
+length_muscle = 10.8
+length_tendon = 4.2 
+muscle_left_extent = [3.0, 3.0, length_muscle] # [cm, cm, cm]
 muscle_left_offset = [0.0, 0.0, 0.0]
-tendon_extent = [3.0, 3.0, 1.2] # [cm, cm, cm]
-tendon_offset = [0.0, 0.0, 14.8]
-muscle_right_extent = [3.0, 3.0, 14.8] # [cm, cm, cm]
-muscle_right_offset = [0.0, 0.0, 14.8 + 1.2]
+tendon_extent = [3.0, 3.0, length_tendon] # [cm, cm, cm]
+tendon_offset = [0.0, 0.0, length_muscle]
+muscle_right_extent = [3.0, 3.0, length_muscle] # [cm, cm, cm]
+muscle_right_offset = [0.0, 0.0, length_muscle + length_tendon]
 
 
 n_elements = [2, 2, 4] # linear elements. each qudaratic element uses the combined nodes of 8 linear elements

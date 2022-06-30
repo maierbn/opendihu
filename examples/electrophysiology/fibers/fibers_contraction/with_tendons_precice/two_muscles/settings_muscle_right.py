@@ -66,6 +66,43 @@ if rank_no == 0:
   
   print("prefactor: sigma_eff/(Am*Cm) = {} = {} / ({}*{})".format(variables.Conductivity/(variables.Am*variables.Cm), variables.Conductivity, variables.Am, variables.Cm))
   
+
+# initialize all helper variables
+variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
+variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
+
+# add meshes
+meshes_muscle_right = {
+  # no `nodePositions` fields as the nodes are created internally
+  "muscle_right_Mesh": {
+    "nElements" :         variables.n_elements_muscle,
+    "physicalExtent":     variables.muscle_right_extent,
+    "physicalOffset":     variables.muscle_right_offset,
+    "logKey":             "muscle_right",
+    "inputMeshIsGlobal":  True,
+    "nRanks":             n_ranks
+  },
+  # needed for mechanics solver
+  "muscle_right_Mesh_quadratic": {
+    "nElements" :         [elems // 2 for elems in variables.n_elements_muscle],
+    "physicalExtent":     variables.muscle_right_extent,
+    "physicalOffset":     variables.muscle_right_offset,
+    "logKey":             "muscle_right_quadratic",
+    "inputMeshIsGlobal":  True,
+    "nRanks":             n_ranks,
+  }
+}
+variables.meshes.update(meshes_muscle_right)
+variables.meshes.update(fiber_meshes)
+
+nx = variables.n_elements_muscle[0]
+ny = variables.n_elements_muscle[1]
+nz = variables.n_elements_muscle[2]
+
+mx = int(variables.n_elements_muscle[0])
+my = int(variables.n_elements_muscle[1])
+mz = int(variables.n_elements_muscle[2])
+
 #############################
 
 # parameters for the main simulation
@@ -78,51 +115,11 @@ if rank_no == 0:
 # edge                       |                     edge
 # u=0                    u_x=u_y=0                 u=0
 #
-
-
-# initialize all helper variables
-variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
-variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
-
-# add meshes
-meshes_muscle_right = {
-  # no `nodePositions` fields as the nodes are created internally
-  "muscle_right_Mesh": {
-    "nElements" :         variables.n_elements,
-    "physicalExtent":     variables.muscle_right_extent,
-    "physicalOffset":     variables.muscle_right_offset,
-    "logKey":             "muscle_right",
-    "inputMeshIsGlobal":  True,
-    "nRanks":             n_ranks
-  },
-  # needed for mechanics solver
-  "muscle_right_Mesh_quadratic": {
-    "nElements" :         [elems // 2 for elems in variables.n_elements],
-    "physicalExtent":     variables.muscle_right_extent,
-    "physicalOffset":     variables.muscle_right_offset,
-    "logKey":             "muscle_right_quadratic",
-    "inputMeshIsGlobal":  True,
-    "nRanks":             n_ranks,
-  }
-}
-variables.meshes.update(meshes_muscle_right)
-variables.meshes.update(fiber_meshes)
-
-#### set Dirichlet BC for the flow problem
-
-nx = variables.nx
-ny = variables.ny
-nz = variables.nz
-
-mx = variables.mx
-my = variables.my
-mz = variables.mz
-
+#### set Dirichlet BC for the free side of the muscle
 
 variables.elasticity_dirichlet_bc = {}
- 
 k = nz-1
-# muscle mesh
+
 for j in range(ny):
     for i in range(nx):
       variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None,None,0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
@@ -454,8 +451,8 @@ config = {
             "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step
 
             #TODO: avoid hard coded 45. Smt like mx*my*mz
-            "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(45)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-            "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(45)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+            "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+            "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
             "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
             "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
             

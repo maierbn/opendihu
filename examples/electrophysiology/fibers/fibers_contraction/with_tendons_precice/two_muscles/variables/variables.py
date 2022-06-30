@@ -144,6 +144,9 @@ def get_specific_states_frequency_jitter(fiber_no, mu_no):
 def get_specific_states_call_enable_begin(fiber_no, mu_no):
   return activation_start_time
 
+###############################
+# CASE-SPECIFIC PARAMETERS
+
 length_muscle = 10.8
 length_tendon = 4.2 
 muscle_left_extent = [3.0, 3.0, length_muscle] # [cm, cm, cm]
@@ -154,18 +157,16 @@ muscle_right_extent = [3.0, 3.0, length_muscle] # [cm, cm, cm]
 muscle_right_offset = [0.0, 0.0, length_muscle + length_tendon]
 
 
-n_elements = [2, 2, 4] # linear elements. each qudaratic element uses the combined nodes of 8 linear elements
-nx = n_elements[0]
-ny = n_elements[1]
-nz = n_elements[2]
+n_elements_muscle = [2, 2, 6] # linear elements. each qudaratic element uses the combined nodes of 8 linear elements
+n_elements_tendon = [2, 2, 4] 
 
-mx = int(n_elements[0]/2)
-my = int(n_elements[1]/2)
-mz = int(n_elements[2]/2)
+n_points_whole_fiber_muscle = 40
+n_points_whole_fiber_tendon = 16
 
-n_points_whole_fiber = 40
 n_fibers_x = 4
 n_fibers_y = 4
+
+###############################
 
 ## currently undefined 
 maximum_number_of_threads = 1
@@ -243,8 +244,7 @@ mapping_tolerance = 0.1
 pmax = None #FIXME: is it relatex to Pmax?
 enable_force_length_relation = True
 lambda_dot_scaling_factor = 1
-muscle_left_mappings = {}
-muscle_right_mappings = {}
+
 
 mappings_between_meshes = {}
 fiber_meshes = {}

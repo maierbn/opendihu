@@ -71,7 +71,7 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 meshes_muscle_left = {
   # no `nodePositions` fields as the nodes are created internally
   "muscle_left_Mesh": {
-    "nElements" :         variables.n_elements,
+    "nElements" :         variables.n_elements_muscle,
     "physicalExtent":     variables.muscle_left_extent,
     "physicalOffset":     variables.muscle_left_offset,
     "logKey":             "muscle_left",
@@ -80,7 +80,7 @@ meshes_muscle_left = {
   },
   # needed for mechanics solver
   "muscle_left_Mesh_quadratic": {
-    "nElements" :         [elems // 2 for elems in variables.n_elements],
+    "nElements" :         [elems // 2 for elems in variables.n_elements_muscle],
     "physicalExtent":     variables.muscle_left_extent,
     "physicalOffset":     variables.muscle_left_offset,
     "logKey":             "muscle_left_quadratic",
@@ -91,13 +91,13 @@ meshes_muscle_left = {
 variables.meshes.update(meshes_muscle_left)
 variables.meshes.update(fiber_meshes)
 
-nx = variables.nx
-ny = variables.ny
-nz = variables.nz
+nx = variables.n_elements_muscle[0]
+ny = variables.n_elements_muscle[1]
+nz = variables.n_elements_muscle[2]
 
-mx = variables.mx
-my = variables.my
-mz = variables.mz
+mx = int(variables.n_elements_muscle[0])
+my = int(variables.n_elements_muscle[1])
+mz = int(variables.n_elements_muscle[2])
 
 #############################
 
@@ -111,13 +111,12 @@ mz = variables.mz
 # edge                       |                     edge
 # u=0                    u_x=u_y=0                 u=0
 #
-#### set Dirichlet BC for the flow problem
 
+#### set Dirichlet BC and Neumann BC for the free side of the muscle
 
 variables.elasticity_dirichlet_bc = {}
 k = 0
 
-# muscle mesh
 for j in range(ny):
     for i in range(nx):
       variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None,None,0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
@@ -128,6 +127,12 @@ for i in range(nx):
     
 # fix corner completely
 variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
+
+variables.force = 1.0
+traction_vector = [0, 0, -variables.force]     # the traction force in specified in the reference configuration
+face = "2-"     
+variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": traction_vector, "face": face} for j in range(ny) for i in range(nx)]
+
 
 # define the config dict
 config = {

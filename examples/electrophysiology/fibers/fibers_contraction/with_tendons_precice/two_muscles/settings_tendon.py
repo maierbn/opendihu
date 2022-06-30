@@ -77,6 +77,22 @@ mx = int(variables.n_elements_tendon[0])
 my = int(variables.n_elements_tendon[1])
 mz = int(variables.n_elements_tendon[2])
 
+#### set Dirichlet BC: the tendon is fixed in the middle
+
+variables.elasticity_dirichlet_bc = {}
+k = nz/2
+
+for j in range(ny):
+    for i in range(nx):
+      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None,None,0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
+
+# fix edge, note: the multidomain simulation does not work without this (linear solver finds no solution)
+for i in range(nx):
+    variables.elasticity_dirichlet_bc[k*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
+    
+# fix corner completely
+variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
+
 
 # set Neumann BC, set traction at the end of the tendon that is attached to the muscle
 

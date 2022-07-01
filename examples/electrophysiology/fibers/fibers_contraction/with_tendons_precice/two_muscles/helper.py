@@ -88,42 +88,6 @@ for j in range(variables.n_fibers_y):
         "inputMeshIsGlobal": True,
         "nRanks": [n_ranks],
       }
-  #create tendon fibers
-  for j in range(variables.n_fibers_y):
-    for i in range(variables.n_fibers_x):
-      fiber_no = j*variables.n_fibers_x + i
-      
-      # determine start position of fiber in (x,y)-plane
-      x = 0 + i / (variables.n_fibers_x - 1) * variables.tendon_extent[0]
-      y = 0 + j / (variables.n_fibers_y - 1) * variables.tendon_extent[1]
-
-      # loop over points of a single fiber
-      node_positions = []
-      for k in range(variables.n_points_whole_fiber_tendon):
-        x_pos = x
-        y_pos = y
-        z_pos = variables.tendon_offset[2] + k / (variables.n_points_whole_fiber_tendon - 1) * variables.tendon_extent[2]
-        node_positions.append([x_pos,y_pos,z_pos])
-      
-      mesh_name = "tendon_fiber_{}".format(fiber_no)
-      fiber_mesh_names.append(mesh_name)
-      
-      fiber_meshes[mesh_name] = {
-        "nodePositions": node_positions,
-        "nElements": [variables.n_points_whole_fiber_tendon - 1],
-        "inputMeshIsGlobal": True,
-        "nRanks": [n_ranks],
-      }
-
-##### set output writer    
-variables.output_writer_fibers = []
-
-subfolder = ""
-if variables.paraview_output:
-  if variables.adios_output:
-    subfolder = "paraview/"
-  variables.output_writer_fibers.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
-
 
 # set variable mappings for cellml model
 if "hodgkin_huxley" in variables.cellml_file:

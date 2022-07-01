@@ -331,61 +331,14 @@ config = {
                       for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) \
                         for fiber_no in [get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)] \
                           for motor_unit_no in [get_motor_unit_no(fiber_no)]],
-                  "OutputWriter" : variables.output_writer_fibers,
+                  "OutputWriter" : [
+                    {"format": "Paraview", "outputInterval": 1000, "filename": "out/"+variables.scenario_name+"/fibers", "binary": True, "fixedFormat": False, "combineFiles":True, "fileNumbering": "incremental"},
+                  ]
                 },
               },
             },
             
-            # # this is for biceps_contraction_no_cell, i.e. PrescribedValues instead of fibers
-            # "GodunovSplitting": {   # this splitting scheme is only needed to replicate the solver structure as with the fibers
-            #   "timeStepWidth":          variables.dt_3D,
-            #   "logTimeStepWidthAsKey":  "dt_splitting",
-            #   "durationLogKey":         "duration_prescribed_values",
-            #   "timeStepOutputInterval": 100,
-            #   "endTime":                variables.dt_3D,
-            #   "connectedSlotsTerm1To2": [],
-            #   "connectedSlotsTerm2To1": [],   # transfer the same back, this avoids data copy
-
-            #   "Term1": {
-            #     "MultipleInstances": {
-            #       "logKey":             "duration_subdomains_z",
-            #       "nInstances":         n_fibers_in_subdomain_x(subdomain_coordinate_x)*n_fibers_in_subdomain_y(subdomain_coordinate_y),
-            #       "instances": 
-            #       [{
-            #         "ranks":                          list(range(variables.n_subdomains_z)),   # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
-            #         "PrescribedValues": {
-            #           "meshName":               "fiber_{}".format(fiber_no),               # reference to the fiber mesh
-            #           "numberTimeSteps":        1,             # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step
-            #           "timeStepOutputInterval": 20,            # if the time step should be written to console, a value > 10 produces no output
-            #           "slotNames":              [],            # names of the data connector slots
-                      
-            #           a list of field variables that will get values assigned in every timestep, by the provided callback function
-            #           "fieldVariables1": [
-            #             {"name": "Vm",     "callback": None},
-            #             {"name": "stress", "callback": set_stress_values},
-            #           ],
-            #           "fieldVariables2":     [],
-            #           "additionalArgument":  fiber_no,         # a custom argument to the fieldVariables callback functions, this will be passed on as the last argument
-                      
-            #           "OutputWriter" : [
-            #             {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_fibers), "filename": "out/" + variables.scenario_name + "/prescribed_fibers", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
-            #           ]
-            #         },      
-            #       } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
-            #           for fiber_in_subdomain_coordinate_x in range(n_fibers_in_subdomain_x(subdomain_coordinate_x)) \
-            #             for fiber_no in [get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)] \
-            #               for motor_unit_no in [get_motor_unit_no(fiber_no)]],
-                          
-            #       "OutputWriter" : variables.output_writer_fibers,
-            #       "OutputWriter": [
-            #         {"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_fibers), "filename": "out/" + variables.scenario_name + "/fibers", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
-            #       ]
-            #     }
-            #   },
-              
-            #   term2 is unused, it is needed to be similar to the actual fiber solver structure
-            #   "Term2": {}
-            # }
+           
               
           } if (subdomain_coordinate_x,subdomain_coordinate_y) == (variables.own_subdomain_coordinate_x,variables.own_subdomain_coordinate_y) else None
           for subdomain_coordinate_y in range(variables.n_subdomains_y)

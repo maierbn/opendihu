@@ -161,6 +161,7 @@ n_elements_muscle = [2, 2, 6] # linear elements. each qudaratic element uses the
 n_elements_tendon = [2, 2, 4] 
 
 n_points_whole_fiber_muscle = 40
+n_points_whole_fiber_tendon = 16
 
 n_fibers_x = 4
 n_fibers_y = 4

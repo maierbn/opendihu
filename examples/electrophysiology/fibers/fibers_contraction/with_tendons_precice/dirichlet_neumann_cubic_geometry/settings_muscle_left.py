@@ -412,7 +412,8 @@ config = {
             #TODO: avoid hard coded 45. Smt like mx*my*mz
             "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(nx*ny*nz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
             "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(nx*ny*nz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-            "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
+            "initialValuesTraction":     [[0.0,0.0,0.0] for _ in range(nx*ny*nz)], 
+            "extrapolateInitialGuess":     False,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
             "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
             
             "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions_muscle",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable

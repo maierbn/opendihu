@@ -78,13 +78,13 @@
     <m2n:sockets from="TendonSolver" to="MuscleSolverLeft" network="lo" />
 
     <coupling-scheme:serial-explicit>
-      <participants first="TendonSolver" second="MuscleSolverLeft"/>
+      <participants first="MuscleSolverLeft" second="TendonSolver"/>
       <max-time value="1000.0"/>           <!-- end time of the whole simulation -->
       <time-window-size value="0.01"/>   <!-- timestep width for coupling -->
       
       <exchange data="Displacement"    mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
       <exchange data="Velocity"        mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
-      <exchange data="Traction"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  <!--initialize="true"-->
+      <exchange data="Traction"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver" />  <!--initialize="true"-->
     </coupling-scheme:serial-explicit>
     
   </solver-interface>

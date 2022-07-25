@@ -99,6 +99,11 @@ traction_vector = [0, 0, -variables.force]     # the traction force in specified
 face = "2-"
 variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": traction_vector, "face": face} for j in range(my) for i in range(mx)]
 
+# k = mz-1 #0 or mz-1
+# variables.force = 1.0
+# traction_vector = [0, 0, variables.force]     # the traction force in specified in the reference configuration
+# face = "2+"
+# variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": traction_vector, "face": face} for j in range(my) for i in range(mx)]
 
 
 config = {

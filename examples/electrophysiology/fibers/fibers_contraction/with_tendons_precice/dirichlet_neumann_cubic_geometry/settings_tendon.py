@@ -68,20 +68,11 @@ variables.meshes.update(meshes_tendon)
 # boundary conditions (for quadratic elements)
 # --------------------------------------------
 
-#[mx, my, mz] = variables.meshes["tendon_Mesh_quadratic"]["nPointsGlobal"]
-nx = variables.n_elements_tendon[0]
-ny = variables.n_elements_tendon[1]
-nz = variables.n_elements_tendon[2]
-
-mx = int(variables.n_elements_tendon[0])
-my = int(variables.n_elements_tendon[1])
-mz = int(variables.n_elements_tendon[2])
-
-#### set Dirichlet BC: the tendon is fixed in the extreme where it is not attached to the muscle
+[nx, ny, nz] = [elem + 1 for elem in variables.n_elements_tendon]
+[mx, my, mz] = [elem // 2 for elem in variables.n_elements_tendon] # quadratic elements consist of 2 linear elements along each axis
 
 variables.elasticity_dirichlet_bc = {}
-k = nz
-
+k = nz-1 #free side of the muscle
 for j in range(ny):
     for i in range(nx):
       variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None,None,0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
@@ -90,19 +81,23 @@ for j in range(ny):
 for i in range(nx):
     variables.elasticity_dirichlet_bc[k*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
     
+# fix corner completely
+variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
 
+# # guide right end of muscle along z axis
+# # muscle mesh
+# for j in range(ny):
+#     for i in range(nx):
+#       variables.muscle1_elasticity_dirichlet_bc[(nz-1)*nx*ny + j*nx + i] = [0.0,0.0,None, None,None,None]
 
-# set Neumann BC, set traction at the end of the tendon that is attached to the muscle
-
-k = nz-1
+# initial Neumann BC at bottom nodes, traction along z axis
+# will be set by tendon
+k = 0 #0 or mz-1
+variables.force = -1.0
 traction_vector = [0, 0, variables.force]     # the traction force in specified in the reference configuration
 face = "2+"
-variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": traction_vector, "face": face} for j in range(ny) for i in range(nx)]
+variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": traction_vector, "face": face} for j in range(my) for i in range(mx)]
 
-# k = 0
-# traction_vector = [0, 0, -variables.force]     # the traction force in specified in the reference configuration
-# face = "2-"     
-# variables.elasticity_neumann_bc = [{"element": k*nx*ny + j*nx + i, "constantVector": traction_vector, "face": face} for j in range(ny) for i in range(nx)]
 
 
 config = {
@@ -193,8 +188,8 @@ config = {
       "updateNeumannBoundaryConditionsFunction": None,       # a callback function to periodically update the Neumann boundary conditions
       "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step      # every which step the update function should be called, 1 means every time step
       
-      "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-      "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+      "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(nx*ny*nz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+      "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(nx*ny*nz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
       "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
       "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
       

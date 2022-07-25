@@ -95,14 +95,6 @@ meshes_muscle_right = {
 variables.meshes.update(meshes_muscle_right)
 variables.meshes.update(fiber_meshes)
 
-nx = variables.n_elements_muscle[0]
-ny = variables.n_elements_muscle[1]
-nz = variables.n_elements_muscle[2]
-
-mx = int(variables.n_elements_muscle[0])
-my = int(variables.n_elements_muscle[1])
-mz = int(variables.n_elements_muscle[2])
-
 #############################
 
 # parameters for the main simulation
@@ -115,10 +107,15 @@ mz = int(variables.n_elements_muscle[2])
 # edge                       |                     edge
 # u=0                    u_x=u_y=0                 u=0
 #
-#### set Dirichlet BC for the free side of the muscle
+
+#### set Dirichlet BC and Neumann BC for the free side of the muscle
+
+[nx, ny, nz] = [elem + 1 for elem in variables.n_elements_muscle]
+[mx, my, mz] = [elem // 2 for elem in variables.n_elements_muscle] # quadratic elements consist of 2 linear elements along each axis
 
 variables.elasticity_dirichlet_bc = {}
-k = nz-1
+
+k = nz-1 #free side of the muscle
 
 for j in range(ny):
     for i in range(nx):
@@ -131,6 +128,19 @@ for i in range(nx):
 # fix corner completely
 variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
 
+# # guide right end of muscle along z axis
+# # muscle mesh
+# for j in range(ny):
+#     for i in range(nx):
+#       variables.muscle1_elasticity_dirichlet_bc[(nz-1)*nx*ny + j*nx + i] = [0.0,0.0,None, None,None,None]
+
+# initial Neumann BC at bottom nodes, traction along z axis
+# will be set by tendon
+# k = 0 #0 or mz-1
+# variables.force = 1.0
+# traction_vector = [0, 0, -variables.force]     # the traction force in specified in the reference configuration
+# face = "2-"
+# variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": traction_vector, "face": face} for j in range(my) for i in range(mx)]
 
 # define the config dict
 config = {
@@ -404,8 +414,8 @@ config = {
             "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step
 
             #TODO: avoid hard coded 45. Smt like mx*my*mz
-            "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-            "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(mx*my*mz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+            "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(nx*ny*nz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+            "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(nx*ny*nz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
             "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
             "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
             

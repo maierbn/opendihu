@@ -21,6 +21,9 @@ from helper import *
 
 variables.scenario_name = "muscle_left"
 
+# input_directory = os.path.join(os.environ.get('OPENDIHU_HOME', '../../../../../'), "examples/electrophysiology/input")
+# variables.firing_times_file = input_directory + "/MU_firing_times_real_no_firing.txt"
+
 # automatically initialize partitioning if it has not been set
 if n_ranks != variables.n_subdomains:
   
@@ -132,11 +135,11 @@ variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
 
 # initial Neumann BC at bottom nodes, traction along z axis
 # will be set by tendon
-# k = 0 #0 or mz-1
-# variables.force = 100.0
-# traction_vector = [0, 0, -variables.force]     # the traction force in specified in the reference configuration
-# face = "2-"
-# variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": traction_vector, "face": face} for j in range(my) for i in range(mx)]
+k = mz-1 #0 or mz-1
+variables.force = 1.0
+traction_vector = [0, 0, variables.force]     # the traction force in specified in the reference configuration
+face = "2+"
+variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": traction_vector, "face": face} for j in range(my) for i in range(mx)]
 
 # define the config dict
 config = {
@@ -172,35 +175,16 @@ config = {
       "dumpFormat":          "matlab",      # default, ascii, matlab
     }
   },
-  "PreciceAdapter": {        # precice adapter for muscle
-    "couplingEnabled":          True,
-    "outputOnlyConvergedTimeSteps": False, #default is true
-    "scalingFactor":            1,
+    # connections of the slots, identified by slot name
+  "connectedSlots": [
+    # global slots only support named slots (connectedSlotsTerm1To2 also allows indices)
 
-    "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
-    "timestepWidth":            1,                          # coupling time step width, must match the value in the precice config
-    "preciceConfigFilename":    "precice_config_dirichlet_neumann_cubic_geometry.xml",    # the preCICE configuration file
-    "preciceParticipantName":   "MuscleSolverLeft",             # name of the own precice participant, has to match the name given in the precice xml config file
-    "preciceMeshes": [                                      # the precice meshes get created as the top or bottom surface of the main geometry mesh of the nested solver
-      {
-        "preciceMeshName":      "MuscleMeshLeft",         # precice name of the 2D coupling mesh
-        "face":                 "2+",                       # face of the 3D mesh where the 2D mesh is located, "2-" = left, "2+" = right (z-coordinate)
-      }
-    ],
-    "preciceData": [
-      {
-        "mode":                 "read-displacements-velocities",    # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
-        "preciceMeshName":      "MuscleMeshLeft",                 # name of the precice coupling surface mesh, as given in the precice xml settings file
-        "displacementsName":    "Displacement",                     # name of the displacements "data", i.e. field variable, as given in the precice xml settings file
-        "velocitiesName":       "Velocity",                         # name of the velocity "data", i.e. field variable, as given in the precice xml settings file
-      },
-      {
-        "mode":                 "write-traction",                   # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
-        "preciceMeshName":      "MuscleMeshLeft",                 # name of the precice coupling surface mesh, as given in the precice xml settings 
-        "tractionName":         "Traction",                         # name of the traction "data", i.e. field variable, as given in the precice xml settings file
-      }
-    ],
-    
+    # use global slot, because automatic connection of "Razumova/activestress" does not work for some reason
+    # "Razumova/activestress" from CellML to Muscle contaction solver
+    ("m1gout", "m1g_in"),
+    ("m2gout", "m2g_in"),
+  ],
+
     "Coupling": {
       "description":            "fibers and contraction",
       "timeStepWidth":          variables.dt_3D,  # 1e-1
@@ -209,7 +193,7 @@ config = {
       "timeStepOutputInterval": 1,
       "endTime":                variables.end_time,
       "connectedSlotsTerm1To2": {1:2},          # transfer gamma to MuscleContractionSolver, the receiving slots are λ, λdot, γ
-      "connectedSlotsTerm2To1":  None,       # transfer nothing back
+      "connectedSlotsTerm2To1":  [None],       # transfer nothing back
       
       "Term1": {        # monodomain, fibers
         "MultipleInstances": {
@@ -227,9 +211,8 @@ config = {
               "logTimeStepWidthAsKey":  "dt_splitting",
               "durationLogKey":         "duration_monodomain",
               "timeStepOutputInterval": 100,
-              "endTime":                variables.dt_splitting,
-              "connectedSlotsTerm1To2": [0,1,2],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
-              "connectedSlotsTerm2To1": [0,None,2],   # transfer the same back, this avoids data copy
+              "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
+              "connectedSlotsTerm2To1": [0],   # transfer the same back, this avoids data copy
 
               "Term1": {      # CellML, i.e. reaction term of Monodomain equation
                 "MultipleInstances": {
@@ -246,6 +229,7 @@ config = {
                       "initialValues":                [],                                      # no initial values are specified
                       "dirichletBoundaryConditions":  {},                                      # no Dirichlet boundary conditions are specified
                       "dirichletOutputFilename":      None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+                      
                       "inputMeshIsGlobal":            True,                                    # the boundary conditions and initial values would be given as global numbers
                       "checkForNanInf":               True,                                    # abort execution if the solution contains nan or inf values
                       "nAdditionalFieldVariables":    0,                                       # number of additional field variables
@@ -315,7 +299,7 @@ config = {
                       "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
                       "nAdditionalFieldVariables":   2,                                       # number of additional field variables that will be written to the output file, here for stress
                       "checkForNanInf":              True,                                    # abort execution if the solution contains nan or inf values
-                      "additionalSlotNames":          [],
+                      "additionalSlotNames":         [],
 
                       "FiniteElementMethod" : {
                         "inputMeshIsGlobal":         True,
@@ -361,7 +345,9 @@ config = {
           "numberTimeSteps":              1,                         # only use 1 timestep per interval
           "timeStepOutputInterval":       100,                       # do not output time steps
           "Pmax":                         variables.pmax,            # maximum PK2 active stress
-          "slotNames":                    [],                        # names of the data connector slots
+          "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
+          "lambdaDotScalingFactor":       1.0,       
+          "slotNames":                    ["m1lda", "m1ldot", "m1g_in", "m1T", "m1ux", "m1uy", "m1uz"],                        # names of the data connector slots
           "OutputWriter" : [
             {"format": "Paraview", "outputInterval": 10, "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
           ],
@@ -454,7 +440,7 @@ config = {
         }
       }
     }
-  }
+  
 }
 
 

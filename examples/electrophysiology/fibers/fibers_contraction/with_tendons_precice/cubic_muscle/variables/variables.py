@@ -53,16 +53,16 @@ stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in f
 # dt_golgi_tendon_organs      = 1e-3  # [ms]
 # dt_interneuron              = 1e-3  # [ms]
 # dt_motoneuron               = 1e-3  # [ms]
-dt_0D = 1e-3                        # [ms] timestep width of ODEs
+dt_0D = 0.5e-3                        # [ms] timestep width of ODEs
 dt_1D = 1e-3                      # [ms] timestep width of diffusion
-dt_3D = 1
-dt_splitting = 1e-3
-dt_elasticity = 0.1# 1e0                 # [ms] time step width of elasticity solver
+dt_3D = 0.1
+dt_splitting = dt_1D
+dt_elasticity = dt_3D# 1e0                 # [ms] time step width of elasticity solver
 
 output_timestep_3D = dt_3D
 output_timestep = dt_3D              # [ms] timestep for output files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
-output_timestep_fibers = 2   # [ms] timestep for multidomain output files
+output_timestep_fibers = dt_3D   # [ms] timestep for multidomain output files
 #output_timestep_elasticity = 1    # [ms] timestep for elasticity output files
 #output_timestep_emg = 20    # [ms] timestep for emg output files
 

@@ -32,7 +32,6 @@ k1 = 42.217e3               # [N/cm^2=kPa]
 k2 = 411.360e3              # [N/cm^2=kPa]
 variables.material_parameters = [c, ca, ct, cat, ctt, mu, k1, k2]
 
-variables.force = 1.0       # [N]
  
 
 # compute partitioning
@@ -92,10 +91,10 @@ variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
 
 # initial Neumann BC at bottom nodes, traction along z axis
 # will be set by tendon
-k = 0 #0 or mz-1
-variables.force = 1.0
-traction_vector = [0, 0, -variables.force]     # the traction force in specified in the reference configuration
-face = "2-"
+k = mz-1 #0 or mz-1
+variables.force = 100
+traction_vector = [0, 0, variables.force]     # the traction force in specified in the reference configuration
+face = "2+"
 variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": traction_vector, "face": face} for j in range(my) for i in range(mx)]
 
 
@@ -190,7 +189,6 @@ config = {
       
       "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(nx*ny*nz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
       "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(nx*ny*nz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-      "initialValuesTraction":     [[0.0,0.0,0.0] for _ in range(nx*ny*nz)], 
       "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
       "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
       

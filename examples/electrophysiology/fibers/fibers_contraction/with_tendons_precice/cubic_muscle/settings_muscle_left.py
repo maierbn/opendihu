@@ -24,6 +24,7 @@ variables.scenario_name = "muscle_left"
 # input_directory = os.path.join(os.environ.get('OPENDIHU_HOME', '../../../../../'), "examples/electrophysiology/input")
 # variables.firing_times_file = input_directory + "/MU_firing_times_real_no_firing.txt"
 
+
 # automatically initialize partitioning if it has not been set
 if n_ranks != variables.n_subdomains:
   
@@ -121,22 +122,22 @@ for j in range(ny):
       variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None,None,0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
 
 # fix edge, note: the multidomain simulation does not work without this (linear solver finds no solution)
-for i in range(nx):
-    variables.elasticity_dirichlet_bc[k*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
+# for i in range(nx):
+#     variables.elasticity_dirichlet_bc[k*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
     
-# fix corner completely
-variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
+# # fix corner completely
+# variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
 
 # # guide right end of muscle along z axis
 # # muscle mesh
-# for j in range(ny):
-#     for i in range(nx):
-#       variables.muscle1_elasticity_dirichlet_bc[(nz-1)*nx*ny + j*nx + i] = [0.0,0.0,None, None,None,None]
+for j in range(ny):
+    for i in range(nx):
+      variables.elasticity_dirichlet_bc[nz*nx*ny + j*nx + i] = [0.0,0.0,None, None,None,None]
 
 # initial Neumann BC at bottom nodes, traction along z axis
 # will be set by tendon
 k = mz-1 #0 or mz-1
-variables.force = 1.0
+variables.force = 10
 traction_vector = [0, 0, variables.force]     # the traction force in specified in the reference configuration
 face = "2+"
 variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": traction_vector, "face": face} for j in range(my) for i in range(mx)]
@@ -166,26 +167,17 @@ config = {
       "preconditionerType": "lu",           # type of the preconditioner
       "maxIterations":       1e4,           # maximum number of iterations in the linear solver
       "snesMaxFunctionEvaluations": 1e8,    # maximum number of function iterations
-      "snesMaxIterations":   14,            # maximum number of iterations in the nonlinear solver
+      "snesMaxIterations":   140,            # maximum number of iterations in the nonlinear solver
       "snesRelativeTolerance": 1e-5,        # relative tolerance of the nonlinear solver
       "snesAbsoluteTolerance": 1e-5,        # absolute tolerance of the nonlinear solver
       "snesLineSearchType": "l2",           # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
-      "snesRebuildJacobianFrequency": 5,    # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+      "snesRebuildJacobianFrequency": 3,    # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
       "dumpFilename":        "",            # dump system matrix and right hand side after every solve
       "dumpFormat":          "matlab",      # default, ascii, matlab
     }
   },
-    # connections of the slots, identified by slot name
-  "connectedSlots": [
-    # global slots only support named slots (connectedSlotsTerm1To2 also allows indices)
 
-    # use global slot, because automatic connection of "Razumova/activestress" does not work for some reason
-    # "Razumova/activestress" from CellML to Muscle contaction solver
-    ("m1gout", "m1g_in"),
-    ("m2gout", "m2g_in"),
-  ],
-
-    "Coupling": {
+  "Coupling": {
       "description":            "fibers and contraction",
       "timeStepWidth":          variables.dt_3D,  # 1e-1
       "logTimeStepWidthAsKey":  "dt_3D",
@@ -211,8 +203,8 @@ config = {
               "logTimeStepWidthAsKey":  "dt_splitting",
               "durationLogKey":         "duration_monodomain",
               "timeStepOutputInterval": 100,
-              "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
-              "connectedSlotsTerm2To1": [0],   # transfer the same back, this avoids data copy
+              "connectedSlotsTerm1To2": [0,1,2],    # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
+              "connectedSlotsTerm2To1": [0,None,2],    # transfer the same back, this avoids data copy
 
               "Term1": {      # CellML, i.e. reaction term of Monodomain equation
                 "MultipleInstances": {
@@ -299,7 +291,7 @@ config = {
                       "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
                       "nAdditionalFieldVariables":   2,                                       # number of additional field variables that will be written to the output file, here for stress
                       "checkForNanInf":              True,                                    # abort execution if the solution contains nan or inf values
-                      "additionalSlotNames":         [],
+                      "additionalSlotNames":         ["stress", "activation"],
 
                       "FiniteElementMethod" : {
                         "inputMeshIsGlobal":         True,
@@ -347,7 +339,7 @@ config = {
           "Pmax":                         variables.pmax,            # maximum PK2 active stress
           "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
           "lambdaDotScalingFactor":       1.0,       
-          "slotNames":                    ["m1lda", "m1ldot", "m1g_in", "m1T", "m1ux", "m1uy", "m1uz"],                        # names of the data connector slots
+          "slotNames":                    ["lambda", "ldot", "gamma", "T"],            
           "OutputWriter" : [
             {"format": "Paraview", "outputInterval": 10, "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
           ],

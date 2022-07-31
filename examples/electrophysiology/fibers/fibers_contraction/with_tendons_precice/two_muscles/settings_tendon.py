@@ -76,14 +76,14 @@ k = nz/2
 
 for j in range(ny):
     for i in range(nx):
-      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None,None,0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
+      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, None, None,None,None] # displacement ux uy uz, velocity vx vy vz
 
 # fix edge, note: the multidomain simulation does not work without this (linear solver finds no solution)
-for i in range(nx):
-    variables.elasticity_dirichlet_bc[k*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
+# for i in range(nx):
+#     variables.elasticity_dirichlet_bc[k*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
     
-# fix corner completely
-variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
+# # fix corner completely
+# variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
 
 # # guide right end of muscle along z axis
 # # muscle mesh
@@ -94,7 +94,7 @@ variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
 # initial Neumann BC at bottom nodes, traction along z axis
 # will be set by tendon
 k = 0 #0 or mz-1
-variables.force = 1.0
+variables.force = 1000.0
 traction_vector = [0, 0, -variables.force]     # the traction force in specified in the reference configuration
 face = "2-"
 variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": traction_vector, "face": face} for j in range(my) for i in range(mx)]

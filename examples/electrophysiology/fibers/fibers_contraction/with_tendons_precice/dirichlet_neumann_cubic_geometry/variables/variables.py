@@ -55,7 +55,7 @@ stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in f
 # dt_motoneuron               = 1e-3  # [ms]
 dt_0D = 1e-3                        # [ms] timestep width of ODEs
 dt_1D = 1e-3                      # [ms] timestep width of diffusion
-dt_3D = 1
+dt_3D = 0.1
 dt_splitting = 1e-3
 dt_elasticity = 0.1# 1e0                 # [ms] time step width of elasticity solver
 

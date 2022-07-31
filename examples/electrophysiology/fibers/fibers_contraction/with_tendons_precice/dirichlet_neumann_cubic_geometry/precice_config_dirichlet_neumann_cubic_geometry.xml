@@ -40,16 +40,17 @@
       <write-data name="Displacement"  mesh="TendonMeshLeft"/>
       <write-data name="Velocity"      mesh="TendonMeshLeft"/>
       <read-data  name="Traction"      mesh="TendonMeshLeft"/>
+          <mapping:nearest-neighbor direction="read" from="MuscleMeshLeft" to="TendonMeshLeft" constraint="consistent"/>
 
       <!-- rbf to map Traction from MuscleMeshRight to TendonMeshLeft -->
-      <mapping:rbf-gaussian 
+      <!-- <mapping:rbf-gaussian 
         direction="read" 
         from="MuscleMeshLeft" 
         to="TendonMeshLeft" 
         constraint="consistent" 
         timing="initial" 
         shape-parameter="50"
-      />
+      /> -->
     </participant>
 
     <participant name="MuscleSolverLeft">
@@ -62,38 +63,38 @@
       <read-data  name="Displacement"  mesh="MuscleMeshLeft"/>
       <read-data  name="Velocity"      mesh="MuscleMeshLeft"/>
       <write-data name="Traction"      mesh="MuscleMeshLeft"/>
-      
+      <mapping:nearest-neighbor direction="read" from="TendonMeshLeft" to="MuscleMeshLeft" constraint="consistent"/>
       <!-- rbf to map displacement and velocity from TendonMeshLeft to Muscle1MeshRight -->
-      <mapping:rbf-gaussian  
+      <!-- <mapping:rbf-gaussian  
         direction="read" 
         from="TendonMeshLeft" 
         to="MuscleMeshLeft" 
         constraint="consistent" 
         timing="initial" 
         shape-parameter="91.05"
-      />     
+      />      -->
     </participant>
     
     <!-- Communication method, use TCP sockets, Change network to "ib0" on SuperMUC -->
     <m2n:sockets from="TendonSolver" to="MuscleSolverLeft" network="lo" />
 
-    <coupling-scheme:serial-explicit>
+    <coupling-scheme:serial-implicit>
       <!-- <participants first="MuscleSolverLeft" second="TendonSolver"/> -->
       <participants first="TendonSolver" second="MuscleSolverLeft"/>
 
       <max-time value="100.0"/>           <!-- end time of the whole simulation -->
-      <time-window-size value="0.01"/>   <!-- timestep width for coupling -->
+      <time-window-size value="0.1"/>   <!-- timestep width for coupling -->
       
       <!-- <absolute-convergence-measure limit="1e-9" data="Displacement" mesh="TendonMeshLeft" />
       <absolute-convergence-measure limit="1e-8" data="Traction" mesh="MuscleMeshLeft" /> -->
 
-      <!-- <relative-convergence-measure limit="1e-5" data="Displacement" mesh="TendonMeshLeft" />
-      <relative-convergence-measure limit="1e-5" data="Traction" mesh="MuscleMeshLeft" /> -->
+      <relative-convergence-measure limit="1e-2" data="Displacement" mesh="TendonMeshLeft" /> -->
+      <!-- <relative-convergence-measure limit="1e-5" data="Traction" mesh="MuscleMeshLeft" /> --> -->
 
       <exchange data="Displacement"    mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
       <exchange data="Velocity"        mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
       <exchange data="Traction"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  <!--initialize="true"-->
-    </coupling-scheme:serial-explicit>
+    </coupling-scheme:serial-implicit>
     
   </solver-interface>
 </precice-configuration>

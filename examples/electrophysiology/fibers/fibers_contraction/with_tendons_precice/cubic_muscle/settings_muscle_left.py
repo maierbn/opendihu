@@ -21,10 +21,6 @@ from helper import *
 
 variables.scenario_name = "muscle_left"
 
-# input_directory = os.path.join(os.environ.get('OPENDIHU_HOME', '../../../../../'), "examples/electrophysiology/input")
-# variables.firing_times_file = input_directory + "/MU_firing_times_real_no_firing.txt"
-
-
 # automatically initialize partitioning if it has not been set
 if n_ranks != variables.n_subdomains:
   
@@ -126,16 +122,39 @@ for k in range(nz):
 
 variables.elasticity_dirichlet_bc[0] = [0.0, 0.0, 0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
 
-# initial Neumann BC at bottom nodes, traction along z axis
+# Neumann BC: constant traction
+
 # will be set by tendon
-k = mz-1 #0 or mz-1
-variables.force = 10
-traction_vector = [0, 0, variables.force]     # the traction force in specified in the reference configuration
-face = "2+"
-variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": traction_vector, "face": face} for j in range(my) for i in range(mx)]
+# k = mz-1 #0 or mz-1
+# variables.force = 30
+# traction_vector = [0, 0, variables.force]     # the traction force in specified in the reference configuration
+# face = "2+"
+# variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": traction_vector, "face": face} for j in range(my) for i in range(mx)]
 
+# Neumann BC: increasing traction
 
+variables.force = 50.0
+k = mz-1
+variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,0], "face": "2+"} for j in range(my) for i in range(mx)]
 
+def update_neumann_bc(t):
+
+  # set new Neumann boundary conditions
+  factor = min(1, t/100)   # for t ∈ [0,100] from 0 to 1
+  elasticity_neumann_bc = [{
+		"element": k*mx*my + j*mx + i, 
+		"constantVector": [0,0, variables.force*factor], 		# force pointing to bottom
+		"face": "2+",
+    "isInReferenceConfiguration": True
+  } for j in range(my) for i in range(mx)]
+
+  config = {
+    "inputMeshIsGlobal": True,
+    "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+    "neumannBoundaryConditions": elasticity_neumann_bc,
+  }
+  print("prescribed pulling force to bottom: {}".format(variables.force*factor))
+  return config
 
 # define the config dict
 config = {
@@ -379,7 +398,7 @@ config = {
             "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
             "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
             "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
-            "updateNeumannBoundaryConditionsFunction":   None,                    # function that updates the Neumann BCs while the simulation is running
+            "updateNeumannBoundaryConditionsFunction":   update_neumann_bc,                    # function that updates the Neumann BCs while the simulation is running
             "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step
 
             #TODO: avoid hard coded 45. Smt like mx*my*mz

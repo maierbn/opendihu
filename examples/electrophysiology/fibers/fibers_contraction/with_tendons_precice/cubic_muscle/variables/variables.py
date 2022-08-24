@@ -46,8 +46,8 @@ linear_absolute_tolerance = 1e-10          # absolute tolerance of the residual 
 
 # timing parameters
 # -----------------
-end_time = 60.0                   # [ms] end time of the simulation
-stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz. This is not used here.
+end_time = 20.0                   # [ms] end time of the simulation
+stimulation_frequency = 100*100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz. This is not used here.
 # dt_neuron_system            = 1e-3  # [ms]
 # dt_muscle_spindles          = 1e-3  # [ms]
 # dt_golgi_tendon_organs      = 1e-3  # [ms]
@@ -74,12 +74,15 @@ output_timestep_fibers = dt_3D   # [ms] timestep for multidomain output files
 
 
 # input files
-# -----------
+
 input_directory = os.path.join(os.environ.get('OPENDIHU_HOME', '../../../../../'), "examples/electrophysiology/input")
 
 fiber_file = None
 fiber_distribution_file = input_directory+"/MU_fibre_distribution_multidomain_67x67_100.txt"
+
+#choose firing or no firing
 firing_times_file = input_directory + "/MU_firing_times_real.txt"
+#firing_times_file = input_directory + "/MU_firing_times_real_no_firing.txt" # no firing
 
 cellml_file = input_directory+"/hodgkin_huxley_1952.c"
 #cellml_file = input_directory+"/hodgkin_huxley-razumova.cellml"
@@ -147,18 +150,9 @@ def get_specific_states_call_enable_begin(fiber_no, mu_no):
 ###############################
 # CASE-SPECIFIC PARAMETERS
 
-length_muscle = 10.8
-length_tendon = 4.2 
-muscle_left_extent = [3.0, 3.0, length_muscle] # [cm, cm, cm]
-muscle_left_offset = [0.0, 0.0, 0.0]
-tendon_extent = [3.0, 3.0, length_tendon] # [cm, cm, cm]
-tendon_offset = [0.0, 0.0, length_muscle]
-muscle_right_extent = [3.0, 3.0, length_muscle] # [cm, cm, cm]
-muscle_right_offset = [0.0, 0.0, length_muscle + length_tendon]
-
-
-n_elements_muscle = [2, 2, 10] # linear elements. each qudaratic element uses the combined nodes of 8 linear elements
-n_elements_tendon = [2, 2, 4] 
+muscle_left_extent = [3.0, 3.0, 10.8] # [cm, cm, cm]
+muscle_left_offset = [0.0, 0.0, 0.0] # [cm, cm, cm]
+n_elements_muscle = [2, 2, 4] # linear elements (should be even). each qudaratic element uses the combined nodes of 8 linear elements
 
 n_points_whole_fiber_muscle = 40
 
@@ -243,8 +237,3 @@ mapping_tolerance = 0.1
 pmax = None #FIXME: is it relatex to Pmax?
 enable_force_length_relation = True
 lambda_dot_scaling_factor = 1
-
-
-mappings_between_meshes = {}
-fiber_meshes = {}
-

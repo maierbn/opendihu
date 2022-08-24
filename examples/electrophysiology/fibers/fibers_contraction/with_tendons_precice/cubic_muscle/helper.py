@@ -49,7 +49,8 @@ for j in range(variables.n_fibers_y):
     for k in range(variables.n_points_whole_fiber_muscle):
       x_pos = x
       y_pos = y
-      z_pos = variables.muscle_left_offset[2] + k / (variables.n_points_whole_fiber_muscle - 1) * variables.muscle_left_extent[2]
+      #z_pos = variables.muscle_left_offset[2] + k / (variables.n_points_whole_fiber_muscle - 1) * variables.muscle_left_extent[2]
+      z_pos =  k / (variables.n_points_whole_fiber_muscle - 1) * variables.muscle_left_extent[2]
       node_positions.append([x_pos,y_pos,z_pos])
     
     mesh_name = "muscle_left_fiber_{}".format(fiber_no)
@@ -141,13 +142,13 @@ else:
   print("\033[0;31mCellML file {} has no mappings implemented in helper.py\033[0m".format(variables.cellml_file))
   quit()                            # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
 
-# load MU distribution and firing times
+# # load MU distribution and firing times
 variables.fiber_distribution = np.genfromtxt(variables.fiber_distribution_file, delimiter=" ", dtype=int)
 variables.firing_times = np.genfromtxt(variables.firing_times_file)
 
 
-# callback functions
-# --------------------------
+# # callback functions
+# # --------------------------
 def get_motor_unit_no(fiber_no):
   return int(variables.fiber_distribution[fiber_no % len(variables.fiber_distribution)]-1)
 

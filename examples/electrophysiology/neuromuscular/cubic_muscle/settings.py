@@ -219,7 +219,7 @@ variables.elasticity_dirichlet_bc[0] = [0.0, 0.0, 0.0, None,None,None] # displac
 
 # Neumann BC: increasing traction
 
-variables.force = 1000.0
+variables.force = 1.0
 k = mz-1
 variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,0], "face": "2+"} for j in range(my) for i in range(mx)]
 

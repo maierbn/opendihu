@@ -47,7 +47,7 @@ linear_absolute_tolerance = 1e-10          # absolute tolerance of the residual 
 # timing parameters
 # -----------------
 end_time = 20.0                   # [ms] end time of the simulation
-stimulation_frequency = 100*100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz. This is not used here.
+stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz. This is not used here.
 # dt_neuron_system            = 1e-3  # [ms]
 # dt_muscle_spindles          = 1e-3  # [ms]
 # dt_golgi_tendon_organs      = 1e-3  # [ms]

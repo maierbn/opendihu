@@ -133,14 +133,14 @@ variables.elasticity_dirichlet_bc[0] = [0.0, 0.0, 0.0, None,None,None] # displac
 
 # Neumann BC: increasing traction
 
-variables.force = 50.0
+variables.force = .001
 k = mz-1
 variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,0], "face": "2+"} for j in range(my) for i in range(mx)]
 
 def update_neumann_bc(t):
 
   # set new Neumann boundary conditions
-  factor = min(1, t/100)   # for t ∈ [0,100] from 0 to 1
+  factor = min(1, t/20)   # for t ∈ [0,100] from 0 to 1
   elasticity_neumann_bc = [{
 		"element": k*mx*my + j*mx + i, 
 		"constantVector": [0,0, variables.force*factor], 		# force pointing to bottom

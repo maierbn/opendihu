@@ -93,7 +93,7 @@ dynamic = True                      # if the dynamic hyperelasticity solver shou
 
 # motor unit stimulation times
 firing_times_file = "../../../input/MU_firing_times_real.txt"
-#firing_times_file = "../../../input/MU_firing_times_immediately.txt"
+#firing_times_file = "../../../input/MU_firing_times_real_no_firing.txt" # no firing
 
 # partitioning
 # ------------

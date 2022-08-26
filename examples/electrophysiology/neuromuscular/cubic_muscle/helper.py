@@ -102,7 +102,7 @@ if variables.exfile_output:
 # set variable mappings for cellml model
 if "hodgkin_huxley" in variables.cellml_file and "hodgkin_huxley-razumova" not in variables.cellml_file:
   # parameters: I_stim
-  variables.mappings = {
+  variables.muscle1_mappings = {
     ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
     ("connectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
   }
@@ -112,7 +112,7 @@ if "hodgkin_huxley" in variables.cellml_file and "hodgkin_huxley-razumova" not i
 
 elif "shorten" in variables.cellml_file:
   # parameters: stimulation current I_stim, fiber stretch λ
-  variables.mappings = {
+  variables.muscle1_mappings = {
     ("parameter", 0):           ("algebraic", "wal_environment/I_HH"), # parameter is algebraic 32
     ("parameter", 1):           ("constant", "razumova/L_x"),             # parameter is constant 65, fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension
     ("connectorSlot", 0): ("state", "wal_environment/vS"),          # expose state 0 = Vm to the operator splitting
@@ -123,7 +123,7 @@ elif "shorten" in variables.cellml_file:
   
 elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain", old tomo mechanics) in OpenCMISS
   # parameters: I_stim, fiber stretch λ
-  variables.mappings = {
+  variables.muscle1_mappings = {
     ("parameter", 0):           ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
     ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
     ("connectorSlot","vm"):     "wal_environment/vS",                 # expose state 0 = Vm to the operator splitting
@@ -135,7 +135,7 @@ elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain"
   
 elif "Aliev_Panfilov_Razumova_2016_08_22" in variables.cellml_file :   # this is (3, "MultiPhysStrain", numerically more stable) in OpenCMISS, this only computes A1,A2,x1,x2 not the stress
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
-  variables.mappings = {
+  variables.muscle1_mappings = {
     ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
     ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 8 = fiber stretch λ
     ("parameter", 2):           ("constant", "Razumova/velo"),        # parameter 2 is constant 9 = fiber contraction velocity \dot{λ}
@@ -148,7 +148,7 @@ elif "Aliev_Panfilov_Razumova_2016_08_22" in variables.cellml_file :   # this is
   
 elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
   # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
-  variables.mappings = {
+  variables.muscle1_mappings = {
     ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
     ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 11 = fiber stretch λ
     ("parameter", 2):           ("constant", "Razumova/rel_velo"),    # parameter 2 is constant 12 = fiber contraction velocity \dot{λ}
@@ -169,14 +169,6 @@ elif "hodgkin_huxley-razumova" in variables.cellml_file:   # this is (4, "Titin"
     ("connectorSlot", "m1gout"):"Razumova/activestress",
     ("connectorSlot", "m1alp"): "Razumova/activation",      # expose activation .
     ("connectorSlot", "m1lda"): "Razumova/l_hs",            # fiber stretch λ
-  }
-  variables.muscle2_mappings = {
-    ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
-    ("parameter", 1):           "Razumova/l_hs",            # parameter 1 is fiber stretch λ
-    ("connectorSlot", "m2vm"):  "membrane/V",               # expose Vm to the operator splitting
-    ("connectorSlot", "m2gout"):"Razumova/activestress",
-    ("connectorSlot", "m2alp"): "Razumova/activation",      # expose activation .
-    ("connectorSlot", "m2lda"): "Razumova/l_hs",            # fiber stretch λ
   }
   variables.parameters_initial_values = [0, 1]
   variables.nodal_stimulation_current = 40.                           # not used

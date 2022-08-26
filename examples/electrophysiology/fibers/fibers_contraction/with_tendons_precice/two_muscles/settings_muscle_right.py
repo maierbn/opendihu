@@ -119,14 +119,13 @@ k = nz-1 #free side of the muscle
 
 for j in range(ny):
     for i in range(nx):
-      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None,None,0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
+      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None, None, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
 
-# fix edge, note: the multidomain simulation does not work without this (linear solver finds no solution)
-for i in range(nx):
-    variables.elasticity_dirichlet_bc[k*nx*ny + 0*nx + i] = [0.0,0.0,0.0, None,None,None]
-    
-# fix corner completely
-variables.elasticity_dirichlet_bc[k*nx*ny + 0] = [0.0,0.0,0.0, None,None,None]
+for k in range(nz):
+    variables.elasticity_dirichlet_bc[k*nx*ny] = [0.0, 0.0, None, None, None, None] # displacement ux uy uz, velocity vx vy vz
+
+variables.elasticity_dirichlet_bc[(nz-1)*nx*ny] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
+
 
 # # guide right end of muscle along z axis
 # # muscle mesh

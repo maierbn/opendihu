@@ -230,6 +230,8 @@ def update_neumann_bc(t):
   elasticity_neumann_bc = [{
 		"element": k*mx*my + j*mx + i, 
 		"constantVector": [0,0, variables.force*factor], 		# force pointing to bottom
+    "constantVector": [0,0, 1.0], 		# force pointing to bottom
+
 		"face": "2+",
     "isInReferenceConfiguration": True
   } for j in range(my) for i in range(mx)]

@@ -22,3 +22,4 @@ if not env['no_examples']:
 
   env.Program(target = 'muscle_fibers_precice', source = "src/muscle_fibers_precice.cpp")
   env.Program(target = 'muscle_fibers', source = "src/muscle_fibers.cpp")
+  env.Program(target = 'muscle_fibers_bidomain', source = "src/muscle_fibers_bidomain.cpp")

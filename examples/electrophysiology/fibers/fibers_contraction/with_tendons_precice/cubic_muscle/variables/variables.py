@@ -150,7 +150,7 @@ def get_specific_states_call_enable_begin(fiber_no, mu_no):
 ###############################
 # CASE-SPECIFIC PARAMETERS
 
-muscle_left_extent = [3.0, 3.0, 10.8] # [cm, cm, cm]
+muscle_left_extent = [3.0, 3.0, 14.8] # [cm, cm, cm]
 muscle_left_offset = [0.0, 0.0, 0.0] # [cm, cm, cm]
 n_elements_muscle = [2, 2, 4] # linear elements (should be even). each qudaratic element uses the combined nodes of 8 linear elements
 

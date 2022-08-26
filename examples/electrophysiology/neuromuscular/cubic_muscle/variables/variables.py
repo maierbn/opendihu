@@ -236,8 +236,8 @@ import numpy as np
 
 input_directory = os.path.join(os.environ.get('OPENDIHU_HOME', '../../../../../'), "examples/electrophysiology/input")
 
-# cellml_file = input_directory+"/hodgkin_huxley_1952.c"
-cellml_file = input_directory+"/hodgkin_huxley-razumova.cellml"
+cellml_file = input_directory+"/hodgkin_huxley_1952.c"
+#cellml_file = input_directory+"/hodgkin_huxley-razumova.cellml"
 fiber_distribution_file = input_directory+"/MU_fibre_distribution_multidomain_67x67_100.txt"
  
 

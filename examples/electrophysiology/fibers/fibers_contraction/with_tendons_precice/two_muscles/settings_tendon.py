@@ -72,11 +72,12 @@ variables.meshes.update(meshes_tendon)
 [mx, my, mz] = [elem // 2 for elem in variables.n_elements_tendon] # quadratic elements consist of 2 linear elements along each axis
 
 variables.elasticity_dirichlet_bc = {}
-k = nz/2
 
-for j in range(ny):
-    for i in range(nx):
-      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, None, None,None,None] # displacement ux uy uz, velocity vx vy vz
+
+for k in range(nz):
+    variables.elasticity_dirichlet_bc[k*nx*ny] = [0.0, 0.0, None, None, None, None] # displacement ux uy uz, velocity vx vy vz
+
+
 
 # fix edge, note: the multidomain simulation does not work without this (linear solver finds no solution)
 # for i in range(nx):

@@ -115,12 +115,12 @@ k = 0 #free side of the muscle
 
 for j in range(ny):
     for i in range(nx):
-      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None, None, 0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
+      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None, None, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
 
 for k in range(nz):
-    variables.elasticity_dirichlet_bc[k*nx*ny] = [0.0, 0.0, None, None,None,None] # displacement ux uy uz, velocity vx vy vz
+    variables.elasticity_dirichlet_bc[k*nx*ny] = [0.0, 0.0, None, None, None, None] # displacement ux uy uz, velocity vx vy vz
 
-variables.elasticity_dirichlet_bc[0] = [0.0, 0.0, 0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
+variables.elasticity_dirichlet_bc[0] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
 
 # Neumann BC: constant traction
 
@@ -133,14 +133,14 @@ variables.elasticity_dirichlet_bc[0] = [0.0, 0.0, 0.0, None,None,None] # displac
 
 # Neumann BC: increasing traction
 
-variables.force = .001
+variables.force = 5.0
 k = mz-1
 variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,0], "face": "2+"} for j in range(my) for i in range(mx)]
 
 def update_neumann_bc(t):
 
   # set new Neumann boundary conditions
-  factor = min(1, t/20)   # for t ∈ [0,100] from 0 to 1
+  factor = min(1, t/100)   # for t ∈ [0,100] from 0 to 1
   elasticity_neumann_bc = [{
 		"element": k*mx*my + j*mx + i, 
 		"constantVector": [0,0, variables.force*factor], 		# force pointing to bottom
@@ -217,8 +217,8 @@ config = {
               "logTimeStepWidthAsKey":  "dt_splitting",
               "durationLogKey":         "duration_monodomain",
               "timeStepOutputInterval": 100,
-              "connectedSlotsTerm1To2": [0,1,2],    # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
-              "connectedSlotsTerm2To1": [0,None,2],    # transfer the same back, this avoids data copy
+              "connectedSlotsTerm1To2": [0],    # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
+              "connectedSlotsTerm2To1": [0],    # transfer the same back, this avoids data copy
 
               "Term1": {      # CellML, i.e. reaction term of Monodomain equation
                 "MultipleInstances": {
@@ -244,21 +244,20 @@ config = {
                       "CellML" : {
                         "modelFilename":                          variables.cellml_file,                          # input C++ source file or cellml XML file
                         #"statesInitialValues":                   [],                                             # if given, the initial values for the the states of one instance
-                        "statesInitialValues":                    variables.states_initial_values,                # initial values for new_slow_TK
                         "initializeStatesToEquilibrium":          False,                                          # if the equilibrium values of the states should be computed before the simulation starts
                         "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
                         
                         # optimization parameters
                         "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
-                        "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+                        "approximateExponentialFunction":         False,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
                         "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
-                        "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+                        "maximumNumberOfThreads":                 1,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
                         
                         # stimulation callbacks
                         #"libraryFilename":                       "cellml_simd_lib.so",                           # compiled library
                         #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current
                         #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_specific_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-                        "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+                        "setSpecificStatesFunction":              None,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
                         #"setSpecificStatesCallInterval":         2*int(1./variables.stimulation_frequency/variables.dt_0D),       # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
                         "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
                         "setSpecificStatesCallFrequency":         variables.get_specific_states_call_frequency(fiber_no, motor_unit_no),   # set_specific_states should be called variables.stimulation_frequency times per ms
@@ -268,8 +267,8 @@ config = {
                         "additionalArgument":                     fiber_no,                                       # last argument that will be passed to the callback functions set_specific_states, set_specific_parameters, etc.
                         
                         # parameters to the cellml model
-                        "mappings":                               variables.mappings,                             # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
                         "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
+                        "mappings":                               variables.mappings,                             # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
                         
                         "meshName":                               "muscle_left_fiber_{}".format(fiber_no),                # reference to the fiber mesh
                         "stimulationLogFilename":                 "out/muscle_left/stimulation.log",                          # a file that will contain the times of stimulations
@@ -304,9 +303,8 @@ config = {
                       "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
                       "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
                       "nAdditionalFieldVariables":   2,                                       # number of additional field variables that will be written to the output file, here for stress
-                      "checkForNanInf":              True,                                    # abort execution if the solution contains nan or inf values
-                      "additionalSlotNames":         ["stress", "activation"],
-
+                      "checkForNanInf":              False,                                    # abort execution if the solution contains nan or inf values
+                      "additionalSlotNames":         [],
                       "FiniteElementMethod" : {
                         "inputMeshIsGlobal":         True,
                         "meshName":                  "muscle_left_fiber_{}".format(fiber_no),
@@ -315,12 +313,6 @@ config = {
                         "slotName":                  ""
                       },
                       "OutputWriter" : [
-                        #{"format": "Paraview", "outputInterval": int(1./variables.dt_3D*variables.output_timestep_3D), "filename": "out/"+variables.scenario_name+"/muscle_left_fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles":True, "fileNumbering": "incremental"},
-
-                        #{"format": "Paraview", "outputInterval": int(1./variables.dt_1D*variables.output_timestep), "filename": "out/fiber_"+str(fiber_no), "binary": True, "fixedFormat": False, "combineFiles": True},
-                        #{"format": "Paraview", "outputInterval": 1./variables.dt_1D*variables.output_timestep, "filename": "out/fiber_"+str(i)+"_txt", "binary": False, "fixedFormat": False},
-                        #{"format": "ExFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./variables.dt_1D*variables.output_timestep, "sphereSize": "0.02*0.02*0.02"},
-                        #{"format": "PythonFile", "filename": "out/fiber_"+str(i), "outputInterval": 1./variables.dt_1D*variables.output_timestep, "binary":True, "onlyNodalValues":True},
                       ]
                     },
                   } for fiber_in_subdomain_coordinate_y in range(n_fibers_in_subdomain_y(subdomain_coordinate_y)) \
@@ -345,6 +337,7 @@ config = {
         "onlyComputeIfHasBeenStimulated": True,                          # only compute fibers after they have been stimulated for the first time
         "disableComputationWhenStatesAreCloseToEquilibrium": True,       # optimization where states that are close to their equilibrium will not be computed again      
         "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set      
+        "neuromuscularJunctionRelativeSize": 0.1,
       },
       "Term2": {        # solid mechanics
         "MuscleContractionSolver": {
@@ -353,7 +346,7 @@ config = {
           "Pmax":                         variables.pmax,            # maximum PK2 active stress
           "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
           "lambdaDotScalingFactor":       1.0,       
-          "slotNames":                    ["lambda", "ldot", "gamma", "T"],            
+            "slotNames":                    ["m1lda", "m1ldot", "m1g_in", "m1T", "m1ux", "m1uy", "m1uz"],  # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
           "OutputWriter" : [
             {"format": "Paraview", "outputInterval": 10, "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
           ],
@@ -389,7 +382,8 @@ config = {
             "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
             #"loadFactors":                [0.25, 0.66, 1.0],                # load factors for every timestep
             "loadFactors":                [],                        # no load factors, solve problem directly
-            "loadFactorGiveUpThreshold":  1e-5,                      # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
+            "loadFactorGiveUpThreshold":  0.25,                      # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
+            "scaleInitialGuess":          False,
             "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
             
             # boundary and initial conditions

@@ -64,11 +64,44 @@ for j in range(variables.n_fibers_y):
     }
 
 # set variable mappings for cellml model
-if "hodgkin_huxley" in variables.cellml_file and "hodgkin_huxley-razumova" not in variables.cellml_file:
+if "shorten_ocallaghan_davidson_soboleva_2007.c" in variables.cellml_file:   # hodgkin huxley membrane with fatigue from shorten
+  # parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
+  variables.mappings = {
+    ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is I_stim
+    ("parameter", 1):           ("constant", "razumova/l_hs"),        # parameter 1 is fiber stretch λ
+    ("parameter", 2):           ("constant", "razumova/velocity"),    # parameter 2 is fiber contraction velocity \dot{λ}
+    ("connectorSlot", "vm"):    ("state",    "membrane/V"),           # expose state Vm to the operator splitting
+    ("connectorSlot", "stress"):("algebraic", "razumova/activestress"), # expose algebraic γ to the operator splitting
+    ("connectorSlot", "alpha"): ("algebraic", "razumova/activation"), # expose algebraic α to the operator splitting
+    
+    ("connectorSlot", "lambda"):"razumova/l_hs",                      # connect output "lamda" of mechanics solver to parameter 1 (l_hs)
+    ("connectorSlot", "ldot"):  "razumova/velocity",                  # connect output "ldot"  of mechanics solver to parameter 2 (rel_velo)
+  }
+  variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 40.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
+  variables.enable_force_length_relation = False                      # disable computation of force-length relation in opendihu, as it is carried out in CellML model
+  variables.lambda_dot_scaling_factor = 7.815e-05    
+
+elif "hodgkin_huxley-razumova" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
+# parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
+  variables.mappings = {
+    ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
+    ("parameter", 1):           "Razumova/l_hs",            # parameter 1 is fiber stretch λ
+    ("connectorSlot", "vm"):  "membrane/V",               # expose Vm to the operator splitting
+    ("connectorSlot", "stress"):"Razumova/activestress",
+    ("connectorSlot", "alpha"): "Razumova/activation",      # expose activation .
+    ("connectorSlot", "lambda"): "Razumova/l_hs",            # fiber stretch λ
+  }
+  variables.parameters_initial_values = [0, 1]
+  variables.nodal_stimulation_current = 40.                           # not used
+  variables.vm_value_stimulated = 20.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
+
+elif "hodgkin_huxley" in variables.cellml_file:
   # parameters: I_stim
   variables.mappings = {
     ("parameter", 0):           ("constant", "membrane/i_Stim"),      # parameter 0 is constant 2 = I_stim
-    ("connectorSlot", 0): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
+    ("connectorSlot", "vm"): ("state", "membrane/V"),              # expose state 0 = Vm to the operator splitting
   }
   variables.parameters_initial_values = [0.0]                         # initial value for stimulation current
   variables.nodal_stimulation_current = 40.                           # not used
@@ -79,7 +112,7 @@ elif "shorten" in variables.cellml_file:
   variables.mappings = {
     ("parameter", 0):           ("algebraic", "wal_environment/I_HH"), # parameter is algebraic 32
     ("parameter", 1):           ("constant", "razumova/L_x"),             # parameter is constant 65, fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension
-    ("connectorSlot", 0): ("state", "wal_environment/vS"),          # expose state 0 = Vm to the operator splitting
+    ("connectorSlot", "vm"): ("state", "wal_environment/vS"),          # expose state 0 = Vm to the operator splitting
   }
   variables.parameters_initial_values = [0.0, 1.0]                        # stimulation current I_stim, fiber stretch λ
   variables.nodal_stimulation_current = 1200.                             # not used
@@ -90,8 +123,8 @@ elif "slow_TK_2014" in variables.cellml_file:   # this is (3a, "MultiPhysStrain"
   variables.mappings = {
     ("parameter", 0):           ("constant", "wal_environment/I_HH"), # parameter 0 is constant 54 = I_stim
     ("parameter", 1):           ("constant", "razumova/L_S"),         # parameter 1 is constant 67 = fiber stretch λ
-    ("connectorSlot", 0): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
-    ("connectorSlot", 1): ("algebraic", "razumova/stress"),  # expose algebraic 12 = γ to the operator splitting
+    ("connectorSlot",  "vm"): ("state", "wal_environment/vS"),      # expose state 0 = Vm to the operator splitting
+    ("connectorSlot",  "stress"): ("algebraic", "razumova/stress"),  # expose algebraic 12 = γ to the operator splitting
   }
   variables.parameters_initial_values = [0.0, 1.0]                    # wal_environment/I_HH = I_stim, razumova/L_S = λ
   variables.nodal_stimulation_current = 40.                           # not used
@@ -103,8 +136,8 @@ elif "Aliev_Panfilov_Razumova_2016_08_22" in variables.cellml_file :   # this is
     ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
     ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 8 = fiber stretch λ
     ("parameter", 2):           ("constant", "Razumova/velo"),        # parameter 2 is constant 9 = fiber contraction velocity \dot{λ}
-    ("connectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
-    ("connectorSlot", 1): ("algebraic", "Razumova/sigma"),   # expose algebraic 0 = γ to the operator splitting
+    ("connectorSlot",  "vm"): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
+    ("connectorSlot",  "stress"): ("algebraic", "Razumova/sigma"),   # expose algebraic 0 = γ to the operator splitting
   }
   variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}
   variables.nodal_stimulation_current = 40.                           # not used
@@ -116,28 +149,14 @@ elif "Aliev_Panfilov_Razumova_Titin" in variables.cellml_file:   # this is (4, "
     ("parameter", 0):           ("constant", "Aliev_Panfilov/I_HH"),  # parameter 0 is constant 0 = I_stim
     ("parameter", 1):           ("constant", "Razumova/l_hs"),        # parameter 1 is constant 11 = fiber stretch λ
     ("parameter", 2):           ("constant", "Razumova/rel_velo"),    # parameter 2 is constant 12 = fiber contraction velocity \dot{λ}
-    ("connectorSlot", 0): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
-    ("connectorSlot", 1): ("algebraic", "Razumova/ActiveStress"),   # expose algebraic 4 = γ to the operator splitting
-    ("connectorSlot", 2): ("algebraic", "Razumova/Activation"),     # expose algebraic 5 = α to the operator splitting
+    ("connectorSlot",  "vm"): ("state", "Aliev_Panfilov/V_m"),      # expose state 0 = Vm to the operator splitting
+    ("connectorSlot",  "stress"): ("algebraic", "Razumova/ActiveStress"),   # expose algebraic 4 = γ to the operator splitting
+    ("connectorSlot",  "alpha"): ("algebraic", "Razumova/Activation"),     # expose algebraic 5 = α to the operator splitting
   }
   variables.parameters_initial_values = [0, 1, 0]                     # Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}
   variables.nodal_stimulation_current = 40.                           # not used
   variables.vm_value_stimulated = 40.     
   
-elif "hodgkin_huxley-razumova" in variables.cellml_file:   # this is (4, "Titin") in OpenCMISS
-# parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}
-  variables.mappings = {
-    ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
-    ("parameter", 1):           "Razumova/l_hs",            # parameter 1 is fiber stretch λ
-    ("connectorSlot", "m1vm"):  "membrane/V",               # expose Vm to the operator splitting
-    ("connectorSlot", "m1gout"):"Razumova/activestress",
-    ("connectorSlot", "m1alp"): "Razumova/activation",      # expose activation .
-    ("connectorSlot", "m1lda"): "Razumova/l_hs",            # fiber stretch λ
-  }
-  variables.parameters_initial_values = [0, 1]
-  variables.nodal_stimulation_current = 40.                           # not used
-  variables.vm_value_stimulated = 20.                                 # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)
-
 else:
   print("\033[0;31mCellML file {} has no mappings implemented in helper.py\033[0m".format(variables.cellml_file))
   quit()                            # to which value of Vm the stimulated node should be set (option "valueForStimulatedPoint" of FastMonodomainSolver)

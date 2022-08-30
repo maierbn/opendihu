@@ -255,14 +255,14 @@ neuron_meshes = {
     "inputMeshIsGlobal":  True,
     "nRanks":             n_ranks
   },
-  "interneuronMesh": {
-    "nElements" :         variables.n_interneurons-1 if n_ranks == 1 else variables.n_interneurons*n_ranks,
-    "physicalExtent":     0,
-    "physicalOffset":     0,
-    "logKey":             "interneuron",
-    "inputMeshIsGlobal":  True,
-    "nRanks":             n_ranks
-  },
+  # "interneuronMesh": {
+  #   "nElements" :         variables.n_interneurons-1 if n_ranks == 1 else variables.n_interneurons*n_ranks,
+  #   "physicalExtent":     0,
+  #   "physicalOffset":     0,
+  #   "logKey":             "interneuron",
+  #   "inputMeshIsGlobal":  True,
+  #   "nRanks":             n_ranks
+  # },
   "muscleSpindleMesh": {
     # each muscle has the same number of muscle spindels
     "nElements" :         (2*variables.n_muscle_spindles)-1 if n_ranks == 1 else (2*variables.n_muscle_spindles)*n_ranks,
@@ -272,14 +272,14 @@ neuron_meshes = {
     "inputMeshIsGlobal":  True,
     "nRanks":             n_ranks
   },
-  "golgiTendonOrganMesh": {
-    "nElements" :         2*(variables.n_golgi_tendon_organs)-1 if n_ranks == 1 else (2*variables.n_golgi_tendon_organs)*n_ranks,
-    "physicalExtent":     1, # has no special meaning. only to seperate data points in paraview
-    "physicalOffset":     0,
-    "logKey":             "golgi_tendon_organ",
-    "inputMeshIsGlobal":  True,
-    "nRanks":             n_ranks
-  },
+  # "golgiTendonOrganMesh": {
+  #   "nElements" :         2*(variables.n_golgi_tendon_organs)-1 if n_ranks == 1 else (2*variables.n_golgi_tendon_organs)*n_ranks,
+  #   "physicalExtent":     1, # has no special meaning. only to seperate data points in paraview
+  #   "physicalOffset":     0,
+  #   "logKey":             "golgi_tendon_organ",
+  #   "inputMeshIsGlobal":  True,
+  #   "nRanks":             n_ranks
+  # },
   # no `nodePositions` fields as the nodes are created internally
   "muscle1Mesh": {
     "nElements" :         variables.n_elements_muscle1,
@@ -303,14 +303,14 @@ neuron_meshes = {
   # combines spindel and interneuron signals
   # target of the MapDofs that computes the signal of the muscle spindles and interneurons to the motoneurons
   # input of the MapDofs that computes the motoneuron input
-  "muscleSpindleAndInterneuronMesh": {
-    "nElements" :         2*variables.n_motoneurons+variables.n_interneurons-1 if n_ranks == 1 else (2*variables.n_motoneurons+variables.n_interneurons)*n_ranks,
-    "physicalExtent":     0,
-    "physicalOffset":     0,
-    "logKey":             "muscle_spindle_interneuron",
-    "inputMeshIsGlobal":  True,
-    "nRanks":             n_ranks
-  },
+  # "muscleSpindleAndInterneuronMesh": {
+  #   "nElements" :         2*variables.n_motoneurons+variables.n_interneurons-1 if n_ranks == 1 else (2*variables.n_motoneurons+variables.n_interneurons)*n_ranks,
+  #   "physicalExtent":     0,
+  #   "physicalOffset":     0,
+  #   "logKey":             "muscle_spindle_interneuron",
+  #   "inputMeshIsGlobal":  True,
+  #   "nRanks":             n_ranks
+  # },
 }
 variables.meshes.update(neuron_meshes)
 variables.meshes.update(fiber_meshes)
@@ -433,7 +433,7 @@ config = {
             "description":                "muscle_spindles_to_motoneurons",   # description that will be shown in solver structure visualization
             "nAdditionalFieldVariables":  1,                                  # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
             "additionalSlotNames":        ["ms&in"],
-            "meshName":                   "muscleSpindleAndInterneuronMesh",                   # the mesh on which the additional field variables will be defined
+            "meshName":                   "muscleSpindleMesh",                   # the mesh on which the additional field variables will be defined
             "beforeComputation": None,
             "afterComputation": [                                         # transfer/mapping of dofs that will be performed after the computation of the nested solver
               # each motoneuron gets input from all muscle spindels in the muscle
@@ -510,172 +510,172 @@ config = {
         },
 
         # Golgi tensor organ
-        "Term2": {
+        # "Term2": {
 
-          # mapping Golgi tendon organs -> interneurons
-          "MapDofs": {
-            "description":                "golgi_tendon_o._to_interneurons",       # description that will be shown in solver structure visualization
-            "nAdditionalFieldVariables":  1,                             # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
-            "additionalSlotNames":        ["in_g"],
-            "meshName":                   "interneuronMesh",             # the mesh on which the additional field variables will be defined
-            "beforeComputation": None,
-            "afterComputation": [                                        # transfer/mapping of dofs that will be performed after the computation of the nested solver
-              {
-                "fromConnectorSlot":                "gt_out",
-                "toConnectorSlots":                 "in_g",
-                "fromSlotConnectorArrayIndex":      0,                   # which fiber/compartment
-                "toSlotConnectorArrayIndex":        0,
-                "mode":                             "callback",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
-                "fromDofNosNumbering":              "local",
-                "toDofNosNumbering":                "local",
-                "dofsMapping":                      None,
-                # golgi tendon organs from both muscles
-                "inputDofs":                        list(range(variables.n_golgi_tendon_organs)),   # [0,1,...,n_golgi_tendon_organs], this is for mesh "golgiTendonOrganMesh"
-                # TODO n_interneurons == n_golgi_tendon_organs?
-                # seems like the signal ist neuron_i = sum golgi + f(golgi_i)
-                "outputDofs":                       [list(range(variables.n_interneurons))],          # [0,1,...,n_interneurons]         this is for mesh "interneuronMesh"
-                "callback":                         variables.callback_golgi_tendon_organs_to_interneurons,
-              }
-            ],
+        #   # mapping Golgi tendon organs -> interneurons
+        #   "MapDofs": {
+        #     "description":                "golgi_tendon_o._to_interneurons",       # description that will be shown in solver structure visualization
+        #     "nAdditionalFieldVariables":  1,                             # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
+        #     "additionalSlotNames":        ["in_g"],
+        #     "meshName":                   "interneuronMesh",             # the mesh on which the additional field variables will be defined
+        #     "beforeComputation": None,
+        #     "afterComputation": [                                        # transfer/mapping of dofs that will be performed after the computation of the nested solver
+        #       {
+        #         "fromConnectorSlot":                "gt_out",
+        #         "toConnectorSlots":                 "in_g",
+        #         "fromSlotConnectorArrayIndex":      0,                   # which fiber/compartment
+        #         "toSlotConnectorArrayIndex":        0,
+        #         "mode":                             "callback",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
+        #         "fromDofNosNumbering":              "local",
+        #         "toDofNosNumbering":                "local",
+        #         "dofsMapping":                      None,
+        #         # golgi tendon organs from both muscles
+        #         "inputDofs":                        list(range(variables.n_golgi_tendon_organs)),   # [0,1,...,n_golgi_tendon_organs], this is for mesh "golgiTendonOrganMesh"
+        #         # TODO n_interneurons == n_golgi_tendon_organs?
+        #         # seems like the signal ist neuron_i = sum golgi + f(golgi_i)
+        #         "outputDofs":                       [list(range(variables.n_interneurons))],          # [0,1,...,n_interneurons]         this is for mesh "interneuronMesh"
+        #         "callback":                         variables.callback_golgi_tendon_organs_to_interneurons,
+        #       }
+        #     ],
 
-            "Heun": {
-              "description":                  "Golgi tendon organs",
-              "timeStepWidth":                variables.dt_golgi_tendon_organs,
-              "logTimeStepWidthAsKey":        "dt_golgi_tendon_organs",
-              "durationLogKey":               "duration_golgi_tendon_organ",
-              "initialValues":                [],
-              "timeStepOutputInterval":       500,
-              "inputMeshIsGlobal":            True,
-              "dirichletBoundaryConditions":  {},
-              "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-              "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
-              "nAdditionalFieldVariables":    0,
-              "additionalSlotNames":          [],
+        #     "Heun": {
+        #       "description":                  "Golgi tendon organs",
+        #       "timeStepWidth":                variables.dt_golgi_tendon_organs,
+        #       "logTimeStepWidthAsKey":        "dt_golgi_tendon_organs",
+        #       "durationLogKey":               "duration_golgi_tendon_organ",
+        #       "initialValues":                [],
+        #       "timeStepOutputInterval":       500,
+        #       "inputMeshIsGlobal":            True,
+        #       "dirichletBoundaryConditions":  {},
+        #       "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+        #       "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
+        #       "nAdditionalFieldVariables":    0,
+        #       "additionalSlotNames":          [],
 
-              # cellml model of golgi tendon organs
-              "CellML" : {
-                "modelFilename":                          variables.golgi_tendon_organ_cellml_file,       # input C++ source file or cellml XML file
-                "initializeStatesToEquilibrium":          False,                                          # if the equilibrium values of the states should be computed before the simulation starts
-                "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
+        #       # cellml model of golgi tendon organs
+        #       "CellML" : {
+        #         "modelFilename":                          variables.golgi_tendon_organ_cellml_file,       # input C++ source file or cellml XML file
+        #         "initializeStatesToEquilibrium":          False,                                          # if the equilibrium values of the states should be computed before the simulation starts
+        #         "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
 
-                # optimization parameters
-                "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
-                "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
-                "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
-                "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+        #         # optimization parameters
+        #         "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
+        #         "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+        #         "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
+        #         "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
 
-                # stimulation callbacks, motor neuron is not stimulated by a callback function, but has a constant stimulation current
-                "setSpecificStatesFunction":              None,                                           # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-                #"setSpecificStatesCallInterval":         0,                                              # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
-                "setSpecificStatesCallInterval":          0,                                              # 0 means disabled
-                "setSpecificStatesCallFrequency":         0,                                              # set_specific_states should be called variables.stimulation_frequency times per ms
-                "setSpecificStatesFrequencyJitter":       0,                                              # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
-                "setSpecificStatesRepeatAfterFirstCall":  0.01,                                           # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
-                "setSpecificStatesCallEnableBegin":       0,                                              # [ms] first time when to call setSpecificStates
-                "additionalArgument":                     None,
+        #         # stimulation callbacks, motor neuron is not stimulated by a callback function, but has a constant stimulation current
+        #         "setSpecificStatesFunction":              None,                                           # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+        #         #"setSpecificStatesCallInterval":         0,                                              # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+        #         "setSpecificStatesCallInterval":          0,                                              # 0 means disabled
+        #         "setSpecificStatesCallFrequency":         0,                                              # set_specific_states should be called variables.stimulation_frequency times per ms
+        #         "setSpecificStatesFrequencyJitter":       0,                                              # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
+        #         "setSpecificStatesRepeatAfterFirstCall":  0.01,                                           # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
+        #         "setSpecificStatesCallEnableBegin":       0,                                              # [ms] first time when to call setSpecificStates
+        #         "additionalArgument":                     None,
 
-                "mappings":                               variables.golgi_tendon_organ_mappings,          # mappings between parameters and algebraics/constants and between connectorSlots and states, algebraics or parameters, they are defined in helper.py
-                "parametersInitialValues":                variables.golgi_tendon_organ_parameters_initial_values,    # # initial values for the parameters, either once for all instances, or for all instances in array of struct ordering with nParameters_ parameters per instance: [inst0p0, inst0p1, ... inst0pn, inst1p0, inst1p1, ...]
+        #         "mappings":                               variables.golgi_tendon_organ_mappings,          # mappings between parameters and algebraics/constants and between connectorSlots and states, algebraics or parameters, they are defined in helper.py
+        #         "parametersInitialValues":                variables.golgi_tendon_organ_parameters_initial_values,    # # initial values for the parameters, either once for all instances, or for all instances in array of struct ordering with nParameters_ parameters per instance: [inst0p0, inst0p1, ... inst0pn, inst1p0, inst1p1, ...]
 
-                "meshName":                               "golgiTendonOrganMesh",
-                "stimulationLogFilename":                 "out/stimulation.log",
+        #         "meshName":                               "golgiTendonOrganMesh",
+        #         "stimulationLogFilename":                 "out/stimulation.log",
 
-                # output writer for states, algebraics and parameters
-                "OutputWriter" : [
-                  {"format": "Paraview",   "outputInterval": int(2./variables.dt_golgi_tendon_organs*variables.output_timestep_golgi_tendon_organs), "filename": "out/" + variables.scenario_name + "/golgi_tendon_organs", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"},
-                  {"format": "PythonFile", "outputInterval": int(2./variables.dt_golgi_tendon_organs*variables.output_timestep_golgi_tendon_organs), "filename": "out/" + variables.scenario_name + "/golgi_tendon_organs", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"},
-                ]
-              }
-            }
-          }
-        },
+        #         # output writer for states, algebraics and parameters
+        #         "OutputWriter" : [
+        #           {"format": "Paraview",   "outputInterval": int(2./variables.dt_golgi_tendon_organs*variables.output_timestep_golgi_tendon_organs), "filename": "out/" + variables.scenario_name + "/golgi_tendon_organs", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"},
+        #           {"format": "PythonFile", "outputInterval": int(2./variables.dt_golgi_tendon_organs*variables.output_timestep_golgi_tendon_organs), "filename": "out/" + variables.scenario_name + "/golgi_tendon_organs", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"},
+        #         ]
+        #       }
+        #     }
+        #   }
+        # },
 
-        # interneuron solver
-        "Term3": {
+        # # interneuron solver
+        # "Term3": {
 
-          # mapping interneurons -> input for motor neurons
-          "MapDofs": {
-            "description":                "interneurons_to_motoneurons",  # description that will be shown in solver structure visualization
-            "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
-            "additionalSlotNames":        ["ms&in"],
-            "meshName":                   "muscleSpindleAndInterneuronMesh", # the mesh on which the additional field variables will be defined
-            "beforeComputation": None,                                    # transfer/mapping of dofs that will be performed before the computation of the nested solver
-            "afterComputation": [                                         # transfer/mapping of dofs that will be performed after the computation of the nested solver
-              {
-                "fromConnectorSlot":                "in_out",
-                "toConnectorSlots":                 "ms&in",
-                "fromSlotConnectorArrayIndex":      0,                    # which fiber/compartment
-                "toSlotConnectorArrayIndex":        0,
-                "mode":                             "callback",           # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
-                "fromDofNosNumbering":              "local",
-                "toDofNosNumbering":                "local",
-                "dofsMapping":                      None,
-                "inputDofs":                        list(range(variables.n_interneurons)),   # [0,1,...,n_interneurons]
-                "outputDofs":                       [in_ms_mesh_interneuron_indices],          # [n_muscle_spindles,n_muscle_spindles+1,...,n_muscle_spindles+n_interneurons]
-                "callback":                         variables.callback_interneurons_to_motoneurons,
-              }
-            ],
+        #   # mapping interneurons -> input for motor neurons
+        #   "MapDofs": {
+        #     "description":                "interneurons_to_motoneurons",  # description that will be shown in solver structure visualization
+        #     "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
+        #     "additionalSlotNames":        ["ms&in"],
+        #     "meshName":                   "muscleSpindleAndInterneuronMesh", # the mesh on which the additional field variables will be defined
+        #     "beforeComputation": None,                                    # transfer/mapping of dofs that will be performed before the computation of the nested solver
+        #     "afterComputation": [                                         # transfer/mapping of dofs that will be performed after the computation of the nested solver
+        #       {
+        #         "fromConnectorSlot":                "in_out",
+        #         "toConnectorSlots":                 "ms&in",
+        #         "fromSlotConnectorArrayIndex":      0,                    # which fiber/compartment
+        #         "toSlotConnectorArrayIndex":        0,
+        #         "mode":                             "callback",           # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
+        #         "fromDofNosNumbering":              "local",
+        #         "toDofNosNumbering":                "local",
+        #         "dofsMapping":                      None,
+        #         "inputDofs":                        list(range(variables.n_interneurons)),   # [0,1,...,n_interneurons]
+        #         "outputDofs":                       [in_ms_mesh_interneuron_indices],          # [n_muscle_spindles,n_muscle_spindles+1,...,n_muscle_spindles+n_interneurons]
+        #         "callback":                         variables.callback_interneurons_to_motoneurons,
+        #       }
+        #     ],
 
-            "Heun" : {
-              "description":                  "interneurons",
-              "timeStepWidth":                variables.dt_interneuron,
-              "logTimeStepWidthAsKey":        "dt_interneuron",
-              "durationLogKey":               "duration_interneuron",
-              "initialValues":                [],
-              "timeStepOutputInterval":       500,
-              "inputMeshIsGlobal":            True,
-              "dirichletBoundaryConditions":  {},
-              "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-              "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
-              "nAdditionalFieldVariables":    0,
-              "additionalSlotNames":          [],
+        #     "Heun" : {
+        #       "description":                  "interneurons",
+        #       "timeStepWidth":                variables.dt_interneuron,
+        #       "logTimeStepWidthAsKey":        "dt_interneuron",
+        #       "durationLogKey":               "duration_interneuron",
+        #       "initialValues":                [],
+        #       "timeStepOutputInterval":       500,
+        #       "inputMeshIsGlobal":            True,
+        #       "dirichletBoundaryConditions":  {},
+        #       "dirichletOutputFilename":      None,                                 # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+        #       "checkForNanInf":               True,             # check if the solution vector contains nan or +/-inf values, if yes, an error is printed. This is a time-consuming check.
+        #       "nAdditionalFieldVariables":    0,
+        #       "additionalSlotNames":          [],
 
-              # cellml model of interneurons
-              "CellML" : {
-                "modelFilename":                          variables.interneuron_cellml_file,              # input C++ source file or cellml XML file
-                "initializeStatesToEquilibrium":          False,                                          # if the equilibrium values of the states should be computed before the simulation starts
-                "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
+        #       # cellml model of interneurons
+        #       "CellML" : {
+        #         "modelFilename":                          variables.interneuron_cellml_file,              # input C++ source file or cellml XML file
+        #         "initializeStatesToEquilibrium":          False,                                          # if the equilibrium values of the states should be computed before the simulation starts
+        #         "initializeStatesToEquilibriumTimestepWidth": 1e-4,                                       # if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation
 
-                # optimization parameters
-                "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
-                "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
-                "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
-                "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
+        #         # optimization parameters
+        #         "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
+        #         "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+        #         "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
+        #         "maximumNumberOfThreads":                 0,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
 
-                # stimulation callbacks, motor neuron is not stimulated by a callback function, but has a constant stimulation current
-                "setSpecificStatesFunction":              None,                                           # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
-                #"setSpecificStatesCallInterval":         0,                                              # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
-                "setSpecificStatesCallInterval":          0,                                              # 0 means disabled
-                "setSpecificStatesCallFrequency":         0,                                              # set_specific_states should be called variables.stimulation_frequency times per ms
-                "setSpecificStatesFrequencyJitter":       0,                                              # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
-                "setSpecificStatesRepeatAfterFirstCall":  0.01,                                           # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
-                "setSpecificStatesCallEnableBegin":       0,                                              # [ms] first time when to call setSpecificStates
-                "additionalArgument":                     None,
+        #         # stimulation callbacks, motor neuron is not stimulated by a callback function, but has a constant stimulation current
+        #         "setSpecificStatesFunction":              None,                                           # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+        #         #"setSpecificStatesCallInterval":         0,                                              # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
+        #         "setSpecificStatesCallInterval":          0,                                              # 0 means disabled
+        #         "setSpecificStatesCallFrequency":         0,                                              # set_specific_states should be called variables.stimulation_frequency times per ms
+        #         "setSpecificStatesFrequencyJitter":       0,                                              # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
+        #         "setSpecificStatesRepeatAfterFirstCall":  0.01,                                           # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
+        #         "setSpecificStatesCallEnableBegin":       0,                                              # [ms] first time when to call setSpecificStates
+        #         "additionalArgument":                     None,
 
-                "mappings":                               variables.interneuron_mappings,                 # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
-                "parametersInitialValues":                variables.interneuron_parameters_initial_values, # # initial values for the parameters, either once for all instances, or for all instances in array of struct ordering with nParameters_ parameters per instance: [inst0p0, inst0p1, ... inst0pn, inst1p0, inst1p1, ...]
+        #         "mappings":                               variables.interneuron_mappings,                 # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
+        #         "parametersInitialValues":                variables.interneuron_parameters_initial_values, # # initial values for the parameters, either once for all instances, or for all instances in array of struct ordering with nParameters_ parameters per instance: [inst0p0, inst0p1, ... inst0pn, inst1p0, inst1p1, ...]
 
-                "meshName":                               "interneuronMesh",
-                "stimulationLogFilename":                 "out/stimulation.log",
+        #         "meshName":                               "interneuronMesh",
+        #         "stimulationLogFilename":                 "out/stimulation.log",
 
-                # output writer for states, algebraics and parameters
-                "OutputWriter" : [
-                  {"format": "PythonFile", "outputInterval": int(2./variables.dt_interneuron*variables.output_timestep_interneurons), "filename": "out/interneurons", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"}
-                ]
-              }
-            }
-          }
-        },
+        #         # output writer for states, algebraics and parameters
+        #         "OutputWriter" : [
+        #           {"format": "PythonFile", "outputInterval": int(2./variables.dt_interneuron*variables.output_timestep_interneurons), "filename": "out/interneurons", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"}
+        #         ]
+        #       }
+        #     }
+        #   }
+        # },
 
         # motor neurons
-        "Term4": {
+        "Term2": {
 
           # mapping signals (from spindles and interneurons) to motor neuron + cortical input to actual inputs
           "MapDofs": {
             "description":                "motoneurons_input",   # description that will be shown in solver structure visualization
             "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
             "additionalSlotNames":        ["ms&in"],
-            "meshName":                   "muscleSpindleAndInterneuronMesh",               # the mesh on which the additional field variables will be defined
+            "meshName":                   "muscleSpindleMesh",               # the mesh on which the additional field variables will be defined
             "beforeComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
               {
                 "fromConnectorSlot":                "ms&in",
@@ -686,7 +686,7 @@ config = {
                 "fromDofNosNumbering":              "local",
                 "toDofNosNumbering":                "local",
                 "dofsMapping":                      None,
-                "inputDofs":                        in_ms_mesh_muscle1_motoneuron_indices + in_ms_mesh_interneuron_indices,   # [0,1,...,n_muscle_spindles,...,n_muscle_spindles+n_interneurons]
+                "inputDofs":                        in_ms_mesh_muscle1_motoneuron_indices,   # [0,1,...,n_muscle_spindles,...,n_muscle_spindles+n_interneurons]
                 "outputDofs":                       [muscle1_motoneuron_indices],   # [0,1,...,n_motoneurons]
                 "callback":                         variables.callback_motoneurons_input,
               }
@@ -746,7 +746,7 @@ config = {
         },
 
         # muscle1: bidoamin + 1D monodomain + 0D
-        "Term5": {
+        "Term3": {
 
           # map from motoneuronMesh to stimulated nodes
           "MapDofs": {
@@ -1044,30 +1044,7 @@ config = {
           }
         ],
 
-        # map from T in the 3D mesh to golgi tendon organs
-        "MapDofs": {
-          "description":                "golgi_tendon_organs_input",      # description that will be shown in solver structure visualization
-          "nAdditionalFieldVariables":  1,                              # number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.
-          "additionalSlotNames":        ["gt_in"],
-          "meshName":                   "golgiTendonOrganMesh",               # the mesh on which the additional field variables will be defined
-          "beforeComputation":          None,
-          "afterComputation": [                                        # transfer/mapping of dofs that will be performed before the computation of the nested solver
-            {
-              "fromConnectorSlot":                "m1T",
-              "toConnectorSlots":                 "gt_in",
-              "fromSlotConnectorArrayIndex":      0,                   # which fiber/compartment, this does not matter here because all compartment meshes have the same displacements
-              "toSlotConnectorArrayIndex":        0,
-              "mode":                             "callback",          # "copyLocal", "copyLocalIfPositive", "localSetIfAboveThreshold" or "communicate"
-              "fromDofNosNumbering":              "global",
-              "toDofNosNumbering":                "local",
-              "dofsMapping":                      None,
-              "inputDofs":                        muscle1_golgi_tendon_organ_node_nos,          # nodes are set at bottom in helper.py
-              "outputDofs":                       [muscle1_golgi_tendon_organ_indices],   # [0,1,...,n_golgi_tendon_organs]
-              "callback":                         variables.callback_golgi_tendon_organs_input,
-            }
-          ],
-
-          "MuscleContractionSolver": {
+        "MuscleContractionSolver": {
             "numberTimeSteps":              1,                         # only use 1 timestep per interval
             "timeStepOutputInterval":       1,
             "Pmax":                         variables.Pmax,            # maximum PK2 active stress
@@ -1163,7 +1140,6 @@ config = {
               }  
             }   
           }
-        }
       }
     }
   }

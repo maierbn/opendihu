@@ -87,6 +87,9 @@ firing_times_file = input_directory + "/MU_firing_times_real.txt"
 cellml_file = input_directory+"/hodgkin_huxley_1952.c"
 #cellml_file = input_directory+"/hodgkin_huxley-razumova.cellml"
 #cellml_file = input_directory + "/shorten.cpp"
+#cellml_file = input_directory + "/shorten_ocallaghan_davidson_soboleva_2007.c"
+#cellml_file = input_directory + "/hodgkin-huxley_shorten_ocallaghan_davidson_soboleva_2007.cellml"
+
 
 
 debug_output = False                # verbose output in this python script, for debugging the domain decomposition

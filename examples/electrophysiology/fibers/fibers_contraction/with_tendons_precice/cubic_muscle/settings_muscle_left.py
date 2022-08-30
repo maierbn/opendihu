@@ -115,12 +115,12 @@ k = 0 #free side of the muscle
 
 for j in range(ny):
     for i in range(nx):
-      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None, None, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
+      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None, None, 0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
 
 for k in range(nz):
-    variables.elasticity_dirichlet_bc[k*nx*ny] = [0.0, 0.0, None, None, None, None] # displacement ux uy uz, velocity vx vy vz
+    variables.elasticity_dirichlet_bc[k*nx*ny] = [0.0, 0.0, None, None,None,None] # displacement ux uy uz, velocity vx vy vz
 
-variables.elasticity_dirichlet_bc[0] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
+variables.elasticity_dirichlet_bc[0] = [0.0, 0.0, 0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
 
 # Neumann BC: constant traction
 
@@ -133,12 +133,11 @@ variables.elasticity_dirichlet_bc[0] = [0.0, 0.0, 0.0, None, None, None] # displ
 
 # Neumann BC: increasing traction
 
-variables.force = 5.0
+variables.force = 1.0
 k = mz-1
-variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,0], "face": "2+"} for j in range(my) for i in range(mx)]
+variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,1.0], "face": "2+"} for j in range(my) for i in range(mx)]
 
 def update_neumann_bc(t):
-
   # set new Neumann boundary conditions
   factor = min(1, t/100)   # for t ∈ [0,100] from 0 to 1
   elasticity_neumann_bc = [{
@@ -181,7 +180,7 @@ config = {
       "preconditionerType": "lu",           # type of the preconditioner
       "maxIterations":       1e4,           # maximum number of iterations in the linear solver
       "snesMaxFunctionEvaluations": 1e8,    # maximum number of function iterations
-      "snesMaxIterations":   140,            # maximum number of iterations in the nonlinear solver
+      "snesMaxIterations":   10,            # maximum number of iterations in the nonlinear solver
       "snesRelativeTolerance": 1e-5,        # relative tolerance of the nonlinear solver
       "snesAbsoluteTolerance": 1e-5,        # absolute tolerance of the nonlinear solver
       "snesLineSearchType": "l2",           # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
@@ -217,8 +216,8 @@ config = {
               "logTimeStepWidthAsKey":  "dt_splitting",
               "durationLogKey":         "duration_monodomain",
               "timeStepOutputInterval": 100,
-              "connectedSlotsTerm1To2": [0],    # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
-              "connectedSlotsTerm2To1": [0],    # transfer the same back, this avoids data copy
+              "connectedSlotsTerm1To2": [0,1,2],    # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
+              "connectedSlotsTerm2To1": [0,None,2],    # transfer the same back, this avoids data copy
 
               "Term1": {      # CellML, i.e. reaction term of Monodomain equation
                 "MultipleInstances": {
@@ -249,7 +248,7 @@ config = {
                         
                         # optimization parameters
                         "optimizationType":                       "vc",                                           # "vc", "simd", "openmp" type of generated optimizated source file
-                        "approximateExponentialFunction":         False,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
+                        "approximateExponentialFunction":         True,                                           # if optimizationType is "vc", whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024
                         "compilerFlags":                          "-fPIC -O3 -march=native -shared ",             # compiler flags used to compile the optimized model code
                         "maximumNumberOfThreads":                 1,                                              # if optimizationType is "openmp", the maximum number of threads to use. Default value 0 means no restriction.
                         
@@ -257,7 +256,7 @@ config = {
                         #"libraryFilename":                       "cellml_simd_lib.so",                           # compiled library
                         #"setSpecificParametersFunction":         set_specific_parameters,                        # callback function that sets parameters like stimulation current
                         #"setSpecificParametersCallInterval":     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_specific_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05
-                        "setSpecificStatesFunction":              None,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+                        "setSpecificStatesFunction":              set_specific_states,                                             # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
                         #"setSpecificStatesCallInterval":         2*int(1./variables.stimulation_frequency/variables.dt_0D),       # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs
                         "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
                         "setSpecificStatesCallFrequency":         variables.get_specific_states_call_frequency(fiber_no, motor_unit_no),   # set_specific_states should be called variables.stimulation_frequency times per ms
@@ -302,15 +301,15 @@ config = {
                       "dirichletOutputFilename":      None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                       "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
                       "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
-                      "nAdditionalFieldVariables":   2,                                       # number of additional field variables that will be written to the output file, here for stress
-                      "checkForNanInf":              False,                                    # abort execution if the solution contains nan or inf values
-                      "additionalSlotNames":         [],
+                      "nAdditionalFieldVariables":   4,                                       # number of additional field variables that will be written to the output file, here for stress
+                      "checkForNanInf":              True,                                    # abort execution if the solution contains nan or inf values
+                      "additionalSlotNames":         ["stress", "alpha", "lambda", "ldot"],
                       "FiniteElementMethod" : {
                         "inputMeshIsGlobal":         True,
                         "meshName":                  "muscle_left_fiber_{}".format(fiber_no),
                         "solverName":                "diffusionTermSolver",
                         "prefactor":                 get_diffusion_prefactor(fiber_no, motor_unit_no),  # resolves to Conductivity / (Am * Cm)
-                        "slotName":                  ""
+                        "slotName":                  "vm"
                       },
                       "OutputWriter" : [
                       ]
@@ -346,7 +345,7 @@ config = {
           "Pmax":                         variables.pmax,            # maximum PK2 active stress
           "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
           "lambdaDotScalingFactor":       1.0,       
-            "slotNames":                    ["m1lda", "m1ldot", "m1g_in", "m1T", "m1ux", "m1uy", "m1uz"],  # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
+          "slotNames":                    ["lambda", "ldot", "gamma", "T"],  # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
           "OutputWriter" : [
             {"format": "Paraview", "outputInterval": 10, "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
           ],
@@ -382,7 +381,7 @@ config = {
             "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
             #"loadFactors":                [0.25, 0.66, 1.0],                # load factors for every timestep
             "loadFactors":                [],                        # no load factors, solve problem directly
-            "loadFactorGiveUpThreshold":  0.25,                      # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
+            "loadFactorGiveUpThreshold":  1,                      # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
             "scaleInitialGuess":          False,
             "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
             
@@ -390,7 +389,7 @@ config = {
             "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
             "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
             "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
-            "updateDirichletBoundaryConditionsFunction": None,                  # function that updates the dirichlet BCs while the simulation is running
+            "isInReferenceConfiguration": True,
             "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
             "updateNeumannBoundaryConditionsFunction":   update_neumann_bc,                    # function that updates the Neumann BCs while the simulation is running
             "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step

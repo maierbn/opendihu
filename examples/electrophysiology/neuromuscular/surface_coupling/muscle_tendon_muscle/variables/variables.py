@@ -126,6 +126,10 @@ tendon_extent = [3.0, 3.0, 2.0] # [cm, cm, cm]
 tendon_offset = [0.0, 0.0, muscle1_extent[2]]
 n_elements_tendon = [2, 2, 2] 
 
+muscle2_extent = [3.0, 3.0, 14.8] # [cm, cm, cm]
+muscle2_offset = [0.0, 0.0, muscle1_extent[2]+tendon_extent[2]]
+n_elements_muscle2 = [2, 2, 12] # linear elements. each qudaratic element uses the combined nodes of 8 linear elements
+
 ## currently undefined 
 maximum_number_of_threads = 1
 use_aovs_memory_layout = True
@@ -216,7 +220,7 @@ input_directory = os.path.join(os.environ.get('OPENDIHU_HOME', '../../../../../'
 cellml_file = input_directory+"/hodgkin_huxley-razumova.cellml"
 fiber_distribution_file = input_directory+"/MU_fibre_distribution_multidomain_67x67_100.txt"
 firing_times_file = input_directory + "/MU_firing_times_real.txt"
-#firing_times_file = input_directory + "/MU_firing_times_real_no_firing.txt" # no firing
+no_firing_times_file = input_directory + "/MU_firing_times_real_no_firing.txt" # no firing
 
  
 # load cortical input values
@@ -353,3 +357,24 @@ def muscle1_postprocess(data):
     muscle1_tendon_z = z_value
     print("Muscle2: t: {:6.2f}, avg. change of muscle length: {:+2.2f}".format(t, muscle1_tendon_z - muscle1_extent[2]))
 
+def muscle2_postprocess(data):
+    t = get_from_obj(data, [0, 'currentTime'])
+    z_data = get_from_obj(data, [0, 'data', ('name','geometry'), 'components', 2, 'values'])
+    [mx, my, mz] = get_from_obj(data, [0, 'nElementsLocal'])
+    basis_order = get_from_obj(data, [0, 'basisOrder'])
+    basis_function = get_from_obj(data, [0, 'basisFunction'])
+    assert(basis_function == 'Lagrange')
+    assert(basis_order == 2)
+    nx = 2*mx + 1
+    ny = 2*my + 1
+    nz = 2*mz + 1
+    # compute average z-value of end of muscle
+    z_value = 0
+    for j in range(ny):
+        for i in range(nx):
+            z_value += z_data[(nz-1)*nx*ny + j*nx + i]
+    z_value /= ny*nx
+
+    global muscle1_tendon_z
+    muscle1_tendon_z = z_value
+    print("Muscle2: t: {:6.2f}, avg. change of muscle length: {:+2.2f}".format(t, muscle1_tendon_z - muscle1_extent[2]))

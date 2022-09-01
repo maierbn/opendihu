@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+
+<precice-configuration>
+  <!-- format for console output of precice -->
+  <log>
+    <sink type="stream" output="stdout"  filter='(%Severity% >= debug) and (not (%Function% = "advance"))' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />
+    <!--<sink type="stream" output="stdout"  filter='%Severity% >= debug' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />-->
+    <!--<sink type="file" output="debug.log" filter= "(%Severity% >= debug)" format="%Message%" enabled="true" />	-->
+  </log>
+
+  <solver-interface dimensions="3">
+    
+    <!-- Data fields that are exchanged between the solvers -->
+    <data:vector name="Displacement"/>
+    <data:vector name="Velocity"/>
+    <data:vector name="Traction"/>
+
+    <!-- A common mesh that uses these data fields -->
+    <mesh name="Tendon1Mesh">
+      <use-data name="Displacement"/>
+      <use-data name="Velocity"/>
+      <use-data name="Traction"/>
+    </mesh>
+
+    <mesh name="Muscle1Mesh">
+      <use-data name="Displacement"/>
+      <use-data name="Velocity"/>
+      <use-data name="Traction"/>
+    </mesh>
+
+    <mesh name="Tendon2Mesh">
+      <use-data name="Displacement"/>
+      <use-data name="Velocity"/>
+      <use-data name="Traction"/>
+    </mesh>
+
+    <mesh name="Muscle2Mesh">
+      <use-data name="Displacement"/>
+      <use-data name="Velocity"/>
+      <use-data name="Traction"/>
+    </mesh>
+    <!--The first participant is the master!! It has to be the tendon -->
+
+    <participant name="TendonSolver"> 
+      
+      <!-- Makes the named mesh available to the participant. Mesh is provided by the solver directly. -->
+      <use-mesh name="Tendon1Mesh" provide="yes"/>
+      <use-mesh name="Tendon2Mesh" provide="yes"/>
+      <use-mesh name="Muscle1Mesh" from="Muscle1Solver"/>
+      <use-mesh name="Muscle2Mesh" from="Muscle2Solver"/>
+      
+      <!-- Define input/output of the solver, the mesh should be the own one.  -->
+      <write-data name="Displacement"  mesh="Tendon1Mesh"/>
+      <write-data name="Velocity"      mesh="Tendon1Mesh"/>
+      <read-data  name="Traction"      mesh="Tendon1Mesh"/>
+      
+      <write-data name="Displacement"  mesh="Tendon2Mesh"/>
+      <write-data name="Velocity"      mesh="Tendon2Mesh"/>
+      <read-data  name="Traction"      mesh="Tendon2Mesh"/>
+
+      <mapping:nearest-neighbor direction="read" from="Muscle1Mesh" to="Tendon1Mesh" constraint="consistent"/>
+      <mapping:nearest-neighbor direction="read" from="Muscle2Mesh" to="Tendon2Mesh" constraint="consistent"/>
+
+      <export:vtk directory="preCICE-output" />
+    </participant>
+
+    <participant name="Muscle1Solver">
+
+      <!-- Makes the named mesh available to the participant. Mesh is provided by the solver directly. -->
+      <use-mesh name="Muscle1Mesh"  provide="yes"/>
+      <use-mesh name="Tendon1Mesh"     from="TendonSolver"/>
+      
+      <!-- Define input/output of the solver, the mesh should be the own one. -->
+      <read-data  name="Displacement"  mesh="Muscle1Mesh"/>
+      <read-data  name="Velocity"      mesh="Muscle1Mesh"/>
+      <write-data name="Traction"      mesh="Muscle1Mesh"/>
+      <mapping:nearest-neighbor direction="read" from="Tendon1Mesh" to="Muscle1Mesh" constraint="consistent"/>
+      <export:vtk directory="preCICE-output" />
+    </participant>
+
+    <participant name="Muscle2Solver">
+
+      <!-- Makes the named mesh available to the participant. Mesh is provided by the solver directly. -->
+      <use-mesh name="Muscle2Mesh"  provide="yes"/>
+      <use-mesh name="Tendon2Mesh"     from="TendonSolver"/>
+      
+      <!-- Define input/output of the solver, the mesh should be the own one. -->
+      <read-data  name="Displacement"  mesh="Muscle2Mesh"/>
+      <read-data  name="Velocity"      mesh="Muscle2Mesh"/>
+      <write-data name="Traction"      mesh="Muscle2Mesh"/>
+      <mapping:nearest-neighbor direction="read" from="Tendon2Mesh" to="Muscle2Mesh" constraint="consistent"/>
+      <export:vtk directory="preCICE-output" />
+    </participant>
+    
+    <!-- Communication method, use TCP sockets, Change network to "ib0" on SuperMUC -->
+    <m2n:sockets from="TendonSolver" to="Muscle1Solver" network="lo" />
+    <m2n:sockets from="TendonSolver" to="Muscle2Solver" network="lo" />
+
+
+    <coupling-scheme:serial-explicit>
+      <!-- <participants first="MuscleSolver" second="TendonSolver"/> -->
+      <participants first="TendonSolver" second="Muscle1Solver"/>
+
+      <max-time value="20.0"/>           <!-- end time of the whole simulation -->
+      <time-window-size value="1.0"/>   <!-- timestep width for coupling -->
+
+      <exchange data="Displacement"    mesh="Tendon1Mesh"    from="TendonSolver" to="Muscle1Solver"/>
+      <exchange data="Velocity"        mesh="Tendon1Mesh"    from="TendonSolver" to="Muscle1Solver"/>
+      <exchange data="Traction"        mesh="Muscle1Mesh" from="Muscle1Solver" to="TendonSolver"/>  <!--initialize="true"-->
+    </coupling-scheme:serial-explicit>
+    
+    <coupling-scheme:serial-explicit>
+      <!-- <participants first="MuscleSolver" second="TendonSolver"/> -->
+      <participants first="TendonSolver" second="Muscle2Solver"/>
+
+      <max-time value="20.0"/>           <!-- end time of the whole simulation -->
+      <time-window-size value="1.0"/>   <!-- timestep width for coupling -->
+
+      <exchange data="Displacement"    mesh="Tendon2Mesh"    from="TendonSolver" to="Muscle2Solver"/>
+      <exchange data="Velocity"        mesh="Tendon2Mesh"    from="TendonSolver" to="Muscle2Solver"/>
+      <exchange data="Traction"        mesh="Muscle2Mesh" from="Muscle2Solver" to="TendonSolver"/>  <!--initialize="true"-->
+    </coupling-scheme:serial-explicit>
+  </solver-interface>
+</precice-configuration>

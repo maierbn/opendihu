@@ -7,8 +7,8 @@
 #include "opendihu.h"
 
 //#define Shorten
-//#define HodgkinHuxley
-#define HodgkinHuxleyShorten
+#define HodgkinHuxley
+//#define HodgkinHuxleyShorten
 
 // #define FiberDiffusionSolver TimeSteppingScheme::ImplicitEuler
 // #define FiberDiffusionSolver TimeSteppingScheme::CrankNicolson
@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
                 >
                 >,
                 Control::MultipleInstances<
-                TimeSteppingScheme::CrankNicolson<                       // fiber diffusion, note that implicit euler gives lower error in this case than crank nicolson
+                TimeSteppingScheme::ImplicitEuler<                       // fiber diffusion, note that implicit euler gives lower error in this case than crank nicolson
                     SpatialDiscretization::FiniteElementMethod<
                     Mesh::StructuredDeformableOfDimension<1>,
                     BasisFunction::LagrangeOfOrder<1>,
@@ -73,7 +73,9 @@ int main(int argc, char *argv[])
             >
             >
         >,
-        MuscleContractionSolver<>
+        MuscleContractionSolver<
+            Mesh::StructuredDeformableOfDimension<3>
+        >
 
     > problem(settings);
   

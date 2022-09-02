@@ -183,28 +183,28 @@ variables.elasticity_dirichlet_bc[0] = [0.0, 0.0, 0.0, None,None,None] # displac
 
 # Neumann BC: increasing traction
 
-variables.force = 1.0
-k = mz-1
-variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,0], "face": "2+"} for j in range(my) for i in range(mx)]
+# variables.force = 1.0
+# k = mz-1
+# variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,0], "face": "2+"} for j in range(my) for i in range(mx)]
 
-def update_neumann_bc(t):
+# def update_neumann_bc(t):
 
-  # set new Neumann boundary conditions
-  factor = min(1, t/100)   # for t ∈ [0,100] from 0 to 1
-  elasticity_neumann_bc = [{
-		"element": k*mx*my + j*mx + i, 
-		"constantVector": [0,0, variables.force*factor], 		# force pointing to bottom
-		"face": "2+",
-    "isInReferenceConfiguration": True
-  } for j in range(my) for i in range(mx)]
+#   # set new Neumann boundary conditions
+#   factor = min(1, t/100)   # for t ∈ [0,100] from 0 to 1
+#   elasticity_neumann_bc = [{
+# 		"element": k*mx*my + j*mx + i, 
+# 		"constantVector": [0,0, variables.force*factor], 		# force pointing to bottom
+# 		"face": "2+",
+#     "isInReferenceConfiguration": True
+#   } for j in range(my) for i in range(mx)]
 
-  config = {
-    "inputMeshIsGlobal": True,
-    "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
-    "neumannBoundaryConditions": elasticity_neumann_bc,
-  }
-  print("prescribed pulling force to bottom: {}".format(variables.force*factor))
-  return config
+#   config = {
+#     "inputMeshIsGlobal": True,
+#     "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+#     "neumannBoundaryConditions": elasticity_neumann_bc,
+#   }
+#   print("prescribed pulling force to bottom: {}".format(variables.force*factor))
+#   return config
 
 # meshes
 
@@ -539,11 +539,11 @@ config = {
 
                 # boundary and initial conditions
                 "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
-                "neumannBoundaryConditions":   [],     # Neumann boundary conditions that define traction forces on surfaces of elements
+                "neumannBoundaryConditions":   variables.elasticity_neumann_bc,    # Neumann boundary conditions that define traction forces on surfaces of elements
                 "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
                 "updateDirichletBoundaryConditionsFunction": None,                  # muscle1_update_dirichlet_boundary_conditions_helper, function that updates the dirichlet BCs while the simulation is running
                 "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
-                "updateNeumannBoundaryConditionsFunction":   update_neumann_bc,                    # function that updates the Neumann BCs while the simulation is running
+                "updateNeumannBoundaryConditionsFunction":   None,                    # function that updates the Neumann BCs while the simulation is running
                 "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step
 
 

@@ -92,8 +92,8 @@ approximate_exponential_function = False   # if the exponential function should 
 dynamic = True                      # if the dynamic hyperelasticity solver should be used
 
 # motor unit stimulation times
-firing_times_file = "../../../input/MU_firing_times_real.txt"
-#firing_times_file = "../../../input/MU_firing_times_real_no_firing.txt" # no firing
+#firing_times_file = "../../../input/MU_firing_times_real.txt"
+firing_times_file = "../../../input/MU_firing_times_real_no_firing.txt" # no firing
 
 # partitioning
 # ------------

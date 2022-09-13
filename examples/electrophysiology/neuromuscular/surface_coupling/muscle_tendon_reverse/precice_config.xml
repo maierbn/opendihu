@@ -37,9 +37,9 @@
       <use-mesh name="MuscleMeshLeft" from="MuscleSolverLeft"/>
       
       <!-- Define input/output of the solver, the mesh should be the own one.  -->
-      <write-data name="Displacement"  mesh="TendonMeshLeft"/>
-      <write-data name="Velocity"      mesh="TendonMeshLeft"/>
-      <read-data  name="Traction"      mesh="TendonMeshLeft"/>
+      <read-data name="Displacement"  mesh="TendonMeshLeft"/>
+      <read-data name="Velocity"      mesh="TendonMeshLeft"/>
+      <write-data  name="Traction"      mesh="TendonMeshLeft"/>
       <mapping:nearest-neighbor direction="read" from="MuscleMeshLeft" to="TendonMeshLeft" constraint="consistent"/>
       <export:vtk directory="preCICE-output" />
     </participant>
@@ -51,9 +51,9 @@
       <use-mesh name="TendonMeshLeft"     from="TendonSolver"/>
       
       <!-- Define input/output of the solver, the mesh should be the own one. -->
-      <read-data  name="Displacement"  mesh="MuscleMeshLeft"/>
-      <read-data  name="Velocity"      mesh="MuscleMeshLeft"/>
-      <write-data name="Traction"      mesh="MuscleMeshLeft"/>
+      <write-data  name="Displacement"  mesh="MuscleMeshLeft"/>
+      <write-data  name="Velocity"      mesh="MuscleMeshLeft"/>
+      <read-data name="Traction"      mesh="MuscleMeshLeft"/>
       <mapping:nearest-neighbor direction="read" from="TendonMeshLeft" to="MuscleMeshLeft" constraint="consistent"/>
       <export:vtk directory="preCICE-output" />
     </participant>
@@ -65,12 +65,13 @@
       <!-- <participants first="MuscleSolverLeft" second="TendonSolver"/> -->
       <participants second="TendonSolver" first="MuscleSolverLeft"/>
 
-      <max-time value="20.0"/>           <!-- end time of the whole simulation -->
+      <max-time value="0.3"/>           <!-- end time of the whole simulation -->
       <time-window-size value="0.1"/>   <!-- timestep width for coupling -->
 
-      <exchange data="Displacement"    mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
-      <exchange data="Velocity"        mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
-      <exchange data="Traction"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  <!--initialize="true"-->
+
+      <exchange data="Traction"        mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
+      <exchange data="Displacement"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  <!--initialize="true"-->
+      <exchange data="Velocity"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  <!--initialize="true"-->
     </coupling-scheme:serial-explicit>
     
   </solver-interface>

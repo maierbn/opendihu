@@ -48,7 +48,7 @@ end_time = 20.0                   # [ms] end time of the simulation
 dt_0D = 0.5e-3                        # [ms] timestep width of ODEs
 dt_1D = 1e-3                      # [ms] timestep width of diffusion
 dt_splitting_0D1D = 1e-3            # [ms] overall timestep width of strang splitting
-dt_elasticity = 0.1             # [ms] time step width of elasticity solver
+dt_elasticity = 0.1              # [ms] time step width of elasticity solver
 
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz. This is not used here.
 activation_start_time = 0           # [ms] time when to start checking for stimulation
@@ -352,4 +352,3 @@ def muscle1_postprocess(data):
     global muscle1_tendon_z
     muscle1_tendon_z = z_value
     print("Muscle2: t: {:6.2f}, avg. change of muscle length: {:+2.2f}".format(t, muscle1_tendon_z - muscle1_extent[2]))
-

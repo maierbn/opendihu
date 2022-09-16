@@ -17,29 +17,38 @@ import variables              # file variables.py, defines default values for al
 from create_partitioned_meshes_for_settings import *   # file create_partitioned_meshes_for_settings with helper functions about own subdomain
 from helper import *
 
-# modify variables according to specific scenario
-
 variables.scenario_name = "tendon"
-
-# material parameters for tendon material
-c = 9.98                    # [N/cm^2=kPa]
-ca = 14.92                  # [-]
-ct = 14.7                   # [-]
-cat = 9.64                  # [-]
-ctt = 11.24                 # [-]
-mu = 3.76                   # [N/cm^2=kPa]
-k1 = 42.217e3               # [N/cm^2=kPa]
-k2 = 411.360e3              # [N/cm^2=kPa]
-variables.material_parameters = [c, ca, ct, cat, ctt, mu, k1, k2]
-
- 
-
 # compute partitioning
 if rank_no == 0:
   if n_ranks != variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z:
     print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
     sys.exit(-1)
     
+# update material parameters
+if (variables.tendon_material == "nonLinear"):
+    c = 9.98                    # [N/cm^2=kPa]
+    ca = 14.92                  # [-]
+    ct = 14.7                   # [-]
+    cat = 9.64                  # [-]
+    ctt = 11.24                 # [-]
+    mu = 3.76                   # [N/cm^2=kPa]
+    k1 = 42.217e3               # [N/cm^2=kPa]
+    k2 = 411.360e3              # [N/cm^2=kPa]
+
+    material_parameters = [c, ca, ct, cat, ctt, mu, k1, k2]
+
+else:
+    # material parameters for Saint Venant-Kirchhoff material
+    # https://www.researchgate.net/publication/230248067_Bulk_Modulus
+
+    youngs_modulus = 7e4        # [N/cm^2 = 10kPa]  
+    shear_modulus = 3e4
+
+    lambd = shear_modulus*(youngs_modulus - 2*shear_modulus) / (3*shear_modulus - youngs_modulus)  # Lamé parameter lambda
+    mu = shear_modulus       # Lamé parameter mu or G (shear modulus)
+
+    material_parameters = [lambd, mu]
+
 
 # add meshes
 meshes_tendon = {
@@ -70,18 +79,12 @@ variables.meshes.update(meshes_tendon)
 [nx, ny, nz] = [elem + 1 for elem in variables.n_elements_tendon]
 [mx, my, mz] = [elem // 2 for elem in variables.n_elements_tendon] # quadratic elements consist of 2 linear elements along each axis
 
-variables.elasticity_dirichlet_bc = {}
 
+# dirichlet
 k = nz-1 #free side of the tendon
-
 for j in range(ny):
     for i in range(nx):
-      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None, None, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
-
-for k in range(nz):
-    variables.elasticity_dirichlet_bc[k*nx*ny] = [0.0, 0.0, None, None, None, None] # displacement ux uy uz, velocity vx vy vz
-
-variables.elasticity_dirichlet_bc[(nz-1)*nx*ny] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
+      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
 
 
 config = {
@@ -90,32 +93,32 @@ config = {
   "solverStructureDiagramFile":     "solver_structure.txt",       # output file of a diagram that shows data connection between solvers
   "mappingsBetweenMeshesLogFile":   "mappings_between_meshes_log.txt",    # log file for mappings 
   "Meshes":                         variables.meshes,
-  
+
   "PreciceAdapter": {        # precice adapter for bottom tendon
-    "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
-    "timestepWidth":            variables.dt_elasticity,                          # coupling time step width, must match the value in the precice config
-    "couplingEnabled":          True,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
-    "preciceConfigFilename":    "../precice_config.xml",    # the preCICE configuration file
-    "preciceParticipantName":   "TendonSolver",             # name of the own precice participant, has to match the name given in the precice xml config file
-    "preciceMeshes": [                                      # the precice meshes get created as the top or bottom surface of the main geometry mesh of the nested solver
-      {
-        "preciceMeshName":      "TendonMeshLeft",            # precice name of the 2D coupling mesh
-        "face":                 "2-",                       # face of the 3D mesh where the 2D mesh is located, "2-" = bottom, "2+" = top
-      }
-    ],
-    "preciceData": [  
-      {
-        "mode":                 "write-displacements-velocities",   # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
-        "preciceMeshName":      "TendonMeshLeft",                    # name of the precice coupling surface mesh, as given in the precice xml settings file
-        "displacementsName":    "Displacement",                     # name of the displacements "data", i.e. field variable, as given in the precice xml settings file
-        "velocitiesName":       "Velocity",                         # name of the velocity "data", i.e. field variable, as given in the precice xml settings file
-      },
-      {
-        "mode":                 "read-traction",                    # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
-        "preciceMeshName":      "TendonMeshLeft",                    # name of the precice coupling surface mesh, as given in the precice xml settings 
-        "tractionName":         "Traction",                         # name of the traction "data", i.e. field variable, as given in the precice xml settings file
-      }
-    ],
+      "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
+      "timestepWidth":            variables.dt_elasticity,                          # coupling time step width, must match the value in the precice config
+      "couplingEnabled":          True,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
+      "preciceConfigFilename":    "../precice_config.xml",    # the preCICE configuration file
+      "preciceParticipantName":   "TendonSolver",             # name of the own precice participant, has to match the name given in the precice xml config file
+      "preciceMeshes": [                                      # the precice meshes get created as the top or bottom surface of the main geometry mesh of the nested solver
+        {
+          "preciceMeshName":      "TendonMeshLeft",            # precice name of the 2D coupling mesh
+          "face":                 "2-",                       # face of the 3D mesh where the 2D mesh is located, "2-" = bottom, "2+" = top
+        }
+      ],
+      "preciceData": [  
+        {
+          "mode":                 "write-displacements-velocities",   # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
+          "preciceMeshName":      "TendonMeshLeft",                    # name of the precice coupling surface mesh, as given in the precice xml settings file
+          "displacementsName":    "Displacement",                     # name of the displacements "data", i.e. field variable, as given in the precice xml settings file
+          "velocitiesName":       "Velocity",                         # name of the velocity "data", i.e. field variable, as given in the precice xml settings file
+        },
+        {
+          "mode":                 "read-traction",                    # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
+          "preciceMeshName":      "TendonMeshLeft",                    # name of the precice coupling surface mesh, as given in the precice xml settings 
+          "tractionName":         "Traction",                         # name of the traction "data", i.e. field variable, as given in the precice xml settings file
+        }
+      ],
     
     "DynamicHyperelasticitySolver": {
       "timeStepWidth":              variables.dt_elasticity,#variables.dt_elasticity,      # time step width 
@@ -123,9 +126,8 @@ config = {
       "durationLogKey":             "duration_mechanics",         # key to find duration of this solver in the log file
       "timeStepOutputInterval":     1,                            # how often the current time step should be printed to console
       
-      "materialParameters":         variables.material_parameters,  # material parameters of the Mooney-Rivlin material
+      "materialParameters":         material_parameters,  # material parameters of the Mooney-Rivlin material
       "density":                    variables.rho,  
-      "dampingFactor":              variables.damping_factor,  # factor for velocity dependent damping
       "displacementsScalingFactor": 1.0,                          # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
       "residualNormLogFilename":    "log_residual_norm.txt",      # log file where residual norm values of the nonlinear solver will be written
       "useAnalyticJacobian":        True,                         # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
@@ -142,7 +144,17 @@ config = {
       "fiberDirection":             [0,0,1],                      # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
       
       # nonlinear solver
-         # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
+      "relativeTolerance":          1e-10,                         # 1e-10 relative tolerance of the linear solver
+      "absoluteTolerance":          1e-10,                        # 1e-10 absolute tolerance of the residual of the linear solver       
+      "solverType":                 "preonly",                    # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
+      "preconditionerType":         "lu",                         # type of the preconditioner
+      "maxIterations":              1e4,                          # maximum number of iterations in the linear solver
+      "snesMaxFunctionEvaluations": 1e8,                          # maximum number of function iterations
+      "snesMaxIterations":          240,                           # maximum number of iterations in the nonlinear solver
+      "snesRelativeTolerance":      1e-4,                         # relative tolerance of the nonlinear solver
+      "snesLineSearchType":         "l2",                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
+      "snesAbsoluteTolerance":      1e-5,                         # absolute tolerance of the nonlinear solver
+      "snesRebuildJacobianFrequency": 5,          
       
       #"dumpFilename": "out/r{}/m".format(sys.argv[-1]),          # dump system matrix and right hand side after every solve
       "dumpFilename":               "",                           # dump disabled
@@ -151,30 +163,31 @@ config = {
       #"loadFactors":                [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
       #"loadFactors":                [0.5, 1.0],                   # load factors for every timestep
       "loadFactors":                [],                           # no load factors, solve problem directly
-      "loadFactorGiveUpThreshold":  0.25, 
-      "scaleInitialGuess":          False,                     # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
+      "loadFactorGiveUpThreshold":  1e-3, 
       "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
       
       # boundary and initial conditions
       "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
       "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
       "divideNeumannBoundaryConditionValuesByTotalArea": False,    # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
-      "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
+      "updateDirichletBoundaryConditionsFunction": None, #update_dirichlet_bc,   # function that updates the dirichlet BCs while the simulation is running
+      "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # stide every which step the update function should be called, 1 means every time step
+      "updateNeumannBoundaryConditionsFunction": None,       # a callback function to periodically update the Neumann boundary conditions
+      "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step 
       
-
+      "constantBodyForce":           None,       # a constant force that acts on the whole body, e.g. for gravity
       "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(variables.n_points_global)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
       "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(variables.n_points_global)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
       "extrapolateInitialGuess":     True, 
-      # "snesRelativeTolerance":           1e-03,
-      # "snesAbsoluteTolerance":           1e-03,
-
 
       "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions_tendon",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-      # "totalForceLogFilename":       "out/tendon_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
+      # "totalForceLogFilename":       "out/tendon_bottom_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
       # "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
       # "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
       # "totalForceTopElementNosGlobal":     [(nz-1)*ny*nx + j*nx + i for j in range(ny) for i in range(nx)],   # global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal
-
+      # "totalForceFunction":          None, #callback_total_force,                # callback function that gets the total force at bottom and top of the domain
+      # "totalForceFunctionCallInterval": 1,   
+      
       "OutputWriter" : [
             {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
           ],
@@ -202,3 +215,4 @@ config = {
     }
   }
 }
+

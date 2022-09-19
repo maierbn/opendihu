@@ -68,35 +68,6 @@ for j in range(variables.n_fibers_y):
       "nRanks": [n_ranks],
     }
 
-#### set output writer
-variables.output_writer_fibers_muscle1 = []
-variables.output_writer_emg_muscle1 = []
-
-subfolder = ""
-if variables.paraview_output:
-  if variables.adios_output:
-    subfolder = "paraview/"
-  variables.output_writer_fibers_muscle1.append({"format": "Paraview", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_fibers", "binary": False, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
-  variables.output_writer_emg_muscle1.append({"format": "Paraview", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
-  
-if variables.adios_output:
-  if variables.paraview_output:
-    subfolder = "adios/"
-  variables.output_writer_fibers_muscle1.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_fibers", "useFrontBackBuffer": False, "combineNInstances": 1, "fileNumbering": "incremental"})
-  variables.output_writer_emg_muscle1.append({"format": "MegaMol", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_emg", "useFrontBackBuffer": False, "combineNInstances": 1, "fileNumbering": "incremental"})
-  
-if variables.python_output:
-  if variables.adios_output:
-    subfolder = "python/"
-  variables.output_writer_fibers_muscle1.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_fibers", "binary": True, "fileNumbering": "incremental"})
-  variables.output_writer_emg_muscle1.append({"format": "PythonFile", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_emg", "binary": True, "fileNumbering": "incremental"})
-  
-if variables.exfile_output:
-  if variables.adios_output:
-    subfolder = "exfile/"
-  variables.output_writer_fibers_muscle1.append({"format": "Exfile", "outputInterval": int(1./variables.dt_splitting_0D1D*variables.output_timestep_fibers), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_fibers", "fileNumbering": "incremental"})
-  variables.output_writer_emg_muscle1.append({"format": "Exfile", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_emg), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_emg", "fileNumbering": "incremental"})
-  
 
 
 # set variable mappings for cellml model
@@ -177,10 +148,6 @@ elif "hodgkin_huxley-razumova" in variables.cellml_file:   # this is (4, "Titin"
 else:
   print("\033[0;31mCellML file {} has no mappings implemented in helper.py\033[0m".format(variables.cellml_file))
   quit()
-
-
-
-
 
 # load MU distribution and firing times
 variables.fiber_distribution = np.genfromtxt(variables.fiber_distribution_file, delimiter=" ", dtype=int)
@@ -351,26 +318,6 @@ for muscle_spindle_no in range(variables.n_muscle_spindles):
 muscle1_spindle_node_nos = _muscle_spindle_node_nos
 # the muscle spindle mesh holds muscle spdindels of both muscles
 muscle1_spindle_indices = list(range(variables.n_muscle_spindles))
-
-#######################################
-# position Golgi tendon organs in the 3D mesh
-
-# determine (random) positions of Golgi organs in elasticity mesh close to tendons
-# _golgi_tendon_organ_node_nos = []
-# for golgi_tendon_organ_no in range(variables.n_golgi_tendon_organs):
-#   i = random.randrange(0,nx)
-#   j = random.randrange(0,ny)
-#   # position on left and right tendon
-#   if golgi_tendon_organ_no % 2 == 0:
-#     k = int(0.1*nz)
-#   else:
-#     k = int(0.9*nz)
- 
-#   dof_no_global = k*nx*ny + j*nx + i
-#   _golgi_tendon_organ_node_nos.append(dof_no_global)
-# muscle1_golgi_tendon_organ_node_nos = _golgi_tendon_organ_node_nos
-# # the muscle spindle mesh holds muscle spdindels of both muscles
-# muscle1_golgi_tendon_organ_indices = list(range(variables.n_golgi_tendon_organs))
 
 #######################################
 # determine positions of neuromuscular junctions in fiber mesh

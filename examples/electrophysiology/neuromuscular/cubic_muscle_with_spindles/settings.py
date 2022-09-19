@@ -45,64 +45,18 @@ if variables.n_subdomains is not None:
   variables.n_subdomains_z = variables.n_subdomains[2]
 
 variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
-# if variables.enable_weak_scaling:
-#   variables.fast_monodomain_solver_optimizations = False
-
-# 3D mesh resolution
-# if variables.mesh3D_sampling_stride is not None:
-#     variables.mesh3D_sampling_stride_x = variables.mesh3D_sampling_stride[0]
-#     variables.mesh3D_sampling_stride_y = variables.mesh3D_sampling_stride[1]
-#     variables.mesh3D_sampling_stride_z = variables.mesh3D_sampling_stride[2]
-# variables.sampling_stride_x = variables.mesh3D_sampling_stride_x
-# variables.sampling_stride_y = variables.mesh3D_sampling_stride_y
-# variables.sampling_stride_z = variables.mesh3D_sampling_stride_z
-
-# automatically initialize partitioning if it has not been set
-if n_ranks != variables.n_subdomains:
-
-  # create all possible partitionings to the given number of ranks
-  optimal_value = n_ranks**(1/3)
-  possible_partitionings = []
-  for i in range(1,n_ranks+1):
-    for j in range(1,n_ranks+1):
-      if i*j <= n_ranks and n_ranks % (i*j) == 0:
-        k = int(n_ranks / (i*j))
-        performance = (k-optimal_value)**2 + (j-optimal_value)**2 + 1.1*(i-optimal_value)**2
-        possible_partitionings.append([i,j,k,performance])
-
-  # if no possible partitioning was found
-  if len(possible_partitionings) == 0:
-    if rank_no == 0:
-      print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {} and no automatic partitioning could be done.\n\n\033[0m".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
-    quit()
-
-  # select the partitioning with the lowest value of performance which is the best
-  lowest_performance = possible_partitionings[0][3]+1
-  for i in range(len(possible_partitionings)):
-    if possible_partitionings[i][3] < lowest_performance:
-      lowest_performance = possible_partitionings[i][3]
-      variables.n_subdomains_x = possible_partitionings[i][0]
-      variables.n_subdomains_y = possible_partitionings[i][1]
-      variables.n_subdomains_z = possible_partitionings[i][2]
 
 # output information of run
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))
-  print("dt_0D:           {:0.1e}, diffusion_solver_type:      {}".format(variables.dt_0D, variables.diffusion_solver_type))
-  print("dt_1D:           {:0.1e}, potential_flow_solver_type: {}, approx. exp.: {}".format(variables.dt_1D, variables.potential_flow_solver_type, variables.approximate_exponential_function))
-  print("dt_splitting:    {:0.1e}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(variables.dt_splitting_0D1D, variables.emg_solver_type, variables.emg_initial_guess_nonzero))
-  print("dt_3D:           {:0.1e}, paraview_output: {}, optimization_type: {}{}".format(variables.dt_bidomain, variables.paraview_output, variables.optimization_type, " ({} threads)".format(variables.maximum_number_of_threads) if variables.optimization_type=="openmp" else " (AoVS)" if variables.optimization_type=="vc" and variables.use_aovs_memory_layout else " (SoVA)" if variables.optimization_type=="vc" and not variables.use_aovs_memory_layout else ""))
-  print("output_timestep: {:0.1e}, surface: {:0.1e}, stimulation_frequency: {} 1/ms = {} Hz".format(variables.output_timestep, variables.output_timestep_surface, variables.stimulation_frequency, variables.stimulation_frequency*1e3))
-  print("                          fast_monodomain_solver_optimizations: {}".format(variables.fast_monodomain_solver_optimizations))
+  print("dt_0D:         {:0.1e}, dt_1D:    {:0.1e}".format(variables.dt_0D, variables.dt_1D))
+  print("dt_elasticity:           {:0.1e}".format(variables.dt_elasticity))
   print("cellml_file:             {}".format(variables.cellml_file))
   print("fiber_distribution_file: {}".format(variables.fiber_distribution_file))
   print("firing_times_file:       {}".format(variables.firing_times_file))
   print("********************************************************************************")
 
   print("prefactor: sigma_eff/(Am*Cm) = {} = {} / ({}*{})".format(variables.Conductivity/(variables.Am*variables.Cm), variables.Conductivity, variables.Am, variables.Cm))
-
-  # start timer to measure duration of parsing of this script
-  t_start_script = timeit.default_timer()
 
 # initialize all helper variables
 from helper import *
@@ -137,7 +91,7 @@ neuron_meshes = {
   "motoneuronMesh": {
     # each muscle has the same number of muscle spindels
     "nElements" :         (2*variables.n_motoneurons)-1 if n_ranks == 1 else (2*variables.n_motoneurons)*n_ranks,  # the last dof is empty in parallel
-    "physicalExtent":     0, # has no special meaning. only to seperate data points in paraview
+    "physicalExtent":     1, # has no special meaning. only to seperate data points in paraview
     "physicalOffset":     0,
     "logKey":             "motoneuron",
     "inputMeshIsGlobal":  True,
@@ -160,7 +114,6 @@ neuron_meshes = {
     "inputMeshIsGlobal":  True,
     "nRanks":             n_ranks
   },
-
   # needed for mechanics solver
   "muscle1Mesh_quadratic": {
     "nElements" :         [elems // 2 for elems in variables.n_elements_muscle1],
@@ -174,12 +127,6 @@ neuron_meshes = {
 variables.meshes.update(neuron_meshes)
 variables.meshes.update(fiber_meshes)
 
-
-def dbg(x, name=None):
-  if name:
-    print(name, end=': ')
-  print(x)
-  return x
 
 # define the config dict
 config = {
@@ -203,27 +150,7 @@ config = {
       "dumpFilename":       "",   # "out/dump_"
       "dumpFormat":         "matlab",
     },
-    # "potentialFlowSolver": {# solver for the initial potential flow, that is needed to estimate fiber directions for the bidomain equation
-    #   "relativeTolerance":  variables.potential_flow_solver_reltol,
-    #   "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual
-    #   "maxIterations":      variables.potential_flow_solver_maxit,
-    #   "solverType":         variables.potential_flow_solver_type,
-    #   "preconditionerType": variables.potential_flow_preconditioner_type,
-    #   "dumpFilename":       "",
-    #   "dumpFormat":         "matlab",
-    #   "cycleType":          "cycleV",     # if the preconditionerType is "gamg", which cycle to use "cycleV" or "cycleW"
-    #   "gamgType":           "agg",        # if the preconditionerType is "gamg", the type of the amg solver
-    #   "nLevels":            25,           # if the preconditionerType is "gamg", the maximum number of levels
-    # },
-    # "muscularEMGSolver": {   # solver for the static Bidomain equation and the EMG
-    #   "relativeTolerance":  variables.emg_solver_reltol,
-    #   "absoluteTolerance":  variables.emg_solver_abstol,
-    #   "maxIterations":      variables.emg_solver_maxit,
-    #   "solverType":         variables.emg_solver_type,
-    #   "preconditionerType": variables.emg_preconditioner_type,
-    #   "dumpFilename":       "",
-    #   "dumpFormat":         "matlab",
-    # },
+
     "mechanicsSolver": {   # solver for the dynamic mechanics problem
       "relativeTolerance":   variables.linear_relative_tolerance,           # 1e-10 relative tolerance of the linear solver
       "absoluteTolerance":   variables.linear_absolute_tolerance,           # 1e-10 absolute tolerance of the residual of the linear solver
@@ -279,7 +206,7 @@ config = {
         "timeStepWidth":          variables.dt_neuron_system,
         "logTimeStepWidthAsKey":  "dt_multiple_coupling",
         "durationLogKey":         "duration_multiple_coupling",
-        "timeStepOutputInterval": 100,
+        "timeStepOutputInterval": 500,
         "deferInitialization":    True,       # initialize nested solvers only right before computation of first timestep
         "connectedSlotsTerm1To2": None,       # connect lambda to slot 0 and gamma to slot 2
         "connectedSlotsTerm2To1": None,       # transfer nothing back
@@ -482,17 +409,6 @@ config = {
                 for fiber_index in range(get_n_fibers_in_motor_unit(motor_unit_no))
             ],
 
-            # "Coupling": {
-            #   "description":            "muscle 1",
-            #   "timeStepWidth":          variables.dt_bidomain,  # 1e-1
-            #   "logTimeStepWidthAsKey":  "dt_3D",
-            #   "durationLogKey":         "duration_total_muscle1",
-            #   "timeStepOutputInterval": 50,
-            #   "connectedSlotsTerm1To2": {0:0},  # elasticity: transfer gamma to elasticity, fibers_emg: transfer Vm to StaticBidomainSolver
-            #   "connectedSlotsTerm2To1": [None],   # elasticity: only transfer back geometry (this happens automatically),   fibers_emg: transfer nothing back
-
-              # monodomain, fibers
-              # "Term1": {
             "MultipleInstances": {
               "logKey":                     "duration_subdomains_xy_muscle1",
               "ranksAllComputedInstances":  list(range(n_ranks)),
@@ -614,7 +530,6 @@ config = {
                                 for fiber_no in [get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)] \
                                   for motor_unit_no in [get_motor_unit_no(fiber_no)]
                         ],
-                        "OutputWriter" : variables.output_writer_fibers_muscle1,
                       },
                     },
                   }
@@ -629,74 +544,11 @@ config = {
                 "disableComputationWhenStatesAreCloseToEquilibrium": variables.fast_monodomain_solver_optimizations,       # optimization where states that are close to their equilibrium will not be computed again
                 "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set
                 "neuromuscularJunctionRelativeSize": 0.1,                        # range where the neuromuscular junction is located around the center, relative to fiber length. The actual position is draws randomly from the interval [0.5-s/2, 0.5+s/2) with s being this option. 0 means sharply at the center, 0.1 means located approximately at the center, but it can vary 10% in total between all fibers.
-                "generateGPUSource":        True,                                # (set to True) only effective if optimizationType=="gpu", whether the source code for the GPU should be generated. If False, an existing source code file (which has to have the correct name) is used and compiled, i.e. the code generator is bypassed. This is useful for debugging, such that you can adjust the source code yourself. (You can also add "-g -save-temps " to compilerFlags under CellMLAdapter)
+                "generateGPUSource":        False,                                # (set to True) only effective if optimizationType=="gpu", whether the source code for the GPU should be generated. If False, an existing source code file (which has to have the correct name) is used and compiled, i.e. the code generator is bypassed. This is useful for debugging, such that you can adjust the source code yourself. (You can also add "-g -save-temps " to compilerFlags under CellMLAdapter)
                 "useSinglePrecision":       False,                               # only effective if optimizationType=="gpu", whether single precision computation should be used on the GPU. Some GPUs have poor double precision performance. Note, this drastically increases the error and, in consequence, the timestep widths should be reduced.
                 #"preCompileCommand":        "bash -c 'module load argon-tesla/gcc/11-20210110-openmp; module list; gcc --version",     # only effective if optimizationType=="gpu", system command to be executed right before the compilation
                 #"postCompileCommand":       "'",   # only effective if optimizationType=="gpu", system command to be executed right after the compilation
               },
-              # "Term2": {        # Bidomain, EMG
-              #   "OutputSurface": {        # version for fibers_emg_2d_output
-              #     "OutputWriter": [
-              #       {"format": "Paraview", "outputInterval": int(1./variables.dt_bidomain*variables.output_timestep_surface), "filename": "out/" + variables.scenario_name + "/muscle1_surface_emg", "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental",},
-              #     ] if variables.enable_surface_emg else [],
-              #     "face":                     ["0+"],              # which faces of the 3D mesh should be written into the 2D mesh
-              #     "samplingPoints":           None,                # the electrode positions, they are created in the helper.py script
-              #     "updatePointPositions":     False,               # the electrode points should be initialize in every timestep (set to False for the static case). This makes a difference if the muscle contracts, then True=fixed electrodes, False=electrodes moving with muscle.
-              #     "filename":                 "out/{}/muscle1_electrodes.csv".format(variables.scenario_name),
-              #     "enableCsvFile":            False,               # if the values at the sampling points should be written to csv files
-              #     "enableVtpFile":            False,               # if the values at the sampling points should be written to vtp files
-              #     "enableGeometryInCsvFile":  False,               # if the csv output file should contain geometry of the electrodes in every time step. This increases the file size and only makes sense if the geometry changed throughout time, i.e. when computing with contraction
-              #     "enableGeometryFiles":      False,               # if there should be extra files of the locations of the electrodes on every rank
-              #     "xiTolerance":              0.3,                 # tolerance for element-local coordinates xi, for finding electrode positions inside the elements. Increase or decrease this numbers if not all electrode points are found.
-
-              #     "StaticBidomainSolver": {
-              #       "timeStepWidth":          variables.dt_bidomain,
-              #       "timeStepOutputInterval": 50,
-              #       "durationLogKey":         "duration_bidomain_muscle1",
-              #       "solverName":             "muscularEMGSolver",
-              #       "initialGuessNonzero":    variables.emg_initial_guess_nonzero,
-              #       "enableJacobianConditionNumber": False,        # if set to true, estimate the condition number of the jacobian of the element-coordinate-to-world-frame mapping in every element and output it in the output writer
-              #       "slotNames":              [],
-              #       "nAdditionalFieldVariables": 0,
-
-              #       "PotentialFlow": {
-              #         "FiniteElementMethod" : {
-              #           "meshName":           "muscle1Mesh",
-              #           "solverName":         "potentialFlowSolver",
-              #           "prefactor":          1.0,
-              #           "dirichletBoundaryConditions": variables.potential_flow_dirichlet_bc,
-              #           "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-              #           "neumannBoundaryConditions":   [],
-              #           "inputMeshIsGlobal":  True,
-              #           "slotName":           "",
-              #         },
-              #       },
-              #       "Activation": {
-              #         "FiniteElementMethod" : {
-              #           "meshName":           "muscle1Mesh",
-              #           "solverName":         "muscularEMGSolver",
-              #           "prefactor":          1.0,
-              #           "inputMeshIsGlobal":  True,
-              #           "dirichletBoundaryConditions": {},
-              #           "dirichletOutputFilename":     None,                # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-              #           "neumannBoundaryConditions":   [],
-              #           "slotName":           "",
-              #           "diffusionTensor": [[      # sigma_i, fiber direction is (1,0,0), one list item = same tensor for all elements, multiple list items = a different tensor for each element
-              #             8.93, 0, 0,
-              #             0, 0.893, 0,
-              #             0, 0, 0.893
-              #           ]],
-              #           "extracellularDiffusionTensor": [[      # sigma_e, one list item = same tensor for all elements, multiple list items = a different tensor for each element
-              #             6.7, 0, 0,
-              #             0, 6.7, 0,
-              #             0, 0, 6.7,
-              #           ]],
-              #         },
-              #       },
-              #       "OutputWriter" : variables.output_writer_emg_muscle1,
-              #     }
-              #   }
-              # }
             }
         },
       },
@@ -751,9 +603,7 @@ config = {
             "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
             "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
             "slotNames":                    ["m1lda", "m1ldot", "m1g_in", "m1T", "m1ux", "m1uy", "m1uz"],  # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
-            "OutputWriter" : [
-              {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/muscle1_contraction", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
-            ],
+
             "mapGeometryToMeshes":          ["muscle1Mesh"] + [key for key in fiber_meshes.keys() if "muscle1_fiber" in key],    # the mesh names of the meshes that will get the geometry transferred
             "reverseMappingOrder":          True,                      # if the mapping target->own mesh should be used instead of own->target mesh. This gives better results in some cases.
             "dynamic":                      variables.dynamic,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
@@ -808,45 +658,13 @@ config = {
               "totalForceLogFilename":       "out/"+variables.scenario_name+"/muscle1_tendon_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
               "totalForceLogOutputInterval":       10,                                  # output interval when to write the totalForceLog file
 
-              # define which file formats should be written
-              # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
-              "OutputWriter" : [
-
-                # Paraview files
-                {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_displacements", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-
-                # Python callback function "postprocess"
-                # responsible to model the tendon
-                {"format": "PythonCallback", "outputInterval": 1, "callback": variables.muscle1_postprocess, "onlyNodalValues":True, "filename": "", "fileNumbering":'incremental'},
-              ],
-              # 2. additional output writer that writes also the hydrostatic pressure
-              "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
-                "OutputWriter" : [
-                  {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_pressure", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-                ]
-              },
-              # 3. additional output writer that writes virtual work terms
-              "dynamic": {    # output of the dynamic solver, has additional virtual work values
-                "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-                  {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-                  {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-                ],
-              },
-              # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
-              "LoadIncrements": {
-                "OutputWriter" : [
-                  {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_load_increments", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-                ]
-              }  
             }   
-          }
+          },
+          "OutputWriter" : [
+            {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/muscle1_contraction", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
+          ],
       }
     }
   }
   
 }
-
-# stop   timer and calculate how long parsing lasted
-if rank_no == 0:
-  t_stop_script = timeit.default_timer()
-  print("Python config parsed in {:.1f}s.".format(t_stop_script - t_start_script))

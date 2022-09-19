@@ -19,16 +19,6 @@ diffusion_solver_type = "cg"        # solver and preconditioner for the diffusio
 diffusion_preconditioner_type = "none"      # preconditioner
 diffusion_solver_maxit = 1e4
 diffusion_solver_reltol = 1e-10
-potential_flow_solver_type = "gmres"        # solver and preconditioner for an initial Laplace flow on the domain, from which fiber directions are determined
-potential_flow_preconditioner_type = "gamg" # preconditioner
-potential_flow_solver_maxit = 1e4
-potential_flow_solver_reltol = 1e-10
-emg_solver_type = "cg"              # solver and preconditioner for the 3D static Bidomain equation that solves the intra-muscular EMG signal
-emg_preconditioner_type = "none"    # preconditioner
-emg_initial_guess_nonzero = False   # If the initial guess for the emg linear system should be set to the previous solution
-emg_solver_maxit = 1e4
-emg_solver_abstol = 1e-5
-emg_solver_reltol = 1e-5
 
 # elasticity
 elasticity_solver_type = "preonly"
@@ -45,28 +35,21 @@ linear_absolute_tolerance = 1e-10          # absolute tolerance of the residual 
 # -----------------
 end_time = 20.0                   # [ms] end time of the simulation
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz. This is not used here.
+
 dt_neuron_system            = 1e-3  # [ms]
 dt_muscle_spindles          = 1e-3  # [ms]
-# dt_golgi_tendon_organs      = 1e-3  # [ms]
-# dt_interneuron              = 1e-3  # [ms]
 dt_motoneuron               = 1e-3  # [ms]
+
 dt_0D = 0.5e-3                        # [ms] timestep width of ODEs
 dt_1D = 1e-3                      # [ms] timestep width of diffusion
-dt_bidomain = 1e-2                  # [ms] timestep width of multidomain
 dt_splitting_0D1D = 1e-3            # [ms] overall timestep width of strang splitting
+
 dt_elasticity = 1e0                 # [ms] time step width of elasticity solver
 output_timestep = 1e0               # [ms] timestep for output files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
-output_timestep_fibers = 2   # [ms] timestep for multidomain output files
+
 output_timestep_elasticity = 1    # [ms] timestep for elasticity output files
-output_timestep_emg = 20    # [ms] timestep for emg output files
-
-# output_timestep_golgi_tendon_organs = 20
 output_timestep_spindles = 1         # [ms] timestep for output of files for all sensor organs and neurons
-output_timestep_motoneuron = 1    # [ms] timestep for output of files for motoneuron
-# output_timestep_interneurons = 1  # [ms] timestep for output of files for intermotoneuron
-output_timestep_surface = 20
-
 
 
 # input files
@@ -473,8 +456,8 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
   for motoneuron_index in range(n_output_values):
     output_values[0][motoneuron_index] = total_signal
   
-  print("muscle_spindles_to_motoneurons: {} -> {}".format(input_values, output_values))
-  sys.stdout.flush() # flush output. neccessary if stdout ist a pipe (eg | tee). files seem to be ok
+  # print("muscle_spindles_to_motoneurons: {} -> {}".format(input_values, output_values))
+  # sys.stdout.flush() # flush output. neccessary if stdout ist a pipe (eg | tee). files seem to be ok
 
 
 
@@ -512,7 +495,7 @@ def callback_motoneurons_input(input_values, output_values, current_time, slot_n
       
       output_values[0][motoneuron_index] = total_signal + cortical_input_value
       
-    print("motoneurons input from spindles and interneurons: {}, resulting drive: {}".format(input_values, output_values))
+    # print("motoneurons input from spindles and interneurons: {}, resulting drive: {}".format(input_values, output_values))
 
 
 

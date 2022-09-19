@@ -163,6 +163,7 @@ include_global_node_positions = False
 # further internal variables that will be set by the helper.py script and used in the config in settings_fibers_emg.py
 n_fibers_total = None
 n_subdomains_xy = None
+n_subdomains = None
 own_subdomain_coordinate_x = 0 # TODO fix this for parallelization
 own_subdomain_coordinate_y = 0 # TODO fix this for parallelization
 own_subdomain_coordinate_z = 0 # TODO fix this for parallelization

@@ -45,17 +45,17 @@ if variables.n_subdomains is not None:
   variables.n_subdomains_z = variables.n_subdomains[2]
 
 variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
-if variables.enable_weak_scaling:
-  variables.fast_monodomain_solver_optimizations = False
+# if variables.enable_weak_scaling:
+#   variables.fast_monodomain_solver_optimizations = False
 
 # 3D mesh resolution
-if variables.mesh3D_sampling_stride is not None:
-    variables.mesh3D_sampling_stride_x = variables.mesh3D_sampling_stride[0]
-    variables.mesh3D_sampling_stride_y = variables.mesh3D_sampling_stride[1]
-    variables.mesh3D_sampling_stride_z = variables.mesh3D_sampling_stride[2]
-variables.sampling_stride_x = variables.mesh3D_sampling_stride_x
-variables.sampling_stride_y = variables.mesh3D_sampling_stride_y
-variables.sampling_stride_z = variables.mesh3D_sampling_stride_z
+# if variables.mesh3D_sampling_stride is not None:
+#     variables.mesh3D_sampling_stride_x = variables.mesh3D_sampling_stride[0]
+#     variables.mesh3D_sampling_stride_y = variables.mesh3D_sampling_stride[1]
+#     variables.mesh3D_sampling_stride_z = variables.mesh3D_sampling_stride[2]
+# variables.sampling_stride_x = variables.mesh3D_sampling_stride_x
+# variables.sampling_stride_y = variables.mesh3D_sampling_stride_y
+# variables.sampling_stride_z = variables.mesh3D_sampling_stride_z
 
 # automatically initialize partitioning if it has not been set
 if n_ranks != variables.n_subdomains:

@@ -439,8 +439,8 @@ config = {
               },
               # output writer for states, algebraics and parameters
               "OutputWriter" : [
-                # {"format": "Paraview",   "outputInterval": 1+0*int(2./variables.dt_motoneuron*variables.output_timestep_motoneuron), "filename": "out/" + variables.scenario_name + "/motoneurons", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"},
-                # {"format": "PythonFile", "outputInterval": 1+0*int(2./variables.dt_motoneuron*variables.output_timestep_motoneuron), "filename": "out/" + variables.scenario_name + "/motoneurons", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"},
+                {"format": "Paraview",   "outputInterval": 100, "filename": "out/" + variables.scenario_name + "/motoneurons", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"},
+                {"format": "PythonFile", "outputInterval": 100, "filename": "out/" + variables.scenario_name + "/motoneurons", "binary": True, "fixedFormat": False, "combineFiles": True, "onlyNodalValues": True, "fileNumbering": "incremental"},
                 # {"format": "PythonCallback", "outputInterval": 1+0*int(2./variables.dt_motoneuron*variables.output_timestep_motoneuron), "callback": lambda *args, **kwargs: print('output callback')},
               ]
             }

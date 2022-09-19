@@ -18,7 +18,7 @@ n_subdomains_z = 1
 # -----------------
 tendon_extent = [3.0, 3.0, 2.0] # [cm, cm, cm]
 tendon_offset = [0.0, 0.0, 0.0]
-n_elements_tendon = [2, 2, 4] 
+n_elements_tendon = [2, 2, 6] 
 
 meshes = {}
 elasticity_dirichlet_bc = {}

@@ -63,25 +63,6 @@ using MonodomainSolver =
     >
   >;
 
-// 3D bidomain
-using BidomainSolver =
-  OutputWriter::OutputSurface<
-    TimeSteppingScheme::StaticBidomainSolver<         // bidomain
-      SpatialDiscretization::FiniteElementMethod<     // FEM for initial potential flow, fiber directions
-        Mesh::StructuredDeformableOfDimension<3>,
-        BasisFunction::LagrangeOfOrder<1>,
-        Quadrature::Gauss<3>,
-        Equation::Static::Laplace
-      >,
-      SpatialDiscretization::FiniteElementMethod<     // anisotropic diffusion
-        Mesh::StructuredDeformableOfDimension<3>,
-        BasisFunction::LagrangeOfOrder<1>,
-        Quadrature::Gauss<5>,
-        Equation::Dynamic::DirectionalDiffusion
-      >
-    >
-  >;
-
 // define helper function space for various activation signals, this is actually a vector space
 typedef FunctionSpace::FunctionSpace<Mesh::StructuredRegularFixedOfDimension<1>,BasisFunction::LagrangeOfOrder<1>> HelperFunctionSpace;
 
@@ -120,10 +101,7 @@ int main(int argc, char *argv[])
       // Fast monodomain: 0D / 1D + 3D bidomain
       Control::MapDofs< // motor neuron -> activation signal
         HelperFunctionSpace,
-        Control::Coupling<
-          MonodomainSolver,
-          BidomainSolver
-        >
+        MonodomainSolver
       >
     >,
     // 1x mechanics TODO make sure that no data is copied
@@ -131,8 +109,7 @@ int main(int argc, char *argv[])
       HelperFunctionSpace,
       MuscleContractionSolver<
           Mesh::StructuredDeformableOfDimension<3>
-      >
-      
+      >      
     >
   > problem(settings);
   

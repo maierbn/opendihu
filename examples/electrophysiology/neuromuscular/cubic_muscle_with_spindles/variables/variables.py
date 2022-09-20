@@ -174,7 +174,7 @@ z_point_index_end = None
 meshes = {}
 potential_flow_dirichlet_bc = None
 elasticity_dirichlet_bc = None
-elasticity_neumann_bc = None
+elasticity_neumann_bc = []
 fibers_on_own_rank = None
 n_fiber_nodes_on_subdomain = None
 fiber_start_node_no = None
@@ -445,7 +445,7 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
       # sum up all input signals
       total_signal += delayed_signal * 1e-3
     
-      print(" spindle {:2d}/{:2d} signal: {:.2e}".format(muscle_spindle_index,n_input_values,delayed_signal * 1e-3))
+      #print(" spindle {:2d}/{:2d} signal: {:.2e}".format(muscle_spindle_index,n_input_values,delayed_signal * 1e-3))
         
   # compute average signal over all muscle spindles
   total_signal /= n_input_values

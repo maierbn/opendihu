@@ -445,7 +445,7 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
       # sum up all input signals
       total_signal += delayed_signal * 1e-3
     
-      #print(" spindle {:2d}/{:2d} signal: {:.2e}".format(muscle_spindle_index,n_input_values,delayed_signal * 1e-3))
+      print(" spindle {:2d}/{:2d} signal: {:.2e}".format(muscle_spindle_index,n_input_values,delayed_signal * 1e-3))
         
   # compute average signal over all muscle spindles
   total_signal /= n_input_values
@@ -456,8 +456,8 @@ def callback_muscle_spindles_to_motoneurons(input_values, output_values, current
   for motoneuron_index in range(n_output_values):
     output_values[0][motoneuron_index] = total_signal
   
-  # print("muscle_spindles_to_motoneurons: {} -> {}".format(input_values, output_values))
-  # sys.stdout.flush() # flush output. neccessary if stdout ist a pipe (eg | tee). files seem to be ok
+  print("muscle_spindles_to_motoneurons: {} -> {}".format(input_values, output_values))
+  sys.stdout.flush() # flush output. neccessary if stdout ist a pipe (eg | tee). files seem to be ok
 
 
 

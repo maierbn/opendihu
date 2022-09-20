@@ -1,25 +1,3 @@
-# Multiple 1D fibers (monodomain) with 3D intra-muscular EMG (static bidomain), biceps geometry
-# to see all available arguments, execute: ./fibers_emg ../settings_fibers_emg.py -help
-#
-# if fiber_file=cuboid.bin, it uses a small cuboid test example
-#
-# You have to set n_subdomains such that it matches the number of processes, e.g. 2x2x1 = 4 processes.
-# Decomposition is in x,y,z direction, the fibers are aligned with the z axis.
-# E.g. --n_subdomains 2 2 1 which is 2x2x1 means no subdivision per fiber,
-# --n_subdomains 8 8 4 means every fiber will be subdivided to 4 processes and all fibers will be computed by 8x8 processes.
-#
-# Example with 4 processes and end time 5, and otherwise default parameters:
-#   mpirun -n 4 ./fibers_emg ../settings_fibers_emg.py --n_subdomains 2 2 1 --end_time=5.0
-#
-# Three files contribute to the settings:
-# A lot of variables are set by the helper.py script, the variables and their values are defined in variables.py and this file
-# creates the composite config that is needed by opendihu.
-# You can provided parameter values in a custom_variables.py file in the variables subfolder of fibers_emg. (Instead of custom_variables.py you can choose any filename.)
-# This custom variables file should be the next argument on the command line after settings_fibers_emg.py, e.g.:
-#
-#  ./fibers_emg ../settings_fibers_emg.py custom_variables.py --n_subdomains 1 1 1 --end_time=5.0
-#  ./fibers_febio ../settings_fibers_emg.py febio.py
-
 import sys, os
 import timeit
 import argparse
@@ -135,33 +113,33 @@ variables.sampling_stride_x = variables.mesh3D_sampling_stride_x
 variables.sampling_stride_y = variables.mesh3D_sampling_stride_y
 variables.sampling_stride_z = variables.mesh3D_sampling_stride_z
 
-# automatically initialize partitioning if it has not been set
-if n_ranks != variables.n_subdomains:
+# # automatically initialize partitioning if it has not been set
+# if n_ranks != variables.n_subdomains:
 
-  # create all possible partitionings to the given number of ranks
-  optimal_value = n_ranks**(1/3)
-  possible_partitionings = []
-  for i in range(1,n_ranks+1):
-    for j in range(1,n_ranks+1):
-      if i*j <= n_ranks and n_ranks % (i*j) == 0:
-        k = int(n_ranks / (i*j))
-        performance = (k-optimal_value)**2 + (j-optimal_value)**2 + 1.1*(i-optimal_value)**2
-        possible_partitionings.append([i,j,k,performance])
+#   # create all possible partitionings to the given number of ranks
+#   optimal_value = n_ranks**(1/3)
+#   possible_partitionings = []
+#   for i in range(1,n_ranks+1):
+#     for j in range(1,n_ranks+1):
+#       if i*j <= n_ranks and n_ranks % (i*j) == 0:
+#         k = int(n_ranks / (i*j))
+#         performance = (k-optimal_value)**2 + (j-optimal_value)**2 + 1.1*(i-optimal_value)**2
+#         possible_partitionings.append([i,j,k,performance])
 
-  # if no possible partitioning was found
-  if len(possible_partitionings) == 0:
-    if rank_no == 0:
-      print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {} and no automatic partitioning could be done.\n\n\033[0m".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
-    quit()
+#   # if no possible partitioning was found
+#   if len(possible_partitionings) == 0:
+#     if rank_no == 0:
+#       print("\n\n\033[0;31mError! Number of ranks {} does not match given partitioning {} x {} x {} = {} and no automatic partitioning could be done.\n\n\033[0m".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
+#     quit()
 
-  # select the partitioning with the lowest value of performance which is the best
-  lowest_performance = possible_partitionings[0][3]+1
-  for i in range(len(possible_partitionings)):
-    if possible_partitionings[i][3] < lowest_performance:
-      lowest_performance = possible_partitionings[i][3]
-      variables.n_subdomains_x = possible_partitionings[i][0]
-      variables.n_subdomains_y = possible_partitionings[i][1]
-      variables.n_subdomains_z = possible_partitionings[i][2]
+#   # select the partitioning with the lowest value of performance which is the best
+#   lowest_performance = possible_partitionings[0][3]+1
+#   for i in range(len(possible_partitionings)):
+#     if possible_partitionings[i][3] < lowest_performance:
+#       lowest_performance = possible_partitionings[i][3]
+#       variables.n_subdomains_x = possible_partitionings[i][0]
+#       variables.n_subdomains_y = possible_partitionings[i][1]
+#       variables.n_subdomains_z = possible_partitionings[i][2]
 
 # output information of run
 if rank_no == 0:
@@ -255,14 +233,6 @@ neuron_meshes = {
     "inputMeshIsGlobal":  True,
     "nRanks":             n_ranks
   },
-  # "interneuronMesh": {
-  #   "nElements" :         variables.n_interneurons-1 if n_ranks == 1 else variables.n_interneurons*n_ranks,
-  #   "physicalExtent":     0,
-  #   "physicalOffset":     0,
-  #   "logKey":             "interneuron",
-  #   "inputMeshIsGlobal":  True,
-  #   "nRanks":             n_ranks
-  # },
   "muscleSpindleMesh": {
     # each muscle has the same number of muscle spindels
     "nElements" :         (2*variables.n_muscle_spindles)-1 if n_ranks == 1 else (2*variables.n_muscle_spindles)*n_ranks,
@@ -272,14 +242,6 @@ neuron_meshes = {
     "inputMeshIsGlobal":  True,
     "nRanks":             n_ranks
   },
-  # "golgiTendonOrganMesh": {
-  #   "nElements" :         2*(variables.n_golgi_tendon_organs)-1 if n_ranks == 1 else (2*variables.n_golgi_tendon_organs)*n_ranks,
-  #   "physicalExtent":     1, # has no special meaning. only to seperate data points in paraview
-  #   "physicalOffset":     0,
-  #   "logKey":             "golgi_tendon_organ",
-  #   "inputMeshIsGlobal":  True,
-  #   "nRanks":             n_ranks
-  # },
   # no `nodePositions` fields as the nodes are created internally
   "muscle1Mesh": {
     "nElements" :         variables.n_elements_muscle1,
@@ -289,7 +251,6 @@ neuron_meshes = {
     "inputMeshIsGlobal":  True,
     "nRanks":             n_ranks
   },
-
   # needed for mechanics solver
   "muscle1Mesh_quadratic": {
     "nElements" :         [elems // 2 for elems in variables.n_elements_muscle1],
@@ -299,18 +260,6 @@ neuron_meshes = {
     "inputMeshIsGlobal":  True,
     "nRanks":             n_ranks,
   },
-
-  # combines spindel and interneuron signals
-  # target of the MapDofs that computes the signal of the muscle spindles and interneurons to the motoneurons
-  # input of the MapDofs that computes the motoneuron input
-  # "muscleSpindleAndInterneuronMesh": {
-  #   "nElements" :         2*variables.n_motoneurons+variables.n_interneurons-1 if n_ranks == 1 else (2*variables.n_motoneurons+variables.n_interneurons)*n_ranks,
-  #   "physicalExtent":     0,
-  #   "physicalOffset":     0,
-  #   "logKey":             "muscle_spindle_interneuron",
-  #   "inputMeshIsGlobal":  True,
-  #   "nRanks":             n_ranks
-  # },
 }
 variables.meshes.update(neuron_meshes)
 variables.meshes.update(fiber_meshes)
@@ -691,6 +640,7 @@ config = {
                 "callback":                         variables.callback_motoneurons_input,
               }
             ],
+            "afterComputation": None,
 
             "Heun" : {
               "description":                  "motoneurons",
@@ -1102,7 +1052,7 @@ config = {
               "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(variables.n_points_global)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
               "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(variables.n_points_global)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
               "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
-              #"constantBodyForce":           variables.main_constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
+              "constantBodyForce":           [0, 0, 0],       # a constant force that acts on the whole body, e.g. for gravity
 
               "dirichletOutputFilename":     "out/"+variables.scenario_name+"/muscle1_dirichlet_boundary_conditions",     # output filename for the dirichlet boundary conditions, set to "" to have no output
               "totalForceLogFilename":       "out/"+variables.scenario_name+"/muscle1_tendon_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume

@@ -1,25 +1,3 @@
-# Multiple 1D fibers (monodomain) with 3D intra-muscular EMG (static bidomain), biceps geometry
-# to see all available arguments, execute: ./fibers_emg ../settings_fibers_emg.py -help
-#
-# if fiber_file=cuboid.bin, it uses a small cuboid test example
-#
-# You have to set n_subdomains such that it matches the number of processes, e.g. 2x2x1 = 4 processes.
-# Decomposition is in x,y,z direction, the fibers are aligned with the z axis.
-# E.g. --n_subdomains 2 2 1 which is 2x2x1 means no subdivision per fiber,
-# --n_subdomains 8 8 4 means every fiber will be subdivided to 4 processes and all fibers will be computed by 8x8 processes.
-#
-# Example with 4 processes and end time 5, and otherwise default parameters:
-#   mpirun -n 4 ./fibers_emg ../settings_fibers_emg.py --n_subdomains 2 2 1 --end_time=5.0
-#
-# Three files contribute to the settings:
-# A lot of variables are set by the helper.py script, the variables and their values are defined in variables.py and this file
-# creates the composite config that is needed by opendihu.
-# You can provided parameter values in a custom_variables.py file in the variables subfolder of fibers_emg. (Instead of custom_variables.py you can choose any filename.)
-# This custom variables file should be the next argument on the command line after settings_fibers_emg.py, e.g.:
-#
-#  ./fibers_emg ../settings_fibers_emg.py custom_variables.py --n_subdomains 1 1 1 --end_time=5.0
-#  ./fibers_febio ../settings_fibers_emg.py febio.py
-
 import sys, os
 import timeit
 import argparse
@@ -320,6 +298,7 @@ config = {
                 "callback":                         variables.callback_motoneurons_input,
               }
             ],
+            "afterComputation": None,
 
             "Heun" : {
               "description":                  "motoneurons",
@@ -544,7 +523,7 @@ config = {
                 "disableComputationWhenStatesAreCloseToEquilibrium": variables.fast_monodomain_solver_optimizations,       # optimization where states that are close to their equilibrium will not be computed again
                 "valueForStimulatedPoint":  variables.vm_value_stimulated,       # to which value of Vm the stimulated node should be set
                 "neuromuscularJunctionRelativeSize": 0.1,                        # range where the neuromuscular junction is located around the center, relative to fiber length. The actual position is draws randomly from the interval [0.5-s/2, 0.5+s/2) with s being this option. 0 means sharply at the center, 0.1 means located approximately at the center, but it can vary 10% in total between all fibers.
-                "generateGPUSource":        False,                                # (set to True) only effective if optimizationType=="gpu", whether the source code for the GPU should be generated. If False, an existing source code file (which has to have the correct name) is used and compiled, i.e. the code generator is bypassed. This is useful for debugging, such that you can adjust the source code yourself. (You can also add "-g -save-temps " to compilerFlags under CellMLAdapter)
+                "generateGPUSource":        True,                                # (set to True) only effective if optimizationType=="gpu", whether the source code for the GPU should be generated. If False, an existing source code file (which has to have the correct name) is used and compiled, i.e. the code generator is bypassed. This is useful for debugging, such that you can adjust the source code yourself. (You can also add "-g -save-temps " to compilerFlags under CellMLAdapter)
                 "useSinglePrecision":       False,                               # only effective if optimizationType=="gpu", whether single precision computation should be used on the GPU. Some GPUs have poor double precision performance. Note, this drastically increases the error and, in consequence, the timestep widths should be reduced.
                 #"preCompileCommand":        "bash -c 'module load argon-tesla/gcc/11-20210110-openmp; module list; gcc --version",     # only effective if optimizationType=="gpu", system command to be executed right before the compilation
                 #"postCompileCommand":       "'",   # only effective if optimizationType=="gpu", system command to be executed right after the compilation
@@ -603,7 +582,9 @@ config = {
             "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
             "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
             "slotNames":                    ["m1lda", "m1ldot", "m1g_in", "m1T", "m1ux", "m1uy", "m1uz"],  # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
-
+            "OutputWriter" : [
+              {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/muscle1_contraction", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
+            ],
             "mapGeometryToMeshes":          ["muscle1Mesh"] + [key for key in fiber_meshes.keys() if "muscle1_fiber" in key],    # the mesh names of the meshes that will get the geometry transferred
             "reverseMappingOrder":          True,                      # if the mapping target->own mesh should be used instead of own->target mesh. This gives better results in some cases.
             "dynamic":                      variables.dynamic,                      # if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem
@@ -656,13 +637,30 @@ config = {
 
               "dirichletOutputFilename":     "out/"+variables.scenario_name+"/muscle1_dirichlet_boundary_conditions",     # output filename for the dirichlet boundary conditions, set to "" to have no output
               "totalForceLogFilename":       "out/"+variables.scenario_name+"/muscle1_tendon_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
-              "totalForceLogOutputInterval":       10,                                  # output interval when to write the totalForceLog file
-
+              "totalForceLogOutputInterval":       10,  
+              "OutputWriter" : [
+                #{"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/muscle1_contraction", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
+              ],                                # output interval when to write the totalForceLog file
+              "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
+                # "OutputWriter" : [
+                #   {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_pressure", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                # ]
+              },
+              # 3. additional output writer that writes virtual work terms
+              "dynamic": {    # output of the dynamic solver, has additional virtual work values
+                # "OutputWriter" : [   # output files for displacements function space (quadratic elements)
+                #   {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                #   {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                # ],
+              },
+              # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
+              "LoadIncrements": {
+                # "OutputWriter" : [
+                #   {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_load_increments", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                # ]
+              }  
             }   
-          },
-          "OutputWriter" : [
-            {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/muscle1_contraction", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
-          ],
+        },          
       }
     }
   }

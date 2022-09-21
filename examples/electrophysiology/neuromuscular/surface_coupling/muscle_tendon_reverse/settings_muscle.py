@@ -15,98 +15,10 @@ sys.path.insert(0, os.path.join(script_path,'variables'))
 
 import variables              # file variables.py, defined default values for all parameters, you can set the parameters there
 
-# if first argument contains "*.py", it is a custom variable definition file, load these values
-if ".py" in sys.argv[0]:
-  variables_path_and_filename = sys.argv[0]
-  variables_path,variables_filename = os.path.split(variables_path_and_filename)  # get path and filename
-  sys.path.insert(0, os.path.join(script_path,variables_path))                    # add the directory of the variables file to python path
-  variables_module,_ = os.path.splitext(variables_filename)                       # remove the ".py" extension to get the name of the module
-
-  if rank_no == 0:
-    print("Loading variables from \"{}\".".format(variables_path_and_filename))
-
-  custom_variables = importlib.import_module(variables_module, package=variables_filename)    # import variables module
-  variables.__dict__.update(custom_variables.__dict__)
-  sys.argv = sys.argv[1:]     # remove first argument, which now has already been parsed
-
-# define command line arguments
-mbool = lambda x:bool(distutils.util.strtobool(x))   # function to parse bool arguments
-parser = argparse.ArgumentParser(description='fibers_emg')
-parser.add_argument('--scenario_name',                       help='The name to identify this run in the log.',            default=variables.scenario_name)
-parser.add_argument('--n_subdomains', nargs=3,               help='Number of subdomains in x,y,z direction.',             type=int)
-parser.add_argument('--n_subdomains_x', '-x',                help='Number of subdomains in x direction.',                 type=int, default=variables.n_subdomains_x)
-parser.add_argument('--n_subdomains_y', '-y',                help='Number of subdomains in y direction.',                 type=int, default=variables.n_subdomains_y)
-parser.add_argument('--n_subdomains_z', '-z',                help='Number of subdomains in z direction.',                 type=int, default=variables.n_subdomains_z)
-parser.add_argument('--diffusion_solver_type',               help='The solver for the diffusion.',                        default=variables.diffusion_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
-parser.add_argument('--diffusion_preconditioner_type',       help='The preconditioner for the diffusion.',                default=variables.diffusion_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
-parser.add_argument('--diffusion_solver_reltol',             help='Ralative tolerance for diffusion solver',              type=float, default=variables.diffusion_solver_reltol)
-parser.add_argument('--diffusion_solver_maxit',              help='Maximum number of iterations for diffusion solver',    type=int, default=variables.diffusion_solver_maxit)
-parser.add_argument('--potential_flow_solver_type',          help='The solver for the potential flow (non-spd matrix).',  default=variables.potential_flow_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
-parser.add_argument('--potential_flow_preconditioner_type',  help='The preconditioner for the potential flow.',           default=variables.potential_flow_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
-parser.add_argument('--potential_flow_solver_maxit',         help='Maximum number of iterations for potential flow solver', type=int, default=variables.potential_flow_solver_maxit)
-parser.add_argument('--potential_flow_solver_reltol',        help='Relative tolerance for potential flow solver',         type=float, default=variables.potential_flow_solver_reltol)
-parser.add_argument('--emg_solver_type',                     help='The solver for the static bidomain.',                  default=variables.emg_solver_type)
-#parser.add_argument('--emg_solver_type',                    help='The solver for the static bidomain.',                  default=variables.emg_solver_type, choices=["gmres","cg","lu","gamg","richardson","chebyshev","cholesky","jacobi","sor","preonly"])
-parser.add_argument('--emg_preconditioner_type',             help='The preconditioner for the static bidomain.',          default=variables.emg_preconditioner_type, choices=["jacobi","sor","lu","ilu","gamg","none"])
-parser.add_argument('--emg_solver_maxit',                    help='Maximum number of iterations for activation solver',   type=int, default=variables.emg_solver_maxit)
-parser.add_argument('--emg_solver_reltol',                   help='Relative tolerance for activation solver',             type=float, default=variables.emg_solver_reltol)
-parser.add_argument('--emg_solver_abstol',                   help='Absolute tolerance for activation solver',             type=float, default=variables.emg_solver_abstol)
-parser.add_argument('--emg_initial_guess_nonzero',           help='If the initial guess for the emg linear system should be set to the previous solution.', default=variables.emg_initial_guess_nonzero, action='store_true')
-parser.add_argument('--paraview_output',                     help='Enable the paraview output writer.',          default=variables.paraview_output, action='store_true')
-parser.add_argument('--python_output',                       help='Enable the python output writer.',                     default=variables.python_output, action='store_true')
-parser.add_argument('--adios_output',                        help='Enable the MegaMol/ADIOS output writer.',          default=variables.adios_output, action='store_true')
-parser.add_argument('--cellml_file',                         help='The filename of the file that contains the cellml model.', default=variables.cellml_file)
-parser.add_argument('--fiber_distribution_file',             help='The filename of the file that contains the MU firing times.', default=variables.fiber_distribution_file)
-parser.add_argument('--firing_times_file',                   help='The filename of the file that contains the cellml model.', default=variables.firing_times_file)
-parser.add_argument('--stimulation_frequency',               help='Stimulations per ms. Each stimulation corresponds to one line in the firing_times_file.', default=variables.stimulation_frequency)
-parser.add_argument('--end_time', '--tend', '-t',            help='The end simulation time.',                             type=float, default=variables.end_time)
-parser.add_argument('--dt_0D',                               help='The timestep for the 0D model.',                       type=float, default=variables.dt_0D)
-parser.add_argument('--dt_1D',                               help='The timestep for the 1D model.',                       type=float, default=variables.dt_1D)
-parser.add_argument('--dt_splitting',                        help='The timestep for the splitting.',                      type=float, default=variables.dt_splitting_0D1D)
-parser.add_argument('--dt_elasticity',                       help='The timestep for the elasticity model.', type=float, default=variables.dt_elasticity)
-parser.add_argument('--optimization_type',                   help='The optimization_type in the cellml adapter.',         default=variables.optimization_type, choices=["vc", "simd", "openmp", "gpu"])
-parser.add_argument('--approximate_exponential_function',    help='Approximate the exp function by a Taylor series',      type=mbool, default=variables.approximate_exponential_function)
-parser.add_argument('--maximum_number_of_threads',           help='If optimization_type is "openmp", the max thread number, 0=all.', type=int, default=variables.maximum_number_of_threads)
-parser.add_argument('--use_aovs_memory_layout',              help='If optimization_type is "vc", whether to use AoVS memory layout.', type=mbool, default=variables.use_aovs_memory_layout)
-parser.add_argument('--disable_firing_output',               help='Disables the initial list of fiber firings.',          default=variables.disable_firing_output, action='store_true')
-parser.add_argument('--enable_surface_emg',                  help='Enable the surface emg output writer.',                type=mbool, default=variables.enable_surface_emg)
-parser.add_argument('--fast_monodomain_solver_optimizations',help='Enable the optimizations for fibers.',                 type=mbool, default=variables.fast_monodomain_solver_optimizations)
-parser.add_argument('--enable_weak_scaling',                 help='Disable optimization for not stimulated fibers.',      default=False, action='store_true')
-parser.add_argument('--v',                                   help='Enable full verbosity in c++ code')
-parser.add_argument('-v',                                    help='Enable verbosity level in c++ code',                   action="store_true")
-parser.add_argument('-vmodule',                              help='Enable verbosity level for given file in c++ code')
-parser.add_argument('-pause',                                help='Stop at parallel debugging barrier',                   action="store_true")
-# parameter for the 3D mesh generation
-parser.add_argument('--mesh3D_sampling_stride', nargs=3,     help='Stride to select the mesh points in x, y and z direction.', type=int, default=None)
-parser.add_argument('--mesh3D_sampling_stride_x',            help='Stride to select the mesh points in x direction.',     type=int, default=variables.sampling_stride_x)
-parser.add_argument('--mesh3D_sampling_stride_y',            help='Stride to select the mesh points in y direction.',     type=int, default=variables.sampling_stride_y)
-parser.add_argument('--mesh3D_sampling_stride_z',            help='Stride to select the mesh points in z direction.',     type=int, default=variables.sampling_stride_z)
-
-# parse command line arguments and assign values to variables module
-args, other_args = parser.parse_known_args(args=sys.argv[:-2], namespace=variables)
-if len(other_args) != 0 and rank_no == 0:
-    print("Warning: These arguments were not parsed by the settings python file\n  " + "\n  ".join(other_args), file=sys.stderr)
-
-
-
-# initialize some dependend variables
-if variables.n_subdomains is not None:
-  variables.n_subdomains_x = variables.n_subdomains[0]
-  variables.n_subdomains_y = variables.n_subdomains[1]
-  variables.n_subdomains_z = variables.n_subdomains[2]
 
 variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
-if variables.enable_weak_scaling:
-  variables.fast_monodomain_solver_optimizations = False
 
-# 3D mesh resolution
-if variables.mesh3D_sampling_stride is not None:
-    variables.mesh3D_sampling_stride_x = variables.mesh3D_sampling_stride[0]
-    variables.mesh3D_sampling_stride_y = variables.mesh3D_sampling_stride[1]
-    variables.mesh3D_sampling_stride_z = variables.mesh3D_sampling_stride[2]
-variables.sampling_stride_x = variables.mesh3D_sampling_stride_x
-variables.sampling_stride_y = variables.mesh3D_sampling_stride_y
-variables.sampling_stride_z = variables.mesh3D_sampling_stride_z
+
 
 # automatically initialize partitioning if it has not been set
 if n_ranks != variables.n_subdomains:
@@ -139,16 +51,9 @@ if n_ranks != variables.n_subdomains:
 # output information of run
 if rank_no == 0:
   print("scenario_name: {},  n_subdomains: {} {} {},  n_ranks: {},  end_time: {}".format(variables.scenario_name, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, n_ranks, variables.end_time))
-  print("dt_0D:           {:0.1e}, diffusion_solver_type:      {}".format(variables.dt_0D, variables.diffusion_solver_type))
-  print("dt_1D:           {:0.1e}, potential_flow_solver_type: {}, approx. exp.: {}".format(variables.dt_1D, variables.potential_flow_solver_type, variables.approximate_exponential_function))
-  print("dt_splitting:    {:0.1e}, emg_solver_type:            {}, emg_initial_guess_nonzero: {}".format(variables.dt_splitting_0D1D, variables.emg_solver_type, variables.emg_initial_guess_nonzero))
-  print("                          fast_monodomain_solver_optimizations: {}".format(variables.fast_monodomain_solver_optimizations))
   print("cellml_file:             {}".format(variables.cellml_file))
-  print("fiber_distribution_file: {}".format(variables.fiber_distribution_file))
   print("firing_times_file:       {}".format(variables.firing_times_file))
   print("********************************************************************************")
-
-  print("prefactor: sigma_eff/(Am*Cm) = {} = {} / ({}*{})".format(variables.Conductivity/(variables.Am*variables.Cm), variables.Conductivity, variables.Am, variables.Cm))
 
   # start timer to measure duration of parsing of this script
   t_start_script = timeit.default_timer()
@@ -174,42 +79,13 @@ k = 0 #free side of the muscle
 
 for j in range(ny):
     for i in range(nx):
-      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None, None, 0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
+      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, 0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
 
-for k in range(nz):
-    variables.elasticity_dirichlet_bc[k*nx*ny] = [0.0, 0.0, None, None,None,None] # displacement ux uy uz, velocity vx vy vz
-
-variables.elasticity_dirichlet_bc[0] = [0.0, 0.0, 0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
-
-# Neumann BC: increasing traction
-
-# variables.force = 1.0
-# k = mz-1
-# variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,0], "face": "2+"} for j in range(my) for i in range(mx)]
-
-# def update_neumann_bc(t):
-
-#   # set new Neumann boundary conditions
-#   factor = min(1, t/100)   # for t ∈ [0,100] from 0 to 1
-#   elasticity_neumann_bc = [{
-# 		"element": k*mx*my + j*mx + i, 
-# 		"constantVector": [0,0, variables.force*factor], 		# force pointing to bottom
-# 		"face": "2+",
-#     "isInReferenceConfiguration": True
-#   } for j in range(my) for i in range(mx)]
-
-#   config = {
-#     "inputMeshIsGlobal": True,
-#     "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
-#     "neumannBoundaryConditions": elasticity_neumann_bc,
-#   }
-#   print("prescribed pulling force to bottom: {}".format(variables.force*factor))
-#   return config
 
 # meshes
 
 # add neuron meshes
-neuron_meshes = {
+muscle_meshes = {
 
   "muscle1Mesh": {
     "nElements" :         variables.n_elements_muscle1,
@@ -230,7 +106,7 @@ neuron_meshes = {
     "nRanks":             n_ranks,
   }
 }
-variables.meshes.update(neuron_meshes)
+variables.meshes.update(muscle_meshes)
 variables.meshes.update(fiber_meshes)
 
 
@@ -512,7 +388,7 @@ config = {
                 "durationLogKey":             "muscle1_duration_mechanics",               # key to find duration of this solver in the log file
                 "timeStepOutputInterval":     1,                         # how often the current time step should be printed to console
 
-                "materialParameters":         variables.material_parameters,  # material parameters of the Mooney-Rivlin material
+                "materialParameters":         variables.muscle_material_parameters,  # material parameters of the Mooney-Rivlin material
                 "density":                    variables.rho,             # density of the material
                 "dampingFactor":              variables.damping_factor,  # factor for velocity dependent damping
                 "displacementsScalingFactor": 1.0,                       # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
@@ -533,7 +409,7 @@ config = {
                 "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
                 #"loadFactors":                [0.5, 1.0],                # load factors for every timestep
                 "loadFactors":                [],                        # no load factors, solve problem directly
-                "loadFactorGiveUpThreshold":  1e-5,                       # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
+                "loadFactorGiveUpThreshold":  0.25,                       # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
                 "scaleInitialGuess":          False,                     # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
                 "nNonlinearSolveCalls":       1,                         # how often the nonlinear solve should be repeated
 
@@ -550,7 +426,7 @@ config = {
                 "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(variables.n_points_global)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
                 "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(variables.n_points_global)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
                 "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
-                "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
+                "constantBodyForce":           None,       # a constant force that acts on the whole body, e.g. for gravity
 
                 "dirichletOutputFilename":     "out/"+variables.scenario_name+"/muscle1_dirichlet_boundary_conditions",     # output filename for the dirichlet boundary conditions, set to "" to have no output
                 "totalForceLogFilename":       "out/"+variables.scenario_name+"/muscle1_tendon_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume

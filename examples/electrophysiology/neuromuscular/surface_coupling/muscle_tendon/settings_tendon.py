@@ -18,6 +18,7 @@ from create_partitioned_meshes_for_settings import *   # file create_partitioned
 from helper import *
 
 variables.scenario_name = "tendon"
+
 # compute partitioning
 if rank_no == 0:
   if n_ranks != variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z:
@@ -35,7 +36,7 @@ if (variables.tendon_material == "nonLinear"):
     k1 = 42.217e3               # [N/cm^2=kPa]
     k2 = 411.360e3              # [N/cm^2=kPa]
 
-    material_parameters = [c, ca, ct, cat, ctt, mu, k1, k2]
+    variables.material_parameters = [c, ca, ct, cat, ctt, mu, k1, k2]
 
 else:
     # material parameters for Saint Venant-Kirchhoff material
@@ -47,7 +48,7 @@ else:
     lambd = shear_modulus*(youngs_modulus - 2*shear_modulus) / (3*shear_modulus - youngs_modulus)  # Lamé parameter lambda
     mu = shear_modulus       # Lamé parameter mu or G (shear modulus)
 
-    material_parameters = [lambd, mu]
+    variables.material_parameters = [lambd, mu]
 
 
 # add meshes
@@ -82,6 +83,7 @@ variables.meshes.update(meshes_tendon)
 
 # dirichlet
 k = nz-1 #free side of the tendon
+
 for j in range(ny):
     for i in range(nx):
       variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
@@ -126,7 +128,7 @@ config = {
       "durationLogKey":             "duration_mechanics",         # key to find duration of this solver in the log file
       "timeStepOutputInterval":     1,                            # how often the current time step should be printed to console
       
-      "materialParameters":         material_parameters,  # material parameters of the Mooney-Rivlin material
+      "materialParameters":         variables.material_parameters,  # material parameters of the Mooney-Rivlin material
       "density":                    variables.rho,  
       "displacementsScalingFactor": 1.0,                          # scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements
       "residualNormLogFilename":    "log_residual_norm.txt",      # log file where residual norm values of the nonlinear solver will be written

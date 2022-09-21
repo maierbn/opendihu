@@ -256,23 +256,6 @@ if rank_no == 0 and not variables.disable_firing_output:
 
 variables.n_points_global = nx * ny * nz
 variables.n_elements_global = mx * my * mz
- 
-# set Dirichlet BC values for bottom nodes to 0 and for top nodes to 1
-# variables.potential_flow_dirichlet_bc = {}
-# for i in range(nx*ny):
-#   variables.potential_flow_dirichlet_bc[i] = 0.0
-#   variables.potential_flow_dirichlet_bc[(nz-1)*nx*ny + i] = 1.0
-  
-# set boundary conditions for the elasticity
-# Note, we have a composite mesh, consisting of 3Dmesh_elasticity_quadratic and 3DFatMesh_elasticity_quadratic and this composite mesh has a numbering that goes over all dofs.
-# The following works because we index the first sub mesh and the first mesh of a composite mesh always has all own dofs with their normal no.s.
-# The 2nd mesh has the shared dofs to the first mesh removed in the internal numbering, i.e. internally, they are not counted twice. 
-# However, here in the settings, the numbering is concatenated from both meshes, i.e., first all nodes of mesh 0, then all nodes of mesh 1, etc.
 
-#######################################
-# determine positions of neuromuscular junctions in fiber mesh
-# stimulate every fiber at its center
-# center_index = variables.n_points_whole_fiber // 2
-# stimulation_node_nos = [center_index-1, center_index, center_index+1]
 
 

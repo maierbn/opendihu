@@ -21,25 +21,37 @@ from helper import *
 
 variables.scenario_name = "tendon"
 
-# material parameters for tendon material
-c = 9.98                    # [N/cm^2=kPa]
-ca = 14.92                  # [-]
-ct = 14.7                   # [-]
-cat = 9.64                  # [-]
-ctt = 11.24                 # [-]
-mu = 3.76                   # [N/cm^2=kPa]
-k1 = 42.217e3               # [N/cm^2=kPa]
-k2 = 411.360e3              # [N/cm^2=kPa]
-variables.material_parameters = [c, ca, ct, cat, ctt, mu, k1, k2]
-
- 
-
 # compute partitioning
 if rank_no == 0:
   if n_ranks != variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z:
     print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
     sys.exit(-1)
     
+# update material parameters
+if (variables.tendon_material == "nonLinear"):
+    c = 9.98                    # [N/cm^2=kPa]
+    ca = 14.92                  # [-]
+    ct = 14.7                   # [-]
+    cat = 9.64                  # [-]
+    ctt = 11.24                 # [-]
+    mu = 3.76                   # [N/cm^2=kPa]
+    k1 = 42.217e3               # [N/cm^2=kPa]
+    k2 = 411.360e3              # [N/cm^2=kPa]
+
+    variables.material_parameters = [c, ca, ct, cat, ctt, mu, k1, k2]
+
+else:
+    # material parameters for Saint Venant-Kirchhoff material
+    # https://www.researchgate.net/publication/230248067_Bulk_Modulus
+
+    youngs_modulus = 7e4        # [N/cm^2 = 10kPa]  
+    shear_modulus = 3e4
+
+    lambd = shear_modulus*(youngs_modulus - 2*shear_modulus) / (3*shear_modulus - youngs_modulus)  # Lamé parameter lambda
+    mu = shear_modulus       # Lamé parameter mu or G (shear modulus)
+
+    variables.material_parameters = [lambd, mu]
+
 
 # add meshes
 meshes_tendon = {

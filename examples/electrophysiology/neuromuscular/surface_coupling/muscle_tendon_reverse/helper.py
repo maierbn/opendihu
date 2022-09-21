@@ -182,40 +182,6 @@ def get_motor_unit_no(fiber_no):
 def get_diffusion_prefactor(fiber_no, mu_no):
   return variables.get_conductivity(fiber_no, mu_no) / (variables.get_am(fiber_no, mu_no) * variables.get_cm(fiber_no, mu_no))
 
-def compartment_gets_stimulated(compartment_no, frequency, current_time):
-  """
-  determine if compartment compartment_no gets stimulated at simulation time current_time
-  """
-
-  # determine motor unit
-  alpha = 1.0   # 0.8
-  mu_no = int(get_motor_unit_no(compartment_no)*alpha)
-  
-  # determine if fiber fires now
-  index = int(np.round(current_time * frequency))
-  n_firing_times = np.size(variables.firing_times,0)
-  
-  #if variables.firing_times[index % n_firing_times, mu_no] == 1:
-    #print("{}: fiber {} is mu {}, t = {}, row: {}, stimulated: {} {}".format(rank_no, fiber_no, mu_no, current_time, (index % n_firing_times), variables.firing_times[index % n_firing_times, mu_no], "true" if variables.firing_times[index % n_firing_times, mu_no] == 1 else "false"))
-  
-  return variables.firing_times[index % n_firing_times, mu_no] == 1
-
-
-# determine MU sizes and create n_fibers_in_motor_unit array
-variables.n_fibers_in_motor_unit = [0 for _ in range(variables.n_motor_units)]
-variables.fiber_index_in_motor_unit = [[] for _ in range(variables.n_motor_units)]
-
-for fiber_no in range(variables.n_fibers_total):
-  mu_no = get_motor_unit_no(fiber_no)
-  variables.n_fibers_in_motor_unit[mu_no] += 1
-  variables.fiber_index_in_motor_unit[mu_no].append(fiber_no)
-
-def get_fiber_index_in_motor_unit(fiber_index, motor_unit_no):
-  return variables.fiber_index_in_motor_unit[motor_unit_no][fiber_index]
-  
-def get_n_fibers_in_motor_unit(motor_unit_no):
-  return variables.n_fibers_in_motor_unit[motor_unit_no]
-
 
 
 # for debugging output show when the first 20 fibers will fire
@@ -290,97 +256,6 @@ if rank_no == 0 and not variables.disable_firing_output:
 
 variables.n_points_global = nx * ny * nz
 variables.n_elements_global = mx * my * mz
- 
-# set Dirichlet BC values for bottom nodes to 0 and for top nodes to 1
-variables.potential_flow_dirichlet_bc = {}
-for i in range(nx*ny):
-  variables.potential_flow_dirichlet_bc[i] = 0.0
-  variables.potential_flow_dirichlet_bc[(nz-1)*nx*ny + i] = 1.0
-  
-# set boundary conditions for the elasticity
-# Note, we have a composite mesh, consisting of 3Dmesh_elasticity_quadratic and 3DFatMesh_elasticity_quadratic and this composite mesh has a numbering that goes over all dofs.
-# The following works because we index the first sub mesh and the first mesh of a composite mesh always has all own dofs with their normal no.s.
-# The 2nd mesh has the shared dofs to the first mesh removed in the internal numbering, i.e. internally, they are not counted twice. 
-# However, here in the settings, the numbering is concatenated from both meshes, i.e., first all nodes of mesh 0, then all nodes of mesh 1, etc.
-
-# print all mesh information
-if False:
-  for mesh_name in ["3Dmesh_elasticity_quadratic","3DFatMesh_elasticity_quadratic"]:
-    print("")
-    print("{}: mesh {}".format(rank_no, mesh_name))
-    print("    nPointsLocal: {}".format(variables.meshes[mesh_name]["nPointsLocal"]))
-    print("    nPointsGlobal: {}".format(variables.meshes[mesh_name]["nPointsGlobal"]))
-    print("    nElementsGlobal: {}".format(variables.meshes[mesh_name]["nElementsGlobal"]))
-    print("    inputMeshIsGlobal: {}".format(variables.meshes[mesh_name]["inputMeshIsGlobal"]))
-    print("    nElements: {}".format(variables.meshes[mesh_name]["nElements"]))
-    print("    nRanks: {}".format(variables.meshes[mesh_name]["nRanks"]))
-    print("    len(nodePositions): {}".format(len(variables.meshes[mesh_name]["nodePositions"][1])))
 
 
-#######################################
-# position sensor organs in the 3D mesh
 
-# determine (random) positions of muscle spindles in elasticity mesh
-# _muscle_spindle_node_nos = []
-# for muscle_spindle_no in range(variables.n_muscle_spindles):
-#   i = random.randrange(0,nx)
-#   j = random.randrange(0,ny)
-#   k = random.randrange(0,nz)
-
-#   dof_no_global = k*nx*ny + j*nx + i
-#   _muscle_spindle_node_nos.append(dof_no_global)
-# muscle1_spindle_node_nos = _muscle_spindle_node_nos
-# # the muscle spindle mesh holds muscle spdindels of both muscles
-# muscle1_spindle_indices = list(range(variables.n_muscle_spindles))
-
-#######################################
-# position Golgi tendon organs in the 3D mesh
-
-# determine (random) positions of Golgi organs in elasticity mesh close to tendons
-# _golgi_tendon_organ_node_nos = []
-# for golgi_tendon_organ_no in range(variables.n_golgi_tendon_organs):
-#   i = random.randrange(0,nx)
-#   j = random.randrange(0,ny)
-#   # position on left and right tendon
-#   if golgi_tendon_organ_no % 2 == 0:
-#     k = int(0.1*nz)
-#   else:
-#     k = int(0.9*nz)
- 
-#   dof_no_global = k*nx*ny + j*nx + i
-#   _golgi_tendon_organ_node_nos.append(dof_no_global)
-# muscle1_golgi_tendon_organ_node_nos = _golgi_tendon_organ_node_nos
-# # the muscle spindle mesh holds muscle spdindels of both muscles
-# muscle1_golgi_tendon_organ_indices = list(range(variables.n_golgi_tendon_organs))
-
-#######################################
-# determine positions of neuromuscular junctions in fiber mesh
-# stimulate every fiber at its center
-center_index = variables.n_points_whole_fiber // 2
-stimulation_node_nos = [center_index-1, center_index, center_index+1]
-
-#######################################
-# motoneurons
-# muscle1_motoneuron_indices = list(range(variables.n_motoneurons))
-
-#######################################
-# combined interneuron + muscle spindle mesh
-# (input for motoneurons)
-"""
-splindles1 --mean--> mn1 \
-                          }--mean--> mn1
-golgi      --------> in  X
-                          }--mean--> mn2
-splindles2 --mean--> mn2 /            ^
-                      ^               |
-                      |               '- motoneuron input: muscle..._motoneuron_indices
-                      '- combinded mesh: in_ms_..._indices
-"""
-# in_ms_mesh_muscle1_motoneuron_indices = list(range(variables.n_motoneurons)) 
-# in_ms_mesh_interneuron_indices = list(range(2*variables.n_motoneurons, 2*variables.n_motoneurons + variables.n_interneurons))
-
-# print(f"Muscle 1 indices in spindle    mesh: {muscle1_spindle_indices[0]:3}...{muscle1_spindle_indices[-1]:3}")
-# print(f"Muscle 1 indices in golgi t.o. mesh: {muscle1_golgi_tendon_organ_indices[0]:3}...{muscle1_golgi_tendon_organ_indices[-1]:3}")
-# print(f"Muscle 1 indices in motoneuron mesh: {muscle1_motoneuron_indices[0]:3}...{muscle1_motoneuron_indices[-1]:3}")
-# print(f"Muscle 1 indices in sp.+itern. mesh: {in_ms_mesh_muscle1_motoneuron_indices[0]:3}...{in_ms_mesh_muscle1_motoneuron_indices[-1]:3}")
-# print(f"Intern.  indices in sp.+itern. mesh: {in_ms_mesh_interneuron_indices[0]:3}...{in_ms_mesh_interneuron_indices[-1]:3}")

@@ -19,14 +19,6 @@ import variables              # file variables.py, defined default values for al
 variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
 
 
-# 3D mesh resolution
-# if variables.mesh3D_sampling_stride is not None:
-#     variables.mesh3D_sampling_stride_x = variables.mesh3D_sampling_stride[0]
-#     variables.mesh3D_sampling_stride_y = variables.mesh3D_sampling_stride[1]
-#     variables.mesh3D_sampling_stride_z = variables.mesh3D_sampling_stride[2]
-# variables.sampling_stride_x = variables.mesh3D_sampling_stride_x
-# variables.sampling_stride_y = variables.mesh3D_sampling_stride_y
-# variables.sampling_stride_z = variables.mesh3D_sampling_stride_z
 
 # automatically initialize partitioning if it has not been set
 if n_ranks != variables.n_subdomains:
@@ -434,7 +426,7 @@ config = {
                 "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(variables.n_points_global)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
                 "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(variables.n_points_global)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
                 "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
-                #"constantBodyForce":           variables.main_constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
+                "constantBodyForce":           None,       # a constant force that acts on the whole body, e.g. for gravity
 
                 "dirichletOutputFilename":     "out/"+variables.scenario_name+"/muscle1_dirichlet_boundary_conditions",     # output filename for the dirichlet boundary conditions, set to "" to have no output
                 "totalForceLogFilename":       "out/"+variables.scenario_name+"/muscle1_tendon_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume

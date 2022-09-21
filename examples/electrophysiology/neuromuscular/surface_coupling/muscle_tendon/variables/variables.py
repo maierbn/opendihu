@@ -76,14 +76,10 @@ tendon_extent = [3.0, 3.0, 2.0] # [cm, cm, cm]
 tendon_offset = [0.0, 0.0, muscle1_extent[2]]
 n_elements_tendon = [8, 8, 6] 
 
-
-
-
 # random
 # ------------
 maximum_number_of_threads = 1
 use_aovs_memory_layout = True
-# enable_surface_emg = False
 fast_monodomain_solver_optimizations = True
 
 own_subdomain_coordinate_x = 0 # TODO fix this for parallelization
@@ -117,8 +113,8 @@ d  = 9.1733                 # [-] anisotropy parameter
 # for debugging, b = 0 leads to normal Mooney-Rivlin
 
 muscle_material_parameters = [c1, c2, b, d]   # material parameters
-tendon_material = "SaintVenantKirchoff"         #use with tendon_linear_dynamic.cpp
-#tendon_material = "nonLinear"  
+#tendon_material = "SaintVenantKirchoff"         #use with tendon_linear_dynamic.cpp
+tendon_material = "nonLinear"  
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 # These functions can be redefined differently in a custom variables script
@@ -192,4 +188,3 @@ def muscle1_postprocess(data):
     global muscle1_tendon_z
     muscle1_tendon_z = z_value
     print("Muscle2: t: {:6.2f}, avg. change of muscle length: {:+2.2f}".format(t, muscle1_tendon_z - muscle1_extent[2]))
-

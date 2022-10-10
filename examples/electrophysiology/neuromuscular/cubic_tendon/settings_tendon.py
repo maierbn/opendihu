@@ -12,10 +12,8 @@ n_ranks = (int)(sys.argv[-1])
 script_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, script_path)
 sys.path.insert(0, os.path.join(script_path,'variables'))
+import variables             
 
-import variables              # file variables.py, defines default values for all parameters, you can set the parameters there
-from create_partitioned_meshes_for_settings import *   # file create_partitioned_meshes_for_settings with helper functions about own subdomain
-from helper import *
 
 # compute partitioning
 if rank_no == 0:
@@ -62,7 +60,7 @@ meshes_tendon = {
   },
   # needed for mechanics solver
   "tendon_Mesh_quadratic": {
-    "nElements" :         [elems // 2 for elems in variables.n_elements_tendon],
+    "nElements" :         [elems//2 for elems in variables.n_elements_tendon],
     "physicalExtent":     variables.tendon_extent,
     "physicalOffset":     variables.tendon_offset,
     "logKey":             "tendon_quadratic",
@@ -86,7 +84,7 @@ for j in range(ny):
       variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
 
 # neumann
-force = 1.0
+force = 0.3
 k = 0
 variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,-force], "face": "2-"} for j in range(my) for i in range(mx)]
 
@@ -110,12 +108,15 @@ config = {
     "residualNormLogFilename":    "log_residual_norm.txt",      # log file where residual norm values of the nonlinear solver will be written
     "useAnalyticJacobian":        True,                         # whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)
     "useNumericJacobian":         False,                        # whether to use the numerically computed jacobian matrix in the nonlinear solver (slow), only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian
-      
+ 
     "dumpDenseMatlabVariables":   False,                        # whether to have extra output of matlab vectors, x,r, jacobian matrix (very slow)
     # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
     
     # mesh
-    "meshName":                   "tendon_Mesh_quadratic",           # mesh with quadratic Lagrange ansatz functions
+    
+    # "meshName":                   "tendon_Mesh_quadratic",           # mesh with quadratic Lagrange ansatz functions
+    "meshName":                   "tendon_Mesh",           # mesh with quadratic Lagrange ansatz functions
+
     "inputMeshIsGlobal":          True,                         # boundary conditions are specified in global numberings, whereas the mesh is given in local numberings
     
     "fiberMeshNames":             [],                           # fiber meshes that will be used to determine the fiber direction
@@ -133,7 +134,7 @@ config = {
     "snesLineSearchType":         "l2",                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
     "snesAbsoluteTolerance":      1e-5,                         # absolute tolerance of the nonlinear solver
     "snesRebuildJacobianFrequency": 5,          
-    
+
     #"dumpFilename": "out/r{}/m".format(sys.argv[-1]),          # dump system matrix and right hand side after every solve
     "dumpFilename":               "",                           # dump disabled
     "dumpFormat":                 "matlab",                     # default, ascii, matlab
@@ -154,12 +155,12 @@ config = {
     "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step 
     
     "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
-    "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(variables.n_points_global)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-    "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(variables.n_points_global)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+    "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(nx * ny * nz * 8)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+    "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(nx * ny * nz * 8)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
     "extrapolateInitialGuess":     True, 
 
     "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions_tendon",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-    # "totalForceLogFilename":       "out/tendon_bottom_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
+    "totalForceLogFilename":       "",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
     # "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
     # "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
     # "totalForceTopElementNosGlobal":     [(nz-1)*ny*nx + j*nx + i for j in range(ny) for i in range(nx)],   # global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal

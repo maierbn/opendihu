@@ -61,18 +61,20 @@
     <!-- Communication method, use TCP sockets, Change network to "ib0" on SuperMUC -->
     <m2n:sockets from="TendonSolver" to="MuscleSolverLeft" network="lo" />
 
-    <coupling-scheme:serial-explicit>
+    <coupling-scheme:serial-implicit>
       <!-- <participants first="MuscleSolverLeft" second="TendonSolver"/> -->
       <participants second="TendonSolver" first="MuscleSolverLeft"/>
 
-      <max-time value="0.3"/>           <!-- end time of the whole simulation -->
+      <max-time value="0.5"/>           <!-- end time of the whole simulation -->
       <time-window-size value="0.1"/>   <!-- timestep width for coupling -->
 
+    <absolute-convergence-measure limit="1e-5" data="Displacement" mesh="MuscleMeshLeft"/>
+    <absolute-convergence-measure limit="1e-5" data="Velocity" mesh="MuscleMeshLeft"/>
 
       <exchange data="Traction"        mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
       <exchange data="Displacement"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  <!--initialize="true"-->
       <exchange data="Velocity"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  <!--initialize="true"-->
-    </coupling-scheme:serial-explicit>
+    </coupling-scheme:serial-implicit>
     
   </solver-interface>
 </precice-configuration>

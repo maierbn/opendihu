@@ -23,7 +23,7 @@ diffusion_solver_reltol = 1e-10
 
 elasticity_solver_type = "preonly"
 elasticity_preconditioner_type = "lu"
-snes_max_iterations = 10                  # maximum number of iterations in the nonlinear solver
+snes_max_iterations = 50                  # maximum number of iterations in the nonlinear solver
 snes_rebuild_jacobian_frequency = 2       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
 snes_relative_tolerance = 1e-5      # relative tolerance of the nonlinear solver
 snes_absolute_tolerance = 1e-5      # absolute tolerance of the nonlinear solver
@@ -149,8 +149,8 @@ input_directory = os.path.join(os.environ.get('OPENDIHU_HOME', '../../../../../'
 #cellml_file = input_directory+"/hodgkin_huxley_1952.c"
 cellml_file = input_directory+"/hodgkin_huxley-razumova.cellml"
 fiber_distribution_file = input_directory+"/MU_fibre_distribution_multidomain_67x67_100.txt"
-firing_times_file = input_directory + "/MU_firing_times_real.txt"
-#firing_times_file = input_directory + "/MU_firing_times_real_no_firing.txt" # no firing
+# firing_times_file = input_directory + "/MU_firing_times_real.txt"
+firing_times_file = input_directory + "/MU_firing_times_real_no_firing.txt" # no firing
 
 def get_from_obj(data, path):
   for elem in path:

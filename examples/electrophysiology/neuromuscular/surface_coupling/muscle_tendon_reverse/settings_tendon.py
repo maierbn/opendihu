@@ -82,11 +82,10 @@ variables.meshes.update(meshes_tendon)
 
 
 # dirichlet
-k = nz-1 #free side of the tendon
+k = mz -1# free side of the tendon
 
-for j in range(ny):
-    for i in range(nx):
-      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
+force = 0.1
+variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,-force], "face": "2-"} for j in range(my) for i in range(mx)]
 
 
 config = {
@@ -146,17 +145,17 @@ config = {
       "fiberDirection":             [0,0,1],                      # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
       
       # nonlinear solver
-      "relativeTolerance":          1e-10,                         # 1e-10 relative tolerance of the linear solver
+      "relativeTolerance":          1e-5,                         # 1e-10 relative tolerance of the linear solver
       "absoluteTolerance":          1e-10,                        # 1e-10 absolute tolerance of the residual of the linear solver       
       "solverType":                 "preonly",                    # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
       "preconditionerType":         "lu",                         # type of the preconditioner
       "maxIterations":              1e4,                          # maximum number of iterations in the linear solver
       "snesMaxFunctionEvaluations": 1e8,                          # maximum number of function iterations
-      "snesMaxIterations":          240,                           # maximum number of iterations in the nonlinear solver
-      "snesRelativeTolerance":      1e-4,                         # relative tolerance of the nonlinear solver
+      "snesMaxIterations":          50,                           # maximum number of iterations in the nonlinear solver
+      "snesRelativeTolerance":      1e-5,                         # relative tolerance of the nonlinear solver
       "snesLineSearchType":         "l2",                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
       "snesAbsoluteTolerance":      1e-5,                         # absolute tolerance of the nonlinear solver
-      "snesRebuildJacobianFrequency": 5,          
+      "snesRebuildJacobianFrequency": 2,          
       
       #"dumpFilename": "out/r{}/m".format(sys.argv[-1]),          # dump system matrix and right hand side after every solve
       "dumpFilename":               "",                           # dump disabled

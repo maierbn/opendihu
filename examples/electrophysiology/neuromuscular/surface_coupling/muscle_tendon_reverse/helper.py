@@ -248,14 +248,3 @@ if rank_no == 0 and not variables.disable_firing_output:
 
 
 
-####################################
-# set Dirichlet BC for the flow problem
-
-[nx, ny, nz] = [elem + 1 for elem in variables.n_elements_muscle1]
-[mx, my, mz] = [elem // 2 for elem in variables.n_elements_muscle1] # quadratic elements consist of 2 linear elements along each axis
-
-variables.n_points_global = nx * ny * nz
-variables.n_elements_global = mx * my * mz
-
-
-

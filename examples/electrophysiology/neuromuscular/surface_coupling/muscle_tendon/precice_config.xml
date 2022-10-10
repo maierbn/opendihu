@@ -65,7 +65,7 @@
       <!-- <participants first="MuscleSolverLeft" second="TendonSolver"/> -->
       <participants second="TendonSolver" first="MuscleSolverLeft"/>
 
-      <max-time value="20.0"/>           <!-- end time of the whole simulation -->
+      <max-time value="0.5"/>           <!-- end time of the whole simulation -->
       <time-window-size value="0.1"/>   <!-- timestep width for coupling -->
 
       <exchange data="Displacement"    mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>

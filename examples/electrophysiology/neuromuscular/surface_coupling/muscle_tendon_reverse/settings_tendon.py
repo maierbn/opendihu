@@ -81,11 +81,18 @@ variables.meshes.update(meshes_tendon)
 [mx, my, mz] = [elem // 2 for elem in variables.n_elements_tendon] # quadratic elements consist of 2 linear elements along each axis
 
 
-# dirichlet
-k = mz -1# free side of the tendon
+
+# k = nz-1 
+
+# for j in range(ny):
+#     for i in range(nx):
+#       variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, 0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
+
+
+k = mz-1
 
 force = 0.1
-variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,-force], "face": "2-"} for j in range(my) for i in range(mx)]
+variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,+force], "face": "2+"} for j in range(my) for i in range(mx)]
 
 
 config = {
@@ -109,13 +116,13 @@ config = {
       ],
       "preciceData": [  
         {
-          "mode":                 "read-displacements-velocities",   # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
+          "mode":                 "write-displacements-velocities",   # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
           "preciceMeshName":      "TendonMeshLeft",                    # name of the precice coupling surface mesh, as given in the precice xml settings file
           "displacementsName":    "Displacement",                     # name of the displacements "data", i.e. field variable, as given in the precice xml settings file
           "velocitiesName":       "Velocity",                         # name of the velocity "data", i.e. field variable, as given in the precice xml settings file
         },
         {
-          "mode":                 "write-traction",                    # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
+          "mode":                 "read-traction",                    # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
           "preciceMeshName":      "TendonMeshLeft",                    # name of the precice coupling surface mesh, as given in the precice xml settings 
           "tractionName":         "Traction",                         # name of the traction "data", i.e. field variable, as given in the precice xml settings file
         }

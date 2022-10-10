@@ -37,9 +37,9 @@
       <use-mesh name="MuscleMeshLeft" from="MuscleSolverLeft"/>
       
       <!-- Define input/output of the solver, the mesh should be the own one.  -->
-      <read-data name="Displacement"  mesh="TendonMeshLeft"/>
-      <read-data name="Velocity"      mesh="TendonMeshLeft"/>
-      <write-data  name="Traction"      mesh="TendonMeshLeft"/>
+      <write-data name="Displacement"  mesh="TendonMeshLeft"/>
+      <write-data name="Velocity"      mesh="TendonMeshLeft"/>
+      <read-data  name="Traction"      mesh="TendonMeshLeft"/>
       <mapping:nearest-neighbor direction="read" from="MuscleMeshLeft" to="TendonMeshLeft" constraint="consistent"/>
       <export:vtk directory="preCICE-output" />
     </participant>
@@ -51,9 +51,9 @@
       <use-mesh name="TendonMeshLeft"     from="TendonSolver"/>
       
       <!-- Define input/output of the solver, the mesh should be the own one. -->
-      <write-data  name="Displacement"  mesh="MuscleMeshLeft"/>
-      <write-data  name="Velocity"      mesh="MuscleMeshLeft"/>
-      <read-data name="Traction"      mesh="MuscleMeshLeft"/>
+      <read-data  name="Displacement"  mesh="MuscleMeshLeft"/>
+      <read-data  name="Velocity"      mesh="MuscleMeshLeft"/>
+      <write-data name="Traction"      mesh="MuscleMeshLeft"/>
       <mapping:nearest-neighbor direction="read" from="TendonMeshLeft" to="MuscleMeshLeft" constraint="consistent"/>
       <export:vtk directory="preCICE-output" />
     </participant>
@@ -61,20 +61,22 @@
     <!-- Communication method, use TCP sockets, Change network to "ib0" on SuperMUC -->
     <m2n:sockets from="TendonSolver" to="MuscleSolverLeft" network="lo" />
 
-    <coupling-scheme:serial-implicit>
+    <coupling-scheme:serial-explicit>
       <!-- <participants first="MuscleSolverLeft" second="TendonSolver"/> -->
-      <participants second="TendonSolver" first="MuscleSolverLeft"/>
+      <participants first="TendonSolver" second="MuscleSolverLeft"/>
 
-      <max-time value="0.5"/>           <!-- end time of the whole simulation -->
+      <max-time value="5.0"/>           <!-- end time of the whole simulation -->
       <time-window-size value="0.1"/>   <!-- timestep width for coupling -->
 
-    <absolute-convergence-measure limit="1e-5" data="Displacement" mesh="MuscleMeshLeft"/>
-    <absolute-convergence-measure limit="1e-5" data="Velocity" mesh="MuscleMeshLeft"/>
+      <!-- <absolute-convergence-measure limit="1e-5" data="Displacement" mesh="MuscleMeshLeft"/>
+      <absolute-convergence-measure limit="1e-5" data="Velocity" mesh="MuscleMeshLeft"/>
+      <max-iterations value="15" /> -->
 
-      <exchange data="Traction"        mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
-      <exchange data="Displacement"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  <!--initialize="true"-->
-      <exchange data="Velocity"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  <!--initialize="true"-->
-    </coupling-scheme:serial-implicit>
+      <exchange data="Displacement"        mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
+      <exchange data="Velocity"        mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
+
+      <exchange data="Traction"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  <!--initialize="true"-->
+    </coupling-scheme:serial-explicit>
     
   </solver-interface>
 </precice-configuration>

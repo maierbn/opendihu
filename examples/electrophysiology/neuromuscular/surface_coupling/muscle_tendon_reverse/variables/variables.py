@@ -66,7 +66,7 @@ sampling_factor_elasticity_fat_y = 0.5
 # geometry
 # ------------
 muscle1_extent = [3.0, 3.0, 14.8] # [cm, cm, cm]
-n_elements_muscle1 = [8, 8, 30] # linear elements. each qudaratic element uses the combined nodes of 8 linear elements
+n_elements_muscle1 = [2, 2, 20] # linear elements. each qudaratic element uses the combined nodes of 8 linear elements
 n_points_whole_fiber = 40
 n_fibers_x = 4
 n_fibers_y = 4
@@ -74,7 +74,7 @@ n_fibers_y = 4
 
 tendon_extent = [3.0, 3.0, 2.0] # [cm, cm, cm]
 tendon_offset = [0.0, 0.0, muscle1_extent[2]]
-n_elements_tendon = [8, 8, 6] 
+n_elements_tendon = [2, 2, 6] 
 
 # random
 # ------------

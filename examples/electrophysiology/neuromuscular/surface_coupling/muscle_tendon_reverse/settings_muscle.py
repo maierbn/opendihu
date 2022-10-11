@@ -17,9 +17,6 @@ import variables              # file variables.py, defined default values for al
 
 
 variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
-
-
-
 # automatically initialize partitioning if it has not been set
 if n_ranks != variables.n_subdomains:
 
@@ -72,8 +69,6 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 
 [nx, ny, nz] = [elem + 1 for elem in variables.n_elements_muscle1]
 [mx, my, mz] = [elem // 2 for elem in variables.n_elements_muscle1] # quadratic elements consist of 2 linear elements along each axis
-
-variables.elasticity_dirichlet_bc = {}
 
 k = 0 #free side of the muscle
 

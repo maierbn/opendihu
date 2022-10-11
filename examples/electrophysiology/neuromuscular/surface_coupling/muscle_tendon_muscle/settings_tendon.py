@@ -82,45 +82,6 @@ variables.meshes.update(meshes_tendon)
 [nx, ny, nz] = [elem + 1 for elem in variables.n_elements_tendon]
 [mx, my, mz] = [elem // 2 for elem in variables.n_elements_tendon] # quadratic elements consist of 2 linear elements along each axis
 
-variables.elasticity_dirichlet_bc = {}
-
-k = nz-1 #free side of the tendon
-
-for j in range(ny):
-    for i in range(nx):
-      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [None, None, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
-
-for k in range(nz):
-    variables.elasticity_dirichlet_bc[k*nx*ny] = [0.0, 0.0, None, None, None, None] # displacement ux uy uz, velocity vx vy vz
-
-variables.elasticity_dirichlet_bc[(nz-1)*nx*ny] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
-
-# Neumann BC: increasing traction
-
-# variables.force = 1000.0
-# k = mz-1
-# variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,0], "face": "2+"} for j in range(my) for i in range(mx)]
-
-# def update_neumann_bc(t):
-
-#   # set new Neumann boundary conditions
-#   factor = min(1, t/100)   # for t ∈ [0,100] from 0 to 1
-#   elasticity_neumann_bc = [{
-# 		"element": k*mx*my + j*mx + i, 
-# 		"constantVector": [0,0, variables.force*factor], 		# force pointing to bottom
-# 		"face": "2+",
-#     "isInReferenceConfiguration": True
-#   } for j in range(my) for i in range(mx)]
-
-#   config = {
-#     "inputMeshIsGlobal": True,
-#     "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
-#     "neumannBoundaryConditions": elasticity_neumann_bc,
-#   }
-#   print("prescribed pulling force to bottom: {}".format(variables.force*factor))
-#   return config
-
-
 
 config = {
   "scenarioName":                   variables.scenario_name,      # scenario name to identify the simulation runs in the log file
@@ -194,13 +155,13 @@ config = {
       "fiberDirection":             [0,0,1],                      # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system
       
       # nonlinear solver
-       "relativeTolerance":          1e-10,                         # 1e-10 relative tolerance of the linear solver
+      "relativeTolerance":          1e-5,                         # 1e-10 relative tolerance of the linear solver
       "absoluteTolerance":          1e-10,                        # 1e-10 absolute tolerance of the residual of the linear solver       
       "solverType":                 "preonly",                    # type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls
       "preconditionerType":         "lu",                         # type of the preconditioner
       "maxIterations":              1e4,                          # maximum number of iterations in the linear solver
       "snesMaxFunctionEvaluations": 1e8,                          # maximum number of function iterations
-      "snesMaxIterations":          24,                           # maximum number of iterations in the nonlinear solver
+      "snesMaxIterations":          50,                           # maximum number of iterations in the nonlinear solver
       "snesRelativeTolerance":      1e-5,                         # relative tolerance of the nonlinear solver
       "snesLineSearchType":         "l2",                         # type of linesearch, possible values: "bt" "nleqerr" "basic" "l2" "cp" "ncglinear"
       "snesAbsoluteTolerance":      1e-5,                         # absolute tolerance of the nonlinear solver
@@ -213,22 +174,22 @@ config = {
       #"loadFactors":                [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep
       #"loadFactors":                [0.5, 1.0],                   # load factors for every timestep
       "loadFactors":                [],                           # no load factors, solve problem directly
-      "loadFactorGiveUpThreshold":  1e-5,                         # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
+      "loadFactorGiveUpThreshold":  1e-3,                         # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
       "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
       
       # boundary and initial conditions
       "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
-      "neumannBoundaryConditions":   [],     # Neumann boundary conditions that define traction forces on surfaces of elements
-      "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+      "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
+      "divideNeumannBoundaryConditionValuesByTotalArea": False,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
       "updateDirichletBoundaryConditionsFunction": None, #update_dirichlet_bc,   # function that updates the dirichlet BCs while the simulation is running
       "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # stide every which step the update function should be called, 1 means every time step
       "updateNeumannBoundaryConditionsFunction": None,       # a callback function to periodically update the Neumann boundary conditions
       "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step      # every which step the update function should be called, 1 means every time step
-      
+
+      "constantBodyForce":           None,       # a constant force that acts on the whole body, e.g. for gravity
       "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(nx*ny*nz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
       "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(nx*ny*nz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
       "extrapolateInitialGuess":     True,                                # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
-      "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
       
       "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions_tendon",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
       # "totalForceLogFilename":       "out/tendon_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume

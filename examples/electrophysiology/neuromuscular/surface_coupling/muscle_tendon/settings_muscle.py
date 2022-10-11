@@ -73,8 +73,6 @@ variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
 [nx, ny, nz] = [elem + 1 for elem in variables.n_elements_muscle1]
 [mx, my, mz] = [elem // 2 for elem in variables.n_elements_muscle1] # quadratic elements consist of 2 linear elements along each axis
 
-variables.elasticity_dirichlet_bc = {}
-
 k = 0 #free side of the muscle
 
 for j in range(ny):

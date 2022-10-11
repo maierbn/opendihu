@@ -71,7 +71,6 @@ n_points_whole_fiber = 40
 n_fibers_x = 4
 n_fibers_y = 4
 
-
 tendon_extent = [3.0, 3.0, 2.0] # [cm, cm, cm]
 tendon_offset = [0.0, 0.0, muscle1_extent[2]]
 n_elements_tendon = [2, 2, 6] 

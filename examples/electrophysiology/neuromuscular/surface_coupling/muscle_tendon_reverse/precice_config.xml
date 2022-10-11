@@ -72,9 +72,8 @@
       <absolute-convergence-measure limit="1e-5" data="Velocity" mesh="MuscleMeshLeft"/>
       <max-iterations value="15" /> -->
 
-      <exchange data="Displacement"        mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
+      <exchange data="Displacement"    mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
       <exchange data="Velocity"        mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
-
       <exchange data="Traction"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  <!--initialize="true"-->
     </coupling-scheme:serial-explicit>
     

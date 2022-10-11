@@ -78,15 +78,15 @@ for j in range(variables.n_fibers_y):
     fiber_no = j*variables.n_fibers_x + i
     
     # determine start position of fiber in (x,y)-plane
-    x = 0 + i / (variables.n_fibers_x - 1) * variables.muscle2_extent[0]
-    y = 0 + j / (variables.n_fibers_y - 1) * variables.muscle2_extent[1]
+    x = variables.muscle2_offset[0] + i / (variables.n_fibers_x - 1) * variables.muscle2_extent[0]
+    y = variables.muscle2_offset[1] + j / (variables.n_fibers_y - 1) * variables.muscle2_extent[1]
 
     # loop over points of a single fiber
     node_positions = []
     for k in range(variables.n_points_whole_fiber):
       x_pos = x
       y_pos = y
-      z_pos = 0.0 + k / (variables.n_points_whole_fiber - 1) * variables.muscle2_extent[2]
+      z_pos = variables.muscle2_offset[2] + k / (variables.n_points_whole_fiber - 1) * variables.muscle2_extent[2]
       node_positions.append([x_pos,y_pos,z_pos])
     
     mesh_name = "muscle2_fiber{}".format(fiber_no)
@@ -221,40 +221,6 @@ def get_motor_unit_no(fiber_no):
 
 def get_diffusion_prefactor(fiber_no, mu_no):
   return variables.get_conductivity(fiber_no, mu_no) / (variables.get_am(fiber_no, mu_no) * variables.get_cm(fiber_no, mu_no))
-
-def compartment_gets_stimulated(compartment_no, frequency, current_time):
-  """
-  determine if compartment compartment_no gets stimulated at simulation time current_time
-  """
-
-  # determine motor unit
-  alpha = 1.0   # 0.8
-  mu_no = int(get_motor_unit_no(compartment_no)*alpha)
-  
-  # determine if fiber fires now
-  index = int(np.round(current_time * frequency))
-  n_firing_times = np.size(variables.firing_times,0)
-  
-  #if variables.firing_times[index % n_firing_times, mu_no] == 1:
-    #print("{}: fiber {} is mu {}, t = {}, row: {}, stimulated: {} {}".format(rank_no, fiber_no, mu_no, current_time, (index % n_firing_times), variables.firing_times[index % n_firing_times, mu_no], "true" if variables.firing_times[index % n_firing_times, mu_no] == 1 else "false"))
-  
-  return variables.firing_times[index % n_firing_times, mu_no] == 1
-
-
-# determine MU sizes and create n_fibers_in_motor_unit array
-variables.n_fibers_in_motor_unit = [0 for _ in range(variables.n_motor_units)]
-variables.fiber_index_in_motor_unit = [[] for _ in range(variables.n_motor_units)]
-
-for fiber_no in range(variables.n_fibers_total):
-  mu_no = get_motor_unit_no(fiber_no)
-  variables.n_fibers_in_motor_unit[mu_no] += 1
-  variables.fiber_index_in_motor_unit[mu_no].append(fiber_no)
-
-def get_fiber_index_in_motor_unit(fiber_index, motor_unit_no):
-  return variables.fiber_index_in_motor_unit[motor_unit_no][fiber_index]
-  
-def get_n_fibers_in_motor_unit(motor_unit_no):
-  return variables.n_fibers_in_motor_unit[motor_unit_no]
 
 
 

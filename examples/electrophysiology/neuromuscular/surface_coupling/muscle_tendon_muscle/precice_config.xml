@@ -95,30 +95,27 @@
     <!-- Communication method, use TCP sockets, Change network to "ib0" on SuperMUC -->
     <m2n:sockets from="TendonSolver" to="Muscle1Solver" network="lo" />
     <m2n:sockets from="TendonSolver" to="Muscle2Solver" network="lo" />
-
-
-    <coupling-scheme:serial-explicit>
-      <!-- <participants first="MuscleSolver" second="TendonSolver"/> -->
-      <participants first="TendonSolver" second="Muscle1Solver"/>
-
-      <max-time value="20.0"/>           <!-- end time of the whole simulation -->
-      <time-window-size value="1.0"/>   <!-- timestep width for coupling -->
-
-      <exchange data="Displacement"    mesh="Tendon1Mesh"    from="TendonSolver" to="Muscle1Solver"/>
-      <exchange data="Velocity"        mesh="Tendon1Mesh"    from="TendonSolver" to="Muscle1Solver"/>
-      <exchange data="Traction"        mesh="Muscle1Mesh" from="Muscle1Solver" to="TendonSolver"/>  <!--initialize="true"-->
-    </coupling-scheme:serial-explicit>
     
-    <coupling-scheme:serial-explicit>
-      <!-- <participants first="MuscleSolver" second="TendonSolver"/> -->
-      <participants first="TendonSolver" second="Muscle2Solver"/>
+    <coupling-scheme:multi>
+      <participant name="TendonSolver" control="yes"/>
+      <participant name="Muscle1Solver" />
+      <participant name="Muscle2Solver" />
 
-      <max-time value="20.0"/>           <!-- end time of the whole simulation -->
-      <time-window-size value="1.0"/>   <!-- timestep width for coupling -->
+      <max-time value="20.0"/>          
+      <time-window-size value="0.1"/>   
+
+      <max-iterations value="15" />
+      <relative-convergence-measure limit="1e-3" data="Displacement" mesh="Tendon1Mesh"/>
+      <relative-convergence-measure limit="1e-3" data="Displacement" mesh="Tendon2Mesh"/>
 
       <exchange data="Displacement"    mesh="Tendon2Mesh"    from="TendonSolver" to="Muscle2Solver"/>
       <exchange data="Velocity"        mesh="Tendon2Mesh"    from="TendonSolver" to="Muscle2Solver"/>
-      <exchange data="Traction"        mesh="Muscle2Mesh" from="Muscle2Solver" to="TendonSolver"/>  <!--initialize="true"-->
-    </coupling-scheme:serial-explicit>
+      <exchange data="Traction"        mesh="Muscle2Mesh" from="Muscle2Solver" to="TendonSolver"/>  
+
+      <exchange data="Displacement"    mesh="Tendon1Mesh"    from="TendonSolver" to="Muscle1Solver"/>
+      <exchange data="Velocity"        mesh="Tendon1Mesh"    from="TendonSolver" to="Muscle1Solver"/>
+      <exchange data="Traction"        mesh="Muscle1Mesh" from="Muscle1Solver" to="TendonSolver"/>  
+    </coupling-scheme:multi>
+
   </solver-interface>
 </precice-configuration>

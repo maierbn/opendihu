@@ -73,8 +73,14 @@ variables.meshes.update(meshes_tendon)
 # boundary conditions (for quadratic elements)
 # --------------------------------------------
 
-[nx, ny, nz] = [elem + 1 for elem in variables.n_elements_tendon]
-[mx, my, mz] = [elem // 2 for elem in variables.n_elements_tendon] # quadratic elements consist of 2 linear elements along each axis
+# [nx, ny, nz] = [elem + 1 for elem in variables.n_elements_tendon]
+# [mx, my, mz] = [elem // 2 for elem in variables.n_elements_tendon] # quadratic elements consist of 2 linear elements along each axis
+
+# boundary conditions (for linear elements)
+# --------------------------------------------
+
+[nx, ny, nz] = [2*elem+1 for elem in variables.n_elements_tendon]
+[mx, my, mz] = [elem+1  for elem in variables.n_elements_tendon] # quadratic elements consist of 2 linear elements along each axis
 
 
 # dirichlet
@@ -84,7 +90,7 @@ for j in range(ny):
       variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
 
 # neumann
-force = 0.3
+force = 0.5
 k = 0
 variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,-force], "face": "2-"} for j in range(my) for i in range(mx)]
 

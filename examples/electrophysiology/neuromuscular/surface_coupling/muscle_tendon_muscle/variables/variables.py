@@ -8,7 +8,7 @@ end_time = 20.0                   # [ms] end time of the simulation
 dt_0D = 0.5e-3                        # [ms] timestep width of ODEs
 dt_1D = 1e-3                      # [ms] timestep width of diffusion
 dt_splitting_0D1D = 1e-3            # [ms] overall timestep width of strang splitting
-dt_elasticity = 1e0               # [ms] time step width of elasticity solver
+dt_elasticity = 0.1             # [ms] time step width of elasticity solver
 
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz. This is not used here.
 activation_start_time = 0           # [ms] time when to start checking for stimulation
@@ -22,7 +22,7 @@ diffusion_solver_reltol = 1e-10
 
 elasticity_solver_type = "preonly"
 elasticity_preconditioner_type = "lu"
-snes_max_iterations = 50                  # maximum number of iterations in the nonlinear solver
+snes_max_iterations = 10                  # maximum number of iterations in the nonlinear solver
 snes_rebuild_jacobian_frequency = 2       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
 snes_relative_tolerance = 1e-5      # relative tolerance of the nonlinear solver
 snes_absolute_tolerance = 1e-5      # absolute tolerance of the nonlinear solver
@@ -65,18 +65,19 @@ sampling_factor_elasticity_fat_y = 0.5
 # geometry
 # ------------
 muscle1_extent = [3.0, 3.0, 14.8] # [cm, cm, cm]
-n_elements_muscle1 = [4, 4, 20] # linear elements. each qudaratic element uses the combined nodes of 8 linear elements
+n_elements_muscle1 = [2, 2, 20] # linear elements. each qudaratic element uses the combined nodes of 8 linear elements
 n_points_whole_fiber = 40
 n_fibers_x = 4
 n_fibers_y = 4
 
+
 tendon_extent = [3.0, 3.0, 2.0] # [cm, cm, cm]
 tendon_offset = [0.0, 0.0, muscle1_extent[2]]
-n_elements_tendon = [4, 4, 4] 
+n_elements_tendon = [2, 2, 4] 
 
 muscle2_extent = [3.0, 3.0, 14.8] # [cm, cm, cm]
 muscle2_offset = [0.0, 0.0, muscle1_extent[2]+tendon_extent[2]]
-n_elements_muscle2 = [4, 4, 20] # linear elements. each qudaratic element uses the combined nodes of 8 linear elements
+n_elements_muscle2 = [2, 2, 20] # linear elements. each qudaratic element uses the combined nodes of 8 linear elements
 
 
 
@@ -98,6 +99,7 @@ meshes = {}
 elasticity_dirichlet_bc = {}
 elasticity_neumann_bc = []
 
+
 # material parameters
 # --------------------
 Pmax = 7.3                          # maximum stress [N/cm^2]
@@ -118,7 +120,7 @@ d  = 9.1733                 # [-] anisotropy parameter
 
 muscle_material_parameters = [c1, c2, b, d]   # material parameters
 tendon_material = "SaintVenantKirchoff"         #use with tendon_linear_dynamic.cpp
-# tendon_material = "nonLinear" 
+#tendon_material = "nonLinear"  
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 # These functions can be redefined differently in a custom variables script
@@ -140,7 +142,8 @@ def get_specific_states_frequency_jitter(fiber_no, mu_no):
 def get_specific_states_call_enable_begin(fiber_no, mu_no):
   return activation_start_time
 
-# input files  
+
+# input files
 #--------------------------------
 
 import os
@@ -155,46 +158,42 @@ fiber_distribution_file = input_directory+"/MU_fibre_distribution_multidomain_67
 firing_times_file = input_directory + "/MU_firing_times_real.txt"
 no_firing_times_file = input_directory + "/MU_firing_times_real_no_firing.txt" # no firing
 
- 
-# load cortical input values
-cortical_input_file = input_directory+"/cortical_input_realistic.txt"
-cortical_input = np.genfromtxt(cortical_input_file, delimiter=",")
-
 def get_from_obj(data, path):
-    for elem in path:
-        if type(elem) == str:
-            data = data[elem]
-        elif type(elem) == int:
-            data = data[elem]
-        elif type(elem) == tuple:
-            # search for key == value with (key, value) = elem
-            key, value = elem
-            data = next(filter(lambda e: e[key] == value, data))
-        else:
-            raise KeyError(f"Unknown type of '{elem}': '{type(elem)}'. Path: '{'.'.join(path)}'")
-    return data
+  for elem in path:
+      if type(elem) == str:
+          data = data[elem]
+      elif type(elem) == int:
+          data = data[elem]
+      elif type(elem) == tuple:
+          # search for key == value with (key, value) = elem
+          key, value = elem
+          data = next(filter(lambda e: e[key] == value, data))
+      else:
+          raise KeyError(f"Unknown type of '{elem}': '{type(elem)}'. Path: '{'.'.join(path)}'")
+  return data
+
 
 def muscle1_postprocess(data):
-    t = get_from_obj(data, [0, 'currentTime'])
-    z_data = get_from_obj(data, [0, 'data', ('name','geometry'), 'components', 2, 'values'])
-    [mx, my, mz] = get_from_obj(data, [0, 'nElementsLocal'])
-    basis_order = get_from_obj(data, [0, 'basisOrder'])
-    basis_function = get_from_obj(data, [0, 'basisFunction'])
-    assert(basis_function == 'Lagrange')
-    assert(basis_order == 2)
-    nx = 2*mx + 1
-    ny = 2*my + 1
-    nz = 2*mz + 1
-    # compute average z-value of end of muscle
-    z_value = 0
-    for j in range(ny):
-        for i in range(nx):
-            z_value += z_data[(nz-1)*nx*ny + j*nx + i]
-    z_value /= ny*nx
+   t = get_from_obj(data, [0, 'currentTime'])
+   z_data = get_from_obj(data, [0, 'data', ('name','geometry'), 'components', 2, 'values'])
+   [mx, my, mz] = get_from_obj(data, [0, 'nElementsLocal'])
+   basis_order = get_from_obj(data, [0, 'basisOrder'])
+   basis_function = get_from_obj(data, [0, 'basisFunction'])
+   assert(basis_function == 'Lagrange')
+   assert(basis_order == 2)
+   nx = 2*mx + 1
+   ny = 2*my + 1
+   nz = 2*mz + 1
+   # compute average z-value of end of muscle
+   z_value = 0
+   for j in range(ny):
+       for i in range(nx):
+          z_value += z_data[(nz-1)*nx*ny + j*nx + i]
+       z_value /= ny*nx
 
-    global muscle1_tendon_z
-    muscle1_tendon_z = z_value
-    print("Muscle2: t: {:6.2f}, avg. change of muscle length: {:+2.2f}".format(t, muscle1_tendon_z - muscle1_extent[2]))
+   global muscle1_tendon_z
+   muscle1_tendon_z = z_value
+   print("Muscle2: t: {:6.2f}, avg. change of muscle length: {:+2.2f}".format(t, muscle1_tendon_z - muscle1_extent[2]))
 
 def muscle2_postprocess(data):
     t = get_from_obj(data, [0, 'currentTime'])

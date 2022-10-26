@@ -17,6 +17,9 @@ import variables              # file variables.py, defined default values for al
 
 
 variables.n_subdomains = variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z
+
+
+
 # automatically initialize partitioning if it has not been set
 if n_ranks != variables.n_subdomains:
 
@@ -174,7 +177,7 @@ config = {
   "PreciceAdapter" : {
 
     "couplingEnabled":          True,
-    "outputOnlyConvergedTimeSteps": False, #default is true
+    "outputOnlyConvergedTimeSteps": True, #default is true
     "scalingFactor":            1,
 
     "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
@@ -371,7 +374,7 @@ config = {
               "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
               "slotNames":                    ["m1lda", "m1ldot", "m1g_in", "m1T", "m1ux", "m1uy", "m1uz"],  # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
               "OutputWriter" : [
-                {"format": "Paraview", "outputInterval": 10, "filename": "out/" + variables.scenario_name + "/muscle1_contraction", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
+                {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/muscle1_contraction", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
               ],
               "mapGeometryToMeshes":          ["muscle1Mesh"] + [key for key in fiber_meshes.keys() if "muscle1_fiber" in key],    # the mesh names of the meshes that will get the geometry transferred
               "reverseMappingOrder":          True,                      # if the mapping target->own mesh should be used instead of own->target mesh. This gives better results in some cases.
@@ -425,36 +428,31 @@ config = {
 
                 "dirichletOutputFilename":     "out/"+variables.scenario_name+"/muscle1_dirichlet_boundary_conditions",     # output filename for the dirichlet boundary conditions, set to "" to have no output
                 "totalForceLogFilename":       "out/"+variables.scenario_name+"/muscle1_tendon_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
-                "totalForceLogOutputInterval":       int(1/variables.dt_elasticity),                                  # output interval when to write the totalForceLog file
+                "totalForceLogOutputInterval":       1,                                  # output interval when to write the totalForceLog file
 
                 # define which file formats should be written
                 # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
                 "OutputWriter" : [
-
-                  # Paraview files
-                  {"format": "Paraview", "outputInterval": int(1/variables.dt_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_displacements", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-
-                  # Python callback function "postprocess"
-                  # responsible to model the tendon
-                  {"format": "PythonCallback", "outputInterval": int(1/variables.dt_elasticity), "callback": variables.muscle1_postprocess, "onlyNodalValues":True, "filename": "", "fileNumbering":'incremental'},
+                  {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_displacements", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                  {"format": "PythonCallback", "outputInterval": 1, "callback": variables.muscle1_postprocess, "onlyNodalValues":True, "filename": "", "fileNumbering":'incremental'},
                 ],
                 # 2. additional output writer that writes also the hydrostatic pressure
                 "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
                   "OutputWriter" : [
-                    {"format": "Paraview", "outputInterval": int(1/variables.dt_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_pressure", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                    {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_pressure", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
                   ]
                 },
                 # 3. additional output writer that writes virtual work terms
                 "dynamic": {    # output of the dynamic solver, has additional virtual work values
                   "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-                    {"format": "Paraview", "outputInterval": int(1/variables.dt_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-                    {"format": "Paraview", "outputInterval": int(1/variables.dt_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                    {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                    {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
                   ],
                 },
                 # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
                 "LoadIncrements": {
                   "OutputWriter" : [
-                    {"format": "Paraview", "outputInterval": int(1/variables.dt_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_load_increments", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                    #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_load_increments", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
                   ]
                 }  
               }   

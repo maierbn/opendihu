@@ -13,7 +13,6 @@ dt_elasticity = 0.1             # [ms] time step width of elasticity solver
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz. This is not used here.
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 
-
 # solvers
 # -------
 diffusion_solver_type = "cg"        # solver and preconditioner for the diffusion part of the Monodomain equation
@@ -66,7 +65,7 @@ sampling_factor_elasticity_fat_y = 0.5
 # geometry
 # ------------
 muscle1_extent = [3.0, 3.0, 14.8] # [cm, cm, cm]
-n_elements_muscle1 = [8, 8, 30] # linear elements. each qudaratic element uses the combined nodes of 8 linear elements
+n_elements_muscle1 = [2, 2, 20] # linear elements. each qudaratic element uses the combined nodes of 8 linear elements
 n_points_whole_fiber = 40
 n_fibers_x = 4
 n_fibers_y = 4
@@ -74,7 +73,7 @@ n_fibers_y = 4
 
 tendon_extent = [3.0, 3.0, 2.0] # [cm, cm, cm]
 tendon_offset = [0.0, 0.0, muscle1_extent[2]]
-n_elements_tendon = [8, 8, 6] 
+n_elements_tendon = [2, 2, 4] 
 
 # random
 # ------------
@@ -113,8 +112,8 @@ d  = 9.1733                 # [-] anisotropy parameter
 # for debugging, b = 0 leads to normal Mooney-Rivlin
 
 muscle_material_parameters = [c1, c2, b, d]   # material parameters
-#tendon_material = "SaintVenantKirchoff"         #use with tendon_linear_dynamic.cpp
-tendon_material = "nonLinear"  
+tendon_material = "SaintVenantKirchoff"         #use with tendon_linear_dynamic.cpp
+#tendon_material = "nonLinear"  
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 # These functions can be redefined differently in a custom variables script
@@ -150,7 +149,7 @@ input_directory = os.path.join(os.environ.get('OPENDIHU_HOME', '../../../../../'
 cellml_file = input_directory+"/hodgkin_huxley-razumova.cellml"
 fiber_distribution_file = input_directory+"/MU_fibre_distribution_multidomain_67x67_100.txt"
 firing_times_file = input_directory + "/MU_firing_times_real.txt"
-#firing_times_file = input_directory + "/MU_firing_times_real_no_firing.txt" # no firing
+no_firing_times_file = input_directory + "/MU_firing_times_real_no_firing.txt" # no firing
 
 def get_from_obj(data, path):
   for elem in path:

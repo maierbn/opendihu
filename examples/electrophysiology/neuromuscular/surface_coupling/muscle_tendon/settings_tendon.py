@@ -81,12 +81,12 @@ variables.meshes.update(meshes_tendon)
 [mx, my, mz] = [elem // 2 for elem in variables.n_elements_tendon] # quadratic elements consist of 2 linear elements along each axis
 
 
-# dirichlet
-k = nz-1 #free side of the tendon
+# # dirichlet
+# k = nz-1 #free side of the tendon
 
-for j in range(ny):
-    for i in range(nx):
-      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
+# for j in range(ny):
+#     for i in range(nx):
+#       variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
 
 
 config = {
@@ -139,7 +139,7 @@ config = {
       # if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian
       
       # mesh
-      "meshName":                   "tendon_Mesh",           # mesh with quadratic Lagrange ansatz functions
+      "meshName":                   "tendon_Mesh_quadratic",           # mesh with quadratic Lagrange ansatz functions
       "inputMeshIsGlobal":          True,                         # boundary conditions are specified in global numberings, whereas the mesh is given in local numberings
       
       "fiberMeshNames":             [],                           # fiber meshes that will be used to determine the fiber direction
@@ -183,13 +183,11 @@ config = {
       "extrapolateInitialGuess":     True, 
 
       "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions_tendon",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
-      # "totalForceLogFilename":       "out/tendon_bottom_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
+      # "totalForceLogFilename":       "out/tendon_force.csv",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
       # "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
       # "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
       # "totalForceTopElementNosGlobal":     [(nz-1)*ny*nx + j*nx + i for j in range(ny) for i in range(nx)],   # global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal
-      # "totalForceFunction":          None, #callback_total_force,                # callback function that gets the total force at bottom and top of the domain
-      # "totalForceFunctionCallInterval": 1,   
-      
+
       "OutputWriter" : [
             {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
           ],
@@ -198,14 +196,14 @@ config = {
       # 2. additional output writer that writes also the hydrostatic pressure
       "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
         "OutputWriter" : [
-          #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/p", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+          {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/p", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
         ]
       },
       # 3. additional output writer that writes virtual work terms
       "dynamic": {    # output of the dynamic solver, has additional virtual work values 
         "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-                {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-          #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+          {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+          {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
         ],
       },
       # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written

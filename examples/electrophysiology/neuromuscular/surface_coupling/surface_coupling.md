@@ -9,28 +9,28 @@ The examples in this folder use the built-in opendihu precice adapter for surfac
 
 **A multi-scale problem**
 
-The muscle particupant requires of the solution of a multi-scale problem with three main phenomena being modelled:
+The muscle participant requires of the solution of a multi-scale problem consisting of three main phenomena being modelled:
 * sub-cellular processes at the sarcomeres: modelled as a 0D process and with `dt_0D = 0.5e-3` [ms]                      
 * potential propagation at the fibers: modelled as a 1D process and with `dt_1D = 1e-3` [ms] 
 * solid-mechanics (muscle contraction): modelled as a 3D process and with `dt_elasticity = 1e-1` [ms] 
 
 **About muscle fibers**
 
-The muscle fibers are created in the `helper.py`.  All the fibers have the same length (given by the muscle length) and direction (given by z-axis). In the `variables.py` we can specify:
+The muscle fibers are created in `helper.py`.  All fibers have the same length (equal to the muscle length) and direction (given by z-axis). In the `variables.py` we can specify:
 - numer of points per fiber (eg. number of sarcomeres per fiber): `n_points_whole_fiber`
 - number of fibers in the x and y axis: `n_fibers_x` and `n_fibers_y`
 - fiber distribution file: use input file `/MU_fibre_distribution_multidomain_67x67_100.txt`
 
-The fibers are stimulated via cortical input. In these examples the neural estimulation is not modelled explicitely and we use a file with the firing times instead. 
+The fibers are stimulated via cortical input. In these examples the neural estimulation is not modelled explicitely and a file with the firing times is used instead. 
 
 - fiber firing times: use input file `"/MU_firing_times_real.txt"`
 - alterative fiber firing times (zero everywhere, for no activation): use input file `"/MU_firing_times_real_no_firing.txt"`
 - start time for firing: `activation_start_time`
 
 > **Note**
-> If you choose not to activate the muscle fibers the muscle will not contract unless you apply an external force. So if you try this in the muscle-tendon example you will see that both the muscle and the tendon remain unmodified.
+> If you choose not to activate the muscle fibers the muscle will not contract unless you apply an external force. If you try this in the muscle-tendon example you will see that both the muscle and the tendon remain unmodified.
 
-**About the subcellur processes**
+**About the subcellullar processes**
 
 We are using the Hodgkin-Huxley-Razumova model. 
 
@@ -65,9 +65,32 @@ The idea behind the `MonodomainSolver` is to apply strang splitting to each fibe
 > **Connected slots between reaction term and diffusion term**
 > to-do
 
+**Meshes and spatial discretization**
+
+The implementation of the muscle participant in this folder requires of several meshes.
+
+On the one hand we have a 1D mesh for each fiber. On the other hand we have a 3D mesh for the solid mechanics problem.
+
+The spatial discretization for the solid mechanics is done via FEM. In OpenDiHu we can choose between using linear or quadratic ansatz functions. Quadratic ansatz functions are used for the muscle participant. This is implemented by choosing `"meshName": "muscle1Mesh_quadratic"` in the muscle settings file. 
+
+TODO: check that defining `"muscle1Mesh"` is actually necessary.
+
+
 
 ### The tendon participant:
-Two opendihu solvers for the tendon participant can be found in this folder: `tendon_precice_dynamic.cpp` and `tendon_linear_precice_dynamic.cpp`. The main difference is that the equation describing the solid mechanics used on each of them is different. 
+Two opendihu solvers for the tendon participant can be found in this folder: `tendon_precice_dynamic.cpp` and `tendon_linear_precice_dynamic.cpp`. The main difference is that the equation describing the solid mechanics used on each of them is different. I recommend using `tendon_linear_precice_dynamic.cpp`, which solves a linear equation and is believed to be more stable. 
+
+In any case, you must specify the `tendon_material` according to the opendihu solver you are using:
+
+- linear tendon: `tendon_linear_precice_dynamic.cpp` and `tendon_material= "SaintVenantKirchoff"` 
+- non-linear tendon: `tendon_precice_dynamic.cpp` and `tendon_material= "SaintVenantKirchoff"` 
+
+In the file `settings_tendon.py` you can see the input parameters that are used in each case. You can play with the elasticity of the tendon by modifying these parameters. 
+
+> **Note**
+> If we solve a linear equation does it makes sense to use quadratic ansatz functions?? TODO: make sure that linear functions work well for a single tendon. 
+
+
 
 ### About the muscle-tendon example:
 
@@ -80,20 +103,20 @@ mkorn && sr
 cd build_release
 ```
 
-You will need two terminals to run the example. In the first execute
+You will need two terminals to run the example. In the first terminal execute
 ```
 cd muscle_tendon/build_release
 ./muscle_neuromuscular.cpp ../settings_muscle.py
 ```
 
-and in the second terminal run
+and in the second one run
 ```
 cd muscle_tendon/build_release
 ./tendon_linear.cpp ../settings_tendon.py
 ```
 
 > **Note**
-> To obtain a more detailed logging output (eg. to debug precice) it's convenient to build using debug mode. In that case run `mkorn && sd` and run the code in the `build_debug/`.
+> To obtain a more detailed logging output (eg. to debug precice) it's convenient to build using debug mode. In that case run `mkorn && sd` and run the code in the `build_debug/` folder.
 
 
 **Set-up**
@@ -111,12 +134,12 @@ If you run the simulation you will see this looks quite good!
 **Open Issues**
 
 > **Warning**
-> currently trying to get `</coupling-scheme:parallel-implicit>` to work
+> currently trying to get `</coupling-scheme:parallel-implicit>` to work properly
 
 - Implicit coupling reaches the maximum number of iterations, even if it is high (eg. 100)
     - No improvement observed if acceleration schemes are used.
     - Maybe it helps using absolute convergence criterium instead of relative criterium in case this is due to an almost-zero denominator.
-- As a consequence of the previous point we cannot have running simulations where the traction is send from the tendon to the muscle.
+- As a consequence of the previous point we cannot have running simulations where the traction is sent from the tendon to the muscle.
 - If we replace the free end of the tendon by a traction bc this boundary condition is not reflected in the results. However, a single tendon with different traction boundary conditions at the ends was simulated without issues.
 
 

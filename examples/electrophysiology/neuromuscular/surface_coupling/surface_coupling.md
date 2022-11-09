@@ -9,7 +9,7 @@ The examples in this folder use the built-in opendihu precice adapter for surfac
 
 **A multi-scale problem**
 
-The muscle participant requires of the solution of a multi-scale problem consisting of three main phenomena being modelled:
+The muscle participant requires of the solution of a multi-scale problem consisting of three main phenomena:
 * sub-cellular processes at the sarcomeres: modelled as a 0D process and with `dt_0D = 0.5e-3` [ms]                      
 * potential propagation at the fibers: modelled as a 1D process and with `dt_1D = 1e-3` [ms] 
 * solid-mechanics (muscle contraction): modelled as a 3D process and with `dt_elasticity = 1e-1` [ms] 
@@ -48,11 +48,9 @@ The opendihu solver that is used for the muscle participant is given by `muscle_
 
 The muscle solver consists of the `MonodomainSolver`, which models the 1d voltage propagation in the muscle fibers, and the `MuscleContractionSolver`, which models the 3d solid mechanics. 
 
-> **Note**
-> **Connected slots between  `MonodomainSolver` and `MuscleContractionSolver`**
-> The `MuscleContractionSolver` receives the following slots:
-> `slotNames":                    ["m1lda", "m1ldot", "m1g_in", "m1T", "m1ux", "m1uy", "m1uz"]`
-> to-do
+TODO: Connected slots between  `MonodomainSolver` and `MuscleContractionSolver`
+The `MuscleContractionSolver` receives the following slots:
+`slotNames":                    ["m1lda", "m1ldot", "m1g_in", "m1T", "m1ux", "m1uy", "m1uz"]`
 
 
 The idea behind the `MonodomainSolver` is to apply strang splitting to each fiber. The components of the strang splitting are the fiber reaction term and the fiber diffusion term. The fiber reaction term corresponds to the sub-cellular processes taking place at the sarcomeres. 
@@ -61,17 +59,16 @@ The idea behind the `MonodomainSolver` is to apply strang splitting to each fibe
 > The overall timestep of the strang splitting is `dt_splitting_0D1D`
 > The optimal choice of timesteps for the strang splitting is `dt_1D = 2*dt_1D`
 
-> **Note**
-> **Connected slots between reaction term and diffusion term**
-> to-do
+TODO: **Connected slots between reaction term and diffusion term**
 
 **Meshes and spatial discretization**
 
-The implementation of the muscle participant in this folder requires of several meshes.
-
-On the one hand we have a 1D mesh for each fiber. On the other hand we have a 3D mesh for the solid mechanics problem.
+On the one hand we have a 1D mesh for each fiber. On the other hand we have a 3D mesh for the solid mechanics problem. The dimensions and numer of elements are defined by `muscle1_extent` ([cm]) and `n_elements_muscle1`.
 
 The spatial discretization for the solid mechanics is done via FEM. In OpenDiHu we can choose between using linear or quadratic ansatz functions. Quadratic ansatz functions are used for the muscle participant. This is implemented by choosing `"meshName": "muscle1Mesh_quadratic"` in the muscle settings file. 
+
+> **Note**
+> Quadratic elements are created by taking 2x2x2 linear elements. Thus `n_elements_muscle1` must contain even numbers.
 
 TODO: check that defining `"muscle1Mesh"` is actually necessary.
 

@@ -5,15 +5,17 @@ PreCICE does not provide an official adapter for OpenDiHu (yet). Benjamin Maier 
 
 The examples in this folder use the built-in opendihu precice adapter for surface coupling.
 
-### About the muscle participant:
+### The muscle participant:
 
 **A multi-scale problem**
-The muscle is a multi-scale problem with three main phenomena being modelled:
+
+The muscle particupant requires of the solution of a multi-scale problem with three main phenomena being modelled:
 * sub-cellular processes at the sarcomeres: modelled as a 0D process and with `dt_0D = 0.5e-3` [ms]                      
 * potential propagation at the fibers: modelled as a 1D process and with `dt_1D = 1e-3` [ms] 
 * solid-mechanics (muscle contraction): modelled as a 3D process and with `dt_elasticity = 1e-1` [ms] 
 
 **About muscle fibers**
+
 The muscle fibers are created in the `helper.py`.  All the fibers have the same length (given by the muscle length) and direction (given by z-axis). In the `variables.py` we can specify:
 - numer of points per fiber (eg. number of sarcomeres per fiber): `n_points_whole_fiber`
 - number of fibers in the x and y axis: `n_fibers_x` and `n_fibers_y`
@@ -29,8 +31,8 @@ The fibers are stimulated via cortical input. In these examples the neural estim
 > If you choose not to activate the muscle fibers the muscle will not contract unless you apply an external force. So if you try this in the muscle-tendon example you will see that both the muscle and the tendon remain unmodified.
 
 **About the subcellur processes**
+
 We are using the Hodgkin-Huxley-Razumova model. 
-The model we are using is specified by the `cellml_file`.  
 
 If you want to change the used cellml model you need to do the following:
 - select another file for `cellml_file`
@@ -41,6 +43,7 @@ If you want to change the used cellml model you need to do the following:
 > Changing the subcellular model typically requires recompiling the muscle solver!
 
 **The structure of the muscle solver**
+
 The opendihu solver that is used for the muscle participant is given by `muscle_neuromuscular.cpp`.
 
 The muscle solver consists of the `MonodomainSolver`, which models the 1d voltage propagation in the muscle fibers, and the `MuscleContractionSolver`, which models the 3d solid mechanics. 
@@ -63,10 +66,36 @@ The idea behind the `MonodomainSolver` is to apply strang splitting to each fibe
 > to-do
 
 
-### About the tendon participant:
-to-do
+### The tendon participant:
+Two opendihu solvers for the tendon participant can be found in this folder: `tendon_precice_dynamic.cpp` and `tendon_linear_precice_dynamic.cpp`. The main difference is that the equation describing the solid mechanics used on each of them is different. 
 
 ### About the muscle-tendon example:
+
+**How to build and run**
+
+To build the muscle and tendon solvers:
+```
+cd muscle_tendon/
+mkorn && sr
+cd build_release
+```
+
+You will need two terminals to run the example. In the first execute
+```
+cd muscle_tendon/build_release
+./muscle_neuromuscular.cpp ../settings_muscle.py
+```
+
+and in the second terminal run
+```
+cd muscle_tendon/build_release
+./tendon_linear.cpp ../settings_tendon.py
+```
+
+> **Note**
+> To obtain a more detailed logging output (eg. to debug precice) it's convenient to build using debug mode. In that case run `mkorn && sd` and run the code in the `build_debug/`.
+
+
 **Set-up**
 - muscle: fixed on one end (z=0.0) and attached to the tendon in the other end (z= muscle initial length)
 - tendon: fixed on one end (z= muscle initial length + tendon length) and attached to the muscle on the other end (z= muscle initial length)
@@ -81,7 +110,7 @@ If you run the simulation you will see this looks quite good!
 
 **Open Issues**
 
-> **warning**
+> **Warning**
 > currently trying to get `</coupling-scheme:parallel-implicit>` to work
 
 - Implicit coupling reaches the maximum number of iterations, even if it is high (eg. 100)
@@ -92,8 +121,36 @@ If you run the simulation you will see this looks quite good!
 
 
 # About the muscle-tendon-muscle example:
+
+**How to build and run**
+
+To build the muscle and tendon solvers:
+```
+cd muscle_tendon/
+mkorn && sr
+cd build_release
+```
+
+You will need three terminals to run the example. In the first one execute
+```
+cd muscle_tendon_muscle/build_release
+./muscle_neuromuscular.cpp ../settings_muscle.py
+```
+
+and in the second terminal run
+```
+cd muscle_tendon_muscle/build_release
+./tendon_linear.cpp ../settings_tendon.py
+```
+and in the third one run
+```
+cd muscle_tendon_muscle/build_release
+./muscle_neuromuscular.cpp ../settings_muscle_right.py
+```
+
+
 **Set-up**
-- muscle left and muscle right are the same except for their location on the z axis. The two muscles are connected by a tendon
+- Muscle left and muscle right are identical except for their location on the z axis. The two muscles are connected by a tendon.
 - muscle left: fixed on one end (z=0.0) and attached to the tendon in the other end (z= muscle initial length)
 - tendon: attached to muscle 2 (z= muscle initial length + tendon length) and attached to the muscle 1 on the other end (z= muscle initial length)
 - muscle right: fixed on one end (z= 2* muscle initial length + tendon length) and attached to the tendon in the other end (muscle initial length + tendon length)

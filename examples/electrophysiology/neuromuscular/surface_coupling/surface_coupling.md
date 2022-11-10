@@ -42,6 +42,7 @@ If you want to change the used cellml model you need to do the following:
 > **Warning**
 > Changing the subcellular model typically requires recompiling the muscle solver.
 
+
 **The structure of the muscle solver**
 
 The opendihu solver that is used for the muscle participant is given by `muscle_neuromuscular.cpp`.
@@ -59,7 +60,35 @@ The idea behind the `MonodomainSolver` is to apply strang splitting to each fibe
 > The overall timestep of the strang splitting is `dt_splitting_0D1D = dt_1D`
 > The optimal choice of timesteps for the strang splitting is `dt_1D = 2*dt_0D`
 
-TODO: **Connected slots between reaction term and diffusion term**
+**About transfer of data in opendihu coupling**
+- Transfer of data in strang splitting: 
+
+This is what we have specified in `settings_muscle.py`:
+```
+"connectedSlotsTerm1To2": [0],   
+"connectedSlotsTerm2To1": [0],  
+
+```
+Meaning that the slot 1 is tranferred from term 1 (reaction term) to the term 2 (diffusion) and back. TODO: can we avoid the transfer back?
+
+The immediate question is what is stored in that slot. For this we need to refer to `muscle1_mappings`, which are defined in `helper.py`.
+
+```
+  variables.muscle1_mappings = {
+    ("parameter", 0):           "membrane/i_Stim",          # parameter 0 is I_stim
+    ("parameter", 1):           "Razumova/l_hs",            # parameter 1 is fiber stretch λ
+    ("connectorSlot", "m1vm"):  "membrane/V",               # expose Vm to the operator splitting
+    ("connectorSlot", "m1gout"):"Razumova/activestress",
+    ("connectorSlot", "m1alp"): "Razumova/activation",      # expose activation 
+    ("connectorSlot", "m1lda"): "Razumova/l_hs",            # fiber stretch λ
+  }
+```
+The naming of the variables is given by the `cellml_file`.
+
+> **Note**
+> *cellml* files can be visualize (and run!) with the open-source software *OpenCOR*.
+
+TODO: what about the other names that are not defined in here? eg. m1T
 
 **Meshes and spatial discretization**
 

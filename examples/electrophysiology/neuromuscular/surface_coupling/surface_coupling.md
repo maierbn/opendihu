@@ -123,7 +123,15 @@ cd muscle_tendon/build_release
 - transfer of data: the tendon sends the displacement and velocities to the muscle and the muscle sends traction data to the tendon.
 - `</coupling-scheme:serial-explicit>`
 
-If you run the simulation you will see this looks quite good! 
+**How to visualize**
+
+The visualization can be done with *ParaView*.
+Interesting group files to visualize:
+- muscle1_contraction_..vtp
+- muscle1_fibers_..vtp (use Points Gaussian)
+- mechanics_3D_..vtp (tendon results)
+
+To debug precice, you can also visualize the files in the folder `preCICE-output/`.
 
 > **Note**
 > There are only some mismatches for the traction values at the edges of the coupling interface, but I believe this is due to the implementation of von Neumann boundary conditions in openDiHu and is not a worrying issue.
@@ -167,15 +175,11 @@ cd muscle_tendon_muscle/build_release
 ./muscle_neuromuscular.cpp ../settings_muscle_right.py
 ```
 
-**How to visualize**
-
-The visualization can be done with *ParaView*.
-Interesting group files to visualize:
-- muscle1_contraction_..vtp
-- muscle1_fibers_..vtp (use Points Gaussian)
-- mechanics_3D_..vtp (tendon results)
 
 **Set-up**
+
+![image info](./pictures/aa_system.png)
+
 - Muscle left and muscle right are identical except for their location on the z axis. The two muscles are connected by a tendon.
 - muscle left: fixed on one end (z=0.0) and attached to the tendon in the other end (z= muscle initial length)
 - tendon: attached to muscle 2 (z= muscle initial length + tendon length) and attached to the muscle 1 on the other end (z= muscle initial length)

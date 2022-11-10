@@ -5,7 +5,7 @@ PreCICE does not provide an official adapter for OpenDiHu (yet). Benjamin Maier 
 
 The examples in this folder use the built-in opendihu precice adapter for surface coupling.
 
-### The muscle participant:
+## The muscle participant:
 
 **A multi-scale problem**
 
@@ -40,7 +40,7 @@ If you want to change the used cellml model you need to do the following:
 - modify `Ǹ_states` and `Ǹ_algebraics` in `muscle_neuromuscular.cpp` according to the model
 
 > **Warning**
-> Changing the subcellular model typically requires recompiling the muscle solver!
+> Changing the subcellular model typically requires recompiling the muscle solver.
 
 **The structure of the muscle solver**
 
@@ -56,8 +56,8 @@ The `MuscleContractionSolver` receives the following slots:
 The idea behind the `MonodomainSolver` is to apply strang splitting to each fiber. The components of the strang splitting are the fiber reaction term and the fiber diffusion term. The fiber reaction term corresponds to the sub-cellular processes taking place at the sarcomeres. 
 
 > **Note**
-> The overall timestep of the strang splitting is `dt_splitting_0D1D`
-> The optimal choice of timesteps for the strang splitting is `dt_1D = 2*dt_1D`
+> The overall timestep of the strang splitting is `dt_splitting_0D1D = dt_1D`
+> The optimal choice of timesteps for the strang splitting is `dt_1D = 2*dt_0D`
 
 TODO: **Connected slots between reaction term and diffusion term**
 
@@ -74,7 +74,7 @@ TODO: check that defining `"muscle1Mesh"` is actually necessary.
 
 
 
-### The tendon participant:
+## The tendon participant:
 Two opendihu solvers for the tendon participant can be found in this folder: `tendon_precice_dynamic.cpp` and `tendon_linear_precice_dynamic.cpp`. The main difference is that the equation describing the solid mechanics used on each of them is different. I recommend using `tendon_linear_precice_dynamic.cpp`, which solves a linear equation and is believed to be more stable. 
 
 In any case, you must specify the `tendon_material` according to the opendihu solver you are using:
@@ -89,7 +89,7 @@ In the file `settings_tendon.py` you can see the input parameters that are used 
 
 
 
-### About the muscle-tendon example:
+## About the muscle-tendon example:
 
 **How to build and run**
 
@@ -130,8 +130,7 @@ If you run the simulation you will see this looks quite good!
 
 **Open Issues**
 
-> **Warning**
-> currently trying to get `</coupling-scheme:parallel-implicit>` to work properly
+TODO: currently trying to get `</coupling-scheme:parallel-implicit>` to work properly
 
 - Implicit coupling reaches the maximum number of iterations, even if it is high (eg. 100)
     - No improvement observed if acceleration schemes are used.
@@ -140,7 +139,7 @@ If you run the simulation you will see this looks quite good!
 - If we replace the free end of the tendon by a traction bc this boundary condition is not reflected in the results. However, a single tendon with different traction boundary conditions at the ends was simulated without issues.
 
 
-# About the muscle-tendon-muscle example:
+## About the muscle-tendon-muscle example:
 
 **How to build and run**
 
@@ -168,6 +167,13 @@ cd muscle_tendon_muscle/build_release
 ./muscle_neuromuscular.cpp ../settings_muscle_right.py
 ```
 
+**How to visualize**
+
+The visualization can be done with *ParaView*.
+Interesting group files to visualize:
+- muscle1_contraction_..vtp
+- muscle1_fibers_..vtp (use Points Gaussian)
+- mechanics_3D_..vtp (tendon results)
 
 **Set-up**
 - Muscle left and muscle right are identical except for their location on the z axis. The two muscles are connected by a tendon.

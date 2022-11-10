@@ -38,7 +38,7 @@ If you want to change the used cellml model you need to do the following:
 - select another file for `cellml_file`
 - provide the required parameters in `muscle_material_parameters`
 - modify `Ǹ_states` and `Ǹ_algebraics` in `muscle_neuromuscular.cpp` according to the model
-- provide slots for mapping purposes in `helper.py`
+- fill-in slots for mapping purposes in `helper.py`
 
 > **Warning**
 > Changing the subcellular model typically requires recompiling the muscle solver.
@@ -79,7 +79,7 @@ This is what we have specified in `settings_muscle.py`:
 "connectedSlotsTerm2To1": [0],  
 
 ```
-Meaning that the slot 1 is tranferred from term 1 (reaction term) to the term 2 (diffusion) and back. TODO: do we need the transfer back?
+Meaning that the slot 0 is tranferred from term 1 (reaction term) to the term 2 (diffusion) and back. TODO: do we need the transfer back?
 
 The immediate question is what is stored in that slot. For this we need to refer to `muscle1_mappings`, which are defined in `helper.py` and depend on the specified `cellml_file`.
 
@@ -189,8 +189,10 @@ Interesting group files to visualize:
 
 To debug precice, you can also visualize the files in the folder `preCICE-output/`.
 
-> **Note**
-> There are only some mismatches for the traction values at the edges of the coupling interface, but I believe this is due to the implementation of von Neumann boundary conditions in openDiHu and is not a worrying issue.
+![image info](./pictures/mismatch_traction.png)
+
+> **Warning**
+> The traction values at the edges of the coupling interface are wrong.
 
 **Open Issues**
 

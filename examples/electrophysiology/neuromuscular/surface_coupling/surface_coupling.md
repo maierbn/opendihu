@@ -38,6 +38,7 @@ If you want to change the used cellml model you need to do the following:
 - select another file for `cellml_file`
 - provide the required parameters in `muscle_material_parameters`
 - modify `Ǹ_states` and `Ǹ_algebraics` in `muscle_neuromuscular.cpp` according to the model
+- provide slots for mapping purposes in `helper.py`
 
 > **Warning**
 > Changing the subcellular model typically requires recompiling the muscle solver.
@@ -49,19 +50,28 @@ The opendihu solver that is used for the muscle participant is given by `muscle_
 
 The muscle solver consists of the `MonodomainSolver`, which models the 1d voltage propagation in the muscle fibers, and the `MuscleContractionSolver`, which models the 3d solid mechanics. 
 
-TODO: Connected slots between  `MonodomainSolver` and `MuscleContractionSolver`
-The `MuscleContractionSolver` receives the following slots:
-`slotNames":                    ["m1lda", "m1ldot", "m1g_in", "m1T", "m1ux", "m1uy", "m1uz"]`
-
-
 The idea behind the `MonodomainSolver` is to apply strang splitting to each fiber. The components of the strang splitting are the fiber reaction term and the fiber diffusion term. The fiber reaction term corresponds to the sub-cellular processes taking place at the sarcomeres. 
+
+
+All in all, we have:
+
+- muscle solver
+    - MonodomainSolver (strang splitting)
+        - reaction term
+        - diffusion term
+    - MuscleContractionSolver
 
 > **Note**
 > The overall timestep of the strang splitting is `dt_splitting_0D1D = dt_1D`
 > The optimal choice of timesteps for the strang splitting is `dt_1D = 2*dt_0D`
 
 **About transfer of data in opendihu coupling**
-- Transfer of data in strang splitting: 
+
+The transfer of data between the opendihu solvers is done via the slots feature. We can refer to the slots via name or their position index. In the case of this muscle solver we need transfer of data between
+- Reaction and diffusion term in the strang splitting
+- Monodomainsolver and muscleContractionSolver
+
+Let's first look at the transfer of data in the strang splitting: 
 
 This is what we have specified in `settings_muscle.py`:
 ```
@@ -69,9 +79,9 @@ This is what we have specified in `settings_muscle.py`:
 "connectedSlotsTerm2To1": [0],  
 
 ```
-Meaning that the slot 1 is tranferred from term 1 (reaction term) to the term 2 (diffusion) and back. TODO: can we avoid the transfer back?
+Meaning that the slot 1 is tranferred from term 1 (reaction term) to the term 2 (diffusion) and back. TODO: do we need the transfer back?
 
-The immediate question is what is stored in that slot. For this we need to refer to `muscle1_mappings`, which are defined in `helper.py`.
+The immediate question is what is stored in that slot. For this we need to refer to `muscle1_mappings`, which are defined in `helper.py` and depend on the specified `cellml_file`.
 
 ```
   variables.muscle1_mappings = {
@@ -88,7 +98,24 @@ The naming of the variables is given by the `cellml_file`.
 > **Note**
 > *cellml* files can be visualize (and run!) with the open-source software *OpenCOR*.
 
-TODO: what about the other names that are not defined in here? eg. m1T
+
+Regarding thw Monodomainsolver and the muscleContractionSolver coupling, the mechanics solver `MuscleSolverContraction` recives the following data:
+
+```
+"slotNames": ["m1lda", "m1ldot", "m1g_in", "m1T", "m1ux", "m1uy", "m1uz"]
+# slot names of the data connector slots: lambda, lambdaDot, gamma, traction
+```
+
+TODO: ["m1lda", "m1ldot", "m1g_in"] leads to almost the same results (see out_new) Should we use that?
+
+You may notice some of this names are not defined in the `muscle1_mappings`, but in the settings file we can define further slots mappings:
+
+```
+"connectedSlots": [
+("m1gout", "m1g_in")     # "Razumova/activestress" from CellML to Muscle contaction solver
+
+]
+```
 
 **Meshes and spatial discretization**
 

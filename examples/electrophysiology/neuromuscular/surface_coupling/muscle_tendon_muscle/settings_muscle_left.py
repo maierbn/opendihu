@@ -163,15 +163,6 @@ config = {
     # "Razumova/activestress" from CellML to Muscle contaction solver
     ("m1gout", "m1g_in"),
     ("m2gout", "m2g_in"),
-
-    # lambda and derived values (by MapDofs) -> input of muscle splindel simulation
-    ("ms0",    "ms_in0"),
-    ("ms1",    "ms_in1"),
-    ("ms2",    "ms_in2"),
-    ("ms3",    "ms_in3"),
-    ("ms4",    "ms_in4"),
-
-    ("in_g",   "in_in"),
   ],
 
   "PreciceAdapter" : {

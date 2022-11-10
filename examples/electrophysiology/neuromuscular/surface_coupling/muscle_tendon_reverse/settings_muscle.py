@@ -163,15 +163,6 @@ config = {
     # "Razumova/activestress" from CellML to Muscle contaction solver
     ("m1gout", "m1g_in"),
     ("m2gout", "m2g_in"),
-
-    # lambda and derived values (by MapDofs) -> input of muscle splindel simulation
-    ("ms0",    "ms_in0"),
-    ("ms1",    "ms_in1"),
-    ("ms2",    "ms_in2"),
-    ("ms3",    "ms_in3"),
-    ("ms4",    "ms_in4"),
-
-    ("in_g",   "in_in"),
   ],
 
   "PreciceAdapter" : {
@@ -192,13 +183,13 @@ config = {
     ],
     "preciceData": [
       {
-        "mode":                 "read-displacements-velocities",    # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
+        "mode":                 "write-displacements-velocities",    # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
         "preciceMeshName":      "MuscleMeshLeft",                 # name of the precice coupling surface mesh, as given in the precice xml settings file
         "displacementsName":    "Displacement",                     # name of the displacements "data", i.e. field variable, as given in the precice xml settings file
         "velocitiesName":       "Velocity",                         # name of the velocity "data", i.e. field variable, as given in the precice xml settings file
       },
       {
-        "mode":                 "write-traction",                   # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
+        "mode":                 "read-traction",                   # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
         "preciceMeshName":      "MuscleMeshLeft",                 # name of the precice coupling surface mesh, as given in the precice xml settings 
         "tractionName":         "Traction",                         # name of the traction "data", i.e. field variable, as given in the precice xml settings file
       }

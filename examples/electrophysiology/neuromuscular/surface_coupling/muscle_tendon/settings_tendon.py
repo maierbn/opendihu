@@ -81,12 +81,12 @@ variables.meshes.update(meshes_tendon)
 [mx, my, mz] = [elem // 2 for elem in variables.n_elements_tendon] # quadratic elements consist of 2 linear elements along each axis
 
 
-# # dirichlet
-# k = nz-1 #free side of the tendon
+# dirichlet
+k = nz-1 #free side of the tendon
 
-# for j in range(ny):
-#     for i in range(nx):
-#       variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
+for j in range(ny):
+    for i in range(nx):
+      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
 
 
 config = {

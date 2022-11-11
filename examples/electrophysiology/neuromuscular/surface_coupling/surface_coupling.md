@@ -192,15 +192,18 @@ To debug precice, you can also visualize the files in the folder `preCICE-output
 ![image info](./pictures/mismatch_traction.png)
 
 > **Warning**
-> The traction values at the edges of the coupling interface are wrong.
+> The traction values at the edges of the coupling interface are wrong. I believe this issue has nothing to do with the precice adapter but on how opendihu applies neumann boundary conditions. 
+> **Priority:** fix issue with Neumann boundary condition in a single tendon first!
+> This is what happens if we apply constant Traction_z = -0.5 in a tendon.
+> ![image info](./pictures/tendon_traction.png)
+> The elements that have outer faces show smaller traction values. It looks like the outer edges have the default bc (traction_z = 0) instead of the prescribed one. TODO: find out the order in which bc are applied.
+
 
 **Open Issues**
 
 TODO: currently trying to get `</coupling-scheme:parallel-implicit>` to work properly
 
-- Implicit coupling reaches the maximum number of iterations, even if it is high (eg. 100)
-    - No improvement observed if acceleration schemes are used.
-    - Maybe it helps using absolute convergence criterium instead of relative criterium in case this is due to an almost-zero denominator.
+- Implicit coupling does not converge (maximum number of iterations (eg. 100) is reached)
 - As a consequence of the previous point we cannot have running simulations where the traction is sent from the tendon to the muscle.
 - If we replace the free end of the tendon by a traction bc this boundary condition is not reflected in the results. However, a single tendon with different traction boundary conditions at the ends was simulated without issues.
 

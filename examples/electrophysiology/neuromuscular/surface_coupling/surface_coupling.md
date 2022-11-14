@@ -79,7 +79,7 @@ This is what we have specified in `settings_muscle.py`:
 "connectedSlotsTerm2To1": [0],  
 
 ```
-Meaning that the slot 0 is tranferred from term 1 (reaction term) to the term 2 (diffusion) and back. TODO: do we need the transfer back?
+Meaning that the slot 0 is tranferred from term 1 (reaction term) to the term 2 (diffusion) and back.
 
 The immediate question is what is stored in that slot. For this we need to refer to `muscle1_mappings`, which are defined in `helper.py` and depend on the specified `cellml_file`.
 
@@ -99,16 +99,14 @@ The naming of the variables is given by the `cellml_file`.
 > *cellml* files can be visualize (and run!) with the open-source software *OpenCOR*.
 
 
-Regarding thw Monodomainsolver and the muscleContractionSolver coupling, the mechanics solver `MuscleSolverContraction` recives the following data:
+Regarding the Monodomainsolver and the muscleContractionSolver coupling, the mechanics solver `MuscleSolverContraction` recives the following data:
 
 ```
 "slotNames": ["m1lda", "m1ldot", "m1g_in", "m1T", "m1ux", "m1uy", "m1uz"]
 # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
 ```
 
-TODO: ["m1lda", "m1ldot", "m1g_in"] leads to almost the same results (see out_new) Should we use that?
-
-You may notice some of this names are not defined in the `muscle1_mappings`, but in the settings file we can define further slots mappings:
+You may notice `"mg_in"` is not defined in the `muscle1_mappings`, but in the settings file we have defined a mapping from :
 
 ```
 "connectedSlots": [
@@ -116,6 +114,10 @@ You may notice some of this names are not defined in the `muscle1_mappings`, but
 
 ]
 ```
+
+It can be the case that we provide slots that are not connected. Naming unconnected slots does not make a difference, thus it makes no sense to do so. We can easily check which slots are connected by looking at `solver_structure.txt` which is generated with the building of the solver. 
+
+TODO: Benjamin says that "just" naming slots makes no difference, but I did see differences. Try again to confirm it!
 
 **Meshes and spatial discretization**
 
@@ -196,8 +198,7 @@ To debug precice, you can also visualize the files in the folder `preCICE-output
 > **Priority:** fix issue with Neumann boundary condition in a single tendon first!
 > This is what happens if we apply constant Traction_z = -0.5 in a tendon.
 > ![image info](./pictures/tendon_traction.png)
-> The elements that have outer faces show smaller traction values. It looks like the outer edges have the default bc (traction_z = 0) instead of the prescribed one. TODO: find out the order in which bc are applied.
-
+> - weird issue: the geometryValues in `10_function_space_field_variable.tpp` look weird, I always have 2x2x2 regardless the number of elements. If the elements are 2*n, then tendon_extend/n.
 
 **Open Issues**
 

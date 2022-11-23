@@ -50,7 +50,7 @@ The opendihu solver that is used for the muscle participant is given by `muscle_
 
 The muscle solver consists of the `MonodomainSolver`, which models the 1d voltage propagation in the muscle fibers, and the `MuscleContractionSolver`, which models the 3d solid mechanics. 
 
-The idea behind the `MonodomainSolver` is to apply strang splitting to each fiber. The components of the strang splitting are the fiber reaction term and the fiber diffusion term. The fiber reaction term corresponds to the sub-cellular processes taking place at the sarcomeres. 
+The idea behind the `MonodomainSolver` is to apply strang splitting to each fiber. The components of the Strang splitting are the fiber reaction term and the fiber diffusion term. The fiber reaction term corresponds to the sub-cellular processes taking place at the sarcomeres. 
 
 
 All in all, we have:
@@ -79,7 +79,7 @@ This is what we have specified in `settings_muscle.py`:
 "connectedSlotsTerm2To1": [0],  
 
 ```
-Meaning that the slot 0 is tranferred from term 1 (reaction term) to the term 2 (diffusion) and back.
+Meaning that the slot 0 is transferred from term 1 (reaction term) to the term 2 (diffusion) and back.
 
 The immediate question is what is stored in that slot. For this we need to refer to `muscle1_mappings`, which are defined in `helper.py` and depend on the specified `cellml_file`.
 
@@ -196,18 +196,33 @@ To debug precice, you can also visualize the files in the folder `preCICE-output
 > **Warning**
 > The traction values at the edges of the coupling interface are wrong. I believe this issue has nothing to do with the precice adapter but on how opendihu applies neumann boundary conditions. 
 > **Priority:** fix issue with Neumann boundary condition in a single tendon first!
-> This is what happens if we apply constant Traction_z = -0.5 in a tendon.
-> ![image info](./pictures/tendon_traction.png)
-> - weird issue: the geometryValues in `10_function_space_field_variable.tpp` look weird, I always have 2x2x2 regardless the number of elements. If the elements are 2*n, then tendon_extend/n.
 
-**Open Issues**
 
-TODO: currently trying to get `</coupling-scheme:parallel-implicit>` to work properly
+**WIP: solve traction BC bug**
 
-- Implicit coupling does not converge (maximum number of iterations (eg. 100) is reached)
+The MuscleContractionSolver has a dynamic and a static mode. 
+If `"dynamic: True"` we are in dynamic mode and we call the `"DynamicHyperelasticitySolver"` whereas if `"dynamic: False"` we call the `"HyperelasticitySolver"`.  
+
+So far, I have been using the dynamic MuscleContractionSolver, but I believe I must switch too the static MuscleContractionSolver. In the dynamic solver the traction boundary condition does not match the traction field but it does so in the static solver. We need the traction boundary condition too match the traction field in our coupling scenario. 
+
+> BM: Because it is a dynamic problem, the nodes at the Neumann BC domain accelerate slowly, counteracting inertia. Also the stress >builds up slowly. The unknowns of the problem that is solved are the displacement u and velocity v (and pressure p if incompressible). From the solution u, we can compute the stress tensor S by a formula and the traction by S n. The traction that we see in ParaView is computed like this. It is zero at t=0, because S=0. The traction in the output is not directly linked to the Neumann BC as it would be in a static problem.
+
+**TODO:** Use `cubic_muscle_only_monodomain_and_contraction/` to debug using a static solver. After several timesteps I get warnings about det J < 0. So far I have tried:
+- smaller load factors
+- smaller timestep
+- higher mesh resolution
+- adding regularisation
+- increasing frequency to rebuild jacobian
+Of course it could be my changes were not significant enough or that I had to combine several of them.
+
+*some more issues:*
+
+- Implicit coupling does not converge (maximum number of iterations (eg. 100) is reached) 
 - As a consequence of the previous point we cannot have running simulations where the traction is sent from the tendon to the muscle.
 - If we replace the free end of the tendon by a traction bc this boundary condition is not reflected in the results. However, a single tendon with different traction boundary conditions at the ends was simulated without issues.
-
+- weird issue: the geometryValues in `10_function_space_field_variable.tpp` look weird, I always have 2x2x2 regardless the number of elements. If the elements are 2*n, then tendon_extend/n.
+- This is what happens if we apply constant Traction_z = -0.5 in a tendon. TODO: find static solver for tendon given a time-stepping scheme.
+![image info](./pictures/tendon_traction.png)
 
 ## About the muscle-tendon-muscle example:
 

@@ -209,11 +209,12 @@ So far, I have been using the dynamic MuscleContractionSolver, but I believe I m
 
 **TODO:** Use `cubic_muscle_only_monodomain_and_contraction/` to debug using a static solver. After several timesteps I get warnings about det J < 0. So far I have tried:
 - smaller load factors
-- smaller timestep
+- smaller timestep (down to `dt_elasticity=1e-2`)
 - higher mesh resolution
-- adding regularisation
+- adding regularisation:`"regularization": [1e-5,1e-3]`
 - increasing frequency to rebuild jacobian
-Of course it could be my changes were not significant enough or that I had to combine several of them.
+
+Of course it could be my changes were not significant enough or that I had to combine several of them. The question is if it makes sense to try or this is an ill-posed problem. 
 
 *some more issues:*
 

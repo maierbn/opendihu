@@ -215,15 +215,6 @@ variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVect
 
 # add neuron meshes
 neuron_meshes = {
-  # "motoneuronMesh": {
-  #   # each muscle has the same number of muscle spindels
-  #   "nElements" :         (2*variables.n_motoneurons)-1 if n_ranks == 1 else (2*variables.n_motoneurons)*n_ranks,  # the last dof is empty in parallel
-  #   "physicalExtent":     0, # has no special meaning. only to seperate data points in paraview
-  #   "physicalOffset":     0,
-  #   "logKey":             "motoneuron",
-  #   "inputMeshIsGlobal":  True,
-  #   "nRanks":             n_ranks
-  # },
 
   "muscle1Mesh": {
     "nElements" :         variables.n_elements_muscle1,
@@ -276,27 +267,6 @@ config = {
       "dumpFilename":       "",   # "out/dump_"
       "dumpFormat":         "matlab",
     },
-    # "potentialFlowSolver": {# solver for the initial potential flow, that is needed to estimate fiber directions for the bidomain equation
-    #   "relativeTolerance":  variables.potential_flow_solver_reltol,
-    #   "absoluteTolerance":  1e-10,         # 1e-10 absolute tolerance of the residual
-    #   "maxIterations":      variables.potential_flow_solver_maxit,
-    #   "solverType":         variables.potential_flow_solver_type,
-    #   "preconditionerType": variables.potential_flow_preconditioner_type,
-    #   "dumpFilename":       "",
-    #   "dumpFormat":         "matlab",
-    #   "cycleType":          "cycleV",     # if the preconditionerType is "gamg", which cycle to use "cycleV" or "cycleW"
-    #   "gamgType":           "agg",        # if the preconditionerType is "gamg", the type of the amg solver
-    #   "nLevels":            25,           # if the preconditionerType is "gamg", the maximum number of levels
-    # },
-    # "muscularEMGSolver": {   # solver for the static Bidomain equation and the EMG
-    #   "relativeTolerance":  variables.emg_solver_reltol,
-    #   "absoluteTolerance":  variables.emg_solver_abstol,
-    #   "maxIterations":      variables.emg_solver_maxit,
-    #   "solverType":         variables.emg_solver_type,
-    #   "preconditionerType": variables.emg_preconditioner_type,
-    #   "dumpFilename":       "",
-    #   "dumpFormat":         "matlab",
-    # },
     "mechanicsSolver": {   # solver for the dynamic mechanics problem
       "relativeTolerance":   variables.linear_relative_tolerance,           # 1e-10 relative tolerance of the linear solver
       "absoluteTolerance":   variables.linear_absolute_tolerance,           # 1e-10 absolute tolerance of the residual of the linear solver
@@ -506,7 +476,7 @@ config = {
         "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
         "slotNames":                    ["m1lda", "m1ldot", "m1g_in", "m1T", "m1ux", "m1uy", "m1uz"],  # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
         "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/" + variables.scenario_name + "/muscle1_contraction", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
+          {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/muscle1_contraction", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
         ],
         "mapGeometryToMeshes":          ["muscle1Mesh"] + [key for key in fiber_meshes.keys() if "muscle1_fiber" in key],    # the mesh names of the meshes that will get the geometry transferred
         "reverseMappingOrder":          True,                      # if the mapping target->own mesh should be used instead of own->target mesh. This gives better results in some cases.
@@ -536,7 +506,7 @@ config = {
           "solverName":                 "mechanicsSolver",         # name of the nonlinear solver configuration, it is defined under "Solvers" at the beginning of this config
           "loadFactors":                list(np.logspace(-2,0,10)),             # load factors for every timestep
           #"loadFactors":                [],                        # no load factors, solve problem directly
-          "loadFactorGiveUpThreshold":  1e-8,                       # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
+          "loadFactorGiveUpThreshold":  1e-4,                       # a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the load factors get too small, it aborts the solve.
           "scaleInitialGuess":          False,                     # when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).
           "nNonlinearSolveCalls":      1,                         # how often the nonlinear solve should be repeated
 
@@ -565,7 +535,7 @@ config = {
           "OutputWriter" : [
 
             # Paraview files
-            {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_displacements", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+            {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_displacements", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
 
             # Python callback function "postprocess"
             # responsible to model the tendon
@@ -574,20 +544,20 @@ config = {
           # 2. additional output writer that writes also the hydrostatic pressure
           "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
             "OutputWriter" : [
-              {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_pressure", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_pressure", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ]
           },
           # 3. additional output writer that writes virtual work terms
           "dynamic": {    # output of the dynamic solver, has additional virtual work values
             "OutputWriter" : [   # output files for displacements function space (quadratic elements)
               {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-              {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ],
           },
           # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
           "LoadIncrements": {
             "OutputWriter" : [
-              {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_load_increments", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_load_increments", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ]
           } 
         },
@@ -645,7 +615,7 @@ config = {
           "OutputWriter" : [
 
             # Paraview files
-            {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_displacements", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+            {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_displacements", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
 
             # Python callback function "postprocess"
             # responsible to model the tendon
@@ -654,20 +624,20 @@ config = {
           # 2. additional output writer that writes also the hydrostatic pressure
           "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
             "OutputWriter" : [
-              {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_pressure", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_pressure", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ]
           },
           # 3. additional output writer that writes virtual work terms
           "dynamic": {    # output of the dynamic solver, has additional virtual work values
             "OutputWriter" : [   # output files for displacements function space (quadratic elements)
               {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-              {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ],
           },
           # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written
           "LoadIncrements": {
             "OutputWriter" : [
-              {"format": "Paraview", "outputInterval": int(1./variables.dt_elasticity*variables.output_timestep_elasticity), "filename": "out/"+variables.scenario_name+"/muscle1_load_increments", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_load_increments", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
             ]
           }  
         }   

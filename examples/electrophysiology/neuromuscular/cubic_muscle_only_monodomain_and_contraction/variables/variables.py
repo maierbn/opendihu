@@ -51,8 +51,8 @@ dt_0D = 0.5e-3                        # [ms] timestep width of ODEs
 dt_1D = 1e-3                      # [ms] timestep width of diffusion
 dt_bidomain = 1e-2                  # [ms] timestep width of multidomain
 dt_splitting_0D1D = 1e-3            # [ms] overall timestep width of strang splitting
-dt_elasticity = 1e0                # [ms] time step width of elasticity solver
-output_timestep = 1e0            # [ms] timestep for output files
+dt_elasticity = 1e-1           # [ms] time step width of elasticity solver
+output_timestep = 1e-1            # [ms] timestep for output files
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 output_timestep_fibers = 2   # [ms] timestep for multidomain output files
 output_timestep_elasticity = 1    # [ms] timestep for elasticity output files
@@ -86,7 +86,7 @@ use_lumped_mass_matrix = False      # which formulation to use, the formulation 
 show_linear_solver_output = True    # if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations
 optimization_type = "vc"            # the optimization_type used in the cellml adapter, "vc" uses explicit vectorization
 approximate_exponential_function = False   # if the exponential function should be approximated by a Taylor series with only 11 FLOPS
-dynamic = False                    # if the dynamic hyperelasticity solver should be used
+dynamic = True                    # if the dynamic hyperelasticity solver should be used
 
 # motor unit stimulation times
 firing_times_file = "../../../input/MU_firing_times_real.txt"

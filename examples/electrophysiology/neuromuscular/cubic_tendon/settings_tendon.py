@@ -96,9 +96,7 @@ k = 0
 variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,0.0], "face": "2-"} for j in range(my) for i in range(mx)]
 
 def update_neumann_bc(t):
-
-  # set new Neumann boundary conditions
-  factor = min(1, t/1)   # for t ∈ [0,100] from 0 to 1
+  factor = min(1, t/1)   # at t=1.0 we have F = external_force
   elasticity_neumann_bc = [{
 		"element": k*mx*my + j*mx + i, 
 		"constantVector": [0,0, -external_force*factor], 		# force pointing to bottom
@@ -108,7 +106,7 @@ def update_neumann_bc(t):
 
   config = {
     "inputMeshIsGlobal": True,
-    "divideNeumannBoundaryConditionValuesByTotalArea": False,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+    "divideNeumannBoundaryConditionValuesByTotalArea": False,            
     "neumannBoundaryConditions": elasticity_neumann_bc,
   }
   return config
@@ -197,8 +195,8 @@ config = {
     # "totalForceFunctionCallInterval": 1,   
     
     "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues": True, "combineFiles": True, "fileNumbering": "incremental"},
-        ],
+      {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues": True, "combineFiles": True, "fileNumbering": "incremental"},
+    ],
     # define which file formats should be written
     # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
     # 2. additional output writer that writes also the hydrostatic pressure

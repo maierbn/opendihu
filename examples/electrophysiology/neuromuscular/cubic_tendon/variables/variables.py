@@ -18,7 +18,7 @@ n_subdomains_z = 1
 # -----------------
 tendon_extent = [3.0, 3.0, 2.0] # [cm, cm, cm]
 tendon_offset = [0.0, 0.0, 0.0]
-n_elements_tendon = [2, 2, 4] 
+n_elements_tendon = [6, 6, 4] 
 
 meshes = {}
 elasticity_dirichlet_bc = {}
@@ -31,6 +31,6 @@ rho = 10                    # [1e-4 kg/cm^3] density of the muscle (density of w
 constant_body_force = None
 
 tendon_material = "SaintVenantKirchoff"         #use with tendon_linear_dynamic.cpp
-#tendon_material = "nonLinear"                  #use with tendon_dynamic.cpp                  
+# tendon_material = "nonLinear"                  #use with tendon_dynamic.cpp                  
 
 

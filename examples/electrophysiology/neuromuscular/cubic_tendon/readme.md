@@ -13,11 +13,75 @@ Linear or non-linear is given by the material properties of the tendon and refer
 
 Dynamic or static (quasistatic just means we solve a static problem for each timestep) has to do with wether we neglect inertia forces or not. For large inertia forces it is necessary to use the dynamic solver. 
 
+> **Warning**
+> The `HyperelasticitySolver` used to output before and after calling the non-linear solver. In order not to get the output duplicated I have commented the output before calling the non-linear solver.
+
 ## Bulk force and external forces
 
 A bulk force is appled on the whole body ( eg. gravity), why a external force is a force applied to the surface.
-The body force is included in the configuration by `"constantBodyForce": variables.constant_body_force` 
+The body force is included in the configuration by `"constantBodyForce": variables.constant_body_force` .
+
 The external force is included in the configuration as a Neumann boundary condition. 
+
+**Constant traction**
+
+The most likely scenario is that we have a constant force pulling from one of the extreme of the tendon. This can be add in the configuration as follows:
+
+```
+"neumannBoundaryConditions":   variables.elasticity_neumann_bc,     
+"divideNeumannBoundaryConditionValuesByTotalArea": False,         # if true we divide by the area
+```
+
+where
+
+```
+k = 0 # bc at  z=0
+variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0.0,0.0,-1.000], "face": "2-"} for j in range(my) for i in range(mx)]
+
+```
+Please note that tendons are rather stift, if you apply small forces (eg. < 1000) you will not see deformation with the bare eye. You see larger deformations if you use a linear solver.  
+
+**Increasing traction**
+
+```
+"neumannBoundaryConditions":   variables.elasticity_neumann_bc,     
+"divideNeumannBoundaryConditionValuesByTotalArea": False,         # if true we divide by the area
+"updateNeumannBoundaryConditionsFunction": update_neumann_bc,       
+"updateNeumannBoundaryConditionsFunctionCallInterval": 1          
+```
+
+where
+
+```
+external_force = 1000.0
+k = 0 # bc at  z=0
+variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,0.0], "face": "2-"} for j in range(my) for i in range(mx)]
+
+def update_neumann_bc(t):
+  factor = min(1, t/1)   # at t=1.0 we have F = external_force
+  elasticity_neumann_bc = [{
+		"element": k*mx*my + j*mx + i, 
+		"constantVector": [0,0, -external_force*factor], 		# force pointing to bottom
+		"face": "2-",
+    "isInReferenceConfiguration": True
+  } for j in range(my) for i in range(mx)]
+
+  config = {
+    "inputMeshIsGlobal": True,
+    "divideNeumannBoundaryConditionValuesByTotalArea": False,            
+    "neumannBoundaryConditions": elasticity_neumann_bc,
+  }
+  return config
+```
+
+> **Note**
+> We use `n_elements_tendon = [6, 6, 4]` and `dt_elasticity = 0.1`. If we compare the external forces to the traction field we see that:
+> - the non-linear shows more similar values than the linear
+> - the quasistatic shows more similar values than the dynamic
+> - The quasistatic is not matching (min is -499.2 instead -500) :disappointed:
+> - TODO: TRY SMALLER TIMESTEP AND SEE IF QUASISTATIC RESULTS IMPROVED
+> - TODO: COMPARE RESULTS FOR CONSTANT TRACTION
+
 
 ## How to set Dirichlet BC
 

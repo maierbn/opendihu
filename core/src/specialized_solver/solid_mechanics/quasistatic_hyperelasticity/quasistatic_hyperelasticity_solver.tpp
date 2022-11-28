@@ -402,7 +402,7 @@ advanceTimeSpan(bool withOutputWritersEnabled)
       LOG(INFO) << "QuasistaticHyperelasticitySolver, timestep " << timeStepNo << "/" << this->numberTimeSteps_<< ", t=" << currentTime;
     }
 
-    LOG(DEBUG) << "solveDynamicProblem";
+    LOG(DEBUG) << "solveStaticProblem";
 
     // advance simulation time, staticSolver needs the new time in order to output results after the solve is done
     timeStepNo++;
@@ -434,7 +434,7 @@ advanceTimeSpan(bool withOutputWritersEnabled)
     if (isTractionInCurrentConfiguration_)
       updateNeumannBoundaryConditions();
 
-    // compute the total force and torque at the z+ and z- surfaces of the volume
+    // // compute the total force and torque at the z+ and z- surfaces of the volume
     computeBearingForcesAndMoments(currentTime);
 
     // start duration measurement
@@ -465,6 +465,7 @@ callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
 {
   // call the output writer of the nested solver
   this->hyperelasticitySolver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
+  //hyperelasticitySolver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
 
   // call the own output writer
   this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime, callCountIncrement);

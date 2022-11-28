@@ -84,20 +84,39 @@ variables.meshes.update(meshes_tendon)
 
 
 # dirichlet
-# k = nz-1 #free side of the tendon
-# for j in range(ny):
-#     for i in range(nx):
-#       variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
+k = nz-1 #free side of the tendon
+for j in range(ny):
+    for i in range(nx):
+      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
 
 # neumann
 
+external_force = 1000.0
 k = 0
-variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,-5.0], "face": "2-"} for j in range(my) for i in range(mx)]
+variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,0.0], "face": "2-"} for j in range(my) for i in range(mx)]
 
-k = mz-1
-variables.elasticity_neumann_bc.extend([{"element": k*mx*my + j*mx + i, "constantVector": [0,0,2.0], "face": "2+"} for j in range(my) for i in range(mx)])
+def update_neumann_bc(t):
 
-print(variables.elasticity_neumann_bc[1])
+  # set new Neumann boundary conditions
+  factor = min(1, t/1)   # for t ∈ [0,100] from 0 to 1
+  elasticity_neumann_bc = [{
+		"element": k*mx*my + j*mx + i, 
+		"constantVector": [0,0, -external_force*factor], 		# force pointing to bottom
+		"face": "2-",
+    "isInReferenceConfiguration": True
+  } for j in range(my) for i in range(mx)]
+
+  config = {
+    "inputMeshIsGlobal": True,
+    "divideNeumannBoundaryConditionValuesByTotalArea": False,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+    "neumannBoundaryConditions": elasticity_neumann_bc,
+  }
+  return config
+
+# k = mz-1
+# variables.elasticity_neumann_bc.extend([{"element": k*mx*my + j*mx + i, "constantVector": [0,0,2.0], "face": "2+"} for j in range(my) for i in range(mx)])
+
+
 
 config = {
   "scenarioName":                   variables.scenario_name,      # scenario name to identify the simulation runs in the log file
@@ -107,7 +126,7 @@ config = {
   "Meshes":                         variables.meshes,
     
   "DynamicHyperelasticitySolver": {
-    "timeStepWidth":              variables.dt_elasticity,#variables.dt_elasticity,      # time step width 
+    "timeStepWidth":              variables.dt_elasticity,      # variables.dt_elasticity,      # time step width 
     "endTime":                    variables.end_time,           # end time of the simulation time span    
     "durationLogKey":             "duration_mechanics",         # key to find duration of this solver in the log file
     "timeStepOutputInterval":     1,                            # how often the current time step should be printed to console
@@ -161,15 +180,15 @@ config = {
     "divideNeumannBoundaryConditionValuesByTotalArea": False,    # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
     "updateDirichletBoundaryConditionsFunction": None, #update_dirichlet_bc,   # function that updates the dirichlet BCs while the simulation is running
     "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # stide every which step the update function should be called, 1 means every time step
-    "updateNeumannBoundaryConditionsFunction": None,       # a callback function to periodically update the Neumann boundary conditions
+    "updateNeumannBoundaryConditionsFunction": update_neumann_bc,       # a callback function to periodically update the Neumann boundary conditions
     "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step 
     
     "constantBodyForce":           variables.constant_body_force,       # a constant force that acts on the whole body, e.g. for gravity
-    "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(nx * ny * nz * 8)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
-    "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(nx * ny * nz * 8)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+    "initialValuesDisplacements":  [[0.0,0.0,0.0] for _ in range(nx * ny * nz)],     # the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
+    "initialValuesVelocities":     [[0.0,0.0,0.0] for _ in range(nx * ny * nz)],     # the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]
     "extrapolateInitialGuess":     True, 
 
-    "dirichletOutputFilename":     "out/"+variables.scenario_name+"/dirichlet_boundary_conditions_tendon",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
+    "dirichletOutputFilename":     "out/" + variables.scenario_name + "/dirichlet_boundary_conditions_tendon",    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     "totalForceLogFilename":       "",              # filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume
     # "totalForceLogOutputInterval": 10,                                  # output interval when to write the totalForceLog file
     # "totalForceBottomElementNosGlobal":  [j*nx + i for j in range(ny) for i in range(nx)],                  # global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename
@@ -178,7 +197,7 @@ config = {
     # "totalForceFunctionCallInterval": 1,   
     
     "OutputWriter" : [
-          {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+          {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues": True, "combineFiles": True, "fileNumbering": "incremental"},
         ],
     # define which file formats should be written
     # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
@@ -191,7 +210,7 @@ config = {
     # 3. additional output writer that writes virtual work terms
     "dynamic": {    # output of the dynamic solver, has additional virtual work values 
       "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-              {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+              {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues": True, "combineFiles": True, "fileNumbering": "incremental"},
         #{"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
       ],
     },

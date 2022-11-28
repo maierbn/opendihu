@@ -1,13 +1,23 @@
 ## Choose solver
 
-There are two tested solver options for this case:
+We can choose between a dynamic or a quasistatic solver, or a linear or a non-linear solver. All in all, there are four tested solver options for this case:
 - tendon_dynamic
 - tendon_linear_dynamic
+- tendon_quasistatic
+- tendon_linear_quasistatic
 
-The tendon_linear_dynamic is less costly. For "small" deformations, the linear solver should be sufficient. 
+Linear or non-linear is given by the material properties of the tendon and refers to the relationship between the stress S and the strain E. The material parameters must be chosen accordingly in the `variables.py`file:
 
-> **Warning**
-> **TODO:** Find a static solver that can run over time!
+- linear tendon: `tendon_material= "SaintVenantKirchoff"` 
+- non-linear tendon: `tendon_material= "SaintVenantKirchoff"` 
+
+Dynamic or static (quasistatic just means we solve a static problem for each timestep) has to do with wether we neglect inertia forces or not. For large inertia forces it is necessary to use the dynamic solver. 
+
+## Bulk force and external forces
+
+A bulk force is appled on the whole body ( eg. gravity), why a external force is a force applied to the surface.
+The body force is included in the configuration by `"constantBodyForce": variables.constant_body_force` 
+The external force is included in the configuration as a Neumann boundary condition. 
 
 ## How to set Dirichlet BC
 

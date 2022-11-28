@@ -8,7 +8,7 @@
 Import('env')     # import Environment object from calling SConstruct
 
 # create the main executable
-#env.Program(target = 'tendon_dynamic', source = "src/tendon_dynamic.cpp")
+env.Program(target = 'tendon_dynamic', source = "src/tendon_dynamic.cpp")
 env.Program(target = 'tendon_linear_dynamic', source = "src/tendon_linear_dynamic.cpp")
-# env.Program(target = 'tendon_linear_quasistatic', source = "src/tendon_linear_quasistatic.cpp")
-# env.Program(target = 'tendon_quasistatic', source = "src/tendon_quasistatic.cpp")
+env.Program(target = 'tendon_linear_quasistatic', source = "src/tendon_linear_quasistatic.cpp")
+env.Program(target = 'tendon_quasistatic', source = "src/tendon_quasistatic.cpp")

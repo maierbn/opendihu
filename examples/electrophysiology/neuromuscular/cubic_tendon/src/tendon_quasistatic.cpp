@@ -18,7 +18,6 @@ int main(int argc, char *argv[])
   TimeSteppingScheme::QuasistaticHyperelasticitySolver<
         Equation::SolidMechanics::HyperelasticTendon
         //Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressible3D
-    > problem(settings);
   
   > problem(settings);
   

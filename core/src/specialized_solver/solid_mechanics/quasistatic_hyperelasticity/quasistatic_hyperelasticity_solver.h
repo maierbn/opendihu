@@ -112,4 +112,4 @@ private:
 
 }  // namespace
 
-#include "specialized_solver/solid_mechanics/dynamic_hyperelasticity/dynamic_hyperelasticity_solver.tpp"
+#include "specialized_solver/solid_mechanics/quasistatic_hyperelasticity/quasistatic_hyperelasticity_solver.tpp"

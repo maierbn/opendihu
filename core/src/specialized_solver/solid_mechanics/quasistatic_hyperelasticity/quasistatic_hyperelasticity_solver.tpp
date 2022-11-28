@@ -410,9 +410,7 @@ advanceTimeSpan(bool withOutputWritersEnabled)
 
     // set the current Time to the hyperelasticity solver and then solve the dynamic problem
     hyperelasticitySolver_.setTimeSpan(-1, currentTime);
-    hyperelasticitySolver_.nonlinearSolve();
-    //hyperelasticitySolver_.solveDynamicProblem(uvp_, timeStepNo==0,
-    //                                           internalVirtualWork_, externalVirtualWorkDead_, accelerationTerm_, withOutputWritersEnabled);
+    hyperelasticitySolver_.run(); //output is written
 
     // stop duration measurement
     if (this->durationLogKey_ != "")
@@ -426,10 +424,7 @@ advanceTimeSpan(bool withOutputWritersEnabled)
     hyperelasticitySolver_.setDisplacementsVelocitiesAndPressureFromCombinedVec(externalVirtualWorkDead_, this->data_.externalVirtualWorkDead());
     hyperelasticitySolver_.setDisplacementsVelocitiesAndPressureFromCombinedVec(accelerationTerm_, this->data_.accelerationTerm());
 
-    // write current output values
-    if (withOutputWritersEnabled)
-      this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
-
+ 
     // potentially update DirichletBC by calling "updateDirichletBoundaryConditionsFunction"
     callUpdateDirichletBoundaryConditionsFunction(currentTime);
 

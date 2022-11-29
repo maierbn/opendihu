@@ -2,7 +2,9 @@
 
 #include <Python.h>  // has to be the first included header
 
-#include "specialized_solver/muscle_contraction_solver.h"
+#include "specialized_solver/muscle_contraction_solver.h" // indludes DynamicHyperelasticity and Hyperelasticity
+#include "specialized_solver/solid_mechanics/quasistatic_hyperelasticity/quasistatic_hyperelasticity_solver.h"
+
 
 namespace Control
 {
@@ -85,6 +87,52 @@ public:
 
   //! get the function space of the nested solver, after it has been initialized
   std::shared_ptr<typename TimeSteppingScheme::DynamicHyperelasticitySolver<Material>::FunctionSpace>
+  functionSpace(NestedSolverType &nestedSolver);
+
+  //! initialize dirichlet boundary conditions by adding prescribed values for all bottom or top nodes
+  void addDirichletBoundaryConditions(NestedSolverType &nestedSolver,
+                                      std::vector<typename SpatialDiscretization::DirichletBoundaryConditionsBase<FunctionSpace,6>::ElementWithNodes> &dirichletBoundaryConditionElements);
+
+  //! update existing boundary conditions with new values
+  void updateDirichletBoundaryConditions(NestedSolverType &nestedSolver,
+                                         std::vector<std::pair<global_no_t,std::array<double,6>>> newDirichletBoundaryConditionValues);
+
+  //! update the neumann boundary conditions by replacing the complete object
+  void updateNeumannBoundaryConditions(NestedSolverType &nestedSolver,
+                                       std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions);
+
+  //! get the displacement and velocity vectors of the given local dof nos
+  void getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<dof_no_t> &dofNosLocal,
+                                     std::vector<double> &displacementValues, std::vector<double> &velocityValues);
+
+  //! get the traction vectors of the given local dof nos
+  void getTractionValues(NestedSolverType &nestedSolver, const std::vector<dof_no_t> &dofNosLocal, std::vector<double> &tractionValues);
+
+  //! get at Petsc Vec that stores all values of the current state, to be used to store and restore checkpoints
+  Vec currentState(NestedSolverType &nestedSolver);
+
+  //! get the field variable of the deformation gradient
+  std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,9>> deformationGradientField(NestedSolverType &nestedSolver);
+};
+
+/** Partial specialization for tendon or pure mechanics solver, dynamic nonlinear elasticity
+ */
+template<typename Material>
+class PreciceAdapterNestedSolver<
+  TimeSteppingScheme::QuasistaticHyperelasticitySolver<Material>
+>
+{
+public:
+  //! define the type of the nested solver
+  typedef TimeSteppingScheme::QuasistaticHyperelasticitySolver<Material> NestedSolverType;
+
+  //! make the FunctionSpace of the NestedSolver class available
+  typedef typename NestedSolverType::FunctionSpace FunctionSpace;
+
+  typedef typename SpatialDiscretization::DirichletBoundaryConditionsBase<FunctionSpace,6>::ElementWithNodes ElementWithNodes;
+
+  //! get the function space of the nested solver, after it has been initialized
+  std::shared_ptr<typename TimeSteppingScheme::QuasistaticHyperelasticitySolver<Material>::FunctionSpace>
   functionSpace(NestedSolverType &nestedSolver);
 
   //! initialize dirichlet boundary conditions by adding prescribed values for all bottom or top nodes

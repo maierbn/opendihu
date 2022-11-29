@@ -95,7 +95,7 @@ Consider the results for `n_elements_tendon = [6, 6, 4]`. We look at the results
 | dynamic       | F = - 886 if `dt = 0.1` and F = - 974 if `dt=0.01` |  F = - 897 if `dt = 0.1` and F = - 986 if `dt=0.01` |
 
 > **Warning**
-> I was expecting the quasistatic solver to match the bc better than the dynamic, but that's not the case. However, the values show less variance for the quasistatic: eg. we have 968.6 \pm 0.2 for the quasistatic vs 986.5 \pm 2.0
+> I was expecting the quasistatic solver to match the bc better than the dynamic, but that's not the case. However, the values show less variance for the quasistatic: eg. we have $968.6 \pm 0.2$ for the quasistatic vs $986.5 \pm 2.0$
 
 
 ## How to set Dirichlet BC

@@ -167,11 +167,11 @@ config = {
 
   "PreciceAdapter" : {
 
-    "couplingEnabled":          True,
+    "couplingEnabled":              True,
     "outputOnlyConvergedTimeSteps": True, #default is true
     "scalingFactor":            1,
 
-    "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
+    "timeStepOutputInterval":   1,                        # interval in which to display current timestep and time in console
     "timestepWidth":            variables.dt_elasticity,                          # coupling time step width, must match the value in the precice config
     "preciceConfigFilename":    "../precice_config.xml",    # the preCICE configuration file
     "preciceParticipantName":   "MuscleSolverLeft",             # name of the own precice participant, has to match the name given in the precice xml config file

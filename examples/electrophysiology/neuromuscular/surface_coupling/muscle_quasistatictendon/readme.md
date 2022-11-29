@@ -59,3 +59,12 @@ Assume `n_elements_muscle1 = [2, 2, 20]` and `n_elements_tendon = [2, 2, 4]`
 
 - linear_quasistatic with `dt=0.01`:
 Not looking good. The corners (xmax, 0) and (0, ymax) are off. But maybe a absolute convergence of 1e-2 could still be satisfied. 
+
+- quasistatic with `dt=0.01`:
+**Works properly** :tada:
+Even the corner values match! The image below corresponds to t=10ms, when the muscle is contracted. The image shows the values provided by precice, that is, our boundary condition and the actual traction field in the tendon.
+
+![image info](./quasistatic_tendon_at_10.png)
+
+
+**Note to myself:** `results are in quasistatic_explicit`

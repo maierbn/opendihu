@@ -53,7 +53,7 @@ cd muscle_tendon/build_release
 ./tendon_quasistatic.cpp ../settings_tendon.py
 ```
 
-## Discussion of results
+## Discussion of results (EXPLICIT)
 
 Assume `n_elements_muscle1 = [2, 2, 20]` and `n_elements_tendon = [2, 2, 4]`
 
@@ -67,4 +67,45 @@ Even the corner values match! The image below corresponds to t=10ms, when the mu
 ![image info](./quasistatic_tendon_at_10.png)
 
 
-**Note to myself:** `results are in quasistatic_explicit`
+## Discussion of results (IMPLICIT)
+
+- first attempt: 
+We apply an absolute convergence criterium.
+
+```
+<max-iterations value="10" />
+<absolute-convergence-measure limit="1e-6" data="Displacement" mesh="TendonMeshLeft" strict="1"/>
+<absolute-convergence-measure limit="1e-2" data="Traction" mesh="MuscleMeshLeft" strict="1"/>
+```
+
+![image info](./implicit1_at_10.png)
+
+> **Warning**
+> Doesn't look as good as the explicit one. Hopefully a stricter convergence criterium will solve it.
+
+- second attempt:
+The motivation is to have an stricter criteria for convergence.
+
+```
+<max-iterations value="50" />
+<relative-convergence-measure limit="1e-4" data="Displacement" mesh="TendonMeshLeft" strict="1"/>
+<relative-convergence-measure limit="1e-2" data="Traction" mesh="MuscleMeshLeft" strict="1"/>
+```
+
+Acceleration is necessary in this case. In particular I use
+
+```
+<acceleration:aitken>
+    <data name="Traction" mesh="MuscleMeshLeft"/>
+    <initial-relaxation value="0.1"/>
+</acceleration:aitken> 
+```
+I observed that using 
+```
+<acceleration:constant>
+    <relaxation value="0.5"/>
+</acceleration:constant>
+```
+leads to a worse performance that not using acceleration at all. 
+
+TODO: **try larger timestep `dt=0.1`**

@@ -464,11 +464,11 @@ void QuasistaticHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
 {
   // call the output writer of the nested solver
-  this->hyperelasticitySolver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
-  //hyperelasticitySolver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
+  // this->hyperelasticitySolver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
+  // //hyperelasticitySolver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
 
-  // call the own output writer
-  this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime, callCountIncrement);
+  // // call the own output writer
+  // this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime, callCountIncrement);
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType>

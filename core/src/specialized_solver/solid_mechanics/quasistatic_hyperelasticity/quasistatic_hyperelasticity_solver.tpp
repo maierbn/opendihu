@@ -424,7 +424,9 @@ advanceTimeSpan(bool withOutputWritersEnabled)
     hyperelasticitySolver_.setDisplacementsVelocitiesAndPressureFromCombinedVec(externalVirtualWorkDead_, this->data_.externalVirtualWorkDead());
     hyperelasticitySolver_.setDisplacementsVelocitiesAndPressureFromCombinedVec(accelerationTerm_, this->data_.accelerationTerm());
 
- 
+    if (withOutputWritersEnabled)
+        this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
+        
     // potentially update DirichletBC by calling "updateDirichletBoundaryConditionsFunction"
     callUpdateDirichletBoundaryConditionsFunction(currentTime);
 

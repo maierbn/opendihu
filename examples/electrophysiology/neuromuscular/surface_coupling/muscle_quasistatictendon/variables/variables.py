@@ -3,7 +3,7 @@ scenario_name = ""
 
 # timing parameters
 # -----------------
-end_time = 5.0                   # [ms] end time of the simulation
+end_time = 0.05                   # [ms] end time of the simulation
 
 dt_0D = 0.5e-3                        # [ms] timestep width of ODEs
 dt_1D = 1e-3                      # [ms] timestep width of diffusion

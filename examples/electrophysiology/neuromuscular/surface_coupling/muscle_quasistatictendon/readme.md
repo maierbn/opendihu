@@ -2,30 +2,6 @@
 
 The goal of this case is to debug the use of a tendon quasistatic solver for coupling purposes. The goal is to get matching traction values at the interface, eg. get implicit coupling to converge. 
 
-> **Warning**
-> The `run()` method in the `HyperelasticitySolver` outputs after calling the non-linear solver. In order not to get the output for the tendon quasistatic duplicated you can comment the output after the solver call in `02_hyperelasticity_solver.tpp`. However I didn't push this because otherwhise we loose the output in `cubic_tendon/`.
-```
-  // if (withOutputWritersEnabled)
-  // {
-  //   this->outputWriterManager_.writeOutput(this->data_, 0, 0.0, 0);
-  //   this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, 0.0, 0);
-  // }
-
-  this->nonlinearSolve();
-  postprocessSolution();
-
-  // stop duration measurement
-  if (this->durationLogKey_ != "")
-    Control::PerformanceMeasurement::stop(this->durationLogKey_);
-
-  // write current output values
-  // if (withOutputWritersEnabled)
-  // {
-  //   this->outputWriterManager_.writeOutput(this->data_, 1, endTime_);
-  //   this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 1, endTime_);
-  // }
-```
-
 ## How to build and run
 
 To build the muscle and quasistatic tendon solvers:
@@ -69,7 +45,23 @@ Even the corner values match! The image below corresponds to t=10ms, when the mu
 
 ## Discussion of results (IMPLICIT)
 
-- first attempt: 
+> **Warning**
+> Results are not looking good. Are we doing the iterations properly?
+> - When trying to do quasinewton: ERROR: The quasi-Newton update contains NaN values. This means that the quasi-Newton acceleration failed to converge. When writing your own adapter this could indicate that you give wrong information to preCICE, such as identical data in succeeding iterations. Or you do not properly save and reload checkpoints. If you give the correct data this could also mean that the coupled problem is too hard to solve.
+
+- **zero attempt**:
+implicit coupling with one iteration (for comparison to explicit coupling)
+
+```
+<max-iterations value="1" />
+<absolute-convergence-measure limit="1e-6" data="Displacement" mesh="TendonMeshLeft" strict="0"/>
+<absolute-convergence-measure limit="1e-2" data="Traction" mesh="MuscleMeshLeft" strict="0"/>
+```
+
+Precice provides 0 values for the traction!
+
+
+- **first attempt**: 
 We apply an absolute convergence criterium.
 
 ```
@@ -80,10 +72,7 @@ We apply an absolute convergence criterium.
 
 ![image info](./implicit1_at_10.png)
 
-> **Warning**
-> Doesn't look as good as the explicit one. Hopefully a stricter convergence criterium will solve it.
-
-- second attempt:
+- **second attempt**:
 The motivation is to have an stricter criteria for convergence.
 
 ```
@@ -100,12 +89,17 @@ Acceleration is necessary in this case. In particular I use
     <initial-relaxation value="0.1"/>
 </acceleration:aitken> 
 ```
+
 I observed that using 
+
 ```
 <acceleration:constant>
     <relaxation value="0.5"/>
 </acceleration:constant>
 ```
+
 leads to a worse performance that not using acceleration at all. 
+
+![image info](./implicit2_at_10.png)
 
 TODO: **try larger timestep `dt=0.1`**

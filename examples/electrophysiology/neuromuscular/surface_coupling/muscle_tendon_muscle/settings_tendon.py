@@ -131,7 +131,7 @@ config = {
       }
     ],
     
-    "DynamicHyperelasticitySolver": {
+    "QuasistaticHyperelasticitySolver": {
       "timeStepWidth":              variables.dt_elasticity,#variables.dt_elasticity,      # time step width 
       "endTime":                    variables.end_time,           # end time of the simulation time span    
       "durationLogKey":             "duration_mechanics",         # key to find duration of this solver in the log file

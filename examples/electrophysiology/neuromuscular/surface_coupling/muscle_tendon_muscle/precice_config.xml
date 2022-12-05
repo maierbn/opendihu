@@ -96,10 +96,10 @@
     <m2n:sockets from="TendonSolver" to="Muscle1Solver" network="lo" />
     <m2n:sockets from="TendonSolver" to="Muscle2Solver" network="lo" />
 
-    <!-- <coupling-scheme:serial-explicit>
-      <participants first="Muscle2Solver" second="TendonSolver"/>
+    <coupling-scheme:serial-explicit>
+      <participants second="Muscle2Solver" first="TendonSolver"/>
 
-      <max-time value="10.0"/>          
+      <max-time value="20.0"/>          
       <time-window-size value="0.1"/>   
       
       <exchange data="Displacement"    mesh="Tendon2Mesh"    from="TendonSolver" to="Muscle2Solver"/>
@@ -111,26 +111,31 @@
     <coupling-scheme:serial-explicit>
       <participants first="Muscle1Solver" second="TendonSolver"/>
 
-      <max-time value="10.0"/>          
+      <max-time value="20.0"/>          
       <time-window-size value="0.1"/>   
 
       <exchange data="Displacement"    mesh="Tendon1Mesh"    from="TendonSolver" to="Muscle1Solver"/>
       <exchange data="Velocity"        mesh="Tendon1Mesh"    from="TendonSolver" to="Muscle1Solver"/>
       <exchange data="Traction"        mesh="Muscle1Mesh" from="Muscle1Solver" to="TendonSolver"/>  
-    </coupling-scheme:serial-explicit> -->
+    </coupling-scheme:serial-explicit> 
 
 
-    <coupling-scheme:multi>
+    <!-- <coupling-scheme:multi>
       <participant name="TendonSolver" control="yes"/>
       <participant name="Muscle1Solver" />
       <participant name="Muscle2Solver" />
 
-      <max-time value="0.7"/>          
+      <max-time value="20.0"/>          
       <time-window-size value="0.1"/>   
 
-      <max-iterations value="5" />
-      <relative-convergence-measure limit="1e-3" data="Displacement" mesh="Tendon1Mesh"/>
-      <relative-convergence-measure limit="1e-3" data="Displacement" mesh="Tendon2Mesh"/>
+      <acceleration:aitken>
+        <data name="Traction" mesh="Muscle1Mesh"/>
+        <initial-relaxation value="0.1"/>
+      </acceleration:aitken> 
+
+      <max-iterations value="10" />
+      <absolute-convergence-measure limit="1e-2" data="Traction" mesh="Muscle1Mesh" strict="1"/>
+      <absolute-convergence-measure limit="1e-2" data="Traction" mesh="Muscle2Mesh" strict="1"/>
 
       <exchange data="Displacement"    mesh="Tendon2Mesh"    from="TendonSolver" to="Muscle2Solver"/>
       <exchange data="Velocity"        mesh="Tendon2Mesh"    from="TendonSolver" to="Muscle2Solver"/>
@@ -139,7 +144,7 @@
       <exchange data="Displacement"    mesh="Tendon1Mesh"    from="TendonSolver" to="Muscle1Solver"/>
       <exchange data="Velocity"        mesh="Tendon1Mesh"    from="TendonSolver" to="Muscle1Solver"/>
       <exchange data="Traction"        mesh="Muscle1Mesh" from="Muscle1Solver" to="TendonSolver"/>  
-    </coupling-scheme:multi>
+    </coupling-scheme:multi> -->
 
 
   </solver-interface>

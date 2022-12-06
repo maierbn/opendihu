@@ -410,7 +410,8 @@ advanceTimeSpan(bool withOutputWritersEnabled)
 
     // set the current Time to the hyperelasticity solver and then solve the dynamic problem
     hyperelasticitySolver_.setTimeSpan(-1, currentTime);
-    hyperelasticitySolver_.run(); //output is written
+    hyperelasticitySolver_.initialize();
+    hyperelasticitySolver_.advanceTimeSpan(false);
 
     // stop duration measurement
     if (this->durationLogKey_ != "")
@@ -425,7 +426,9 @@ advanceTimeSpan(bool withOutputWritersEnabled)
     hyperelasticitySolver_.setDisplacementsVelocitiesAndPressureFromCombinedVec(accelerationTerm_, this->data_.accelerationTerm());
 
     if (withOutputWritersEnabled)
-        this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
+      hyperelasticitySolver_.callOutputWriter(timeStepNo, currentTime);
+
+      // this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
         
     // potentially update DirichletBC by calling "updateDirichletBoundaryConditionsFunction"
     callUpdateDirichletBoundaryConditionsFunction(currentTime);
@@ -465,12 +468,12 @@ template<typename Term,bool withLargeOutput,typename MeshType>
 void QuasistaticHyperelasticitySolver<Term,withLargeOutput,MeshType>::
 callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
 {
-  // call the output writer of the nested solver
-  // this->hyperelasticitySolver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
-  // //hyperelasticitySolver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
+  //call the output writer of the nested solver
+  this->hyperelasticitySolver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
+  //hyperelasticitySolver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
 
-  // // call the own output writer
-  // this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime, callCountIncrement);
+  // call the own output writer
+  this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime, callCountIncrement);
 }
 
 template<typename Term,bool withLargeOutput,typename MeshType>

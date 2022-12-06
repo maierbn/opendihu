@@ -16,9 +16,6 @@ Dynamic or static (quasistatic just means we solve a static problem for each tim
 - dynamic: `settings_tendon.py"` 
 - quasistatic: `settings_tendon_quasistatic.py` 
 
-> **Warning**
-> The `HyperelasticitySolver` used to output before and after calling the non-linear solver. In order not to get the output duplicated I have commented the output before calling the non-linear solver.
-
 ## Bulk force and external forces
 
 A bulk force is appled on the whole body ( eg. gravity), whereas a external force is a force applied to the surface.

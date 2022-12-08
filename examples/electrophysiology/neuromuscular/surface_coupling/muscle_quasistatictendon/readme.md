@@ -45,61 +45,31 @@ Even the corner values match! The image below corresponds to t=10ms, when the mu
 
 ## Discussion of results (IMPLICIT)
 
-> **Warning**
-> Results are not looking good. Are we doing the iterations properly?
-> - When trying to do quasinewton: ERROR: The quasi-Newton update contains NaN values. This means that the quasi-Newton acceleration failed to converge. When writing your own adapter this could indicate that you give wrong information to preCICE, such as identical data in succeeding iterations. Or you do not properly save and reload checkpoints. If you give the correct data this could also mean that the coupled problem is too hard to solve.
+We want to get implicit coupling to work so that we can reverse which participant sends which data.
 
-- **zero attempt**:
-implicit coupling with one iteration (for comparison to explicit coupling)
+Some comments:
 
-```
-<max-iterations value="1" />
-<absolute-convergence-measure limit="1e-6" data="Displacement" mesh="TendonMeshLeft" strict="0"/>
-<absolute-convergence-measure limit="1e-2" data="Traction" mesh="MuscleMeshLeft" strict="0"/>
-```
+- **Enforce one iteration**:
+That would be equivalent to explicit coupling, but if we choose parallel we see that the precice values for traction are zero. This makes sense if we do a single iteration in parallel. 
 
-Precice provides 0 values for the traction!
-
-
-- **first attempt**: 
-We apply an absolute convergence criterium.
+- **Absolute convergence for traction 1e-4**:
+It seems necessary to use the quasi-newton acceleration. In order to do the quasi-newton we have to remove the convergence criterium for the displacement, since it is always convergence. So far the best results (crashing at t=12.0) were obtained using:
 
 ```
-<max-iterations value="10" />
-<absolute-convergence-measure limit="1e-6" data="Displacement" mesh="TendonMeshLeft" strict="1"/>
-<absolute-convergence-measure limit="1e-2" data="Traction" mesh="MuscleMeshLeft" strict="1"/>
-```
+<max-time value="20.0"/>           
+<time-window-size value="0.1"/>   
 
-![image info](./implicit1_at_10.png)
+<acceleration:IQN-ILS>
+<!-- <data name="Displacement" mesh="TendonMeshLeft"/> -->
+<data name="Traction" mesh="MuscleMeshLeft"/>
+<preconditioner type="residual-sum"/>
+<filter type="QR2" limit="1e-3"/>
+<initial-relaxation value="0.5"/>
+<max-used-iterations value="10"/>
+<time-windows-reused value="20"/>
+</acceleration:IQN-ILS>
 
-- **second attempt**:
-The motivation is to have an stricter criteria for convergence.
-
-```
 <max-iterations value="50" />
-<relative-convergence-measure limit="1e-4" data="Displacement" mesh="TendonMeshLeft" strict="1"/>
-<relative-convergence-measure limit="1e-2" data="Traction" mesh="MuscleMeshLeft" strict="1"/>
+<!-- <absolute-convergence-measure limit="1e-6" data="Displacement" mesh="TendonMeshLeft" strict="1"/> -->
+<absolute-convergence-measure limit="1e-4" data="Traction" mesh="MuscleMeshLeft" strict="1"/>
 ```
-
-Acceleration is necessary in this case. In particular I use
-
-```
-<acceleration:aitken>
-    <data name="Traction" mesh="MuscleMeshLeft"/>
-    <initial-relaxation value="0.1"/>
-</acceleration:aitken> 
-```
-
-I observed that using 
-
-```
-<acceleration:constant>
-    <relaxation value="0.5"/>
-</acceleration:constant>
-```
-
-leads to a worse performance that not using acceleration at all. 
-
-![image info](./implicit2_at_10.png)
-
-TODO: **try larger timestep `dt=0.1`**

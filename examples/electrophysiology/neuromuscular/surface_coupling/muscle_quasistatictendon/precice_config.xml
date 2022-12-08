@@ -75,35 +75,36 @@
     <coupling-scheme:parallel-implicit>
       <participants second="TendonSolver" first="MuscleSolverLeft"/>
 
-      <max-time value="0.05"/>           
-      <time-window-size value="0.01"/>   
+      <max-time value="20.0"/>           
+      <time-window-size value="0.1"/>   
 
-      <!-- <acceleration:IQN-ILS>
-        <data name="Displacement" mesh="TendonMeshLeft"/>
-        <data name="Traction" mesh="MuscleMeshLeft"/>             
-        <preconditioner type="value"/>
-        <filter type="QR2" limit="1e-1"/>
-        <initial-relaxation value="0.1"/>
-        <max-used-iterations value="100"/>
-        <time-windows-reused value="20"/>
-      </acceleration:IQN-ILS> -->
-
-
-
-      <acceleration:aitken>
+      <acceleration:IQN-ILS>
+        <!-- <data name="Displacement" mesh="TendonMeshLeft"/> -->
         <data name="Traction" mesh="MuscleMeshLeft"/>
-        <initial-relaxation value="0.1"/>
-      </acceleration:aitken> 
+        <preconditioner type="residual-sum"/>
+        <filter type="QR2" limit="1e-3"/>
+        <initial-relaxation value="0.5"/>
+        <max-used-iterations value="8"/>
+        <time-windows-reused value="20"/>
+      </acceleration:IQN-ILS>
+
+
+
+
+      <!-- <acceleration:aitken>
+        <data name="Traction" mesh="MuscleMeshLeft"/>
+        <initial-relaxation value="0.7"/>
+      </acceleration:aitken>  -->
 
       <!-- <acceleration:constant>
         <relaxation value="0.5"/>
       </acceleration:constant>    -->
 
-      <!-- <max-iterations value="1" /> -->
-      <absolute-convergence-measure limit="1e-6" data="Displacement" mesh="TendonMeshLeft" strict="1"/>
+      <max-iterations value="50" />
+      <!-- <absolute-convergence-measure limit="1e-6" data="Displacement" mesh="TendonMeshLeft" strict="1"/> -->
       <absolute-convergence-measure limit="1e-4" data="Traction" mesh="MuscleMeshLeft" strict="1"/>
   
-      <!-- <min-iteration-convergence-measure min-iterations="2" data="Displacement" mesh="TendonMeshLeft" strict="0" suffices="0"/> -->
+      <!-- <min-iteration-convergence-measure min-iterations="3" data="Displacement" mesh="TendonMeshLeft" strict="0" suffices="0"/> -->
 
       <exchange data="Displacement"    mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
       <exchange data="Velocity"        mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>

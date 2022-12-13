@@ -143,6 +143,8 @@ addDirichletBoundaryConditions(NestedSolverType &nestedSolver,
                                std::vector<typename SpatialDiscretization::DirichletBoundaryConditionsBase<FunctionSpace,6>::ElementWithNodes> &dirichletBoundaryConditionElements)
 {
   // add the dirichlet bc values
+  LOG(INFO) << "add dirichlet BC \n";
+
   bool overwriteBcOnSameDof = true;
   nestedSolver.addDirichletBoundaryConditions(dirichletBoundaryConditionElements, overwriteBcOnSameDof);
 }
@@ -153,6 +155,7 @@ void PreciceAdapterNestedSolver<TimeSteppingScheme::DynamicHyperelasticitySolver
 updateDirichletBoundaryConditions(NestedSolverType &nestedSolver,
                                   std::vector<std::pair<global_no_t,std::array<double,6>>> newDirichletBoundaryConditionValues)
 {
+    LOG(INFO) << "update dirichlet BC \n";
   nestedSolver.updateDirichletBoundaryConditions(newDirichletBoundaryConditionValues);
 }
 
@@ -161,6 +164,7 @@ void PreciceAdapterNestedSolver<TimeSteppingScheme::DynamicHyperelasticitySolver
 updateNeumannBoundaryConditions(NestedSolverType &nestedSolver,
                                 std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions)
 {
+    LOG(INFO) << "update neumann BC \n";
   nestedSolver.hyperelasticitySolver().updateNeumannBoundaryConditions(neumannBoundaryConditions);
 }
 
@@ -174,6 +178,11 @@ getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<
   static std::vector<Vec3> values;
   values.clear();
   nestedSolver.data().displacements()->getValues(dofNosLocal, values);
+
+  std::vector<Vec3> values0;
+  nestedSolver.hyperelasticitySolver().data().displacements()->getValuesWithoutGhosts(values0);
+  LOG(INFO) << "in getDisplacementVelocityValues  getValuesWithoutGhosts" << values0;
+  LOG(INFO) << "in getDisplacementVelocityValues  local u values" << "\ndofNosLocal: " << dofNosLocal << "\nall values: " << values;
 
   // store displacement values in interleaved order (array of struct)
   int nVectors = values.size();
@@ -275,6 +284,9 @@ void PreciceAdapterNestedSolver<TimeSteppingScheme::QuasistaticHyperelasticitySo
 updateDirichletBoundaryConditions(NestedSolverType &nestedSolver,
                                   std::vector<std::pair<global_no_t,std::array<double,6>>> newDirichletBoundaryConditionValues)
 {
+
+  LOG(INFO) << "update dirichlet BC \n";
+  
   nestedSolver.updateDirichletBoundaryConditions(newDirichletBoundaryConditionValues);
 }
 
@@ -283,6 +295,7 @@ void PreciceAdapterNestedSolver<TimeSteppingScheme::QuasistaticHyperelasticitySo
 updateNeumannBoundaryConditions(NestedSolverType &nestedSolver,
                                 std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions)
 {
+  LOG(INFO) << "update neumann BC \n";
   nestedSolver.hyperelasticitySolver().updateNeumannBoundaryConditions(neumannBoundaryConditions);
 }
 
@@ -296,6 +309,12 @@ getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<
   static std::vector<Vec3> values;
   values.clear();
   nestedSolver.data().displacements()->getValues(dofNosLocal, values);
+  LOG(INFO) << "in getDisplacementVelocityValues  getValues" << values;
+
+
+  std::vector<Vec3> values0;
+  nestedSolver.hyperelasticitySolver().data().displacements()->getValuesWithoutGhosts(values0);
+  LOG(INFO) << "in getDisplacementVelocityValues  getValuesWithoutGhosts" << values0;
 
   // store displacement values in interleaved order (array of struct)
   int nVectors = values.size();
@@ -303,14 +322,14 @@ getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<
 
   for (int i = 0; i < nVectors; i++)
   {
-    displacementValues[3*i + 0] = values[i][0];
-    displacementValues[3*i + 1] = values[i][1];
-    displacementValues[3*i + 2] = values[i][2];
+    displacementValues[3*i + 0] = values0[i][0];
+    displacementValues[3*i + 1] = values0[i][1];
+    displacementValues[3*i + 2] = values0[i][2];
   }
 
   // get the velocity values
-  values.clear();
-  nestedSolver.data().velocities()->getValues(dofNosLocal, values);
+  values0.clear();
+  nestedSolver.hyperelasticitySolver().data().velocities()->getValuesWithoutGhosts(values0);
 
   // store velocity values in interleaved order (array of struct)
   nVectors = values.size();
@@ -318,9 +337,9 @@ getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<
 
   for (int i = 0; i < nVectors; i++)
   {
-    velocityValues[3*i + 0] = values[i][0];
-    velocityValues[3*i + 1] = values[i][1];
-    velocityValues[3*i + 2] = values[i][2];
+    velocityValues[3*i + 0] = values0[i][0];
+    velocityValues[3*i + 1] = values0[i][1];
+    velocityValues[3*i + 2] = values0[i][2];
   }
 }
 

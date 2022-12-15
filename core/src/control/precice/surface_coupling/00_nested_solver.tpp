@@ -179,10 +179,6 @@ getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<
   values.clear();
   nestedSolver.data().displacements()->getValues(dofNosLocal, values);
 
-  std::vector<Vec3> values0;
-  nestedSolver.hyperelasticitySolver().data().displacements()->getValuesWithoutGhosts(values0);
-  LOG(INFO) << "in getDisplacementVelocityValues  getValuesWithoutGhosts" << values0;
-  LOG(INFO) << "in getDisplacementVelocityValues  local u values" << "\ndofNosLocal: " << dofNosLocal << "\nall values: " << values;
 
   // store displacement values in interleaved order (array of struct)
   int nVectors = values.size();
@@ -308,13 +304,9 @@ getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<
   // get the displacement values
   static std::vector<Vec3> values;
   values.clear();
-  nestedSolver.data().displacements()->getValues(dofNosLocal, values);
-  LOG(INFO) << "in getDisplacementVelocityValues  getValues" << values;
+  nestedSolver.hyperelasticitySolver().data().displacements()->getValues(dofNosLocal, values);
 
-
-  std::vector<Vec3> values0;
-  nestedSolver.hyperelasticitySolver().data().displacements()->getValuesWithoutGhosts(values0);
-  LOG(INFO) << "in getDisplacementVelocityValues  getValuesWithoutGhosts" << values0;
+  //nestedSolver.data().displacements()->getValues(dofNosLocal, values);
 
   // store displacement values in interleaved order (array of struct)
   int nVectors = values.size();
@@ -322,14 +314,16 @@ getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<
 
   for (int i = 0; i < nVectors; i++)
   {
-    displacementValues[3*i + 0] = values0[i][0];
-    displacementValues[3*i + 1] = values0[i][1];
-    displacementValues[3*i + 2] = values0[i][2];
+    displacementValues[3*i + 0] = values[i][0];
+    displacementValues[3*i + 1] = values[i][1];
+    displacementValues[3*i + 2] = values[i][2];
   }
 
   // get the velocity values
-  values0.clear();
-  nestedSolver.hyperelasticitySolver().data().velocities()->getValuesWithoutGhosts(values0);
+  values.clear();
+  //nestedSolver.data().velocities()->getValues(dofNosLocal, values);
+  nestedSolver.hyperelasticitySolver().data().velocities()->getValues(dofNosLocal, values);
+
 
   // store velocity values in interleaved order (array of struct)
   nVectors = values.size();
@@ -337,9 +331,9 @@ getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<
 
   for (int i = 0; i < nVectors; i++)
   {
-    velocityValues[3*i + 0] = values0[i][0];
-    velocityValues[3*i + 1] = values0[i][1];
-    velocityValues[3*i + 2] = values0[i][2];
+    velocityValues[3*i + 0] = values[i][0];
+    velocityValues[3*i + 1] = values[i][1];
+    velocityValues[3*i + 2] = values[i][2];
   }
 }
 

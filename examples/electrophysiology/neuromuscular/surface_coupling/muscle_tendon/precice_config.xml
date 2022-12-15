@@ -61,45 +61,54 @@
     <!-- Communication method, use TCP sockets, Change network to "ib0" on SuperMUC -->
     <m2n:sockets from="TendonSolver" to="MuscleSolverLeft" network="lo" />
 
-    <coupling-scheme:serial-explicit>
+    <!-- <coupling-scheme:serial-explicit>
       <participants second="TendonSolver" first="MuscleSolverLeft"/>
 
-      <max-time value="20.0"/>           
+      <max-time value="1.0"/>           
       <time-window-size value="0.1"/>   
 
       <exchange data="Displacement"    mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
       <exchange data="Velocity"        mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
       <exchange data="Traction"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  
-    </coupling-scheme:serial-explicit>
-
-    <!-- <coupling-scheme:parallel-implicit>
+    </coupling-scheme:serial-explicit> -->
+    <coupling-scheme:parallel-implicit>
       <participants second="TendonSolver" first="MuscleSolverLeft"/>
 
-      <max-time value="20.0"/>           
+      <max-time value="1.0"/>           
       <time-window-size value="0.1"/>   
 
-
-      <acceleration:aitken>
+      <acceleration:IQN-ILS>
+        <data name="Displacement" mesh="TendonMeshLeft"/>
+        <data name="Velocity" mesh="TendonMeshLeft"/>
         <data name="Traction" mesh="MuscleMeshLeft"/>
-        <initial-relaxation value="0.1"/>
-      </acceleration:aitken> 
 
-      <acceleration:constant>
-        <relaxation value="0.5"/>
-      </acceleration:constant>
+        <preconditioner type="residual-sum"/>
+        <filter type="QR2" limit="1e-3"/>
+        <initial-relaxation value="0.4"/>
+        <max-used-iterations value="10"/>
+        <time-windows-reused value="20"/>
+      </acceleration:IQN-ILS>
 
+      <!-- <acceleration:aitken>
+        <data name="Displacement" mesh="TendonMeshLeft"/>
+        <data name="Velocity" mesh="TendonMeshLeft"/>
+        <data name="Traction" mesh="MuscleMeshLeft"/>
 
-      <max-iterations value="200" />
-      <absolute-convergence-measure limit="1e-6" data="Displacement" mesh="TendonMeshLeft" strict="1"/>
-      <absolute-convergence-measure limit="1e-2" data="Traction" mesh="MuscleMeshLeft" strict="1"/>
+        <initial-relaxation value="0.5"/>
+      </acceleration:aitken>  -->
+
+      <!-- <acceleration:constant>
+        <relaxation value="0.1"/>
+      </acceleration:constant>    -->
+
+      <max-iterations value="50" />
+      <absolute-convergence-measure limit="1e-8" data="Displacement" mesh="TendonMeshLeft" strict="1"/>
+      <absolute-convergence-measure limit="1e-8" data="Velocity" mesh="TendonMeshLeft" strict="1"/>
+      <absolute-convergence-measure limit="1e-4" data="Traction" mesh="MuscleMeshLeft" strict="1"/>
   
-      <min-iteration-convergence-measure min-iterations="2" data="Displacement" mesh="TendonMeshLeft" strict="0" suffices="0"/>
-
-
       <exchange data="Displacement"    mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
       <exchange data="Velocity"        mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
       <exchange data="Traction"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  
-    </coupling-scheme:parallel-implicit> -->
-    
+    </coupling-scheme:parallel-implicit>
   </solver-interface>
 </precice-configuration>

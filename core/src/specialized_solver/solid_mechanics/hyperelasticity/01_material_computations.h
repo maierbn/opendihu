@@ -56,6 +56,8 @@ public:
   void solveDynamicProblem(std::shared_ptr<VecHyperelasticity> displacementsVelocitiesPressure, bool isFirstTimeStep,
                            Vec internalVirtualWork, Vec &externalVirtualWorkDead, Vec accelerationTerm, bool withOutputWritersEnabled = true);
 
+ void solveQuasistaticProblem(std::shared_ptr<VecHyperelasticity> displacementsVelocitiesPressure, bool isFirstTimeStep,
+                           bool withOutputWritersEnabled = true);
   //! compute u from the equation ∂W_int - externalVirtualWork = 0 and J = 1, the result will be in displacements,
   //! the previous value in displacements will be used as initial guess (call zeroEntries() of displacements beforehand, if no initial guess should be provided)
   void solveForDisplacements(

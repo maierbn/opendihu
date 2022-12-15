@@ -206,4 +206,59 @@ solveDynamicProblem(
   ierr = VecSwap(result, solverVariableSolution_); CHKERRV(ierr);
 }
 
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticityMaterialComputations<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+solveQuasistaticProblem(
+  std::shared_ptr<VecHyperelasticity> displacementsVelocitiesPressure, bool isFirstTimeStep, bool withOutputWritersEnabled
+)
+{
+  // solve δW_int - δW_ext,dead + ∫_Ω ρ0 1/dt (v^(n+1),L - v^(n),L)/dt ϕ^L ϕ^M δu dV = 0,
+  // 1/dt (u^(n+1) - u^(n)) - v^(n+1) = 0
+  // ∫ (J-1) δp = 0   ∀ δp,δu,δv
+
+  assert(nDisplacementComponents == 6);
+
+  // use given solution vector
+  PetscErrorCode ierr;
+  Vec result = displacementsVelocitiesPressure->valuesGlobal();
+  ierr = VecSwap(result, solverVariableSolution_); CHKERRV(ierr);
+
+  // write reference output values
+  if (isFirstTimeStep)
+  {
+    // write initial values but don't increment counter
+    this->outputWriterManager_.writeOutput(this->data_, 0, 0.0, 0);
+    this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, 0.0, 0);
+  }
+
+  // save u,v,p of previous timestep from solverVariableSolution_
+  this->setDisplacementsVelocitiesAndPressureFromCombinedVec(solverVariableSolution_,
+                                                             this->data_.displacementsPreviousTimestep(),
+                                                             this->data_.velocitiesPreviousTimestep(),
+                                                             this->data_.pressurePreviousTimestep());
+
+  LOG(DEBUG) << "saved initial uvp values: ";
+  LOG(DEBUG) << *this->data_.displacementsPreviousTimestep();
+  VLOG(1) << *this->data_.velocitiesPreviousTimestep();
+  VLOG(1) << *this->data_.pressurePreviousTimestep();
+
+  // find the solution for u,v,p of the nonlinear equation, potentially multiple load steps and repeated solve calls
+  this->nonlinearSolve();
+
+  LOG(DEBUG) << "result: " << getString(solverVariableSolution_);
+
+  // update geometry fields from displacements, compute PK2Stress, write output with output writers
+  this->postprocessSolution();
+
+  LOG(DEBUG) << "nonlinearSolve finished";
+
+  // output with output writers of hyperelasticity_solver
+  if (withOutputWritersEnabled)
+  {
+    this->outputWriterManager_.writeOutput(this->data_, 0, this->endTime_);
+    this->outputWriterManagerPressure_.writeOutput(this->pressureDataCopy_, 0, this->endTime_);
+  }
+
+}
+
 }  // namespace SpatialDiscretization

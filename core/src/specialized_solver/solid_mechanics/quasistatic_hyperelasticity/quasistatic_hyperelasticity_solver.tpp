@@ -410,23 +410,22 @@ advanceTimeSpan(bool withOutputWritersEnabled)
 
     // set the current Time to the hyperelasticity solver and then solve the dynamic problem
     hyperelasticitySolver_.setTimeSpan(-1, currentTime);
-    hyperelasticitySolver_.initialize();
-    hyperelasticitySolver_.advanceTimeSpan(false);
-
-    // stop duration measurement
+    hyperelasticitySolver_.solveQuasistaticProblem(uvp_, timeStepNo==0, withOutputWritersEnabled);    // stop duration measurement
+    
     if (this->durationLogKey_ != "")
       Control::PerformanceMeasurement::stop(this->durationLogKey_);
 
     // copy resulting values to data object such that they can be written by output writer
     hyperelasticitySolver_.setDisplacementsVelocitiesAndPressureFromCombinedVec(
-      uvp_->valuesGlobal(), this->data_.displacements(), this->data_.velocities());
+     uvp_->valuesGlobal(), this->data_.displacements(), this->data_.velocities());
 
     hyperelasticitySolver_.setDisplacementsVelocitiesAndPressureFromCombinedVec(internalVirtualWork_, this->data_.internalVirtualWork());
     hyperelasticitySolver_.setDisplacementsVelocitiesAndPressureFromCombinedVec(externalVirtualWorkDead_, this->data_.externalVirtualWorkDead());
     hyperelasticitySolver_.setDisplacementsVelocitiesAndPressureFromCombinedVec(accelerationTerm_, this->data_.accelerationTerm());
 
+  
     if (withOutputWritersEnabled)
-      hyperelasticitySolver_.callOutputWriter(timeStepNo, currentTime);
+      this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
 
       // this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime);
         
@@ -439,7 +438,7 @@ advanceTimeSpan(bool withOutputWritersEnabled)
     if (isTractionInCurrentConfiguration_)
       updateNeumannBoundaryConditions();
 
-    // // compute the total force and torque at the z+ and z- surfaces of the volume
+    // compute the total force and torque at the z+ and z- surfaces of the volume
     computeBearingForcesAndMoments(currentTime);
 
     // start duration measurement
@@ -470,7 +469,6 @@ callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
 {
   //call the output writer of the nested solver
   this->hyperelasticitySolver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
-  //hyperelasticitySolver_.callOutputWriter(timeStepNo, currentTime, callCountIncrement);
 
   // call the own output writer
   this->outputWriterManager_.writeOutput(this->data_, timeStepNo, currentTime, callCountIncrement);

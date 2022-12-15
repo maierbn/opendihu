@@ -112,8 +112,8 @@ d  = 9.1733                 # [-] anisotropy parameter
 # for debugging, b = 0 leads to normal Mooney-Rivlin
 
 muscle_material_parameters = [c1, c2, b, d]   # material parameters
-tendon_material = "SaintVenantKirchoff"         #use with tendon_linear_dynamic.cpp
-#tendon_material = "nonLinear"  
+#tendon_material = "SaintVenantKirchoff"         #use with tendon_linear_dynamic.cpp
+tendon_material = "nonLinear"  
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 # These functions can be redefined differently in a custom variables script

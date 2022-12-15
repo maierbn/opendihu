@@ -29,47 +29,57 @@ cd muscle_tendon/build_release
 ./tendon_quasistatic.cpp ../settings_tendon.py
 ```
 
-## Discussion of results (EXPLICIT)
-
-Assume `n_elements_muscle1 = [2, 2, 20]` and `n_elements_tendon = [2, 2, 4]`
-
-- linear_quasistatic with `dt=0.01`:
-Not looking good. The corners (xmax, 0) and (0, ymax) are off. But maybe a absolute convergence of 1e-2 could still be satisfied. 
-
-- quasistatic with `dt=0.01`:
-**Works properly** :tada:
-Even the corner values match! The image below corresponds to t=10ms, when the muscle is contracted. The image shows the values provided by precice, that is, our boundary condition and the actual traction field in the tendon.
-
-![image info](./quasistatic_tendon_at_10.png)
-
-
-## Discussion of results (IMPLICIT)
-
-We want to get implicit coupling to work so that we can reverse which participant sends which data.
-
-Some comments:
-
-- **Enforce one iteration**:
-That would be equivalent to explicit coupling, but if we choose parallel we see that the precice values for traction are zero. This makes sense if we do a single iteration in parallel. 
-
-- **Absolute convergence for traction 1e-4**:
-It seems necessary to use the quasi-newton acceleration. In order to do the quasi-newton we have to remove the convergence criterium for the displacement, since it is always convergence. So far the best results (crashing at t=12.0) were obtained using:
+## Use of acceleration schemes
+The following is considered:
 
 ```
-<max-time value="20.0"/>           
-<time-window-size value="0.1"/>   
-
-<acceleration:IQN-ILS>
-<!-- <data name="Displacement" mesh="TendonMeshLeft"/> -->
-<data name="Traction" mesh="MuscleMeshLeft"/>
-<preconditioner type="residual-sum"/>
-<filter type="QR2" limit="1e-3"/>
-<initial-relaxation value="0.5"/>
-<max-used-iterations value="10"/>
-<time-windows-reused value="20"/>
-</acceleration:IQN-ILS>
-
-<max-iterations value="50" />
-<!-- <absolute-convergence-measure limit="1e-6" data="Displacement" mesh="TendonMeshLeft" strict="1"/> -->
-<absolute-convergence-measure limit="1e-4" data="Traction" mesh="MuscleMeshLeft" strict="1"/>
+ <max-iterations value="50" />
+      <absolute-convergence-measure limit="1e-8" data="Displacement" mesh="TendonMeshLeft" strict="1"/>
+      <absolute-convergence-measure limit="1e-8" data="Velocity" mesh="TendonMeshLeft" strict="1"/>
+      <absolute-convergence-measure limit="1e-4" data="Traction" mesh="MuscleMeshLeft" strict="1"/>
 ```
+
+> **Note**
+>  t=0.6 is the first timestep were the tendon writes non-zero values of displacement and velocities. If the initial displacement is 0s everywhere, we expect the velocity to be a factor of 10 larger than the displacement
+> 
+
+- **no acceleration**: We reach maximum number of iteration at t=0.6. Error goes down and up.
+
+- **constant acceleration**: We reach maximum number of iteration at t=0.6. Error goes down and up. I tried `<relaxation value="0.1"/>` and `<relaxation value="0.5"/>`.
+
+**OQ: do we write all meshes?**
+
+- **aitken acceleration**: Error goes down and up.
+
+|  initial relaxation |  crashes at t |
+|---|---|
+| 0.5  | 0.7  | 
+| 0.1 |  0.6 |  
+
+- **quasi-newton acceleration**:
+
+|  initial relaxation |  preconditioner |  max-used.iterations | time-windows-reused | crashes at t | Note 
+|---|---|---|---| ---|
+| 0.1 | residual-sum | 100 | 20 | 1.3 | 1|
+| 0.1 | residual-sum | 8 | 20 | 1.2 | - |
+| 0.5 | residual-sum | 8 | 20 | 1.3 | - |
+| 0.3 | residual-sum | 8 | 20 | 1.1 | - |
+| 0.7 | residual-sum | 8 | 20 | 1.0 | - |
+| 0.2 | residual-sum | 8 | 20 | 1.2 | - |
+| 0.2 | residual-sum | 8 | 8 | 1.1 | - |
+
+
+1) The number of columns in the least squares system exceeded half the number of unknowns at the interface. The system will probably become bad or ill-conditioned and the quasi-Newton acceleration may not converge. Maybe the number of allowed columns ("max-used-iterations") should be limited -> since we have 9 values at the interface chance from 100 to 8. 
+
+## About the quasistatic solver
+
+- Add new folder with solver files `solid_mechanics/quasistatic_hyperelasticity`
+    - `quasistatic_hyperelasticity_solver.h` is identical to `dynamic_hyperelasticity_solver.h`: only the solver/class name changes
+    - `quasistatic_hyperelasticity_solver.tpp` is almost identical to `dynamic_hyperelasticity_solver.tpp`: in function `advanceTimeSpan(withOutputWritersEnabled)` we call function `solveQuasistaticProblem` instead of `solveDynamicProblem`
+- Write function `solveQuasistaticProblem` in file `solid_mechanics/hyperelasticity/01_material_computations_wrappers.tpp`
+    - add new function to file `solid_mechanics/hyperelasticity/01_material_computations_wrappers.tpp`
+    - the main idea is to use the results of the previous timesteps for the initial values of displacement, velocities and pressure.
+- Add precice adapter for quasistatic solver in `00_nested_solver.h` and `00_nested:solver.tpp`.
+
+> **Warning**
+> The way we write displacements and velocities to precice changes from the quasistatic to the dynamic solver! See function `getDisplacementVelocityValues` in the adapter. 

@@ -111,9 +111,9 @@ setDirichletBoundaryConditions(typename PreciceAdapterInitialize<NestedSolver>::
       }
     }
 
-    LOG(DEBUG) << "read data from precice complete, displacement values: " << displacementValues_
+    LOG(INFO) << "read data from precice complete, displacement values: " << displacementValues_
       << ", velocityValues: " << velocityValues_;
-    LOG(DEBUG) << "read and set Dirichlet BC: " << newDirichletBCValues;
+    LOG(INFO) << "read and set Dirichlet BC: " << newDirichletBCValues;
   }
 
   //! set new dirichlet boundary condition values
@@ -304,9 +304,10 @@ preciceWriteData()
 
         this->getDisplacementVelocityValues(this->nestedSolver_, preciceData.preciceMesh->dofNosLocal, displacementValues_, velocityValues_);
 
-#ifndef NDEBUG
-        LOG(DEBUG) << "write displacements data to precice: " << displacementValues_;
-#endif
+        LOG(INFO) << "write displacements data to precice: " << displacementValues_;
+        LOG(INFO) << "write velocities data to precice: " << velocityValues_;
+
+
         // scale displacement and velocity values
         for (double &value : displacementValues_)
           value *= this->scalingFactor_;

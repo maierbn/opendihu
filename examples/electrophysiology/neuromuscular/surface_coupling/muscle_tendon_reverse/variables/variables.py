@@ -13,7 +13,6 @@ dt_elasticity = 0.1             # [ms] time step width of elasticity solver
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz. This is not used here.
 activation_start_time = 0           # [ms] time when to start checking for stimulation
 
-
 # solvers
 # -------
 diffusion_solver_type = "cg"        # solver and preconditioner for the diffusion part of the Monodomain equation
@@ -23,7 +22,7 @@ diffusion_solver_reltol = 1e-10
 
 elasticity_solver_type = "preonly"
 elasticity_preconditioner_type = "lu"
-snes_max_iterations = 50                  # maximum number of iterations in the nonlinear solver
+snes_max_iterations = 10                  # maximum number of iterations in the nonlinear solver
 snes_rebuild_jacobian_frequency = 2       # how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again 
 snes_relative_tolerance = 1e-5      # relative tolerance of the nonlinear solver
 snes_absolute_tolerance = 1e-5      # absolute tolerance of the nonlinear solver
@@ -71,9 +70,10 @@ n_points_whole_fiber = 40
 n_fibers_x = 4
 n_fibers_y = 4
 
+
 tendon_extent = [3.0, 3.0, 2.0] # [cm, cm, cm]
 tendon_offset = [0.0, 0.0, muscle1_extent[2]]
-n_elements_tendon = [2, 2, 6] 
+n_elements_tendon = [2, 2, 4] 
 
 # random
 # ------------
@@ -112,8 +112,8 @@ d  = 9.1733                 # [-] anisotropy parameter
 # for debugging, b = 0 leads to normal Mooney-Rivlin
 
 muscle_material_parameters = [c1, c2, b, d]   # material parameters
-tendon_material = "SaintVenantKirchoff"         #use with tendon_linear_dynamic.cpp
-#tendon_material = "nonLinear"  
+#tendon_material = "SaintVenantKirchoff"         #use with tendon_linear_dynamic.cpp
+tendon_material = "nonLinear"  
 
 # functions, here, Am, Cm and Conductivity are constant for all fibers and MU's
 # These functions can be redefined differently in a custom variables script
@@ -148,8 +148,8 @@ input_directory = os.path.join(os.environ.get('OPENDIHU_HOME', '../../../../../'
 #cellml_file = input_directory+"/hodgkin_huxley_1952.c"
 cellml_file = input_directory+"/hodgkin_huxley-razumova.cellml"
 fiber_distribution_file = input_directory+"/MU_fibre_distribution_multidomain_67x67_100.txt"
-# firing_times_file = input_directory + "/MU_firing_times_real.txt"
-firing_times_file = input_directory + "/MU_firing_times_real_no_firing.txt" # no firing
+firing_times_file = input_directory + "/MU_firing_times_real.txt"
+no_firing_times_file = input_directory + "/MU_firing_times_real_no_firing.txt" # no firing
 
 def get_from_obj(data, path):
   for elem in path:

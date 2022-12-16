@@ -1,4 +1,3 @@
-
 # SConstruct file for a single example.
 #
 # Usage: `scons BUILD_TYPE=debug` will build debug version, `scons` will build release version.

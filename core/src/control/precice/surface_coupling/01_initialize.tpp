@@ -259,14 +259,14 @@ initializePreciceData()
 
       // get precice names of the variables
       preciceData.displacementsName = currentPreciceData.getOptionString("displacementsName", "Displacement");
-      preciceData.velocitiesName = currentPreciceData.getOptionString("velocitiesName", "Velocity");
+      // preciceData.velocitiesName = currentPreciceData.getOptionString("velocitiesName", "Velocity");
 
       // get precice data ids
       preciceData.preciceDataIdDisplacements = preciceSolverInterface_->getDataID(
         preciceData.displacementsName, preciceData.preciceMesh->preciceMeshId);
 
-      preciceData.preciceDataIdVelocities = preciceSolverInterface_->getDataID(
-        preciceData.velocitiesName, preciceData.preciceMesh->preciceMeshId);
+      // preciceData.preciceDataIdVelocities = preciceSolverInterface_->getDataID(
+      //   preciceData.velocitiesName, preciceData.preciceMesh->preciceMeshId);
     }
     else if (mode == "read-traction")
     {
@@ -286,14 +286,14 @@ initializePreciceData()
 
       // get precice names of the variables
       preciceData.displacementsName = currentPreciceData.getOptionString("displacementsName", "Displacement");
-      preciceData.velocitiesName = currentPreciceData.getOptionString("velocitiesName", "Velocity");
+      // preciceData.velocitiesName = currentPreciceData.getOptionString("velocitiesName", "Velocity");
 
       // get precice data ids
       preciceData.preciceDataIdDisplacements = preciceSolverInterface_->getDataID(
         preciceData.displacementsName, preciceData.preciceMesh->preciceMeshId);
 
-      preciceData.preciceDataIdVelocities = preciceSolverInterface_->getDataID(
-        preciceData.velocitiesName, preciceData.preciceMesh->preciceMeshId);
+      // preciceData.preciceDataIdVelocities = preciceSolverInterface_->getDataID(
+      //   preciceData.velocitiesName, preciceData.preciceMesh->preciceMeshId);
     }
     else if (mode == "write-traction")
     {

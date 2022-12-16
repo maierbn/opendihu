@@ -96,32 +96,30 @@ config = {
   "mappingsBetweenMeshesLogFile":   "mappings_between_meshes_log.txt",    # log file for mappings 
   "Meshes":                         variables.meshes,
 
-  "PreciceAdapter": {  
-    "outputOnlyConvergedTimeSteps": True, #default is true      # precice adapter for bottom tendon
-    "timeStepOutputInterval":   1,                        # interval in which to display current timestep and time in console
-    "timestepWidth":            variables.dt_elasticity,                          # coupling time step width, must match the value in the precice config
-    "couplingEnabled":          True,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
-    "preciceConfigFilename":    "../precice_config.xml",    # the preCICE configuration file
-    "preciceParticipantName":   "TendonSolver",             # name of the own precice participant, has to match the name given in the precice xml config file
-    "preciceMeshes": [                                      # the precice meshes get created as the top or bottom surface of the main geometry mesh of the nested solver
-      {
-        "preciceMeshName":      "TendonMeshLeft",            # precice name of the 2D coupling mesh
-        "face":                 "2-",                       # face of the 3D mesh where the 2D mesh is located, "2-" = bottom, "2+" = top
-      }
-    ],
-    "preciceData": [  
-      {
-        "mode":                 "write-displacements-velocities",   # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
-        "preciceMeshName":      "TendonMeshLeft",                    # name of the precice coupling surface mesh, as given in the precice xml settings file
-        "displacementsName":    "Displacement",                     # name of the displacements "data", i.e. field variable, as given in the precice xml settings file
-        "velocitiesName":       "Velocity",                         # name of the velocity "data", i.e. field variable, as given in the precice xml settings file
-      },
-      {
-        "mode":                 "read-traction",                    # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
-        "preciceMeshName":      "TendonMeshLeft",                    # name of the precice coupling surface mesh, as given in the precice xml settings 
-        "tractionName":         "Traction",                         # name of the traction "data", i.e. field variable, as given in the precice xml settings file
-      }
-    ],
+  "PreciceAdapter": {        # precice adapter for bottom tendon
+      "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
+      "timestepWidth":            variables.dt_elasticity,                          # coupling time step width, must match the value in the precice config
+      "couplingEnabled":          True,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
+      "preciceConfigFilename":    "../precice_config.xml",    # the preCICE configuration file
+      "preciceParticipantName":   "TendonSolver",             # name of the own precice participant, has to match the name given in the precice xml config file
+      "preciceMeshes": [                                      # the precice meshes get created as the top or bottom surface of the main geometry mesh of the nested solver
+        {
+          "preciceMeshName":      "TendonMeshLeft",            # precice name of the 2D coupling mesh
+          "face":                 "2-",                       # face of the 3D mesh where the 2D mesh is located, "2-" = bottom, "2+" = top
+        }
+      ],
+      "preciceData": [  
+        {
+          "mode":                 "write-displacements-velocities",   # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
+          "preciceMeshName":      "TendonMeshLeft",                    # name of the precice coupling surface mesh, as given in the precice xml settings file
+          "displacementsName":    "Displacement",                     # name of the displacements "data", i.e. field variable, as given in the precice xml settings file
+        },
+        {
+          "mode":                 "read-traction",                    # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
+          "preciceMeshName":      "TendonMeshLeft",                    # name of the precice coupling surface mesh, as given in the precice xml settings 
+          "tractionName":         "Traction",                         # name of the traction "data", i.e. field variable, as given in the precice xml settings file
+        }
+      ],
     
     "QuasistaticHyperelasticitySolver": {
       "timeStepWidth":              variables.dt_elasticity,#variables.dt_elasticity,      # time step width 

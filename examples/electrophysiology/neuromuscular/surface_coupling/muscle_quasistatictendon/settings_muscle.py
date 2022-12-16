@@ -167,11 +167,11 @@ config = {
 
   "PreciceAdapter" : {
 
-    "couplingEnabled":              True,
+    "couplingEnabled":          True,
     "outputOnlyConvergedTimeSteps": True, #default is true
     "scalingFactor":            1,
 
-    "timeStepOutputInterval":   1,                        # interval in which to display current timestep and time in console
+    "timeStepOutputInterval":   100,                        # interval in which to display current timestep and time in console
     "timestepWidth":            variables.dt_elasticity,                          # coupling time step width, must match the value in the precice config
     "preciceConfigFilename":    "../precice_config.xml",    # the preCICE configuration file
     "preciceParticipantName":   "MuscleSolverLeft",             # name of the own precice participant, has to match the name given in the precice xml config file
@@ -186,7 +186,6 @@ config = {
         "mode":                 "read-displacements-velocities",    # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
         "preciceMeshName":      "MuscleMeshLeft",                 # name of the precice coupling surface mesh, as given in the precice xml settings file
         "displacementsName":    "Displacement",                     # name of the displacements "data", i.e. field variable, as given in the precice xml settings file
-        "velocitiesName":       "Velocity",                         # name of the velocity "data", i.e. field variable, as given in the precice xml settings file
       },
       {
         "mode":                 "write-traction",                   # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"

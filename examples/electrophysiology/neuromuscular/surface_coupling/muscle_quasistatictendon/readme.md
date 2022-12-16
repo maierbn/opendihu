@@ -43,29 +43,26 @@ The following is considered:
 >  t=0.7 is the first timestep were the tendon writes non-zero values of displacement and velocities. If the initial displacement is 0s everywhere, we expect the velocity to be a factor of 10 larger than the displacement
 > 
 
-- **no acceleration**: Crashes at t=1.0
-- **constant acceleration**: We reach maximum number of iteration at t=0.6. Error goes down and up. I tried `<relaxation value="0.1"/>` and `<relaxation value="0.5"/>`.
+- **no acceleration**: Crashes at t=0.9
+- **constant acceleration**: 
+| relaxation |  crashes at t |
+|---|---|
+| 0.1  | 0.7  | 
+| 0.1 |  0.7 |  
 
-**OQ: do we write all meshes?**
 
 - **aitken acceleration**: Error goes down and up.
 
 |  initial relaxation |  crashes at t |
 |---|---|
-| 0.5  | 0.7  | 
-| 0.1 |  0.6 |  
+| 0.5  | 0.8  | 
+| 0.1 |  0.8 |  
 
 - **quasi-newton acceleration**:
 
 |  initial relaxation |  preconditioner |  max-used.iterations | time-windows-reused | crashes at t | Note 
 |---|---|---|---| ---|
-| 0.1 | residual-sum | 100 | 20 | 1.3 | 1|
-| 0.1 | residual-sum | 8 | 20 | 1.2 | - |
-| 0.5 | residual-sum | 8 | 20 | 1.3 | - |
-| 0.3 | residual-sum | 8 | 20 | 1.1 | - |
-| 0.7 | residual-sum | 8 | 20 | 1.0 | - |
-| 0.2 | residual-sum | 8 | 20 | 1.2 | - |
-| 0.2 | residual-sum | 8 | 8 | 1.1 | - |
+| 0.1 | residual-sum | 8 | 20 | 0.8 | - |
 
 
 1) The number of columns in the least squares system exceeded half the number of unknowns at the interface. The system will probably become bad or ill-conditioned and the quasi-Newton acceleration may not converge. Maybe the number of allowed columns ("max-used-iterations") should be limited -> since we have 9 values at the interface chance from 100 to 8. 

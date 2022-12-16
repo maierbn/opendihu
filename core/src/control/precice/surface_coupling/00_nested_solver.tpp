@@ -304,9 +304,8 @@ getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<
   // get the displacement values
   static std::vector<Vec3> values;
   values.clear();
-  nestedSolver.hyperelasticitySolver().data().displacements()->getValues(dofNosLocal, values);
+  nestedSolver.data().displacements()->getValues(dofNosLocal, values);
 
-  //nestedSolver.data().displacements()->getValues(dofNosLocal, values);
 
   // store displacement values in interleaved order (array of struct)
   int nVectors = values.size();
@@ -321,9 +320,7 @@ getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<
 
   // get the velocity values
   values.clear();
-  //nestedSolver.data().velocities()->getValues(dofNosLocal, values);
-  nestedSolver.hyperelasticitySolver().data().velocities()->getValues(dofNosLocal, values);
-
+  nestedSolver.data().velocities()->getValues(dofNosLocal, values);
 
   // store velocity values in interleaved order (array of struct)
   nVectors = values.size();

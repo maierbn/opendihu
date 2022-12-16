@@ -40,11 +40,10 @@ The following is considered:
 ```
 
 > **Note**
->  t=0.6 is the first timestep were the tendon writes non-zero values of displacement and velocities. If the initial displacement is 0s everywhere, we expect the velocity to be a factor of 10 larger than the displacement
+>  t=0.7 is the first timestep were the tendon writes non-zero values of displacement and velocities. If the initial displacement is 0s everywhere, we expect the velocity to be a factor of 10 larger than the displacement
 > 
 
-- **no acceleration**: We reach maximum number of iteration at t=0.6. Error goes down and up.
-
+- **no acceleration**: Crashes at t=1.0
 - **constant acceleration**: We reach maximum number of iteration at t=0.6. Error goes down and up. I tried `<relaxation value="0.1"/>` and `<relaxation value="0.5"/>`.
 
 **OQ: do we write all meshes?**
@@ -81,5 +80,3 @@ The following is considered:
     - the main idea is to use the results of the previous timesteps for the initial values of displacement, velocities and pressure.
 - Add precice adapter for quasistatic solver in `00_nested_solver.h` and `00_nested:solver.tpp`.
 
-> **Warning**
-> The way we write displacements and velocities to precice changes from the quasistatic to the dynamic solver! See function `getDisplacementVelocityValues` in the adapter. 

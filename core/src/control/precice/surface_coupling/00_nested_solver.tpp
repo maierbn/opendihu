@@ -126,6 +126,14 @@ deformationGradientField(NestedSolverType &nestedSolver)
   return nestedSolver.timeStepping2().dynamicHyperelasticitySolver()->hyperelasticitySolver().data().deformationGradient();
 }
 
+template<typename T1, typename T2, typename T3>
+void PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::
+reset(NestedSolverType &nestedSolver)
+{
+  nestedSolver.timeStepping1().reset();
+  //nestedSolver.timeStepping2().reset();
+}
+
 // --------------------------------------------------
 // DynamicHyperelasticitySolver
 
@@ -253,6 +261,13 @@ deformationGradientField(NestedSolverType &nestedSolver)
   return nestedSolver.hyperelasticitySolver().data().deformationGradient();
 }
 
+template<typename Material>
+void PreciceAdapterNestedSolver<TimeSteppingScheme::DynamicHyperelasticitySolver<Material>>::
+reset(NestedSolverType &nestedSolver)
+{
+  //nestedSolver.reset();
+}
+
 // --------------------------------------------------
 // QHyperelasticitySolver
 
@@ -372,6 +387,13 @@ PreciceAdapterNestedSolver<TimeSteppingScheme::QuasistaticHyperelasticitySolver<
 deformationGradientField(NestedSolverType &nestedSolver)
 {
   return nestedSolver.hyperelasticitySolver().data().deformationGradient();
+}
+
+template<typename Material>
+void PreciceAdapterNestedSolver<TimeSteppingScheme::QuasistaticHyperelasticitySolver<Material>>::
+reset(NestedSolverType &nestedSolver)
+{
+  nestedSolver.reset();
 }
 
 // --------------------------------------------------
@@ -530,4 +552,10 @@ deformationGradientField(NestedSolverType &nestedSolver)
   return nestedSolver.data().deformationGradient();
 }
 
+template<typename Material>
+void PreciceAdapterNestedSolver<SpatialDiscretization::HyperelasticitySolver<Material>>::
+reset(NestedSolverType &nestedSolver)
+{
+  nestedSolver.reset();
+}
 }  // namespace

@@ -101,6 +101,7 @@ run()
     {
       // set variables back to last checkpoint
       currentTime = this->loadCheckpoint();
+      this->nestedSolver_.reset();
       this->preciceSolverInterface_->markActionFulfilled(precice::constants::actionReadIterationCheckpoint());
     }
 
@@ -122,16 +123,6 @@ run()
 #else
   LOG(FATAL) << "Not compiled with preCICE!";
 #endif
-}
-
-template<typename NestedSolver>
-void PreciceAdapter<NestedSolver>::
-reset()
-{
-  this->nestedSolver_.reset();
-
-  this->initialized_ = false;
-  // "uninitialize" everything
 }
 
 template<typename NestedSolver>

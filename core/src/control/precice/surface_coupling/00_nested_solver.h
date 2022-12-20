@@ -67,6 +67,8 @@ public:
 
   //! get the field variable of the deformation gradient
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,9>> deformationGradientField(NestedSolverType &nestedSolver);
+
+  void reset(NestedSolverType &nestedSolver);
 };
 
 /** Partial specialization for tendon or pure mechanics solver, dynamic nonlinear elasticity
@@ -113,6 +115,8 @@ public:
 
   //! get the field variable of the deformation gradient
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,9>> deformationGradientField(NestedSolverType &nestedSolver);
+
+  void reset(NestedSolverType &nestedSolver);
 };
 
 /** Partial specialization for tendon or pure mechanics solver, dynamic nonlinear elasticity
@@ -159,6 +163,8 @@ public:
 
   //! get the field variable of the deformation gradient
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,9>> deformationGradientField(NestedSolverType &nestedSolver);
+
+  void reset(NestedSolverType &nestedSolver);
 };
 
 /** Partial specialization for tendon or pure mechanics solver, static nonlinear elasticity
@@ -205,6 +211,9 @@ public:
 
   //! get the field variable of the deformation gradient
   std::shared_ptr<FieldVariable::FieldVariable<FunctionSpace,9>> deformationGradientField(NestedSolverType &nestedSolver);
+
+  void reset(NestedSolverType &nestedSolver);
+
 };
 
 }  // namespace

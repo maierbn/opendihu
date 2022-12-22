@@ -117,6 +117,37 @@ public:
   //! get a reference to the nested solvers
   NestedSolversType &nestedSolvers();
 
+  /** data to be exchanged for computation of a single fiber
+   *  The data stored herein is used for local computation.
+   */
+  struct FiberData
+  {
+    std::vector<double> elementLengths;   //< lengths of the 1D elements
+    std::vector<double> vmValues;         //< values of Vm
+    std::vector<double> furtherStatesAndAlgebraicsValues;    //< all data to be transferred back to the fibers, apart from vmValues, corresponding to statesForTransferIndices_ and algebraicsForTransferIndices_ (array of struct memory layout)
+    int valuesLength;                     //< number of vmValues
+    global_no_t valuesOffset;             //< number of vmValues in previous entries in fiberData_
+
+    int fiberNoGlobal;                    //< fiberNo as given in settings (value of additionalArgument)
+    int motorUnitNo;                      //< motor unit no.
+    int fiberStimulationPointIndex;       //< index of the point on the fiber where to stimulate, i.e. position of the neuromuscular junction, if at center, it is equal to (int)(fiberData_[fiberDataNo].valuesLength / 2)
+
+    double lastStimulationCheckTime;      //< last time the fiber was checked for stimulation
+    double setSpecificStatesCallFrequency;        //< value of option with the same name in the python settings
+    std::vector<double> setSpecificStatesFrequencyJitter;      //< value of option with the same name in the python settings
+    double setSpecificStatesRepeatAfterFirstCall; //< how long in ms the prescribed value should be set
+    double setSpecificStatesCallEnableBegin;      //< value of option with the same name in the python settings
+
+    double currentJitter;                         //< current absolute value of jitter to add to setSpecificStatesCallFrequency
+    int jitterIndex;                              //< index of the vector in setSpecificStatesFrequencyJitter which is the current value to use
+    bool currentlyStimulating;                    //< if a stimulation is in progress at the current time
+  };
+
+  std::vector<FiberData> getFiberState();
+
+  void updateFiberState(std::vector<FiberData> fiberData);
+
+
 protected:
 
   //! load the firing times file and initialize the firingEvents_ and motorUnitNo_ variables
@@ -155,7 +186,6 @@ protected:
   void computeMonodomain();
 
   //! check if the current point will be stimulated now
-  struct FiberData;
   bool isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointIsInCenter);
 
   //! method to be called after the compute0D, updates the information in fiberPointBuffersStatesAreCloseToEquilibrium_
@@ -182,32 +212,6 @@ protected:
   PythonConfig specificSettings_;    //< config for this object
 
   NestedSolversType nestedSolvers_;   //< the nested solvers object that would normally solve the problem
-
-  /** data to be exchanged for computation of a single fiber
-   *  The data stored herein is used for local computation.
-   */
-  struct FiberData
-  {
-    std::vector<double> elementLengths;   //< lengths of the 1D elements
-    std::vector<double> vmValues;         //< values of Vm
-    std::vector<double> furtherStatesAndAlgebraicsValues;    //< all data to be transferred back to the fibers, apart from vmValues, corresponding to statesForTransferIndices_ and algebraicsForTransferIndices_ (array of struct memory layout)
-    int valuesLength;                     //< number of vmValues
-    global_no_t valuesOffset;             //< number of vmValues in previous entries in fiberData_
-
-    int fiberNoGlobal;                    //< fiberNo as given in settings (value of additionalArgument)
-    int motorUnitNo;                      //< motor unit no.
-    int fiberStimulationPointIndex;       //< index of the point on the fiber where to stimulate, i.e. position of the neuromuscular junction, if at center, it is equal to (int)(fiberData_[fiberDataNo].valuesLength / 2)
-
-    double lastStimulationCheckTime;      //< last time the fiber was checked for stimulation
-    double setSpecificStatesCallFrequency;        //< value of option with the same name in the python settings
-    std::vector<double> setSpecificStatesFrequencyJitter;      //< value of option with the same name in the python settings
-    double setSpecificStatesRepeatAfterFirstCall; //< how long in ms the prescribed value should be set
-    double setSpecificStatesCallEnableBegin;      //< value of option with the same name in the python settings
-
-    double currentJitter;                         //< current absolute value of jitter to add to setSpecificStatesCallFrequency
-    int jitterIndex;                              //< index of the vector in setSpecificStatesFrequencyJitter which is the current value to use
-    bool currentlyStimulating;                    //< if a stimulation is in progress at the current time
-  };
 
   std::vector<FiberPointBuffers<nStates>> fiberPointBuffers_;    //< computation buffers for the 0D problem, the states vector used when optimizationType == "vc"
 

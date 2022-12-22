@@ -115,6 +115,9 @@ template<typename T1, typename T2, typename T3>
 Vec PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::
 currentState(NestedSolverType &nestedSolver)
 {
+  //Vec dynamicHyperelasticSolverState;
+  // std::vector<double> fastMonodomainSolverState;
+  // fastMonodomainSolverState = nestedSolver.timeStepping1().currentState();
   return nestedSolver.timeStepping2().dynamicHyperelasticitySolver()->currentState();
 }
 
@@ -130,8 +133,8 @@ template<typename T1, typename T2, typename T3>
 void PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::
 reset(NestedSolverType &nestedSolver)
 {
-  nestedSolver.timeStepping1().reset();
-  //nestedSolver.timeStepping2().reset();
+  //nestedSolver.timeStepping1().reset();
+  nestedSolver.timeStepping2().reset();
 }
 
 // --------------------------------------------------

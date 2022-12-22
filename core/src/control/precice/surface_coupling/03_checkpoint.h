@@ -3,6 +3,8 @@
 #include <Python.h>  // has to be the first included header
 
 #include "control/precice/surface_coupling/02_read_write.h"
+#include "specialized_solver/fast_monodomain_solver/fast_monodomain_solver_base.h"
+
 
 namespace Control
 {
@@ -29,6 +31,8 @@ protected:
 
   double savedCurrentTime_;   //< the saved value of the simulation time
   Vec savedState_ = PETSC_NULL;            //< Petsc Vec that stores the whole data
+  // std::vector<FiberData> savedFiberState = nullptr;
+
 };
 
 }  // namespace

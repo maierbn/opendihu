@@ -66,3 +66,17 @@ getSlotConnectorData()
 {
   return nestedSolvers_.getSlotConnectorData();
 }
+
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
+updateFiberState(std::vector<FiberData> fiberData)
+{
+  fiberData_ = fiberData;
+}
+
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+std::vector<FiberData> FastMonodomainSolverBase<nStates, nAlgebraics, DiffusionTimeSteppingScheme>::
+getFiberState()
+{
+  return fiberData_;
+}

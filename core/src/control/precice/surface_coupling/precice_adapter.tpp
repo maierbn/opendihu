@@ -101,7 +101,6 @@ run()
     {
       // set variables back to last checkpoint
       currentTime = this->loadCheckpoint();
-      this->nestedSolver_.reset();
       this->preciceSolverInterface_->markActionFulfilled(precice::constants::actionReadIterationCheckpoint());
     }
 

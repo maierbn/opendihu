@@ -75,7 +75,7 @@ updateFiberState(std::vector<FiberData> fiberData)
 }
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
-std::vector<FiberData> FastMonodomainSolverBase<nStates, nAlgebraics, DiffusionTimeSteppingScheme>::
+std::vector<typename FastMonodomainSolverBase<nStates, nAlgebraics, DiffusionTimeSteppingScheme>::FiberData> FastMonodomainSolverBase<nStates, nAlgebraics, DiffusionTimeSteppingScheme>::
 getFiberState()
 {
   return fiberData_;

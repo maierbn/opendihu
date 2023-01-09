@@ -143,9 +143,10 @@ public:
     bool currentlyStimulating;                    //< if a stimulation is in progress at the current time
   };
 
+  void updateFiberState(std::vector<FiberData> fiberData);
+
   std::vector<FiberData> getFiberState();
 
-  void updateFiberState(std::vector<FiberData> fiberData);
 
 
 protected:

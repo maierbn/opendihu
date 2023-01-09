@@ -27,15 +27,15 @@ initialize()
   if (initialized_)
     return;
 
-  if (!std::is_same<DiffusionTimeSteppingScheme,
-        TimeSteppingScheme::ImplicitEuler<typename DiffusionTimeSteppingScheme::DiscretizableInTime>
-      >::value
-     && !std::is_same<DiffusionTimeSteppingScheme,
-        TimeSteppingScheme::CrankNicolson<typename DiffusionTimeSteppingScheme::DiscretizableInTime>
-      >::value)
-  {
-    LOG(FATAL) << "Timestepping scheme of diffusion in FastMonodomainSolver must be either ImplicitEuler or CrankNicolson!";
-  }
+  // if (!std::is_same<DiffusionTimeSteppingScheme,
+  //       TimeSteppingScheme::ImplicitEuler<typename DiffusionTimeSteppingScheme::DiscretizableInTime>
+  //     >::value
+  //    && !std::is_same<DiffusionTimeSteppingScheme,
+  //       TimeSteppingScheme::CrankNicolson<typename DiffusionTimeSteppingScheme::DiscretizableInTime>
+  //     >::value)
+  // {
+  //   LOG(FATAL) << "Timestepping scheme of diffusion in FastMonodomainSolver must be either ImplicitEuler or CrankNicolson!";
+  // }
 
   // disable the generation of the source code and compilation of the library in the nested CellmlAdapter
   // loop over instances of the CellML adapter

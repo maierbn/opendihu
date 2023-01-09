@@ -69,14 +69,20 @@ getSlotConnectorData()
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
-updateFiberState(std::vector<FiberData> fiberData)
+updateFiberState()
 {
-  fiberData_ = fiberData;
+
+  LOG(INFO) << "update fiber state";
+  fiberData_.clear();
+  fiberData_ = fiberDataOld_;
 }
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
-std::vector<typename FastMonodomainSolverBase<nStates, nAlgebraics, DiffusionTimeSteppingScheme>::FiberData> FastMonodomainSolverBase<nStates, nAlgebraics, DiffusionTimeSteppingScheme>::
-getFiberState()
+void FastMonodomainSolverBase<nStates, nAlgebraics, DiffusionTimeSteppingScheme>::
+saveFiberState()
 {
-  return fiberData_;
+  
+  LOG(INFO) << "save fiber state";
+  fiberDataOld_.clear();
+  fiberDataOld_ = fiberData_;
 }

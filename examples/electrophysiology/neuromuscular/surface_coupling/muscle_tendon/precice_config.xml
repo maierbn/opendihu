@@ -47,7 +47,7 @@
     <!-- <coupling-scheme:serial-explicit>
       <participants second="TendonSolver" first="MuscleSolverLeft"/>
 
-      <max-time value="20.0"/>           
+      <max-time value="2.0"/>           
       <time-window-size value="0.1"/>   
 
       <exchange data="Displacement"    mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
@@ -58,34 +58,12 @@
     <coupling-scheme:parallel-implicit>
       <participants second="TendonSolver" first="MuscleSolverLeft"/>
 
-      <max-time value="20.0"/>           
+      <max-time value="2.0"/>           
       <time-window-size value="0.1"/>   
 
-       <!-- <acceleration:IQN-ILS>
-        <data name="Displacement" mesh="TendonMeshLeft"/>
-        <data name="Traction" mesh="MuscleMeshLeft"/>
-
-         <preconditioner type="residual"/>
-        <filter type="QR2" limit="1e-1"/>
-        <initial-relaxation value="0.5"/>
-        <max-used-iterations value="8"/>
-        <time-windows-reused value="20"/>
-      </acceleration:IQN-ILS> 
-
-      <acceleration:aitken>
-        <data name="Displacement" mesh="TendonMeshLeft"/>
-        <data name="Traction" mesh="MuscleMeshLeft"/>
-
-        <initial-relaxation value="0.5"/>
-      </acceleration:aitken>  
- 
-      <acceleration:constant>
-        <relaxation value="0.5"/>
-      </acceleration:constant>     -->
-
-      <max-iterations value="2" />
-      <relative-convergence-measure limit="1e-2" data="Displacement" mesh="TendonMeshLeft" strict="0"/>
-      <relative-convergence-measure limit="1e-2" data="Traction" mesh="MuscleMeshLeft" strict="0"/>
+      <max-iterations value="10" />
+      <relative-convergence-measure limit="1e-8" data="Displacement" mesh="TendonMeshLeft" strict="0"/>
+      <relative-convergence-measure limit="1e-8" data="Traction" mesh="MuscleMeshLeft" strict="0"/>
   
       <exchange data="Displacement"    mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
       <exchange data="Traction"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  

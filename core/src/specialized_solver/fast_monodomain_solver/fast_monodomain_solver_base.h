@@ -143,9 +143,9 @@ public:
     bool currentlyStimulating;                    //< if a stimulation is in progress at the current time
   };
 
-  void updateFiberState(std::vector<FiberData> fiberData);
+  void updateFiberState();
 
-  std::vector<FiberData> getFiberState();
+  void saveFiberState();
 
 
 
@@ -225,7 +225,7 @@ protected:
   std::string durationLogKey1D_;                  //< duration log key for the 1D problem
 
   OutputWriter::Manager outputWriterManager_;     //< manager object holding all output writers
-
+  std::vector<FiberData> fiberDataOld_;
   std::vector<FiberData> fiberData_;  //< vector of fibers, the number of entries is the number of fibers to be computed by the own rank (nFibersToCompute_)
   int nFibersToCompute_;              //< number of fibers where own rank is involved (>= n.fibers that are computed by own rank)
   int nInstancesToCompute_;           //< number of instances of the Hodgkin-Huxley (or other CellML) problem to compute on this rank

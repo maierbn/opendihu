@@ -273,6 +273,7 @@ initializeDataStructures()
 
   fiberData_.resize(nFibersToCompute_);
   fiberHasBeenStimulated_.resize(nFibersToCompute_, false);
+  fiberHasBeenStimulatedOld_.resize(nFibersToCompute_, false);
   LOG(DEBUG) << "nFibers: " << nFibers << ", nFibersToCompute_: " << nFibersToCompute_;
 
   // initialize random generator that is used to determine the stimulation point of the fiber

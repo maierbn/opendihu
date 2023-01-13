@@ -69,20 +69,51 @@ getSlotConnectorData()
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
-updateFiberState()
+loadFiberState()
 {
 
-  LOG(INFO) << "update fiber state";
-  fiberData_.clear();
+
+  fetchFiberData();
+
+  // LOG(INFO) << "current vm values";
+  // for (int i=0; i<fiberData_.size(); i++){
+  //   LOG(INFO) << "fiber " << i << " has vm " << fiberData_[i].vmValues;
+  // }
+
+  // LOG(INFO) << "saved vm values";
+  // for (int i=0; i<fiberDataOld_.size(); i++){
+  //   LOG(INFO) << "fiber " << i << " has vm " << fiberDataOld_[i].vmValues;
+  // }
+
+  // LOG(INFO) << "update fiber state";
   fiberData_ = fiberDataOld_;
+  fiberHasBeenStimulated_ = fiberHasBeenStimulatedOld_;
+
+  // for (int i=0; i<fiberData_.size(); i++){
+  //   LOG(INFO) << "fiber " << i << " has new vm " << fiberData_[i].vmValues;
+  // }
+
+  updateFiberData();
 }
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates, nAlgebraics, DiffusionTimeSteppingScheme>::
 saveFiberState()
 {
+
+  fetchFiberData();
   
-  LOG(INFO) << "save fiber state";
-  fiberDataOld_.clear();
+  // LOG(INFO) << "current vm values";
+  // for (int i=0; i<fiberData_.size(); i++){
+  //   LOG(INFO) << "fiber " << i << "has vm " << fiberData_[i].vmValues;
+  // }
+
+  // LOG(INFO) << "save fiber state";
   fiberDataOld_ = fiberData_;
+  fiberHasBeenStimulated_ = fiberHasBeenStimulatedOld_;
+
+  // LOG(INFO) << "saved vm values";
+  // for (int i=0; i<fiberDataOld_.size(); i++){
+  //   LOG(INFO) << "fiber " << i << "has vm " << fiberDataOld_[i].vmValues;
+  // }
 }

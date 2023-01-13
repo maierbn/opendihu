@@ -150,7 +150,7 @@ void PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,
 loadFiberData(NestedSolverType &nestedSolver)
 {
   //nestedSolver.timeStepping1().reset();
-  nestedSolver.timeStepping1().updateFiberState();
+  nestedSolver.timeStepping1().loadFiberState();
 }
 
 // --------------------------------------------------

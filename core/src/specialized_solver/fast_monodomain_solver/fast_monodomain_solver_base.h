@@ -143,7 +143,7 @@ public:
     bool currentlyStimulating;                    //< if a stimulation is in progress at the current time
   };
 
-  void updateFiberState();
+  void loadFiberState();
 
   void saveFiberState();
 
@@ -225,8 +225,9 @@ protected:
   std::string durationLogKey1D_;                  //< duration log key for the 1D problem
 
   OutputWriter::Manager outputWriterManager_;     //< manager object holding all output writers
-  std::vector<FiberData> fiberDataOld_;
+
   std::vector<FiberData> fiberData_;  //< vector of fibers, the number of entries is the number of fibers to be computed by the own rank (nFibersToCompute_)
+  std::vector<FiberData> fiberDataOld_;
   int nFibersToCompute_;              //< number of fibers where own rank is involved (>= n.fibers that are computed by own rank)
   int nInstancesToCompute_;           //< number of instances of the Hodgkin-Huxley (or other CellML) problem to compute on this rank
   int nInstancesToComputePerFiber_;   //< number of instances to compute per fiber, i.e., global number of instances of a fiber
@@ -236,6 +237,7 @@ protected:
 
   bool onlyComputeIfHasBeenStimulated_;       //< option if fiber should only be computed after it has been stimulated for the first time
   std::vector<bool> fiberHasBeenStimulated_;  //< for every fiber if it has been stimulated
+  std::vector<bool> fiberHasBeenStimulatedOld_; 
 
   bool disableComputationWhenStatesAreCloseToEquilibrium_;                  //< option to avoid computation when the states won't change much
   enum state_t {

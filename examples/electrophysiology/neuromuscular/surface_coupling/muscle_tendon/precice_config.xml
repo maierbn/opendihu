@@ -52,8 +52,8 @@
 
       <exchange data="Displacement"    mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
       <exchange data="Traction"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  
-    </coupling-scheme:serial-explicit> 
-     -->
+    </coupling-scheme:serial-explicit>  -->
+    
 
     <coupling-scheme:parallel-implicit>
       <participants second="TendonSolver" first="MuscleSolverLeft"/>
@@ -61,7 +61,7 @@
       <max-time value="2.0"/>           
       <time-window-size value="0.1"/>   
 
-      <max-iterations value="10" />
+      <max-iterations value="8" />
       <relative-convergence-measure limit="1e-8" data="Displacement" mesh="TendonMeshLeft" strict="0"/>
       <relative-convergence-measure limit="1e-8" data="Traction" mesh="MuscleMeshLeft" strict="0"/>
   

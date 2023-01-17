@@ -167,6 +167,7 @@ initializeFiringTimes()
 
     //variable has the following layout: firingEvents_[timeStepNo][motorUnitNo]
     firingEvents_.push_back(std::vector<bool>());
+    firingEventsOld_.push_back(std::vector<bool>());
 
     // parse line, loop over columns
     int columnNo = 0;
@@ -176,6 +177,7 @@ initializeFiringTimes()
 
       // the variable firingEvents_ is for normal execution
       firingEvents_.back().push_back((bool)(entry));
+      firingEventsOld_.back().push_back((bool)(entry));
 
       // the variable gpuFiringEvents_ is to be send to gpu
       if (gpuFiringEventsNColumns_ == 0 || columnNo < gpuFiringEventsNColumns_)

@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+
+<precice-configuration>
+  <!-- format for console output of precice -->
+  <log>
+    <sink type="stream" output="stdout"  filter='(%Severity% >= debug) and (not (%Function% = "advance"))' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />
+    <!--<sink type="stream" output="stdout"  filter='%Severity% >= debug' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />-->
+    <!--<sink type="file" output="debug.log" filter= "(%Severity% >= debug)" format="%Message%" enabled="true" />	-->
+  </log>
+
+  <solver-interface dimensions="3">
+    
+    <data:vector name="Displacement"/>
+    <data:vector name="Traction"/>
+
+    <mesh name="LeftTendonMesh">
+      <use-data name="Displacement"/>
+      <use-data name="Traction"/>
+    </mesh>
+
+    <mesh name="RightTendonMesh">
+      <use-data name="Displacement"/>
+      <use-data name="Traction"/>
+    </mesh>
+
+    <participant name="LeftTendonSolver"> 
+      <use-mesh name="LeftTendonMesh" provide="yes"/>
+      <use-mesh name="RightTendonMesh" from="RightTendonSolver"/>
+      <write-data name="Displacement"  mesh="LeftTendonMesh"/>
+      <read-data  name="Traction"      mesh="LeftTendonMesh"/>
+      <mapping:nearest-neighbor direction="read" from="RightTendonMesh" to="LeftTendonMesh" constraint="consistent"/>
+      <export:vtk directory="preCICE-output" />
+    </participant>
+
+    <participant name="RightTendonSolver"> 
+      <use-mesh name="RightTendonMesh" provide="yes"/>
+      <use-mesh name="LeftTendonMesh" from="LeftTendonSolver"/>
+      <read-data name="Displacement"  mesh="RightTendonMesh"/>
+      <write-data  name="Traction"      mesh="RightTendonMesh"/>
+      <mapping:nearest-neighbor direction="read" from="LeftTendonMesh" to="RightTendonMesh" constraint="consistent"/>
+      <export:vtk directory="preCICE-output" />
+    </participant>
+
+    <!-- Communication method, use TCP sockets, Change network to "ib0" on SuperMUC -->      
+    <m2n:sockets from="LeftTendonSolver" to="RightTendonSolver" network="lo" />
+
+    <!-- <coupling-scheme:serial-explicit>
+      <participants second="LeftTendonSolver" first="RightTendonSolver"/>
+
+      <max-time value="23.0"/>           
+      <time-window-size value="0.05"/>   
+
+      <exchange data="Displacement"    mesh="LeftTendonMesh"    from="LeftTendonSolver" to="RightTendonSolver"/>
+      <exchange data="Traction"        mesh="RightTendonMesh" from="RightTendonSolver" to="LeftTendonSolver"/>  
+    </coupling-scheme:serial-explicit> 
+     -->
+
+    <coupling-scheme:parallel-implicit>
+      <participants first="LeftTendonSolver" second="RightTendonSolver"/>
+
+      <max-time value="23.0"/>           
+      <time-window-size value="0.05"/>   
+
+      <acceleration:aitken>  
+      
+        <data name="Displacement" mesh="LeftTendonMesh"/>
+        <data name="Traction" mesh="RightTendonMesh"/>
+
+        <initial-relaxation value="0.5"/>
+      </acceleration:aitken>   
+
+      <max-iterations value="50" />
+      <relative-convergence-measure limit="1e-2" data="Displacement" mesh="LeftTendonMesh" strict="1"/>
+      <relative-convergence-measure limit="1e-2" data="Traction" mesh="RightTendonMesh" strict="1"/>
+  
+      <exchange data="Displacement"    mesh="LeftTendonMesh"    from="LeftTendonSolver" to="RightTendonSolver"/>
+      <exchange data="Traction"        mesh="RightTendonMesh" from="RightTendonSolver" to="LeftTendonSolver"/>  
+    </coupling-scheme:parallel-implicit>
+
+  </solver-interface>
+</precice-configuration>

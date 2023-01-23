@@ -1,5 +1,5 @@
 # scenario name for log file
-scenario_name = ""
+scenario_name = "musclefibers"
 
 # timing parameters
 # -----------------

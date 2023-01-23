@@ -69,8 +69,10 @@ int main(int argc, char *argv[])
   // initialize everything, handle arguments and parse settings from input file
   DihuContext settings(argc, argv);
 
-  MonodomainSolver      
-  problem(settings);
+  Control::Coupling<                   
+    MonodomainSolver,
+    Dummy      
+  > problem(settings);
   
   problem.run();
   

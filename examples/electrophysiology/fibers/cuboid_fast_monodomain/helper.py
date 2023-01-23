@@ -68,18 +68,6 @@ for j in range(variables.n_fibers_y):
       "nRanks": [n_ranks],
     }
 
-#### set output writer
-variables.output_writer_fibers_muscle1 = []
-variables.output_writer_emg_muscle1 = []
-
-subfolder = ""
-if variables.paraview_output:
-  if variables.adios_output:
-    subfolder = "paraview/"
-  variables.output_writer_fibers_muscle1.append({"format": "Paraview", "outputInterval": int(variables.dt_elasticity/variables.dt_1D), "filename": "out/" + subfolder + variables.scenario_name + "/muscle1_fibers", "binary": False, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"})
-
-
-
 # set variable mappings for cellml model
 if "hodgkin_huxley" in variables.cellml_file and "hodgkin_huxley-razumova" not in variables.cellml_file:
   # parameters: I_stim

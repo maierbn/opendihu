@@ -167,7 +167,6 @@ initializeFiringTimes()
 
     //variable has the following layout: firingEvents_[timeStepNo][motorUnitNo]
     firingEvents_.push_back(std::vector<bool>());
-    firingEventsOld_.push_back(std::vector<bool>());
 
     // parse line, loop over columns
     int columnNo = 0;
@@ -177,7 +176,6 @@ initializeFiringTimes()
 
       // the variable firingEvents_ is for normal execution
       firingEvents_.back().push_back((bool)(entry));
-      firingEventsOld_.back().push_back((bool)(entry));
 
       // the variable gpuFiringEvents_ is to be send to gpu
       if (gpuFiringEventsNColumns_ == 0 || columnNo < gpuFiringEventsNColumns_)
@@ -275,7 +273,6 @@ initializeDataStructures()
 
   fiberData_.resize(nFibersToCompute_);
   fiberHasBeenStimulated_.resize(nFibersToCompute_, false);
-  fiberHasBeenStimulatedOld_.resize(nFibersToCompute_, false);
   LOG(DEBUG) << "nFibers: " << nFibers << ", nFibersToCompute_: " << nFibersToCompute_;
 
   // initialize random generator that is used to determine the stimulation point of the fiber

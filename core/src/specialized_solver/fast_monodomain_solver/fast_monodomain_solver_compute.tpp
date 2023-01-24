@@ -33,6 +33,7 @@ advanceTimeSpan(bool withOutputWritersEnabled)
   updateFiberData();
 
   // call output writer of diffusion
+
   if (withOutputWritersEnabled)
   {
     std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
@@ -121,6 +122,9 @@ computeMonodomain()
     compute0D(currentTime, dt0D, nTimeSteps0D, false);
     compute1D(currentTime, dt1D, nTimeSteps1D, prefactor);
     compute0D(midTime,     dt0D, nTimeSteps0D, storeAlgebraicsForTransfer);
+    LOG(INFO)<<"callOutputWriter with timeStepNo, currentTime = " << timeStepNo << " " << currentTime;
+    callOutputWriter( timeStepNo, currentTime, 10);
+
   }
 
   currentTime_ = instances[0].endTime();

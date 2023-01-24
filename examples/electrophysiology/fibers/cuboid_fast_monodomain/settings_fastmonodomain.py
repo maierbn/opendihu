@@ -119,9 +119,9 @@ config = {
 "ranks": list(range(subdomain_coordinate_y*variables.n_subdomains_x + subdomain_coordinate_x, n_ranks, variables.n_subdomains_x*variables.n_subdomains_y)),
 "StrangSplitting": {
   "withOutputWritersEnabled": True,
-  "numberTimeSteps":        5,             
+  # "numberTimeSteps":        2,   # not needed          
   "timeStepWidth":          0.001,  # 1e-1 
-  "endTime":                0.005,
+  "endTime":                0.01,
   "logTimeStepWidthAsKey":  "dt_splitting",
   "durationLogKey":         "duration_monodomain",
   "timeStepOutputInterval": 1,

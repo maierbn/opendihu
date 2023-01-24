@@ -10,11 +10,12 @@ callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
 {
   // call output writer of diffusion
   std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
-
-  for (int i = 0; i < instances.size(); i++)
-  {
-    // call write output of MultipleInstances, callCountIncrement is the number of times the output writer would have been called without FastMonodomainSolver
-    instances[i].timeStepping2().writeOwnOutput(0, currentTime_, nTimeStepsSplitting_);
+  if (timeStepNo%callCountIncrement == 0){
+    for (int i = 0; i < instances.size(); i++)
+    {
+      // call write output of MultipleInstances, callCountIncrement is the number of times the output writer would have been called without FastMonodomainSolver
+      instances[i].timeStepping2().writeOwnOutput(0, currentTime_, nTimeStepsSplitting_);
+    }
   }
 }
 

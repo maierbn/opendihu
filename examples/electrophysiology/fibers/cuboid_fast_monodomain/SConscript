@@ -8,4 +8,4 @@
 Import('env')     # import Environment object from calling SConstruct
 
 # create the main executable
-env.Program(target = 'muscle_fibers', source = "src/muscle_fibers.cpp")
+env.Program(target = 'coupled_fastmonodomain', source = "src/coupled_fastmonodomain.cpp")

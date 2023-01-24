@@ -9,3 +9,4 @@ Import('env')     # import Environment object from calling SConstruct
 
 # create the main executable
 env.Program(target = 'coupled_fastmonodomain', source = "src/coupled_fastmonodomain.cpp")
+env.Program(target = 'fastmonodomain', source = "src/fastmonodomain.cpp")

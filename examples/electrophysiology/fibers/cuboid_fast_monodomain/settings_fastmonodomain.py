@@ -118,13 +118,11 @@ config = {
 [{
 "ranks": list(range(subdomain_coordinate_y*variables.n_subdomains_x + subdomain_coordinate_x, n_ranks, variables.n_subdomains_x*variables.n_subdomains_y)),
 "StrangSplitting": {
-  "withOutputWritersEnabled": True,
-  # "numberTimeSteps":        2,   # not needed          
   "timeStepWidth":          0.001,  # 1e-1 
-  "endTime":                0.01,
+  "endTime":                20.0,
   "logTimeStepWidthAsKey":  "dt_splitting",
   "durationLogKey":         "duration_monodomain",
-  "timeStepOutputInterval": 5,
+  "timeStepOutputInterval": 1000,
   "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
   "connectedSlotsTerm2To1": [0],   # transfer the same back, this avoids data copy
 

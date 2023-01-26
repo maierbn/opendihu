@@ -77,6 +77,8 @@ computeMonodomain()
   double timeStepWidthSplitting = instances[0].timeStepWidth();
   nTimeStepsSplitting_ = instances[0].numberTimeSteps();
 
+  int timeStepOutputInterval = instances[0].timeStepOutputInterval();
+
   heun.setTimeSpan(startTime, startTime + 0.5 * timeStepWidthSplitting);
   double dt0D = heun.timeStepWidth();
   int nTimeSteps0D = heun.numberTimeSteps();
@@ -123,7 +125,7 @@ computeMonodomain()
     compute1D(currentTime, dt1D, nTimeSteps1D, prefactor);
     compute0D(midTime,     dt0D, nTimeSteps0D, storeAlgebraicsForTransfer);
     LOG(INFO)<<"callOutputWriter with timeStepNo, currentTime = " << timeStepNo << " " << currentTime;
-    callOutputWriter( timeStepNo, currentTime, 10);
+    callOutputWriter( timeStepNo, currentTime, timeStepOutputInterval);
 
   }
 

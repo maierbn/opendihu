@@ -124,7 +124,7 @@ config = {
   "endTime":                0.01,
   "logTimeStepWidthAsKey":  "dt_splitting",
   "durationLogKey":         "duration_monodomain",
-  "timeStepOutputInterval": 1,
+  "timeStepOutputInterval": 5,
   "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
   "connectedSlotsTerm2To1": [0],   # transfer the same back, this avoids data copy
 

@@ -118,11 +118,11 @@ config = {
 [{
 "ranks": list(range(subdomain_coordinate_y*variables.n_subdomains_x + subdomain_coordinate_x, n_ranks, variables.n_subdomains_x*variables.n_subdomains_y)),
 "StrangSplitting": {
-  "timeStepWidth":          0.001,  # 1e-1 
-  "endTime":                20.0,
+  "timeStepWidth":          variables.dt_splitting,  # 1e-1 
+  "endTime":                variables.end_time,
   "logTimeStepWidthAsKey":  "dt_splitting",
   "durationLogKey":         "duration_monodomain",
-  "timeStepOutputInterval": 1000,
+  "timeStepOutputInterval": 100,
   "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
   "connectedSlotsTerm2To1": [0],   # transfer the same back, this avoids data copy
 
@@ -134,7 +134,7 @@ config = {
       [{
         "ranks":                          list(range(variables.n_subdomains_z)),    # these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction
         "Heun" : {
-          "timeStepWidth":                0.0005,                         # timestep width of 0D problem
+          "timeStepWidth":                variables.dt_0D,                         # timestep width of 0D problem
           "logTimeStepWidthAsKey":        "dt_0D",                                 # key under which the time step width will be written to the log file
           "durationLogKey":               "duration_0D",                           # log key of duration for this solver
           "timeStepOutputInterval":       1e4,                                     # how often to print the current timestep
@@ -199,7 +199,7 @@ config = {
         "ImplicitEuler" : {
           "initialValues":               [],                                      # no initial values are given
           #"numberTimeSteps":            1,
-          "timeStepWidth":               0.001,                         # timestep width for the diffusion problem
+          "timeStepWidth":               variables.dt_1D,                         # timestep width for the diffusion problem
           "timeStepWidthRelativeTolerance": 1e-10,
           "logTimeStepWidthAsKey":       "dt_1D",                                 # key under which the time step width will be written to the log file
           "durationLogKey":              "duration_1D",                           # log key of duration for this solver

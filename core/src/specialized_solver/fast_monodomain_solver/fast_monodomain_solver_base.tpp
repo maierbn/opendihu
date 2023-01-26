@@ -9,7 +9,7 @@ void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement)
 {
   // call output writer of diffusion
-  LOG(INFO)<<"callOutputWriter with timeStepNo, currentTime = " << timeStepNo << " " << currentTime;
+  LOG(DEBUG)<<"callOutputWriter with timeStepNo, currentTime = " << timeStepNo << " " << currentTime;
 
   std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 

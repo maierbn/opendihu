@@ -137,22 +137,6 @@ reset(NestedSolverType &nestedSolver)
   nestedSolver.timeStepping2().reset();
 }
 
-template<typename T1, typename T2, typename T3>
-void PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::
-saveFiberData(NestedSolverType &nestedSolver)
-{
-  //nestedSolver.timeStepping1().reset();
-  nestedSolver.timeStepping1().saveFiberState();
-}
-
-template<typename T1, typename T2, typename T3>
-void PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::
-loadFiberData(NestedSolverType &nestedSolver)
-{
-  //nestedSolver.timeStepping1().reset();
-  nestedSolver.timeStepping1().loadFiberState();
-}
-
 // --------------------------------------------------
 // DynamicHyperelasticitySolver
 
@@ -287,17 +271,6 @@ reset(NestedSolverType &nestedSolver)
   //nestedSolver.reset();
 }
 
-template<typename Material>
-void PreciceAdapterNestedSolver<TimeSteppingScheme::DynamicHyperelasticitySolver<Material>>::
-saveFiberData(NestedSolverType &nestedSolver)
-{
-}
-
-template<typename Material>
-void PreciceAdapterNestedSolver<TimeSteppingScheme::DynamicHyperelasticitySolver<Material>>::
-loadFiberData(NestedSolverType &nestedSolver)
-{
-}
 // --------------------------------------------------
 // QHyperelasticitySolver
 
@@ -426,17 +399,6 @@ reset(NestedSolverType &nestedSolver)
   nestedSolver.reset();
 }
 
-template<typename Material>
-void PreciceAdapterNestedSolver<TimeSteppingScheme::QuasistaticHyperelasticitySolver<Material>>::
-saveFiberData(NestedSolverType &nestedSolver)
-{
-}
-
-template<typename Material>
-void PreciceAdapterNestedSolver<TimeSteppingScheme::QuasistaticHyperelasticitySolver<Material>>::
-loadFiberData(NestedSolverType &nestedSolver)
-{
-}
 
 // --------------------------------------------------
 // HyperelasticitySolver
@@ -601,15 +563,4 @@ reset(NestedSolverType &nestedSolver)
   nestedSolver.reset();
 }
 
-template<typename Material>
-void PreciceAdapterNestedSolver<SpatialDiscretization::HyperelasticitySolver<Material>>::
-saveFiberData(NestedSolverType &nestedSolver)
-{
-}
-
-template<typename Material>
-void PreciceAdapterNestedSolver<SpatialDiscretization::HyperelasticitySolver<Material>>::
-loadFiberData(NestedSolverType &nestedSolver)
-{
-}
 }  // namespace

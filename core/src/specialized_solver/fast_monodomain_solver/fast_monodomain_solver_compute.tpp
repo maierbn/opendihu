@@ -17,7 +17,7 @@ advanceTimeSpan(bool withOutputWritersEnabled)
 {
   LOG_SCOPE_FUNCTION;
 
-  LOG(TRACE) << "FastMonodomainSolver::advanceTimeSpan";
+  LOG(DEBUG) << "FastMonodomainSolver::advanceTimeSpan";
 
   // loop over fibers and communicate element lengths and initial values to the ranks that participate in computing
   fetchFiberData();
@@ -25,29 +25,14 @@ advanceTimeSpan(bool withOutputWritersEnabled)
   //Control::PerformanceMeasurement::startFlops();
 
   // do computation of own fibers, stimulation from parsed MU and firing_times files
-  computeMonodomain();
+  computeMonodomain(withOutputWritersEnabled);
 
-  //Control::PerformanceMeasurement::endFlops();
-
-  // loop over fibers and communicate resulting values back
-  updateFiberData();
-
-  // call output writer of diffusion
-  if (withOutputWritersEnabled)
-  {
-    std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
-
-    for (int i = 0; i < instances.size(); i++)
-    {
-      // call write output of MultipleInstances, callCountIncrement is the number of times the output writer would have been called without FastMonodomainSolver
-      instances[i].timeStepping2().writeOwnOutput(0, currentTime_, nTimeStepsSplitting_);
-    }
-  }
+  //Control::PerformanceMeasurement::endFlops();  
 }
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
-computeMonodomain()
+computeMonodomain(bool withOutputWritersEnabled)
 {
   if (!useVc_)
   {
@@ -75,6 +60,8 @@ computeMonodomain()
   double startTime = instances[0].startTime();
   double timeStepWidthSplitting = instances[0].timeStepWidth();
   nTimeStepsSplitting_ = instances[0].numberTimeSteps();
+
+  int timeStepOutputInterval = instances[0].timeStepOutputInterval();
 
   heun.setTimeSpan(startTime, startTime + 0.5 * timeStepWidthSplitting);
   double dt0D = heun.timeStepWidth();
@@ -121,6 +108,14 @@ computeMonodomain()
     compute0D(currentTime, dt0D, nTimeSteps0D, false);
     compute1D(currentTime, dt1D, nTimeSteps1D, prefactor);
     compute0D(midTime,     dt0D, nTimeSteps0D, storeAlgebraicsForTransfer);
+    
+    if (withOutputWritersEnabled){
+      if (timeStepNo%timeStepOutputInterval == 0){
+        updateFiberData();
+        callOutputWriter(timeStepNo,currentTime, nTimeStepsSplitting_);
+      }
+    }
+
   }
 
   currentTime_ = instances[0].endTime();

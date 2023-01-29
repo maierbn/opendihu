@@ -143,7 +143,6 @@ public:
     bool currentlyStimulating;                    //< if a stimulation is in progress at the current time
   };
 
-
 protected:
 
   //! load the firing times file and initialize the firingEvents_ and motorUnitNo_ variables
@@ -179,7 +178,7 @@ protected:
   void compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefactor);
 
   //! compute the 0D-1D problem with Strang splitting
-  void computeMonodomain();
+  void computeMonodomain(bool withOutputWritersEnabled);
 
   //! check if the current point will be stimulated now
   bool isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointIsInCenter);
@@ -242,6 +241,8 @@ protected:
   int nFiberPointBufferStatesCloseToEquilibrium_;                           //< number of "inactive" entries in fiberPointBuffersStatesAreCloseToEquilibrium_
   bool setComputeStateInformation_;                                         //< whether the information in fiberPointBuffersStatesAreCloseToEquilibrium_ should be added to the algebraics to transfer in a variable named "computeStateInformation"
 
+  std::vector<int> statesForTransferIndices_;          //< state no.s to transfer to other solvers within slot connector data
+  std::vector<int> algebraicsForTransferIndices_;      //< which algebraics should be transferred to other solvers as part of slot connector data
   double valueForStimulatedPoint_;              //< value to which the first state will be set if stimulated
   double neuromuscularJunctionRelativeSize_;    //< relative size of the range where the neuromuscular junction is located
 

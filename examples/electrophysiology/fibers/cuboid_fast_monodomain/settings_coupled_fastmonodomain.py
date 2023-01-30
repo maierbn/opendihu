@@ -128,10 +128,10 @@ config = {
       "StrangSplitting": {
         # "numberTimeSteps":        1,             # number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step
         "timeStepWidth":          variables.dt_splitting,  # 1e-1
-        "endTime":                variables.end_time,
+        # "endTime":                variables.end_time,
         "logTimeStepWidthAsKey":  "dt_splitting",
         "durationLogKey":         "duration_monodomain",
-        "timeStepOutputInterval": 100,
+        "timeStepOutputInterval": 1,
         "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
         "connectedSlotsTerm2To1": [0],   # transfer the same back, this avoids data copy
 
@@ -212,7 +212,7 @@ config = {
                 "timeStepWidthRelativeTolerance": 1e-10,
                 "logTimeStepWidthAsKey":       "dt_1D",                                 # key under which the time step width will be written to the log file
                 "durationLogKey":              "duration_1D",                           # log key of duration for this solver
-                "timeStepOutputInterval":      1e8,                                     # how often to print the current timestep
+                "timeStepOutputInterval":      1e4,                                     # how often to print the current timestep
                 "dirichletBoundaryConditions": {},                                      # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
                 "dirichletOutputFilename":     None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                 "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
@@ -236,7 +236,7 @@ config = {
                   for fiber_no in [get_fiber_no(subdomain_coordinate_x, subdomain_coordinate_y, fiber_in_subdomain_coordinate_x, fiber_in_subdomain_coordinate_y)] \
                     for motor_unit_no in [get_motor_unit_no(fiber_no)]],
             "OutputWriter" : [
-              {"format": "Paraview", "outputInterval": 1, "filename": "out/" + "/CoupledMeshFibers", "binary": True, "fixedFormat": False, "onlyNodalValues":True,  "combineFiles": True, "fileNumbering": "incremental"}
+              {"format": "Paraview", "outputInterval": 1, "filename": "out/" + "/MeshFiber", "binary": True, "fixedFormat": False, "onlyNodalValues":True,  "combineFiles": True, "fileNumbering": "incremental"}
             ]
           },
         },

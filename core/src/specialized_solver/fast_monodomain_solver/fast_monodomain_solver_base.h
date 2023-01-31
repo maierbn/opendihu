@@ -249,7 +249,6 @@ protected:
   std::vector<std::vector<Vc::double_v>> fiberPointBuffersParameters_;        //< constant parameter values, changing parameters is not implemented
   std::vector<std::vector<Vc::double_v>> fiberPointBuffersAlgebraicsForTransfer_;   //<  [fiberPointNo][algebraicToTransferNo], algebraic values to use for slot connector data
 
-
   std::vector<float> gpuParameters_;              //< for "gpu": constant parameter values, in struct of array memory layout: gpuParameters_[parameterNo*nInstances + instanceNo]
   std::vector<double> gpuAlgebraicsForTransfer_;   //< for "gpu": algebraic values to use for slot connector data, in struct of array memory layout: gpuAlgebraicsForTransfer_[algebraicNo*nInstances + instanceNo]
   std::vector<double> gpuStatesForTransfer_;       //< for "gpu": state values to use for slot connector data, in struct of array memory layout: gpuStatesForTransfer_[stateInThisListIndex*nInstances + instanceNo]

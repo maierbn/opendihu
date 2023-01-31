@@ -69,7 +69,6 @@ run()
     {
       // save checkpoint
       this->saveCheckpoint(currentTime);
-      this->saveFiberData(this->nestedSolver_);
       this->preciceSolverInterface_->markActionFulfilled(precice::constants::actionWriteIterationCheckpoint());
     }
 
@@ -102,7 +101,6 @@ run()
     {
       // set variables back to last checkpoint
       currentTime = this->loadCheckpoint();
-      this->loadFiberData(this->nestedSolver_);
       this->preciceSolverInterface_->markActionFulfilled(precice::constants::actionReadIterationCheckpoint());
     }
 

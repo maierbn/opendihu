@@ -178,7 +178,7 @@ protected:
   void compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefactor);
 
   //! compute the 0D-1D problem with Strang splitting
-  void computeMonodomain();
+  void computeMonodomain(bool withOutputWritersEnabled);
 
   //! check if the current point will be stimulated now
   bool isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointIsInCenter);

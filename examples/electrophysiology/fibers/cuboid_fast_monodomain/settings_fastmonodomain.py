@@ -120,11 +120,11 @@ config = {
 "StrangSplitting": {
   "withOutputWritersEnabled": True,
   # "numberTimeSteps":        2,   # not needed          
-  "timeStepWidth":          0.001,  # 1e-1 
-  "endTime":                0.01,
+  "timeStepWidth":          variables.dt_splitting,  # 1e-1 
+  "endTime":                variables.end_time,
   "logTimeStepWidthAsKey":  "dt_splitting",
   "durationLogKey":         "duration_monodomain",
-  "timeStepOutputInterval": 5,
+  "timeStepOutputInterval": 100,
   "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)
   "connectedSlotsTerm2To1": [0],   # transfer the same back, this avoids data copy
 
@@ -170,7 +170,7 @@ config = {
             "setSpecificStatesCallInterval":          0,                                                               # 0 means disabled
             "setSpecificStatesCallFrequency":         variables.get_specific_states_call_frequency(fiber_no, motor_unit_no),   # set_specific_states should be called variables.stimulation_frequency times per ms
             "setSpecificStatesFrequencyJitter":       variables.get_specific_states_frequency_jitter(fiber_no, motor_unit_no), # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
-            "setSpecificStatesRepeatAfterFirstCall":  variables.end_time,# [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
+            "setSpecificStatesRepeatAfterFirstCall":  0.01,# [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
             "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),# [ms] first time when to call setSpecificStates
             "additionalArgument":                     fiber_no,                                       # last argument that will be passed to the callback functions set_specific_states, set_specific_parameters, etc.
 

@@ -25,30 +25,14 @@ advanceTimeSpan(bool withOutputWritersEnabled)
   //Control::PerformanceMeasurement::startFlops();
 
   // do computation of own fibers, stimulation from parsed MU and firing_times files
-  computeMonodomain();
+  computeMonodomain(withOutputWritersEnabled);
 
   //Control::PerformanceMeasurement::endFlops();
-
-  // loop over fibers and communicate resulting values back
-  updateFiberData();
-
-  // call output writer of diffusion
-
-  if (withOutputWritersEnabled)
-  {
-    std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
-
-    for (int i = 0; i < instances.size(); i++)
-    {
-      // call write output of MultipleInstances, callCountIncrement is the number of times the output writer would have been called without FastMonodomainSolver
-      instances[i].timeStepping2().writeOwnOutput(0, currentTime_, nTimeStepsSplitting_);
-    }
-  }
 }
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
-computeMonodomain()
+computeMonodomain(bool withOutputWritersEnabled)
 {
   if (!useVc_)
   {
@@ -124,18 +108,9 @@ computeMonodomain()
     compute0D(currentTime, dt0D, nTimeSteps0D, false);
     compute1D(currentTime, dt1D, nTimeSteps1D, prefactor);
     compute0D(midTime,     dt0D, nTimeSteps0D, storeAlgebraicsForTransfer);
-<<<<<<< HEAD
-    
-    if (withOutputWritersEnabled){
-      if (timeStepNo%timeStepOutputInterval == 0){
-        updateFiberData();
-        callOutputWriter(timeStepNo,currentTime, nTimeStepsSplitting_);
-      }
-    }
-=======
-    LOG(INFO)<<"callOutputWriter with timeStepNo, currentTime = " << timeStepNo << " " << currentTime;
-    callOutputWriter( timeStepNo, currentTime, timeStepOutputInterval);
->>>>>>> parent of 979bcc6d... fix number of output files by removing printing of last time step (ugly)
+
+    updateFiberData();
+    callOutputWriter(timeStepNo, currentTime, timeStepOutputInterval);
 
   }
 

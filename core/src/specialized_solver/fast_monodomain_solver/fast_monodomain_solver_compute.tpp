@@ -17,15 +17,19 @@ advanceTimeSpan(bool withOutputWritersEnabled)
 {
   LOG_SCOPE_FUNCTION;
 
-  LOG(TRACE) << "FastMonodomainSolver::advanceTimeSpan";
+  LOG(INFO) << "FastMonodomainSolver::advanceTimeSpan";
 
   // loop over fibers and communicate element lengths and initial values to the ranks that participate in computing
+  //loadFiberData();
+  
   fetchFiberData();
 
   //Control::PerformanceMeasurement::startFlops();
 
   // do computation of own fibers, stimulation from parsed MU and firing_times files
   computeMonodomain(withOutputWritersEnabled);
+
+  //saveFiberData();
 
   //Control::PerformanceMeasurement::endFlops();
 }
@@ -92,44 +96,42 @@ computeMonodomain(bool withOutputWritersEnabled)
     return;
   }
 
+  int fakeTimeStepNo = 0;
  
   // loop over splitting time steps
   for (int timeStepNo = 0; timeStepNo < nTimeStepsSplitting_; timeStepNo++)
   {
 
-    // if (timeStepNo>0){
-    //   loadFiberData();
-    //   LOG(INFO) << "after load data ";
-    // }
+    if (timeStepNo>0){
+      loadFiberData();
+      //fetchFiberData();
+      LOG(INFO) << "load fiber data ";
+    }
     // perform Strang splitting
-    double currentTime = startTime + timeStepNo * timeStepWidthSplitting;
 
-    LOG(INFO) << "splitting " << timeStepNo << "/" << nTimeStepsSplitting_ << ", t: " << currentTime;
+    //loadFiberData();
+    double currentTime = startTime + fakeTimeStepNo * timeStepWidthSplitting;
+
+    LOG(INFO) << "splitting " << fakeTimeStepNo << "/" << nTimeStepsSplitting_ << ", t: " << currentTime;
 
     // compute midTime once per step to reuse it. [currentTime, midTime=currentTime+0.5*timeStepWidth, currentTime+timeStepWidth]
     double midTime = currentTime + 0.5 * timeStepWidthSplitting;
-    bool storeAlgebraicsForTransfer = timeStepNo == nTimeStepsSplitting_-1;   // after the last timestep, store the algebraics for transfer
+    bool storeAlgebraicsForTransfer = fakeTimeStepNo == nTimeStepsSplitting_-1;   // after the last timestep, store the algebraics for transfer
 
     // perform splitting
     compute0D(currentTime, dt0D, nTimeSteps0D, false);
     compute1D(currentTime, dt1D, nTimeSteps1D, prefactor);
     compute0D(midTime,     dt0D, nTimeSteps0D, storeAlgebraicsForTransfer);
 
-    
-
+    updateFiberData();
 
     if (timeStepNo < nTimeStepsSplitting_/2){
-          updateFiberData();
-          saveFiberData();
-          LOG(INFO) << "update and save fiber data ";
+      fakeTimeStepNo += 1;
+      saveFiberData();
+      LOG(INFO) << "save fiber data";
     }
 
-    //loadFiberData();
-    
-    //updateFiberData();
-
-    callOutputWriter(timeStepNo, currentTime, timeStepOutputInterval);
-    loadFiberData();
+    callOutputWriter(fakeTimeStepNo, currentTime, timeStepOutputInterval);
 
   }
 

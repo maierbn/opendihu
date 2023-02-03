@@ -499,15 +499,16 @@ updateFiberData()
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 loadFiberData(){
+  LOG(INFO) << "in loadFiberData";
+  LOG(INFO) << "vm values" << fiberData_[0].vmValues;
   fiberData_ = fiberDataOld_;
-  this->fetchFiberData();
+  LOG(INFO) << "new vm values" << fiberData_[0].vmValues;
+
 }
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 saveFiberData(){
-
-  //this->fetchFiberData();
 
   fiberDataOld_ = fiberData_;
 }

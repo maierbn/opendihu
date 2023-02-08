@@ -96,7 +96,7 @@ computeMonodomain(bool withOutputWritersEnabled)
     return;
   }
 
-  int fakeTimeStepNo = 0;
+  // int fakeTimeStepNo = 0;
  
   // loop over splitting time steps
   for (int timeStepNo = 0; timeStepNo < nTimeStepsSplitting_; timeStepNo++)
@@ -110,13 +110,13 @@ computeMonodomain(bool withOutputWritersEnabled)
     // perform Strang splitting
 
     //loadFiberData();
-    double currentTime = startTime + fakeTimeStepNo * timeStepWidthSplitting;
+    double currentTime = startTime + timeStepNo * timeStepWidthSplitting;
 
-    LOG(INFO) << "splitting " << fakeTimeStepNo << "/" << nTimeStepsSplitting_ << ", t: " << currentTime;
+    LOG(INFO) << "splitting " << timeStepNo << "/" << nTimeStepsSplitting_ << ", t: " << currentTime;
 
     // compute midTime once per step to reuse it. [currentTime, midTime=currentTime+0.5*timeStepWidth, currentTime+timeStepWidth]
     double midTime = currentTime + 0.5 * timeStepWidthSplitting;
-    bool storeAlgebraicsForTransfer = fakeTimeStepNo == nTimeStepsSplitting_-1;   // after the last timestep, store the algebraics for transfer
+    bool storeAlgebraicsForTransfer = timeStepNo == nTimeStepsSplitting_-1;   // after the last timestep, store the algebraics for transfer
 
     // perform splitting
     compute0D(currentTime, dt0D, nTimeSteps0D, false);
@@ -126,12 +126,12 @@ computeMonodomain(bool withOutputWritersEnabled)
     updateFiberData();
 
     if (timeStepNo < nTimeStepsSplitting_/2){
-      fakeTimeStepNo += 1;
+      // fakeTimeStepNo += 1;
       saveFiberData();
       LOG(INFO) << "save fiber data";
     }
 
-    callOutputWriter(fakeTimeStepNo, currentTime, timeStepOutputInterval);
+    callOutputWriter(timeStepNo, currentTime, timeStepOutputInterval);
 
   }
 

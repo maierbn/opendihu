@@ -492,9 +492,6 @@ initializeDataStructures()
     << " Vc vectors, size of double_v: " << Vc::double_v::size() << ", "
     << statesForTransferIndices_.size()-1 << " additional states for transfer, "
     << algebraicsForTransferIndices_.size() << " algebraics for transfer";
-
-  fiberDataOld_ = fiberData_;
-
 }
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>

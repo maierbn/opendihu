@@ -102,8 +102,9 @@ computeMonodomain(bool withOutputWritersEnabled)
   for (int timeStepNo = 0; timeStepNo < nTimeStepsSplitting_; timeStepNo++)
   {
 
-    if (timeStepNo>0){
-      loadFiberData();
+    if (timeStepNo > 0)
+    {
+      restoreFiberDataCheckpoint();
       //fetchFiberData();
       LOG(INFO) << "load fiber data ";
     }
@@ -125,9 +126,10 @@ computeMonodomain(bool withOutputWritersEnabled)
 
     updateFiberData();
 
-    if (timeStepNo < nTimeStepsSplitting_/2){
+    if (timeStepNo < nTimeStepsSplitting_/2)
+    {
       // fakeTimeStepNo += 1;
-      saveFiberData();
+      saveFiberDataCheckpoint();
       LOG(INFO) << "save fiber data";
     }
 

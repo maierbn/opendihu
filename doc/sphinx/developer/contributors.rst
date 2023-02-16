@@ -17,7 +17,7 @@ Most recent on top:
 - **Marius Nitzsche**
 
   - Master thesis with Benjamin and Aaron
-  - from 09/2019
+  - 09/2019 - 09/2020
   - Parallel-in-time algorithm for Multidomain, Integrate multigrid-reduction-in-time scheme provided by external library `xbraid`. Examples: `Pint_diffusion`, `multidomain_no_fat`
     
 - **Felix Huber**
@@ -57,5 +57,5 @@ Most recent on top:
   
 - **Benjamin Maier**
   
-  - PhD student with Miriam Mehl
-  - from 07/2017
+  - PhD student with Miriam Schulte
+  - 07/2017 - 05/2021

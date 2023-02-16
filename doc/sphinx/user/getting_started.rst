@@ -96,6 +96,6 @@ Getting started
   but some classes are not yet documented and their settings can only be known from the examples (or the C++ core code).
   So if you need to know how to specify certain options, look for an example files, that does it, or ask a developer.
 * To execute some of the more advanced electrophysiology examples, you'll need special input files like a muscle geometry. 
-  These are too large to have in git. `Download the file <https://drive.google.com/file/d/12ssGRgDz1uQcsoWeuE6ldUAn7-SW1YkH/view?usp=sharing>`_ and unpack it in the ``examples/electrophysiology/input`` directory.
+  These are too large to have in git. `Download the files <https://zenodo.org/record/4705982>`_ and put them in the ``examples/electrophysiology/input`` directory.
 * If you now continue to use opendihu, you can read the :doc:`/settings` pages for reference. 
   If anything is unclear do not hesitate to ask. If you have improvements concerning the formulations on this website or can contribute to writing the documentation, come in contact!

@@ -230,6 +230,12 @@ createPetscObjects()
     parameterNames.push_back(s.str());
   }
 
+
+  if (parameterNames.size() > nAlgebraics)
+  {
+    LOG(FATAL) << "There can only be as many parameters as there are algebraics. This is an arbitrary restriction, if you need more parameters, try increasing the number of algebraics in the C++ source file."
+      << "Now you have (" << parameterNames.size() << " parameters and the maximum possible number is " << nAlgebraics << ").";
+  }
   this->parameters_ = this->functionSpace_->template createFieldVariable<nAlgebraics>("parameters", parameterNames);
 }
 

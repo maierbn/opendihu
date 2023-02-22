@@ -34,7 +34,7 @@
 
       <read-data  name="Traction"      mesh="LeftTendonMesh"/>
       <mapping:nearest-neighbor direction="read" from="RightTendonMesh" to="LeftTendonMesh" constraint="consistent"/>
-      <export:vtk directory="preCICE-output" />
+      <export:vtk directory="preCICE-output"/>
     </participant>
 
     <participant name="RightTendonSolver"> 
@@ -52,14 +52,46 @@
     <m2n:sockets from="LeftTendonSolver" to="RightTendonSolver" network="lo" />
 
     <coupling-scheme:serial-explicit>
-      <participants second="LeftTendonSolver" first="RightTendonSolver"/>
-      <max-time value="23.0"/>           
-      <time-window-size value="0.05"/>   
+      <participants first="LeftTendonSolver" second="RightTendonSolver"/>
+      <max-time value="5.0"/>           
+      <time-window-size value="0.01"/>   
       <exchange data="Displacement"    mesh="LeftTendonMesh"    from="LeftTendonSolver" to="RightTendonSolver"/>
       <exchange data="Velocity"    mesh="LeftTendonMesh"    from="LeftTendonSolver" to="RightTendonSolver"/>
       <exchange data="Traction"        mesh="RightTendonMesh" from="RightTendonSolver" to="LeftTendonSolver"/>  
     </coupling-scheme:serial-explicit> 
     
+    <!-- <coupling-scheme:parallel-implicit>
+      <participants first="RightTendonSolver" second="LeftTendonSolver"/>
+
+      <max-time value="5.0"/>           
+      <time-window-size value="0.01"/>   
+
+      <exchange data="Displacement" mesh="LeftTendonMesh" from="LeftTendonSolver" to="RightTendonSolver"/>  
+      <exchange data="Velocity" mesh="LeftTendonMesh" from="LeftTendonSolver" to="RightTendonSolver"/>  
+      <exchange data="Traction" mesh="RightTendonMesh" from="RightTendonSolver" to="LeftTendonSolver"/>   
+
+      <acceleration:IQN-ILS>
+        <data name="Displacement" mesh="LeftTendonMesh"/>
+        <data name="Velocity" mesh="LeftTendonMesh"/>
+        <data name="Traction" mesh="RightTendonMesh"/>
+        <preconditioner type="residual-sum"/>
+        <filter type="QR2" limit="1e-3"/>
+        <initial-relaxation value="0.6"/>
+        <max-used-iterations value="10"/>
+        <time-windows-reused value="15"/>
+      </acceleration:IQN-ILS>
+
+      <max-iterations value="50"/>
+
+      <relative-convergence-measure limit="1e-6" data="Displacement" mesh="LeftTendonMesh" strict="1"/>
+      <relative-convergence-measure limit="1e-6" data="Velocity" mesh="LeftTendonMesh" strict="1"/>
+      <absolute-convergence-measure limit="0.1" data="Traction" mesh="RightTendonMesh" strict="1"/>
+
+
+    </coupling-scheme:parallel-implicit> -->
+
+
+
 
 
   </solver-interface>

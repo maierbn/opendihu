@@ -84,13 +84,13 @@ variables.meshes = meshes_tendon
 
 # neumann
 k = mz-1
-variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0, 0], "face": "2+", "isInReferenceConfiguration": True} for j in range(my) for i in range(mx)]
+variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0, 0.05], "face": "2+", "isInReferenceConfiguration": True} for j in range(my) for i in range(mx)]
 
 def update_neumann_bc(t):
   factor = min(1.0, t/20.0)   # at t=1.0 we have F = external_force
   elasticity_neumann_bc = [{
 		"element": k*mx*my + j*mx + i, 
-		"constantVector": [0,0, variables.force*factor], 		# force pointing to bottom
+		"constantVector": [0,0, variables.force*factor + 0.05], 		# force pointing to bottom
 		"face": "2+",
     "isInReferenceConfiguration": True
   } for j in range(my) for i in range(mx)]
@@ -204,6 +204,8 @@ config = {
 
       "OutputWriter" : [
           {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+          {"format": "PythonCallback", "outputInterval": 10, "callback": variables.write_to_file, "onlyNodalValues":True, "filename": "", "fileNumbering":'incremental'},
+
         ],
       # define which file formats should be written
       # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.

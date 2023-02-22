@@ -2,6 +2,8 @@
 
 This is the case setup we consider a tendon which is fixed to a wall on one side and pull by a lineraly increasing force on the other side. Then we split the tendon in two and use the precice surface adapter to couple them. 
 
+![image](tendon_coupling_white_background.png)
+
 You can run the single tendon
 ```
 ./tendon ../single_tendon.py

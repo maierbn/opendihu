@@ -18,7 +18,6 @@
 #include <cstdlib>
 #include <cctype>
 
-
 #include "utility/python_utility.h"
 //#include "output_writer/paraview/paraview.h"
 #include "output_writer/python_callback/python_callback.h"
@@ -88,7 +87,7 @@ void handleSignal(int signalNo)
   MappingBetweenMeshes::Manager::writeLogFile();
 
   int rankNo = DihuContext::ownRankNoCommWorld();
-  LOG(INFO) << "Rank " << rankNo << " received signal " << strsignal[signalNo]
+  LOG(INFO) << "Rank " << rankNo << " received signal " << sys_siglist[signalNo]
     << " (" << signalNo << "): " << signalName;
 
   if (signalNo == SIGBUS)
@@ -473,8 +472,8 @@ std::string DihuContext::metaText()
   metaTextStr << "current time: " << tm_string << ", hostname: ";
 
   // host name
-  char hostname[HOST_NAME_MAX+1];
-  gethostname(hostname, HOST_NAME_MAX+1);
+  char hostname[MAXHOSTNAMELEN+1];
+  gethostname(hostname, MAXHOSTNAMELEN+1);
   metaTextStr << std::string(hostname) << ", n ranks: " << nRanksCommWorld_;
 
   return metaTextStr.str();

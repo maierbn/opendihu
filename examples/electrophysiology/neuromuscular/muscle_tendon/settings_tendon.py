@@ -14,16 +14,17 @@ sys.path.insert(0, script_path)
 sys.path.insert(0, os.path.join(script_path,'variables'))
 
 import variables              # file variables.py, defines default values for all parameters, you can set the parameters there
+from create_partitioned_meshes_for_settings import *   # file create_partitioned_meshes_for_settings with helper functions about own subdomain
+from helper import *
 
-variables.scenario_name = "right_tendon"
+variables.scenario_name = "tendon"
 
-n_elements_right_tendon = variables.n_elements_single_tendon
-n_elements_right_tendon[2] = int(n_elements_right_tendon[2]/2)
-right_tendon_extent = variables.single_tendon_extent
-right_tendon_extent[2] = right_tendon_extent[2]/2
-right_tendon_offset= [0,0,right_tendon_extent[2]]
-
-
+# compute partitioning
+if rank_no == 0:
+  if n_ranks != variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z:
+    print("\n\nError! Number of ranks {} does not match given partitioning {} x {} x {} = {}.\n\n".format(n_ranks, variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z, variables.n_subdomains_x*variables.n_subdomains_y*variables.n_subdomains_z))
+    sys.exit(-1)
+    
 # update material parameters
 if (variables.tendon_material == "nonLinear"):
     c = 9.98                    # [N/cm^2=kPa]
@@ -54,53 +55,39 @@ else:
 meshes_tendon = {
   # no `nodePositions` fields as the nodes are created internally
   "tendon_Mesh": {
-    "nElements" :         n_elements_right_tendon,
-    "physicalExtent":     right_tendon_extent,
-    "physicalOffset":     right_tendon_offset,
+    "nElements" :         variables.n_elements_tendon,
+    "physicalExtent":     variables.tendon_extent,
+    "physicalOffset":     variables.tendon_offset,
     "logKey":             "tendon",
     "inputMeshIsGlobal":  True,
     "nRanks":             n_ranks
   },
   # needed for mechanics solver
   "tendon_Mesh_quadratic": {
-    "nElements" :         [elems // 2 for elems in n_elements_right_tendon],
-    "physicalExtent":     right_tendon_extent,
-    "physicalOffset":     right_tendon_offset,
+    "nElements" :         [elems // 2 for elems in variables.n_elements_tendon],
+    "physicalExtent":     variables.tendon_extent,
+    "physicalOffset":     variables.tendon_offset,
     "logKey":             "tendon_quadratic",
     "inputMeshIsGlobal":  True,
     "nRanks":             n_ranks,
   }
 }
-variables.meshes = meshes_tendon
+variables.meshes.update(meshes_tendon)
 
 # boundary conditions (for quadratic elements)
 # --------------------------------------------
 
-[nx, ny, nz] = [elem + 1 for elem in n_elements_right_tendon]
-[mx, my, mz] = [elem // 2 for elem in n_elements_right_tendon] # quadratic elements consist of 2 linear elements along each axis
+[nx, ny, nz] = [elem + 1 for elem in variables.n_elements_tendon]
+[mx, my, mz] = [elem // 2 for elem in variables.n_elements_tendon] # quadratic elements consist of 2 linear elements along each axis
 
 
-# dirichlet bc at k = 0 is provided via precice
+# # dirichlet
+# k = nz-1 #free side of the tendon
 
-# neumann
-k = mz-1
-variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0, 0.05], "face": "2+", "isInReferenceConfiguration": True} for j in range(my) for i in range(mx)]
+# for j in range(ny):
+#     for i in range(nx):
+#       variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
 
-def update_neumann_bc(t):
-  factor = min(1.0, t/20.0)   # at t=1.0 we have F = external_force
-  elasticity_neumann_bc = [{
-		"element": k*mx*my + j*mx + i, 
-		"constantVector": [0,0, variables.force*factor + 0.05], 		# force pointing to bottom
-		"face": "2+",
-    "isInReferenceConfiguration": True
-  } for j in range(my) for i in range(mx)]
-
-  config = {
-    "inputMeshIsGlobal": True,
-    "divideNeumannBoundaryConditionValuesByTotalArea": False,            
-    "neumannBoundaryConditions": elasticity_neumann_bc,
-  }
-  return config
 
 config = {
   "scenarioName":                   variables.scenario_name,      # scenario name to identify the simulation runs in the log file
@@ -114,24 +101,22 @@ config = {
       "timestepWidth":            variables.dt_elasticity,                          # coupling time step width, must match the value in the precice config
       "couplingEnabled":          True,                       # if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging
       "preciceConfigFilename":    "../precice_config.xml",    # the preCICE configuration file
-      "preciceParticipantName":   "RightTendonSolver",             # name of the own precice participant, has to match the name given in the precice xml config file
+      "preciceParticipantName":   "TendonSolver",             # name of the own precice participant, has to match the name given in the precice xml config file
       "preciceMeshes": [                                      # the precice meshes get created as the top or bottom surface of the main geometry mesh of the nested solver
         {
-          "preciceMeshName":      "RightTendonMesh",            # precice name of the 2D coupling mesh
+          "preciceMeshName":      "TendonMeshLeft",            # precice name of the 2D coupling mesh
           "face":                 "2-",                       # face of the 3D mesh where the 2D mesh is located, "2-" = bottom, "2+" = top
         }
       ],
       "preciceData": [  
         {
-          "mode":                 "read-displacements-velocities",   # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
-          "preciceMeshName":      "RightTendonMesh",                    # name of the precice coupling surface mesh, as given in the precice xml settings file
+          "mode":                 "write-displacements-velocities",   # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
+          "preciceMeshName":      "TendonMeshLeft",                    # name of the precice coupling surface mesh, as given in the precice xml settings file
           "displacementsName":    "Displacement",                     # name of the displacements "data", i.e. field variable, as given in the precice xml settings file
-          "velocitiesName":       "Velocity",                     # name of the displacements "data", i.e. field variable, as given in the precice xml settings file
-
         },
         {
-          "mode":                 "write-traction",                    # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
-          "preciceMeshName":      "RightTendonMesh",                    # name of the precice coupling surface mesh, as given in the precice xml settings 
+          "mode":                 "read-traction",                    # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
+          "preciceMeshName":      "TendonMeshLeft",                    # name of the precice coupling surface mesh, as given in the precice xml settings 
           "tractionName":         "Traction",                         # name of the traction "data", i.e. field variable, as given in the precice xml settings file
         }
       ],
@@ -184,11 +169,11 @@ config = {
       
       # boundary and initial conditions
       "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
-      "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
+      "neumannBoundaryConditions":   [],     # Neumann boundary conditions that define traction forces on surfaces of elements
       "divideNeumannBoundaryConditionValuesByTotalArea": False,    # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
       "updateDirichletBoundaryConditionsFunction": None, #update_dirichlet_bc,   # function that updates the dirichlet BCs while the simulation is running
       "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # stide every which step the update function should be called, 1 means every time step
-      "updateNeumannBoundaryConditionsFunction": update_neumann_bc,       # a callback function to periodically update the Neumann boundary conditions
+      "updateNeumannBoundaryConditionsFunction": None,       # a callback function to periodically update the Neumann boundary conditions
       "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step 
       
       "constantBodyForce":           None,       # a constant force that acts on the whole body, e.g. for gravity
@@ -204,7 +189,7 @@ config = {
 
       "OutputWriter" : [
           {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/mechanics_3D", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-          {"format": "PythonCallback", "outputInterval": 10, "callback": variables.write_to_file, "onlyNodalValues":True, "filename": "", "fileNumbering":'incremental'},
+          {"format": "PythonCallback", "outputInterval": 1, "callback": variables.tendon_write_to_file, "onlyNodalValues":True, "filename": "", "fileNumbering":'incremental'},
 
         ],
       # define which file formats should be written

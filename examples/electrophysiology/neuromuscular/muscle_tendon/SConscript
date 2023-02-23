@@ -1,3 +1,4 @@
+
 # This script declares to SCons how to compile the example.
 # It has to be called from a SConstruct file.
 # The 'env' object is passed from there and contains further specification like directory and debug/release flags.
@@ -8,9 +9,8 @@
 Import('env')     # import Environment object from calling SConstruct
 
 # create the main executable
-env.Program(target = 'tendon_precice', source = "src/tendon_precice_dynamic.cpp")
-env.Program(target = 'tendon', source = "src/tendon_dynamic.cpp")
+env.Program(target = 'muscle', source = "src/muscle.cpp")
+env.Program(target = 'muscle_precice', source = "src/muscle_precice.cpp")
+env.Program(target = 'muscle_precice_mechanics', source = "src/muscle_precice_mechanics.cpp")
 
-# create the main executable
-env.Program(target = 'tendon_precice', source = "src/tendon_precice_dynamic.cpp")
-env.Program(target = 'tendon', source = "src/tendon_dynamic.cpp")
+env.Program(target = 'tendon_precice', source = "src/tendon_precice.cpp")

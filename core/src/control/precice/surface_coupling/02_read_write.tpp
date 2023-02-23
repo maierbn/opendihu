@@ -36,8 +36,8 @@ preciceReadData()
         this->preciceSolverInterface_->readBlockVectorData(preciceData.preciceDataIdDisplacements, preciceData.preciceMesh->nNodesLocal,
                                                            preciceData.preciceMesh->preciceVertexIds.data(), displacementValues_.data());
 
-        this->preciceSolverInterface_->readBlockVectorData(preciceData.preciceDataIdVelocities, preciceData.preciceMesh->nNodesLocal,
-                                                           preciceData.preciceMesh->preciceVertexIds.data(), velocityValues_.data());
+        // this->preciceSolverInterface_->readBlockVectorData(preciceData.preciceDataIdVelocities, preciceData.preciceMesh->nNodesLocal,
+        //                                                    preciceData.preciceMesh->preciceVertexIds.data(), velocityValues_.data());
 
         setDirichletBoundaryConditions(preciceData);
       }
@@ -111,9 +111,9 @@ setDirichletBoundaryConditions(typename PreciceAdapterInitialize<NestedSolver>::
       }
     }
 
-    LOG(DEBUG) << "read data from precice complete, displacement values: " << displacementValues_
+    LOG(INFO) << "read data from precice complete, displacement values: " << displacementValues_
       << ", velocityValues: " << velocityValues_;
-    LOG(DEBUG) << "read and set Dirichlet BC: " << newDirichletBCValues;
+    LOG(INFO) << "read and set Dirichlet BC: " << newDirichletBCValues;
   }
 
   //! set new dirichlet boundary condition values
@@ -305,20 +305,24 @@ preciceWriteData()
         this->getDisplacementVelocityValues(this->nestedSolver_, preciceData.preciceMesh->dofNosLocal, displacementValues_, velocityValues_);
 
         LOG(INFO) << "write displacements data to precice: " << displacementValues_;
+        //LOG(INFO) << "write velocities data to precice: " << velocityValues_;
+
+
+        LOG(INFO) << "write displacements data to precice: " << displacementValues_;
         // scale displacement and velocity values
         for (double &value : displacementValues_)
           value *= this->scalingFactor_;
 
-        for (double &value : velocityValues_)
-          value *= this->scalingFactor_;
+        // for (double &value : velocityValues_)
+        //   value *= this->scalingFactor_;
 
         // write displacement values in precice
         this->preciceSolverInterface_->writeBlockVectorData(preciceData.preciceDataIdDisplacements, preciceData.preciceMesh->nNodesLocal,
                                                             preciceData.preciceMesh->preciceVertexIds.data(), displacementValues_.data());
 
         // write velocity values in precice
-        this->preciceSolverInterface_->writeBlockVectorData(preciceData.preciceDataIdVelocities, preciceData.preciceMesh->nNodesLocal,
-                                                            preciceData.preciceMesh->preciceVertexIds.data(), velocityValues_.data());
+        // this->preciceSolverInterface_->writeBlockVectorData(preciceData.preciceDataIdVelocities, preciceData.preciceMesh->nNodesLocal,
+        //                                                     preciceData.preciceMesh->preciceVertexIds.data(), velocityValues_.data());
       }
       // if the data is traction
       else if (!preciceData.tractionName.empty())

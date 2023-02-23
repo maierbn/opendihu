@@ -36,11 +36,21 @@ loadCheckpoint()
 
   PetscErrorCode ierr;
 
+  // LOG(INFO) << "load saved state ";
+  // VecView(savedState_, PETSC_VIEWER_STDOUT_SELF);
+
+  // LOG(INFO) << "load current state ";
+  // VecView(this->currentState(this->nestedSolver_), PETSC_VIEWER_STDOUT_SELF);
+
+  
+
   // copy values back
   ierr = VecCopy(savedState_, this->currentState(this->nestedSolver_));
   if (ierr != 0)
     LOG(FATAL) << "Loading checkpoint failed.";
 
+  // LOG(INFO) << "load current state after copy";
+  // VecView(this->currentState(this->nestedSolver_), PETSC_VIEWER_STDOUT_SELF);
 
   return savedCurrentTime_;
 }

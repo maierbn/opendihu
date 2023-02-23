@@ -8,6 +8,8 @@ template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 fetchFiberData()
 {
+  LOG(INFO) << "infetchFiberData";
+
   VLOG(1) << "fetchFiberData";
   std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 
@@ -492,4 +494,21 @@ updateFiberData()
         fiberDataNo++;
     }
   }
+}
+
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
+restoreFiberDataCheckpoint()
+{
+  LOG(INFO) << "in loadFiberData";
+  LOG(INFO) << "vm values" << fiberData_[0].vmValues;
+  fiberPointBuffers_ = fiberPointBuffersLastCheckpoint_;
+
+}
+
+template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
+void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
+saveFiberDataCheckpoint()
+{
+  fiberPointBuffersLastCheckpoint_ = fiberPointBuffers_;
 }

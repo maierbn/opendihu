@@ -1,0 +1,94 @@
+<?xml version="1.0"?>
+
+<precice-configuration>
+  <!-- format for console output of precice -->
+  <log>
+    <sink type="stream" output="stdout"  filter='(%Severity% >= debug) and (not (%Function% = "advance"))' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />
+    <!--<sink type="stream" output="stdout"  filter='%Severity% >= debug' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />-->
+    <!--<sink type="file" output="debug.log" filter= "(%Severity% >= debug)" format="%Message%" enabled="true" />	-->
+  </log>
+
+  <solver-interface dimensions="3">
+    
+    <data:vector name="Displacement"/>
+    <data:vector name="Traction"/>
+
+    <mesh name="TendonMeshLeft">
+      <use-data name="Displacement"/>
+      <use-data name="Traction"/>
+    </mesh>
+
+    <mesh name="MuscleMeshLeft">
+      <use-data name="Displacement"/>
+      <use-data name="Traction"/>
+    </mesh>
+
+    <participant name="TendonSolver"> 
+      <use-mesh name="TendonMeshLeft" provide="yes"/>
+      <use-mesh name="MuscleMeshLeft" from="MuscleSolverLeft"/>
+      <write-data name="Displacement"  mesh="TendonMeshLeft"/>
+      <read-data  name="Traction"      mesh="TendonMeshLeft"/>
+      <mapping:nearest-neighbor direction="read" from="MuscleMeshLeft" to="TendonMeshLeft" constraint="consistent"/>
+      <export:vtk directory="preCICE-output" />
+    </participant>
+
+    <participant name="MuscleSolverLeft">
+      <use-mesh name="MuscleMeshLeft"  provide="yes"/>
+      <use-mesh name="TendonMeshLeft"     from="TendonSolver"/>
+      <read-data  name="Displacement"  mesh="MuscleMeshLeft"/>
+      <write-data name="Traction"      mesh="MuscleMeshLeft"/>
+      <mapping:nearest-neighbor direction="read" from="TendonMeshLeft" to="MuscleMeshLeft" constraint="consistent"/>
+      <export:vtk directory="preCICE-output" />
+    </participant>
+    
+    <!-- Communication method, use TCP sockets, Change network to "ib0" on SuperMUC -->
+    <m2n:sockets from="TendonSolver" to="MuscleSolverLeft" network="lo" />
+
+    <!-- <coupling-scheme:serial-explicit>
+      <participants second="TendonSolver" first="MuscleSolverLeft"/>
+
+      <max-time value="20.0"/>           
+      <time-window-size value="0.1"/>   
+
+      <exchange data="Displacement"    mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
+      <exchange data="Traction"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  
+    </coupling-scheme:serial-explicit> -->
+
+    <coupling-scheme:parallel-implicit>
+      <participants second="TendonSolver" first="MuscleSolverLeft"/>
+
+      <max-time value="1.0"/>           
+      <time-window-size value="0.1"/>   
+
+      <acceleration:IQN-ILS>
+        <data name="Displacement" mesh="TendonMeshLeft"/>
+        <data name="Traction" mesh="MuscleMeshLeft"/>
+
+        <preconditioner type="residual-sum"/>
+        <filter type="QR2" limit="1e-3"/>
+        <initial-relaxation value="0.5"/>
+        <max-used-iterations value="8"/>
+        <time-windows-reused value="20"/>
+      </acceleration:IQN-ILS>
+
+      <!-- <acceleration:aitken>
+        <data name="Displacement" mesh="TendonMeshLeft"/>
+        <data name="Traction" mesh="MuscleMeshLeft"/>
+
+        <initial-relaxation value="0.1"/>
+      </acceleration:aitken>  -->
+
+      <!-- <acceleration:constant>
+        <relaxation value="0.5"/>
+      </acceleration:constant>    -->
+
+      <max-iterations value="50" />
+      <absolute-convergence-measure limit="1e-8" data="Displacement" mesh="TendonMeshLeft" strict="1"/>
+      <absolute-convergence-measure limit="1e-4" data="Traction" mesh="MuscleMeshLeft" strict="1"/>
+  
+      <exchange data="Displacement"    mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
+      <exchange data="Traction"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  
+    </coupling-scheme:parallel-implicit>
+
+  </solver-interface>
+</precice-configuration>

@@ -18,3 +18,8 @@ if not env['no_examples']:
   env.Program(target = 'tendon_linear_precice_quasistatic', source = "src/tendon_linear_precice_quasistatic.cpp")
   env.Program(target = 'tendon_mooney_rivlin_precice_quasistatic', source = "src/tendon_mooney_rivlin_precice_quasistatic.cpp")
   env.Program(target = 'tendon_linear_precice_dynamic', source = "src/tendon_linear_precice_dynamic.cpp")
+  #env.Program(target = 'muscle_passive', source = "src/muscle_passive.cpp")
+
+  env.Program(target = 'muscle_fibers_precice', source = "src/muscle_fibers_precice.cpp")
+  env.Program(target = 'muscle_fibers', source = "src/muscle_fibers.cpp")
+  env.Program(target = 'muscle_fibers_bidomain', source = "src/muscle_fibers_bidomain.cpp")

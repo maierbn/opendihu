@@ -17,37 +17,26 @@ advanceTimeSpan(bool withOutputWritersEnabled)
 {
   LOG_SCOPE_FUNCTION;
 
-  LOG(TRACE) << "FastMonodomainSolver::advanceTimeSpan";
+  LOG(INFO) << "FastMonodomainSolver::advanceTimeSpan";
 
   // loop over fibers and communicate element lengths and initial values to the ranks that participate in computing
+  //loadFiberData();
+  
   fetchFiberData();
 
   //Control::PerformanceMeasurement::startFlops();
 
   // do computation of own fibers, stimulation from parsed MU and firing_times files
-  computeMonodomain();
+  computeMonodomain(withOutputWritersEnabled);
+
+  //saveFiberData();
 
   //Control::PerformanceMeasurement::endFlops();
-
-  // loop over fibers and communicate resulting values back
-  updateFiberData();
-
-  // call output writer of diffusion
-  if (withOutputWritersEnabled)
-  {
-    std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
-
-    for (int i = 0; i < instances.size(); i++)
-    {
-      // call write output of MultipleInstances, callCountIncrement is the number of times the output writer would have been called without FastMonodomainSolver
-      instances[i].timeStepping2().writeOwnOutput(0, currentTime_, nTimeStepsSplitting_);
-    }
-  }
 }
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
-computeMonodomain()
+computeMonodomain(bool withOutputWritersEnabled)
 {
   if (!useVc_)
   {
@@ -75,6 +64,8 @@ computeMonodomain()
   double startTime = instances[0].startTime();
   double timeStepWidthSplitting = instances[0].timeStepWidth();
   nTimeStepsSplitting_ = instances[0].numberTimeSteps();
+
+  int timeStepOutputInterval = instances[0].timeStepOutputInterval();
 
   heun.setTimeSpan(startTime, startTime + 0.5 * timeStepWidthSplitting);
   double dt0D = heun.timeStepWidth();
@@ -105,13 +96,24 @@ computeMonodomain()
     return;
   }
 
+  // int fakeTimeStepNo = 0;
+ 
   // loop over splitting time steps
   for (int timeStepNo = 0; timeStepNo < nTimeStepsSplitting_; timeStepNo++)
   {
+
+    if (timeStepNo > 0)
+    {
+      restoreFiberDataCheckpoint();
+      //fetchFiberData();
+      LOG(INFO) << "load fiber data ";
+    }
     // perform Strang splitting
+
+    //loadFiberData();
     double currentTime = startTime + timeStepNo * timeStepWidthSplitting;
 
-    LOG(DEBUG) << "splitting " << timeStepNo << "/" << nTimeStepsSplitting_ << ", t: " << currentTime;
+    LOG(INFO) << "splitting " << timeStepNo << "/" << nTimeStepsSplitting_ << ", t: " << currentTime;
 
     // compute midTime once per step to reuse it. [currentTime, midTime=currentTime+0.5*timeStepWidth, currentTime+timeStepWidth]
     double midTime = currentTime + 0.5 * timeStepWidthSplitting;
@@ -121,6 +123,18 @@ computeMonodomain()
     compute0D(currentTime, dt0D, nTimeSteps0D, false);
     compute1D(currentTime, dt1D, nTimeSteps1D, prefactor);
     compute0D(midTime,     dt0D, nTimeSteps0D, storeAlgebraicsForTransfer);
+
+    updateFiberData();
+
+    if (timeStepNo < nTimeStepsSplitting_/2)
+    {
+      // fakeTimeStepNo += 1;
+      saveFiberDataCheckpoint();
+      LOG(INFO) << "save fiber data";
+    }
+
+    callOutputWriter(timeStepNo, currentTime, timeStepOutputInterval);
+
   }
 
   currentTime_ = instances[0].endTime();

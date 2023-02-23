@@ -18,10 +18,15 @@ with open('single_muscle_high.txt', 'r') as f:
     t_high = [float(line.split()[0]) for line in lines]
     z_high = [float(line.split()[1]) for line in lines]
 
-# with open('muscle_precice.txt', 'r') as f:
-#     lines = f.readlines()
-#     t_precice = [float(line.split()[0]) for line in lines]
-#     z_precice= [float(line.split()[1]) for line in lines]
+with open('muscle_with_large_tendon_explicit.txt', 'r') as f:
+    lines = f.readlines()
+    t_large= [float(line.split()[0]) for line in lines]
+    z_large= [float(line.split()[1]) for line in lines]
+
+with open('muscle_with_small_tendon_explicit.txt', 'r') as f:
+    lines = f.readlines()
+    t_small= [float(line.split()[0]) for line in lines]
+    z_small= [float(line.split()[1]) for line in lines]
 
 # with open('muscle_precice1.txt', 'r') as f:
 #     lines = f.readlines()
@@ -74,18 +79,17 @@ plt.ylabel("muscle length (cm)")
 plt.legend()
 plt.show()
 
-# plt.figure(2)
-# plt.plot(t_high,z_high, "-", label="reference")
-# plt.plot(t_explicit,z_explicit, "x", label="explicit")
-# plt.plot(t_precice,z_precice, "o", label="implicit v1")
-# plt.plot(t_precice1,z_precice1, "o", label="implicit v2")
+plt.figure(2)
+plt.plot(t_high,z_high, "o", label="no tendon")
+plt.plot(t_large,z_large, "o", label="large tendon")
+plt.plot(t_small,z_small, "o", label="small tendon")
 
 
-# plt.title("Single muscle vs coupled muscle")
-# plt.xlabel("time (ms)")
-# plt.ylabel("displacement (cm)")
-# plt.legend()
-# plt.show()
+plt.title("Explicit coupling muscle-tendon")
+plt.xlabel("time (ms)")
+plt.ylabel("displacement (cm)")
+plt.legend()
+plt.show()
 
 # plt.figure(3)
 # #plt.plot(t_tendon,tendon_length, "o")

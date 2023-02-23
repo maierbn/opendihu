@@ -51,18 +51,17 @@
     
     <!-- Communication method, use TCP sockets, Change network to "ib0" on SuperMUC -->
     <m2n:sockets from="TendonSolver" to="MuscleSolverLeft" network="lo" /> 
-    <!--
+    
      <coupling-scheme:serial-explicit>
       <participants second="TendonSolver" first="MuscleSolverLeft"/>
       <max-time value="5.0"/>           
-      <time-window-size value="0.1"/>   
+      <time-window-size value="0.01"/>   
       <exchange data="Displacement"    mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
       <exchange data="Velocity"    mesh="TendonMeshLeft"    from="TendonSolver" to="MuscleSolverLeft"/>
-
       <exchange data="Traction"        mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>  
-    </coupling-scheme:serial-explicit>   -->
+    </coupling-scheme:serial-explicit>  
 
-    <coupling-scheme:parallel-implicit>
+    <!-- <coupling-scheme:parallel-implicit>
       <participants first="MuscleSolverLeft" second="TendonSolver"/>
 
       <max-time value="5.0"/>           
@@ -85,11 +84,11 @@
 
       <max-iterations value="50"/>
 
-      <relative-convergence-measure limit="1e-6" data="Displacement" mesh="TendonMeshLeft" strict="1"/>
-      <relative-convergence-measure limit="1e-6" data="Velocity" mesh="TendonMeshLeft" strict="1"/>
+      <relative-convergence-measure limit="1e-5" data="Displacement" mesh="TendonMeshLeft" strict="1"/>
+      <relative-convergence-measure limit="1e-5" data="Velocity" mesh="TendonMeshLeft" strict="1"/>
       <absolute-convergence-measure limit="1e-3" data="Traction" mesh="MuscleMeshLeft" strict="1"/>
 
 
-    </coupling-scheme:parallel-implicit>
+    </coupling-scheme:parallel-implicit> -->
   </solver-interface>
 </precice-configuration>

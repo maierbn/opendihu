@@ -146,7 +146,7 @@ def muscle_write_to_file(data):
             z_value += z_data[(nz-1)*nx*ny + j*nx + i]
     z_value /= ny*nx
 
-    f = open("muscle_precice2.txt", "a")
+    f = open("muscle_2iteration.txt", "a")
     f.write("{:6.2f} {:+2.4f}\n".format(t, z_value))
     f.close()
 
@@ -173,6 +173,6 @@ def tendon_write_to_file(data):
             z_value_end += z_data[(nz-1)*nx*ny + j*nx + i]
     z_value_end /= ny*nx
 
-    f = open("tendon_precice2.txt", "a")
+    f = open("tendon_2iterations.txt", "a")
     f.write("{:6.2f} {:+2.4f} {:+2.4f}\n".format(t, z_value_begin, z_value_end))
     f.close()

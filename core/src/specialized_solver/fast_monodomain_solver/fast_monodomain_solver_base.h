@@ -184,7 +184,7 @@ protected:
   void compute1D(double startTime, double timeStepWidth, int nTimeSteps, double prefactor);
 
   //! compute the 0D-1D problem with Strang splitting
-  void computeMonodomain(bool withOutputWritersEnabled);
+  void computeMonodomain();
 
   //! check if the current point will be stimulated now
   bool isCurrentPointStimulated(int fiberDataNo, double currentTime, bool currentPointIsInCenter);
@@ -221,6 +221,8 @@ protected:
   std::string firingTimesFilename_;        //< filename of the firingTimesFile, which contains points in time of stimulation for each motor unit
 
   std::vector<std::vector<bool>> firingEvents_;   //< if a motor unit fires, firingEvents_[timeStepNo][motorUnitNo]
+  std::vector<std::vector<bool>> firingEventsLastCheckpoint_;   //< if a motor unit fires, firingEvents_[timeStepNo][motorUnitNo]
+
   std::vector<int> motorUnitNo_;                  //< number of motor unit for given fiber no motorUnitNo_[fiberNo]
   std::string durationLogKey0D_;                  //< duration log key for the 0D problem
   std::string durationLogKey1D_;                  //< duration log key for the 1D problem
@@ -228,6 +230,8 @@ protected:
   OutputWriter::Manager outputWriterManager_;     //< manager object holding all output writers
 
   std::vector<FiberData> fiberData_;  //< vector of fibers, the number of entries is the number of fibers to be computed by the own rank (nFibersToCompute_)
+  //std::vector<FiberData> fiberDataLastCheckpoint_;  //< vector of fibers, the number of entries is the number of fibers to be computed by the own rank (nFibersToCompute_)
+
   int nFibersToCompute_;              //< number of fibers where own rank is involved (>= n.fibers that are computed by own rank)
   int nInstancesToCompute_;           //< number of instances of the Hodgkin-Huxley (or other CellML) problem to compute on this rank
   int nInstancesToComputePerFiber_;   //< number of instances to compute per fiber, i.e., global number of instances of a fiber
@@ -237,6 +241,7 @@ protected:
 
   bool onlyComputeIfHasBeenStimulated_;       //< option if fiber should only be computed after it has been stimulated for the first time
   std::vector<bool> fiberHasBeenStimulated_;  //< for every fiber if it has been stimulated
+  std::vector<bool> fiberHasBeenStimulatedLastCheckpoint_;
 
   bool disableComputationWhenStatesAreCloseToEquilibrium_;                  //< option to avoid computation when the states won't change much
   enum state_t {
@@ -245,6 +250,8 @@ protected:
     active                      //< the state values at the own point change and have to be computed
   };                                                                        //< type for fiberPointBuffersStatesAreCloseToEquilibrium_
   std::vector<state_t> fiberPointBuffersStatesAreCloseToEquilibrium_;
+  std::vector<state_t> fiberPointBuffersStatesAreCloseToEquilibriumLastCheckpoint_;
+
   int nFiberPointBufferStatesCloseToEquilibrium_;                           //< number of "inactive" entries in fiberPointBuffersStatesAreCloseToEquilibrium_
   bool setComputeStateInformation_;                                         //< whether the information in fiberPointBuffersStatesAreCloseToEquilibrium_ should be added to the algebraics to transfer in a variable named "computeStateInformation"
 

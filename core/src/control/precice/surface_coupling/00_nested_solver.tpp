@@ -137,20 +137,24 @@ reset(NestedSolverType &nestedSolver)
   nestedSolver.timeStepping2().reset();
 }
 
+//! save fibers checkpoint
 template<typename T1, typename T2, typename T3>
 void PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::
 saveFiberData(NestedSolverType &nestedSolver)
 {
   //nestedSolver.timeStepping1().reset();
-  nestedSolver.timeStepping1().saveFiberState();
+  LOG(INFO) <<"saveFiberDataCheckpoint";
+  nestedSolver.timeStepping1().saveFiberDataCheckpoint();
 }
 
+//! load fibers checkpoint
 template<typename T1, typename T2, typename T3>
 void PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::
 loadFiberData(NestedSolverType &nestedSolver)
 {
   //nestedSolver.timeStepping1().reset();
-  nestedSolver.timeStepping1().loadFiberState();
+  LOG(INFO) <<"loadFiberDataCheckpoint";
+  nestedSolver.timeStepping1().restoreFiberDataCheckpoint();
 }
 
 // --------------------------------------------------
@@ -218,20 +222,20 @@ getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<
     displacementValues[3*i + 2] = values[i][2];
   }
 
-  // // get the velocity values
-  // values.clear();
-  // nestedSolver.data().velocities()->getValues(dofNosLocal, values);
+  // get the velocity values
+  values.clear();
+  nestedSolver.data().velocities()->getValues(dofNosLocal, values);
 
-  // // store velocity values in interleaved order (array of struct)
-  // nVectors = values.size();
-  // velocityValues.resize(nVectors * 3);
+  // store velocity values in interleaved order (array of struct)
+  nVectors = values.size();
+  velocityValues.resize(nVectors * 3);
 
-  // for (int i = 0; i < nVectors; i++)
-  // {
-  //   velocityValues[3*i + 0] = values[i][0];
-  //   velocityValues[3*i + 1] = values[i][1];
-  //   velocityValues[3*i + 2] = values[i][2];
-  // }
+  for (int i = 0; i < nVectors; i++)
+  {
+    velocityValues[3*i + 0] = values[i][0];
+    velocityValues[3*i + 1] = values[i][1];
+    velocityValues[3*i + 2] = values[i][2];
+  }
 }
 
 //! get the traction vectors of the given local dof nos
@@ -365,13 +369,14 @@ getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<
     displacementValues[3*i + 2] = values[i][2];
   }
 
+  nVectors = values.size();
   velocityValues.resize(nVectors * 3);
 
   for (int i = 0; i < nVectors; i++)
   {
-    velocityValues[3*i + 0] = 0.0;
-    velocityValues[3*i + 1] = 0.0;
-    velocityValues[3*i + 2] = 0.0;
+    velocityValues[3*i + 0] = values[i][0];
+    velocityValues[3*i + 1] = values[i][1];
+    velocityValues[3*i + 2] = values[i][2];
   }
 }
 
@@ -540,13 +545,14 @@ getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<
   }
 
   // get the velocity values
+  nVectors = values.size();
   velocityValues.resize(nVectors * 3);
 
   for (int i = 0; i < nVectors; i++)
   {
-    velocityValues[3*i + 0] = 0.0;
-    velocityValues[3*i + 1] = 0.0;
-    velocityValues[3*i + 2] = 0.0;
+    velocityValues[3*i + 0] = values[i][0];
+    velocityValues[3*i + 1] = values[i][1];
+    velocityValues[3*i + 2] = values[i][2];
   }
 }
 

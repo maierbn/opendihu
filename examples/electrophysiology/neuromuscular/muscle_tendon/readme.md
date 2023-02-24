@@ -10,7 +10,9 @@ This is the case setup we consider a muscle which is fixed to a wall on one end 
 
 At the free end of the muscle we add a tendon. The tendon is attached to the muscle on one end and is free on the other side. We expect the tendon to move as the muscle contracts. Since the tendon is adding to the mass that must be accelerated, it is expected to see that the muscle contracts less when the tendon is attached. 
 
-We use an explicit scheme
+### Explicit coupling
+
+We use the following scheme
 
 ```
 <coupling-scheme:serial-explicit>
@@ -23,7 +25,8 @@ We use an explicit scheme
 </coupling-scheme:serial-explicit>  
 ```
 
-And study the effect of the additional tendon mass:
+and study the effect of the additional tendon mass:
+
 - small tendon
 
 ```
@@ -41,3 +44,10 @@ n_elements_tendon = [2, 2, 4]
 ```
 
 ![image](Figure_2.png)
+
+### Implicit
+
+> **Note**
+> In order to use implicit coupling we have to make sure that the checkpoints are loaded correctly. In particular, it's necessary to load checkpoints for the fastmonodomainsolver, not only for the mechanics solver. An easy way to check weather the checkpoints are loaded correctly for the fibers, is to set `"outputOnlyConvergedTimeSteps": False` and check that the results in `muscle1_fibers*.vtu` do not change for every iteration. 
+
+![image](Figure_3.png)

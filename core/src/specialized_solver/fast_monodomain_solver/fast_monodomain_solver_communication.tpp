@@ -500,10 +500,8 @@ template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 restoreFiberDataCheckpoint()
 {
-  LOG(INFO) << "in loadFiberData";
-  LOG(INFO) << "vm values" << fiberData_[0].vmValues;
   fiberPointBuffers_ = fiberPointBuffersLastCheckpoint_;
-
+  updateFiberData();
 }
 
 template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>

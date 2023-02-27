@@ -12,7 +12,6 @@ with open('single_muscle_low.txt', 'r') as f:
     t_low = [float(line.split()[0]) for line in lines]
     z_low = [float(line.split()[1]) for line in lines]
 
-
 with open('single_muscle_high.txt', 'r') as f:
     lines = f.readlines()
     t_high = [float(line.split()[0]) for line in lines]
@@ -30,8 +29,13 @@ with open('muscle_with_small_tendon_explicit.txt', 'r') as f:
 
 with open('muscle_2iterations.txt', 'r') as f:
     lines = f.readlines()
-    t_precice1 = [float(line.split()[0]) for line in lines]
-    z_precice1= [float(line.split()[1]) for line in lines]
+    t_2iterations = [float(line.split()[0]) for line in lines]
+    z_2iterations= [float(line.split()[1]) for line in lines]
+
+with open('muscle_4iterations.txt', 'r') as f:
+    lines = f.readlines()
+    t_4iterations = [float(line.split()[0]) for line in lines]
+    z_4iterations= [float(line.split()[1]) for line in lines]
 
 # with open('tendon_precice_explicit.txt', 'r') as f:
 #     lines = f.readlines()
@@ -58,9 +62,9 @@ with open('muscle_2iterations.txt', 'r') as f:
 
 
 plt.figure(1)
-plt.plot(t_low,z_low, "o", label="dt_elasticity=1.0 ms")
-plt.plot(t,z, "o", label="dt_elasticity=0.1 ms")
-plt.plot(t_high,z_high, "o", label="dt_elasticity=0.01 ms")
+plt.plot(t_low,z_low,linewidth=2,label="dt_elasticity=1.0 ms")
+plt.plot(t,z,linewidth=2,label="dt_elasticity=0.1 ms")
+plt.plot(t_high,z_high,linewidth=2,label="dt_elasticity=0.01 ms")
 
 plt.title("Single muscle")
 plt.xlabel("time (ms)")
@@ -70,9 +74,9 @@ plt.show()
 
 
 plt.figure(2)
-plt.plot(t_high,z_high, "o", label="no tendon")
-plt.plot(t_large,z_large, "o", label="large tendon")
-plt.plot(t_small,z_small, "o", label="small tendon")
+plt.plot(t_high,z_high,linewidth=2,label="no tendon")
+plt.plot(t_large,z_large,linewidth=2,label="large tendon")
+plt.plot(t_small,z_small,linewidth=2,label="small tendon")
 
 plt.title("Explicit coupling muscle-tendon")
 plt.xlabel("time (ms)")
@@ -80,15 +84,14 @@ plt.ylabel("muscle length (cm)")
 plt.legend()
 plt.show()
 
-
 plt.figure(3)
-plt.plot(t_high,z_high, "o", label="no tendon")
-plt.plot(t_precice1,z_precice1, "o", label="explicit")
-plt.plot(t_small,z_small, "o", label="implicit (2 iterations)")
+plt.plot(t_high,z_high,linewidth=2,label="no tendon")
+plt.plot(t_small,z_small,linewidth=2,label="explicit")
+plt.plot(t_2iterations,z_2iterations,linewidth=2,label="implicit (2 iterations)")
+plt.plot(t_4iterations,z_4iterations,linewidth=2,label="implicit (4 iterations)")
 
 plt.title("Implicit vs explicit coupling (small tendon)")
 plt.xlabel("time (ms)")
 plt.ylabel("muscle length (cm)")
 plt.legend()
 plt.show()
-

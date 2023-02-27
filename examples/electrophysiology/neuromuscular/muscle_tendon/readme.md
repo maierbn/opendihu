@@ -2,6 +2,11 @@
 
 ## Single muscle 
 
+To run this case open a terminal and type
+```
+./muscle ../settings_single_muscle
+```
+
 This is the case setup we consider a muscle which is fixed to a wall on one end and free on the other one. The muscle is contracted due to the input from `/MU_firing_times_real.txt`. First of all, we start by studying the effect of different `dt_elasticity`. 
 
 ![image](Figure_1.png)
@@ -9,6 +14,15 @@ This is the case setup we consider a muscle which is fixed to a wall on one end 
 ## Muscle-Tendon
 
 At the free end of the muscle we add a tendon. The tendon is attached to the muscle on one end and is free on the other side. We expect the tendon to move as the muscle contracts. Since the tendon is adding to the mass that must be accelerated, it is expected to see that the muscle contracts less when the tendon is attached. 
+
+To run this case open two terminals and type
+```
+./muscle_precice ../settings_muscle
+```
+and 
+```
+./tendon_precice ../settings_tendon.py
+```
 
 ### Explicit coupling
 
@@ -69,8 +83,6 @@ Note that *implicit* corresponds to the following
 </acceleration:IQN-ILS>
 
 <max-iterations value="100"/>
-<!-- <min-iteration-convergence-measure min-iterations="4" data="Displacement" mesh="TendonMeshLeft" strict="0" suffices="0"/> -->
-
 
 <relative-convergence-measure limit="1e-5" data="Displacement" mesh="TendonMeshLeft" strict="1"/>
 <relative-convergence-measure limit="1e-5" data="Velocity" mesh="TendonMeshLeft" strict="1"/>
@@ -87,3 +99,65 @@ We did a parameter study for *implicit*:
 | 0.6  |  1393 |   
 | 0.7  |  1444 |   
 | 0.8  |  1274 |   
+
+### Proper tuning of the acceleration when using an implicit scheme
+
+A sensible tuning is such that `max-used-iterations value`> `max-iterations value` and that  `max-used-iterations value`> `time-windows-reused value`. Now we consider the following acceleration schemes:
+
+- Settings for *implicit (case 2)*
+
+```
+<acceleration:IQN-ILS>
+  <data name="Displacement" mesh="TendonMeshLeft"/>
+  <data name="Velocity" mesh="TendonMeshLeft"/>
+  <data name="Traction" mesh="MuscleMeshLeft"/>
+  <preconditioner type="residual-sum"/>
+  <filter type="QR2" limit="1e-2"/>
+  <initial-relaxation value="0.4"/>
+  <max-used-iterations value="100"/>
+  <time-windows-reused value="15"/>
+</acceleration:IQN-ILS>
+
+<max-iterations value="25"/>
+
+<relative-convergence-measure limit="1e-5" data="Displacement" mesh="TendonMeshLeft" strict="0"/>
+<relative-convergence-measure limit="1e-5" data="Velocity" mesh="TendonMeshLeft" strict="0"/>
+<absolute-convergence-measure limit="1e-2" data="Traction" mesh="MuscleMeshLeft" strict="0"/>
+```
+
+- Settings for *implicit (case 3)*
+
+As in *case 2* but now  `initial-relaxation value="0.6"`.
+
+We can compare the results in the next image. *case 2* required a total of 1283 iterations while *case 3* required 1305 iterations.
+
+![image](Figure_4.png)
+
+To see what the acceleration is doing look into the `precice-TendonSolver-iterations.log`. To understand the meaning of each column you can read about it in the [precice documentation](https://precice.org/running-output-files.html#precice-mysolver-iterationslog).
+
+By looking at the file, we can explain the unexpected behaviour of *case 2*, as the maximum number of iterations was achieved in multiple occasions in a row, compared to *case 3*.
+
+
+
+### Length of the tendon
+
+The length of the tendon remains constant as you can see in the next plot:
+![image](Figure_5.png)
+
+
+## Muscle-Tendon-Muscle
+
+Now we add a muscle to the free end of the tendon. The added muscle will be fix to the wall. It will be a dummy muscle (no activation, just an hyperelastic material with different material properties than the tendon). We want to see how the added muscle elongates as the first muscle contracts.
+
+To run this case open three terminals and type
+```
+./muscle_precice ../settings_muscle.py
+```
+and 
+```
+./tendon_precice ../settings_tendon_attached.py
+```
+and
+```
+./muscle_precice_mechanics ../settings_right_muscle.py
+```

@@ -42,52 +42,47 @@ with open('muscle_implicit.txt', 'r') as f:
     t_implicit = [float(line.split()[0]) for line in lines]
     z_implicit= [float(line.split()[1]) for line in lines]
 
-# with open('tendon_precice_explicit.txt', 'r') as f:
-#     lines = f.readlines()
-#     t_tendon = [float(line.split()[0]) for line in lines]
-#     tendon_begin= [float(line.split()[1]) for line in lines]
-#     tendon_end= [float(line.split()[2]) for line in lines]
-#     tendon_length= [float(line.split()[2])-float(line.split()[1]) for line in lines]
+with open('muscle_case2.txt', 'r') as f:
+    lines = f.readlines()
+    t_case2 = [float(line.split()[0]) for line in lines]
+    z_case2= [float(line.split()[1]) for line in lines]
 
 
-
-# with open('tendon_precice1.txt', 'r') as f:
-#     lines = f.readlines()
-#     t_tendon1 = [float(line.split()[0]) for line in lines]
-#     tendon1_begin= [float(line.split()[1]) for line in lines]
-#     tendon1_end= [float(line.split()[2]) for line in lines]
-#     tendon1_length= [float(line.split()[2])-float(line.split()[1]) for line in lines]
-
-# with open('tendon_precice2.txt', 'r') as f:
-#     lines = f.readlines()
-#     t_tendon2 = [float(line.split()[0]) for line in lines]
-#     tendon2_begin= [float(line.split()[1]) for line in lines]
-#     tendon2_end= [float(line.split()[2]) for line in lines]
-#     tendon2_length= [float(line.split()[2])-float(line.split()[1]) for line in lines]
+with open('muscle_case3.txt', 'r') as f:
+    lines = f.readlines()
+    t_case3 = [float(line.split()[0]) for line in lines]
+    z_case3= [float(line.split()[1]) for line in lines]
 
 
-# plt.figure(1)
-# plt.plot(t_low,z_low,linewidth=2,label="dt_elasticity=1.0 ms")
-# plt.plot(t,z,linewidth=2,label="dt_elasticity=0.1 ms")
-# plt.plot(t_high,z_high,linewidth=2,label="dt_elasticity=0.01 ms")
-
-# plt.title("Single muscle")
-# plt.xlabel("time (ms)")
-# plt.ylabel("muscle length (cm)")
-# plt.legend()
-# plt.show()
+with open('tendon_case2.txt', 'r') as f:
+    lines = f.readlines()
+    t_tendon2 = [float(line.split()[0]) for line in lines]
+    tendon2_begin= [float(line.split()[1]) for line in lines]
+    tendon2_end= [float(line.split()[2]) for line in lines]
+    tendon2_length= [float(line.split()[2])-float(line.split()[1]) for line in lines]
 
 
-# plt.figure(2)
-# plt.plot(t_high,z_high,linewidth=2,label="no tendon")
-# plt.plot(t_large,z_large,linewidth=2,label="large tendon")
-# plt.plot(t_small,z_small,linewidth=2,label="small tendon")
+plt.figure(1)
+plt.plot(t_low,z_low,linewidth=2,label="dt_elasticity=1.0 ms")
+plt.plot(t,z,linewidth=2,label="dt_elasticity=0.1 ms")
+plt.plot(t_high,z_high,linewidth=2,label="dt_elasticity=0.01 ms")
 
-# plt.title("Explicit coupling muscle-tendon")
-# plt.xlabel("time (ms)")
-# plt.ylabel("muscle length (cm)")
-# plt.legend()
-# plt.show()
+plt.title("Single muscle")
+plt.xlabel("time (ms)")
+plt.ylabel("muscle length (cm)")
+plt.legend()
+plt.show()
+
+plt.figure(2)
+plt.plot(t_high,z_high,linewidth=2,label="no tendon")
+plt.plot(t_large,z_large,linewidth=2,label="large tendon")
+plt.plot(t_small,z_small,linewidth=2,label="small tendon")
+
+plt.title("Explicit coupling muscle-tendon")
+plt.xlabel("time (ms)")
+plt.ylabel("muscle length (cm)")
+plt.legend()
+plt.show()
 
 plt.figure(3)
 plt.plot(t_high,z_high,linewidth=2,label="no tendon")
@@ -101,3 +96,26 @@ plt.xlabel("time (ms)")
 plt.ylabel("muscle length (cm)")
 plt.legend()
 plt.show()
+
+plt.figure(4)
+plt.plot(t_high,z_high,linewidth=2,label="no tendon")
+plt.plot(t_implicit,z_implicit,linewidth=2,label="implicit")
+plt.plot(t_case2,z_case2,linewidth=2,label="implicit (case 2)")
+plt.plot(t_case3,z_case3,linewidth=2,label="implicit (case 3)")
+
+
+plt.title("Different acceleration schemes")
+plt.xlabel("time (ms)")
+plt.ylabel("muscle length (cm)")
+plt.legend()
+plt.show()
+
+plt.figure(5)
+plt.plot(t_tendon2,tendon2_length,linewidth=2,label="implicit (case 2)")
+
+plt.title("Tendon length")
+plt.xlabel("time (ms)")
+plt.ylabel("tendon length (cm)")
+plt.legend()
+plt.show()
+

@@ -50,4 +50,40 @@ n_elements_tendon = [2, 2, 4]
 > **Note**
 > In order to use implicit coupling we have to make sure that the checkpoints are loaded correctly. In particular, it's necessary to load checkpoints for the fastmonodomainsolver, not only for the mechanics solver. An easy way to check weather the checkpoints are loaded correctly for the fibers, is to set `"outputOnlyConvergedTimeSteps": False` and check that the results in `muscle1_fibers*.vtu` do not change for every iteration. 
 
+
+The next plot compares the results using different criteria for the implicit scheme. We consider cases where we do a constant number of iterations per timestep, vs cases where we set a convergence criterium based on the data. In the second case, is necessary to add an acceleration scheme. 
+
 ![image](Figure_3.png)
+
+Note that *implicit* corresponds to the following
+```
+<acceleration:IQN-ILS>
+  <data name="Displacement" mesh="TendonMeshLeft"/>
+  <data name="Velocity" mesh="TendonMeshLeft"/>
+  <data name="Traction" mesh="MuscleMeshLeft"/>
+  <preconditioner type="residual-sum"/>
+  <filter type="QR2" limit="1e-3"/>
+  <initial-relaxation value="0.6"/>
+  <max-used-iterations value="15"/>
+  <time-windows-reused value="15"/>
+</acceleration:IQN-ILS>
+
+<max-iterations value="100"/>
+<!-- <min-iteration-convergence-measure min-iterations="4" data="Displacement" mesh="TendonMeshLeft" strict="0" suffices="0"/> -->
+
+
+<relative-convergence-measure limit="1e-5" data="Displacement" mesh="TendonMeshLeft" strict="1"/>
+<relative-convergence-measure limit="1e-5" data="Velocity" mesh="TendonMeshLeft" strict="1"/>
+<absolute-convergence-measure limit="1e-2" data="Traction" mesh="MuscleMeshLeft" strict="1"/>
+```
+
+If we look at the total number of iterations, *implicit* required 1393 iterations, which is notably less than for *implicit (4 iterations)*, where 4x499=1996 and yet the convergence measurements where not satisfied.
+
+We did a parameter study for *implicit*:
+
+|  `initial-relaxation value` |  # total iterations |  
+|---|---|
+| 0.5  | 1317  |   
+| 0.6  |  1393 |   
+| 0.7  |  1444 |   
+| 0.8  |  1274 |   

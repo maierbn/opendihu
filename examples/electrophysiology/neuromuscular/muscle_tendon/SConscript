@@ -12,5 +12,4 @@ Import('env')     # import Environment object from calling SConstruct
 env.Program(target = 'muscle', source = "src/muscle.cpp")
 env.Program(target = 'muscle_precice', source = "src/muscle_precice.cpp")
 env.Program(target = 'muscle_precice_mechanics', source = "src/muscle_precice_mechanics.cpp")
-
 env.Program(target = 'tendon_precice', source = "src/tendon_precice.cpp")

@@ -129,15 +129,22 @@ A sensible tuning is such that `max-used-iterations value`> `max-iterations valu
 
 As in *case 2* but now  `initial-relaxation value="0.6"`.
 
-We can compare the results in the next image. *case 2* required a total of 1283 iterations while *case 3* required 1305 iterations.
+- Settings for *implicit (case 4)*
+
+As in *case 2* but now  `initial-relaxation value="0.9"`.
+
+We can compare the results in the next image. *case 4* is not shown, but it mostly overlaps with *case 3*. 
 
 ![image](Figure_4.png)
 
-To see what the acceleration is doing look into the `precice-TendonSolver-iterations.log`. To understand the meaning of each column you can read about it in the [precice documentation](https://precice.org/running-output-files.html#precice-mysolver-iterationslog).
-
-By looking at the file, we can explain the unexpected behaviour of *case 2*, as the maximum number of iterations was achieved in multiple occasions in a row, compared to *case 3*.
+To see what the acceleration is doing look into the `precice-TendonSolver-iterations.log`. To understand the meaning of each column you can read about it in the [precice documentation](https://precice.org/running-output-files.html#precice-mysolver-iterationslog). The table below shows some of the key information obtained from this file. 
 
 
+| case number|  `initial-relaxation value` |  # total iterations |  non-converged steps |
+|---|---|---|----|
+| 2  | 0.4  | 1283  | 9 |
+| 3  |  0.6 |   1305 | 6 |
+| 4  |  0.9 |   1310 | 4 |
 
 ### Length of the tendon
 
@@ -155,9 +162,20 @@ To run this case open three terminals and type
 ```
 and 
 ```
-./tendon_precice ../settings_tendon_attached.py
+./tendon_precice ../settings_tendon_between_muscles.py
 ```
 and
 ```
 ./muscle_precice_mechanics ../settings_right_muscle.py
 ```
+
+In order for this to work, you must change one line in `settings_muscle.py` and call the precice configuration file for the 3-participants case:
+
+```
+    "preciceConfigFilename":    "../precice_config_multi_coupling.xml",    # the preCICE configuration file
+
+```
+
+In the following image you can see the results of the simulation. The image shows the expected behaviour but then the simulation crashed for reasons that are still being investigated.
+
+![image](3participants.png)

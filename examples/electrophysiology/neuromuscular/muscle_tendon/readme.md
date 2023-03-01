@@ -9,7 +9,7 @@ To run this case open a terminal and type
 
 This is the case setup we consider a muscle which is fixed to a wall on one end and free on the other one. The muscle is contracted due to the input from `/MU_firing_times_real.txt`. First of all, we start by studying the effect of different `dt_elasticity`. 
 
-![image](Figure_1.png)
+![image](plots/Figure_1.png)
 
 ## Muscle-Tendon
 
@@ -57,7 +57,7 @@ tendon_offset = [0.0, 0.0, muscle1_extent[2]]
 n_elements_tendon = [2, 2, 4] 
 ```
 
-![image](Figure_2.png)
+![image](plots/Figure_2.png)
 
 ### Implicit
 
@@ -67,7 +67,7 @@ n_elements_tendon = [2, 2, 4]
 
 The next plot compares the results using different criteria for the implicit scheme. We consider cases where we do a constant number of iterations per timestep, vs cases where we set a convergence criterium based on the data. In the second case, is necessary to add an acceleration scheme. 
 
-![image](Figure_3.png)
+![image](plots/Figure_3.png)
 
 Note that *implicit* corresponds to the following
 ```
@@ -135,7 +135,7 @@ As in *case 2* but now  `initial-relaxation value="0.9"`.
 
 We can compare the results in the next image. *case 4* is not shown, but it mostly overlaps with *case 3*. 
 
-![image](Figure_4.png)
+![image](plots/Figure_4.png)
 
 To see what the acceleration is doing look into the `precice-TendonSolver-iterations.log`. To understand the meaning of each column you can read about it in the [precice documentation](https://precice.org/running-output-files.html#precice-mysolver-iterationslog). The table below shows some of the key information obtained from this file. 
 
@@ -151,6 +151,83 @@ To see what the acceleration is doing look into the `precice-TendonSolver-iterat
 The length of the tendon remains constant as you can see in the next plot:
 ![image](Figure_5.png)
 
+### Reversed transfer of data
+
+A main advantage of using an implicit coupling scheme is that we should be able to tranfer data in the non-implicit direction as well. In other words:
+
+```
+<exchange data="Traction" mesh="TendonMeshLeft" from="TendonSolver" to="MuscleSolverLeft"/>  
+<exchange data="Displacement" mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>   
+<exchange data="Velocity" mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>   
+```
+
+To reproduce the reversed transfer of data please change the following in `settings_muscle.py`:
+```
+"preciceData": [
+  {
+    "mode":                 "write-displacements-velocities",    
+    "preciceMeshName":      "MuscleMeshLeft",              
+    "displacementsName":    "Displacement",                    
+    "velocitiesName":       "Velocity",                     
+
+  },
+  {
+    "mode":                 "read-traction",                   
+    "preciceMeshName":      "MuscleMeshLeft",               
+    "tractionName":         "Traction",                       
+  }
+],
+    
+```
+
+and the next lines in `setttings_tendon.py`:
+
+```
+      "preciceData": [  
+        {
+          "mode":                 "read-displacements-velocities", "write-displacements-velocities", "write-traction"
+          "preciceMeshName":      "TendonMeshLeft",                    
+          "displacementsName":    "Displacement",                    
+          "velocitiesName":       "Velocity",                     
+
+        },
+        {
+          "mode":                 "write-traction",                   
+          "preciceMeshName":      "TendonMeshLeft",                    
+          "tractionName":         "Traction",                         
+      ],
+    
+```
+
+We are trying out the following scheme for *case 5*:
+```
+<acceleration:IQN-ILS>
+  <data name="Displacement" mesh="MuscleMeshLeft"/>
+  <data name="Velocity" mesh="MuscleMeshLeft"/>
+  <data name="Traction" mesh="TendonMeshLeft"/>
+  <preconditioner type="residual-sum"/>
+  <filter type="QR2" limit="1e-2"/>
+  <initial-relaxation value="0.9"/>
+  <max-used-iterations value="40"/>
+  <time-windows-reused value="15"/>
+</acceleration:IQN-ILS>
+
+
+<max-iterations value="25"/>
+```
+
+We investigate how this compares to *case 4*. 
+
+| case number|  `max-used-iterations value` |  # total iterations |  non-converged steps | max(QNColumns)
+|---|---|---|---|---|
+| 4  |  100 | 1310 | 4 | 23 |
+| 5  | 40 | 3302 | 4 | 40 |
+
+We can see that the number of *QNColumns* was very low in *case 4* and no columns where deleted due to  `max-used-iterations value`. In fact, no columns would have been deleted even if we used `max-used-iterations value = 40`, meaning that both cases are directly comparable. 
+
+![image](plots/reversed_muscle.png)
+
+Nevertheless, the plot shows an unexpected behaviour that still needs to be investigated. 
 
 ## Muscle-Tendon-Muscle
 
@@ -178,4 +255,4 @@ In order for this to work, you must change one line in `settings_muscle.py` and 
 
 In the following image you can see the results of the simulation. The image shows the expected behaviour but then the simulation crashed for reasons that are still being investigated.
 
-![image](3participants.png)
+![image](plots/3participants.png)

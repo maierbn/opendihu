@@ -1,60 +1,60 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-with open('single_muscle.txt', 'r') as f:
+with open('data/single_muscle.txt', 'r') as f:
     lines = f.readlines()
     t = [float(line.split()[0]) for line in lines]
     z = [float(line.split()[1]) for line in lines]
 
 
-with open('single_muscle_low.txt', 'r') as f:
+with open('data/single_muscle_low.txt', 'r') as f:
     lines = f.readlines()
     t_low = [float(line.split()[0]) for line in lines]
     z_low = [float(line.split()[1]) for line in lines]
 
-with open('single_muscle_high.txt', 'r') as f:
+with open('data/single_muscle_high.txt', 'r') as f:
     lines = f.readlines()
     t_high = [float(line.split()[0]) for line in lines]
     z_high = [float(line.split()[1]) for line in lines]
 
-with open('muscle_with_large_tendon_explicit.txt', 'r') as f:
+with open('data/muscle_with_large_tendon_explicit.txt', 'r') as f:
     lines = f.readlines()
     t_large= [float(line.split()[0]) for line in lines]
     z_large= [float(line.split()[1]) for line in lines]
 
-with open('muscle_with_small_tendon_explicit.txt', 'r') as f:
+with open('data/muscle_with_small_tendon_explicit.txt', 'r') as f:
     lines = f.readlines()
     t_small= [float(line.split()[0]) for line in lines]
     z_small= [float(line.split()[1]) for line in lines]
 
-with open('muscle_2iterations.txt', 'r') as f:
+with open('data/muscle_2iterations.txt', 'r') as f:
     lines = f.readlines()
     t_2iterations = [float(line.split()[0]) for line in lines]
     z_2iterations= [float(line.split()[1]) for line in lines]
 
-with open('muscle_4iterations.txt', 'r') as f:
+with open('data/muscle_4iterations.txt', 'r') as f:
     lines = f.readlines()
     t_4iterations = [float(line.split()[0]) for line in lines]
     z_4iterations= [float(line.split()[1]) for line in lines]
 
-with open('muscle_implicit.txt', 'r') as f:
+with open('data/muscle_implicit.txt', 'r') as f:
     lines = f.readlines()
     t_implicit = [float(line.split()[0]) for line in lines]
     z_implicit= [float(line.split()[1]) for line in lines]
 
-with open('muscle_case2.txt', 'r') as f:
+with open('data/muscle_case2.txt', 'r') as f:
     lines = f.readlines()
     t_case2 = [float(line.split()[0]) for line in lines]
     z_case2= [float(line.split()[1]) for line in lines]
 
 
-with open('muscle_case3.txt', 'r') as f:
+with open('data/muscle_case3.txt', 'r') as f:
     lines = f.readlines()
     t_case3 = [float(line.split()[0]) for line in lines]
     z_case3= [float(line.split()[1]) for line in lines]
 
 
-with open('tendon_case2.txt', 'r') as f:
+with open('data/tendon_case2.txt', 'r') as f:
     lines = f.readlines()
     t_tendon2 = [float(line.split()[0]) for line in lines]
     tendon2_begin= [float(line.split()[1]) for line in lines]
@@ -102,7 +102,6 @@ plt.plot(t_high,z_high,linewidth=2,label="no tendon")
 plt.plot(t_implicit,z_implicit,linewidth=2,label="implicit")
 plt.plot(t_case2,z_case2,linewidth=2,label="implicit (case 2)")
 plt.plot(t_case3,z_case3,linewidth=2,label="implicit (case 3)")
-
 
 plt.title("Different acceleration schemes")
 plt.xlabel("time (ms)")

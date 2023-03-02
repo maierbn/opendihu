@@ -160,7 +160,6 @@ A main advantage of using an implicit coupling scheme is that we should be able 
 <exchange data="Displacement" mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>   
 <exchange data="Velocity" mesh="MuscleMeshLeft" from="MuscleSolverLeft" to="TendonSolver"/>   
 ```
-
 To reproduce the reversed transfer of data please change the following in `settings_muscle.py`:
 ```
 "preciceData": [
@@ -198,8 +197,12 @@ and the next lines in `setttings_tendon.py`:
       ],
     
 ```
+Also make sure to call `precice_config_reversed.xml`in both of them. If we run this in an explicit coupling cheme we immediately get an error:
+> Error: J=det F is negative: -0.727635. Result will be unphysical.
 
-We are trying out the following scheme for *case 5*:
+This is becase we are trying to send data in the *reversed/unstable* direction. Using an implicit scheme is a must.
+
+- *case 5*:
 ```
 <acceleration:IQN-ILS>
   <data name="Displacement" mesh="MuscleMeshLeft"/>
@@ -216,18 +219,22 @@ We are trying out the following scheme for *case 5*:
 <max-iterations value="25"/>
 ```
 
-We investigate how this compares to *case 4*. 
+- *case 6*:
 
-| case number|  `max-used-iterations value` |  # total iterations |  non-converged steps | max(QNColumns)
-|---|---|---|---|---|
-| 4  |  100 | 1310 | 4 | 23 |
-| 5  | 40 | 3302 | 4 | 40 |
+Same as in *case 5* but with `<preconditioner type="constant"/>`.
 
-We can see that the number of *QNColumns* was very low in *case 4* and no columns where deleted due to  `max-used-iterations value`. In fact, no columns would have been deleted even if we used `max-used-iterations value = 40`, meaning that both cases are directly comparable. 
+- *case 7*:
+
+ Same as in *case 5* but with `<time-window-size value="2e-3"/>` and `dt_elasticity = 2e-3`.  
+
+
+We can see that the number of *QNColumns* was very low in *case 4* and no columns where deleted due to  `max-used-iterations value`. In fact, no columns would have been deleted even if we used `max-used-iterations value = 40`, meaning that the cases are directly comparable. 
 
 ![image](plots/reversed_muscle.png)
 
-Nevertheless, the plot shows an unexpected behaviour that still needs to be investigated. 
+Nevertheless, the plot shows an unexpected behaviour that still needs to be investigated. The same unexpected behaviour is obtained when running *case 6*. 
+
+![image](plots/case5vs6.png)
 
 ## Muscle-Tendon-Muscle
 
@@ -249,7 +256,7 @@ and
 In order for this to work, you must change one line in `settings_muscle.py` and call the precice configuration file for the 3-participants case:
 
 ```
-    "preciceConfigFilename":    "../precice_config_multi_coupling.xml",    # the preCICE configuration file
+"preciceConfigFilename":    "../precice_config_multi_coupling.xml",    # the preCICE configuration file
 
 ```
 

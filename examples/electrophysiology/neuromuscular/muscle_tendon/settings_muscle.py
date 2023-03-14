@@ -223,7 +223,7 @@ config = {
                   "timeStepWidth":          variables.dt_splitting_0D1D,  
                   "logTimeStepWidthAsKey":  "dt_splitting",
                   "durationLogKey":         "duration_monodomain_muscle1",
-                  "timeStepOutputInterval": 100,
+                  "timeStepOutputInterval": variables.output_interval_fibers,
                   "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), for elasticity also transfer gamma
                   "connectedSlotsTerm2To1": [0],   # transfer the same back, this avoids data copy
 
@@ -309,7 +309,7 @@ config = {
                             "timeStepWidthRelativeTolerance": 1e-10,                                # tolerance for the time step width, when to rebuild the system matrix
                             "logTimeStepWidthAsKey":       "dt_1D",                                 # key under which the time step width will be written to the log file
                             "durationLogKey":              "duration_1D_muscle1",                           # log key of duration for this solver
-                            "timeStepOutputInterval":      1,                                     # how often to print the current timestep to console
+                            "timeStepOutputInterval":      variables.output_interval_fibers,                                     # how often to print the current timestep to console
                             "dirichletBoundaryConditions": {},                                      # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
                             "dirichletOutputFilename":     None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                             "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
@@ -359,7 +359,7 @@ config = {
 
       "Term2": {
         "MuscleContractionSolver": {
-              # "numberTimeSteps":              1,                         # only use 1 timestep per interval
+              "timeStepWidth":                variables.dt_elasticity, 
               "timeStepOutputInterval":       1,
               "Pmax":                         variables.Pmax,            # maximum PK2 active stress
               "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.

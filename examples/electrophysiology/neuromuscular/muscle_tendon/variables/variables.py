@@ -6,8 +6,12 @@ scenario_name = ""
 dt_elasticity = 0.01
 dt_0D = 0.5e-3                        # [ms] timestep width of ODEs
 dt_1D = 1e-3                      # [ms] timestep width of diffusion
-dt_splitting_0D1D = 1e-3            # [ms] overall timestep width of strang splitting
-end_time = 5.0
+dt_splitting_0D1D = dt_1D           # [ms] overall timestep width of strang splitting
+end_time = 20.0
+
+output_interval_fibers = dt_elasticity/dt_1D
+output_interval_0D = dt_elasticity/dt_0D
+
 
 stimulation_frequency = 100*1e-3    # [ms^-1] sampling frequency of stimuli in firing_times_file, in stimulations per ms, number before 1e-3 factor is in Hertz. This is not used here.
 activation_start_time = 0           # [ms] time when to start checking for stimulation
@@ -29,9 +33,9 @@ n_fibers_x = 4
 n_fibers_y = 4
 
 
-tendon_extent = [3.0, 3.0, 2.0] # [cm, cm, cm]
+tendon_extent = [3.0, 3.0, 2.0 + 14.8] # [cm, cm, cm]
 tendon_offset = [0.0, 0.0, muscle1_extent[2]]
-n_elements_tendon = [2, 2, 4] 
+n_elements_tendon = [2, 2, 20 + 4] 
 
 rho = 10   ## [1e-4 kg/cm^3] density of the water
 

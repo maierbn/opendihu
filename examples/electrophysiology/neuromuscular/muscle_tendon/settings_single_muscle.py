@@ -61,7 +61,7 @@ if rank_no == 0:
 # initialize all helper variables
 from helper import *
 
-variables.scenario_name = "muscle"
+variables.scenario_name = "single_muscle"
 
 variables.n_subdomains_xy = variables.n_subdomains_x * variables.n_subdomains_y
 variables.n_fibers_total = variables.n_fibers_x * variables.n_fibers_y
@@ -192,7 +192,7 @@ config = {
                 "timeStepWidth":          variables.dt_splitting_0D1D,  
                 "logTimeStepWidthAsKey":  "dt_splitting",
                 "durationLogKey":         "duration_monodomain_muscle1",
-                "timeStepOutputInterval": 100,
+                "timeStepOutputInterval": variables.output_interval_fibers,
                 "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), for elasticity also transfer gamma
                 "connectedSlotsTerm2To1": [0],   # transfer the same back, this avoids data copy
 
@@ -208,7 +208,7 @@ config = {
                           "timeStepWidth":                variables.dt_0D,                         # timestep width of 0D problem
                           "logTimeStepWidthAsKey":        "dt_0D",                                 # key under which the time step width will be written to the log file
                           "durationLogKey":               "duration_0D_muscle1",                           # log key of duration for this solver
-                          "timeStepOutputInterval":       1e4,                                     # how often to print the current timestep
+                          "timeStepOutputInterval":       variables.output_interval_0D,                                     # how often to print the current timestep
                           "initialValues":                [],                                      # no initial values are specified
                           "dirichletBoundaryConditions":  {},                                      # no Dirichlet boundary conditions are specified
                           "dirichletOutputFilename":      None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
@@ -252,7 +252,7 @@ config = {
                             "stimulationLogFilename":                 "out/" + variables.scenario_name + "/stimulation_muscle1.log",                          # a file that will contain the times of stimulations
                           },
                           "OutputWriter" : [
-                            {"format": "Paraview", "outputInterval": int(variables.dt_elasticity/variables.dt_0D), "filename": "out/" + variables.scenario_name + "/muscle1_0D_states({},{})".format(fiber_in_subdomain_coordinate_x,fiber_in_subdomain_coordinate_y), "binary": True, "fixedFormat": False, "combineFiles": True}
+                            {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/muscle1_0D_states({},{})".format(fiber_in_subdomain_coordinate_x,fiber_in_subdomain_coordinate_y), "binary": True, "fixedFormat": False, "combineFiles": True, "fileNumbering": "incremental"}
                           ] if variables.states_output else []
                         },
 
@@ -278,7 +278,7 @@ config = {
                           "timeStepWidthRelativeTolerance": 1e-10,                                # tolerance for the time step width, when to rebuild the system matrix
                           "logTimeStepWidthAsKey":       "dt_1D",                                 # key under which the time step width will be written to the log file
                           "durationLogKey":              "duration_1D_muscle1",                           # log key of duration for this solver
-                          "timeStepOutputInterval":      1,                                     # how often to print the current timestep to console
+                          "timeStepOutputInterval":      variables.output_interval_fibers,                                     # how often to print the current timestep to console
                           "dirichletBoundaryConditions": {},                                      # old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},
                           "dirichletOutputFilename":     None,                                    # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
                           "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
@@ -328,7 +328,7 @@ config = {
 
     "Term2": {
       "MuscleContractionSolver": {
-            # "numberTimeSteps":              1,                         # only use 1 timestep per interval
+            "timeStepWidth":                variables.dt_elasticity, 
             "timeStepOutputInterval":       1,
             "Pmax":                         variables.Pmax,            # maximum PK2 active stress
             "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
@@ -394,20 +394,20 @@ config = {
               # define which file formats should be written
               # 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.
               "OutputWriter" : [
-                {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_displacements", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                # {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_displacements", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
                 {"format": "PythonCallback", "outputInterval": 1, "callback": variables.muscle_write_to_file, "onlyNodalValues":True, "filename": "", "fileNumbering":'incremental'},
               ],
               # 2. additional output writer that writes also the hydrostatic pressure
               "pressure": {   # output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities
                 "OutputWriter" : [
-                  {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_pressure", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                  # {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_pressure", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
                 ]
               },
               # 3. additional output writer that writes virtual work terms
               "dynamic": {    # output of the dynamic solver, has additional virtual work values
                 "OutputWriter" : [   # output files for displacements function space (quadratic elements)
-                  {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
-                  {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                  # {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_dynamic", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
+                  # {"format": "Paraview", "outputInterval": 1, "filename": "out/"+variables.scenario_name+"/muscle1_virtual_work", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles":True, "fileNumbering": "incremental"},
                 ],
               },
               # 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written

@@ -156,14 +156,14 @@ config = {
 
 
   # connections of the slots, identified by slot name
-  "connectedSlots": [
-    # global slots only support named slots (connectedSlotsTerm1To2 also allows indices)
+  # "connectedSlots": [
+  #   # global slots only support named slots (connectedSlotsTerm1To2 also allows indices)
 
-    # use global slot, because automatic connection of "Razumova/activestress" does not work for some reason
-    # "Razumova/activestress" from CellML to Muscle contaction solver
-    ("m1gout", "m1g_in"),
-    ("m2gout", "m2g_in"),
-  ],
+  #   # use global slot, because automatic connection of "Razumova/activestress" does not work for some reason
+  #   # "Razumova/activestress" from CellML to Muscle contaction solver
+  #   ("m1gout", "m1g_in"),
+  #   ("m2gout", "m2g_in"),
+  # ],
     
   "Coupling": {
     'description':            "everything",
@@ -172,7 +172,7 @@ config = {
     "durationLogKey":         "duration_coupling",
     "timeStepOutputInterval": 1,
     "endTime":                variables.end_time,
-    "connectedSlotsTerm1To2": None,       # transfer nothing. only use numbers here!
+    "connectedSlotsTerm1To2": {1:2},       # transfer nothing. only use numbers here!
     "connectedSlotsTerm2To1": None,       # transfer nothing back
 
     "Term1": {
@@ -193,8 +193,8 @@ config = {
                 "logTimeStepWidthAsKey":  "dt_splitting",
                 "durationLogKey":         "duration_monodomain_muscle1",
                 "timeStepOutputInterval": variables.output_interval_fibers,
-                "connectedSlotsTerm1To2": [0],   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), for elasticity also transfer gamma
-                "connectedSlotsTerm2To1": [0],   # transfer the same back, this avoids data copy
+                "connectedSlotsTerm1To2": None,   # transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion), for elasticity also transfer gamma
+                "connectedSlotsTerm2To1": None,   # transfer the same back, this avoids data copy
 
                 # CellML, i.e. reaction term of Monodomain equation
                 "Term1": {
@@ -246,7 +246,17 @@ config = {
 
                             # parameters to the cellml model
                             "parametersInitialValues":                variables.parameters_initial_values,            #[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs
-                            "mappings":                               variables.muscle1_mappings,                             # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
+                            "mappings": {
+                              ("parameter", 0):               "membrane/i_Stim",
+                              ("parameter", 1):               "Razumova/l_hs",
+                              ("parameter", 2):               ("constant", "Razumova/rel_velo"),
+                              ("connectorSlot", "vm"):        "membrane/V",
+                              ("connectorSlot", "stress"):    "Razumova/activestress",
+                              ("connectorSlot", "alpha"):     "Razumova/activation",
+                              ("connectorSlot", "lambda"):    "Razumova/l_hs",
+                              ("connectorSlot", "ldot"):      "Razumova/rel_velo"
+                            },
+                            "parametersInitialValues": [0.0, 1.0, 0.0],                           # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py
 
                             "meshName":                               "muscle1_fiber{}".format(fiber_no),                # reference to the fiber mesh
                             "stimulationLogFilename":                 "out/" + variables.scenario_name + "/stimulation_muscle1.log",                          # a file that will contain the times of stimulations
@@ -284,8 +294,8 @@ config = {
                           "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
                           "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
                           "checkForNanInf":              False,                                   # if the solution should be checked for NaN and inf values, this requires a lot of runtimes
-                          "nAdditionalFieldVariables":   2,    # number of additional field variables that should be added and potentially written to output files, these field variables can be used for receiving data from other solvers
-                          "additionalSlotNames":         [],                                      # slot names for the additional field variables
+                          "nAdditionalFieldVariables":    4,
+                          "additionalSlotNames":          ["stress", "alpha", "lambda", "ldot"],                                  # slot names for the additional field variables
                           "FiniteElementMethod" : {
                             "inputMeshIsGlobal":         True,
                             "meshName":                  "muscle1_fiber{}".format(fiber_no),
@@ -302,7 +312,7 @@ config = {
                               for motor_unit_no in [get_motor_unit_no(fiber_no)]
                     ],
                     "OutputWriter" : [
-                      {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/muscle1_fibers", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
+                      {"format": "Paraview", "outputInterval": 10, "filename": "out/" + variables.scenario_name + "/muscle1_fibers", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
                     ],
                   },
                 },
@@ -333,7 +343,7 @@ config = {
             "Pmax":                         variables.Pmax,            # maximum PK2 active stress
             "enableForceLengthRelation":    True,                      # if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.
             "lambdaDotScalingFactor":       1.0,                       # scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.
-            "slotNames":                    ["m1lda", "m1ldot", "m1g_in", "m1T", "m1ux", "m1uy", "m1uz"],  # slot names of the data connector slots: lambda, lambdaDot, gamma, traction
+            "slotNames":                    ["lambda", "ldot", "gamma", "T"],            
             "OutputWriter" : [
               {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/muscle1_contraction", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
             ],

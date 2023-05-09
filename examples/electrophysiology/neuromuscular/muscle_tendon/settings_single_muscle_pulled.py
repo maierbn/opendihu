@@ -80,6 +80,27 @@ for j in range(ny):
       variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, 0.0, None,None,None] # displacement ux uy uz, velocity vx vy vz
 
 
+k = mz-1 #free side of the muscle (pulled by an exernal force)
+variables.elasticity_neumann_bc = [{"element": j*mx + i, "constantVector": [0,0, 0], "face": "2+", "isInReferenceConfiguration": True} for j in range(my) for i in range(mx)]
+
+variables.force = 0.5
+def update_neumann_bc(t):
+  factor = min(1.0, t/20.0)   # at t=20.0 we have F = external_force
+  elasticity_neumann_bc = [{
+		"element": k*mx*my + j*mx + i, 
+		"constantVector": [0,0, variables.force*factor], 		# force pointing to bottom
+		"face": "2+",
+    "isInReferenceConfiguration": True
+  } for j in range(my) for i in range(mx)]
+
+  config = {
+    "inputMeshIsGlobal": True,
+    "divideNeumannBoundaryConditionValuesByTotalArea": False,            
+    "neumannBoundaryConditions": elasticity_neumann_bc,
+  }
+  return config
+
+
 # meshes
 
 # add neuron meshes
@@ -282,8 +303,8 @@ config = {
                           "inputMeshIsGlobal":           True,                                    # initial values would be given as global numbers
                           "solverName":                  "diffusionTermSolver",                   # reference to the linear solver
                           "checkForNanInf":              False,                                   # if the solution should be checked for NaN and inf values, this requires a lot of runtimes
-                          "nAdditionalFieldVariables":    4,
-                          "additionalSlotNames":          ["stress", "alpha", "lambda", "ldot"],                                  # slot names for the additional field variables
+                          "nAdditionalFieldVariables":   4,                                       # number of additional field variables that should be added and potentially written to output files, these field variables can be used for receiving data from other solvers
+                          "additionalSlotNames":         ["stress", "alpha", "lambda", "ldot"],   # slot names for the additional field variables                                     # slot names for the additional field variables
                           "FiniteElementMethod" : {
                             "inputMeshIsGlobal":         True,
                             "meshName":                  "muscle1_fiber{}".format(fiber_no),
@@ -300,7 +321,7 @@ config = {
                               for motor_unit_no in [get_motor_unit_no(fiber_no)]
                     ],
                     "OutputWriter" : [
-                      {"format": "Paraview", "outputInterval": 10, "filename": "out/" + variables.scenario_name + "/muscle1_fibers", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
+                      {"format": "Paraview", "outputInterval": 1, "filename": "out/" + variables.scenario_name + "/muscle1_fibers", "binary": True, "fixedFormat": False, "onlyNodalValues":True, "combineFiles": True, "fileNumbering": "incremental"},
                     ],
                   },
                 },
@@ -376,7 +397,7 @@ config = {
               "divideNeumannBoundaryConditionValuesByTotalArea": False,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
               "updateDirichletBoundaryConditionsFunction": None,                  # muscle1_update_dirichlet_boundary_conditions_helper, function that updates the dirichlet BCs while the simulation is running
               "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # every which step the update function should be called, 1 means every time step
-              "updateNeumannBoundaryConditionsFunction":   None,                    # function that updates the Neumann BCs while the simulation is running
+              "updateNeumannBoundaryConditionsFunction":   update_neumann_bc,                    # function that updates the Neumann BCs while the simulation is running
               "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step
 
 

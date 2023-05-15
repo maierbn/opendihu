@@ -1,0 +1,13 @@
+cmake_minimum_required(VERSION 3.13...3.24)
+
+# package versioning
+include(cmake/git.cmake)
+
+project(OPENDIHU
+LANGUAGES C CXX
+HOMEPAGE_URL https://opendihu.readthedocs.io/en/latest/introduction.html#overview
+DESCRIPTION "OpenDiHu is a scalable Finite Element code for skeletal muscle simulations."
+)
+
+# Check for MPI installation
+find_package(MPI COMPONENTS C CXX REQUIRED)

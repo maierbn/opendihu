@@ -5,7 +5,7 @@ on:
     paths:
       - "**/CMakeLists.txt"
       - "**.cmake"
-      - ".github/workflows/ci_cmake.yml"
+      - ".github/workflows/ci_cmake_ubuntu2204.yml"
       
 jobs:
   

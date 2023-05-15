@@ -17,7 +17,6 @@ out.py
 **/*.o.part
 **/*.kate-swp
 *python-test
-.*
 **/*.dvi
 **/*.fdb_latexmk
 **/*.out
@@ -50,3 +49,4 @@ dependencies
 **/mappings_between_meshes_log.txt
 **/solver_structure.txt
 **/old*
+.*

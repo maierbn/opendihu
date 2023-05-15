@@ -6,6 +6,7 @@ include(cmake/git.cmake)
 # Print package version to console.
 message(STATUS "OpenDiHu ${PROJECT_VERSION}")
 
+# Project description
 project(OPENDIHU
 LANGUAGES C CXX
 HOMEPAGE_URL https://opendihu.readthedocs.io/en/latest/introduction.html#overview

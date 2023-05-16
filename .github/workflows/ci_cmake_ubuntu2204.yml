@@ -30,3 +30,10 @@ jobs:
           DIR="cmake_build" && mkdir -p "$DIR" && cd "$DIR"
           cmake ..
     
+      - name: Build
+        run: |
+          make -j2
+
+      - name: Test
+        run: |
+          ctest .

@@ -34,6 +34,7 @@ jobs:
         run: |
           cd "$DIR"
           pwd
+          ls -l
           make -j2
 
       - name: Test

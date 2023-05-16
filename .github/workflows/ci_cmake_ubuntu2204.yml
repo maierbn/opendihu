@@ -33,6 +33,7 @@ jobs:
       - name: Build
         run: |
           cd "$DIR"
+          pwd
           make -j2
 
       - name: Test

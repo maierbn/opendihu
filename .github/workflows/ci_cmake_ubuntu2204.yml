@@ -32,8 +32,10 @@ jobs:
     
       - name: Build
         run: |
+          cd "$DIR"
           make -j2
 
       - name: Test
         run: |
+          cd "$DIR"
           ctest .

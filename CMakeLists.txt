@@ -14,5 +14,10 @@ DESCRIPTION "OpenDiHu is a scalable Finite Element code for skeletal muscle simu
 VERSION ${PROJECT_VERSION}
 )
 
-# Check for MPI installation
-find_package(MPI COMPONENTS C CXX REQUIRED)
+# Find the packages of all dependencies.
+# The configure is aborted if a package cannot be found.
+include(cmake/find_dependencies.cmake)
+
+# Unit testing for dependecies and source code.
+include(CTest)
+add_subdirectory(testing/link_test)

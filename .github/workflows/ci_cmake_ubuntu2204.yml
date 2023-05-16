@@ -32,12 +32,12 @@ jobs:
     
       - name: Build
         run: |
-          cd "$DIR"
+          cd "$DIR/cmake_build"
           pwd
           ls -l
           make -j2
 
       - name: Test
         run: |
-          cd "$DIR"
+          cd "$DIR/cmake_build"
           ctest .

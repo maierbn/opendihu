@@ -33,11 +33,18 @@ jobs:
       - name: Build
         run: |
           cd "$PWD/cmake_build"
-          pwd
-          ls -l
           make -j2
 
       - name: Test
         run: |
           cd "$PWD/cmake_build"
           ctest .
+
+      - name: Upload log files
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ubuntu2204_cmake_log
+          path: |
+            ${PWD}/cmake_build/CMakeFiles/CMakeConfigureLog.yaml
+            ${PWD}/cmake_build/Testing/Temporary/LastTest.log

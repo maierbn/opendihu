@@ -3,9 +3,11 @@
 #include <boost/thread.hpp>   
 #include <boost/date_time.hpp>   
 #include <boost/system/error_code.hpp>
+#include <boost/program_options.hpp>
 #include <iostream>
 
 using namespace boost::system;
+using namespace boost::program_options;
 
 void workerFunc()  
 {  
@@ -22,7 +24,7 @@ void fail(error_code &ec)
   ec = errc::make_error_code(errc::not_supported);
 }
 
-int main(int, char*[])
+int main(int argc, char** argv)
 {
     /* Code to test log module. */
     BOOST_LOG_TRIVIAL(trace) << "A trace severity message";
@@ -44,6 +46,10 @@ int main(int, char*[])
     fail(ec);
     boost::system::error_condition ecnd = ec.default_error_condition();
     std::cout << ecnd.value() << '\n';
+
+    /* Code to test program_options module. */
+    options_description desc{"Options"};
+    variables_map vm;
 
     return EXIT_SUCCESS;
 }

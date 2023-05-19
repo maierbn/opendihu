@@ -18,3 +18,8 @@ add_test(NAME test_eigen COMMAND test_eigen)
 add_executable(test_boost test_boost.cpp)
 target_link_libraries(test_boost ${Boost_LIBRARIES})
 add_test(NAME test_boost COMMAND test_boost)
+
+# Test for Boost unit_test_framework installation.
+add_executable(test_boost_unit_test_framework test_boost_unit_test_framework.cpp)
+target_link_libraries(test_boost_unit_test_framework ${Boost_LIBRARIES})
+add_test(NAME test_boost_unit_test_framework COMMAND test_boost_unit_test_framework)

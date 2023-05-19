@@ -6,6 +6,7 @@ on:
       - "**/CMakeLists.txt"
       - "**.cmake"
       - ".github/workflows/ci_cmake_ubuntu2204.yml"
+      - "testing/link_test/**.cpp"
       
 jobs:
   
@@ -19,6 +20,14 @@ jobs:
         run: |
          sudo apt-get update -yq
          sudo apt-get install -yq --no-install-recommends libmpich-dev mpich
+         sudo apt update
+         sudo apt install software-properties-common
+         sudo add-apt-repository ppa:deadsnakes/ppa
+         sudo apt update
+         sudo apt install python3
+         sudo apt install python3-numpy
+         sudo apt install libeigen3-dev
+         sudo apt install libboost-filesystem-dev libboost-log-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libboost-test-dev
     
       - name: Checkout source code
         uses: actions/checkout@v3
@@ -30,3 +39,7 @@ jobs:
           DIR="cmake_build" && mkdir -p "$DIR" && cd "$DIR"
           cmake ..
     
+      - name: Build
+        run: |
+          cd "$PWD/cmake_build"
+          make -j2

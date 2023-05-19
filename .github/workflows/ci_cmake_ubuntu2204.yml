@@ -6,6 +6,7 @@ on:
       - "**/CMakeLists.txt"
       - "**.cmake"
       - ".github/workflows/ci_cmake_ubuntu2204.yml"
+      - "testing/link_test/**.cpp"
       
 jobs:
   

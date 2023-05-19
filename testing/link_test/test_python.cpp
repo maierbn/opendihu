@@ -4,6 +4,7 @@
 
 int main(int argc, char** argv)
 {
+  /* Code to test Python.h */
   Py_Initialize();
   std::cout << "Python initialized." << std::endl;
   Py_Finalize();

@@ -4,10 +4,12 @@
 #include <boost/date_time.hpp>   
 #include <boost/system/error_code.hpp>
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 #include <iostream>
 
 using namespace boost::system;
 using namespace boost::program_options;
+using namespace boost::filesystem;
 
 void workerFunc()  
 {  
@@ -50,6 +52,9 @@ int main(int argc, char** argv)
     /* Code to test program_options module. */
     options_description desc{"Options"};
     variables_map vm;
+
+    /* Code to test filesystem. */
+    std::cout << argv[0] << " " << file_size(argv[0]) << '\n';
 
     return EXIT_SUCCESS;
 }

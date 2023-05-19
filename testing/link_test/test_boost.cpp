@@ -53,7 +53,7 @@ int main(int argc, char** argv)
     options_description desc{"Options"};
     variables_map vm;
 
-    /* Code to test filesystem. */
+    /* Code to test filesystem module. */
     std::cout << argv[0] << " " << file_size(argv[0]) << '\n';
 
     return EXIT_SUCCESS;

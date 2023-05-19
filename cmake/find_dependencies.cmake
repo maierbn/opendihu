@@ -11,6 +11,9 @@ if(${Eigen3_FOUND})
   message(STATUS "Found Eigen3: yes")
 endif()
 
+# Check for libboost
+find_package(Boost REQUIRED COMPONENTS log log_setup thread system filesystem program_options unit_test_framework)
+
 include_directories(${MPI_CXX_INCLUDE_DIRS}
                     ${Python3_INCLUDE_DIRS}
                    )

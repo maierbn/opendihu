@@ -13,3 +13,8 @@ add_test(NAME test_python COMMAND test_python)
 add_executable(test_eigen test_eigen.cpp)
 target_link_libraries(test_eigen Eigen3::Eigen)
 add_test(NAME test_eigen COMMAND test_eigen)
+
+# Test for Boost installation.
+add_executable(test_boost test_boost.cpp)
+target_link_libraries(test_boost ${Boost_LIBRARIES})
+add_test(NAME test_boost COMMAND test_boost)

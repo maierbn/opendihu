@@ -23,3 +23,8 @@ add_test(NAME test_boost COMMAND test_boost)
 add_executable(test_boost_unit_test_framework test_boost_unit_test_framework.cpp)
 target_link_libraries(test_boost_unit_test_framework ${Boost_LIBRARIES})
 add_test(NAME test_boost_unit_test_framework COMMAND test_boost_unit_test_framework)
+
+# Test for Boost installation.
+add_executable(test_xml2 test_xml2.cpp)
+target_link_libraries(test_xml2 ${LIBXML2_LIBRARIES})
+add_test(NAME test_xml2 COMMAND test_xml2)

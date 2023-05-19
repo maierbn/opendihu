@@ -14,6 +14,10 @@ endif()
 # Check for libboost
 find_package(Boost REQUIRED COMPONENTS log log_setup thread system filesystem program_options unit_test_framework)
 
+# Check for libxml2
+find_package(LibXml2 REQUIRED)
+
 include_directories(${MPI_CXX_INCLUDE_DIRS}
                     ${Python3_INCLUDE_DIRS}
+                    ${LIBXML2_INCLUDE_DIR}
                    )

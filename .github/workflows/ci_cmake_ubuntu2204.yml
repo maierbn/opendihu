@@ -20,6 +20,7 @@ jobs:
         run: |
          sudo apt-get update -yq
          sudo apt-get install -yq --no-install-recommends libmpich-dev mpich
+         sudo apt-get install libxml2-dev
          sudo apt update
          sudo apt install software-properties-common
          sudo add-apt-repository ppa:deadsnakes/ppa

@@ -2,7 +2,10 @@
 #include <boost/log/trivial.hpp>
 #include <boost/thread.hpp>   
 #include <boost/date_time.hpp>   
+#include <boost/system/error_code.hpp>
 #include <iostream>
+
+using namespace boost::system;
 
 void workerFunc()  
 {  
@@ -13,6 +16,11 @@ void workerFunc()
     boost::this_thread::sleep(workTime);          
     std::cout << "Worker: finished" << std::endl;  
 }    
+
+void fail(error_code &ec)
+{
+  ec = errc::make_error_code(errc::not_supported);
+}
 
 int main(int, char*[])
 {
@@ -30,6 +38,12 @@ int main(int, char*[])
     std::cout << "main: waiting for thread" << std::endl;          
     workerThread.join();
     std::cout << "main: done" << std::endl;
+
+    /* Code to test system module. */
+    error_code ec;
+    fail(ec);
+    boost::system::error_condition ecnd = ec.default_error_condition();
+    std::cout << ecnd.value() << '\n';
 
     return EXIT_SUCCESS;
 }

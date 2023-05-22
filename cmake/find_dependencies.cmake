@@ -2,6 +2,9 @@
 # Check for MPI installation.
 find_package(MPI COMPONENTS C CXX REQUIRED)
 
+# Check for zlib installation
+find_package(ZLIB REQUIRED)
+
 # Check for Python3
 find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
 
@@ -20,4 +23,5 @@ find_package(LibXml2 REQUIRED)
 include_directories(${MPI_CXX_INCLUDE_DIRS}
                     ${Python3_INCLUDE_DIRS}
                     ${LIBXML2_INCLUDE_DIR}
+                    ${ZLIB_INCLUDE_DIRS}
                    )

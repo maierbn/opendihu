@@ -33,3 +33,8 @@ add_test(NAME test_boost_unit_test_framework COMMAND test_boost_unit_test_framew
 add_executable(test_xml2 test_xml2.cpp)
 target_link_libraries(test_xml2 ${LIBXML2_LIBRARIES})
 add_test(NAME test_xml2 COMMAND test_xml2)
+
+# Test for easyloggingpp installation.
+add_executable(test_easyloggingpp test_easyloggingpp.cpp)
+target_link_libraries(test_easyloggingpp ${EASYLOGGINGPP_LIBRARIES})
+add_test(NAME test_easyloggingpp COMMAND test_easyloggingpp)

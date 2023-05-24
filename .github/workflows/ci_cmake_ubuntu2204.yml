@@ -30,6 +30,7 @@ jobs:
          sudo apt install python3-numpy
          sudo apt install libeigen3-dev
          sudo apt install libboost-filesystem-dev libboost-log-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libboost-test-dev
+         sudo apt install libeasyloggingpp-dev
     
       - name: Checkout source code
         uses: actions/checkout@v3

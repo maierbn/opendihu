@@ -20,6 +20,9 @@ find_package(Boost REQUIRED COMPONENTS log log_setup thread system filesystem pr
 # Check for libxml2
 find_package(LibXml2 REQUIRED)
 
+# Check for easylogging++
+include(cmake/FindEASYLOGGINGPP.cmake)
+
 include_directories(${MPI_CXX_INCLUDE_DIRS}
                     ${Python3_INCLUDE_DIRS}
                     ${LIBXML2_INCLUDE_DIR}

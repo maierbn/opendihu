@@ -32,6 +32,8 @@ advanceTimeSpan(bool withOutputWritersEnabled)
   // loop over fibers and communicate resulting values back
   updateFiberData();
 
+  LOG(INFO) << "print vm values" << fiberData_[0].vmValues;
+
   // call output writer of diffusion
   if (withOutputWritersEnabled)
   {
@@ -76,6 +78,8 @@ computeMonodomain()
   double timeStepWidthSplitting = instances[0].timeStepWidth();
   nTimeStepsSplitting_ = instances[0].numberTimeSteps();
 
+  int timeStepOutputInterval = instances[0].timeStepOutputInterval();
+
   heun.setTimeSpan(startTime, startTime + 0.5 * timeStepWidthSplitting);
   double dt0D = heun.timeStepWidth();
   int nTimeSteps0D = heun.numberTimeSteps();
@@ -105,6 +109,8 @@ computeMonodomain()
     return;
   }
 
+  // int fakeTimeStepNo = 0;
+ 
   // loop over splitting time steps
   for (int timeStepNo = 0; timeStepNo < nTimeStepsSplitting_; timeStepNo++)
   {

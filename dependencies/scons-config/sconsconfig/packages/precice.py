@@ -6,7 +6,7 @@ class precice(Package):
 
   def __init__(self, **kwargs):
     defaults = {
-        'download_url': 'https://github.com/precice/precice/archive/v2.1.0.zip',
+        'download_url': 'https://github.com/precice/precice/archive/refs/tags/v2.5.0.zip',
     }
     defaults.update(kwargs)
     super(precice, self).__init__(**defaults)

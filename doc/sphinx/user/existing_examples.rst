@@ -692,6 +692,31 @@ Scenario (1)
   
 Scenario (2): A piece of gelatine the gets moved to the right. This is realized with Dirichlet boundary conditions that can be updated over time by a python callback function. 
 
+With this scenario, we can demonstrate the effect of the option ``extrapolateInitialGuess``. It controls whether the initial guess for the vector of unknowns in the dynamic solid mechanics problem is extrapolated from the two previous time steps.
+
+We consider a simulation until :math:`t=10` (set ``end_time = 10`` in ``settings_gelatine1.py``). 
+At timestep 19 (:math:`t=9.5`), we observe the following behaviour:
+
+.. list-table:: Effect of extrapolating the initial guess
+   :widths: 50 25 25
+   :header-rows: 1
+
+   * - ``"extrapolateInitialGuess":``
+     - ``False``
+     - ``True``
+   * - Initial residuum at :math:`t=9.5`
+     - 8.07862
+     - 1.80136
+   * - Number of Newton iterations `*)`
+     - 5
+     - 3
+   * - Wall user time of the entire simulation
+     - 52 s
+     - 40 s
+
+`*)`:  Number of Newton iterations of the 
+dynamic problem at :math:`t=9.5`, until the absolute error is below 1e-5.
+
 .. _dynamic_mooney_rivlin_3:
 .. image:: examples/dynamic_mooney_rivlin_3_1.png
   :width: 13%

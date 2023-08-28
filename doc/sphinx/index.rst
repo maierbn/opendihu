@@ -18,6 +18,7 @@ If you are new, start with the :ref:`introduction <introduction>` or continue cl
    
    introduction
    user/existing_examples
+   user/validation
    settings
 
 .. toctree::

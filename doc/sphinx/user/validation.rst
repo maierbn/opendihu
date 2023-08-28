@@ -1,7 +1,7 @@
 Validation
 =======================
 
-On this page, we show some numeric experiments to validate the implemented solvers.
+On this page, we present numeric experiments for problems for which analytic solutions are known. By such comparison, we can validate the implemented solvers in OpenDiHu.
 
 1D Poisson 
 --------------
@@ -314,3 +314,180 @@ How to reproduce
 2D Diffusion
 ----------------------
 
+Next, the parabolic diffusion equation with a constant coefficient is used to validate the respective solvers.
+
+Problem definition
+^^^^^^^^^^^^^^^^^^^^^^
+
+The 2D Diffusion problem is formulated as
+
+.. math::
+
+  -\dfrac{\partial}{\partial t}u(\textbf{x},t) + D\,\Delta u(\textbf{x},t) = 0 \quad \text{on }\textbf{x} \in \Omega = [0, 10] \times [0,10].
+
+The diffusion factor is chosen to be constant :math:`D=3`.
+
+The initial values are given by the following function,
+
+.. math::
+
+    u(\textbf{x},0) = 1 + \textrm{cos}(\textrm{min}(\vert\textbf{x} - \textbf{p}\vert,\pi)), \quad \textbf{p} = (2,5)^\top.
+
+This function describes a peak of height 2 at :math:`\textbf{p}=(2,5)^\top`. The function decays in radial direction away from :math:`\textbf{p}` and reaches constant zero at the boundary :math:`\partial \Omega`.
+
+We consider two scenarios \(a\) and \(b\). In \(a\), we impose homogeneous Dirichlet boundary conditions at :math:`x=0`,
+
+.. math::
+
+    u(x=0,y,t) = 0, \quad (\text{where }\textbf{x} = (x,y)^\top).
+
+In scenario \(b\) we specify homogeneous Neumann boundary conditions at :math:`x=0`, 
+
+.. math::
+
+    \dfrac{\partial}{\partial x} u(x=0,y,t) = 0.
+
+Analytic solution
+^^^^^^^^^^^^^^^^^^^^^^
+
+It is known that a solution to the governing diffusion equation on the 2D infinite domain :math:`\Omega_\infty = \mathbb{R}^2` is given by [Ursell2016]_,
+
+.. math::
+    :label: diffusion_eq_solution
+
+    u(\textbf{x},t) = \displaystyle\int G(\textbf{x}, \textbf{x}', t)\,u(\textbf{x}', 0)\,\mathrm{d}x,
+
+with *Green's Function*
+
+.. math::
+
+    G(\textbf{x}, \textbf{x}', t) = \dfrac{\mathrm{exp}\Big(-\frac{|\textbf{x}-\textbf{x}'|^2}{4\,D\,t}\Big)}{4\,\pi\,D\,t}.
+
+For scenario \(a\) with homogeneous Dirichlet boundary at :math:`x=0`, we can construct a new function :math:`G_D` as sum of :math:`G(x)` 
+and its mirrored counterpart :math:`-G(-x)` whose graph is mirrored around the :math:`x=0` axis,
+
+.. math::
+
+    G_D(x,y,x',y',t) = G(x,y,x',y',t) - G(x,y,-x',y',t)
+
+This function is zero for :math:`x=0`.
+
+Similarly, for the Neumann boundary in scenario \(b\), we construct a function 
+
+.. math::
+
+    G_N(x,y,x',y',t) = G(x,y,x',y',t) + G_D(x,y,-x',y',t).
+
+We get an analytic solution for scenario \(a\) by replacing :math:`G` by :math:`G_D` in Eq. :eq:`diffusion_eq_solution` and for scenario \(b\) by replacing :math:`G` by :math:`G_N` in :eq:`diffusion_eq_solution`.
+This solution, however, is correct only for a problem on :math:`\Omega = [0, \infty) \times (-\infty, \infty)`.
+
+
+Numeric solution 
+^^^^^^^^^^^^^^^^^^^^^
+
+With our finite element solver, we can only discretize a finite domain. 
+The considered problem on :math:`\Omega = [0,10]\times [0,10]` with the given initial values is specified such that large changes in function value :math:`u` 
+mainly occur in the interior of the domain, away from the boundary at :math:`x=10, y=0,` and :math:`y=10`.
+
+:Numref:`diffusiondirichlet` and :numref:`diffusionneumann` show the initial values :math:`u(\textbf{x}, 0)` and the values for :math:`t=1`, 
+:math:`u(\textbf{x}, 1)` for scenarios \(a\) and \(b\), respectively.
+
+.. _diffusiondirichlet:
+.. figure:: /user/validation/diffusion_dirichlet.png
+  :width: 50%
+
+  Scenario \(a\) with homogeneous Dirichlet boundary conditions at :math:`x=0`, for :math:`t=0` (top) and :math:`t=1` (bottom).
+
+.. _diffusionneumann:
+.. figure:: /user/validation/diffusion_neumann.png
+  :width: 50%
+
+  Scenario \(b\) with homogeneous Neumann boundary conditions at :math:`x=0`, for :math:`t=0` (top) and :math:`t=1` (bottom).
+
+It can also be seen how the different boundary conditions affect the solution value. While the Dirichlet boundary conditions in scenarios \(a\) absorbs the concentration :math:`u` at :math:`x=0`, 
+the homogeneous Neumann boundary condition serves as a *reflection boundary* which leads to a constant concentration gradient orthogonal to the wall.
+The comparison of the state at :math:`t=0.5` in the following images (Scenario \(a\) left, scenario \(b\) right) shows that concentration decreases faster with the Dirichlet boundary condition.
+
+.. |diffusion_dirichlet_0_5| image:: /user/validation/diffusion_dirichlet_0_5.png
+    :width: 48%
+
+.. |diffusion_neumann_0_5| image:: /user/validation/diffusion_neumann_0_5.png
+    :width: 48%
+
+|diffusion_dirichlet_0_5| |diffusion_neumann_0_5|
+
+We disretize the problem in space by :math:`10\times 10` quadratic Finite Elements and in time using the Crank-Nicolson scheme with time step width :math:`dt = 1e-5`. 
+The linear system of equations in every timestep is solved by a geometric multi-grid solver.
+
+Comparison of numeric and analytic solutions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+We compare the solution value :math:`u(\textbf{x},t)` over time at selected nodes of the Finite Element mesh. 
+The quadratic mesh has :math:`21 \times 21` nodes that span the :math:`[0,10] \times [0,10]` domain.
+:numref:`diffusion_error_dirichlet` and :numref:`diffusion_error_neumann` show the results for scenario \(a\) and scenario \(b\), the selected nodes are given in the legend.
+
+.. _diffusion_error_dirichlet:
+.. figure:: /user/validation/diffusion_error_dirichlet.png
+  :width: 80%
+
+  Scenario (a): Numeric (solid lines) and analytic solution (dashed lines) for selected nodes in the mesh.
+
+.. _diffusion_error_neumann:
+.. figure:: /user/validation/diffusion_error_neumann.png
+  :width: 80%
+
+  Scenario (b): Numeric (solid lines) and analytic solution (dashed lines) for selected nodes in the mesh.
+
+It can be seen that the analytic and numeric plots essentially coincide. 
+At some points, the solution starts to differ during the end of the simulation time span, which can be explained by the analytic solution being correct for the infinite domain.
+
+This result shows that the diffusion problem solver of OpenDiHu is validated.
+
+How to reproduce
+^^^^^^^^^^^^^^^^^^^^^
+
+* Build the example
+
+    .. code-block:: bash
+
+        cd $OPENDIHU_HOME/examples/validation/diffusion_2d
+        mkorn && sr       # build
+
+* Run the simulations
+
+    .. code-block:: bash
+
+        cd $OPENDIHU_HOME/examples/validation/diffusion_2d/build_release
+        
+        # scenario (a)
+        ./diffusion2d_quadratic ../settings_diffusion_2d_dirichlet.py
+        
+        # scenario (b)
+        ./diffusion2d_quadratic ../settings_diffusion_2d_neumann.py
+
+* Visualize the numeric solutions (make sure that the ``$OPENDIHU_HOME/scripts`` directory is in the ``PYTHONPATH`` environment variable)
+
+    .. code-block:: bash
+
+        cd $OPENDIHU_HOME/examples/validation/diffusion_2d/build_release
+        
+        # scenario (a)
+        plot out_dirichlet/*
+
+        # scenario (b)
+        plot out_neumann/*
+
+
+* Calculate the analytic solution and create the plot
+
+    .. code-block:: bash
+
+        cd $OPENDIHU_HOME/examples/validation/diffusion_2d
+        
+        # scenario (a)
+        python3 compute_error_dirichlet.py
+
+        # scenario (b)
+        python3 compute_error_neumann.py
+
+.. [Ursell2016] `Ursell et al. 2016, The Diffusion Equation/A Multi-dimensional Tutorial <https://www.yumpu.com/en/document/read/7921375/the-diffusion-equation-a-multi-dimensional-tutorial-california->`_

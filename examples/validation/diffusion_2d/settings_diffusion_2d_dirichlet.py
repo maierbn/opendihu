@@ -1,17 +1,20 @@
 import numpy as np
 
+# size of domain
+size_x = 10
+size_y = 10
+
 # problem definition
-# boundary conditions
-def u_boundary(x, y):
-  return 1 + x/3 + y/8
 
 # initial values
 def u_initial(x, y):
-  return np.maximum(0.0, 2 - np.sin(np.sqrt((x-2)**2 + (y-2)**2)))
+  d = np.minimum(np.sqrt((x-2)**2 + (y-size_y/2)**2), np.pi)
+  return 1 + np.cos(d)
 
 # discretization
 nx = 10   # number of elements
 ny = nx
+
 
 # number of nodes
 import opendihu
@@ -22,29 +25,22 @@ if "linear" in opendihu.program_name:
 elif "quadratic" in opendihu.program_name:
   mx = 2*nx + 1
   my = 2*ny + 1
+  print(f"quadratic, mx={mx}")
 
 # define Dirichlet boundary conditions
 bc = {}
-
-# x=0 and x=3
+# x=0
 for j in range(my):
-  y = 4.0*j/(my-1)
-  bc[j*mx + 0] = u_boundary(0,y)
-  bc[j*mx + mx-1] = u_boundary(3,y)
-
-# y=0 and y=4
-for i in range(mx):
-  x = 3.0*i/(mx-1)
-  bc[0*mx + i] = u_boundary(x,0)
-  bc[(my-1)*mx + i] = u_boundary(x,4)
+  y = size_y*j/(my-1)
+  bc[j*mx + 0] = 0
 
 # define initial values
 initial_values = {}
 
 for j in range(my):
   for i in range(mx):
-    x = 3.0*i/(mx-1)
-    y = 4.0*j/(my-1)
+    x = size_x*i/(mx-1)
+    y = size_y*j/(my-1)
     initial_values[j*mx + i] = u_initial(x,y)
 
 print(mx,my)
@@ -70,12 +66,19 @@ config = {
       "maxIterations": 1000,
       "dumpFormat": "default",
       "dumpFilename": "",
+    },
+    "implicitSolver":
+    {
+      "solverType":        "lu",
+      "preconditionerType": "none",
+      "relativeTolerance": 1e-15,
+      "absoluteTolerance": 1e-10
     }
   },
 
-  "Heun" : {
+  "CrankNicolson" : {
     "initialValues": initial_values,
-    "timeStepWidth": 1e-3,
+    "timeStepWidth": 1e-5,
     "endTime": 1.0,
     "timeStepOutputInterval": 100,
     "checkForNanInf": False,
@@ -85,24 +88,25 @@ config = {
     "dirichletBoundaryConditions": bc,
     "dirichletOutputFilename": None,   # filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable
     "neumannBoundaryConditions": [],
+    "solverName":       "implicitSolver",
     
     "FiniteElementMethod" : {
       # mesh parameters
       "nElements":        [nx, ny],
       "inputMeshIsGlobal": True,
-      "physicalExtent":   [3.0, 4.0],
+      "physicalExtent":   [size_x, size_y],
       "physicalOffset":   [0.0, 0.0],
       
       "solverName":       "linearSolver",
       "slotName": "",
       
       # problem parameters
-      "prefactor":        0.5,
+      "prefactor":        3,
     },
 
     "OutputWriter" : [
-      {"format": "Paraview", "outputInterval": 10, "filename": "out/filename", "binary": True, "fixedFormat": False, "onlyNodalValues": True, "combineFiles": True, "fileNumbering": "incremental"},
-      {"format": "PythonFile", "outputInterval": 10, "filename": "out/diffusion2d", "binary": True, "onlyNodalValues": True, "combineFiles": True, "fileNumbering": "incremental"}
+      {"format": "Paraview", "outputInterval": 1000, "filename": "out_dirichlet/diffusion2d", "binary": True, "fixedFormat": False, "onlyNodalValues": True, "combineFiles": True, "fileNumbering": "incremental"},
+      {"format": "PythonFile", "outputInterval": 1000, "filename": "out_dirichlet/diffusion2d", "binary": True, "onlyNodalValues": True, "combineFiles": True, "fileNumbering": "incremental"}
     ]
   },
 }

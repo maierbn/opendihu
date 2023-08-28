@@ -203,7 +203,7 @@ This is the minimum number of timesteps to perform in the time span for the "mod
 
 
 CrankNicolson
--------------------t
+-------------------
 The Crank Nicolson scheme is implicit and 2nd order consistent. 
 The keyword for the settings is ``"CrankNicolson"``.
 In addition to the common properties, it has the options:

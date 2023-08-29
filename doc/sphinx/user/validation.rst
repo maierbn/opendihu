@@ -491,3 +491,248 @@ How to reproduce
         python3 compute_error_neumann.py
 
 .. [Ursell2016] `Ursell et al. 2016, The Diffusion Equation/A Multi-dimensional Tutorial <https://www.yumpu.com/en/document/read/7921375/the-diffusion-equation-a-multi-dimensional-tutorial-california->`_
+
+CellML models
+-----------------------------------
+
+We solve CellML models with `OpenCOR <https://opencor.ws/>`_ and OpenDiHu and compare the results. 
+`CellML <https://www.cellml.org/>`_ is a description standard for differential-algebraic systems of equations used in the bioengineering community. The XML based CellML file format can be parsed and solved by both OpenCOR and OpenDiHu.
+
+Hodgkin-Huxley (1952)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The most basic electrophysiology model was formulated by `Hodgkin and Huxley (1952) <https://royalsocietypublishing.org/doi/abs/10.1098/rspb.1952.0054>`_. It contains four state variables :math:`V_m`, :math:`n`, :math:`h`, :math:`m`.
+We set a constant stimulation current of :math:`i_\text{Stim} = 10 μA/cm^2` and solve the system for :math:`t_\text{end}=35 ms` with Heun's method and a time step witdh of :math:`dt=1e-5 ms`.
+
+As a reference, the same simulation is performed with OpenCOR. The resulting values show good agreement.
+
+.. _hodgkin_huxley_opencor:
+.. figure:: /user/validation/hodgkin_huxley_opencor.png
+  :width: 70%
+
+  Visualization of the results in the OpenCOR GUI
+  
+.. _hodgkin_huxley_opendihu:
+.. figure:: /user/validation/hodgkin_huxley_opendihu.png
+  :width: 70%
+
+  Visualization of the results from OpenDiHu with the OpenDiHu plot script
+  
+.. _hodgkin_huxley_compared:
+.. figure:: /user/validation/hodgkin_huxley_compared.png
+  :width: 70%
+
+  Comparison of results computed by OpenCOR (dashed lines) and OpenDiHu (solid lines), which show good agreement.
+  
+The :math:`\mathcal{L}_2`-errors for the solved variables over the entire timespan are given below.
+
+.. list-table::
+  :widths: 5 10
+  :header-rows: 1
+
+  * - variable
+    - :math:`\mathcal{L}_2`-error
+  * - :math:`V_m`
+    - 2.0e-03
+  * - :math:`n`
+    - 3.3e-06
+  * - :math:`h`
+    - 4.2e-06
+  * - :math:`m`
+    - 1.9e-05
+
+Shorten, Ocallaghan, Davidson, Soboleva (2007)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Another relevant CellML model is the model by `Shorten, Ocallaghan, Davidson, Soboleva (2007) <https://link.springer.com/article/10.1007/s10974-007-9125-6>`_.
+It consists of 58 ordinary differential equations and 77 algebraic equations that have to be solved in time. 
+We repeat the previous study with this model using the same numerical parameters and present the result in the following.
+
+.. _cellml_shorten_ocallaghan_comparison:
+.. figure:: /user/validation/cellml_shorten_ocallaghan_comparison.png
+  :width: 100%
+
+  Comparison of results computed by OpenCOR (dashed lines) and OpenDiHu (solid lines), which show good agreement.
+
+The :math:`\mathcal{L}_2`-errors over all timesteps for all state variables are given below. 
+It can be seen that they show good agreement with the reference simulation.
+
+
+.. list-table::
+  :header-rows: 1
+
+  * - variable
+    - :math:`\mathcal{L}_2`-error
+    - variable
+    - :math:`\mathcal{L}_2`-error
+    - variable
+    - :math:`\mathcal{L}_2`-error
+    - variable
+    - :math:`\mathcal{L}_2`-error
+  * - A_1
+    - 5.7e-06
+    - A_2
+    - 3.5e-06
+    - ATP1
+    - 1.3e-03
+    - ATP2
+    - 3.6e-04
+  * - Ca_1
+    - 9.9e-04
+    - Ca_2
+    - 1.1e-04
+    - Ca_ATP1
+    - 1.4e-03
+    - Ca_ATP2
+    - 3.7e-04
+  * - Ca_CaT2
+    - 2.5e+01
+    - Ca_Cs1
+    - 2.6e-02
+    - Ca_Cs2
+    - 2.7e-02
+    - Ca_P1
+    - 2.9e-03
+  * - Ca_P2
+    - 3.3e-04
+    - Ca_SR1
+    - 1.8e-02
+    - Ca_SR2
+    - 1.8e-02
+    - Ca_T_2
+    - 2.5e+01
+  * - D_0
+    - 9.2e-06
+    - D_1
+    - 1.9e-05
+    - D_2
+    - 5.7e-05
+    - Mg1
+    - 2.9e-03
+  * - Mg2
+    - 2.8e-03
+    - Mg_ATP1
+    - 2.9e-03
+    - Mg_ATP2
+    - 2.8e-03
+    - Mg_P1
+    - 2.8e-04
+  * - Mg_P2
+    - 2.9e-04
+    - P
+    - 2.9e-06
+    - P_C_SR
+    - 2.9e-07
+    - P_SR
+    - 2.9e-08
+  * - x_1
+    - 0.0e+00
+    - x_2
+    - 0.0e+00
+    - C_0
+    - 1.9e-05
+    - C_1
+    - 1.3e-05
+  * - C_2
+    - 5.9e-06
+    - C_3
+    - 8.1e-07
+    - C_4
+    - 3.2e-08
+    - O_0
+    - 3.8e-11
+  * - O_1
+    - 6.3e-10
+    - O_2
+    - 7.3e-09
+    - O_3
+    - 2.5e-08
+    - O_4
+    - 2.2e-08
+  * - K_e
+    - 3.0e-06
+    - K_i
+    - 2.8e-04
+    - K_t
+    - 1.3e-05
+    - Na_e
+    - 3.2e-04
+  * - Na_i
+    - 2.7e-05
+    - Na_t
+    - 2.8e-04
+    - h_K
+    - 3.3e-07
+    - n
+    - 1.6e-05
+  * - h
+    - 8.2e-06
+    - m
+    - 8.1e-05
+    - S
+    - 3.0e-07
+    - h_K_t
+    - 6.1e-05
+  * - n_t
+    - 1.5e-05
+    - h_t
+    - 1.3e-05
+    - m_t
+    - 8.2e-05
+    - S_t
+    - 2.8e-07
+  * - vS
+    - 5.2e-03
+    - vT
+    - 4.4e-03
+    -
+    -
+    -
+    -
+
+How to reproduce
+^^^^^^^^^^^^^^^^^^^^^
+
+* Build the example
+
+    .. code-block:: bash
+
+        cd $OPENDIHU_HOME/examples/validation/cellml
+        mkorn && sr       # build
+
+* Run the simulations
+
+    .. code-block:: bash
+
+        cd $OPENDIHU_HOME/examples/validation/cellml/build_release
+        
+        ./hodgkin_huxley ../settings_cellml.py
+        ./shorten ../settings_cellml.py
+
+* Visualize the numeric solutions (make sure that the ``$OPENDIHU_HOME/scripts`` directory is in the ``PYTHONPATH`` environment variable)
+
+    .. code-block:: bash
+
+        cd $OPENDIHU_HOME/examples/validation/cellml/build_release
+        
+        plot out_hodgkin_huxley/*
+        plot out_shorten/*
+
+
+* Compute the L2 errors and generate the comparison plot
+
+    .. code-block:: bash
+
+        cd $OPENDIHU_HOME/examples/validation/cellml
+        
+        python3 compute_error_hodgkin_huxley.py
+        python3 compute_error_shorten.py
+
+
+
+
+Nonlinear solid mechanics 
+-----------------------------
+
+Excited muscle
+-------------------

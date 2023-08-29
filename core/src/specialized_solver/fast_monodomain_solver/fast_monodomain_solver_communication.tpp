@@ -8,8 +8,6 @@ template<int nStates, int nAlgebraics, typename DiffusionTimeSteppingScheme>
 void FastMonodomainSolverBase<nStates,nAlgebraics,DiffusionTimeSteppingScheme>::
 fetchFiberData()
 {
-  LOG(INFO) << "infetchFiberData";
-
   VLOG(1) << "fetchFiberData";
   std::vector<typename NestedSolversType::TimeSteppingSchemeType> &instances = nestedSolvers_.instancesLocal();
 

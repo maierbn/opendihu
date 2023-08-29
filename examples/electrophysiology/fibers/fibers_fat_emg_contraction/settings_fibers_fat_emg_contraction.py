@@ -409,7 +409,7 @@ config = {
 
               "PotentialFlow": {
                 "FiniteElementMethod" : {
-                  "meshName":           ["3Dmesh","3DFatMesh"]
+                  "meshName":           ["3Dmesh","3DFatMesh"],
                   "solverName":         "potentialFlowSolver",
                   "prefactor":          1.0,
                   "dirichletBoundaryConditions": variables.potential_flow_dirichlet_bc,

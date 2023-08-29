@@ -25,7 +25,7 @@ scenario_name = "fibers"
 # parameters for main simulation
 # load
 main_constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
-main_bottom_traction = [0,0,-10]        # [N]  (-30 works)
+main_bottom_traction = [0,0,-1e-3]        # [N]  (-30 works)
 
 # general parameters
 # -----------------------------

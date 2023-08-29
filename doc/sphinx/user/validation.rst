@@ -547,6 +547,7 @@ Shorten, Ocallaghan, Davidson, Soboleva (2007)
 Another relevant CellML model is the model by `Shorten, Ocallaghan, Davidson, Soboleva (2007) <https://link.springer.com/article/10.1007/s10974-007-9125-6>`_.
 It consists of 58 ordinary differential equations and 77 algebraic equations that have to be solved in time. 
 We repeat the previous study with this model using the same numerical parameters and present the result in the following.
+The stimulation current ``wal_environment/I_HH`` is set to 50.
 
 .. _cellml_shorten_ocallaghan_comparison:
 .. figure:: /user/validation/cellml_shorten_ocallaghan_comparison.png
@@ -721,6 +722,9 @@ How to reproduce
 
 * Compute the L2 errors and generate the comparison plot
 
+    The reference values were simulated in OpenCOR (set ``wal_environment/I_HH`` manually to 50) and then exported as csv files, only selected the state variables to be included in the file.
+    The repository contains these reference values in the directory ``$OPENDIHU_HOME/examples/validation/cellml/`` in the files ``hodgkin_huxley_1952_data_istim10_opencor.csv`` and ``shorten_ocallaghan_davidson_soboleva_2007_no_stim_data_ihh50_opencor.csv``.
+
     .. code-block:: bash
 
         cd $OPENDIHU_HOME/examples/validation/cellml
@@ -728,11 +732,73 @@ How to reproduce
         python3 compute_error_hodgkin_huxley.py
         python3 compute_error_shorten.py
 
-
-
-
 Nonlinear solid mechanics 
 -----------------------------
+
+To validate the implementation of the nonlinear incompressible solid mechanics solver, a comparison against results from the `FEBio <https://febio.org/>`_ solver are conducted.
+Two test case of a tensile test and a shear test are simulated with both solvers.
+Three different formulations of incompressible hyperelasticity in OpenDiHu are compared with the reference solution from FEBio and found to be equal.
+
+The description of the setup and the results can be found in the `dissertation <https://arxiv.org/abs/2107.07104>`_, chapter 8.2.2 [Maier2021]_.
+
+.. _solid_mechanics_validation_tensile_test:
+.. figure:: /user/validation/solid_mechanics_validation_tensile_test.png
+  :width: 100%
+
+  Resulting stresses in the tensile test showing good match between the different formulations with OpenDiHu and the reference solver FEBio
+  
+
+.. _solid_mechanics_shear_test:
+.. figure:: /user/validation/solid_mechanics_shear_test.png
+  :width: 70%
+
+  Resulting stress components in the shear test with good match to the reference solver FEBio
+  
+
+
+.. [Maier2021] `Maier (2021), Scalable Biophysical Simulations of the Neuromuscular System <https://arxiv.org/abs/2107.07104>`_, Ph.D. thesis, University of Stuttgart, 2021
+
+How to reproduce
+^^^^^^^^^^^^^^^^^^^^^
+
+* Build the example
+
+    .. code-block:: bash
+
+        # tensile test
+        cd $OPENDIHU_HOME/opendihu/examples/solid_mechanics/tensile_test
+        mkorn && sr
+
+        # shear test
+        cd $OPENDIHU_HOME/opendihu/examples/solid_mechanics/shear_test
+        mkorn && sr
+
+* Run the simulations
+
+    For the FEBio simulations to work you need FEBio 3 installed (such that it can be called from the command line as ``febio3``). If FEBio is not installed, the OpenDiHu simulations will still run, but the reference data will not be available in the plot.
+
+    .. code-block:: bash
+
+        # tensile test
+        cd $OPENDIHU_HOME/examples/solid_mechanics/tensile_test/build_release
+        ../run_force.sh
+
+        # shear test
+        cd $OPENDIHU_HOME/examples/solid_mechanics/shear_test/build_release
+        ../run_force.sh
+
+* Visualize the results
+
+    .. code-block:: bash
+
+        # tensile test
+        cd $OPENDIHU_HOME/examples/solid_mechanics/tensile_test
+        python3 plot_validation.py
+
+        # shear test
+        cd $OPENDIHU_HOME/examples/solid_mechanics/shear_test
+        python3 plot_validation.py
+
 
 Excited muscle
 -------------------

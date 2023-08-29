@@ -211,7 +211,7 @@ cortical_input_file = input_directory+"/cortical_input_realistic.txt"
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1 
 sampling_stride_y = 1 
-sampling_stride_z = 50
+sampling_stride_z = 10
 sampling_stride_fat = 1 
 
 # how much of the 3D mesh is used for elasticity

@@ -98,7 +98,7 @@ with open(input_filename, "rb") as infile:
         point.append(value)
         
       # check if point is valid
-      if point[0] == 0.0 and point[1] == 0.0 and point[2] == 0.0:
+      if point[0] == 0.0 and point[1] == 0.0 and point[2] == 0.0 and False:
         if streamline_valid:
           coordinate_x = streamline_no % n_fibers_x
           coordinate_y = (int)(streamline_no / n_fibers_x)

@@ -273,9 +273,9 @@ def create_partitioned_meshes_for_settings(n_subdomains_x, n_subdomains_y, n_sub
       if rank_no == 0:
         print("Note, local_sampling_stride_z is no longer used! Simply use sampling_stride_z! (Now setting sampling_stride_z = {})".format(variables.sampling_stride_z))
   
-  #if "cuboid.bin" not in fiber_file:  
-  variables.n_fibers_x = (int)(np.round(np.sqrt(variables.n_fibers_total)))
-  variables.n_fibers_y = variables.n_fibers_x
+  if "cuboid.bin" not in fiber_file:  
+    variables.n_fibers_x = (int)(np.round(np.sqrt(variables.n_fibers_total)))
+    variables.n_fibers_y = variables.n_fibers_x
 
   if rank_no == 0 and have_fibers:
     print("n fibers:              {} ({} x {}), sampled by stride {} x {}".format(variables.n_fibers_total, variables.n_fibers_x, variables.n_fibers_y, variables.sampling_stride_x, variables.sampling_stride_y))

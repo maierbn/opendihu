@@ -140,7 +140,7 @@ createMatrix(MatType matrixType, int nNonZerosDiagonal, int nNonZerosOffdiagonal
     LOG(DEBUG) << "Mat SetPreallocation, nNonZerosDiagonal: " << nNonZerosDiagonal << ", nNonZerosOffdiagonal: " << nNonZerosOffdiagonal;
 
     // strictly do not allow new entries that are not covered by preallocation
-    ierr = MatSetOption(this->globalMatrix_, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_TRUE); CHKERRV(ierr);
+    /**/ierr = MatSetOption(this->globalMatrix_, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_FALSE); CHKERRV(ierr);
   }
 
   createLocalMatrix();

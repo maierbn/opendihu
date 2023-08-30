@@ -25,7 +25,7 @@ scenario_name = "fibers"
 # parameters for main simulation
 # load
 main_constant_body_force = (0,0,-9.81e-4)   # [cm/ms^2], gravity constant for the body force
-main_bottom_traction = [0,0,-10]        # [N]  (-30 works)
+main_bottom_traction = [0,0,-1e-3]        # [N]  (-30 works)
 
 # general parameters
 # -----------------------------
@@ -193,6 +193,7 @@ size_z = 6
 
 firing_times_file = input_directory+"/MU_firing_times_always.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 firing_times_file = input_directory+"/MU_firing_times_once.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
+firing_times_file = input_directory+"/MU_firing_times_heidlauf_10MU.txt"    # use setSpecificStatesCallEnableBegin and setSpecificStatesCallFrequency
 fiber_distribution_file = input_directory+"/MU_fibre_distribution_10MUs.txt"
 cortical_input_file = input_directory+"/cortical_input_realistic.txt"
 
@@ -211,13 +212,13 @@ cortical_input_file = input_directory+"/cortical_input_realistic.txt"
 # If you change this, delete the compartment_relative_factors.* files, they have to be generated again.
 sampling_stride_x = 1 
 sampling_stride_y = 1 
-sampling_stride_z = 50
+sampling_stride_z = 10
 sampling_stride_fat = 1 
 
 # how much of the 3D mesh is used for elasticity
 sampling_factor_elasticity_x = 0.7 
 sampling_factor_elasticity_y = 0.7 
-sampling_factor_elasticity_z = 0.3 
+sampling_factor_elasticity_z = 0.7 
 sampling_factor_elasticity_fat_y = 0.5 
 
 # other options
@@ -228,7 +229,7 @@ python_output = False
 states_output = False                    # if also the subcellular states should be output, this produces large files, set output_timestep_0D_states
 enable_surface_emg = True               # if the EMG values on a 2D surface should be written to files
 show_linear_solver_output = False       # if every solve of multidomain diffusion should be printed
-disable_firing_output = True            # if information about firing of MUs should be printed
+disable_firing_output = False            # if information about firing of MUs should be printed
 optimization_type = "vc"                # the optimization_type used in the cellml adapter, "vc" uses explicit vectorization
 approximate_exponential_function = True # if the exponential function should be approximated by a Taylor series with only 11 FLOPS
 
@@ -253,15 +254,16 @@ def get_conductivity(fiber_no, mu_no):
   return Conductivity
   
 
-def get_specific_states_call_frequency(mu_no):
+def get_specific_states_call_frequency(fiber_no, mu_no):
+  return 1
   stimulation_frequency = motor_units[mu_no % len(motor_units)]["stimulation_frequency"]
   return stimulation_frequency*1e-3
 
-def get_specific_states_frequency_jitter(mu_no):
-  #return 0
-  return motor_units[mu_no % len(motor_units)]["jitter"]
+def get_specific_states_frequency_jitter(fiber_no, mu_no):
+  return 0
+  #return motor_units[mu_no % len(motor_units)]["jitter"]
 
-def get_specific_states_call_enable_begin(mu_no):
+def get_specific_states_call_enable_begin(fiber_no, mu_no):
   #return 1000  # start directly
-  #return 0  # start directly
-  return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3
+  return 0  # start directly
+  #return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3

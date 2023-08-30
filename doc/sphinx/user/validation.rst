@@ -800,5 +800,194 @@ How to reproduce
         python3 plot_validation.py
 
 
-Excited muscle
--------------------
+Excited cuboid muscle
+-----------------------
+
+For more complex multi-scale models, no analytic solutions are available and a direct verification of the solver becomes impossible.
+A qualitative validation can be carried out by comparing to other groups simulation. In the following, we compute a scenario similar to the one in [Heidlauf2016]_, chapter 7.3.1.
+
+A cuboid muscle of size :math:`2.9 \times 1.2 \times 6` cm has :math:`31 \times 13` embedded muscle fibers.
+The fibers are organized in 10 motor units which are activated from a motor neuron model, as described in [Heidlauf2016]_. We use the same discharge times as the author.
+We the discretize the fibers by 145 linear Finite Elements as in [Heidlauf2016]_. No information is given about the 3D domain discretization, for which we use :math:`15 \times 5 \times 33 = 2475` quadratic Finite Elements.
+A difference between our simulation and the one in [Heidlauf2016]_ is that we omit the fat layer and use a more realistic dynamic solid mechanics formulation instead of the quasi-static formulation.
+
+The contraction state in our simulation is shown below and can be compared to Fig. 7.4 in [Heidlauf2016]_. (Note that we set the `"displacementsScalingFactor"` to 5, equal to the visualization in the referenced thesis.)
+The contraction shows qualitative agreement.
+
+.. [Heidlauf2016] `Heidlauf (2016) Chemo-electro-mechanical modelling of the neuromuscular system <http://dx.doi.org/10.18419/opus-658>`_, Ph.D. thesis, University of Stuttgart
+
+.. |fibers004| image:: /user/validation/fibers004.png
+    :width: 70%
+
+.. |fibers020| image:: /user/validation/fibers020.png
+    :width: 70%
+
+.. |fibers040| image:: /user/validation/fibers040.png
+    :width: 70%
+
+.. |fibers080| image:: /user/validation/fibers080.png
+    :width: 70%
+
+.. |fibers120| image:: /user/validation/fibers120.png
+    :width: 70%
+
+.. |fibers200| image:: /user/validation/fibers200.png
+    :width: 70%
+
+|fibers004| |fibers020|
+|fibers040| |fibers080|
+|fibers120| |fibers200|
+
+:numref:`fibers_stretch` evaluates the amount of contraction that the muscle undergoes in this scenario. The orange lines shows the average over all nodes of the 3D mesh, the light orange range corresponds to the 25\%-75\% quartile range of values.
+At 240ms, the average stretch is circa 90% which means that the muscle contracted by 10% in this time.
+
+.. _fibers_stretch:
+.. figure:: /user/validation/fibers_stretch.png
+  :width: 100%
+
+  Stretch over time of the muscle tissue. 
+
+
+More details about the scenario in OpenDiHu can be found here:
+
+.. code-block::
+
+    0/16 : This is opendihu 1.3, built Aug 29 2023, C++ 201402, GCC 9.4.0, current time: 2023/8/30 11:10:01, hostname: pcsgs05, n ranks: 16      
+    0/16 : Open MPI v4.0.3, package: Debian OpenMPI, ident: 4.0.3, repo rev: v4.0.3, Mar 03, 2020                                                
+    0/16 : File "../settings_cuboid_muscle.py" loaded.                                                                                           
+    0/16 : ---------------------------------------- begin python output ----------------------------------------                                 
+    Loading variables from "heidlauf.py".                                                                                                        
+    scenario_name: heidlauf,  n_subdomains: 2 2 4,  n_ranks: 16,  end_time: 4000.0                                                               
+    dt_0D:           1e-04, diffusion_solver_type:      cg                                                                                       
+    dt_1D:           1e-04, potential_flow_solver_type: gmres                                                                                    
+    dt_splitting:    1e-04, emg_solver_type:            cg, emg_initial_guess_nonzero: False                                                     
+    dt_3D:           1e+00, paraview_output: True                                                                                                
+    output_timestep: 1e+00  stimulation_frequency: 1.0 1/ms = 1000.0 Hz                                                                          
+    fast_monodomain_solver_optimizations: True, use_analytic_jacobian: True, use_vc: True                                                        
+    fiber_file:              cuboid.bin                                                                                                          
+    fat_mesh_file:           ../../../../input/13x13fibers.bin_fat.bin                                                                           
+    cellml_file:             ../../../electrophysiology/input/new_slow_TK_2014_12_08.c                                                           
+    fiber_distribution_file: ../../../electrophysiology/input/MU_fibre_distribution_10MUs.txt                                                    
+    firing_times_file:       ../../../electrophysiology/input/MU_firing_times_heidlauf_10MU.txt                                                  
+    ********************************************************************************                                                             
+    prefactor: sigma_eff/(Am*Cm) = 0.0132 = 3.828 / (500.0*0.58)                                                                                 
+    create cuboid.bin with size [2.9,1.2,6], n points [31,13,145]                                                                                
+    diffusion solver type: cg                                                                                                                    
+    n fibers:              403 (31 x 13), sampled by stride 2 x 2                                                                                
+    n points per fiber:    145, sampled by stride 4                                                                                              
+    16 ranks, partitioning: x2 x y2 x z4                                                                                                         
+    31 x 13 = 403 fibers, per partition: 14 x 6 = 84                                                                                             
+    per fiber: 1D mesh    nodes global: 145, local: 36                                                                                           
+      sampling 3D mesh with stride 2 x 2 x 4                                                                                                     
+      distribute_nodes_equally: True                                                                                                             
+    quadratic 3D mesh    nodes global: 15 x 5 x 33 = 2475, local: 8 x 2 x 8 = 128                                                               
+    quadratic 3D mesh elements global: 7 x 2 x 16 = 224, local: 4 x 1 x 4 = 16                                                                  
+    number of degrees of freedom:                                                                                                                
+                        1D fiber:        145  (per process: 36)                                                                                  
+                0D-1D monodomain:       8120  (per process: 2016)                                                                                
+    all fibers 0D-1D monodomain:    3272360  (per process: 169344)                                                                              
+                    3D bidomain:       2475  (per process: 128)                                                                                 
+                          total:    3274835  (per process: 169472)                                                                              
+    Debugging output about fiber firing: Taking input from file "../../../electrophysiology/input/MU_firing_times_heidlauf_10MU.txt"             
+    First stimulation times                                                                                                                      
+        Time  MU fibers                                                                                                                          
+        0.00   2 [60, 80, 81, 101, 104, 118, 127, 191, 228, 275] (only showing first 10, 19 total)                                               
+        2.00   3 [1, 12, 17, 40, 75, 76, 82, 94, 98, 108] (only showing first 10, 22 total)                                                      
+        3.00   5 [7, 10, 19, 21, 24, 32, 35, 43, 62, 68] (only showing first 10, 42 total)                                                       
+        7.01   4 [14, 16, 27, 39, 52, 106, 111, 116, 125, 146] (only showing first 10, 35 total)                                                 
+        8.01   7 [0, 2, 9, 15, 18, 28, 33, 36, 45, 55] (only showing first 10, 53 total)                                                         
+        9.01   1 [29, 49, 58, 102, 131, 134, 153, 182, 184, 232] (only showing first 10, 14 total)                                               
+      16.02   6 [26, 31, 44, 51, 53, 56, 57, 65, 67, 83] (only showing first 10, 46 total)                                                      
+      35.04   8 [3, 13, 23, 25, 30, 38, 41, 54, 71, 78] (only showing first 10, 69 total)                                                       
+      never stimulated: MU   0, fibers [37, 46, 47, 48, 69, 74, 89, 93, 138, 213] (only showing first 10, 23 total)                              
+    stimulated MUs: 8, not stimulated MUs: 1                                                                                 
+
+How to reproduce
+^^^^^^^^^^^^^^^^^^^^^
+
+* Build the example
+
+    .. code-block:: bash
+
+        cd $OPENDIHU_HOME/opendihu/examples/validation/cuboid_muscle/
+        mkorn && sr
+
+* Run the simulation
+
+    .. code-block:: bash
+
+        cd $OPENDIHU_HOME/opendihu/examples/validation/cuboid_muscle/build_release
+        mpirun -n 16 ./cuboid_muscle ../settings_cuboid_muscle.py heidlauf.py
+
+
+Cuboid muscle with EMG
+-------------------------
+
+
+How to reproduce
+^^^^^^^^^^^^^^^^^^^^^
+
+* Build the example
+
+    .. code-block:: bash
+        
+        cd $OPENDIHU_HOME/opendihu/examples/electrophysiology/fibers/fibers_fat_emg_contraction/
+        mkorn && sr
+
+* Run the simulation
+
+    .. code-block:: bash
+
+        cd $OPENDIHU_HOME/opendihu/examples/electrophysiology/fibers/fibers_fat_emg_contraction/build_release
+        ./fibers_fat_emg_contraction ../settings_fibers_fat_emg_contraction.py fibers.py
+
+.. code-block::
+
+    Open MPI v4.0.3, package: Debian OpenMPI, ident: 4.0.3, repo rev: v4.0.3, Mar 03, 2020
+    File "../settings_fibers_fat_emg_contraction.py" loaded.
+    ---------------------------------------- begin python output ----------------------------------------
+    Loading variables from "fibers.py".
+    scenario_name: fibers,  n_subdomains: 1 1 1,  n_ranks: 1,  end_time: 5000.0
+    dt_0D:           2.5e-05, diffusion_solver_type:      cg
+    dt_1D:           2.5e-05, potential_flow_solver_type: gmres, approx. exp.: True
+    dt_splitting:    2.5e-05, emg_solver_type:            cg, emg_initial_guess_nonzero: False
+    dt_3D:           1.0e-03, paraview_output: True, optimization_type: vc
+    dt_elasticity:   1e-01    elasticity solver: lu, preconditioner: none
+    fiber_file:              cuboid.bin
+    fat_mesh_file:           cuboid_fat2.bin
+    cellml_file:             /data/scratch/maierbn/opendihu/examples/electrophysiology/input/new_slow_TK_2014_12_08.c
+    fiber_distribution_file: /data/scratch/maierbn/opendihu/examples/electrophysiology/input/MU_fibre_distribution_10MUs.txt
+    firing_times_file:       /data/scratch/maierbn/opendihu/examples/electrophysiology/input/MU_firing_times_heidlauf_10MU.txt
+    ********************************************************************************
+    n fibers:              403 (31 x 13), sampled by stride 1 x 1
+    n points per fiber:    145, sampled by stride 10
+    1 rank, partitioning: x1 x y1 x z1
+    31 x 13 = 403 fibers, per partition: 30 x 12 = 360
+    per fiber: 1D mesh    nodes global: 145, local: 145
+      sampling 3D mesh with stride 1 x 1 x 10 
+        linear 3D mesh    nodes global: 31 x 13 x 15 = 6045, local: 31 x 13 x 15 = 6045
+        linear 3D mesh elements global: 30 x 12 x 14 = 5040, local: 30 x 12 x 14 = 5040
+    quadratic 3D mesh    nodes global: 31 x 13 x 15 = 6045, local: 31 x 13 x 15 = 6045
+    quadratic 3D mesh elements global: 15 x 6 x 7 = 630, local: 15 x 6 x 7 = 630
+    number of degrees of freedom:
+                        1D fiber:        145  (per process: 145)
+                0D-1D monodomain:       8120  (per process: 8120)
+    all fibers 0D-1D monodomain:    3272360  (per process: 2923200)
+                    3D bidomain:       6045  (per process: 6045)
+                          total:    3278405  (per process: 2929245)
+        fat mesh, n points total:    1935 (43 x 3 x 15), (per process: 43 x 3 x 15 = 1935)
+      sub-sampling 3D elasticity mesh with factors 0.7, 0.7, 0.7 
+      elasticity quadratic 3D meshes:
+      muscle:             nodes global: 21 x 9 x 11 = 2079, local: 21 x 9 x 11 = 2079
+              quadratic elements global: 10 x 4 x 5 = 200, local: 14 x 1 x 5 = 70
+      fat and skin layer: nodes global: 29 x 3 x 11 = 957, local: 29 x 3 x 11 = 957
+              quadratic elements global: 14 x 1 x 5 = 70, local: 14 x 1 x 5 = 70
+    Python config parsed in 0.2s.
+    ----------------------------------------- end python output -----------------------------------------
+    Read from file "cuboid.bin", 16651 collective chunks.
+    done.
+    Note, setting regularization to [tol,eps] = [1e-2,1e-1]. Add `"regularization": None` in the settings to disable.
+    Initialize 1 global instances (1 local).
+    CellML file "/data/scratch/maierbn/opendihu/examples/electrophysiology/input/new_slow_TK_2014_12_08.c" with 57 states, 71 algebraics, specified 2 parameters: 
+      parameter 0 maps to "wal_environment/I_HH" (CONSTANTS[54]), initial value: 0, 
+      parameter 1 maps to "razumova/L_S" (CONSTANTS[67]), initial value: 1

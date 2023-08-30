@@ -783,37 +783,23 @@ def compartment_gets_stimulated(compartment_no, frequency, current_time):
   return variables.firing_times[index % n_firing_times, mu_no] == 1
   
 # callback function that can set states, i.e. prescribed values for stimulation
-def set_specific_states(n_nodes_global, time_step_no, current_time, states, compartment_no):
-  
+def set_specific_states(n_nodes_global, time_step_no, current_time, states, fiber_no):
+
   # determine if fiber gets stimulated at the current time
-  is_compartment_gets_stimulated = compartment_gets_stimulated(compartment_no, variables.stimulation_frequency, current_time)
+  is_fiber_gets_stimulated = fiber_gets_stimulated(fiber_no, variables.stimulation_frequency, current_time)
+  
+  if is_fiber_gets_stimulated:
+    # determine nodes to stimulate (center node, left and right neighbour)
+    innervation_zone_width_n_nodes = variables.innervation_zone_width*100  # 100 nodes per cm
+    innervation_node_global = int(n_nodes_global / 2)
+    nodes_to_stimulate_global = [innervation_node_global]
+    if innervation_node_global > 0:
+      nodes_to_stimulate_global.insert(0, innervation_node_global-1)
+    if innervation_node_global < n_nodes_global-1:
+      nodes_to_stimulate_global.append(innervation_node_global+1)
 
-  if is_compartment_gets_stimulated:  
-    
-    n_nodes_x = variables.n_points_3D_mesh_global_x
-    n_nodes_y = variables.n_points_3D_mesh_global_y
-    n_nodes_z = variables.n_points_3D_mesh_global_z
-    z_index_center = (int)(n_nodes_z/2)
-    y_index_center = (int)(n_nodes_y/2)
-    x_index_center = (int)(n_nodes_x/2)
-    
-    for k in range(n_nodes_z):
-      if z_index_center-1 <= k <= z_index_center+1:  # use only 3 nodes in z direction from center
-        for j in range(n_nodes_y):
-          #if y_index_center-1 <= j <= y_index_center+1:  # use only 3 nodes in y direction from center
-          if True:                                        # use all nodes
-            for i in range(n_nodes_x):
-              #if x_index_center-1 <= i <= x_index_center+1:  # use only 3 nodes in x direction from center
-              if True:                                        # use all nodes
-                
-                key = ((i,j,k),0,0)        # key: ((x,y,z),nodal_dof_index,state_no)
-                states[key] = variables.vm_value_stimulated
-                #print("set states at ({},{},{}) to 40".format(i,j,k))
-
-    #print("states: {}".format(states))
-    #print("n_nodes: ({},{},{})".format(n_nodes_x, n_nodes_y, n_nodes_z))
-    #print("n_nodes_global: {}, time_step_no: {}, current_time: {}, compartment_no: {}".format(n_nodes_global, time_step_no, current_time, compartment_no))
-    #wait = input("Press any key to continue...")
+    for node_no_global in nodes_to_stimulate_global:
+      states[(node_no_global,0,0)] = variables.vm_value_stimulated   # key: ((x,y,z),nodal_dof_index,state_no)
 
 # load MU distribution and firing times
 variables.fiber_distribution = np.genfromtxt(variables.fiber_distribution_file, delimiter=" ")

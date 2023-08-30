@@ -272,12 +272,12 @@ config = {
                           #"libraryFilename":                        "lib/lib.so",                                   # manually compiled library
                                   
                           # stimulation callbacks
-                          "setSpecificStatesFunction":              None,                                           # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
+                          "setSpecificStatesFunction":              set_specific_states,                                           # callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters
                           "setSpecificStatesCallInterval":          0,                                              # 0 means disabled
-                          "setSpecificStatesCallFrequency":         0,                                              # set_specific_states should be called variables.stimulation_frequency times per ms
-                          "setSpecificStatesFrequencyJitter":       None,                                           # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
+                          "setSpecificStatesCallFrequency":         variables.get_specific_states_call_frequency(fiber_no, motor_unit_no),                                              # set_specific_states should be called variables.stimulation_frequency times per ms
+                          "setSpecificStatesFrequencyJitter":       variables.get_specific_states_frequency_jitter(fiber_no, motor_unit_no),                                           # random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency
                           "setSpecificStatesRepeatAfterFirstCall":  0.01,                                           # [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered
-                          "setSpecificStatesCallEnableBegin":       0,                                              # [ms] first time when to call setSpecificStates
+                          "setSpecificStatesCallEnableBegin":       variables.get_specific_states_call_enable_begin(fiber_no, motor_unit_no),                                              # [ms] first time when to call setSpecificStates
                           "additionalArgument":                     fiber_no,
                           
                           "mappings":                               variables.mappings,                             # mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py

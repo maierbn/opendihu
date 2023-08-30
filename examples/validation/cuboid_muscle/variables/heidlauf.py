@@ -81,8 +81,6 @@ for mu_no in range(n_motor_units):
   {
     "radius":                radius,                 # [μm] parameter for motor unit: radius of the fiber, used to compute Am
     "cm":                    cm,                     # [uF/cm^2] parameter Cm
-    "activation_start_time": 0.1*mu_no,              # [s] when to start activating this motor unit, here it is a ramp
-    "stimulation_frequency": stimulation_frequency,  # [Hz] stimulation frequency for activation
     "jitter": [0.1*random.uniform(-1,1) for i in range(100)]     # [-] random jitter values that will be added to the intervals to simulate jitter
   })  
 
@@ -122,6 +120,7 @@ size_z = 6
 sampling_stride_x = 2
 sampling_stride_y = 2
 sampling_stride_z = 4      # good values: divisors of 1480: 1480 = 1*1480 = 2*740 = 4*370 = 5*296 = 8*185 = 10*148 = 20*74 = 37*40
+distribute_nodes_equally = True
 
 # other options
 paraview_output = True
@@ -148,13 +147,10 @@ def get_conductivity(fiber_no, mu_no):
   return Conductivity
 
 def get_specific_states_call_frequency(fiber_no, mu_no):
-  stimulation_frequency = motor_units[mu_no % len(motor_units)]["stimulation_frequency"]
-  return stimulation_frequency*1e-3
+  return stimulation_frequency
 
 def get_specific_states_frequency_jitter(fiber_no, mu_no):
-  #return 0
-  return motor_units[mu_no % len(motor_units)]["jitter"]
+  return 0
 
 def get_specific_states_call_enable_begin(fiber_no, mu_no):
-  #return 1
-  return motor_units[mu_no % len(motor_units)]["activation_start_time"]*1e3
+  return 0

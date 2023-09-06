@@ -329,15 +329,21 @@ preciceWriteData()
         tractionValues_.clear();
         this->getTractionValues(this->nestedSolver_, preciceData.preciceMesh->dofNosLocal, tractionValues_);
 
-#ifndef NDEBUG
-        LOG(DEBUG) << "write traction data to precice: " << tractionValues_;
-        std::stringstream s;
-        for (int i = 2; i < tractionValues_.size(); i+=3)
-        {
-          s << " " << tractionValues_[i];
-        }
-        LOG(DEBUG) << "z values of traction: " << s.str();
-#endif
+        // LOG(DEBUG) << "write traction data to precice: " << tractionValues_;
+        // std::stringstream s;
+        // double average_traction = 0.0;
+        // int size_traction = 0;
+        // for (int i = 2; i < tractionValues_.size(); i+=3)
+        // {
+        //   tractionValues_[i] += average_traction;
+        //   size_traction += 1;
+        // }
+        // average_traction /= size_traction;
+        // for (int i = 2; i < tractionValues_.size(); i+=3)
+        // {
+        //   tractionValues_[i] = average_traction;
+        // }
+        // LOG(DEBUG) << "z values of traction: " << s.str();
         // scale traction values, they are always scaled by the factor of -1
         for (double &value : tractionValues_)
         {

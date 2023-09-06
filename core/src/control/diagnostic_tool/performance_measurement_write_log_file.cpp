@@ -38,8 +38,8 @@ void PerformanceMeasurement::writeLogFile(std::string logFileName)
   auto t = std::time(nullptr);
   auto tm = *std::localtime(&t);
   // host name
-  char hostname[MAXHOSTNAMELEN+1];
-  gethostname(hostname, MAXHOSTNAMELEN+1);
+  char hostname[HOST_NAME_MAX+1];
+  gethostname(hostname, HOST_NAME_MAX+1);
 
   std::stringstream header;
   std::stringstream data;

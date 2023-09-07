@@ -920,74 +920,74 @@ How to reproduce
         mpirun -n 16 ./cuboid_muscle ../settings_cuboid_muscle.py heidlauf.py
 
 
-Cuboid muscle with EMG
--------------------------
+.. Cuboid muscle with EMG
+.. -------------------------
 
 
-How to reproduce
-^^^^^^^^^^^^^^^^^^^^^
+.. How to reproduce
+.. ^^^^^^^^^^^^^^^^^^^^^
 
-* Build the example
+.. * Build the example
 
-    .. code-block:: bash
+..     .. code-block:: bash
         
-        cd $OPENDIHU_HOME/opendihu/examples/electrophysiology/fibers/fibers_fat_emg_contraction/
-        mkorn && sr
+..         cd $OPENDIHU_HOME/opendihu/examples/electrophysiology/fibers/fibers_fat_emg_contraction/
+..         mkorn && sr
 
-* Run the simulation
+.. * Run the simulation
 
-    .. code-block:: bash
+..     .. code-block:: bash
 
-        cd $OPENDIHU_HOME/opendihu/examples/electrophysiology/fibers/fibers_fat_emg_contraction/build_release
-        ./fibers_fat_emg_contraction ../settings_fibers_fat_emg_contraction.py fibers.py
+..         cd $OPENDIHU_HOME/opendihu/examples/electrophysiology/fibers/fibers_fat_emg_contraction/build_release
+..         ./fibers_fat_emg_contraction ../settings_fibers_fat_emg_contraction.py fibers.py
 
-.. code-block::
+.. .. code-block::
 
-    Open MPI v4.0.3, package: Debian OpenMPI, ident: 4.0.3, repo rev: v4.0.3, Mar 03, 2020
-    File "../settings_fibers_fat_emg_contraction.py" loaded.
-    ---------------------------------------- begin python output ----------------------------------------
-    Loading variables from "fibers.py".
-    scenario_name: fibers,  n_subdomains: 1 1 1,  n_ranks: 1,  end_time: 5000.0
-    dt_0D:           2.5e-05, diffusion_solver_type:      cg
-    dt_1D:           2.5e-05, potential_flow_solver_type: gmres, approx. exp.: True
-    dt_splitting:    2.5e-05, emg_solver_type:            cg, emg_initial_guess_nonzero: False
-    dt_3D:           1.0e-03, paraview_output: True, optimization_type: vc
-    dt_elasticity:   1e-01    elasticity solver: lu, preconditioner: none
-    fiber_file:              cuboid.bin
-    fat_mesh_file:           cuboid_fat2.bin
-    cellml_file:             /data/scratch/maierbn/opendihu/examples/electrophysiology/input/new_slow_TK_2014_12_08.c
-    fiber_distribution_file: /data/scratch/maierbn/opendihu/examples/electrophysiology/input/MU_fibre_distribution_10MUs.txt
-    firing_times_file:       /data/scratch/maierbn/opendihu/examples/electrophysiology/input/MU_firing_times_heidlauf_10MU.txt
-    ********************************************************************************
-    n fibers:              403 (31 x 13), sampled by stride 1 x 1
-    n points per fiber:    145, sampled by stride 10
-    1 rank, partitioning: x1 x y1 x z1
-    31 x 13 = 403 fibers, per partition: 30 x 12 = 360
-    per fiber: 1D mesh    nodes global: 145, local: 145
-      sampling 3D mesh with stride 1 x 1 x 10 
-        linear 3D mesh    nodes global: 31 x 13 x 15 = 6045, local: 31 x 13 x 15 = 6045
-        linear 3D mesh elements global: 30 x 12 x 14 = 5040, local: 30 x 12 x 14 = 5040
-    quadratic 3D mesh    nodes global: 31 x 13 x 15 = 6045, local: 31 x 13 x 15 = 6045
-    quadratic 3D mesh elements global: 15 x 6 x 7 = 630, local: 15 x 6 x 7 = 630
-    number of degrees of freedom:
-                        1D fiber:        145  (per process: 145)
-                0D-1D monodomain:       8120  (per process: 8120)
-    all fibers 0D-1D monodomain:    3272360  (per process: 2923200)
-                    3D bidomain:       6045  (per process: 6045)
-                          total:    3278405  (per process: 2929245)
-        fat mesh, n points total:    1935 (43 x 3 x 15), (per process: 43 x 3 x 15 = 1935)
-      sub-sampling 3D elasticity mesh with factors 0.7, 0.7, 0.7 
-      elasticity quadratic 3D meshes:
-      muscle:             nodes global: 21 x 9 x 11 = 2079, local: 21 x 9 x 11 = 2079
-              quadratic elements global: 10 x 4 x 5 = 200, local: 14 x 1 x 5 = 70
-      fat and skin layer: nodes global: 29 x 3 x 11 = 957, local: 29 x 3 x 11 = 957
-              quadratic elements global: 14 x 1 x 5 = 70, local: 14 x 1 x 5 = 70
-    Python config parsed in 0.2s.
-    ----------------------------------------- end python output -----------------------------------------
-    Read from file "cuboid.bin", 16651 collective chunks.
-    done.
-    Note, setting regularization to [tol,eps] = [1e-2,1e-1]. Add `"regularization": None` in the settings to disable.
-    Initialize 1 global instances (1 local).
-    CellML file "/data/scratch/maierbn/opendihu/examples/electrophysiology/input/new_slow_TK_2014_12_08.c" with 57 states, 71 algebraics, specified 2 parameters: 
-      parameter 0 maps to "wal_environment/I_HH" (CONSTANTS[54]), initial value: 0, 
-      parameter 1 maps to "razumova/L_S" (CONSTANTS[67]), initial value: 1
+..     Open MPI v4.0.3, package: Debian OpenMPI, ident: 4.0.3, repo rev: v4.0.3, Mar 03, 2020
+..     File "../settings_fibers_fat_emg_contraction.py" loaded.
+..     ---------------------------------------- begin python output ----------------------------------------
+..     Loading variables from "fibers.py".
+..     scenario_name: fibers,  n_subdomains: 1 1 1,  n_ranks: 1,  end_time: 5000.0
+..     dt_0D:           2.5e-05, diffusion_solver_type:      cg
+..     dt_1D:           2.5e-05, potential_flow_solver_type: gmres, approx. exp.: True
+..     dt_splitting:    2.5e-05, emg_solver_type:            cg, emg_initial_guess_nonzero: False
+..     dt_3D:           1.0e-03, paraview_output: True, optimization_type: vc
+..     dt_elasticity:   1e-01    elasticity solver: lu, preconditioner: none
+..     fiber_file:              cuboid.bin
+..     fat_mesh_file:           cuboid_fat2.bin
+..     cellml_file:             /data/scratch/maierbn/opendihu/examples/electrophysiology/input/new_slow_TK_2014_12_08.c
+..     fiber_distribution_file: /data/scratch/maierbn/opendihu/examples/electrophysiology/input/MU_fibre_distribution_10MUs.txt
+..     firing_times_file:       /data/scratch/maierbn/opendihu/examples/electrophysiology/input/MU_firing_times_heidlauf_10MU.txt
+..     ********************************************************************************
+..     n fibers:              403 (31 x 13), sampled by stride 1 x 1
+..     n points per fiber:    145, sampled by stride 10
+..     1 rank, partitioning: x1 x y1 x z1
+..     31 x 13 = 403 fibers, per partition: 30 x 12 = 360
+..     per fiber: 1D mesh    nodes global: 145, local: 145
+..       sampling 3D mesh with stride 1 x 1 x 10 
+..         linear 3D mesh    nodes global: 31 x 13 x 15 = 6045, local: 31 x 13 x 15 = 6045
+..         linear 3D mesh elements global: 30 x 12 x 14 = 5040, local: 30 x 12 x 14 = 5040
+..     quadratic 3D mesh    nodes global: 31 x 13 x 15 = 6045, local: 31 x 13 x 15 = 6045
+..     quadratic 3D mesh elements global: 15 x 6 x 7 = 630, local: 15 x 6 x 7 = 630
+..     number of degrees of freedom:
+..                         1D fiber:        145  (per process: 145)
+..                 0D-1D monodomain:       8120  (per process: 8120)
+..     all fibers 0D-1D monodomain:    3272360  (per process: 2923200)
+..                     3D bidomain:       6045  (per process: 6045)
+..                           total:    3278405  (per process: 2929245)
+..         fat mesh, n points total:    1935 (43 x 3 x 15), (per process: 43 x 3 x 15 = 1935)
+..       sub-sampling 3D elasticity mesh with factors 0.7, 0.7, 0.7 
+..       elasticity quadratic 3D meshes:
+..       muscle:             nodes global: 21 x 9 x 11 = 2079, local: 21 x 9 x 11 = 2079
+..               quadratic elements global: 10 x 4 x 5 = 200, local: 14 x 1 x 5 = 70
+..       fat and skin layer: nodes global: 29 x 3 x 11 = 957, local: 29 x 3 x 11 = 957
+..               quadratic elements global: 14 x 1 x 5 = 70, local: 14 x 1 x 5 = 70
+..     Python config parsed in 0.2s.
+..     ----------------------------------------- end python output -----------------------------------------
+..     Read from file "cuboid.bin", 16651 collective chunks.
+..     done.
+..     Note, setting regularization to [tol,eps] = [1e-2,1e-1]. Add `"regularization": None` in the settings to disable.
+..     Initialize 1 global instances (1 local).
+..     CellML file "/data/scratch/maierbn/opendihu/examples/electrophysiology/input/new_slow_TK_2014_12_08.c" with 57 states, 71 algebraics, specified 2 parameters: 
+..       parameter 0 maps to "wal_environment/I_HH" (CONSTANTS[54]), initial value: 0, 
+..       parameter 1 maps to "razumova/L_S" (CONSTANTS[67]), initial value: 1

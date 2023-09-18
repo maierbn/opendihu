@@ -43,7 +43,7 @@ protected:
   std::vector<Vec3> displacementVectors_;           //< send value buffer for the displacement values
   std::vector<Vec3> velocityVectors_;              //< send value buffer for the velocity values
   std::vector<Vec3> tractionVectors_;                //< send value buffer for the traction values
-  std::vector<Vec3> averageTractionVectors_;                //< send value buffer for the averaged z-tractio values
+  std::vector<Vec3> averagedTractionVectors_;                //< send value buffer for the averaged z-tractio values
 
 };
 

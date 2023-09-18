@@ -39,9 +39,11 @@ protected:
   std::vector<double> displacementValues_;   //< read value buffer for the displacement values
   std::vector<double> velocityValues_;      //< read value buffer for the velocity values
   std::vector<double> tractionValues_;        //< read value buffer for the traction values
+  std::vector<double> averagedtractionValues_;        //< read value buffer for the averaged z-traction values
   std::vector<Vec3> displacementVectors_;           //< send value buffer for the displacement values
   std::vector<Vec3> velocityVectors_;              //< send value buffer for the velocity values
   std::vector<Vec3> tractionVectors_;                //< send value buffer for the traction values
+  std::vector<Vec3> averageTractionVectors_;                //< send value buffer for the averaged z-tractio values
 
 };
 

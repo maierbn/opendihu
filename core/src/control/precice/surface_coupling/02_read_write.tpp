@@ -329,21 +329,15 @@ preciceWriteData()
         tractionValues_.clear();
         this->getTractionValues(this->nestedSolver_, preciceData.preciceMesh->dofNosLocal, tractionValues_);
 
-        // LOG(DEBUG) << "write traction data to precice: " << tractionValues_;
-        // std::stringstream s;
-        // double average_traction = 0.0;
-        // int size_traction = 0;
-        // for (int i = 2; i < tractionValues_.size(); i+=3)
-        // {
-        //   tractionValues_[i] += average_traction;
-        //   size_traction += 1;
-        // }
-        // average_traction /= size_traction;
-        // for (int i = 2; i < tractionValues_.size(); i+=3)
-        // {
-        //   tractionValues_[i] = average_traction;
-        // }
-        // LOG(DEBUG) << "z values of traction: " << s.str();
+#ifndef NDEBUG
+        LOG(DEBUG) << "write traction data to precice: " << tractionValues_;
+        std::stringstream s;
+        for (int i = 2; i < tractionValues_.size(); i+=3)
+        {
+          s << " " << tractionValues_[i];
+        }
+        LOG(DEBUG) << "z values of traction: " << s.str();
+#endif
         // scale traction values, they are always scaled by the factor of -1
         for (double &value : tractionValues_)
         {
@@ -353,6 +347,38 @@ preciceWriteData()
 
         this->preciceSolverInterface_->writeBlockVectorData(preciceData.preciceDataIdTraction, preciceData.preciceMesh->nNodesLocal,
                                                             preciceData.preciceMesh->preciceVertexIds.data(), tractionValues_.data());
+      }
+            // if the data is traction
+      else if (!preciceData.averagedtractionName.empty())
+      {
+        // convert geometry values to precice data layout
+        averagedTractionValues_.clear();
+        this->getTractionValues(this->nestedSolver_, preciceData.preciceMesh->dofNosLocal, averagedTractionValues_);
+        // average z-values of traction
+        double average_traction = 0.0;
+        int size_traction = 0;
+        for (int i = 2; i < tractionValues_.size(); i+=3)
+        {
+          averagedtractionValues_[i] += average_traction;
+          size_traction += 1;
+        }
+        average_traction /= size_traction;
+        for (int i = 2; i < averagedtractionValues_.size(); i+=3)
+        {
+          averagedTractionValues_[i] = average_traction;
+        }
+#ifndef NDEBUG
+        LOG(DEBUG) << "write averaged-traction data to precice: " <<  averagedTractionValues_[i];
+#endif
+        scale traction values, they are always scaled by the factor of -1
+        for (double &value : averagedTractionValues_)
+        {
+          value *= this->scalingFactor_;
+          value *= -1;
+        }
+
+        this->preciceSolverInterface_->writeBlockVectorData(preciceData.preciceDataIdTraction, preciceData.preciceMesh->nNodesLocal,
+                                                            preciceData.preciceMesh->preciceVertexIds.data(), averagedTractionValues_.data());
       }
       else
       {

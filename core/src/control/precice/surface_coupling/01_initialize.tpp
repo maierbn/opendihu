@@ -280,6 +280,18 @@ initializePreciceData()
       preciceData.preciceDataIdTraction = preciceSolverInterface_->getDataID(
         preciceData.tractionName, preciceData.preciceMesh->preciceMeshId);
     }
+    else if (mode == "read-averaged-traction")
+    {
+      preciceData.ioType = PreciceData::ioRead;
+      preciceData.boundaryConditionType = PreciceData::bcTypeNeumann;
+
+      // get precice names of the variables
+      preciceData.averagedTractionName = currentPreciceData.getOptionString("averagedTractionName", "averagedTraction");
+
+      // get precice data ids
+      preciceData.preciceDataIdAveragedTraction = preciceSolverInterface_->getDataID(
+      preciceData.averagedTractionName, preciceData.preciceMesh->preciceMeshId);
+    }
     else if (mode == "write-displacements-velocities")
     {
       preciceData.ioType = PreciceData::ioWrite;
@@ -306,10 +318,21 @@ initializePreciceData()
       preciceData.preciceDataIdTraction = preciceSolverInterface_->getDataID(
         preciceData.tractionName, preciceData.preciceMesh->preciceMeshId);
     }
+    else if (mode == "write-averaged-traction")
+    {
+      preciceData.ioType = PreciceData::ioWrite;
+
+      // get precice names of the variables
+      preciceData.averagedTractionName = currentPreciceData.getOptionString("averagedTractionName", "averagedTraction");
+
+      // get precice data ids
+      preciceData.preciceDataIdAveragedTraction = preciceSolverInterface_->getDataID(
+      preciceData.averagedTractionName, preciceData.preciceMesh->preciceMeshId);
+    }
     else
     {
       LOG(FATAL) << currentPreciceData << "[\"mode\"] is \"" << mode << "\", "
-        << "possible values are: \"read-displacements-velocities\", \"read-traction\", \"write-displacements-velocities\", \"write-traction\".";
+        << "possible values are: \"read-displacements-velocities\", \"read-traction\", \"read-averaged-traction\", \"write-displacements-velocities\", \"write-traction\", \"write-averaged-traction\".";
     }
 
     // store preciceData to vector

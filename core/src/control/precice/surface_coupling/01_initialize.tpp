@@ -309,13 +309,15 @@ initializePreciceData()
     else if (mode == "write-averaged-traction")
     {
       preciceData.ioType = PreciceData::ioWrite;
+      preciceData.average = true;
+      LOG(INFO) << "Set average = true";
 
       // get precice names of the variables
-      preciceData.averagedTractionName = currentPreciceData.getOptionString("averagedTractionName", "averagedTraction");
+      preciceData.tractionName = currentPreciceData.getOptionString("tractionName", "Traction");
 
       // get precice data ids
-      preciceData.preciceDataIdAveragedTraction = preciceSolverInterface_->getDataID(
-      preciceData.averagedTractionName, preciceData.preciceMesh->preciceMeshId);
+      preciceData.preciceDataIdTraction = preciceSolverInterface_->getDataID(
+      preciceData.tractionName, preciceData.preciceMesh->preciceMeshId);
     }
     else
     {

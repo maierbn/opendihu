@@ -55,14 +55,12 @@ protected:
     std::string displacementsName;            //< precice name of the displacements variable, if any
     std::string velocitiesName;               //< precice name of the velocities variable, if any
     std::string tractionName;                 //< precice name of the traction variable, if any
-    std::string averagedTractionName;         //< precice name of the z-averaged traction variable, if any
-
 
     int preciceDataIdDisplacements;           //< precice id of the displacements variable
     int preciceDataIdVelocities;              //< precice id of the velocities variable
     int preciceDataIdTraction;                //< precice id of the traction variable
-    int preciceDataIdAveragedTraction;        //< precice id of the z-averaged traction variable
 
+    bool average;
 
     enum {
       ioRead,

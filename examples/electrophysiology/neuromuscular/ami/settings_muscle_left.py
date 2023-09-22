@@ -110,7 +110,7 @@ config = {
   "scenarioName":                   variables.scenario_name,    # scenario name which will appear in the log file
   "logFormat":                      "csv",                      # "csv" or "json", format of the lines in the log file, csv gives smaller files
   "solverStructureDiagramFile":     "solver_structure.txt",     # output file of a diagram that shows data connection between solvers
-  "mappingsBetweenMeshesLogFile":   "out/" + variables.scenario_name + "/mappings_between_meshes.txt",
+  "mappingsBetweenMeshesLogFile":   "out/" + variables.case_name + "/" + variables.scenario_name +"/mappings_between_meshes.txt",
   "meta": {                 # additional fields that will appear in the log
     "partitioning": [variables.n_subdomains_x, variables.n_subdomains_y, variables.n_subdomains_z]
   },

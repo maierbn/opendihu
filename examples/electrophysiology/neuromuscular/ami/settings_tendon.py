@@ -145,7 +145,7 @@ config = {
 
         },
         {
-          "mode":                 "write-traction",                    # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
+          "mode":                 "write-averaged-traction",                    # mode is one of "read-displacements-velocities", "read-traction", "write-displacements-velocities", "write-traction"
           "preciceMeshName":      "TendonMeshRight",                    # name of the precice coupling surface mesh, as given in the precice xml settings 
           "tractionName":         "Traction",                         # name of the traction "data", i.e. field variable, as given in the precice xml settings file
         }

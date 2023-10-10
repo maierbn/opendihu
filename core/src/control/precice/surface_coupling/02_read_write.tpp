@@ -323,27 +323,54 @@ preciceWriteData()
                                                             preciceData.preciceMesh->preciceVertexIds.data(), velocityValues_.data());
       }
       // if the data is traction
+      else if (!preciceData.tractionName.empty() && preciceData.average == true)
+      {
+        LOG(INFO) << "Write averaged traction";
+        // convert geometry values to precice data layout
+        tractionValues_.clear();
+        this->getTractionValues(this->nestedSolver_, preciceData.preciceMesh->dofNosLocal, tractionValues_);
+        // average z-values of traction
+        double average_traction = 0.0;
+        for (int i = 2; i < tractionValues_.size(); i+=3)
+        {
+          average_traction += tractionValues_[i];
+        }
+        average_traction /= (tractionValues_.size()/3);
+        for (int i = 2; i < tractionValues_.size(); i+=3)
+        {
+          tractionValues_[i] = average_traction;
+        }
+#ifndef NDEBUG
+        LOG(DEBUG) << "Write averaged-traction data to precice: " <<  tractionValues_[2];
+#endif
+        //scale traction values, they are always scaled by the factor of -1
+        for (double &value : tractionValues_)
+        {
+          value *= this->scalingFactor_;
+          value *= -1;
+        }
+
+        this->preciceSolverInterface_->writeBlockVectorData(preciceData.preciceDataIdTraction, preciceData.preciceMesh->nNodesLocal,
+                                                            preciceData.preciceMesh->preciceVertexIds.data(), tractionValues_.data());
+      }
       else if (!preciceData.tractionName.empty())
       {
+
+        LOG(INFO) << "Write non-averaged traction";
+
         // convert geometry values to precice data layout
         tractionValues_.clear();
         this->getTractionValues(this->nestedSolver_, preciceData.preciceMesh->dofNosLocal, tractionValues_);
 
-        // LOG(DEBUG) << "write traction data to precice: " << tractionValues_;
-        // std::stringstream s;
-        // double average_traction = 0.0;
-        // int size_traction = 0;
-        // for (int i = 2; i < tractionValues_.size(); i+=3)
-        // {
-        //   tractionValues_[i] += average_traction;
-        //   size_traction += 1;
-        // }
-        // average_traction /= size_traction;
-        // for (int i = 2; i < tractionValues_.size(); i+=3)
-        // {
-        //   tractionValues_[i] = average_traction;
-        // }
-        // LOG(DEBUG) << "z values of traction: " << s.str();
+#ifndef NDEBUG
+        LOG(DEBUG) << "write traction data to precice: " << tractionValues_;
+        std::stringstream s;
+        for (int i = 2; i < tractionValues_.size(); i+=3)
+        {
+          s << " " << tractionValues_[i];
+        }
+        LOG(DEBUG) << "z values of traction: " << s.str();
+#endif
         // scale traction values, they are always scaled by the factor of -1
         for (double &value : tractionValues_)
         {

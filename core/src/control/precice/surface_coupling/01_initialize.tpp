@@ -306,10 +306,23 @@ initializePreciceData()
       preciceData.preciceDataIdTraction = preciceSolverInterface_->getDataID(
         preciceData.tractionName, preciceData.preciceMesh->preciceMeshId);
     }
+    else if (mode == "write-averaged-traction")
+    {
+      preciceData.ioType = PreciceData::ioWrite;
+      preciceData.average = true;
+      LOG(INFO) << "Set average = true";
+
+      // get precice names of the variables
+      preciceData.tractionName = currentPreciceData.getOptionString("tractionName", "Traction");
+
+      // get precice data ids
+      preciceData.preciceDataIdTraction = preciceSolverInterface_->getDataID(
+      preciceData.tractionName, preciceData.preciceMesh->preciceMeshId);
+    }
     else
     {
       LOG(FATAL) << currentPreciceData << "[\"mode\"] is \"" << mode << "\", "
-        << "possible values are: \"read-displacements-velocities\", \"read-traction\", \"write-displacements-velocities\", \"write-traction\".";
+        << "possible values are: \"read-displacements-velocities\", \"read-traction\", \"write-displacements-velocities\", \"write-traction\", \"write-averaged-traction\".";
     }
 
     // store preciceData to vector

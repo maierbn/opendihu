@@ -331,13 +331,11 @@ preciceWriteData()
         this->getTractionValues(this->nestedSolver_, preciceData.preciceMesh->dofNosLocal, tractionValues_);
         // average z-values of traction
         double average_traction = 0.0;
-        int size_traction = 0;
         for (int i = 2; i < tractionValues_.size(); i+=3)
         {
           average_traction += tractionValues_[i];
-          size_traction += 1;
         }
-        average_traction /= size_traction;
+        average_traction /= (tractionValues_.size()/3);
         for (int i = 2; i < tractionValues_.size(); i+=3)
         {
           tractionValues_[i] = average_traction;

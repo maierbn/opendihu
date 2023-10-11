@@ -13,8 +13,6 @@ template<typename NestedSolver>
 void PreciceAdapterReadWrite<NestedSolver>::
 preciceReadData()
 {
-  if (!this->preciceSolverInterface_->isReadDataAvailable())
-    return;
 
   LOG(DEBUG) << "read data from precice";
 
@@ -284,9 +282,6 @@ template<typename NestedSolver>
 void PreciceAdapterReadWrite<NestedSolver>::
 preciceWriteData()
 {
-  if (!this->preciceSolverInterface_->isWriteDataRequired(this->timeStepWidth_))
-    return;
-
   // write data to precice
   LOG(DEBUG) << "write data to precice";
 

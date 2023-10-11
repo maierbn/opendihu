@@ -52,7 +52,7 @@ MEGAMOL_DOWNLOAD = False    # install MegaMol from official git repo, but needed
 # Vc, vectorization types and C++ utility to produce vectorized code (but does not support AVX-512)
 # std::experimental::simd supports AVX-512, but requires C++17. Therefore the package std_simd includes a compatibility script that falls back to Vc, if C++17 is not available.
 VC_DOWNLOAD = True
-STD_SIMD_DOWNLOAD = True
+STD_SIMD_DOWNLOAD = False
 
 # xbraid, used for parallel-in time methods (currently only on branch `xbraid`)
 XBRAID_DOWNLOAD = True

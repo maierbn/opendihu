@@ -22,8 +22,8 @@ mpiCC = "mpic++"   # MPI C++ wrapper
 cmake="cmake"      # cmake command
 
 # PETSc, this also downloads and installs MUMPS (direct solver package) and its dependencies PT-Scotch, SCAlapack, ParMETIS, METIS
-#PETSC_DOWNLOAD = True
-PETSC_DIR = "/usr/lib/petsc/"
+PETSC_DOWNLOAD = True
+#PETSC_DIR = "/usr/lib/petsc/"
 
 # Python 3.9, note that this also builds the C-API which is usually not included in the normal python3 installation of your system, therefore it is recommended that you leave it at 'True'
 PYTHON_DOWNLOAD = True
@@ -52,7 +52,7 @@ MEGAMOL_DOWNLOAD = False    # install MegaMol from official git repo, but needed
 # Vc, vectorization types and C++ utility to produce vectorized code (but does not support AVX-512)
 # std::experimental::simd supports AVX-512, but requires C++17. Therefore the package std_simd includes a compatibility script that falls back to Vc, if C++17 is not available.
 VC_DOWNLOAD = True
-STD_SIMD_DOWNLOAD = False
+STD_SIMD_DOWNLOAD = True
 
 # xbraid, used for parallel-in time methods (currently only on branch `xbraid`)
 XBRAID_DOWNLOAD = True

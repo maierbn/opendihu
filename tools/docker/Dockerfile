@@ -2,7 +2,8 @@ FROM ubuntu:22.04
 
 # Install prerequisites
 RUN apt update -y && apt install -y \
-build-essential cmake libeigen3-dev libxml2-dev libboost-all-dev petsc-dev python3-dev python3-numpy git wget libxsimdexir-dev
+git wget vim \
+build-essential cmake libeigen3-dev libxml2-dev libboost-all-dev petsc-dev python3-dev python3-numpy 
 
 WORKDIR /workspace
 

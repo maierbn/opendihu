@@ -17,7 +17,5 @@ RUN echo ". /workspace/.bash_aliases " >> ~/.bashrc
 # Build opendihu
 RUN make release_without_tests; echo "done"; cat config.log
 
-# 
-ADD .bash_aliases /workspace
-RUN echo ". /workspace/.bash_aliases " >> ~/.bashrc 
+
 

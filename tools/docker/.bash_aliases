@@ -23,7 +23,5 @@ alias mkod='$OPENDIHU_HOME/scripts/shortcuts/mkod.sh'
 alias mkodn='$OPENDIHU_HOME/scripts/shortcuts/mkodn.sh'
 alias mkordn='$OPENDIHU_HOME/scripts/shortcuts/mkordn.sh'
 
-export PETSC_DIR=$OPENDIHU_HOME/dependencies/petsc/src/petsc-3.12.3
-export PETSC_ARCH=arch-linux-c-opt
-export LD_LIBRARY_PATH=$OPENDIHU_HOME/dependencies/petsc/install/lib:$OPENDIHU_HOME/dependencies/precice/install/lib
+
 

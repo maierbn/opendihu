@@ -2,8 +2,9 @@ FROM ubuntu:22.04
 
 # Install prerequisites
 RUN apt update -y && apt install -y \
-git wget vim bison \
+git wget vim \
 build-essential cmake python3-dev python3-numpy python-is-python3 \
+libopenmpi-dev bison \
 libeigen3-dev libxml2-dev libboost-all-dev petsc-dev 
 
 WORKDIR /workspace

@@ -2,6 +2,11 @@
 # The content of this file is to be added to the docker container dashfile
 export OPENDIHU_HOME=/workspace/opendihu
 
+# export PETSC_DIR=$OPENDIHU_HOME/dependencies/petsc/src/petsc-3.12.3
+# export PETSC_ARCH=arch-linux-c-opt
+# export LD_LIBRARY_PATH=$OPENDIHU_HOME/dependencies/petsc/install/lib:$OPENDIHU_HOME/dependencies/precice/install/lib
+
+
 export PATH=$PATH:$OPENDIHU_HOME/scripts
 export PATH=$PATH:$OPENDIHU_HOME/scripts/geometry_manipulation
 export PATH=$PATH:$OPENDIHU_HOME/scripts/file_manipulation

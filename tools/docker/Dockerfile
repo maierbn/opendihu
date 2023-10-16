@@ -2,7 +2,7 @@ FROM ubuntu:22.04
 
 # Install prerequisites
 RUN apt update -y && apt install -y \
-git wget vim \
+git wget vim bison\
 build-essential cmake python3-dev python3-numpy python-is-python3 \
 libeigen3-dev libxml2-dev libboost-all-dev petsc-dev 
 

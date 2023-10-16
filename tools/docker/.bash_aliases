@@ -23,5 +23,6 @@ alias mkod='$OPENDIHU_HOME/scripts/shortcuts/mkod.sh'
 alias mkodn='$OPENDIHU_HOME/scripts/shortcuts/mkodn.sh'
 alias mkordn='$OPENDIHU_HOME/scripts/shortcuts/mkordn.sh'
 
+#export STD_SIMD_DIR=/workspace/opendihu/dependencies/std_simd/install
 
 

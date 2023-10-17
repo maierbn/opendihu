@@ -20,8 +20,7 @@ class PETSc(Package):
 
   def __init__(self, **kwargs):
     defaults = {
-      #'download_url': 'http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-3.7.6.tar.gz',
-      'download_url': 'http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-3.12.3.tar.gz',
+      'download_url': 'http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-3.15.5.tar.gz'
     }
     defaults.update(kwargs)
     super(PETSc, self).__init__(**defaults)

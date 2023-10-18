@@ -3,8 +3,7 @@ FROM ubuntu:22.04
 # Install prerequisites
 RUN apt-get update && apt-get install -y \
     git wget vim unzip \
-    build-essential cmake python3-dev python3-numpy python-is-python3 \
-    libopenmpi-dev bison \
+    build-essential cmake python3-dev python3-numpy \
     libeigen3-dev libxml2-dev libboost-all-dev petsc-dev \
     libffi-dev 
 

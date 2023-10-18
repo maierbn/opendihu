@@ -88,7 +88,7 @@ void handleSignal(int signalNo)
   MappingBetweenMeshes::Manager::writeLogFile();
 
   int rankNo = DihuContext::ownRankNoCommWorld();
-  LOG(INFO) << "Rank " << rankNo << " received signal " << strsignal[signalNo]
+  LOG(INFO) << "Rank " << rankNo << " received signal " << strsignal(signalNo)
     << " (" << signalNo << "): " << signalName;
 
   if (signalNo == SIGBUS)

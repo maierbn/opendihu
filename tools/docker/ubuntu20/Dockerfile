@@ -4,10 +4,12 @@ FROM ubuntu:20.04
 RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" TZ="Europe/Berlin" \
     apt-get install -y \
-    git wget vim unzip \
-    build-essential cmake python3-dev python3-numpy python3-scipy python-is-python3 \
-    libopenmpi-dev bison \
-    libeigen3-dev libxml2-dev libboost-all-dev petsc-dev 
+    git \
+    wget unzip \
+    build-essential petsc-dev libeigen3-dev libxml2-dev libboost-all-dev \
+    cmake \
+    libffi-dev \
+    vim
 
 WORKDIR /workspace
 

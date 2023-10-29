@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:18.04
 
 # Install prerequisites
 RUN apt-get update && \
@@ -9,12 +9,16 @@ RUN apt-get update && \
     build-essential petsc-dev libeigen3-dev libxml2-dev libboost-all-dev \
     cmake \
     libffi-dev \
+    python3 \
     vim
+
+# make python point to python3 (needed for petsc build)
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 100
 
 WORKDIR /workspace
 
 # Clone opendihu
-RUN git clone --branch docker-with-precice-v2.5 --depth=1 https://github.com/maierbn/opendihu.git  
+RUN git clone --branch docker-ubuntu16-18 --depth=1 https://github.com/maierbn/opendihu.git  
 WORKDIR opendihu
 
 # Build opendihu

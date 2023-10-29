@@ -21,6 +21,13 @@ WORKDIR /workspace
 RUN git clone --branch docker-ubuntu16-18 --depth=1 https://github.com/maierbn/opendihu.git  
 WORKDIR opendihu
 
+# install recent cmake
+RUN mkdir -p dependencies/cmake && cd dependencies/cmake && \
+    wget https://github.com/Kitware/CMake/releases/download/v3.28.0-rc3/cmake-3.28.0-rc3.tar.gz && \
+    tar xf cmake-3.28.0-rc3.tar.gz && \
+    cd cmake-3.28.0-rc3 && \
+    ./bootstrap && make && make install
+
 # Build opendihu
 RUN make release_without_tests; echo "done"; cat config.log
 

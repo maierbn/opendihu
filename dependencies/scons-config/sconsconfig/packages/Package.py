@@ -692,7 +692,6 @@ class Package(object):
               output = f.read()
           except:
             output = ''
-            pass
         n = output.count('\n')
       else:
         continue
@@ -816,8 +815,17 @@ class Package(object):
           self.command_running = False
           stdout_log.close()
           if os.path.exists('stdout.log'):
-            with open('stdout.log') as f:
-              output = f.read()
+            try:
+              with open('stdout.log') as f:
+                output = f.read()
+                  
+            # if output contains non-asci characters, try to open in binary mode
+            except UnicodeDecodeError:
+              try:
+                with open('stdout.log', 'rb') as f:
+                  output = f.read()
+              except:
+                output = ''
             stdout_log.close()
             os.remove('stdout.log')
           

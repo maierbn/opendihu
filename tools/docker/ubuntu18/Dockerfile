@@ -6,7 +6,7 @@ RUN apt-get update && \
     apt-get install -y \
     git \
     wget unzip \
-    build-essential petsc-dev libeigen3-dev libxml2-dev libboost-all-dev \
+    build-essential petsc-dev bison flex libeigen3-dev libxml2-dev libboost-all-dev \
     cmake \
     libffi-dev \
     python3 \

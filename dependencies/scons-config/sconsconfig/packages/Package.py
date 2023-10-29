@@ -689,7 +689,7 @@ class Package(object):
         except UnicodeDecodeError:
           try:
             with open('stdout.log', 'rb') as f:
-              output = f.read()
+              output = str(f.read())
           except:
             output = ''
         n = output.count('\n')
@@ -823,7 +823,7 @@ class Package(object):
             except UnicodeDecodeError:
               try:
                 with open('stdout.log', 'rb') as f:
-                  output = f.read()
+                  output = str(f.read())
               except:
                 output = ''
             stdout_log.close()

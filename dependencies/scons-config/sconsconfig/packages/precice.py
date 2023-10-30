@@ -128,8 +128,8 @@ class precice(Package):
         # boost
         'if [ ! -d ${PREFIX}/include/boost ]; then \
           cd ${SOURCE_DIR} && [ ! -f ${SOURCE_DIR}/boost_1_65_1.tar.gz ] && \
-          ( wget https://boostorg.jfrog.io/artifactory/main/release/1.71.0/source/boost_1_71_0.tar.gz && tar xf boost_1_71_0.tar.gz ); \
-          cd boost_1_71_0 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test,regex --prefix=${PREFIX} && \
+          ( wget https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_1_83_0.tar.gz && tar xf boost_1_83_0.tar.gz ); \
+          cd boost_1_83_0 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test,regex --prefix=${PREFIX} && \
           ./b2 -j12 install; \
         fi',
 
@@ -142,7 +142,7 @@ class precice(Package):
         -DCMAKE_BUILD_TYPE=RELEASE \
         -DPRECICE_PythonActions=OFF \
         -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=${DEPENDENCIES_DIR}/python/install/bin/python3 \
-        -DPETSC_DIR=${PETSC_DIR} -DPETSC_EXECUTABLE_RUNS=TRUE \
+        -DPETSc_DIR=${PETSC_DIR} -DPETSC_EXECUTABLE_RUNS=TRUE \
         -DLIBXML2_INCLUDE_DIR=${PREFIX}/include/libxml2 -DLIBXML2_LIBRARY=${PREFIX}/lib/libxml2.so \
         -DPRECICE_ENABLE_FORTRAN=OFF \
         -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR \

@@ -75,8 +75,8 @@ class precice(Package):
       
     self.libs = ['precice']
     self.extra_libs = [[],
-                       ['boost_filesystem', 'boost_log', 'boost_log_setup', 'boost_program_options', 'boost_system', 'boost_thread', 'boost_unit_test_framework', 'dl', 'boost_regex'],
-    									 ['boost_atomic', 'boost_chrono', 'boost_filesystem', 'boost_log', 'boost_log_setup', 'boost_prg_exec_monitor', 'boost_program_options', 'boost_system', 'boost_test_exec_monitor', 'boost_thread', 'boost_unit_test_framework', 'dl', 'boost_regex']]
+                       ['boost_filesystem', 'boost_log_setup', 'boost_log', 'boost_program_options', 'boost_system', 'boost_thread', 'boost_unit_test_framework', 'dl', 'boost_regex'],
+    									 ['boost_atomic', 'boost_chrono', 'boost_filesystem', 'boost_log_setup', 'boost_log', 'boost_prg_exec_monitor', 'boost_program_options', 'boost_system', 'boost_test_exec_monitor', 'boost_thread', 'boost_unit_test_framework', 'dl', 'boost_regex']]
     self.headers = ["precice/SolverInterface.hpp"]
 
   def check(self, ctx):
@@ -129,7 +129,7 @@ class precice(Package):
         'if [ ! -d ${PREFIX}/include/boost ]; then \
           cd ${SOURCE_DIR} && [ ! -f ${SOURCE_DIR}/boost_1_65_1.tar.gz ] && \
           ( wget https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_1_83_0.tar.gz && tar xf boost_1_83_0.tar.gz ); \
-          cd boost_1_83_0 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test,regex,log_setup --prefix=${PREFIX} && \
+          cd boost_1_83_0 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test,regex --prefix=${PREFIX} && \
           ./b2 -j12 install; \
         fi',
 

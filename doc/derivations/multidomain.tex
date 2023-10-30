@@ -116,7 +116,7 @@ In general, the weak form of a diffusion problem discretized with Crank-Nicolson
     \Rightarrow\quad \ds\int_Ω \big(\theta\,Δu^{(i+1)} + (1-\theta)\,Δu^{(i)}\big)\,\phi \,\d\bfx = \dfrac{1}{dt} \ds\int_Ω(u^{(i+1)} - u^{(i)})\,\phi\,\d\bfx, \quad \forall \phi \in V_h\\[4mm]
   \end{array}
 \end{equation}
-Discretize in space with $u = \sum_j u_j\,\varphi_j, V_h = \span\{\varphi_j | j = 1\dots N\}$ and using Divergence theorem
+Discretize in space with $u = \sum_j u_j\,\varphi_j, V_h = \mathrm{span}\{\varphi_j | j = 1\dots N\}$ and using Divergence theorem
 \begin{equation}\label{eq:weak_form1}
   \begin{array}{lll}
     \ds\sum\limits_{j=1}^{N} \big(\theta\,u_j^{(i+1)} + (1-\theta)\,u_j^{(i)}\big)  \left(-\ds\int_Ω ∇\varphi_j\cdot ∇\varphi_k \,\d\bfx + \ds\int_{∂Ω} (∇\varphi_j\cdot \bfn)\varphi_k \,\d\bfx  \right) \\[4mm]
@@ -564,7 +564,7 @@ So far we haven't specified a boundary condition for the second row.
 \subsection{Additional body region}
 To simulate surface-electromyography we add a domain $\Omega_B$ which represents fat tissue. The setting is visualized by Fig.~\ref{fig:body_domain2}.
 
-\bild{body_domain2}{0.3\textwidth}{Computational domains}
+\bild{body_domain2}{0.5\textwidth}{Computational domains}
 
 On the muscle domain $\Omega_M$, we have the 1st and 2nd Multidomain equation,
 \begin{equation*}

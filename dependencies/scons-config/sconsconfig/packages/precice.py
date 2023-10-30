@@ -128,8 +128,8 @@ class precice(Package):
         # boost
         'if [ ! -d ${PREFIX}/include/boost ]; then \
           cd ${SOURCE_DIR} && [ ! -f ${SOURCE_DIR}/boost_1_65_1.tar.gz ] && \
-          ( wget https://boostorg.jfrog.io/artifactory/main/release/1.65.1/source/boost_1_65_1.tar.gz && tar xf boost_1_65_1.tar.gz ); \
-          cd boost_1_65_1 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test,regex --prefix=${PREFIX} && \
+          ( wget https://boostorg.jfrog.io/artifactory/main/release/1.71.0/source/boost_1_71_0.tar.gz && tar xf boost_1_71_0.tar.gz ); \
+          cd boost_1_71_0 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test,regex --prefix=${PREFIX} && \
           ./b2 -j12 install; \
         fi',
 
@@ -147,7 +147,7 @@ class precice(Package):
         -DPRECICE_ENABLE_FORTRAN=OFF \
         -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR \
         -DEigen3_ROOT=${SOURCE_DIR}/eigen-3.3.8 \
-        -DBOOST_ROOT=${PREFIX} \
+        -DBoost_ROOT=${PREFIX} \
         -DBoost_DIR=${PREFIX} \
         ..',
         'cd ${SOURCE_DIR}/build && make precice install -j 16'

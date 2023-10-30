@@ -106,7 +106,7 @@ class PETSc(Package):
           --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
           COPTFLAGS=-O3\
           CXXOPTFLAGS=-O3\
-          FOPTFLAGS="-O3 -fallow-argument-mismatch" | tee out.txt',
+          FOPTFLAGS=-O3 | tee out.txt',
         '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',     # do it twice, the first time fails with PGI
         '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
         '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
@@ -150,7 +150,7 @@ class PETSc(Package):
             --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
             COPTFLAGS=-O3 \
             CXXOPTFLAGS=-O3 \
-            FOPTFLAGS="-O3 -fallow-argument-mismatch" | tee out.txt',
+            FOPTFLAGS=-O3 | tee out.txt',
           '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt || make',
           '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt) || make install',
         ])  
@@ -187,7 +187,7 @@ class PETSc(Package):
             --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
             COPTFLAGS=-O3 \
             CXXOPTFLAGS=-O3 \
-            FOPTFLAGS="-O3 -fallow-argument-mismatch" | tee out.txt',
+            FOPTFLAGS=-O3 | tee out.txt',
           '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt || make',
           '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt) || make install',
         ])  

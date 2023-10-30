@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+
+<precice-configuration>
+  <!-- format for console output of precice -->
+  <log>
+    <sink type="stream" output="stdout"  filter='(%Severity% >= debug) and (not (%Function% = "advance"))' format="\033[0;33m%Rank% [precice]\033[0m %ColorizedSeverity%\033[0;33m%Message%\033[0m" enabled="true" />
+  </log>
+
+  <solver-interface dimensions="3">
+    <data:vector name="Velocity"/>
+    <data:vector name="Displacement"/>
+    <data:vector name="Traction"/>
+
+    <mesh name="LeftTendonMesh">
+       <use-data name="Displacement"/>
+       <use-data name="Velocity"/>
+       <use-data name="Traction"/>
+    </mesh>
+
+    <mesh name="CentralTendonMeshLeft">
+       <use-data name="Displacement"/>
+       <use-data name="Velocity"/>
+       <use-data name="Traction"/>
+    </mesh>
+
+    <mesh name="CentralTendonMeshRight">
+       <use-data name="Displacement"/>
+       <use-data name="Velocity"/>
+       <use-data name="Traction"/>
+    </mesh>
+
+    <mesh name="RightTendonMesh">
+       <use-data name="Displacement"/>
+       <use-data name="Velocity"/>
+       <use-data name="Traction"/>
+    </mesh>
+
+    <participant name="LeftTendonSolver">
+      <use-mesh name="LeftTendonMesh" provide="yes"/>
+      <use-mesh name="CentralTendonMeshLeft" from="CentralTendonSolver"/>
+
+      <read-data  name="Displacement" mesh="LeftTendonMesh"/>
+      <read-data  name="Velocity" mesh="LeftTendonMesh"/>
+      <write-data name="Traction" mesh="LeftTendonMesh"/>
+
+      <mapping:nearest-neighbor direction="read" from="CentralTendonMeshLeft" to="LeftTendonMesh" constraint="consistent"/>
+      <export:vtk directory="preCICE-output"/>
+    </participant>
+
+    <participant name="CentralTendonSolver"> 
+      <use-mesh name="LeftTendonMesh" from="LeftTendonSolver"/>
+      <use-mesh name="CentralTendonMeshLeft" provide="yes"/>
+      <use-mesh name="CentralTendonMeshRight" provide="yes"/>
+      <use-mesh name="RightTendonMesh" from="RightTendonSolver"/>
+
+      <write-data name="Displacement" mesh="CentralTendonMeshLeft"/>
+      <write-data name="Velocity" mesh="CentralTendonMeshLeft"/>
+      <read-data  name="Traction" mesh="CentralTendonMeshLeft"/>
+
+      <write-data name="Displacement" mesh="CentralTendonMeshRight"/>
+      <write-data name="Velocity" mesh="CentralTendonMeshRight"/>
+      <read-data  name="Traction" mesh="CentralTendonMeshRight"/>
+
+      <mapping:nearest-neighbor direction="read" from="LeftTendonMesh" to="CentralTendonMeshLeft" constraint="consistent"/>
+      <mapping:nearest-neighbor direction="read" from="RightTendonMesh" to="CentralTendonMeshRight" constraint="consistent"/>
+
+      <export:vtk directory="preCICE-output" />
+    </participant>
+
+    <participant name="RightTendonSolver">
+      <use-mesh name="CentralTendonMeshRight" from="CentralTendonSolver"/>
+      <use-mesh name="RightTendonMesh" provide="yes"/>
+
+      <read-data  name="Displacement" mesh="RightTendonMesh"/>
+      <read-data  name="Velocity" mesh="RightTendonMesh"/>
+      <write-data name="Traction" mesh="RightTendonMesh"/>
+
+      <mapping:nearest-neighbor direction="read" from="CentralTendonMeshRight" to="RightTendonMesh" constraint="consistent"/>
+      <export:vtk directory="preCICE-output"/>
+    </participant>
+    
+    <!-- Communication method, use TCP sockets, Change network to "ib0" on SuperMUC -->
+    <m2n:sockets from="CentralTendonSolver" to="LeftTendonSolver" network="lo" />
+    <m2n:sockets from="CentralTendonSolver" to="RightTendonSolver" network="lo" />
+
+    <coupling-scheme:multi>
+      <participant name="CentralTendonSolver" control="yes"/>
+      <participant name="LeftTendonSolver" />
+      <participant name="RightTendonSolver" />
+
+      <max-time value="20.0"/>          
+      <time-window-size value="1"/>   
+
+      <max-iterations value="3" />
+
+      <relative-convergence-measure limit="1" data="Displacement" mesh="LeftTendonMesh" strict="0"/>
+      <relative-convergence-measure limit="1" data="Velocity" mesh="LeftTendonMesh" strict="0"/>
+      <absolute-convergence-measure limit="1" data="Traction" mesh="CentralTendonMeshLeft" strict="0"/>
+
+      <relative-convergence-measure limit="1" data="Displacement" mesh="RightTendonMesh" strict="0"/>
+      <relative-convergence-measure limit="1" data="Velocity" mesh="RightTendonMesh" strict="0"/>
+      <absolute-convergence-measure limit="1" data="Traction" mesh="CentralTendonMeshRight" strict="0"/>
+
+      <exchange data="Traction" mesh="CentralTendonMeshLeft" from="CentralTendonSolver" to="LeftTendonSolver"/>
+      <exchange data="Traction" mesh="CentralTendonMeshRight" from="CentralTendonSolver" to="RightTendonSolver"/>  
+  
+      <exchange data="Displacement" mesh="LeftTendonMesh" from="LeftTendonSolver" to="CentralTendonSolver"/>  
+      <exchange data="Velocity" mesh="LeftTendonMesh" from="LeftTendonSolver" to="CentralTendonSolver"/>  
+
+      <exchange data="Displacement" mesh="RightTendonMesh" from="RightTendonSolver" to="CentralTendonSolver"/>  
+      <exchange data="Velocity" mesh="RightTendonMesh" from="RightTendonSolver" to="CentralTendonSolver"/>  
+
+    </coupling-scheme:multi>
+
+  </solver-interface>
+</precice-configuration>

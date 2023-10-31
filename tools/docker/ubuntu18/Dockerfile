@@ -28,6 +28,9 @@ RUN mkdir -p dependencies/cmake && cd dependencies/cmake && \
     cd cmake-3.28.0-rc3 && \
     ./bootstrap && make && make install
 
+# disable precice
+RUN sed -i 's/PRECICE_DOWNLOAD = True/PRECICE_DOWNLOAD = False/g' user-variables.scons.py
+
 # Build opendihu
 RUN make release_without_tests; echo "done"; cat config.log
 

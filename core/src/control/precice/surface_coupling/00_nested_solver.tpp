@@ -42,6 +42,15 @@ updateNeumannBoundaryConditions(NestedSolverType &nestedSolver,
   nestedSolver.timeStepping2().dynamicHyperelasticitySolver()->hyperelasticitySolver().updateNeumannBoundaryConditions(neumannBoundaryConditions);
 }
 
+template<typename T1, typename T2, typename T3>
+void PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::
+updateNeumannBoundaryConditionElements(NestedSolverType &nestedSolver,
+                                std::vector<typename SpatialDiscretization::NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>::ElementWithFaces> &neumannBoundaryConditionElements)
+{
+    LOG(INFO) << "update neumann BC \n";
+  nestedSolver.timeStepping2().dynamicHyperelasticitySolver()->hyperelasticitySolver().updateNeumannBoundaryConditionElements(neumannBoundaryConditionElements);
+}
+
 //! get the displacement and velocity vectors of the given local dof nos
 template<typename T1, typename T2, typename T3>
 void PreciceAdapterNestedSolver<Control::Coupling<T1,MuscleContractionSolver<T2,T3>>>::
@@ -194,6 +203,15 @@ updateNeumannBoundaryConditions(NestedSolverType &nestedSolver,
 {
     LOG(INFO) << "update neumann BC \n";
   nestedSolver.hyperelasticitySolver().updateNeumannBoundaryConditions(neumannBoundaryConditions);
+}
+
+template<typename Material>
+void PreciceAdapterNestedSolver<TimeSteppingScheme::DynamicHyperelasticitySolver<Material>>::
+updateNeumannBoundaryConditionElements(NestedSolverType &nestedSolver,
+                                std::vector<typename SpatialDiscretization::NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>::ElementWithFaces> &neumannBoundaryConditionElements)
+{
+    LOG(INFO) << "update neumann BC \n";
+  nestedSolver.hyperelasticitySolver().updateNeumannBoundaryConditionElements(neumannBoundaryConditionElements);
 }
 
 //! get the displacement and velocity vectors of the given local dof nos
@@ -375,6 +393,15 @@ updateNeumannBoundaryConditions(NestedSolverType &nestedSolver,
                                 std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions)
 {
   nestedSolver.updateNeumannBoundaryConditions(neumannBoundaryConditions);
+}
+
+template<typename Material>
+void PreciceAdapterNestedSolver<SpatialDiscretization::HyperelasticitySolver<Material>>::
+updateNeumannBoundaryConditionElements(NestedSolverType &nestedSolver,
+                                std::vector<typename SpatialDiscretization::NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>::ElementWithFaces> &neumannBoundaryConditionElements)
+{
+    LOG(INFO) << "update neumann BC \n";
+  nestedSolver.updateNeumannBoundaryConditionElements(&neumannBoundaryConditionElements);
 }
 
 //! get the displacement and velocity vectors of the given local dof nos

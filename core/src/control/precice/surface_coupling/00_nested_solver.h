@@ -53,6 +53,11 @@ public:
   void updateNeumannBoundaryConditions(NestedSolverType &nestedSolver,
                                        std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions);
 
+  //! update the neumann boundary conditions by replacing the neumannBoundaryConditionsElements object only
+  void updateNeumannBoundaryConditionElements(NestedSolverType &nestedSolver,
+                                       std::vector<typename SpatialDiscretization::NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>::ElementWithFaces> &neumannBoundaryConditionElements);
+
+
   //! get the displacement and velocity vectors of the given local dof nos
   void getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<dof_no_t> &dofNosLocal,
                                      std::vector<double> &displacementValues, std::vector<double> &velocityValues);
@@ -106,6 +111,10 @@ public:
   //! update the neumann boundary conditions by replacing the complete object
   void updateNeumannBoundaryConditions(NestedSolverType &nestedSolver,
                                        std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions);
+  
+  //! update the neumann boundary conditions by replacing the neumannBoundaryConditionsElements object only
+  void updateNeumannBoundaryConditionElements(NestedSolverType &nestedSolver,
+                                       std::vector<typename SpatialDiscretization::NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>::ElementWithFaces> &neumannBoundaryConditionElements);
 
   //! get the displacement and velocity vectors of the given local dof nos
   void getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<dof_no_t> &dofNosLocal,
@@ -159,6 +168,10 @@ public:
   //! update the neumann boundary conditions by replacing the complete object
   void updateNeumannBoundaryConditions(NestedSolverType &nestedSolver,
                                        std::shared_ptr<SpatialDiscretization::NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>> neumannBoundaryConditions);
+
+  //! update the neumann boundary conditions by replacing the neumannBoundaryConditionsElements object only
+  void updateNeumannBoundaryConditionElements(NestedSolverType &nestedSolver,
+                                       std::vector<typename SpatialDiscretization::NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>::ElementWithFaces> &neumannBoundaryConditionElements);
 
   //! get the displacement and velocity vectors of the given local dof nos
   void getDisplacementVelocityValues(NestedSolverType &nestedSolver, const std::vector<dof_no_t> &dofNosLocal,

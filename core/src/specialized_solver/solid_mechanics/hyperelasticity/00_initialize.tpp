@@ -1014,6 +1014,14 @@ updateNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<typena
   materialComputeExternalVirtualWorkDead();
 }
 
+//! set new neumann bc's = traction for the next solve
+template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
+void HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
+updateNeumannBoundaryConditionElements(std::vector<typename NeumannBoundaryConditions<typename HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>::ElementWithFaces> newNeumannBoundaryConditionElements)
+{
+  
+}
+
 //! set new dirichlet boundary condition values for existing dofs
 template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementComponents>
 void HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::

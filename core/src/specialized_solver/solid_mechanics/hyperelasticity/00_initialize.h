@@ -97,6 +97,9 @@ public:
   //! set new neumann bc's = traction for the next solve
   void updateNeumannBoundaryConditions(std::shared_ptr<NeumannBoundaryConditions<DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>> newNeumannBoundaryConditions);
 
+  //! set new neumann bc's = traction for the next solve
+  void updateNeumannBoundaryConditionElements(std::vector<typename NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>::ElementWithFaces> newNeumannBoundaryConditionElement);
+
   //! set new dirichlet boundary condition values for existing dofs
   void updateDirichletBoundaryConditions(std::vector<std::pair<global_no_t,std::array<double,3>>> newDirichletBCValues);
 

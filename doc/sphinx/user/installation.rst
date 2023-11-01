@@ -2,12 +2,12 @@
 
 Installation
 =================
-OpenDiHu uses existing open-source projects, like PETSc, Python, Easylogging++, etc. The installation of opendihu has to provide all these packages, too. 
+OpenDiHu uses existing open-source projects, like PETSc, Python, Easylogging++, etc. The installation of OpenDiHu has to provide all these packages, too. 
 A `scons <https://scons.org/>`_ based build system is included that automatically downloads and builds all needed dependencies. 
-It was successfully tested on Ubuntu 16.04, 18.04 and 20.04 (also on the Windows subsystem for linux, WSL) and on Debian as well as on the supercomputers `Hazel Hen` and `Hawk`. 
+It was successfully tested on Ubuntu 16.04, 18.04, 20.04 and 22.04 (also on the Windows subsystem for linux, WSL) and on Debian as well as on the supercomputers `Hazel Hen` and `Hawk`. 
 It should work on other Linux distributions as well. If something fails, usually minor adjustments in the configuration solve the problem.
 
-For users that only want to quickly check the functionality without a lengthy installation process, we provide a docker image of opendihu.
+For users that only want to quickly check the functionality without a lengthy installation process, we provide a docker image of OpenDiHu.
 This serves all the available functionality, except that parallel execution in docker containers is generally hardly possible. 
 Because this is key to efficiently computing simulations, we recommend the native installation.
 
@@ -38,11 +38,29 @@ Which branches are being developed can be checked on the overview page of the co
 
 From time to time there are `releases <https://github.com/maierbn/opendihu/releases>`_, e.g. there is version 1.0 from 15.04.2019 and newer ones.
 
-Prerequisites
+The `develop` branch is not guaranted to support Ubuntu versions before 20.04 anymore. TODO: We provide a release with the lastest version compatible with older versions of Ubuntu (down to Ubuntu 16.04).
+
+Prerequisites (starting from Ubuntu 20.04)
 ^^^^^^^^^^^^^^
 
 On a blank computer with Ubuntu, the following packages should be installed.
-On all servers of SGS, these packages are already available and no further steps are required.
+
+.. code-block:: bash
+
+  # Packages needed on Ubuntu 16.04 and above
+  sudo apt-get update && \
+  sudo apt-get install -y build-essential cmake petsc-dev libeigen3-dev libxml2-dev libboost-all-dev libffi-dev \
+  git wget unzip
+  
+  # (optional) To be able to build this documentation, install
+  sudo apt install python3-pip
+  sudo pip3 install sphinx recommonmark sphinx_rtd_theme
+
+
+Prerequisites (starting from Ubuntu 16.04)
+^^^^^^^^^^^^^^
+
+On a blank computer with Ubuntu, the following packages should be installed.
 
 .. code-block:: bash
 
@@ -124,7 +142,7 @@ Instead of using the `Makefile` you can also call ``scons`` yourself.
 Define environment variables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In order for some commands to work (e.g. the ``plot`` utility), you need to set the PATH variable to point to some directories of opendihu. 
+In order for some commands to work (e.g. the ``plot`` utility), you need to set the PATH variable to point to some directories of OpenDiHu. 
 This can be done by adding the following lines to your `~/.bashrc` script or `~/.bash_aliases` on Ubuntu.
 
 .. code-block:: bash
@@ -141,15 +159,17 @@ Setting these variables is recommended but not required.
 The `~/.bashrc` or `~/.bash_aliases` file will be executed whenever you start a new `bash` instance. 
 In order for the variable assignments to take effect, either close and reopen the console window or source the file yourself, by executing ``. ~/.bashrc``.
 
+**IMPORTANT:** Ubuntu 22.04 users need to add `export OMPI_MCA_osc="^ucx"` to their `~/.bashrc` file. 
+
 Building with scons
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Opendihu consists of a `core` library that contains the main functionality and multiple examples, that each use the core library.
-As mentioned, to build the opendihu core library either `make` can be used, or it is possible to use the build system `scons`.
+As mentioned, to build the OpenDiHu core library either `make` can be used, or it is possible to use the build system `scons`.
 In order to build examples there is no choice, you need to use `scons`.
 
 To be able to use `scons`, you can either install the `scons` package on your system (``sudo apt install scons`` on Ubuntu)
-or use the `scons` program, that is packaged with opendihu. 
+or use the `scons` program, that is packaged with OpenDiHu. 
 This is located under `dependencies/scons/scons.py`, so simply run the following command:
 
 .. code-block:: bash
@@ -182,15 +202,15 @@ If you like, you can copy the following aliases to your `~/.bashrc` or `~/.bash_
 Then, the following commands can be used for the build:
 
   * ``scons BUILD_TYPE=release`` or ``scons BUILD_TYPE=r`` or ``scons`` or ``s``:
-    Build the file in the current directory in `release` mode, either to be used in the opendihu main directory to build the core library or in any example directory.
+    Build the file in the current directory in `release` mode, either to be used in the OpenDiHu main directory to build the core library or in any example directory.
   
   * ``scons BUILD_TYPE=debug`` or ``scons BUILD_TYPE=d`` or ``sd``: Build `debug` target in current directory.
   * ``sdd``: To be used from within a `build_debug` directory. Go one directory up, build the example in `debug` target and go back to the original directory. This alias is equivalent to ``cd ..; scons BUILD_TYPE=debug; cd -``.
   * ``srr``: To be used from within a `build_release` directory. Go one directory up, build the example in `release` target and go back to the original directory. This alias is equivalent to ``cd ..; scons BUILD_TYPE=release; cd -``.
   * ``mkor``: "Make opendihu release". Use this command in any directory. It changes into the `opendihu` directory, executes `scons` there, to build the core library and changes back to the original directory.
-  * ``mkorn``: "Make opendihu release, no tests". Same as `mkor`, except it does not build the unit tests. This is the most frequently used command to build the opendihu core.
+  * ``mkorn``: "Make opendihu release, no tests". Same as `mkor`, except it does not build the unit tests. This is the most frequently used command to build the OpenDiHu core.
   * ``mkod``: "Make opendihu debug". Use this command in any directory. It changes into the `opendihu` directory, executes `scons BUILD_TYPE=debug` there, to build the core library and changes back to the original directory.
-  * ``mkodn``: "Make opendihu debug, no tests". Same as `mkor`, except it does not build the unit tests. This is the most frequently used command to build the opendihu core in debug target.
+  * ``mkodn``: "Make opendihu debug, no tests". Same as `mkor`, except it does not build the unit tests. This is the most frequently used command to build the OpenDiHu core in debug target.
   * ``scons BUILD_TYPE=releasewithdebuginfo`` or ``scons BUILD_TYPE=rd`` or ``srd``: Build `releasewithdebuginfo` target in current directory.
   
 As an example, if you work on a particular example and are in its `build_release` subdirectory, use ``mkorn && srr`` to build the core and the example and end up in the same directory afterwards.
@@ -224,21 +244,21 @@ The second line would provide the path to an already existing installation on th
 
 There are similar options for all packages. You can read about more possibilities in the header of the `user-variables.scons.py` file. 
 
-There are required dependencies, which need to be present in order for opendihu to work, and optional dependencies:
+There are required dependencies, which need to be present in order for OpenDiHu to work, and optional dependencies:
 
 ============================================================  ========  ===================================================================================
  Package                                                      Required    Description
 ============================================================  ========  ===================================================================================
 `MPI`                                                             yes     | *Message Passing Interface*, used for data transfer between
                                                                           | processes. This should be your system MPI. If you let 
-                                                                          | opendihu install it for you, `OpenMPI <https://www.open-mpi.org/>`_ 
+                                                                          | OpenDiHu install it for you, `OpenMPI <https://www.open-mpi.org/>`_ 
                                                                           | will be chosen.
 `PETSc <https://www.mcs.anl.gov/petsc/>`_                         yes     | Low-level data structures and solvers, see their `website <https://www.mcs.anl.gov/petsc/>`_
                                                                           | for more details.
 `Python3`                                                         yes     | The `Python3 interpreter <https://www.python.org/>`_, 
                                                                           | version 3.9 or 3.6.5 for legacy. We need the development 
                                                                           | header and source files, therefore it is recommended to 
-                                                                          | let opendihu build python for you, even if your system 
+                                                                          | let OpenDiHu build python for you, even if your system 
                                                                           | has python installed.
 `pythonPackages`                                                  yes     | This is a custom collection of python packages for the
                                                                           | python 3 interpreter and are available in the

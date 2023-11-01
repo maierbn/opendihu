@@ -18,7 +18,7 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 100
 WORKDIR /workspace
 
 # Clone opendihu
-RUN git clone --branch docker-ubuntu16-18 --depth=1 https://github.com/maierbn/opendihu.git  
+RUN git clone --branch develop --depth=1 https://github.com/maierbn/opendihu.git  
 WORKDIR opendihu
 
 # install recent cmake

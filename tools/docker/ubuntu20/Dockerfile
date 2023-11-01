@@ -14,7 +14,7 @@ RUN apt-get update && \
 WORKDIR /workspace
 
 # Clone opendihu
-RUN git clone --branch docker-with-precice-v2.5 --depth=1 https://github.com/maierbn/opendihu.git  
+RUN git clone --branch develop --depth=1 https://github.com/maierbn/opendihu.git  
 WORKDIR opendihu
 
 # Build opendihu

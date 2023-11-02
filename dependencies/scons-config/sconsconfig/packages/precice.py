@@ -75,8 +75,8 @@ class precice(Package):
       
     self.libs = ['precice']
     self.extra_libs = [[],
-                       ['boost_filesystem', 'boost_log', 'boost_log_setup', 'boost_program_options', 'boost_system', 'boost_thread', 'boost_unit_test_framework', 'dl', 'boost_regex'],
-    									 ['boost_atomic', 'boost_chrono', 'boost_date_time', 'boost_filesystem', 'boost_log', 'boost_log_setup', 'boost_prg_exec_monitor', 'boost_program_options', 'boost_system', 'boost_test_exec_monitor', 'boost_thread', 'boost_timer', 'boost_unit_test_framework', 'dl', 'boost_regex']]
+                       ['boost_filesystem', 'boost_log_setup', 'boost_log', 'boost_program_options', 'boost_system', 'boost_thread', 'boost_unit_test_framework', 'dl', 'boost_regex'],
+    									 ['boost_atomic', 'boost_chrono', 'boost_filesystem', 'boost_log_setup', 'boost_log', 'boost_prg_exec_monitor', 'boost_program_options', 'boost_system', 'boost_test_exec_monitor', 'boost_thread', 'boost_unit_test_framework', 'dl', 'boost_regex']]
     self.headers = ["precice/SolverInterface.hpp"]
 
   def check(self, ctx):
@@ -99,7 +99,7 @@ class precice(Package):
           -DCMAKE_BUILD_TYPE=RELEASE \
           -DPRECICE_PythonActions=OFF \
           -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=${DEPENDENCIES_DIR}/python/install/bin/python3 \
-          -DPETSC_DIR=${PETSC_DIR} -DPETSC_EXECUTABLE_RUNS=TRUE \
+          -DPETSc_DIR=${PETSC_DIR} \
           -DPRECICE_ENABLE_FORTRAN=OFF \
           -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR \
           -DEigen3_ROOT=${SOURCE_DIR}/eigen-3.3.8 \
@@ -128,8 +128,8 @@ class precice(Package):
         # boost
         'if [ ! -d ${PREFIX}/include/boost ]; then \
           cd ${SOURCE_DIR} && [ ! -f ${SOURCE_DIR}/boost_1_65_1.tar.gz ] && \
-          ( wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz && tar xf boost_1_65_1.tar.gz ); \
-          cd boost_1_65_1 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test,regex --prefix=${PREFIX} && \
+          ( wget https://boostorg.jfrog.io/artifactory/main/release/1.83.0/source/boost_1_83_0.tar.gz && tar xf boost_1_83_0.tar.gz ); \
+          cd boost_1_83_0 && ./bootstrap.sh --with-libraries=log,thread,system,filesystem,program_options,test,regex --prefix=${PREFIX} && \
           ./b2 -j12 install; \
         fi',
 
@@ -141,13 +141,13 @@ class precice(Package):
         'cd ${SOURCE_DIR} && mkdir -p build && cd build && '+ctx.env["cmake"]+' -DCMAKE_INSTALL_PREFIX=${PREFIX} \
         -DCMAKE_BUILD_TYPE=RELEASE \
         -DPRECICE_PythonActions=OFF \
-        -DCMAKE_BUILD_TYPE=RELEASE -DPYTHON_EXECUTABLE=${DEPENDENCIES_DIR}/python/install/bin/python3 \
-        -DPETSC_DIR=${PETSC_DIR} -DPETSC_EXECUTABLE_RUNS=TRUE \
+        -DCMAKE_BUILD_TYPE=RELEASE \
+        -DPETSc_DIR=${PETSC_DIR} \
         -DLIBXML2_INCLUDE_DIR=${PREFIX}/include/libxml2 -DLIBXML2_LIBRARY=${PREFIX}/lib/libxml2.so \
         -DPRECICE_ENABLE_FORTRAN=OFF \
-        -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DPETSC_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR \
+        -DMPI_CXX_COMPILER='+ctx.env["mpiCC"]+' -DMPI_DIR=$MPI_DIR \
         -DEigen3_ROOT=${SOURCE_DIR}/eigen-3.3.8 \
-        -DBOOST_ROOT=${PREFIX} \
+        -DBoost_ROOT=${PREFIX} \
         -DBoost_DIR=${PREFIX} \
         ..',
         'cd ${SOURCE_DIR}/build && make precice install -j 16'

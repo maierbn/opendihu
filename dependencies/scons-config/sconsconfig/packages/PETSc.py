@@ -20,13 +20,12 @@ class PETSc(Package):
 
   def __init__(self, **kwargs):
     defaults = {
-      #'download_url': 'http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-3.7.6.tar.gz',
-      'download_url': 'http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-3.12.3.tar.gz',
+      'download_url': 'http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-lite-3.15.5.tar.gz'
     }
     defaults.update(kwargs)
     super(PETSc, self).__init__(**defaults)
     self.sub_dirs = [('include','lib')]
-    self.libs = [['cmumps', 'HYPRE', 'sundials_cvode', 'petsc', 'scalapack', 'parmetis', 'dmumps', 'smumps', 'zmumps', 'mumps_common', 'cmumps', 'scalapack', 'petsc', 'pord', 'parmetis', 'petsc', 'dmumps', 'sundials_nvecparallel', 'sundials_nvecserial', 'petsc', 'sundials_cvode', 'smumps']]
+    self.libs = [['cmumps', 'HYPRE', 'petsc', 'scalapack', 'parmetis', 'dmumps', 'smumps', 'zmumps', 'mumps_common', 'cmumps', 'scalapack', 'petsc', 'pord', 'parmetis', 'petsc', 'dmumps', 'petsc', 'smumps']]
       # ['petsc', 'cmumps', 'dmumps', 'HYPRE', 'mumps_common', 'pord', 'scalapack', 'smumps', 'sundials_cvode', 'sundials_nvecparallel', 'sundials_nvecserial', 'zmumps', 'parmetis']]
     self.headers = ['petsc.h']
 
@@ -107,7 +106,7 @@ class PETSc(Package):
           --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
           COPTFLAGS=-O3\
           CXXOPTFLAGS=-O3\
-          FOPTFLAGS="-O3 -fallow-argument-mismatch" | tee out.txt',
+          FOPTFLAGS=-O3 | tee out.txt',
         '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',     # do it twice, the first time fails with PGI
         '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt',
         '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt)',
@@ -151,7 +150,7 @@ class PETSc(Package):
             --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
             COPTFLAGS=-O3 \
             CXXOPTFLAGS=-O3 \
-            FOPTFLAGS="-O3 -fallow-argument-mismatch" | tee out.txt',
+            FOPTFLAGS=-O3 | tee out.txt',
           '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt || make',
           '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt) || make install',
         ])  
@@ -188,7 +187,7 @@ class PETSc(Package):
             --download-mumps --download-scalapack --download-parmetis --download-metis --download-ptscotch --download-sundials --download-hypre \
             COPTFLAGS=-O3 \
             CXXOPTFLAGS=-O3 \
-            FOPTFLAGS="-O3 -fallow-argument-mismatch" | tee out.txt',
+            FOPTFLAGS=-O3 | tee out.txt',
           '$$(sed -n \'/Configure stage complete./{n;p;}\' out.txt) | tee out2.txt || make',
           '$$(sed -n \'/Now to install the libraries do:/{n;p;}\' out2.txt) || make install',
         ])  

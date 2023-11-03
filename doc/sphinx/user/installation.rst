@@ -14,15 +14,19 @@ Because this is key to efficiently computing simulations, we recommend the nativ
 Using docker
 ----------------
 Using the docker image you can use the framework directly without having to build and install any dependencies. 
-The disadvantage is that you only have a shell and can't plot anything. The docker image may also be slightly out-of-date.
+The disadvantage is that you only have a shell and can't plot anything. We provide a docker image which contains the latest release as of November 2023. 
 
-First install `docker <https://docs.docker.com/install/linux/docker-ce/ubuntu/>`_, following the instructions on the website. Then, start a shell inside the container with the following command:
+First install `docker <https://docs.docker.com/engine/install/ubuntu/>`_, following the instructions on the website. Then, you can run the provided docker image with the following command:
 
 .. code-block:: bash
 
   docker run -it maierbn/opendihu:latest bash
 
-Inside the container, run ``cd opendihu``, ``git pull`` and ``make`` to get and compile the latest code.
+Alternatively you can build the docker image yourself. We provide Dockerfiles to set up OpenDiHu containers that import Ubuntu 16.04, 18.04, 20.04 or 22.04. 
+To build one of the provided OpenDiHu container you have to
+  1. Move to the directory where `Dockerfile` is located
+  2. Execute `docker build -t workspace .`
+You can run the container you just built executing `docker run -i -t workspace`
 
 Native installation
 ----------------------
@@ -37,8 +41,6 @@ The `stable` branch aims to be always stable but does not contain the latest dev
 Which branches are being developed can be checked on the overview page of the continuous integration tool, `CircleCI <https://app.circleci.com/pipelines/github/maierbn/opendihu>`_.
 
 From time to time there are `releases <https://github.com/maierbn/opendihu/releases>`_, e.g. there is version 1.0 from 15.04.2019 and newer ones.
-
-The `develop` branch is not guaranted to support Ubuntu versions before 20.04 anymore. TODO: We provide a release with the lastest version compatible with older versions of Ubuntu (down to Ubuntu 16.04).
 
 Prerequisites (starting from Ubuntu 20.04)
 ^^^^^^^^^^^^^^

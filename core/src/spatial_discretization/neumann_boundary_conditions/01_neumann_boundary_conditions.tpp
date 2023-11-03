@@ -30,7 +30,7 @@ initializeRhs()
   }
 
   this->data_.rhs()->setRepresentationGlobal();
-  this->data_.rhs()->zeroEntries();
+  //this->data_.rhs()->zeroEntries();
   this->data_.rhs()->startGhostManipulation();
   //this->data_.rhs()->zeroGhostBuffer();
 

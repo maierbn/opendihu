@@ -1019,7 +1019,9 @@ template<typename Term,bool withLargeOutput,typename MeshType,int nDisplacementC
 void HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::
 updateNeumannBoundaryConditionElements(std::vector<typename NeumannBoundaryConditions<typename HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>::ElementWithFaces> newNeumannBoundaryConditionElements)
 {
-  
+  neumannBoundaryConditions_->NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>::initialize(displacementsFunctionSpace_, newNeumannBoundaryConditionElements);
+
+  materialComputeExternalVirtualWorkDead();
 }
 
 //! set new dirichlet boundary condition values for existing dofs

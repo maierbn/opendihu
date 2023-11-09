@@ -20,6 +20,10 @@ template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
 void NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::
 initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> functionSpace, std::string boundaryConditionsConfigKey)
 {
+
+  LOG(INFO) << "Initialize object ";
+
+
   if (initialized_)
     return;
 
@@ -164,7 +168,7 @@ initialize(PythonConfig specificSettings, std::shared_ptr<FunctionSpaceType> fun
 
   for(ElementWithFaces elementWithFaces : boundaryConditionElements_)
   {
-    LOG(DEBUG) << "  elementNoLocal " << elementWithFaces.elementNoLocal << ", face " << Mesh::getString(elementWithFaces.face)
+    LOG(INFO) << "  elementNoLocal " << elementWithFaces.elementNoLocal << ", face " << Mesh::getString(elementWithFaces.face)
       << ", dofVectors on surface: " << elementWithFaces.dofVectors << ", surfaceDofs on volume: " << elementWithFaces.surfaceDofs;
   }
 
@@ -177,6 +181,8 @@ template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
 void NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::
 initialize(std::shared_ptr<FunctionSpaceType> functionSpace, const std::vector<typename NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces> &boundaryConditionElements)
 {
+  LOG(INFO) << "Initialize elements ";
+
   if (initialized_)
     return;
 
@@ -184,21 +190,23 @@ initialize(std::shared_ptr<FunctionSpaceType> functionSpace, const std::vector<t
   data_.setFunctionSpace(functionSpace_);
   data_.initialize();
 
-  boundaryConditionElements_ = boundaryConditionElements;
+  boundaryConditionElements_.insert(boundaryConditionElements_.begin(), boundaryConditionElements.begin(), boundaryConditionElements.end());
 
   // output parsed settings
-  LOG(DEBUG) << boundaryConditionElements_.size() << " boundaryConditionElements parsed";
-  LOG(DEBUG) << boundaryConditionElements_.size() << " boundaryConditionElements_: ";
 
   for(ElementWithFaces elementWithFaces : boundaryConditionElements_)
   {
-    LOG(DEBUG) << "  elementNoLocal " << elementWithFaces.elementNoLocal << ", face " << Mesh::getString(elementWithFaces.face)
+    LOG(INFO) << "  elementNoLocal " << elementWithFaces.elementNoLocal << ", face " << Mesh::getString(elementWithFaces.face)
       << ", dofVectors on surface: " << elementWithFaces.dofVectors << ", surfaceDofs on volume: " << elementWithFaces.surfaceDofs;
   }
 
+  LOG(INFO)<<"Print first element inside of initialize";
+  this->printboundaryConditionElements();
+
   initialized_ = true;
   initializeRhs();
-}
+
+ }
 
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
 std::shared_ptr<FieldVariable::FieldVariable<FunctionSpaceType,nComponents>> NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::
@@ -213,6 +221,27 @@ const std::vector<typename NeumannBoundaryConditionsBase<FunctionSpaceType,Quadr
 boundaryConditionElements() const
 {
   return boundaryConditionElements_;
+}
+
+//! get the internal values of boundaryConditionElements_ for debugging
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
+void NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::
+appendBoundaryConditionElements(const std::vector<typename NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces> &boundaryConditionElements)
+{
+  boundaryConditionElements_.insert(boundaryConditionElements_.begin(), boundaryConditionElements.begin(), boundaryConditionElements.end());
+}
+
+
+//! get the internal values of boundaryConditionElements_ for debugging
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
+void NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::
+printboundaryConditionElements() const
+{
+  auto elementWithFaces = boundaryConditionElements_[0];
+  
+  LOG(INFO) << "  elementNoLocal " << elementWithFaces.elementNoLocal << ", face " << Mesh::getString(elementWithFaces.face)
+    << ", dofVectors on surface: " << elementWithFaces.dofVectors << ", surfaceDofs on volume: " << elementWithFaces.surfaceDofs;
+
 }
 
 //! determine whether any boundary condition was given with option "isInReferenceConfiguration": False

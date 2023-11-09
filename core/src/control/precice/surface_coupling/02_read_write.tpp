@@ -273,7 +273,7 @@ setNeumannBoundaryConditions(typename PreciceAdapterInitialize<NestedSolver>::Pr
 #endif
 
   // set Neumann BCs in the static hyperelasticity of the TimeSteppingScheme::DynamicHyperelasticitySolver solver
-  //this->updateNeumannBoundaryConditions(this->nestedSolver_, neumannBoundaryConditions);
+  // this->updateNeumannBoundaryConditions(this->nestedSolver_, neumannBoundaryConditions);
   this->updateNeumannBoundaryConditionElements(this->nestedSolver_, neumannBoundaryConditionElements);
 
   LOG(DEBUG) << "read data from precice complete, traction values: " << tractionValues_;

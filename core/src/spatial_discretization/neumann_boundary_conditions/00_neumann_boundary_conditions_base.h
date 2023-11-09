@@ -53,6 +53,10 @@ public:
   //! get the internal values of boundaryConditionElements_ for debugging
   const std::vector<ElementWithFaces> &boundaryConditionElements() const;
 
+  void appendBoundaryConditionElements(const std::vector<ElementWithFaces> &boundaryConditionElements);
+
+  void printboundaryConditionElements() const;
+
 protected:
 
   //! initialize the rhs in data, this is called by initialize()

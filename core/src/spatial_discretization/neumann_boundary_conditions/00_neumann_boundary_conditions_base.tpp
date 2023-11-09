@@ -231,6 +231,44 @@ appendBoundaryConditionElements(const std::vector<typename NeumannBoundaryCondit
   boundaryConditionElements_.insert(boundaryConditionElements_.begin(), boundaryConditionElements.begin(), boundaryConditionElements.end());
 }
 
+//! get the internal values of boundaryConditionElements_ for debugging
+template<typename FunctionSpaceType,typename QuadratureType,int nComponents>
+void NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::
+updateBoundaryConditionElements(const std::vector<typename NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces> &boundaryConditionElements)
+{
+  // assumes only two possible faces
+  // assumes both faces provide the same number of elements
+  LOG(DEBUG) << "Update Neumann BC";
+
+  if (boundaryConditionElements_.size() == 0){
+    LOG(DEBUG) << "Write first elements to Neumann BC";
+    boundaryConditionElements_.insert(boundaryConditionElements_.begin(), boundaryConditionElements.begin(), boundaryConditionElements.end());
+  }
+  else if (boundaryConditionElements_[0].face == boundaryConditionElements[0].face){
+    LOG(DEBUG) << "Update " << Mesh::getString(boundaryConditionElements[0].face) << " elements to Neumann BC (first elements)";    
+    
+    for (int index = 0; index < boundaryConditionElements.size(); index++){  
+      boundaryConditionElements_[index] = boundaryConditionElements[index]; 
+    }
+  }
+  else{
+    if (boundaryConditionElements.size() == boundaryConditionElements_.size()){
+      LOG(DEBUG) << "Write new elements to Neumann BC";
+      
+      boundaryConditionElements_.insert(boundaryConditionElements_.begin(), boundaryConditionElements.begin(), boundaryConditionElements.end());
+    } 
+    else {
+      LOG(DEBUG) << "Update " << Mesh::getString(boundaryConditionElements[0].face) << " elements to Neumann BC (second elements)";    
+      
+      for (int index = 0; index < boundaryConditionElements.size(); index++){      
+        boundaryConditionElements_[boundaryConditionElements.size()+index] = boundaryConditionElements[index]; 
+      }
+    }
+  }
+  
+}
+
+
 
 //! get the internal values of boundaryConditionElements_ for debugging
 template<typename FunctionSpaceType,typename QuadratureType,int nComponents>

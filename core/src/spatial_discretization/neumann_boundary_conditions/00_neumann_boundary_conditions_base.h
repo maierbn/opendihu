@@ -55,6 +55,9 @@ public:
 
   void appendBoundaryConditionElements(const std::vector<ElementWithFaces> &boundaryConditionElements);
 
+  void updateBoundaryConditionElements(const std::vector<ElementWithFaces> &boundaryConditionElements);
+
+
   void printboundaryConditionElements() const;
 
 protected:

@@ -1,3 +1,5 @@
+.. _existing_examples:
+
 Existing examples
 =======================
 

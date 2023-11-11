@@ -36,8 +36,8 @@ Read `my thesis <https://arxiv.org/abs/2107.07104>`__ or `one of the papers <htt
    :maxdepth: 1
    :caption: Next pages to read
    
-   user/features
    user/installation
+   user/features
    user/framework_structure
    user/getting_started
    user/examples

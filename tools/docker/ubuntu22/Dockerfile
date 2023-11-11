@@ -26,12 +26,16 @@ WORKDIR /workspace
 RUN git clone --branch develop --depth=1 https://github.com/maierbn/opendihu.git  
 WORKDIR opendihu
 
+# Build opendihu, debug and release target for core, build release unit tests and run tests, build all examples
+RUN make debug_without_tests; echo "make debug_without_tests done"
+RUN make release_without_tests; echo "make release_without_tests done"; cat config.log
+RUN make travis_ci; echo "build examples done"
+
 # Set environment variable such that OpenMPI works inside docker container (run as root)
 ENV OMPI_ALLOW_RUN_AS_ROOT=1
 ENV OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
-
-# Build opendihu, debug and release target for core, build release unit tests and run tests, build all examples
-RUN make; echo "done"; cat config.log
+ENV OMPI_MCA_btl_vader_single_copy_mechanism=none
+ENV OMPI_MCA_osc=ucx 
 
 # Add aliases
 ADD .bash_aliases /workspace

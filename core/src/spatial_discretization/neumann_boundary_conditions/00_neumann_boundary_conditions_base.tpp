@@ -200,9 +200,6 @@ initialize(std::shared_ptr<FunctionSpaceType> functionSpace, const std::vector<t
       << ", dofVectors on surface: " << elementWithFaces.dofVectors << ", surfaceDofs on volume: " << elementWithFaces.surfaceDofs;
   }
 
-  LOG(INFO)<<"Print first element inside of initialize";
-  this->printboundaryConditionElements();
-
   initialized_ = true;
   initializeRhs();
 
@@ -264,6 +261,11 @@ updateBoundaryConditionElements(const std::vector<typename NeumannBoundaryCondit
         boundaryConditionElements_[boundaryConditionElements.size()+index] = boundaryConditionElements[index]; 
       }
     }
+  }
+  for(ElementWithFaces elementWithFaces : boundaryConditionElements_)
+  {
+    LOG(INFO) << "  elementNoLocal " << elementWithFaces.elementNoLocal << ", face " << Mesh::getString(elementWithFaces.face)
+      << ", dofVectors on surface: " << elementWithFaces.dofVectors << ", surfaceDofs on volume: " << elementWithFaces.surfaceDofs;
   }
   
 }

@@ -1025,7 +1025,7 @@ updateNeumannBoundaryConditionElements(std::vector<typename NeumannBoundaryCondi
   // compute new value for the rhs, δW_ext,dead = int_Ω B^L * phi^L * phi^M * δu^M dx + int_∂Ω T^L * phi^L * phi^M * δu^M dS
   materialComputeExternalVirtualWorkDead();
 
-  LOG(DEBUG)<<"Print number of elements after update " << neumannBoundaryConditions_->NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>::boundaryConditionElements().size();
+  LOG(INFO)<<"Print number of elements after update " << neumannBoundaryConditions_->NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>::boundaryConditionElements().size();
 
 }
 

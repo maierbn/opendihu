@@ -60,7 +60,7 @@ protected:
     int preciceDataIdVelocities;              //< precice id of the velocities variable
     int preciceDataIdTraction;                //< precice id of the traction variable
 
-    bool average;
+    bool average = false;
 
     enum {
       ioRead,

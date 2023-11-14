@@ -91,15 +91,15 @@
       <max-time value="20.0"/>          
       <time-window-size value="1"/>   
 
-      <max-iterations value="3" />
+      <max-iterations value="10" />
 
-      <relative-convergence-measure limit="1" data="Displacement" mesh="LeftTendonMesh" strict="0"/>
-      <relative-convergence-measure limit="1" data="Velocity" mesh="LeftTendonMesh" strict="0"/>
-      <absolute-convergence-measure limit="1" data="Traction" mesh="CentralTendonMeshLeft" strict="0"/>
+      <relative-convergence-measure limit="1e-4" data="Displacement" mesh="LeftTendonMesh" strict="0"/>
+      <relative-convergence-measure limit="1e-4" data="Velocity" mesh="LeftTendonMesh" strict="0"/>
+      <absolute-convergence-measure limit="1e-2" data="Traction" mesh="CentralTendonMeshLeft" strict="0"/>
 
-      <relative-convergence-measure limit="1" data="Displacement" mesh="RightTendonMesh" strict="0"/>
-      <relative-convergence-measure limit="1" data="Velocity" mesh="RightTendonMesh" strict="0"/>
-      <absolute-convergence-measure limit="1" data="Traction" mesh="CentralTendonMeshRight" strict="0"/>
+      <relative-convergence-measure limit="1e-4" data="Displacement" mesh="RightTendonMesh" strict="0"/>
+      <relative-convergence-measure limit="1e-4" data="Velocity" mesh="RightTendonMesh" strict="0"/>
+      <absolute-convergence-measure limit="1e-2" data="Traction" mesh="CentralTendonMeshRight" strict="0"/>
 
       <exchange data="Traction" mesh="CentralTendonMeshLeft" from="CentralTendonSolver" to="LeftTendonSolver"/>
       <exchange data="Traction" mesh="CentralTendonMeshRight" from="CentralTendonSolver" to="RightTendonSolver"/>  

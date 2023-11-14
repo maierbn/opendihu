@@ -91,24 +91,38 @@
       <max-time value="20.0"/>          
       <time-window-size value="1"/>   
 
-      <max-iterations value="10" />
+      <acceleration:IQN-ILS>
+        <data name="Displacement" mesh="CentralTendonMeshLeft"/>
+        <data name="Velocity" mesh="CentralTendonMeshLeft"/>
+        <data name="Traction" mesh="LeftTendonMesh"/>
+        <data name="Displacement" mesh="CentralTendonMeshRight"/>
+        <data name="Velocity" mesh="CentralTendonMeshRight"/>
+        <data name="Traction" mesh="RightTendonMesh"/>
+        <preconditioner type="residual-sum"/>
+        <filter type="QR2" limit="1e-3"/>
+        <initial-relaxation value="0.1"/>
+        <max-used-iterations value="40"/>
+        <time-windows-reused value="15"/>
+      </acceleration:IQN-ILS>
 
-      <relative-convergence-measure limit="1e-4" data="Displacement" mesh="LeftTendonMesh" strict="0"/>
-      <relative-convergence-measure limit="1e-4" data="Velocity" mesh="LeftTendonMesh" strict="0"/>
-      <absolute-convergence-measure limit="1e-2" data="Traction" mesh="CentralTendonMeshLeft" strict="0"/>
+      <max-iterations value="25" />
 
-      <relative-convergence-measure limit="1e-4" data="Displacement" mesh="RightTendonMesh" strict="0"/>
-      <relative-convergence-measure limit="1e-4" data="Velocity" mesh="RightTendonMesh" strict="0"/>
-      <absolute-convergence-measure limit="1e-2" data="Traction" mesh="CentralTendonMeshRight" strict="0"/>
+      <relative-convergence-measure limit="1e-4" data="Displacement" mesh="CentralTendonMeshLeft" strict="0"/>
+      <relative-convergence-measure limit="1e-4" data="Velocity" mesh="CentralTendonMeshLeft" strict="0"/>
+      <absolute-convergence-measure limit="1e-2" data="Traction" mesh="LeftTendonMesh" strict="0"/>
 
-      <exchange data="Traction" mesh="CentralTendonMeshLeft" from="CentralTendonSolver" to="LeftTendonSolver"/>
-      <exchange data="Traction" mesh="CentralTendonMeshRight" from="CentralTendonSolver" to="RightTendonSolver"/>  
+      <relative-convergence-measure limit="1e-4" data="Displacement" mesh="CentralTendonMeshRight" strict="0"/>
+      <relative-convergence-measure limit="1e-4" data="Velocity" mesh="CentralTendonMeshRight" strict="0"/>
+      <absolute-convergence-measure limit="1e-2" data="Traction" mesh="RightTendonMesh" strict="0"/>
+
+      <exchange data="Traction" mesh="RightTendonMesh" from="RightTendonSolver" to="CentralTendonSolver"/>
+      <exchange data="Traction" mesh="LeftTendonMesh" from="LeftTendonSolver" to="CentralTendonSolver"/>  
   
-      <exchange data="Displacement" mesh="LeftTendonMesh" from="LeftTendonSolver" to="CentralTendonSolver"/>  
-      <exchange data="Velocity" mesh="LeftTendonMesh" from="LeftTendonSolver" to="CentralTendonSolver"/>  
+      <exchange data="Displacement" mesh="CentralTendonMeshLeft" from="CentralTendonSolver" to="LeftTendonSolver"/>  
+      <exchange data="Velocity" mesh="CentralTendonMeshLeft" from="CentralTendonSolver" to="LeftTendonSolver"/>  
 
-      <exchange data="Displacement" mesh="RightTendonMesh" from="RightTendonSolver" to="CentralTendonSolver"/>  
-      <exchange data="Velocity" mesh="RightTendonMesh" from="RightTendonSolver" to="CentralTendonSolver"/>  
+      <exchange data="Displacement" mesh="CentralTendonMeshRight" from="CentralTendonSolver" to="RightTendonSolver"/>  
+      <exchange data="Velocity" mesh="CentralTendonMeshRight" from="CentralTendonSolver" to="RightTendonSolver"/>  
 
     </coupling-scheme:multi>
 

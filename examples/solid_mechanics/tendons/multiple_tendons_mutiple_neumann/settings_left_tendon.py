@@ -80,11 +80,36 @@ variables.meshes.update(meshes_tendon)
 [mx, my, mz] = [elem // 2 for elem in variables.n_elements_tendon] # quadratic elements consist of 2 linear elements along each axis
 
 # dirichlet
-k = 0 #free side of the tendon
+# k = 0 #free side of the tendon
 
-for j in range(ny):
-    for i in range(nx):
-      variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
+# for j in range(ny):
+#     for i in range(nx):
+#       variables.elasticity_dirichlet_bc[k*nx*ny + j*nx + i] = [0.0, 0.0, 0.0, None, None, None] # displacement ux uy uz, velocity vx vy vz
+
+# neumann
+variables.force = 10000.0 
+k = 0
+face = "2-"     
+variables.elasticity_neumann_bc = [{"element": k*mx*my + j*mx + i, "constantVector": [0,0,0], "face": face} for j in range(my) for i in range(mx)]
+
+def update_neumann_bc(t):
+  # set new Neumann boundary conditions
+  k = 0
+  factor = min(1, t/100)   # for t ∈ [0,100] from 0 to 1
+  elasticity_neumann_bc = [{
+		"element": k*mx*my + j*mx + i, 
+		"constantVector": [0,0,-variables.force*factor], 		# force pointing to bottom
+		"face": "2-",
+    "isInReferenceConfiguration": True
+  } for j in range(my) for i in range(mx)]
+
+  config = {
+    "inputMeshIsGlobal": True,
+    "divideNeumannBoundaryConditionValuesByTotalArea": True,            # if the given Neumann boundary condition values under "neumannBoundaryConditions" are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied
+    "neumannBoundaryConditions": elasticity_neumann_bc,
+  }
+
+  return config
 
 config = {
   "scenarioName":                   variables.scenario_name,      # scenario name to identify the simulation runs in the log file
@@ -167,12 +192,12 @@ config = {
       "nNonlinearSolveCalls":       1,                            # how often the nonlinear solve should be called
       
       # boundary and initial conditions
-      "dirichletBoundaryConditions": variables.elasticity_dirichlet_bc,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
-      "neumannBoundaryConditions":   [],     # Neumann boundary conditions that define traction forces on surfaces of elements
+      "dirichletBoundaryConditions": None,   # the initial Dirichlet boundary conditions that define values for displacements u and velocity v
+      "neumannBoundaryConditions":   variables.elasticity_neumann_bc,     # Neumann boundary conditions that define traction forces on surfaces of elements
       "divideNeumannBoundaryConditionValuesByTotalArea": False,    # if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities
       "updateDirichletBoundaryConditionsFunction": None, #update_dirichlet_bc,   # function that updates the dirichlet BCs while the simulation is running
       "updateDirichletBoundaryConditionsFunctionCallInterval": 1,         # stide every which step the update function should be called, 1 means every time step
-      "updateNeumannBoundaryConditionsFunction": None,       # a callback function to periodically update the Neumann boundary conditions
+      "updateNeumannBoundaryConditionsFunction": update_neumann_bc,       # a callback function to periodically update the Neumann boundary conditions
       "updateNeumannBoundaryConditionsFunctionCallInterval": 1,           # every which step the update function should be called, 1 means every time step 
       
       "constantBodyForce":           None,       # a constant force that acts on the whole body, e.g. for gravity

@@ -6,7 +6,7 @@ precice_file = "../precice_config.xml"
 # timing parameters
 # -----------------
 dt_elasticity = 1.0
-end_time = 20.0
+end_time = 100.0
 
 output_timestep_elasticity = 10      # [ms] timestep for elasticity output files
 

@@ -200,6 +200,9 @@ initialize(std::shared_ptr<FunctionSpaceType> functionSpace, const std::vector<t
       << ", dofVectors on surface: " << elementWithFaces.dofVectors << ", surfaceDofs on volume: " << elementWithFaces.surfaceDofs;
   }
 
+
+  LOG(INFO)<<"Print number of elements inside initialize" << boundaryConditionElements_.size();
+
   initialized_ = true;
   initializeRhs();
 
@@ -238,7 +241,7 @@ updateBoundaryConditionElements(const std::vector<typename NeumannBoundaryCondit
   LOG(DEBUG) << "Update Neumann BC";
 
   if (boundaryConditionElements_.size() == 0){
-    LOG(DEBUG) << "Write first elements to Neumann BC";
+    LOG(INFO) << "Write first elements to Neumann BC (inside)";
     boundaryConditionElements_.insert(boundaryConditionElements_.begin(), boundaryConditionElements.begin(), boundaryConditionElements.end());
   }
   else if (boundaryConditionElements_[0].face == boundaryConditionElements[0].face){

@@ -1020,7 +1020,18 @@ void HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementCompon
 updateNeumannBoundaryConditionElements(std::vector<typename NeumannBoundaryConditions<typename HyperelasticityInitialize<Term,withLargeOutput,MeshType,nDisplacementComponents>::DisplacementsFunctionSpace,Quadrature::Gauss<3>,3>::ElementWithFaces> newNeumannBoundaryConditionElements)
 {
 
+  // if boundary conditions elements is empy intialize it
+  if (neumannBoundaryConditions_->boundaryConditionElements().size() == 0){
+      LOG(INFO) << "Write first elements to Neumann BC (outside)";
+      // neumannBoundaryConditions_->NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>::initialize(this->displacementsFunctionSpace_, newNeumannBoundaryConditionElements);        
+      neumannBoundaryConditions_->NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>::appendBoundaryConditionElements(newNeumannBoundaryConditionElements);
+  }
+
+  LOG(INFO)<<"Print number of elements after initialize " << neumannBoundaryConditions_->NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>::boundaryConditionElements().size();
+  
+  // if boundary condtions elements is already initialized, add/update neumann boundary condition elements
   neumannBoundaryConditions_->NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>::updateBoundaryConditionElements(newNeumannBoundaryConditionElements);
+  neumannBoundaryConditions_->NeumannBoundaryConditions<FunctionSpace,Quadrature::Gauss<3>,3>::initializeRhs();
 
   // compute new value for the rhs, δW_ext,dead = int_Ω B^L * phi^L * phi^M * δu^M dx + int_∂Ω T^L * phi^L * phi^M * δu^M dS
   materialComputeExternalVirtualWorkDead();

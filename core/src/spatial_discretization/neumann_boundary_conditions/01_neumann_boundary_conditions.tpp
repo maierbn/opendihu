@@ -34,7 +34,7 @@ initializeRhs()
   this->data_.rhs()->startGhostManipulation();
   //this->data_.rhs()->zeroGhostBuffer();
 
-  LOG(DEBUG) << "after startGhostManipulation, rhs: " << *this->data_.rhs();
+  LOG(INFO) << "after startGhostManipulation, rhs: " << *this->data_.rhs();
 
   typedef typename NeumannBoundaryConditionsBase<FunctionSpaceType,QuadratureType,nComponents>::ElementWithFaces ElementWithFaces;
   typedef FunctionSpace::FunctionSpace<typename FunctionSpaceType::SurfaceMesh,

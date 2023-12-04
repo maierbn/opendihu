@@ -554,4 +554,16 @@ getString(std::shared_ptr<typename MultipleInstances<TimeSteppingScheme>::SlotCo
   return s.str();
 }
 
+template<typename TimeSteppingScheme>
+void MultipleInstances<TimeSteppingScheme>::
+saveFiberDataCheckpoint()
+{
+}  
+
+template<typename TimeSteppingScheme>
+void MultipleInstances<TimeSteppingScheme>::
+restoreFiberDataCheckpoint()
+{
+}  
+
 }  // namespace

@@ -73,6 +73,11 @@ public:
   //! call the output writer on the data object and all nested solvers, output files will contain currentTime, with callCountIncrement !=1 output timesteps can be skipped
   void callOutputWriter(int timeStepNo, double currentTime, int callCountIncrement = 1);
 
+  void saveFiberDataCheckpoint();
+
+  void restoreFiberDataCheckpoint();
+
+
 protected:
 
   DihuContext context_;                         //< the context object that holds the config for this class

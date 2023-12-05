@@ -93,7 +93,6 @@ FieldVariableDataStructuredForSurface(FieldVariable<FunctionSpace::FunctionSpace
   assert(nDofsLocalWithoutGhosts == surfaceDofs_.size());
 
   rhs.functionSpace()->geometryField().getValues(surfaceDofs_, localNodePositions2D);
-  std::array<element_no_t,2> nElementsPerCoordinateDirectionLocal;
 
   LOG(DEBUG) << "localNodePositions2D: " << localNodePositions2D << ", now create function space";
 

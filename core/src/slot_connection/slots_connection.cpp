@@ -493,7 +493,7 @@ bool SlotsConnection::getSlotInformationUncached(int fromVectorNo, int fromVecto
           << "or unneccessary slots have been created (e.g. algebraics in cellml that are not used further)."
           << getDebugInformation()
           << DihuContext::solverStructureVisualizer()->getDiagram();
-        return false;
+      return false;
     }
     else if (toVectorNo == 1 && toVectorIndex >= nFieldVariablesTerm2Vector2_)
     {

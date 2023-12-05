@@ -586,8 +586,10 @@ getDofNoGlobalPetsc(const std::vector<dof_no_t> &dofNosLocal, std::vector<PetscI
 
   // transfer the local indices to global indices
   PetscErrorCode ierr;
-  if (localToGlobalPetscMappingDofs_)
+  if (localToGlobalPetscMappingDofs_) 
+  {
     ierr = ISLocalToGlobalMappingApply(localToGlobalPetscMappingDofs_, dofNosLocal.size(), dofNosLocal.data(), dofNosGlobalPetsc.data()); CHKERRV(ierr);
+  }
 }
 
 template<typename MeshType,typename BasisFunctionType>
@@ -600,7 +602,9 @@ getDofNoGlobalPetsc(dof_no_t dofNoLocal) const
   PetscInt dofNoGlobal;
   PetscErrorCode ierr;
   if (localToGlobalPetscMappingDofs_)
+  {
     ierr = ISLocalToGlobalMappingApply(localToGlobalPetscMappingDofs_, 1, &dofNoLocal, &dofNoGlobal); CHKERRQ(ierr);
+  }
   return (global_no_t)dofNoGlobal;
 }
 

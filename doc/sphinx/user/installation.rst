@@ -123,13 +123,13 @@ Then, scons will download and install everything for a while. It runs the unit t
 
 If some of the dependencies were not found this is not a problem, e.g. if precice fails, you'll not be able to use precice but everything else still works.
 
-You can also execute `make release` to only build the release target. This is enough if you don't aim at developing the C++ code.
-
 Three different targets are defined: `release`, `debug` and `releasewithdebuginfo`. In `release` target, the code will be optimized to run as fast as possible.
 In `debug` target, compilation and execution will take more time. A lot of debugging information will be printed by the program to the console. This is the standard target to use during development.
 The third target, `releasewithdebuginfo` enables optimizations, like the `release` target, but additionally includes the debugging output.
 
-Analogous to ``make release``, there is also ``make debug`` to build the debug target and ``make release_without_tests`` or `make debug_without_tests` to exclude build unit tests (which are not required but take a lot of time).
+You can execute ``make release`` to only build the release target. This is enough if you don't aim at developing the C++ code.
+
+Analogous to ``make release``, there is also ``make debug`` to build the debug target and ``make release_without_tests`` or ``make debug_without_tests`` to exclude build unit tests (which are not required but take a lot of time).
 To learn about more available make targets, read the `Makefile`.
 
 Internally, ``make`` calls the build system, `scons`.
@@ -159,7 +159,7 @@ Setting these variables is recommended but not required.
 The `~/.bashrc` or `~/.bash_aliases` file will be executed whenever you start a new `bash` instance. 
 In order for the variable assignments to take effect, either close and reopen the console window or source the file yourself, by executing ``. ~/.bashrc``.
 
-**IMPORTANT:** Ubuntu 22.04 users need to add `export OMPI_MCA_osc="^ucx"` to their `~/.bashrc` file. 
+**IMPORTANT:** Ubuntu 22.04 users need to add ``export OMPI_MCA_osc="^ucx"`` to their `~/.bashrc` file. 
 
 Building with scons
 ^^^^^^^^^^^^^^^^^^^^^^^^

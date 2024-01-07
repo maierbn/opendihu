@@ -6,16 +6,22 @@ RUN apt-get update && \
     apt-get install -y \
     git \
     wget unzip \
-    build-essential petsc-dev libeigen3-dev libxml2-dev libboost-all-dev \
+    build-essential petsc-dev bison flex libeigen3-dev libxml2-dev libboost-all-dev \
     cmake \
     libffi-dev \
     vim
+
+# make python point to python3 (needed for petsc build)
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 100
 
 WORKDIR /workspace
 
 # Clone opendihu
 RUN git clone --branch develop --depth=1 https://github.com/maierbn/opendihu.git  
 WORKDIR opendihu
+
+# disable precice
+RUN sed -i 's/PRECICE_DOWNLOAD = True/PRECICE_DOWNLOAD = False/g' user-variables.scons.py
 
 # Build opendihu
 RUN make release_without_tests; echo "done"; cat config.log

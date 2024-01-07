@@ -863,7 +863,7 @@ initializeGhostNodeNos()
 
   // output requestNodesFromRanks_
 #ifndef NDEBUG
-  for (const std::pair<int,std::vector<NodesRequest>> &requestNodesFromRank : requestNodesFromRanks_)
+  for (const std::pair<int,std::vector<NodesRequest>> requestNodesFromRank : requestNodesFromRanks_)
   {
     VLOG(1) << "from rank " << requestNodesFromRank.first << " request: ";
     for (const NodesRequest &nodesRequest : requestNodesFromRank.second)
@@ -874,7 +874,7 @@ initializeGhostNodeNos()
 #endif
 
   // put number of requested ghost nodes to the corresponding processes
-  for (const std::pair<int,std::vector<NodesRequest>> &requestNodesFromRank : requestNodesFromRanks_)
+  for (const std::pair<int,std::vector<NodesRequest>> requestNodesFromRank : requestNodesFromRanks_)
   {
     for (int subMeshNo = 0; subMeshNo < nSubMeshes_; subMeshNo++)
     {
@@ -1057,7 +1057,7 @@ initializeGhostNodeNos()
   std::vector<std::vector<int>> requestedNodesGlobalPetscReceiveBuffer(requestNodesFromRanks_.size());
 
   i = 0;
-  for (const std::pair<int,std::vector<NodesRequest>> &requestNodesFromRank : requestNodesFromRanks_)
+  for (const std::pair<int,std::vector<NodesRequest>> requestNodesFromRank : requestNodesFromRanks_)
   {
     int foreignRankNo = requestNodesFromRank.first;
     int nRequestedNodes = 0;
@@ -1089,7 +1089,7 @@ initializeGhostNodeNos()
   // copy received nodes to new vector
   i = 0;
   nonDuplicateGhostNodeNosGlobal_.clear();
-  for (const std::pair<int,std::vector<NodesRequest>> &requestNodesFromRank : requestNodesFromRanks_)
+  for (const std::pair<int,std::vector<NodesRequest>> requestNodesFromRank : requestNodesFromRanks_)
   {
     int nRequestedNodes = 0;
     for (int subMeshNo = 0; subMeshNo < nSubMeshes_; subMeshNo++)

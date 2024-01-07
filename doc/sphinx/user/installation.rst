@@ -107,7 +107,9 @@ Three different targets are defined: `release`, `debug` and `releasewithdebuginf
 * In `debug` target, compilation and execution will take more time. A lot of debugging information will be printed by the program to the console. This is the standard target to use during development.
 * The third target, `releasewithdebuginfo` enables optimizations, like the `release` target, but additionally includes the debugging output.
 
-Analogous to ``make release``, there is also ``make debug`` to build the debug target and ``make release_without_tests`` or `make debug_without_tests` to exclude build unit tests (which are not required but take a lot of time).
+You can execute ``make release`` to only build the release target. This is enough if you don't aim at developing the C++ code.
+
+Analogous to ``make release``, there is also ``make debug`` to build the debug target and ``make release_without_tests`` or ``make debug_without_tests`` to exclude build unit tests (which are not required but take a lot of time).
 To learn about more available make targets, read the `Makefile`.
 
 Internally, ``make`` calls the build system, `scons`.
@@ -158,7 +160,7 @@ In order for the variable assignments to take effect, either close and reopen th
 
 .. note::
   
-  Ubuntu 22.04 users need to add ``export OMPI_MCA_osc="^ucx"`` to their ``~/.bashrc`` file. 
+  **IMPORTANT:** Ubuntu 22.04 users need to add ``export OMPI_MCA_osc="^ucx"`` to their `~/.bashrc` file. 
 
 Building with scons
 ----------------------

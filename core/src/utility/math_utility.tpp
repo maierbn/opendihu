@@ -418,7 +418,7 @@ Tensor2<3,double_v_t> computeInverse(const Tensor2<3,double_v_t> &matrix, const 
   return result;
 }
 
-template<typename double_v_t=double>
+template<typename double_v_t>
 std::array<double_v_t,9> computeTransformationMatrixAndDeterminant(const std::array<VecD<3,double_v_t>,3> &jacobian, double_v_t &determinant)
 {
   // rename input values
@@ -455,7 +455,7 @@ std::array<double_v_t,9> computeTransformationMatrixAndDeterminant(const std::ar
   return result;
 }
 
-template<typename double_v_t=double>
+template<typename double_v_t>
 std::array<double_v_t,9> computeTransformationDiffusionMatrixAndDeterminant(const std::array<VecD<3,double_v_t>,3> &jacobian, const Matrix<3,3,double_v_t> &diffusionTensor, double_v_t &determinant)
 {
   // rename input values

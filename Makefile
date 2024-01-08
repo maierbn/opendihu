@@ -1,4 +1,4 @@
-.PHONY: clean all
+.PHONY: clean all doc
 
 all: debug_without_tests release
 

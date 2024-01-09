@@ -234,6 +234,7 @@ void CellmlSourceCodeGeneratorBase::convertFromXmlToC()
 
   LOG(DEBUG) << "useOpenCor=" << useOpenCor << ", cFilename: " << cFilename << ", sourceFilename_: " << sourceFilename_;
 
+#ifdef HAVE_OPENCOR
   if (useOpenCor)
   {
     // do conversion on rank 0
@@ -249,6 +250,7 @@ void CellmlSourceCodeGeneratorBase::convertFromXmlToC()
       }
     }
   }
+#endif
 
   //LOG(DEBUG) << "MPI barrier, wait on all ranks until conversion is finished, n ranks: " << DihuContext::partitionManager()->rankSubsetForCollectiveOperations()->size();
 

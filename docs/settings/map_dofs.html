@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MapDofs &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="PreciceAdapter" href="precice_adapter.html" />
+    <link rel="prev" title="PrescribedValues" href="prescribed_values.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solver.html">Solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">MapDofs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#c-code">C++ code</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#python-settings">Python settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#nadditionalfieldvariables"><cite>nAdditionalFieldVariables</cite></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#additionalslotnames"><cite>additionalSlotNames</cite></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#meshname"><cite>meshName</cite></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#beforecomputation-and-aftercomputation"><cite>beforeComputation</cite> and <cite>afterComputation</cite></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fromconnectorslot-and-toconnectorslots"><cite>fromConnectorSlot</cite> and <cite>toConnectorSlots</cite></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fromoutputconnectorarrayindex-and-tooutputconnectorarrayindex"><cite>fromOutputConnectorArrayIndex</cite> and <cite>toOutputConnectorArrayIndex</cite></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mode"><cite>mode</cite></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fromdofnosnumbering-and-todofnosnumbering"><cite>“fromDofNosNumbering”</cite> and <cite>“toDofNosNumbering”</cite></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dofsmapping"><cite>dofsMapping</cite></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#inputdofs"><cite>inputDofs</cite></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#outputdofs"><cite>outputDofs</cite></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#callback"><cite>callback</cite></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exemplary-solver-structure">Exemplary solver structure</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">MapDofs</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/map_dofs.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="mapdofs">
+<h1>MapDofs<a class="headerlink" href="#mapdofs" title="Link to this heading"></a></h1>
+<p>This is a class that copies and transforms values from one mesh to another in a configurable way.
+With parallel computation this also involves communicating the values between the processes.</p>
+<p>It is a wrapper to another solver. It adds a number of field variables which can be defined on an own function space. The slots of <cite>MapDofs</cite> consists of the slots of the nested solver, as well as the additional field variables.
+The value transfer can be done between any two of these slots, the <cite>from</cite> or <cite>source</cite> slot and the <cite>to</cite> or <cite>target</cite> slot. With advanced callbacks it is also possible to map to multiple output slots at once.</p>
+<p>There are several modes, what exactly is done in this transfer:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>There is a simple local transfer, where values are copied from one slot to another (mode <cite>“copyLocal”</cite>).</p></li>
+<li><p>There is a conditional transfer, where only positive values are copied (mode <cite>“copyLocalIfPositive”</cite>).</p></li>
+<li><p>Instead of copying from the first slot, one can define the value to be set in the second slot if the value of the first slot is above a defined threshold (mode <cite>“localSetIfAboveThreshold”</cite>).</p></li>
+<li><p>The previous modes are simple actions that may occur frequently and thus have been implemented in the C++ core. However, other use cases can be programmed in python.
+A Python callback function can handle the transfer and involve any computation. This allows to e.g. delaying a signal or to map from <span class="math notranslate nohighlight">\(M\)</span> inputs to <span class="math notranslate nohighlight">\(N\)</span> outputs (mode <cite>“callback”</cite>).</p></li>
+<li><p>Whereas the previous modes all work entirely on the local domain, there is the option to communicate between processes. Local or global degree of freedom (dof) numbers can be defined for specifying the input and output values.</p></li>
+</ul>
+</div></blockquote>
+<section id="c-code">
+<h2>C++ code<a class="headerlink" href="#c-code" title="Link to this heading"></a></h2>
+<p>The first template argument is a function space. The additional field variables will be defined with this function space.
+The second template argument is the nested solver.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">Control</span><span class="o">::</span><span class="n">MapDofs</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="c1">// function space for additional field variables</span>
+<span class="w">  </span><span class="p">,</span>
+<span class="w">  </span><span class="c1">// nested solver</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>For example:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">Control</span><span class="o">::</span><span class="n">MapDofs</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="n">FunctionSpace</span><span class="o">::</span><span class="n">FunctionSpace</span><span class="o">&lt;</span><span class="n">Mesh</span><span class="o">::</span><span class="n">StructuredRegularFixedOfDimension</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">,</span><span class="n">BasisFunction</span><span class="o">::</span><span class="n">LagrangeOfOrder</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">OperatorSplitting</span><span class="o">::</span><span class="n">Strang</span><span class="o">&lt;</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">  </span><span class="o">&gt;</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+</section>
+<section id="python-settings">
+<h2>Python settings<a class="headerlink" href="#python-settings" title="Link to this heading"></a></h2>
+<p>The follows shows all python settings.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;MapDofs&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;nAdditionalFieldVariables&quot;</span><span class="p">:</span>  <span class="mi">1</span><span class="p">,</span>                              <span class="c1"># number of additional field variables that are defined by this object. They have 1 component, use the templated function space and mesh given by meshName.</span>
+  <span class="s2">&quot;additionalSlotNames&quot;</span><span class="p">:</span>        <span class="p">[</span><span class="s2">&quot;mn&quot;</span><span class="p">],</span>                         <span class="c1"># list of names of the slots for the additional field variables</span>
+  <span class="s2">&quot;meshName&quot;</span><span class="p">:</span>                   <span class="s2">&quot;motoneuronMesh&quot;</span><span class="p">,</span>               <span class="c1"># the mesh on which the additional field variables will be defined</span>
+
+  <span class="c1"># mapping from motoneuronMesh which contains on every rank as many nodes as there are motoneurons to the 3D domain</span>
+  <span class="c1"># map from motoneuronMesh (algebraics) to 3Dmesh (solution)</span>
+  <span class="s2">&quot;beforeComputation&quot;</span><span class="p">:</span> <span class="p">[</span>                                        <span class="c1"># transfer/mapping of dofs that will be performed before the computation of the nested solver, can be None if not needed</span>
+    <span class="p">{</span>
+      <span class="c1"># alternative forms:</span>
+      <span class="s2">&quot;fromConnectorSlot&quot;</span><span class="p">:</span>                <span class="mi">2</span><span class="p">,</span>                    <span class="c1"># The slot no or slot name from which the data will be taken.</span>
+      <span class="s2">&quot;fromConnectorSlot&quot;</span><span class="p">:</span>                <span class="s2">&quot;slotA&quot;</span><span class="p">,</span>              <span class="c1"># The slot no or slot name from which the data will be taken.</span>
+
+      <span class="c1"># alternative forms:</span>
+      <span class="s2">&quot;toConnectorSlots&quot;</span><span class="p">:</span>                 <span class="mi">0</span><span class="p">,</span>                    <span class="c1"># The slots to which the data will be written. This can be a list if multiple slots are needed. Either as slot no.s or names.</span>
+      <span class="s2">&quot;toConnectorSlots&quot;</span><span class="p">:</span>                 <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>                <span class="c1"># The slots to which the data will be written. This can be a list if multiple slots are needed. Either as slot no.s or names.</span>
+      <span class="s2">&quot;toConnectorSlots&quot;</span><span class="p">:</span>                 <span class="s2">&quot;slotB&quot;</span><span class="p">,</span>              <span class="c1"># The slots to which the data will be written. This can be a list if multiple slots are needed. Either as slot no.s or names.</span>
+      <span class="s2">&quot;toConnectorSlots&quot;</span><span class="p">:</span>                 <span class="p">[</span><span class="s2">&quot;slotB&quot;</span><span class="p">,</span><span class="s2">&quot;slotC&quot;</span><span class="p">],</span>    <span class="c1"># The slots to which the data will be written. This can be a list if multiple slots are needed. Either as slot no.s or names.</span>
+
+      <span class="s2">&quot;fromOutputConnectorArrayIndex&quot;</span><span class="p">:</span>    <span class="mi">0</span><span class="p">,</span>                    <span class="c1"># which fiber/compartment for the input slot, if there are multiple</span>
+      <span class="s2">&quot;toOutputConnectorArrayIndex&quot;</span><span class="p">:</span>      <span class="mi">0</span><span class="p">,</span>                    <span class="c1"># which fiber/compartment for the output slot, if there are multiple</span>
+      <span class="s2">&quot;mode&quot;</span><span class="p">:</span>                             <span class="s2">&quot;callback&quot;</span><span class="p">,</span>           <span class="c1"># &quot;copyLocal&quot;, &quot;copyLocalIfPositive&quot;, &quot;localSetIfAboveThreshold&quot;, &quot;callback&quot; or &quot;communicate&quot;</span>
+      <span class="s2">&quot;fromDofNosNumbering&quot;</span><span class="p">:</span>              <span class="s2">&quot;local&quot;</span><span class="p">,</span>              <span class="c1"># if the input dofs are interpreted as local or global numbers, refers to &quot;dofsMapping&quot; and &quot;inputDofs&quot;</span>
+      <span class="s2">&quot;toDofNosNumbering&quot;</span><span class="p">:</span>                <span class="s2">&quot;global&quot;</span><span class="p">,</span>             <span class="c1"># if the output dofs are interpreted as local or global numbers, refers to &quot;dofsMapping&quot; and &quot;outputDofs&quot;</span>
+      <span class="s2">&quot;dofsMapping&quot;</span><span class="p">:</span>                      <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="p">[</span><span class="n">n_elements</span><span class="o">/</span><span class="mi">2</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_elements</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_elements</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span><span class="p">]},</span>    <span class="c1"># a mapping from input to output dofs, for all modes except &quot;callback&quot;</span>
+      <span class="s2">&quot;inputDofs&quot;</span><span class="p">:</span>                        <span class="mi">0</span><span class="p">,</span>                    <span class="c1"># the input dofs for the mode &quot;callback&quot;</span>
+      <span class="s2">&quot;outputDofs&quot;</span><span class="p">:</span>                       <span class="p">[</span><span class="n">n_elements</span><span class="o">/</span><span class="mi">2</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_elements</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_elements</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span>       <span class="c1"># the output dofs for the mode &quot;callback&quot;, if multiple output dofs are used, this can be a list of lists of the dofs</span>
+      <span class="s2">&quot;callback&quot;</span><span class="p">:</span>                         <span class="n">callback_motoneuron</span><span class="p">,</span>  <span class="c1"># the callback function if the mode is &quot;callback&quot;</span>
+      <span class="c1">#&quot;thresholdValue&quot;:                   20,                  # if mode is &quot;localSetIfAboveThreshold&quot;, this is the threshold, if the value is above it, set the value `valueToSet`</span>
+      <span class="c1">#&quot;valueToSet&quot;:                       20,                  # if mode is &quot;localSetIfAboveThreshold&quot;, this is the value to set the target dof to, if the source dof is above thresholdValue.</span>
+    <span class="p">}</span>
+  <span class="p">],</span>
+  <span class="s2">&quot;afterComputation&quot;</span><span class="p">:</span>             <span class="kc">None</span><span class="p">,</span>                         <span class="c1"># transfer/mapping of dofs that will be performed after the computation of the nested solver, can be None if not needed</span>
+
+  <span class="c1"># Nested solver, e.g.</span>
+  <span class="s2">&quot;StrangSplitting&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="o">...</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="nadditionalfieldvariables">
+<h2><cite>nAdditionalFieldVariables</cite><a class="headerlink" href="#nadditionalfieldvariables" title="Link to this heading"></a></h2>
+<p>Number of field variables that will be defined on the additional function space that was given as first template argument in the c++ code. These can be useful to map from the nested solvers’ slots to some other mesh.</p>
+</section>
+<section id="additionalslotnames">
+<h2><cite>additionalSlotNames</cite><a class="headerlink" href="#additionalslotnames" title="Link to this heading"></a></h2>
+<p>A list of strings with as many entries as <cite>nAdditionalFieldVariables</cite>. The list should contains the names for the slots that will be created for the additional field variables. Each name has to consist of 6 or less characters.</p>
+</section>
+<section id="meshname">
+<h2><cite>meshName</cite><a class="headerlink" href="#meshname" title="Link to this heading"></a></h2>
+<p>Specification or reference of the mesh (see <a class="reference internal" href="mesh.html"><span class="doc">Mesh</span></a> for details how to specify meshes inline and under the <cite>“Meshes”</cite> key) to be used for the additional field variables. The type of the mesh is as given by the first template argument in the c++ code.</p>
+</section>
+<section id="beforecomputation-and-aftercomputation">
+<h2><cite>beforeComputation</cite> and <cite>afterComputation</cite><a class="headerlink" href="#beforecomputation-and-aftercomputation" title="Link to this heading"></a></h2>
+<p>Under these keys, a list of mapping actions can be defined that will be performed directly before and after the solution step of the nested solver.
+If no actions for one of them is needed, <cite>None</cite> can be used. Each action is given as a dict containing more specific options to the action.</p>
+</section>
+<section id="fromconnectorslot-and-toconnectorslots">
+<h2><cite>fromConnectorSlot</cite> and <cite>toConnectorSlots</cite><a class="headerlink" href="#fromconnectorslot-and-toconnectorslots" title="Link to this heading"></a></h2>
+<p>These two values specify the slots for the value transfer. The slots can either be identified by the slot number or by the slot name.</p>
+<ul class="simple">
+<li><p>If the slots should be used to identify the slots, consult the <cite>solver_structure.txt</cite> representation to find out the slot numbers. Then, option <cite>fromConnectorSlot</cite> is simply a single integer. The option <cite>toConnectorSlots</cite> is either a single number or a list of multiple numbers for multiple output slots. Multiple output slots are only supported for the mode “callback”.</p></li>
+<li><p>If the slots should be identified by slot names, the same holds, but instead of numbers, simply provide the slot names as strings.</p></li>
+</ul>
+</section>
+<section id="fromoutputconnectorarrayindex-and-tooutputconnectorarrayindex">
+<h2><cite>fromOutputConnectorArrayIndex</cite> and <cite>toOutputConnectorArrayIndex</cite><a class="headerlink" href="#fromoutputconnectorarrayindex-and-tooutputconnectorarrayindex" title="Link to this heading"></a></h2>
+<p>If the slots contain multiple instances of the actual slot, these two options specify which of the instance to use for the mapping.
+This occurs, if a nested solver contains <cite>MultipleInstances</cite> somewhere. For example for multiple fibers or multiple compartments for multidomain.</p>
+<p>Note that <cite>toOutputConnectorArrayIndex</cite> is always a single number, even if multiple output slots are used for <cite>toConnectorSlotNo</cite>.</p>
+</section>
+<section id="mode">
+<h2><cite>mode</cite><a class="headerlink" href="#mode" title="Link to this heading"></a></h2>
+<p>One of “copyLocal”, “copyLocalIfPositive”, “localSetIfAboveThreshold”, “callback” or “communicate”, specifies what to do for the transfer.</p>
+<ul>
+<li><p><cite>copyLocal</cite>: Copy dofs within the local domain as specified in <cite>“dofsMapping”</cite>, dofs on other processes are ignored.</p></li>
+<li><p><cite>copyLocalIfPositive</cite>: Same as <cite>copyLocal</cite>, but the target value is only set if the source value is positive.</p></li>
+<li><p><cite>localSetIfAboveThreshold</cite>: Similar to <cite>copyLocalIfPositive</cite>, but the threshold value can be customized by the option <cite>“thresholdValue”</cite>. Instead of copying the source dof, a fixed value given by <cite>“valueToSet”</cite> is used.</p></li>
+<li><p><cite>communicate</cite>: Perform the mapping specified in <cite>“dofsMapping”</cite> and also consider dofs on remote processes. The source dofs can be given as either local or global numbers. The target dofs have to be given as global numbers, i.e. <cite>“toDofNosNumbering”</cite> has to be <cite>“global”</cite>.</p></li>
+<li><p><cite>callback</cite>: Do not use the <cite>“dofsMapping”</cite>, instead specify what to map by a custom callback function. The function is provided in <cite>“callback”</cite>, see below for the signature. The input dofs and output dofs are given by <cite>“inputDofs”</cite> and <cite>“outputDofs”</cite> and can both be specified in local or global numbering. Again, only the locally present dofs are considered. If you need the callback plus global communication, use two actions, one with mode “communicate” and one with “callback”.</p>
+<p>The <cite>callback</cite> option is the only one to allow to map to multiple output slots. If this is needed, the option <cite>“toConnectorSlotNo”</cite> is a list (of lists) with entries for the different slots.</p>
+</li>
+</ul>
+<p>Depending on the mode, other options have to be given.
+All modes need the options <cite>“fromDofNosNumbering”</cite> and <cite>“toDofNosNumbering”</cite>. These specify if dof numbers for the source and target slots are specified in <em>local numbering</em> or <em>global numbering</em>.
+For the modes <em>“copyLocal”</em>, <em>“copyLocalIfPositive”</em>, <em>“localSetIfAboveThreshold”</em> and <em>“communicate”</em>, the additional option <cite>“inputDofs”</cite> is needed.</p>
+<p>For mode <em>“localSetIfAboveThreshold”</em>, additionally, <cite>“thresholdValue”</cite> and <cite>“valueToSet”</cite> are needed.</p>
+<p>For the mode <em>“callback”</em>, the options <em>“inputDofs”</em>, <em>“outputDofs”</em> and <em>“callback”</em> need to be given, instead of <cite>dofsMapping</cite>.</p>
+</section>
+<section id="fromdofnosnumbering-and-todofnosnumbering">
+<h2><cite>“fromDofNosNumbering”</cite> and <cite>“toDofNosNumbering”</cite><a class="headerlink" href="#fromdofnosnumbering-and-todofnosnumbering" title="Link to this heading"></a></h2>
+<p>One of “local”, “global”. Specifies if the dof numbers given as <cite>key:value</cite> pairs in the dict <cite>dofsMapping</cite> are interpreted as <em>local numbering</em> or <em>global numbering</em>. (<cite>fromDofNosNumbering</cite> refers to key, <cite>toDofNosNumbering</cite> refers to value dofs).
+For the <cite>callback</cite> mode, it refers to the numbers in <cite>inputDofs</cite> (<cite>fromDofNosNumbering</cite>) and <cite>outputDofs  (`fromDofNosNumbering</cite>).</p>
+</section>
+<section id="dofsmapping">
+<h2><cite>dofsMapping</cite><a class="headerlink" href="#dofsmapping" title="Link to this heading"></a></h2>
+<p>Specification of which dofs values at the “from” slot will be transferred to which dofs at the “to” slot. It is a dict such as,
+e.g., <code class="docutils literal notranslate"><span class="pre">{0:</span> <span class="pre">1,</span> <span class="pre">2:</span> <span class="pre">[5,6,8],</span> <span class="pre">3:</span> <span class="pre">0}</span></code>. This would copy the value at dof 0 to the other slot at dof 1,
+the value at dof 2 to the other slot at three values at once (5,6,8) and dof 3 to dof 0.</p>
+<p>The dof numbers are interpreted either as local or global numbers, depending on the valeu of <cite>“fromDofNosNumbering”</cite> and <cite>“toDofNosNumbering”</cite>.
+Global numbers that are not present on the own process are ignored, for both the source and the target dofs.</p>
+</section>
+<section id="inputdofs">
+<h2><cite>inputDofs</cite><a class="headerlink" href="#inputdofs" title="Link to this heading"></a></h2>
+<p>If <cite>“mode”</cite> is <cite>“callback”</cite>, this is a list of dofs for which the values are taken from the field variable at the input slot.</p>
+</section>
+<section id="outputdofs">
+<h2><cite>outputDofs</cite><a class="headerlink" href="#outputdofs" title="Link to this heading"></a></h2>
+<p>If <cite>“mode”</cite> is <cite>“callback”</cite>, this is a list of lists of dofs for which the values are taken from the field variable for each output slot.
+If only one output slot is needed, it has to be of the form <code class="docutils literal notranslate"><span class="pre">`[[0,1,2,...]]`</span></code>, i.e. also as list of lists.</p>
+</section>
+<section id="callback">
+<h2><cite>callback</cite><a class="headerlink" href="#callback" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>A python function that performs the mapping between a potentially different number of input and output dofs, used for mode “callback”.</dt><dd><p>The function has the following form. An example is given that delays the input signal number 0, and writes a gaussian stimulus with maximum value of 20 to all output dofs.</p>
+</dd>
+</dl>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">callback_motoneuron</span><span class="p">(</span><span class="n">input_values</span><span class="p">,</span> <span class="n">output_values</span><span class="p">,</span> <span class="n">current_time</span><span class="p">,</span> <span class="n">slot_nos</span><span class="p">,</span> <span class="n">buffer</span><span class="p">):</span>
+<span class="w">  </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">  Callback function that transform a number of input_values to a number of output_values.</span>
+<span class="sd">  This function gets called by a MapDofs object.</span>
+<span class="sd">  :param input_values: (list of float values) The input values from the slot as defined in the MapDofs settings.</span>
+<span class="sd">  :param output_values: (list of list of float values) output_values[slotIndex][valueIndex]</span>
+<span class="sd">                        The output values buffer, potentially for multiple slots.</span>
+<span class="sd">                        Initially, this is a list of the form [[None, None, ..., None]] with the size matching</span>
+<span class="sd">                        the number of required output values. The function should set some of the entries to a computed value.</span>
+<span class="sd">                        The entries that are not None will be set in the output slot at the dofs defined by MapDofs.</span>
+<span class="sd">  :param current_time:  Current simulation time.</span>
+<span class="sd">  :param slot_nos:      List of [fromSlotNo, toSlotNo, fromArrayIndex, toArrayIndex].</span>
+<span class="sd">  :param buffer:        A persistent helper buffer. This variable can be set to anything and will be provided back to</span>
+<span class="sd">                        this function every time. Using this buffer, it is possible to implement a time delay of signals.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+
+  <span class="c1"># get number of input and output values</span>
+  <span class="n">n_input_values</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_values</span><span class="p">)</span>
+  <span class="n">n_output_values</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>     <span class="c1"># number of output values for the first output slot</span>
+
+  <span class="c1"># initialize buffer the first time</span>
+  <span class="k">if</span> <span class="mi">0</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">buffer</span><span class="p">:</span>
+    <span class="n">buffer</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+  <span class="c1"># determine spike by threshold</span>
+  <span class="k">if</span> <span class="n">input_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">20</span><span class="p">:</span>
+    <span class="n">buffer</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_time</span>    <span class="c1"># store time of last activation in buffer[0]</span>
+
+  <span class="c1"># if there has been a stimulation so far</span>
+  <span class="k">if</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+
+    <span class="c1"># convolute Dirac delta, kernel is a shifted and scaled gaussian</span>
+    <span class="n">t_delay</span> <span class="o">=</span> <span class="mi">10</span>              <span class="c1"># [ms] delay of the signal</span>
+    <span class="n">gaussian_std_dev</span> <span class="o">=</span> <span class="mf">0.1</span>    <span class="c1"># [ms] width of the gaussian curve</span>
+    <span class="n">convolution_kernel</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">((</span><span class="n">t</span> <span class="o">-</span> <span class="n">t_delay</span><span class="p">)</span> <span class="o">/</span> <span class="n">gaussian_std_dev</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">delayed_signal</span> <span class="o">=</span> <span class="n">convolution_kernel</span><span class="p">(</span><span class="n">current_time</span> <span class="o">-</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="mi">20</span>
+
+    <span class="c1"># loop over output values and set all to the computed signal, cut off at 1e-5</span>
+    <span class="k">if</span> <span class="n">delayed_signal</span> <span class="o">&gt;</span> <span class="mf">1e-5</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;motoneuron t: </span><span class="si">{}</span><span class="s2">, last_activation: </span><span class="si">{}</span><span class="s2">, computed delayed_signal: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">current_time</span><span class="p">,</span> <span class="n">buffer</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">delayed_signal</span><span class="p">))</span>
+      <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_output_values</span><span class="p">):</span>
+        <span class="n">output_values</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">delayed_signal</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_output_values</span><span class="p">):</span>
+        <span class="n">output_values</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>     <span class="c1"># do not set any values</span>
+</pre></div>
+</div>
+</section>
+<section id="exemplary-solver-structure">
+<h2>Exemplary solver structure<a class="headerlink" href="#exemplary-solver-structure" title="Link to this heading"></a></h2>
+<p>The following is a solver structure that uses a MapDofs. The actions are indicated by the two arrows with double tips.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Solver<span class="w"> </span>structure:
+
+├──<span class="w"> </span>Coupling
+│<span class="w">  </span>output<span class="w"> </span>slots:
+│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution.membrane/V<span class="w">                     </span>+──────<span class="w"> </span>¤0<span class="w"> </span>x
+│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution<span class="w">                                </span>:+─────<span class="w"> </span>¤1<span class="w"> </span>x
+│<span class="w">  </span><span class="o">[</span>b<span class="o">]</span><span class="w"> </span>additionalFieldVariable0<span class="w">                </span>::+────<span class="w"> </span>¤2<span class="w"> </span>x
+│<span class="w">  </span><span class="o">[</span>b<span class="o">]</span><span class="w"> </span>additionalFieldVariable1<span class="w">                </span>:::+───<span class="w"> </span>¤3<span class="w"> </span>x
+│<span class="w">                                              </span>::::
+│<span class="w">  </span>slot<span class="w"> </span>connections:<span class="w">                           </span>::::
+│<span class="w">  </span><span class="m">1</span>¤<span class="w"> </span>&lt;═&gt;<span class="w"> </span>¤2<span class="w">                                   </span>::::
+│<span class="w">  </span><span class="m">2</span>¤<span class="w"> </span>&lt;─&gt;<span class="w"> </span>¤3<span class="w">                                   </span>::::
+│<span class="w">                                              </span>::::
+│<span class="w"> </span>├──<span class="w"> </span>Heun<span class="w">                                     </span>::::
+│<span class="w"> </span>│<span class="w">   </span><span class="o">(</span><span class="s2">&quot;Term1&quot;</span><span class="o">)</span><span class="w">                                </span>::::
+│<span class="w"> </span>│<span class="w">  </span>output<span class="w"> </span>slots:<span class="w">                             </span>::::
+│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>b<span class="o">]</span><span class="w"> </span>solution.membrane/V<span class="w">                   </span>+÷÷÷───<span class="w"> </span>¤0<span class="w"> </span>x
+│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>b<span class="o">]</span><span class="w"> </span>firing_threshold/V_extern_out<span class="w"> </span><span class="o">(</span><span class="k">in</span><span class="w"> </span>var<span class="w">  </span>+÷÷───<span class="w"> </span>¤1════╗
+│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>b<span class="o">]</span><span class="w"> </span><span class="o">(</span>P<span class="o">)</span>firing_threshold/V_extern_in<span class="w"> </span><span class="o">(</span><span class="k">in</span><span class="w"> </span>v<span class="w">   </span>+÷───<span class="w"> </span>¤2&lt;─┐<span class="w"> </span>║
+│<span class="w"> </span>│<span class="w">                                               </span>:<span class="w">        </span>│<span class="w"> </span>║
+│<span class="w"> </span>│<span class="w"> </span>└──<span class="w"> </span>CellmlAdapter<span class="w">                             </span>:<span class="w">        </span>│<span class="w"> </span>║
+│<span class="w"> </span>└<span class="w">                                               </span>:<span class="w">        </span>│<span class="w"> </span>║
+│<span class="w">                                                 </span>:<span class="w">        </span>│<span class="w"> </span>║
+│<span class="w"> </span>├──<span class="w"> </span>MapDofs<span class="w">                                     </span>:<span class="w">        </span>│<span class="w"> </span>║
+│<span class="w"> </span>│<span class="w">   </span><span class="o">(</span><span class="s2">&quot;Term2&quot;</span><span class="o">)</span><span class="w">                                   </span>:<span class="w">        </span>│<span class="w"> </span>║
+│<span class="w"> </span>│<span class="w">  </span>output<span class="w"> </span>slots:<span class="w">                                </span>:<span class="w">        </span>│<span class="w"> </span>║
+│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution.membrane/V<span class="w">              </span>┌»┌<span class="w">     </span>+───<span class="w"> </span>¤0<span class="w"> </span>x│<span class="w"> </span>║
+│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution<span class="w">                         </span>│<span class="w"> </span>│<span class="w">     </span>:+──<span class="w"> </span>¤1<span class="w"> </span>x│<span class="w"> </span>║
+│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>b<span class="o">]</span><span class="w"> </span>additionalFieldVariable0<span class="w">         </span>└<span class="w"> </span>│<span class="w">     </span>::<span class="w">   </span>¤2══┼═╝
+│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>b<span class="o">]</span><span class="w"> </span>additionalFieldVariable1<span class="w">           </span>└»<span class="w">    </span>::<span class="w">   </span>¤3&lt;─┘
+│<span class="w"> </span>│<span class="w">                                               </span>::
+│<span class="w"> </span>│<span class="w"> </span>├──<span class="w"> </span>StrangSplitting<span class="w">                           </span>::
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>output<span class="w"> </span>slots:<span class="w">                              </span>::
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution.membrane/V<span class="w">                    </span>+÷──<span class="w"> </span>¤0<span class="w"> </span>x
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution<span class="w">                               </span>:+──<span class="w"> </span>¤1<span class="w"> </span>x
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">                                             </span>::
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>slot<span class="w"> </span>connections:<span class="w">                          </span>::
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span><span class="m">0</span>¤<span class="w"> </span>&lt;═&gt;<span class="w"> </span>¤0<span class="w">                                  </span>::
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span><span class="m">1</span>¤<span class="w"> </span>&lt;═&gt;<span class="w"> </span>¤1<span class="w">                                  </span>::
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span><span class="m">2</span>¤<span class="w"> </span>&lt;═&gt;<span class="w"> </span>¤2<span class="w">                                  </span>::
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">                                             </span>::
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>├──<span class="w"> </span>Heun<span class="w">                                    </span>::
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">   </span><span class="o">(</span><span class="s2">&quot;Term1&quot;</span><span class="o">)</span><span class="w">                               </span>::
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>output<span class="w"> </span>slots:<span class="w">                            </span>::
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution.membrane/V<span class="w">                  </span>+÷──<span class="w"> </span>¤0══╗
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">                                            </span>:<span class="w">       </span>║
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>└──<span class="w"> </span>CellmlAdapter<span class="w">                          </span>:<span class="w">       </span>║
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>└<span class="w">                                            </span>:<span class="w">       </span>║
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">                                              </span>:<span class="w">       </span>║
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>├──<span class="w"> </span>CrankNicolson<span class="w">                            </span>:<span class="w">       </span>║
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">   </span><span class="o">(</span><span class="s2">&quot;Term2&quot;</span><span class="o">)</span><span class="w">                                </span>:<span class="w">       </span>║
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>output<span class="w"> </span>slots:<span class="w">                             </span>:<span class="w">       </span>║
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution<span class="w">                              </span>+──<span class="w"> </span>¤0══╝
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>├──<span class="w"> </span>FiniteElementMethod
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>output<span class="w"> </span>slots:
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution<span class="w">                                </span>¤0<span class="w"> </span>x
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>└
+│<span class="w"> </span>│<span class="w"> </span>└
+│<span class="w"> </span>└
+└
+
+Connection<span class="w"> </span>Types:
+<span class="w">  </span>+··+<span class="w">   </span>Internal<span class="w"> </span>connection,<span class="w"> </span>no<span class="w"> </span>copy
+<span class="w">  </span>════<span class="w">   </span>Reuse<span class="w"> </span>variable,<span class="w"> </span>no<span class="w"> </span>copy
+<span class="w">  </span>───&gt;<span class="w">   </span>Copy<span class="w"> </span>data<span class="w"> </span><span class="k">in</span><span class="w"> </span>direction<span class="w"> </span>of<span class="w"> </span>arrow
+<span class="w">  </span>─m──<span class="w">   </span>Mapping<span class="w"> </span>between<span class="w"> </span>different<span class="w"> </span>meshes
+
+Referenced<span class="w"> </span>Meshes:
+<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span><span class="s2">&quot;MeshFiber&quot;</span>,<span class="w"> </span>1D<span class="w"> </span>regular<span class="w"> </span>fixed,<span class="w"> </span>linear<span class="w"> </span>Lagrange<span class="w"> </span>basis
+<span class="w">  </span><span class="o">[</span>b<span class="o">]</span><span class="w"> </span><span class="s2">&quot;motoneuronMesh&quot;</span>,<span class="w"> </span>1D<span class="w"> </span>regular<span class="w"> </span>fixed,<span class="w"> </span>linear<span class="w"> </span>Lagrange<span class="w"> </span>basis
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="prescribed_values.html" class="btn btn-neutral float-left" title="PrescribedValues" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="precice_adapter.html" class="btn btn-neutral float-right" title="PreciceAdapter" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

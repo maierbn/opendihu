@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mesh &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="MappingsBetweenMeshes" href="mappings_between_meshes.html" />
+    <link rel="prev" title="Python Settings" href="../settings.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Mesh</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#c-class-template-mesh">C++ class template Mesh</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#python-settings-for-mesh">Python settings for Mesh</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#structuredregularfixed">StructuredRegularFixed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#structureddeformable">StructuredDeformable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id3">inputMeshIsGlobal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#unstructureddeformable">UnstructuredDeformable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#compositeofdimension-d">CompositeOfDimension&lt;D&gt;</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solver.html">Solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">Mesh</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/mesh.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="mesh">
+<h1>Mesh<a class="headerlink" href="#mesh" title="Link to this heading"></a></h1>
+<p>Meshes appear in the C++ code. A <code class="docutils literal notranslate"><span class="pre">Mesh</span></code> together with a <code class="docutils literal notranslate"><span class="pre">BasisFunction</span></code> define a <code class="docutils literal notranslate"><span class="pre">FunctionSpace</span></code>. In the python settings, there are no function spaces, the <em>mesh</em> is everything that needs to be specified.</p>
+<section id="c-class-template-mesh">
+<h2>C++ class template Mesh<a class="headerlink" href="#c-class-template-mesh" title="Link to this heading"></a></h2>
+<p>On the C++ side, there exist three mesh types,</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Mesh::StructuredRegularFixedOfDimension&lt;D&gt;</span></code>,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Mesh::StructuredDeformableOfDimension&lt;D&gt;</span></code>,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Mesh::UnstructuredDeformableOfDimension&lt;D&gt;</span></code>,</p></li>
+</ul>
+<p>with <code class="docutils literal notranslate"><span class="pre">D</span></code> equals to 1, 2 or 3.</p>
+<p>Additionally, there is a composite mesh,</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Mesh::CompositeOfDimension&lt;D&gt;</span></code>,</p></li>
+</ul>
+<p>which forms a single mesh that consists of multiple meshes of type <code class="docutils literal notranslate"><span class="pre">Mesh::StructuredDeformableOfDimension&lt;D&gt;</span></code>.</p>
+<p><a class="reference internal" href="#meshes"><span class="std std-numref">Fig. 96</span></a> shows the different mesh types for linear and quadratic basis functions. As can be seen, the meshes all have quadrilateral elements, corresponding to lines in 1D, quadrilaterals in 2D and hexaeders in 3D.</p>
+<figure class="align-default" id="id7">
+<span id="meshes"></span><a class="reference internal image-reference" href="../_images/meshes.svg"><img alt="../_images/meshes.svg" src="../_images/meshes.svg" width="50%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 96 </span><span class="caption-text">Different Mesh types, here 2D meshes, for linear or Hermite basis functions (left column) and for quadratic Lagrange basis functions (right column)</span><a class="headerlink" href="#id7" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>The <strong>Structured Regular Fixed</strong> mesh is a structured rectilinear mesh with a fixed mesh width. The mesh width is the same in all dimensions.
+A StructuredRegularFixed mesh is fully defined by the number of elements in each coordinate direction and the mesh width.
+The geometry of a mesh of this type cannot be changed during the computation, that means it is not possible to use this mesh for computing deformations.</p>
+<p>One advantage of this mesh type is that the needed memory is independent of the number of elements and nodes, because only the mesh width and dimensions need to be stored. Therefore it is suited for large problem sizes.
+A second advantage is that mass and stiffness matrices do not need to be integrated numerically if linear Lagrange basis functions are used. These matrices are instead assembled from precomputed stencils.</p>
+<p>The <strong>Structured Deformable</strong> mesh is more general than the <em>Structured Regular Fixed</em> mesh. The node positions can have arbitrary locations.
+However, the mesh is still structured, i.e. it has a fixed number of elements in the coordinate directions.</p>
+<p>When computing elasticity problems, the geometry of the mesh (node positions) can change, i.e. the mesh can deform.</p>
+<p>This mesh type is the one most commonly used, when a given geometry should be discretized. For these two <em>structured</em> mesh types, the domain decomposition always uses planar cuts to subdivide the whole mesh into subdomains. Therefore, a subdomain again has always a fixed number of elements in each coordinate direction.</p>
+<p>The <strong>Unstructured</strong> mesh is the most general mesh type. Contrary to the structured meshes, here the adjacency information can be defined arbitrarily and is not implicitely given by the mesh structured.
+The node positions need to be specified and can move during the computation, like with the <em>Structured Deformable</em> mesh.</p>
+<p>The <em>Unstructured</em> mesh type can only be used with serial execution, i.e. no domain decomposition is implemented.</p>
+<p>Node positions are always stored as points in <span class="math notranslate nohighlight">\(\mathbb{R}^3\)</span>. Consequently, it is possible to define a 1D mesh embedded in the 3D space, for example for 1D muscle fibers in a 3D muscle geometry. Similarly, “bended” 2D meshes can be defined, like the 2D surface of a 3D muscle.</p>
+<p>The <strong>Composite</strong> mesh is used when the geometry cannot be described by a single structured mesh because it does not have the shape of a cuboid. Then, 2 or more structured meshes are combined into a single mesh.</p>
+<p>The number of nodes in a mesh depends on the ansatz functions as visualized in <a class="reference internal" href="#mesh-ansatz-functions"><span class="std std-numref">Fig. 97</span></a>.</p>
+<figure class="align-default" id="id8">
+<span id="mesh-ansatz-functions"></span><a class="reference internal image-reference" href="../_images/mesh_ansatz_functions.svg"><img alt="../_images/mesh_ansatz_functions.svg" src="../_images/mesh_ansatz_functions.svg" width="100%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 97 </span><span class="caption-text">1D ansatz functions and resulting elements.</span><a class="headerlink" href="#id8" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>A description of the numbering of nodes and degrees of freedom can be found under <a class="reference internal" href="boundary_conditions.html"><span class="doc">Boundary Conditions</span></a>.</p>
+</section>
+<section id="python-settings-for-mesh">
+<span id="define-meshes"></span><h2>Python settings for Mesh<a class="headerlink" href="#python-settings-for-mesh" title="Link to this heading"></a></h2>
+<p>To specify a mesh in the python settings, depending on the mesh type, its size, node positions or adjacency infos have to be given.</p>
+<p>In the python settings, all meshes should be defined at the beginning of the <code class="docutils literal notranslate"><span class="pre">config</span></code> dictionary under the <code class="docutils literal notranslate"><span class="pre">&quot;Meshes&quot;</span></code> key.
+The item <code class="docutils literal notranslate"><span class="pre">&quot;Meshes&quot;</span></code> is itself a dictionary, where the properties of every mesh are contained with a <em>mesh name</em> as key. The mesh name can be chosen abitrarily.
+It is used to reference the mesh later, where it is needed, e.g. in a FiniteElementMethod object.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s2">&quot;Meshes&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;mesh0&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+      <span class="c1"># further properties of mesh &quot;mesh0&quot; (see below for the description, depending on the type)</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;arbitraryMeshName1&quot;</span><span class="p">:</span> <span class="p">{</span>
+       <span class="c1"># properties of this mesh</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<section id="structuredregularfixed">
+<h3>StructuredRegularFixed<a class="headerlink" href="#structuredregularfixed" title="Link to this heading"></a></h3>
+<p>The <strong>Structured Regular Fixed</strong> mesh is completely specified by the number of elements in each coordinate direction and the physical extent.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;nElements&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">nx</span><span class="p">,</span> <span class="n">ny</span><span class="p">],</span>      <span class="c1"># example for a 2D mesh</span>
+<span class="s2">&quot;physicalExtent&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">],</span>
+<span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+</pre></div>
+</div>
+<section id="nelements">
+<h4>nElements<a class="headerlink" href="#nelements" title="Link to this heading"></a></h4>
+<p><em>Default: D=1 (lines): 0, which means a degenerate element, D=2 or D=3: 1</em></p>
+<p>The number of elements of the mesh in the coordinate directions. For D=1, i.e. lines, it is a scalar non-negative integer value. For D=2 respective D=3 it is a list of 2 respective 3 non-negative integer values.</p>
+</section>
+<section id="physicalextent">
+<h4>physicalExtent<a class="headerlink" href="#physicalextent" title="Link to this heading"></a></h4>
+<p><em>Default: list of values 1.0</em></p>
+<p>The “size” of the mesh in physical units (e.g. meters if SI units are used), in the coordinate directions. This has to be a list of <code class="docutils literal notranslate"><span class="pre">D</span></code>  positive double values.</p>
+<p>Because the mesh width has to be constant in all coordinate directions, <code class="docutils literal notranslate"><span class="pre">physicalExtent</span></code> has to be a multiple of <code class="docutils literal notranslate"><span class="pre">nElements</span></code>.</p>
+</section>
+<section id="inputmeshisglobal">
+<h4>inputMeshIsGlobal<a class="headerlink" href="#inputmeshisglobal" title="Link to this heading"></a></h4>
+<p><em>Default: ``True``</em></p>
+<p>Whether the values of <code class="docutils literal notranslate"><span class="pre">nElements</span></code> and <code class="docutils literal notranslate"><span class="pre">physicalExtent</span></code> describe the global domain (<code class="docutils literal notranslate"><span class="pre">True</span></code>) or the local subdomain (<code class="docutils literal notranslate"><span class="pre">False</span></code>) in parallel execution. See also the notes on <a class="reference internal" href="#id3"><span class="std std-ref">inputMeshIsGlobal</span></a> later.</p>
+</section>
+</section>
+<section id="structureddeformable">
+<h3>StructuredDeformable<a class="headerlink" href="#structureddeformable" title="Link to this heading"></a></h3>
+<p>For specifying the <strong>Structured Deformable</strong> mesh there are two possibilities:</p>
+<ol class="arabic simple">
+<li><p>Specify <code class="docutils literal notranslate"><span class="pre">nElements</span></code> and <code class="docutils literal notranslate"><span class="pre">physicalExtent</span></code>, like for a <em>StructuredRegularFixed</em> mesh. A rectilinear mesh is constructed, analogous to the <em>StructuredRegularFixed</em> mesh. There is the additional option <code class="docutils literal notranslate"><span class="pre">physicalOffset</span></code> that offsets all node positions by the given vector. The physicalOffset is always global, i.e. even when <code class="docutils literal notranslate"><span class="pre">inputMeshIsGlobal</span></code> is set to <code class="docutils literal notranslate"><span class="pre">False</span></code>, the <code class="docutils literal notranslate"><span class="pre">physicalOffset</span></code> specifies the offset to the front lower left corner of the global mesh.</p></li>
+</ol>
+<blockquote>
+<div><p>Note, that now the mesh widths does not need to be the same in every coordinate direction, so there is no restriction on the values of <code class="docutils literal notranslate"><span class="pre">nElements</span></code> and <code class="docutils literal notranslate"><span class="pre">physicalExtent</span></code>.
+Again, the value of <code class="docutils literal notranslate"><span class="pre">inputMeshIsGlobal</span></code> applies.</p>
+<p>An example is given below:</p>
+</div></blockquote>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;nElements&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">nx</span><span class="p">,</span> <span class="n">ny</span><span class="p">],</span>      <span class="c1"># example for a 2D mesh</span>
+<span class="s2">&quot;physicalExtent&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">2.5</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">],</span>
+<span class="s2">&quot;physicalOffset&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+<span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Specify <code class="docutils literal notranslate"><span class="pre">nElements</span></code> and the node positions.</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;nElements&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">nx</span><span class="p">,</span> <span class="n">ny</span><span class="p">],</span>     <span class="c1"># example for a 2D mesh</span>
+<span class="s2">&quot;nodePositions&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">],</span> <span class="p">[</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">],</span> <span class="o">...</span><span class="p">],</span>
+<span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+</pre></div>
+</div>
+<section id="id1">
+<h4>nElements<a class="headerlink" href="#id1" title="Link to this heading"></a></h4>
+<p><em>Default: D=1 (lines): 0, which means a degenerate element, D=2 or D=3: 1</em></p>
+<p>The number of elements of the mesh in the coordinate directions. For D=1, i.e. lines, it is a scalar non-negative integer value. For D=2 respective D=3 it is a list of 2 respective 3 non-negative integer values.</p>
+</section>
+<section id="nodepositions">
+<h4>nodePositions<a class="headerlink" href="#nodepositions" title="Link to this heading"></a></h4>
+<p>Specify all node positions (all global node positions or all local node positions without ghosts, depending on <code class="docutils literal notranslate"><span class="pre">inputMeshIsGlobal</span></code>). There are two different formats:</p>
+<ol class="arabic simple">
+<li><p>A list of points where each point is a list with three entries <code class="docutils literal notranslate"><span class="pre">[x,y,z]</span></code>. Even for lower dimensional meshes, <code class="docutils literal notranslate"><span class="pre">D&lt;3</span></code>, the node positions have three components.</p></li>
+</ol>
+<blockquote>
+<div><p>It is possible to define an embedded 1D or 2D manifold in the 3D domain. If this is not needed, the last entries can be set to 0 or omitted, as the default value for not specified components is 0.</p>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p>The geometry values can also be given as consecutive array of [x,y,z,x,y,z,…] or [x,y,x,y,…] values.</p></li>
+</ol>
+<blockquote>
+<div><p>Then there is another property <code class="docutils literal notranslate"><span class="pre">&quot;nodeDimension&quot;</span></code>, which is an integer from 1 to 3, with default value 3. This has to be set the number of dimensions that will be specified for each point in the consecutive array.</p>
+<p>Then, the node position values are provided in <code class="docutils literal notranslate"><span class="pre">nodePositions</span></code> as a list with <code class="docutils literal notranslate"><span class="pre">nodeDimension</span></code> double values per point, one point after each other.
+If <code class="docutils literal notranslate"><span class="pre">nodeDimension</span></code> is set to 1, <code class="docutils literal notranslate"><span class="pre">nodePositions</span></code> should be a list of the <code class="docutils literal notranslate"><span class="pre">x</span></code> values of the nodes, useful only for 1D meshes.
+If <code class="docutils literal notranslate"><span class="pre">nodeDimension</span></code> is set to 2, <code class="docutils literal notranslate"><span class="pre">nodePositions</span></code> should be a list with 2*number of nodes values, the x and y components of the node positions in consecutive order. Similar for <code class="docutils literal notranslate"><span class="pre">nodeDimension=3</span></code>.</p>
+</div></blockquote>
+<p>The order of the node positions proceeds through the entire structured mesh, with <code class="docutils literal notranslate"><span class="pre">x</span></code> advancing fastest, then the <code class="docutils literal notranslate"><span class="pre">y</span></code> index, then thet <code class="docutils literal notranslate"><span class="pre">z</span></code> index (if any).
+This means, e.g. for a 3D mesh, that starting from the first point at index <span class="math notranslate nohighlight">\((z,y,x)=(0,0,0)\)</span>, the next point is the one next to it in x-direction, i.e. <span class="math notranslate nohighlight">\((z,y,x)=(0,0,1)\)</span>,
+then the next and so on until the line is full. Then the next line starts with <span class="math notranslate nohighlight">\((z,y,x)=(0,1,0)\)</span>, then <span class="math notranslate nohighlight">\((z,y,x)=(0,1,1)\)</span>, etc.
+After the x,y-plane is done, the next plane starts with <span class="math notranslate nohighlight">\((z,y,x)=(1,0,0)\)</span>.</p>
+<p>For imagination see <a class="reference internal" href="#coordinate-directions"><span class="std std-numref">Fig. 98</span></a>.</p>
+<figure class="align-default" id="id9">
+<span id="coordinate-directions"></span><a class="reference internal image-reference" href="../_images/coordinate_directions.svg"><img alt="../_images/coordinate_directions.svg" src="../_images/coordinate_directions.svg" width="80%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 98 </span><span class="caption-text">Coordinate directions x,y,z and iterator/index names i,j,k for 2D and 3D meshes.</span><a class="headerlink" href="#id9" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="id2">
+<h4>inputMeshIsGlobal<a class="headerlink" href="#id2" title="Link to this heading"></a></h4>
+<p><em>Default: ``True``</em></p>
+<p>Whether the values of <code class="docutils literal notranslate"><span class="pre">nElements</span></code> and the <code class="docutils literal notranslate"><span class="pre">nodePositions</span></code> describe the global domain (<code class="docutils literal notranslate"><span class="pre">True</span></code>) or the local subdomain (<code class="docutils literal notranslate"><span class="pre">False</span></code>) in parallel execution.</p>
+<p>See also the following notes on <a class="reference internal" href="#id3"><span class="std std-ref">inputMeshIsGlobal</span></a>.</p>
+</section>
+</section>
+<section id="id3">
+<span id="id4"></span><h3>inputMeshIsGlobal<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>It specifies whether the given values and degrees of freedom are interpreted as local values or global values in the context of a parallel execution on multiple processes. It has no effect for serial execution and unstructured meshes.
+It applies to all values given as mesh properties, such as node positions, element and node numbers, the physicalExtent, the number of elements, etc.</p>
+<ul>
+<li><p>If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, all specified values and degrees of freedom are interpreted with global indexing. In this case, the same values should be given on all processes. Consequently, the program can be run on different numbers of processes with the same settings.</p></li>
+<li><p>If set to <code class="docutils literal notranslate"><span class="pre">False</span></code>, all specified values and degrees of freedom are interpreted to be for the local portion of the own process, only.
+In parallel execution, each process has to get only its own range of values (without ghosts), which are typically different on each process.</p>
+<p>For example, the number of elements is only specified for the local portion. Opendihu will compute the global number of elements from the local numbers on all the processes.</p>
+</li>
+</ul>
+<p>To provide different values for different MPI ranks, the own MPI rank number can be retrieved in the python settings.
+The last two command line arguments that are available in the python settings script are the own MPI rank number and the total number of ranks.</p>
+<p>The advantage of the local specification is that each process only has to know its own portion of the whole problem. Internally there is no transfer of the local information to other processes.
+Thus, large problems can be computed with a high number of processes, where the global problem data would be too big to be stored by a single process.</p>
+<p>The following example shows how to use the own MPI rank number.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># get own MPI rank number and number of MPI ranks</span>
+<span class="n">rank_no</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">)(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+<span class="n">n_ranks</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">)(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="k">if</span> <span class="n">rank_no</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+  <span class="o">...</span>
+<span class="k">elif</span> <span class="n">rank_no</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+  <span class="o">...</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s2">&quot;Meshes&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;mesh&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+      <span class="c1"># ...</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="unstructureddeformable">
+<span id="unstructured-deformable-mesh-settings"></span><h3>UnstructuredDeformable<a class="headerlink" href="#unstructureddeformable" title="Link to this heading"></a></h3>
+<p>For specifying an <strong>Unstructured Deformable</strong> mesh there are two options:</p>
+<ol class="arabic simple">
+<li><p>Using node positions and elements. For each element the corresponding nodes have to be specified.</p></li>
+<li><p>Using <em>EX files</em>, an ASCII-based file format for unstructured meshes, that is used by <a class="reference external" href="http://opencmiss.org">OpenCMISS</a>.</p></li>
+</ol>
+<p>These two options are described in the following.</p>
+<section id="using-node-positions-and-elements">
+<h4>1. Using <strong>node positions and elements</strong><a class="headerlink" href="#using-node-positions-and-elements" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;elements&quot;</span><span class="p">:</span> <span class="p">[[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">0</span><span class="p">]],</span> <span class="p">[</span><span class="nb">next</span> <span class="n">element</span><span class="p">]]</span>   <span class="c1"># each node is [node no, version-at-that-node no] or just node-no then it assumes version no 0</span>
+<span class="s2">&quot;nodePositions&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span> <span class="o">...</span><span class="p">],</span>
+</pre></div>
+</div>
+</section>
+<section id="elements">
+<h4>elements<a class="headerlink" href="#elements" title="Link to this heading"></a></h4>
+<p>An element is a Finite Element that consists of its nodes. The number of nodes per element is dependent on the dimensionality of the mesh and the basis function.</p>
+<p>When two elements are next to each other, they usually share the nodes on their common edge. This ensures that there is only one degree of freedom at the common nodes and therefore the field variable is continuous.
+However, for unstructured meshes there is also the possibility to have different degrees of freedom at a common node of two adjacent elements. This means, that discontinuities can be modeled.</p>
+<p>For this concept, the degree of freedom is assigned to a <em>version</em> of the node within the element. A node is seen in different <em>versions</em> by the different adjacent elements.</p>
+<p>What needs to be specified in the python settings under the <code class="docutils literal notranslate"><span class="pre">elements</span></code> key is a list of element specifications. Each element specification is a list of node references. Each node reference is either a node number (non-negative integer value) or a two-element list of the node number and the version number.</p>
+<p>In an element specification there have to be as many node references as there are nodes in the element. The order of the nodes in the element follows the numbering scheme of advancing in <span class="math notranslate nohighlight">\(x\)</span>-direction fastest, then in <span class="math notranslate nohighlight">\(y\)</span>-direction, then in <span class="math notranslate nohighlight">\(z\)</span>-direction. For example, linear 2D elements have 4 nodes, so the element specification has 4 items in the list. Quadratic 3D elements have <span class="math notranslate nohighlight">\(3^3=27\)</span> nodes.</p>
+<p>The node number in the node reference is the global node number in the typical numbering.</p>
+<p>The version number is counted from zero for each node. If this number is omitted, then 0 is assumed.</p>
+</section>
+<section id="id5">
+<h4>nodePositions<a class="headerlink" href="#id5" title="Link to this heading"></a></h4>
+<p>This is a list of positions of the nodes, each node position is a list with maximum three entries for the components in <span class="math notranslate nohighlight">\(x,y\)</span> and <span class="math notranslate nohighlight">\(z\)</span> direction. Not specified entries are set to zero.</p>
+</section>
+<section id="using-ex-files">
+<h4>2. Using EX files<a class="headerlink" href="#using-ex-files" title="Link to this heading"></a></h4>
+<p>The 2. option is to provide <strong>EX files</strong>. This is an ASCII-based file format and only suitable for small problem sizes. It is used by <a class="reference external" href="http://opencmiss.org">OpenCMISS</a> and can be visualized using <a class="reference external" href="http://physiomeproject.org/software/opencmiss/cmgui/download">CMGUI</a>. A geometry description consists of an <em>*.exelem</em> file that contains element adjacency information and an <em>*.exnode</em> file with the actual node positions. Opendihu extracts the <em>geometric field</em> of these files and uses them as geometry (opendihu terminology is <em>geometry field</em>).</p>
+<p>More details on this file format can be found <a class="reference external" href="http://opencmiss.org/documentation/data_format/ex_file_format.html">here in the opencmiss documentation</a>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;exelem&quot;</span><span class="p">:</span> <span class="s2">&quot;left_biceps_brachii.exelem&quot;</span><span class="p">,</span>
+<span class="s2">&quot;exnode&quot;</span><span class="p">:</span> <span class="s2">&quot;left_biceps_brachii.exnode&quot;</span><span class="p">,</span>
+</pre></div>
+</div>
+</section>
+<section id="exelem">
+<h4>exelem<a class="headerlink" href="#exelem" title="Link to this heading"></a></h4>
+<p>The file name of the <em>exelem</em> file.</p>
+</section>
+<section id="exnode">
+<h4>exnode<a class="headerlink" href="#exnode" title="Link to this heading"></a></h4>
+<p>The file name of the <em>exnode</em> file.</p>
+</section>
+</section>
+<section id="compositeofdimension-d">
+<h3>CompositeOfDimension&lt;D&gt;<a class="headerlink" href="#compositeofdimension-d" title="Link to this heading"></a></h3>
+<p>The composite mesh consists of multiple meshes of type <code class="docutils literal notranslate"><span class="pre">StructuredDeformableOfDimension&lt;D&gt;</span></code>, called <cite>submeshes</cite>. In order to create a composite mesh, all submeshes need to be defined under the <code class="docutils literal notranslate"><span class="pre">&quot;Meshes&quot;</span></code> section of the config. The composite mesh itself is not defined extra.</p>
+<p>In the solver that will use the composite mesh, the <code class="docutils literal notranslate"><span class="pre">&quot;meshName&quot;</span></code> option has to be a list containing all mesh names of the submeshes.</p>
+<p>All submeshes will be partitioned independently when running in parallel. Consequently, it is also possible to specify only the local partitions of the submeshes, as described earlier (set <code class="docutils literal notranslate"><span class="pre">&quot;inputMeshIsGlobal&quot;:</span> <span class="pre">False</span></code>).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s2">&quot;Meshes&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;submesh0&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;nElements&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+      <span class="s2">&quot;physicalExtent&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+      <span class="s2">&quot;physicalOffset&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+      <span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;submesh1&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;nElements&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+      <span class="s2">&quot;physicalExtent&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+      <span class="s2">&quot;physicalOffset&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+      <span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">},</span>
+  <span class="p">},</span>
+  <span class="o">...</span>
+  <span class="s2">&quot;MySolver&quot;</span><span class="p">:</span> <span class="p">{</span>   <span class="c1"># name of the solver that uses the composite mesh</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;meshName&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;submesh0&quot;</span><span class="p">,</span> <span class="s2">&quot;submesh1&quot;</span><span class="p">],</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>A composite mesh consists of the elements of all submeshes and therefore it contains also all nodes. Duplicate or shared nodes of different submeshes that would be on the same position appear only once. Whether two nodes have the same position is determined by computing the distance of the points. If the distance is below the tolerance of 1e-5, the nodes are considered to be shared.</p>
+<p>Note, that shared nodes have to be on the same subdomain. I.e. when the program is run with multiple processes, make sure that the shared nodes of different submeshes are in the same partition.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../settings.html" class="btn btn-neutral float-left" title="Python Settings" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="mappings_between_meshes.html" class="btn btn-neutral float-right" title="MappingsBetweenMeshes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

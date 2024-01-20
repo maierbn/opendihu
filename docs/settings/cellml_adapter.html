@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CellMLAdapter &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="QuasiStaticLinearElasticitySolver" href="quasi_static_linear_elasticity_solver.html" />
+    <link rel="prev" title="FastMonodomainSolver" href="fast_monodomain_solver.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solver.html">Solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">CellMLAdapter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#modelfilename">modelFilename</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#libraryfilename">libraryFilename</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#statesinitialvalues">statesInitialValues</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#initializestatestoequilibrium-and-initializestatestoequilibriumtimestepwidth">initializeStatesToEquilibrium and initializeStatesToEquilibriumTimestepWidth</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#callbacks">Callbacks</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#setspecificparametersfunction-and-setspecificparameterscallinterval"><em>setSpecificParametersFunction</em> and <em>setSpecificParametersCallInterval</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setspecificstatesfunction-and-setspecificstatescallinterval"><em>setSpecificStatesFunction</em> and <em>setSpecificStatesCallInterval</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setspecificstatescallenablebegin-setspecificstatescallfrequency-and-setspecificstatesfrequencyjitter"><em>setSpecificStatesCallEnableBegin</em>, <em>setSpecificStatesCallFrequency</em> and <em>setSpecificStatesFrequencyJitter</em></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#handleresultfunction-and-handleresultcallinterval"><em>handleResultFunction</em> and <em>handleResultCallInterval</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#how-to-specify-mappings-of-states-algebraics-and-parameters">How to specify mappings of states, algebraics and parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#parametersusedasalgebraic">parametersUsedAsAlgebraic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#parametersusedasconstant">parametersUsedAsConstant</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#algebraicsfortransfer-and-statesfortransfer"><em>algebraicsForTransfer</em> and <em>statesForTransfer</em></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#parametersinitialvalues">parametersInitialValues</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mappings">mappings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#meshname">meshName</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stimulationlogfilename">stimulationLogFilename</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#optimizationtype">optimizationType</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#compilerflags">compilerFlags</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">CellMLAdapter</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/cellml_adapter.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="cellmladapter">
+<h1>CellMLAdapter<a class="headerlink" href="#cellmladapter" title="Link to this heading"></a></h1>
+<p>A CellMLAdapter class is used to run a CellML model.
+It uses a code generator to produce efficient code for the given model at compile time.</p>
+<p>The given CellML model is always computed for all nodes of a mesh, i.e. there are multiple instances being computed.
+By specifying a mesh with 0 elements, you get a single instance of the model.</p>
+<p>A CellML model is a first-order differential-algebraic system of equations (DAE) of the following form:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\frac{\partial \textbf{y}}{\partial t} = f(t,\textbf{y}(t),\textbf{h}(t),\hat{\textbf{c}},\hat{\textbf{p}}(t)) \\
+\textbf{h}(t) = g(\textbf{y}(t),\hat{\textbf{c}},\hat{\textbf{p}}(t))\end{split}\]</div>
+<p>The values <span class="math notranslate nohighlight">\(\textbf{y} \in \mathbb{R}^n\)</span> are called <em>states</em> and will be integrated in time using a timestepping scheme.
+There are also the algebraic values, <span class="math notranslate nohighlight">\(\textbf{h}\)</span>, which are not integrated.
+A set of parameters, <span class="math notranslate nohighlight">\(\hat{\textbf{p}}\)</span>, can be defined in the settings and changed over time.
+There are also constants , <span class="math notranslate nohighlight">\(\hat{\textbf{c}}\)</span>, that are given in the CellML model and cannot be changed.</p>
+<p>There exist several different names for the quantities <span class="math notranslate nohighlight">\(\textbf{y}, \frac{\partial \textbf{y}}{\partial t}, \textbf{h}\)</span> and <span class="math notranslate nohighlight">\(\hat{\textbf{p}}\)</span>:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>symbol</p></th>
+<th class="head"><p>opendihu</p></th>
+<th class="head"><p>OpenCOR</p></th>
+<th class="head"><p>OpenCMISS</p></th>
+<th class="head"><p>computed by model</p></th>
+<th class="head"><p>initial values can be set</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\textbf{y}\)</span></p></td>
+<td><p>states</p></td>
+<td><p>states</p></td>
+<td><p>STATES</p></td>
+<td><p>by timestepping</p></td>
+<td><p>yes</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\frac{\partial \textbf{y}}{\partial t}\)</span></p></td>
+<td><p>rates</p></td>
+<td><p>rates</p></td>
+<td><p>RATES</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\textbf{h}\)</span></p></td>
+<td><p>algebraics</p></td>
+<td><p>algebraic</p></td>
+<td><p>WANTED</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\hat{\textbf{c}}\)</span></p></td>
+<td><p>constants</p></td>
+<td><p>constants</p></td>
+<td><p>CONSTANTS</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\hat{\textbf{p}}\)</span></p></td>
+<td><p>parameters</p></td>
+<td><p>algebraic</p></td>
+<td><p>KNOWN</p></td>
+<td><p>no</p></td>
+<td><p>yes</p></td>
+</tr>
+</tbody>
+</table>
+<p>Initially the CellML model does not have any ‘parameters’, all values are given some defined value.
+In opendihu, any <em>constants</em> and <em>algebraics</em> can be transformed into <em>parameters</em> and then have changing values assigned.
+This is done by the options <code class="docutils literal notranslate"><span class="pre">parametersUsedAsAlgebraic</span></code> and <code class="docutils literal notranslate"><span class="pre">parametersUsedAsConstant</span></code>.</p>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<p>The following C++ code shows the typical usage inside a time stepping scheme to solve the model:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">TimeSteppingScheme</span><span class="o">::</span><span class="n">ExplicitEuler</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="n">CellmlAdapter</span><span class="o">&lt;</span><span class="mi">57</span><span class="p">,</span><span class="mi">1</span><span class="o">&gt;</span><span class="w">  </span><span class="c1">// nStates,nAlgebraics: 57,71 = Shorten, 4,9 = Hodgkin Huxley</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>The two template arguments of <cite>CellmlAdapter</cite> are the <em>number of states</em> and the <em>number of algebraics</em>.
+This has to match the actual numbers of the CellML model that is to be computed. Consequently, when a specific model should be computed, the CellmlAdapter has be adjusted.</p>
+<p>If the numbers are not correct a corresponding error will be shown from which the correct numbers can be determined.</p>
+<p>Note that only explicit timestepping schemes are possible, which is current <code class="docutils literal notranslate"><span class="pre">TimeSteppingScheme::ExplicitEuler</span></code> or <code class="docutils literal notranslate"><span class="pre">TimeSteppingScheme::Heun</span></code>.</p>
+<p>There is an optional third template argument which specifies the function space, on which the CellML instances will be solved.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">TimeSteppingScheme</span><span class="o">::</span><span class="n">ExplicitEuler</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="n">CellmlAdapter</span><span class="o">&lt;</span><span class="mi">57</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">FunctionSpace</span><span class="o">&lt;</span><span class="n">Mesh</span><span class="o">::</span><span class="n">StructuredDeformableOfDimension</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">,</span><span class="n">BasisFunction</span><span class="o">::</span><span class="n">LagrangeOfOrder</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;&gt;&gt;</span><span class="w">  </span><span class="c1">// nStates,nAlgebraics: 57,71 = Shorten, 4,9 = Hodgkin Huxley</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>This template argument is required if the mesh should be reused.
+E.g., for Monodomain eq. there is a splitting scheme with CellML and Diffusion and both parts use the same mesh. Then you have to assert that the mesh is the same type in the diffusion and here, e.g. by setting the mesh to structured deformable, as shown above.</p>
+<p>The default FunctionSpace is <cite>FunctionSpace::Generic</cite> which is the following typedef:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">typedef</span><span class="w"> </span><span class="n">FunctionSpace</span><span class="o">&lt;</span><span class="n">Mesh</span><span class="o">::</span><span class="n">StructuredRegularFixedOfDimension</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">,</span><span class="n">BasisFunction</span><span class="o">::</span><span class="n">LagrangeOfOrder</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="n">Generic</span><span class="p">;</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;CellML&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;modelFilename&quot;</span><span class="p">:</span>                          <span class="s2">&quot;../../input/hodgkin_huxley_1952.c&quot;</span><span class="p">,</span>    <span class="c1"># CellML file (xml) or C++ source file</span>
+  <span class="c1">#&quot;libraryFilename&quot;:                       &quot;cellml_simd_lib.so&quot;,                   # (optional) filename of a compiled library, overrides modelFilename</span>
+  <span class="c1">#&quot;statesInitialValues&quot;:                   [],                                     # (optional) initial values of all states, if not set, values from CellML model are used</span>
+  <span class="s2">&quot;initializeStatesToEquilibrium&quot;</span><span class="p">:</span>          <span class="kc">False</span><span class="p">,</span>                                  <span class="c1"># if the equilibrium values of the states should be computed before the simulation starts</span>
+  <span class="s2">&quot;initializeStatesToEquilibriumTimestepWidth&quot;</span><span class="p">:</span> <span class="mf">1e-4</span><span class="p">,</span>                               <span class="c1"># if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation</span>
+
+  <span class="c1"># optimization parameters</span>
+  <span class="s2">&quot;optimizationType&quot;</span><span class="p">:</span>                       <span class="s2">&quot;simd&quot;</span><span class="p">,</span>                                 <span class="c1"># &quot;vc&quot;, &quot;simd&quot;, &quot;openmp&quot; or &quot;gpu&quot;: type of generated optimizated source file</span>
+  <span class="s2">&quot;approximateExponentialFunction&quot;</span><span class="p">:</span>         <span class="kc">True</span><span class="p">,</span>                                   <span class="c1"># if optimizationType is &quot;vc&quot; or &quot;gpu&quot;, whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024</span>
+  <span class="s2">&quot;compilerFlags&quot;</span><span class="p">:</span>                          <span class="s2">&quot;-fPIC -O3 -march=native -shared &quot;</span><span class="p">,</span>     <span class="c1"># compiler flags used to compile the optimized model code</span>
+  <span class="s2">&quot;maximumNumberOfThreads&quot;</span><span class="p">:</span>                 <span class="mi">0</span><span class="p">,</span>                                      <span class="c1"># if optimizationType is &quot;openmp&quot;, the maximum number of threads to use. Default value 0 means no restriction.</span>
+  <span class="s2">&quot;useAoVSMemoryLayout&quot;</span><span class="p">:</span>                    <span class="n">use_aovs_memory_layout</span><span class="p">,</span>                 <span class="c1"># if optimizationType is &quot;vc&quot;, whether to use the Array-of-Vectorized-Stru    ct (AoVS) memory layout instead of the Struct-of-Vectorized-Array (SoVA) memory layout. Setting to True is faster.</span>
+
+  <span class="c1"># stimulation callbacks</span>
+  <span class="c1">#&quot;setSpecificParametersFunction&quot;:         set_specific_parameters,                # callback function that sets parameters like stimulation current</span>
+  <span class="c1">#&quot;setSpecificParametersCallInterval&quot;:     int(1./stimulation_frequency/dt_0D),    # set_specific_parameters should be called every 1/stimulation_frequency seconds</span>
+  <span class="s2">&quot;setSpecificStatesFunction&quot;</span><span class="p">:</span>              <span class="n">set_specific_states</span><span class="p">,</span>                    <span class="c1"># callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setSpecificParameters</span>
+  <span class="c1">#&quot;setSpecificStatesCallInterval&quot;:         2*int(1./stimulation_frequency/dt_0D),  # set_specific_states should be called stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs</span>
+  <span class="s2">&quot;setSpecificStatesCallInterval&quot;</span><span class="p">:</span>          <span class="mi">0</span><span class="p">,</span>                                      <span class="c1"># call intervall of the set_specific_states function, 0 means use setSpecificStatesCallFrequency instead</span>
+  <span class="s2">&quot;setSpecificStatesCallFrequency&quot;</span><span class="p">:</span>         <span class="n">get_specific_states_call_frequency</span><span class="p">,</span>     <span class="c1"># set_specific_states should be called stimulation_frequency times per ms</span>
+  <span class="s2">&quot;setSpecificStatesFrequencyJitter&quot;</span><span class="p">:</span>       <span class="n">get_specific_states_frequency_jitter</span><span class="p">,</span>   <span class="c1"># list of values to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency</span>
+  <span class="s2">&quot;setSpecificStatesRepeatAfterFirstCall&quot;</span><span class="p">:</span>  <span class="mf">0.01</span><span class="p">,</span>                                   <span class="c1"># [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered</span>
+  <span class="s2">&quot;setSpecificStatesCallEnableBegin&quot;</span><span class="p">:</span>       <span class="n">get_specific_states_call_enable_begin</span><span class="p">,</span>  <span class="c1"># [ms] first time when to call setSpecificStates</span>
+  <span class="s2">&quot;additionalArgument&quot;</span><span class="p">:</span>                     <span class="n">fiber_no</span><span class="p">,</span>                               <span class="c1"># any additional value that will be given to the callback functions</span>
+
+
+  <span class="s2">&quot;mappings&quot;</span><span class="p">:</span> <span class="p">{</span>                                                                     <span class="c1"># mappings between parameters and algebraics/constants and between connectorSlots and states, algebraics or parameters</span>
+    <span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>           <span class="p">(</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span> <span class="s2">&quot;membrane/i_Stim&quot;</span><span class="p">),</span>                    <span class="c1"># parameter 0 is mapped to constant with name &quot;membrane/i_Stim&quot;</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>       <span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="s2">&quot;membrane/V&quot;</span><span class="p">),</span>                            <span class="c1"># as output connector slot 0 expose state with name &quot;membrane/V&quot;</span>
+  <span class="p">},</span>
+
+  <span class="c1">#&quot;algebraicsForTransfer&quot;:                 [],                                    # alternative way of specifying &quot;mappings&quot;: which algebraic values to use in further computation</span>
+  <span class="c1">#&quot;statesForTransfer&quot;:                     [0],                                   # alternative way of specifying &quot;mappings&quot;: which state values to use in further computation, Shorten / Hodgkin Huxley: state 0 = Vm</span>
+  <span class="c1">#&quot;parametersUsedAsAlgebraic&quot;:             [32],                                  # alternative way of specifying &quot;mappings&quot;: list of algebraic value indices, that will be set by parameters. Explicitely defined parameters that will be copied to algebraics, this vector contains the indices of the algebraic array. This is ignored if the input is generated from OpenCMISS generated c code.</span>
+  <span class="c1">#&quot;parametersUsedAsConstant&quot;:              [65],                                  # alternative way of specifying &quot;mappings&quot;: list of constant value indices, that will be set by parameters. This is ignored if the input is generated from OpenCMISS generated c code.</span>
+  <span class="s2">&quot;parametersInitialValues&quot;</span><span class="p">:</span>                <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>                            <span class="c1"># initial values for the parameters, e.g. I_Stim, l_hs</span>
+  <span class="s2">&quot;meshName&quot;</span><span class="p">:</span>                               <span class="s2">&quot;MeshFiber_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fiber_no</span><span class="p">),</span>
+  <span class="s2">&quot;stimulationLogFilename&quot;</span><span class="p">:</span>                 <span class="s2">&quot;out/stimulation.log&quot;</span><span class="p">,</span>
+<span class="p">},</span>
+</pre></div>
+</div>
+<p>In the following all parameters will be explained.</p>
+</section>
+<section id="modelfilename">
+<h2>modelFilename<a class="headerlink" href="#modelfilename" title="Link to this heading"></a></h2>
+<p>This is the filename of the CellML model file. It can either be the XML file or a C/C++ code file. If it is an XML file, <em>opendihu</em> will use <em>OpenCOR</em> to convert it to a C source code file first.
+Afterwards, <em>opendihu</em> will generate optimized C code (using the options given by the <em>optimization parameters</em>) and will store it as another file in the <cite>src</cite> subdirectory. The code will be compiled to a shared library (extension ’*.so’) that will get loaded at runtime of the simulation. The shared library will be stored in the <cite>lib</cite> subdirectory.</p>
+</section>
+<section id="libraryfilename">
+<h2>libraryFilename<a class="headerlink" href="#libraryfilename" title="Link to this heading"></a></h2>
+<p>Optional, if given, it should be the filename of a shared object library (<em>.so) that will be used to compute the model.
+This will be used instead of the model given in *modelFilename</em>. Usually this is only used to reuse library created by opendihu earlier.</p>
+</section>
+<section id="statesinitialvalues">
+<h2>statesInitialValues<a class="headerlink" href="#statesinitialvalues" title="Link to this heading"></a></h2>
+<p>Optional. Default: <cite>“CellML”</cite></p>
+<p>If <em>statesInitialValues</em> is a list, it should contain an initial value for each state of the CellML model.
+If there are multiple instances all instances will be initialized by the same values.</p>
+<p>If <em>statesInitialValues</em> is set to <em>CellML</em>, the initial values will be taken from the CellML model file (either XML or C). Usually this is what you want.</p>
+<p>If <em>statesInitialValues</em> is set to <em>undefined</em>, no initial values will be set and the outer time stepping scheme can set initial values by giving <cite>“initialValues”</cite>.</p>
+</section>
+<section id="initializestatestoequilibrium-and-initializestatestoequilibriumtimestepwidth">
+<h2>initializeStatesToEquilibrium and initializeStatesToEquilibriumTimestepWidth<a class="headerlink" href="#initializestatestoequilibrium-and-initializestatestoequilibriumtimestepwidth" title="Link to this heading"></a></h2>
+<p>If <cite>initializeStatesToEquilibrium</cite> is set to <cite>True</cite>, equilibrum values of the states in the CellML model will be computed before the simulation starts. Then, these values will be used to initialize the states.</p>
+<p>Given the CellML model as</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial \textbf{y}}{\partial t} = f(t,\textbf{y}(t),\textbf{h}(t),\hat{\textbf{c}},\hat{\textbf{p}}(t)),\]</div>
+<p>the equation is solved by a 4th order Runge-Kutta timestepping scheme, until</p>
+<div class="math notranslate nohighlight">
+\[\Vert\frac{\partial \textbf{y}}{\partial t}\Vert &lt; \epsilon\]</div>
+<p>is reached, with <span class="math notranslate nohighlight">\(\epsilon = 1e-5\)</span>. The timestep width of the Runge-Kutta scheme can be given by <cite>initializeStatesToEquilibriumTimestepWidth</cite>. If an instability with this timestep width is detected (any value gets <cite>inf</cite> or <cite>nan</cite>), the timestep width will be decreased automatically and the computation will be restarted.</p>
+<p>The resulting equilibrium values and the residuals are written to a file <cite>&lt;modelfilename&gt;_equilibrium_values.txt</cite>, where <cite>&lt;modelfilename&gt;</cite> is the file name of the model. An example for such a file is given below:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// Result of computation of equilibrium values for the states by opendihu on 2020/2/29 10:17:12</span>
+<span class="c1">// Number of iterations: 10000000, dt: 0.0015625</span>
+<span class="c1">// Maximum ∂u/∂t = 0.0424747 for state 28</span>
+<span class="c1">// (If this is a high value, it indicates that the equilibrium was not fully reached.)</span>
+
+<span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">-81.0764</span><span class="p">;</span><span class="w">      </span><span class="c1">// residuum: 3.15938e-05</span>
+<span class="n">state</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">-81.0242</span><span class="p">;</span><span class="w">      </span><span class="c1">// residuum: 3.15353e-05</span>
+<span class="n">state</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">7.25855</span><span class="p">;</span><span class="w">       </span><span class="c1">// residuum: 5.68619e-06</span>
+<span class="p">(...</span><span class="n">more</span><span class="w"> </span><span class="n">lines</span><span class="w"> </span><span class="n">follow</span><span class="p">...)</span>
+<span class="n">state</span><span class="p">[</span><span class="mi">53</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.00249843</span><span class="p">;</span><span class="w">   </span><span class="c1">// residuum: 1.95519e-11</span>
+<span class="n">state</span><span class="p">[</span><span class="mi">54</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.213378</span><span class="p">;</span><span class="w">     </span><span class="c1">// residuum: -6.67943e-07</span>
+<span class="n">state</span><span class="p">[</span><span class="mi">55</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.228239</span><span class="p">;</span><span class="w">     </span><span class="c1">// residuum: -1.38375e-06</span>
+<span class="n">state</span><span class="p">[</span><span class="mi">56</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">2.8029e-10</span><span class="p">;</span><span class="w">   </span><span class="c1">// residuum: -1.57379e-13</span>
+
+<span class="w">  </span><span class="n">Line</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">copy</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">settings</span><span class="o">:</span>
+<span class="w">  </span><span class="s">&quot;statesInitialValues&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="mf">-81.0764</span><span class="p">,</span><span class="w"> </span><span class="mf">-81.0242</span><span class="p">,</span><span class="w"> </span><span class="mf">7.25855</span><span class="p">,</span><span class="w"> </span><span class="mf">150.928</span><span class="p">,</span><span class="w"> </span><span class="mf">6.13908</span><span class="p">,</span><span class="w"> </span><span class="mf">12.6374</span><span class="p">,</span><span class="w"> </span><span class="mf">131.485</span><span class="p">,</span><span class="w"> </span><span class="mf">132.853</span><span class="p">,</span><span class="w"> </span><span class="mf">0.00809159</span><span class="p">,</span><span class="w"> </span><span class="mf">0.995921</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0312117</span><span class="p">,</span><span class="w"> </span><span class="mf">0.546801</span><span class="p">,</span><span class="w"> </span><span class="mf">0.784615</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0081521</span><span class="p">,</span><span class="w"> </span><span class="mf">0.995806</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0314177</span><span class="p">,</span><span class="w"> </span><span class="mf">0.544509</span><span class="p">,</span><span class="w"> </span><span class="mf">0.783771</span><span class="p">,</span><span class="w"> </span><span class="mf">1.75163e-06</span><span class="p">,</span><span class="w"> </span><span class="mf">5.90311e-06</span><span class="p">,</span><span class="w"> </span><span class="mf">7.46021e-06</span><span class="p">,</span><span class="w"> </span><span class="mf">4.19024e-06</span><span class="p">,</span><span class="w"> </span><span class="mf">8.82585e-07</span><span class="p">,</span><span class="w"> </span><span class="mf">0.875814</span><span class="p">,</span><span class="w"> </span><span class="mf">0.118062</span><span class="p">,</span><span class="w"> </span><span class="mf">0.00596817</span><span class="p">,</span><span class="w"> </span><span class="mf">0.000134088</span><span class="p">,</span><span class="w"> </span><span class="mf">1.12971e-06</span><span class="p">,</span><span class="w"> </span><span class="mf">-1580.24</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0284811</span><span class="p">,</span><span class="w"> </span><span class="mf">53.9751</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0284799</span><span class="p">,</span><span class="w"> </span><span class="mf">1687.43</span><span class="p">,</span><span class="w"> </span><span class="mf">2.98746</span><span class="p">,</span><span class="w"> </span><span class="mi">615</span><span class="p">,</span><span class="w"> </span><span class="mi">615</span><span class="p">,</span><span class="w"> </span><span class="mi">811</span><span class="p">,</span><span class="w"> </span><span class="mi">811</span><span class="p">,</span><span class="w"> </span><span class="mf">1283.85</span><span class="p">,</span><span class="w"> </span><span class="mf">17808.2</span><span class="p">,</span><span class="w"> </span><span class="mf">0.107779</span><span class="p">,</span><span class="w"> </span><span class="mf">0.107778</span><span class="p">,</span><span class="w"> </span><span class="mf">7243.03</span><span class="p">,</span><span class="w"> </span><span class="mf">7243.03</span><span class="p">,</span><span class="w"> </span><span class="mf">756.867</span><span class="p">,</span><span class="w"> </span><span class="mf">756.867</span><span class="p">,</span><span class="w"> </span><span class="mf">956.975</span><span class="p">,</span><span class="w"> </span><span class="mf">956.975</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0343446</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0102602</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0136077</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0314302</span><span class="p">,</span><span class="w"> </span><span class="mf">0.00312304</span><span class="p">,</span><span class="w"> </span><span class="mf">0.00249843</span><span class="p">,</span><span class="w"> </span><span class="mf">0.213378</span><span class="p">,</span><span class="w"> </span><span class="mf">0.228239</span><span class="p">,</span><span class="w"> </span><span class="mf">2.8029e-10</span><span class="p">],</span>
+</pre></div>
+</div>
+<p>The last line can be copy&amp;pasted into the settings file and then specifies the initial values to be used in the next run.</p>
+</section>
+<section id="callbacks">
+<h2>Callbacks<a class="headerlink" href="#callbacks" title="Link to this heading"></a></h2>
+<p>A CellMLAdapter can have several callback functions. These are python functions that will be called in regular time intervals during the computation and can alter values of the computation.
+They can be used, e.g., to stimulate a subcellular model at specific times.</p>
+<p>The different callback functions and their time step interval by which the functions will be called are listed below.
+All of them will get the value of the option <em>additionalArgument</em> as its last argument. Like this it is possible to distinguish different instances in the functions when <em>CellMLAdapter</em> is nested inside <em>MultipleInstances</em>. This is the case for multiple fibers, where the <em>additionalArgument</em> can be the fiber number.</p>
+<section id="setspecificparametersfunction-and-setspecificparameterscallinterval">
+<h3><em>setSpecificParametersFunction</em> and <em>setSpecificParametersCallInterval</em><a class="headerlink" href="#setspecificparametersfunction-and-setspecificparameterscallinterval" title="Link to this heading"></a></h3>
+<p>Callback function and time step interval by which the function will be called.
+This function can change some parameters and has the following signature:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">set_specific_parameters</span><span class="p">(</span><span class="n">n_dofs_global</span><span class="p">,</span> <span class="n">timestep_no</span><span class="p">,</span> <span class="n">current_time</span><span class="p">,</span> <span class="n">global_parameters</span><span class="p">,</span> <span class="n">additional_argument</span><span class="p">):</span>
+  <span class="c1"># n_dofs_global:  (int) global number of dofs in the mesh, i.e. number of CellML instances to be computed</span>
+  <span class="c1"># timestep_no:    (int)   current time step number, advances by the value of &quot;setSpecificParametersCallInterval&quot;</span>
+  <span class="c1"># current_time:   (float) the current simulation time</span>
+  <span class="c1"># global_parameters:  (dict)  initially an empty dict, the parameters to be changed should be indicated in this dict (see below)</span>
+  <span class="c1"># additional_argument: The value of the option &quot;additionalArgument&quot;, can be any Python object.</span>
+
+  <span class="c1"># set parameters using calls like the following</span>
+
+  <span class="n">global_parameters</span><span class="p">{([</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">],</span> <span class="n">nodal_dof_index</span><span class="p">,</span> <span class="n">parameter_no</span><span class="p">)}</span> <span class="o">=</span> <span class="n">value</span>
+  <span class="c1"># [x,y,z] are the global coordinates of the node to set the parameter</span>
+  <span class="c1"># nodal_dof_index is the dof number of the node, usually 0. Only for Hermite ansatz functions it can be higher.</span>
+  <span class="c1"># parameter_no is the parameter number to set</span>
+  <span class="c1"># value is the new parameter value</span>
+</pre></div>
+</div>
+<figure class="align-center" id="id1">
+<span id="callbackmesh"></span><a class="reference internal image-reference" href="../_images/callback_mesh.svg"><img alt="../_images/callback_mesh.svg" src="../_images/callback_mesh.svg" width="50%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 112 </span><span class="caption-text">Example mesh with two subdomains and global natural ordering of the nodes.</span><a class="headerlink" href="#id1" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>For example, consider a mesh as in <a class="reference internal" href="#callbackmesh"><span class="std std-numref">Fig. 112</span></a> where a CellML model is computed on each node. The mesh is partitioned to two subdomains.
+Rank 0 computes the grey nodes, rank 1 computes the blue nodes. The global natural ordering is given in the figure.</p>
+<p>Then, on rank 0, <code class="docutils literal notranslate"><span class="pre">dof_nos_global_natural</span></code> will contain the list <code class="docutils literal notranslate"><span class="pre">[0,1,4,5,8,9]</span></code> and on rank 1, the list will be  <code class="docutils literal notranslate"><span class="pre">[2,3,6,7,10,11]</span></code>.
+This shows to which global nodes the values in the <cite>parameters</cite> list correspond. With this information, the callback function could decide which parameters to update.</p>
+</section>
+<section id="setspecificstatesfunction-and-setspecificstatescallinterval">
+<h3><em>setSpecificStatesFunction</em> and <em>setSpecificStatesCallInterval</em><a class="headerlink" href="#setspecificstatesfunction-and-setspecificstatescallinterval" title="Link to this heading"></a></h3>
+<p>Callback function and time step interval by which the function will be called.
+This function can change some states and has the following signature:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">set_specific_states</span><span class="p">(</span><span class="n">n_dofs_global</span><span class="p">,</span> <span class="n">timestep_no</span><span class="p">,</span> <span class="n">current_time</span><span class="p">,</span> <span class="n">global_states</span><span class="p">,</span> <span class="n">additional_argument</span><span class="p">):</span>
+  <span class="c1"># n_dofs_global:  (int) global number of dofs in the mesh, i.e. number of CellML instances to be computed</span>
+  <span class="c1"># timestep_no:    (int)   current time step number, advances by the value of &quot;setSpecificParametersCallInterval&quot;</span>
+  <span class="c1"># current_time:   (float) the current simulation time</span>
+  <span class="c1"># global_states:  (dict)  initially an empty dict, the states to be changed should be indicated in this dict (see below)</span>
+  <span class="c1"># additional_argument: The value of the option &quot;additionalArgument&quot;, can be any Python object.</span>
+
+  <span class="c1"># set states using calls like the following</span>
+
+  <span class="n">global_states</span><span class="p">{([</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">],</span> <span class="n">nodal_dof_index</span><span class="p">,</span> <span class="n">state_no</span><span class="p">)}</span> <span class="o">=</span> <span class="n">value</span>
+  <span class="c1"># [x,y,z] are the global coordinates of the node for which to set the state</span>
+  <span class="c1"># nodal_dof_index is the dof number of the node, usually 0. Only for Hermite ansatz functions it can be higher.</span>
+  <span class="c1"># state_no is the state number to set</span>
+  <span class="c1"># value is the new state value</span>
+</pre></div>
+</div>
+<p>If <code class="docutils literal notranslate"><span class="pre">setSpecificStatesFunction</span></code> will be called, this happens during the time step update just before each evaluation of the right hand side / the CellML model.
+I.e. for Heun’s method it will be called up to twice per time step (depending on the other <cite>setSpecificStates*</cite> settings).</p>
+</section>
+<section id="setspecificstatescallenablebegin-setspecificstatescallfrequency-and-setspecificstatesfrequencyjitter">
+<h3><em>setSpecificStatesCallEnableBegin</em>, <em>setSpecificStatesCallFrequency</em> and <em>setSpecificStatesFrequencyJitter</em><a class="headerlink" href="#setspecificstatescallenablebegin-setspecificstatescallfrequency-and-setspecificstatesfrequencyjitter" title="Link to this heading"></a></h3>
+<p>If <em>setSpecificStatesCallInterval</em> is set to 0, the times when to call <em>setSpecificStatesFunction</em> are given by <em>setSpecificStatesCallEnableBegin</em>, <em>setSpecificStatesCallFrequency</em> and <em>setSpecificStatesFrequencyJitter</em>.</p>
+<p>With these options, it is possible to efficiently specify a repeating pattern of calling the callback function. This is the recommended way to model a frequency encoded stimulation.</p>
+<p>The first call of the callback is at simulation time <em>setSpecificStatesCallEnableBegin</em>. Using this parameter, a “ramp” can be modelled.
+The callback is then called according to the frequency in <em>setSpecificStatesCallFrequency</em>. The frequency is <span class="math notranslate nohighlight">\(1/T\)</span> and thus does not count timesteps, as with <em>setSpecificStatesCallInterval</em>, but uses the simulation time directly.</p>
+<p>The frequency is modulated by applying a relative jitter, given in a list by <em>setSpecificStatesFrequencyJitter</em>. The jitter values are taken from the list and repeated. A value of 0 indicates no jitter, i.e. the frequency is met exactly. E.g., a value of 1.1 means a 10% longer time between subsequent calls to the function.</p>
+<p>After the callback was called it will be repeated in the next timesteps <em>setSpecificStatesRepeatAfterFirstCall</em> times. Using this setting, a “square” signal can be modelled.</p>
+<p>A visualization of the options is shown in <a class="reference internal" href="#stimulation-times-2"><span class="std std-numref">Fig. 113</span></a>.</p>
+<figure class="align-default" id="id2">
+<span id="stimulation-times-2"></span><a class="reference internal image-reference" href="../_images/stimulation_times.svg"><img alt="../_images/stimulation_times.svg" src="../_images/stimulation_times.svg" width="80%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 113 </span><span class="caption-text">Options that influence the stimulation. A time line is shown from left to right. The red blocks are time spans when <cite>setSpecificStates</cite> will be called. Because setSpecificStates usually checks a <cite>firing times file</cite> whether or not to activate the fiber, it can make sense to use the file <cite>“MU_firing_times_always.txt”</cite>. This file always indicates stimulation. Thus, the spike trains are completely determined by the options <cite>setSpecificStatesCallEnableBegin</cite>, <cite>setSpecificStatesCallFrequency</cite> and <cite>setSpecificStatesFrequencyJitter</cite>.</span><a class="headerlink" href="#id2" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="handleresultfunction-and-handleresultcallinterval">
+<h3><em>handleResultFunction</em> and <em>handleResultCallInterval</em><a class="headerlink" href="#handleresultfunction-and-handleresultcallinterval" title="Link to this heading"></a></h3>
+<p>Callback function and time step interval by which the function will be called.
+This function can be used to postprocess the result and has the following signature:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">handle_result</span><span class="p">(</span><span class="n">n_instances</span><span class="p">,</span> <span class="n">time_step_no</span><span class="p">,</span> <span class="n">current_time</span><span class="p">,</span> <span class="n">states_list</span><span class="p">,</span> <span class="n">algebraics_list</span><span class="p">,</span> <span class="n">name_information</span><span class="p">,</span> <span class="n">additional_argument</span><span class="p">):</span>
+  <span class="c1"># n_instances:         (int) local number of CellML instances to be computed</span>
+  <span class="c1"># time_step_no:        (int)   current time step number, advances by the value of &quot;setSpecificParametersCallInterval&quot;</span>
+  <span class="c1"># current_time:        (float) the current simulation time</span>
+  <span class="c1"># states_list:         (list of floats) all local state values in struct-of-array memory layout,</span>
+  <span class="c1">#                       i.e. [instance0state0, instance1state0, ... instanceNstate0, instance0state1, instance1state1, ...]</span>
+  <span class="c1"># algebraics_list:  (list of floats) all local algebraic values in struct-of-array memory layout,</span>
+  <span class="c1">#                       i.e. [instance0algebraic0, instance1algebraic0, ... instanceNalgebraic0, instance0algebraic1, instance1algebraic1, ...]</span>
+  <span class="c1"># name_information:    a map with the keys &quot;stateNames&quot; and &quot;algebraicNames&quot;, contains lists of all CellML names of the states and algebraics</span>
+  <span class="c1"># additional_argument: The value of the option &quot;additionalArgument&quot;, can be any Python object.</span>
+
+
+  <span class="c1"># asign some states to variables</span>
+  <span class="n">Vm</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">name_information</span><span class="p">[</span><span class="s2">&quot;stateNames&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;membrane/V&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_instances</span><span class="p">]</span>
+  <span class="n">Ca_1</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">name_information</span><span class="p">[</span><span class="s2">&quot;stateNames&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;razumova/Ca_1&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_instances</span><span class="p">]</span>
+  <span class="n">A_1</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">name_information</span><span class="p">[</span><span class="s2">&quot;stateNames&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;razumova/A_1&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_instances</span><span class="p">]</span>
+  <span class="n">A_2</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">name_information</span><span class="p">[</span><span class="s2">&quot;stateNames&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;razumova/A_2&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_instances</span><span class="p">]</span>
+  <span class="n">x_1</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">name_information</span><span class="p">[</span><span class="s2">&quot;stateNames&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;razumova/x_1&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_instances</span><span class="p">]</span>
+  <span class="n">x_2</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">name_information</span><span class="p">[</span><span class="s2">&quot;stateNames&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;razumova/x_2&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_instances</span><span class="p">]</span>
+
+  <span class="c1"># assign some algebraics to variables</span>
+  <span class="n">active_stress</span> <span class="o">=</span> <span class="n">algebraics</span><span class="p">[</span><span class="n">name_information</span><span class="p">[</span><span class="s2">&quot;algebraicNames&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;razumova/activestress&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_instances</span><span class="p">]</span>
+  <span class="n">activation</span> <span class="o">=</span> <span class="n">algebraics</span><span class="p">[</span><span class="n">name_information</span><span class="p">[</span><span class="s2">&quot;algebraicNames&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;razumova/activation&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_instances</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The example shows how one can access the state and algebraic variables by their name. The call to</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">name_information</span><span class="p">[</span><span class="s2">&quot;stateNames&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;razumova/Ca_1&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>gives the index of the state with the given name. Because the data for all locally computed instances is contained in the states array, we need to multiply this index with <code class="docutils literal notranslate"><span class="pre">n_instances</span></code> to get the first entry of the given state. This is now the index in <code class="docutils literal notranslate"><span class="pre">states</span></code> for the first instance. If the problem is monodomain on a fiber, in order to get the value at the center, use</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Ca_1</span> <span class="o">=</span> <span class="n">states</span><span class="p">[</span><span class="n">name_information</span><span class="p">[</span><span class="s2">&quot;stateNames&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;razumova/Ca_1&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">n_instances</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_instances</span><span class="o">/</span><span class="mi">2</span><span class="p">)]</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="how-to-specify-mappings-of-states-algebraics-and-parameters">
+<h2>How to specify mappings of states, algebraics and parameters<a class="headerlink" href="#how-to-specify-mappings-of-states-algebraics-and-parameters" title="Link to this heading"></a></h2>
+<p>The algebraics and constants in the CellML model can be replaced by so-called <cite>parameters</cite>. It is possible to define an arbitrary number of parameters (not completely arbitrary - the number has to be lower than the number of algebraics). These parameters act like constants during computation of the model. After each computation, their values can be changed either by callback functions or, if they are connected via an output slot to another solver, the values are set by the other solver.</p>
+<p>The model to be computed appears as if the specified <cite>algebraics</cite> and <cite>constants</cite> had been replaced by the respective parameters.
+This replacement relation is called <cite>mapping</cite> and can be defined in two different ways: the older way is by setting <cite>parametersUsedAsAlgebraic</cite> and <cite>parametersUsedAsConstant</cite>. The newer and recommended way is by using <cite>mappings</cite>.</p>
+<p>Furthermore, some of the <cite>states</cite> and <cite>algebraics</cite> as well as some <cite>parameters</cite> can be connected to an output slot of the timestepping scheme and thereby reused by a different solver within a coupling or operator splitting scheme. Which <cite>states</cite>, <cite>algebraics</cite> and <cite>parameters</cite> to connect can again be specified in two ways: either by <cite>algebraicsForTransfer</cite> and <cite>statesForTransfer</cite> and <cite>parametersForTransfer</cite> or by <cite>mappings</cite>.</p>
+<p>These settings will be explained in the following.</p>
+<section id="parametersusedasalgebraic">
+<h3>parametersUsedAsAlgebraic<a class="headerlink" href="#parametersusedasalgebraic" title="Link to this heading"></a></h3>
+<p>(list of int) List of algebraic numbers that will be replaced by parameters.
+There are explicitely defined parameter values that will be copied to these algebraics.
+This vector contains the indices of the algebraic array.
+Note, that these values can also be set by the <code class="docutils literal notranslate"><span class="pre">mappings</span></code> option, which is more clear.</p>
+</section>
+<section id="parametersusedasconstant">
+<h3>parametersUsedAsConstant<a class="headerlink" href="#parametersusedasconstant" title="Link to this heading"></a></h3>
+<p>(list of int) List of indices, which constants in the computation will be replaced by parameters.
+Note, that these values can also be set by the <code class="docutils literal notranslate"><span class="pre">mappings</span></code> option, which is more clear.</p>
+</section>
+<section id="algebraicsfortransfer-and-statesfortransfer">
+<h3><em>algebraicsForTransfer</em> and <em>statesForTransfer</em><a class="headerlink" href="#algebraicsfortransfer-and-statesfortransfer" title="Link to this heading"></a></h3>
+<p>(list of ints) Which algebraics and states should be transferred to the other solver in either a <cite>Coupling</cite>, <cite>GodunovSplitting</cite> or <cite>StrangSplitting</cite>.</p>
+<p>The total number of field variables to be transferred is the sum of the length of these two settings (+number of parameters if specified).</p>
+<p>Note, that these values can also be set by the <code class="docutils literal notranslate"><span class="pre">mappings</span></code> option, which is more clear.</p>
+</section>
+</section>
+<section id="parametersinitialvalues">
+<h2>parametersInitialValues<a class="headerlink" href="#parametersinitialvalues" title="Link to this heading"></a></h2>
+<p>(list of float) List of values of the parameters. This also defines the number of parameters.</p>
+<p>Example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">parametersInitialValues</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">]</span>
+<span class="n">parametersUsedAsAlgebraic</span> <span class="o">=</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+<span class="n">parametersUsedAsConstant</span><span class="p">[</span><span class="mi">10</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>This example will compute the given CellML model with the following modifications: The algebraic/algebraic values <code class="docutils literal notranslate"><span class="pre">algebraics[5]</span></code> and <code class="docutils literal notranslate"><span class="pre">algebraics[2]</span></code> will not be computed by the model, but get the values <code class="docutils literal notranslate"><span class="pre">1.0</span></code> and <code class="docutils literal notranslate"><span class="pre">2.0</span></code>. These values may be changed later using one of the callback functions.
+The variable <code class="docutils literal notranslate"><span class="pre">constants[10]</span></code> will be set to <code class="docutils literal notranslate"><span class="pre">3.0</span></code> and not changed.</p>
+</section>
+<section id="mappings">
+<h2>mappings<a class="headerlink" href="#mappings" title="Link to this heading"></a></h2>
+<p>(dict)
+Under <code class="docutils literal notranslate"><span class="pre">mapping</span></code> it is possible to specify the connection of <cite>parameters</cite> to <cite>algebraics</cite> and <cite>constants</cite>,
+as well as the connection of <cite>connectorSlots</cite> to <cite>states</cite>, <cite>algebraics</cite> and <cite>parameters</cite>. An example is given below (the actual names are only dummies and make no sense):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;mappings&quot;</span> <span class="p">:</span> <span class="p">{</span>
+    <span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>           <span class="p">(</span><span class="s2">&quot;algebraic&quot;</span><span class="p">,</span> <span class="s2">&quot;wal_environment/I_HH&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>           <span class="p">(</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span> <span class="s2">&quot;razumova/L_x&quot;</span><span class="p">),</span>
+
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>       <span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="s2">&quot;wal_environment/vS&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>       <span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>       <span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="s2">&quot;potassium_channel_n_gate/n&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>       <span class="s2">&quot;potassium_channel_n_gate/n&quot;</span><span class="p">,</span>             <span class="c1"># alternative</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span><span class="p">):</span>  <span class="p">(</span><span class="s2">&quot;algebraic&quot;</span><span class="p">,</span> <span class="s2">&quot;leakage_current/i_L&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;A&quot;</span><span class="p">):</span>  <span class="s2">&quot;leakage_current/i_L&quot;</span><span class="p">,</span>                    <span class="c1"># alternative</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="s2">&quot;slotB&quot;</span><span class="p">):</span> <span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="s2">&quot;lambda&quot;</span><span class="p">):(</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span> <span class="s2">&quot;razumova/L_S&quot;</span><span class="p">),</span>         <span class="c1"># expose fiber stretch to get the current fiber stretch from the mechanics solver</span>
+  <span class="p">}</span>
+</pre></div>
+</div>
+<p>The value of <cite>mappings</cite> is a Python Dict.
+Each key (left hand side) has one of the following formats:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">(&quot;parameter&quot;,</span> <span class="pre">0)</span></code> to specify a parameter with given number. The number is needed to identify the initial values for the parameters.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">(&quot;connectorSlot&quot;,</span> <span class="pre">0)</span></code> where <code class="docutils literal notranslate"><span class="pre">0</span></code> can be any integer number, to specify a connector slot, the number is arbitrary and is only used to order multiple slots in relation to each other.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">(&quot;connectorSlot&quot;,</span> <span class="pre">&quot;slotA&quot;)</span></code> here with a slot name, the name has to be maximum 10 characters long.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">(&quot;connectorSlot&quot;,</span> <span class="pre">0,</span> <span class="pre">&quot;slotA&quot;)</span></code> This is a combination of the two formats above, it specifies a slot name and also a number for ordering the slots.</p></li>
+</ul>
+<p>The value that corresponds to the key (right hand side) of one <cite>mappings</cite> item is a two-element tuple or string of the form</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">(&quot;name&quot;,</span> <span class="pre">&quot;cellml</span> <span class="pre">name&quot;)</span></code></p></li>
+<li><p>or <code class="docutils literal notranslate"><span class="pre">(&quot;name&quot;,</span> <span class="pre">0)</span></code></p></li>
+<li><p>or <code class="docutils literal notranslate"><span class="pre">&quot;cellml</span> <span class="pre">name&quot;</span></code>,</p></li>
+</ul>
+<p>where <code class="docutils literal notranslate"><span class="pre">&quot;name&quot;</span></code> has to be either <code class="docutils literal notranslate"><span class="pre">&quot;constant&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;state&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;algebraic&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;parameter&quot;</span></code>. The <code class="docutils literal notranslate"><span class="pre">&quot;cellml</span> <span class="pre">name&quot;</span></code> is the name of the variable in the CellML model in the form <code class="docutils literal notranslate"><span class="pre">&quot;componentName/variableName&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">0</span></code> can be any valid index. This means, it is possible to identify, e.g. a state by its name as well as by its index in the C code file.
+If there is no tuple but only the “cellml name”, it will be determine automatically if it is a <cite>state</cite>, <cite>algebraic</cite> or <cite>constant</cite> by searching among all available cellml names.</p>
+<p>For the parameters, the index must start with <cite>0</cite> and increase by one for all further parameters. As already mentioned, the mapped variable for a parameter can be an <cite>“algebraic”</cite> or a <cite>“constant”</cite>. The beginning of the parameters list must all map to algebraics and the rest must map to constants. I.e., every constant must be mapped to a parameter with lower index than all the parameters that are mapped to algebraics. The specified mappings will internally be transferred to the <code class="docutils literal notranslate"><span class="pre">parametersUsedAsAlgebraic</span></code> and <code class="docutils literal notranslate"><span class="pre">parametersUsedAsConstant</span></code> lists that can otherwise also be set directly by these options.</p>
+<p>Also for the <cite>“connectorSlots”</cite> there is a required order. At first, all mapped <cite>“states”</cite> have to be given, then all <cite>“algebraics”</cite> and then all <cite>“parameters”</cite>.</p>
+<p>Note that the values of parameters will not be changed by the CellML model. If you need to reuse values computed within the CellML model, use states or algebraics. The purpose of connecting parameters to output slots is to allow the initial parameter value to be set by a different solver.</p>
+<p>Typical mappings and initial values of parameters by commonly used cellml models (in variable <code class="docutils literal notranslate"><span class="pre">cellml_file</span></code>) are given below. Note that these do not set slot names. But for more complex examples it would be good to add slot names.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># set variable mappings for cellml model</span>
+<span class="k">if</span> <span class="s2">&quot;hodgkin_huxley&quot;</span> <span class="ow">in</span> <span class="n">cellml_file</span><span class="p">:</span>
+  <span class="c1"># parameters: I_stim</span>
+  <span class="n">mappings</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>     <span class="p">(</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span> <span class="s2">&quot;membrane/i_Stim&quot;</span><span class="p">),</span>      <span class="c1"># parameter 0 is constant 2 = I_stim</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="s2">&quot;membrane/V&quot;</span><span class="p">),</span>              <span class="c1"># expose state 0 = Vm to the operator splitting</span>
+  <span class="p">}</span>
+  <span class="n">parameters_initial_values</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span>                         <span class="c1"># initial value for stimulation current</span>
+
+<span class="k">elif</span> <span class="s2">&quot;shorten&quot;</span> <span class="ow">in</span> <span class="n">cellml_file</span><span class="p">:</span>
+  <span class="c1"># parameters: stimulation current I_stim, fiber stretch λ</span>
+  <span class="n">mappings</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>     <span class="p">(</span><span class="s2">&quot;algebraic&quot;</span><span class="p">,</span> <span class="s2">&quot;wal_environment/I_HH&quot;</span><span class="p">),</span> <span class="c1"># parameter is algebraic 32</span>
+    <span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>     <span class="p">(</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span> <span class="s2">&quot;razumova/L_x&quot;</span><span class="p">),</span>             <span class="c1"># parameter is constant 65, fiber stretch λ, this indicates how much the fiber has stretched, 1 means no extension</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="s2">&quot;wal_environment/vS&quot;</span><span class="p">),</span>          <span class="c1"># expose state 0 = Vm to the operator splitting</span>
+  <span class="p">}</span>
+  <span class="n">parameters_initial_values</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span>                        <span class="c1"># stimulation current I_stim, fiber stretch λ</span>
+
+<span class="k">elif</span> <span class="s2">&quot;slow_TK_2014&quot;</span> <span class="ow">in</span> <span class="n">cellml_file</span><span class="p">:</span>   <span class="c1"># this is (3a, &quot;MultiPhysStrain&quot;, old tomo mechanics) in OpenCMISS</span>
+  <span class="c1"># parameters: I_stim, fiber stretch λ</span>
+  <span class="n">mappings</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>     <span class="p">(</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span> <span class="s2">&quot;wal_environment/I_HH&quot;</span><span class="p">),</span> <span class="c1"># parameter 0 is constant 54 = I_stim</span>
+    <span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>     <span class="p">(</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span> <span class="s2">&quot;razumova/L_S&quot;</span><span class="p">),</span>         <span class="c1"># parameter 1 is constant 67 = fiber stretch λ</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="s2">&quot;wal_environment/vS&quot;</span><span class="p">),</span>      <span class="c1"># expose state 0 = Vm to the operator splitting</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="p">(</span><span class="s2">&quot;algebraic&quot;</span><span class="p">,</span> <span class="s2">&quot;razumova/stress&quot;</span><span class="p">),</span>     <span class="c1"># expose algebraic 12 = γ to the operator splitting</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="s2">&quot;lambda&quot;</span><span class="p">):(</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span> <span class="s2">&quot;razumova/L_S&quot;</span><span class="p">),</span>   <span class="c1"># expose fiber stretch to get the current fiber stretch from the mechanics solver</span>
+  <span class="p">}</span>
+  <span class="n">parameters_initial_values</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">]</span>                    <span class="c1"># wal_environment/I_HH = I_stim, razumova/L_S = λ</span>
+
+<span class="k">elif</span> <span class="s2">&quot;Aliev_Panfilov_Razumova_2016_08_22&quot;</span> <span class="ow">in</span> <span class="n">cellml_file</span> <span class="p">:</span>   <span class="c1"># this is (3, &quot;MultiPhysStrain&quot;, numerically more stable) in OpenCMISS, this only computes A1,A2,x1,x2 not the stress</span>
+  <span class="c1"># parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}</span>
+  <span class="n">mappings</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>     <span class="p">(</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span> <span class="s2">&quot;Aliev_Panfilov/I_HH&quot;</span><span class="p">),</span>  <span class="c1"># parameter 0 is constant 0 = I_stim</span>
+    <span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>     <span class="p">(</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span> <span class="s2">&quot;Razumova/l_hs&quot;</span><span class="p">),</span>        <span class="c1"># parameter 1 is constant 8 = fiber stretch λ</span>
+    <span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>     <span class="p">(</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span> <span class="s2">&quot;Razumova/velo&quot;</span><span class="p">),</span>        <span class="c1"># parameter 2 is constant 9 = fiber contraction velocity \dot{λ}</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="s2">&quot;Aliev_Panfilov/V_m&quot;</span><span class="p">),</span>      <span class="c1"># expose state 0 = Vm to the operator splitting</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="p">(</span><span class="s2">&quot;algebraic&quot;</span><span class="p">,</span> <span class="s2">&quot;Razumova/sigma&quot;</span><span class="p">),</span>      <span class="c1"># expose algebraic 0 = γ to the operator splitting</span>
+  <span class="p">}</span>
+  <span class="n">parameters_initial_values</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>                     <span class="c1"># Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/velo = \dot{λ}</span>
+
+<span class="k">elif</span> <span class="s2">&quot;Aliev_Panfilov_Razumova_Titin&quot;</span> <span class="ow">in</span> <span class="n">cellml_file</span><span class="p">:</span>   <span class="c1"># this is (4, &quot;Titin&quot;) in OpenCMISS</span>
+  <span class="c1"># parameters: I_stim, fiber stretch λ, fiber contraction velocity \dot{λ}</span>
+  <span class="n">mappings</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>     <span class="p">(</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span> <span class="s2">&quot;Aliev_Panfilov/I_HH&quot;</span><span class="p">),</span>  <span class="c1"># parameter 0 is constant 0 = I_stim</span>
+    <span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>     <span class="p">(</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span> <span class="s2">&quot;Razumova/l_hs&quot;</span><span class="p">),</span>        <span class="c1"># parameter 1 is constant 11 = fiber stretch λ</span>
+    <span class="p">(</span><span class="s2">&quot;parameter&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>     <span class="p">(</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span> <span class="s2">&quot;Razumova/rel_velo&quot;</span><span class="p">),</span>    <span class="c1"># parameter 2 is constant 12 = fiber contraction velocity \dot{λ}</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span> <span class="p">(</span><span class="s2">&quot;state&quot;</span><span class="p">,</span> <span class="s2">&quot;Aliev_Panfilov/V_m&quot;</span><span class="p">),</span>      <span class="c1"># expose state 0 = Vm to the operator splitting</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span> <span class="p">(</span><span class="s2">&quot;algebraic&quot;</span><span class="p">,</span> <span class="s2">&quot;Razumova/ActiveStress&quot;</span><span class="p">),</span>   <span class="c1"># expose algebraic 4 = γ to the operator splitting</span>
+    <span class="p">(</span><span class="s2">&quot;connectorSlot&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span> <span class="p">(</span><span class="s2">&quot;algebraic&quot;</span><span class="p">,</span> <span class="s2">&quot;Razumova/Activation&quot;</span><span class="p">),</span>     <span class="c1"># expose algebraic 5 = α to the operator splitting</span>
+  <span class="p">}</span>
+  <span class="n">parameters_initial_values</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>                     <span class="c1"># Aliev_Panfilov/I_HH = I_stim, Razumova/l_hs = λ, Razumova/rel_velo = \dot{λ}</span>
+</pre></div>
+</div>
+</section>
+<section id="meshname">
+<h2>meshName<a class="headerlink" href="#meshname" title="Link to this heading"></a></h2>
+<p>The mesh to use, to be defined under “Meshes”. For details, see <a class="reference internal" href="mesh.html#define-meshes"><span class="std std-ref">Python settings for Mesh</span></a>. You can instead also just specify <code class="docutils literal notranslate"><span class="pre">nElements</span></code> to directly set the number of instances to be computed.</p>
+<p>If no mesh is specified at all, the standard is <code class="docutils literal notranslate"><span class="pre">&quot;nElements&quot;:</span> <span class="pre">0</span></code>. This corresponds to 1 node, i.e. one instance of the CellML problem. There will be the warning about the missing <em>nElements</em> though.</p>
+</section>
+<section id="stimulationlogfilename">
+<h2>stimulationLogFilename<a class="headerlink" href="#stimulationlogfilename" title="Link to this heading"></a></h2>
+<p>Default: “out/stimulation.log”</p>
+<p>A file name of an output file that will contain all firing times.</p>
+</section>
+<section id="optimizationtype">
+<h2>optimizationType<a class="headerlink" href="#optimizationtype" title="Link to this heading"></a></h2>
+<p>Possible values: <code class="docutils literal notranslate"><span class="pre">simd</span></code>, <code class="docutils literal notranslate"><span class="pre">vc</span></code>, <code class="docutils literal notranslate"><span class="pre">openmp</span></code> or <code class="docutils literal notranslate"><span class="pre">gpu</span></code>. Which type of code to generate. <code class="docutils literal notranslate"><span class="pre">openmp</span></code> produces code for shared-memory parallelization, using OpenMP. <code class="docutils literal notranslate"><span class="pre">simd</span></code> produces auto-vectorizable code. <code class="docutils literal notranslate"><span class="pre">vc</span></code> produces explicitly vectorized code (fastest). <code class="docutils literal notranslate"><span class="pre">gpu</span></code> is only available if the <a class="reference internal" href="fast_monodomain_solver.html"><span class="doc">FastMonodomainSolver</span></a> is used.</p>
+<p>See also the notes on <code class="docutils literal notranslate"><span class="pre">vc</span></code> about AVX-512 on the page of <a class="reference internal" href="fast_monodomain_solver.html"><span class="doc">FastMonodomainSolver</span></a>.</p>
+</section>
+<section id="compilerflags">
+<h2>compilerFlags<a class="headerlink" href="#compilerflags" title="Link to this heading"></a></h2>
+<p>Additional compiler flags for the compilation of the source file. Default: <code class="docutils literal notranslate"><span class="pre">-fPIC</span> <span class="pre">-finstrument-functions</span> <span class="pre">-ftree-vectorize</span> <span class="pre">-fopt-info-vec-optimized=vectorizer_optimized.log</span> <span class="pre">-shared</span></code></p>
+<p>When compiled in release target, <code class="docutils literal notranslate"><span class="pre">-O3</span></code> is added. In debug target, <code class="docutils literal notranslate"><span class="pre">-O0</span> <span class="pre">-ggdb</span></code> is added. If <em>optimizationType</em> is <code class="docutils literal notranslate"><span class="pre">openmp</span></code>, <code class="docutils literal notranslate"><span class="pre">-fopenmp</span></code> is added.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="fast_monodomain_solver.html" class="btn btn-neutral float-left" title="FastMonodomainSolver" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="quasi_static_linear_elasticity_solver.html" class="btn btn-neutral float-right" title="QuasiStaticLinearElasticitySolver" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

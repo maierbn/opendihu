@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PreciceAdapter &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Information for developers" href="../developer_information.html" />
+    <link rel="prev" title="MapDofs" href="map_dofs.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solver.html">Solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">PreciceAdapter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#surface-coupling">Surface coupling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#volume-coupling">Volume coupling</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">PreciceAdapter</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/precice_adapter.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="preciceadapter">
+<h1>PreciceAdapter<a class="headerlink" href="#preciceadapter" title="Link to this heading"></a></h1>
+<p>There are two different precice adapters, one for surface coupling (<code class="docutils literal notranslate"><span class="pre">PreciceAdapter</span></code>) and one for volume coupling (<code class="docutils literal notranslate"><span class="pre">PreciceAdapterVolumeCoupling</span></code>) .</p>
+<section id="surface-coupling">
+<h2>Surface coupling<a class="headerlink" href="#surface-coupling" title="Link to this heading"></a></h2>
+<p>The precice adapter is a simple wrapper to its nested solvers:</p>
+<p>C++ code:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="c1">// surface coupling adapter</span>
+<span class="n">Control</span><span class="o">::</span><span class="n">PreciceAdapter</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="cm">/*nested solver*/</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>The python settings for the surface coupling adapter are as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;PreciceAdapter&quot;</span><span class="p">:</span> <span class="p">{</span>        <span class="c1"># precice adapter for muscle</span>
+  <span class="s2">&quot;timeStepOutputInterval&quot;</span><span class="p">:</span>   <span class="mi">100</span><span class="p">,</span>                        <span class="c1"># interval in which to display current timestep and time in console</span>
+  <span class="s2">&quot;timestepWidth&quot;</span><span class="p">:</span>            <span class="mi">1</span><span class="p">,</span>                          <span class="c1"># coupling time step width, must match the value in the precice config</span>
+  <span class="s2">&quot;couplingEnabled&quot;</span><span class="p">:</span>          <span class="n">variables</span><span class="o">.</span><span class="n">enable_coupling</span><span class="p">,</span>  <span class="c1"># if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging</span>
+  <span class="s2">&quot;preciceConfigFilename&quot;</span><span class="p">:</span>    <span class="s2">&quot;precice_config_muscle_dirichlet_tendon_neumann_implicit_coupling_multiple_tendons.xml&quot;</span><span class="p">,</span>    <span class="c1"># the preCICE configuration file</span>
+  <span class="s2">&quot;preciceParticipantName&quot;</span><span class="p">:</span>   <span class="s2">&quot;MuscleSolver&quot;</span><span class="p">,</span>             <span class="c1"># name of the own precice participant, has to match the name given in the precice xml config file</span>
+  <span class="s2">&quot;scalingFactor&quot;</span><span class="p">:</span>            <span class="mi">1</span><span class="p">,</span>                          <span class="c1"># a factor to scale the exchanged data, prior to communication</span>
+  <span class="s2">&quot;outputOnlyConvergedTimeSteps&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>                   <span class="c1"># if the output writers should be called only after a time window of precice is complete, this means the timestep has converged</span>
+  <span class="s2">&quot;preciceMeshes&quot;</span><span class="p">:</span> <span class="p">[</span>                                      <span class="c1"># the precice meshes get created as the top or bottom surface of the main geometry mesh of the nested solver</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;preciceMeshName&quot;</span><span class="p">:</span>      <span class="s2">&quot;MuscleMeshBottom&quot;</span><span class="p">,</span>         <span class="c1"># precice name of the 2D coupling mesh</span>
+      <span class="s2">&quot;face&quot;</span><span class="p">:</span>                 <span class="s2">&quot;2-&quot;</span><span class="p">,</span>                       <span class="c1"># face of the 3D mesh where the 2D mesh is located, &quot;2-&quot; = bottom, &quot;2+&quot; = top</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;preciceMeshName&quot;</span><span class="p">:</span>      <span class="s2">&quot;MuscleMeshTopA&quot;</span><span class="p">,</span>           <span class="c1"># precice name of the 2D coupling mesh</span>
+      <span class="s2">&quot;face&quot;</span><span class="p">:</span>                 <span class="s2">&quot;2+&quot;</span><span class="p">,</span>                       <span class="c1"># face of the 3D mesh where the 2D mesh is located, &quot;2-&quot; = bottom, &quot;2+&quot; = top</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;preciceMeshName&quot;</span><span class="p">:</span>      <span class="s2">&quot;MuscleMeshTopB&quot;</span><span class="p">,</span>           <span class="c1"># precice name of the 2D coupling mesh</span>
+      <span class="s2">&quot;face&quot;</span><span class="p">:</span>                 <span class="s2">&quot;2+&quot;</span><span class="p">,</span>                       <span class="c1"># face of the 3D mesh where the 2D mesh is located, &quot;2-&quot; = bottom, &quot;2+&quot; = top</span>
+    <span class="p">},</span>
+  <span class="p">],</span>
+  <span class="s2">&quot;preciceData&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;mode&quot;</span><span class="p">:</span>                 <span class="s2">&quot;read-displacements-velocities&quot;</span><span class="p">,</span>    <span class="c1"># mode is one of &quot;read-displacements-velocities&quot;, &quot;read-traction&quot;, &quot;write-displacements-velocities&quot;, &quot;write-traction&quot;</span>
+      <span class="s2">&quot;preciceMeshName&quot;</span><span class="p">:</span>      <span class="s2">&quot;MuscleMeshBottom&quot;</span><span class="p">,</span>                 <span class="c1"># name of the precice coupling surface mesh, as given in the precice xml settings file</span>
+      <span class="s2">&quot;displacementsName&quot;</span><span class="p">:</span>    <span class="s2">&quot;Displacement&quot;</span><span class="p">,</span>                     <span class="c1"># name of the displacements &quot;data&quot;, i.e. field variable, as given in the precice xml settings file</span>
+      <span class="s2">&quot;velocitiesName&quot;</span><span class="p">:</span>       <span class="s2">&quot;Velocity&quot;</span><span class="p">,</span>                         <span class="c1"># name of the velocity &quot;data&quot;, i.e. field variable, as given in the precice xml settings file</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;mode&quot;</span><span class="p">:</span>                 <span class="s2">&quot;read-displacements-velocities&quot;</span><span class="p">,</span>    <span class="c1"># mode is one of &quot;read-displacements-velocities&quot;, &quot;read-traction&quot;, &quot;write-displacements-velocities&quot;, &quot;write-traction&quot;</span>
+      <span class="s2">&quot;preciceMeshName&quot;</span><span class="p">:</span>      <span class="s2">&quot;MuscleMeshTopA&quot;</span><span class="p">,</span>                   <span class="c1"># name of the precice coupling surface mesh, as given in the precice xml settings file</span>
+      <span class="s2">&quot;displacementsName&quot;</span><span class="p">:</span>    <span class="s2">&quot;Displacement&quot;</span><span class="p">,</span>                     <span class="c1"># name of the displacements &quot;data&quot;, i.e. field variable, as given in the precice xml settings file</span>
+      <span class="s2">&quot;velocitiesName&quot;</span><span class="p">:</span>       <span class="s2">&quot;Velocity&quot;</span><span class="p">,</span>                         <span class="c1"># name of the velocity &quot;data&quot;, i.e. field variable, as given in the precice xml settings file</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;mode&quot;</span><span class="p">:</span>                 <span class="s2">&quot;read-displacements-velocities&quot;</span><span class="p">,</span>    <span class="c1"># mode is one of &quot;read-displacements-velocities&quot;, &quot;read-traction&quot;, &quot;write-displacements-velocities&quot;, &quot;write-traction&quot;</span>
+      <span class="s2">&quot;preciceMeshName&quot;</span><span class="p">:</span>      <span class="s2">&quot;MuscleMeshTopB&quot;</span><span class="p">,</span>                   <span class="c1"># name of the precice coupling surface mesh, as given in the precice xml settings file</span>
+      <span class="s2">&quot;displacementsName&quot;</span><span class="p">:</span>    <span class="s2">&quot;Displacement&quot;</span><span class="p">,</span>                     <span class="c1"># name of the displacements &quot;data&quot;, i.e. field variable, as given in the precice xml settings file</span>
+      <span class="s2">&quot;velocitiesName&quot;</span><span class="p">:</span>       <span class="s2">&quot;Velocity&quot;</span><span class="p">,</span>                         <span class="c1"># name of the velocity &quot;data&quot;, i.e. field variable, as given in the precice xml settings file</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;mode&quot;</span><span class="p">:</span>                 <span class="s2">&quot;write-traction&quot;</span><span class="p">,</span>                   <span class="c1"># mode is one of &quot;read-displacements-velocities&quot;, &quot;read-traction&quot;, &quot;write-displacements-velocities&quot;, &quot;write-traction&quot;</span>
+      <span class="s2">&quot;preciceMeshName&quot;</span><span class="p">:</span>      <span class="s2">&quot;MuscleMeshBottom&quot;</span><span class="p">,</span>                 <span class="c1"># name of the precice coupling surface mesh, as given in the precice xml settings</span>
+      <span class="s2">&quot;tractionName&quot;</span><span class="p">:</span>         <span class="s2">&quot;Traction&quot;</span><span class="p">,</span>                         <span class="c1"># name of the traction &quot;data&quot;, i.e. field variable, as given in the precice xml settings file</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;mode&quot;</span><span class="p">:</span>                 <span class="s2">&quot;write-traction&quot;</span><span class="p">,</span>                   <span class="c1"># mode is one of &quot;read-displacements-velocities&quot;, &quot;read-traction&quot;, &quot;write-displacements-velocities&quot;, &quot;write-traction&quot;</span>
+      <span class="s2">&quot;preciceMeshName&quot;</span><span class="p">:</span>      <span class="s2">&quot;MuscleMeshTopA&quot;</span><span class="p">,</span>                   <span class="c1"># name of the precice coupling surface mesh, as given in the precice xml settings</span>
+      <span class="s2">&quot;tractionName&quot;</span><span class="p">:</span>         <span class="s2">&quot;Traction&quot;</span><span class="p">,</span>                         <span class="c1"># name of the traction &quot;data&quot;, i.e. field variable, as given in the precice xml settings file</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;mode&quot;</span><span class="p">:</span>                 <span class="s2">&quot;write-traction&quot;</span><span class="p">,</span>                   <span class="c1"># mode is one of &quot;read-displacements-velocities&quot;, &quot;read-traction&quot;, &quot;write-displacements-velocities&quot;, &quot;write-traction&quot;</span>
+      <span class="s2">&quot;preciceMeshName&quot;</span><span class="p">:</span>      <span class="s2">&quot;MuscleMeshTopB&quot;</span><span class="p">,</span>                   <span class="c1"># name of the precice coupling surface mesh, as given in the precice xml settings</span>
+      <span class="s2">&quot;tractionName&quot;</span><span class="p">:</span>         <span class="s2">&quot;Traction&quot;</span><span class="p">,</span>                         <span class="c1"># name of the traction &quot;data&quot;, i.e. field variable, as given in the precice xml settings file</span>
+    <span class="p">},</span>
+  <span class="p">],</span>
+</pre></div>
+</div>
+</section>
+<section id="volume-coupling">
+<h2>Volume coupling<a class="headerlink" href="#volume-coupling" title="Link to this heading"></a></h2>
+<p>The precice adapter is a simple wrapper to its nested solvers:</p>
+<p>C++ code:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="c1">// volume coupling adapter</span>
+<span class="n">Control</span><span class="o">::</span><span class="n">PreciceAdapterVolumeCoupling</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="cm">/*nested solver*/</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>The python settings for the volume coupling adapter are as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;PreciceAdapterVolumeCoupling&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;timeStepOutputInterval&quot;</span><span class="p">:</span>   <span class="mi">100</span><span class="p">,</span>                        <span class="c1"># interval in which to display current timestep and time in console</span>
+  <span class="s2">&quot;timestepWidth&quot;</span><span class="p">:</span>            <span class="mi">1</span><span class="p">,</span>                          <span class="c1"># coupling time step width, must match the value in the precice config</span>
+  <span class="s2">&quot;couplingEnabled&quot;</span><span class="p">:</span>          <span class="kc">True</span><span class="p">,</span>                       <span class="c1"># if the precice coupling is enabled, if not, it simply calls the nested solver, for debugging</span>
+  <span class="s2">&quot;endTimeIfCouplingDisabled&quot;</span><span class="p">:</span> <span class="n">variables</span><span class="o">.</span><span class="n">end_time</span><span class="p">,</span>        <span class="c1"># if &quot;couplingEnabled&quot; is set to False, use this end time for the simulation</span>
+  <span class="s2">&quot;preciceConfigFilename&quot;</span><span class="p">:</span>    <span class="s2">&quot;../precice_config.xml&quot;</span><span class="p">,</span>    <span class="c1"># the preCICE configuration file</span>
+  <span class="s2">&quot;preciceParticipantName&quot;</span><span class="p">:</span>   <span class="s2">&quot;PartitionedFibers&quot;</span><span class="p">,</span>        <span class="c1"># name of the own precice participant, has to match the name given in the precice xml config file</span>
+  <span class="s2">&quot;scalingFactor&quot;</span><span class="p">:</span>            <span class="mi">1</span><span class="p">,</span>                          <span class="c1"># a factor to scale the exchanged data, prior to communication</span>
+  <span class="s2">&quot;outputOnlyConvergedTimeSteps&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>                   <span class="c1"># if the output writers should be called only after a time window of precice is complete, this means the timestep has converged</span>
+
+  <span class="s2">&quot;preciceData&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;mode&quot;</span><span class="p">:</span>                 <span class="s2">&quot;read&quot;</span><span class="p">,</span>                     <span class="c1"># mode is one of &quot;read&quot; or &quot;write&quot;</span>
+      <span class="s2">&quot;preciceDataName&quot;</span><span class="p">:</span>      <span class="s2">&quot;Geometry&quot;</span><span class="p">,</span>                 <span class="c1"># name of the vector or scalar to transfer, as given in the precice xml settings file</span>
+      <span class="s2">&quot;preciceMeshName&quot;</span><span class="p">:</span>      <span class="s2">&quot;PartitionedFibersMesh&quot;</span><span class="p">,</span>    <span class="c1"># name of the precice coupling mesh, as given in the precice xml settings file</span>
+      <span class="s2">&quot;opendihuMeshName&quot;</span><span class="p">:</span>     <span class="kc">None</span><span class="p">,</span>                       <span class="c1"># extra specification of the opendihu mesh that is used for the initialization of the precice mapping. If None or &quot;&quot;, the mesh of the field variable is used.</span>
+      <span class="s2">&quot;slotName&quot;</span><span class="p">:</span>             <span class="kc">None</span><span class="p">,</span>                       <span class="c1"># name of the existing slot of the opendihu data connector to which this variable is associated to (only relevant if not isGeometryField)</span>
+      <span class="s2">&quot;isGeometryField&quot;</span><span class="p">:</span>      <span class="kc">True</span><span class="p">,</span>                       <span class="c1"># if this is the geometry field of the mesh</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;mode&quot;</span><span class="p">:</span>                 <span class="s2">&quot;write&quot;</span><span class="p">,</span>                    <span class="c1"># mode is one of &quot;read&quot; or &quot;write&quot;</span>
+      <span class="s2">&quot;preciceDataName&quot;</span><span class="p">:</span>      <span class="s2">&quot;Gamma&quot;</span><span class="p">,</span>                    <span class="c1"># name of the vector or scalar to transfer, as given in the precice xml settings file</span>
+      <span class="s2">&quot;preciceMeshName&quot;</span><span class="p">:</span>      <span class="s2">&quot;PartitionedFibersMesh&quot;</span><span class="p">,</span>    <span class="c1"># name of the precice coupling mesh, as given in the precice xml settings file</span>
+      <span class="s2">&quot;opendihuMeshName&quot;</span><span class="p">:</span>     <span class="kc">None</span><span class="p">,</span>                       <span class="c1"># extra specification of the opendihu mesh that is used for the initialization of the precice mapping. If None or &quot;&quot;, the mesh of the field variable is used.</span>
+      <span class="s2">&quot;slotName&quot;</span><span class="p">:</span>             <span class="s2">&quot;gamma&quot;</span><span class="p">,</span>                    <span class="c1"># name of the existing slot of the opendihu data connector to which this variable is associated to (only relevant if not isGeometryField)</span>
+      <span class="s2">&quot;isGeometryField&quot;</span><span class="p">:</span>      <span class="kc">False</span><span class="p">,</span>                      <span class="c1"># if this is the geometry field of the mesh</span>
+    <span class="p">},</span>
+  <span class="p">],</span>
+
+  <span class="c1"># options of the nested solver</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="map_dofs.html" class="btn btn-neutral float-left" title="MapDofs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../developer_information.html" class="btn btn-neutral float-right" title="Information for developers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

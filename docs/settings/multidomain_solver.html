@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MultidomainSolver &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="MultipleInstances" href="multiple_instances.html" />
+    <link rel="prev" title="OutputSurface" href="output_surface.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solver.html">Solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">MultidomainSolver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#c-code">C++ code</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#python-settings">Python settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#solvername-and-alternativesolvername"><cite>solverName</cite> and <cite>alternativeSolverName</cite></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#theta">theta</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#uselumpedmassmatrix">useLumpedMassMatrix</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#usesymmetricpreconditionermatrix">useSymmetricPreconditionerMatrix</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#initialguessnonzero">initialGuessNonzero</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#enablefatcomputation">enableFatComputation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#showlinearsolveroutput">showLinearSolverOutput</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#updatesystemmatrixeverytimestep-and-updatesystemmatrixinterval">updateSystemMatrixEveryTimestep and updateSystemMatrixInterval</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#recreatelinearsolverinterval">recreateLinearSolverInterval</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#rescalerelativefactors">rescaleRelativeFactors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setdirichletboundaryconditionphie-setdirichletboundaryconditionphib">setDirichletBoundaryConditionPhiE, setDirichletBoundaryConditionPhiB</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#resettoaveragezerophie-resettoaveragezerophib">resetToAverageZeroPhiE, resetToAverageZeroPhiB</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">MultidomainSolver</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/multidomain_solver.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="multidomainsolver">
+<h1>MultidomainSolver<a class="headerlink" href="#multidomainsolver" title="Link to this heading"></a></h1>
+<p>This solves the multidomain equations given below. There is the <cite>MultidomainSolver</cite> which only solves the equations on the muscle domain
+(see example <cite>examples/electrophysiology/multidomain/multidomain_no_fat</cite>)
+and there is the <cite>MultidomainWithFatSolver</cite> which additionally considers a fat and skin layer. It uses a composite mesh of muscle and body domain.
+(See example <cite>examples/electrophysiology/multidomain/multidomain_with_fat</cite>.)</p>
+<p>The first and second Multidomain equation for compartments <span class="math notranslate nohighlight">\(k = 1, \dots, N_\text{MU}\)</span> are given below:</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[\begin{split}\color{red}{\textrm{div}\big(\sigma_e \,\textrm{grad}( \phi_e)\big) + \sum\limits_{k=1}^{N_\text{MU}} f_r^k\,\textrm{div}\big(\sigma_i^k\,\textrm{grad}(\phi_i^k)\big)  = 0}\\
+\color{red}{\textrm{div}\big(\sigma_i^k\,\textrm{grad}(\phi_i^k)\big)} = \color{orange}{ A_m^k\,\big(C_m^k \dfrac{\partial V_m^k}{\partial t} + I_\text{ion}(V_m^k, l_\text{HS}, \dot{l}_\text{HS}, \textbf{y}^k)\big),} \quad \forall k \in \{1, \dots, N_\text{MU}\}\\
+\color{orange}{\textbf{y}^k(t) = g(V_m^k, \textbf{y}^k(t))} \quad \forall k \in \{1, \dots, N_\text{MU}\}\end{split}\]</div>
+<p>Reference: <a class="reference external" href="https://link.springer.com/article/10.1007%2Fs10237-019-01214-5">Paper</a></p>
+</div></blockquote>
+<section id="c-code">
+<h2>C++ code<a class="headerlink" href="#c-code" title="Link to this heading"></a></h2>
+<p>C++ code for a typical usage of the <cite>MultidomainSolver</cite>, i.e. without fat layer:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">OperatorSplitting</span><span class="o">::</span><span class="n">Strang</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="n">Control</span><span class="o">::</span><span class="n">MultipleInstances</span><span class="o">&lt;</span>
+<span class="w">    </span><span class="n">TimeSteppingScheme</span><span class="o">::</span><span class="n">Heun</span><span class="o">&lt;</span>
+<span class="w">      </span><span class="n">CellmlAdapter</span><span class="o">&lt;</span>
+<span class="w">        </span><span class="mi">4</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="w">  </span><span class="c1">// nStates,nAlgebraics: 57,1 = Shorten, 4,9 = Hodgkin Huxley</span>
+<span class="w">        </span><span class="n">FunctionSpace</span><span class="o">::</span><span class="n">FunctionSpace</span><span class="o">&lt;</span><span class="n">MeshType</span><span class="p">,</span><span class="n">BasisFunction</span><span class="o">::</span><span class="n">LagrangeOfOrder</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;&gt;</span><span class="w">  </span><span class="c1">// same function space as for anisotropic diffusion</span>
+<span class="w">      </span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">TimeSteppingScheme</span><span class="o">::</span><span class="n">MultidomainSolver</span><span class="o">&lt;</span><span class="w">              </span><span class="c1">// multidomain</span>
+<span class="w">    </span><span class="n">SpatialDiscretization</span><span class="o">::</span><span class="n">FiniteElementMethod</span><span class="o">&lt;</span><span class="w">       </span><span class="c1">//FEM for initial potential flow, fibre directions</span>
+<span class="w">      </span><span class="n">MeshType</span><span class="p">,</span>
+<span class="w">      </span><span class="n">BasisFunction</span><span class="o">::</span><span class="n">LagrangeOfOrder</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">      </span><span class="n">Quadrature</span><span class="o">::</span><span class="n">Gauss</span><span class="o">&lt;</span><span class="mi">3</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">      </span><span class="n">Equation</span><span class="o">::</span><span class="n">Static</span><span class="o">::</span><span class="n">Laplace</span>
+<span class="w">    </span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">SpatialDiscretization</span><span class="o">::</span><span class="n">FiniteElementMethod</span><span class="o">&lt;</span><span class="w">   </span><span class="c1">// anisotropic diffusion</span>
+<span class="w">      </span><span class="n">MeshType</span><span class="p">,</span>
+<span class="w">      </span><span class="n">BasisFunction</span><span class="o">::</span><span class="n">LagrangeOfOrder</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">      </span><span class="n">Quadrature</span><span class="o">::</span><span class="n">Gauss</span><span class="o">&lt;</span><span class="mi">5</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">      </span><span class="n">Equation</span><span class="o">::</span><span class="n">Dynamic</span><span class="o">::</span><span class="n">DirectionalDiffusion</span>
+<span class="w">    </span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&gt;</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>C++ code for a typical usage of the <cite>MultidomainWithFatSolver</cite>, i.e. with fat layer:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">OperatorSplitting</span><span class="o">::</span><span class="n">Strang</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="n">Control</span><span class="o">::</span><span class="n">MultipleInstances</span><span class="o">&lt;</span>
+<span class="w">    </span><span class="n">TimeSteppingScheme</span><span class="o">::</span><span class="n">Heun</span><span class="o">&lt;</span>
+<span class="w">      </span><span class="n">CellmlAdapter</span><span class="o">&lt;</span>
+<span class="w">        </span><span class="mi">4</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="w">  </span><span class="c1">// nStates,nAlgebraics: 57,1 = Shorten, 4,9 = Hodgkin Huxley</span>
+<span class="w">        </span><span class="n">FunctionSpace</span><span class="o">::</span><span class="n">FunctionSpace</span><span class="o">&lt;</span><span class="n">MeshType</span><span class="p">,</span><span class="n">BasisFunction</span><span class="o">::</span><span class="n">LagrangeOfOrder</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;&gt;</span><span class="w">  </span><span class="c1">// same function space as for anisotropic diffusion</span>
+<span class="w">      </span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">TimeSteppingScheme</span><span class="o">::</span><span class="n">MultidomainWithFatSolver</span><span class="o">&lt;</span><span class="w">       </span><span class="c1">// multidomain</span>
+<span class="w">    </span><span class="n">SpatialDiscretization</span><span class="o">::</span><span class="n">FiniteElementMethod</span><span class="o">&lt;</span><span class="w">       </span><span class="c1">//FEM for initial potential flow, fibre directions</span>
+<span class="w">      </span><span class="n">MeshType</span><span class="p">,</span>
+<span class="w">      </span><span class="n">BasisFunction</span><span class="o">::</span><span class="n">LagrangeOfOrder</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">      </span><span class="n">Quadrature</span><span class="o">::</span><span class="n">Gauss</span><span class="o">&lt;</span><span class="mi">3</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">      </span><span class="n">Equation</span><span class="o">::</span><span class="n">Static</span><span class="o">::</span><span class="n">Laplace</span>
+<span class="w">    </span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">SpatialDiscretization</span><span class="o">::</span><span class="n">FiniteElementMethod</span><span class="o">&lt;</span><span class="w">       </span><span class="c1">// anisotropic diffusion</span>
+<span class="w">      </span><span class="n">MeshType</span><span class="p">,</span>
+<span class="w">      </span><span class="n">BasisFunction</span><span class="o">::</span><span class="n">LagrangeOfOrder</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">      </span><span class="n">Quadrature</span><span class="o">::</span><span class="n">Gauss</span><span class="o">&lt;</span><span class="mi">5</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">      </span><span class="n">Equation</span><span class="o">::</span><span class="n">Dynamic</span><span class="o">::</span><span class="n">DirectionalDiffusion</span>
+<span class="w">    </span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">SpatialDiscretization</span><span class="o">::</span><span class="n">FiniteElementMethod</span><span class="o">&lt;</span><span class="w">       </span><span class="c1">// isotropic diffusion in fat layer</span>
+<span class="w">      </span><span class="n">MeshType</span><span class="p">,</span>
+<span class="w">      </span><span class="n">BasisFunction</span><span class="o">::</span><span class="n">LagrangeOfOrder</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">      </span><span class="n">Quadrature</span><span class="o">::</span><span class="n">Gauss</span><span class="o">&lt;</span><span class="mi">5</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">      </span><span class="n">Equation</span><span class="o">::</span><span class="n">Dynamic</span><span class="o">::</span><span class="n">IsotropicDiffusion</span>
+<span class="w">    </span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&gt;</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+</section>
+<section id="python-settings">
+<h2>Python settings<a class="headerlink" href="#python-settings" title="Link to this heading"></a></h2>
+<p>The MultidomainSolver is a time stepping scheme and therefor has the basic options of all time stepping schemes, such as <code class="docutils literal notranslate"><span class="pre">timeStepWidth</span></code>, <code class="docutils literal notranslate"><span class="pre">endTime</span></code>, <code class="docutils literal notranslate"><span class="pre">timeStepOutputInterval</span></code>.</p>
+<p>The options below can be used for both <cite>MultidomainSolver</cite> and <cite>MultidomainWithFatSolver</cite>. They are explained by the comments.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;MultidomainSolver&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;timeStepWidth&quot;</span><span class="p">:</span>                    <span class="n">variables</span><span class="o">.</span><span class="n">dt_multidomain</span><span class="p">,</span>             <span class="c1"># time step width of the subcellular problem</span>
+  <span class="s2">&quot;endTime&quot;</span><span class="p">:</span>                          <span class="n">variables</span><span class="o">.</span><span class="n">end_time</span><span class="p">,</span>                   <span class="c1"># end time, this is not relevant because it will be overridden by the splitting scheme</span>
+  <span class="s2">&quot;timeStepOutputInterval&quot;</span><span class="p">:</span>           <span class="mi">100</span><span class="p">,</span>                                  <span class="c1"># how often the output timestep should be printed</span>
+  <span class="s2">&quot;durationLogKey&quot;</span><span class="p">:</span>                   <span class="s2">&quot;duration_multidomain&quot;</span><span class="p">,</span>               <span class="c1"># key for duration in log.csv file</span>
+  <span class="s2">&quot;slotNames&quot;</span><span class="p">:</span>                        <span class="p">[</span><span class="s2">&quot;vm_old&quot;</span><span class="p">,</span> <span class="s2">&quot;vm_new&quot;</span><span class="p">,</span> <span class="s2">&quot;g_mu&quot;</span><span class="p">,</span> <span class="s2">&quot;g_tot&quot;</span><span class="p">],</span>  <span class="c1"># names of the data connector slots, maximum length per name is 10 characters. g_mu is gamma (active stress) of the compartment, g_tot is the total gamma</span>
+
+  <span class="c1"># material parameters for the compartments</span>
+  <span class="s2">&quot;nCompartments&quot;</span><span class="p">:</span>                    <span class="n">variables</span><span class="o">.</span><span class="n">n_compartments</span><span class="p">,</span>             <span class="c1"># number of compartments</span>
+  <span class="s2">&quot;compartmentRelativeFactors&quot;</span><span class="p">:</span>       <span class="n">variables</span><span class="o">.</span><span class="n">relative_factors</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>  <span class="c1"># list of lists of (the factors for all dofs), because &quot;inputIsGlobal&quot;: True, this contains the global dofs</span>
+  <span class="s2">&quot;inputIsGlobal&quot;</span><span class="p">:</span>                    <span class="kc">True</span><span class="p">,</span>                                 <span class="c1"># if values and dofs correspond to the global numbering</span>
+  <span class="s2">&quot;am&quot;</span><span class="p">:</span>                               <span class="p">[</span><span class="n">variables</span><span class="o">.</span><span class="n">get_am</span><span class="p">(</span><span class="n">mu_no</span><span class="p">)</span> <span class="k">for</span> <span class="n">mu_no</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">variables</span><span class="o">.</span><span class="n">n_compartments</span><span class="p">)],</span>   <span class="c1"># Am parameter for every motor unit (ration of surface to volume of fibers)</span>
+  <span class="s2">&quot;cm&quot;</span><span class="p">:</span>                               <span class="p">[</span><span class="n">variables</span><span class="o">.</span><span class="n">get_cm</span><span class="p">(</span><span class="n">mu_no</span><span class="p">)</span> <span class="k">for</span> <span class="n">mu_no</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">variables</span><span class="o">.</span><span class="n">n_compartments</span><span class="p">)],</span>   <span class="c1"># Cm parameter for every motor unit (capacitance of the cellular membrane)</span>
+
+  <span class="c1"># solver options</span>
+  <span class="s2">&quot;solverName&quot;</span><span class="p">:</span>                       <span class="s2">&quot;multidomainLinearSolver&quot;</span><span class="p">,</span>            <span class="c1"># reference to the solver used for the global linear system of the multidomain eq.</span>
+  <span class="s2">&quot;alternativeSolverName&quot;</span><span class="p">:</span>            <span class="s2">&quot;multidomainAlternativeLinearSolver&quot;</span><span class="p">,</span> <span class="c1"># reference to the alternative solver, which is used when the normal solver diverges</span>
+  <span class="s2">&quot;subSolverType&quot;</span><span class="p">:</span>                    <span class="s2">&quot;gamg&quot;</span><span class="p">,</span>                               <span class="c1"># sub solver when block jacobi preconditioner is used</span>
+  <span class="s2">&quot;subPreconditionerType&quot;</span><span class="p">:</span>            <span class="s2">&quot;none&quot;</span><span class="p">,</span>                               <span class="c1"># sub preconditioner when block jacobi preconditioner is used</span>
+  <span class="c1">#&quot;subPreconditionerType&quot;:            &quot;boomeramg&quot;,                          # sub preconditioner when block jacobi preconditioner is used, boomeramg is the AMG preconditioner of HYPRE</span>
+
+  <span class="c1"># gamg specific options:</span>
+  <span class="s2">&quot;gamgType&quot;</span><span class="p">:</span>                         <span class="s2">&quot;classical&quot;</span><span class="p">,</span>                          <span class="c1"># one of agg, geo, or classical</span>
+  <span class="s2">&quot;cycleType&quot;</span><span class="p">:</span>                        <span class="s2">&quot;cycleV&quot;</span><span class="p">,</span>                             <span class="c1"># either cycleV or cycleW</span>
+  <span class="s2">&quot;nLevels&quot;</span><span class="p">:</span>                          <span class="mi">25</span><span class="p">,</span>
+  <span class="s2">&quot;hypreOptions&quot;</span><span class="p">:</span>                     <span class="s2">&quot;-pc_hypre_boomeramg_strong_threshold 0.7&quot;</span><span class="p">,</span>       <span class="c1"># additional options if a hypre preconditioner is selected</span>
+
+  <span class="s2">&quot;theta&quot;</span><span class="p">:</span>                            <span class="n">variables</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span>                      <span class="c1"># weighting factor of implicit term in Crank-Nicolson scheme, 0.5 gives the classic, 2nd-order Crank-Nicolson scheme, 1.0 gives implicit euler</span>
+  <span class="s2">&quot;useLumpedMassMatrix&quot;</span><span class="p">:</span>              <span class="n">variables</span><span class="o">.</span><span class="n">use_lumped_mass_matrix</span><span class="p">,</span>     <span class="c1"># which formulation to use, the formulation with lumped mass matrix (True) is more stable but approximative, the other formulation (False) is exact but needs more iterations</span>
+  <span class="s2">&quot;useSymmetricPreconditionerMatrix&quot;</span><span class="p">:</span> <span class="n">variables</span><span class="o">.</span><span class="n">use_symmetric_preconditioner_matrix</span><span class="p">,</span>    <span class="c1"># if the diagonal blocks of the system matrix should be used as preconditioner matrix</span>
+  <span class="s2">&quot;initialGuessNonzero&quot;</span><span class="p">:</span>              <span class="n">variables</span><span class="o">.</span><span class="n">initial_guess_nonzero</span><span class="p">,</span>      <span class="c1"># if the initial guess for the 3D system should be set as the solution of the previous timestep, this only makes sense for iterative solvers</span>
+  <span class="s2">&quot;enableFatComputation&quot;</span><span class="p">:</span>             <span class="kc">True</span><span class="p">,</span>                                 <span class="c1"># disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity</span>
+  <span class="s2">&quot;showLinearSolverOutput&quot;</span><span class="p">:</span>           <span class="n">variables</span><span class="o">.</span><span class="n">show_linear_solver_output</span><span class="p">,</span>  <span class="c1"># if convergence information of the linear solver in every timestep should be printed, this is a lot of output for fast computations</span>
+  <span class="s2">&quot;updateSystemMatrixEveryTimestep&quot;</span><span class="p">:</span>  <span class="kc">False</span><span class="p">,</span>                                <span class="c1"># if this multidomain solver will update the system matrix in every first timestep, use this only if the geometry changes, e.g. by contraction</span>
+  <span class="s2">&quot;updateSystemMatrixInterval&quot;</span><span class="p">:</span>       <span class="mi">1</span><span class="p">,</span>                                    <span class="c1"># if updateSystemMatrixEveryTimestep is True, how often the system matrix should be rebuild, in terms of calls to the solver. (E.g., 2 means every second time the solver is called)</span>
+  <span class="s2">&quot;recreateLinearSolverInterval&quot;</span><span class="p">:</span>     <span class="mi">0</span><span class="p">,</span>                                    <span class="c1"># how often the Petsc KSP object (linear solver) should be deleted and recreated. This is to remedy memory leaks in Petsc&#39;s implementation of some solvers. 0 means disabled.</span>
+  <span class="s2">&quot;rescaleRelativeFactors&quot;</span><span class="p">:</span>           <span class="kc">True</span><span class="p">,</span>                                 <span class="c1"># if all relative factors should be rescaled such that max Σf_r = 1</span>
+  <span class="s2">&quot;setDirichletBoundaryConditionPhiE&quot;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span>                                <span class="c1"># (set to False) if the last dof of the extracellular space (variable phi_e) should have a 0 Dirichlet boundary condition. However, this makes the solver converge slower.</span>
+  <span class="s2">&quot;setDirichletBoundaryConditionPhiB&quot;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span>                                <span class="c1"># (set to False) if the last dof of the fat layer (variable phi_b) should have a 0 Dirichlet boundary condition. However, this makes the solver converge slower.</span>
+  <span class="s2">&quot;resetToAverageZeroPhiE&quot;</span><span class="p">:</span>           <span class="kc">True</span><span class="p">,</span>                                 <span class="c1"># if a constant should be added to the phi_e part of the solution vector after every solve, such that the average is zero</span>
+  <span class="s2">&quot;resetToAverageZeroPhiB&quot;</span><span class="p">:</span>           <span class="kc">True</span><span class="p">,</span>                                 <span class="c1"># if a constant should be added to the phi_b part of the solution vector after every solve, such that the average is zero</span>
+  <span class="p">}</span>
+</pre></div>
+</div>
+<p>The list of values for <cite>compartmentRelativeFactors</cite> is for the symbol <span class="math notranslate nohighlight">\(f_r^k\)</span> in the equations. The values should be the same on every rank.
+It is beneficial to compute the values once and store them in a cache file. Note that the number of nodes in total can be different if the same settings are used for different numbers of ranks. Therefore it is not easily possible to run the program serially, compute the cache of <cite>compartmentRelativeFactors</cite> and reuse it for all ranks.
+Instead, the cache has to be created by a parallel run, but then only rank 0 should compute the values. This is done in the <cite>helper.py</cite> script of the examples <cite>examples/electrophysiology/multidomain/multidomain_no_fat</cite> and <cite>examples/electrophysiology/multidomain/multidomain_with_fat</cite>.</p>
+<p>This means that using the MultidomainSolver is not so trivial. Therefore, the two given examples should be reused or copied if any new example is to be created.
+Not all settings will be explained again in the following as they are already given above.</p>
+<section id="solvername-and-alternativesolvername">
+<h3><cite>solverName</cite> and <cite>alternativeSolverName</cite><a class="headerlink" href="#solvername-and-alternativesolvername" title="Link to this heading"></a></h3>
+<p>There is th problem with the <cite>HYPRE</cite> AMG solver that is sometimes converges very fast and sometimes diverges. To be able to use it nevertheless, the <cite>alternativeSolverName</cite> solver is automatically used after the main solver <cite>solverName</cite> diverged.</p>
+</section>
+<section id="theta">
+<h3>theta<a class="headerlink" href="#theta" title="Link to this heading"></a></h3>
+<p>Weighting factor of the implicit term in the Crank-Nicolson scheme:</p>
+<div class="math notranslate nohighlight">
+\[\dfrac{u^{(t+1)} - u^{(t)}}{dt} = \theta \cdot rhs(u^{(t+1)},t+1) + (1-\theta) \cdot rhs(u^{(t)},t)\]</div>
+<p><span class="math notranslate nohighlight">\(\theta=0.5\)</span> gives the classic, 2nd-order Crank-Nicolson scheme, <span class="math notranslate nohighlight">\(\theta=1\)</span> leads to implicit euler. The fully implicit schemes was found to be more robust and should be used, i.e. <code class="docutils literal notranslate"><span class="pre">theta=1</span></code>.</p>
+</section>
+<section id="uselumpedmassmatrix">
+<h3>useLumpedMassMatrix<a class="headerlink" href="#uselumpedmassmatrix" title="Link to this heading"></a></h3>
+<p>Which formulation to use, the formulation with lumped mass matrix (<cite>True</cite>) is more stable but approximative, the other formulation (<cite>False</cite>) is exact but needs more iterations. Usually, this option can be set to <cite>True</cite>.</p>
+</section>
+<section id="usesymmetricpreconditionermatrix">
+<h3>useSymmetricPreconditionerMatrix<a class="headerlink" href="#usesymmetricpreconditionermatrix" title="Link to this heading"></a></h3>
+<p>If the diagonal blocks of the system matrix should be used as preconditioner matrix. If set to false, the whole matrix is used for preconditioning.</p>
+</section>
+<section id="initialguessnonzero">
+<h3>initialGuessNonzero<a class="headerlink" href="#initialguessnonzero" title="Link to this heading"></a></h3>
+<p>If the initial guess for the 3D system is given by the solution of the previous timestep. This only makes sense for iterative solvers. A direct solver <code class="docutils literal notranslate"><span class="pre">&quot;lu&quot;</span></code> requires that this option is set to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</section>
+<section id="enablefatcomputation">
+<h3>enableFatComputation<a class="headerlink" href="#enablefatcomputation" title="Link to this heading"></a></h3>
+<p>This is a switch to disable the fat layer in the multidomain formulation. Disabling the computation of the fat layer is only for debugging and speeds up computation. If set to False, the respective matrix is set to the identity.</p>
+</section>
+<section id="showlinearsolveroutput">
+<h3>showLinearSolverOutput<a class="headerlink" href="#showlinearsolveroutput" title="Link to this heading"></a></h3>
+<p>If convergence information of the linear solver should be printedin every timestep. As this involves a lot of output for small and fast computations, it should be disabled. It can be useful for large and slow computations to see the, e.g., the number of iterations of the linear solver.</p>
+</section>
+<section id="updatesystemmatrixeverytimestep-and-updatesystemmatrixinterval">
+<h3>updateSystemMatrixEveryTimestep and updateSystemMatrixInterval<a class="headerlink" href="#updatesystemmatrixeverytimestep-and-updatesystemmatrixinterval" title="Link to this heading"></a></h3>
+<p>This option allows to create a new system matrix before every new solve. This is only required if the geometry changes, e.g., if a solid mechanics solver is deforming the domain.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">updateSystemMatrixEveryTimestep</span></code> is set to <cite>True</cite>, the option <code class="docutils literal notranslate"><span class="pre">updateSystemMatrixInterval</span></code> determines, how frequently the system matrix will be rebuild. A value of 1 means in every first timestep of the multidomain solver, a higher value specifies every which call to the solver will compute a new system matrix. This is needed, e.g., if the multidomain solver and a muscle contraction solver are coupled and the multidomain solver is called more often than the muscle contraction solver.</p>
+</section>
+<section id="recreatelinearsolverinterval">
+<h3>recreateLinearSolverInterval<a class="headerlink" href="#recreatelinearsolverinterval" title="Link to this heading"></a></h3>
+<p>There appears to be a memory leak in some implementation of a PETSc solver that is visible during long runs. Using this option, it is possible to recreate the PETSc KSP object after the given number of time steps to free the memory. Apparently, the memory is still not freed despite deleting and recreating the PETSc solver.</p>
+</section>
+<section id="rescalerelativefactors">
+<h3>rescaleRelativeFactors<a class="headerlink" href="#rescalerelativefactors" title="Link to this heading"></a></h3>
+<p>If all relative factors should be rescaled such that max Σf_r = 1.</p>
+</section>
+<section id="setdirichletboundaryconditionphie-setdirichletboundaryconditionphib">
+<h3>setDirichletBoundaryConditionPhiE, setDirichletBoundaryConditionPhiB<a class="headerlink" href="#setdirichletboundaryconditionphie-setdirichletboundaryconditionphib" title="Link to this heading"></a></h3>
+<p>If the last dof of the extracellular space (variable phi_e) and the fat layer (variable phi_b) should have a 0 Dirichlet boundary condition, each.
+This remove zero eigenvalues and makes the system regular.
+However, this makes the solver converge slower. Therefore, these options are usually set to False.</p>
+</section>
+<section id="resettoaveragezerophie-resettoaveragezerophib">
+<h3>resetToAverageZeroPhiE, resetToAverageZeroPhiB<a class="headerlink" href="#resettoaveragezerophie-resettoaveragezerophib" title="Link to this heading"></a></h3>
+<p>If a constant should be added to the phi_e and phi_b parts of the solution vector after every solve, such that the average is zero.
+This reduces the drift of the solution of the system is not regular. (If setDirichletBoundaryConditionPhi* is False).</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="output_surface.html" class="btn btn-neutral float-left" title="OutputSurface" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="multiple_instances.html" class="btn btn-neutral float-right" title="MultipleInstances" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

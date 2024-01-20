@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Examples &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Existing examples" href="existing_examples.html" />
+    <link rel="prev" title="Getting started" href="getting_started.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../introduction.html">Introduction</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../introduction.html#overview">Overview</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="features.html">Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="framework_structure.html">Framework structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Examples</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#directory-structure">Directory structure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#create-your-own-example">Create your own example</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#input-files">Input files</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="validation.html">Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">Python Settings</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../introduction.html">Introduction</a></li>
+      <li class="breadcrumb-item active">Examples</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user/examples.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h1>
+<p>The actual simulation programs or scenarios that make use of opendihu as software framework are called examples. They are stored in the <cite>examples</cite> folder, organized in subdirectories.</p>
+<section id="directory-structure">
+<h2>Directory structure<a class="headerlink" href="#directory-structure" title="Link to this heading"></a></h2>
+<p>An example consists of the following files, as illustrated using the <cite>electrophysiology/cellml</cite> example.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>tree<span class="w"> </span>-L<span class="w"> </span><span class="m">2</span><span class="w"> </span>cellml/
+cellml/
+├──<span class="w"> </span>build_debug
+│<span class="w">   </span>└──<span class="w"> </span>cellml
+├──<span class="w"> </span>build_release
+│<span class="w">   </span>└──<span class="w"> </span>cellml
+├──<span class="w"> </span>SConscript
+├──<span class="w"> </span>SConstruct
+├──<span class="w"> </span>settings.py
+└──<span class="w"> </span>src
+<span class="w">    </span>└──<span class="w"> </span>cellml.cpp
+</pre></div>
+</div>
+<p>The following explanation starts from the bottom.</p>
+<ul>
+<li><p>The <cite>src</cite> subdirectory contains the source file of the example. This is the short C++ file, that instantiates the solver and runs the simulation. In this case, <cite>src/cellml.cpp</cite> is only 22 lines, other examples are slightly longer.</p></li>
+<li><p><cite>settings.py</cite> is a python script that specifies the settings to the simulation. The script will be parsed by the simulation program, the settings have to be present in the <cite>config</cite> variable, a Python dict.</p></li>
+<li><p><cite>SConstruct</cite> is the file that tells <cite>scons</cite> how to build everything, similar to a <cite>Makefile</cite> for <cite>make</cite>. Every example has a copy of this file. Note the line</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># get the directory where opendihu is installed (the top level directory of opendihu)</span>
+<span class="n">opendihu_home</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;OPENDIHU_HOME&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;../../..&quot;</span>
+</pre></div>
+</div>
+<p>This determines the home directory of the opendihu installation. It tries to read the path from the environment variable <cite>OPENDIHU_HOME</cite>. If this fails, because the variable is not set, it uses the relative path <cite>../../..</cite>. This has the following consequences. First, if you want to have your own examples stored somewhere else and their <cite>SConstruct</cite> file looks the same, because you copied it from an other example, you should set the environment variable <cite>OPENDIHU_HOME</cite> such that the base directory of opendihu can be found. But a line similar to the following to your <cite>~/.bashrc</cite>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">OPENDIHU_HOME</span><span class="o">=</span>/your-absolute-path-to/opendihu
+</pre></div>
+</div>
+<p>Second, if you create a new example under the examples folder, make sure that the relative path match the depth of the example directory, e.g. <cite>../../..</cite> or <cite>../..</cite>.</p>
+</li>
+<li><p>The <cite>SConscript</cite> file contains the executable names and the corresponding source files. You can define multiple executables.
+The following is a schematic example for two executables with names <cite>executable-name</cite> and <cite>other-executable</cite> and different source files:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">env</span><span class="o">.</span><span class="n">Program</span><span class="p">(</span><span class="n">target</span> <span class="o">=</span> <span class="s2">&quot;executable-name&quot;</span><span class="p">,</span> <span class="n">source</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;src/source.cpp&quot;</span><span class="p">])</span>
+<span class="n">env</span><span class="o">.</span><span class="n">Program</span><span class="p">(</span><span class="n">target</span> <span class="o">=</span> <span class="s2">&quot;other-executable&quot;</span><span class="p">,</span> <span class="n">source</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;src/other_source.cpp&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+</li>
+<li><p>The folders <cite>build_debug</cite> and <cite>build_release</cite> will contain the compiled executable. They can be deleted, because after compilation they will be created again.</p></li>
+</ul>
+<p>To compile an example, change into its base directory (where <cite>SConstruct</cite> is located) and execute</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sd
+</pre></div>
+</div>
+<p>to build the debug target or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sr
+</pre></div>
+</div>
+<p>to build the release target. This will create the <cite>build_debug</cite> or <cite>build_release</cite> subdirectories if they didn’t exist yet. (Note, you need the aliases <cite>sd</cite> and <cite>sr</cite> as described in <a class="reference internal" href="installation.html#installation-aliases"><span class="std std-ref">Define aliases and environment variables</span></a>).</p>
+</section>
+<section id="create-your-own-example">
+<h2>Create your own example<a class="headerlink" href="#create-your-own-example" title="Link to this heading"></a></h2>
+<p>Copy any existing example and delete everything except <cite>SConscript</cite>, <cite>SConstruct</cite>, <cite>settings.py</cite> and the <cite>src</cite> folder. Adjust these files depending on your need. Notice the comments above concerning finding of the opendihu home directory.</p>
+</section>
+<section id="input-files">
+<h2>Input files<a class="headerlink" href="#input-files" title="Link to this heading"></a></h2>
+<p>Sometimes, additional input files are required. If they are big, they are not included in the git repository, but hosted somewhere else. This is the case for all electrophysiology examples. These have an <cite>opendihu/examples/electrophysiology/input</cite> directory with binary data. There is a readme file that contains a link where to download these files.</p>
+<p>For a description of existing example, see <a class="reference internal" href="existing_examples.html"><span class="doc">Existing examples</span></a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="getting_started.html" class="btn btn-neutral float-left" title="Getting started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="existing_examples.html" class="btn btn-neutral float-right" title="Existing examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Coupling &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OutputWriter" href="output_writer.html" />
+    <link rel="prev" title="Operator Splitting" href="splitting.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solver.html">Solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">Coupling</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/coupling.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="coupling">
+<h1>Coupling<a class="headerlink" href="#coupling" title="Link to this heading"></a></h1>
+<p>The coupling class takes two timestepping schemes and executes them alternatingly. It sets divides the total time span in smaller time spans. For each of the
+smaller time spans <span class="math notranslate nohighlight">\([t_i,t_{i+1}]\)</span>, it does the following:</p>
+<ul class="simple">
+<li><p>set time span <span class="math notranslate nohighlight">\([t_i,t_{i+1}]\)</span> in time stepping scheme 1</p></li>
+<li><p>solve time stepping scheme 1 (call <code class="docutils literal notranslate"><span class="pre">advanceTimeSpan()</span></code>)</p></li>
+<li><p>transfer data from time stepping scheme 1 to 2</p></li>
+<li><p>set time span <span class="math notranslate nohighlight">\([t_i,t_{i+1}]\)</span> in time stepping scheme 2</p></li>
+<li><p>solve time stepping scheme 2 (call <code class="docutils literal notranslate"><span class="pre">advanceTimeSpan()</span></code>)</p></li>
+<li><p>transfer data from time stepping scheme 2 to 1</p></li>
+</ul>
+<p>The Coupling is itself a timestepping scheme and has all options listed on the (<a class="reference internal" href="timestepping_schemes_ode.html"><span class="doc">TimeSteppingSchemesOde</span></a>) page.</p>
+<p>It is equivalent to <a class="reference internal" href="splitting.html"><span class="doc">Operator Splitting</span></a>, but with the keyword “Coupling” instead of “GodunovSplitting”.</p>
+<p>Note that usually data should be transferred between the two solvers. This is done with the settings <code class="docutils literal notranslate"><span class="pre">connectedSlotsTerm1To2</span></code>
+and <code class="docutils literal notranslate"><span class="pre">connectedSlotsTerm2To1</span></code>. See the notes on <a class="reference internal" href="output_connector_slots.html"><span class="doc">Connector Slots</span></a>.</p>
+<p>C++ code:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">Control</span><span class="o">::</span><span class="n">Coupling</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="cm">/*first timestepping scheme*/</span><span class="p">,</span>
+<span class="w">  </span><span class="cm">/*second timestepping scheme*/</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>Python settings:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;Coupling&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;numberTimeSteps&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+  <span class="s2">&quot;timeStepWidth&quot;</span><span class="p">:</span> <span class="mf">1e-1</span><span class="p">,</span>
+  <span class="s2">&quot;endTime&quot;</span><span class="p">:</span> <span class="mf">10.0</span><span class="p">,</span>
+  <span class="s2">&quot;logTimeStepWidthAsKey&quot;</span><span class="p">:</span> <span class="s2">&quot;dt_3D&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;durationLogKey&quot;</span><span class="p">:</span> <span class="s2">&quot;duration_total&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;timeStepOutputInterval&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+
+  <span class="s2">&quot;connectedSlotsTerm1To2&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="c1"># list of slots of term 2 that are connected to the slots of term 1</span>
+  <span class="s2">&quot;connectedSlotsTerm2To1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="c1"># list of slots of term 1 that are connected to the slots of term 2</span>
+
+  <span class="s2">&quot;Term1&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;ExplicitEuler&quot;</span> <span class="p">:</span> <span class="p">{</span>  <span class="c1"># these are the properties for the first timestepping</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;Term2&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;ImplicitEuler&quot;</span> <span class="p">:</span> <span class="p">{</span>  <span class="c1"># these are the properties for the second timestepping</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="multiplecoupling">
+<h1>MultipleCoupling<a class="headerlink" href="#multiplecoupling" title="Link to this heading"></a></h1>
+<p>If you need more than two child solvers that should be executed in a row, you can use <cite>MultipleCoupling</cite>.</p>
+<p>Without this, a nested structure of <cite>Coupling</cite> schemes would be needed. For example, for 3 solvers <cite>A</cite>, <cite>B</cite> and <cite>C</cite>, you would do something like:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">Control</span><span class="o">::</span><span class="n">Coupling</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="n">A</span><span class="p">,</span>
+<span class="w">  </span><span class="n">Control</span><span class="o">::</span><span class="n">Coupling</span><span class="o">&lt;</span>
+<span class="w">    </span><span class="n">B</span><span class="p">,</span>
+<span class="w">    </span><span class="n">C</span>
+<span class="w">  </span><span class="o">&gt;</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>with settings</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;Coupling&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;Term1&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="c1"># settings for A</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;Term2&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;Coupling&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;Term1&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="c1"># settings for B</span>
+      <span class="p">},</span>
+      <span class="s2">&quot;Term2&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="c1"># settings for C</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <cite>MultipleCoupling</cite> abstracts this construction for any number of subsolvers. The usage is</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">Control</span><span class="o">::</span><span class="n">MultipleCoupling</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="n">A</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">C</span><span class="p">,</span><span class="w"> </span><span class="c1">//...   any number of subsolvers (at least 2)</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>This is more convenient than the construction with the nested Coupling schemes.
+Also the Python settings are simplified:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;MultipleCoupling&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;endTime&quot;</span><span class="p">:</span>                <span class="n">variables</span><span class="o">.</span><span class="n">end_time</span><span class="p">,</span>           <span class="c1"># end time of the simulation</span>
+  <span class="s2">&quot;timeStepWidth&quot;</span><span class="p">:</span>          <span class="n">variables</span><span class="o">.</span><span class="n">dt_neuron_transfer</span><span class="p">,</span> <span class="c1"># time step width of the data transfer between the sub solvers</span>
+  <span class="s2">&quot;logTimeStepWidthAsKey&quot;</span><span class="p">:</span>  <span class="s2">&quot;dt_neuron_transfer&quot;</span><span class="p">,</span>         <span class="c1"># string under which the timestep width will be stored in the log file</span>
+  <span class="s2">&quot;durationLogKey&quot;</span><span class="p">:</span>         <span class="s2">&quot;duration_total&quot;</span><span class="p">,</span>             <span class="c1"># string under which the total duration will be stored in the log file</span>
+  <span class="s2">&quot;timeStepOutputInterval&quot;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span>                          <span class="c1"># how often to print the current time step</span>
+  <span class="s2">&quot;connectedSlotsTerm1To2&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>                         <span class="c1"># this would be the connected slots for a normal Coupling scheme, but here it should be set to None, use global option &quot;connectedSlots&quot; instead</span>
+  <span class="s2">&quot;connectedSlotsTerm2To1&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>                         <span class="c1"># this would be the connected slots for a normal Coupling scheme, but here it should be set to None, use global option &quot;connectedSlots&quot; instead</span>
+
+  <span class="s2">&quot;Term1&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="c1"># settings for A</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;Term2&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="c1"># settings for B</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;Term3&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="c1"># settings for C</span>
+  <span class="p">},</span>
+  <span class="o">//</span> <span class="n">etc</span><span class="o">.</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Internally, <cite>MultipleCoupling</cite> constructs the tree of nested <cite>Coupling</cite> schemes. It is implemented using variadic templates and therefore works for any number of nested solvers.</p>
+<p>The settings for <cite>MultipleCoupling</cite> are shared for all constructed <cite>Coupling</cite> schemes. This means that the set timestep width is reused for all terms of the coupling. The options <code class="docutils literal notranslate"><span class="pre">&quot;connectedSlotsTerm1To2&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;connectedSlotsTerm2To1&quot;</span></code> should be set to <code class="docutils literal notranslate"><span class="pre">None</span></code>. The slots should be connected using the <cite>“connectedSlots”</cite> option, for details see <a class="reference internal" href="output_connector_slots.html"><span class="doc">Connector Slots</span></a>.
+The settings for the nested solvers can be given under <cite>“Term1”</cite>, <cite>“Term2”</cite>, <cite>“Term3”</cite>, etc., as with the normal Coupling scheme.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="splitting.html" class="btn btn-neutral float-left" title="Operator Splitting" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="output_writer.html" class="btn btn-neutral float-right" title="OutputWriter" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

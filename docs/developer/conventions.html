@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conventions and Tips &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="C++ Reference" href="reference.html" />
+    <link rel="prev" title="Information for developers" href="../developer_information.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">Python Settings</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../developer_information.html">Information for developers</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Conventions and Tips</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#style-guide">Style guide</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#commonly-used-terms">Commonly used terms</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#numbering-schemes">Numbering Schemes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#unit-tests">Unit tests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#howto-debug">Howto debug</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#using-gdb">Using GDB</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#debugging-output">Debugging output</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#debugging-parallel-programs">Debugging parallel programs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#using-memcheck">Using Memcheck</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#working-with-parallel-vectors">Working with parallel vectors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-output-data">Using output data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#profiling-on-hazel-hen">Profiling on Hazel Hen</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#work-with-large-simulation-output-on-servers">Work with large simulation output on servers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#building-the-sphinx-doc-what-you-are-reading">Building the  sphinx doc (what you are reading)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reference.html">C++ Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="supercomputer.html">Build on supercomputer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="new_physics.html">Implement New Physics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributors.html">Contributors</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../developer_information.html">Information for developers</a></li>
+      <li class="breadcrumb-item active">Conventions and Tips</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/developer/conventions.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="conventions-and-tips">
+<h1>Conventions and Tips<a class="headerlink" href="#conventions-and-tips" title="Link to this heading"></a></h1>
+<section id="style-guide">
+<h2>Style guide<a class="headerlink" href="#style-guide" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Write code in style similar to what is already there: camelCase, all in english, enough comments, comment all member variables and methods.</p></li>
+<li><p>Use less abbreviations, instead long names for variables and methods. (Except maybe in comments)</p></li>
+<li><p>The rest is common sense.</p></li>
+</ul>
+</section>
+<section id="commonly-used-terms">
+<h2>Commonly used terms<a class="headerlink" href="#commonly-used-terms" title="Link to this heading"></a></h2>
+<p>In this section some expressions are listed that occur frequently in variable names.</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><em>Element</em>:</dt><dd><p>An element consists of has several <em>nodes</em>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><em>Node</em>:</dt><dd><p>A node has several <em>dofs</em>, for Lagrange ansatz functions there is one dof per node, for cubic Hermite there are 2^D dofs per node
+(e.g. 1D: 2 dofs per node for value and derivative)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><em>Dof</em>:</dt><dd><p>“Degree of freedom”, an element of the function space that is spanned by the basis functions on the mesh.
+Dofs are located on the nodes, every node has at least 1 dof or more.
+To define a scalar field on the mesh one has to specify a value for each dof. For a vector field with nComponents components, (e.g. the geometryField with nComponents=3) there are
+<cite>nComponents*nDofs</cite> values needed.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><em>Unknown</em>:</dt><dd><p>A component of a dof. If only scalar fields are considered, <cite>nUnknowns = nDofs</cite>, otherwise <cite>nUnknows = nDofs*nComponents</cite>
+Note that the total number of unknowns for which the system has to be solved can be a multiple of the number of dofs when there are multiple components.
+(E.g. 3D finite elasticity with 3-component displacement and 1-component pressure has 4 components per dofs, i.e. <cite>nUnkowns = nDofs*4</cite>)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><em>No</em>:</dt><dd><p>Abbreviation for “number”, in the sense of a counter value (i.e. not meaning “total sum” but as in numbering)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><em>n</em>:</dt><dd><p>E.g. nUnknowns, nDofs: “number”, but this time meaning the total number/count of items</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Vectors that contain multiple elements/nodes/dofs or methods that work on such vectors have to specify if the entities are in the local or global numbering, refering to parallel execution, where a process knowns only its own local subdomain.</p>
+<p>Consistent naming of local and global quantities is given by the following schemes:</p>
+<ul class="simple">
+<li><p><cite>&lt;x&gt;LocalWithGhosts</cite>: The items are numbered in the local numbering, all local items including the local ghosts are contained. The non-ghost locals are the first entries, the ghost follow at the end.</p></li>
+<li><p><cite>&lt;x&gt;LocalWithoutGhosts</cite>: The items are numbered in the local numbering and do not contain ghosts.</p></li>
+<li><p><cite>&lt;x&gt;Global</cite>: This means global numbering, which may not be consecutive, because only local information may be known.</p></li>
+</ul>
+<p>Examplary method names that use these conventions are <cite>nNodesLocalWithGhosts()</cite> or <cite>nDofsGlobal()</cite>.</p>
+</section>
+<section id="numbering-schemes">
+<h2>Numbering Schemes<a class="headerlink" href="#numbering-schemes" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><dl class="simple">
+<dt>Global natural numbering:</dt><dd><p>starting at 0 at the front left bottom corner, then continuing in x-direction, then y-direction, then z-direction (if in 3D)
+This numbering is used for global input of Dirichlet boundary conditions or right hand side values</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Local numbering,</dt><dd><p>per partition, starting from 0 to nDofsLocalWithoutGhosts-1, only numbering the non-ghost local dofs, in the same order as the global natural numbering but in the local partition.
+Then from nDofsLocalWithoutGhosts to nDofsLocalWithGhosts-1 the ghost dofs are numbered, again in the order given by the global natural numering.
+This numbering is used for accessing local vectors and matrices. One can access all values including ghosts by using the whole range or only access the non-ghost values by using the range [0,nDofsLocalWithoutGhosts-1]</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Global Petsc numbering,</dt><dd><p>starts at 0 on rank 0 and follows the local numbering for the non-ghost dofs, then it continues on rank 1 and follows the non-ghost dofs there and so on.
+This is the numbering that has to be used for accessing global Petsc vectors and matrices, however this is not needed because one can access these vectors and matrices through the local vectors and matrices.
+It is needed for the creation of the Vecs and Mats.</p>
+</dd>
+</dl>
+</li>
+</ol>
+</section>
+<section id="unit-tests">
+<h2>Unit tests<a class="headerlink" href="#unit-tests" title="Link to this heading"></a></h2>
+<p>The unit tests are located in <cite>testing/unit_testing/src</cite>. They are automatically compiled after the library by <cite>scons</cite>.
+There are tests for 1 rank, 2 ranks and 6 ranks. All of the respective tests are compiled as one executable, which runs all tests and fails if any test fails.</p>
+<p>The executable can be run manually e.g. in  testing/unit_testing/build_debug/1_rank_tests`.
+To only run a single test, use the <cite>–gtest_filter=&lt;test name&gt;</cite> command. It also supports wild cards (*), e.g.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./1_rank_tests<span class="w"> </span>--gtest_filter<span class="o">=</span>LaplaceTest.*Structured*<span class="w"> </span>-v
+</pre></div>
+</div>
+<p>This runs the tests.
+When working on unit tests, you can temporarily enable just the test you are working on in the file <cite>testing/unit_testing/SConscript</cite>.
+There you can set the file names to be included in the executable and fully enable/disable the 1_rank/2_ranks/6_ranks tests. This reduces compile time.</p>
+</section>
+<section id="howto-debug">
+<h2>Howto debug<a class="headerlink" href="#howto-debug" title="Link to this heading"></a></h2>
+<section id="using-gdb">
+<h3>Using GDB<a class="headerlink" href="#using-gdb" title="Link to this heading"></a></h3>
+<blockquote>
+<div><p>It is convient to define the following alias:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">alias</span><span class="w"> </span><span class="nv">gdbrun</span><span class="o">=</span><span class="s1">&#39;gdb -ex=run --args &#39;</span>
+</pre></div>
+</div>
+<p>then simply run with gdb:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>gdbrun<span class="w"> </span>./executable<span class="w"> </span>../settings.py<span class="w"> </span>&lt;further-arguments&gt;
+</pre></div>
+</div>
+<p>After the program crashes you can inspect the stacktrace with the command <cite>bt</cite> inside gdb.</p>
+</div></blockquote>
+</section>
+<section id="debugging-output">
+<h3>Debugging output<a class="headerlink" href="#debugging-output" title="Link to this heading"></a></h3>
+<blockquote>
+<div><p>Logging is done using the <a class="reference external" href="https://github.com/zuhd-org/easyloggingpp">Easylogging++</a> library. In the C++ code the statements are, e.g., <cite>LOG(DEBUG) &lt;&lt; “text”;</cite> and <cite>VLOG(1) &lt;&lt; “level1”;</cite>.
+The <cite>LOG(DEBUG)</cite> statements are only displayed if compiled to debug target. The <cite>VLOG(1)</cite>, <cite>VLOG(2)</cite>, etc. statements are also only available in debug executable and have to be enable additionally using the following command line arguments:</p>
+<ul class="simple">
+<li><p>run with <cite>-v</cite> to enable all verbose output</p></li>
+<li><p>run with <cite>–v=1</cite> or <cite>–v=2</cite> etc. to enable verbose output to a given level</p></li>
+<li><p>run with <cite>-vmodule=partitioned_petsc_vec_structured.tpp=2,01_mesh_partition_structured.tpp=1</cite> to enable verbose output of level2 only in the file <cite>partitioned_petsc_vec_structured.tpp</cite> and verbose output level 1 only in file <cite>01_mesh_partition_structured.tpp</cite>
+Also wildcards (*) can be used, e.g. <cite>-vmodule=*vec*=3,*mat*=5,*mesh_partition*=1</cite>, then all files matching <cite>*vec*</cite>, <cite>*mat*</cite> or <cite>*mesh_partition*</cite> will get the specified output verbosity.</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="debugging-parallel-programs">
+<h3>Debugging parallel programs<a class="headerlink" href="#debugging-parallel-programs" title="Link to this heading"></a></h3>
+<blockquote>
+<div><ul>
+<li><p>run program with mpirun and with <cite>-pause</cite> argument, example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-n<span class="w"> </span><span class="m">2</span><span class="w"> </span>./2_ranks_tests<span class="w"> </span>-v<span class="w"> </span>--gtest_filter<span class="o">=</span>LaplaceTest.Structured1DHermite<span class="w"> </span>-pause
+</pre></div>
+</div>
+<p>Then it will stop with the following message:</p>
+<blockquote>
+<div><p>0/2 INFO : Rank 0, PID 16614 is waiting for gdbResume=0 to become 1</p>
+<p>gdb -p 16614</p>
+<p>select-frame 2
+set var gdbResume = 1
+info locals
+continue
+1/2 INFO : Rank 1, PID 16615 is waiting for gdbResume=0 to become 1</p>
+<p>gdb -p 16615</p>
+<p>select-frame 2
+set var gdbResume = 1
+info locals
+continue</p>
+</div></blockquote>
+</li>
+<li><p>now in two separate shell windows, execute <cite>gdb -p 16614</cite> and <cite>gdb -p 16615</cite>. This attaches gdb to the two MPI processes. Inside gdb run the displayed commands <cite>select-frame 2</cite>, <cite>set var gdbResume = 1</cite>, etc.
+After <cite>continue</cite> in both attached shells the program will continue. When it crashes, use <cite>bt</cite> to inspect the location again.</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="using-memcheck">
+<h3>Using Memcheck<a class="headerlink" href="#using-memcheck" title="Link to this heading"></a></h3>
+<blockquote>
+<div><p>For segmentation faults that cannot be debugged with gdb, you can use valgrind with memcheck:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>valgrind<span class="w"> </span>--tool<span class="o">=</span>memcheck<span class="w"> </span>--log-file<span class="o">=</span>valgrind-log-%p.txt<span class="w"> </span>--suppressions<span class="o">=</span><span class="nv">$OPENDIHU_HOME</span>/dependencies/python/src/Python-3.6.5/Misc/valgrind-python.supp<span class="w"> </span>./executable
+</pre></div>
+</div>
+<p>There are a lot of “false positives” at the beginning while the python settings script is run. This is due to the python library overloading functions of memory management.
+The suppressions file eliminates most of them, but not all.</p>
+</div></blockquote>
+</section>
+</section>
+<section id="working-with-parallel-vectors">
+<h2>Working with parallel vectors<a class="headerlink" href="#working-with-parallel-vectors" title="Link to this heading"></a></h2>
+<p>The objects that represent parallel vectors in opendihu are of type <cite>FieldVariable</cite>.
+A field variable is a vector with one entry for each dof in the <cite>FunctionSpace</cite>.
+Each entry has a number of components, so the actual “size” of a field variable is <cite>nDofsGlobal*nComponents</cite>.</p>
+<p>Examples for the use of components are the geometryField, which stores x,y,z values for each dofs and thus has <cite>nComponents=3</cite>.</p>
+<p>To access the values of a field variable, there are methods like:</p>
+<table class="docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><cite>getValue</cite>, <cite>getValues</cite></p></td>
+<td><p>get the values for specified dof numbers and components</p></td>
+</tr>
+<tr class="row-even"><td><p><cite>getElementValues</cite></p></td>
+<td><p>get all the values that correspond to the dofs of an element</p></td>
+</tr>
+<tr class="row-odd"><td><p><cite>getValuesWithGhosts</cite></p></td>
+<td><p>get all locally stored values, including ghost values</p></td>
+</tr>
+<tr class="row-even"><td><p><cite>getValuesWithoutGhosts</cite></p></td>
+<td><p>same, but without ghost values</p></td>
+</tr>
+</tbody>
+</table>
+<p>(Read the actual signatures in <cite>field_variable/structured/03_field_variable_set_get_structured.h</cite>)</p>
+<p>To set values in the vector, there are similar methods</p>
+<blockquote>
+<div><p>setValue, setValues, zeroEntries, setValuesWithGhosts, setValuesWithoutGhosts</p>
+</div></blockquote>
+<p>It is most efficient to get/set multiple values at once instead of calling getValue/setValue for every single update.
+The described methods work fully with the local dof numbering and only modify local or ghost values.</p>
+<p>To work with these vectors using Petsc there is the <cite>valuesGlobal()</cite> method that returns a global Petsc vector that can be used with e.g. <cite>MatMult(matrix-&gt;globalValues(), fieldVariable-&gt;globalValues(), result);</cite> etc.
+Do not use Petsc routines to get and set values (<cite>VecGetValues</cite>, <cite>VecSetValues</cite>) with the obtained Petsc vectors!
+Rather use the described setValues/getValues methods, because they take care of the correct
+indexing (local vs. global numbering) and perform sanity checks for indices (of course only when compiled for debug target).</p>
+<p>There is also a more low-level vector class, <cite>PartitionedPetscVec</cite> which wraps the Petsc Vec’s and handles creation of the Vec’s and ghost values exchange. This class is used by FieldVariable internally and there should be no need to use it directly. However, there you can see how numbering/ghost exchange etc. is implemented.</p>
+<p>One important thing when working with field variables, i.e. parallel vectors, is the correct ghost value manipulation.
+Each rank only has local memory to store its non-ghost and ghost values.</p>
+<p>Before you can read and write to locally stored ghost values, call</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">fieldVariable</span><span class="o">-&gt;</span><span class="n">startGhostManipulation</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This fills the local ghost value buffer with the actual values from the corresponding other ranks and overwrites what was previously in the local ghost value buffer. After that you can read out the ghost values and also write to the local buffer. Calls with INSERT_VALUES and ADD_VALUES can be mixed without further consideration, because everything is only updated locally. For example you could do</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">fieldVariable</span><span class="o">-&gt;</span><span class="n">setValues</span><span class="p">(</span><span class="o">&lt;</span><span class="n">vector</span><span class="w"> </span><span class="n">of</span><span class="w"> </span><span class="n">local</span><span class="w"> </span><span class="n">dof</span><span class="w"> </span><span class="n">nos</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">some</span><span class="w"> </span><span class="n">non</span><span class="o">-</span><span class="n">ghosts</span><span class="w"> </span><span class="n">and</span><span class="w"> </span><span class="n">ghosts</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="o">&lt;</span><span class="n">some</span><span class="w"> </span><span class="n">values</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">INSERT_VALUES</span><span class="p">);</span>
+<span class="n">fieldVariable</span><span class="o">-&gt;</span><span class="n">setValues</span><span class="p">(</span><span class="o">&lt;</span><span class="n">some</span><span class="w"> </span><span class="n">other</span><span class="w"> </span><span class="n">dof</span><span class="w"> </span><span class="n">nos</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="o">&lt;</span><span class="n">some</span><span class="w"> </span><span class="n">other</span><span class="w"> </span><span class="n">values</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">ADD_VALUES</span><span class="p">);</span>
+<span class="n">fieldVariable</span><span class="o">-&gt;</span><span class="n">getValues</span><span class="p">(</span><span class="o">&lt;</span><span class="n">again</span><span class="w"> </span><span class="n">some</span><span class="w"> </span><span class="n">dof</span><span class="w"> </span><span class="n">nos</span><span class="w"> </span><span class="n">with</span><span class="w"> </span><span class="n">possibly</span><span class="w"> </span><span class="n">ghosts</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="o">&lt;</span><span class="n">output</span><span class="w"> </span><span class="n">vector</span><span class="o">&gt;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>After that for each ghost dof the ghost value on the rank where it is a ghost and the actual value on the rank where it is not a ghost need to be added. This is done by</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">fieldVariable</span><span class="o">-&gt;</span><span class="n">finishGhostManipulation</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>After that the two values are added and stored only on the rank where the dof is not the ghost. To also get the updated value to the rank where it is a ghost you need to call fieldVariable-&gt;startGhostManipulation() again. For every  startGhostManipulation there has to be a matching finishGhostManipulation later.</p>
+<p>Note, the following is wrong:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">fieldVariable</span><span class="o">-&gt;</span><span class="n">startGhostManipulation</span><span class="p">()</span>
+<span class="c1">// setValues which manipulates local ghost values</span>
+<span class="n">fieldVariable</span><span class="o">-&gt;</span><span class="n">finishGhostManipulation</span><span class="p">()</span><span class="w">  </span><span class="c1">// everything good up to here, now every rank has the correct local non-ghost values</span>
+
+<span class="n">fieldVariable</span><span class="o">-&gt;</span><span class="n">startGhostManipulation</span><span class="p">()</span><span class="w">  </span><span class="c1">// still okay, now every rank also has correct ghost values (#)</span>
+<span class="c1">// setValues which only manipulate non-ghost values</span>
+<span class="n">fieldVariable</span><span class="o">-&gt;</span><span class="n">finishGhostManipulation</span><span class="p">()</span><span class="w">  </span><span class="c1">// unexpected result, some local values (those that are ghosts on other ranks) will get ghost-buffer values added, that are still in the ghost buffers on an other rank. (#)</span>
+</pre></div>
+</div>
+<p>The correction for the example would be to remove (#) lines or set the ghost buffers to zero fieldVariable-&gt;zeroGhostBuffer() (but then the start/finishGhostManipulation calls would be useless anyway)</p>
+<p>So if you want to read ghost values, call startGhostManipulation() beforehand,
+if you want to write all ghost values, wrap the setValues code with startGhostManipulation() and finishGhostManipulation().
+If you want to write some ghost values, call startGhostManipulation(), save the ghost values you need (by fieldVariable-&gt;getValues()), zeroGhostBuffer(), finishGhostManipulation()</p>
+</section>
+<section id="using-output-data">
+<h2>Using output data<a class="headerlink" href="#using-output-data" title="Link to this heading"></a></h2>
+<p>The python output data in <cite>*.py</cite> files can be viewed by the script <cite>catpy.py &lt;files&gt;</cite> and plotted by <cite>plot.py &lt;files&gt;</cite>.
+The scripts are located in the <cite>scripts</cite> folder.
+It is convenient to add this folder to PATH, e.g. in <cite>~/.bashrc</cite> with</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/store/software/opendihu/scripts<span class="w">   </span><span class="c1"># (adjust to your path)</span>
+</pre></div>
+</div>
+<p>There are also shortcuts <cite>plot</cite> and <cite>catpy</cite>. Example usage:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>catpy<span class="w">                   </span><span class="c1"># without arguments, displays contents of all files in the current directory with `*.py` suffix.</span>
+plot<span class="w">                    </span><span class="c1"># without arguments, plots everything from the `*.py`files in the current directory.</span>
+plot<span class="w"> </span>out*<span class="w">               </span><span class="c1"># plot all out* files</span>
+validate_parallel.py<span class="w">    </span><span class="c1"># without arguments, checks if the content of all files with corresponding names matches, where some files are serial files like `out.py` and some are parallel files like `out.0.py`, `out.1.py` etc.</span>
+validate_parallel.py<span class="w"> </span>out.py<span class="w"> </span>out.0.py<span class="w"> </span>out.1.py<span class="w">   </span><span class="c1"># do the same but with explicit specification of which files to use.</span>
+</pre></div>
+</div>
+</section>
+<section id="profiling-on-hazel-hen">
+<h2>Profiling on Hazel Hen<a class="headerlink" href="#profiling-on-hazel-hen" title="Link to this heading"></a></h2>
+<p>In order to use <cite>pat_run</cite> with GCC do the following:</p>
+<ul class="simple">
+<li><p>It needs <cite>-finstrument-functions</cite> in compile options for all code levels. I.e., core, example code and eventually in cellml runtime compiled code.</p></li>
+<li><p>Load the modules: <cite>PrgEnv-gnu, perftools-base, perftools-preload</cite>.</p></li>
+<li><p>Execute the aprun command: aprun (aprun opts like -n= …) pat_run (pat_run options,
+at least: -gmpi -r -m lite-events. for more, see man pat_run) example_name (example options)
+for example: ´aprun -n8 pat_run -m lite-events -gmpi -r ./shorten_implicit ../settings.py´</p></li>
+</ul>
+</section>
+<section id="work-with-large-simulation-output-on-servers">
+<h2>Work with large simulation output on servers<a class="headerlink" href="#work-with-large-simulation-output-on-servers" title="Link to this heading"></a></h2>
+<p>Assume you have a long simulation on a compute server that produced a lot of output files.
+Now you want to download them to your laptop and visualize them, but the total filesize is too high.</p>
+<ul>
+<li><p>One solution is to use start the render server of paraview on the compute server and then connect from the local system with the Paraview client.
+This requires a good internet connection, otherwise the interactivity is reduced.</p>
+<p>Download and build paraview yourself, e.g., on neon. On your laptop, add a server launch configuration (Server Type <cite>Client / Server</cite>, Host <cite>localhost</cite>, Port <cite>11116</cite>, configure Startup Type <cite>Command</cite> and insert a command like the following (adjust to your path):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ssh<span class="w"> </span>-X<span class="w"> </span>maierbn@neon<span class="w"> </span>/home/maierbn/software/ParaView-5.6.0-RC1-Qt5-MPI-Linux-64bit/bin/pvserver<span class="w"> </span>--server-port<span class="o">=</span><span class="m">11116</span>
+</pre></div>
+</div>
+<p>Then you just need to click on <cite>Connect</cite> in ParaView on your laptop. This will automatically run the server on neon. (You need to be in the network or VPN).</p>
+</li>
+<li><p>Or you only select a subset of the files on the server to download them. Selecting every <cite>nth</cite> file can be done in bash:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>tar<span class="w"> </span>czf<span class="w"> </span>ramp.tgz<span class="w"> </span>fibers_0000*<span class="o">{</span><span class="m">000</span>..286..8<span class="o">}</span>.vtp
+</pre></div>
+</div>
+<p>This selects every 8th file out of the files from <cite>fibers_0000000.vtp</cite> to <cite>fibers_0000286.vtp</cite> and puts them in a compressed archive, which can then be downloaded.</p>
+</li>
+</ul>
+</section>
+<section id="building-the-sphinx-doc-what-you-are-reading">
+<h2>Building the  sphinx doc (what you are reading)<a class="headerlink" href="#building-the-sphinx-doc-what-you-are-reading" title="Link to this heading"></a></h2>
+<p>The following has to be installed beforehand.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>sphinx
+sudo<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>recommonmark
+sudo<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>sphinx_rtd_theme
+</pre></div>
+</div>
+<p>To build the newest documentation, change into the opendihu/doc/sphinx directory and run</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>html
+</pre></div>
+</div>
+<p>The local documentation can be viewed in a browser at</p>
+<blockquote>
+<div><p><a class="reference external" href="file:/">file:/</a>/&lt;your-path&gt;/opendihu/doc/sphinx/_build/html/index.html</p>
+</div></blockquote>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../developer_information.html" class="btn btn-neutral float-left" title="Information for developers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="reference.html" class="btn btn-neutral float-right" title="C++ Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

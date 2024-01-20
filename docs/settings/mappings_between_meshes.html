@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MappingsBetweenMeshes &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Solver" href="solver.html" />
+    <link rel="prev" title="Mesh" href="mesh.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">MappingsBetweenMeshes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#python-settings">Python Settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#mappingsbetweenmesheslogfile">mappingsBetweenMeshesLogFile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#name">name</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xitolerance">xiTolerance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#enablewarnings">enableWarnings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#compositeuseonlyinitializedmappings">compositeUseOnlyInitializedMappings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#defaultvalue">defaultValue</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#mapping">Mapping</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="solver.html">Solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">MappingsBetweenMeshes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/mappings_between_meshes.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="mappingsbetweenmeshes">
+<h1>MappingsBetweenMeshes<a class="headerlink" href="#mappingsbetweenmeshes" title="Link to this heading"></a></h1>
+<p>When multiple meshes are involved, data has to be transferred between meshes.
+A mapping between two different meshes is a special case in the normal data transfer in the Operator Splitting and Coupling schemes.
+If the meshes do not match, a mapping between these meshes is retrieved from the <cite>MappingBetweenMeshes::Manager</cite> class.
+Every mesh is identified by its <code class="docutils literal notranslate"><span class="pre">meshName</span></code>. A mapping between two meshes is identified by the two mesh names of the involved meshes.</p>
+<p>The actual mapping object stores information, how to map values from a field variables of the source mesh to values of a field variable of the target mesh.
+The initialization of these connectivity data can be expensive. Therefore, it is important to properly initialize the mappings.</p>
+<p>At the beginning of the settings, multiple mappings between meshes can be initialized with given options. Then the mappings will be generated at the beginning of the program.
+Use the key “MappingsBetweenMeshes” as shown below. If the required meshes are not initialized like this, they will be created on-the-fly the first time they are needed.</p>
+<p>In certain cases there are two possibilities how to map between two meshes (if the dimension of the meshes is equal). Then, if mapping from mesh A to B is required, either the mapping A-&gt;B is used or the inverse mapping of B-&gt;A is used.
+If one of them was initialized and the other was not, then the initialized version will be used. If none of them was initialized, A-&gt;B will be used. But this choice could not be the optimal. Therefore, it is recommended to initialize all used mappings.</p>
+<section id="python-settings">
+<h2>Python Settings<a class="headerlink" href="#python-settings" title="Link to this heading"></a></h2>
+<p>The following is an example how to initialize mappings between meshes:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s2">&quot;mappingsBetweenMeshesLogFile&quot;</span><span class="p">:</span>   <span class="s2">&quot;mappings_between_meshes_log.txt&quot;</span><span class="p">,</span>    <span class="c1"># log file for mappings</span>
+  <span class="s2">&quot;Meshes&quot;</span><span class="p">:</span>  <span class="o">...</span> <span class="c1"># define all meshes here</span>
+
+  <span class="s2">&quot;MappingsBetweenMeshes&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;meshA&quot;</span><span class="p">:</span> <span class="s2">&quot;meshB&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;meshC&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;meshD&quot;</span><span class="p">,</span> <span class="s2">&quot;xiTolerance&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;enableWarnings&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;compositeUseOnlyInitializedMappings&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;defaultValue&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+
+    <span class="c1"># the following is from the multidomain_contraction example</span>
+    <span class="s2">&quot;3Dmesh&quot;</span><span class="p">:</span> <span class="p">[</span>
+       <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;3Dmesh_elasticity_quadratic&quot;</span><span class="p">,</span>                                <span class="s2">&quot;xiTolerance&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;enableWarnings&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;compositeUseOnlyInitializedMappings&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+       <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic&quot;</span><span class="p">,</span> <span class="s2">&quot;xiTolerance&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;enableWarnings&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;compositeUseOnlyInitializedMappings&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>     <span class="c1"># mapping from multidomain to elasticity mesh, for transferring γ</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;3DFatMesh&quot;</span><span class="p">:</span>  <span class="p">[</span>
+       <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;3DFatMesh_elasticity_quadratic&quot;</span><span class="p">,</span>                             <span class="s2">&quot;xiTolerance&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;enableWarnings&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;compositeUseOnlyInitializedMappings&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+       <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic&quot;</span><span class="p">,</span> <span class="s2">&quot;xiTolerance&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;enableWarnings&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;compositeUseOnlyInitializedMappings&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>     <span class="c1"># mapping from multidomain to elasticity mesh, for transferring γ</span>
+    <span class="p">],</span>
+    <span class="s2">&quot;3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic&quot;</span><span class="p">:</span> <span class="p">[</span>
+       <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;3Dmesh&quot;</span><span class="p">,</span>    <span class="s2">&quot;xiTolerance&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;enableWarnings&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;compositeUseOnlyInitializedMappings&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>    <span class="c1"># mapping uses mappings of submeshes (i.e. 3Dmesh_elasticity_quadratic-&gt;3Dmesh)</span>
+       <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;3DFatMesh&quot;</span><span class="p">,</span> <span class="s2">&quot;xiTolerance&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s2">&quot;enableWarnings&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;compositeUseOnlyInitializedMappings&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>    <span class="c1"># mapping uses mappings of submeshes (i.e. 3DFatMesh_elasticity_quadratic-&gt;3DFatMesh)</span>
+    <span class="p">],</span>
+  <span class="p">},</span>
+</pre></div>
+</div>
+<p>The mapping from <code class="docutils literal notranslate"><span class="pre">meshA</span></code> to <code class="docutils literal notranslate"><span class="pre">meshB</span></code> can be initialized by inserting <code class="docutils literal notranslate"><span class="pre">&quot;meshA&quot;:</span> <span class="pre">&quot;meshB&quot;</span></code> in the dict under <code class="docutils literal notranslate"><span class="pre">&quot;MappingsBetweenMeshes&quot;</span></code>, as shown above. This does not initialize the reverse mapping <code class="docutils literal notranslate"><span class="pre">meshB</span></code> to <code class="docutils literal notranslate"><span class="pre">meshA</span></code>.
+This brief method is to initialize mappings using default values for all settings.</p>
+<p>If the options should be specified, the second possibility can be used, where the value of the <code class="docutils literal notranslate"><span class="pre">key:value</span></code> pair is itself a dict. This can be seen with mesh <code class="docutils literal notranslate"><span class="pre">&quot;meshC&quot;</span></code> above. The name of the target mesh has to be given under the key <code class="docutils literal notranslate"><span class="pre">&quot;name&quot;</span></code>.
+The further options are explained below.</p>
+<p>If there should be multiple mappings from a single mesh, then a list has to be used, because one key cannot appear multiple times in a dict. In the above example, this was done for the mesh <code class="docutils literal notranslate"><span class="pre">3Dmesh</span></code>, which maps to <code class="docutils literal notranslate"><span class="pre">3Dmesh_elasticity_quadratic</span></code> and <code class="docutils literal notranslate"><span class="pre">3Dmesh_elasticity_quadratic+3DFatMesh_elasticity_quadratic</span></code> (this is a composite mesh).</p>
+<section id="mappingsbetweenmesheslogfile">
+<h3>mappingsBetweenMeshesLogFile<a class="headerlink" href="#mappingsbetweenmesheslogfile" title="Link to this heading"></a></h3>
+<p>This is the name of a log file that will contain events during creation and mapping.</p>
+<p>The following options are valid for the target mesh dict.</p>
+</section>
+<section id="name">
+<h3>name<a class="headerlink" href="#name" title="Link to this heading"></a></h3>
+<p>The name of the target mesh.</p>
+</section>
+<section id="xitolerance">
+<h3>xiTolerance<a class="headerlink" href="#xitolerance" title="Link to this heading"></a></h3>
+<p>(default: 0.1, this was tested to be reasonable)</p>
+<p>The element coordinates are called xi, e.g. for a 3D element <span class="math notranslate nohighlight">\(\xi_1, \xi_2, \xi_3 \in [0,1]^3\)</span>. The tolerance specifies when a point is considered and checked if it is still inside the element, even if it has a <span class="math notranslate nohighlight">\(\xi\)</span> value &lt;0 or &gt;1.</p>
+<p>A point is also inside the element for (<span class="math notranslate nohighlight">\(xi\)</span> &lt; 0 but <span class="math notranslate nohighlight">\(xi\)</span> &gt; -xiTolerance) or, analogously, (<span class="math notranslate nohighlight">\(xi\)</span> &gt; 1 but <span class="math notranslate nohighlight">\(xi\)</span> &lt; 1+xiTolerance), if the respective element is the best fit among all elements.
+This means, if the point is outside of the actual mesh, then it is treated (in the construction of the mapping between meshes) as if it were inside the nearest element.
+Thus, with this tolerance, also nodes of the source mesh that are slightly outside the target mesh get a value mapped. This is useful for fiber mesh that lie exactly on the outer boundary of the 3D muscle mesh.</p>
+<p>This tolerance only applies to the decision if the point is considered inside the element, not to the actual computation of the xi coordinates of the point inside the element.
+Inside the mesh (not at the boundary) multiple adjacent elements may claim ownership of a point because of that tolerance. Then they will be all considered and the actual xi coordinates for the point will be computed from which the element where the point is really inside will be detected.
+This means the tolerance has no effect on the error of the mapping.</p>
+</section>
+<section id="enablewarnings">
+<h3>enableWarnings<a class="headerlink" href="#enablewarnings" title="Link to this heading"></a></h3>
+<p>(default: True)</p>
+<p>Show some warnings if not all target mesh nodes get values mapped to. Set this to false to have not so many warnings in the output. It definitely makes sense if
+<code class="docutils literal notranslate"><span class="pre">&quot;compositeUseOnlyInitializedMappings&quot;:</span> <span class="pre">True</span></code>, because then this case happens on purpose.</p>
+</section>
+<section id="compositeuseonlyinitializedmappings">
+<h3>compositeUseOnlyInitializedMappings<a class="headerlink" href="#compositeuseonlyinitializedmappings" title="Link to this heading"></a></h3>
+<p>(default: False)</p>
+<p>For mappings from a composite mesh to any mesh (composite or not), only reuse all mappings from the sub meshes to the target mesh to construct the mapping. These sub mappings have to be initialized.</p>
+<p>For example, if there is a mapping <code class="docutils literal notranslate"><span class="pre">&quot;meshA+meshB&quot;</span> <span class="pre">-&gt;</span> <span class="pre">&quot;meshC&quot;</span></code>, then if the option is <code class="docutils literal notranslate"><span class="pre">compositeUseOnlyInitializedMappings:</span> <span class="pre">False</span></code> (as the default), it will create the normal mapping, iterating over all points in the composite mesh “meshA+meshB” and finding the containing element in “meshC”.
+If the option is True, it will consider the mappings <code class="docutils literal notranslate"><span class="pre">&quot;meshA&quot;</span> <span class="pre">-&gt;</span> <span class="pre">&quot;meshC&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">meshB&quot;</span> <span class="pre">-&gt;</span> <span class="pre">&quot;meshC&quot;</span></code>, each only if it was initialized. It will reuse the information from these mappings and the mapping data should be the same as when the option is False.
+However, with this it is possible to construct a mapping where the the target mesh is only on a part of the composite mesh.</p>
+<p>Consider the following use case: In the examples where we consider a fat layer (e.g. multidomain_contraction), we have a muscle mesh <code class="docutils literal notranslate"><span class="pre">&quot;3Dmesh&quot;</span></code> and a fat layer mesh <code class="docutils literal notranslate"><span class="pre">3DFatMesh</span></code> that are adjacent.
+There is a composite mesh <code class="docutils literal notranslate"><span class="pre">&quot;3Dmesh+3DFatMesh&quot;</span></code>.
+The extra-cellular potential <span class="math notranslate nohighlight">\(phi_e\)</span> in the muscle domain on mesh <code class="docutils literal notranslate"><span class="pre">3Dmesh</span></code> should be mapped to the composite mesh <code class="docutils literal notranslate"><span class="pre">3Dmesh+3DFatMesh</span></code>. Normally the setup of the mapping <code class="docutils literal notranslate"><span class="pre">3Dmesh</span> <span class="pre">-&gt;</span> <span class="pre">3Dmesh+3DFatMesh</span></code> would be inefficient,
+because the <code class="docutils literal notranslate"><span class="pre">3DFatMesh</span></code> part of the composite mesh get no values mapped but during the setup the mapping class searches for parts of the other mesh there. Instead, we can use this option and initialize the mappings <code class="docutils literal notranslate"><span class="pre">3Dmesh</span> <span class="pre">-&gt;</span> <span class="pre">3Dmesh</span></code> and <code class="docutils literal notranslate"><span class="pre">3DFatMesh-&gt;3DFatMesh</span></code> or similar when the single meshes are not identical (as is the case in multidomain_contraction where the elasticity mesh is coarser).</p>
+</section>
+<section id="defaultvalue">
+<h3>defaultValue<a class="headerlink" href="#defaultvalue" title="Link to this heading"></a></h3>
+<p>(default: 0.0)</p>
+<p>When mapping from a lower dimensional to a higher dimensional mesh, e.g. from a 1D fiber mesh to a 3D muscle volume, there can be some degrees of freedom in the higher dimensional mesh that have no nearby degrees of freedom of the lower dimensional mesh.
+E.g., there might be regions of the 3D muscle volume where there is no fiber nearby. By default, these dofs will get the value 0.0 when mapping from the 1D to the 3D mesh.</p>
+<p>This default value can be changed by this option. A use case is where the transmembrane potential <span class="math notranslate nohighlight">\(V_m\)</span> is mapped from fibers to the muscle. Then set <cite>defaultValue</cite> to the equilibrium value, to have this value set where no fiber is.
+An example that uses this option is <code class="docutils literal notranslate"><span class="pre">examples/electrophysiology/fibers/analytical_fibers_emg</span></code>.</p>
+</section>
+</section>
+<section id="mapping">
+<h2>Mapping<a class="headerlink" href="#mapping" title="Link to this heading"></a></h2>
+<p>In the following the actual data mapping will be explained.</p>
+<p>We always map values from a set of points to a target mesh, i.e. there is no structural information like mesh connectivity associated with the source data. Therefore it is not relevant if the source mesh is 1D,2D or 3D as only points in 3D space will be considered.
+This helps in the partitioning, it is only required, that the source points are on the same partition as the target element that surrounds it. (if the elements of the source mesh would also be considered then there would be problems with the partitioning, because if the source and target meshes don’t coincidentally match, there is always a small domain where part of the element of source and target meshes are on different processes)</p>
+<p><code class="xref std std-numref docutils literal notranslate"><span class="pre">mapping_between_meshes_1</span></code> shows a source degree of freedom (dof) or point, <span class="math notranslate nohighlight">\(s_0\)</span>, that gets mapped to the target element with points <span class="math notranslate nohighlight">\(t0\)</span> to <span class="math notranslate nohighlight">\(t3\)</span>.
+The first step in constructing the mapping is finding the target element, where the source dof is located. Then the element coordinates <span class="math notranslate nohighlight">\(\boldsymbol{\xi} = (\xi_1,\xi_2,\xi_3)^\top \in [0,1]^3\)</span> of the source point within the target element are computed.
+Using barycentric interpolation, the value of <span class="math notranslate nohighlight">\(s_0\)</span> will be scaled with the ansatz functions, <span class="math notranslate nohighlight">\(\phi_i\)</span>, evaluated at <span class="math notranslate nohighlight">\(\boldsymbol{\xi}\)</span>.</p>
+<figure class="align-center" id="mapping-between-meshes-1">
+<a class="reference internal image-reference" href="../_images/mapping_between_meshes_1.svg"><img alt="../_images/mapping_between_meshes_1.svg" src="../_images/mapping_between_meshes_1.svg" width="40%" /></a>
+</figure>
+<p>After all source dofs were mapped, the contributions at every target point will be added up and divided by the sum of all contribution factors. In <code class="xref std std-numref docutils literal notranslate"><span class="pre">mapping_between_meshes_2</span></code> we see that target point <span class="math notranslate nohighlight">\(t_0\)</span> got contributions from the source points <span class="math notranslate nohighlight">\(s_0,s_1,s_2\)</span> and <span class="math notranslate nohighlight">\(s_3\)</span>.
+If the ansatz function in the target mesh for point <span class="math notranslate nohighlight">\(t_0\)</span> is <span class="math notranslate nohighlight">\(\phi\)</span>, the target value of <span class="math notranslate nohighlight">\(t_0\)</span> will be computed as</p>
+<div class="math notranslate nohighlight">
+\[t_0 = (\sum\limits_{i=0}^4 s_i \cdot \phi(\boldsymbol{\xi}_i)) / \sum\limits_{i=0}^4 \phi(\boldsymbol{\xi}_i)\]</div>
+<p>(Note that this formulation is not quite correct, in this example there would actually be three different parts of the ansatz functions in every target element and the <span class="math notranslate nohighlight">\(\boldsymbol{\xi}\)</span> values would be local to the respective element, but the idea should be clear.)</p>
+<figure class="align-center" id="mapping-between-meshes-2">
+<a class="reference internal image-reference" href="../_images/mapping_between_meshes_2.svg"><img alt="../_images/mapping_between_meshes_2.svg" src="../_images/mapping_between_meshes_2.svg" width="60%" /></a>
+</figure>
+<p>One point of the target mesh contributes to all dofs in the source mesh that are located in all adjacent target elements as can be seen in <code class="xref std std-numref docutils literal notranslate"><span class="pre">mapping_between_meshes_3</span></code>.</p>
+<figure class="align-center" id="mapping-between-meshes-3">
+<a class="reference internal image-reference" href="../_images/mapping_between_meshes_3.svg"><img alt="../_images/mapping_between_meshes_3.svg" src="../_images/mapping_between_meshes_3.svg" width="60%" /></a>
+</figure>
+<p>The inverse direction of the mapping is visualized in <code class="xref std std-numref docutils literal notranslate"><span class="pre">mapping_between_meshes_3</span></code>. The direction of data transfer is reversed and the contribution factors stay the same. Thus, the value at <span class="math notranslate nohighlight">\(s_0\)</span> will be computed to be</p>
+<div class="math notranslate nohighlight">
+\[s_0 = \sum\limits_{i=0}^4 t_i \cdot \phi(\boldsymbol{\xi}_i).\]</div>
+<p>This is simply interpolation in the target mesh.</p>
+<p>This reverse direction of the mapping, i.e. from <span class="math notranslate nohighlight">\(t_i\)</span> to <span class="math notranslate nohighlight">\(s_i\)</span> is also implemented in the <code class="docutils literal notranslate"><span class="pre">source</span> <span class="pre">-&gt;</span> <span class="pre">target</span></code> mapping. In order to map from <span class="math notranslate nohighlight">\(t_i\)</span> to <span class="math notranslate nohighlight">\(s_i\)</span> you can also construct the inverse mapping and do the “forward direction” mapping.
+For the presented example this would look like in <code class="xref std std-numref docutils literal notranslate"><span class="pre">mapping_between_meshes_4</span></code>.</p>
+<figure class="align-center" id="mapping-between-meshes-4">
+<a class="reference internal image-reference" href="../_images/mapping_between_meshes_4.svg"><img alt="../_images/mapping_between_meshes_4.svg" src="../_images/mapping_between_meshes_4.svg" width="60%" /></a>
+</figure>
+<p>Note, that the computed values will be slightly different. This reversibility of source and target mesh is only possible when both meshes have the same dimensionality. Obviously we can’t map “forward” from a source 3D mesh to a target 1D mesh with <code class="docutils literal notranslate"><span class="pre">&quot;3D-&gt;1D&quot;</span></code>, we have to use the “reverse” mapping of the <code class="docutils literal notranslate"><span class="pre">1D-&gt;3D</span></code> mapping.
+Even if the dimensionality is the same, there is usually a preferred direction, usually from the finer mesh to the coarser. This should be considered in initialization of the mappings under option <code class="docutils literal notranslate"><span class="pre">&quot;MappingsBetweenMeshes&quot;</span></code> where only this direction should be initialized.</p>
+<p>There is one problem if the meshes have significantly different element sizes. An example is shown in <code class="xref std std-numref docutils literal notranslate"><span class="pre">mapping_between_meshes_5</span></code>.</p>
+<figure class="align-center" id="mapping-between-meshes-5">
+<a class="reference internal image-reference" href="../_images/mapping_between_meshes_5.svg"><img alt="../_images/mapping_between_meshes_5.svg" src="../_images/mapping_between_meshes_5.svg" width="40%" /></a>
+</figure>
+<p>The nodes <span class="math notranslate nohighlight">\(s_0\)</span> and <span class="math notranslate nohighlight">\(s_3\)</span> only contribute to the target dofs of the target elements where they are located. This leads to numerous target dofs that do not get any contribution, for example <span class="math notranslate nohighlight">\(t_1\)</span> and <span class="math notranslate nohighlight">\(t_2\)</span>.
+In the program, this problem is solved by connecting the “unmapped” target dofs also to the source dof. For this, the source mesh is considered and the normal mesh interpolation in the source element is used. In the example, this means that <span class="math notranslate nohighlight">\(t_2\)</span> gets contributions from <span class="math notranslate nohighlight">\(s_0\)</span> to <span class="math notranslate nohighlight">\(s_3\)</span>.
+In the reverse mapping, these contributions are also present, as can be seen in <code class="xref std std-numref docutils literal notranslate"><span class="pre">mapping_between_meshes_6</span></code>.</p>
+<p>However, this fix is time-consuming, because we have to iterate also over the source mesh, not only the target mesh. In this example the reverse mapping <code class="docutils literal notranslate"><span class="pre">t-&gt;s</span></code> would have been better.</p>
+<figure class="align-center" id="mapping-between-meshes-6">
+<a class="reference internal image-reference" href="../_images/mapping_between_meshes_6.svg"><img alt="../_images/mapping_between_meshes_6.svg" src="../_images/mapping_between_meshes_6.svg" width="40%" /></a>
+</figure>
+<p><code class="xref std std-numref docutils literal notranslate"><span class="pre">mapping_between_meshes_1</span></code></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="mesh.html" class="btn btn-neutral float-left" title="Mesh" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="solver.html" class="btn btn-neutral float-right" title="Solver" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

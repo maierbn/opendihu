@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Python Settings &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=0ed52906"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Mesh" href="settings/mesh.html" />
+    <link rel="prev" title="Validation" href="user/validation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Python Settings</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/mesh.html">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/solver.html">Solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Python Settings</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/settings.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="python-settings">
+<span id="id1"></span><h1>Python Settings<a class="headerlink" href="#python-settings" title="Link to this heading"></a></h1>
+<p>The following pages contain all settings that are possible to specify for the different objects. This is the user documentation that provides information outside of the C++ code.</p>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="settings/mesh.html">Mesh</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/mesh.html#c-class-template-mesh">C++ class template Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/mesh.html#python-settings-for-mesh">Python settings for Mesh</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/mappings_between_meshes.html">MappingsBetweenMeshes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/mappings_between_meshes.html#python-settings">Python Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/mappings_between_meshes.html#mapping">Mapping</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/solver.html">Solver</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/solver.html#solvertype">solverType</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/solver.html#preconditionertype">preconditionerType</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/solver.html#relativetolerance">relativeTolerance</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/solver.html#maxiterations">maxIterations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/solver.html#command-line-options-for-petsc">Command line options for PETSc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/solver.html#dumpfilename">dumpFilename</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/solver.html#dumpformat">dumpFormat</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/boundary_conditions.html">Boundary Conditions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/boundary_conditions.html#python-settings">Python settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/boundary_conditions.html#dirichlet-boundary-conditions">Dirichlet Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/boundary_conditions.html#dirichlet-output-filename">Dirichlet Output Filename</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/boundary_conditions.html#neumann-boundary-conditions">Neumann Boundary Conditions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/output_connector_slots.html">Connector Slots</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_connector_slots.html#connectedslotsterm1to2-and-connectedslotsterm2to1"><cite>connectedSlotsTerm1To2</cite> and <cite>connectedSlotsTerm2To1</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_connector_slots.html#solverstructurediagramfile">solverStructureDiagramFile</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_connector_slots.html#using-global-slot-names">Using global slot names</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_connector_slots.html#connection-by-choosing-equal-slot-names">Connection by choosing equal slot names</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_connector_slots.html#example">Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/finite_element_method.html">FiniteElementMethod</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/finite_element_method.html#description">Description</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/finite_element_method.html#c-instantiation">C++ instantiation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/finite_element_method.html#python-settings">Python Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/finite_element_method.html#properties">Properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/finite_element_method.html#location-in-the-code">Location in the code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/finite_element_method.html#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/timestepping_schemes_ode.html">TimeSteppingSchemesOde</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/timestepping_schemes_ode.html#common-properties">Common properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/timestepping_schemes_ode.html#expliciteuler">ExplicitEuler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/timestepping_schemes_ode.html#impliciteuler">ImplicitEuler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/timestepping_schemes_ode.html#heun">Heun</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/timestepping_schemes_ode.html#heunadaptive">HeunAdaptive</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/timestepping_schemes_ode.html#cranknicolson">CrankNicolson</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/splitting.html">Operator Splitting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/splitting.html#godunovsplitting">GodunovSplitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/splitting.html#strangsplitting">StrangSplitting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/coupling.html">Coupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="settings/coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="settings/output_writer.html">OutputWriter</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_writer.html#filename">filename</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_writer.html#outputinterval">outputInterval</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_writer.html#filenumbering">fileNumbering</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_writer.html#id1">Paraview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_writer.html#pythonfile">PythonFile</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_writer.html#pythoncallback">PythonCallback</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_writer.html#exfile">ExFile</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_writer.html#megamol">MegaMol</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/output_surface.html">OutputSurface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_surface.html#output-of-surface-meshes">Output of surface meshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/output_surface.html#surface-sampling">Surface Sampling</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/multidomain_solver.html">MultidomainSolver</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/multidomain_solver.html#c-code">C++ code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/multidomain_solver.html#python-settings">Python settings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/multiple_instances.html">MultipleInstances</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/multiple_instances.html#ninstances">nInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/multiple_instances.html#instances">instances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/multiple_instances.html#ranks">ranks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/fast_monodomain_solver.html">FastMonodomainSolver</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/fast_monodomain_solver.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/fast_monodomain_solver.html#python-options">Python options</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/fast_monodomain_solver.html#tampering-the-generated-source-code">Tampering the generated source code</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/cellml_adapter.html">CellMLAdapter</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/cellml_adapter.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/cellml_adapter.html#modelfilename">modelFilename</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/cellml_adapter.html#libraryfilename">libraryFilename</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/cellml_adapter.html#statesinitialvalues">statesInitialValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/cellml_adapter.html#initializestatestoequilibrium-and-initializestatestoequilibriumtimestepwidth">initializeStatesToEquilibrium and initializeStatesToEquilibriumTimestepWidth</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/cellml_adapter.html#callbacks">Callbacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/cellml_adapter.html#how-to-specify-mappings-of-states-algebraics-and-parameters">How to specify mappings of states, algebraics and parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/cellml_adapter.html#parametersinitialvalues">parametersInitialValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/cellml_adapter.html#mappings">mappings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/cellml_adapter.html#meshname">meshName</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/cellml_adapter.html#stimulationlogfilename">stimulationLogFilename</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/cellml_adapter.html#optimizationtype">optimizationType</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/cellml_adapter.html#compilerflags">compilerFlags</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/quasi_static_linear_elasticity_solver.html#dirichletboundaryconditions">dirichletBoundaryConditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/quasi_static_linear_elasticity_solver.html#python-settings">Python Settings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/static_bidomain_solver.html">StaticBidomainSolver</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/static_bidomain_solver.html#c-instantiation">C++ instantiation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/static_bidomain_solver.html#slotnames">slotNames</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/hyperelasticity.html">Hyperelasticity</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/hyperelasticity.html#description">Description</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/hyperelasticity.html#c-instantiation">C++ instantiation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/hyperelasticity.html#python-settings">Python settings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/dynamic_hyperelasticity.html">Dynamic hyperelasticity</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/dynamic_hyperelasticity.html#c-instantiation">C++ instantiation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/dynamic_hyperelasticity.html#python-settings">Python settings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/muscle_contraction_solver.html">Muscle contraction solver</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/muscle_contraction_solver.html#c-instantiation">C++ instantiation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/muscle_contraction_solver.html#python-settings">Python settings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/prescribed_values.html">PrescribedValues</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/prescribed_values.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/prescribed_values.html#meshname">meshName</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/prescribed_values.html#slotnames">slotNames</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/prescribed_values.html#additionalargument">additionalArgument</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/prescribed_values.html#callback-function">Callback Function</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="settings/map_dofs.html">MapDofs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/map_dofs.html#c-code">C++ code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/map_dofs.html#python-settings">Python settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/map_dofs.html#nadditionalfieldvariables"><cite>nAdditionalFieldVariables</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/map_dofs.html#additionalslotnames"><cite>additionalSlotNames</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/map_dofs.html#meshname"><cite>meshName</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/map_dofs.html#beforecomputation-and-aftercomputation"><cite>beforeComputation</cite> and <cite>afterComputation</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/map_dofs.html#fromconnectorslot-and-toconnectorslots"><cite>fromConnectorSlot</cite> and <cite>toConnectorSlots</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/map_dofs.html#fromoutputconnectorarrayindex-and-tooutputconnectorarrayindex"><cite>fromOutputConnectorArrayIndex</cite> and <cite>toOutputConnectorArrayIndex</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/map_dofs.html#mode"><cite>mode</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/map_dofs.html#fromdofnosnumbering-and-todofnosnumbering"><cite>“fromDofNosNumbering”</cite> and <cite>“toDofNosNumbering”</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/map_dofs.html#dofsmapping"><cite>dofsMapping</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/map_dofs.html#inputdofs"><cite>inputDofs</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/map_dofs.html#outputdofs"><cite>outputDofs</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/map_dofs.html#callback"><cite>callback</cite></a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/map_dofs.html#exemplary-solver-structure">Exemplary solver structure</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="settings/precice_adapter.html">PreciceAdapter</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="settings/precice_adapter.html#surface-coupling">Surface coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings/precice_adapter.html#volume-coupling">Volume coupling</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="user/validation.html" class="btn btn-neutral float-left" title="Validation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="settings/mesh.html" class="btn btn-neutral float-right" title="Mesh" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

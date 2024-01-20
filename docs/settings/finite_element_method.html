@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FiniteElementMethod &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="TimeSteppingSchemesOde" href="timestepping_schemes_ode.html" />
+    <link rel="prev" title="Connector Slots" href="output_connector_slots.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solver.html">Solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">FiniteElementMethod</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#description">Description</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c-instantiation">C++ instantiation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#mesh">Mesh</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#basisfunction">BasisFunction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#quadrature">Quadrature</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#equation">Equation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#python-settings">Python Settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#femesh">&lt;mesh&gt;</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#solver">&lt;solver&gt;</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#slotname">slotName</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#output-writer">&lt;output writer&gt;</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#prefactor">prefactor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#righthandside">rightHandSide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dirichletboundaryconditions">dirichletBoundaryConditions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neumannboundaryconditions">neumannBoundaryConditions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#updateprescribedvaluesfromsolution">updatePrescribedValuesFromSolution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#inputmeshisglobal">inputMeshIsGlobal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#diffusiontensor">diffusionTensor</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#properties">Properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#location-in-the-code">Location in the code</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">FiniteElementMethod</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/finite_element_method.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="finiteelementmethod">
+<h1>FiniteElementMethod<a class="headerlink" href="#finiteelementmethod" title="Link to this heading"></a></h1>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
+<p>This class template is used to discretize the Laplace operator using the Finite Element Method.
+It assembles stiffness and mass matrices and can call a solver for the Laplace or Poisson problem.
+Thus, it can be used directly to solve a Laplace or Poisson problem. It can also be used in a timestepping scheme to solve a diffusion equation.</p>
+</section>
+<section id="c-instantiation">
+<h2>C++ instantiation<a class="headerlink" href="#c-instantiation" title="Link to this heading"></a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">SpatialDiscretization</span><span class="o">::</span><span class="n">FiniteElementMethod</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="cm">/*Mesh*/</span><span class="p">,</span>
+<span class="w">  </span><span class="cm">/*BasisFunction*/</span><span class="p">,</span>
+<span class="w">  </span><span class="cm">/*Quadrature*/</span><span class="p">,</span>
+<span class="w">  </span><span class="cm">/*Equation*/</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>Example:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">SpatialDiscretization</span><span class="o">::</span><span class="n">FiniteElementMethod</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="n">Mesh</span><span class="o">::</span><span class="n">StructuredRegularFixedOfDimension</span><span class="o">&lt;</span><span class="mi">3</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">BasisFunction</span><span class="o">::</span><span class="n">LagrangeOfOrder</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">Quadrature</span><span class="o">::</span><span class="n">Gauss</span><span class="o">&lt;</span><span class="mi">3</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">Equation</span><span class="o">::</span><span class="n">Static</span><span class="o">::</span><span class="n">Laplace</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+<section id="mesh">
+<h3>Mesh<a class="headerlink" href="#mesh" title="Link to this heading"></a></h3>
+<p>The mesh to use for the discretization. This is one of</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">Mesh::StructuredRegularFixedOfDimension&lt;D&gt;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Mesh::StructuredDeformableOfDimension&lt;D&gt;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Mesh::UnstructuredDeformableOfDimension&lt;D&gt;</span></code></p></li>
+</ul>
+<p>where <code class="docutils literal notranslate"><span class="pre">D</span></code> is either <code class="docutils literal notranslate"><span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">2</span></code> or <code class="docutils literal notranslate"><span class="pre">3</span></code>. See <a class="reference internal" href="mesh.html"><span class="doc">Mesh</span></a> for details.</p>
+</section>
+<section id="basisfunction">
+<h3>BasisFunction<a class="headerlink" href="#basisfunction" title="Link to this heading"></a></h3>
+<p>The basis function/ansatz function/shape function to use for discretizing the field variables. This is one of</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">BasisFunction::LagrangeOfOrder&lt;1&gt;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BasisFunction::LagrangeOfOrder&lt;2&gt;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BasisFunction::Hermite</span></code></p></li>
+</ul>
+<p>where <code class="docutils literal notranslate"><span class="pre">Hermite</span></code> specifies cubic Hermite functions without scaling factors, i.e. <span class="math notranslate nohighlight">\(C^0\)</span>, non-smooth discretizations.</p>
+<p>Note that internally, the <code class="docutils literal notranslate"><span class="pre">FunctionSpace::FunctionSpace</span></code> class is build from <code class="docutils literal notranslate"><span class="pre">Mesh</span></code> and <code class="docutils literal notranslate"><span class="pre">BasisFunction</span></code>.</p>
+<p>Basis functions are defined in the directory <a class="reference external" href="https://github.com/maierbn/opendihu/tree/develop/core/src/basis_function">basis_function</a>.</p>
+</section>
+<section id="quadrature">
+<h3>Quadrature<a class="headerlink" href="#quadrature" title="Link to this heading"></a></h3>
+<p>The quadrature scheme to use for computing the integral in the stiffness and mass matrices. For higher-dimensional quadrature, the tensor-product is taken. Possible values are</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">Quadrature::Gauss&lt;NumberGaussPoints&gt;</span></code> where <code class="docutils literal notranslate"><span class="pre">NumberGaussPoints</span></code> is the number of sampling points for the integration.</p>
+<p>Supported values are 1-8, 10, 12, 16, 20, 24, 64.</p>
+<p>The Gauss quadrature scheme is capable of exactly integrating polynomials of degree <span class="math notranslate nohighlight">\(2\cdot\text{NumberGaussPoints}-1\)</span>.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Quadrature::ClenshawCurtis&lt;NumberIntegrationPoints&gt;</span></code> for Clenshaw-Curtis integration.</p>
+<p>It is capable of exactly integrating polynomials of degree <span class="math notranslate nohighlight">\(\text{NumberIntegrationPoints}-1\)</span>.</p>
+<p>Allowed values for <code class="docutils literal notranslate"><span class="pre">NumberIntegrationPoints</span></code> are 1-7 and 64.</p>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Quadrature::NewtonCotes&lt;NumberIntegrationPoints&gt;</span></code>.</p>
+<p>It is capable of exactly integrating polynomials of degree <span class="math notranslate nohighlight">\(\lfloor(\text{NumberIntegrationPoints}+1)/2\rfloor \cdot 2-1\)</span></p>
+<p>The following table lists the commonly known names of the schemes and their integration order.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>name</p></th>
+<th class="head"><p>integration points</p></th>
+<th class="head"><p>exact integration of polynomials</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>rectangle</p></td>
+<td><p>1</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-odd"><td><p>trapezoid</p></td>
+<td><p>2</p></td>
+<td><p>1</p></td>
+</tr>
+<tr class="row-even"><td><p>Simpson</p></td>
+<td><p>3</p></td>
+<td><p>3</p></td>
+</tr>
+<tr class="row-odd"><td><p>3/8-rule</p></td>
+<td><p>5</p></td>
+<td><p>5</p></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+<p>Quadrature schemes are defined in the directory <a class="reference external" href="https://github.com/maierbn/opendihu/tree/develop/core/src/quadrature">quadrature</a>.</p>
+</section>
+<section id="equation">
+<h3>Equation<a class="headerlink" href="#equation" title="Link to this heading"></a></h3>
+<p>This specifies for which equation the mass and stiffness matrices should be computed. To directly use a <code class="docutils literal notranslate"><span class="pre">FiniteElementMethod</span></code> class with its <code class="docutils literal notranslate"><span class="pre">run()</span></code> method, the following values are possible:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">Equation::Static::Laplace</span></code> for solving the Laplace equation:</p>
+<div class="math notranslate nohighlight">
+\[c\cdot Δ u = 0\]</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Equation::Static::GeneralizedLaplace</span></code> for solving the Laplace equation:</p>
+<div class="math notranslate nohighlight">
+\[∇\cdot(A∇u) = 0\]</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Equation::Static::Poisson</span></code> for solving the Poisson equation:</p>
+<div class="math notranslate nohighlight">
+\[c\cdot Δ u = f\]</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Equation::Static::GeneralizedPoisson</span></code> for solving the Poisson equation:</p>
+<div class="math notranslate nohighlight">
+\[∇\cdot(A∇u) = f\]</div>
+<p>The right hand side <span class="math notranslate nohighlight">\(f\)</span> can be given in the python settings.</p>
+</li>
+</ul>
+<p>For the following equations, the <code class="docutils literal notranslate"><span class="pre">FiniteElementMethod</span></code> class needs to be wrapped in other solver, e.g. time stepping schemes:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">Equation::Dynamic::IsotropicDiffusion</span></code> for solving the diffusion equation,</p>
+<div class="math notranslate nohighlight">
+\[u_t - Δu = 0\]</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Equation::Dynamic::AnisotropicDiffusion</span></code> for solving the diffusion equation,</p>
+<div class="math notranslate nohighlight">
+\[u_t - ∇\cdot A ∇u = 0\]</div>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Equation::Dynamic::DirectionalDiffusion</span></code> for solving the diffusion equation,</p>
+<div class="math notranslate nohighlight">
+\[u_t - ∇\cdot A(v)∇u = 0,\]</div>
+<p>where the diffusion tensor, <span class="math notranslate nohighlight">\(A\)</span>, depends on a direction field <span class="math notranslate nohighlight">\(v\)</span>.</p>
+</li>
+</ul>
+<p>Equations are defined in the directory <a class="reference external" href="https://github.com/maierbn/opendihu/tree/develop/core/src/equation">equation</a>. The prefactors <span class="math notranslate nohighlight">\(c\)</span> and <span class="math notranslate nohighlight">\(A\)</span> can vary over the domain.</p>
+</section>
+</section>
+<section id="python-settings">
+<h2>Python Settings<a class="headerlink" href="#python-settings" title="Link to this heading"></a></h2>
+<p>The following keywords in the python dictionary are recognized:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;FiniteElementMethod&quot;</span> <span class="p">:</span> <span class="p">{</span>
+  <span class="c1"># &lt;mesh&gt;</span>
+  <span class="c1"># &lt;solver&gt;</span>
+  <span class="c1"># &lt;output writer&gt;</span>
+
+  <span class="s2">&quot;prefactor&quot;</span><span class="p">:</span>          <span class="c1"># type: double</span>
+  <span class="s2">&quot;rightHandSide&quot;</span><span class="p">:</span>      <span class="c1"># type: list of double</span>
+  <span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span>  <span class="c1"># type: bool</span>
+  <span class="s2">&quot;diffusionTensor&quot;</span><span class="p">:</span>    <span class="c1"># type: list of double</span>
+
+  <span class="s2">&quot;nElements&quot;</span><span class="p">:</span>          <span class="c1"># type: integer</span>
+  <span class="s2">&quot;physicalExtent&quot;</span><span class="p">:</span>     <span class="c1"># type: double</span>
+  <span class="s2">&quot;dirichletBoundaryConditions&quot;</span><span class="p">:</span> <span class="c1"># type: dict, {}</span>
+  <span class="s2">&quot;neumannBoundaryConditions&quot;</span><span class="p">:</span> <span class="c1"># type: list, []</span>
+  <span class="s2">&quot;updatePrescribedValuesFromSolution&quot;</span><span class="p">:</span> <span class="c1"># type: bool</span>
+  <span class="s2">&quot;nodePositions&quot;</span><span class="p">:</span>      <span class="c1"># type: [[x,y,z], [x,y,z], ...]</span>
+  <span class="s2">&quot;elements&quot;</span><span class="p">:</span>           <span class="c1"># type: [[i1,i2,...], [i1,i2,...] ],</span>
+  <span class="s2">&quot;relativeTolerance&quot;</span><span class="p">:</span>  <span class="c1"># type: double</span>
+  <span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span>  <span class="c1"># type: bool</span>
+  <span class="s2">&quot;slotName&quot;</span><span class="p">:</span>           <span class="c1"># type: string</span>
+  <span class="s2">&quot;OutputWriter&quot;</span><span class="p">:</span>       <span class="c1"># type: [{}, {}, ...]</span>
+<span class="p">},</span>
+</pre></div>
+</div>
+<p>The items <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">&lt;mesh&gt;</span></code>, <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">&lt;solver&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">&lt;output</span> <span class="pre">writer&gt;</span></code> are placeholders for <a class="reference internal" href="mesh.html"><span class="doc">Mesh</span></a>, <a class="reference internal" href="solver.html"><span class="doc">Solver</span></a> and <a class="reference internal" href="output_writer.html"><span class="doc">OutputWriter</span></a>.</p>
+<section id="femesh">
+<span id="id3"></span><h3>&lt;mesh&gt;<a class="headerlink" href="#femesh" title="Link to this heading"></a></h3>
+<p>The mesh defines the node positions and therefore the geometry. The number and location of the degrees of freedom (dofs) is dependent on the <code class="docutils literal notranslate"><span class="pre">Mesh</span></code> and <code class="docutils literal notranslate"><span class="pre">BasisFunction</span></code> classes in the C++ instantiation. Details on dofs and how to specify the geometry is given on the <a class="reference internal" href="mesh.html"><span class="doc">Mesh</span></a> page.</p>
+<p>To specify properties of the mesh there are two possibilities:</p>
+<ol class="arabic simple">
+<li><p>Provide the <code class="docutils literal notranslate"><span class="pre">meshName</span></code> keyword and give the name of the mesh. A mesh with this name should be defined under the section <code class="docutils literal notranslate"><span class="pre">Meshes</span></code> of the config. This section is always top-level in the <code class="docutils literal notranslate"><span class="pre">config</span></code> dict, i.e. at <code class="docutils literal notranslate"><span class="pre">config[&quot;Meshes&quot;]</span></code>. For details, see <a class="reference internal" href="mesh.html"><span class="doc">Mesh</span></a>.</p></li>
+</ol>
+<blockquote>
+<div><p>An example for a 2D linear mesh is given below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s2">&quot;Meshes&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;mesh0&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;nElements&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span>
+      <span class="s2">&quot;physicalExtent&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">5.0</span><span class="p">,</span><span class="mf">5.0</span><span class="p">]</span>
+      <span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>    <span class="c1"># This is always needed for the mesh</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="s2">&quot;FiniteElementMethod&quot;</span> <span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;meshName&quot;</span><span class="p">:</span> <span class="s2">&quot;mesh0&quot;</span>
+
+    <span class="c1"># further options of FiniteElementMethod, e.g.:</span>
+    <span class="s2">&quot;dirichletBoundaryConditions&quot;</span><span class="p">:</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mf">1.0</span><span class="p">},</span>
+    <span class="s2">&quot;prefactor&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="s2">&quot;relativeTolerance&quot;</span><span class="p">:</span> <span class="mf">1e-15</span><span class="p">,</span>
+    <span class="s2">&quot;rightHandSide&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span>
+    <span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span> <span class="kc">True</span>   <span class="c1"># This is needed at this point only, if a rightHandSide is given (for Poisson problem)</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p>Directly specify the properties of the mesh under <code class="docutils literal notranslate"><span class="pre">&quot;FiniteElementMethod&quot;</span></code>, for example:</p></li>
+</ol>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s2">&quot;FiniteElementMethod&quot;</span> <span class="p">:</span> <span class="p">{</span>
+    <span class="c1"># options for the mesh</span>
+    <span class="s2">&quot;nElements&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span>
+    <span class="s2">&quot;physicalExtent&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">5.0</span><span class="p">,</span><span class="mf">5.0</span><span class="p">]</span>
+    <span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+
+    <span class="c1"># further options of FiniteElementMethod, e.g.:</span>
+    <span class="s2">&quot;dirichletBoundaryConditions&quot;</span><span class="p">:</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mf">1.0</span><span class="p">},</span>
+    <span class="s2">&quot;prefactor&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="s2">&quot;relativeTolerance&quot;</span><span class="p">:</span> <span class="mf">1e-15</span><span class="p">,</span>
+    <span class="s2">&quot;rightHandSide&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Note, that in this case, <code class="docutils literal notranslate"><span class="pre">inputMeshIsGlobal</span></code> applies to both the mesh data and the rightHandSide data, if specified</p>
+</div></blockquote>
+<p>The first option is useful to reuse meshes that only need to be defined once.</p>
+<p>If a <code class="docutils literal notranslate"><span class="pre">&quot;meshName&quot;</span></code> is provided, all mesh properties specified under <code class="docutils literal notranslate"><span class="pre">&quot;FiniteElementMethod&quot;</span></code> other than <code class="docutils literal notranslate"><span class="pre">&quot;inputMeshIsGlobal&quot;</span></code> will be ignored.</p>
+</section>
+<section id="solver">
+<h3>&lt;solver&gt;<a class="headerlink" href="#solver" title="Link to this heading"></a></h3>
+<p>The solver is the solver of the linear system</p>
+<div class="math notranslate nohighlight">
+\[K u = f,\]</div>
+<p>with stiffness matrix <span class="math notranslate nohighlight">\(K\)</span>, vector of unknowns, <span class="math notranslate nohighlight">\(u\)</span> and right hand side <span class="math notranslate nohighlight">\(f\)</span>. This is needed when the Laplace or Poisson problem is solved (by calling <code class="docutils literal notranslate"><span class="pre">run()</span></code> of the object). Furthermore, in an explicit Euler timestepping of the diffusion equation we compute</p>
+<div class="math notranslate nohighlight">
+\[u^{(t+1)} = u^{(t)} + dt M^{-1} K u_{t}\]</div>
+<p>For this also the linear solver is used.</p>
+<p>The specification of the solver can be given directly in-place or by specifying the name of a solver configuration that was given earlier, analoguous to &lt;mesh&gt;:</p>
+<ol class="arabic simple">
+<li><p>Provide the <code class="docutils literal notranslate"><span class="pre">solverName</span></code> keyword and give the name of the solver configuration. A solver configuration with this name should be defined under the section <code class="docutils literal notranslate"><span class="pre">Solvers</span></code> of the config. This section is always top-level in the <code class="docutils literal notranslate"><span class="pre">config</span></code> dict, i.e. at <code class="docutils literal notranslate"><span class="pre">config[&quot;Solvers&quot;]</span></code>. For details, see <a class="reference internal" href="solver.html"><span class="doc">Solver</span></a>.</p></li>
+</ol>
+<blockquote>
+<div><p>An example is given below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s2">&quot;Solvers&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;linearSolver&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;relativeTolerance&quot;</span><span class="p">:</span> <span class="mf">1e-15</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="s2">&quot;FiniteElementMethod&quot;</span> <span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;solverName&quot;</span><span class="p">:</span> <span class="s2">&quot;linearSolver&quot;</span>
+
+    <span class="c1"># further options of FiniteElementMethod</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p>Directly specify the solver properties under <code class="docutils literal notranslate"><span class="pre">&quot;FiniteElementMethod&quot;</span></code>, for example:</p></li>
+</ol>
+<blockquote>
+<div><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s2">&quot;FiniteElementMethod&quot;</span> <span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;relativeTolerance&quot;</span><span class="p">:</span> <span class="mf">1e-15</span><span class="p">,</span>
+
+    <span class="c1"># further options of FiniteElementMethod</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>The first option is useful when the same solver should be used for multiple classes.</p>
+<p>If a <code class="docutils literal notranslate"><span class="pre">&quot;solverName&quot;</span></code> is provided, all solver properties specified under <code class="docutils literal notranslate"><span class="pre">&quot;FiniteElementMethod&quot;</span></code> will be ignored.</p>
+</section>
+<section id="slotname">
+<h3>slotName<a class="headerlink" href="#slotname" title="Link to this heading"></a></h3>
+<p>The <cite>FiniteElementMethod</cite> class exposes one slot that contains the solution variable. The option <cite>slot name</cite> specifies the name of the slot. Slot names are needed for coupling schemes to connect field variables between solvers. For details, see <a class="reference internal" href="output_connector_slots.html"><span class="doc">Connector Slots</span></a>.</p>
+</section>
+<section id="output-writer">
+<h3>&lt;output writer&gt;<a class="headerlink" href="#output-writer" title="Link to this heading"></a></h3>
+<p>This optionally specifies a list of output writers that can be used to output geometry field variables in various formats. For details, see <a class="reference internal" href="output_writer.html"><span class="doc">OutputWriter</span></a></p>
+</section>
+<section id="prefactor">
+<h3>prefactor<a class="headerlink" href="#prefactor" title="Link to this heading"></a></h3>
+<p><em>Default: 1</em></p>
+<p>The prefactor is a scalar multiplier of the Laplace operator term, i.e. <span class="math notranslate nohighlight">\(c\)</span> in <span class="math notranslate nohighlight">\(c\cdot  Δu\)</span> or <span class="math notranslate nohighlight">\(c\cdot∇ \cdot (A ∇u)\)</span>.</p>
+<p>It can be specified spatially varying, <span class="math notranslate nohighlight">\(c(x)\)</span> by providing a list with as many entries as degrees of freedom (dofs). Depending on <code class="docutils literal notranslate"><span class="pre">&quot;inputMeshIsGlobal&quot;</span></code>, you have to set as many entries as there are global or local dofs.</p>
+<p>When using a composite mesh, you can also provide a list with as many entries as there are sub meshes. Then each value will be set in a sub mesh and <span class="math notranslate nohighlight">\(c(x)\)</span> will be constant in the sub mesh.</p>
+</section>
+<section id="righthandside">
+<h3>rightHandSide<a class="headerlink" href="#righthandside" title="Link to this heading"></a></h3>
+<p><em>Default: lists of zeros</em></p>
+<p>Here, the right hand side vector <span class="math notranslate nohighlight">\(f\)</span> can be specified.
+Either as list of double values (e.g. <code class="docutils literal notranslate"><span class="pre">[1.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0,</span> <span class="pre">2.0]</span></code>) or as dictionary (e.g. <code class="docutils literal notranslate"><span class="pre">{0:1.0,</span> <span class="pre">3:2.0}</span></code>). In the latter case all unspecified values are set to 0.</p>
+<p>In the dictionary case, negative indices are counted from the end. This means, e.g., that <code class="docutils literal notranslate"><span class="pre">{-2:1.0,</span> <span class="pre">-1:1.0}</span></code> sets the last two values to 1.0. This works for both values of <code class="docutils literal notranslate"><span class="pre">inputMeshIsGlobal</span></code>, i.e. local and global indices (see below).</p>
+<p>The given values correspond to global degrees of freedom, if <code class="docutils literal notranslate"><span class="pre">&quot;inputMeshIsGlobal&quot;:</span> <span class="pre">True</span></code> is given (or omitted, because <code class="docutils literal notranslate"><span class="pre">True</span></code> is the default) or to local degrees of freedom of the process, if <code class="docutils literal notranslate"><span class="pre">&quot;inputMeshIsGlobal&quot;:</span> <span class="pre">False</span></code>.</p>
+</section>
+<section id="dirichletboundaryconditions">
+<h3>dirichletBoundaryConditions<a class="headerlink" href="#dirichletboundaryconditions" title="Link to this heading"></a></h3>
+<p>See <a class="reference internal" href="boundary_conditions.html"><span class="doc">Boundary Conditions</span></a>.</p>
+</section>
+<section id="neumannboundaryconditions">
+<h3>neumannBoundaryConditions<a class="headerlink" href="#neumannboundaryconditions" title="Link to this heading"></a></h3>
+<p>See <a class="reference internal" href="boundary_conditions.html"><span class="doc">Boundary Conditions</span></a>.</p>
+</section>
+<section id="updateprescribedvaluesfromsolution">
+<h3>updatePrescribedValuesFromSolution<a class="headerlink" href="#updateprescribedvaluesfromsolution" title="Link to this heading"></a></h3>
+<p><em>Default:</em> <code class="docutils literal notranslate"><span class="pre">False</span></code></p>
+<p>If this option is set to true, the values that are initially set in the solution field variable are used as the prescribed values at the dofs in <cite>dirichletBoundaryConditions</cite>.
+The values that were given in <cite>dirichletBoundaryConditions</cite> have overridden by this. This is useful only if the <cite>FiniteElementMethod</cite> is part of a nested solver structure with a coupling and a timestepping scheme around it, where the solution value is updated in every iteration and the <cite>solve()</cite> gets called. Then the problem adjusts to update Dirichlet boundary conditions.o</p>
+</section>
+<section id="inputmeshisglobal">
+<h3>inputMeshIsGlobal<a class="headerlink" href="#inputmeshisglobal" title="Link to this heading"></a></h3>
+<p><em>Default:</em> <code class="docutils literal notranslate"><span class="pre">True</span></code></p>
+<p>Together with <code class="docutils literal notranslate"><span class="pre">rightHandSide</span></code> it specifies whether the given values are interpreted as local values or global values in the context of a parallel execution on multiple processes. It has no effect for serial execution.</p>
+<ul class="simple">
+<li><p>If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, values are interpreted as for serial execution. Then the same right hand side values should be given for all processes. Consequently, the program can be run with different numbers of processes with the same settings.</p></li>
+<li><p>If set to <code class="docutils literal notranslate"><span class="pre">False</span></code>, the specified right hand side values are interpreted to be for the local portion of the own process. In parallel execution, each process has to get only its own range of values, which are typically different for each process. Only the non-ghost nodal values have to be given in the settings.</p></li>
+</ul>
+<p>The advantage of the local specification is that each process only has to know its own portion of the whole problem. Internally there is no transfer of the local information to other processes.
+Thus, large problems can be computed with a high number of processes, where the global problem data would be too big to be stored by a single process.</p>
+<p>To provide different values for different MPI ranks, the own MPI rank number can be retrieved in the python settings. The last two command line arguments that are available in the python settings script are the own MPI rank number and the total number of ranks.</p>
+<p>The following example uses such a local specification of the right hand side. It sets the right hand side value of the last degree of freedom on the last MPI rank to 1.0 and all other values to 0.0.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># get own MPI rank number and number of MPI ranks</span>
+<span class="n">rank_no</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">)(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+<span class="n">n_ranks</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">)(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s2">&quot;FiniteElementMethod&quot;</span> <span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="s2">&quot;rightHandSide&quot;</span><span class="p">:</span> <span class="p">{</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span> <span class="k">if</span> <span class="n">rank_no</span> <span class="o">==</span> <span class="n">n_ranks</span><span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="p">{},</span>
+
+    <span class="c1"># further options of FiniteElementMethod</span>
+    <span class="c1"># ...</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="diffusiontensor">
+<h3>diffusionTensor<a class="headerlink" href="#diffusiontensor" title="Link to this heading"></a></h3>
+<p>For anisotropic diffusion, the diffusion tensor can be given as a list of double valus in row-major order. The diffusion tensor is always 2nd order (a square DxD matrix for dimension D). It is convenient to write the diffusion tensor with corresponding line breaks, as in the following example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;FiniteElementMethod&quot;</span> <span class="p">:</span> <span class="p">{</span>
+   <span class="s2">&quot;diffusionTensor&quot;</span><span class="p">:</span> <span class="p">[</span>
+      <span class="mf">8.93</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+      <span class="mi">0</span><span class="p">,</span> <span class="mf">0.893</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+      <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.893</span>
+    <span class="p">],</span>
+
+  <span class="c1"># further options of FiniteElementMethod</span>
+  <span class="c1"># ...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">diffusionTensor</span></code> can be specified spatially varying, <span class="math notranslate nohighlight">\(A(x)\)</span> just like the <code class="docutils literal notranslate"><span class="pre">prefactor</span></code>. This can be achieved by providing a list with as many entries as degrees of freedom (dofs). Depending on <code class="docutils literal notranslate"><span class="pre">&quot;inputMeshIsGlobal&quot;</span></code>, you have to set as many items as there are global or local dofs. Note that one item is again a list of the entries of the matrix.</p>
+<p>When using a composite mesh, you can also provide a list with as many items as there are sub meshes. Then each tensor will be set in a sub mesh and <span class="math notranslate nohighlight">\(A(x)\)</span> will be constant in the sub mesh.</p>
+</section>
+</section>
+<section id="properties">
+<h2>Properties<a class="headerlink" href="#properties" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><em>Runnable</em>:   This class contains a <code class="docutils literal notranslate"><span class="pre">run()</span></code> method that solves the numerical problem. Therefore, this class can be used as the outermost solver of the instantiation in the <code class="docutils literal notranslate"><span class="pre">main</span></code> function.</p></li>
+<li><p><em>Multipliable</em>:  This class can be wrapped by a <code class="docutils literal notranslate"><span class="pre">MultipleInstances</span></code> class.</p></li>
+</ul>
+</section>
+<section id="location-in-the-code">
+<h2>Location in the code<a class="headerlink" href="#location-in-the-code" title="Link to this heading"></a></h2>
+<p>The source code files are in the directory <a class="reference external" href="https://github.com/maierbn/opendihu/tree/develop/core/src/spatial_discretization/finite_element_method">spatial_discretization/finite_element_method</a>.
+The top-level class is in <a class="reference external" href="https://github.com/maierbn/opendihu/blob/develop/core/src/spatial_discretization/finite_element_method/finite_element_method.h">finite_element_method.h</a>.</p>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<p>The following example instantiates a finite element solver on a 3D structured regular grid, with linear Lagrange basis functions and Gauss quadrature with 3 Gauss points to solve the Laplace equation.</p>
+<p>C++ main file</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">SpatialDiscretization</span><span class="o">::</span><span class="n">FiniteElementMethod</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="n">Mesh</span><span class="o">::</span><span class="n">StructuredRegularFixedOfDimension</span><span class="o">&lt;</span><span class="mi">3</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">BasisFunction</span><span class="o">::</span><span class="n">LagrangeOfOrder</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">Quadrature</span><span class="o">::</span><span class="n">Gauss</span><span class="o">&lt;</span><span class="mi">3</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">Equation</span><span class="o">::</span><span class="n">Static</span><span class="o">::</span><span class="n">Laplace</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>python settings</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;FiniteElementMethod&quot;</span> <span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;nElements&quot;</span><span class="p">:</span> <span class="n">n</span><span class="p">,</span>
+  <span class="s2">&quot;physicalExtent&quot;</span><span class="p">:</span> <span class="mf">5.0</span><span class="p">,</span>
+  <span class="s2">&quot;dirichletBoundaryConditions&quot;</span><span class="p">:</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="mf">1.0</span><span class="p">},</span>
+  <span class="s2">&quot;nodePositions&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="nb">float</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">/</span><span class="n">n</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)],</span>
+  <span class="s2">&quot;elements&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)],</span>
+  <span class="s2">&quot;relativeTolerance&quot;</span><span class="p">:</span> <span class="mf">1e-15</span><span class="p">,</span>
+  <span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+  <span class="s2">&quot;prefactor&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+  <span class="s2">&quot;OutputWriter&quot;</span> <span class="p">:</span> <span class="p">[]</span>
+<span class="p">},</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="output_connector_slots.html" class="btn btn-neutral float-left" title="Connector Slots" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="timestepping_schemes_ode.html" class="btn btn-neutral float-right" title="TimeSteppingSchemesOde" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Getting started &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="prev" title="Framework structure" href="framework_structure.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../introduction.html">Introduction</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../introduction.html#overview">Overview</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="features.html">Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="framework_structure.html">Framework structure</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Getting started</a></li>
+<li class="toctree-l3"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="validation.html">Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">Python Settings</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../introduction.html">Introduction</a></li>
+      <li class="breadcrumb-item active">Getting started</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user/getting_started.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="getting-started">
+<h1>Getting started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h1>
+<ul>
+<li><p>To get started, you’ll find extensive examples in the <code class="docutils literal notranslate"><span class="pre">examples</span></code> directory of OpenDiHu. Also see the <a class="reference internal" href="existing_examples.html#existing-examples"><span class="std std-ref">Existing examples</span></a> page.</p></li>
+<li><p>To build an example, <cite>cd</cite> into a subdirectory under <cite>examples</cite>, e.g. <cite>examples/laplace/laplace2d</cite>. In this directory, run <code class="docutils literal notranslate"><span class="pre">scons</span></code>. See the <a class="reference internal" href="installation.html#installation"><span class="std std-ref">Installation</span></a> page for details.</p></li>
+<li><p>To build the release target, simply use on of <code class="docutils literal notranslate"><span class="pre">sr</span></code>, <code class="docutils literal notranslate"><span class="pre">scons</span></code>, <code class="docutils literal notranslate"><span class="pre">scons</span> <span class="pre">BUILD_TYPE=release</span></code> or <code class="docutils literal notranslate"><span class="pre">scons</span> <span class="pre">BUILD_TYPE=r</span></code> (how to set up the aliases, see <a class="reference internal" href="installation.html#installation-aliases"><span class="std std-ref">Define aliases and environment variables</span></a>)</p></li>
+<li><p>To build the debug target, use one of <code class="docutils literal notranslate"><span class="pre">sd</span></code>, <code class="docutils literal notranslate"><span class="pre">scons</span> <span class="pre">BUILD_TYPE=debug</span></code> or <code class="docutils literal notranslate"><span class="pre">scons</span> <span class="pre">BUILD_TYPE=d</span></code>.</p></li>
+<li><p>To use multiple processes at once, add the <code class="docutils literal notranslate"><span class="pre">-j</span></code> option, e.g. <code class="docutils literal notranslate"><span class="pre">scons</span> <span class="pre">BUILD_TYPE=r</span> <span class="pre">-j</span> <span class="pre">4</span></code> to build the release target with 4 processes. This is not needed for the <code class="docutils literal notranslate"><span class="pre">sr</span></code> shortcut as this does it automatically.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/laplace/laplace2d
+mkorn<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sr
+</pre></div>
+</div>
+</li>
+<li><p>There will be executables created in the <cite>build_debug</cite> or <cite>build_release</cite> subdirectories. Change into one of these directories and run the program with a settings file as only argument:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>build_release
+./laplace_regular<span class="w"> </span>settings_lagrange_quadratic.py
+</pre></div>
+</div>
+</li>
+<li><p>Output files in this example (and likewise in the other examples) will be created under the <cite>out</cite> subdirectory.
+If you look into <cite>out</cite>, you’ll find two files: <cite>laplace.py</cite> and <cite>laplace.vtr</cite>.</p>
+<p>The <cite>*.vtr</cite> files can be visualized using Paraview. The <cite>*.py</cite> files can be visualized using the plot script in <cite>opendihu/scripts</cite>.</p>
+<p>It is useful to add the <cite>scripts</cite> directory to the <cite>PATH</cite> environment variable, e.g. by adding the line <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">PATH=$PATH:$OPENDIHU_HOME/scripts</span></code> to your <cite>.bashrc</cite> file as mentioned on the <a class="reference internal" href="installation.html#installation-aliases"><span class="std std-ref">Define aliases and environment variables</span></a> page.</p>
+<p>Then, you can run <code class="docutils literal notranslate"><span class="pre">plot.py</span> <span class="pre">&lt;*.py-output</span> <span class="pre">files&gt;</span></code> anywhere to visualize the output. Usually the shortcut <code class="docutils literal notranslate"><span class="pre">plot</span></code> instead of <code class="docutils literal notranslate"><span class="pre">plot.py</span></code> should also work. (Unless you have installed something different with the name <code class="docutils literal notranslate"><span class="pre">plot</span></code>).</p>
+<p>An often used command is, thus, <code class="docutils literal notranslate"><span class="pre">plot</span> <span class="pre">out/*</span></code>. If arguments are ommited, i.e., just <code class="docutils literal notranslate"><span class="pre">plot</span></code>, it is the same as <code class="docutils literal notranslate"><span class="pre">plot</span> <span class="pre">*.py</span></code>.</p>
+<p>In our example, the command could be</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>plot<span class="w"> </span>out/laplace.py
+</pre></div>
+</div>
+</li>
+<li><p>The source files are located in the <cite>src</cite> subdirectory. The files to be compiled are specified in <cite>SConscript</cite>.
+There, you can, for example, comment out the examples that you don’t want to compile every time.</p></li>
+<li><p>Now, change into <cite>src</cite> (i.e. into <cite>…/examples/laplace/laplace2d/src</cite>) and open <cite>laplace_regular.cpp</cite>.
+This is the main file of the 2D Laplace model.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// ...</span>
+<span class="n">SpatialDiscretization</span><span class="o">::</span><span class="n">FiniteElementMethod</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="n">Mesh</span><span class="o">::</span><span class="n">StructuredRegularFixedOfDimension</span><span class="o">&lt;</span><span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">BasisFunction</span><span class="o">::</span><span class="n">LagrangeOfOrder</span><span class="o">&lt;</span><span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">Quadrature</span><span class="o">::</span><span class="n">Gauss</span><span class="o">&lt;</span><span class="mi">3</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">Equation</span><span class="o">::</span><span class="n">Static</span><span class="o">::</span><span class="n">Laplace</span>
+<span class="o">&gt;</span><span class="w"> </span><span class="n">equationDiscretized</span><span class="p">(</span><span class="n">settings</span><span class="p">);</span>
+<span class="c1">// ...</span>
+</pre></div>
+</div>
+<p>As can be seen, the equation <cite>Δu = 0</cite> is discretized by the Finite Element Method on a structured regular grid of dimension 2, basis functions are Lagrange of order 2, and the Quadrature scheme is Gauss quadrature with 3 gauss points per dimension.</p>
+<ul class="simple">
+<li><p>Now change the quadratic to linear Lagrange basis functions, by changing <code class="docutils literal notranslate"><span class="pre">LagrangeOfOrder&lt;2&gt;</span></code> to <code class="docutils literal notranslate"><span class="pre">LagrangeOfOrder&lt;1&gt;</span></code>.</p></li>
+<li><p>Change into the <cite>build_debug</cite> directory (<code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">../build_debug</span></code>).</p></li>
+<li><p>If you have set the aliases, you can recompile with <code class="docutils literal notranslate"><span class="pre">sdd</span></code>. Otherwise go up one directory and run <code class="docutils literal notranslate"><span class="pre">scons</span> <span class="pre">BUILD_TYPE=d</span> <span class="pre">-j</span> <span class="pre">4</span></code>.</p></li>
+<li><p>Now, from the <cite>build_debug</cite> directory, run the new executable with</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./laplace_regular<span class="w"> </span>../settings_lagrange_linear.py
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Plot the result with <code class="docutils literal notranslate"><span class="pre">plot</span> <span class="pre">out/*</span></code>.</p></li>
+</ul>
+</li>
+<li><p>Test the parallel execution and run the same program with the same settings file on two processes:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-n<span class="w"> </span><span class="m">2</span><span class="w"> </span>./laplace_regular<span class="w"> </span>../settings_lagrange_linear.py
+</pre></div>
+</div>
+<p>If you now look into the out directory (<code class="docutils literal notranslate"><span class="pre">ls</span> <span class="pre">-l</span> <span class="pre">out</span></code>), you’ll see that two new files, <cite>laplace.0.py</cite> and <cite>laplace.1.py</cite>, were created by the two processes. The file <cite>laplace.py</cite> is still the old one from the single process.</p>
+<p>Now plot the new files, either <code class="docutils literal notranslate"><span class="pre">plot</span> <span class="pre">out/laplace.0.py</span> <span class="pre">out/laplace.1.py</span></code> or shorter <code class="docutils literal notranslate"><span class="pre">plot</span> <span class="pre">out/laplace.*.py</span></code>. The result is the same.</p>
+<p>Check that the results from the serial and parallel are actually the same using the following helper script:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>validate_parallel.py<span class="w"> </span>out/*
+</pre></div>
+</div>
+</li>
+<li><p>The created python output files are human-readable (because <cite>“binary”:False</cite> is set in the settings file). You can open them in an editor and see what they contain. There is also the <cite>catpy</cite>  script for formatted printing on the console:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>catpy<span class="w"> </span>out/laplace.0.py
+</pre></div>
+</div>
+</li>
+<li><p>With the current settings, also the Paraview files are human-readable. You can also open e.g. <cite>out/laplace.vtr</cite> in an editor. Also try loading the <cite>.pvtr</cite> file in Paraview.
+For big files it is better to produce binary files.</p>
+<p>In the settings file <cite>settings_lagrange_linear.py</cite> change <cite>“binary”:False</cite> to <cite>“binary”:True</cite> in the output writers. Now if you run the program again you’ll get binary files that can’t be read in a text editor. However, the <code class="docutils literal notranslate"><span class="pre">plot</span></code>, <code class="docutils literal notranslate"><span class="pre">validate_parallel</span></code> and <code class="docutils literal notranslate"><span class="pre">catpy</span></code> utilities still work.</p>
+</li>
+<li><p>If you know <a class="reference external" href="http://physiomeproject.org/software/opencmiss/cmgui/download">cmgui</a>, the visualization tool of <a class="reference external" href="http://opencmiss.org/">OpenCMISS</a> Zinc, you can also generate <cite>exnode</cite> and <cite>exelem</cite> output files for cmgui. Add the line</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;Exfile&quot;</span><span class="p">,</span> <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;out/laplace&quot;</span><span class="p">},</span>
+</pre></div>
+</div>
+<p>to the <cite>“OutputWriter”</cite> list in file <cite>settings_lagrange_linear.py</cite> (line 40). (More details at <a class="reference internal" href="../settings/output_writer.html"><span class="doc">OutputWriter</span></a>.)</p>
+<p>After running the program again, you get the output files <cite>laplace.exelem</cite>, <cite>laplace.exnode</cite> and <cite>laplace.com</cite> in the out directory. The <cite>.com</cite> file is a convienient perl script that sets up the visualization in cmgui (OpenCMISS Iron won’t generate this for you.). Change into the <cite>out</cite> directory and simply run <cite>cmgui laplace.com</cite>. In the Scene Editor click on <cite>/</cite> and then the <cite>surface</cite> item. Under <cite>data</cite>, select <cite>solution</cite> as the field variable that will be shown in color. Now you can tilt the view in the Graphics window to see the solution.</p>
+</li>
+<li><p>Now you know the basics how to run a simulation program.</p>
+<p>Next, you can try to change parameters in the settings file, like number of elements (variables <cite>m</cite> and <cite>n</cite>), the <cite>physicalExtent</cite> or try to understand, how the Dirichlet boundary conditions were specified.</p>
+<p>Note, that because this example uses a <cite>Mesh::StructuredRegularFixedOfDimension&lt;2&gt;</cite> mesh (in the <cite>cpp</cite> source file), we can only have elements with quadratic shape, i.e. <cite>physicalExtent</cite> and <cite>nElements</cite> have to match. You can look into the <cite>laplace_structured.cpp</cite> example file, which uses a structured mesh, that can have different mesh width in <cite>x</cite> and <cite>y</cite> direction or even arbitrary node positions.</p>
+</li>
+<li><p>The settings files use python syntax and are actually Python scripts.
+This means you can execute any Python code there, for example load your own custom geometry or input data files and set the options appropriately.</p>
+<p>The general documentation of the options is given on the <a class="reference internal" href="../settings.html"><span class="doc">Python Settings</span></a> pages.</p>
+</li>
+<li><p>To execute some of the more advanced electrophysiology examples, you’ll need special input files like a muscle geometry.
+These are too large to have in git. <a class="reference external" href="https://zenodo.org/record/4705982">Download the files</a> and put them in the <code class="docutils literal notranslate"><span class="pre">examples/electrophysiology/input</span></code> directory.</p></li>
+<li><p>If you now continue to use OpenDiHu, you can read the <a class="reference internal" href="../settings.html"><span class="doc">Python Settings</span></a> pages for reference.
+If anything is unclear, do not hesitate to ask. If you have improvements concerning the formulations on this website or can contribute to writing the documentation, come in contact!</p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="framework_structure.html" class="btn btn-neutral float-left" title="Framework structure" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="examples.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Build on supercomputer &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Implement New Physics" href="new_physics.html" />
+    <link rel="prev" title="FieldVariable" href="field_variable.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">Python Settings</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../developer_information.html">Information for developers</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="conventions.html">Conventions and Tips</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference.html">C++ Reference</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Build on supercomputer</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#git-tunnel">Git tunnel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#modules">Modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#installation">Installation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="new_physics.html">Implement New Physics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributors.html">Contributors</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../developer_information.html">Information for developers</a></li>
+      <li class="breadcrumb-item active">Build on supercomputer</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/developer/supercomputer.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="build-on-supercomputer">
+<h1>Build on supercomputer<a class="headerlink" href="#build-on-supercomputer" title="Link to this heading"></a></h1>
+<p>On Hawk, we have the problem that there is no direct internet access from the login nodes and compute nodes.
+This makes the installation more difficult.</p>
+<section id="git-tunnel">
+<h2>Git tunnel<a class="headerlink" href="#git-tunnel" title="Link to this heading"></a></h2>
+<p>Acess to git repositiories, however, is possible by setting up the ssh tunnel:</p>
+<p>ssh -N -D 1080 localhost</p>
+<p>add the following to your bashrc (replace <cite>iccbnmai</cite> with your username):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">alias</span><span class="w"> </span><span class="nv">hawk</span><span class="o">=</span><span class="s1">&#39;echo &quot;start ssh-tunnel with ssh -N -D 1080 localhost&quot; &amp;&amp; ssh -R 7480:localhost:1080 icbbnmai@hawk-login04.hww.hlrs.de&#39;</span>
+</pre></div>
+</div>
+<p>Then, on the computer that was specified during admission of the account, execute:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ssh<span class="w"> </span>-N<span class="w"> </span>-D<span class="w"> </span><span class="m">1080</span><span class="w"> </span>localhost
+</pre></div>
+</div>
+<p>And in another shell:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>hawk
+</pre></div>
+</div>
+<p>On hawk, add the following to your <cite>~/.gitconfig</cite>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>http<span class="o">]</span>
+<span class="w">  </span><span class="nv">proxy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>socks5://localhost:7480
+</pre></div>
+</div>
+<p>(Make sure the port number matches, in this case <cite>7480</cite>, the same port can be used only once, so maybe use a different number if this port is already occupied.)</p>
+</section>
+<section id="modules">
+<h2>Modules<a class="headerlink" href="#modules" title="Link to this heading"></a></h2>
+<p>To install opendihu on Hawk, load at least the following modules:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>module<span class="w"> </span>load<span class="w"> </span>adios2/2.5.0
+module<span class="w"> </span>load<span class="w"> </span>cmake
+module<span class="w"> </span>load<span class="w"> </span>python
+module<span class="w"> </span>load<span class="w"> </span>mkl
+module<span class="w"> </span>load<span class="w"> </span>zlib<span class="w">  </span><span class="c1"># (needed to build python)</span>
+</pre></div>
+</div>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<p>After cloning opendihu, you have to download all required packages on a different computer and transfer them to Hawk.</p>
+<p>Then, you can in principle run <code class="docutils literal notranslate"><span class="pre">scons</span> <span class="pre">no_tests=TRUE</span> <span class="pre">-j</span> <span class="pre">64</span></code> on a login node and the dependencies will be installed.
+If it says something like <cite>Downloading…</cite>, then interrupt the process and see what is missing.</p>
+<p>For some packages, you have to do the installation manually.
+If you’re done run <code class="docutils literal notranslate"><span class="pre">touch</span> <span class="pre">scons_build_success</span></code> in the <code class="docutils literal notranslate"><span class="pre">dependencies/package/src/package</span></code> directory, such that scons knows that the package was installed.</p>
+<p>In the following, we give some hints how to install some packages. However, you have to figure out the details yourself, adjust the paths, etc.</p>
+<ul>
+<li><p>Hints to manually install PETSc:</p>
+<p>Download the dependencies for PETSc, e.g., to <cite>dependencies/petsc_downloads</cite>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>total<span class="w"> </span>41M
+-rw-------<span class="w"> </span><span class="m">1</span><span class="w"> </span>icbbnmai<span class="w"> </span>cbm44102<span class="w"> </span><span class="m">5</span>,5M<span class="w"> </span>Apr<span class="w"> </span><span class="m">18</span><span class="w">  </span><span class="m">2020</span><span class="w"> </span>93baaa8c9.tar.gz
+drwxr-xr-x<span class="w"> </span><span class="m">4</span><span class="w"> </span>icbbnmai<span class="w"> </span>cbm44102<span class="w"> </span><span class="m">4</span>,0K<span class="w"> </span>Apr<span class="w"> </span><span class="m">19</span><span class="w">  </span><span class="m">2020</span><span class="w"> </span>bison
+drwxr-xr-x<span class="w"> </span><span class="m">4</span><span class="w"> </span>icbbnmai<span class="w"> </span>cbm44102<span class="w"> </span><span class="m">4</span>,0K<span class="w"> </span>Apr<span class="w"> </span><span class="m">19</span><span class="w">  </span><span class="m">2020</span><span class="w"> </span>flex
+-rw-------<span class="w"> </span><span class="m">1</span><span class="w"> </span>icbbnmai<span class="w"> </span>cbm44102<span class="w"> </span><span class="m">5</span>,8M<span class="w"> </span>Apr<span class="w"> </span><span class="m">18</span><span class="w">  </span><span class="m">2020</span><span class="w"> </span>scotch-v6.0.8.tar.gz
+-rw-------<span class="w"> </span><span class="m">1</span><span class="w"> </span>icbbnmai<span class="w"> </span>cbm44102<span class="w"> </span><span class="m">5</span>,8M<span class="w"> </span>Apr<span class="w"> </span><span class="m">18</span><span class="w">  </span><span class="m">2020</span><span class="w"> </span>scotch-v6.0.8.tar.gz.1
+-rw-------<span class="w"> </span><span class="m">1</span><span class="w"> </span>icbbnmai<span class="w"> </span>cbm44102<span class="w"> </span><span class="m">8</span>,0M<span class="w"> </span>Apr<span class="w"> </span><span class="m">18</span><span class="w">  </span><span class="m">2020</span><span class="w"> </span>sundials-2.5.0p1.tar.gz
+-rw-------<span class="w"> </span><span class="m">1</span><span class="w"> </span>icbbnmai<span class="w"> </span>cbm44102<span class="w"> </span><span class="m">4</span>,6M<span class="w"> </span>Apr<span class="w"> </span><span class="m">18</span><span class="w">  </span><span class="m">2020</span><span class="w"> </span>v2.0.2-p2.tar.gz
+-rw-------<span class="w"> </span><span class="m">1</span><span class="w"> </span>icbbnmai<span class="w"> </span>cbm44102<span class="w"> </span><span class="m">4</span>,6M<span class="w"> </span>Sep<span class="w"> </span><span class="m">15</span><span class="w">  </span><span class="m">2020</span><span class="w"> </span>v2.1.0-p1.tar.gz
+-rw-------<span class="w"> </span><span class="m">1</span><span class="w"> </span>icbbnmai<span class="w"> </span>cbm44102<span class="w"> </span><span class="m">3</span>,2M<span class="w"> </span>Apr<span class="w"> </span><span class="m">18</span><span class="w">  </span><span class="m">2020</span><span class="w"> </span>v3.4.2-p2.tar.gz
+-rw-------<span class="w"> </span><span class="m">1</span><span class="w"> </span>icbbnmai<span class="w"> </span>cbm44102<span class="w"> </span>143K<span class="w"> </span>Apr<span class="w"> </span><span class="m">18</span><span class="w">  </span><span class="m">2020</span><span class="w"> </span>v4.0.3-p5.tar.gz
+-rw-------<span class="w"> </span><span class="m">1</span><span class="w"> </span>icbbnmai<span class="w"> </span>cbm44102<span class="w"> </span>281K<span class="w"> </span>Apr<span class="w"> </span><span class="m">18</span><span class="w">  </span><span class="m">2020</span><span class="w"> </span>v5.1.0-p7.tar.gz
+-rw-------<span class="w"> </span><span class="m">1</span><span class="w"> </span>icbbnmai<span class="w"> </span>cbm44102<span class="w"> </span><span class="m">2</span>,9M<span class="w"> </span>Apr<span class="w"> </span><span class="m">18</span><span class="w">  </span><span class="m">2020</span><span class="w"> </span>v5.2.1-p2.tar.gz
+</pre></div>
+</div>
+<p>Building somehow only works on the login node, not on the compute node.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/lustre/hpe/ws10/ws10.2/ws/icbbnmai-opendihu2//opendihu-hawk-gnu/dependencies/petsc_downloads/flex/install/bin
+<span class="nb">export</span><span class="w"> </span><span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="nv">$LD_LIBRARY_PATH</span>:/lustre/hpe/ws10/ws10.2/ws/icbbnmai-opendihu2//opendihu-hawk-gnu/dependencies/petsc_downloads/flex/install/lib
+<span class="nb">export</span><span class="w"> </span><span class="nv">C_INCLUDE_PATH</span><span class="o">=</span><span class="nv">$C_INCLUDE_PATH</span>:/lustre/hpe/ws10/ws10.2/ws/icbbnmai-opendihu2//opendihu-hawk-gnu/dependencies/petsc_downloads/flex/install/include
+<span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:/lustre/hpe/ws10/ws10.2/ws/icbbnmai-opendihu2//opendihu-hawk-gnu/dependencies/petsc_downloads/bison/install/bin
+<span class="nb">export</span><span class="w"> </span><span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="nv">$LD_LIBRARY_PATH</span>:/lustre/hpe/ws10/ws10.2/ws/icbbnmai-opendihu2//opendihu-hawk-gnu/dependencies/petsc_downloads/bison/install/lib
+<span class="nb">export</span><span class="w"> </span><span class="nv">C_INCLUDE_PATH</span><span class="o">=</span><span class="nv">$C_INCLUDE_PATH</span>:/lustre/hpe/ws10/ws10.2/ws/icbbnmai-opendihu2//opendihu-hawk-gnu/dependencies/petsc_downloads/bison/install/include
+
+module<span class="w"> </span>load<span class="w"> </span>parmetis/4.0.3-int32-shared<span class="w"> </span>mkl/19.1.0<span class="w"> </span>metis/5.1.0-int32-shared<span class="w"> </span>scalapack/2.1.0-shared<span class="w"> </span>scotch/6.0.9-int32-shared<span class="w"> </span>mumps/5.2.1-int32-shared<span class="w"> </span>sundials/5.1.0-int32
+
+./configure<span class="w"> </span><span class="nv">CC</span><span class="o">=</span><span class="nv">$CC</span><span class="w"> </span><span class="nv">CXX</span><span class="o">=</span><span class="nv">$CXX</span><span class="w"> </span><span class="nv">FC</span><span class="o">=</span><span class="nv">$FC</span><span class="w"> </span><span class="nv">F77</span><span class="o">=</span><span class="nv">$F77</span><span class="w"> </span><span class="nv">F90</span><span class="o">=</span><span class="nv">$F90</span><span class="w"> </span>--prefix<span class="o">=</span>/lustre/hpe/ws10/ws10.2/ws/icbbnmai-opendihu2//opendihu-hawk-gnu/dependencies/petsc/install<span class="w">  </span>--with-shared-libraries<span class="o">=</span><span class="m">1</span><span class="w"> </span>--download--fblaslapack<span class="o">=</span><span class="m">1</span><span class="w"> </span>--with-packages-download-dir<span class="o">=</span>/lustre/hpe/ws10/ws10.2/ws/icbbnmai-opendihu2//opendihu-hawk-gnu/dependencies/petsc_downloads<span class="w">  </span>--download-hypre<span class="w"> </span><span class="se">\</span>
+<span class="w"> </span>--with-debugging<span class="o">=</span><span class="m">0</span><span class="w"> </span><span class="nv">COPTFLAGS</span><span class="o">=</span><span class="s1">&#39;-O3 -march=native -mtune=native&#39;</span><span class="w"> </span><span class="nv">CXXOPTFLAGS</span><span class="o">=</span><span class="s1">&#39;-O3 -march=native -mtune=native&#39;</span><span class="w"> </span><span class="nv">FOPTFLAGS</span><span class="o">=</span><span class="s1">&#39;-O3 -march=native -mtune=native&#39;</span>
+
+<span class="c1"># to add mumps: --download-mumps --download-scalapack</span>
+<span class="c1"># but does not compile</span>
+
+make<span class="w"> </span><span class="nv">PETSC_DIR</span><span class="o">=</span>/lustre/hpe/ws10/ws10.2/ws/icbbnmai-opendihu2//opendihu-hawk-gnu/dependencies/petsc/src/petsc-3.13.1<span class="w"> </span><span class="nv">PETSC_ARCH</span><span class="o">=</span>arch-linux-c-opt<span class="w"> </span>all
+make<span class="w"> </span><span class="nv">PETSC_DIR</span><span class="o">=</span>/lustre/hpe/ws10/ws10.2/ws/icbbnmai-opendihu2//opendihu-hawk-gnu/dependencies/petsc/src/petsc-3.13.1<span class="w"> </span><span class="nv">PETSC_ARCH</span><span class="o">=</span>arch-linux-c-opt<span class="w"> </span>install
+</pre></div>
+</div>
+</li>
+<li><p>Hints to manually install python:</p>
+<p>Run the normal configure with the correct <code class="docutils literal notranslate"><span class="pre">--prefix</span> <span class="pre">&lt;opendihu&gt;/dependencies/python/install/bin</span></code> option. Then manually install the python packages <cite>numpy, scipy and matplotlib</cite> as follows:
+Download from pip:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>argparse-1.4.0-py2.py3-none-any.whl
+cycler-0.10.0-py2.py3-none-any.whl
+geomdl-5.3.0-py2.py3-none-any.whl
+kiwisolver-1.3.1-cp39-cp39-manylinux1_x86_64.whl
+matplotlib-3.4.2-cp39-cp39-manylinux1_x86_64.whl
+numpy-1.20.3-cp39-cp39-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
+Pillow-8.2.0-cp39-cp39-manylinux1_x86_64.whl
+pyparsing-2.4.7-py2.py3-none-any.whl
+python_dateutil-2.8.1-py2.py3-none-any.whl
+pytz-2020.4-py2.py3-none-any.whl
+scipy-1.6.3-cp39-cp39-manylinux1_x86_64.whl
+scons_build_success
+setuptools-50.3.2-py3-none-any.whl
+six-1.15.0-py2.py3-none-any.whl
+</pre></div>
+</div>
+<p>Then run <code class="docutils literal notranslate"><span class="pre">&lt;opendihu&gt;/dependencies/python/install/bin/python</span> <span class="pre">-m</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">*.whl</span></code>.</p>
+</li>
+<li><p>Hints to manually install preCICE:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmake<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-DCMAKE_INSTALL_PREFIX<span class="o">=</span>/lustre/hpe/ws10/ws10.2/ws/icbbnmai-opendihu2/opendihu-hawk-gnu/dependencies/precice/install<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-DCMAKE_BUILD_TYPE<span class="o">=</span>RELEASE<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-DPYTHON_EXECUTABLE<span class="o">=</span>/lustre/hpe/ws10/ws10.2/ws/icbbnmai-opendihu2/opendihu-hawk-gnu/dependencies/python/install/bin/python3<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-DPETSC_DIR<span class="o">=</span>/lustre/hpe/ws10/ws10.2/ws/icbbnmai-opendihu2/opendihu-hawk-gnu/dependencies/petsc/install<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-DPETSC_EXECUTABLE_RUNS<span class="o">=</span>TRUE<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-DPRECICE_ENABLE_FORTRAN<span class="o">=</span>OFF<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-DPETSC_COMPILER<span class="o">=</span>mpic++<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-DEigen3_ROOT<span class="o">=</span>/lustre/hpe/ws10/ws10.2/ws/icbbnmai-opendihu2/opendihu-hawk-gnu/dependencies/precice/src/precice-2.1.0/eigen-3.3.8<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-DLIBXML2_INCLUDE_DIR<span class="o">=</span>/lustre/hpe/ws10/ws10.2/ws/icbbnmai-opendihu2/opendihu-hawk-gnu/dependencies/precice/install/libxml2/include/libxml2<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-DLIBXML2_LIBRARY<span class="o">=</span>/lustre/hpe/ws10/ws10.2/ws/icbbnmai-opendihu2/opendihu-hawk-gnu/dependencies/precice/install/libxml2/lib/libxml2.so<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-DBOOST_ROOT<span class="o">=</span>/lustre/hpe/ws10/ws10.2/ws/icbbnmai-opendihu2/opendihu-hawk-gnu/dependencies/precice/install<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>..
+make<span class="w"> </span>-j<span class="w"> </span><span class="m">64</span>
+make<span class="w"> </span>install
+</pre></div>
+</div>
+</li>
+<li><p>After having installed the dependencies, run <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">clean</span></code> to clear the scons cache and <code class="docutils literal notranslate"><span class="pre">scons</span> <span class="pre">no_tests=TRUE</span> <span class="pre">-j</span> <span class="pre">64</span></code> to build.
+Set <code class="docutils literal notranslate"><span class="pre">&lt;PACKAGE&gt;_DOWNLOAD</span> <span class="pre">=</span> <span class="pre">False</span></code> in <cite>user-variables.scons.py</cite> to disable the automatic building efforts of scons where have installed it manually.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="field_variable.html" class="btn btn-neutral float-left" title="FieldVariable" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="new_physics.html" class="btn btn-neutral float-right" title="Implement New Physics" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

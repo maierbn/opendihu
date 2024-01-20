@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Muscle contraction solver &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="PrescribedValues" href="prescribed_values.html" />
+    <link rel="prev" title="Dynamic hyperelasticity" href="dynamic_hyperelasticity.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solver.html">Solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Muscle contraction solver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#c-instantiation">C++ instantiation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#python-settings">Python settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#timestepoutputinterval">timeStepOutputInterval</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pmax">Pmax</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#enableforcelengthrelation">enableForceLengthRelation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lambdadotscalingfactor">lambdaDotScalingFactor</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mapgeometrytomeshes">mapGeometryToMeshes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#slotnames">slotNames</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dynamic">dynamic</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">Muscle contraction solver</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/muscle_contraction_solver.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="muscle-contraction-solver">
+<h1>Muscle contraction solver<a class="headerlink" href="#muscle-contraction-solver" title="Link to this heading"></a></h1>
+<p>This class solves a dynamic or quasi-static hyperelasticity problem, possibly with active stress terms.
+It adds connector slots, e.g. for the fiber stretch, <span class="math notranslate nohighlight">\(\lambda\)</span>. It also contains an <cite>OutputWriter</cite> that writes the most important field variables to a single output file.
+Internally it encapsulates the classes <cite>HyperelasticitySolver</cite> and <cite>DynamicHyperelasticitySolver</cite> with <cite>Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D</cite> as Material.
+Currently, the Material is hardcoded, because it is specific to the active stress term. It should not be too difficult to make it also a template argument in the C++ core code.</p>
+<p>The differences to <cite>DynamicHyperelasticitySolver</cite> is the following:</p>
+<ul>
+<li><p>Allows to choose dynamic or quasi-static problem (by option <code class="docutils literal notranslate"><span class="pre">dynamic</span></code>).</p></li>
+<li><p>Adds the active stress values to the 2nd Piola-Kirchhoff stresses. This value is provided over the connector slot “γ”. The active stress is computed as</p>
+<div class="math notranslate nohighlight">
+\[\dfrac{1}{\lambda}  P_\text{max} f(\lambda/\lambda_\text{opt}) \gamma\]</div>
+<p>with the force-length relation</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}f(\lambda/\lambda_\text{opt}) = -\dfrac{25}{4} \left(\dfrac{\lambda}{\lambda_\text{opt}}\right)^2 + \dfrac{25}{2} \dfrac{\lambda}{\lambda_\text{opt}} - 5.25,\\
+\lambda_\text{opt} = 1.2\end{split}\]</div>
+</li>
+<li><p>Computes fiber stretch, <span class="math notranslate nohighlight">\(\lambda\)</span>, contraction velocity, <span class="math notranslate nohighlight">\(\dot\lambda\)</span> (not yet implemented), and material traction, <span class="math notranslate nohighlight">\(T\)</span>, and provides these values via a connector slot.
+The order of the slots is: λ, λdot, γ, T</p></li>
+<li><p>Provides an output writer which contains all important information. The <cite>HyperelasticitySolver</cite> and <cite>DynamicHyperelasticitySolver</cite> also provide OutputWriters,  but several with different data. Here, all static and dynamic quantities of interest, such as stresses, displacements and velocities are combined into a single file.</p></li>
+</ul>
+<section id="c-instantiation">
+<h2>C++ instantiation<a class="headerlink" href="#c-instantiation" title="Link to this heading"></a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="c1">// either with composite mesh:</span>
+<span class="n">MuscleContractionSolver</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="n">Mesh</span><span class="o">::</span><span class="n">CompositeOfDimension</span><span class="o">&lt;</span><span class="mi">3</span><span class="o">&gt;</span>
+<span class="o">&gt;</span>
+
+<span class="c1">// or with structured mesh:</span>
+<span class="n">MuscleContractionSolver</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="n">Mesh</span><span class="o">::</span><span class="n">StructuredDeformableOfDimension</span><span class="o">&lt;</span><span class="mi">3</span><span class="o">&gt;</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>Alternatively, the <cite>Term</cite>, i.e. material can be specified as second template argument:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="c1">// either with composite mesh:</span>
+<span class="n">MuscleContractionSolver</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="n">Mesh</span><span class="o">::</span><span class="n">CompositeOfDimension</span><span class="o">&lt;</span><span class="mi">3</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">Equation</span><span class="o">::</span><span class="n">SolidMechanics</span><span class="o">::</span><span class="n">TransverselyIsotropicMooneyRivlinIncompressibleActive3D</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>The given value of <cite>Equation::SolidMechanics::TransverselyIsotropicMooneyRivlinIncompressibleActive3D</cite> is the default but can be replaced.
+The material has to set <code class="docutils literal notranslate"><span class="pre">usesActiveStress=true</span></code> in order for the active stress to work.</p>
+<p>And additionally, the parameter <cite>withLargeOutputFiles</cite> can be specified as the third parameter (default is true). If set to false, smaller output files that don’t contain <span class="math notranslate nohighlight">\(P,\dot{F}\)</span> and <span class="math notranslate nohighlight">\(F\)</span> values will be created.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="c1">// either with composite mesh:</span>
+<span class="n">MuscleContractionSolver</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="n">Mesh</span><span class="o">::</span><span class="n">CompositeOfDimension</span><span class="o">&lt;</span><span class="mi">3</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">Equation</span><span class="o">::</span><span class="n">SolidMechanics</span><span class="o">::</span><span class="n">TransverselyIsotropicMooneyRivlinIncompressibleActive3D</span><span class="p">,</span>
+<span class="w">  </span><span class="nb">true</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+</section>
+<section id="python-settings">
+<h2>Python settings<a class="headerlink" href="#python-settings" title="Link to this heading"></a></h2>
+<p>In the following all possible options are listed. and explained by the comments.
+Depending on the value of <code class="docutils literal notranslate"><span class="pre">dynamic</span></code>, either an instance of <code class="docutils literal notranslate"><span class="pre">DynamicHyperelasticitSolver</span></code> or <code class="docutils literal notranslate"><span class="pre">HyperlasticitySolver</span></code> is included. See <a class="reference internal" href="hyperelasticity.html"><span class="doc">Hyperelasticity</span></a> and <a class="reference internal" href="dynamic_hyperelasticity.html"><span class="doc">Dynamic hyperelasticity</span></a> for details.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;MuscleContractionSolver&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;numberTimeSteps&quot;</span><span class="p">:</span>              <span class="mi">1</span><span class="p">,</span>                         <span class="c1"># number of timesteps to use per call</span>
+  <span class="s2">&quot;timeStepOutputInterval&quot;</span><span class="p">:</span>       <span class="mi">100</span><span class="p">,</span>                       <span class="c1"># How often the current timestep will be displayed, if this is &gt;100 and numberTimeSteps is 1, nothing will be printed</span>
+  <span class="s2">&quot;Pmax&quot;</span><span class="p">:</span>                         <span class="n">variables</span><span class="o">.</span><span class="n">pmax</span><span class="p">,</span>            <span class="c1"># maximum PK2 active stress</span>
+  <span class="s2">&quot;enableForceLengthRelation&quot;</span><span class="p">:</span>    <span class="kc">True</span><span class="p">,</span>                      <span class="c1"># if the factor f_l(λ_f) modeling the force-length relation (as in Heidlauf2013) should be multiplied. Set to false if this relation is already considered in the CellML model.</span>
+  <span class="s2">&quot;lambdaDotScalingFactor&quot;</span><span class="p">:</span>       <span class="mf">1.0</span><span class="p">,</span>                       <span class="c1"># scaling factor for the output of the lambda dot slot, i.e. the contraction velocity. Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model.</span>
+  <span class="s2">&quot;OutputWriter&quot;</span> <span class="p">:</span> <span class="p">[</span>                                         <span class="c1"># This is an output writer that writes files with all required fields.</span>
+    <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;Paraview&quot;</span><span class="p">,</span> <span class="s2">&quot;outputInterval&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">variables</span><span class="o">.</span><span class="n">dt_3D</span><span class="o">*</span><span class="n">variables</span><span class="o">.</span><span class="n">output_timestep_3D</span><span class="p">),</span> <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;out/&quot;</span> <span class="o">+</span> <span class="n">variables</span><span class="o">.</span><span class="n">scenario_name</span> <span class="o">+</span> <span class="s2">&quot;/mechanics_3D&quot;</span><span class="p">,</span> <span class="s2">&quot;binary&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fixedFormat&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;onlyNodalValues&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;combineFiles&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fileNumbering&quot;</span><span class="p">:</span> <span class="s2">&quot;incremental&quot;</span><span class="p">},</span>
+  <span class="p">],</span>
+  <span class="s2">&quot;mapGeometryToMeshes&quot;</span><span class="p">:</span>          <span class="p">[],</span>                        <span class="c1"># the mesh names of the meshes that will get the geometry transferred</span>
+  <span class="s2">&quot;slotNames&quot;</span><span class="p">:</span>                    <span class="p">[</span><span class="s2">&quot;lambda&quot;</span><span class="p">,</span> <span class="s2">&quot;ldot&quot;</span><span class="p">,</span> <span class="s2">&quot;gamma&quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">],</span>    <span class="c1"># names of the connector slots, maximum 10 characters per name</span>
+  <span class="s2">&quot;dynamic&quot;</span><span class="p">:</span>                      <span class="kc">True</span><span class="p">,</span>                      <span class="c1"># if the dynamic solid mechanics solver should be used, else it computes the quasi-static problem</span>
+
+  <span class="c1"># the actual solid mechanics solver, this is either &quot;DynamicHyperelasticitySolver&quot; or &quot;HyperelasticitySolver&quot;, depending on the value of &quot;dynamic&quot;</span>
+  <span class="s2">&quot;DynamicHyperelasticitySolver&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;timeStepWidth&quot;</span><span class="p">:</span>              <span class="n">variables</span><span class="o">.</span><span class="n">dt_3D</span><span class="p">,</span>           <span class="c1"># time step width</span>
+    <span class="s2">&quot;durationLogKey&quot;</span><span class="p">:</span>             <span class="s2">&quot;nonlinear&quot;</span><span class="p">,</span>               <span class="c1"># key to find duration of this solver in the log file</span>
+    <span class="s2">&quot;timeStepOutputInterval&quot;</span><span class="p">:</span>     <span class="mi">1</span><span class="p">,</span>                         <span class="c1"># how often the current time step should be printed to console</span>
+
+    <span class="s2">&quot;materialParameters&quot;</span><span class="p">:</span>         <span class="n">variables</span><span class="o">.</span><span class="n">material_parameters</span><span class="p">,</span>  <span class="c1"># material parameters of the Mooney-Rivlin material</span>
+    <span class="s2">&quot;density&quot;</span><span class="p">:</span>                    <span class="n">variables</span><span class="o">.</span><span class="n">rho</span><span class="p">,</span>             <span class="c1"># density of the material</span>
+    <span class="s2">&quot;displacementsScalingFactor&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>                       <span class="c1"># scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements</span>
+    <span class="s2">&quot;residualNormLogFilename&quot;</span><span class="p">:</span>    <span class="s2">&quot;log_residual_norm.txt&quot;</span><span class="p">,</span>   <span class="c1"># log file where residual norm values of the nonlinear solver will be written</span>
+    <span class="s2">&quot;useAnalyticJacobian&quot;</span><span class="p">:</span>        <span class="n">variables</span><span class="o">.</span><span class="n">use_analytic_jacobian</span><span class="p">,</span>      <span class="c1"># whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)</span>
+    <span class="s2">&quot;useNumericJacobian&quot;</span><span class="p">:</span>         <span class="ow">not</span> <span class="n">variables</span><span class="o">.</span><span class="n">use_analytic_jacobian</span><span class="p">,</span>  <span class="c1"># whether to use the numerically computed jacobian matrix in the nonlinear solver (slow), only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian</span>
+
+    <span class="s2">&quot;dumpDenseMatlabVariables&quot;</span><span class="p">:</span>   <span class="kc">False</span><span class="p">,</span>                     <span class="c1"># whether to have extra output of matlab vectors, x,r, jacobian matrix (very slow)</span>
+    <span class="c1"># if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian</span>
+
+    <span class="c1"># mesh</span>
+    <span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span>          <span class="kc">True</span><span class="p">,</span>                     <span class="c1"># the mesh is given locally</span>
+    <span class="s2">&quot;meshName&quot;</span><span class="p">:</span>                   <span class="s2">&quot;3Dmesh_quadratic&quot;</span><span class="p">,</span>        <span class="c1"># name of the 3D mesh, it is defined under &quot;Meshes&quot; at the beginning of this config</span>
+    <span class="s2">&quot;fiberMeshNames&quot;</span><span class="p">:</span>             <span class="n">variables</span><span class="o">.</span><span class="n">fiber_mesh_names</span><span class="p">,</span>  <span class="c1"># fiber meshes that will be used to determine the fiber direction, for multidomain there are no fibers so this would be empty list</span>
+    <span class="c1">#&quot;fiberDirection&quot;:             [0,0,1],                  # if fiberMeshNames is empty, directly set the constant fiber direction, in element coordinate system</span>
+
+    <span class="c1"># solving</span>
+    <span class="s2">&quot;solverName&quot;</span><span class="p">:</span>                 <span class="s2">&quot;mechanicsSolver&quot;</span><span class="p">,</span>         <span class="c1"># name of the nonlinear solver configuration, it is defined under &quot;Solvers&quot; at the beginning of this config</span>
+    <span class="c1">#&quot;loadFactors&quot;:                [0.25, 0.66, 1.0],                # load factors for every timestep</span>
+    <span class="s2">&quot;loadFactors&quot;</span><span class="p">:</span>                <span class="p">[],</span>                        <span class="c1"># no load factors, solve problem directly</span>
+    <span class="s2">&quot;loadFactorGiveUpThreshold&quot;</span><span class="p">:</span>   <span class="mi">1</span><span class="p">,</span>                      <span class="c1"># when to abort the solve</span>
+    <span class="s2">&quot;scaleInitialGuess&quot;</span><span class="p">:</span>          <span class="kc">False</span><span class="p">,</span>                      <span class="c1"># when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).</span>
+    <span class="s2">&quot;nNonlinearSolveCalls&quot;</span><span class="p">:</span>       <span class="mi">1</span><span class="p">,</span>                         <span class="c1"># how often the nonlinear solve should be repeated</span>
+
+    <span class="c1"># boundary and initial conditions</span>
+    <span class="s2">&quot;dirichletBoundaryConditions&quot;</span><span class="p">:</span> <span class="n">variables</span><span class="o">.</span><span class="n">elasticity_dirichlet_bc</span><span class="p">,</span>   <span class="c1"># the initial Dirichlet boundary conditions that define values for displacements u and velocity v</span>
+    <span class="s2">&quot;neumannBoundaryConditions&quot;</span><span class="p">:</span>   <span class="n">variables</span><span class="o">.</span><span class="n">elasticity_neumann_bc</span><span class="p">,</span>     <span class="c1"># Neumann boundary conditions that define traction forces on surfaces of elements</span>
+    <span class="s2">&quot;divideNeumannBoundaryConditionValuesByTotalArea&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>            <span class="c1"># if the given Neumann boundary condition values under &quot;neumannBoundaryConditions&quot; are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied</span>
+    <span class="s2">&quot;updateDirichletBoundaryConditionsFunction&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>                  <span class="c1"># function that updates the dirichlet BCs while the simulation is running</span>
+    <span class="s2">&quot;updateDirichletBoundaryConditionsFunctionCallInterval&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>         <span class="c1"># every which step the update function should be called, 1 means every time step</span>
+
+    <span class="s2">&quot;initialValuesDisplacements&quot;</span><span class="p">:</span>  <span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">mx</span><span class="o">*</span><span class="n">my</span><span class="o">*</span><span class="n">mz</span><span class="p">)],</span>     <span class="c1"># the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]</span>
+    <span class="s2">&quot;initialValuesVelocities&quot;</span><span class="p">:</span>     <span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">mx</span><span class="o">*</span><span class="n">my</span><span class="o">*</span><span class="n">mz</span><span class="p">)],</span>     <span class="c1"># the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]</span>
+    <span class="s2">&quot;extrapolateInitialGuess&quot;</span><span class="p">:</span>     <span class="kc">True</span><span class="p">,</span>                                <span class="c1"># if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities</span>
+    <span class="s2">&quot;constantBodyForce&quot;</span><span class="p">:</span>           <span class="n">variables</span><span class="o">.</span><span class="n">constant_body_force</span><span class="p">,</span>       <span class="c1"># a constant force that acts on the whole body, e.g. for gravity</span>
+
+    <span class="s2">&quot;dirichletOutputFilename&quot;</span><span class="p">:</span>    <span class="s2">&quot;out/&quot;</span><span class="o">+</span><span class="n">variables</span><span class="o">.</span><span class="n">scenario_name</span><span class="o">+</span><span class="s2">&quot;/dirichlet_boundary_conditions&quot;</span><span class="p">,</span>     <span class="c1"># output filename for the dirichlet boundary conditions, set to &quot;&quot; to have no output</span>
+    <span class="s2">&quot;totalForceLogFilename&quot;</span><span class="p">:</span>       <span class="s2">&quot;out/&quot;</span><span class="o">+</span><span class="n">variables</span><span class="o">.</span><span class="n">scenario_name</span><span class="o">+</span><span class="s2">&quot;/tendon_force.csv&quot;</span><span class="p">,</span>              <span class="c1"># filename of a log file that will contain the total (bearing) forces and moments at the top and bottom of the volume</span>
+    <span class="s2">&quot;totalForceLogOutputInterval&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>                                  <span class="c1"># output interval when to write the totalForceLog file</span>
+    <span class="s2">&quot;totalForceBottomElementNosGlobal&quot;</span><span class="p">:</span>  <span class="p">[</span><span class="n">j</span><span class="o">*</span><span class="n">nx</span> <span class="o">+</span> <span class="n">i</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ny</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nx</span><span class="p">)],</span>                  <span class="c1"># global element nos of the bottom elements used to compute the total forces in the log file totalForceLogFilename</span>
+    <span class="s2">&quot;totalForceTopElementNosGlobal&quot;</span><span class="p">:</span>     <span class="p">[(</span><span class="n">nz</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">ny</span><span class="o">*</span><span class="n">nx</span> <span class="o">+</span> <span class="n">j</span><span class="o">*</span><span class="n">nx</span> <span class="o">+</span> <span class="n">i</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ny</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nx</span><span class="p">)],</span>   <span class="c1"># global element nos of the top elements used to compute the total forces in the log file totalForceTopElementsGlobal</span>
+
+
+    <span class="c1"># define which file formats should be written</span>
+    <span class="c1"># 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.</span>
+    <span class="s2">&quot;OutputWriter&quot;</span> <span class="p">:</span> <span class="p">[</span>
+
+      <span class="c1"># Paraview files</span>
+      <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;Paraview&quot;</span><span class="p">,</span> <span class="s2">&quot;outputInterval&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;out/&quot;</span><span class="o">+</span><span class="n">variables</span><span class="o">.</span><span class="n">scenario_name</span><span class="o">+</span><span class="s2">&quot;/u&quot;</span><span class="p">,</span> <span class="s2">&quot;binary&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fixedFormat&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;onlyNodalValues&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;combineFiles&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fileNumbering&quot;</span><span class="p">:</span> <span class="s2">&quot;incremental&quot;</span><span class="p">},</span>
+
+      <span class="c1"># Python callback function &quot;postprocess&quot;</span>
+      <span class="c1">#{&quot;format&quot;: &quot;PythonCallback&quot;, &quot;outputInterval&quot;: 1, &quot;callback&quot;: postprocess, &quot;onlyNodalValues&quot;:True, &quot;filename&quot;: &quot;&quot;},</span>
+    <span class="p">],</span>
+    <span class="c1"># 2. additional output writer that writes also the hydrostatic pressure</span>
+    <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="p">{</span>   <span class="c1"># output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities</span>
+      <span class="s2">&quot;OutputWriter&quot;</span> <span class="p">:</span> <span class="p">[</span>
+        <span class="c1">#{&quot;format&quot;: &quot;Paraview&quot;, &quot;outputInterval&quot;: 1, &quot;filename&quot;: &quot;out/&quot;+variables.scenario_name+&quot;/p&quot;, &quot;binary&quot;: True, &quot;fixedFormat&quot;: False, &quot;onlyNodalValues&quot;:True, &quot;combineFiles&quot;:True, &quot;fileNumbering&quot;: &quot;incremental&quot;},</span>
+      <span class="p">]</span>
+    <span class="p">},</span>
+    <span class="c1"># 3. additional output writer that writes virtual work terms</span>
+    <span class="s2">&quot;dynamic&quot;</span><span class="p">:</span> <span class="p">{</span>    <span class="c1"># output of the dynamic solver, has additional virtual work values</span>
+      <span class="s2">&quot;OutputWriter&quot;</span> <span class="p">:</span> <span class="p">[</span>   <span class="c1"># output files for displacements function space (quadratic elements)</span>
+        <span class="c1">#{&quot;format&quot;: &quot;Paraview&quot;, &quot;outputInterval&quot;: int(output_interval/dt), &quot;filename&quot;: &quot;out/dynamic&quot;, &quot;binary&quot;: False, &quot;fixedFormat&quot;: False, &quot;onlyNodalValues&quot;:True, &quot;combineFiles&quot;:True, &quot;fileNumbering&quot;: &quot;incremental&quot;},</span>
+        <span class="c1">#{&quot;format&quot;: &quot;Paraview&quot;, &quot;outputInterval&quot;: int(1./variables.dt_3D*variables.output_timestep_3D), &quot;filename&quot;: &quot;out/&quot;+variables.scenario_name+&quot;/virtual_work&quot;, &quot;binary&quot;: True, &quot;fixedFormat&quot;: False, &quot;onlyNodalValues&quot;:True, &quot;combineFiles&quot;:True, &quot;fileNumbering&quot;: &quot;incremental&quot;},</span>
+      <span class="p">],</span>
+    <span class="p">},</span>
+    <span class="c1"># 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written</span>
+    <span class="s2">&quot;LoadIncrements&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;OutputWriter&quot;</span> <span class="p">:</span> <span class="p">[</span>
+        <span class="c1">#{&quot;format&quot;: &quot;Paraview&quot;, &quot;outputInterval&quot;: 1, &quot;filename&quot;: &quot;out/&quot;+variables.scenario_name+&quot;/load_increments&quot;, &quot;binary&quot;: False, &quot;fixedFormat&quot;: False, &quot;onlyNodalValues&quot;:True, &quot;combineFiles&quot;:True, &quot;fileNumbering&quot;: &quot;incremental&quot;},</span>
+      <span class="p">]</span>
+    <span class="p">},</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>See the description in <a class="reference internal" href="dynamic_hyperelasticity.html"><span class="doc">Dynamic hyperelasticity</span></a> for all details, such as boundary conditions.</p>
+<section id="timestepoutputinterval">
+<h3>timeStepOutputInterval<a class="headerlink" href="#timestepoutputinterval" title="Link to this heading"></a></h3>
+<p>How often the current timestep will be printed to the console and log.
+If this is &gt;100 and numberTimeSteps is 1, nothing will be printed.</p>
+</section>
+<section id="pmax">
+<h3>Pmax<a class="headerlink" href="#pmax" title="Link to this heading"></a></h3>
+<p>The maximum active stress value, also called <span class="math notranslate nohighlight">\(S_\text{max}\)</span> in the derivation.</p>
+</section>
+<section id="enableforcelengthrelation">
+<h3>enableForceLengthRelation<a class="headerlink" href="#enableforcelengthrelation" title="Link to this heading"></a></h3>
+<p>If the function <span class="math notranslate nohighlight">\(f_l(λ_f)\)</span> which models the force-length relation (as in Heidlauf2013) should be multiplied to the active stress value.
+Set to false if this relation is already considered in the CellML model.</p>
+</section>
+<section id="lambdadotscalingfactor">
+<h3>lambdaDotScalingFactor<a class="headerlink" href="#lambdadotscalingfactor" title="Link to this heading"></a></h3>
+<p>A scaling factor for the output of the lambda dot slot, i.e. the contraction velocity.
+Use this to scale the unit-less quantity to, e.g., micrometers per millisecond for the subcellular model. Usually this factor can be set to 1.</p>
+</section>
+<section id="mapgeometrytomeshes">
+<h3>mapGeometryToMeshes<a class="headerlink" href="#mapgeometrytomeshes" title="Link to this heading"></a></h3>
+<p>This is a list of opendihu mesh names that will be updated with the deformed geometry of the 3D mesh.
+If this list is not empty, only the specified meshes will be deformed according to the computed displacements.</p>
+<p>If this list is empty, the meshes of all connected slots will automatically be deformed, as this is usually what you want.</p>
+</section>
+<section id="slotnames">
+<h3>slotNames<a class="headerlink" href="#slotnames" title="Link to this heading"></a></h3>
+<p>A list names of the connector slots, maximum 6 characters per name, see <a class="reference internal" href="output_connector_slots.html"><span class="doc">Connector Slots</span></a> for details.</p>
+</section>
+<section id="dynamic">
+<h3>dynamic<a class="headerlink" href="#dynamic" title="Link to this heading"></a></h3>
+<p>This is a bool variable that specifies if the static solver (<a class="reference internal" href="hyperelasticity.html"><span class="doc">Hyperelasticity</span></a>) or the dynamic solver (<a class="reference internal" href="dynamic_hyperelasticity.html"><span class="doc">Dynamic hyperelasticity</span></a>) should be used.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="dynamic_hyperelasticity.html" class="btn btn-neutral float-left" title="Dynamic hyperelasticity" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="prescribed_values.html" class="btn btn-neutral float-right" title="PrescribedValues" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

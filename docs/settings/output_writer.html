@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OutputWriter &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="OutputSurface" href="output_surface.html" />
+    <link rel="prev" title="Coupling" href="coupling.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solver.html">Solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">OutputWriter</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#filename">filename</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#outputinterval">outputInterval</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#filenumbering">fileNumbering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Paraview</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#binary">binary</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fixedformat">fixedFormat</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#combinefiles">combineFiles</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#file-suffixes">File suffixes</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pythonfile">PythonFile</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pythoncallback">PythonCallback</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exfile">ExFile</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#megamol">MegaMol</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">OutputWriter</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/output_writer.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="outputwriter">
+<h1>OutputWriter<a class="headerlink" href="#outputwriter" title="Link to this heading"></a></h1>
+<p>OutputWriters are used to write the computed simulation data to files. The data is organised in field variables, which are scalar or vector fields over the computational domain.</p>
+<p>Note: To output matrices and right hand side vectors, e.g. in MATLAB compatible format, the direct options of the <a class="reference internal" href="solver.html"><span class="doc">Solver</span></a> class should be used.</p>
+<p>Several different output writers can be specified in the <code class="docutils literal notranslate"><span class="pre">&quot;OutputWriter&quot;</span></code> list.
+The output writers are then called one after another and produce output in different formats, depending on their properties.</p>
+<p>What kind of data, i.e. which field variables will be written, is fixed by the C++ code and cannot be adjusted in the python settings. In general, it contains all interesting field variables that are used during computation.</p>
+<p>However, different output data can be written from output writers at different locations in the class hierarchy.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&quot;OutputWriter&quot;</span></code> keyword can appear in the settings for the following classes:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="cellml_adapter.html"><span class="doc">CellMLAdapter</span></a></p></li>
+<li><p><a class="reference internal" href="multiple_instances.html"><span class="doc">MultipleInstances</span></a></p></li>
+<li><p><a class="reference internal" href="finite_element_method.html"><span class="doc">FiniteElementMethod</span></a></p></li>
+<li><p><a class="reference internal" href="timestepping_schemes_ode.html"><span class="doc">TimeSteppingSchemesOde</span></a> (Heun, ExplicitEuler, etc.)</p></li>
+<li><p>specialized solvers like <a class="reference internal" href="static_bidomain_solver.html"><span class="doc">StaticBidomainSolver</span></a>, <a class="reference internal" href="quasi_static_linear_elasticity_solver.html"><span class="doc">QuasiStaticLinearElasticitySolver</span></a></p></li>
+</ul>
+<p>The following is an example of specifying output writers of all possible formats. This would output the same data in all possible file formats and as python callback. Multiple output writers of the same format would also be allowed.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;OutputWriter&quot;</span> <span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;Paraview&quot;</span><span class="p">,</span>   <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;out/filename&quot;</span><span class="p">,</span> <span class="s2">&quot;outputInterval&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;binary&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;fixedFormat&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;onlyNodalValues&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;combineFiles&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;PythonFile&quot;</span><span class="p">,</span> <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;out/filename&quot;</span><span class="p">,</span> <span class="s2">&quot;outputInterval&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;binary&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;onlyNodalValues&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;ExFile&quot;</span><span class="p">,</span>     <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;out/filename&quot;</span><span class="p">,</span> <span class="s2">&quot;outputInterval&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;sphereSize&quot;</span><span class="p">:</span> <span class="s2">&quot;0.005*0.005*0.01&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;MegaMol&quot;</span><span class="p">,</span>    <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;out/filename&quot;</span><span class="p">,</span> <span class="s2">&quot;outputInterval&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;PythonCallback&quot;</span><span class="p">,</span> <span class="s2">&quot;callback&quot;</span><span class="p">:</span> <span class="n">callback</span><span class="p">,</span>   <span class="s2">&quot;outputInterval&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+  <span class="p">]</span>
+</pre></div>
+</div>
+<p>The formats are explained in more detail below.
+There are common properties, like filename and outputInterval.</p>
+<section id="filename">
+<h2>filename<a class="headerlink" href="#filename" title="Link to this heading"></a></h2>
+<p>The file name of the output file to write. It can contain a path to the output directory (e.g. <em>out/</em>). If this directory does not yet exist, it will be created. Usually, for dynamic problems, files will be written for multiple timesteps. The filename will get a consecutive number of 7 digits appended (with leading zeros), then the MPI rank number of the process, then the format specific suffix. For example the <em>out</em> folder could contain the following files for the Paraview output writer:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">filename_0000000</span><span class="mf">.0</span><span class="o">.</span><span class="n">vtr</span>
+<span class="n">filename_0000000</span><span class="mf">.1</span><span class="o">.</span><span class="n">vtr</span>
+<span class="n">filename_0000000</span><span class="o">.</span><span class="n">pvtr</span>
+<span class="n">filename_0000001</span><span class="mf">.0</span><span class="o">.</span><span class="n">vtr</span>
+<span class="n">filename_0000001</span><span class="mf">.1</span><span class="o">.</span><span class="n">vtr</span>
+<span class="n">filename_0000001</span><span class="o">.</span><span class="n">pvtr</span>
+<span class="n">filename_0000002</span><span class="mf">.0</span><span class="o">.</span><span class="n">vtr</span>
+<span class="n">filename_0000002</span><span class="mf">.1</span><span class="o">.</span><span class="n">vtr</span>
+<span class="n">filename_0000002</span><span class="o">.</span><span class="n">pvtr</span>
+</pre></div>
+</div>
+<p>In this case, the <code class="docutils literal notranslate"><span class="pre">*.pvtr</span></code> is the master file that references the two files <code class="docutils literal notranslate"><span class="pre">*.0.vtr</span></code>, written by rank 0 and <code class="docutils literal notranslate"><span class="pre">*.1.vtr</span></code> written by rank 1. All these files can be loaded in <a class="reference external" href="https://www.paraview.org/">Paraview</a> at once.</p>
+</section>
+<section id="outputinterval">
+<h2>outputInterval<a class="headerlink" href="#outputinterval" title="Link to this heading"></a></h2>
+<p>The interval in which timesteps an actual file should be written. This is an integer value. The output writer is usually called after each time step. However, it only outputs a file after <code class="docutils literal notranslate"><span class="pre">outputInterval</span></code> timesteps have passed. This is useful to reduce the number of output files.</p>
+<p>A common practice to compute outputInterval is to write</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;outputInterval&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">dt</span><span class="o">*</span><span class="n">output_timestep</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">dt</span></code> is the timestep width of the scheme in seconds and <code class="docutils literal notranslate"><span class="pre">output_timestep</span></code> is the output interval in seconds. Then files are generated every <code class="docutils literal notranslate"><span class="pre">output_timestep</span></code> seconds of simulation time. Note the cast to <code class="docutils literal notranslate"><span class="pre">int</span></code> to get an integer value.</p>
+</section>
+<section id="filenumbering">
+<h2>fileNumbering<a class="headerlink" href="#filenumbering" title="Link to this heading"></a></h2>
+<p><em>Default: “incremental”</em></p>
+<p>Defines how the output files should be numbered. With <code class="docutils literal notranslate"><span class="pre">&quot;incremental&quot;</span></code> the files get incremental number suffixes starting from 0. With <code class="docutils literal notranslate"><span class="pre">&quot;timeStepIndex&quot;</span></code> the file suffix corresponds to the time step index.  This means that the suffixes are not incremental if <code class="docutils literal notranslate"><span class="pre">outputInterval</span></code> does not equal 1. The index is counted on a per-integrator basis. That means, that each time a time step is performed with a specific integrator, the index for that integrater increases.</p>
+</section>
+<section id="id1">
+<h2>Paraview<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p><a class="reference external" href="https://www.paraview.org/">Paraview</a> is a postprocessing tool that can efficiently handle large data and can also be executed in parallel. It supports file formats that can also be handled by the <a class="reference external" href="https://vtk.org/">Visualization Toolkit</a> (<em>VTK</em>). The output files can be ASCII-based or binary. Separate files for every process or combined files can be written and parsed by Paraview.</p>
+<p>A file can always only contain one mesh (with the exception of using the <code class="docutils literal notranslate"><span class="pre">combineFiles</span></code> option), for different meshes like, e.g. 1D and 3D meshes, separated files have to be written.</p>
+<p>Example (normally the properties of a single output writer are written in a single line):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;OutputWriter&quot;</span> <span class="p">:</span> <span class="p">[</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;Paraview&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;out/filename&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;outputInterval&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;binary&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="s2">&quot;fixedFormat&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="s2">&quot;onlyNodalValues&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="s2">&quot;combineFiles&quot;</span><span class="p">:</span> <span class="kc">False</span>
+  <span class="p">},</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<section id="binary">
+<h3>binary<a class="headerlink" href="#binary" title="Link to this heading"></a></h3>
+<p><em>Default: True</em></p>
+<p>Whether to produce binary data files. The output files are valid XML-documents, the headers and describing structure of the file is therefore always human-readable. However, the data block can either contain the floating point values as ASCII-text or be in a binary format.
+Binary files are encoded in <cite>Base64 &lt;https://en.wikipedia.org/wiki/Base64&gt;</cite>, an encoding that is 4/3 the size of the actual raw data but only uses printable characters and, thus, gives valid XML documents.</p>
+</section>
+<section id="fixedformat">
+<h3>fixedFormat<a class="headerlink" href="#fixedformat" title="Link to this heading"></a></h3>
+<p><em>Default: True</em></p>
+<p>If <code class="docutils literal notranslate"><span class="pre">binary:</span> <span class="pre">False</span></code> is set, the values will be written as ASCII text to the file. If <code class="docutils literal notranslate"><span class="pre">fixedFormat</span></code> is set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, the values will be in a column-fixed format with a length of 16 characters and in scientific notation.</p>
+</section>
+<section id="combinefiles">
+<h3>combineFiles<a class="headerlink" href="#combinefiles" title="Link to this heading"></a></h3>
+<p><em>Default: False</em></p>
+<p>For serial execution, normally every process writes their own files. However, for massively parallel runs, this gives a high load on the file system. In theses cases, one should enable this option. Then a single file will be written per timestep, using MPI collective file operations.</p>
+<p>The collective files will also gather all 1D, 2D and 3D meshes, respectively. This means that one file containing all 1D meshes will be created, another one containing only 2D meshes and another one with 3D meshes, if there are any. This is useful in a scenario of numerous 1D muscle fibers. Without this option, a new file would be created for every muscle fiber, because it is a new mesh. With this option, all fibers are contained in a single file.</p>
+</section>
+<section id="file-suffixes">
+<h3>File suffixes<a class="headerlink" href="#file-suffixes" title="Link to this heading"></a></h3>
+<p>Depending on the <a class="reference internal" href="mesh.html"><span class="doc">Mesh</span></a>, different file formats with different file endings are created.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">*.vtr</span></code> StructuredRegularFixed mesh, serial execution</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*.pvtr</span></code> StructuredRegularFixed mesh, master file for parallel execution, besides this file, every rank writes a <code class="docutils literal notranslate"><span class="pre">*.vtr</span></code> file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*.vts</span></code> StructuredDeformable mesh, serial execution</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*.pvts</span></code> StructuredDeformable mesh, master file for parallel execution, besides this file, every rank writes a <code class="docutils literal notranslate"><span class="pre">*.vts</span></code> file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*.vtu</span></code> Unstructured mesh, serial execution</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*.pvtu</span></code> Unstructured mesh, master file for parallel execution, besides this file, every rank writes a <code class="docutils literal notranslate"><span class="pre">*.vtu</span></code> file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">*.vtp</span></code> A file containing multiple 1D meshes, when option <code class="docutils literal notranslate"><span class="pre">combineFiles</span></code> is used</p></li>
+</ul>
+</section>
+</section>
+<section id="pythonfile">
+<h2>PythonFile<a class="headerlink" href="#pythonfile" title="Link to this heading"></a></h2>
+<p>A <code class="docutils literal notranslate"><span class="pre">*.py</span></code> file will be written, that can be parsed using python and the <em>pickle</em> package. Human-readable output files and binary files can be created, depending on the <code class="docutils literal notranslate"><span class="pre">binary</span></code> option. Both options are valid pickle formats.</p>
+<p>The file contents can directly be loaded using <em>pickle</em> or with the <code class="docutils literal notranslate"><span class="pre">py_reader</span></code> utility, that load the data of potentially multiple input files, regardless whether they are binary or not, and also stitching together the pieces from different processes. An example code is given here:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">py_reader</span>
+
+<span class="n">filenames</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;...&quot;</span><span class="p">]</span>
+
+<span class="c1"># load all files</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">py_reader</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span><span class="n">filenames</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The data can also be inspected using the <code class="docutils literal notranslate"><span class="pre">catpy</span></code> and <code class="docutils literal notranslate"><span class="pre">plot</span></code> utilities, that come with opendihu and are located in the <code class="docutils literal notranslate"><span class="pre">scripts</span></code> subdirectory.</p>
+<p>Using</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>plot<span class="w"> </span>*.py
+</pre></div>
+</div>
+<p>all files in the current folder will be plotted using <em>Matplotlib</em>. An animation will be saved in <code class="docutils literal notranslate"><span class="pre">mp4</span></code> format and shown in an interactive plot.</p>
+<p>The utility</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>catpy<span class="w"> </span>*.py
+</pre></div>
+</div>
+<p>outputs the contents of the files to the console. This is useful for debugging and works again regardless if the files are binary or ASCII-based.</p>
+<p>The command line arguments to these two utilities are simply all files that should be considered, possibly from multiple timesteps and from multiple processes. The plot script only handles 1D and 2D plots, but automatically detects the contents and adjusts the plot format accordingly.</p>
+</section>
+<section id="pythoncallback">
+<h2>PythonCallback<a class="headerlink" href="#pythoncallback" title="Link to this heading"></a></h2>
+<p>This output writer does not write any files by itself. Instead, it calls a python callback function with an object of what would be contained in the file when the <code class="docutils literal notranslate"><span class="pre">PythonFile</span></code> format would be used. This callback function can then do whatever the user wants and write the data in a custom format.</p>
+</section>
+<section id="exfile">
+<h2>ExFile<a class="headerlink" href="#exfile" title="Link to this heading"></a></h2>
+<p>The EX file format is an ASCII-based file format for unstructured meshes that is used by <a class="reference external" href="http://opencmiss.org">OpenCMISS</a>. EX files are only suited for small problem sizes. It is also output by <a class="reference external" href="http://opencmiss.org">OpenCMISS Iron</a> and can be visualized using <a class="reference external" href="http://physiomeproject.org/software/opencmiss/cmgui/download">CMGUI</a>.
+More details on this file format can be found <a class="reference external" href="http://opencmiss.org/documentation/data_format/ex_file_format.html">here in the opencmiss documentation</a>.</p>
+<p>A geometry description consists of an <em>*.exelem</em> file that contains element adjacency information and an <em>*.exnode</em> file with the actual node positions.
+The output writer also outputs a <em>*.com</em> file, which contains <em>Perl</em> commands for <em>CMGUI</em>. You can visualize the data in the Ex files by calling</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>cmgui<span class="w"> </span>file.com
+</pre></div>
+</div>
+<p>This creates predefined visualizations in CMGUI that can be further adjusted.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">sphereSize</span></code> option defines how spheres, used to visualize nodes, will be rendered. The format is <code class="docutils literal notranslate"><span class="pre">x*y*z</span></code> and the default is <code class="docutils literal notranslate"><span class="pre">0.005*0.005*0.01</span></code>.</p>
+</section>
+<section id="megamol">
+<h2>MegaMol<a class="headerlink" href="#megamol" title="Link to this heading"></a></h2>
+<p><a class="reference external" href="https://megamol.org/">MegaMol</a> is a visualization framework started by <a class="reference external" href="https://www.visus.uni-stuttgart.de/en">VISUS</a> at University of Stuttgart. It efficiently visualizes spheres, also on supercomputing hardware.</p>
+<p>The MegaMol output writer outputs files in the <a class="reference external" href="https://adios2.readthedocs.io/en/latest/">Adaptable Input/Output System 2 (ADIOS2)</a> format. MegaMol can directly read this format. If the file is written to <code class="docutils literal notranslate"><span class="pre">/dev/shm/</span></code>, <em>In-Situ</em> visualization is performed that completely avoids the disc to generate visualization output.</p>
+<p>Since the file format is binary packed and self-descriptive, it is also suited for long-term storage of the data or for large simulation output in general. However, it cannot be directly visualization with e.g. Paraview.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="coupling.html" class="btn btn-neutral float-left" title="Coupling" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="output_surface.html" class="btn btn-neutral float-right" title="OutputSurface" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

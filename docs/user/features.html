@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Features &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Framework structure" href="framework_structure.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../introduction.html">Introduction</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../introduction.html#overview">Overview</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Features</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#equations">Equations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#boundary-and-initial-conditions">Boundary and initial conditions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#discretization-and-mesh-types">Discretization and Mesh types</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#input-output">Input/Output</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#parallelism">Parallelism</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="framework_structure.html">Framework structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l3"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="validation.html">Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">Python Settings</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../introduction.html">Introduction</a></li>
+      <li class="breadcrumb-item active">Features</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user/features.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="features">
+<h1>Features<a class="headerlink" href="#features" title="Link to this heading"></a></h1>
+<p>This page lists the functionality that is currently implemented. More detailed information is given on the <a class="reference internal" href="../settings.html"><span class="doc">Python Settings</span></a> pages.</p>
+<section id="equations">
+<h2>Equations<a class="headerlink" href="#equations" title="Link to this heading"></a></h2>
+<p>OpenDiHu currently implements the following model equations:</p>
+<ul class="simple">
+<li><p>Laplace and Poisson</p></li>
+<li><p>Diffusion, istropoic and anisotropic</p></li>
+<li><p>Monodomain: Reaction-diffusion, where the reaction term is given in <a class="reference external" href="https://www.cellml.org/">CellML</a> description</p></li>
+<li><p>Bidomain equation</p></li>
+<li><p>Multidomain equation</p></li>
+<li><p>Multi-physics combinations of the above</p></li>
+<li><p>Functionality to estimate and trace fibers from streamlines of a laplacian flow through a muscle volume</p></li>
+<li><p>Static linear elasticity</p></li>
+<li><p>Hyperelasticity, static and dynamic formulations</p></li>
+<li><p>Pre-defined hyperelastic materials such as Mooney-Rivlin or user-defined strain energy functions</p></li>
+</ul>
+</section>
+<section id="boundary-and-initial-conditions">
+<h2>Boundary and initial conditions<a class="headerlink" href="#boundary-and-initial-conditions" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Dirichlet and Neumann-type boundary conditions are supported.</p></li>
+<li><p>For transient problems, initial conditions have to be specified.</p></li>
+</ul>
+</section>
+<section id="discretization-and-mesh-types">
+<h2>Discretization and Mesh types<a class="headerlink" href="#discretization-and-mesh-types" title="Link to this heading"></a></h2>
+<ul>
+<li><p>For the time domain, there are explicit and implicit Euler and Heun method implemented, Crank-Nicolson, as well as a Godunov and Strang splitting scheme.</p>
+<p>To learn more about the time stepping schemes, see <a class="reference internal" href="../settings/timestepping_schemes_ode.html"><span class="doc">TimeSteppingSchemesOde</span></a>, the splitting schemes are explained at <a class="reference internal" href="../settings/splitting.html"><span class="doc">Operator Splitting</span></a>.</p>
+</li>
+<li><p>There are three implemented mesh types which each have variants for 1D, 2D and 3D.</p>
+<ul>
+<li><p><strong>StructuredRegularFixedOfDimension&lt;D&gt;</strong>:</p>
+<p>This is a rectilinear grid with fixed mesh width in all dimensions. To store a mesh, only the number of elements in the <cite>D</cite> dimensions and the mesh width or extent is needed.</p>
+<p>This is computationally fast and memory efficient. The stiffness and mass matrices for the laplace operator are assembled by precomputed stencils. This mesh type is mainly used for validation of the other mesh types and for examples that have an analytical solution.</p>
+</li>
+<li><p><strong>StructuredDeformableOfDimension&lt;D&gt;</strong>:</p>
+<p>This structured mesh can have arbitrary node positions, with a fixed number of elements in each dimension.</p>
+<p>Internally, there is no need to store extra adjacency information, only the node positions and number of elements in the dimensions is stored. Therefore, using this mesh type is computationally efficient. This type of mesh can deform over time, it is suitable for structured mechanics calculations.</p>
+</li>
+<li><p><strong>UnstructuredDeformableOfDimension&lt;D&gt;</strong>:</p>
+<p>This is the most general mesh type. The elements can arbitrarily share nodes. Supported are also <em>versions</em> like in OpenCMISS where there can be multiple degrees of freedom at a node, to model discontinuities. Such meshes can be natively constructed from <cite>exfiles</cite> which is a file format defined in the OpenCMISS ecosystem.</p>
+</li>
+</ul>
+</li>
+<li><p>The following basis functions are available: linear and quadratic Lagrange and cubic Hermite. Unit tests cover all combinations of mesh types in 1D, 2D, 3D with the basis function types, in serial and parallel execution.</p></li>
+</ul>
+<p>More details on the meshes are given on the <a class="reference internal" href="../settings/mesh.html"><span class="doc">Mesh</span></a> page.</p>
+</section>
+<section id="input-output">
+<h2>Input/Output<a class="headerlink" href="#input-output" title="Link to this heading"></a></h2>
+<ul>
+<li><p>The OpenDiHu framework has a Python 3 interpreter included and defines its own python dictionary-based config file format. Input for meshes can be specified by python lists containing node positions, element-node mappings, number of elements, etc., depending on the mesh type. This gives the user flexibility as to how to import and store custom mesh information.</p></li>
+<li><p>As a special case, <cite>exnode</cite> and <cite>exelem</cite> file types can be parsed to construct a mesh of type <cite>UnstructuredDeformableOfDimension&lt;D&gt;</cite>.</p></li>
+<li><p>OpenDiHu supports 5 output formats for simulation results:</p>
+<ul>
+<li><p><strong>Python file:</strong></p>
+<p>The data is exported as python dictionary. The output file can be configured to be human readable (ascii), or binary (using the python <cite>pickle</cite> package).</p>
+<p>This type of output is the most memory efficient and easy to handle output format. OpenDiHu comes with a plot script that can plot 1D and 2D results (also over time) directly from these files (simply execute <cite>plot</cite> in the shell, the script is located under <code class="docutils literal notranslate"><span class="pre">opendihu/scripts</span></code> which is on <code class="docutils literal notranslate"><span class="pre">PATH</span></code>).</p>
+</li>
+<li><p><strong>Python callback:</strong></p>
+<p>You can provide a callback function in the input config file that will be called regularly with the previously described python dict.</p>
+</li>
+<li><p><strong>VTK/Paraview:</strong></p></li>
+</ul>
+<blockquote>
+<div><p>Files with extensions <cite>*.vtr</cite>, <cite>*.vts</cite> and <cite>*.vtu</cite> are generated for the three mesh types, respectively and can be visualized with <a class="reference external" href="https://www.paraview.org/">ParaView</a>. This output method is preferred for 3D results. ParaView provides extensive tools for manipulating the visualisation and post)-processing the results.</p>
+</div></blockquote>
+<ul>
+<li><p><strong>Exfiles:</strong></p>
+<p>Every mesh type (not just <cite>UnstructuredDeformableOfDimension&lt;D&gt;</cite>) can be exported to pairs of <cite>exelem</cite> and <cite>exnode</cite> files. A <cite>com</cite> script is created that loads all generated exfiles (with correct offsets) and can be directly visualized using <a class="reference external" href="https://physiomeproject.org/software/opencmiss/cmgui/download">cmgui</a>.</p>
+</li>
+<li><p><strong>ADIOS native files:</strong></p>
+<p>The <a class="reference external" href="https://csmd.ornl.gov/adios">ADIOS library</a> is used to write this type of files. To perform in-situ visualization with <a class="reference external" href="https://megamol.org/">MegaMol</a>, the files can be directly written to RAM. This type of output is only suggested for experts from <a class="reference external" href="https://www.visus.uni-stuttgart.de/en">VISUS</a>.</p>
+</li>
+</ul>
+</li>
+<li><p>CSV based log files that contain parameters, timing and numerical information will be written at the end of each simulation run using parallel file I/O. They can be used for runtime statistics.</p></li>
+</ul>
+</section>
+<section id="parallelism">
+<h2>Parallelism<a class="headerlink" href="#parallelism" title="Link to this heading"></a></h2>
+<ul>
+<li><p>Distributed memory parallelism using MPI is implemented for structured meshes (<cite>StructuredRegularFixedOfDimension&lt;D&gt;</cite> and <cite>StructuredDeformableOfDimension&lt;D&gt;</cite>).</p></li>
+<li><p>Input can be specified globally and locally distributed.</p>
+<ul>
+<li><p>The simple case is a global specification of the mesh. In parallel execution, every process picks only the information for its own subdomain.</p></li>
+<li><p>The more advanced and parallel efficient way is to specify mesh information locally for each process. This approach is required for scenarios with large meshe and highly parallel execution (HPC), where providing the whole information to a single process is not feasible due to memory limits.</p>
+<p>In such case, a single settings file can be specified for every process. It contains if branches depending on the own process rank, to determine which data to provide for which process.</p>
+</li>
+</ul>
+</li>
+<li><p>Output of python files and VTK files is uses parallelism. Parallel output in this case results in seperate files for each process. The python plotting utility of OpenDiHu transparently handles parallel output files in the same way as serially created files. Paraview is able to work with the parallel VTK files.</p></li>
+<li><p>MPI I/O is used to write combined VTK output files, i.e. a single file per time step. This is needed on supercomputers when running with a high number of cores.</p></li>
+<li><p>The monodomain example has been successfully executed on 27,000 cores on Hazel Hen to simulate a biceps with a typical number of 270,000 fibers.</p></li>
+<li><p>Instruction level parallelism is enabled by suitable data structures. This holds especially in the CellML functionality, where multiple instances of the model are combined to enable Single-instruction-multiple-data type parallelism.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="framework_structure.html" class="btn btn-neutral float-right" title="Framework structure" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

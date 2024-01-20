@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Features" href="features.html" />
+    <link rel="prev" title="Introduction" href="../introduction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../introduction.html">Introduction</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../introduction.html#overview">Overview</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#using-docker">Using docker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#native-installation">Native installation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#build-step">Build step</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dowload-input-data">Dowload input data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#define-aliases-and-environment-variables">Define aliases and environment variables</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#building-with-scons">Building with scons</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#configuring-the-dependencies">Configuring the dependencies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="features.html">Features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="framework_structure.html">Framework structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="getting_started.html">Getting started</a></li>
+<li class="toctree-l3"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="validation.html">Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">Python Settings</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../introduction.html">Introduction</a></li>
+      <li class="breadcrumb-item active">Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user/installation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation">
+<span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
+<p>The standard way is to build the package and all examples from source, see <a class="reference internal" href="#native-installation">Native installation</a>.</p>
+<p>If you just quickly want to check the functionality without lengthy installation process, use our docker image, see <a class="reference internal" href="#using-docker">Using docker</a>.
+The docker image serves all the available functionality for executing simulations, also in parallel. Post-processing such as plotting is not possible in docker containers.</p>
+<section id="using-docker">
+<span id="id2"></span><h2>Using docker<a class="headerlink" href="#using-docker" title="Link to this heading"></a></h2>
+<p>With the docker image, you can use the framework directly without having to build and install any dependencies. Parallel execution with MPI is possible.
+The disadvantage is that you only have a shell and can’t plot anything.
+We provide docker images on docker hub that contain the latest release as of November 2023. They are based on recent Ubuntu 22.04 as well as legacy Ubuntu 16.04 to 20.04:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">maierbn/opendihu:2204</span></code> or alias <code class="docutils literal notranslate"><span class="pre">maierbn/opendihu:latest</span></code>:</p>
+<ul>
+<li><p>image based on Ubuntu 22.04</p></li>
+<li><p>all dependencies are installed</p></li>
+<li><p>petsc has all extra dependencies such as, e.g., HYPRE, PARMETIS etc.</p></li>
+<li><p>the core is built in debug and release target</p></li>
+<li><p>all examples are built in release target</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">maierbn/opendihu:2004</span></code>, <code class="docutils literal notranslate"><span class="pre">maierbn/opendihu:1804</span></code>, <code class="docutils literal notranslate"><span class="pre">maierbn/opendihu:1604</span></code>:</p>
+<ul>
+<li><p>images based on Ubuntu 20.04, 18.04, and 16.04</p></li>
+<li><p>dependencies are installed (except precice), petsc only has standard functionality</p></li>
+<li><p>the core is built in release target</p></li>
+<li><p>examples are not yet built</p></li>
+</ul>
+</li>
+</ul>
+<p>First install <a class="reference external" href="https://docs.docker.com/engine/install/ubuntu/">docker</a> following the instructions on the website. Then, you can run the provided docker image with the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>run<span class="w"> </span>-it<span class="w"> </span>maierbn/opendihu:latest<span class="w"> </span>bash
+</pre></div>
+</div>
+<p>You can also build docker images yourself. We provide Dockerfiles to set up OpenDiHu containers that import Ubuntu 16.04, 18.04, 20.04 or 22.04.
+To build one of the provided OpenDiHu container you have to</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Change to the directory where <cite>Dockerfile</cite> is located, under <code class="docutils literal notranslate"><span class="pre">tools/docker/ubuntu*</span></code></p></li>
+<li><p>Execute <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">build</span> <span class="pre">-t</span> <span class="pre">workspace</span> <span class="pre">.</span></code></p></li>
+</ol>
+</div></blockquote>
+<p>You can run the container you just built by executing <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">run</span> <span class="pre">-it</span> <span class="pre">workspace</span></code></p>
+</section>
+<section id="native-installation">
+<span id="id3"></span><h2>Native installation<a class="headerlink" href="#native-installation" title="Link to this heading"></a></h2>
+<p>In order to use the code for development or for more efficient runs, it is necessary to clone the repository locally and build and install the framework including all dependencies.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/maierbn/opendihu
+</pre></div>
+</div>
+<p>The <cite>develop</cite> branch contains the latest version. You can also check out the <a class="reference external" href="https://github.com/maierbn/opendihu/releases">releases</a>.</p>
+</section>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
+<p>On a blank computer with Ubuntu 20.04 or above, the following packages should be installed:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Packages needed on Ubuntu 16.04 and above</span>
+sudo<span class="w"> </span>apt-get<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="se">\</span>
+sudo<span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>build-essential<span class="w"> </span>cmake<span class="w"> </span>petsc-dev<span class="w"> </span>bison<span class="w"> </span>flex<span class="w"> </span>libeigen3-dev<span class="w"> </span>libxml2-dev<span class="w"> </span>libboost-all-dev<span class="w"> </span>libffi-dev<span class="w"> </span><span class="se">\</span>
+git<span class="w"> </span>wget<span class="w"> </span>unzip
+
+<span class="c1"># (optional) make `python` point to python3 (needed for some scripts that call python instead of python3)</span>
+update-alternatives<span class="w"> </span>--install<span class="w"> </span>/usr/bin/python<span class="w"> </span>python<span class="w"> </span>/usr/bin/python3<span class="w"> </span><span class="m">100</span>
+
+<span class="c1"># (optional) To be able to build this documentation, install</span>
+sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>python3-pip
+sudo<span class="w"> </span>pip3<span class="w"> </span>install<span class="w"> </span>sphinx<span class="w"> </span>recommonmark<span class="w"> </span>sphinx_rtd_theme
+</pre></div>
+</div>
+<p>For older systems, refer to the docker files for <a class="reference external" href="https://github.com/maierbn/opendihu/blob/develop/tools/docker/ubuntu16/Dockerfile">Ubuntu 16.04</a> and  <a class="reference external" href="https://github.com/maierbn/opendihu/blob/develop/tools/docker/ubuntu18/Dockerfile">Ubuntu 18.04</a>.</p>
+<p>OpenDiHu uses existing open-source projects, like PETSc, Python, Easylogging++, etc. The installation of OpenDiHu has to provide all these packages, too.
+A <a class="reference external" href="https://scons.org/">scons</a> based build system is included that automatically downloads and builds all needed dependencies.
+It was successfully tested on Ubuntu 16.04, 18.04, 20.04 and 22.04 (also on the Windows subsystem for linux, WSL) and on Debian as well as on the supercomputers <cite>Hazel Hen</cite> and <cite>Hawk</cite>.
+It should work on other Linux distributions as well. If something fails, usually minor adjustments in the configuration solve the problem.</p>
+<p>For each dependency, you can either specify the path of its installation if the dependency package is already installed on your system.
+Or, if you don’t do anything special, the build system downloads, builds and installs the dependencies on its own. This is the recommended way.</p>
+<p>Note that one of these dependencies is a development version of <cite>python3</cite> with <cite>numpy</cite>, <cite>scipy</cite> and <cite>matplotlib</cite>. OpenDiHu will download and install <cite>python3</cite> including these packages regardless of an already existing python3 installation on your system.</p>
+</section>
+<section id="build-step">
+<h2>Build step<a class="headerlink" href="#build-step" title="Link to this heading"></a></h2>
+<p>The recommended way for the first installation is to change into the <cite>opendihu</cite> directory and simply execute</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make
+</pre></div>
+</div>
+<p>Then, scons will download and install everything for a while. It runs the unit tests using 1, 2 and 6 processes. Then, it compiles all examples. As soon as the unit tests are being compiled, the installation has finished and you can abort the process. Or, you can wait for it to finish.</p>
+<p>If some of the dependencies were not found this is not a problem, e.g. if precice fails, you’ll not be able to use precice but everything else still works.</p>
+<p>You can also execute <cite>make release</cite> to only build the release target. This is enough if you don’t aim at developing the C++ code.</p>
+<p>Three different targets are defined: <cite>release</cite>, <cite>debug</cite> and <cite>releasewithdebuginfo</cite>.</p>
+<ul class="simple">
+<li><p>In <cite>release</cite> target, the code will be optimized to run as fast as possible.</p></li>
+<li><p>In <cite>debug</cite> target, compilation and execution will take more time. A lot of debugging information will be printed by the program to the console. This is the standard target to use during development.</p></li>
+<li><p>The third target, <cite>releasewithdebuginfo</cite> enables optimizations, like the <cite>release</cite> target, but additionally includes the debugging output.</p></li>
+</ul>
+<p>You can execute <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">release</span></code> to only build the release target. This is enough if you don’t aim at developing the C++ code.</p>
+<p>Analogous to <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">release</span></code>, there is also <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">debug</span></code> to build the debug target and <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">release_without_tests</span></code> or <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">debug_without_tests</span></code> to exclude build unit tests (which are not required but take a lot of time).
+To learn about more available make targets, read the <cite>Makefile</cite>.</p>
+<p>Internally, <code class="docutils literal notranslate"><span class="pre">make</span></code> calls the build system, <cite>scons</cite>.
+The installation procedure can also be started by the command <cite>scons</cite> for release build or <cite>scons BUILD_TYPE=debug</cite> for debug build.
+The <code class="docutils literal notranslate"><span class="pre">make</span></code> targets <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">release</span></code> and <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">debug</span></code> just call <code class="docutils literal notranslate"><span class="pre">scons</span></code> with the respective build type and thus building the framework <cite>debug</cite> or <cite>release</cite> mode.
+Instead of using the <cite>Makefile</cite> you can also call <code class="docutils literal notranslate"><span class="pre">scons</span></code> yourself.</p>
+</section>
+<section id="dowload-input-data">
+<h2>Dowload input data<a class="headerlink" href="#dowload-input-data" title="Link to this heading"></a></h2>
+<p>To execute some of the more advanced electrophysiology examples, you’ll need special input files, like meshes of a biceps muscle or input files that specify motor unit assignments.</p>
+<p>These files are too large to have in git.</p>
+<p>Instead, you have to download the files from <a class="reference external" href="https://zenodo.org/record/4705982">zenodo</a> and put them in the <code class="docutils literal notranslate"><span class="pre">examples/electrophysiology/input</span></code> directory.
+The download is compressed using tar, so you have to untar the directory.</p>
+<p>The download and extraction can be done with the following commands:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>examples/electrophysiology
+wget<span class="w"> </span>https://zenodo.org/records/4705982/files/input.tgz
+tar<span class="w"> </span>xf<span class="w"> </span>input.tgz
+</pre></div>
+</div>
+</section>
+<section id="define-aliases-and-environment-variables">
+<span id="installation-aliases"></span><h2>Define aliases and environment variables<a class="headerlink" href="#define-aliases-and-environment-variables" title="Link to this heading"></a></h2>
+<p>In order for some commands to work (e.g. the <code class="docutils literal notranslate"><span class="pre">plot</span></code> utility), you need to set the PATH variable to point to some directories of OpenDiHu.
+This can be done by adding the following lines to your <cite>~/.bashrc</cite> script or <cite>~/.bash_aliases</cite> on Ubuntu.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># set environment variables and PATH</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">OPENDIHU_HOME</span><span class="o">=</span>~/opendihu<span class="w">         </span><span class="c1"># replace this by the location for your installation</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:<span class="nv">$OPENDIHU_HOME</span>/scripts
+<span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:<span class="nv">$OPENDIHU_HOME</span>/scripts/geometry_manipulation
+<span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$PATH</span>:<span class="nv">$OPENDIHU_HOME</span>/scripts/file_manipulation
+</pre></div>
+</div>
+<p>(Replace the <cite>~/opendihu</cite> with your own path).
+Setting these variables is recommended but not required.</p>
+<p>The <cite>~/.bashrc</cite> or <cite>~/.bash_aliases</cite> file will be executed whenever you start a new <cite>bash</cite> instance.
+In order for the variable assignments to take effect, either close and reopen the console window or source the file yourself, by executing <code class="docutils literal notranslate"><span class="pre">.</span> <span class="pre">~/.bashrc</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>IMPORTANT:</strong> Ubuntu 22.04 users need to add <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">OMPI_MCA_osc=&quot;^ucx&quot;</span></code> to their <cite>~/.bashrc</cite> file.</p>
+</div>
+</section>
+<section id="building-with-scons">
+<h2>Building with scons<a class="headerlink" href="#building-with-scons" title="Link to this heading"></a></h2>
+<p>Opendihu consists of a <cite>core</cite> library that contains the main functionality and multiple examples, that each use the core library.
+As mentioned, to build the OpenDiHu core library either <cite>make</cite> can be used, or it is possible to use the build system <cite>scons</cite>.
+In order to build examples there is no choice, you need to use <cite>scons</cite>.</p>
+<p>To be able to use <cite>scons</cite>, you can either install the <cite>scons</cite> package on your system (<code class="docutils literal notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">scons</span></code> on Ubuntu)
+or use the <cite>scons</cite> program, that is packaged with OpenDiHu.
+This is located under <cite>dependencies/scons/scons.py</cite>, so simply run the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>dependencies/scons/scons.py<span class="w"> </span><span class="nv">BUILD_TYPE</span><span class="o">=</span>release
+</pre></div>
+</div>
+<p>Because this is a long command, it is advisable to define a bash alias for this scons command.
+There are some predefined helper scripts that handle various frequently used compilation commands.
+If you like, you can copy the following aliases to your <cite>~/.bashrc</cite> or <cite>~/.bash_aliases</cite> file, if you also have set the <cite>OPENDIHU_HOME</cite> environment variable as shown earlier.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># define convenience commands for compilation</span>
+<span class="nb">alias</span><span class="w"> </span><span class="nv">scons</span><span class="o">=</span><span class="s1">&#39;$OPENDIHU_HOME/dependencies/scons/scons.py&#39;</span>
+<span class="nb">alias</span><span class="w"> </span><span class="nv">s</span><span class="o">=</span><span class="s1">&#39;scons&#39;</span>
+<span class="nb">alias</span><span class="w"> </span><span class="nv">sd</span><span class="o">=</span><span class="s1">&#39;$OPENDIHU_HOME/scripts/shortcuts/sd.sh&#39;</span>
+<span class="nb">alias</span><span class="w"> </span><span class="nv">sdd</span><span class="o">=</span><span class="s1">&#39;$OPENDIHU_HOME/scripts/shortcuts/sdd.sh&#39;</span>
+<span class="nb">alias</span><span class="w"> </span><span class="nv">sddn</span><span class="o">=</span><span class="s1">&#39;cd .. &amp;&amp; scons BUILD_TYPE=d no_tests=yes no_examples=yes; cd -&#39;</span>
+<span class="nb">alias</span><span class="w"> </span><span class="nv">sdn</span><span class="o">=</span><span class="s1">&#39;scons BUILD_TYPE=d no_tests=yes no_examples=yes&#39;</span>
+<span class="nb">alias</span><span class="w"> </span><span class="nv">srn</span><span class="o">=</span><span class="s1">&#39;scons BUILD_TYPE=r no_tests=yes no_examples=yes&#39;</span>
+<span class="nb">alias</span><span class="w"> </span><span class="nv">sr</span><span class="o">=</span><span class="s1">&#39;$OPENDIHU_HOME/scripts/shortcuts/sr.sh&#39;</span>
+<span class="nb">alias</span><span class="w"> </span><span class="nv">srd</span><span class="o">=</span><span class="s1">&#39;$OPENDIHU_HOME/scripts/shortcuts/srd.sh&#39;</span>
+<span class="nb">alias</span><span class="w"> </span><span class="nv">srr</span><span class="o">=</span><span class="s1">&#39;$OPENDIHU_HOME/scripts/shortcuts/srr.sh&#39;</span>
+<span class="nb">alias</span><span class="w"> </span><span class="nv">mkor</span><span class="o">=</span><span class="s1">&#39;$OPENDIHU_HOME/scripts/shortcuts/mkor.sh&#39;</span>
+<span class="nb">alias</span><span class="w"> </span><span class="nv">mkorn</span><span class="o">=</span><span class="s1">&#39;$OPENDIHU_HOME/scripts/shortcuts/mkorn.sh&#39;</span>
+<span class="nb">alias</span><span class="w"> </span><span class="nv">mkod</span><span class="o">=</span><span class="s1">&#39;$OPENDIHU_HOME/scripts/shortcuts/mkod.sh&#39;</span>
+<span class="nb">alias</span><span class="w"> </span><span class="nv">mkodn</span><span class="o">=</span><span class="s1">&#39;$OPENDIHU_HOME/scripts/shortcuts/mkodn.sh&#39;</span>
+<span class="nb">alias</span><span class="w"> </span><span class="nv">mkordn</span><span class="o">=</span><span class="s1">&#39;$OPENDIHU_HOME/scripts/shortcuts/mkordn.sh&#39;</span>
+</pre></div>
+</div>
+<p>Then, the following commands can be used for the build:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">scons</span> <span class="pre">BUILD_TYPE=release</span></code> or <code class="docutils literal notranslate"><span class="pre">scons</span> <span class="pre">BUILD_TYPE=r</span></code> or <code class="docutils literal notranslate"><span class="pre">scons</span></code> or <code class="docutils literal notranslate"><span class="pre">s</span></code>:
+Build the file in the current directory in <cite>release</cite> mode, either to be used in the OpenDiHu main directory to build the core library or in any example directory.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scons</span> <span class="pre">BUILD_TYPE=debug</span></code> or <code class="docutils literal notranslate"><span class="pre">scons</span> <span class="pre">BUILD_TYPE=d</span></code> or <code class="docutils literal notranslate"><span class="pre">sd</span></code>: Build <cite>debug</cite> target in current directory.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sdd</span></code>: To be used from within a <cite>build_debug</cite> directory. Go one directory up, build the example in <cite>debug</cite> target and go back to the original directory. This alias is equivalent to <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">..;</span> <span class="pre">scons</span> <span class="pre">BUILD_TYPE=debug;</span> <span class="pre">cd</span> <span class="pre">-</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">srr</span></code>: To be used from within a <cite>build_release</cite> directory. Go one directory up, build the example in <cite>release</cite> target and go back to the original directory. This alias is equivalent to <code class="docutils literal notranslate"><span class="pre">cd</span> <span class="pre">..;</span> <span class="pre">scons</span> <span class="pre">BUILD_TYPE=release;</span> <span class="pre">cd</span> <span class="pre">-</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mkor</span></code>: “Make opendihu release”. Use this command in any directory. It changes into the <cite>opendihu</cite> directory, executes <cite>scons</cite> there, to build the core library and changes back to the original directory.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mkorn</span></code>: “Make opendihu release, no tests”. Same as <cite>mkor</cite>, except it does not build the unit tests. This is the most frequently used command to build the OpenDiHu core.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mkod</span></code>: “Make opendihu debug”. Use this command in any directory. It changes into the <cite>opendihu</cite> directory, executes <cite>scons BUILD_TYPE=debug</cite> there, to build the core library and changes back to the original directory.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mkodn</span></code>: “Make opendihu debug, no tests”. Same as <cite>mkor</cite>, except it does not build the unit tests. This is the most frequently used command to build the OpenDiHu core in debug target.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scons</span> <span class="pre">BUILD_TYPE=releasewithdebuginfo</span></code> or <code class="docutils literal notranslate"><span class="pre">scons</span> <span class="pre">BUILD_TYPE=rd</span></code> or <code class="docutils literal notranslate"><span class="pre">srd</span></code>: Build <cite>releasewithdebuginfo</cite> target in current directory.</p></li>
+</ul>
+</div></blockquote>
+<p>As an example, if you work on a particular example and are in its <cite>build_release</cite> subdirectory, use <code class="docutils literal notranslate"><span class="pre">mkorn</span> <span class="pre">&amp;&amp;</span> <span class="pre">srr</span></code> to build the core and the example and end up in the same directory afterwards.</p>
+<p>If you have called <cite>make</cite> and everything has completed after some hours (green text), you were successful. Go on and build some examples (See next page, <a class="reference internal" href="getting_started.html"><span class="doc">Getting started</span></a>).
+If not, read on, to find out what you need to configure in your case.</p>
+</section>
+<section id="configuring-the-dependencies">
+<h2>Configuring the dependencies<a class="headerlink" href="#configuring-the-dependencies" title="Link to this heading"></a></h2>
+<p>Configuration settings have to be provided in the python script <cite>user-variables.scons.py</cite>. These include settings for the dependency packages as well as further options concerning the build.</p>
+<p>The option <code class="docutils literal notranslate"><span class="pre">USE_VECTORIZED_FE_MATRIX_ASSEMBLY</span></code> specifies if the Finite Element matrices should be assembled with SIMD instruction using the Vc library.
+This leads to 4 elements always being a assembled at once using vector instructions (on systems with AVX-2).</p>
+<p>If set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, this significantly speeds up the computation for problems that assemble a lot of matrices, e.g. solid mechanics problems.
+However, it takes a long time to compile the code, up to 3x. If you intend to develop the core code, set it to <code class="docutils literal notranslate"><span class="pre">False</span></code> to have faster compilation.
+If you mainly want to run simulations including mechanics, set it to <code class="docutils literal notranslate"><span class="pre">True</span></code>.
+(Also set it to <code class="docutils literal notranslate"><span class="pre">False</span></code>, if compilation fails for <code class="docutils literal notranslate"><span class="pre">True</span></code> maybe because there is a bug somewhere that has not yet been found because the developers have this option always set to <code class="docutils literal notranslate"><span class="pre">False</span></code>.)</p>
+<p>For every dependency package there are variables like</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1">#PETSC_DOWNLOAD=True</span>
+<span class="c1">#PETSC_DIR=&quot;~/petsc/install&quot;</span>
+</pre></div>
+</div>
+<p>(Note, <cite>#</cite> means commented out here, because you shouldn’t specify both lines at once).
+The first line would instruct the build system to download and build the package, in this case PETSc.
+The second line would provide the path to an already existing installation on the system, which would then be used. Thus, specify either of those.</p>
+<p>There are similar options for all packages. You can read about more possibilities in the header of the <cite>user-variables.scons.py</cite> file.</p>
+<p>There are required dependencies, which need to be present in order for OpenDiHu to work, and optional dependencies:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Package</p></th>
+<th class="head"><p>Required</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><cite>MPI</cite></p></td>
+<td><p>yes</p></td>
+<td><div class="line-block">
+<div class="line"><em>Message Passing Interface</em>, used for data transfer between</div>
+<div class="line">processes. This should be your system MPI. If you let</div>
+<div class="line">OpenDiHu install it for you, <a class="reference external" href="https://www.open-mpi.org/">OpenMPI</a></div>
+<div class="line">will be chosen.</div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="https://www.mcs.anl.gov/petsc/">PETSc</a></p></td>
+<td><p>yes</p></td>
+<td><div class="line-block">
+<div class="line">Low-level data structures and solvers, see their <a class="reference external" href="https://www.mcs.anl.gov/petsc/">website</a></div>
+<div class="line">for more details.</div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><p><cite>Python3</cite></p></td>
+<td><p>yes</p></td>
+<td><div class="line-block">
+<div class="line">The <a class="reference external" href="https://www.python.org/">Python3 interpreter</a>,</div>
+<div class="line">version 3.9 or 3.6.5 for legacy. We need the development</div>
+<div class="line">header and source files, therefore it is recommended to</div>
+<div class="line">let OpenDiHu build python for you, even if your system</div>
+<div class="line">has python installed.</div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p><cite>pythonPackages</cite></p></td>
+<td><p>yes</p></td>
+<td><div class="line-block">
+<div class="line">This is a custom collection of python packages for the</div>
+<div class="line">python 3 interpreter and are available in the</div>
+<div class="line">python configuration scripts. It consists of</div>
+<div class="line"><cite>numpy matplotlib scipy numpy-stl svg.path triangle geomdl vtk</cite>.</div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><p><a class="reference external" href="https://github.com/tkislan/base64">Base64</a></p></td>
+<td><p>yes</p></td>
+<td><div class="line-block">
+<div class="line">An encoding standard and library that is used to create</div>
+<div class="line">binary VTK output files that can be viewed in Paraview.</div>
+<div class="line">Base64 encoded data is ASCII characters, the size is 4/3</div>
+<div class="line">of the raw binary data. The advantage is that despite</div>
+<div class="line">being packed, it can be embedded in human-readable <cite>XML</cite></div>
+<div class="line">files, which is the concept of VTK files.</div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="https://github.com/google/googletest">googletest</a></p></td>
+<td><p>no</p></td>
+<td><div class="line-block">
+<div class="line">A testing framework, used for unit tests. Opendihu</div>
+<div class="line">compiles also without unit tests, but it is recommended</div>
+<div class="line">to have them, especially for development of the core.</div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><p><a class="reference external" href="https://github.com/maierbn/semt">SEMT</a></p></td>
+<td><p>no</p></td>
+<td><div class="line-block">
+<div class="line">This is a small C++ symbolic differentiation toolbox</div>
+<div class="line">that will be used for nonlinear solid mechanics, to</div>
+<div class="line">derive material laws.</div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="https://adios2.readthedocs.io/en/latest">ADIOS2</a></p></td>
+<td><p>no</p></td>
+<td><div class="line-block">
+<div class="line">Binary output file format and library, parallely</div>
+<div class="line">efficient and self-descriptive. This is only installed,</div>
+<div class="line">if you have a very recent version of <cite>cmake</cite>. If this</div>
+<div class="line">fails to install it is no problem as most users won’t</div>
+<div class="line">need it. It is needed for interfacing <cite>MegaMol</cite>.</div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><p><a class="reference external" href="https://vcdevel.github.io/Vc-1.4.1/index.html">Vc</a></p></td>
+<td><p>yes</p></td>
+<td><div class="line-block">
+<div class="line">A vectorization library that produces <cite>simd</cite> code</div>
+<div class="line">depending on the hardware capabilities.</div>
+<div class="line"><br /></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="https://github.com/XBraid/xbraid">xbraid</a></p></td>
+<td><p>no</p></td>
+<td><div class="line-block">
+<div class="line">A framework for the parallel-in-time algorithm multigrid-</div>
+<div class="line">reduction-in-time (MGRIT)</div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><p><a class="reference external" href="https://opencor.ws/">OpenCOR</a></p></td>
+<td><p>no</p></td>
+<td><div class="line-block">
+<div class="line"><cite>OpenCOR</cite> is a modelling tool for CellML models and can</div>
+<div class="line">convert <cite>*.cellml</cite> files to C code files, <cite>*.c</cite>. If</div>
+<div class="line">installed, the conversion of cellml input files is</div>
+<div class="line">done automatically. If not, you can only input</div>
+<div class="line">C files of the cellml models.</div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="http://xmlsoft.org/">libxml</a></p></td>
+<td><p>no</p></td>
+<td><div class="line-block">
+<div class="line">A XML C parser, only needed for the installation of preCICE.</div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><p><a class="reference external" href="https://www.precice.org/">preCICE</a></p></td>
+<td><p>no</p></td>
+<td><div class="line-block">
+<div class="line">Numerical coupling library, required, e.g., for the</div>
+<div class="line">simulation of a muscle-tendon complex. This requires</div>
+<div class="line">a <a class="reference external" href="https://www.boost.org/">boost</a> installation as an additional prerequisite.</div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference external" href="https://github.com/zuhd-org/easyloggingpp">Easylogging++</a></p></td>
+<td><p>yes</p></td>
+<td><div class="line-block">
+<div class="line">This is the logging library. By default, logs are created</div>
+<div class="line">in <cite>/tmp/logs/</cite> and output is written to the standard output.</div>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<p>It is recommended to not let the build system download and build <cite>MPI</cite>,
+instead you should use your local MPI installation.</p>
+<p>On Ubuntu systems, the system MPI directory should already be set correctly by the default value in <cite>user-variables.scons.py</cite>.
+If you run <cite>make</cite>, you can check if MPI will be found.</p>
+<p>If the MPI location is not detected automatically, you have to specify the path yourself.
+Find out in which path on your system MPI is installed.
+The required directory contains a <cite>lib</cite> and an <cite>include</cite> subdirectory.
+It may be located at <cite>/usr/lib/openmpi</cite>, <cite>/usr/lib/mpich</cite>, <cite>/usr/lib/x86_64-linux-gnu/openmpi</cite> or similar.
+Set this path in <cite>user-variables.scons.py</cite> as the value of the variable <cite>MPI_DIR</cite>.</p>
+<p>When running <code class="docutils literal notranslate"><span class="pre">make</span></code>, <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">debug</span></code> or <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">release</span></code>, the dependencies will be downloaded and installed,
+and consequently, debug or release target will be build.
+The installation of dependencies can take several hours.
+The compilation of the <cite>core</cite> afterwards completes in several minutes.</p>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h2>
+<p>If something fails during the installation, read the <cite>config.log</cite> file that will be created.
+It contains information about the commands used in the build process.</p>
+<p>To restart the build process, it is sometimes required to clean the <cite>scons</cite> cache. This is done by deleting files <code class="docutils literal notranslate"><span class="pre">.sconf_temp</span> <span class="pre">.sconsign.dblite</span></code> which is executed by the command</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>clean
+</pre></div>
+</div>
+<p>The dependencies that were already installed successfully will be detected the next time and not installed again.
+However, sometimes it is required to try to build a packages again.
+You can force to rebuild selected packages by the <cite>…_REBUILD</cite> option, e.g.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>scons<span class="w"> </span><span class="nv">PETSC_REBUILD</span><span class="o">=</span>True
+</pre></div>
+</div>
+<p>to rebuild petsc, even if it was already detected.</p>
+<p>In general, the same options that can be specified in the <cite>user-variables.scons.py</cite> file
+can also be given like this on the command line as options to the <cite>scons</cite> command. (Also to the <cite>sd</cite> etc. shortcuts described earlier).</p>
+<p>To restart with downloading the package and then installing it again, use the <cite>…_REDOWNLOAD</cite> option, like this:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>scons<span class="w"> </span><span class="nv">PETSC_REDOWNLOAD</span><span class="o">=</span>True
+</pre></div>
+</div>
+<p>Sometimes it also helps to delete the whole folder of a package in the <cite>dependencies</cite> subdirectory
+and retry the installation.</p>
+<p>If during execution of an example an error occurs that says numpy could not be imported, try to install the python packages of the python3 installation within opendihu yourself:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>opendihu/dependencies/python/install/bin/python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>numpy<span class="w"> </span>matplotlib<span class="w"> </span>scipy<span class="w"> </span>svg.path<span class="w"> </span>geomdl
+</pre></div>
+</div>
+<p>If a dependency fails to install, you can try to install it manually on your own.
+The commands that are used by the <cite>scons</cite> build system are printed to the console and additionally logged in the <cite>config.log</cite> file.</p>
+<p>For advanced users, if you want to change the build system and update the commands that are executed
+for installing a specific dependency, have a look at the directory <cite>opendihu/dependencies/scons-config/sconsconfig/packages</cite>.
+It contains the source code for the build system.
+The main implementation is in <cite>Package.py</cite>, all other classes inherit from this class.
+Usually you find the file that is named like the dependency, e.g., <cite>LAPACK.py</cite> for Lapack or <cite>PETSc.py</cite> for PETSc.</p>
+<p>If you change something here, you need to rebuild the python <cite>egg</cite> file of <cite>scons-config</cite>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>&lt;your-opendihu-path&gt;
+<span class="nb">cd</span><span class="w"> </span>dependencies/scons-config
+.<span class="w"> </span>install_manually.sh
+</pre></div>
+</div>
+<p>Then, rerun the installation from the <cite>opendihu</cite> directory with <cite>scons</cite>.</p>
+<p>If you don’t succeed, ask for help and send us the <cite>config.log</cite> file.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../introduction.html" class="btn btn-neutral float-left" title="Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="features.html" class="btn btn-neutral float-right" title="Features" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

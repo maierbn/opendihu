@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hyperelasticity &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Dynamic hyperelasticity" href="dynamic_hyperelasticity.html" />
+    <link rel="prev" title="StaticBidomainSolver" href="static_bidomain_solver.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solver.html">Solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Hyperelasticity</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#description">Description</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#c-instantiation">C++ instantiation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#specification-of-the-material">Specification of the Material</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#specification-of-the-options">Specification of the options</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#specification-of-the-parameters">Specification of the parameters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#specification-of-the-strain-energy-function">Specification of the strain energy function</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#python-settings">Python settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#durationlogkey">durationLogKey</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#materialparameters"><cite>materialParameters</cite></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#displacementsscalingfactor">displacementsScalingFactor”</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#residualnormlogfilename">residualNormLogFilename</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#slotnames">slotNames</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#useanalyticjacobian-and-usenumericjacobian"><cite>useAnalyticJacobian</cite> and <cite>useNumericJacobian</cite></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dumpdensematlabvariables">dumpDenseMatlabVariables</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#meshname">meshName</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#inputmeshisglobal">inputMeshIsGlobal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fibermeshnames">fiberMeshNames</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#fiberdirection-fiberdirectioninelement">fiberDirection, fiberDirectionInElement</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#nonlinear-solver">Nonlinear Solver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#regularization">regularization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#loadfactors">loadFactors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#loadfactorgiveupthreshold">loadFactorGiveUpThreshold</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scaleinitialguess">scaleInitialGuess</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#nnonlinearsolvecalls">nNonlinearSolveCalls</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#boundary-conditions">Boundary Conditions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dirichletoutputfilename">dirichletOutputFilename</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#initial-values">Initial values</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extrapolateinitialguess">extrapolateInitialGuess</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#constantbodyforce">constantBodyForce</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#outputwriters">OutputWriters</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">Hyperelasticity</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/hyperelasticity.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="hyperelasticity">
+<h1>Hyperelasticity<a class="headerlink" href="#hyperelasticity" title="Link to this heading"></a></h1>
+<section id="description">
+<h2>Description<a class="headerlink" href="#description" title="Link to this heading"></a></h2>
+<p>This class is a nonlinear solver for hyperelastic solid mechanics problems in 3D using structured meshes. Incompressible materials are implemented by mixed-formulation Finite Elements with Taylor-Hood elements, which use quadratic shape functions for displacements (and velocities for dynamic problems) and linear shape functions for the pressure.
+For compressible materials, the pressure is computed from a constitutive equation and does not need an extra discretization.</p>
+<p>This solver computes the static problem, for the dynamic problem, use the <a class="reference internal" href="dynamic_hyperelasticity.html"><span class="doc">Dynamic hyperelasticity</span></a> solver.</p>
+</section>
+<section id="c-instantiation">
+<h2>C++ instantiation<a class="headerlink" href="#c-instantiation" title="Link to this heading"></a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">SpatialDiscretization</span><span class="o">::</span><span class="n">HyperelasticitySolver</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="n">Material</span>
+<span class="o">&gt;</span>
+<span class="c1">// or:</span>
+<span class="n">SpatialDiscretization</span><span class="o">::</span><span class="n">HyperelasticitySolver</span><span class="o">&lt;</span><span class="n">Material</span><span class="p">,</span><span class="w"> </span><span class="nb">true</span><span class="o">&gt;</span><span class="w">   </span><span class="c1">// default, same as without &quot;false&quot;</span>
+<span class="n">SpatialDiscretization</span><span class="o">::</span><span class="n">HyperelasticitySolver</span><span class="o">&lt;</span><span class="n">Material</span><span class="p">,</span><span class="w"> </span><span class="nb">false</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>If the second tempate parameter is <code class="docutils literal notranslate"><span class="pre">true</span></code>, additionally the PK1 stress <span class="math notranslate nohighlight">\(P\)</span> (instead of only the PK2 stress <span class="math notranslate nohighlight">\(S\)</span>) and the deformation gradient <span class="math notranslate nohighlight">\(F\)</span> will be contained in the output files. However, since <span class="math notranslate nohighlight">\(P\)</span> is unsymmetric it will be more data (9 values per dof). If the second parameter is set to <code class="docutils literal notranslate"><span class="pre">false</span></code>, the output files will be significantly smaller.
+The first template parameter <code class="docutils literal notranslate"><span class="pre">Material</span></code> is a class that describes the used constitutive equations at compile time.</p>
+<section id="specification-of-the-material">
+<h3>Specification of the Material<a class="headerlink" href="#specification-of-the-material" title="Link to this heading"></a></h3>
+<p>The following classes are pre-defined for the material:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">Equation</span><span class="o">::</span><span class="n">SolidMechanics</span><span class="o">::</span><span class="n">MooneyRivlinIncompressible3D</span>
+<span class="n">Equation</span><span class="o">::</span><span class="n">SolidMechanics</span><span class="o">::</span><span class="n">TransverselyIsotropicMooneyRivlinIncompressible3D</span>
+<span class="n">Equation</span><span class="o">::</span><span class="n">SolidMechanics</span><span class="o">::</span><span class="n">TransverselyIsotropicMooneyRivlinIncompressibleActive3D</span>
+<span class="n">Equation</span><span class="o">::</span><span class="n">SolidMechanics</span><span class="o">::</span><span class="n">HyperelasticTendon</span>
+</pre></div>
+</div>
+<p>You can look at <a class="reference external" href="https://github.com/maierbn/opendihu/blob/develop/core/src/equation/mooney_rivlin_incompressible.h">core/src/equation/mooney_rivlin_incompressible.h</a> to see how they are defined.</p>
+<p>Alternatively, a new formulation can directly be defined in the main cpp file. For this, the <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">Material</span></code> that is used as template parameter in the <code class="docutils literal notranslate"><span class="pre">HyperelasticitySolver</span></code> class has to be defined.
+It contains three parts:</p>
+<ul class="simple">
+<li><p>Some settings by defining <code class="docutils literal notranslate"><span class="pre">bool</span></code> constants</p></li>
+<li><p>Definition of material parameters. Values for these are set in the python settings.</p></li>
+<li><p>The strain energy function for the material.</p></li>
+</ul>
+<p>The following is an example for this.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;Python.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;cstdlib&gt;</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;iostream&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;easylogging++.h&quot;</span>
+
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&quot;opendihu.h&quot;</span>
+
+<span class="c1">// define material</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">Material</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">Equation</span><span class="o">::</span><span class="n">SolidMechanics</span><span class="o">::</span><span class="n">HyperelasticityBase</span>
+<span class="p">{</span>
+<span class="w">  </span><span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">isIncompressible</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w">      </span><span class="c1">//&lt; if the formulation is incompressible, then, strainEnergyDensityFunctionVolumetric will not be considered</span>
+<span class="w">  </span><span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">usesFiberDirection</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w">    </span><span class="c1">//&lt; if the decoupled form uses the 4th or 5th invariants, Ibar4, Ibar2, this means it is an anisotropic material</span>
+<span class="w">  </span><span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">usesActiveStress</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w">      </span><span class="c1">//&lt; if the value of an active stress term will be added to the stress</span>
+
+<span class="w">  </span><span class="c1">// material parameters</span>
+<span class="w">  </span><span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">c1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PARAM</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span><span class="w">     </span><span class="c1">//&lt; material parameter</span>
+<span class="w">  </span><span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">c2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PARAM</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span><span class="w">     </span><span class="c1">//&lt; material parameter</span>
+<span class="w">  </span><span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">kappa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PARAM</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span><span class="w">  </span><span class="c1">//&lt; material parameter, bulk modulus</span>
+
+<span class="w">  </span><span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">nMaterialParameters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w">  </span><span class="c1">//&lt; number of material parameters</span>
+
+<span class="w">  </span><span class="c1">//! the isochoric part of the decoupled strain energy function, Ψ_iso(Ibar1,Ibar2,Ibar4,Ibar5), in terms of the reduced invariants</span>
+<span class="w">  </span><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="n">strainEnergyDensityFunctionIsochoric</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">c1</span><span class="o">*</span><span class="p">(</span><span class="n">Ibar1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">c2</span><span class="o">*</span><span class="p">(</span><span class="n">Ibar2</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">3</span><span class="p">));</span>
+
+<span class="w">  </span><span class="c1">//! the volumetric part of the decoupled strain energy function, Ψ_vol(J), only used for compressible formulation (isIncompressible == false)</span>
+<span class="w">  </span><span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">G</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">INT</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="n">pow</span><span class="p">(</span><span class="n">J</span><span class="p">,</span><span class="n">INT</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">ln</span><span class="p">(</span><span class="n">J</span><span class="p">));</span><span class="w">        </span><span class="c1">// Holzapfel p.245</span>
+<span class="w">  </span><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="n">strainEnergyDensityFunctionVolumetric</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">kappa</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">G</span><span class="p">;</span>
+
+<span class="w">  </span><span class="c1">//! coupled form of the strain energy function, Ψ(I1,I2,I3), as alternative to the two decoupled functions</span>
+<span class="w">  </span><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="n">strainEnergyDensityFunctionCoupled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">//! another coupled form of the strain energy function, Ψ(C), dependent on right Cauchy Green tensor, C</span>
+<span class="w">  </span><span class="c1">//! it must only depend on variables C11, C12, C13, C22, C23, C33.</span>
+<span class="w">  </span><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="n">strainEnergyDensityFunctionCoupledDependentOnC</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="p">};</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+<span class="p">{</span>
+<span class="w">  </span><span class="c1">// Solves nonlinear hyperelasticity (Mooney-Rivlin) using the built-in solver</span>
+
+<span class="w">  </span><span class="c1">// initialize everything, handle arguments and parse settings from input file</span>
+<span class="w">  </span><span class="n">DihuContext</span><span class="w"> </span><span class="n">settings</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">);</span>
+
+
+<span class="w">  </span><span class="c1">// define problem</span>
+<span class="w">  </span><span class="n">SpatialDiscretization</span><span class="o">::</span><span class="n">HyperelasticitySolver</span><span class="o">&lt;</span><span class="n">Material</span><span class="o">&gt;</span><span class="w"> </span><span class="n">problem</span><span class="p">(</span><span class="n">settings</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// run problem</span>
+<span class="w">  </span><span class="n">problem</span><span class="p">.</span><span class="n">run</span><span class="p">();</span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">EXIT_SUCCESS</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Every new material has to inherit from <code class="docutils literal notranslate"><span class="pre">Equation::SolidMechanics::HyperelasticityBase</span></code>, which defines the following symbols:</p>
+<div class="highlight-c notranslate" id="baseclass"><div class="highlight"><pre><span></span><span class="c1">// reduced invariants, arguments of `strainEnergyDensityFunctionIsochoric`</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">Ibar1</span><span class="p">;</span><span class="w"> </span><span class="c1">//&lt; 1st reduced or modified strain invariant Ibar1 = tr(Cbar) = J^{-2/3}*I_1</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">Ibar2</span><span class="p">;</span><span class="w"> </span><span class="c1">//&lt; 2nd reduced or modified strain invariant Ibar2 = 1/2 (tr(Cbar)^2 - tr(Cbar^2)) = J^{-2/3}*I_2</span>
+<span class="w">                                      </span><span class="c1">// Note, there is no 3rd reduced or modified strain invariant needed, Ibar3 = det(Cbar) = 1 (incompressibility)</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">Ibar4</span><span class="p">;</span><span class="w"> </span><span class="c1">//&lt; 4th reduced or modified strain invariant Ibar4 = a0•C a0</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">Ibar5</span><span class="p">;</span><span class="w"> </span><span class="c1">//&lt; 5th reduced or modified strain invariant Ibar4 = a0•C^2 a0</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">lambda</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sqrt</span><span class="p">(</span><span class="n">Ibar4</span><span class="p">);</span><span class="w">    </span><span class="c1">//&lt; fiber stretch, helper variable that can also be used in `strainEnergyDensityFunctionIsochoric`</span>
+
+<span class="c1">// volume factor, argument of `strainEnergyDensityFunctionVolumetric` (only for compressible material)</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">J</span><span class="p">;</span><span class="w">     </span><span class="c1">//&lt; volume factor, J = det(F), only for compressible material (otherwise it is 1)</span>
+
+<span class="c1">// invariants, arguments of `strainEnergyDensityFunctionCoupled`</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">I1</span><span class="p">;</span><span class="w">    </span><span class="c1">//&lt; 1st strain invariant I1 = tr(C)</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">I2</span><span class="p">;</span><span class="w">    </span><span class="c1">//&lt; 2nd strain invariant I2 = 1/2 (tr(C)^2 - tr(C^2))</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">I3</span><span class="p">;</span><span class="w">    </span><span class="c1">//&lt; 3rd strain invariant I3 = det(C) = J^2</span>
+
+<span class="c1">// components of the right Cauchy Green tensor, arguments of `strainEnergyDensityFunctionCoupledDependentOnC</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">C11</span><span class="p">;</span><span class="w">    </span><span class="c1">//&lt; entry C11 of the right Cauchy Green tensor, C</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">C12</span><span class="p">;</span><span class="w">    </span><span class="c1">//&lt; entry C12 = C21 of the right Cauchy Green tensor, C</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">C13</span><span class="p">;</span><span class="w">    </span><span class="c1">//&lt; entry C13 = C31 of the right Cauchy Green tensor, C</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">C22</span><span class="p">;</span><span class="w">    </span><span class="c1">//&lt; entry C22 of the right Cauchy Green tensor, C</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">C23</span><span class="p">;</span><span class="w">    </span><span class="c1">//&lt; entry C23 = C32 of the right Cauchy Green tensor, C</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">C33</span><span class="p">;</span><span class="w">    </span><span class="c1">//&lt; entry C33 of the right Cauchy Green tensor, C</span>
+
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">a1</span><span class="p">;</span><span class="w">     </span><span class="c1">//&lt; entry a0_1 of the fiber direction, a0</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">a2</span><span class="p">;</span><span class="w">     </span><span class="c1">//&lt; entry a0_2 of the fiber direction, a0</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">a3</span><span class="p">;</span><span class="w">     </span><span class="c1">//&lt; entry a0_3 of the fiber direction, a0</span>
+
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">I4</span><span class="p">;</span><span class="w">     </span><span class="c1">//&lt; non-reduced 4th strain invariant, I4 = a0•C a0</span>
+</pre></div>
+</div>
+<p>These symbols are to be used as the parameters to the strain energy functions and are, thus, available in the material description class.
+Only some particular symbols can be used in some terms of the strain energy function.</p>
+<p>In the following, the three parts of a custom material are explained.</p>
+</section>
+<section id="specification-of-the-options">
+<h3>Specification of the options<a class="headerlink" href="#specification-of-the-options" title="Link to this heading"></a></h3>
+<p>Currently, three options have to be defined.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">isIncompressible</span></code> specifies if the material is incompressible. This implies <code class="docutils literal notranslate"><span class="pre">J=1</span></code> and <code class="docutils literal notranslate"><span class="pre">I3=1</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">usesFiberDirection</span></code>: if this is set, the material can be anisotropic and the invariants <code class="docutils literal notranslate"><span class="pre">Ibar4</span></code> and <code class="docutils literal notranslate"><span class="pre">Ibar5</span></code> are available. Furthermore, a fiber direction will be determined from the given fiber meshes in the python settings.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">usesActiveStress</span></code>: if this is true, the value of thet active stress will be added to the normal stress</p></li>
+</ul>
+</section>
+<section id="specification-of-the-parameters">
+<h3>Specification of the parameters<a class="headerlink" href="#specification-of-the-parameters" title="Link to this heading"></a></h3>
+<p>Parameters are constants that can appear in the formulation of the strain energy function. Their value has to be set in the python settings.</p>
+<p>The parameter section looks like the following.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="c1">// material parameters</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">c1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PARAM</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span><span class="w">     </span><span class="c1">//&lt; material parameter</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">c2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PARAM</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span><span class="w">     </span><span class="c1">//&lt; material parameter</span>
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">kappa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PARAM</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span><span class="w">  </span><span class="c1">//&lt; material parameter, bulk modulus</span>
+
+<span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">nMaterialParameters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w">  </span><span class="c1">//&lt; number of material parameters</span>
+</pre></div>
+</div>
+<p>Any number of parameters can be specified and the names are custom. (The specifiers already used in the <code class="docutils literal notranslate"><span class="pre">HyperelasticityBase</span></code> class can, of course, not be used).
+The parameters are assigned the macro <code class="docutils literal notranslate"><span class="pre">PARAM(i)</span></code> where <code class="docutils literal notranslate"><span class="pre">i</span></code> is a consecutively increasing number from 0.
+The number of parameters in <code class="docutils literal notranslate"><span class="pre">nMaterialParameters</span></code> has to be correct. This is the number of values that are expected in the python settings <code class="docutils literal notranslate"><span class="pre">materialParameters</span></code>.
+The order of the values in the python settings is given by the <code class="docutils literal notranslate"><span class="pre">PARAM</span></code> macros.</p>
+</section>
+<section id="specification-of-the-strain-energy-function">
+<span id="strain-energy-function"></span><h3>Specification of the strain energy function<a class="headerlink" href="#specification-of-the-strain-energy-function" title="Link to this heading"></a></h3>
+<p>The strain energy function, ψ, is the constitutive equation that connects deformation with stress response. For the 2nd Piola-Kirchhoff, <span class="math notranslate nohighlight">\(S\)</span>, and the right Cauchy-Green tensor, <span class="math notranslate nohighlight">\(C=F^\top\,F\)</span>, the following holds:</p>
+<div class="math notranslate nohighlight">
+\[S = 2\dfrac{∂ψ}{∂C}\]</div>
+<p>For a hyperelastic material, the strain energy can always be formulated in terms of invariants. The implemented functionality comprises 5 invariants. The first three specifiy isotropic material behaviour and the 4th and the 5th depend on a fiber direction.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}I_1 &amp;= tr(C),\\
+I_2 &amp;= \dfrac12 \big(tr(C)^2 - tr(C^2)\big),\\
+I_3 &amp;= det(C) = J^2,\\
+I_4 &amp;= a_0 \cdot C a_0,\\
+I_5 &amp;= a_0 \cdot C^2 a_0,\\\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(C\)</span> is the right Cauchy-Green tensor, <span class="math notranslate nohighlight">\(J = det F\)</span> is the volume ratio or the determinant of the deformation gradient, <span class="math notranslate nohighlight">\(F = grad_X χ\)</span> and <span class="math notranslate nohighlight">\(a_0\)</span> is the fiber direction.</p>
+<p>Often, the strain energy is given in a decoupled formulation. It is formulated in terms of quantities that are split into volumetric and isochor (with constant volume) contributions.  We have the volume-preserving measures</p>
+<div class="math notranslate nohighlight">
+\[\bar{F} = J^{-1/3}\,F, \quad \bar{C} = J^{-2/3}\,C\]</div>
+<p>Then, we use the modified or reduced invariants</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\bar{I}_1 &amp;= tr(\bar{C}) &amp;= J^{-2/3}\,I_1,\\
+\bar{I}_2 &amp;= \dfrac12 \big(tr(\bar{C})^2 - tr(\bar{C}^2)\big) &amp;= J^{-4/3}\,I_2,\\
+\bar{I}_3 &amp;= det(\bar{C}) = 1.\end{split}\]</div>
+<p>The general form in which the strain energy function can be specified consists of the following 4 summands.</p>
+<div class="math notranslate nohighlight">
+\[Ψ = Ψ_{iso}(\bar{I}_1, \bar{I}_2, \bar{I}_4, \bar{I}_5) + Ψ_{vol}(J) + Ψ(I_1,I_2,I_3) + Ψ(C,a_0,I4)\]</div>
+<p>Every summand can be set to constant 0 if not needed (<code class="docutils literal notranslate"><span class="pre">INT(0)</span></code> in the C++ code).</p>
+<p>In order to use a decoupled formulation, specify <span class="math notranslate nohighlight">\(Ψ_{iso}(\bar{I}_1, \bar{I}_2, \bar{I}_4, \bar{I}_5)\)</span> and <span class="math notranslate nohighlight">\(Ψ_{vol}(J)\)</span> for compressible materials or only <span class="math notranslate nohighlight">\(Ψ_{iso}(\bar{I}_1, \bar{I}_2, \bar{I}_4, \bar{I}_5)\)</span> for incompressible materials.</p>
+<p>To use a coupled formulation, use <span class="math notranslate nohighlight">\(Ψ(I_1,I_2,I_3)\)</span>. Though the strain energy function can always be formulated in terms of the invariants, some literature only provides a formulation in terms of the right Cauchy-Green tensor, <span class="math notranslate nohighlight">\(C\)</span> and the fiber direction, <span class="math notranslate nohighlight">\(a_0\)</span>. In this case, the function <span class="math notranslate nohighlight">\(Ψ(C,a_0,I4)\)</span> can be specified. For the last function, note that <span class="math notranslate nohighlight">\(I_4\)</span> is available as an abbreviation for <span class="math notranslate nohighlight">\(a_0 \cdot C a_0\)</span>.</p>
+<p>The available summands of <span class="math notranslate nohighlight">\(Ψ\)</span> also depends on the options that were set in the first part of the material structure. For incompressible material, i.e. if <code class="docutils literal notranslate"><span class="pre">isIncompressible</span> <span class="pre">==</span> <span class="pre">true</span></code>, we have the following form:</p>
+<div class="math notranslate nohighlight">
+\[Ψ = Ψ_{iso}(\bar{I}_1, \bar{I}_2, \bar{I}_4, \bar{I}_5) + Ψ(I_1,I_2,I_3) + Ψ(C,a_0)\]</div>
+<p>If <code class="docutils literal notranslate"><span class="pre">usesFiberDirection</span> <span class="pre">==</span> <span class="pre">false</span></code> there are no 4th and 5th invariants:</p>
+<div class="math notranslate nohighlight">
+\[Ψ = Ψ_{iso}(\bar{I}_1, \bar{I}_2) + Ψ_{vol}(J)  + Ψ(I_1,I_2,I_3) + Ψ(C,a_0,I4)\]</div>
+<p>The 4 functions <span class="math notranslate nohighlight">\(Ψ_{iso}(\bar{I}_1, \bar{I}_2, \bar{I}_4, \bar{I}_5)\)</span> <span class="math notranslate nohighlight">\(Ψ_{vol}(J)\)</span>, <span class="math notranslate nohighlight">\(Ψ(I_1,I_2,I_3)\)</span> and <span class="math notranslate nohighlight">\(Ψ(C,a_0)\)</span> are given by the following 4 symbols that need to be defined in the material struct:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="n">strainEnergyDensityFunctionIsochoric</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span><span class="w">      </span><span class="c1">// parameters: Ibar1,Ibar2,Ibar4,Ibar5,lambda (=sqrt(Ibar4))</span>
+<span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="n">strainEnergyDensityFunctionVolumetric</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span><span class="w">     </span><span class="c1">// parameters: J</span>
+<span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="n">strainEnergyDensityFunctionCoupled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span><span class="w">        </span><span class="c1">// parameters: I1,I2,I3</span>
+<span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="n">strainEnergyDensityFunctionCoupledDependentOnC</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span><span class="w">  </span><span class="c1">// parameters: C11, C12, C13, C22, C23, C33, a1, a2, a3, I4</span>
+</pre></div>
+</div>
+<p>The equations need to be specified according to the syntax of the <a class="reference external" href="https://github.com/st-gille/semt">SEMT library</a>.
+Normal operators such as <code class="docutils literal notranslate"><span class="pre">+</span></code>, <code class="docutils literal notranslate"><span class="pre">*</span></code>, <code class="docutils literal notranslate"><span class="pre">sqrt</span></code>, <code class="docutils literal notranslate"><span class="pre">ln</span></code> and <code class="docutils literal notranslate"><span class="pre">pow</span></code> can be used to combine the parameters given under <a class="reference internal" href="#baseclass"><span class="std std-ref">the base class</span></a>.
+Whenever an integer constant needs to be used, wrap it in <code class="docutils literal notranslate"><span class="pre">INT()</span></code>, e.g. <code class="docutils literal notranslate"><span class="pre">INT(5)</span></code>. Other factors that are no whole numbers cannot be used directly. They have to be defined as material parameter and their value is then set in the python settings.</p>
+<p>It is also possible to define helper functions that are reused later. This can be done with the type <code class="docutils literal notranslate"><span class="pre">static</span> <span class="pre">constexpr</span> <span class="pre">auto</span></code>.</p>
+<p>An example for the incompressible Mooney-Rivlin material is given below:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="n">strainEnergyDensityFunctionIsochoric</span>
+<span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">c1</span><span class="o">*</span><span class="p">(</span><span class="n">Ibar1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">c2</span><span class="o">*</span><span class="p">(</span><span class="n">Ibar2</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">3</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>An example for an incompressible material that uses a helper function is given here:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">c1</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">c2</span><span class="p">);</span>
+
+<span class="k">static</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="n">constexpr</span><span class="w"> </span><span class="n">strainEnergyDensityFunctionCoupled</span>
+<span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="n">c</span><span class="o">*</span><span class="n">pow</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">I3</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">d</span><span class="o">*</span><span class="n">ln</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">I3</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">c1</span><span class="o">*</span><span class="p">(</span><span class="n">I1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">c2</span><span class="o">*</span><span class="p">(</span><span class="n">I2</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">INT</span><span class="p">(</span><span class="mi">3</span><span class="p">));</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="python-settings">
+<h2>Python settings<a class="headerlink" href="#python-settings" title="Link to this heading"></a></h2>
+<p>The following shows all possible options. The meaning can be learned from the comments.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;HyperelasticitySolver&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;durationLogKey&quot;</span><span class="p">:</span>             <span class="s2">&quot;duration_mechanics&quot;</span><span class="p">,</span>         <span class="c1"># key to find duration of this solver in the log file</span>
+
+  <span class="s2">&quot;materialParameters&quot;</span><span class="p">:</span>         <span class="n">material_parameters</span><span class="p">,</span>          <span class="c1"># material parameters of the Mooney-Rivlin material</span>
+  <span class="s2">&quot;displacementsScalingFactor&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>                          <span class="c1"># scaling factor for displacements, only set to sth. other than 1 only to increase visual appearance for very small displacements</span>
+  <span class="s2">&quot;residualNormLogFilename&quot;</span><span class="p">:</span>    <span class="s2">&quot;log_residual_norm.txt&quot;</span><span class="p">,</span>      <span class="c1"># log file where residual norm values of the nonlinear solver will be written</span>
+  <span class="s2">&quot;slotNames&quot;</span><span class="p">:</span>                  <span class="p">[</span><span class="s2">&quot;ux&quot;</span><span class="p">,</span> <span class="s2">&quot;uy&quot;</span><span class="p">,</span> <span class="s2">&quot;uz&quot;</span><span class="p">],</span>           <span class="c1"># (optional) slot names of the data connector slots, there are three slots, namely the displacement components ux, uy, uz</span>
+  <span class="s2">&quot;useAnalyticJacobian&quot;</span><span class="p">:</span>        <span class="kc">True</span><span class="p">,</span>                         <span class="c1"># whether to use the analytically computed jacobian matrix in the nonlinear solver (fast)</span>
+  <span class="s2">&quot;useNumericJacobian&quot;</span><span class="p">:</span>         <span class="kc">False</span><span class="p">,</span>                        <span class="c1"># whether to use the numerically computed jacobian matrix in the nonlinear solver (slow), only works with non-nested matrices, if both numeric and analytic are enable, it uses the analytic for the preconditioner and the numeric as normal jacobian</span>
+
+  <span class="s2">&quot;dumpDenseMatlabVariables&quot;</span><span class="p">:</span>   <span class="kc">False</span><span class="p">,</span>                        <span class="c1"># whether to have extra output of matlab vectors, x,r, jacobian matrix (very slow)</span>
+  <span class="c1"># if useAnalyticJacobian,useNumericJacobian and dumpDenseMatlabVariables all all three true, the analytic and numeric jacobian matrices will get compared to see if there are programming errors for the analytic jacobian</span>
+
+  <span class="c1"># mesh</span>
+  <span class="s2">&quot;meshName&quot;</span><span class="p">:</span>                   <span class="s2">&quot;3Dmesh_quadratic&quot;</span><span class="p">,</span>           <span class="c1"># mesh with quadratic Lagrange ansatz functions</span>
+  <span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span>          <span class="kc">True</span><span class="p">,</span>                         <span class="c1"># boundary conditions are specified in global numberings, whereas the mesh is given in local numberings</span>
+
+  <span class="s2">&quot;fiberMeshNames&quot;</span><span class="p">:</span>             <span class="p">[],</span>                           <span class="c1"># fiber meshes that will be used to determine the fiber direction</span>
+  <span class="s2">&quot;fiberDirection&quot;</span><span class="p">:</span>             <span class="p">[],</span>                           <span class="c1"># if fiberMeshNames is empty, directly set the constant fiber direction, in global coordinate system</span>
+  <span class="s2">&quot;fiberDirectionInElement&quot;</span><span class="p">:</span>    <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>                      <span class="c1"># if fiberMeshNames and fiberDirections are empty, directly set the constant fiber direction, in element coordinate system</span>
+
+  <span class="c1"># nonlinear solver</span>
+  <span class="s2">&quot;relativeTolerance&quot;</span><span class="p">:</span>          <span class="mf">1e-5</span><span class="p">,</span>                         <span class="c1"># 1e-10 relative tolerance of the linear solver</span>
+  <span class="s2">&quot;absoluteTolerance&quot;</span><span class="p">:</span>          <span class="mf">1e-10</span><span class="p">,</span>                        <span class="c1"># 1e-10 absolute tolerance of the residual of the linear solver</span>
+  <span class="s2">&quot;solverType&quot;</span><span class="p">:</span>                 <span class="s2">&quot;preonly&quot;</span><span class="p">,</span>                    <span class="c1"># type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls</span>
+  <span class="s2">&quot;preconditionerType&quot;</span><span class="p">:</span>         <span class="s2">&quot;lu&quot;</span><span class="p">,</span>                         <span class="c1"># type of the preconditioner</span>
+  <span class="s2">&quot;maxIterations&quot;</span><span class="p">:</span>              <span class="mf">1e4</span><span class="p">,</span>                          <span class="c1"># maximum number of iterations in the linear solver</span>
+  <span class="s2">&quot;snesMaxFunctionEvaluations&quot;</span><span class="p">:</span> <span class="mf">1e8</span><span class="p">,</span>                          <span class="c1"># maximum number of function iterations</span>
+  <span class="s2">&quot;snesMaxIterations&quot;</span><span class="p">:</span>          <span class="mi">100</span><span class="p">,</span>                           <span class="c1"># maximum number of iterations in the nonlinear solver</span>
+  <span class="s2">&quot;snesRelativeTolerance&quot;</span><span class="p">:</span>      <span class="mf">1e-5</span><span class="p">,</span>                         <span class="c1"># relative tolerance of the nonlinear solver</span>
+  <span class="s2">&quot;snesLineSearchType&quot;</span><span class="p">:</span>         <span class="s2">&quot;l2&quot;</span><span class="p">,</span>                         <span class="c1"># type of linesearch, possible values: &quot;bt&quot; &quot;nleqerr&quot; &quot;basic&quot; &quot;l2&quot; &quot;cp&quot; &quot;ncglinear&quot;</span>
+  <span class="s2">&quot;snesAbsoluteTolerance&quot;</span><span class="p">:</span>      <span class="mf">1e-5</span><span class="p">,</span>                         <span class="c1"># absolute tolerance of the nonlinear solver</span>
+  <span class="s2">&quot;snesRebuildJacobianFrequency&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>                          <span class="c1"># how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again</span>
+
+  <span class="c1">#&quot;dumpFilename&quot;: &quot;out/r{}/m&quot;.format(sys.argv[-1]),          # dump system matrix and right hand side after every solve</span>
+  <span class="s2">&quot;dumpFilename&quot;</span><span class="p">:</span>               <span class="s2">&quot;&quot;</span><span class="p">,</span>                           <span class="c1"># dump disabled</span>
+  <span class="s2">&quot;dumpFormat&quot;</span><span class="p">:</span>                 <span class="s2">&quot;default&quot;</span><span class="p">,</span>                     <span class="c1"># default, ascii, matlab</span>
+
+  <span class="c1">#&quot;loadFactors&quot;:                [0.1, 0.2, 0.35, 0.5, 1.0],   # load factors for every timestep</span>
+  <span class="c1">#&quot;loadFactors&quot;:                [0.5, 1.0],                   # load factors for every timestep</span>
+  <span class="c1">#&quot;loadFactors&quot;:                list(np.logspace(-3,0,4)),    # load factors, equally spaced in log space: (1e-3, 1e-2, 1e-1, 1)</span>
+  <span class="s2">&quot;loadFactors&quot;</span><span class="p">:</span>                <span class="p">[],</span>                           <span class="c1"># no load factors, solve problem directly</span>
+  <span class="s2">&quot;loadFactorGiveUpThreshold&quot;</span><span class="p">:</span>  <span class="mf">4e-2</span><span class="p">,</span>                         <span class="c1"># a threshold for the load factor, when to abort the solve of the current time step. The load factors are adjusted automatically if the nonlinear solver diverged. If the progression between two subsequent load factors gets smaller than this value, the solution is aborted.</span>
+  <span class="s2">&quot;scaleInitialGuess&quot;</span><span class="p">:</span>          <span class="kc">False</span><span class="p">,</span>                        <span class="c1"># when load stepping is used, scale initial guess between load steps a and b by sqrt(a*b)/a. This potentially reduces the number of iterations per load step (but not always).</span>
+  <span class="s2">&quot;nNonlinearSolveCalls&quot;</span><span class="p">:</span>       <span class="mi">1</span><span class="p">,</span>                            <span class="c1"># how often the nonlinear solve should be called</span>
+
+  <span class="c1"># boundary and initial conditions</span>
+  <span class="s2">&quot;dirichletBoundaryConditions&quot;</span><span class="p">:</span> <span class="n">elasticity_dirichlet_bc</span><span class="p">,</span>             <span class="c1"># the initial Dirichlet boundary conditions that define values for displacements u</span>
+  <span class="s2">&quot;neumannBoundaryConditions&quot;</span><span class="p">:</span>   <span class="n">elasticity_neumann_bc</span><span class="p">,</span>               <span class="c1"># Neumann boundary conditions that define traction forces on surfaces of elements</span>
+  <span class="s2">&quot;divideNeumannBoundaryConditionValuesByTotalArea&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>            <span class="c1"># if the given Neumann boundary condition values under &quot;neumannBoundaryConditions&quot; are total forces instead of surface loads and therefore should be scaled by the surface area of all elements where Neumann BC are applied</span>
+
+  <span class="s2">&quot;initialValuesDisplacements&quot;</span><span class="p">:</span>  <span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">mx</span><span class="o">*</span><span class="n">my</span><span class="o">*</span><span class="n">mz</span><span class="p">)],</span>     <span class="c1"># the initial values for the displacements, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]</span>
+  <span class="s2">&quot;initialValuesVelocities&quot;</span><span class="p">:</span>     <span class="p">[[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">mx</span><span class="o">*</span><span class="n">my</span><span class="o">*</span><span class="n">mz</span><span class="p">)],</span>     <span class="c1"># the initial values for the velocities, vector of values for every node [[node1-x,y,z], [node2-x,y,z], ...]</span>
+  <span class="s2">&quot;extrapolateInitialGuess&quot;</span><span class="p">:</span>     <span class="kc">True</span><span class="p">,</span>                                <span class="c1"># if the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities</span>
+  <span class="s2">&quot;constantBodyForce&quot;</span><span class="p">:</span>           <span class="n">constant_body_force</span><span class="p">,</span>                 <span class="c1"># a constant force that acts on the whole body, e.g. for gravity</span>
+
+  <span class="s2">&quot;dirichletOutputFilename&quot;</span><span class="p">:</span>     <span class="s2">&quot;out/&quot;</span><span class="o">+</span><span class="n">scenario_name</span><span class="o">+</span><span class="s2">&quot;/dirichlet_boundary_conditions_tendon&quot;</span><span class="p">,</span>    <span class="c1"># filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable</span>
+
+  <span class="c1"># define which file formats should be written</span>
+  <span class="c1"># 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.</span>
+  <span class="s2">&quot;OutputWriter&quot;</span> <span class="p">:</span> <span class="p">[</span>
+
+    <span class="c1"># Paraview files</span>
+    <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;Paraview&quot;</span><span class="p">,</span> <span class="s2">&quot;outputInterval&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;out/&quot;</span><span class="o">+</span><span class="n">scenario_name</span><span class="o">+</span><span class="s2">&quot;/u&quot;</span><span class="p">,</span> <span class="s2">&quot;binary&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fixedFormat&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;onlyNodalValues&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;combineFiles&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fileNumbering&quot;</span><span class="p">:</span> <span class="s2">&quot;incremental&quot;</span><span class="p">},</span>
+
+    <span class="c1"># Python files and callback</span>
+    <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;PythonFile&quot;</span><span class="p">,</span> <span class="s2">&quot;outputInterval&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;out/all/&quot;</span><span class="o">+</span><span class="n">scenario_name</span><span class="p">,</span> <span class="s2">&quot;binary&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fixedFormat&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;onlyNodalValues&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;combineFiles&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fileNumbering&quot;</span><span class="p">:</span> <span class="s2">&quot;incremental&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;PythonCallback&quot;</span><span class="p">,</span> <span class="s2">&quot;outputInterval&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;out/all/&quot;</span><span class="o">+</span><span class="n">scenario_name</span><span class="p">,</span> <span class="s2">&quot;callback&quot;</span><span class="p">:</span> <span class="n">handle_result_hyperelasticity</span><span class="p">,</span> <span class="s2">&quot;binary&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fixedFormat&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;onlyNodalValues&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;combineFiles&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fileNumbering&quot;</span><span class="p">:</span> <span class="s2">&quot;incremental&quot;</span><span class="p">},</span>
+  <span class="p">],</span>
+  <span class="c1"># 2. additional output writer that writes also the hydrostatic pressure</span>
+  <span class="s2">&quot;pressure&quot;</span><span class="p">:</span> <span class="p">{</span>   <span class="c1"># output files for pressure function space (linear elements), contains pressure values, as well as displacements and velocities</span>
+    <span class="s2">&quot;OutputWriter&quot;</span> <span class="p">:</span> <span class="p">[</span>
+      <span class="c1">#{&quot;format&quot;: &quot;Paraview&quot;, &quot;outputInterval&quot;: 1, &quot;filename&quot;: &quot;out/&quot;+scenario_name+&quot;/p&quot;, &quot;binary&quot;: True, &quot;fixedFormat&quot;: False, &quot;onlyNodalValues&quot;:True, &quot;combineFiles&quot;:True, &quot;fileNumbering&quot;: &quot;incremental&quot;},</span>
+    <span class="p">]</span>
+  <span class="p">},</span>
+  <span class="c1"># 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written</span>
+  <span class="s2">&quot;LoadIncrements&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;OutputWriter&quot;</span> <span class="p">:</span> <span class="p">[</span>
+      <span class="c1">#{&quot;format&quot;: &quot;Paraview&quot;, &quot;outputInterval&quot;: 1, &quot;filename&quot;: &quot;out/load_increments&quot;, &quot;binary&quot;: False, &quot;fixedFormat&quot;: False, &quot;onlyNodalValues&quot;:True, &quot;combineFiles&quot;:True, &quot;fileNumbering&quot;: &quot;incremental&quot;},</span>
+    <span class="p">]</span>
+  <span class="p">},</span>
+<span class="p">},</span>
+</pre></div>
+</div>
+<section id="durationlogkey">
+<h3>durationLogKey<a class="headerlink" href="#durationlogkey" title="Link to this heading"></a></h3>
+<p>A key under which the duration for this solver is stored in the log file.</p>
+</section>
+<section id="materialparameters">
+<h3><cite>materialParameters</cite><a class="headerlink" href="#materialparameters" title="Link to this heading"></a></h3>
+<p>A list of material parameters, must match the number of parameters in the material.</p>
+</section>
+<section id="displacementsscalingfactor">
+<h3>displacementsScalingFactor”<a class="headerlink" href="#displacementsscalingfactor" title="Link to this heading"></a></h3>
+<p>A scaling factor for the displacements that will be written to the output files. This is mainly for debugging.
+Only set this to something other than 1 to increase the visual appearance for very small displacements.</p>
+</section>
+<section id="residualnormlogfilename">
+<h3>residualNormLogFilename<a class="headerlink" href="#residualnormlogfilename" title="Link to this heading"></a></h3>
+<p>A txt log file where the residual norm values of the nonlinear solver will be written to.</p>
+<p>The progression of the residual norm over number of iterations can be visualized using <code class="docutils literal notranslate"><span class="pre">plot_residual_norm.py</span></code>.</p>
+</section>
+<section id="slotnames">
+<h3>slotNames<a class="headerlink" href="#slotnames" title="Link to this heading"></a></h3>
+<p>(optional) A list of names for the data connector slots. The slot names are used for connecting the slots to other solvers, i.e., when the displacement results should be reused by another solver.
+Each slot name should have &lt;= 10 characters. See <a class="reference internal" href="output_connector_slots.html"><span class="doc">Connector Slots</span></a> for more details.</p>
+<p>The key <cite>slotNames</cite> can also be omitted if the slots should not be reused. Note that these slotNames are not needed if the Hyperelasticity solver is contained in a <a class="reference internal" href="muscle_contraction_solver.html"><span class="doc">Muscle contraction solver</span></a>.</p>
+</section>
+<section id="useanalyticjacobian-and-usenumericjacobian">
+<h3><cite>useAnalyticJacobian</cite> and <cite>useNumericJacobian</cite><a class="headerlink" href="#useanalyticjacobian-and-usenumericjacobian" title="Link to this heading"></a></h3>
+<p>Whether to use the analytically computed jacobian matrix in the nonlinear solver (fast) or the numerically computed jacobian matrix in the nonlinear solver (slow). This only works with non-nested matrices, if both numeric and analytic are enabled, it uses the analytic for the preconditioner and the numeric as normal jacobian.</p>
+</section>
+<section id="dumpdensematlabvariables">
+<h3>dumpDenseMatlabVariables<a class="headerlink" href="#dumpdensematlabvariables" title="Link to this heading"></a></h3>
+<p>Whether to have extra output of matlab vectors, x,r, jacobian matrix (very slow). This is mainly for debugging.
+If <cite>useAnalyticJacobian</cite>, <cite>useNumericJacobian</cite> and <cite>dumpDenseMatlabVariables</cite> are all three set to <code class="docutils literal notranslate"><span class="pre">True</span></code>, the analytic and numeric Jacobian matrices will get compared to see if there are programming errors for the analytic jacobian. Use this only for very small problems (like 5 elements)</p>
+</section>
+<section id="meshname">
+<h3>meshName<a class="headerlink" href="#meshname" title="Link to this heading"></a></h3>
+<p>The mesh to use, this mesh has to use quadratic Lagrange basis functions. See <a class="reference internal" href="mesh.html"><span class="doc">Mesh</span></a> how to specify meshes.</p>
+</section>
+<section id="inputmeshisglobal">
+<h3>inputMeshIsGlobal<a class="headerlink" href="#inputmeshisglobal" title="Link to this heading"></a></h3>
+<p>This refers to the specification of the boundary conditions. Indicates whether the numberings used in the BCs is interpreted as global or local numbers. Note, that the mesh can be specified independently, i.e., it is possible to have the mesh specification in local numberings and the boundary conditions in global numberings.</p>
+</section>
+<section id="fibermeshnames">
+<h3>fiberMeshNames<a class="headerlink" href="#fibermeshnames" title="Link to this heading"></a></h3>
+<p>Fiber meshes that will be used to determine the fiber direction, used for anisotropic materials</p>
+</section>
+<section id="fiberdirection-fiberdirectioninelement">
+<h3>fiberDirection, fiberDirectionInElement<a class="headerlink" href="#fiberdirection-fiberdirectioninelement" title="Link to this heading"></a></h3>
+<p>If fiberMeshNames is empty, directly set the constant fiber direction. Either use <cite>fiberDirection</cite> to specify a direction in the global coordinate system, or use <cite>fiberDirectionInElement</cite> to specify the direction in the element coordinate system. The direction should be a vector, e.g., <code class="docutils literal notranslate"><span class="pre">[0,0,1]</span></code></p>
+</section>
+<section id="nonlinear-solver">
+<h3>Nonlinear Solver<a class="headerlink" href="#nonlinear-solver" title="Link to this heading"></a></h3>
+<p>The following parameters can be given to specify the nonlinear solver:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;relativeTolerance&quot;</span><span class="p">:</span>          <span class="mf">1e-5</span><span class="p">,</span>                         <span class="c1"># 1e-10 relative tolerance of the linear solver</span>
+<span class="s2">&quot;absoluteTolerance&quot;</span><span class="p">:</span>          <span class="mf">1e-10</span><span class="p">,</span>                        <span class="c1"># 1e-10 absolute tolerance of the residual of the linear solver</span>
+<span class="s2">&quot;solverType&quot;</span><span class="p">:</span>                 <span class="s2">&quot;preonly&quot;</span><span class="p">,</span>                    <span class="c1"># type of the linear solver: cg groppcg pipecg pipecgrr cgne nash stcg gltr richardson chebyshev gmres tcqmr fcg pipefcg bcgs ibcgs fbcgs fbcgsr bcgsl cgs tfqmr cr pipecr lsqr preonly qcg bicg fgmres pipefgmres minres symmlq lgmres lcd gcr pipegcr pgmres dgmres tsirm cgls</span>
+<span class="s2">&quot;preconditionerType&quot;</span><span class="p">:</span>         <span class="s2">&quot;lu&quot;</span><span class="p">,</span>                         <span class="c1"># type of the preconditioner</span>
+<span class="s2">&quot;maxIterations&quot;</span><span class="p">:</span>              <span class="mf">1e4</span><span class="p">,</span>                          <span class="c1"># maximum number of iterations in the linear solver</span>
+<span class="s2">&quot;snesMaxFunctionEvaluations&quot;</span><span class="p">:</span> <span class="mf">1e8</span><span class="p">,</span>                          <span class="c1"># maximum number of function iterations</span>
+<span class="s2">&quot;snesMaxIterations&quot;</span><span class="p">:</span>          <span class="mi">100</span><span class="p">,</span>                           <span class="c1"># maximum number of iterations in the nonlinear solver</span>
+<span class="s2">&quot;snesRelativeTolerance&quot;</span><span class="p">:</span>      <span class="mf">1e-5</span><span class="p">,</span>                         <span class="c1"># relative tolerance of the nonlinear solver</span>
+<span class="s2">&quot;snesLineSearchType&quot;</span><span class="p">:</span>         <span class="s2">&quot;l2&quot;</span><span class="p">,</span>                         <span class="c1"># type of linesearch, possible values: &quot;bt&quot; &quot;nleqerr&quot; &quot;basic&quot; &quot;l2&quot; &quot;cp&quot; &quot;ncglinear&quot;</span>
+<span class="s2">&quot;snesAbsoluteTolerance&quot;</span><span class="p">:</span>      <span class="mf">1e-5</span><span class="p">,</span>                         <span class="c1"># absolute tolerance of the nonlinear solver</span>
+<span class="s2">&quot;snesRebuildJacobianFrequency&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>                          <span class="c1"># how often the jacobian should be recomputed, -1 indicates NEVER rebuild, 1 means rebuild every time the Jacobian is computed within a single nonlinear solve, 2 means every second time the Jacobian is built etc. -2 means rebuild at next chance but then never again</span>
+
+<span class="s2">&quot;dumpFilename&quot;</span><span class="p">:</span>               <span class="s2">&quot;&quot;</span><span class="p">,</span>                           <span class="c1"># dump disabled</span>
+<span class="s2">&quot;dumpFormat&quot;</span><span class="p">:</span>                 <span class="s2">&quot;default&quot;</span><span class="p">,</span>                    <span class="c1"># default, ascii, matlab</span>
+</pre></div>
+</div>
+<p>Details, e.g., about <cite>dumpFilename</cite> can also be found under <a class="reference internal" href="solver.html"><span class="doc">Solver</span></a>.</p>
+<p>Note that the top-level <code class="docutils literal notranslate"><span class="pre">regularization</span></code> option also influences the error of the solution, see next section.</p>
+</section>
+<section id="regularization">
+<h3>regularization<a class="headerlink" href="#regularization" title="Link to this heading"></a></h3>
+<p>When using non-cartesian meshes, some elements may have interior angles of almost 180 degrees. In such elements, the inversion of the mapping from element coordinates to world coordinates is nearly singular.
+Inverting the jacobian matrix of this mapping is poorly conditioned and gives large errors. As a remedy, the following regularization can be specified. If the absolute determinant of the matrix is below a given threshold <cite>tol</cite>, a constant <cite>eps*h</cite> is added on the diagonal of the matrix. Thus, the problem becomes better conditioned.
+The constant depends on the mesh width <cite>h</cite>. For <span class="math notranslate nohighlight">\(h \to 0\)</span>, the regularization vanishes and the formulation converges to the correct solution.</p>
+<p>This regularization is applied to all matrix inversions (not only for the described mapping between element and world coordinates). The parameters <cite>tol</cite> and <cite>eps</cite> can be specified by the <code class="docutils literal notranslate"><span class="pre">&quot;regularization&quot;</span></code> option as a list <code class="docutils literal notranslate"><span class="pre">[tol,</span> <span class="pre">eps]</span></code>.
+The option can be set to <code class="docutils literal notranslate"><span class="pre">None</span></code>, to disable the regularization (equivalent to <code class="docutils literal notranslate"><span class="pre">[0,0]</span></code>). If not specified, the default regularization is <cite>[1e-2,1e-1]</cite>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s2">&quot;regularization&quot;</span><span class="p">:</span>           <span class="p">[</span><span class="mf">1e-5</span><span class="p">,</span><span class="mf">1e-3</span><span class="p">],</span>                  <span class="c1"># None to disable or [tol,eps]. if the absolute determinant |J|=|det(F)| within an element is below tol, add eps*I to the matrix, to regularize the inversion of the nearly singular matrix</span>
+  <span class="c1">#&quot;regularization&quot;:           None,                         # None to disable or [tol,eps]. if the absolute determinant |J|=|det(F)| within an element is below tol, add eps*I to the matrix, to regularize the inversion of the nearly singular matrix</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="loadfactors">
+<h3>loadFactors<a class="headerlink" href="#loadfactors" title="Link to this heading"></a></h3>
+<p>The load factors to solve the static problem. This should be a list of factors between 0 and 1 with the last factor 1. The loads will be scaled with these factors. After a solution with a factor was solved, the next solution uses the previous solution as initial values. Thus, it is possible to solve badly conditioned problems by increasing the load step by step.</p>
+<p>Examples for load factors:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+<span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">)),</span>   <span class="c1"># use 10 equidistant load factors in [0,1] in log space</span>
+<span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+<span class="p">[],</span>                           <span class="c1"># no load factors, solve problem directly</span>
+</pre></div>
+</div>
+</section>
+<section id="loadfactorgiveupthreshold">
+<h3>loadFactorGiveUpThreshold<a class="headerlink" href="#loadfactorgiveupthreshold" title="Link to this heading"></a></h3>
+<p>When a computation diverges, it is automatically retried with a load factor that is half as large as the failed load step.
+This can lead to the load factors getting smaller and smaller without any successfull solution. In such a case it is desirable to abort the computation.
+If the progression between two subsequent load factors gets smaller than this threshold value, the solution is finally considered diverged and the computation continues with the next solver.</p>
+</section>
+<section id="scaleinitialguess">
+<h3>scaleInitialGuess<a class="headerlink" href="#scaleinitialguess" title="Link to this heading"></a></h3>
+<p>(default: False) After a load step has been computed, scale the resulting solution that is used as the initial guess for the next load step.
+If the previous load factor is <span class="math notranslate nohighlight">\(b\)</span> and the next load factor is <span class="math notranslate nohighlight">\(b\)</span>, the naive way would be to scale by the factor <span class="math notranslate nohighlight">\(b/a\)</span> (divide by old factor, multiply by new factor).
+However, this would lead to an overshoot, as the material is approximated linearly but the real model is nonlinear.
+Instead, we scale scale by <span class="math notranslate nohighlight">\(\sqrt{ab}/a\)</span>. This corresponds to the geometric mean between the old load factor and the new load factor.</p>
+<p>This scaling usually reduces the initial residual. Nevertheless, the number of iterations is sometimes higher, maybe because the prediction led to a worse area in the definition space of the model.</p>
+<p>Note, this option is different from <cite>extrapolateInitialGuess</cite>, which only applies to dynamic problems and uses information from the last timestep. The option <cite>scaleInitialGuess</cite> uses information from the previous load step and is indepent of whether the problem is static or dynamic.</p>
+</section>
+<section id="nnonlinearsolvecalls">
+<h3>nNonlinearSolveCalls<a class="headerlink" href="#nnonlinearsolvecalls" title="Link to this heading"></a></h3>
+<p>How often the same static problem should be solved. This should be set to 1, because it makes no sense to solve the same problem multiple times. It originates from the Chaste documentation, where they observed different solutions after the first solve (which doesn’t make sense).</p>
+</section>
+<section id="boundary-conditions">
+<h3>Boundary Conditions<a class="headerlink" href="#boundary-conditions" title="Link to this heading"></a></h3>
+<p>Boundary conditions are specified with the keys <code class="docutils literal notranslate"><span class="pre">dirichletBoundaryConditions</span></code>, <code class="docutils literal notranslate"><span class="pre">neumannBoundaryConditions</span></code> and <code class="docutils literal notranslate"><span class="pre">divideNeumannBoundaryConditionValuesByTotalArea</span></code>.
+Refer to <a class="reference internal" href="boundary_conditions.html"><span class="doc">Boundary Conditions</span></a> how to specify boundary conditions.</p>
+<p><code class="docutils literal notranslate"><span class="pre">divideNeumannBoundaryConditionValuesByTotalArea</span></code> specifies if the given Neumann boundary condition values under <code class="docutils literal notranslate"><span class="pre">neumannBoundaryConditions</span></code> are total forces or surface loads. If <code class="docutils literal notranslate"><span class="pre">True</span></code> the values are surface loads and will be scaled by the surface area of all elements where Neumann BC are applied. The unit is then <cite>N/cm^2</cite>. If <code class="docutils literal notranslate"><span class="pre">False</span></code>, the values are treated as normal Neumann boundary condition values, i.e. nodal force values with unit <cite>N</cite>.</p>
+</section>
+<section id="dirichletoutputfilename">
+<h3>dirichletOutputFilename<a class="headerlink" href="#dirichletoutputfilename" title="Link to this heading"></a></h3>
+<p>A filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable. This is for debugging the Dirichlet boundary condition nodes</p>
+</section>
+<section id="initial-values">
+<h3>Initial values<a class="headerlink" href="#initial-values" title="Link to this heading"></a></h3>
+<p>The initial values are given by <code class="docutils literal notranslate"><span class="pre">initialValuesDisplacements</span></code> and <code class="docutils literal notranslate"><span class="pre">initialValuesVelocities</span></code>. A list of entries for all dofs is required, as vector of values for every node: <code class="docutils literal notranslate"><span class="pre">[[node1-x,y,z],</span> <span class="pre">[node2-x,y,z],</span> <span class="pre">...]</span></code></p>
+</section>
+<section id="extrapolateinitialguess">
+<h3>extrapolateInitialGuess<a class="headerlink" href="#extrapolateinitialguess" title="Link to this heading"></a></h3>
+<p>If the initial values for the dynamic nonlinear problem should be computed by extrapolating the previous displacements and velocities (from the previous timestep).
+This is faster and should be set to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</section>
+<section id="constantbodyforce">
+<h3>constantBodyForce<a class="headerlink" href="#constantbodyforce" title="Link to this heading"></a></h3>
+<p>A constant force that acts on the whole body, e.g. for gravity. The units are <code class="docutils literal notranslate"><span class="pre">cm/ms^2</span></code> It should be a 3d vector (list of 3 entries):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">constant_body_force</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="o">-</span><span class="mf">9.81e-4</span><span class="p">)</span>   <span class="c1"># [cm/ms^2], gravity constant for the body force</span>
+</pre></div>
+</div>
+</section>
+<section id="outputwriters">
+<h3>OutputWriters<a class="headerlink" href="#outputwriters" title="Link to this heading"></a></h3>
+<p>There are different types of output writers that output different variables.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;OutputWriter&quot;</span></code>: 1. main output writer that writes output files using the quadratic elements function space. Writes displacements, velocities and PK2 stresses.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;pressure&quot;</span></code>: 2. additional output writer that writes also the hydrostatic pressure</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;LoadIncrements&quot;</span></code>: 4. output writer for debugging, outputs files after each load increment, the geometry is not changed but u and v are written</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="static_bidomain_solver.html" class="btn btn-neutral float-left" title="StaticBidomainSolver" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="dynamic_hyperelasticity.html" class="btn btn-neutral float-right" title="Dynamic hyperelasticity" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

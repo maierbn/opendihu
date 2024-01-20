@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connector Slots &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="FiniteElementMethod" href="finite_element_method.html" />
+    <link rel="prev" title="Boundary Conditions" href="boundary_conditions.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solver.html">Solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Connector Slots</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#connectedslotsterm1to2-and-connectedslotsterm2to1"><cite>connectedSlotsTerm1To2</cite> and <cite>connectedSlotsTerm2To1</cite></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#solverstructurediagramfile">solverStructureDiagramFile</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-global-slot-names">Using global slot names</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#connection-by-choosing-equal-slot-names">Connection by choosing equal slot names</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">Connector Slots</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/output_connector_slots.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="connector-slots">
+<h1>Connector Slots<a class="headerlink" href="#connector-slots" title="Link to this heading"></a></h1>
+<p>Each solver has multiple <em>connector slots</em> where field variables are exposed to surrounding solvers.
+When using a <a class="reference internal" href="coupling.html"><span class="doc">Coupling</span></a> or <a class="reference internal" href="splitting.html"><span class="doc">Operator Splitting</span></a> scheme, data will be transferred between the two involved solvers.</p>
+<p>After solution of term 1 is complete, all slots of term 2 will get the values of the connected slots from term 1. After the solution of term 2 is complete, the opposite connections will be used.</p>
+<p>The connections between the slots of two solvers have to be specified in the settings. There are two possibilities</p>
+<ul class="simple">
+<li><p>Either in the Coupling or Splitting scheme itself using the <code class="docutils literal notranslate"><span class="pre">connectedSlotsTerm1To2</span></code> and <code class="docutils literal notranslate"><span class="pre">connectedSlotsTerm2To1</span></code> options.</p></li>
+<li><p>Or globally with the <code class="docutils literal notranslate"><span class="pre">&quot;connectedSlots&quot;</span></code> option and referencing the slots by slot names.</p></li>
+</ul>
+<p>The first possibility is shown below.
+The following is an example of two solvers within a <cite>StrangSplitting</cite>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;solverStructureDiagramFile&quot;</span><span class="p">:</span> <span class="s2">&quot;solver_structure.txt&quot;</span><span class="p">,</span>     <span class="c1"># filename of file that will contain a visualization of the solver structure and data mapping</span>
+<span class="s2">&quot;StrangSplitting&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="c1">#&quot;timeStepWidth&quot; and other options</span>
+
+  <span class="s2">&quot;connectedSlotsTerm1To2&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>         <span class="c1"># list of slots of term 2 that are connected to the slots of term 1</span>
+  <span class="s2">&quot;connectedSlotsTerm2To1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>    <span class="c1"># list of slots of term 1 that are connected to the slots of term 2, None means slot is not connected</span>
+
+  <span class="c1">#&quot;connectedSlotsTerm1To2&quot;: {0:1, 1:0},   # alternative form</span>
+  <span class="c1">#&quot;connectedSlotsTerm2To1&quot;: {0:0, 2:1},</span>
+
+  <span class="s2">&quot;Term1&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="c1"># settings of first solver</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;Term2&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="c1"># settings of second solver</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<section id="connectedslotsterm1to2-and-connectedslotsterm2to1">
+<h2><cite>connectedSlotsTerm1To2</cite> and <cite>connectedSlotsTerm2To1</cite><a class="headerlink" href="#connectedslotsterm1to2-and-connectedslotsterm2to1" title="Link to this heading"></a></h2>
+<p>The options <code class="docutils literal notranslate"><span class="pre">connectedSlotsTerm1To2</span></code> and <code class="docutils literal notranslate"><span class="pre">connectedSlotsTerm2To1</span></code> specify which slots should be connected to each other. The first specifies to which slots of term 2 the slots of term 1 will be connected to. The second vice-versa.</p>
+<p>They can either be given as a list or as a dict. If a list is given, the items in the list are the slots of the other solver and correspond to the own slots 0,1,2… Slots that should not be connected have to be given as <code class="docutils literal notranslate"><span class="pre">None</span></code>. But normally, all slots should be connected.</p>
+<p>If a dict is given, the mappings can be specified directly, i.e. <code class="docutils literal notranslate"><span class="pre">2:1</span></code> means connect the own slot no. 2 to the slot 1 of the other solver.</p>
+<p>If two slots of both solvers are connected both ways, the field variables can be reused. Otherwise, the data has to be copied, which is slower. Therefore, it is often beneficial to connect slots both ways even if the reverse direction wouldn’t be needed for the data flow, but then copy can be avoided.</p>
+<p>There are some special rules, when data will still be copied even if the slots are connected both ways, e.g. if there is a <a class="reference internal" href="cellml_adapter.html"><span class="doc">CellMLAdapter</span></a> and two different states are mapped. This has to do with the internal data representation using the PETSc Vec’s.</p>
+<p>If copy is avoided can be seen from the <em>solverStructureDiagramFile</em> which will be explained below.</p>
+</section>
+<section id="solverstructurediagramfile">
+<h2>solverStructureDiagramFile<a class="headerlink" href="#solverstructurediagramfile" title="Link to this heading"></a></h2>
+<p>(string) Filename of a file that will contain a visualization of the output slots connections. This file will be written when the program completes. If the program crashes, the file will also be written, however, it may not contain the full information if not all solvers have been visited prior to the crash.</p>
+<p>The following is an example for such a file. It is from the <code class="docutils literal notranslate"><span class="pre">fibers_emg</span></code> example. (It is an older version, the recent version looks even fancier) It can be seen that the <code class="docutils literal notranslate"><span class="pre">solution.membrane/V</span></code> variable is shared between the CellMLAdapter and the diffusion solver (no copy). Outside this variable is also copied to the StaticBidomainSolver.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Solver<span class="w"> </span>structure:
+
+├──<span class="w"> </span>Coupling
+│<span class="w">  </span>output<span class="w"> </span>slots:
+│<span class="w">  </span>solution.membrane/V<span class="w">                     </span>──<span class="w"> </span>¤0<span class="w"> </span>x
+│
+│<span class="w">  </span>slot<span class="w"> </span>connections:
+│<span class="w">  </span><span class="m">0</span>¤<span class="w"> </span>-&gt;<span class="w"> </span>¤0
+│
+│<span class="w"> </span>├──<span class="w"> </span>FastMonodomainSolver
+│<span class="w"> </span>│<span class="w">   </span><span class="o">(</span><span class="s2">&quot;Term1&quot;</span><span class="o">)</span>
+│<span class="w"> </span>│<span class="w"> </span>└──<span class="w"> </span>MultipleInstances
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>├──<span class="w"> </span>StrangSplitting
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>output<span class="w"> </span>slots:
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>solution.membrane/V<span class="w">               </span>──<span class="w"> </span>¤0────┐
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">                                             </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>slot<span class="w"> </span>connections:<span class="w">                          </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span><span class="m">0</span>¤<span class="w"> </span>&lt;<span class="o">=</span>&gt;<span class="w"> </span>¤0<span class="w">                                  </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">                                             </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>├──<span class="w"> </span>MultipleInstances<span class="w">                       </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">   </span><span class="o">(</span><span class="s2">&quot;Term1&quot;</span><span class="o">)</span><span class="w">                               </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>├──<span class="w"> </span>Heun<span class="w">                                  </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>output<span class="w"> </span>slots:<span class="w">                          </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>solution.membrane/V<span class="w">           </span>──<span class="w"> </span>¤0══╗<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">                                       </span>║<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>└──<span class="w"> </span>CellmlAdapter<span class="w">                     </span>║<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>└<span class="w">                                       </span>║<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>└<span class="w">                                         </span>║<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">                                           </span>║<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>└──<span class="w"> </span>MultipleInstances<span class="w">                     </span>║<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">   </span><span class="o">(</span><span class="s2">&quot;Term2&quot;</span><span class="o">)</span><span class="w">                             </span>║<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>├──<span class="w"> </span>ImplicitEuler<span class="w">                       </span>║<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>output<span class="w"> </span>slots:<span class="w">                        </span>║<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>solution.0<span class="w">                    </span>──<span class="w"> </span>¤0══╝<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">                                         </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>├──<span class="w"> </span>FiniteElementMethod<span class="w">                 </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>output<span class="w"> </span>slots:<span class="w">                        </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>solution.0<span class="w">                  </span>──<span class="w"> </span>¤0<span class="w"> </span>x<span class="w">  </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w">                                       </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>└<span class="w">                                         </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>└<span class="w">                                           </span>│
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w"> </span>└<span class="w">                                             </span>│
+│<span class="w"> </span>│<span class="w"> </span>└<span class="w">                                               </span>│
+│<span class="w"> </span>└<span class="w">                                                 </span>│
+│<span class="w">                                                   </span>│
+│<span class="w"> </span>├──<span class="w"> </span>StaticBidomainSolver<span class="w">                          </span>│
+│<span class="w"> </span>│<span class="w">   </span><span class="o">(</span><span class="s2">&quot;Term2&quot;</span><span class="o">)</span><span class="w">                                     </span>│
+│<span class="w"> </span>│<span class="w">  </span>output<span class="w"> </span>slots:<span class="w">                                  </span>│
+│<span class="w"> </span>│<span class="w">  </span>Vm.0<span class="w">                                  </span>──<span class="w"> </span>¤0&lt;───┘
+│<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>├──<span class="w"> </span>FiniteElementMethod
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">   </span><span class="o">(</span><span class="s2">&quot;PotentialFlow&quot;</span><span class="o">)</span>
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>output<span class="w"> </span>slots:
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>solution.0<span class="w">                          </span>──<span class="w"> </span>¤0<span class="w"> </span>x
+│<span class="w"> </span>│<span class="w"> </span>│
+│<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>├──<span class="w"> </span>FiniteElementMethod
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">   </span><span class="o">(</span><span class="s2">&quot;Activation Transmembrane&quot;</span><span class="o">)</span>
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>output<span class="w"> </span>slots:
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>solution.0<span class="w">                          </span>──<span class="w"> </span>¤0<span class="w"> </span>x
+│<span class="w"> </span>│<span class="w"> </span>│
+│<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>├──<span class="w"> </span>FiniteElementMethod
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">   </span><span class="o">(</span><span class="s2">&quot;Activation Extracellular&quot;</span><span class="o">)</span>
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>output<span class="w"> </span>slots:
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>solution.0<span class="w">                          </span>──<span class="w"> </span>¤0<span class="w"> </span>x
+│<span class="w"> </span>│<span class="w"> </span>│
+│<span class="w"> </span>└
+└
+
+connection<span class="w"> </span>types:
+<span class="w">  </span>═══<span class="w"> </span>...<span class="w"> </span>reuse<span class="w"> </span>field<span class="w"> </span>variable,<span class="w"> </span>no<span class="w"> </span>copy
+<span class="w">  </span>──&gt;<span class="w"> </span>...<span class="w"> </span>copy<span class="w"> </span>data<span class="w"> </span><span class="k">in</span><span class="w"> </span>direction<span class="w"> </span>of<span class="w"> </span>arrow
+</pre></div>
+</div>
+</section>
+<section id="using-global-slot-names">
+<h2>Using global slot names<a class="headerlink" href="#using-global-slot-names" title="Link to this heading"></a></h2>
+<p>Another possibility that is advantageous for more complex examples is to specify all slot connections globally.
+This required that all connector slots have names assigned. These names have to be set by options in the solvers, usually <code class="docutils literal notranslate"><span class="pre">slotNames</span></code> (e.g. <a class="reference internal" href="static_bidomain_solver.html"><span class="doc">StaticBidomainSolver</span></a>, <a class="reference internal" href="muscle_contraction_solver.html"><span class="doc">Muscle contraction solver</span></a>, <a class="reference internal" href="quasi_static_linear_elasticity_solver.html"><span class="doc">QuasiStaticLinearElasticitySolver</span></a>) or <code class="docutils literal notranslate"><span class="pre">additionalSlotNames</span></code> (e.g. any <a class="reference internal" href="timestepping_schemes_ode.html"><span class="doc">TimeSteppingSchemesOde</span></a>, <a class="reference internal" href="map_dofs.html"><span class="doc">MapDofs</span></a>). For the <a class="reference internal" href="cellml_adapter.html"><span class="doc">CellMLAdapter</span></a>, the slot names are directly given in the <code class="docutils literal notranslate"><span class="pre">mappings</span></code> option.</p>
+<p>Then you can define the option</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="o">...</span>
+  <span class="s2">&quot;connectedSlots&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s2">&quot;mn_out&quot;</span><span class="p">,</span> <span class="s2">&quot;mn&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;in_g&quot;</span><span class="p">,</span>   <span class="s2">&quot;in_in&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;msin_s&quot;</span><span class="p">,</span> <span class="s2">&quot;msin_i&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;msin_i&quot;</span><span class="p">,</span> <span class="s2">&quot;msin_m&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;gt&quot;</span><span class="p">,</span>     <span class="s2">&quot;gt_in&quot;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s2">&quot;ms&quot;</span><span class="p">,</span>     <span class="s2">&quot;ms_in&quot;</span><span class="p">),</span>
+  <span class="p">],</span>
+  <span class="o">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>It is a list of tuples with <code class="docutils literal notranslate"><span class="pre">(&quot;fromName&quot;,</span> <span class="pre">&quot;toName&quot;)</span></code> entries.</p>
+<p>Note that the slot names must be 10 characters long or less. This restriction is because of the solver structure visualization. (Actually they can be any length but only the first 10 characters will be shown in the solver structure file.)</p>
+</section>
+<section id="connection-by-choosing-equal-slot-names">
+<h2>Connection by choosing equal slot names<a class="headerlink" href="#connection-by-choosing-equal-slot-names" title="Link to this heading"></a></h2>
+<p>Slots that have the same name are automatically connected. Thus, it is often enough to just name all slots properly.</p>
+</section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">examples/electrophysiology/monodomain/hodgkin_huxley</span></code> example yields the following solver structure (file <code class="docutils literal notranslate"><span class="pre">solver_structure.txt</span></code>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>The<span class="w"> </span>following<span class="w"> </span>data<span class="w"> </span>slot<span class="w"> </span>connection<span class="w"> </span>were<span class="w"> </span>given<span class="w"> </span>by<span class="w"> </span>the<span class="w"> </span>setting<span class="w"> </span><span class="s2">&quot;connectedSlots&quot;</span>:
+<span class="w">       </span>h<span class="w"> </span>¤<span class="w"> </span>&lt;─&gt;<span class="w"> </span>¤<span class="w"> </span>h_gate
+
+The<span class="w"> </span>following<span class="w"> </span>data<span class="w"> </span>slots<span class="w"> </span>were<span class="w"> </span>connected<span class="w"> </span>because<span class="w"> </span>the<span class="w"> </span>names<span class="w"> </span>appeared<span class="w"> </span><span class="k">in</span><span class="w"> </span>both<span class="w"> </span>terms<span class="w"> </span>of<span class="w"> </span>a<span class="w"> </span>coupling<span class="w"> </span>or<span class="w"> </span>splitting<span class="w"> </span>scheme:
+<span class="w">  </span>m_gate<span class="w"> </span>¤<span class="w"> </span>&lt;─&gt;<span class="w"> </span>¤<span class="w"> </span>m_gate
+
+Solver<span class="w"> </span>structure:
+
+├──<span class="w"> </span>StrangSplitting
+│<span class="w">  </span>data<span class="w"> </span>slots:
+│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution.membrane/V<span class="w">                     </span>├───────────────<span class="w"> </span>¤0<span class="w"> </span>x
+│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution.sodium_channel_m_gate/m<span class="w">        </span>:├────────m_gate<span class="w"> </span>¤1<span class="w"> </span>x
+│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution.sodium_channel_h_gate/h<span class="w">        </span>::├───────h_gate<span class="w"> </span>¤2<span class="w"> </span>x
+│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution.potassium_channel_n_gate/n<span class="w">     </span>:::├────────────<span class="w"> </span>¤3<span class="w"> </span>x
+│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>additionalFieldVariable0<span class="w">                </span>::::├────────<span class="w"> </span>aa<span class="w"> </span>¤4<span class="w"> </span>x
+│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>additionalFieldVariable1<span class="w">                </span>:::::├───────<span class="w"> </span>bb<span class="w"> </span>¤5<span class="w"> </span>x
+│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>leakage_current/i_L<span class="w">                     </span>::::::├─────────<span class="w"> </span>¤6<span class="w"> </span>x
+│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution<span class="w">                                </span>:::::::├─────<span class="w"> </span>vm<span class="w"> </span>¤7<span class="w"> </span>x
+│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>additionalFieldVariable0<span class="w">                </span>::::::::├─m_gate<span class="w"> </span>¤8<span class="w"> </span>x
+│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>additionalFieldVariable1<span class="w">                </span>:::::::::├────<span class="w"> </span>h<span class="w"> </span>¤9<span class="w"> </span>x
+│<span class="w">                                              </span>::::::::::
+│<span class="w">  </span>slot<span class="w"> </span>connections:<span class="w">                           </span>::::::::::
+│<span class="w">  </span><span class="m">0</span>¤<span class="w"> </span>&lt;─&gt;<span class="w"> </span>¤0<span class="w">                                   </span>::::::::::
+│<span class="w">  </span><span class="m">1</span>¤<span class="w"> </span>&lt;─&gt;<span class="w"> </span>¤1<span class="w">                                   </span>::::::::::
+│<span class="w">  </span><span class="m">2</span>¤<span class="w"> </span>&lt;─&gt;<span class="w"> </span>¤2<span class="w">                                   </span>::::::::::
+│<span class="w">                                              </span>::::::::::
+│<span class="w"> </span>├──<span class="w"> </span>Heun<span class="w">                                     </span>::::::::::
+│<span class="w"> </span>│<span class="w">  </span>data<span class="w"> </span>slots:<span class="w">                               </span>::::::::::
+│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution.membrane/V<span class="w">                   </span>├÷÷÷÷÷÷÷÷÷──────<span class="w"> </span>¤0&lt;─────┐
+│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution.sodium_channel_m_gate/m<span class="w">       </span>├÷÷÷÷÷÷÷÷m_gate<span class="w"> </span>¤1&lt;───┐<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution.sodium_channel_h_gate/h<span class="w">        </span>├÷÷÷÷÷÷÷h_gate<span class="w"> </span>¤2&lt;─┐<span class="w"> </span>│<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution.potassium_channel_n_gate/n<span class="w">      </span>├÷÷÷÷÷÷──────<span class="w"> </span>¤3<span class="w"> </span>x│<span class="w"> </span>│<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>additionalFieldVariable0<span class="w">                  </span>├÷÷÷÷÷───<span class="w"> </span>aa<span class="w"> </span>¤4<span class="w"> </span>x│<span class="w"> </span>│<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>additionalFieldVariable1<span class="w">                   </span>├÷÷÷÷───<span class="w"> </span>bb<span class="w"> </span>¤5<span class="w"> </span>x│<span class="w"> </span>│<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>leakage_current/i_L<span class="w">                         </span>├÷÷÷──────<span class="w"> </span>¤6<span class="w"> </span>x│<span class="w"> </span>│<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w">                                                   </span>:::<span class="w">           </span>│<span class="w"> </span>│<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>└──<span class="w"> </span>CellmlAdapter<span class="w">                                 </span>:::<span class="w">           </span>│<span class="w"> </span>│<span class="w"> </span>│
+│<span class="w"> </span>└<span class="w">                                                   </span>:::<span class="w">           </span>│<span class="w"> </span>│<span class="w"> </span>│
+│<span class="w">                                                     </span>:::<span class="w">           </span>│<span class="w"> </span>│<span class="w"> </span>│
+│<span class="w"> </span>├──<span class="w"> </span>CrankNicolson<span class="w">                                   </span>:::<span class="w">           </span>│<span class="w"> </span>│<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w">  </span>data<span class="w"> </span>slots:<span class="w">                                      </span>:::<span class="w">           </span>│<span class="w"> </span>│<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution<span class="w">                                     </span>├÷÷───<span class="w"> </span>vm<span class="w"> </span>¤0&lt;─┼─┼─┘
+│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>additionalFieldVariable0<span class="w">                      </span>├÷m_gate<span class="w"> </span>¤1&lt;─┼─┘
+│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>additionalFieldVariable1<span class="w">                       </span>├────<span class="w"> </span>h<span class="w"> </span>¤2&lt;─┘
+│<span class="w"> </span>│
+│<span class="w"> </span>│<span class="w"> </span>├──<span class="w"> </span>FiniteElementMethod
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span>data<span class="w"> </span>slots:
+│<span class="w"> </span>│<span class="w"> </span>│<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span>solution<span class="w">                                          </span>vm<span class="w"> </span>¤0<span class="w"> </span>x
+│<span class="w"> </span>│<span class="w"> </span>│
+│<span class="w"> </span>└
+└
+
+Connection<span class="w"> </span>Types:
+<span class="w">  </span>+··+<span class="w">   </span>Internal<span class="w"> </span>connection,<span class="w"> </span>no<span class="w"> </span>copy
+<span class="w">  </span>════<span class="w">   </span>Reuse<span class="w"> </span>variable,<span class="w"> </span>no<span class="w"> </span>copy
+<span class="w">  </span>───&gt;<span class="w">   </span>Copy<span class="w"> </span>data<span class="w"> </span><span class="k">in</span><span class="w"> </span>direction<span class="w"> </span>of<span class="w"> </span>arrow
+<span class="w">  </span>─m──<span class="w">   </span>Mapping<span class="w"> </span>between<span class="w"> </span>different<span class="w"> </span>meshes
+
+Referenced<span class="w"> </span>Meshes:
+<span class="w">  </span><span class="o">[</span>a<span class="o">]</span><span class="w"> </span><span class="s2">&quot;MeshFiber&quot;</span>,<span class="w"> </span>1D<span class="w"> </span>regular<span class="w"> </span>fixed,<span class="w"> </span>linear<span class="w"> </span>Lagrange<span class="w"> </span>basis
+</pre></div>
+</div>
+<p>With this example, the threre mechanisms to connect data slots can be seen:</p>
+<ul class="simple">
+<li><p>For connecting the variable <code class="docutils literal notranslate"><span class="pre">solution.membrane/V</span></code> in the <cite>Heun</cite> scheme to the <code class="docutils literal notranslate"><span class="pre">solution</span></code> variable in the <cite>CrankNicolson</cite> scheme, the connection was specified in the StrangSplitting scheme under the options <code class="docutils literal notranslate"><span class="pre">&quot;connectedSlotsTerm1To2&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;connectedSlotsTerm2To1&quot;</span></code>.</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;connectedSlotsTerm1To2&quot;</span><span class="p">:</span>     <span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">},</span>   <span class="c1"># transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)</span>
+<span class="s2">&quot;connectedSlotsTerm2To1&quot;</span><span class="p">:</span>     <span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="mi">0</span><span class="p">},</span>   <span class="c1"># transfer the same back, in order to reuse field variables</span>
+</pre></div>
+</div>
+<p>Note that the slots do not have to have slot names defined.</p>
+<ul class="simple">
+<li><p>Connection of the <cite>h</cite> gating variable slots was done with the global setting “connectedSlots” as follows:</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="o">...</span>
+  <span class="s2">&quot;connectedSlots&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s2">&quot;h&quot;</span><span class="p">,</span> <span class="s2">&quot;h_gate&quot;</span><span class="p">),</span>      <span class="c1"># connect the additional field variable in the output writer</span>
+    <span class="p">(</span><span class="s2">&quot;h_gate&quot;</span><span class="p">,</span> <span class="s2">&quot;h&quot;</span><span class="p">),</span>
+  <span class="p">],</span>
+  <span class="o">...</span>
+</pre></div>
+</div>
+<p>Here, the two slots <code class="docutils literal notranslate"><span class="pre">h_gate</span></code> and <code class="docutils literal notranslate"><span class="pre">h</span></code> are connected, <code class="docutils literal notranslate"><span class="pre">h_gate</span></code> is the name of the slot at the <cite>CellmlAdapter</cite> and <code class="docutils literal notranslate"><span class="pre">h</span></code> is the slot name at the additional field variable in the <cite>CrankNicolson</cite> scheme.</p>
+<ul class="simple">
+<li><p>The mechanism to connect slots by naming the slots the same is in use for the <cite>m_gate</cite> variable.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="boundary_conditions.html" class="btn btn-neutral float-left" title="Boundary Conditions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="finite_element_method.html" class="btn btn-neutral float-right" title="FiniteElementMethod" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

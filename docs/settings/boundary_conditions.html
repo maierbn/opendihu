@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boundary Conditions &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Connector Slots" href="output_connector_slots.html" />
+    <link rel="prev" title="Solver" href="solver.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solver.html">Solver</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Boundary Conditions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#python-settings">Python settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dirichlet-boundary-conditions">Dirichlet Boundary Conditions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#structured-meshes">Structured Meshes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#numbering-of-degrees-of-freedom-in-parallel-execution">Numbering of Degrees of Freedom in Parallel Execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#unstructured-meshes">Unstructured Meshes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#composite-meshes">Composite Meshes</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#dirichlet-output-filename">Dirichlet Output Filename</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#neumann-boundary-conditions">Neumann Boundary Conditions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#reference-or-current-configuration">Reference or current configuration</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">Boundary Conditions</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/boundary_conditions.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="boundary-conditions">
+<h1>Boundary Conditions<a class="headerlink" href="#boundary-conditions" title="Link to this heading"></a></h1>
+<p>Two types of boundary conditions are supported: Dirichlet and Neumann-type boundary conditions. They can be set in the settings for the following solvers:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="finite_element_method.html"><span class="doc">FiniteElementMethod</span></a></p></li>
+<li><p><a class="reference internal" href="hyperelasticity.html"><span class="doc">HyperelasticitySolver</span></a></p></li>
+<li><p><a class="reference internal" href="dynamic_hyperelasticity.html"><span class="doc">DynamicHyperelasticitySolver</span></a></p></li>
+<li><p><a class="reference internal" href="muscle_contraction_solver.html"><span class="doc">MuscleContractionSolver</span></a></p></li>
+</ul>
+<p>Furthermore, in the <a class="reference internal" href="dynamic_hyperelasticity.html"><span class="doc">DynamicHyperelasticitySolver</span></a>, they can be changed over time.</p>
+<section id="python-settings">
+<h2>Python settings<a class="headerlink" href="#python-settings" title="Link to this heading"></a></h2>
+<p>In all of the above mentioned solvers, the syntax for specifying Dirichlet and Neumann-type boundary conditions is the same. The following keys are used:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="o">...</span>
+  <span class="s2">&quot;dirichletBoundaryConditions&quot;</span><span class="p">:</span> <span class="n">dirichlet_bc</span><span class="p">,</span>
+  <span class="s2">&quot;neumannBoundaryConditions&quot;</span><span class="p">:</span>   <span class="n">neumann_bc</span><span class="p">,</span>
+  <span class="s2">&quot;dirichletOutputFilename&quot;</span><span class="p">:</span>     <span class="s2">&quot;out/dirichlet_bc&quot;</span><span class="p">,</span>
+  <span class="o">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The options <code class="docutils literal notranslate"><span class="pre">&quot;dirichletBoundaryConditions&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;neumannBoundaryConditions&quot;</span></code> associate dofs and elements with prescribed values.
+The option <code class="docutils literal notranslate"><span class="pre">&quot;dirichletOutputFilename&quot;</span></code> allows to specifiy a file name where the Dirichlet boundary conditions will be written to, mainly for visualization.</p>
+<p>In order to not specify any boundary conditions, use an empty dict for Dirichlet boundary conditions and an empty list for Neumann boundary conditions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;dirichletBoundaryConditions&quot;</span><span class="p">:</span> <span class="p">{},</span>
+<span class="s2">&quot;neumannBoundaryConditions&quot;</span><span class="p">:</span>   <span class="p">[],</span>
+<span class="s2">&quot;dirichletOutputFilename&quot;</span><span class="p">:</span>     <span class="kc">None</span><span class="p">,</span>
+</pre></div>
+</div>
+</section>
+<section id="dirichlet-boundary-conditions">
+<h2>Dirichlet Boundary Conditions<a class="headerlink" href="#dirichlet-boundary-conditions" title="Link to this heading"></a></h2>
+<p>Dirichlet boundary conditions fix several degrees of freedom to prescribed values.
+The option has to be a Dict with <code class="docutils literal notranslate"><span class="pre">{&lt;dof</span> <span class="pre">no&gt;:</span> <span class="pre">&lt;value&gt;}</span></code> entries. Here, the <code class="docutils literal notranslate"><span class="pre">&lt;dof</span> <span class="pre">no&gt;</span></code> refers to the degrees of freedom (dofs) in the mesh for which the value should prescribed.
+The numbering of dofs follows different schemes for <em>structured</em>, <em>unstructured</em> and <em>composite</em> structured <cite>&lt;/settings/mesh&gt; meshes</cite>.</p>
+<section id="structured-meshes">
+<h3>Structured Meshes<a class="headerlink" href="#structured-meshes" title="Link to this heading"></a></h3>
+<p><em>Structured</em> meshes, i.e. <code class="docutils literal notranslate"><span class="pre">Mesh::StructuredRegularFixedOfDimension&lt;D&gt;</span></code> and <code class="docutils literal notranslate"><span class="pre">Mesh::StructuredDeformableOfDimension&lt;D&gt;</span></code> have a linear (1D), rectilinear (2D) or cuboid (3D) shape.
+The numbering of nodes and dofs follows this regular structure. It starts with 0 and proceeds fastest in <cite>x</cite> or <cite>i</cite>-direction, then (for 2D and 3D) in <cite>y</cite> or <cite>j</cite>-direction, then (for 3D) in <cite>z</cite> or <cite>k</cite>-direction.</p>
+<p>If the mesh has <span class="math notranslate nohighlight">\(n_x \times n_y \times n_z\)</span> nodes or dofs, then a contiguous index of all dofs or nodes is given by <span class="math notranslate nohighlight">\(k\, n_x \, n_y + j \, n_x + i\)</span> for <span class="math notranslate nohighlight">\(i = 1, \dots, n_x, j = 1, \dots, n_y, k = 1, \dots, n_z\)</span>.</p>
+<p>For 1D meshes the numbering is trivial. Examples for 2D and 3D structured meshes are given for linear elements in <a class="reference internal" href="#dof-numbering-structured"><span class="std std-numref">Fig. 99</span></a> and for quadratic elements in <a class="reference internal" href="#dof-numbering-structured-quadratic"><span class="std std-numref">Fig. 100</span></a>.</p>
+<figure class="align-default" id="id1">
+<span id="dof-numbering-structured"></span><a class="reference internal image-reference" href="../_images/dof_numbering_structured.svg"><img alt="../_images/dof_numbering_structured.svg" src="../_images/dof_numbering_structured.svg" width="100%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 99 </span><span class="caption-text">Numbering of nodes and dofs for a linear structured mesh. The left mesh has <span class="math notranslate nohighlight">\(6\times 5 = 30\)</span> nodes with numbers from 0 to 29. The right mesh has <span class="math notranslate nohighlight">\(5\times 5\times 5=125\)</span> nodes with numbers from 0 to 124.</span><a class="headerlink" href="#id1" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id2">
+<span id="dof-numbering-structured-quadratic"></span><a class="reference internal image-reference" href="../_images/dof_numbering_structured_quadratic.svg"><img alt="../_images/dof_numbering_structured_quadratic.svg" src="../_images/dof_numbering_structured_quadratic.svg" width="100%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 100 </span><span class="caption-text">Numbering of nodes and dofs for a quadratic structured mesh. The numbering is the same as for linear elements, only the element boundaries are different.</span><a class="headerlink" href="#id2" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>The number of nodes in a mesh depends on the ansatz functions as visualized in <a class="reference internal" href="#mesh-ansatz-functions0"><span class="std std-numref">Fig. 101</span></a>.</p>
+<figure class="align-default" id="id3">
+<span id="mesh-ansatz-functions0"></span><a class="reference internal image-reference" href="../_images/mesh_ansatz_functions.svg"><img alt="../_images/mesh_ansatz_functions.svg" src="../_images/mesh_ansatz_functions.svg" width="70%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 101 </span><span class="caption-text">1D ansatz functions and resulting elements. For linear and Hermite ansatz functions, 1/2/3/<span class="math notranslate nohighlight">\(d\)</span> D elements have 2/4/8/<span class="math notranslate nohighlight">\(2^d\)</span> nodes. For quadratic ansatz functions, 1/2/3/<span class="math notranslate nohighlight">\(d\)</span> D elements have 3/9/27/<span class="math notranslate nohighlight">\(3^d\)</span> nodes.</span><a class="headerlink" href="#id3" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>For Lagrange ansatz functions, every node has exactly one dof. Therefore dof numbers and node numbers are the same.
+For cubic Hermite ansatz functions, a 1D element has 2 dofs on every node. As can be seen in <a class="reference internal" href="#mesh-ansatz-functions0"><span class="std std-numref">Fig. 101</span></a> (bottom left), one dof corresponds to the function value (this is the first dof) and one dof corresponds to the first derivative of the discretized function (this is the second dof).
+Consequently, when 2D and 3D elements are constructed by tensor product of 1D elements, the 2D nodes get <span class="math notranslate nohighlight">\(2^2=4\)</span> dofs and the 3D nodes get <span class="math notranslate nohighlight">\(2^3=8\)</span> dofs.</p>
+<p>The dof numbering proceeds along the nodes as usual. For every node, all dofs are enumerated. The first dof per node is always the function value, the rest are the (combined) derivatives. For a function <span class="math notranslate nohighlight">\(f\)</span> in 2D the dofs per node are <span class="math notranslate nohighlight">\((f,\partial_x f,\partial_y f, \partial_x \partial_y f)\)</span>, analogous for 3D with function value and 7 combined derivatives. An exemplary numbering scheme is shown in the following <a class="reference internal" href="#dof-numbering-structured-hermite"><span class="std std-numref">Fig. 102</span></a>.</p>
+<figure class="align-default" id="id4">
+<span id="dof-numbering-structured-hermite"></span><a class="reference internal image-reference" href="../_images/dof_numbering_structured_hermite.svg"><img alt="../_images/dof_numbering_structured_hermite.svg" src="../_images/dof_numbering_structured_hermite.svg" width="50%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 102 </span><span class="caption-text">Dof numbering for 2D Hermite elements. The mesh has <span class="math notranslate nohighlight">\(6 \times 5=30\)</span> nodes and therefore <span class="math notranslate nohighlight">\(4\cdot 30 = 120\)</span> dofs.</span><a class="headerlink" href="#id4" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>The dof numbers are needed to specify the Dirichlet boundary conditions in the settings, e.g. as <code class="docutils literal notranslate"><span class="pre">&quot;dirichletBoundaryConditions&quot;:</span> <span class="pre">{&lt;dofA&gt;:</span> <span class="pre">&lt;value&gt;,</span> <span class="pre">&lt;dofB&gt;:</span> <span class="pre">&lt;value&gt;,</span> <span class="pre">...},</span></code>.
+Negative dof no.s are interpreted as counted from the end, i.e. -1 is the last dof, -2 is the second-last etc.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&lt;value&gt;</span></code> is a list of as many entries as the solution field has components. For example, for the normal <cite>FiniteElementMethod</cite>, this is typically one component. Then, <cite>&lt;value&gt;</cite> is either a list with one entry, such as <code class="docutils literal notranslate"><span class="pre">[0]</span></code> or simply the value itself (<code class="docutils literal notranslate"><span class="pre">0</span></code>).</p>
+<p>For the FiniteElementMethod that is used inside the 3D <cite>QuasiStaticLinearElasticitySolver</cite>, <code class="docutils literal notranslate"><span class="pre">&lt;value&gt;</span></code> is a list of three components for the displacements in the three coordinate directions, e.g. <code class="docutils literal notranslate"><span class="pre">[0,5,0]</span></code>.
+The same holds for the <a class="reference internal" href="hyperelasticity.html"><span class="doc">Hyperelasticity</span></a>. For the <a class="reference internal" href="dynamic_hyperelasticity.html"><span class="doc">Dynamic hyperelasticity</span></a>, the number of components is 6, comprising 3 displacements and 3 velocities, e.g. <code class="docutils literal notranslate"><span class="pre">[0,0,0,None,None,None]</span></code>.
+<code class="docutils literal notranslate"><span class="pre">None</span></code> can be used in such a list of components for a particular component that should not be prescribed. In the example <code class="docutils literal notranslate"><span class="pre">[0,0,0,None,None,None]</span></code> of a dynamic mechanics formulation only the first three components are prescribed, i.e. the displacements are fixed to 0.</p>
+<p>Another example is the following, where for a three-component FiniteElementMethod, the dofs 0, 5 and 7 and the last degree of freedom are set to some values.
+For dof 5, only the first component is prescribed.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># define the dict directly</span>
+<span class="n">dirichlet_bc</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="mi">0</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span>
+  <span class="mi">5</span><span class="p">:</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="kc">None</span><span class="p">],</span>
+  <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span>
+<span class="p">}</span>
+
+<span class="n">dirichlet_bc</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span><span class="mi">7</span><span class="p">]</span>     <span class="c1"># change the dict later, this syntax is also possible</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="o">...</span>
+  <span class="s2">&quot;dirichletBoundaryConditions&quot;</span><span class="p">:</span> <span class="n">dirichlet_bc</span><span class="p">,</span>
+  <span class="c1">#&quot;dirichletBoundaryConditions&quot;: {0: [1,2]},     # or define the values inline like this</span>
+  <span class="o">...</span>
+ <span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="numbering-of-degrees-of-freedom-in-parallel-execution">
+<h3>Numbering of Degrees of Freedom in Parallel Execution<a class="headerlink" href="#numbering-of-degrees-of-freedom-in-parallel-execution" title="Link to this heading"></a></h3>
+<p>When the program is run with multiple processes, each process stores and computes only a part of the domain, its own subdomain. The boundary conditions can either be specified for the whole domain or only for the local subdomain. In the latter case, the  boundary conditions specification is typically different on each process.</p>
+<p>The option <cite>inputMeshIsGlobal</cite> decides which of the two cases is used. With  <code class="docutils literal notranslate"><span class="pre">&quot;inputMeshIsGlobal&quot;:</span> <span class="pre">True</span></code> the dofs are interpreted as global dof no.s and each processes only picks the dofs that it needs from the global specification of boundary conditions.</p>
+<p>However, if <cite>inputMeshIsGlobal</cite> is set to <code class="docutils literal notranslate"><span class="pre">False</span></code>, the specified dofs are interpreted as local numbers in the subdomain. Then you have to specify values <strong>also for the ghost dofs</strong>. This means that you have to specify the same prescribed nodal values for a node on every process whose subdomain is adjacent to that node.</p>
+<p>In the example in <a class="reference internal" href="#dof-numbering-parallel"><span class="std std-numref">Fig. 103</span></a>, a mesh with <span class="math notranslate nohighlight">\(7 \times 5\)</span> nodes is partitioned to two processes. The local dof numbers are given in blue. Process 0 has ghost dofs shown by the red numbers. If, e.g., the value of the third-to-last dof in the top row should be prescribed, you have to set both dof 24 on rank 0 and dof 12 on rank 1 to the same prescribed value as both subdomains are adjacent to this node.</p>
+<figure class="align-default" id="id5">
+<span id="dof-numbering-parallel"></span><a class="reference internal image-reference" href="../_images/dof_numbering_parallel.svg"><img alt="../_images/dof_numbering_parallel.svg" src="../_images/dof_numbering_parallel.svg" width="60%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 103 </span><span class="caption-text">Domain partitioned to two processes with the MPI ranks 0 and 1. Local dof nos. in blue, ghost dofs in red.</span><a class="headerlink" href="#id5" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>In general, the local numbering and determination which nodes are ghost and non-ghost is as follows. The subdomains are created by a partitioning of the elements, i.e., every element is assigned to exactly one subdomain. All the nodes that are adjacent to these elements are contained in the subdomain, either as a non-ghost node or as a ghost node.
+Every node is a non-ghost node in exactly one subdomain. It is the subdomain on the process with the highest number that contains the node, i.e. in the x-y-z grid the subdomain most to the right, back and top. The node is a ghost node on all other subdomains that contain it.</p>
+<p>The local numbering follows the same scheme where the <cite>i</cite> coordinate advances fastest, then the <cite>j</cite>, then the <cite>k</cite> coordinate. At first, all non-ghost nodes are numbered, starting from 0 in each subdomain. Then the numbering continues with remaining ghost nodes following the same <cite>i,j,k</cite> order.</p>
+<p>A more involved example is given in <a class="reference internal" href="#dof-numbering-parallel2"><span class="std std-numref">Fig. 104</span></a>.</p>
+<figure class="align-default" id="id6">
+<span id="dof-numbering-parallel2"></span><a class="reference internal image-reference" href="../_images/dof_numbering_parallel2.svg"><img alt="../_images/dof_numbering_parallel2.svg" src="../_images/dof_numbering_parallel2.svg" width="60%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 104 </span><span class="caption-text">Local node no.s on 6 subdomains of the mesh with <span class="math notranslate nohighlight">\(5 \times 4\)</span> elements from <a class="reference internal" href="#dof-numbering-structured"><span class="std std-numref">Fig. 99</span></a>. Ghost nodes are indicate by red circles and numbers, non-ghost nodes are blue.</span><a class="headerlink" href="#id6" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>When the local numbering is used, the Python settings file has to specify different values for different processes. This can be achieved by using <cite>if</cite> statements on the own MPI rank no. Each process gets an MPI rank no., starting with 0 for the first process. The number for processes and the own rank no. can always be determined by adding the following to the settings. Then, <code class="docutils literal notranslate"><span class="pre">rank_no</span></code> can be used to distinguish the processes.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># parse rank arguments</span>
+<span class="n">rank_no</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">)(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+<span class="n">n_ranks</span> <span class="o">=</span> <span class="p">(</span><span class="nb">int</span><span class="p">)(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+<section id="unstructured-meshes">
+<h3>Unstructured Meshes<a class="headerlink" href="#unstructured-meshes" title="Link to this heading"></a></h3>
+<p>For <strong>unstructured meshes</strong>, the ordering of the dofs cannot follow an <cite>i,j,k</cite> iteration scheme such as for structured meshes. The ordering of the nodes and dofs is defined when the mesh is specified. In an unstructured mesh, every element explicitely stores the node numbers of its adjacent nodes. (For structured meshes this information was implicitly given by the dimensions and partitioning of the mesh).</p>
+<p>Unstructured meshes can be created differently. They can be read from <code class="docutils literal notranslate"><span class="pre">*.ex</span></code> files, which are defined within the OpenCMISS framework. These files contain the information about the node numbers for each element. They can also be directly specified in the Python settings using elements and node positions (see <a class="reference internal" href="mesh.html#unstructured-deformable-mesh-settings"><span class="std std-ref">UnstructuredDeformable</span></a> for details).</p>
+<p>Once the node numbers are known, the transfer from node numbers to dof numbers is the same as for structured meshes. The dofs per node are simply consecutively numbered. (This is relevant only for Hermite elements anyways.)</p>
+</section>
+<section id="composite-meshes">
+<h3>Composite Meshes<a class="headerlink" href="#composite-meshes" title="Link to this heading"></a></h3>
+<p>For <strong>composite meshes</strong> the numbering proceeds contiguously through all sub mesh. This means numbers 0 to <code class="docutils literal notranslate"><span class="pre">nDofsMesh0-1</span></code>, where <code class="docutils literal notranslate"><span class="pre">nDofsMesh0</span></code> is the number of dofs in the first submesh directly map to the dofs of the first submesh. Then the numbers <code class="docutils literal notranslate"><span class="pre">nDofsMesh0</span></code> to <code class="docutils literal notranslate"><span class="pre">nDofsMesh0+nDofsMesh1-1</span></code> map to the second sub mesh and so on.
+An example with two submeshes is given in <a class="reference internal" href="#dof-numbering-structured-composite"><span class="std std-numref">Fig. 105</span></a>.</p>
+<p>Note, that negative values therefore count from the end of the last submesh, i.e. <code class="docutils literal notranslate"><span class="pre">-1</span></code> specifies the last dof of the last submesh. In the example, <code class="docutils literal notranslate"><span class="pre">-1</span></code> would be equivalent to <code class="docutils literal notranslate"><span class="pre">36</span></code>.</p>
+<figure class="align-default" id="id7">
+<span id="dof-numbering-structured-composite"></span><a class="reference internal image-reference" href="../_images/dof_numbering_structured_composite.svg"><img alt="../_images/dof_numbering_structured_composite.svg" src="../_images/dof_numbering_structured_composite.svg" width="40%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 105 </span><span class="caption-text">2D quadratic composite mesh with two submeshes. The numbers within the second submesh are shown in green, however, there is nothing different between blue and green dofs.</span><a class="headerlink" href="#id7" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+</section>
+<section id="dirichlet-output-filename">
+<h2>Dirichlet Output Filename<a class="headerlink" href="#dirichlet-output-filename" title="Link to this heading"></a></h2>
+<p>The option <code class="docutils literal notranslate"><span class="pre">&quot;dirichletOutputFilename&quot;</span></code> allows to specify a filename where the Dirichlet Boundary conditions will be written to.
+The file name will have the ending “.vtp”, which indicates a VTK file to be viewed in ParaView. It contains the prescribed nodes with the prescribed values.
+This is useful to debug the dofs and the assigned Dirichlet values.</p>
+<p>The file contains the following information:</p>
+<ul class="simple">
+<li><p>Spatial location of the nodes where Dirichlet boundary conditions are specified. This allows them to be visualized as spheres.</p></li>
+<li><p>Prescribed value. Note, that the value will be <cite>inf</cite> where <code class="docutils literal notranslate"><span class="pre">None</span></code> is specified.</p></li>
+<li><p>Partition, i.e. rank no. of the process that owns the boundary condition.</p></li>
+</ul>
+<p>If this option is set to the empty string, <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code>, or to <code class="docutils literal notranslate"><span class="pre">None</span></code>, no such file will be created.</p>
+</section>
+<section id="neumann-boundary-conditions">
+<h2>Neumann Boundary Conditions<a class="headerlink" href="#neumann-boundary-conditions" title="Link to this heading"></a></h2>
+<p>Neumann boundary conditions are needed for specification of fluxes or traction forces in mechanics formulations.
+The Neumann boundary conditions are specified on surfaces. In general, the surface is given by a face of an element. For 3D meshes, a face is a 2D surface. For 2D meshes, the face is a line. For 1D meshes, face refers to a point.</p>
+<p>If the prescribed values are interpreted as flow over the face, a scalar value is usually needed. If the values is interpreted as traction force, then a vector should be specified. In this case, a simplification is possible if the force should act normal to the surface.</p>
+<p>The given object is a list of dicts as shown below. Each dict specifies one surface and its prescribed value.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">neumann_bc</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;element&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>               <span class="c1"># local element no, negative values count from the end</span>
+    <span class="s2">&quot;face&quot;</span><span class="p">:</span> <span class="s2">&quot;2-&quot;</span><span class="p">,</span>               <span class="c1"># face on which the neumann bc should act</span>
+    <span class="s2">&quot;constantVector&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>  <span class="c1"># specify only one of &quot;constantVector&quot;, &quot;constantValue&quot; and &quot;dofVectors&quot;</span>
+    <span class="s2">&quot;constantValue&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="s2">&quot;dofVectors&quot;</span><span class="p">:</span>    <span class="p">{</span><span class="mi">0</span><span class="p">:[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">:[</span><span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="mi">3</span><span class="p">:[</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]},</span>
+    <span class="s2">&quot;isInReferenceConfiguration&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>  <span class="c1"># for dynamic hyperelasticity, if the traction is interpreted as specified in reference configuration or current configuration</span>
+  <span class="p">},</span>
+  <span class="p">{</span><span class="o">...</span><span class="p">}</span>   <span class="c1"># other dicts for prescribed values on more surfaces</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">element</span></code> is the local element number of the element which has the face for which to specify the Neumann boundary condition.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">face</span></code> specifies the face on which the Neumann boundary condition will act. Possible values are “0-”, “0+”, “1-”, “1+”, “2-”, “2+”, where 0,1,2 stand for the x, y and z coordinate axis and “-” or “+” stand for negative or positive direction. Note that a 3D element has all 6 faces. A 2D element only has the faces “0-”, “0+”, “1-” and “1+”. A 1D line element only has “0-” and “0+” which mean <cite>left end point</cite> and <cite>right end point</cite>.</p></li>
+</ul>
+<p>The value to be prescribed can be given by either of three posibilities:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">constantVector</span></code>: This is a vector, useful e.g. for traction or forces. If for the <a class="reference internal" href="hyperelasticity.html"><span class="doc">HyperelasticitySolver</span></a> or <a class="reference internal" href="dynamic_hyperelasticity.html"><span class="doc">DynamicHyperelasticitySolver</span></a> the option <cite>“divideNeumannBoundaryConditionValuesByTotalArea”</cite> is set to <cite>True</cite>, this vector is interpreted as a total force and will be scaled down automatically to reflect the actual surface size. If this option is <cite>False</cite>, the vector specifies a constant surface traction of the whole surface, as one would expect. The direction is always given in reference configuration. Note that you are responsible for the direction of the vector, if it points inwards or outwards of the domain.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">constantValue</span></code>: For problems with only 1 component, this is the natural way to specify an outward flux. For problems with more components, i.e. mechanics, the constant value will be a factor to the outward normal. By this it is easily possible to specify loads orthogonal to the surface.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dofVectors</span></code>: This gives the most flexibility in specifying the values. It is a dict where the key is the node/dof number on the <em>surface element</em> and the value specifies the traction vector on that node. In the given example, only the nodes 0, 1 and 3 have a Neumann boundary condition value applied.</p></li>
+</ul>
+<p>Especially for the mechanics problems, it is often convenient to use Python list comprehension to construct the <code class="docutils literal notranslate"><span class="pre">neumann_bc</span></code> object:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">nx</span> <span class="o">=</span> <span class="o">...</span> <span class="c1"># number of elements in x direction</span>
+<span class="n">ny</span> <span class="o">=</span> <span class="o">...</span> <span class="c1"># number of elements in x direction</span>
+<span class="n">nz</span> <span class="o">=</span> <span class="o">...</span> <span class="c1"># number of elements in x direction</span>
+<span class="n">k</span> <span class="o">=</span> <span class="n">nz</span><span class="o">-</span><span class="mi">1</span>   <span class="c1"># top element</span>
+
+<span class="c1"># the following specifies a constant surface load of 1 pointing upwards and acting on the top surface of the whole 3D box</span>
+<span class="n">neumann_bc</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;element&quot;</span><span class="p">:</span> <span class="n">k</span><span class="o">*</span><span class="n">nx</span><span class="o">*</span><span class="n">ny</span> <span class="o">+</span> <span class="n">j</span><span class="o">*</span><span class="n">nx</span> <span class="o">+</span> <span class="n">i</span><span class="p">,</span> <span class="s2">&quot;constantVector&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;face&quot;</span><span class="p">:</span> <span class="s2">&quot;2+&quot;</span><span class="p">}</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ny</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nx</span><span class="p">)]</span>
+</pre></div>
+</div>
+<p>The numbering of elements uses the same scheme as the numbering of nodes. This means that element numbers increase fastest in <cite>x</cite> or <cite>i</cite>-direction, then in <cite>y</cite> or <cite>j</cite> direction and slowest in <cite>z</cite> or <cite>k</cite> direction. It is easier, because no ghosts have to be considered. An example is given in the left side of <a class="reference internal" href="#element-numbering"><span class="std std-numref">Fig. 106</span></a>.</p>
+<figure class="align-default" id="id8">
+<span id="element-numbering"></span><a class="reference internal image-reference" href="../_images/element_numbering.svg"><img alt="../_images/element_numbering.svg" src="../_images/element_numbering.svg" width="90%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 106 </span><span class="caption-text">Left: element numbering for a linear 2D mesh. Right: local numbering if the domain is partitioned for 4 processes.</span><a class="headerlink" href="#id8" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>When running the program in parallel the same for the node numbers also holds for the element numbers.
+As previously mentioned, the element numbers are interpreted as global numbers for <code class="docutils literal notranslate"><span class="pre">&quot;inputMeshIsGlobal&quot;:</span> <span class="pre">True</span></code> and as local numbers for <code class="docutils literal notranslate"><span class="pre">&quot;inputMeshIsGlobal&quot;:</span> <span class="pre">False</span></code>.
+The local numbering of elements starts from zero for each subdomain, as shown in the example on the right of <a class="reference internal" href="#element-numbering"><span class="std std-numref">Fig. 106</span></a>.</p>
+<p>The <cite>“face”</cite> that needs to be specified is indicated by one of “0-”, “0+”, “1-”, “1+”, “2-”, “2+”, as mentioned above. The faces are visualized in <a class="reference internal" href="#faces0"><span class="std std-numref">Fig. 107</span></a>.</p>
+<figure class="align-default" id="id9">
+<span id="faces0"></span><a class="reference internal image-reference" href="../_images/faces.svg"><img alt="../_images/faces.svg" src="../_images/faces.svg" width="100%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 107 </span><span class="caption-text">Faces for specifying Neumann boundary conditions on 1D, 2D and 3D meshes.</span><a class="headerlink" href="#id9" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<section id="reference-or-current-configuration">
+<h3>Reference or current configuration<a class="headerlink" href="#reference-or-current-configuration" title="Link to this heading"></a></h3>
+<p>Traction boundary conditions can be either given in reference configuration (default) or in the actual configuration. For static problems there is no difference, as the system starts in reference configuration. However, for dynamic problems Neumann boundary conditions specified in reference configuration create “moving loads” that keep their angle relative to the surface, while the surface moves.</p>
+<p>To specify traction and forces that also point in the same global direction, they should be specified in the current configuration.</p>
+<p>The option <cite>isInReferenceConfiguration</cite> controls whether the specified boundary conditions on an element are “moving loads” in reference configuration (<code class="docutils literal notranslate"><span class="pre">True</span></code>) or fixed loads in actual configuration (<code class="docutils literal notranslate"><span class="pre">False</span></code>).</p>
+<p>The mapping between the traction <span class="math notranslate nohighlight">\(T\)</span> in reference configuration and the traction <span class="math notranslate nohighlight">\(t\)</span> in current configuration is given by the inverse deformation gradient:</p>
+<div class="math notranslate nohighlight">
+\[T = F^{-1} t.\]</div>
+<p>This transformation is computed in every timestep if <cite>isInReferenceConfiguration</cite> is set to <cite>False</cite> on any Neumann BC element. This may slow down the computation a little bit.</p>
+<p>When working with traction, the <code class="docutils literal notranslate"><span class="pre">&quot;constantVector&quot;</span></code> option is best suited as it directly specifies the direction of the traction. The option <code class="docutils literal notranslate"><span class="pre">&quot;constantValue&quot;</span></code> is also possible and corresponds to a load in normal direction. This normal direction, however, is set initially in the reference configuration and not updated during the simulation.</p>
+<p>The following figures illustrate the difference between specified Neumann boundary conditions in reference and current configurations.
+The first image shows a horizontal rod in its reference configuration. A traction force in positive x direction is specified on the left surface. The first row shows the simulation where the traction force is specified in current configuration and, thus, always points “upwards”. The second row shows the simulation with the exact same parameters, except the traction force is in reference configuration. It always points horizontal at the surface. As a result the rod bends more to the right.</p>
+<ul>
+<li><p>Traction in current configuration (always pointing upwards):</p>
+<a class="reference internal image-reference" href="../_images/current_configuration_1.png"><img alt="../_images/current_configuration_1.png" src="../_images/current_configuration_1.png" style="width: 30%;" /></a>
+<a class="reference internal image-reference" href="../_images/current_configuration_2.png"><img alt="../_images/current_configuration_2.png" src="../_images/current_configuration_2.png" style="width: 30%;" /></a>
+<a class="reference internal image-reference" href="../_images/current_configuration_3.png"><img alt="../_images/current_configuration_3.png" src="../_images/current_configuration_3.png" style="width: 30%;" /></a>
+</li>
+<li><p>Traction in reference configuration (always pointing orthogonal to the rod):</p>
+<a class="reference internal image-reference" href="../_images/current_configuration_1.png"><img alt="../_images/current_configuration_1.png" src="../_images/current_configuration_1.png" style="width: 30%;" /></a>
+<a class="reference internal image-reference" href="../_images/reference_configuration_2.png"><img alt="../_images/reference_configuration_2.png" src="../_images/reference_configuration_2.png" style="width: 30%;" /></a>
+<a class="reference internal image-reference" href="../_images/reference_configuration_3.png"><img alt="../_images/reference_configuration_3.png" src="../_images/reference_configuration_3.png" style="width: 30%;" /></a>
+</li>
+</ul>
+<p>How to run this simulation:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/electrophysiology/fibers/fibers_contraction/with_tendons_precice/meshes
+./create_cuboid_meshes.sh<span class="w">     </span><span class="c1"># create the cuboid mesh</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/electrophysiology/fibers/fibers_contraction/with_tendons_precice/traction_current_or_reference_configuration
+mkorn<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>srr<span class="w">       </span><span class="c1"># build</span>
+./muscle_precice<span class="w"> </span>settings_current_configuration.py<span class="w"> </span>ramp.py
+./muscle_precice<span class="w"> </span>settings_reference_configuration.py<span class="w"> </span>ramp.py
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="solver.html" class="btn btn-neutral float-left" title="Solver" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="output_connector_slots.html" class="btn btn-neutral float-right" title="Connector Slots" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

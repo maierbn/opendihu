@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MultipleInstances &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="FastMonodomainSolver" href="fast_monodomain_solver.html" />
+    <link rel="prev" title="MultidomainSolver" href="multidomain_solver.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solver.html">Solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">MultipleInstances</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#ninstances">nInstances</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#instances">instances</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ranks">ranks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">MultipleInstances</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/multiple_instances.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="multipleinstances">
+<h1>MultipleInstances<a class="headerlink" href="#multipleinstances" title="Link to this heading"></a></h1>
+<p>MultipleInstances is a class that creates multiple instances out of the underlying solver. A use case is, for example, when we want to simulate multiple muscle fibers. We only need to setup the solver structure for a single fiber and can wrap it by a MultipleInstances class. In the settings we can specify how many fibers we want to have and then for each instance or fiber the individual settings. Like this we can specify e.g. different geometry for the fibers in the Python settings and use the same C++ solver code at the same time.</p>
+<p>The MultipleInstances class simply creates the specified number of instances and runs them one after another in a for loop.
+In the mentioned example with the fibers, this would mean that all fibers will get computed one ofter another. But, usually we want to compute the equations of the fibers synchronously, from timestep to timestep for all fibers at once. This is also possible, for this we have to put the MultipleInstances class into the inner solver. For details, study the C++ file of the <cite>fibers_emg</cite> example.</p>
+<p>The C++ code is simply:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">Control</span><span class="o">::</span><span class="n">MultipleInstances</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="c1">// nested solvers</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>The settings have the following form:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;MultipleInstances&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;nInstances&quot;</span><span class="p">:</span> <span class="n">nInstances</span><span class="p">,</span>
+  <span class="s2">&quot;instances&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;ranks&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span>
+
+      <span class="c1"># further solver property objects, e.g. for GodunovSplitting</span>
+      <span class="s2">&quot;GodunovSplitting&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+    <span class="c1">#... further instance</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+  <span class="s2">&quot;OutputWriter&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="o">...</span><span class="p">],</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<section id="ninstances">
+<h2>nInstances<a class="headerlink" href="#ninstances" title="Link to this heading"></a></h2>
+<p>The number of instance to create and run in total.</p>
+</section>
+<section id="instances">
+<h2>instances<a class="headerlink" href="#instances" title="Link to this heading"></a></h2>
+<p>A list of settings for the instances. The size has to be at least <cite>nInstances</cite>. If the list is larger, exceeding entries will be ignored.
+Each instance takes the next settings from the list.</p>
+<p>One settings instance is a Python dictionary with an item <code class="docutils literal notranslate"><span class="pre">&quot;ranks&quot;</span></code> (see below) and the settings for the instance.</p>
+</section>
+<section id="ranks">
+<h2>ranks<a class="headerlink" href="#ranks" title="Link to this heading"></a></h2>
+<p>A list of MPI ranks on which the instance should be computed. Since this property is part of the settings for a specific instance, it specifies the processes that will be used for the particular instance. This list can be different for different instances.</p>
+<p>A process only takes part in the computation of those instances which have the rank number of the process included in <cite>ranks</cite>. Consequently, only those settings in the <cite>instances</cite> list are significant. The others can be set to <cite>None</cite>. This helps to reduce the parsing time and memory footprint. It is required for large settings on more than 10.000 cores, for smaller, medium-scale problems it is not required.</p>
+<p>When specifying the <cite>instances</cite> settings, it can be helpful to make use of <a class="reference external" href="https://docs.python.org/3/tutorial/datastructures.html#list-comprehensions">List Comprehensions</a>, e.g. for 4 processes, like</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;instances&quot;</span><span class="p">:</span> <span class="p">[</span>
+  <span class="p">{</span>
+    <span class="s2">&quot;ranks&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)),</span>   <span class="c1"># use all 4 processes for all fibers</span>
+    <span class="c1"># further settings, depending on variable i, e.g.:</span>
+    <span class="o">...</span>
+        <span class="s2">&quot;meshName&quot;</span><span class="p">:</span> <span class="s2">&quot;MeshFiber_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="o">...</span>
+  <span class="p">}</span>
+<span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_fibers</span><span class="p">)</span>     <span class="c1"># iterate over settings with i=0..n_fibers-1</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="multidomain_solver.html" class="btn btn-neutral float-left" title="MultidomainSolver" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="fast_monodomain_solver.html" class="btn btn-neutral float-right" title="FastMonodomainSolver" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

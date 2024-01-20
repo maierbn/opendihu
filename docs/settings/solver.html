@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solver &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Boundary Conditions" href="boundary_conditions.html" />
+    <link rel="prev" title="MappingsBetweenMeshes" href="mappings_between_meshes.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Solver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#solvertype">solverType</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#preconditionertype">preconditionerType</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#relativetolerance">relativeTolerance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#maxiterations">maxIterations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#command-line-options-for-petsc">Command line options for PETSc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dumpfilename">dumpFilename</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dumpformat">dumpFormat</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">Solver</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/solver.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="solver">
+<h1>Solver<a class="headerlink" href="#solver" title="Link to this heading"></a></h1>
+<p>A linear solver is e.g. needed for FiniteElementMethod class, for MultidomainSolver etc. whenever a linear system needs to be solved. It usually consists of a preconditioner and the actual solver. The preconditioners and solvers are provided by PETSc.</p>
+<p>In the python settings, solvers can be defined at the beginning of the <code class="docutils literal notranslate"><span class="pre">config</span></code> dictionary under the <code class="docutils literal notranslate"><span class="pre">&quot;Solvers&quot;</span></code> key, similar to meshes under the <code class="docutils literal notranslate"><span class="pre">&quot;Meshes&quot;</span></code> key.
+The item <code class="docutils literal notranslate"><span class="pre">&quot;Solvers&quot;</span></code> is itself a dictionary, where the properties of every solver are listed with a <em>solver name</em> as key. The solver name can be chosen abitrarily.
+It is used to reference the solver later, where it is needed, e.g. in a FiniteElementMethod object.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s2">&quot;Solvers&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;activationSolver&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;solverType&quot;</span><span class="p">:</span> <span class="s2">&quot;gmres&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;preconditionerType&quot;</span><span class="p">:</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;relativeTolerance&quot;</span><span class="p">:</span> <span class="mf">1e-5</span><span class="p">,</span>
+      <span class="s2">&quot;maxIterations&quot;</span><span class="p">:</span> <span class="mf">1e4</span><span class="p">,</span>
+      <span class="s2">&quot;dumpFilename&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>      <span class="c1"># no filename means dump is disabled</span>
+      <span class="s2">&quot;dumpFormat&quot;</span><span class="p">:</span> <span class="s2">&quot;default&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;otherSolver&quot;</span><span class="p">:</span> <span class="p">{</span>
+       <span class="c1"># properties of this solver</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<section id="solvertype">
+<h2>solverType<a class="headerlink" href="#solvertype" title="Link to this heading"></a></h2>
+<p><em>Default: gmres</em></p>
+<p>The <em>KSPType</em> of the solver, i.e. which solver to use. Possible values are:</p>
+<ul class="simple">
+<li><p>gmres</p></li>
+<li><p>sor</p></li>
+<li><p>jacobi</p></li>
+<li><p>cg</p></li>
+<li><p>bcgs</p></li>
+<li><p>lu</p></li>
+<li><p>cholesky</p></li>
+<li><p>gamg</p></li>
+<li><p>richardson</p></li>
+<li><p>chebyshev</p></li>
+<li><p>preonly (This means only use the preconditioner)</p></li>
+</ul>
+<p>See <a class="reference external" href="https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPType.html#KSPType">this PETSc page</a> for details. All strings defined there are also possible.</p>
+</section>
+<section id="preconditionertype">
+<h2>preconditionerType<a class="headerlink" href="#preconditionertype" title="Link to this heading"></a></h2>
+<p><em>Default: none</em></p>
+<p>The preconditioner type of PETSc to use. Possible values are:</p>
+<ul class="simple">
+<li><p>jacobi</p></li>
+<li><p>sor</p></li>
+<li><p>lu</p></li>
+<li><p>ilu  (incomplete LU factorization)</p></li>
+<li><p>gamg (geometric algebraic multigrid)</p></li>
+<li><p>none</p></li>
+</ul>
+<p>See <a class="reference external" href="https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/PC/PCType.html">the PETSc page on PCType</a> for more information. All strings defined there are also possible.</p>
+</section>
+<section id="relativetolerance">
+<h2>relativeTolerance<a class="headerlink" href="#relativetolerance" title="Link to this heading"></a></h2>
+<p>The relative tolerance of the residuum after which the solver is converged. Relative means relative to the initial residuum.</p>
+</section>
+<section id="maxiterations">
+<h2>maxIterations<a class="headerlink" href="#maxiterations" title="Link to this heading"></a></h2>
+<p>The maximum number of iterations after which the solver aborts and states divergence.</p>
+<p>Internally the solver is configured with</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="c1">//                        relative tol,      absolute tol,  diverg tol.,   max_iterations</span>
+<span class="n">KSPSetTolerances</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">ksp_</span><span class="p">,</span><span class="w"> </span><span class="n">relativeTolerance_</span><span class="p">,</span><span class="w"> </span><span class="n">PETSC_DEFAULT</span><span class="p">,</span><span class="w"> </span><span class="n">PETSC_DEFAULT</span><span class="p">,</span><span class="w"> </span><span class="n">maxIterations_</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>See the <a class="reference external" href="https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPSetTolerances.html">PETSc documentation for KSPSetTolerances</a> to understand what that means.</p>
+</section>
+<section id="command-line-options-for-petsc">
+<h2>Command line options for PETSc<a class="headerlink" href="#command-line-options-for-petsc" title="Link to this heading"></a></h2>
+<p>PETSc uses its own options database which is initialized from command line arguments. Opendihu passes command line arguments on to PETSc such that this feature of PETSc can be used.</p>
+<p>Details can be found <a class="reference external" href="https://www.mcs.anl.gov/petsc/petsc-current/docs/manualpages/KSP/KSPSetFromOptions.html">here</a>. For example by using the command line argument <cite>-ksp_monitor</cite> information about the PETSc solver are printed to stdout.</p>
+</section>
+<section id="dumpfilename">
+<h2>dumpFilename<a class="headerlink" href="#dumpfilename" title="Link to this heading"></a></h2>
+<p><em>Default: “”</em></p>
+<p>If this is set to a non-empty string, the system matrix and right hand side vector will be dumped before every linear solve. Dumping means writing to a file in a specific format, depending on
+<code class="docutils literal notranslate"><span class="pre">dumpFormat</span></code>.</p>
+<p>Note, that there is also the possiblity of using <a class="reference internal" href="output_writer.html"><span class="doc">OutputWriter</span></a> s that output field variables. These also contain the right hand side vector, and any other variables of interest.</p>
+<p>The value of <code class="docutils literal notranslate"><span class="pre">dumpFilename</span></code> is a filename prefix. The actual filename is of the form <code class="docutils literal notranslate"><span class="pre">&lt;dumpFilename&gt;_matrix_#####.m</span></code>, where “matrix” is replaced by “rhs” for the right hand side vector and ##### is a 5-digit consecutive number, useful for timestepping schemes, where matrix and vector will be output for every time step. “.m” is the suffix, in this case for MATLAB files, otherwise “.txt” for ascii files.</p>
+<p>A tip is to set it to <code class="docutils literal notranslate"><span class="pre">&quot;out/&quot;</span></code>. This will create a directory called <code class="docutils literal notranslate"><span class="pre">out</span></code>, the specified filename after this path is empty. But this is no problem, because the filename will only consist of the suffixes in this case.</p>
+</section>
+<section id="dumpformat">
+<h2>dumpFormat<a class="headerlink" href="#dumpformat" title="Link to this heading"></a></h2>
+<p><em>Default: “default”</em></p>
+<p>The format in which to export/dump data of matrices and vectors in the file. Possible values are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">default</span></code>: Uses the default format provided by PETSc, usually human-readable, but not very nice. For sparse matrices this states the non-zero entries, for vectors it contains the values row-wise. This format is useful to copy-paste vectors to process them further in any other way.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ascii</span></code>: Outputs dense vectors and matrices as ascii values, this is the best option to produce human-readable output. For a vector, the indices and values will be written row by row. For a matrix, the dense matrix including all zero entries will be written.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">matlab</span></code>: Generates files that can be used directly with MATLAB. Execute the <code class="docutils literal notranslate"><span class="pre">*.m</span></code> script files to load the variables in matlab. The variables will be named like the internal name in opendihu, e.g. for a Laplace problem in release mode <code class="docutils literal notranslate"><span class="pre">rightHandSide</span></code> and <code class="docutils literal notranslate"><span class="pre">stiffnessMatrix</span></code>. The matrices are stored as sparse matrices in matlab.</p></li>
+</ul>
+<p>The matlab option is also useful for higher-dimensional problems, whereas the other, ascii-based formats take a long time to write and should only be used with small problem sizes. The difference is that the matlab files contain the system matrix in a sparse format (i.e. only non-zero entries) and the ascii based files contain the whole matrix including all zeros.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="mappings_between_meshes.html" class="btn btn-neutral float-left" title="MappingsBetweenMeshes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="boundary_conditions.html" class="btn btn-neutral float-right" title="Boundary Conditions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

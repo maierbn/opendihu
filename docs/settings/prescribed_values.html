@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PrescribedValues &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="MapDofs" href="map_dofs.html" />
+    <link rel="prev" title="Muscle contraction solver" href="muscle_contraction_solver.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solver.html">Solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">PrescribedValues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#meshname">meshName</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#slotnames">slotNames</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#additionalargument">additionalArgument</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#callback-function">Callback Function</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">PrescribedValues</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/prescribed_values.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="prescribedvalues">
+<h1>PrescribedValues<a class="headerlink" href="#prescribedvalues" title="Link to this heading"></a></h1>
+<p>The <cite>PrescribedValues</cite> allows to directly set the values of a field variable over time from a python callback function.
+It is a normal timestepping scheme. The “solution” step consists of calling a python callback for every field variable.
+The field variable can be 1D, 2D or 3D, with any mesh and ansatz function.</p>
+<p>Two different types of field variables with different numbers of components can be specified. Then, of each type, any number of field variables can be created. E.g. if scalar and two-component vector-valued field variables should be used, there can be any number of scalar field variables plus any number of vector-valued field variables.</p>
+<p>The first component of every field variable is automatically connected to the output slot of the <cite>PrescribedValues</cite> class (see <a class="reference internal" href="output_connector_slots.html"><span class="doc">Connector Slots</span></a>).</p>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<p>The PrescribedValues class has three template parameters, of which the last two are optional (with default value 1).</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">PrescribedValues</span><span class="o">&lt;</span><span class="cm">/*FunctionSpace*/</span><span class="p">,</span><span class="w"> </span><span class="cm">/*nComponents1*/</span><span class="p">,</span><span class="w"> </span><span class="cm">/*nComponents2*/</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>for example:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">PrescribedValues</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="n">FunctionSpace</span><span class="o">::</span><span class="n">FunctionSpace</span><span class="o">&lt;</span>
+<span class="w">    </span><span class="n">Mesh</span><span class="o">::</span><span class="n">StructuredRegularFixedOfDimension</span><span class="o">&lt;</span><span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">    </span><span class="n">BasisFunction</span><span class="o">::</span><span class="n">LagrangeOfOrder</span><span class="o">&lt;</span><span class="mi">2</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&gt;</span><span class="p">,</span>
+<span class="w">  </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="mi">3</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>The above example uses a 2D structured regular fixed mesh with quadratic Lagrange ansatz functions.
+It allows to define different field variables with one and three components, i.e. scalar field variables and field variables with 3 components. If the last two numbers are not specified, they are both 1.</p>
+<p>The python settings are as given below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;PrescribedValues&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;meshName&quot;</span><span class="p">:</span>            <span class="s2">&quot;mesh&quot;</span><span class="p">,</span>        <span class="c1"># the mesh to use for the field variables</span>
+  <span class="s2">&quot;numberTimeSteps&quot;</span><span class="p">:</span>     <span class="mi">1</span><span class="p">,</span>             <span class="c1"># number of timesteps to call the callback functions subsequently, this is usually 1 for prescribed values, because it is enough to set the reaction term only once per time step</span>
+  <span class="s2">&quot;timeStepOutputInterval&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>         <span class="c1"># if the time step should be written to console, a value &gt; 1 produces no output</span>
+  <span class="s2">&quot;slotNames&quot;</span><span class="p">:</span>           <span class="p">[</span><span class="s2">&quot;reac&quot;</span><span class="p">],</span>      <span class="c1"># list of names of the connector slots, maximum length is 10 characters per name</span>
+
+  <span class="c1"># a list of field variables that will get values assigned in every timestep, by the provided callback function</span>
+  <span class="s2">&quot;fieldVariables1&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;reaction_term&quot;</span><span class="p">,</span> <span class="s2">&quot;callback&quot;</span><span class="p">:</span> <span class="n">set_reaction_term_values</span><span class="p">},</span>
+  <span class="p">],</span>
+  <span class="s2">&quot;fieldVariables2&quot;</span><span class="p">:</span>     <span class="p">[],</span>
+  <span class="s2">&quot;additionalArgument&quot;</span><span class="p">:</span>  <span class="kc">None</span><span class="p">,</span>          <span class="c1"># a custom argument to the fieldVariables callback functions, this will be passed on as the last argument</span>
+
+  <span class="s2">&quot;OutputWriter&quot;</span> <span class="p">:</span> <span class="p">[</span>
+    <span class="c1">#{&quot;format&quot;: &quot;Paraview&quot;, &quot;interval&quot;: 1, &quot;filename&quot;: &quot;out&quot;, &quot;binaryOutput&quot;: &quot;false&quot;, &quot;fixedFormat&quot;: False, &quot;onlyNodalValues&quot;:True, &quot;fileNumbering&quot;: &quot;incremental&quot;},</span>
+    <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;PythonFile&quot;</span><span class="p">,</span> <span class="s2">&quot;outputInterval&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;out/reaction&quot;</span><span class="p">,</span> <span class="s2">&quot;binary&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;onlyNodalValues&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fileNumbering&quot;</span><span class="p">:</span> <span class="s2">&quot;incremental&quot;</span><span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">},</span>
+</pre></div>
+</div>
+<p>In the following all parameters will be explained.</p>
+</section>
+<section id="meshname">
+<h2>meshName<a class="headerlink" href="#meshname" title="Link to this heading"></a></h2>
+<p>The <a class="reference internal" href="mesh.html"><span class="doc">Mesh</span></a> on which the field variable will live. It is also possible to specify the mesh in-line, as explained for <a class="reference internal" href="finite_element_method.html#femesh"><span class="std std-ref">Finite Element Method</span></a>.</p>
+</section>
+<section id="slotnames">
+<h2>slotNames<a class="headerlink" href="#slotnames" title="Link to this heading"></a></h2>
+<p>A list of strings, names for the connector slots. Each name should be smaller or equal than 10 characters.
+In general, named slots are used to connect the slots from a global setting “connectedSlots”. See <a class="reference internal" href="output_connector_slots.html"><span class="doc">Connector Slots</span></a> for details.</p>
+</section>
+<section id="additionalargument">
+<h2>additionalArgument<a class="headerlink" href="#additionalargument" title="Link to this heading"></a></h2>
+<p>This is a custom argument that will be passed to the fieldVariables callback functions as the last argument.</p>
+</section>
+<section id="callback-function">
+<h2>Callback Function<a class="headerlink" href="#callback-function" title="Link to this heading"></a></h2>
+<p>The callback functions that are specified under “callback” have the following signatures. The function will provide the current local values of the field variable in the <code class="docutils literal notranslate"><span class="pre">values</span></code> parameter, as well as some other information.
+The values in this list can be changed inside the callback function and are then updated in the field variable. Only the local values can be accessed inside the callback function. But there is enough information passed to the callback to conveniently access the correct values.</p>
+<p>The following example also shows, how one can iterate over the local values.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">set_reaction_term_values</span><span class="p">(</span><span class="n">n_dofs_global</span><span class="p">,</span> <span class="n">n_nodes_global_per_coordinate_direction</span><span class="p">,</span> <span class="n">time_step_no</span><span class="p">,</span> <span class="n">current_time</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">global_natural_dofs</span><span class="p">,</span> <span class="n">additional_argument</span><span class="p">):</span>
+  <span class="c1"># n_dofs_global:       (int) global number of dofs in the mesh where to set the values</span>
+  <span class="c1"># n_nodes_global_per_coordinate_direction (list of ints)   [mx, my, mz] number of global nodes in each coordinate direction.</span>
+  <span class="c1">#                       For composite meshes, the values are only for the first submesh, for other meshes sum(...) equals n_dofs_global</span>
+  <span class="c1"># time_step_no:        (int)   current time step number</span>
+  <span class="c1"># current_time:        (float) the current simulation time</span>
+  <span class="c1"># values:              (list of floats) all current local values of the field variable, if there are multiple components, they are stored in struct-of-array memory layout</span>
+  <span class="c1">#                       i.e. [point0_component0, point0_component1, ... point0_componentN, point1_component0, point1_component1, ...]</span>
+  <span class="c1">#                       After the call, these values will be assigned to the field variable.</span>
+  <span class="c1"># global_natural_dofs  (list of ints) for every local dof no. the dof no. in global natural ordering</span>
+  <span class="c1"># additional_argument: The value of the option &quot;additionalArgument&quot;, can be any Python object.</span>
+
+  <span class="k">for</span> <span class="n">local_dof_no</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)):</span>
+    <span class="c1"># get the global no. of the current dof</span>
+    <span class="n">global_dof_no</span> <span class="o">=</span> <span class="n">global_natural_dofs</span><span class="p">[</span><span class="n">local_dof_no</span><span class="p">]</span>
+
+    <span class="n">i</span> <span class="o">=</span> <span class="n">global_dof_no</span> <span class="o">%</span> <span class="n">n_nodes_global_per_coordinate_direction</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>        <span class="c1"># index in x direction</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">global_dof_no</span> <span class="o">/</span> <span class="n">n_nodes_global_per_coordinate_direction</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>   <span class="c1"># index in y direction</span>
+
+    <span class="c1"># now we know that values[local_dof_no] is the value at node (i,j) in the global mesh</span>
+
+    <span class="c1"># e.g. set gaussian</span>
+    <span class="n">center</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">))</span> <span class="o">-</span> <span class="n">center</span><span class="p">)</span>
+    <span class="n">values</span><span class="p">[</span><span class="n">local_dof_no</span><span class="p">]</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="dummy">
+<h1>Dummy<a class="headerlink" href="#dummy" title="Link to this heading"></a></h1>
+<p>The <cite>Dummy</cite> class can be used as a placeholder, e.g. in a Coupling scheme when the second Term is not yet implemented but the first one should already be tested.</p>
+<p>It is used without any template argument:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">Dummy</span>
+</pre></div>
+</div>
+<p>It does not have any Python settings. Also there are no field variables and no connector slots.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="muscle_contraction_solver.html" class="btn btn-neutral float-left" title="Muscle contraction solver" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="map_dofs.html" class="btn btn-neutral float-right" title="MapDofs" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

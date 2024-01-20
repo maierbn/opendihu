@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Validation &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Python Settings" href="../settings.html" />
+    <link rel="prev" title="Existing examples" href="existing_examples.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Validation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#d-poisson">1D Poisson</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#problem-definition">Problem definition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#analytic-solution">Analytic solution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#numeric-solution">Numeric solution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#convergence-study">Convergence study</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-to-reproduce">How to reproduce</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">3D Poisson</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Problem definition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Analytic solution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Numeric solution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">How to reproduce</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#d-diffusion">2D Diffusion</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">Problem definition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">Analytic solution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id9">Numeric solution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#comparison-of-numeric-and-analytic-solutions">Comparison of numeric and analytic solutions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">How to reproduce</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#cellml-models">CellML models</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#hodgkin-huxley-1952">Hodgkin-Huxley (1952)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#shorten-ocallaghan-davidson-soboleva-2007">Shorten, Ocallaghan, Davidson, Soboleva (2007)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">How to reproduce</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#nonlinear-solid-mechanics">Nonlinear solid mechanics</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id14">How to reproduce</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#excited-cuboid-muscle">Excited cuboid muscle</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id20">How to reproduce</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">Python Settings</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Validation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/user/validation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="validation">
+<h1>Validation<a class="headerlink" href="#validation" title="Link to this heading"></a></h1>
+<p>On this page, we present numeric experiments for problems for which analytic solutions are known. By such comparison, we can validate the implemented solvers in OpenDiHu.</p>
+<section id="d-poisson">
+<h2>1D Poisson<a class="headerlink" href="#d-poisson" title="Link to this heading"></a></h2>
+<p>We solve the 1D Poisson equation with linear, quadratic and cubic Hermite elements and conduct a convergence study.
+The resulting linear system of equations is solved directly using LU decomposition. Note that Hermite ansatz is only experimental,
+while linear and quadratic ansatz functions can safely be used.</p>
+<section id="problem-definition">
+<h3>Problem definition<a class="headerlink" href="#problem-definition" title="Link to this heading"></a></h3>
+<p>The 1D Poisson problem on a finite interval is given by</p>
+<div class="math notranslate nohighlight">
+\[-\dfrac{\partial}{\partial x}u(x) + f(x) = 0 \quad \text{on }\Omega = [0, b], \quad b = 3.\]</div>
+<p>We use the following right hand side.</p>
+<div class="math notranslate nohighlight">
+\[f: [0, b] \to \mathbb{R}, \quad f(x) := 1 - x^2\]</div>
+<p>We impose Dirichlet boundary conditions at both ends of the interval.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}u(0) = 1,\\
+u(3) = 2\end{split}\]</div>
+</section>
+<section id="analytic-solution">
+<h3>Analytic solution<a class="headerlink" href="#analytic-solution" title="Link to this heading"></a></h3>
+<p>The following function fulfills the formulated boundary value problem.</p>
+<div class="math notranslate nohighlight">
+\[u(x) = -\dfrac1{12}x^4 + \dfrac1{2}x^2 + \dfrac{13}{12}x + 1\]</div>
+</section>
+<section id="numeric-solution">
+<h3>Numeric solution<a class="headerlink" href="#numeric-solution" title="Link to this heading"></a></h3>
+<p>We discretize the 1D domain with linear, quadratic and cubic Hermite elements with a given numbers of elements, <span class="math notranslate nohighlight">\(n\)</span>.
+The following plots show the result for <span class="math notranslate nohighlight">\(n=6\)</span>.</p>
+<figure class="align-default" id="id21">
+<span id="poisson-1d-linear6"></span><a class="reference internal image-reference" href="../_images/poisson_1d_linear6.png"><img alt="../_images/poisson_1d_linear6.png" src="../_images/poisson_1d_linear6.png" style="width: 70%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 81 </span><span class="caption-text">Numeric solution with 6 linear elements</span><a class="headerlink" href="#id21" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id22">
+<span id="poisson-1d-quadratic6"></span><a class="reference internal image-reference" href="../_images/poisson_1d_quadratic6.png"><img alt="../_images/poisson_1d_quadratic6.png" src="../_images/poisson_1d_quadratic6.png" style="width: 70%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 82 </span><span class="caption-text">Numeric solution with 6 quadratic elements</span><a class="headerlink" href="#id22" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id23">
+<span id="poisson-1d-hermite6"></span><a class="reference internal image-reference" href="../_images/poisson_1d_hermite6.png"><img alt="../_images/poisson_1d_hermite6.png" src="../_images/poisson_1d_hermite6.png" style="width: 70%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 83 </span><span class="caption-text">Numeric solution with 6 Hermite elements</span><a class="headerlink" href="#id23" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="convergence-study">
+<h3>Convergence study<a class="headerlink" href="#convergence-study" title="Link to this heading"></a></h3>
+<p>To assess the convergence behaviour, we increase <span class="math notranslate nohighlight">\(n\)</span> from 10 to 100 and compute the <span class="math notranslate nohighlight">\(\mathcal{L}_2\)</span>-error against the analytic solution.</p>
+<figure class="align-default" id="id24">
+<span id="poisson-1d-convergence-study"></span><a class="reference internal image-reference" href="../_images/poisson_1d_convergence_study.png"><img alt="../_images/poisson_1d_convergence_study.png" src="../_images/poisson_1d_convergence_study.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 84 </span><span class="caption-text">Result of a convergence study, L2 error against number of elements</span><a class="headerlink" href="#id24" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>The experimental order of converge <span class="math notranslate nohighlight">\(\frac{log(\varepsilon_i)-log(\varepsilon_{i-1})}{log(n_i)-log(n_{i-1})}\)</span> is determined to be as follows.</p>
+<table class="docutils align-default" id="id25">
+<caption><span class="caption-number">Table 2 </span><span class="caption-text">Experimental order of convergence for <a class="reference internal" href="#poisson-1d-convergence-study">poisson_1d_convergence_study</a>.</span><a class="headerlink" href="#id25" title="Link to this table"></a></caption>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Linear elements</p></td>
+<td><p>-2</p></td>
+</tr>
+<tr class="row-even"><td><p>Quadratic elements</p></td>
+<td><p>-4</p></td>
+</tr>
+<tr class="row-odd"><td><p>Hermite elements</p></td>
+<td><p>-1</p></td>
+</tr>
+</tbody>
+</table>
+<p>The linear and quadratic formulations exhibit the expected order of convergence of exactly second order for linear elements and at least third order for quadratic elements.
+Note that the solution <span class="math notranslate nohighlight">\(u(x)\)</span> has no <span class="math notranslate nohighlight">\(x^3\)</span>-term, therefore the order of convergence is exactly 4 with the quadratic ansatz.</p>
+<p>For the quadratic ansatz, the error does not continue to decrease further below <span class="math notranslate nohighlight">\(2^{-11}\)</span> for <span class="math notranslate nohighlight">\(n=600\)</span> elements and more because machine precision is reached in the solver and/or the computation of the L2 error.</p>
+<p>The Hermite formulation in OpenDiHu is experimental.
+The observed convergence order lies around 1. Using Hermite ansatz functions required more effort in the problem specification, because we have to define also boundary conditions for the first derivative <span class="math notranslate nohighlight">\(u'(0)\)</span>.
+In OpenDiHu, using the Hermite ansatz requires specification of both the right hand side function <span class="math notranslate nohighlight">\(f\)</span> and its derivative <span class="math notranslate nohighlight">\(f'\)</span>.</p>
+</section>
+<section id="how-to-reproduce">
+<h3>How to reproduce<a class="headerlink" href="#how-to-reproduce" title="Link to this heading"></a></h3>
+<ul>
+<li><p>Build the example</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/validation/poisson_1d
+mkorn<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sr<span class="w">       </span><span class="c1"># build</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Run the simulation for a given number of elements, e.g., 6 elements.</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/validation/poisson_1d/build_release
+
+./linear<span class="w"> </span>../settings_poisson_1d.py<span class="w"> </span><span class="m">6</span>
+./quadratic<span class="w"> </span>../settings_poisson_1d.py<span class="w"> </span><span class="m">6</span>
+./hermite<span class="w"> </span>../settings_poisson_1d.py<span class="w"> </span><span class="m">6</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Plot the results (make sure that the <code class="docutils literal notranslate"><span class="pre">$OPENDIHU_HOME/scripts</span></code> directory is in the <code class="docutils literal notranslate"><span class="pre">PYTHONPATH</span></code> environment variable).</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/validation/poisson_1d/build_release/out
+plot<span class="w"> </span>linear.py
+plot<span class="w"> </span>quadratic.py
+plot<span class="w"> </span>hermite.py
+
+<span class="c1"># (instead you can also call `plot out/linear.py` etc. from one directory above)</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Compute the error for the current simulation results.</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/validation/poisson_1d
+python3<span class="w"> </span>compute_error.py
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Conduct the convergence study.</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/validation/poisson_1d/build_release
+python3<span class="w"> </span>./do_convergence_study.py
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</section>
+</section>
+<section id="id1">
+<h2>3D Poisson<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<p>The next validation scenario is a more complex Poisson problem in a 3D domain.</p>
+<section id="id2">
+<h3>Problem definition<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>The 1D Poisson problem is given by</p>
+<div class="math notranslate nohighlight">
+\[-\Delta u(\textbf{x}) + f(\textbf{x}) = 0 \quad \text{on }\Omega = [0, 2] \times [0,3] \times [0,4].\]</div>
+<p>We define the following right hand side.</p>
+<div class="math notranslate nohighlight">
+\[f: \Omega \to \mathbb{R}, \quad f(x,y,z) := 2\,x^3\,z + 24\,x^2\,y^2\,z + 8\,x^2\,z^3 + 6\,x\,y^2\,z + 12\,x\,y\,z + 8\,y^2\,z^3 + 4\,y\]</div>
+<p>We use the following Dirichlet boundary conditions <span class="math notranslate nohighlight">\(u(\textbf{x}) = \bar{u}(\textbf{x})\)</span> on <span class="math notranslate nohighlight">\(\textbf{x} \in \partial \Omega\)</span></p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\bar{u}(x,y,z)\vert_{x=0} &amp;= 4\,y\,(2\,y\,z^3 + 1) +1\\
+\bar{u}(x,y,z)\vert_{x=2} &amp;= 8\,y^2\,z^3 + 108\,y^2\,z + 24\,y\,z + 4\,y + 32\,z^3 + 16\,z +1\\
+\bar{u}(x,y,z)\vert_{y=0} &amp;= 2\,x^2\,z\,(x + 4\,z^2)+1\\
+\bar{u}(x,y,z)\vert_{y=3} &amp;= 2\,x^3\,z + 8\,x^2\,z^3 + 216\,x^2\,z + 90\,x\,z + 72\,z^3 + 13\\
+\bar{u}(x,y,z)\vert_{z=0} &amp;= 4\,y+1\\
+\bar{u}(x,y,z)\vert_{z=4} &amp;= 8\,x^3 + 96\,x^2\,y^2 + 512\,x^2 + 24\,x\,y^2 + 48\,x\,y + 512\,y^2 + 4\,y+1\end{split}\]</div>
+</section>
+<section id="id3">
+<h3>Analytic solution<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>The following function fulfills the formulated boundary value problem.</p>
+<div class="math notranslate nohighlight">
+\[u(x) = x^3\,y^2\,z + 4\,x^2\,y^2\,z^3 + 2\,x\,y^3\,z - y\,z^2 + 3\,x^2\,y + 1\]</div>
+</section>
+<section id="id4">
+<h3>Numeric solution<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<blockquote>
+<div><p>We discretize the domain <span class="math notranslate nohighlight">\(\Omega = [0, 2] \times [0,3] \times [0,4]\)</span> by</p>
+<ul class="simple">
+<li><p>(a) <span class="math notranslate nohighlight">\(\quad 2\,n\times 3\,n \times 4\,n\quad\)</span> linear and quadratic elements, and by</p></li>
+<li><p>(b) <span class="math notranslate nohighlight">\(\quad n\times n \times n\quad\)</span> linear and quadratic elements.</p></li>
+</ul>
+<p>In case (a), the elements have a cube shape while in (b) they are cuboid shaped with different element lengths along the coordinate axes.</p>
+<p>The resulting solution can be seen in the three following plots, for <span class="math notranslate nohighlight">\(n=2\)</span> and <span class="math notranslate nohighlight">\(z=1, z=2\)</span>, and <span class="math notranslate nohighlight">\(z=3\)</span>.</p>
+</div></blockquote>
+<p><a class="reference internal" href="../_images/poisson_3d_z1.png"><img alt="poisson_3d_z1" src="../_images/poisson_3d_z1.png" style="width: 30%;" /></a> <a class="reference internal" href="../_images/poisson_3d_z2.png"><img alt="poisson_3d_z2" src="../_images/poisson_3d_z2.png" style="width: 30%;" /></a> <a class="reference internal" href="../_images/poisson_3d_z3.png"><img alt="poisson_3d_z3" src="../_images/poisson_3d_z3.png" style="width: 30%;" /></a></p>
+<p>The resulting <span class="math notranslate nohighlight">\(\mathcal{L}_2\)</span>-errors to the analytic solution are given in <a class="reference internal" href="#eoftable"><span class="std std-numref">Table 3</span></a>. It can be seen that the error is at machine precision for every tested discretization.</p>
+<span id="eoftable"></span><table class="docutils align-default" id="id26">
+<caption><span class="caption-number">Table 3 </span><span class="caption-text">Experimental order of convergence for <a class="reference internal" href="#poisson-1d-convergence-study">poisson_1d_convergence_study</a></span><a class="headerlink" href="#id26" title="Link to this table"></a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>case</p></th>
+<th class="head"><p>ansatz functions</p></th>
+<th class="head"><p>number of degrees of freedom</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\mathcal{L}_2\)</span>-norm of error</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>(a)</p></td>
+<td><p>Linear</p></td>
+<td><p>60</p></td>
+<td><p>1.1e-14</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td></td>
+<td><p>315</p></td>
+<td><p>8.7e-14</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td></td>
+<td><p>910</p></td>
+<td><p>1.9e-13</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td></td>
+<td><p>1989</p></td>
+<td><p>3.7e-13</p></td>
+</tr>
+<tr class="row-even"><td><p>(a)</p></td>
+<td><p>Quadratic</p></td>
+<td><p>315</p></td>
+<td><p>1.7e-13</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td></td>
+<td><p>1989</p></td>
+<td><p>6.4e-13</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td></td>
+<td><p>6175</p></td>
+<td><p>1.3e-12</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td></td>
+<td><p>14025</p></td>
+<td><p>1.3e-11</p></td>
+</tr>
+<tr class="row-even"><td><p>(b)</p></td>
+<td><p>Linear</p></td>
+<td><p>27</p></td>
+<td><p>2.0e-14</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td></td>
+<td><p>125</p></td>
+<td><p>6.9e-14</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td></td>
+<td><p>512</p></td>
+<td><p>1.7e-13</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td></td>
+<td><p>1989</p></td>
+<td><p>3.7e-13</p></td>
+</tr>
+<tr class="row-even"><td><p>(b)</p></td>
+<td><p>Quadratic</p></td>
+<td><p>125</p></td>
+<td><p>9.5e-14</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td></td>
+<td><p>729</p></td>
+<td><p>3.6e-13</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td></td>
+<td><p>3375</p></td>
+<td><p>1.8e-12</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td></td>
+<td><p>12167</p></td>
+<td><p>8.1e-12</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id5">
+<h3>How to reproduce<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<ul>
+<li><p>Build the example</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/validation/poisson_3d
+mkorn<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sr<span class="w">       </span><span class="c1"># build</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Run the simulation for a given element number <span class="math notranslate nohighlight">\(n\)</span>, e.g. <span class="math notranslate nohighlight">\(n=1\)</span></p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/validation/poisson_3d/build_release
+
+<span class="c1"># case (a) - cube shaped elements</span>
+./linear_regular<span class="w"> </span>../settings_poisson_3d.py<span class="w"> </span><span class="m">1</span>
+./quadratic_regular<span class="w"> </span>../settings_poisson_3d.py<span class="w"> </span><span class="m">1</span>
+
+<span class="c1"># case (b) - cuboid shaped elements</span>
+./linear_structured<span class="w"> </span>../settings_poisson_3d.py<span class="w"> </span><span class="m">1</span>
+./quadratic_structured<span class="w"> </span>../settings_poisson_3d.py<span class="w"> </span><span class="m">1</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Compute the error for the current simulation results.</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/validation/poisson_3d
+python3<span class="w"> </span>compute_error.py
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</section>
+</section>
+<section id="d-diffusion">
+<h2>2D Diffusion<a class="headerlink" href="#d-diffusion" title="Link to this heading"></a></h2>
+<p>Next, the parabolic diffusion equation with a constant coefficient is used to validate the respective solvers.</p>
+<section id="id6">
+<h3>Problem definition<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<p>The 2D Diffusion problem is formulated as</p>
+<div class="math notranslate nohighlight">
+\[-\dfrac{\partial}{\partial t}u(\textbf{x},t) + D\,\Delta u(\textbf{x},t) = 0 \quad \text{on }\textbf{x} \in \Omega = [0, 10] \times [0,10].\]</div>
+<p>The diffusion factor is chosen to be constant <span class="math notranslate nohighlight">\(D=3\)</span>.</p>
+<p>The initial values are given by the following function,</p>
+<div class="math notranslate nohighlight">
+\[u(\textbf{x},0) = 1 + \textrm{cos}(\textrm{min}(\vert\textbf{x} - \textbf{p}\vert,\pi)), \quad \textbf{p} = (2,5)^\top.\]</div>
+<p>This function describes a peak of height 2 at <span class="math notranslate nohighlight">\(\textbf{p}=(2,5)^\top\)</span>. The function decays in radial direction away from <span class="math notranslate nohighlight">\(\textbf{p}\)</span> and reaches constant zero at the boundary <span class="math notranslate nohighlight">\(\partial \Omega\)</span>.</p>
+<p>We consider two scenarios (a) and (b). In (a), we impose homogeneous Dirichlet boundary conditions at <span class="math notranslate nohighlight">\(x=0\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[u(x=0,y,t) = 0, \quad (\text{where }\textbf{x} = (x,y)^\top).\]</div>
+<p>In scenario (b) we specify homogeneous Neumann boundary conditions at <span class="math notranslate nohighlight">\(x=0\)</span>,</p>
+<div class="math notranslate nohighlight">
+\[\dfrac{\partial}{\partial x} u(x=0,y,t) = 0.\]</div>
+</section>
+<section id="id7">
+<h3>Analytic solution<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<p>It is known that a solution to the governing diffusion equation on the 2D infinite domain <span class="math notranslate nohighlight">\(\Omega_\infty = \mathbb{R}^2\)</span> is given by <a class="reference internal" href="#ursell2016" id="id8"><span>[Ursell2016]</span></a>,</p>
+<div class="math notranslate nohighlight" id="equation-diffusion-eq-solution">
+<span class="eqno">(1)<a class="headerlink" href="#equation-diffusion-eq-solution" title="Link to this equation"></a></span>\[u(\textbf{x},t) = \displaystyle\int G(\textbf{x}, \textbf{x}', t)\,u(\textbf{x}', 0)\,\mathrm{d}x,\]</div>
+<p>with <em>Green’s Function</em></p>
+<div class="math notranslate nohighlight">
+\[G(\textbf{x}, \textbf{x}', t) = \dfrac{\mathrm{exp}\Big(-\frac{|\textbf{x}-\textbf{x}'|^2}{4\,D\,t}\Big)}{4\,\pi\,D\,t}.\]</div>
+<p>For scenario (a) with homogeneous Dirichlet boundary at <span class="math notranslate nohighlight">\(x=0\)</span>, we can construct a new function <span class="math notranslate nohighlight">\(G_D\)</span> as sum of <span class="math notranslate nohighlight">\(G(x)\)</span>
+and its mirrored counterpart <span class="math notranslate nohighlight">\(-G(-x)\)</span> whose graph is mirrored around the <span class="math notranslate nohighlight">\(x=0\)</span> axis,</p>
+<div class="math notranslate nohighlight">
+\[G_D(x,y,x',y',t) = G(x,y,x',y',t) - G(x,y,-x',y',t)\]</div>
+<p>This function is zero for <span class="math notranslate nohighlight">\(x=0\)</span>.</p>
+<p>Similarly, for the Neumann boundary in scenario (b), we construct a function</p>
+<div class="math notranslate nohighlight">
+\[G_N(x,y,x',y',t) = G(x,y,x',y',t) + G_D(x,y,-x',y',t).\]</div>
+<p>We get an analytic solution for scenario (a) by replacing <span class="math notranslate nohighlight">\(G\)</span> by <span class="math notranslate nohighlight">\(G_D\)</span> in Eq. <a class="reference internal" href="#equation-diffusion-eq-solution">(1)</a> and for scenario (b) by replacing <span class="math notranslate nohighlight">\(G\)</span> by <span class="math notranslate nohighlight">\(G_N\)</span> in <a class="reference internal" href="#equation-diffusion-eq-solution">(1)</a>.
+This solution, however, is correct only for a problem on <span class="math notranslate nohighlight">\(\Omega = [0, \infty) \times (-\infty, \infty)\)</span>.</p>
+</section>
+<section id="id9">
+<h3>Numeric solution<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<p>With our finite element solver, we can only discretize a finite domain.
+The considered problem on <span class="math notranslate nohighlight">\(\Omega = [0,10]\times [0,10]\)</span> with the given initial values is specified such that large changes in function value <span class="math notranslate nohighlight">\(u\)</span>
+mainly occur in the interior of the domain, away from the boundary at <span class="math notranslate nohighlight">\(x=10, y=0,\)</span> and <span class="math notranslate nohighlight">\(y=10\)</span>.</p>
+<p><a class="reference internal" href="#diffusiondirichlet"><span class="std std-numref">Fig. 85</span></a> and <a class="reference internal" href="#diffusionneumann"><span class="std std-numref">Fig. 86</span></a> show the initial values <span class="math notranslate nohighlight">\(u(\textbf{x}, 0)\)</span> and the values for <span class="math notranslate nohighlight">\(t=1\)</span>,
+<span class="math notranslate nohighlight">\(u(\textbf{x}, 1)\)</span> for scenarios (a) and (b), respectively.</p>
+<figure class="align-default" id="id27">
+<span id="diffusiondirichlet"></span><a class="reference internal image-reference" href="../_images/diffusion_dirichlet.png"><img alt="../_images/diffusion_dirichlet.png" src="../_images/diffusion_dirichlet.png" style="width: 50%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 85 </span><span class="caption-text">Scenario (a) with homogeneous Dirichlet boundary conditions at <span class="math notranslate nohighlight">\(x=0\)</span>, for <span class="math notranslate nohighlight">\(t=0\)</span> (top) and <span class="math notranslate nohighlight">\(t=1\)</span> (bottom).</span><a class="headerlink" href="#id27" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id28">
+<span id="diffusionneumann"></span><a class="reference internal image-reference" href="../_images/diffusion_neumann.png"><img alt="../_images/diffusion_neumann.png" src="../_images/diffusion_neumann.png" style="width: 50%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 86 </span><span class="caption-text">Scenario (b) with homogeneous Neumann boundary conditions at <span class="math notranslate nohighlight">\(x=0\)</span>, for <span class="math notranslate nohighlight">\(t=0\)</span> (top) and <span class="math notranslate nohighlight">\(t=1\)</span> (bottom).</span><a class="headerlink" href="#id28" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>It can also be seen how the different boundary conditions affect the solution value. While the Dirichlet boundary conditions in scenarios (a) absorbs the concentration <span class="math notranslate nohighlight">\(u\)</span> at <span class="math notranslate nohighlight">\(x=0\)</span>,
+the homogeneous Neumann boundary condition serves as a <em>reflection boundary</em> which leads to a constant concentration gradient orthogonal to the wall.
+The comparison of the state at <span class="math notranslate nohighlight">\(t=0.5\)</span> in the following images (Scenario (a) left, scenario (b) right) shows that concentration decreases faster with the Dirichlet boundary condition.</p>
+<p><a class="reference internal" href="../_images/diffusion_dirichlet_0_5.png"><img alt="diffusion_dirichlet_0_5" src="../_images/diffusion_dirichlet_0_5.png" style="width: 48%;" /></a> <a class="reference internal" href="../_images/diffusion_neumann_0_5.png"><img alt="diffusion_neumann_0_5" src="../_images/diffusion_neumann_0_5.png" style="width: 48%;" /></a></p>
+<p>We disretize the problem in space by <span class="math notranslate nohighlight">\(10\times 10\)</span> quadratic Finite Elements and in time using the Crank-Nicolson scheme with time step width <span class="math notranslate nohighlight">\(dt = 1e-5\)</span>.
+The linear system of equations in every timestep is solved by a geometric multi-grid solver.</p>
+</section>
+<section id="comparison-of-numeric-and-analytic-solutions">
+<h3>Comparison of numeric and analytic solutions<a class="headerlink" href="#comparison-of-numeric-and-analytic-solutions" title="Link to this heading"></a></h3>
+<p>We compare the solution value <span class="math notranslate nohighlight">\(u(\textbf{x},t)\)</span> over time at selected nodes of the Finite Element mesh.
+The quadratic mesh has <span class="math notranslate nohighlight">\(21 \times 21\)</span> nodes that span the <span class="math notranslate nohighlight">\([0,10] \times [0,10]\)</span> domain.
+<a class="reference internal" href="#diffusion-error-dirichlet"><span class="std std-numref">Fig. 87</span></a> and <a class="reference internal" href="#diffusion-error-neumann"><span class="std std-numref">Fig. 88</span></a> show the results for scenario (a) and scenario (b), the selected nodes are given in the legend.</p>
+<figure class="align-default" id="id29">
+<span id="diffusion-error-dirichlet"></span><a class="reference internal image-reference" href="../_images/diffusion_error_dirichlet.png"><img alt="../_images/diffusion_error_dirichlet.png" src="../_images/diffusion_error_dirichlet.png" style="width: 80%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 87 </span><span class="caption-text">Scenario (a): Numeric (solid lines) and analytic solution (dashed lines) for selected nodes in the mesh.</span><a class="headerlink" href="#id29" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id30">
+<span id="diffusion-error-neumann"></span><a class="reference internal image-reference" href="../_images/diffusion_error_neumann.png"><img alt="../_images/diffusion_error_neumann.png" src="../_images/diffusion_error_neumann.png" style="width: 80%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 88 </span><span class="caption-text">Scenario (b): Numeric (solid lines) and analytic solution (dashed lines) for selected nodes in the mesh.</span><a class="headerlink" href="#id30" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>It can be seen that the analytic and numeric plots essentially coincide.
+At some points, the solution starts to differ during the end of the simulation time span, which can be explained by the analytic solution being correct for the infinite domain.</p>
+<p>This result shows that the diffusion problem solver of OpenDiHu is validated.</p>
+</section>
+<section id="id10">
+<h3>How to reproduce<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<ul>
+<li><p>Build the example</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/validation/diffusion_2d
+mkorn<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sr<span class="w">       </span><span class="c1"># build</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Run the simulations</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/validation/diffusion_2d/build_release
+
+<span class="c1"># scenario (a)</span>
+./diffusion2d_quadratic<span class="w"> </span>../settings_diffusion_2d_dirichlet.py
+
+<span class="c1"># scenario (b)</span>
+./diffusion2d_quadratic<span class="w"> </span>../settings_diffusion_2d_neumann.py
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Visualize the numeric solutions (make sure that the <code class="docutils literal notranslate"><span class="pre">$OPENDIHU_HOME/scripts</span></code> directory is in the <code class="docutils literal notranslate"><span class="pre">PYTHONPATH</span></code> environment variable)</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/validation/diffusion_2d/build_release
+
+<span class="c1"># scenario (a)</span>
+plot<span class="w"> </span>out_dirichlet/*
+
+<span class="c1"># scenario (b)</span>
+plot<span class="w"> </span>out_neumann/*
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Calculate the analytic solution and create the plot</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/validation/diffusion_2d
+
+<span class="c1"># scenario (a)</span>
+python3<span class="w"> </span>compute_error_dirichlet.py
+
+<span class="c1"># scenario (b)</span>
+python3<span class="w"> </span>compute_error_neumann.py
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+<div role="list" class="citation-list">
+<div class="citation" id="ursell2016" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id8">Ursell2016</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://www.yumpu.com/en/document/read/7921375/the-diffusion-equation-a-multi-dimensional-tutorial-california-">Ursell et al. 2016, The Diffusion Equation/A Multi-dimensional Tutorial</a></p>
+</div>
+</div>
+</section>
+</section>
+<section id="cellml-models">
+<h2>CellML models<a class="headerlink" href="#cellml-models" title="Link to this heading"></a></h2>
+<p>We solve CellML models with <a class="reference external" href="https://opencor.ws/">OpenCOR</a> and OpenDiHu and compare the results.
+<a class="reference external" href="https://www.cellml.org/">CellML</a> is a description standard for differential-algebraic systems of equations used in the bioengineering community. The XML based CellML file format can be parsed and solved by both OpenCOR and OpenDiHu.</p>
+<section id="hodgkin-huxley-1952">
+<h3>Hodgkin-Huxley (1952)<a class="headerlink" href="#hodgkin-huxley-1952" title="Link to this heading"></a></h3>
+<p>The most basic electrophysiology model was formulated by <a class="reference external" href="https://royalsocietypublishing.org/doi/abs/10.1098/rspb.1952.0054">Hodgkin and Huxley (1952)</a>. It contains four state variables <span class="math notranslate nohighlight">\(V_m\)</span>, <span class="math notranslate nohighlight">\(n\)</span>, <span class="math notranslate nohighlight">\(h\)</span>, <span class="math notranslate nohighlight">\(m\)</span>.
+We set a constant stimulation current of <span class="math notranslate nohighlight">\(i_\text{Stim} = 10 μA/cm^2\)</span> and solve the system for <span class="math notranslate nohighlight">\(t_\text{end}=35 ms\)</span> with Heun’s method and a time step witdh of <span class="math notranslate nohighlight">\(dt=1e-5 ms\)</span>.</p>
+<p>As a reference, the same simulation is performed with OpenCOR. The resulting values show good agreement.</p>
+<figure class="align-default" id="id31">
+<span id="hodgkin-huxley-opencor"></span><a class="reference internal image-reference" href="../_images/hodgkin_huxley_opencor.png"><img alt="../_images/hodgkin_huxley_opencor.png" src="../_images/hodgkin_huxley_opencor.png" style="width: 70%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 89 </span><span class="caption-text">Visualization of the results in the OpenCOR GUI</span><a class="headerlink" href="#id31" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id32">
+<span id="hodgkin-huxley-opendihu"></span><a class="reference internal image-reference" href="../_images/hodgkin_huxley_opendihu.png"><img alt="../_images/hodgkin_huxley_opendihu.png" src="../_images/hodgkin_huxley_opendihu.png" style="width: 70%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 90 </span><span class="caption-text">Visualization of the results from OpenDiHu with the OpenDiHu plot script</span><a class="headerlink" href="#id32" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id33">
+<span id="hodgkin-huxley-compared"></span><a class="reference internal image-reference" href="../_images/hodgkin_huxley_compared.png"><img alt="../_images/hodgkin_huxley_compared.png" src="../_images/hodgkin_huxley_compared.png" style="width: 70%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 91 </span><span class="caption-text">Comparison of results computed by OpenCOR (dashed lines) and OpenDiHu (solid lines), which show good agreement.</span><a class="headerlink" href="#id33" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>The <span class="math notranslate nohighlight">\(\mathcal{L}_2\)</span>-errors for the solved variables over the entire timespan are given below.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 67%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>variable</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\mathcal{L}_2\)</span>-error</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(V_m\)</span></p></td>
+<td><p>2.0e-03</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(n\)</span></p></td>
+<td><p>3.3e-06</p></td>
+</tr>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(h\)</span></p></td>
+<td><p>4.2e-06</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(m\)</span></p></td>
+<td><p>1.9e-05</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="shorten-ocallaghan-davidson-soboleva-2007">
+<h3>Shorten, Ocallaghan, Davidson, Soboleva (2007)<a class="headerlink" href="#shorten-ocallaghan-davidson-soboleva-2007" title="Link to this heading"></a></h3>
+<p>Another relevant CellML model is the model by <a class="reference external" href="https://link.springer.com/article/10.1007/s10974-007-9125-6">Shorten, Ocallaghan, Davidson, Soboleva (2007)</a>.
+It consists of 58 ordinary differential equations and 77 algebraic equations that have to be solved in time.
+We repeat the previous study with this model using the same numerical parameters and present the result in the following.
+The stimulation current <code class="docutils literal notranslate"><span class="pre">wal_environment/I_HH</span></code> is set to 50.</p>
+<figure class="align-default" id="id34">
+<span id="cellml-shorten-ocallaghan-comparison"></span><a class="reference internal image-reference" href="../_images/cellml_shorten_ocallaghan_comparison.png"><img alt="../_images/cellml_shorten_ocallaghan_comparison.png" src="../_images/cellml_shorten_ocallaghan_comparison.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 92 </span><span class="caption-text">Comparison of results computed by OpenCOR (dashed lines) and OpenDiHu (solid lines), which show good agreement.</span><a class="headerlink" href="#id34" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>The <span class="math notranslate nohighlight">\(\mathcal{L}_2\)</span>-errors over all timesteps for all state variables are given below.
+It can be seen that they show good agreement with the reference simulation.</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>variable</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\mathcal{L}_2\)</span>-error</p></th>
+<th class="head"><p>variable</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\mathcal{L}_2\)</span>-error</p></th>
+<th class="head"><p>variable</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\mathcal{L}_2\)</span>-error</p></th>
+<th class="head"><p>variable</p></th>
+<th class="head"><p><span class="math notranslate nohighlight">\(\mathcal{L}_2\)</span>-error</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>A_1</p></td>
+<td><p>5.7e-06</p></td>
+<td><p>A_2</p></td>
+<td><p>3.5e-06</p></td>
+<td><p>ATP1</p></td>
+<td><p>1.3e-03</p></td>
+<td><p>ATP2</p></td>
+<td><p>3.6e-04</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ca_1</p></td>
+<td><p>9.9e-04</p></td>
+<td><p>Ca_2</p></td>
+<td><p>1.1e-04</p></td>
+<td><p>Ca_ATP1</p></td>
+<td><p>1.4e-03</p></td>
+<td><p>Ca_ATP2</p></td>
+<td><p>3.7e-04</p></td>
+</tr>
+<tr class="row-even"><td><p>Ca_CaT2</p></td>
+<td><p>2.5e+01</p></td>
+<td><p>Ca_Cs1</p></td>
+<td><p>2.6e-02</p></td>
+<td><p>Ca_Cs2</p></td>
+<td><p>2.7e-02</p></td>
+<td><p>Ca_P1</p></td>
+<td><p>2.9e-03</p></td>
+</tr>
+<tr class="row-odd"><td><p>Ca_P2</p></td>
+<td><p>3.3e-04</p></td>
+<td><p>Ca_SR1</p></td>
+<td><p>1.8e-02</p></td>
+<td><p>Ca_SR2</p></td>
+<td><p>1.8e-02</p></td>
+<td><p>Ca_T_2</p></td>
+<td><p>2.5e+01</p></td>
+</tr>
+<tr class="row-even"><td><p>D_0</p></td>
+<td><p>9.2e-06</p></td>
+<td><p>D_1</p></td>
+<td><p>1.9e-05</p></td>
+<td><p>D_2</p></td>
+<td><p>5.7e-05</p></td>
+<td><p>Mg1</p></td>
+<td><p>2.9e-03</p></td>
+</tr>
+<tr class="row-odd"><td><p>Mg2</p></td>
+<td><p>2.8e-03</p></td>
+<td><p>Mg_ATP1</p></td>
+<td><p>2.9e-03</p></td>
+<td><p>Mg_ATP2</p></td>
+<td><p>2.8e-03</p></td>
+<td><p>Mg_P1</p></td>
+<td><p>2.8e-04</p></td>
+</tr>
+<tr class="row-even"><td><p>Mg_P2</p></td>
+<td><p>2.9e-04</p></td>
+<td><p>P</p></td>
+<td><p>2.9e-06</p></td>
+<td><p>P_C_SR</p></td>
+<td><p>2.9e-07</p></td>
+<td><p>P_SR</p></td>
+<td><p>2.9e-08</p></td>
+</tr>
+<tr class="row-odd"><td><p>x_1</p></td>
+<td><p>0.0e+00</p></td>
+<td><p>x_2</p></td>
+<td><p>0.0e+00</p></td>
+<td><p>C_0</p></td>
+<td><p>1.9e-05</p></td>
+<td><p>C_1</p></td>
+<td><p>1.3e-05</p></td>
+</tr>
+<tr class="row-even"><td><p>C_2</p></td>
+<td><p>5.9e-06</p></td>
+<td><p>C_3</p></td>
+<td><p>8.1e-07</p></td>
+<td><p>C_4</p></td>
+<td><p>3.2e-08</p></td>
+<td><p>O_0</p></td>
+<td><p>3.8e-11</p></td>
+</tr>
+<tr class="row-odd"><td><p>O_1</p></td>
+<td><p>6.3e-10</p></td>
+<td><p>O_2</p></td>
+<td><p>7.3e-09</p></td>
+<td><p>O_3</p></td>
+<td><p>2.5e-08</p></td>
+<td><p>O_4</p></td>
+<td><p>2.2e-08</p></td>
+</tr>
+<tr class="row-even"><td><p>K_e</p></td>
+<td><p>3.0e-06</p></td>
+<td><p>K_i</p></td>
+<td><p>2.8e-04</p></td>
+<td><p>K_t</p></td>
+<td><p>1.3e-05</p></td>
+<td><p>Na_e</p></td>
+<td><p>3.2e-04</p></td>
+</tr>
+<tr class="row-odd"><td><p>Na_i</p></td>
+<td><p>2.7e-05</p></td>
+<td><p>Na_t</p></td>
+<td><p>2.8e-04</p></td>
+<td><p>h_K</p></td>
+<td><p>3.3e-07</p></td>
+<td><p>n</p></td>
+<td><p>1.6e-05</p></td>
+</tr>
+<tr class="row-even"><td><p>h</p></td>
+<td><p>8.2e-06</p></td>
+<td><p>m</p></td>
+<td><p>8.1e-05</p></td>
+<td><p>S</p></td>
+<td><p>3.0e-07</p></td>
+<td><p>h_K_t</p></td>
+<td><p>6.1e-05</p></td>
+</tr>
+<tr class="row-odd"><td><p>n_t</p></td>
+<td><p>1.5e-05</p></td>
+<td><p>h_t</p></td>
+<td><p>1.3e-05</p></td>
+<td><p>m_t</p></td>
+<td><p>8.2e-05</p></td>
+<td><p>S_t</p></td>
+<td><p>2.8e-07</p></td>
+</tr>
+<tr class="row-even"><td><p>vS</p></td>
+<td><p>5.2e-03</p></td>
+<td><p>vT</p></td>
+<td><p>4.4e-03</p></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="id12">
+<h3>How to reproduce<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<ul>
+<li><p>Build the example</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/validation/cellml
+mkorn<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sr<span class="w">       </span><span class="c1"># build</span>
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Run the simulations</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/validation/cellml/build_release
+
+./hodgkin_huxley<span class="w"> </span>../settings_cellml.py
+./shorten<span class="w"> </span>../settings_cellml.py
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Visualize the numeric solutions (make sure that the <code class="docutils literal notranslate"><span class="pre">$OPENDIHU_HOME/scripts</span></code> directory is in the <code class="docutils literal notranslate"><span class="pre">PYTHONPATH</span></code> environment variable)</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/validation/cellml/build_release
+
+plot<span class="w"> </span>out_hodgkin_huxley/*
+plot<span class="w"> </span>out_shorten/*
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Compute the L2 errors and generate the comparison plot</p>
+<blockquote>
+<div><p>The reference values were simulated in OpenCOR (set <code class="docutils literal notranslate"><span class="pre">wal_environment/I_HH</span></code> manually to 50) and then exported as csv files, only selected the state variables to be included in the file.
+The repository contains these reference values in the directory <code class="docutils literal notranslate"><span class="pre">$OPENDIHU_HOME/examples/validation/cellml/</span></code> in the files <code class="docutils literal notranslate"><span class="pre">hodgkin_huxley_1952_data_istim10_opencor.csv</span></code> and <code class="docutils literal notranslate"><span class="pre">shorten_ocallaghan_davidson_soboleva_2007_no_stim_data_ihh50_opencor.csv</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/validation/cellml
+
+python3<span class="w"> </span>compute_error_hodgkin_huxley.py
+python3<span class="w"> </span>compute_error_shorten.py
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</section>
+</section>
+<section id="nonlinear-solid-mechanics">
+<h2>Nonlinear solid mechanics<a class="headerlink" href="#nonlinear-solid-mechanics" title="Link to this heading"></a></h2>
+<p>To validate the implementation of the nonlinear incompressible solid mechanics solver, a comparison against results from the <a class="reference external" href="https://febio.org/">FEBio</a> solver are conducted.
+Two test case of a tensile test and a shear test are simulated with both solvers.
+Three different formulations of incompressible hyperelasticity in OpenDiHu are compared with the reference solution from FEBio and found to be equal.</p>
+<p>The description of the setup and the results can be found in the <a class="reference external" href="https://arxiv.org/abs/2107.07104">dissertation</a>, chapter 8.2.2 <a class="reference internal" href="#maier2021" id="id13"><span>[Maier2021]</span></a>.</p>
+<figure class="align-default" id="id35">
+<span id="solid-mechanics-validation-tensile-test"></span><a class="reference internal image-reference" href="../_images/solid_mechanics_validation_tensile_test.png"><img alt="../_images/solid_mechanics_validation_tensile_test.png" src="../_images/solid_mechanics_validation_tensile_test.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 93 </span><span class="caption-text">Resulting stresses in the tensile test showing good match between the different formulations with OpenDiHu and the reference solver FEBio</span><a class="headerlink" href="#id35" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id36">
+<span id="solid-mechanics-shear-test"></span><a class="reference internal image-reference" href="../_images/solid_mechanics_shear_test.png"><img alt="../_images/solid_mechanics_shear_test.png" src="../_images/solid_mechanics_shear_test.png" style="width: 70%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 94 </span><span class="caption-text">Resulting stress components in the shear test with good match to the reference solver FEBio</span><a class="headerlink" href="#id36" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<div role="list" class="citation-list">
+<div class="citation" id="maier2021" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id13">Maier2021</a><span class="fn-bracket">]</span></span>
+<p><a class="reference external" href="https://arxiv.org/abs/2107.07104">Maier (2021), Scalable Biophysical Simulations of the Neuromuscular System</a>, Ph.D. thesis, University of Stuttgart, 2021</p>
+</div>
+</div>
+<section id="id14">
+<h3>How to reproduce<a class="headerlink" href="#id14" title="Link to this heading"></a></h3>
+<ul>
+<li><p>Build the example</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># tensile test</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/opendihu/examples/solid_mechanics/tensile_test
+mkorn<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sr
+
+<span class="c1"># shear test</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/opendihu/examples/solid_mechanics/shear_test
+mkorn<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sr
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Run the simulations</p>
+<blockquote>
+<div><p>For the FEBio simulations to work you need FEBio 3 installed (such that it can be called from the command line as <code class="docutils literal notranslate"><span class="pre">febio3</span></code>). If FEBio is not installed, the OpenDiHu simulations will still run, but the reference data will not be available in the plot.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># tensile test</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/solid_mechanics/tensile_test/build_release
+../run_force.sh
+
+<span class="c1"># shear test</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/solid_mechanics/shear_test/build_release
+../run_force.sh
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Visualize the results</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># tensile test</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/solid_mechanics/tensile_test
+python3<span class="w"> </span>plot_validation.py
+
+<span class="c1"># shear test</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/solid_mechanics/shear_test
+python3<span class="w"> </span>plot_validation.py
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</section>
+</section>
+<section id="excited-cuboid-muscle">
+<h2>Excited cuboid muscle<a class="headerlink" href="#excited-cuboid-muscle" title="Link to this heading"></a></h2>
+<p>For more complex multi-scale models, no analytic solutions are available and a direct verification of the solver becomes impossible.
+A qualitative validation can be carried out by comparing to other groups simulation. In the following, we compute a scenario similar to the one in <a class="reference internal" href="#heidlauf2016" id="id15"><span>[Heidlauf2016]</span></a>, chapter 7.3.1.</p>
+<p>A cuboid muscle of size <span class="math notranslate nohighlight">\(2.9 \times 1.2 \times 6\)</span> cm has <span class="math notranslate nohighlight">\(31 \times 13\)</span> embedded muscle fibers.
+The fibers are organized in 10 motor units which are activated from a motor neuron model, as described in <a class="reference internal" href="#heidlauf2016" id="id16"><span>[Heidlauf2016]</span></a>. We use the same discharge times as the author.
+We the discretize the fibers by 145 linear Finite Elements as in <a class="reference internal" href="#heidlauf2016" id="id17"><span>[Heidlauf2016]</span></a>. No information is given about the 3D domain discretization, for which we use <span class="math notranslate nohighlight">\(15 \times 5 \times 33 = 2475\)</span> quadratic Finite Elements.
+A difference between our simulation and the one in <a class="reference internal" href="#heidlauf2016" id="id18"><span>[Heidlauf2016]</span></a> is that we omit the fat layer and use a more realistic dynamic solid mechanics formulation instead of the quasi-static formulation.</p>
+<p>The contraction state in our simulation is shown below and can be compared to Fig. 7.4 in <a class="reference internal" href="#heidlauf2016" id="id19"><span>[Heidlauf2016]</span></a>. (Note that we set the <cite>“displacementsScalingFactor”</cite> to 5, equal to the visualization in the referenced thesis.)
+The contraction shows qualitative agreement.</p>
+<div role="list" class="citation-list">
+<div class="citation" id="heidlauf2016" role="doc-biblioentry">
+<span class="label"><span class="fn-bracket">[</span>Heidlauf2016<span class="fn-bracket">]</span></span>
+<span class="backrefs">(<a role="doc-backlink" href="#id15">1</a>,<a role="doc-backlink" href="#id16">2</a>,<a role="doc-backlink" href="#id17">3</a>,<a role="doc-backlink" href="#id18">4</a>,<a role="doc-backlink" href="#id19">5</a>)</span>
+<p><a class="reference external" href="http://dx.doi.org/10.18419/opus-658">Heidlauf (2016) Chemo-electro-mechanical modelling of the neuromuscular system</a>, Ph.D. thesis, University of Stuttgart</p>
+</div>
+</div>
+<p><a class="reference internal" href="../_images/fibers004.png"><img alt="fibers004" src="../_images/fibers004.png" style="width: 70%;" /></a> <a class="reference internal" href="../_images/fibers020.png"><img alt="fibers020" src="../_images/fibers020.png" style="width: 70%;" /></a>
+<a class="reference internal" href="../_images/fibers040.png"><img alt="fibers040" src="../_images/fibers040.png" style="width: 70%;" /></a> <a class="reference internal" href="../_images/fibers080.png"><img alt="fibers080" src="../_images/fibers080.png" style="width: 70%;" /></a>
+<a class="reference internal" href="../_images/fibers120.png"><img alt="fibers120" src="../_images/fibers120.png" style="width: 70%;" /></a> <a class="reference internal" href="../_images/fibers200.png"><img alt="fibers200" src="../_images/fibers200.png" style="width: 70%;" /></a></p>
+<p><a class="reference internal" href="#fibers-stretch"><span class="std std-numref">Fig. 95</span></a> evaluates the amount of contraction that the muscle undergoes in this scenario. The orange lines shows the average over all nodes of the 3D mesh, the light orange range corresponds to the 25%-75% quartile range of values.
+At 240ms, the average stretch is circa 90% which means that the muscle contracted by 10% in this time.</p>
+<figure class="align-default" id="id37">
+<span id="fibers-stretch"></span><a class="reference internal image-reference" href="../_images/fibers_stretch.png"><img alt="../_images/fibers_stretch.png" src="../_images/fibers_stretch.png" style="width: 100%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 95 </span><span class="caption-text">Stretch over time of the muscle tissue.</span><a class="headerlink" href="#id37" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>More details about the scenario in OpenDiHu can be found here:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">0</span><span class="o">/</span><span class="mi">16</span> <span class="p">:</span> <span class="n">This</span> <span class="ow">is</span> <span class="n">opendihu</span> <span class="mf">1.3</span><span class="p">,</span> <span class="n">built</span> <span class="n">Aug</span> <span class="mi">29</span> <span class="mi">2023</span><span class="p">,</span> <span class="n">C</span><span class="o">++</span> <span class="mi">201402</span><span class="p">,</span> <span class="n">GCC</span> <span class="mf">9.4.0</span><span class="p">,</span> <span class="n">current</span> <span class="n">time</span><span class="p">:</span> <span class="mi">2023</span><span class="o">/</span><span class="mi">8</span><span class="o">/</span><span class="mi">30</span> <span class="mi">11</span><span class="p">:</span><span class="mi">10</span><span class="p">:</span><span class="mi">01</span><span class="p">,</span> <span class="n">hostname</span><span class="p">:</span> <span class="n">pcsgs05</span><span class="p">,</span> <span class="n">n</span> <span class="n">ranks</span><span class="p">:</span> <span class="mi">16</span>
+<span class="mi">0</span><span class="o">/</span><span class="mi">16</span> <span class="p">:</span> <span class="n">Open</span> <span class="n">MPI</span> <span class="n">v4</span><span class="mf">.0.3</span><span class="p">,</span> <span class="n">package</span><span class="p">:</span> <span class="n">Debian</span> <span class="n">OpenMPI</span><span class="p">,</span> <span class="n">ident</span><span class="p">:</span> <span class="mf">4.0.3</span><span class="p">,</span> <span class="n">repo</span> <span class="n">rev</span><span class="p">:</span> <span class="n">v4</span><span class="mf">.0.3</span><span class="p">,</span> <span class="n">Mar</span> <span class="mi">03</span><span class="p">,</span> <span class="mi">2020</span>
+<span class="mi">0</span><span class="o">/</span><span class="mi">16</span> <span class="p">:</span> <span class="n">File</span> <span class="s2">&quot;../settings_cuboid_muscle.py&quot;</span> <span class="n">loaded</span><span class="o">.</span>
+<span class="mi">0</span><span class="o">/</span><span class="mi">16</span> <span class="p">:</span> <span class="o">----------------------------------------</span> <span class="n">begin</span> <span class="n">python</span> <span class="n">output</span> <span class="o">----------------------------------------</span>
+<span class="n">Loading</span> <span class="n">variables</span> <span class="kn">from</span> <span class="s2">&quot;heidlauf.py&quot;</span><span class="o">.</span>
+<span class="n">scenario_name</span><span class="p">:</span> <span class="n">heidlauf</span><span class="p">,</span>  <span class="n">n_subdomains</span><span class="p">:</span> <span class="mi">2</span> <span class="mi">2</span> <span class="mi">4</span><span class="p">,</span>  <span class="n">n_ranks</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>  <span class="n">end_time</span><span class="p">:</span> <span class="mf">4000.0</span>
+<span class="n">dt_0D</span><span class="p">:</span>           <span class="mf">1e-04</span><span class="p">,</span> <span class="n">diffusion_solver_type</span><span class="p">:</span>      <span class="n">cg</span>
+<span class="n">dt_1D</span><span class="p">:</span>           <span class="mf">1e-04</span><span class="p">,</span> <span class="n">potential_flow_solver_type</span><span class="p">:</span> <span class="n">gmres</span>
+<span class="n">dt_splitting</span><span class="p">:</span>    <span class="mf">1e-04</span><span class="p">,</span> <span class="n">emg_solver_type</span><span class="p">:</span>            <span class="n">cg</span><span class="p">,</span> <span class="n">emg_initial_guess_nonzero</span><span class="p">:</span> <span class="kc">False</span>
+<span class="n">dt_3D</span><span class="p">:</span>           <span class="mf">1e+00</span><span class="p">,</span> <span class="n">paraview_output</span><span class="p">:</span> <span class="kc">True</span>
+<span class="n">output_timestep</span><span class="p">:</span> <span class="mf">1e+00</span>  <span class="n">stimulation_frequency</span><span class="p">:</span> <span class="mf">1.0</span> <span class="mi">1</span><span class="o">/</span><span class="n">ms</span> <span class="o">=</span> <span class="mf">1000.0</span> <span class="n">Hz</span>
+<span class="n">fast_monodomain_solver_optimizations</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="n">use_analytic_jacobian</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="n">use_vc</span><span class="p">:</span> <span class="kc">True</span>
+<span class="n">fiber_file</span><span class="p">:</span>              <span class="n">cuboid</span><span class="o">.</span><span class="n">bin</span>
+<span class="n">fat_mesh_file</span><span class="p">:</span>           <span class="o">../../../../</span><span class="nb">input</span><span class="o">/</span><span class="mi">13</span><span class="n">x13fibers</span><span class="o">.</span><span class="n">bin_fat</span><span class="o">.</span><span class="n">bin</span>
+<span class="n">cellml_file</span><span class="p">:</span>             <span class="o">../../../</span><span class="n">electrophysiology</span><span class="o">/</span><span class="nb">input</span><span class="o">/</span><span class="n">new_slow_TK_2014_12_08</span><span class="o">.</span><span class="n">c</span>
+<span class="n">fiber_distribution_file</span><span class="p">:</span> <span class="o">../../../</span><span class="n">electrophysiology</span><span class="o">/</span><span class="nb">input</span><span class="o">/</span><span class="n">MU_fibre_distribution_10MUs</span><span class="o">.</span><span class="n">txt</span>
+<span class="n">firing_times_file</span><span class="p">:</span>       <span class="o">../../../</span><span class="n">electrophysiology</span><span class="o">/</span><span class="nb">input</span><span class="o">/</span><span class="n">MU_firing_times_heidlauf_10MU</span><span class="o">.</span><span class="n">txt</span>
+<span class="o">********************************************************************************</span>
+<span class="n">prefactor</span><span class="p">:</span> <span class="n">sigma_eff</span><span class="o">/</span><span class="p">(</span><span class="n">Am</span><span class="o">*</span><span class="n">Cm</span><span class="p">)</span> <span class="o">=</span> <span class="mf">0.0132</span> <span class="o">=</span> <span class="mf">3.828</span> <span class="o">/</span> <span class="p">(</span><span class="mf">500.0</span><span class="o">*</span><span class="mf">0.58</span><span class="p">)</span>
+<span class="n">create</span> <span class="n">cuboid</span><span class="o">.</span><span class="n">bin</span> <span class="k">with</span> <span class="n">size</span> <span class="p">[</span><span class="mf">2.9</span><span class="p">,</span><span class="mf">1.2</span><span class="p">,</span><span class="mi">6</span><span class="p">],</span> <span class="n">n</span> <span class="n">points</span> <span class="p">[</span><span class="mi">31</span><span class="p">,</span><span class="mi">13</span><span class="p">,</span><span class="mi">145</span><span class="p">]</span>
+<span class="n">diffusion</span> <span class="n">solver</span> <span class="nb">type</span><span class="p">:</span> <span class="n">cg</span>
+<span class="n">n</span> <span class="n">fibers</span><span class="p">:</span>              <span class="mi">403</span> <span class="p">(</span><span class="mi">31</span> <span class="n">x</span> <span class="mi">13</span><span class="p">),</span> <span class="n">sampled</span> <span class="n">by</span> <span class="n">stride</span> <span class="mi">2</span> <span class="n">x</span> <span class="mi">2</span>
+<span class="n">n</span> <span class="n">points</span> <span class="n">per</span> <span class="n">fiber</span><span class="p">:</span>    <span class="mi">145</span><span class="p">,</span> <span class="n">sampled</span> <span class="n">by</span> <span class="n">stride</span> <span class="mi">4</span>
+<span class="mi">16</span> <span class="n">ranks</span><span class="p">,</span> <span class="n">partitioning</span><span class="p">:</span> <span class="n">x2</span> <span class="n">x</span> <span class="n">y2</span> <span class="n">x</span> <span class="n">z4</span>
+<span class="mi">31</span> <span class="n">x</span> <span class="mi">13</span> <span class="o">=</span> <span class="mi">403</span> <span class="n">fibers</span><span class="p">,</span> <span class="n">per</span> <span class="n">partition</span><span class="p">:</span> <span class="mi">14</span> <span class="n">x</span> <span class="mi">6</span> <span class="o">=</span> <span class="mi">84</span>
+<span class="n">per</span> <span class="n">fiber</span><span class="p">:</span> <span class="mi">1</span><span class="n">D</span> <span class="n">mesh</span>    <span class="n">nodes</span> <span class="k">global</span><span class="p">:</span> <span class="mi">145</span><span class="p">,</span> <span class="n">local</span><span class="p">:</span> <span class="mi">36</span>
+  <span class="n">sampling</span> <span class="mi">3</span><span class="n">D</span> <span class="n">mesh</span> <span class="k">with</span> <span class="n">stride</span> <span class="mi">2</span> <span class="n">x</span> <span class="mi">2</span> <span class="n">x</span> <span class="mi">4</span>
+  <span class="n">distribute_nodes_equally</span><span class="p">:</span> <span class="kc">True</span>
+<span class="n">quadratic</span> <span class="mi">3</span><span class="n">D</span> <span class="n">mesh</span>    <span class="n">nodes</span> <span class="k">global</span><span class="p">:</span> <span class="mi">15</span> <span class="n">x</span> <span class="mi">5</span> <span class="n">x</span> <span class="mi">33</span> <span class="o">=</span> <span class="mi">2475</span><span class="p">,</span> <span class="n">local</span><span class="p">:</span> <span class="mi">8</span> <span class="n">x</span> <span class="mi">2</span> <span class="n">x</span> <span class="mi">8</span> <span class="o">=</span> <span class="mi">128</span>
+<span class="n">quadratic</span> <span class="mi">3</span><span class="n">D</span> <span class="n">mesh</span> <span class="n">elements</span> <span class="k">global</span><span class="p">:</span> <span class="mi">7</span> <span class="n">x</span> <span class="mi">2</span> <span class="n">x</span> <span class="mi">16</span> <span class="o">=</span> <span class="mi">224</span><span class="p">,</span> <span class="n">local</span><span class="p">:</span> <span class="mi">4</span> <span class="n">x</span> <span class="mi">1</span> <span class="n">x</span> <span class="mi">4</span> <span class="o">=</span> <span class="mi">16</span>
+<span class="n">number</span> <span class="n">of</span> <span class="n">degrees</span> <span class="n">of</span> <span class="n">freedom</span><span class="p">:</span>
+                    <span class="mi">1</span><span class="n">D</span> <span class="n">fiber</span><span class="p">:</span>        <span class="mi">145</span>  <span class="p">(</span><span class="n">per</span> <span class="n">process</span><span class="p">:</span> <span class="mi">36</span><span class="p">)</span>
+            <span class="mi">0</span><span class="n">D</span><span class="o">-</span><span class="mi">1</span><span class="n">D</span> <span class="n">monodomain</span><span class="p">:</span>       <span class="mi">8120</span>  <span class="p">(</span><span class="n">per</span> <span class="n">process</span><span class="p">:</span> <span class="mi">2016</span><span class="p">)</span>
+<span class="nb">all</span> <span class="n">fibers</span> <span class="mi">0</span><span class="n">D</span><span class="o">-</span><span class="mi">1</span><span class="n">D</span> <span class="n">monodomain</span><span class="p">:</span>    <span class="mi">3272360</span>  <span class="p">(</span><span class="n">per</span> <span class="n">process</span><span class="p">:</span> <span class="mi">169344</span><span class="p">)</span>
+                <span class="mi">3</span><span class="n">D</span> <span class="n">bidomain</span><span class="p">:</span>       <span class="mi">2475</span>  <span class="p">(</span><span class="n">per</span> <span class="n">process</span><span class="p">:</span> <span class="mi">128</span><span class="p">)</span>
+                      <span class="n">total</span><span class="p">:</span>    <span class="mi">3274835</span>  <span class="p">(</span><span class="n">per</span> <span class="n">process</span><span class="p">:</span> <span class="mi">169472</span><span class="p">)</span>
+<span class="n">Debugging</span> <span class="n">output</span> <span class="n">about</span> <span class="n">fiber</span> <span class="n">firing</span><span class="p">:</span> <span class="n">Taking</span> <span class="nb">input</span> <span class="kn">from</span> <span class="nn">file</span> <span class="s2">&quot;../../../electrophysiology/input/MU_firing_times_heidlauf_10MU.txt&quot;</span>
+<span class="n">First</span> <span class="n">stimulation</span> <span class="n">times</span>
+    <span class="n">Time</span>  <span class="n">MU</span> <span class="n">fibers</span>
+    <span class="mf">0.00</span>   <span class="mi">2</span> <span class="p">[</span><span class="mi">60</span><span class="p">,</span> <span class="mi">80</span><span class="p">,</span> <span class="mi">81</span><span class="p">,</span> <span class="mi">101</span><span class="p">,</span> <span class="mi">104</span><span class="p">,</span> <span class="mi">118</span><span class="p">,</span> <span class="mi">127</span><span class="p">,</span> <span class="mi">191</span><span class="p">,</span> <span class="mi">228</span><span class="p">,</span> <span class="mi">275</span><span class="p">]</span> <span class="p">(</span><span class="n">only</span> <span class="n">showing</span> <span class="n">first</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">19</span> <span class="n">total</span><span class="p">)</span>
+    <span class="mf">2.00</span>   <span class="mi">3</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">75</span><span class="p">,</span> <span class="mi">76</span><span class="p">,</span> <span class="mi">82</span><span class="p">,</span> <span class="mi">94</span><span class="p">,</span> <span class="mi">98</span><span class="p">,</span> <span class="mi">108</span><span class="p">]</span> <span class="p">(</span><span class="n">only</span> <span class="n">showing</span> <span class="n">first</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">22</span> <span class="n">total</span><span class="p">)</span>
+    <span class="mf">3.00</span>   <span class="mi">5</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">19</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">35</span><span class="p">,</span> <span class="mi">43</span><span class="p">,</span> <span class="mi">62</span><span class="p">,</span> <span class="mi">68</span><span class="p">]</span> <span class="p">(</span><span class="n">only</span> <span class="n">showing</span> <span class="n">first</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">42</span> <span class="n">total</span><span class="p">)</span>
+    <span class="mf">7.01</span>   <span class="mi">4</span> <span class="p">[</span><span class="mi">14</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="mi">39</span><span class="p">,</span> <span class="mi">52</span><span class="p">,</span> <span class="mi">106</span><span class="p">,</span> <span class="mi">111</span><span class="p">,</span> <span class="mi">116</span><span class="p">,</span> <span class="mi">125</span><span class="p">,</span> <span class="mi">146</span><span class="p">]</span> <span class="p">(</span><span class="n">only</span> <span class="n">showing</span> <span class="n">first</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">35</span> <span class="n">total</span><span class="p">)</span>
+    <span class="mf">8.01</span>   <span class="mi">7</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">33</span><span class="p">,</span> <span class="mi">36</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">55</span><span class="p">]</span> <span class="p">(</span><span class="n">only</span> <span class="n">showing</span> <span class="n">first</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">53</span> <span class="n">total</span><span class="p">)</span>
+    <span class="mf">9.01</span>   <span class="mi">1</span> <span class="p">[</span><span class="mi">29</span><span class="p">,</span> <span class="mi">49</span><span class="p">,</span> <span class="mi">58</span><span class="p">,</span> <span class="mi">102</span><span class="p">,</span> <span class="mi">131</span><span class="p">,</span> <span class="mi">134</span><span class="p">,</span> <span class="mi">153</span><span class="p">,</span> <span class="mi">182</span><span class="p">,</span> <span class="mi">184</span><span class="p">,</span> <span class="mi">232</span><span class="p">]</span> <span class="p">(</span><span class="n">only</span> <span class="n">showing</span> <span class="n">first</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">14</span> <span class="n">total</span><span class="p">)</span>
+  <span class="mf">16.02</span>   <span class="mi">6</span> <span class="p">[</span><span class="mi">26</span><span class="p">,</span> <span class="mi">31</span><span class="p">,</span> <span class="mi">44</span><span class="p">,</span> <span class="mi">51</span><span class="p">,</span> <span class="mi">53</span><span class="p">,</span> <span class="mi">56</span><span class="p">,</span> <span class="mi">57</span><span class="p">,</span> <span class="mi">65</span><span class="p">,</span> <span class="mi">67</span><span class="p">,</span> <span class="mi">83</span><span class="p">]</span> <span class="p">(</span><span class="n">only</span> <span class="n">showing</span> <span class="n">first</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">46</span> <span class="n">total</span><span class="p">)</span>
+  <span class="mf">35.04</span>   <span class="mi">8</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">38</span><span class="p">,</span> <span class="mi">41</span><span class="p">,</span> <span class="mi">54</span><span class="p">,</span> <span class="mi">71</span><span class="p">,</span> <span class="mi">78</span><span class="p">]</span> <span class="p">(</span><span class="n">only</span> <span class="n">showing</span> <span class="n">first</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">69</span> <span class="n">total</span><span class="p">)</span>
+  <span class="n">never</span> <span class="n">stimulated</span><span class="p">:</span> <span class="n">MU</span>   <span class="mi">0</span><span class="p">,</span> <span class="n">fibers</span> <span class="p">[</span><span class="mi">37</span><span class="p">,</span> <span class="mi">46</span><span class="p">,</span> <span class="mi">47</span><span class="p">,</span> <span class="mi">48</span><span class="p">,</span> <span class="mi">69</span><span class="p">,</span> <span class="mi">74</span><span class="p">,</span> <span class="mi">89</span><span class="p">,</span> <span class="mi">93</span><span class="p">,</span> <span class="mi">138</span><span class="p">,</span> <span class="mi">213</span><span class="p">]</span> <span class="p">(</span><span class="n">only</span> <span class="n">showing</span> <span class="n">first</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">23</span> <span class="n">total</span><span class="p">)</span>
+<span class="n">stimulated</span> <span class="n">MUs</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> <span class="ow">not</span> <span class="n">stimulated</span> <span class="n">MUs</span><span class="p">:</span> <span class="mi">1</span>
+</pre></div>
+</div>
+<section id="id20">
+<h3>How to reproduce<a class="headerlink" href="#id20" title="Link to this heading"></a></h3>
+<ul>
+<li><p>Build the example</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/opendihu/examples/validation/cuboid_muscle/
+mkorn<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sr
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+<li><p>Run the simulation</p>
+<blockquote>
+<div><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/opendihu/examples/validation/cuboid_muscle/build_release
+mpirun<span class="w"> </span>-n<span class="w"> </span><span class="m">16</span><span class="w"> </span>./cuboid_muscle<span class="w"> </span>../settings_cuboid_muscle.py<span class="w"> </span>heidlauf.py
+</pre></div>
+</div>
+</div></blockquote>
+</li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="existing_examples.html" class="btn btn-neutral float-left" title="Existing examples" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../settings.html" class="btn btn-neutral float-right" title="Python Settings" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

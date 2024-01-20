@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FastMonodomainSolver &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="CellMLAdapter" href="cellml_adapter.html" />
+    <link rel="prev" title="MultipleInstances" href="multiple_instances.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solver.html">Solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_surface.html">OutputSurface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">FastMonodomainSolver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#python-options">Python options</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#fiberdistributionfile">fiberDistributionFile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#firingtimesfile">firingTimesFile</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#onlycomputeifhasbeenstimulated">onlyComputeIfHasBeenStimulated</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#disablecomputationwhenstatesareclosetoequilibrium">disableComputationWhenStatesAreCloseToEquilibrium</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#valueforstimulatedpoint">valueForStimulatedPoint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#neuromuscularjunctionrelativesize">neuromuscularJunctionRelativeSize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#optimizationtype">optimizationType</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#generategpusource">generateGPUSource</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#usesingleprecision">useSinglePrecision</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#precompilecommand-postcompilecommand">preCompileCommand, postCompileCommand</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#tampering-the-generated-source-code">Tampering the generated source code</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">FastMonodomainSolver</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/fast_monodomain_solver.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="fastmonodomainsolver">
+<h1>FastMonodomainSolver<a class="headerlink" href="#fastmonodomainsolver" title="Link to this heading"></a></h1>
+<p>This is a very efficient implementation of multiple fibers where the monodomain equation is solved on each.
+The fibers all have the same number of elements. The fibers are more or less parallel.
+The parallel partitioning is arbitrary, i.e. fibers can be subdivided to different processes and different fibers do not need to share processes.</p>
+<p>All nodes of this geometry form a cuboid in index space <span class="math notranslate nohighlight">\((i,j,k)\)</span>, where the <cite>k</cite> index runs over the nodes of a fiber and <span class="math notranslate nohighlight">\((i,j)\)</span> specify the fiber in a 2D grid of fibers.
+The partitioning is obtained by dividing this cuboid by axis-aligned plane cuts in all three dimensions.</p>
+<p>The <em>FastMonodomainSolver</em> reuses nested solvers, as given below.</p>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<p>The following shows the typical usage in the C++ source file. Only the number of states and intermediates, 4 and 9 in this example and the timestepping scheme of the diffusion, <cite>TimeSteppingScheme::ImplicitEuler</cite>, in this example, can be changed.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 1</span><span class="n">FastMonodomainSolver</span><span class="o">&lt;</span><span class="w">                        </span><span class="c1">// a wrapper that improves performance of multidomain</span>
+<span class="linenos"> 2</span><span class="w">  </span><span class="n">Control</span><span class="o">::</span><span class="n">MultipleInstances</span><span class="o">&lt;</span><span class="w">                       </span><span class="c1">// fibers</span>
+<span class="linenos"> 3</span><span class="w">    </span><span class="n">OperatorSplitting</span><span class="o">::</span><span class="n">Strang</span><span class="o">&lt;</span>
+<span class="linenos"> 4</span><span class="w">      </span><span class="n">Control</span><span class="o">::</span><span class="n">MultipleInstances</span><span class="o">&lt;</span>
+<span class="linenos"> 5</span><span class="w">        </span><span class="n">TimeSteppingScheme</span><span class="o">::</span><span class="n">Heun</span><span class="o">&lt;</span><span class="w">                   </span><span class="c1">// fiber reaction term</span>
+<span class="linenos"> 6</span><span class="w">          </span><span class="n">CellmlAdapter</span><span class="o">&lt;</span>
+<span class="linenos"> 7</span><span class="w">            </span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="mi">9</span><span class="p">,</span><span class="w">  </span><span class="c1">// nStates,nIntermediates: 57,1 = Shorten, 4,9 = Hodgkin Huxley</span>
+<span class="linenos"> 8</span><span class="w">            </span><span class="n">FunctionSpace</span><span class="o">::</span><span class="n">FunctionSpace</span><span class="o">&lt;</span>
+<span class="linenos"> 9</span><span class="w">              </span><span class="n">Mesh</span><span class="o">::</span><span class="n">StructuredDeformableOfDimension</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="linenos">10</span><span class="w">              </span><span class="n">BasisFunction</span><span class="o">::</span><span class="n">LagrangeOfOrder</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span>
+<span class="linenos">11</span><span class="w">            </span><span class="o">&gt;</span>
+<span class="linenos">12</span><span class="w">          </span><span class="o">&gt;</span>
+<span class="linenos">13</span><span class="w">        </span><span class="o">&gt;</span>
+<span class="linenos">14</span><span class="w">      </span><span class="o">&gt;</span><span class="p">,</span>
+<span class="linenos">15</span><span class="w">      </span><span class="n">Control</span><span class="o">::</span><span class="n">MultipleInstances</span><span class="o">&lt;</span>
+<span class="linenos">16</span><span class="w">        </span><span class="n">TimeSteppingScheme</span><span class="o">::</span><span class="n">ImplicitEuler</span><span class="o">&lt;</span><span class="w">          </span><span class="c1">// fiber diffusion</span>
+<span class="linenos">17</span><span class="w">          </span><span class="n">SpatialDiscretization</span><span class="o">::</span><span class="n">FiniteElementMethod</span><span class="o">&lt;</span>
+<span class="linenos">18</span><span class="w">            </span><span class="n">Mesh</span><span class="o">::</span><span class="n">StructuredDeformableOfDimension</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="linenos">19</span><span class="w">            </span><span class="n">BasisFunction</span><span class="o">::</span><span class="n">LagrangeOfOrder</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="linenos">20</span><span class="w">            </span><span class="n">Quadrature</span><span class="o">::</span><span class="n">Gauss</span><span class="o">&lt;</span><span class="mi">2</span><span class="o">&gt;</span><span class="p">,</span>
+<span class="linenos">21</span><span class="w">            </span><span class="n">Equation</span><span class="o">::</span><span class="n">Dynamic</span><span class="o">::</span><span class="n">IsotropicDiffusion</span>
+<span class="linenos">22</span><span class="w">          </span><span class="o">&gt;</span>
+<span class="linenos">23</span><span class="w">        </span><span class="o">&gt;</span>
+<span class="linenos">24</span><span class="w">      </span><span class="o">&gt;</span>
+<span class="linenos">25</span><span class="w">    </span><span class="o">&gt;</span>
+<span class="linenos">26</span><span class="w">  </span><span class="o">&gt;</span>
+<span class="linenos">27</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>The two template arguments of <cite>CellmlAdapter</cite>, the <em>number of states</em> and <em>number of intermediates</em> can be adjusted to fit the subcellular CellML model.
+Instead of <code class="docutils literal notranslate"><span class="pre">TimeSteppingScheme::ImplicitEuler</span></code> for the diffusion problem, <code class="docutils literal notranslate"><span class="pre">TimeSteppingScheme::CrankNicholson</span></code> can be used. All other templates must appear exactly as given above.</p>
+<p>The <em>FastMonodomainSolver</em> solves the same equations as the nested solver would (just as if lines 1 and 27 were not present). The discretization is also the same. A difference is that the diffusion problem is solved in serial using Thomas’ algorithm, i.e. in linear time. For this purpose, the data of a single fiber is communicated to a single rank where it gets solved. At he end of the timestep, the results are communicated back.</p>
+<p>The improved performance is by roughly a factor of 10. The reason is that the 1D diffusion problem which is a tri-diagonal system gets solved serially and by a Thomas’ algorithm which has linear time complexity. All values of a fiber are communicated to a single rank at the beginning of the time span. (Different ranks for different fibers). The fiber is then solved completely on this one rank for all specified timesteps.
+This involves the Strang splitting consisting of solving the subcellular model and the diffusion problem.
+At the end, the values are communicated back to the original process. Consequently, the <em>FastMonodomainSolver</em> appears to surrounding solvers like its nested solvers with a cubes-like partitioning, but internally the fibers are not split across processors.</p>
+<p>For the subcellular model, efficent code of the whole Heun scheme, using <cite>“vc”</cite>, is generated and executed. This is also faster than if <cite>Heun</cite> and <cite>CellMLAdapter</cite> are nested.</p>
+</section>
+<section id="python-options">
+<h2>Python options<a class="headerlink" href="#python-options" title="Link to this heading"></a></h2>
+<p>The normal python options for the nested solvers are needed. The FastMonodomainSolver extracts most of its settings from the settings of the nested solvers. There are some additional options at the end that are specific to the FastMonodomainSolver.</p>
+<p>The following example of python options is taken from the <cite>fibers/fibers_fat_emg</cite> example. Note the additional options at the end. Also note that there is no new top-level key for the FastMonodomainSolver, it simply uses the existing keys.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;MultipleInstances&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;logKey&quot;</span><span class="p">:</span>                     <span class="s2">&quot;duration_subdomains_xy&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ranksAllComputedInstances&quot;</span><span class="p">:</span>  <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_ranks</span><span class="p">)),</span>
+    <span class="s2">&quot;nInstances&quot;</span><span class="p">:</span>                 <span class="n">variables</span><span class="o">.</span><span class="n">n_subdomains_xy</span><span class="p">,</span>
+    <span class="s2">&quot;instances&quot;</span><span class="p">:</span>
+    <span class="p">[{</span>
+      <span class="s2">&quot;ranks&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">subdomain_coordinate_y</span><span class="o">*</span><span class="n">variables</span><span class="o">.</span><span class="n">n_subdomains_x</span> <span class="o">+</span> <span class="n">subdomain_coordinate_x</span><span class="p">,</span> <span class="n">n_ranks</span><span class="p">,</span> <span class="n">variables</span><span class="o">.</span><span class="n">n_subdomains_x</span><span class="o">*</span><span class="n">variables</span><span class="o">.</span><span class="n">n_subdomains_y</span><span class="p">)),</span>
+      <span class="s2">&quot;StrangSplitting&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="c1">#&quot;numberTimeSteps&quot;: 1,</span>
+        <span class="s2">&quot;timeStepWidth&quot;</span><span class="p">:</span>          <span class="n">variables</span><span class="o">.</span><span class="n">dt_splitting</span><span class="p">,</span>  <span class="c1"># 1e-1</span>
+        <span class="s2">&quot;logTimeStepWidthAsKey&quot;</span><span class="p">:</span>  <span class="s2">&quot;dt_splitting&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;durationLogKey&quot;</span><span class="p">:</span>         <span class="s2">&quot;duration_monodomain&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;timeStepOutputInterval&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="s2">&quot;endTime&quot;</span><span class="p">:</span>                <span class="n">variables</span><span class="o">.</span><span class="n">dt_splitting</span><span class="p">,</span>
+        <span class="s2">&quot;connectedSlotsTerm1To2&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span>   <span class="c1"># transfer slot 0 = state Vm from Term1 (CellML) to Term2 (Diffusion)</span>
+        <span class="s2">&quot;connectedSlotsTerm2To1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span>   <span class="c1"># transfer the same back, this avoids data copy</span>
+
+        <span class="s2">&quot;Term1&quot;</span><span class="p">:</span> <span class="p">{</span>      <span class="c1"># CellML, i.e. reaction term of Monodomain equation</span>
+          <span class="s2">&quot;MultipleInstances&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;logKey&quot;</span><span class="p">:</span>             <span class="s2">&quot;duration_subdomains_z&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;nInstances&quot;</span><span class="p">:</span>         <span class="n">n_fibers_in_subdomain_x</span><span class="p">(</span><span class="n">subdomain_coordinate_x</span><span class="p">)</span><span class="o">*</span><span class="n">n_fibers_in_subdomain_y</span><span class="p">(</span><span class="n">subdomain_coordinate_y</span><span class="p">),</span>
+            <span class="s2">&quot;instances&quot;</span><span class="p">:</span>
+            <span class="p">[{</span>
+              <span class="s2">&quot;ranks&quot;</span><span class="p">:</span>                          <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">variables</span><span class="o">.</span><span class="n">n_subdomains_z</span><span class="p">)),</span>    <span class="c1"># these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction</span>
+              <span class="s2">&quot;Heun&quot;</span> <span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;timeStepWidth&quot;</span><span class="p">:</span>                <span class="n">variables</span><span class="o">.</span><span class="n">dt_0D</span><span class="p">,</span>                         <span class="c1"># timestep width of 0D problem</span>
+                <span class="s2">&quot;logTimeStepWidthAsKey&quot;</span><span class="p">:</span>        <span class="s2">&quot;dt_0D&quot;</span><span class="p">,</span>                                 <span class="c1"># key under which the time step width will be written to the log file</span>
+                <span class="s2">&quot;durationLogKey&quot;</span><span class="p">:</span>               <span class="s2">&quot;duration_0D&quot;</span><span class="p">,</span>                           <span class="c1"># log key of duration for this solver</span>
+                <span class="s2">&quot;timeStepOutputInterval&quot;</span><span class="p">:</span>       <span class="mf">1e4</span><span class="p">,</span>                                     <span class="c1"># how often to print the current timestep</span>
+                <span class="s2">&quot;initialValues&quot;</span><span class="p">:</span>                <span class="p">[],</span>                                      <span class="c1"># no initial values are specified</span>
+                <span class="s2">&quot;dirichletBoundaryConditions&quot;</span><span class="p">:</span>  <span class="p">{},</span>                                      <span class="c1"># no Dirichlet boundary conditions are specified</span>
+                <span class="s2">&quot;dirichletOutputFilename&quot;</span><span class="p">:</span>      <span class="kc">None</span><span class="p">,</span>                                    <span class="c1"># filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable</span>
+
+                <span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span>            <span class="kc">True</span><span class="p">,</span>                                    <span class="c1"># the boundary conditions and initial values would be given as global numbers</span>
+                <span class="s2">&quot;checkForNanInf&quot;</span><span class="p">:</span>               <span class="kc">True</span><span class="p">,</span>                                    <span class="c1"># abort execution if the solution contains nan or inf values</span>
+                <span class="s2">&quot;nAdditionalFieldVariables&quot;</span><span class="p">:</span>    <span class="mi">0</span><span class="p">,</span>                                       <span class="c1"># number of additional field variables</span>
+                <span class="s2">&quot;additionalSlotNames&quot;</span><span class="p">:</span>          <span class="p">[],</span>                                      <span class="c1"># names for the additional slots</span>
+
+                <span class="s2">&quot;CellML&quot;</span> <span class="p">:</span> <span class="p">{</span>
+                  <span class="s2">&quot;modelFilename&quot;</span><span class="p">:</span>                          <span class="n">variables</span><span class="o">.</span><span class="n">cellml_file</span><span class="p">,</span>                          <span class="c1"># input C++ source file or cellml XML file</span>
+                  <span class="c1">#&quot;statesInitialValues&quot;:                   [],                                             # if given, the initial values for the the states of one instance</span>
+                  <span class="s2">&quot;initializeStatesToEquilibrium&quot;</span><span class="p">:</span>          <span class="kc">False</span><span class="p">,</span>                                          <span class="c1"># if the equilibrium values of the states should be computed before the simulation starts</span>
+                  <span class="s2">&quot;initializeStatesToEquilibriumTimestepWidth&quot;</span><span class="p">:</span> <span class="mf">1e-4</span><span class="p">,</span>                                       <span class="c1"># if initializeStatesToEquilibrium is enable, the timestep width to use to solve the equilibrium equation</span>
+
+                  <span class="c1"># optimization parameters</span>
+                  <span class="s2">&quot;optimizationType&quot;</span><span class="p">:</span>                       <span class="s2">&quot;vc&quot;</span> <span class="k">if</span> <span class="n">variables</span><span class="o">.</span><span class="n">use_vc</span> <span class="k">else</span> <span class="s2">&quot;simd&quot;</span><span class="p">,</span>           <span class="c1"># &quot;vc&quot;, &quot;simd&quot;, &quot;openmp&quot; or &quot;gpu&quot;, type of generated optimizated source file</span>
+                  <span class="s2">&quot;approximateExponentialFunction&quot;</span><span class="p">:</span>         <span class="kc">True</span><span class="p">,</span>                                           <span class="c1"># if optimizationType is &quot;vc&quot; or &quot;gpu&quot;, whether the exponential function exp(x) should be approximate by (1+x/n)^n with n=1024</span>
+                  <span class="s2">&quot;compilerFlags&quot;</span><span class="p">:</span>                          <span class="s2">&quot;-fPIC -O3 -march=native -shared &quot;</span><span class="p">,</span>             <span class="c1"># compiler flags used to compile the optimized model code</span>
+                  <span class="s2">&quot;maximumNumberOfThreads&quot;</span><span class="p">:</span>                 <span class="mi">0</span><span class="p">,</span>                                              <span class="c1"># if optimizationType is &quot;openmp&quot;, the maximum number of threads to use. Default value 0 means no restriction.</span>
+
+                  <span class="c1"># stimulation callbacks</span>
+                  <span class="c1">#&quot;libraryFilename&quot;:                       &quot;cellml_simd_lib.so&quot;,                           # compiled library</span>
+                  <span class="c1">#&quot;setSpecificParametersFunction&quot;:         set_specific_parameters,                        # callback function that sets parameters like stimulation current</span>
+                  <span class="c1">#&quot;setSpecificParametersCallInterval&quot;:     int(1./variables.stimulation_frequency/variables.dt_0D),         # set_specific_parameters should be called every 0.1, 5e-5 * 1e3 = 5e-2 = 0.05</span>
+                  <span class="s2">&quot;setSpecificStatesFunction&quot;</span><span class="p">:</span>              <span class="n">set_specific_states</span><span class="p">,</span>                                             <span class="c1"># callback function that sets states like Vm, activation can be implemented by using this method and directly setting Vm values, or by using setParameters/setSpecificParameters</span>
+                  <span class="c1">#&quot;setSpecificStatesCallInterval&quot;:         2*int(1./variables.stimulation_frequency/variables.dt_0D),       # set_specific_states should be called variables.stimulation_frequency times per ms, the factor 2 is needed because every Heun step includes two calls to rhs</span>
+                  <span class="s2">&quot;setSpecificStatesCallInterval&quot;</span><span class="p">:</span>          <span class="mi">0</span><span class="p">,</span>                                                               <span class="c1"># 0 means disabled</span>
+                  <span class="s2">&quot;setSpecificStatesCallFrequency&quot;</span><span class="p">:</span>         <span class="n">variables</span><span class="o">.</span><span class="n">get_specific_states_call_frequency</span><span class="p">(</span><span class="n">fiber_no</span><span class="p">,</span> <span class="n">motor_unit_no</span><span class="p">),</span>   <span class="c1"># set_specific_states should be called variables.stimulation_frequency times per ms</span>
+                  <span class="s2">&quot;setSpecificStatesFrequencyJitter&quot;</span><span class="p">:</span>       <span class="n">variables</span><span class="o">.</span><span class="n">get_specific_states_frequency_jitter</span><span class="p">(</span><span class="n">fiber_no</span><span class="p">,</span> <span class="n">motor_unit_no</span><span class="p">),</span> <span class="c1"># random value to add or substract to setSpecificStatesCallFrequency every stimulation, this is to add random jitter to the frequency</span>
+                  <span class="s2">&quot;setSpecificStatesRepeatAfterFirstCall&quot;</span><span class="p">:</span>  <span class="mf">0.01</span><span class="p">,</span>                                                            <span class="c1"># [ms] simulation time span for which the setSpecificStates callback will be called after a call was triggered</span>
+                  <span class="s2">&quot;setSpecificStatesCallEnableBegin&quot;</span><span class="p">:</span>       <span class="n">variables</span><span class="o">.</span><span class="n">get_specific_states_call_enable_begin</span><span class="p">(</span><span class="n">fiber_no</span><span class="p">,</span> <span class="n">motor_unit_no</span><span class="p">),</span><span class="c1"># [ms] first time when to call setSpecificStates</span>
+                  <span class="s2">&quot;additionalArgument&quot;</span><span class="p">:</span>                     <span class="n">fiber_no</span><span class="p">,</span>                                       <span class="c1"># last argument that will be passed to the callback functions set_specific_states, set_specific_parameters, etc.</span>
+
+                  <span class="c1"># parameters to the cellml model</span>
+                  <span class="s2">&quot;mappings&quot;</span><span class="p">:</span>                               <span class="n">variables</span><span class="o">.</span><span class="n">mappings</span><span class="p">,</span>                             <span class="c1"># mappings between parameters and algebraics/constants and between outputConnectorSlots and states, algebraics or parameters, they are defined in helper.py</span>
+                  <span class="s2">&quot;parametersInitialValues&quot;</span><span class="p">:</span>                <span class="n">variables</span><span class="o">.</span><span class="n">parameters_initial_values</span><span class="p">,</span>            <span class="c1">#[0.0, 1.0],      # initial values for the parameters: I_Stim, l_hs</span>
+
+                  <span class="s2">&quot;meshName&quot;</span><span class="p">:</span>                               <span class="s2">&quot;MeshFiber_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fiber_no</span><span class="p">),</span>                <span class="c1"># reference to the fiber mesh</span>
+                  <span class="s2">&quot;stimulationLogFilename&quot;</span><span class="p">:</span>                 <span class="s2">&quot;out/stimulation.log&quot;</span><span class="p">,</span>                          <span class="c1"># a file that will contain the times of stimulations</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;OutputWriter&quot;</span> <span class="p">:</span> <span class="p">[</span>
+                  <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;Paraview&quot;</span><span class="p">,</span> <span class="s2">&quot;outputInterval&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;out/&quot;</span> <span class="o">+</span> <span class="n">variables</span><span class="o">.</span><span class="n">scenario_name</span> <span class="o">+</span> <span class="s2">&quot;/0D_states(</span><span class="si">{}</span><span class="s2">,</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fiber_in_subdomain_coordinate_x</span><span class="p">,</span><span class="n">fiber_in_subdomain_coordinate_y</span><span class="p">),</span> <span class="s2">&quot;binary&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fixedFormat&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;combineFiles&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+                <span class="p">]</span> <span class="k">if</span> <span class="n">variables</span><span class="o">.</span><span class="n">states_output</span> <span class="k">else</span> <span class="p">[]</span>
+
+              <span class="p">},</span>
+            <span class="p">}</span> <span class="k">for</span> <span class="n">fiber_in_subdomain_coordinate_y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_fibers_in_subdomain_y</span><span class="p">(</span><span class="n">subdomain_coordinate_y</span><span class="p">))</span> \
+                <span class="k">for</span> <span class="n">fiber_in_subdomain_coordinate_x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_fibers_in_subdomain_x</span><span class="p">(</span><span class="n">subdomain_coordinate_x</span><span class="p">))</span> \
+                  <span class="k">for</span> <span class="n">fiber_no</span> <span class="ow">in</span> <span class="p">[</span><span class="n">get_fiber_no</span><span class="p">(</span><span class="n">subdomain_coordinate_x</span><span class="p">,</span> <span class="n">subdomain_coordinate_y</span><span class="p">,</span> <span class="n">fiber_in_subdomain_coordinate_x</span><span class="p">,</span> <span class="n">fiber_in_subdomain_coordinate_y</span><span class="p">)]</span> \
+                    <span class="k">for</span> <span class="n">motor_unit_no</span> <span class="ow">in</span> <span class="p">[</span><span class="n">get_motor_unit_no</span><span class="p">(</span><span class="n">fiber_no</span><span class="p">)]],</span>
+          <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;Term2&quot;</span><span class="p">:</span> <span class="p">{</span>     <span class="c1"># Diffusion</span>
+          <span class="s2">&quot;MultipleInstances&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;nInstances&quot;</span><span class="p">:</span> <span class="n">n_fibers_in_subdomain_x</span><span class="p">(</span><span class="n">subdomain_coordinate_x</span><span class="p">)</span><span class="o">*</span><span class="n">n_fibers_in_subdomain_y</span><span class="p">(</span><span class="n">subdomain_coordinate_y</span><span class="p">),</span>
+            <span class="s2">&quot;instances&quot;</span><span class="p">:</span>
+            <span class="p">[{</span>
+              <span class="s2">&quot;ranks&quot;</span><span class="p">:</span>                         <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">variables</span><span class="o">.</span><span class="n">n_subdomains_z</span><span class="p">)),</span>   <span class="c1"># these rank nos are local nos to the outer instance of MultipleInstances, i.e. from 0 to number of ranks in z direction</span>
+              <span class="s2">&quot;ImplicitEuler&quot;</span> <span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;initialValues&quot;</span><span class="p">:</span>               <span class="p">[],</span>                                      <span class="c1"># no initial values are given</span>
+                <span class="c1">#&quot;numberTimeSteps&quot;:            1,</span>
+                <span class="s2">&quot;timeStepWidth&quot;</span><span class="p">:</span>               <span class="n">variables</span><span class="o">.</span><span class="n">dt_1D</span><span class="p">,</span>                         <span class="c1"># timestep width for the diffusion problem</span>
+                <span class="s2">&quot;timeStepWidthRelativeTolerance&quot;</span><span class="p">:</span> <span class="mf">1e-10</span><span class="p">,</span>
+                <span class="s2">&quot;logTimeStepWidthAsKey&quot;</span><span class="p">:</span>       <span class="s2">&quot;dt_1D&quot;</span><span class="p">,</span>                                 <span class="c1"># key under which the time step width will be written to the log file</span>
+                <span class="s2">&quot;durationLogKey&quot;</span><span class="p">:</span>              <span class="s2">&quot;duration_1D&quot;</span><span class="p">,</span>                           <span class="c1"># log key of duration for this solver</span>
+                <span class="s2">&quot;timeStepOutputInterval&quot;</span><span class="p">:</span>      <span class="mf">1e4</span><span class="p">,</span>                                     <span class="c1"># how often to print the current timestep</span>
+                <span class="s2">&quot;dirichletBoundaryConditions&quot;</span><span class="p">:</span> <span class="p">{},</span>                                      <span class="c1"># old Dirichlet BC that are not used in FastMonodomainSolver: {0: -75.0036, -1: -75.0036},</span>
+                <span class="s2">&quot;dirichletOutputFilename&quot;</span><span class="p">:</span>     <span class="kc">None</span><span class="p">,</span>                                    <span class="c1"># filename for a vtp file that contains the Dirichlet boundary condition nodes and their values, set to None to disable</span>
+                <span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span>           <span class="kc">True</span><span class="p">,</span>                                    <span class="c1"># initial values would be given as global numbers</span>
+                <span class="s2">&quot;solverName&quot;</span><span class="p">:</span>                  <span class="s2">&quot;diffusionTermSolver&quot;</span><span class="p">,</span>                   <span class="c1"># reference to the linear solver</span>
+                <span class="s2">&quot;nAdditionalFieldVariables&quot;</span><span class="p">:</span>   <span class="mi">0</span><span class="p">,</span>
+                <span class="s2">&quot;additionalSlotNames&quot;</span><span class="p">:</span>         <span class="p">[],</span>
+                <span class="s2">&quot;checkForNanInf&quot;</span><span class="p">:</span>              <span class="kc">False</span><span class="p">,</span>
+
+                <span class="s2">&quot;FiniteElementMethod&quot;</span> <span class="p">:</span> <span class="p">{</span>
+                  <span class="s2">&quot;inputMeshIsGlobal&quot;</span><span class="p">:</span>         <span class="kc">True</span><span class="p">,</span>
+                  <span class="s2">&quot;meshName&quot;</span><span class="p">:</span>                  <span class="s2">&quot;MeshFiber_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fiber_no</span><span class="p">),</span>
+                  <span class="s2">&quot;solverName&quot;</span><span class="p">:</span>                <span class="s2">&quot;diffusionTermSolver&quot;</span><span class="p">,</span>
+                  <span class="s2">&quot;prefactor&quot;</span><span class="p">:</span>                 <span class="n">get_diffusion_prefactor</span><span class="p">(</span><span class="n">fiber_no</span><span class="p">,</span> <span class="n">motor_unit_no</span><span class="p">),</span>  <span class="c1"># resolves to Conductivity / (Am * Cm)</span>
+                  <span class="s2">&quot;slotName&quot;</span><span class="p">:</span>                  <span class="s2">&quot;vm&quot;</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;OutputWriter&quot;</span> <span class="p">:</span> <span class="p">[</span>
+                  <span class="c1">#{&quot;format&quot;: &quot;Paraview&quot;, &quot;outputInterval&quot;: int(1./variables.dt_1D*variables.output_timestep), &quot;filename&quot;: &quot;out/fiber_&quot;+str(fiber_no), &quot;binary&quot;: True, &quot;fixedFormat&quot;: False, &quot;combineFiles&quot;: True},</span>
+                  <span class="c1">#{&quot;format&quot;: &quot;Paraview&quot;, &quot;outputInterval&quot;: 1./variables.dt_1D*variables.output_timestep, &quot;filename&quot;: &quot;out/fiber_&quot;+str(i)+&quot;_txt&quot;, &quot;binary&quot;: False, &quot;fixedFormat&quot;: False},</span>
+                  <span class="c1">#{&quot;format&quot;: &quot;ExFile&quot;, &quot;filename&quot;: &quot;out/fiber_&quot;+str(i), &quot;outputInterval&quot;: 1./variables.dt_1D*variables.output_timestep, &quot;sphereSize&quot;: &quot;0.02*0.02*0.02&quot;},</span>
+                  <span class="c1">#{&quot;format&quot;: &quot;PythonFile&quot;, &quot;filename&quot;: &quot;out/fiber_&quot;+str(i), &quot;outputInterval&quot;: 1./variables.dt_1D*variables.output_timestep, &quot;binary&quot;:True, &quot;onlyNodalValues&quot;:True},</span>
+                <span class="p">]</span>
+              <span class="p">},</span>
+            <span class="p">}</span> <span class="k">for</span> <span class="n">fiber_in_subdomain_coordinate_y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_fibers_in_subdomain_y</span><span class="p">(</span><span class="n">subdomain_coordinate_y</span><span class="p">))</span> \
+                <span class="k">for</span> <span class="n">fiber_in_subdomain_coordinate_x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_fibers_in_subdomain_x</span><span class="p">(</span><span class="n">subdomain_coordinate_x</span><span class="p">))</span> \
+                  <span class="k">for</span> <span class="n">fiber_no</span> <span class="ow">in</span> <span class="p">[</span><span class="n">get_fiber_no</span><span class="p">(</span><span class="n">subdomain_coordinate_x</span><span class="p">,</span> <span class="n">subdomain_coordinate_y</span><span class="p">,</span> <span class="n">fiber_in_subdomain_coordinate_x</span><span class="p">,</span> <span class="n">fiber_in_subdomain_coordinate_y</span><span class="p">)]</span> \
+                    <span class="k">for</span> <span class="n">motor_unit_no</span> <span class="ow">in</span> <span class="p">[</span><span class="n">get_motor_unit_no</span><span class="p">(</span><span class="n">fiber_no</span><span class="p">)]],</span>
+            <span class="s2">&quot;OutputWriter&quot;</span> <span class="p">:</span> <span class="n">variables</span><span class="o">.</span><span class="n">output_writer_fibers</span><span class="p">,</span>
+          <span class="p">},</span>
+        <span class="p">},</span>
+      <span class="p">}</span>
+    <span class="p">}</span> <span class="k">if</span> <span class="p">(</span><span class="n">subdomain_coordinate_x</span><span class="p">,</span><span class="n">subdomain_coordinate_y</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="n">variables</span><span class="o">.</span><span class="n">own_subdomain_coordinate_x</span><span class="p">,</span><span class="n">variables</span><span class="o">.</span><span class="n">own_subdomain_coordinate_y</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">subdomain_coordinate_y</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">variables</span><span class="o">.</span><span class="n">n_subdomains_y</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">subdomain_coordinate_x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">variables</span><span class="o">.</span><span class="n">n_subdomains_x</span><span class="p">)]</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;fiberDistributionFile&quot;</span><span class="p">:</span>    <span class="n">variables</span><span class="o">.</span><span class="n">fiber_distribution_file</span><span class="p">,</span>   <span class="c1"># for FastMonodomainSolver, e.g. MU_fibre_distribution_3780.txt</span>
+  <span class="s2">&quot;firingTimesFile&quot;</span><span class="p">:</span>          <span class="n">variables</span><span class="o">.</span><span class="n">firing_times_file</span><span class="p">,</span>         <span class="c1"># for FastMonodomainSolver, e.g. MU_firing_times_real.txt</span>
+  <span class="s2">&quot;onlyComputeIfHasBeenStimulated&quot;</span><span class="p">:</span> <span class="n">variables</span><span class="o">.</span><span class="n">fast_monodomain_solver_optimizations</span><span class="p">,</span>                          <span class="c1"># only compute fibers after they have been stimulated for the first time</span>
+  <span class="s2">&quot;disableComputationWhenStatesAreCloseToEquilibrium&quot;</span><span class="p">:</span> <span class="n">variables</span><span class="o">.</span><span class="n">fast_monodomain_solver_optimizations</span><span class="p">,</span>       <span class="c1"># optimization where states that are close to their equilibrium will not be computed again</span>
+  <span class="s2">&quot;valueForStimulatedPoint&quot;</span><span class="p">:</span>  <span class="n">variables</span><span class="o">.</span><span class="n">vm_value_stimulated</span><span class="p">,</span>       <span class="c1"># to which value of Vm the stimulated node should be set</span>
+  <span class="s2">&quot;neuromuscularJunctionRelativeSize&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span>                          <span class="c1"># range where the neuromuscular junction is located around the center, relative to fiber length. The actual position is draws randomly from the interval [0.5-s/2, 0.5+s/2) with s being this option. 0 means sharply at the center, 0.1 means located approximately at the center, but it can vary 10% in total between all fibers.</span>
+  <span class="s2">&quot;generateGPUSource&quot;</span><span class="p">:</span>        <span class="kc">True</span><span class="p">,</span>                                <span class="c1"># (set to True) only effective if optimizationType==&quot;gpu&quot;, whether the source code for the GPU should be generated. If False, an existing source code file (which has to have the correct name) is used and compiled, i.e. the code generator is bypassed. This is useful for debugging, such that you can adjust the source code yourself. (You can also add &quot;-g -save-temps &quot; to compilerFlags under CellMLAdapter)</span>
+  <span class="s2">&quot;useSinglePrecision&quot;</span><span class="p">:</span>       <span class="kc">False</span><span class="p">,</span>                               <span class="c1"># only effective if optimizationType==&quot;gpu&quot;, whether single precision computation should be used on the GPU. Some GPUs have poor double precision performance. Note, this drastically increases the error and, in consequence, the timestep widths should be reduced.</span>
+  <span class="c1">#&quot;preCompileCommand&quot;:        &quot;bash -c &#39;module load argon-tesla/gcc/11-20210110-openmp; module list; gcc --version&quot;,     # only effective if optimizationType==&quot;gpu&quot;, system command to be executed right before the compilation</span>
+  <span class="c1">#&quot;postCompileCommand&quot;:       &quot;&#39;&quot;,   # only effective if optimizationType==&quot;gpu&quot;, system command to be executed right after the compilation</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Instead of the callback function <cite>setSpecificStates</cite> that would normally handle the stimulation, the FastMonodomainSolver does the stimulation differently. Calling the callback functions would be too slow. The same behaviour as with the standard <cite>setSpecificStates</cite> is implemented, respecting the options <code class="docutils literal notranslate"><span class="pre">setSpecificStatesCallFrequency</span></code>, <code class="docutils literal notranslate"><span class="pre">setSpecificStatesFrequencyJitter</span></code>, <code class="docutils literal notranslate"><span class="pre">setSpecificStatesRepeatAfterFirstCall</span></code> and <code class="docutils literal notranslate"><span class="pre">setSpecificStatesCallEnableBegin</span></code>. Stimulation is done by setting Vm at a node to the value <code class="docutils literal notranslate"><span class="pre">valueForStimulatedPoint</span></code>. Which node is determined by <code class="docutils literal notranslate"><span class="pre">neuromuscularJunctionRelativeSize</span></code>.</p>
+<figure class="align-default" id="id1">
+<span id="stimulation-times-1"></span><a class="reference internal image-reference" href="../_images/stimulation_times.svg"><img alt="../_images/stimulation_times.svg" src="../_images/stimulation_times.svg" width="80%" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 111 </span><span class="caption-text">Options that influence the stimulation. A time line is shown from left to right. The red blocks are time spans when there can be a stimulation. If there will be an actual stimulation, i.e. <span class="math notranslate nohighlight">\(V_m\)</span> will be set to <code class="docutils literal notranslate"><span class="pre">valueForStimulatedPoint</span></code>, depends on the entry in <code class="docutils literal notranslate"><span class="pre">firingTimesFile</span></code> for the current time step. Therefore it makes sense to use the file <cite>“MU_firing_times_always.txt”</cite> with these options as then, the spike trains are completely determined by the options <cite>setSpecificStatesCallEnableBegin</cite>, <cite>setSpecificStatesCallFrequency</cite> and <cite>setSpecificStatesFrequencyJitter</cite>..</span><a class="headerlink" href="#id1" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<section id="fiberdistributionfile">
+<h3>fiberDistributionFile<a class="headerlink" href="#fiberdistributionfile" title="Link to this heading"></a></h3>
+<p>This file contains the assignment of fibers to motor units. Such files are located in the <cite>examples/electrophysiology/input</cite> directory and have names <code class="docutils literal notranslate"><span class="pre">MU_fibre_distribution*.txt</span></code>.</p>
+<p>The file contains a single line with space separated numbers, e.g. <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">5</span> <span class="pre">4</span> <span class="pre">5</span> <span class="pre">2</span> <span class="pre">2</span> <span class="pre">2</span> <span class="pre">2</span> <span class="pre">2</span> <span class="pre">4</span> <span class="pre">2</span> <span class="pre">5</span> <span class="pre">2</span> <span class="pre">5</span> <span class="pre">2</span> <span class="pre">2</span> <span class="pre">5</span> <span class="pre">5</span> <span class="pre">14</span> <span class="pre">16</span> <span class="pre">2</span> <span class="pre">8</span> <span class="pre">10</span> <span class="pre">7</span> <span class="pre">8</span></code>. Each number specifies the motor unit number of the next fiber, i.e., in this example fiber 0 is of MU 2, fiber 1 is of MU 5 etc. If there are more timestep or more motor units than entries in the file, the values wrap around, i.e. after the last column the first is used again. This file format is compatible with the OpenCMISS Iron examples.</p>
+</section>
+<section id="firingtimesfile">
+<h3>firingTimesFile<a class="headerlink" href="#firingtimesfile" title="Link to this heading"></a></h3>
+<p>This file specifies when which motor unit fires. Such files are located in the <cite>examples/electrophysiology/input</cite> directory and have names <code class="docutils literal notranslate"><span class="pre">MU_firing_times*.txt</span></code>.
+Examples of available files are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">MU_firing_times_always.txt</span></code>    Every motor unit fires in every timestep. This file is needed if the <cite>setSpecificStatesCallFrequency</cite> and <cite>setSpecificStatesFrequencyJitter</cite> functionality should be used.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MU_firing_times_immediately.txt</span></code>  All motor units fire the first three timesteps at the beginning, then with a certain frequency which is exponentially distributed among the MUs. This can be used for debugging. In small simulation time spans also all MUs fire.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MU_firing_times_once.txt</span></code>      All motor units fire only in the first timestep.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MU_firing_times_real.txt</span></code>      The motor units fire in a frequency that is exponentially distributed over MU numbers.</p></li>
+</ul>
+<p>It contains multiple lines, one for each time step. Every line consists of indications whether a motor unit fires (1) or not (0). The 0s and 1s are separated by spaces. This means the rows specify timestep numbers and the columns specify motor unit numbers. If there are more timestep or more motor units than entries in the file, the values wrap around, i.e. after the last column the first is used again. This file format is again compatible with the OpenCMISS Iron examples.</p>
+</section>
+<section id="onlycomputeifhasbeenstimulated">
+<h3>onlyComputeIfHasBeenStimulated<a class="headerlink" href="#onlycomputeifhasbeenstimulated" title="Link to this heading"></a></h3>
+<p>This option disabled computation of the Monodomain equation as long as the fiber has not been stimulated in therefore is in equilibrium.
+This speeds up computation for a ramp scenario where a lot of MUs are inactive at the beginning. Set this option to False for runtime tests of the 0D and 1D problem.</p>
+</section>
+<section id="disablecomputationwhenstatesareclosetoequilibrium">
+<h3>disableComputationWhenStatesAreCloseToEquilibrium<a class="headerlink" href="#disablecomputationwhenstatesareclosetoequilibrium" title="Link to this heading"></a></h3>
+<p>Similar to <cite>onlyComputeIfHasBeenStimulated</cite>, this checks whether the values have reached the equilibrium and then disables the computation.</p>
+</section>
+<section id="valueforstimulatedpoint">
+<h3>valueForStimulatedPoint<a class="headerlink" href="#valueforstimulatedpoint" title="Link to this heading"></a></h3>
+<p>This is the value that will be set for the transmembrane potential <span class="math notranslate nohighlight">\(V_m\)</span> when it is stimulated.</p>
+</section>
+<section id="neuromuscularjunctionrelativesize">
+<h3>neuromuscularJunctionRelativeSize<a class="headerlink" href="#neuromuscularjunctionrelativesize" title="Link to this heading"></a></h3>
+<p>Relative range of the position of the neuromuscular junction. The neuromuscular junction is the point on a fiber where the nerve innervates and the fiber gets stimulated. This value is a relative number between 0 and 1. It specifies the range around the center of the fiber where this point is located.</p>
+<p>The actual location is draws from a uniform random distribution around the center,</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}[0.5-\dfrac{s}{2}, 0.5+\dfrac{s}{2}),\\
+\text{with $s=$neuromuscularJunctionRelativeSize.}\end{split}\]</div>
+<p>The interval is multiplied by the number of points on the fiber, i.e. 0.5 indicates the center point. A value of 0 for <cite>neuromuscularJunctionRelativeSize</cite> indicates that the stimulation point is always at the center. A value of 0.1 indicates that the point is randomly at the center range of 10% of the fiber. Thus, for a lot of fibers, the position varies by maximum 10% fiber length.</p>
+</section>
+<section id="optimizationtype">
+<h3>optimizationType<a class="headerlink" href="#optimizationtype" title="Link to this heading"></a></h3>
+<p>Different code is generated for the <code class="docutils literal notranslate"><span class="pre">vc</span></code>, <code class="docutils literal notranslate"><span class="pre">simd</span></code> and <code class="docutils literal notranslate"><span class="pre">gpu</span></code> values of <code class="docutils literal notranslate"><span class="pre">optimizationType</span></code>.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">vc</span></code>: <a class="reference external" href="https://github.com/VcDevel/Vc">Vc</a> is a library for explicit vectorization.
+It is no longer actively developed, but works well up to the <cite>AVX2</cite> instruction set (4 double values per SIMD instruction).
+It can be compiler with every compiler (&gt;GCC 7). The successor of <cite>Vc</cite> is <a class="reference external" href="https://github.com/VcDevel/std-simd">std-simd</a>.
+It also supports AVX-512 (8 doubles per SIMD instruction). It uses C++17 technology, therefore is has to be compiled by at least GCC 9. Normally, the C++ standard of opendihu is C++14.
+To use C++17, use GCC 9 or later and set <code class="docutils literal notranslate"><span class="pre">USE_STDSIMD</span> <span class="pre">=</span> <span class="pre">True</span></code> in <code class="docutils literal notranslate"><span class="pre">user-variables.scons.py</span></code>. This will automatically use C++17 and select <cite>std-simd</cite> instead of <cite>Vc</cite>. Internally, this is achieved by using <a class="reference external" href="https://github.com/maierbn/std_simd_vc_wrapper">this wrapper</a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gpu</span></code>: Support for GPU is implemented using OpenMP 4.5 pragmas. At least GCC 11 is required (or a patched version of GCC 10). Because GCC 11 is not yet release (as of January 2021) this is a bit difficult. You have to download a recent snapshot and build GCC yourself, with nvptx-offloading support enabled (this includes building the CUDA compiler and tools). On the SGS servers, there are various modules available.
+If no GPU is present, the code defaults to CPU execution. Whether the CPU or GPU is currently used can be seen from the console output whenever a fiber is stimulated:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>t:<span class="w"> </span><span class="m">24</span>.188000,<span class="w"> </span>stimulate<span class="w"> </span>fiber<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">(</span><span class="nb">local</span><span class="w"> </span>no.<span class="o">)</span>,<span class="w"> </span>MU<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="o">(</span>computation<span class="w"> </span>on<span class="w"> </span>CPU<span class="o">)</span>
+--<span class="w"> </span>or<span class="w"> </span>--
+t:<span class="w"> </span><span class="m">24</span>.188000,<span class="w"> </span>stimulate<span class="w"> </span>fiber<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">(</span><span class="nb">local</span><span class="w"> </span>no.<span class="o">)</span>,<span class="w"> </span>MU<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="o">(</span>computation<span class="w"> </span>on<span class="w"> </span>GPU<span class="o">)</span>
+</pre></div>
+</div>
+<p>For GPU, the code generator outputs a source file that solves the whole Monodomain equation (0D and 1D) for all local fibers, either using Implicit Euler or Crank Nicholson. This is differnt than “vc”, where only the 0D CellML part of the Monodomain equation is generated by the code generator of opendihu.</p>
+<p>One problem with the GPU code is that the available memory of most GPUs is very low such that some numbers of fibers won’t work.
+The floating point precision (float or double) can be adjusted by the <code class="docutils literal notranslate"><span class="pre">useSinglePrecision</span></code> option. However, single precision is not enough (at least for Hodgkin-Huxley and Shorten based subcellular models).
+The following has been successfully tested: 49 fibers with hodgkin-huxley, 1 fiber with shorten, both with double precision.
+The following has been found to not converge or not compile: more than 1 fiber with shorten. 1 fibers with Hodgkin-Huxley or Shorten in single precision.</p>
+</li>
+</ul>
+<p>If you want to experiment with different OpenMP pragmas or try out other, custom optimizations in the code, choose <code class="docutils literal notranslate"><span class="pre">optimizationType:</span> <span class="pre">&quot;gpu&quot;</span></code>,
+run it once with <code class="docutils literal notranslate"><span class="pre">generateGPUSource:</span> <span class="pre">True</span></code> and then set <code class="docutils literal notranslate"><span class="pre">generateGPUSource:</span> <span class="pre">False</span></code>. This will at first generate the full source code with the CellML model and solver of Monodomain equation. Then, the next time, the source code will not be generated again, but every process just uses the existing code file and compiles it.
+This means, you can edit the source file as you like and it will be used like this.</p>
+</section>
+<section id="generategpusource">
+<h3>generateGPUSource<a class="headerlink" href="#generategpusource" title="Link to this heading"></a></h3>
+<p>Only effective if <cite>optimizationType</cite> is <cite>gpu</cite>, whether the source code file should be generated prior to compilation. If set to false, it is assumed that the file already exists. This allows to provide a custom file.</p>
+</section>
+<section id="usesingleprecision">
+<h3>useSinglePrecision<a class="headerlink" href="#usesingleprecision" title="Link to this heading"></a></h3>
+<p>Whether to use the <code class="docutils literal notranslate"><span class="pre">float</span></code> datatype instead of <code class="docutils literal notranslate"><span class="pre">double</span></code> for the computations. This may be faster but usually the precision is not high enough such that the model diverges.</p>
+</section>
+<section id="precompilecommand-postcompilecommand">
+<h3>preCompileCommand, postCompileCommand<a class="headerlink" href="#precompilecommand-postcompilecommand" title="Link to this heading"></a></h3>
+<p>These are commands that are executed prior to and after the compilation command (only for GPU). Not sure if it is useful. For example, it does not work to load modules here, because the shell is different from the environment where the program is started.</p>
+</section>
+</section>
+<section id="tampering-the-generated-source-code">
+<h2>Tampering the generated source code<a class="headerlink" href="#tampering-the-generated-source-code" title="Link to this heading"></a></h2>
+<p>In case you want to manually adjust the source code that is compiled and loaded for the fast monodomain solver, there are two options:</p>
+<ul>
+<li><p>You can build the shared library that is loaded by OpenDiHu yourself. Run the program once, to get the normal source code, e.g.:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span><span class="nv">$OPENDIHU_HOME</span>/examples/electrophysiology/fibers/fibers_emg/build_release
+mpirun<span class="w"> </span>-n<span class="w"> </span><span class="m">4</span><span class="w"> </span>./fast_fibers_emg<span class="w"> </span>../settings_fibers_emg.py<span class="w"> </span>ramp_emg.py
+</pre></div>
+</div>
+<p>Then, you can use the generated source code under <code class="docutils literal notranslate"><span class="pre">build_release/src/hodgkin_huxley_1952_fast_monodomain.c</span></code> as template for your own modifications.</p>
+<p>In the <code class="docutils literal notranslate"><span class="pre">src</span></code> directory, compile the library as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>g++<span class="w"> </span>hodgkin_huxley_1952_fast_monodomain.c<span class="w"> </span>-O3<span class="w"> </span>-march<span class="o">=</span>native<span class="w"> </span>-fPIC<span class="w"> </span>-shared<span class="w"> </span>-lVc<span class="w"> </span>-I<span class="nv">$OPENDIHU_HOME</span>/dependencies/std_simd/install/include<span class="w"> </span>-I<span class="nv">$OPENDIHU_HOME</span>/dependencies/vc/install/include<span class="w"> </span>-L<span class="nv">$OPENDIHU_HOME</span>/dependencies/vc/install/lib<span class="w"> </span>-o<span class="w"> </span>../cellml_simd_lib.so
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">-march=native</span></code> is important such that the compiled library uses a SIMD lane width of 4 (depending on the hardware), it has to be the same value as for the OpenDiHu core.
+The flags <code class="docutils literal notranslate"><span class="pre">-fPIC</span> <span class="pre">-shared</span></code> create the shared object. In this case, the resulting library will be under <code class="docutils literal notranslate"><span class="pre">build_release/cellml_simd_lib.so</span></code>.</p>
+<p>To use this library, add the option <code class="docutils literal notranslate"><span class="pre">&quot;libraryFilename&quot;:</span> <span class="pre">&quot;cellml_simd_lib.so&quot;</span></code> in the <code class="docutils literal notranslate"><span class="pre">CellML</span></code> part of the settings file. Then run the program again.</p>
+</li>
+<li><p>The same approach works for the <code class="docutils literal notranslate"><span class="pre">&quot;vc&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">&quot;gpu&quot;</span></code> optimization types. For <code class="docutils literal notranslate"><span class="pre">&quot;gpu&quot;</span></code>, there is another, more convenient method:
+By setting the option <code class="docutils literal notranslate"><span class="pre">&quot;generateGPUSource&quot;:</span> <span class="pre">False</span></code>, the source code is not generated and overwritten, but the existing source code file is compiled, linked and loaded by OpenDiHu. This means, you don’t have to compile the library yourself.</p>
+<p>The steps are: Run the program once with <code class="docutils literal notranslate"><span class="pre">&quot;generateGPUSource&quot;:</span> <span class="pre">True</span></code> to generate the initial source code file under <code class="docutils literal notranslate"><span class="pre">src/</span></code>. Then, adjust the source code to your needs. Set <code class="docutils literal notranslate"><span class="pre">&quot;generateGPUSource&quot;:</span> <span class="pre">False</span></code>. Adjust the <code class="docutils literal notranslate"><span class="pre">&quot;compilerFlags&quot;</span></code> option, if you want to link to other libraries. Run the program again.</p>
+</li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="multiple_instances.html" class="btn btn-neutral float-left" title="MultipleInstances" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cellml_adapter.html" class="btn btn-neutral float-right" title="CellMLAdapter" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

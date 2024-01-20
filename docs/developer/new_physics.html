@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Implement New Physics &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Contributors" href="contributors.html" />
+    <link rel="prev" title="Build on supercomputer" href="supercomputer.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">Python Settings</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../developer_information.html">Information for developers</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="conventions.html">Conventions and Tips</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference.html">C++ Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="supercomputer.html">Build on supercomputer</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Implement New Physics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributors.html">Contributors</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../developer_information.html">Information for developers</a></li>
+      <li class="breadcrumb-item active">Implement New Physics</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/developer/new_physics.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="implement-new-physics">
+<h1>Implement New Physics<a class="headerlink" href="#implement-new-physics" title="Link to this heading"></a></h1>
+<p>This page is a tutorial about how to implement new a physics model that is not yet possible with the C++ core.
+It covers the setup steps to create a new solver class, how to use the existing integration functionality, how to use the available infrastructure such as output writers, Petsc vectors etc. and how to create an example that uses the new model.
+This will be done by considering an exemplary <em>advection-diffusion equation</em>.</p>
+<p>A “reference solution” was created, see the <code class="docutils literal notranslate"><span class="pre">diffusion_advection_solver.tpp</span></code> files under <code class="docutils literal notranslate"><span class="pre">specialized_solvers/darcy</span></code> and the example under <code class="docutils literal notranslate"><span class="pre">examples/darcy/diffusion_advection2d</span></code>.</p>
+<ol class="arabic simple">
+<li><p><em>Complete the formulation.</em></p></li>
+</ol>
+<blockquote>
+<div><p>The first step is to derive the formulation and be clear about what exactly the algorithm has to do in order to solve the model. In this example case, we want to solve the following equation.</p>
+<div class="math notranslate nohighlight">
+\[\frac{∂u(x,t)}{∂t} = Δu(x,t) - ∇\cdot (vu) + f(x,t),\]</div>
+<p>where <span class="math notranslate nohighlight">\(u \in \mathbb{R}\)</span> is the scalar solution variable, <span class="math notranslate nohighlight">\(v \in \mathbb{R}^d\)</span> is a prescribed velocity field and <span class="math notranslate nohighlight">\(f(x,t) \in \mathbb{R}\)</span> is a reaction term.
+The dimensionality, <span class="math notranslate nohighlight">\(d\)</span> of the domain <span class="math notranslate nohighlight">\(\Omega \subset \mathbb{R}^d \ni x\)</span>, should be any of 1,2 or 3.</p>
+<p>We want to use the Finite Element method, therefore we derive the weak form. For simplicity, we discretize in time using the forward Euler scheme.</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\int_\Omega u_t \, \phi \, dx &amp;= -\int_\Omega ∇u \cdot ∇\phi \,dx + \int_\Omega (vu) \cdot ∇\phi \, dx + \int_\Omega f \, \phi \, dx, \quad \forall \phi \in H^{1}_0(\Omega) \\
+\Leftrightarrow \quad &amp;\frac1{dt} \sum_{i=1}^N (u_i^{(t+1)} - u_i^{(t)})\,\int_\Omega \phi_i \, \phi_j \,dx \\
+\quad &amp;= - \sum_{i=1}^N u_i^{(t)} \int_\Omega (∇\phi_i \cdot ∇\phi_j + (v\phi_i)\cdot ∇\phi_j)\, dx + \int_\Omega f \,\phi_j \,dx \quad \forall j\end{split}\]</div>
+<p>By using matrix notation with <span class="math notranslate nohighlight">\(K,M\)</span> and <span class="math notranslate nohighlight">\(V\)</span> for the stiffness, mass and velocity matrices and the vector of degrees of freedom, <span class="math notranslate nohighlight">\(u\)</span>, we get</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\frac1{dt} M (u^{(t+1)} - u^{(t)}) &amp;= K\,u^{(t)} - V\,u^{(t)} - M\,f\\
+\Leftrightarrow \quad u^{(t+1)} &amp;= u^{(t)} + dt\cdot( M^{-1}Ku^{(t)} - M^{-1}Vu^{(t)} - f),\end{split}\]</div>
+<p>where</p>
+<div class="math notranslate nohighlight">
+\[M_{ij} = \int_\Omega \phi_i\,\phi_j \,dx, \quad K_{ij} = -\int_\Omega ∇\phi_i \cdot ∇\phi_j \,dx, \quad
+V_{ij} = -\int_\Omega \phi_i\,(v \cdot ∇\phi_j) \,dx.\]</div>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p><em>Create the solver class.</em></p></li>
+</ol>
+<blockquote>
+<div><p>Next, we decide how to name the new solver class. Here, we choose <cite>AdvectionDiffusionSolver</cite>. There are two classes that can be used as template to start the new solver from.</p>
+<p>There is <code class="docutils literal notranslate"><span class="pre">specialized_solver/my_new_static_solver.h</span></code> for static problem and <code class="docutils literal notranslate"><span class="pre">specialized_solver/my_new_timestepping_solver.h</span></code> for transient problem, i.e. timestepping schemes.
+In our case we need the first, so we copy <code class="docutils literal notranslate"><span class="pre">specialized_solver/my_new_timestepping_solver.h</span></code> to <code class="docutils literal notranslate"><span class="pre">specialized_solver/advection_diffusion_solver.h</span></code> and <code class="docutils literal notranslate"><span class="pre">specialized_solver/my_new_timestepping_solver.tpp</span></code> to <code class="docutils literal notranslate"><span class="pre">specialized_solver/advection_diffusion_solver.tpp</span></code>.</p>
+<p>Replace all occurences of <code class="docutils literal notranslate"><span class="pre">MyNewTimesteppingSolver</span></code> with <code class="docutils literal notranslate"><span class="pre">AdvectionDiffusionSolver</span></code>. Read the comments to understand what this template already contains and what still needs to be done.</p>
+<p>We want the reaction term, <span class="math notranslate nohighlight">\(f\)</span> to be specified by a python callback function. This functionality is implemented by the <cite>PrescribedValues</cite> class which we want to reuse. Such a class should be a nested <cite>solver</cite> of the <cite>AdvectionDiffusionSolver</cite>.
+Therefore, we need to implement one template type. Replace all <code class="docutils literal notranslate"><span class="pre">template&lt;class</span> <span class="pre">TimeStepping&gt;</span></code> by <code class="docutils literal notranslate"><span class="pre">template&lt;class</span> <span class="pre">PrescribedValues&gt;</span></code> and all <code class="docutils literal notranslate"><span class="pre">AdvectionDiffusionSolver&lt;TimeStepping&gt;::</span></code> by <code class="docutils literal notranslate"><span class="pre">AdvectionDiffusionSolver&lt;PrescribedValues&gt;::</span></code>.
+Note this is only a renaming but it would be confusing to call the nested <cite>PrescribedValues</cite> instead <cite>class TimeStepping</cite>.</p>
+</div></blockquote>
+<ol class="arabic simple" start="3">
+<li><p><em>Prepare the data class.</em></p></li>
+</ol>
+<blockquote>
+<div><p>Add scalar and vector-valued field variables for the reaction term, <span class="math notranslate nohighlight">\(f \in \mathbb{R}^1\)</span> and the velocity field, <span class="math notranslate nohighlight">\(v \in \mathbb{R}^d\)</span>.</p>
+</div></blockquote>
+<ol class="arabic simple" start="4">
+<li><p><em>Implement the assembly of matrices.</em></p></li>
+</ol>
+<blockquote>
+<div><p>There is already code to do the quadrature of the integral terms. Open the file <cite>spatial_discretization/finite_element_method/01_stiffness_matrix_integrate.tpp</cite> and copy the <cite>setStiffnessMatrix()</cite> method to the <cite>AdvectionDiffusionSolver</cite>.
+Rename it, e.g. <code class="docutils literal notranslate"><span class="pre">setSystemMatrix</span></code>. This method computes only the stiffness matrix, <span class="math notranslate nohighlight">\(K\)</span>. Carefully read the code and try to understand it. Change it to produce the velocity matrix, <span class="math notranslate nohighlight">\(V\)</span>, instead.</p>
+<p>In order to get the other matrices, <span class="math notranslate nohighlight">\(K\)</span> and <span class="math notranslate nohighlight">\(M^{-1}\)</span>, you can use an object of type <code class="docutils literal notranslate"><span class="pre">FiniteElementMethod</span></code> as member variable of <code class="docutils literal notranslate"><span class="pre">AdvectionDiffusionSolver</span></code>. This class already implements assembly of the normal stiffness matrix, as well as an inverse lumped mass matrix, to be used for <span class="math notranslate nohighlight">\(M^{-1}\)</span>.
+Inspect the data object of the <code class="docutils literal notranslate"><span class="pre">FiniteElementMethod</span></code> which is in <cite>data_management/finite_element_method/finite_elements_base.h</cite>. You can see that there are getter methods <cite>stiffnessMatrix()</cite> and <cite>inverseLumpedMassMatrix()</cite>. In order for them to be available, the initialization method <cite>initializeInverseLumpedMassMatrix</cite> has to be called.</p>
+</div></blockquote>
+<ol class="arabic simple" start="5">
+<li><p><em>Create an example and test it.</em></p></li>
+<li><p><em>Create a unit test.</em></p></li>
+</ol>
+<blockquote>
+<div><p>The last step is to create a unit test to preserve the functionality that is working now also when the code is further changed. The unit test can be a regression test that compares the output to a reference output that is now created.</p>
+</div></blockquote>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="supercomputer.html" class="btn btn-neutral float-left" title="Build on supercomputer" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="contributors.html" class="btn btn-neutral float-right" title="Contributors" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

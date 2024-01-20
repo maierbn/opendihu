@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OutputSurface &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="MultidomainSolver" href="multidomain_solver.html" />
+    <link rel="prev" title="OutputWriter" href="output_writer.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../settings.html">Python Settings</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="mesh.html">Mesh</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mappings_between_meshes.html">MappingsBetweenMeshes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="solver.html">Solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boundary_conditions.html">Boundary Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_connector_slots.html">Connector Slots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="finite_element_method.html">FiniteElementMethod</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timestepping_schemes_ode.html">TimeSteppingSchemesOde</a></li>
+<li class="toctree-l2"><a class="reference internal" href="splitting.html">Operator Splitting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html">Coupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coupling.html#multiplecoupling">MultipleCoupling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="output_writer.html">OutputWriter</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">OutputSurface</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#output-of-surface-meshes">Output of surface meshes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#outputwriter">OutputWriter</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#face">face</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#surface-sampling">Surface Sampling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#enablegeometryincsvfile">enableGeometryInCsvFile</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="multidomain_solver.html">MultidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="multiple_instances.html">MultipleInstances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="fast_monodomain_solver.html">FastMonodomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cellml_adapter.html">CellMLAdapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="quasi_static_linear_elasticity_solver.html">QuasiStaticLinearElasticitySolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="static_bidomain_solver.html">StaticBidomainSolver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hyperelasticity.html">Hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic_hyperelasticity.html">Dynamic hyperelasticity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="muscle_contraction_solver.html">Muscle contraction solver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html">PrescribedValues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="prescribed_values.html#dummy">Dummy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="map_dofs.html">MapDofs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="precice_adapter.html">PreciceAdapter</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../developer_information.html">Information for developers</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../settings.html">Python Settings</a></li>
+      <li class="breadcrumb-item active">OutputSurface</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/settings/output_surface.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="outputsurface">
+<h1>OutputSurface<a class="headerlink" href="#outputsurface" title="Link to this heading"></a></h1>
+<p>This class only modifies the output of OutputWriters. If there are 3D meshes present, it creates a 2D mesh on the surface of the 3D mesh and outputs only the 2D data.
+This helps to reduce the output data size, usually what happens on the surface is the only interesting thing. Especially for problems with larger mesh sizes, the 3D mesh is often not practicable to store and visualize. Here, the 2D meshes can help.</p>
+<p>C++ code:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n">OutputWriter</span><span class="o">::</span><span class="n">OutputSurface</span><span class="o">&lt;</span>
+<span class="w">  </span><span class="c1">// nested solver</span>
+<span class="o">&gt;</span>
+</pre></div>
+</div>
+<section id="output-of-surface-meshes">
+<h2>Output of surface meshes<a class="headerlink" href="#output-of-surface-meshes" title="Link to this heading"></a></h2>
+<p>Python settings:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;OutputSurface&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;OutputWriter&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="c1"># output writer, e.g.:</span>
+    <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;Paraview&quot;</span><span class="p">,</span> <span class="s2">&quot;outputInterval&quot;</span><span class="p">:</span> <span class="p">(</span><span class="nb">int</span><span class="p">)(</span><span class="mf">1.</span><span class="o">/</span><span class="n">dt_1D</span><span class="o">*</span><span class="n">output_timestep</span><span class="p">),</span> <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;out/surface&quot;</span><span class="p">,</span> <span class="s2">&quot;binary&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fixedFormat&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;combineFiles&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
+  <span class="p">],</span>
+  <span class="s2">&quot;face&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;1-&quot;</span><span class="p">],</span>
+
+  <span class="c1"># settings of the nested solver</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<section id="outputwriter">
+<h3>OutputWriter<a class="headerlink" href="#outputwriter" title="Link to this heading"></a></h3>
+<p>The output writers that will output the 2D mesh only, not the 3D mesh.</p>
+</section>
+<section id="face">
+<h3>face<a class="headerlink" href="#face" title="Link to this heading"></a></h3>
+<p>The 2D faces of the 3D volume which will be extracted. This has to be a list of faces, even if only a single face is required (then it is a list with one entry).
+Possible values are <cite>0-</cite>, <cite>0+</cite>, <cite>1-</cite>, <cite>1+</cite>, <cite>2-</cite>, <cite>2+</cite>. <code class="xref std std-numref docutils literal notranslate"><span class="pre">faces</span></code> shows the meaning for 1D, 2D and 3D meshes. In this case the 3D visualization (right picture) is relevant.o</p>
+<figure class="align-default" id="faces">
+<a class="reference internal image-reference" href="../_images/faces.svg"><img alt="../_images/faces.svg" src="../_images/faces.svg" width="100%" /></a>
+</figure>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If the code runs in parallel and composite meshes are used, only the last sub mesh of the composite mesh is considered. Then each subdomain of that submesh has to span all us
+The reason is that each created 2D surface mesh has to take part in the collective communication functions of MPI. This is not the case if some surface meshes only need a subset of the MPI ranks of the other surface meshes.</p>
+<p>If unsure, try out the code. If errors or a crash occurs, then don’t use <cite>OutputSurface</cite> in this context.</p>
+<p>(This is the reason why the <code class="docutils literal notranslate"><span class="pre">static_biceps_emg</span></code> example only works in parallel either with only one face or with two faces but only with partitioning in z direction.)</p>
+</div>
+</section>
+</section>
+<section id="surface-sampling">
+<h2>Surface Sampling<a class="headerlink" href="#surface-sampling" title="Link to this heading"></a></h2>
+<p>The surface output writer is also capable of sampling the resulting surface data at given positions. This is needed for EMG sampling at electrodes on the skin surface. The result can be written to a vtp file to be viewed in ParaView and to a CSV file for further processing.</p>
+<figure class="align-default" id="id1">
+<span id="output-surface-1"></span><a class="reference internal image-reference" href="../_images/output_surface_1.png"><img alt="../_images/output_surface_1.png" src="../_images/output_surface_1.png" style="width: 60%;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 110 </span><span class="caption-text">This image shows a simulation from <cite>fibers_fat_emg</cite>. The surface mesh generated by the OutputSurface class, as well as the points of the electrodes are shown.</span><a class="headerlink" href="#id1" title="Link to this image"></a></p>
+</figcaption>
+</figure>
+<p>Python settings:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="s2">&quot;OutputSurface&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;OutputWriter&quot;</span><span class="p">:</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;Paraview&quot;</span><span class="p">,</span> <span class="s2">&quot;outputInterval&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">variables</span><span class="o">.</span><span class="n">dt_3D</span><span class="o">*</span><span class="n">variables</span><span class="o">.</span><span class="n">output_timestep_surface</span><span class="p">),</span> <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;out/&quot;</span> <span class="o">+</span> <span class="n">variables</span><span class="o">.</span><span class="n">scenario_name</span> <span class="o">+</span> <span class="s2">&quot;/surface_emg&quot;</span><span class="p">,</span> <span class="s2">&quot;binary&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fixedFormat&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;combineFiles&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;fileNumbering&quot;</span><span class="p">:</span> <span class="s2">&quot;incremental&quot;</span><span class="p">},</span>
+  <span class="p">],</span>
+  <span class="c1">#&quot;face&quot;:                    [&quot;1+&quot;,&quot;0+&quot;],         # which faces of the 3D mesh should be written into the 2D mesh</span>
+  <span class="s2">&quot;face&quot;</span><span class="p">:</span>                     <span class="p">[</span><span class="s2">&quot;1+&quot;</span><span class="p">],</span>              <span class="c1"># which faces of the 3D mesh should be written into the 2D mesh</span>
+  <span class="s2">&quot;samplingPoints&quot;</span><span class="p">:</span>           <span class="n">variables</span><span class="o">.</span><span class="n">hdemg_electrode_positions</span><span class="p">,</span>    <span class="c1"># the electrode positions, they are created in the helper.py script</span>
+  <span class="s2">&quot;updatePointPositions&quot;</span><span class="p">:</span>     <span class="kc">False</span><span class="p">,</span>               <span class="c1"># the electrode points should be initialize in every timestep (set to False for the static case). This makes a difference if the muscle contracts, then True=fixed electrodes, False=electrodes moving with muscle.</span>
+  <span class="s2">&quot;filename&quot;</span><span class="p">:</span>                 <span class="s2">&quot;out/</span><span class="si">{}</span><span class="s2">/electrodes.csv&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">variables</span><span class="o">.</span><span class="n">scenario_name</span><span class="p">),</span>
+  <span class="s2">&quot;enableCsvFile&quot;</span><span class="p">:</span>            <span class="kc">True</span><span class="p">,</span>                <span class="c1"># if the values at the sampling points should be written to csv files</span>
+  <span class="s2">&quot;enableVtpFile&quot;</span><span class="p">:</span>            <span class="kc">False</span><span class="p">,</span>               <span class="c1"># if the values at the sampling points should be written to vtp files</span>
+  <span class="s2">&quot;enableGeometryInCsvFile&quot;</span><span class="p">:</span>  <span class="kc">False</span><span class="p">,</span>               <span class="c1"># if the csv output file should contain geometry of the electrodes in every time step. This increases the file size and only makes sense if the geometry changed throughout time, i.e. when computing with contraction</span>
+  <span class="s2">&quot;xiTolerance&quot;</span><span class="p">:</span>              <span class="mf">0.3</span><span class="p">,</span>                 <span class="c1"># tolerance for element-local coordinates xi, for finding electrode positions inside the elements. Increase or decrease this numbers if not all electrode points are found.</span>
+
+  <span class="c1"># settings of the nested solver</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<section id="enablegeometryincsvfile">
+<h3>enableGeometryInCsvFile<a class="headerlink" href="#enablegeometryincsvfile" title="Link to this heading"></a></h3>
+<p>Depending on the settings <code class="docutils literal notranslate"><span class="pre">&quot;enableGeometryInCsvFile&quot;</span></code>, there are two possible file formats of the csv file:</p>
+<ul>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">&quot;enableGeometryInCsvFile&quot;:</span> <span class="pre">True</span></code>, the geometry information about the electrode positions is contained for every timestep. This increases the file size but allows to track moving electrodes (e.g. because of contraction). The csv file starts with the following lines:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1">#timestamp;t;n_points;p0_x;p0_y;p0_z;p1_x;p1_y;p1_z;p2_x;  (...)   p171_z;p0_value;p1_value;  (...)</span>
+<span class="m">2020</span>/9/28<span class="w"> </span><span class="m">09</span>:16:40<span class="p">;</span><span class="m">0</span><span class="p">;</span><span class="m">172</span><span class="p">;</span><span class="m">9</span>.01393<span class="p">;</span><span class="m">15</span>.7361<span class="p">;</span>-54.7243<span class="p">;</span><span class="w">         </span><span class="o">(</span>...<span class="o">)</span>
+</pre></div>
+</div>
+</li>
+<li><p>if <code class="docutils literal notranslate"><span class="pre">&quot;enableGeometryInCsvFile&quot;:</span> <span class="pre">False</span></code>, the geometry information about the electrode positions is not contained for every timestep. Instead it is contained once as a comment at the beginning in the second line. This produces a smaller file. The csv file starts with the following lines:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1">#electrode positions (x0,y0,z0,x1,y1,z1,...);</span>
+<span class="c1">#; ;9.92639;13.9759;-54.8722;                   (...)</span>
+<span class="c1">#timestamp;t;n_points;p0_value;p1_value;        (...)</span>
+<span class="m">2020</span>/9/29<span class="w"> </span><span class="m">10</span>:08:48<span class="p">;</span><span class="m">0</span><span class="p">;</span><span class="m">384</span><span class="p">;</span><span class="m">0</span>.0030616<span class="p">;</span><span class="m">0</span>.00300943<span class="p">;</span><span class="w">  </span><span class="o">(</span>...<span class="o">)</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>The script under <cite>$OPENDIHU_HOME/examples/electrophysiology/fibers/fibers_fat_emg/plot_emg.py</cite> can be used to plot the file contents and create an animation.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="output_writer.html" class="btn btn-neutral float-left" title="OutputWriter" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="multidomain_solver.html" class="btn btn-neutral float-right" title="MultidomainSolver" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

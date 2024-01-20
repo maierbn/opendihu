@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FieldVariable &mdash; opendihu 1.4 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=0ed52906"></script>
+        <script src="../_static/doctools.js?v=888ff710"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Build on supercomputer" href="supercomputer.html" />
+    <link rel="prev" title="FunctionSpace" href="function_space.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            opendihu
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">User documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/existing_examples.html">Existing examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../user/validation.html">Validation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../settings.html">Python Settings</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Developer documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../developer_information.html">Information for developers</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="conventions.html">Conventions and Tips</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="reference.html">C++ Reference</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="function_space.html">FunctionSpace</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">FieldVariable</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#general-methods">General methods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#getters">Getters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setters">Setters</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="supercomputer.html">Build on supercomputer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="new_physics.html">Implement New Physics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributors.html">Contributors</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">opendihu</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../developer_information.html">Information for developers</a></li>
+          <li class="breadcrumb-item"><a href="reference.html">C++ Reference</a></li>
+      <li class="breadcrumb-item active">FieldVariable</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/developer/field_variable.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="fieldvariable">
+<h1>FieldVariable<a class="headerlink" href="#fieldvariable" title="Link to this heading"></a></h1>
+<p>Field variables are the discretized scalar or vector valued functions over the domain. They depend on the function space and have a fixed number of components.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">FieldVariable</span><span class="o">::</span><span class="n">FieldVariable</span><span class="o">&lt;</span><span class="n">FunctionSpaceType</span><span class="p">,</span><span class="n">nComponents</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>A field variable is a vector with as many entries as there are unknowns in the function space. Each entry can have multiple components.
+For example, a geometry field variable, that stores the geometric position of each node of the mesh has 3 components for the <cite>x</cite>, <cite>y</cite> and <cite>z</cite> values.</p>
+<p>The field variable itself has a name, that is used when it is written to output files, e.g. to identify the variable in Paraview, and for debugging output.
+Also the components have names.</p>
+<p>Internally, field variables use a PartitionedPetscVec as data container which is a wrapper for a Petsc Vec.</p>
+<p>Field variables can be generated from the function space on which they are defined:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// define a field variable with 1 component (scalar)</span>
+<span class="c1">// and name &quot;flowPotential&quot;</span>
+<span class="n">fieldVariable_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">functionSpace_</span><span class="o">-&gt;</span><span class="k">template</span><span class="w"> </span><span class="n">createFieldVariable</span><span class="o">&lt;</span><span class="mi">1</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&quot;flowPotential&quot;</span><span class="p">);</span>
+
+<span class="c1">// vector-valued field variable with 3 components x,y,z</span>
+<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span><span class="w"> </span><span class="n">componentNames</span><span class="p">({</span><span class="s">&quot;x&quot;</span><span class="p">,</span><span class="s">&quot;y&quot;</span><span class="p">,</span><span class="s">&quot;z&quot;</span><span class="p">});</span>
+<span class="n">fieldVariable2_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">functionSpace_</span><span class="o">-&gt;</span><span class="k">template</span><span class="w"> </span><span class="n">createFieldVariable</span><span class="o">&lt;</span><span class="mi">3</span><span class="o">&gt;</span><span class="p">(</span><span class="s">&quot;Δu&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">componentNames</span><span class="p">);</span>
+</pre></div>
+</div>
+<section id="general-methods">
+<h2>General methods<a class="headerlink" href="#general-methods" title="Link to this heading"></a></h2>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv418outputHeaderExelemRNSt7ostreamE12element_no_ti">
+<span id="_CPPv318outputHeaderExelemRNSt7ostreamE12element_no_ti"></span><span id="_CPPv218outputHeaderExelemRNSt7ostreamE12element_no_ti"></span><span id="outputHeaderExelem__osR.element_no_t.i"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">outputHeaderExelem</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">ostream</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">file</span></span>, <span class="n"><span class="pre">element_no_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">currentElementGlobalNo</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">fieldVariableNo</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="o"><span class="pre">-</span></span><span class="m"><span class="pre">1</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv418outputHeaderExelemRNSt7ostreamE12element_no_ti" title="Link to this definition"></a><br /></dt>
+<dd><p>Write a exelem file header to a stream, for a particular element, fieldVariableNo is the field index x) in the exelem file header. For parallel program execution this writes headers for the local exelem files on every rank.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>std::ostream &amp;file</strong> – </p></li>
+<li><p><strong>element_no_t currentElementGlobalNo</strong> – </p></li>
+<li><p><strong>int fieldVariableNo=-1</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv418outputHeaderExnodeRNSt7ostreamE9node_no_tRii">
+<span id="_CPPv318outputHeaderExnodeRNSt7ostreamE9node_no_tRii"></span><span id="_CPPv218outputHeaderExnodeRNSt7ostreamE9node_no_tRii"></span><span id="outputHeaderExnode__osR.node_no_t.iR.i"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">outputHeaderExnode</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">ostream</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">file</span></span>, <span class="n"><span class="pre">node_no_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">currentNodeGlobalNo</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">valueIndex</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">fieldVariableNo</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="o"><span class="pre">-</span></span><span class="m"><span class="pre">1</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv418outputHeaderExnodeRNSt7ostreamE9node_no_tRii" title="Link to this definition"></a><br /></dt>
+<dd><p>Write a exelem file header to a stream, for a particular node, for parallel program execution this writes headers for the local exnodes files on every rank.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>std::ostream &amp;file</strong> – </p></li>
+<li><p><strong>node_no_t currentNodeGlobalNo</strong> – </p></li>
+<li><p><strong>int &amp;valueIndex</strong> – </p></li>
+<li><p><strong>int fieldVariableNo=-1</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv428haveSameExfileRepresentation12element_no_t12element_no_t">
+<span id="_CPPv328haveSameExfileRepresentation12element_no_t12element_no_t"></span><span id="_CPPv228haveSameExfileRepresentation12element_no_t12element_no_t"></span><span id="haveSameExfileRepresentation__element_no_t.element_no_t"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">haveSameExfileRepresentation</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">element_no_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">element1</span></span>, <span class="n"><span class="pre">element_no_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">element2</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv428haveSameExfileRepresentation12element_no_t12element_no_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Tell if 2 elements have the same exfile representation, i.e. same number of versions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>element_no_t element1</strong> – </p></li>
+<li><p><strong>element_no_t element2</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv411valuesLocali">
+<span id="_CPPv311valuesLocali"></span><span id="_CPPv211valuesLocali"></span><span id="valuesLocal__i"></span><span class="n"><span class="pre">Vec</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">valuesLocal</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv411valuesLocali" title="Link to this definition"></a><br /></dt>
+<dd><p>Get the internal PETSc vector values, the local vector for the specified component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>int componentNo = 0</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv412valuesGlobali">
+<span id="_CPPv312valuesGlobali"></span><span id="_CPPv212valuesGlobali"></span><span id="valuesGlobal__i"></span><span class="n"><span class="pre">Vec</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">valuesGlobal</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv412valuesGlobali" title="Link to this definition"></a><br /></dt>
+<dd><p>Get the internal PETSc vector values, the global vector for the specified component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>int componentNo</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv412valuesGlobalv">
+<span id="_CPPv312valuesGlobalv"></span><span id="_CPPv212valuesGlobalv"></span><span id="valuesGlobal"></span><span class="n"><span class="pre">Vec</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">valuesGlobal</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv412valuesGlobalv" title="Link to this definition"></a><br /></dt>
+<dd><p>If the vector has multiple components, return a nested Vec of the global vector, else return the global vector.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv419getValuesContiguousv">
+<span id="_CPPv319getValuesContiguousv"></span><span id="_CPPv219getValuesContiguousv"></span><span id="getValuesContiguous"></span><span class="n"><span class="pre">Vec</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">getValuesContiguous</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv419getValuesContiguousv" title="Link to this definition"></a><br /></dt>
+<dd><p>Fill a contiguous vector with all components after each other, “struct of array”-type data layout. after manipulation of the vector has finished one has to call restoreValuesContiguous.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv423restoreValuesContiguousv">
+<span id="_CPPv323restoreValuesContiguousv"></span><span id="_CPPv223restoreValuesContiguousv"></span><span id="restoreValuesContiguous"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">restoreValuesContiguous</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv423restoreValuesContiguousv" title="Link to this definition"></a><br /></dt>
+<dd><p>Copy the values back from a contiguous representation where all components are in one vector to the standard internal format of PartitionedPetscVec where there is one local vector with ghosts for each component. this has to be called.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK6outputERNSt7ostreamE">
+<span id="_CPPv3NK6outputERNSt7ostreamE"></span><span id="_CPPv2NK6outputERNSt7ostreamE"></span><span id="output__osRC"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">output</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">ostream</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">stream</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK6outputERNSt7ostreamE" title="Link to this definition"></a><br /></dt>
+<dd><p>Output string representation to stream for debugging.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>std::ostream &amp;stream</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv413functionSpacev">
+<span id="_CPPv313functionSpacev"></span><span id="_CPPv213functionSpacev"></span><span id="functionSpace"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">FunctionSpaceType</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">functionSpace</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv413functionSpacev" title="Link to this definition"></a><br /></dt>
+<dd><p>Return the functionSpace of this field variable.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK4nameEv">
+<span id="_CPPv3NK4nameEv"></span><span id="_CPPv2NK4nameEv"></span><span id="nameC"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">name</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK4nameEv" title="Link to this definition"></a><br /></dt>
+<dd><p>Get the name of the field variable.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK15isGeometryFieldEv">
+<span id="_CPPv3NK15isGeometryFieldEv"></span><span id="_CPPv2NK15isGeometryFieldEv"></span><span id="isGeometryFieldC"></span><span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">isGeometryField</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK15isGeometryFieldEv" title="Link to this definition"></a><br /></dt>
+<dd><p>If the field has the flag “geometry field”, i.e. in the exelem file its type was specified as “coordinate”.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK13checkNansInfsEi">
+<span id="_CPPv3NK13checkNansInfsEi"></span><span id="_CPPv2NK13checkNansInfsEi"></span><span id="checkNansInfs__iC"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">checkNansInfs</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK13checkNansInfsEi" title="Link to this definition"></a><br /></dt>
+<dd><p>Check if there are NaNs or high values in the current variable, if yes output a warning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>int componentNo = 0</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK23nDofsLocalWithoutGhostsEv">
+<span id="_CPPv3NK23nDofsLocalWithoutGhostsEv"></span><span id="_CPPv2NK23nDofsLocalWithoutGhostsEv"></span><span id="nDofsLocalWithoutGhostsC"></span><span class="n"><span class="pre">dof_no_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">nDofsLocalWithoutGhosts</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK23nDofsLocalWithoutGhostsEv" title="Link to this definition"></a><br /></dt>
+<dd><p>Get the number of dofs.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK11nDofsGlobalEv">
+<span id="_CPPv3NK11nDofsGlobalEv"></span><span id="_CPPv2NK11nDofsGlobalEv"></span><span id="nDofsGlobalC"></span><span class="n"><span class="pre">dof_no_t</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">nDofsGlobal</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK11nDofsGlobalEv" title="Link to this definition"></a><br /></dt>
+<dd><p>Get the number of global dofs.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK14componentNamesEv">
+<span id="_CPPv3NK14componentNamesEv"></span><span id="_CPPv2NK14componentNamesEv"></span><span id="componentNamesC"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">nComponentsValue</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="sig-name descname"><span class="n"><span class="pre">componentNames</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK14componentNamesEv" title="Link to this definition"></a><br /></dt>
+<dd><p>Get the component names.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv49componenti">
+<span id="_CPPv39componenti"></span><span id="_CPPv29componenti"></span><span id="component__i"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">Component</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">FunctionSpaceType</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">nComponentsValue</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">component</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="m"><span class="pre">0</span></span><a class="headerlink" href="#_CPPv49componenti" title="Link to this definition"></a><br /></dt>
+<dd><p>Return the component by index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>int componentNo</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK13componentNameEi">
+<span id="_CPPv3NK13componentNameEi"></span><span id="_CPPv2NK13componentNameEi"></span><span id="componentName__iC"></span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">string</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">componentName</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK13componentNameEi" title="Link to this definition"></a><br /></dt>
+<dd><p>Get the component Name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>int componentNo</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv411nComponentsv">
+<span id="_CPPv311nComponentsv"></span><span id="_CPPv211nComponentsv"></span><span id="nComponentsCE"></span><span class="k"><span class="pre">static</span></span><span class="w"> </span><span class="k"><span class="pre">constexpr</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">nComponents</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv411nComponentsv" title="Link to this definition"></a><br /></dt>
+<dd><p>Get the number of components.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK14getNComponentsEv">
+<span id="_CPPv3NK14getNComponentsEv"></span><span id="_CPPv2NK14getNComponentsEv"></span><span id="getNComponentsC"></span><span class="k"><span class="pre">virtual</span></span><span class="w"> </span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getNComponents</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK14getNComponentsEv" title="Link to this definition"></a><br /></dt>
+<dd><p>Get the number of components.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv420computeGradientFieldNSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeFN17FunctionSpaceType3dimEvEEEENSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeXL1EEEEE">
+<span id="_CPPv320computeGradientFieldNSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeFN17FunctionSpaceType3dimEvEEEENSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeXL1EEEEE"></span><span id="_CPPv220computeGradientFieldNSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeFN17FunctionSpaceType3dimEvEEEENSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeX1EEEE"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">computeGradientField</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">FieldVariable</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">FunctionSpaceType</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">FunctionSpaceType</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">dim</span></span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">gradientField</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">FieldVariable</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">FunctionSpaceType</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">jacobianConditionNumber</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">nullptr</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv420computeGradientFieldNSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeFN17FunctionSpaceType3dimEvEEEENSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeXL1EEEEE" title="Link to this definition"></a><br /></dt>
+<dd><p>Fill the gradient field with the gradient values in world coordinates of this field variable. This is only possible for scalar fields.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>std::shared_ptr&lt;FieldVariable&lt;FunctionSpaceType,FunctionSpaceType::dim()&gt;&gt; gradientField</strong> – </p></li>
+<li><p><strong>std::shared_ptr&lt;FieldVariable&lt;FunctionSpaceType,1&gt;&gt; jacobianConditionNumber = nullptr</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv422startGhostManipulationv">
+<span id="_CPPv322startGhostManipulationv"></span><span id="_CPPv222startGhostManipulationv"></span><span id="startGhostManipulation"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">startGhostManipulation</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv422startGhostManipulationv" title="Link to this definition"></a><br /></dt>
+<dd><p>This has to be called before the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called), to ensure that the current state of the vector is fetched from the global vector.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv415zeroGhostBufferv">
+<span id="_CPPv315zeroGhostBufferv"></span><span id="_CPPv215zeroGhostBufferv"></span><span id="zeroGhostBuffer"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">zeroGhostBuffer</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv415zeroGhostBufferv" title="Link to this definition"></a><br /></dt>
+<dd><p>Zero all values in the local ghost buffer. Needed if between startGhostManipulation() and finishGhostManipulation() only some ghost will be reassigned. To prevent that the “old” ghost values that were present in the local ghost values buffer get again added to the real values which actually did not change.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv423finishGhostManipulationv">
+<span id="_CPPv323finishGhostManipulationv"></span><span id="_CPPv223finishGhostManipulationv"></span><span id="finishGhostManipulation"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">finishGhostManipulation</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv423finishGhostManipulationv" title="Link to this definition"></a><br /></dt>
+<dd><p>This has to be called after the vector is manipulated (i.e. VecSetValues or vecZeroEntries is called), to ensure that operations on different partitions are merged by Petsc It sums up the values in the ghost buffer and the actual nodal value.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv423setRepresentationGlobalv">
+<span id="_CPPv323setRepresentationGlobalv"></span><span id="_CPPv223setRepresentationGlobalv"></span><span id="setRepresentationGlobal"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setRepresentationGlobal</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv423setRepresentationGlobalv" title="Link to this definition"></a><br /></dt>
+<dd><p>Set the internal representation to be global, i.e. using the global vectors, if it was local, ghost buffer entries are discarded (use finishGhostManipulation to consider ghost dofs).</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv422setRepresentationLocalv">
+<span id="_CPPv322setRepresentationLocalv"></span><span id="_CPPv222setRepresentationLocalv"></span><span id="setRepresentationLocal"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setRepresentationLocal</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv422setRepresentationLocalv" title="Link to this definition"></a><br /></dt>
+<dd><p>Set the internal representation to be local, i.e. using the local vectors, ghost buffer is not filled (use startGhostManipulation to consider ghost dofs).</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv427setRepresentationContiguousv">
+<span id="_CPPv327setRepresentationContiguousv"></span><span id="_CPPv227setRepresentationContiguousv"></span><span id="setRepresentationContiguous"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setRepresentationContiguous</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv427setRepresentationContiguousv" title="Link to this definition"></a><br /></dt>
+<dd><p>Set the internal representation to be contiguous, i.e. using the contiguous vectors for a specific component, get all values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>);void getValuesWithGhosts(int componentNo</strong> – </p></li>
+<li><p><strong>std::vector&lt;double&gt; &amp;values</strong> – </p></li>
+<li><p><strong>bool onlyNodalValues=false</strong> – if this is true, for Hermite only the non-derivative values are retrieved.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="getters">
+<h2>Getters<a class="headerlink" href="#getters" title="Link to this heading"></a></h2>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK22getValuesWithoutGhostsEiRNSt6vectorIdEEb">
+<span id="_CPPv3NK22getValuesWithoutGhostsEiRNSt6vectorIdEEb"></span><span id="_CPPv2NK22getValuesWithoutGhostsEiRNSt6vectorIdEEb"></span><span id="getValuesWithoutGhosts__i.std::vector:double:R.bC"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getValuesWithoutGhosts</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">onlyNodalValues</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK22getValuesWithoutGhostsEiRNSt6vectorIdEEb" title="Link to this definition"></a><br /></dt>
+<dd><p>For a specific component, get all values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int componentNo</strong> – </p></li>
+<li><p><strong>std::vector&lt;double&gt; &amp;values</strong> – </p></li>
+<li><p><strong>bool onlyNodalValues=false</strong> – if this is true, for Hermite only the non-derivative values are retrieved.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK19getValuesWithGhostsERNSt6vectorINSt5arrayId11nComponentsEEEEb">
+<span id="_CPPv3NK19getValuesWithGhostsERNSt6vectorINSt5arrayId11nComponentsEEEEb"></span><span id="_CPPv2NK19getValuesWithGhostsERNSt6vectorINSt5arrayId11nComponentsEEEEb"></span><span id="getValuesWithGhosts__std::vector:std::array:double.nComponents::R.bC"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getValuesWithGhosts</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv411nComponentsv" title="nComponents"><span class="n"><span class="pre">nComponents</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">onlyNodalValues</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK19getValuesWithGhostsERNSt6vectorINSt5arrayId11nComponentsEEEEb" title="Link to this definition"></a><br /></dt>
+<dd><p>Get all values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>std::vector&lt;std::array&lt;double,nComponents&gt;&gt; &amp;values</strong> – </p></li>
+<li><p><strong>bool onlyNodalValues=false</strong> – if this is true, for Hermite only the non-derivative values are retrieved.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK22getValuesWithoutGhostsERNSt6vectorINSt5arrayId11nComponentsEEEEb">
+<span id="_CPPv3NK22getValuesWithoutGhostsERNSt6vectorINSt5arrayId11nComponentsEEEEb"></span><span id="_CPPv2NK22getValuesWithoutGhostsERNSt6vectorINSt5arrayId11nComponentsEEEEb"></span><span id="getValuesWithoutGhosts__std::vector:std::array:double.nComponents::R.bC"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getValuesWithoutGhosts</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv411nComponentsv" title="nComponents"><span class="n"><span class="pre">nComponents</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">onlyNodalValues</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK22getValuesWithoutGhostsERNSt6vectorINSt5arrayId11nComponentsEEEEb" title="Link to this definition"></a><br /></dt>
+<dd><p>Get all values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>std::vector&lt;std::array&lt;double,nComponents&gt;&gt; &amp;values</strong> – </p></li>
+<li><p><strong>bool onlyNodalValues=false</strong> – if this is true, for Hermite only the non-derivative values are retrieved.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK22getValuesWithoutGhostsERNSt5arrayINSt6vectorIdEE11nComponentsEEb">
+<span id="_CPPv3NK22getValuesWithoutGhostsERNSt5arrayINSt6vectorIdEE11nComponentsEEb"></span><span id="_CPPv2NK22getValuesWithoutGhostsERNSt5arrayINSt6vectorIdEE11nComponentsEEb"></span><span id="getValuesWithoutGhosts__std::array:std::vector:double:.nComponents:R.bC"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getValuesWithoutGhosts</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv411nComponentsv" title="nComponents"><span class="n"><span class="pre">nComponents</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">onlyNodalValues</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK22getValuesWithoutGhostsERNSt5arrayINSt6vectorIdEE11nComponentsEEb" title="Link to this definition"></a><br /></dt>
+<dd><p>Get all values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>std::array&lt;std::vector&lt;double&gt;,nComponents&gt; &amp;values</strong> – </p></li>
+<li><p><strong>bool onlyNodalValues=false</strong> – if this is true, for Hermite only the non-derivative values are retrieved.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I_iENK9getValuesEviNSt5arrayI8dof_no_t1NEERNSt5arrayId1NEE">
+<span id="_CPPv3I_iENK9getValuesEiNSt5arrayI8dof_no_t1NEERNSt5arrayId1NEE"></span><span id="_CPPv2I_iENK9getValuesEiNSt5arrayI8dof_no_t1NEERNSt5arrayId1NEE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">N</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getValues</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">dof_no_t</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I_iENK9getValuesEviNSt5arrayI8dof_no_t1NEERNSt5arrayId1NEE" title="getValues::N"><span class="n"><span class="pre">N</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">dofLocalNo</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I_iENK9getValuesEviNSt5arrayI8dof_no_t1NEERNSt5arrayId1NEE" title="getValues::N"><span class="n"><span class="pre">N</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4I_iENK9getValuesEviNSt5arrayI8dof_no_t1NEERNSt5arrayId1NEE" title="Link to this definition"></a><br /></dt>
+<dd><p>For a specific component, get values from their local dof no.s, as array, therefore templated by the number of elements, N, to retrieve.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int componentNo</strong> – </p></li>
+<li><p><strong>std::array&lt;dof_no_t,N&gt; dofLocalNo</strong> – </p></li>
+<li><p><strong>std::array&lt;double,N&gt; &amp;values</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK9getValuesEiRKNSt6vectorI8dof_no_tEERNSt6vectorIdEE">
+<span id="_CPPv3NK9getValuesEiRKNSt6vectorI8dof_no_tEERNSt6vectorIdEE"></span><span id="_CPPv2NK9getValuesEiRKNSt6vectorI8dof_no_tEERNSt6vectorIdEE"></span><span id="getValues__i.std::vector:dof_no_t:CR.std::vector:double:RC"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getValues</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">dof_no_t</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">dofLocalNo</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK9getValuesEiRKNSt6vectorI8dof_no_tEERNSt6vectorIdEE" title="Link to this definition"></a><br /></dt>
+<dd><p>For a specific component, get values from their local dof no.s, as vector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int componentNo</strong> – </p></li>
+<li><p><strong>const std::vector&lt;dof_no_t&gt; &amp;dofLocalNo</strong> – </p></li>
+<li><p><strong>std::vector&lt;double&gt; &amp;values</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK9getValuesERKNSt6vectorI8dof_no_tEERNSt6vectorIdEE">
+<span id="_CPPv3NK9getValuesERKNSt6vectorI8dof_no_tEERNSt6vectorIdEE"></span><span id="_CPPv2NK9getValuesERKNSt6vectorI8dof_no_tEERNSt6vectorIdEE"></span><span id="getValues__std::vector:dof_no_t:CR.std::vector:double:RC"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getValues</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">dof_no_t</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">dofLocalNo</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK9getValuesERKNSt6vectorI8dof_no_tEERNSt6vectorIdEE" title="Link to this definition"></a><br /></dt>
+<dd><p>Get values for all components, from their local dof no.s, as contiguous vector in order [comp0, comp0, comp0, …, comp1, comp1, …].</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>const std::vector&lt;dof_no_t&gt; &amp;dofLocalNo</strong> – </p></li>
+<li><p><strong>std::vector&lt;double&gt; &amp;values</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I_iENK9getValuesEvNSt5arrayI8dof_no_t1NEERNSt5arrayINSt5arrayId11nComponentsEE1NEE">
+<span id="_CPPv3I_iENK9getValuesENSt5arrayI8dof_no_t1NEERNSt5arrayINSt5arrayId11nComponentsEE1NEE"></span><span id="_CPPv2I_iENK9getValuesENSt5arrayI8dof_no_t1NEERNSt5arrayINSt5arrayId11nComponentsEE1NEE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">N</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getValues</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">dof_no_t</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I_iENK9getValuesEvNSt5arrayI8dof_no_t1NEERNSt5arrayINSt5arrayId11nComponentsEE1NEE" title="getValues::N"><span class="n"><span class="pre">N</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">dofLocalNo</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv411nComponentsv" title="nComponents"><span class="n"><span class="pre">nComponents</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I_iENK9getValuesEvNSt5arrayI8dof_no_t1NEERNSt5arrayINSt5arrayId11nComponentsEE1NEE" title="getValues::N"><span class="n"><span class="pre">N</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4I_iENK9getValuesEvNSt5arrayI8dof_no_t1NEERNSt5arrayINSt5arrayId11nComponentsEE1NEE" title="Link to this definition"></a><br /></dt>
+<dd><p>Get values from their local dof no.s for all components.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>std::array&lt;dof_no_t,N&gt; dofLocalNo</strong> – </p></li>
+<li><p><strong>std::array&lt;std::array&lt;double,nComponents&gt;,N&gt; &amp;values</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK9getValuesENSt6vectorI8dof_no_tEERNSt6vectorINSt5arrayId11nComponentsEEEE">
+<span id="_CPPv3NK9getValuesENSt6vectorI8dof_no_tEERNSt6vectorINSt5arrayId11nComponentsEEEE"></span><span id="_CPPv2NK9getValuesENSt6vectorI8dof_no_tEERNSt6vectorINSt5arrayId11nComponentsEEEE"></span><span id="getValues__std::vector:dof_no_t:.std::vector:std::array:double.nComponents::RC"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getValues</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">dof_no_t</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">dofLocalNo</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv411nComponentsv" title="nComponents"><span class="n"><span class="pre">nComponents</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK9getValuesENSt6vectorI8dof_no_tEERNSt6vectorINSt5arrayId11nComponentsEEEE" title="Link to this definition"></a><br /></dt>
+<dd><p>Get values from their local dof no.s for all components.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>std::vector&lt;dof_no_t&gt; dofLocalNo</strong> – </p></li>
+<li><p><strong>std::vector&lt;std::array&lt;double,nComponents&gt;&gt; &amp;values</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK16getElementValuesEi12element_no_tRNSt5arrayIdFN17FunctionSpaceType15nDofsPerElementEvEEE">
+<span id="_CPPv3NK16getElementValuesEi12element_no_tRNSt5arrayIdFN17FunctionSpaceType15nDofsPerElementEvEEE"></span><span id="_CPPv2NK16getElementValuesEi12element_no_tRNSt5arrayIdFN17FunctionSpaceType15nDofsPerElementEvEEE"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getElementValues</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span>, <span class="n"><span class="pre">element_no_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">elementNoLocal</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">FunctionSpaceType</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">nDofsPerElement</span></span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK16getElementValuesEi12element_no_tRNSt5arrayIdFN17FunctionSpaceType15nDofsPerElementEvEEE" title="Link to this definition"></a><br /></dt>
+<dd><p>For a specific component, get the values corresponding to all element-local dofs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int componentNo</strong> – </p></li>
+<li><p><strong>element_no_t elementNoLocal</strong> – </p></li>
+<li><p><strong>std::array&lt;double,FunctionSpaceType::nDofsPerElement(</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK16getElementValuesE12element_no_tRNSt5arrayINSt5arrayId11nComponentsEEFN17FunctionSpaceType15nDofsPerElementEvEEE">
+<span id="_CPPv3NK16getElementValuesE12element_no_tRNSt5arrayINSt5arrayId11nComponentsEEFN17FunctionSpaceType15nDofsPerElementEvEEE"></span><span id="_CPPv2NK16getElementValuesE12element_no_tRNSt5arrayINSt5arrayId11nComponentsEEFN17FunctionSpaceType15nDofsPerElementEvEEE"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getElementValues</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">element_no_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">elementNoLocal</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv411nComponentsv" title="nComponents"><span class="n"><span class="pre">nComponents</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">FunctionSpaceType</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">nDofsPerElement</span></span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK16getElementValuesE12element_no_tRNSt5arrayINSt5arrayId11nComponentsEEFN17FunctionSpaceType15nDofsPerElementEvEEE" title="Link to this definition"></a><br /></dt>
+<dd><p>Get the values corresponding to all element-local dofs for all components.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>element_no_t elementNoLocal</strong> – </p></li>
+<li><p><strong>std::array&lt;std::array&lt;double,nComponents&gt;,FunctionSpaceType::nDofsPerElement(</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK8getValueEi9node_no_t">
+<span id="_CPPv3NK8getValueEi9node_no_t"></span><span id="_CPPv2NK8getValueEi9node_no_t"></span><span id="getValue__i.node_no_tC"></span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getValue</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span>, <span class="n"><span class="pre">node_no_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">dofLocalNo</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK8getValueEi9node_no_t" title="Link to this definition"></a><br /></dt>
+<dd><p>For a specific component, get a single value from local dof no.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int componentNo</strong> – </p></li>
+<li><p><strong>node_no_t dofLocalNo</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK9getValuesEiiPK8dof_no_tRNSt6vectorIdEE">
+<span id="_CPPv3NK9getValuesEiiPK8dof_no_tRNSt6vectorIdEE"></span><span id="_CPPv2NK9getValuesEiiPK8dof_no_tRNSt6vectorIdEE"></span><span id="getValues__i.i.dof_no_tCP.std::vector:double:RC"></span><span class="sig-name descname"><span class="n"><span class="pre">getValues</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nValues</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">dof_no_t</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">dofLocalNo</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK9getValuesEiiPK8dof_no_tRNSt6vectorIdEE" title="Link to this definition"></a><br /></dt>
+<dd><p>Get values from their local dof no.s for a specific component.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int componentNo</strong> – </p></li>
+<li><p><strong>int nValues</strong> – The number of values to get.</p></li>
+<li><p><strong>const dof_no_t *dofLocalNo</strong> – </p></li>
+<li><p><strong>std::vector&lt;double&gt; &amp;values</strong> – The resulting values will be appended to this vector.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK8getValueE9node_no_t">
+<span id="_CPPv3NK8getValueE9node_no_t"></span><span id="_CPPv2NK8getValueE9node_no_t"></span><span id="getValue__node_no_tC"></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv411nComponentsv" title="nComponents"><span class="n"><span class="pre">nComponents</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getValue</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">node_no_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">dofLocalNo</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK8getValueE9node_no_t" title="Link to this definition"></a><br /></dt>
+<dd><p>Get a single value from local dof no. for all components.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>node_no_t dofLocalNo</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv420extractComponentCopyiNSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeXL1EEEEE">
+<span id="_CPPv320extractComponentCopyiNSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeXL1EEEEE"></span><span id="_CPPv220extractComponentCopyiNSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeX1EEEE"></span><span id="extractComponentCopy__i.std::shared_ptr:FieldVariable:FunctionSpaceType.1::"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">extractComponentCopy</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">FieldVariable</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">FunctionSpaceType</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">extractedFieldVariable</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv420extractComponentCopyiNSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeXL1EEEEE" title="Link to this definition"></a><br /></dt>
+<dd><p>Extract the specified component from the field variable (by copying it) and store it in the given field variable (which already has the data allocated).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int componentNo</strong> – </p></li>
+<li><p><strong>std::shared_ptr&lt;FieldVariable&lt;FunctionSpaceType,1&gt;&gt; extractedFieldVariable</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv422extractComponentSharediNSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeXL1EEEEE">
+<span id="_CPPv322extractComponentSharediNSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeXL1EEEEE"></span><span id="_CPPv222extractComponentSharediNSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeX1EEEE"></span><span id="extractComponentShared__i.std::shared_ptr:FieldVariable:FunctionSpaceType.1::"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">extractComponentShared</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">FieldVariable</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">FunctionSpaceType</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">extractedFieldVariable</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv422extractComponentSharediNSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeXL1EEEEE" title="Link to this definition"></a><br /></dt>
+<dd><p>Extract the specified component from the field variable by using the raw data array in the given field variable. Afterwards this field variable is invalid and can only be used again after restoreExtractedComponent has been called.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int componentNo</strong> – </p></li>
+<li><p><strong>std::shared_ptr&lt;FieldVariable&lt;FunctionSpaceType,1&gt;&gt; extractedFieldVariable</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I_iE25restoreExtractedComponentvNSt10shared_ptrI19PartitionedPetscVecI17FunctionSpaceType12nComponents2EEE">
+<span id="_CPPv3I_iE25restoreExtractedComponentNSt10shared_ptrI19PartitionedPetscVecI17FunctionSpaceType12nComponents2EEE"></span><span id="_CPPv2I_iE25restoreExtractedComponentNSt10shared_ptrI19PartitionedPetscVecI17FunctionSpaceType12nComponents2EEE"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">nComponents2</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">restoreExtractedComponent</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">PartitionedPetscVec</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">FunctionSpaceType</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I_iE25restoreExtractedComponentvNSt10shared_ptrI19PartitionedPetscVecI17FunctionSpaceType12nComponents2EEE" title="restoreExtractedComponent::nComponents2"><span class="n"><span class="pre">nComponents2</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">extractedVec</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I_iE25restoreExtractedComponentvNSt10shared_ptrI19PartitionedPetscVecI17FunctionSpaceType12nComponents2EEE" title="Link to this definition"></a><br /></dt>
+<dd><p>Restore the extracted raw array to petsc and make the field variable usable again.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>std::shared_ptr&lt;PartitionedPetscVec&lt;FunctionSpaceType,nComponents2&gt;&gt; extractedVec</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK16getElementValuesE12element_no_tRNSt5arrayIdFN17FunctionSpaceType15nDofsPerElementEvEEE">
+<span id="_CPPv3NK16getElementValuesE12element_no_tRNSt5arrayIdFN17FunctionSpaceType15nDofsPerElementEvEEE"></span><span id="_CPPv2NK16getElementValuesE12element_no_tRNSt5arrayIdFN17FunctionSpaceType15nDofsPerElementEvEEE"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getElementValues</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">element_no_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">elementNoLocal</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">FunctionSpaceType</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">nDofsPerElement</span></span><span class="p"><span class="pre">(</span></span><span class="p"><span class="pre">)</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK16getElementValuesE12element_no_tRNSt5arrayIdFN17FunctionSpaceType15nDofsPerElementEvEEE" title="Link to this definition"></a><br /></dt>
+<dd><p>Only for scalar field variables:  get the values corresponding to all element-local dofs for all components.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>element_no_t elementNoLocal</strong> – </p></li>
+<li><p><strong>std::array&lt;double,FunctionSpaceType::nDofsPerElement(</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp">
+<span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getValue</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">node_no_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">dofLocalNo</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><br /></dt>
+<dd><p>Only for scalar field variables:  get a single value from local dof no. for all components.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>node_no_t dofLocalNo</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK19getValuesWithGhostsERNSt6vectorIdEEb">
+<span id="_CPPv3NK19getValuesWithGhostsERNSt6vectorIdEEb"></span><span id="_CPPv2NK19getValuesWithGhostsERNSt6vectorIdEEb"></span><span id="getValuesWithGhosts__std::vector:double:R.bC"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getValuesWithGhosts</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">onlyNodalValues</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK19getValuesWithGhostsERNSt6vectorIdEEb" title="Link to this definition"></a><br /></dt>
+<dd><p>Only for scalar field variables:  get all stored local values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>std::vector&lt;double&gt; &amp;values</strong> – </p></li>
+<li><p><strong>bool onlyNodalValues=false</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4NK22getValuesWithoutGhostsERNSt6vectorIdEEb">
+<span id="_CPPv3NK22getValuesWithoutGhostsERNSt6vectorIdEEb"></span><span id="_CPPv2NK22getValuesWithoutGhostsERNSt6vectorIdEEb"></span><span id="getValuesWithoutGhosts__std::vector:double:R.bC"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">getValuesWithoutGhosts</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="kt"><span class="pre">bool</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">onlyNodalValues</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="k"><span class="pre">false</span></span><span class="sig-paren">)</span><span class="w"> </span><span class="k"><span class="pre">const</span></span><a class="headerlink" href="#_CPPv4NK22getValuesWithoutGhostsERNSt6vectorIdEEb" title="Link to this definition"></a><br /></dt>
+<dd><p>Only for scalar field variables:  get all stored local values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>std::vector&lt;double&gt; &amp;values</strong> – </p></li>
+<li><p><strong>bool onlyNodalValues=false</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="setters">
+<h2>Setters<a class="headerlink" href="#setters" title="Link to this heading"></a></h2>
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv49setValuesi3Vec">
+<span id="_CPPv39setValuesi3Vec"></span><span id="_CPPv29setValuesi3Vec"></span><span id="setValues__i.Vec"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValues</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span>, <span class="n"><span class="pre">Vec</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscVector</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv49setValuesi3Vec" title="Link to this definition"></a><br /></dt>
+<dd><p>Set the values for the given component from a petsc Vec.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int componentNo</strong> – </p></li>
+<li><p><strong>Vec petscVector</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv49setValuesiNSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeXL1EEEEE">
+<span id="_CPPv39setValuesiNSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeXL1EEEEE"></span><span id="_CPPv29setValuesiNSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeX1EEEE"></span><span id="setValues__i.std::shared_ptr:FieldVariable:FunctionSpaceType.1::"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValues</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">shared_ptr</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">FieldVariable</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">FunctionSpaceType</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="m"><span class="pre">1</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">fieldVariable</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv49setValuesiNSt10shared_ptrI13FieldVariableI17FunctionSpaceTypeXL1EEEEE" title="Link to this definition"></a><br /></dt>
+<dd><p>Set the values for the given component from the other field variable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int componentNo</strong> – </p></li>
+<li><p><strong>std::shared_ptr&lt;FieldVariable&lt;FunctionSpaceType,1&gt;&gt; fieldVariable</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv49setValuesiRKNSt6vectorI8dof_no_tEERKNSt6vectorIdEE10InsertMode">
+<span id="_CPPv39setValuesiRKNSt6vectorI8dof_no_tEERKNSt6vectorIdEE10InsertMode"></span><span id="_CPPv29setValuesiRKNSt6vectorI8dof_no_tEERKNSt6vectorIdEE10InsertMode"></span><span id="setValues__i.std::vector:dof_no_t:CR.std::vector:double:CR.InsertMode"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValues</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">dof_no_t</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">dofNosLocal</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="n"><span class="pre">InsertMode</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscInsertMode</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INSERT_VALUES</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv49setValuesiRKNSt6vectorI8dof_no_tEERKNSt6vectorIdEE10InsertMode" title="Link to this definition"></a><br /></dt>
+<dd><p>Set values for a given component for given dofs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int componentNo</strong> – </p></li>
+<li><p><strong>const std::vector&lt;dof_no_t&gt; &amp;dofNosLocal</strong> – </p></li>
+<li><p><strong>const std::vector&lt;double&gt; &amp;values</strong> – </p></li>
+<li><p><strong>InsertMode petscInsertMode=INSERT_VALUES</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I_iE9setValuesviRKNSt5arrayI8dof_no_t1NEERKNSt5arrayId1NEE10InsertMode">
+<span id="_CPPv3I_iE9setValuesiRKNSt5arrayI8dof_no_t1NEERKNSt5arrayId1NEE10InsertMode"></span><span id="_CPPv2I_iE9setValuesiRKNSt5arrayI8dof_no_t1NEERKNSt5arrayId1NEE10InsertMode"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">N</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValues</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">dof_no_t</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I_iE9setValuesviRKNSt5arrayI8dof_no_t1NEERKNSt5arrayId1NEE10InsertMode" title="setValues::N"><span class="n"><span class="pre">N</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">dofNosLocal</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I_iE9setValuesviRKNSt5arrayI8dof_no_t1NEERKNSt5arrayId1NEE10InsertMode" title="setValues::N"><span class="n"><span class="pre">N</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="n"><span class="pre">InsertMode</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscInsertMode</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INSERT_VALUES</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I_iE9setValuesviRKNSt5arrayI8dof_no_t1NEERKNSt5arrayId1NEE10InsertMode" title="Link to this definition"></a><br /></dt>
+<dd><p>Set values for a given component for given dofs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int componentNo</strong> – </p></li>
+<li><p><strong>const std::array&lt;dof_no_t,N&gt; &amp;dofNosLocal</strong> – </p></li>
+<li><p><strong>const std::array&lt;double,N&gt; &amp;values</strong> – </p></li>
+<li><p><strong>InsertMode petscInsertMode=INSERT_VALUES</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv49setValuesiiPK8dof_no_tPKd10InsertMode">
+<span id="_CPPv39setValuesiiPK8dof_no_tPKd10InsertMode"></span><span id="_CPPv29setValuesiiPK8dof_no_tPKd10InsertMode"></span><span id="setValues__i.i.dof_no_tCP.doubleCP.InsertMode"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValues</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span>, <span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nValues</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">dof_no_t</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">dofNosLocal</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="p"><span class="pre">*</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="n"><span class="pre">InsertMode</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscInsertMode</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INSERT_VALUES</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv49setValuesiiPK8dof_no_tPKd10InsertMode" title="Link to this definition"></a><br /></dt>
+<dd><p>Set values for a given component for given dofs, using raw pointers. This directly mirors the VecSetValues function of Petsc.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int componentNo</strong> – </p></li>
+<li><p><strong>int nValues</strong> – The number of values to set</p></li>
+<li><p><strong>const dof_no_t *dofNosLocal</strong> – </p></li>
+<li><p><strong>const double *values</strong> – </p></li>
+<li><p><strong>InsertMode petscInsertMode=INSERT_VALUES</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv49setValuesRKNSt6vectorI8dof_no_tEERKNSt6vectorINSt5arrayId11nComponentsEEEE10InsertMode">
+<span id="_CPPv39setValuesRKNSt6vectorI8dof_no_tEERKNSt6vectorINSt5arrayId11nComponentsEEEE10InsertMode"></span><span id="_CPPv29setValuesRKNSt6vectorI8dof_no_tEERKNSt6vectorINSt5arrayId11nComponentsEEEE10InsertMode"></span><span id="setValues__std::vector:dof_no_t:CR.std::vector:std::array:double.nComponents::CR.InsertMode"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValues</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">dof_no_t</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">dofNosLocal</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv411nComponentsv" title="nComponents"><span class="n"><span class="pre">nComponents</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="n"><span class="pre">InsertMode</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscInsertMode</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INSERT_VALUES</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv49setValuesRKNSt6vectorI8dof_no_tEERKNSt6vectorINSt5arrayId11nComponentsEEEE10InsertMode" title="Link to this definition"></a><br /></dt>
+<dd><p>Set values for all components for dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>const std::vector&lt;dof_no_t&gt; &amp;dofNosLocal</strong> – </p></li>
+<li><p><strong>const std::vector&lt;std::array&lt;double,nComponents&gt;&gt; &amp;values</strong> – </p></li>
+<li><p><strong>InsertMode petscInsertMode=INSERT_VALUES</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I_iE9setValuesvRKNSt5arrayI8dof_no_t1NEERKNSt5arrayINSt5arrayId11nComponentsEE1NEE10InsertMode">
+<span id="_CPPv3I_iE9setValuesRKNSt5arrayI8dof_no_t1NEERKNSt5arrayINSt5arrayId11nComponentsEE1NEE10InsertMode"></span><span id="_CPPv2I_iE9setValuesRKNSt5arrayI8dof_no_t1NEERKNSt5arrayINSt5arrayId11nComponentsEE1NEE10InsertMode"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">N</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValues</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">dof_no_t</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I_iE9setValuesvRKNSt5arrayI8dof_no_t1NEERKNSt5arrayINSt5arrayId11nComponentsEE1NEE10InsertMode" title="setValues::N"><span class="n"><span class="pre">N</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">dofNosLocal</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv411nComponentsv" title="nComponents"><span class="n"><span class="pre">nComponents</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I_iE9setValuesvRKNSt5arrayI8dof_no_t1NEERKNSt5arrayINSt5arrayId11nComponentsEE1NEE10InsertMode" title="setValues::N"><span class="n"><span class="pre">N</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="n"><span class="pre">InsertMode</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscInsertMode</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INSERT_VALUES</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I_iE9setValuesvRKNSt5arrayI8dof_no_t1NEERKNSt5arrayINSt5arrayId11nComponentsEE1NEE10InsertMode" title="Link to this definition"></a><br /></dt>
+<dd><p>Set values for all components for N dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>const std::array&lt;dof_no_t,N&gt; &amp;dofNosLocal</strong> – </p></li>
+<li><p><strong>const std::array&lt;std::array&lt;double,nComponents&gt;,N&gt; &amp;values</strong> – </p></li>
+<li><p><strong>InsertMode petscInsertMode=INSERT_VALUES</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv49setValuesiRKNSt6vectorI8dof_no_tEERKNSt6vectorINSt5arrayId11nComponentsEEEE10InsertMode">
+<span id="_CPPv39setValuesiRKNSt6vectorI8dof_no_tEERKNSt6vectorINSt5arrayId11nComponentsEEEE10InsertMode"></span><span id="_CPPv29setValuesiRKNSt6vectorI8dof_no_tEERKNSt6vectorINSt5arrayId11nComponentsEEEE10InsertMode"></span><span id="setValues__i.std::vector:dof_no_t:CR.std::vector:std::array:double.nComponents::CR.InsertMode"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValues</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">nValues</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">dof_no_t</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">dofNosLocal</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv411nComponentsv" title="nComponents"><span class="n"><span class="pre">nComponents</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="n"><span class="pre">InsertMode</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscInsertMode</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INSERT_VALUES</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv49setValuesiRKNSt6vectorI8dof_no_tEERKNSt6vectorINSt5arrayId11nComponentsEEEE10InsertMode" title="Link to this definition"></a><br /></dt>
+<dd><p>Set values for all components for dofs, only nValues values will be set despite potentially more dofNosLocal, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int nValues</strong> – </p></li>
+<li><p><strong>const std::vector&lt;dof_no_t&gt; &amp;dofNosLocal</strong> – </p></li>
+<li><p><strong>const std::vector&lt;std::array&lt;double,nComponents&gt;&gt; &amp;values</strong> – </p></li>
+<li><p><strong>InsertMode petscInsertMode=INSERT_VALUES</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv48setValue8dof_no_tRKNSt5arrayId11nComponentsEE10InsertMode">
+<span id="_CPPv38setValue8dof_no_tRKNSt5arrayId11nComponentsEE10InsertMode"></span><span id="_CPPv28setValue8dof_no_tRKNSt5arrayId11nComponentsEE10InsertMode"></span><span id="setValue__dof_no_t.std::array:double.nComponents:CR.InsertMode"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValue</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">dof_no_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">dofLocalNo</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv411nComponentsv" title="nComponents"><span class="n"><span class="pre">nComponents</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">value</span></span>, <span class="n"><span class="pre">InsertMode</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscInsertMode</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INSERT_VALUES</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv48setValue8dof_no_tRKNSt5arrayId11nComponentsEE10InsertMode" title="Link to this definition"></a><br /></dt>
+<dd><p>Set a single dof (all components), after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dof_no_t dofLocalNo</strong> – </p></li>
+<li><p><strong>const std::array&lt;double,nComponents&gt; &amp;value</strong> – </p></li>
+<li><p><strong>InsertMode petscInsertMode=INSERT_VALUES</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv48setValuei8dof_no_td10InsertMode">
+<span id="_CPPv38setValuei8dof_no_td10InsertMode"></span><span id="_CPPv28setValuei8dof_no_td10InsertMode"></span><span id="setValue__i.dof_no_t.double.InsertMode"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValue</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span>, <span class="n"><span class="pre">dof_no_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">dofLocalNo</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">value</span></span>, <span class="n"><span class="pre">InsertMode</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscInsertMode</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv48setValuei8dof_no_td10InsertMode" title="Link to this definition"></a><br /></dt>
+<dd><p>Set a single dof for a given component, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int componentNo</strong> – </p></li>
+<li><p><strong>dof_no_t dofLocalNo</strong> – </p></li>
+<li><p><strong>double value</strong> – </p></li>
+<li><p><strong>InsertMode petscInsertMode</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv419setValuesWithGhostsiRKNSt6vectorIdEE10InsertMode">
+<span id="_CPPv319setValuesWithGhostsiRKNSt6vectorIdEE10InsertMode"></span><span id="_CPPv219setValuesWithGhostsiRKNSt6vectorIdEE10InsertMode"></span><span id="setValuesWithGhosts__i.std::vector:double:CR.InsertMode"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValuesWithGhosts</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="n"><span class="pre">InsertMode</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscInsertMode</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INSERT_VALUES</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv419setValuesWithGhostsiRKNSt6vectorIdEE10InsertMode" title="Link to this definition"></a><br /></dt>
+<dd><p>Set values for the specified component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int componentNo</strong> – </p></li>
+<li><p><strong>const std::vector&lt;double&gt; &amp;values</strong> – </p></li>
+<li><p><strong>InsertMode petscInsertMode=INSERT_VALUES</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv422setValuesWithoutGhostsiRKNSt6vectorIdEE10InsertMode">
+<span id="_CPPv322setValuesWithoutGhostsiRKNSt6vectorIdEE10InsertMode"></span><span id="_CPPv222setValuesWithoutGhostsiRKNSt6vectorIdEE10InsertMode"></span><span id="setValuesWithoutGhosts__i.std::vector:double:CR.InsertMode"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValuesWithoutGhosts</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">componentNo</span></span>, <span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="n"><span class="pre">InsertMode</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscInsertMode</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INSERT_VALUES</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv422setValuesWithoutGhostsiRKNSt6vectorIdEE10InsertMode" title="Link to this definition"></a><br /></dt>
+<dd><p>Set values for the specified component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>int componentNo</strong> – </p></li>
+<li><p><strong>const std::vector&lt;double&gt; &amp;values</strong> – </p></li>
+<li><p><strong>InsertMode petscInsertMode=INSERT_VALUES</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv49setValuesd">
+<span id="_CPPv39setValuesd"></span><span id="_CPPv29setValuesd"></span><span id="setValues__double"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValues</span></span></span><span class="sig-paren">(</span><span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">value</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv49setValuesd" title="Link to this definition"></a><br /></dt>
+<dd><p>Set value for all dofs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>double value</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv419setValuesWithGhostsRKNSt6vectorINSt5arrayId11nComponentsEEEE10InsertMode">
+<span id="_CPPv319setValuesWithGhostsRKNSt6vectorINSt5arrayId11nComponentsEEEE10InsertMode"></span><span id="_CPPv219setValuesWithGhostsRKNSt6vectorINSt5arrayId11nComponentsEEEE10InsertMode"></span><span id="setValuesWithGhosts__std::vector:std::array:double.nComponents::CR.InsertMode"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValuesWithGhosts</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv411nComponentsv" title="nComponents"><span class="n"><span class="pre">nComponents</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="n"><span class="pre">InsertMode</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscInsertMode</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INSERT_VALUES</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv419setValuesWithGhostsRKNSt6vectorINSt5arrayId11nComponentsEEEE10InsertMode" title="Link to this definition"></a><br /></dt>
+<dd><p>Set values for the all component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>const std::vector&lt;std::array&lt;double,nComponents&gt;&gt; &amp;values</strong> – </p></li>
+<li><p><strong>InsertMode petscInsertMode=INSERT_VALUES</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv422setValuesWithoutGhostsRKNSt6vectorINSt5arrayId11nComponentsEEEE10InsertMode">
+<span id="_CPPv322setValuesWithoutGhostsRKNSt6vectorINSt5arrayId11nComponentsEEEE10InsertMode"></span><span id="_CPPv222setValuesWithoutGhostsRKNSt6vectorINSt5arrayId11nComponentsEEEE10InsertMode"></span><span id="setValuesWithoutGhosts__std::vector:std::array:double.nComponents::CR.InsertMode"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValuesWithoutGhosts</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv411nComponentsv" title="nComponents"><span class="n"><span class="pre">nComponents</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="n"><span class="pre">InsertMode</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscInsertMode</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INSERT_VALUES</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv422setValuesWithoutGhostsRKNSt6vectorINSt5arrayId11nComponentsEEEE10InsertMode" title="Link to this definition"></a><br /></dt>
+<dd><p>Set values for the all component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>const std::vector&lt;std::array&lt;double,nComponents&gt;&gt; &amp;values</strong> – </p></li>
+<li><p><strong>InsertMode petscInsertMode=INSERT_VALUES</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv422setValuesWithoutGhostsRKNSt5arrayINSt6vectorIdEE11nComponentsEE10InsertMode">
+<span id="_CPPv322setValuesWithoutGhostsRKNSt5arrayINSt6vectorIdEE11nComponentsEE10InsertMode"></span><span id="_CPPv222setValuesWithoutGhostsRKNSt5arrayINSt6vectorIdEE11nComponentsEE10InsertMode"></span><span id="setValuesWithoutGhosts__std::array:std::vector:double:.nComponents:CR.InsertMode"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValuesWithoutGhosts</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv411nComponentsv" title="nComponents"><span class="n"><span class="pre">nComponents</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="n"><span class="pre">InsertMode</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscInsertMode</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INSERT_VALUES</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv422setValuesWithoutGhostsRKNSt5arrayINSt6vectorIdEE11nComponentsEE10InsertMode" title="Link to this definition"></a><br /></dt>
+<dd><p>Set values for the all component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>const std::array&lt;std::vector&lt;double&gt;,nComponents&gt; &amp;values</strong> – </p></li>
+<li><p><strong>InsertMode petscInsertMode=INSERT_VALUES</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv411zeroEntriesv">
+<span id="_CPPv311zeroEntriesv"></span><span id="_CPPv211zeroEntriesv"></span><span id="zeroEntries"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">zeroEntries</span></span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv411zeroEntriesv" title="Link to this definition"></a><br /></dt>
+<dd><p>Set value to zero for all dofs.</p>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv49setValuesR15FieldVariable3D">
+<span id="_CPPv39setValuesR15FieldVariable3D"></span><span id="_CPPv29setValuesR15FieldVariable3D"></span><span id="setValues__FieldVariable3DR"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValues</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">FieldVariable3D</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">rhs</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv49setValuesR15FieldVariable3D" title="Link to this definition"></a><br /></dt>
+<dd><p>Set values from 3D field variables.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>FieldVariable3D &amp;rhs</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv49setValuesR13FieldVariableIN13FunctionSpace13FunctionSpaceIN4Mesh31StructuredDeformableOfDimensionI1DEE17BasisFunctionTypeEE11nComponentsE">
+<span id="_CPPv39setValuesR13FieldVariableIN13FunctionSpace13FunctionSpaceIN4Mesh31StructuredDeformableOfDimensionI1DEE17BasisFunctionTypeEE11nComponentsE"></span><span id="_CPPv29setValuesR13FieldVariableIN13FunctionSpace13FunctionSpaceIN4Mesh31StructuredDeformableOfDimensionI1DEE17BasisFunctionTypeEE11nComponentsE"></span><span id="setValues__FieldVariable:FunctionSpace::FunctionSpace:Mesh::StructuredDeformableOfDimension:D:.BasisFunctionType:.nComponents:R"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValues</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">FieldVariable</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">FunctionSpace</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">FunctionSpace</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">Mesh</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">StructuredDeformableOfDimension</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">D</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="n"><span class="pre">BasisFunctionType</span></span><span class="p"><span class="pre">&gt;</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv411nComponentsv" title="nComponents"><span class="n"><span class="pre">nComponents</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">rhs</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv49setValuesR13FieldVariableIN13FunctionSpace13FunctionSpaceIN4Mesh31StructuredDeformableOfDimensionI1DEE17BasisFunctionTypeEE11nComponentsE" title="Link to this definition"></a><br /></dt>
+<dd><p>Copy the values from another field variable of the same type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>FieldVariable&lt;FunctionSpace::FunctionSpace&lt;Mesh::StructuredDeformableOfDimension&lt;D&gt;,BasisFunctionType&gt;,nComponents&gt; &amp;rhs</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv48setValue8dof_no_td10InsertMode">
+<span id="_CPPv38setValue8dof_no_td10InsertMode"></span><span id="_CPPv28setValue8dof_no_td10InsertMode"></span><span id="setValue__dof_no_t.double.InsertMode"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValue</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">dof_no_t</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">dofLocalNo</span></span>, <span class="kt"><span class="pre">double</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">value</span></span>, <span class="n"><span class="pre">InsertMode</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscInsertMode</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INSERT_VALUES</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv48setValue8dof_no_td10InsertMode" title="Link to this definition"></a><br /></dt>
+<dd><p>Only for scalar field variables:  set a single dof (all components) , after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dof_no_t dofLocalNo</strong> – </p></li>
+<li><p><strong>double value</strong> – </p></li>
+<li><p><strong>InsertMode petscInsertMode=INSERT_VALUES</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv49setValues3Vec">
+<span id="_CPPv39setValues3Vec"></span><span id="_CPPv29setValues3Vec"></span><span id="setValues__Vec"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValues</span></span></span><span class="sig-paren">(</span><span class="n"><span class="pre">Vec</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscVector</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv49setValues3Vec" title="Link to this definition"></a><br /></dt>
+<dd><p>Only for scalar field variables:  set the values from a petsc Vec.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>Vec petscVector</strong> – </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv49setValuesRKNSt6vectorI8dof_no_tEERNSt6vectorIdEE10InsertMode">
+<span id="_CPPv39setValuesRKNSt6vectorI8dof_no_tEERNSt6vectorIdEE10InsertMode"></span><span id="_CPPv29setValuesRKNSt6vectorI8dof_no_tEERNSt6vectorIdEE10InsertMode"></span><span id="setValues__std::vector:dof_no_t:CR.std::vector:double:R.InsertMode"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValues</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">dof_no_t</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">dofNosLocal</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="n"><span class="pre">InsertMode</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscInsertMode</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INSERT_VALUES</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv49setValuesRKNSt6vectorI8dof_no_tEERNSt6vectorIdEE10InsertMode" title="Link to this definition"></a><br /></dt>
+<dd><p>Only for scalar field variables:  set values for the single component for dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>const std::vector&lt;dof_no_t&gt; &amp;dofNosLocal</strong> – </p></li>
+<li><p><strong>std::vector&lt;double&gt; &amp;values</strong> – </p></li>
+<li><p><strong>InsertMode petscInsertMode=INSERT_VALUES</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv4I_iE9setValuesvKNSt5arrayI8dof_no_t7nValuesEENSt5arrayId7nValuesEE10InsertMode">
+<span id="_CPPv3I_iE9setValuesKNSt5arrayI8dof_no_t7nValuesEENSt5arrayId7nValuesEE10InsertMode"></span><span id="_CPPv2I_iE9setValuesKNSt5arrayI8dof_no_t7nValuesEENSt5arrayId7nValuesEE10InsertMode"></span><span class="k"><span class="pre">template</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">int</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">nValues</span></span></span><span class="p"><span class="pre">&gt;</span></span><br /><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValues</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="n"><span class="pre">dof_no_t</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I_iE9setValuesvKNSt5arrayI8dof_no_t7nValuesEENSt5arrayId7nValuesEE10InsertMode" title="setValues::nValues"><span class="n"><span class="pre">nValues</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">dofNosLocal</span></span>, <span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">array</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#_CPPv4I_iE9setValuesvKNSt5arrayI8dof_no_t7nValuesEENSt5arrayId7nValuesEE10InsertMode" title="setValues::nValues"><span class="n"><span class="pre">nValues</span></span></a><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">values</span></span>, <span class="n"><span class="pre">InsertMode</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscInsertMode</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INSERT_VALUES</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4I_iE9setValuesvKNSt5arrayI8dof_no_t7nValuesEENSt5arrayId7nValuesEE10InsertMode" title="Link to this definition"></a><br /></dt>
+<dd><p>Only for scalar field variables:  set values for the single component for dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>const std::array&lt;dof_no_t,nValues&gt; dofNosLocal</strong> – </p></li>
+<li><p><strong>std::array&lt;double,nValues&gt; values</strong> – </p></li>
+<li><p><strong>InsertMode petscInsertMode=INSERT_VALUES</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="cpp function">
+<dt class="sig sig-object cpp" id="_CPPv419setValuesWithGhostsRKNSt6vectorIdEE10InsertMode">
+<span id="_CPPv319setValuesWithGhostsRKNSt6vectorIdEE10InsertMode"></span><span id="_CPPv219setValuesWithGhostsRKNSt6vectorIdEE10InsertMode"></span><span id="setValuesWithGhosts__std::vector:double:CR.InsertMode"></span><span class="kt"><span class="pre">void</span></span><span class="w"> </span><span class="sig-name descname"><span class="n"><span class="pre">setValuesWithGhosts</span></span></span><span class="sig-paren">(</span><span class="k"><span class="pre">const</span></span><span class="w"> </span><span class="n"><span class="pre">std</span></span><span class="p"><span class="pre">::</span></span><span class="n"><span class="pre">vector</span></span><span class="p"><span class="pre">&lt;</span></span><span class="kt"><span class="pre">double</span></span><span class="p"><span class="pre">&gt;</span></span><span class="w"> </span><span class="p"><span class="pre">&amp;</span></span><span class="n sig-param"><span class="pre">values</span></span>, <span class="n"><span class="pre">InsertMode</span></span><span class="w"> </span><span class="n sig-param"><span class="pre">petscInsertMode</span></span><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="n"><span class="pre">INSERT_VALUES</span></span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv419setValuesWithGhostsRKNSt6vectorIdEE10InsertMode" title="Link to this definition"></a><br /></dt>
+<dd><p>Only for scalar field variables:  set values for the single component for all local dofs, after all calls to setValue(s), finishGhostManipulation has to be called to apply the cached changes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>const std::vector&lt;double&gt; &amp;values</strong> – </p></li>
+<li><p><strong>InsertMode petscInsertMode=INSERT_VALUES</strong> – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="function_space.html" class="btn btn-neutral float-left" title="FunctionSpace" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="supercomputer.html" class="btn btn-neutral float-right" title="Build on supercomputer" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2020, Benjamin Maier. MIT licence, see LICENSE for details..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

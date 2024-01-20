@@ -10,10 +10,11 @@ Design goals are usability, performance and extensibility.
 The software is developed at [SGS](https://www.ipvs.uni-stuttgart.de/departments/sgs/) and [IANS](https://www.ians.uni-stuttgart.de/institute/) at the [University of Stuttgart](https://www.uni-stuttgart.de/en/index.html).
 
 ## OpenDiHu has moved!
-OpenDiHu has moved to its own [GitHub Organization](https://github.com/opendihu) where it continues to be actively maintained and developed as OpenDiHu version 2.x.
-
-* Go to the [new opendihu repo](https://github.com/opendihu/opendihu)
-* Read the [new documentation page](https://opendihu.readthedocs.io/)
+> [!IMPORTANT]  
+> OpenDiHu has moved to its own [GitHub Organization](https://github.com/opendihu) where it continues to be actively maintained and developed as OpenDiHu version 2.x.
+> 
+> * Go to the [new opendihu repo](https://github.com/opendihu/opendihu)
+> * Read the [new documentation page](https://opendihu.readthedocs.io/)
 
 You are on the repo of the previous codebase as of 01/2024, containing the stable OpenDiHu version 1.4 and the [Documentation for version 1.4](https://maierbn.github.io/opendihu/).
 

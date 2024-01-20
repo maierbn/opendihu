@@ -1,1 +1,0 @@
-The equation class are only stubs that are used as template typename to specify the implementation at different positions in the code. The only equation classes that carry information are the structured mechanics equation classes. (May be extended in future)

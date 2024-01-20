@@ -1,8 +1,0 @@
-import os
-Import('env obj_map')
-
-objs = obj_map.values()
-libs = env.get('LIBS', [])
-dst_dir = '#' + env['BUILD'] + '/bin/'
-
-#env.Program(dst_dir + 'app', ['app.cc'] + objs, LIBS=libs)

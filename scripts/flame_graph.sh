@@ -1,1 +1,0 @@
-sudo perf record -F 99 -a -g -- sleep 10 && sudo perf script > out.perf && stackcollapse-perf.pl --all out.perf > out.folded && flamegraph.pl --color=java --hash out.folded > perf.svg && firefox perf.svg

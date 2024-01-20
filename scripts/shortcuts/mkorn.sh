@@ -1,1 +1,0 @@
-cd $OPENDIHU_HOME && time $OPENDIHU_HOME/dependencies/scons/scons.py BUILD_TYPE=release no_tests=True -j `nproc --all` $* && (cd - && echo opendihu release build without tests succeeded) || (echo opendihu release build without tests failed && cd - && exit -1)

@@ -1,1 +1,0 @@
-/store/software/opendihu/core/src/cloc.sh

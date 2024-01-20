@@ -15,7 +15,7 @@ OpenDiHu has moved to its own [GitHub Organization](https://github.com/opendihu)
 * Go to the [new opendihu repo](https://github.com/opendihu/opendihu)
 * Read the [new documentation page](https://opendihu.readthedocs.io/)
 
-You are on the repo of the previous codebase as of 01/2024, containing the stable OpenDiHu version 1.4. [The Documentation for version 1.4 can be found here.](https://maierbn.github.io/opendihu/).
+You are on the repo of the previous codebase as of 01/2024, containing the stable OpenDiHu version 1.4 and the [Documentation for version 1.4](https://maierbn.github.io/opendihu/).
 
 
 # Installation

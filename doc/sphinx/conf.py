@@ -26,7 +26,7 @@ author = u'Benjamin Maier'
 # The short X.Y version
 version = u''
 # The full version, including alpha/beta/rc tags
-release = u'1.0'
+release = u'1.4'
 
 
 # -- General configuration ---------------------------------------------------
@@ -153,7 +153,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'opendihu', u'opendihu Documentation',
+    (master_doc, 'opendihu', u'opendihu 1.4 Documentation',
      author, 'opendihu', 'Computational framework for the DiHu multi-scale muscle model and variants.',
      'Miscellaneous'),
 ]

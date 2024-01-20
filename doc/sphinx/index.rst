@@ -3,11 +3,19 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
    
-Documentation
-===============
+OpenDiHu 1.4 Documentation
+===========================
 
-Opendihu is hosted on github: `<https://github.com/maierbn/opendihu>`_. 
+.. note::
 
+   OpenDiHu has moved to its own `GitHub Organization <https://github.com/opendihu>`_ where it continues to be actively maintained and developed as OpenDiHu version 2.x.
+    
+    * Go to the `new opendihu repo <https://github.com/opendihu/opendihu>`_
+    * Read the `new documentation page <https://opendihu.readthedocs.io/>`_
+   
+   The previous codebase as of 01/2024 is the stable OpenDiHu version 1.4. It remains functional under the `original GitHub repo <https://github.com/maierbn/opendihu>`_ 
+   and you are reading the corresponding documentation.
+   
 This documentation contains three parts: An :ref:`introduction <introduction>` including :ref:`installation <installation>` instructions, the :ref:`user documentation of all Python settings <python_settings>` and :ref:`information for developers <developer_information>`.
 
 If you are new, start with the :ref:`introduction <introduction>` or continue clicking "Next" on the bottom of the page.
